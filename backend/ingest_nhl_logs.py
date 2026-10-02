@@ -21,6 +21,10 @@ import paced_http
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest_nfl_logs import ensure_table  # noqa: E402
 from nhl_standings_store import (  # noqa: E402
+    # This module defines its own SOURCE ("nhle.com"); import the standings
+    # one under its own name so the two cannot shadow each other.
+    SOURCE as STANDINGS_NOW_SOURCE,
+    NHLStandingsError,
     ensure_table as ensure_standings_table,
     publish_snapshot as publish_standings_snapshot,
     snapshot_from_document,
@@ -41,6 +45,11 @@ COVERAGE_SOURCE = (
 )
 EXPECTED_TEAMS = 32
 TEAM_DIRECTORY_URL = "https://api-web.nhle.com/v1/standings/now"
+# The league publishes the first and last standings date of every season it has
+# ever played, so a completed season's final table is a fetch, never a rollup of
+# whichever of its games we happen to hold.
+SEASON_LIST_URL = "https://api-web.nhle.com/v1/standings-season"
+STANDINGS_ON_URL = "https://api-web.nhle.com/v1/standings/{date}"
 SEASON_URL = "https://api.nhle.com/stats/rest/en/season?cayenneExp=id={season}"
 SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/{season}"
 BOXSCORE_URL = "https://api-web.nhle.com/v1/gamecenter/{game_id}/boxscore"
@@ -554,14 +563,48 @@ def refresh(db_path: str, *, source_season: int, apply: bool = False) -> dict:
     )
 
 
+def standings_endpoint(source_season: int) -> tuple[str, str]:
+    """Which standings URL publishes this season, and what to record as source.
+
+    `standings/now` is only correct for the season the league is currently
+    playing; asking it for 20252026 returns this season's table under last
+    season's name. For any earlier season the league publishes that season's
+    own `standingsEnd` date, so the final table is read from there.
+    """
+    document = _get(SEASON_LIST_URL)
+    seasons = document.get("seasons") if isinstance(document, dict) else document
+    if not isinstance(seasons, list) or not seasons:
+        raise NHLStandingsError("nhle.com published no standings season list")
+    entry = next(
+        (row for row in seasons
+         if isinstance(row, dict) and int(row.get("id") or 0) == int(source_season)),
+        None,
+    )
+    if entry is None:
+        raise NHLStandingsError(
+            f"nhle.com does not publish standings for season {source_season}"
+        )
+    current = max(int(row.get("id") or 0) for row in seasons if isinstance(row, dict))
+    if int(source_season) == current:
+        return TEAM_DIRECTORY_URL, STANDINGS_NOW_SOURCE
+    end = str(entry.get("standingsEnd") or "")[:10]
+    if len(end) != 10:
+        raise NHLStandingsError(
+            f"season {source_season} publishes no standingsEnd date"
+        )
+    return STANDINGS_ON_URL.format(date=end), f"nhle.com:standings/{end}"
+
+
 def refresh_standings(
     db_path: str, *, source_season: int, apply: bool = False
 ) -> dict:
     """Publish the official season-named standings without fetching game boxes."""
+    url, source = standings_endpoint(source_season)
     snapshot = snapshot_from_document(
-        _get(TEAM_DIRECTORY_URL),
+        _get(url),
         source_season=source_season,
         expected_teams=EXPECTED_TEAMS,
+        source=source,
     )
     summary = {
         "status": "published" if apply else "ready",

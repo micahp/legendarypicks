@@ -70,8 +70,14 @@ def snapshot_from_document(
     *,
     source_season: int,
     expected_teams: int = EXPECTED_TEAMS,
+    source: str = SOURCE,
 ) -> dict[str, Any]:
-    """Validate and normalize one complete official standings document."""
+    """Validate and normalize one complete official standings document.
+
+    `source` names the endpoint the document came from. A completed season is
+    read from `standings/<date>` rather than `standings/now`, and a snapshot
+    that does not say which one it was cannot be told apart later.
+    """
     rows = document.get("standings") if isinstance(document, dict) else None
     if not isinstance(rows, list) or len(rows) != expected_teams:
         raise NHLStandingsError(
@@ -176,7 +182,7 @@ def snapshot_from_document(
         "source_season": int(source_season),
         "season_label": season_label,
         "standings_date": dates.pop(),
-        "source": SOURCE,
+        "source": source,
         "teams": teams,
     }
 

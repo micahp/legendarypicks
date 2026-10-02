@@ -248,3 +248,42 @@ def test_apply_publishes_logs_pairs_stats_and_manifest_together(tmp_path):
     assert stored == (2027, "2026-27", 2, "nhle.com:standings/now")
     assert result["status"] == "published"
     connection.close()
+
+
+SEASON_LIST = {"seasons": [
+    {"id": 20242025, "standingsStart": "2024-10-04", "standingsEnd": "2025-04-17"},
+    {"id": 20252026, "standingsStart": "2025-10-07", "standingsEnd": "2026-04-17"},
+    {"id": 20262027, "standingsStart": "2026-09-29", "standingsEnd": "2026-10-01"},
+]}
+
+
+def test_current_season_reads_standings_now():
+    with mock.patch.object(ingest, "_get", return_value=SEASON_LIST):
+        url, source = ingest.standings_endpoint(20262027)
+    assert url == ingest.TEAM_DIRECTORY_URL
+    assert source == "nhle.com:standings/now"
+
+
+def test_completed_season_reads_its_own_published_end_date():
+    """standings/now would answer for 20252026 with THIS season's table."""
+    with mock.patch.object(ingest, "_get", return_value=SEASON_LIST):
+        url, source = ingest.standings_endpoint(20252026)
+    assert url == "https://api-web.nhle.com/v1/standings/2026-04-17"
+    assert source == "nhle.com:standings/2026-04-17"
+    # The source must say which endpoint answered, or two snapshots taken from
+    # two different URLs are indistinguishable once stored.
+    assert source != "nhle.com:standings/now"
+
+
+def test_a_season_the_league_does_not_publish_fails_closed():
+    with mock.patch.object(ingest, "_get", return_value=SEASON_LIST):
+        with pytest.raises(ingest.NHLStandingsError, match="does not publish"):
+            ingest.standings_endpoint(19992000)
+
+
+def test_a_season_published_without_an_end_date_fails_closed():
+    broken = {"seasons": [{"id": 20262027, "standingsEnd": "2026-10-01"},
+                          {"id": 20252026, "standingsEnd": None}]}
+    with mock.patch.object(ingest, "_get", return_value=broken):
+        with pytest.raises(ingest.NHLStandingsError, match="standingsEnd"):
+            ingest.standings_endpoint(20252026)
