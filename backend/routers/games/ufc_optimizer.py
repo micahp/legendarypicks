@@ -245,12 +245,39 @@ def build_current_pool(now=None, get_json=_get_json):
     }
 
 
+def _stored_pool(now):
+    """The last pool `ingest_ufc_dk_pool.py` captured, if it has not locked."""
+    try:
+        from routers.games import _db as _pkg_db
+        from dk_pool_store import read_unlocked
+        connection = _pkg_db()
+        try:
+            return read_unlocked(connection, now=now)
+        finally:
+            connection.close()
+    except Exception as exc:
+        # A reader problem must not take the board down when the live path works.
+        print(f"[ufc_pool] stored pool unavailable: {type(exc).__name__}: {exc}")
+        return None
+
+
 @router.get("/api/ufc/draftkings-pool")
 def current_draftkings_pool():
+    """Serve the captured pool; fetch live only when there is nothing stored.
+
+    The scheduled job owns the publisher call. A page view that has to go out to
+    RotoWire is as available as RotoWire is at that instant, which is how one
+    bad moment emptied the board. Reading first also means a publisher outage
+    degrades to "captured 20 minutes ago" instead of to nothing.
+    """
     now = dt.datetime.now(dt.timezone.utc)
     with _lock:
         if _cache["value"] is not None and _cache["expires"] > now.timestamp():
             return _cache["value"]
+        stored = _stored_pool(now)
+        if stored is not None:
+            _cache.update(value=stored, expires=now.timestamp() + CACHE_SECONDS)
+            return stored
         try:
             value = build_current_pool(now=now)
         except Exception as exc:

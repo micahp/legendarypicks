@@ -300,6 +300,34 @@ JOBS: List[Dict[str, object]] = [
             },
         ],
     },
+    {
+        "id": "ufc_dk_pool",
+        # The optimizer fetched RotoWire inside the request that drew the page, so the
+        # pool only existed while somebody was looking at it. A publisher blip at that
+        # instant emptied the board, and a slate nobody opened was never captured at all.
+        # This makes the capture independent of page views and gives the board something
+        # to serve when RotoWire is slow.
+        "cadence_min": 30,
+        "timeout_sec": 300,
+        # RotoWire's own host. The props provider runner also talks to RotoWire, so they
+        # share this lock rather than spending that budget at the same time.
+        "host_lock": "rotowire",
+        "steps": [["ingest_ufc_dk_pool.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [
+            {
+                "table": "dk_pool_snapshots",
+                "date_column": "captured_at",
+                "where": "league = 'ufc'",
+                # Deliberately a week, not an hour. Between cards RotoWire publishes no
+                # unlocked Classic pool at all, and the job reports `no_pool` rather than
+                # writing -- that is the publisher answering, not the job failing. Seven
+                # days with no capture is the real defect, because UFC runs most weekends.
+                "stale_hours": 168,
+                "label": "DraftKings MMA pool",
+            },
+        ],
+    },
 ]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
