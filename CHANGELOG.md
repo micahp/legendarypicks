@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.10.0
+
+### The current NHL season is published, and the year is selectable
+
+- **NHL rolled over.** The 2026-27 roster, season totals, game logs and standings are
+  published from the league's own endpoints rather than carried over or rebuilt from the
+  games we happen to hold. `ingest_nhl_roster.py` validates the whole 32-team population
+  before it opens a write, resolves by NHL id first, and publishes one atomic snapshot.
+  `ingest_nhl_logs.py` is game-oriented: it reads a completed game's official boxscore and
+  publishes that game's appearances and both teams' stats in one transaction, replacing a
+  per-player path that issued 1,240 requests and could leave a partial write behind.
+- **Standings carry their season, and you can switch it.** `league_standings_snapshots`
+  stores a validated 32-team table per season. The league publishes every season's own
+  `standingsEnd` date, so a completed season's final table is fetched from it rather than
+  rolled up locally. The NHL standings tab now offers 2026-27 and 2025-26.
+- **Goalies read as goalies.** The profile serializer was choosing the skater stat shape
+  for every NHL player, so saves and save percentage rendered under skater labels.
+- **Readiness says what it measured** (`league-readiness-v3`). The check named `schedule`
+  was counting `team_game_results`, which holds completed games, so its preseason zero read
+  as "the publisher has no schedule" when the publisher has a full one. It is now
+  `completed_team_results`, and NHL gains a `roster_snapshot` check carrying source, season,
+  capture time and age. Current-season staleness warnings arrive before a season starts,
+  rather than after the opportunity is gone.
+
+### The DraftKings MMA pool captures itself
+
+- **The optimizer no longer depends on someone opening the page.** `ingest_ufc_dk_pool.py`
+  captures the pool twice a day on its own timer and stores it; the board reads that and only
+  fetches live when nothing is stored or what is stored is over four hours old. A publisher
+  outage now degrades to a pool captured earlier rather than to an empty tab, and the
+  response answers in milliseconds off the database.
+- **A publisher disagreement is not a dead pool.** RotoWire's event list and its salary feed
+  disagree during fight week: a replaced fighter stays priced after losing his bout and his
+  replacement is in the bout before he is priced. Every such case was a 502 that emptied the
+  whole board. Each is now excluded with a count, the whole bouts are served, and the board
+  says what was left out. Only genuine ambiguity still fails closed.
+
+### Fixes
+
+- NHL projections match every source their history was written under. Pointing the market map
+  at the new boxscore source alone cut the projection window off from 51,143 legacy log rows.
+- The UFC optimizer permits both fighters of a bout in one lineup, and reads the contest's own
+  lock time rather than inferring one from fighter start times.
+- Bovada player props are no longer filtered on the display group's name.
+
 ## v0.9.3
 
 ### Identity, and the work that was already done
