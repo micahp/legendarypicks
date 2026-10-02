@@ -554,6 +554,40 @@ def _settlement_waiting_on(con, league: str) -> dict:
     return {str(event_id): str(date or "") for event_id, date in rows}
 
 
+def _not_started(con, league: str, now_iso: str) -> set:
+    """ESPN event ids we already know have not kicked off yet, read from our own tables.
+
+    Fetching an unplayed match's summary returns no box score, writes nothing, and so
+    leaves the match "not held" -- and it ranks first again next run. Measured 2026-10-02:
+    the twelve matches at the front of the queue were all dated 10-10 and 10-11, priced
+    early so they counted as "waiting on settlement", and every hourly run spent its whole
+    12-request budget re-asking ESPN about them. Dev's held count never moved in seven runs,
+    and RBNY v STL, played 09-30 with no props, sat behind them in the group the budget
+    never reached. A match that has not started costs nothing to skip.
+
+    Two sources, both ours: prop_games (start_time, else the date when no time is stored)
+    and the scoreboard capture. An event in neither is unknown, not future, and is still
+    fetched; ESPN's own `completed` flag below catches it, at the price of one request.
+    """
+    today = now_iso[:10]
+    future = set()
+    queries = (
+        ("SELECT espn_event_id FROM prop_games WHERE league=? AND COALESCE(espn_event_id,'')<>''"
+         " AND ((start_time IS NOT NULL AND start_time > ?)"
+         "      OR (start_time IS NULL AND date > ?))", (league, now_iso, today)),
+        ("SELECT game_id FROM scoreboard_snapshots WHERE league=? AND state='pre'"
+         " AND start_time > ?", (league, now_iso)),
+    )
+    for sql, args in queries:
+        try:
+            future.update(str(row[0]) for row in con.execute(sql, args))
+        except sqlite3.Error as exc:
+            # Say it, and fall back to fetching: skipping on a guess would be worse than
+            # paying for an unplayed match.
+            print(f"  not-started check unavailable ({exc}); those matches will be fetched")
+    return future
+
+
 def _fetch_order(waiting: dict, event_ids: List[str]) -> List[str]:
     """Order a phase's matches by what settlement is waiting on, newest first.
 
@@ -804,6 +838,7 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
     phase_mismatches = 0
     matches_without_events = 0
     skipped_already_held = 0
+    skipped_not_started = 0
     requests_spent = 0
     budget_exhausted = False
 
@@ -817,6 +852,13 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
 
     # Read once, not per phase: the answer cannot change inside a single run.
     settlement_waiting = _settlement_waiting_on(con, league)
+    import datetime as _dt
+    not_started = _not_started(
+        con, league, _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"))
+    # A priced match that has not kicked off is not something settlement can be
+    # waiting on yet; ranking it first is what starved the whole job. See _not_started.
+    settlement_waiting = {e: d for e, d in settlement_waiting.items()
+                          if e not in not_started}
 
     for type_doc in types:
         type_id = type_doc.get("id") or ""
@@ -859,6 +901,10 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
             # The freshness key is a stat introduced with the widened set. A row written by
             # the old 4-stat version does not carry it, so widening re-fetches exactly the
             # matches that need it and nothing else.
+            if game_id in not_started:
+                skipped_not_started += 1
+                continue
+
             freshness_key = _DEEP_FRESHNESS_KEY if deep else None
             if not force_refetch and _already_ingested(
                     con, league, season, game_id, freshness_key):
@@ -1036,7 +1082,8 @@ def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
     print(f"  {matches_without_events} of {completed_games} matches published no keyEvents"
           f" — first_goal omitted so those props void rather than grade as losses")
     print(f"  {requests_spent} summary requests spent on site.web.api"
-          f" (budget {request_budget}); {skipped_already_held} matches already held")
+          f" (budget {request_budget}); {skipped_already_held} matches already held;"
+          f" {skipped_not_started} not yet kicked off, skipped at no cost")
     if deep:
         # Say what the deep pass actually attached, not just that it ran. An
         # athlete the core api answered for but the summary never listed is a
