@@ -26,7 +26,16 @@ from typing import Dict, List, Optional, Set, Tuple
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
-API = "https://api.underdogfantasy.com/beta/v5/over_under_lines"
+# The bulk /beta/v5/over_under_lines book answered HTTP 426 "upgrade_required" from
+# 2026-09-07, and /beta/v6 does too, so Underdog props were dead on both databases for
+# 25 days while the freshness monitor alerted every 30 minutes. The pick'em search the
+# app uses publishes the same object families (appearances, over_under_lines, players,
+# solo_games) per sport, and the parsers below read it unchanged. Measured 2026-10-02:
+# MMA 86 board rows reconciling to 86 scheduled props; tennis 36 ATP and 35 WTA rows.
+API = "https://api.underdogfantasy.com/v2/pickem_search/search_results?sport_id={sport}"
+# Our league -> Underdog's sport id. Tennis is one sport upstream; parse_tennis splits
+# it into ATP and WTA from Underdog's own competition grouping.
+SPORT_ID = {"ufc": "MMA", "atp": "TENNIS", "wta": "TENNIS"}
 HDR = {
     "User-Agent": (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -84,9 +93,12 @@ class SourceIdentityConflict(RuntimeError):
     """A supposedly stable source key now names a different canonical row."""
 
 
-def fetch() -> Dict:
-    """Fetch the public book once; callers must reuse the returned payload."""
-    req = urllib.request.Request(API, headers=HDR)
+def fetch(league: str) -> Dict:
+    """Fetch the public pick'em book for one league's sport."""
+    sport = SPORT_ID.get(league)
+    if sport is None:
+        raise ValueError(f"no Underdog sport id for league {league!r}")
+    req = urllib.request.Request(API.format(sport=sport), headers=HDR)
     with urllib.request.urlopen(req, timeout=30) as response:
         return json.loads(response.read().decode())
 
@@ -580,8 +592,8 @@ def main() -> int:
     # league, one run.
     LEAGUE = league
     dry_run = "--dry-run" in sys.argv
-    print("Fetching one Underdog public bulk book...")
-    data = fetch()
+    print(f"Fetching the Underdog pick'em book for {SPORT_ID.get(league, league)}...")
+    data = fetch(league)
     if league == "ufc":
         props, source_counts = parse_ufc(data)
     else:
