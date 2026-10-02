@@ -848,14 +848,20 @@ _NBA_MARKET_STAT = {
     "turnovers": ("TO",  "espn"),
 }
 
-# NHL: current game logs come from the official gamecenter boxscore. Keep the
-# source exact so projections cannot silently mix the legacy season with the
-# current published feed.
+# NHL: the current season is published by the gamecenter boxscore; every season
+# before it was written under the bare "nhle.com". Both are the same publisher
+# reporting the same quantity, so a market names BOTH and the projection window
+# spans the rollover. Naming only the new one looked tidy and silently cut the
+# NHL projection off from 51,143 rows the moment the season turned -- the whole
+# history -- leaving it the handful of games played since September.
+#
+# "saves" is new-source only: no legacy row carries a non-null $.saves.
+_NHL_LOG_SOURCES = ("nhle.com", "nhle.com:gamecenter/boxscore")
 _NHL_MARKET_STAT = {
-    "goals":   ("goals",   "nhle.com:gamecenter/boxscore"),
-    "shots":   ("shots",   "nhle.com:gamecenter/boxscore"),
-    "assists": ("assists", "nhle.com:gamecenter/boxscore"),
-    "saves":   ("saves",   "nhle.com:gamecenter/boxscore"),
+    "goals":   ("goals",   _NHL_LOG_SOURCES),
+    "shots":   ("shots",   _NHL_LOG_SOURCES),
+    "assists": ("assists", _NHL_LOG_SOURCES),
+    "saves":   ("saves",   ("nhle.com:gamecenter/boxscore",)),
 }
 
 _LEAGUE_MARKET_STAT = {
@@ -878,15 +884,20 @@ def _query_game_log_values(player_id: int, market: str, line: float, league: str
     if league_markets is None or market not in league_markets:
         return None
     stat_key, source = league_markets[market]
+    # A market may name one source or several: a league whose publisher changed
+    # endpoints mid-history still has one continuous series behind it.
+    sources = (source,) if isinstance(source, str) else tuple(source)
+    placeholders = ",".join("?" for _ in sources)
     with closing(_db()) as con:
         rows = con.execute(
-            """SELECT json_extract(stats, ?) AS val
+            f"""SELECT json_extract(stats, ?) AS val
                FROM player_game_logs
-               WHERE player_id = ? AND league = ? AND source = ?
+               WHERE player_id = ? AND league = ? AND source IN ({placeholders})
                  AND json_extract(stats, ?) IS NOT NULL
                ORDER BY game_date DESC
                LIMIT ?""",
-            (f"$.{stat_key}", player_id, league, source, f"$.{stat_key}", _PROJECTION_WINDOW_GAMES),
+            (f"$.{stat_key}", player_id, league, *sources, f"$.{stat_key}",
+             _PROJECTION_WINDOW_GAMES),
         ).fetchall()
     vals = [float(r["val"]) for r in rows]
     if len(vals) < _PROJECTION_MIN_GAMES:
