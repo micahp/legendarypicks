@@ -18,6 +18,12 @@ node_modules
 .next
 out
 
+# Workstation-only report links. These are absolute symlinks into a sibling repo;
+# Docker preserves the links but cannot copy their targets, so Next's standalone
+# server crashes while scanning public/ if either link enters the image.
+public/capture-catalog.html
+public/paper-strategy-results.html
+
 # Not needed to build the frontend, and nothing under pages/components/lib/services
 # imports from it. This is the 1.5GB of databases and 567MB virtualenv.
 backend

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.5
+
+### Fixes
+
+- Frontend images exclude workstation-only report symlinks from `public/`. Absolute
+  links into a sibling repository previously entered the image as broken links and made
+  the standalone Next.js server crash while scanning public routes.
+
 ## v0.9.4
 
 ### The current NHL season is published, and the year is selectable
