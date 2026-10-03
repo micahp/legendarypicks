@@ -302,7 +302,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # 21:10 CDT: ESPN's NBA standings already served 2026-27 with all 30 teams 0-0, the
     # season check passed, and the "quality rank" handed over was a position among 30 ties:
     # the 401902644 preview called Miami "ranked seventh in the league to Toronto's 14th".
-    records_stale = (_standings_out_of_season(standings_season, game_season)
+    # And a table we could not read is no record: ESPN answered 403 on 2026-10-02 22:00 CDT
+    # and the writer was handed "None-None" for both clubs.
+    records_stale = (not strength_rows
+                     or _standings_out_of_season(standings_season, game_season)
                      or _no_games_played(strength_rows))
     smap = {} if records_stale else {r["abbrev"]: r for r in strength_rows if r.get("abbrev")}
     _rank = {} if records_stale else {r["abbrev"]: i + 1 for i, r in enumerate(strength_rows)}
@@ -310,7 +313,9 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     def facts(ab):
         if records_stale:
             return f"{ab}: no games played yet this season (no record to cite)."
-        s = smap.get(ab) or {}
+        if ab not in smap:
+            return f"{ab}: no published record (do not cite one)."
+        s = smap[ab]
         rk = f", quality rank #{_rank[ab]} of {len(_rank)}" if ab in _rank else ""
         # ".500 winning percentage", not "0.5 win%". Measured 2026-08-19: two of
         # three runs turned `0.5 win%` into "leads the AL West by half a game",
@@ -574,6 +579,19 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         new_stakes = bool(stakes_lines) and not cached["has_stakes"]
         if not new_form and not new_stakes and not stale_preview:
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+
+    # Nothing to write from. With no record, form or stakes (a preseason opener before any
+    # game is played) the only facts are the matchup, the date and the phase, and the writer
+    # said exactly that: 401902644 came back "there is no factual basis for a preview of this
+    # matchup". No preview is honest; a paragraph about having nothing to say is not. A
+    # stored story for such a game was written from facts that are no longer given, so it
+    # goes too, and the page shows nothing.
+    finished_game = (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"
+    if records_stale and not form_lines and not stakes_lines and not finished_game:
+        with closing(_db()) as con:
+            con.execute("DELETE FROM game_story WHERE league=? AND game_id=?", (lg, game_id))
+            con.commit()
+        return {"league": lg, "game_id": game_id, "story": None, "cached": False}
 
     # A finished game gets a recap, not a preview. Without this the writer keeps setting up
     # a match whose result is sitting in the facts it was handed — "Chicago look to advance"

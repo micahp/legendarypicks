@@ -98,13 +98,21 @@ def test_no_preview_written_beyond_the_horizon(harness):
     assert out["story"] is None and seen["grounding"] == []
 
 
-def test_preseason_preview_has_no_last_season_records_form_or_stakes(harness):
+def test_preseason_with_nothing_to_say_writes_nothing(harness):
     path, seen = harness
+    out = _gen(_soon())
+    assert out["story"] is None and seen["grounding"] == [] and seen["stakes"] == 0
+
+
+def test_preseason_grounding_drops_last_season_but_keeps_current_form(harness, monkeypatch):
+    import player_form
+    path, seen = harness
+    monkeypatch.setattr(player_form, "lines", lambda *a, **k: ["Bam Adebayo: 18 pts Oct 1"])
+    monkeypatch.setattr(cs, "_logs_predate_season", lambda *a: False)
     _gen(_soon())
     g = seen["grounding"][-1]
     assert "37-45" not in g and "W1" not in g and "ORL" not in g
-    assert "no games played yet this season" in g
-    assert "PRESEASON EXHIBITION" in g
+    assert "no games played yet this season" in g and "PRESEASON EXHIBITION" in g
     assert seen["stakes"] == 0
 
 
@@ -115,10 +123,8 @@ def test_rolled_over_table_of_zeros_is_no_record(harness, monkeypatch):
     monkeypatch.setattr(espn, "team_strength_standings", lambda lg, season=None: {
         "season": 2027, "teams": [{"abbrev": ab, "name": ab, "wins": 0, "losses": 0, "win_pct": 0}
                                   for ab in ("ATL", "BOS", "MIA", "TOR")]})
-    _gen(_soon())
-    g = seen["grounding"][-1]
-    assert "quality rank" not in g and "0-0" not in g and "ORL" not in g
-    assert "no games played yet this season" in g
+    out = _gen(_soon())
+    assert out["story"] is None and seen["grounding"] == []
 
 
 def test_in_season_records_still_flow(harness):
@@ -138,8 +144,24 @@ def test_preview_cached_seven_weeks_early_is_rewritten_inside_the_window(harness
     con.execute("INSERT INTO game_story VALUES ('nba','401902644','OLD STANDINGS RACE','2026-08-17 14:02:11',1,1,0)")
     con.commit()
     con.close()
+    seen["type"], seen["standings_season"] = 2, 2027
     out = _gen(_soon())
     assert out["story"] == "STORY" and len(seen["grounding"]) == 1
+
+
+def test_stored_preview_with_nothing_behind_it_is_dropped(harness):
+    path, seen = harness
+    con = _open(path)
+    con.execute("CREATE TABLE game_story(league TEXT, game_id TEXT, story TEXT, generated_at TEXT, "
+                "has_form INTEGER DEFAULT 0, has_stakes INTEGER DEFAULT 0, form_suppressed INTEGER DEFAULT 0, "
+                "PRIMARY KEY(league, game_id))")
+    con.execute("INSERT INTO game_story VALUES ('nba','401902644','RANKED SEVENTH','2026-10-03 01:10:11',1,0,1)")
+    con.commit()
+    con.close()
+    out = cs.generate_game_story("nba", "401902644", refresh=True, home="MIA", away="TOR",
+                                 state="pre", start_time=_soon())
+    assert out["story"] is None
+    assert _open(path).execute("SELECT COUNT(*) FROM game_story").fetchone()[0] == 0
 
 
 def test_preview_cached_too_early_is_not_served_while_still_too_early(harness):
@@ -164,3 +186,23 @@ def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness):
         {"game_id": "soon", "home": {"abbrev": "MIA"}, "away": {"abbrev": "TOR"}, "state": "pre", "date": _soon()},
     ])
     assert len(started) == 1
+
+
+def test_unreadable_standings_cite_no_record(harness, monkeypatch):
+    import espn_client as espn
+    path, seen = harness
+
+    def refused(lg, season=None):
+        raise OSError("HTTP Error 403: Forbidden")
+    monkeypatch.setattr(espn, "team_strength_standings", refused)
+    seen["type"] = 2
+    out = _gen(_soon())
+    assert out["story"] is None and seen["grounding"] == []
+
+
+def test_team_missing_from_the_table_gets_no_invented_record(harness):
+    path, seen = harness
+    seen["type"], seen["standings_season"] = 2, 2027
+    _gen(_soon())
+    g = seen["grounding"][-1]
+    assert "None-None" not in g and "TOR: no published record" in g
