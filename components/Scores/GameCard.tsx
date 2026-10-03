@@ -204,7 +204,8 @@ export default function GameCard(g: GameProps) {
           })}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
+        <div className="space-y-3 min-w-0">
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
             {showScore && (g.homeTeam.score !== undefined || (outcomeLabel && homeWon)) && (
@@ -212,7 +213,6 @@ export default function GameCard(g: GameProps) {
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
-            {showTime && <span className="text-xs font-normal text-zinc-400">{timeLabel}</span>}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
@@ -222,6 +222,8 @@ export default function GameCard(g: GameProps) {
               </span>
             )}
           </div>
+        </div>
+        {showTime && <span className="text-sm text-zinc-300 tabular-nums">{timeLabel}</span>}
         </div>
       )}
 

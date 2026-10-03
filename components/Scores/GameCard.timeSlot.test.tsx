@@ -16,12 +16,12 @@ const time = new Date(base.startTime).toLocaleTimeString([], { hour: 'numeric', 
 // A scheduled game's start time sits on the team rows, where the score will be; there is
 // no header row above it. Preseason is a quiet line under the teams (ESPN's context line).
 describe('GameCard layout', () => {
-  it('puts a scheduled game\'s time on the first team row, unstyled beyond the old label', () => {
+  it('puts a scheduled game\'s time beside the team names, in the score column', () => {
     const { container } = render(<GameCard {...base} status="SCHEDULED" />)
-    const firstRow = container.firstElementChild!.firstElementChild!.firstElementChild!
-    expect(firstRow.textContent).toBe('WIS' + time)
-    const t = screen.getByText(time)
-    expect(t.className).toBe('text-xs font-normal text-zinc-400')
+    const card = container.firstElementChild!
+    const rows = card.firstElementChild!                       // the team block is the first child
+    expect(rows.textContent).toContain('WIS')
+    expect(rows.lastElementChild!.textContent).toBe(time)       // right column of the same block
   })
 
   it('moves Preseason below the teams', () => {
