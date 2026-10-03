@@ -169,24 +169,20 @@ export default function GameCard(g: GameProps) {
       className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
     >
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        {/* Left side: quiet facts about the game */}
+        {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
         <span className="flex items-center gap-2">
           {/* Quiet on purpose: a fact about the game, not an alert. The accent colour is
               reserved for absence (honest-data-ui), so this takes the time label's styling. */}
           {g.isPreseason && <span className="text-zinc-500">Preseason</span>}
+          {showTime && <span>{timeLabel}</span>}
         </span>
 
-        {/* Right side: one slot for when the game is. A scheduled game's start time sits
-            where a live or final game's status badge does (DESIGN-football-scoreboard.md). */}
-        {showTime ? (
-          <span className="tabular-nums">{timeLabel}</span>
-        ) : (
-          <span
-            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
-          >
-            {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
-          </span>
-        )}
+        {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
+        <span
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
+        >
+          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+        </span>
       </div>
 
       {isTennis && g.sets && g.sets.length > 0 ? (
