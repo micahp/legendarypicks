@@ -940,12 +940,36 @@ def _compute_ev_with_projection(r, player_id: int, market: str, line: float) -> 
     return ev_mod.compute_ev(odds, odds_opp, status)
 
 
+_GAME_TEAM_VOCAB_CACHE: dict = {}
+
+
+def _scoreboard_vocabulary(con, league: str):
+    """The stored scoreboard vocabulary for a league with no static team map.
+
+    prop_games.ncaaf home/away are full display names ("UNLV Rebels"); the same
+    vocabulary the relay ingest trusts maps them onto canonical codes. Cached once per
+    process: the snapshot list a vocabulary misses is one the NEXT process will read,
+    and a miss degrades to the source-team probe, never to a wrong identity.
+    """
+    if league not in _GAME_TEAM_VOCAB_CACHE:
+        try:
+            from ingest_rotowire_props import resolve_team, team_vocabulary
+            _GAME_TEAM_VOCAB_CACHE[league] = (
+                team_vocabulary(con, league), resolve_team)
+        except Exception:
+            _GAME_TEAM_VOCAB_CACHE[league] = (None, None)
+    return _GAME_TEAM_VOCAB_CACHE[league]
+
+
 def _game_team_abbrevs(con, game_id, league: str) -> set:
     """The two teams of a prop_games row as ESPN abbrevs, or an empty set.
 
     prop_games writes home/away in two vocabularies — "Los Angeles Dodgers" from the
     Bovada competitor list, "LAD" from other callers — so both are folded through the
-    same published map link_prop_games already uses for the ESPN crosswalk.
+    same published map link_prop_games already uses for the ESPN crosswalk. A league
+    without a static map (NCAAF: 137 schools change display names every season) falls
+    back to the stored scoreboard vocabulary; a name neither map knows stays unknown,
+    which refuses rather than guesses.
     """
     if not game_id:
         return set()
@@ -955,24 +979,43 @@ def _game_team_abbrevs(con, game_id, league: str) -> set:
     try:
         from link_prop_games import _TEAM_MAPS
     except Exception:
-        return set()
+        _TEAM_MAPS = {}
     tmap = _TEAM_MAPS.get(league, {})
     out = set()
     for value in (row["home"], row["away"]):
         value = (value or "").strip()
         if value:
             out.add(tmap.get(value.lower(), value.upper()))
+    if league not in _TEAM_MAPS and any(
+            len(code) > 4 for code in out):
+        # The static map had no entry, so the fallback above emitted raw display
+        # strings ("UNLV REBELS"). Translate them through the scoreboard vocabulary
+        # when one is stored; a partial translation stays partial, honestly.
+        vocab, resolve = _scoreboard_vocabulary(con, league)
+        if vocab is not None and resolve is not None:
+            out = {resolve(vocab, code) or code for code in out}
     return out
 
 
-def _pick_one(rows, nteam: str, game_teams: set):
+def _pick_one(rows, nteam: str, game_teams: set, require_team_match: bool = False):
     """Choose a single candidate row, or None when the name stays ambiguous.
 
     Two same-named players are separated by the team the prop was written for, and
     failing that by which of them is actually IN the game. Neither signal present
     means we do not know, and guessing writes the prop onto the wrong man.
+
+    `require_team_match` (NCAAF step 2) goes further: a SOLE league-wide match whose
+    team is neither the source's nor the fixture's is a wrong human, not a
+    resolution — Winston Watkins (TOW) is not LSU's Watkins no matter how unique
+    the name is.
     """
     if len(rows) == 1:
+        if require_team_match:
+            team = (rows[0]["team"] or "").strip().upper()
+            probes = {str(t).strip().upper() for t in ({nteam} if nteam else set())}
+            probes |= {str(t).strip().upper() for t in (game_teams or set())}
+            if not probes or team not in probes:
+                return None
         return rows[0]["id"]
     for probe in ({nteam} if nteam else set(), game_teams):
         if not probe:
@@ -1047,6 +1090,10 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     nname = _normalize_name(player_name)
     nteam = team.strip().upper() if team else ""
     game_teams = _game_team_abbrevs(con, game_id, league)
+    # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
+    # source team = roster team = one fixture team. Everywhere else the historical
+    # behavior stands untouched.
+    strict_team = league == "ncaaf"
 
     # 1. Fast path: exact name + league (already-matched players)
     rows = con.execute(
@@ -1054,7 +1101,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
         (player_name, league)
     ).fetchall()
     if rows:
-        picked = _pick_one(rows, nteam, game_teams)
+        picked = _pick_one(rows, nteam, game_teams, require_team_match=strict_team)
         if picked is not None:
             return (picked, "high")
         # The name exists but points at more than one player. Fall through to the
@@ -1086,7 +1133,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     # refused -- _pick_one is the same tiebreak the exact-name path uses.
     cands = _folded_name_index(con, league).get(nname) or []
     if cands:
-        picked = _pick_one(cands, nteam, game_teams)
+        picked = _pick_one(cands, nteam, game_teams, require_team_match=strict_team)
         if picked is not None:
             return (picked, "high")
 
@@ -1098,11 +1145,20 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     if row:
         # Verify the aliased player is in the right league
         pl = con.execute(
-            "SELECT id FROM players WHERE id=? AND league=?",
+            "SELECT id, team FROM players WHERE id=? AND league=?",
             (row["player_id"], league)
         ).fetchone()
         if pl:
-            return (pl["id"], "high")
+            if strict_team:
+                # A reviewed alias is a name judgment, not a team judgment: the NCAAF
+                # strict rule still applies to where the aliased human sits.
+                alias_team = (pl["team"] or "").strip().upper()
+                probes = {str(t).strip().upper() for t in ({nteam} if nteam else set())}
+                probes |= {str(t).strip().upper() for t in (game_teams or set())}
+                if not probes or alias_team not in probes:
+                    pl = None
+            if pl is not None:
+                return (pl["id"], "high")
 
     # 4. The publisher's own roster, read from a stored table.
     #

@@ -101,6 +101,18 @@ LEAGUES = {
     # be guessed into the database.
     "ncaaf": {"sport": "CFB", "kind": "fixture_scoreboard", "aliases": {
         "north carolina state": "NCSU",
+        # Relay spellings the stored scoreboard vocabulary cannot resolve, measured on
+        # the live 2026-10-02 board (21 players queued unverified_team without these):
+        # the relay writes the state/full form where the scoreboard writes the school
+        # form ("Miami (FL)" vs "Miami Hurricanes", "Louisiana-Monroe" vs
+        # "UL Monroe Warhawks", "Army West Point" vs "Army Black Knights",
+        # "Connecticut" vs "UConn Huskies").
+        "miami (fl)": "MIA",
+        "miami fl": "MIA",
+        "connecticut": "CONN",
+        "louisiana-monroe": "ULM",
+        "louisiana monroe": "ULM",
+        "army west point": "ARMY",
     }, "player_aliases": {
         # NC State's official 2026 roster publishes both full names and nicknames:
         # Jayden "Duke" Scott and Joshisa "Jojo" Trader.  Scope these reviewed
@@ -372,13 +384,32 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     fallback that needs a team.
     """
     roster_league = roster_league or league
+    # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
+    # source team = roster team = one fixture team. Everywhere else the historical
+    # behavior stands untouched.
+    strict = league == "ncaaf"
     key = row.get("source_player_key")
+    bound_player_id = None
     if key:
         bound = con.execute(
             "SELECT player_id FROM player_source_ids WHERE source=? AND league=? "
             "AND source_player_key=?", (SOURCE, league, key)).fetchone()
         if bound:
-            return bound["player_id"]
+            if not strict:
+                return bound["player_id"]
+            # A durable binding is evidence, not authority. It was written by whoever
+            # resolved first — for NCAAF that was a sole league-wide name match, which
+            # is how Jack Stevens' RotoWire key kept pointing at the Wagner row after
+            # the real Washington State row arrived (DIAGNOSIS-ncaaf-settlement). The
+            # binding is accepted only while the bound row still sits on the relay's
+            # team; otherwise the strict resolution below decides, and supersedes or
+            # queues.
+            bound_player_id = bound["player_id"]
+            bound_row = con.execute(
+                "SELECT team FROM players WHERE id=?", (bound_player_id,)).fetchone()
+            bound_team = ((bound_row["team"] if bound_row else "") or "").upper()
+            if team_code and bound_team == team_code.upper():
+                return bound_player_id
         if roster_league != league:
             bound = con.execute(
                 "SELECT player_id FROM player_source_ids WHERE source=? AND league=? "
@@ -394,8 +425,22 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     if reviewed_alias:
         published = normalize_name(reviewed_alias)
     roster = [dict(r) for r in con.execute(
-        "SELECT id, name, team, active FROM players WHERE league=?", (roster_league,))]
+        "SELECT id, name, team, active%s FROM players WHERE league=?" % (
+            ", position" if strict else ""), (roster_league,))]
     candidates = [r for r in roster if normalize_name(r["name"]) == published]
+
+    if strict and not team_code:
+        # The relay's team is the one third of the identity triple we can check here.
+        # If the vocabulary cannot resolve it, nothing downstream can verify
+        # source team = roster team, so nothing may be accepted on the name alone.
+        candidates = []
+    elif strict and candidates and team_code:
+        # A same-name player at another school is not a candidate. This is the exact
+        # defect that filed Winston Watkins (TOW) onto LSU fixtures: the league-wide
+        # match was non-empty, so the club-scoped rules never ran and _pick_one kept
+        # the wrong-team row.
+        candidates = [r for r in candidates
+                      if (r["team"] or "").upper() == team_code.upper()]
 
     if not candidates and team_code:
         # Every fallback below is scoped to one club and must land on exactly one
@@ -407,12 +452,32 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
             if candidates:
                 break
 
-    player_id = _pick_one(candidates, team_code)
+    if strict and len(candidates) > 1:
+        # Position is the SECONDARY guard: it only narrows candidates the team rule
+        # already accepted, and it never disqualifies a sole team-verified match.
+        # Vocabularies differ between publishers (PK/K, DB/CB), so an empty or
+        # unresolved position on either side is compatible.
+        candidates = _narrow_by_position(candidates, row.get("position"))
+
+    player_id = _pick_one(candidates, team_code, require_team=strict)
     if player_id is None:
-        queue_unresolved(con, league, row, now,
-                         "ambiguous" if candidates else "not_in_spine")
+        if strict and not team_code:
+            queue_unresolved(con, league, row, now, "unverified_team")
+        else:
+            queue_unresolved(con, league, row, now,
+                             "ambiguous" if candidates else "not_in_spine")
         return None
     if key:
+        if strict and bound_player_id is not None and bound_player_id != player_id:
+            # The binding failed revalidation and the strict re-resolve named a
+            # different, team-verified row. Keeping the old binding would feed every
+            # later run the wrong human again; the strict rule is the revalidation
+            # the durable binding was supposed to be.
+            con.execute(
+                "UPDATE player_source_ids SET player_id=?, last_seen=? "
+                "WHERE source=? AND league=? AND source_player_key=?",
+                (player_id, now, SOURCE, league, key))
+            return player_id
         bind_player_source_key(con, league, key, player_id, now)
     return player_id
 
@@ -437,8 +502,47 @@ def _a_mononym(ours: str, published: str) -> bool:
     return len(theirs) == 1 and len(mine) > 1 and mine[0] == theirs[0]
 
 
-def _pick_one(candidates: List[Dict], team: Optional[str]) -> Optional[int]:
+def _player_team_code(con: sqlite3.Connection, cache: Dict, player_id: int) -> str:
+    """The canonical player's spine team, upper-cased, read once per run."""
+    if player_id not in cache:
+        found = con.execute(
+            "SELECT team FROM players WHERE id=?", (player_id,)).fetchone()
+        cache[player_id] = ((found["team"] if found else "") or "").strip().upper()
+    return cache[player_id]
+
+
+def _narrow_by_position(candidates: List[Dict], position: Optional[str]) -> List[Dict]:
+    """The team-valid candidates whose position does not contradict the relay's.
+
+    Secondary means narrow, never eliminate: if nothing is compatible (or nothing was
+    published on either side), every candidate stands and the team rule alone decides.
+    """
+    theirs = (position or "").strip().upper()
+    if not theirs:
+        return candidates
+    compatible = [c for c in candidates
+                  if not (c.get("position") or "").strip()
+                  or (c.get("position") or "").strip().upper() == theirs]
+    return compatible or candidates
+
+
+def _pick_one(candidates: List[Dict], team: Optional[str],
+              require_team: bool = False) -> Optional[int]:
     """One id, or None. Never a guess between two live rows."""
+    if require_team:
+        # The strict rule (NCAAF step 2): identity needs the relay's team. A sole
+        # league-wide name match on another roster is a wrong human, not a resolution.
+        if not team:
+            return None
+        same_team = [c for c in candidates
+                     if (c["team"] or "").upper() == team.upper()]
+        if len(same_team) == 1:
+            return same_team[0]["id"]
+        if not same_team:
+            return None
+        # Same team, several rows (spine duplicates): prefer the active one, else refuse.
+        active = [c for c in same_team if c["active"]]
+        return active[0]["id"] if len(active) == 1 else None
     if len(candidates) == 1:
         return candidates[0]["id"]
     if not candidates:
@@ -680,6 +784,7 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
     summary = collections.Counter()
     summary["board_rows"] = len(rows)
     games, players = {}, {}
+    player_teams = {}
 
     vocabulary = team_vocabulary(con, league)
     try:
@@ -708,6 +813,21 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
                 # resolving by name onto our stale Toronto row.
                 summary["unverifiable_fixture"] += 1
                 continue
+            if league == "ncaaf" and vocabulary is not None:
+                # Step 2, third edge: the canonical player's roster team must be one of
+                # the fixture's two teams before the prop is published. The relay's own
+                # team was already verified in resolve_player; this catches a stale
+                # binding, a spine row that moved, and any path that never saw the
+                # relay's team word. Without the vocabulary there is nothing to check
+                # against, and the row is skipped rather than trusted.
+                fixture_codes = {resolve_team(vocabulary, row["home"]),
+                                 resolve_team(vocabulary, row["away"])} - {None}
+                roster_team = _player_team_code(con, player_teams, player_id)
+                allowed = {str(code).upper() for code in fixture_codes}
+                if fixture_codes and roster_team not in allowed:
+                    summary["wrong_team_rows"] += 1
+                    queue_unresolved(con, league, row, now, "wrong_team")
+                    continue
             summary[upsert_prop(con, games[row["source_game_key"]], player_id, row, now)] += 1
         if dry_run:
             con.rollback()
@@ -724,7 +844,7 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
     return {key: summary[key] for key in (
         "board_rows", "new", "refreshed", "games", "players", "unresolved_players",
         "unresolved_player_rows", "unknown_team", "unverifiable_fixture",
-        "stale_archive")}
+        "wrong_team_rows", "stale_archive")}
 
 
 def team_vocabulary(con: sqlite3.Connection, league: str) -> Optional[Dict[str, str]]:
@@ -826,12 +946,18 @@ def _fixture_scoreboard_team_vocabulary(
             nickname = str(team.get("nickname") or "").strip()
             if not code or not name:
                 continue
-            # The NCAAF scoreboard legitimately includes an FCS opponent beside an
-            # FBS club (today: NDSU and Sacramento State).  Those codes are outside
-            # the group-80 FBS directory by definition, but the published fixture is
-            # still authoritative.  Accept the scoreboard's code for fixture identity;
-            # player resolution remains restricted to our NCAAF spine and therefore
-            # fails closed for an opponent we do not cover.
+            # Canonical where the directory knows the code (ESPN flips abbrevs
+            # mid-season: Jacksonville State JVST -> JXST on 2026-09-19), raw where it
+            # does not. The NCAAF scoreboard legitimately includes an FCS opponent
+            # beside an FBS club (today: NDSU and Sacramento State).  Those codes are
+            # outside the group-80 FBS directory by definition, but the published
+            # fixture is still authoritative.  Accept the scoreboard's code for
+            # fixture identity; player resolution remains restricted to our NCAAF
+            # spine and therefore fails closed for an opponent we do not cover.
+            try:
+                code = normalize_team_code(league, code)
+            except UnknownTeamCode:
+                pass
             prior = display_names.get(code)
             if prior is not None and prior != name:
                 raise TeamVocabularyError(
@@ -853,11 +979,36 @@ def _fixture_scoreboard_team_vocabulary(
             "{} scoreboard vocabulary is empty".format(league))
     for spelling, code in aliases.items():
         if code not in display_names:
-            continue
+            # The stored scoreboard has not covered this club yet. A code inside the
+            # league's canonical directory is still provably in-league, so a
+            # hand-recorded spelling may map to it; anything else stays unmapped
+            # rather than admitting a club no publisher proved.
+            try:
+                if normalize_team_code(league, code) != code:
+                    continue
+            except UnknownTeamCode:
+                continue
         key = normalize_name(spelling)
         index[key] = code
         index[_squash(key)] = code
     return TeamVocabulary(index, display_names)
+
+
+def _fixture_code(league: str, raw) -> str:
+    """A scoreboard abbreviation in the same space the vocabulary resolves to.
+
+    Canonical where team_codes knows the spelling, raw where it does not (FCS
+    opponents are deliberately outside the directory). Comparing both sides in one
+    space is what makes a mid-season ESPN abbreviation flip (JVST -> JXST) a
+    non-event instead of a fixture that matches nothing.
+    """
+    code = str(raw or "").strip().upper()
+    if not code:
+        return code
+    try:
+        return normalize_team_code(league, code)
+    except UnknownTeamCode:
+        return code
 
 
 def _scheduled_fixture(
@@ -878,8 +1029,8 @@ def _scheduled_fixture(
                 "malformed {} scoreboard snapshot payload".format(league))
         home = payload.get("home") or {}
         away = payload.get("away") or {}
-        if (str(home.get("abbrev") or "").upper(),
-                str(away.get("abbrev") or "").upper()) != (home_code, away_code):
+        if (_fixture_code(league, home.get("abbrev")),
+                _fixture_code(league, away.get("abbrev"))) != (home_code, away_code):
             continue
         published_start = str(payload.get("date") or "")
         try:

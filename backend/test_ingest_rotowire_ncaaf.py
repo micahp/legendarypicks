@@ -15,7 +15,7 @@ def _database(path):
             """
             CREATE TABLE players(
               id INTEGER PRIMARY KEY, name TEXT NOT NULL, team TEXT,
-              league TEXT NOT NULL, active INTEGER DEFAULT 1
+              league TEXT NOT NULL, active INTEGER DEFAULT 1, position TEXT
             );
             CREATE TABLE prop_games(
               id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
@@ -38,7 +38,7 @@ def _database(path):
             """
         )
         con.execute(
-            "INSERT INTO players VALUES(1,'Taz Reddicks','UNLV','ncaaf',1)"
+            "INSERT INTO players VALUES(1,'Taz Reddicks','UNLV','ncaaf',1,NULL)"
         )
         con.execute(
             "INSERT INTO scoreboard_snapshots VALUES('ncaaf',?)",
@@ -136,7 +136,7 @@ def test_ncaaf_official_nickname_alias_is_team_scoped():
             con.row_factory = sqlite3.Row
             rw.ensure_schema(con)
             con.execute(
-                "INSERT INTO players VALUES(2,'Jayden Scott','NCSU','ncaaf',1)"
+                "INSERT INTO players VALUES(2,'Jayden Scott','NCSU','ncaaf',1,NULL)"
             )
             row = {
                 "source_player_key": "46363", "player_name": "Duke Scott",
@@ -186,3 +186,150 @@ def test_archive_replay_cannot_replace_a_newer_live_line():
             assert con.execute(
                 "SELECT DISTINCT captured_at FROM props"
             ).fetchall() == [("2026-08-29T18:00:00+00:00",)]
+
+
+NOW = "2026-10-03T00:30:00+00:00"
+
+
+def test_ncaaf_a_stale_binding_is_revalidated_onto_the_team_verified_row():
+    # Jack Stevens, measured in the 10-02 diagnosis: the RotoWire key was bound to
+    # the sole then-visible Stevens, a Wagner player, and every later run kept
+    # returning him after the real Washington State row arrived.
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        with sqlite3.connect(path) as con:
+            con.row_factory = sqlite3.Row
+            rw.ensure_schema(con)
+            con.execute(
+                "INSERT INTO players VALUES(2,'Jack Stevens','WAG','ncaaf',1,NULL)")
+            con.execute(
+                "INSERT INTO players VALUES(3,'Jack Stevens','WSU','ncaaf',1,'WR')")
+            con.execute(
+                "INSERT INTO player_source_ids(source,league,source_player_key,"
+                "player_id,first_seen,last_seen) VALUES('rotowire','ncaaf','9001',2,"
+                "'2026-09-06T03:05:05Z','2026-09-06T03:05:05Z')")
+            row = {
+                "source_player_key": "9001", "player_name": "Jack Stevens",
+                "team": "Washington State", "position": "WR",
+            }
+            assert rw.resolve_player(con, "ncaaf", row, NOW, "WSU") == 3
+            assert con.execute(
+                "SELECT player_id FROM player_source_ids "
+                "WHERE source_player_key='9001'").fetchone()[0] == 3
+
+
+def test_ncaaf_a_sole_wrong_team_name_is_queued_never_published():
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        with sqlite3.connect(path) as con:
+            con.row_factory = sqlite3.Row
+            rw.ensure_schema(con)
+            con.execute(
+                "INSERT INTO players VALUES(2,'Winston Watkins','TOW','ncaaf',1,'WR')")
+            row = {
+                "source_player_key": "9002", "player_name": "Winston Watkins",
+                "team": "LSU", "position": "WR",
+            }
+            assert rw.resolve_player(con, "ncaaf", row, NOW, "LSU") is None
+            assert con.execute(
+                "SELECT reason FROM unresolved_players "
+                "WHERE source_player_key='9002'").fetchone()[0] == "not_in_spine"
+            assert con.execute(
+                "SELECT COUNT(*) FROM player_source_ids "
+                "WHERE source_player_key='9002'").fetchone()[0] == 0
+
+
+def test_ncaaf_an_unresolvable_relay_team_queues_instead_of_guessing():
+    # The relay names a school the stored scoreboard vocabulary cannot resolve:
+    # nothing downstream can verify source team = roster team, so the name is
+    # refused even though the spine holds exactly one person by it.
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        with sqlite3.connect(path) as con:
+            con.row_factory = sqlite3.Row
+            rw.ensure_schema(con)
+            con.execute(
+                "INSERT INTO players VALUES(2,'Phil Terence','CLEM','ncaaf',1,'LB')")
+            row = {
+                "source_player_key": "9003", "player_name": "Phil Terence",
+                "team": "Clemson", "position": "LB",
+            }
+            assert rw.resolve_player(con, "ncaaf", row, NOW, None) is None
+            assert con.execute(
+                "SELECT reason FROM unresolved_players "
+                "WHERE source_player_key='9003'").fetchone()[0] == "unverified_team"
+
+
+def test_ncaaf_position_narrows_two_same_team_candidates():
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        with sqlite3.connect(path) as con:
+            con.row_factory = sqlite3.Row
+            rw.ensure_schema(con)
+            con.execute(
+                "INSERT INTO players VALUES(2,'Chris Ford','UNLV','ncaaf',1,'CB')")
+            con.execute(
+                "INSERT INTO players VALUES(3,'Chris Ford','UNLV','ncaaf',1,'WR')")
+            row = {
+                "source_player_key": "9004", "player_name": "Chris Ford",
+                "team": "UNLV", "position": "WR",
+            }
+            assert rw.resolve_player(con, "ncaaf", row, NOW, "UNLV") == 3
+
+
+def test_ncaaf_a_position_mismatch_never_disqualifies_a_sole_team_match():
+    # Position is the secondary guard: it narrows, it does not veto. Publishers
+    # disagree about positions (PK/K, DB/CB), so a sole team-verified match stands
+    # even when the relay's position word differs.
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        with sqlite3.connect(path) as con:
+            con.row_factory = sqlite3.Row
+            rw.ensure_schema(con)
+            con.execute(
+                "UPDATE players SET position='CB' WHERE id=1")
+            row = {
+                "source_player_key": "9005", "player_name": "Taz Reddicks",
+                "team": "UNLV", "position": "WR",
+            }
+            assert rw.resolve_player(con, "ncaaf", row, NOW, "UNLV") == 1
+
+
+def test_ncaaf_publish_refuses_a_player_on_neither_fixture_team():
+    # Third edge of the strict rule: the canonical player's roster team must be one
+    # of the fixture's two teams before the prop is written. This catches a stale
+    # binding and any other path that never saw the relay's team word.
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, "picks.db")
+        _database(path)
+        rw.DB = path
+        with sqlite3.connect(path) as con:
+            con.execute(
+                "INSERT INTO scoreboard_snapshots VALUES('ncaaf',?)",
+                (json.dumps({
+                    "game_id": "401858206",
+                    "date": "2026-08-29T16:00Z",
+                    "home": {"abbrev": "WSU",
+                             "name": "Washington State Cougars",
+                             "nickname": "Cougars"},
+                    "away": {"abbrev": "MEM", "name": "Memphis Tigers",
+                             "nickname": "Tigers"},
+                }),),
+            )
+        rows, report = rw.parse(_payload(home="Washington State"), "ncaaf")
+        assert report["counts"]["game_props"] == 1
+
+        summary = rw.ingest(rows, "ncaaf")
+
+        assert summary["wrong_team_rows"] == 2
+        assert summary["new"] == 0
+        with sqlite3.connect(path) as con:
+            assert con.execute("SELECT COUNT(*) FROM props").fetchone()[0] == 0
+            assert con.execute(
+                "SELECT DISTINCT reason FROM unresolved_players"
+            ).fetchall() == [("wrong_team",)]
