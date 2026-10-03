@@ -106,11 +106,7 @@ LEAGUES = {
         # the relay writes the state/full form where the scoreboard writes the school
         # form ("Miami (FL)" vs "Miami Hurricanes", "Louisiana-Monroe" vs
         # "UL Monroe Warhawks", "Army West Point" vs "Army Black Knights",
-        # "Connecticut" vs "UConn Huskies"). "Appalachian State" was measured on the
-        # 2026-10-02 binding replay: the relay's full school form against the
-        # vocabulary's nickname form ("App State Mountaineers"), 11 players queued.
-        "appalachian state": "APP",
-        "appalachian state mountaineers": "APP",
+        # "Connecticut" vs "UConn Huskies").
         "miami (fl)": "MIA",
         "miami fl": "MIA",
         "connecticut": "CONN",
