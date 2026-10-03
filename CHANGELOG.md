@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.9.7
+
+### NCAAF props reach the published result
+
+- Stale Bovada fixture rows can be folded onto their linked games, or linked to the five
+  scoreboard events verified during the repair, without moving any row that already has a result.
+- NCAAF settlement reads the stored CFBD athlete line first and uses ESPN only as a bounded
+  fallback. Missing participation stays pending instead of becoming an invented zero.
+- Every NCAAF attempt records its stage and reason, while unchanged retries add no duplicate
+  audit row.
+- Bovada's `total_passing_touchdowns` market resolves to the published passing-touchdown stat.
+
 ## v0.9.6
 
 ### The NBA comes from the NBA
