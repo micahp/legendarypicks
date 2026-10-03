@@ -1,8 +1,9 @@
 # Football scoreboard: live and final
 
 **Opened** 2026-10-03, from two screenshots Micah sent of the same live game (Memphis at
-Charlotte, NCAAF): a betting app's "Happening now" card and ESPN's gamecast. Mockup canvas:
-https://claude.ai/artifact/UTU9bMPzMTuF1re41ZoBV6 (private until shared).
+Charlotte, NCAAF): a betting app's "Happening now" card and ESPN's gamecast. Mockup (works on a phone):
+https://claude.ai/artifact/BoeTo2QHtjB1wjmtqstPtp. Desktop-only design canvas of the same:
+https://claude.ai/artifact/UTU9bMPzMTuF1re41ZoBV6. Both private until shared.
 
 Governing docs, in order: `.claude/skills/honest-data-ui` (accent marks absence, quiet labels),
 `docs/DESIGN-live-card-rail.md` (solid zinc surfaces, breathing emerald left edge, JetBrains Mono
