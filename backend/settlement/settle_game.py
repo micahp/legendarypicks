@@ -22,6 +22,7 @@ from settlement.ufc_settle import (
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
 from settlement.wc_settle import _settle_wc_props
+from settlement.ncaaf_settle import _settle_ncaaf_props
 
 # The soccer competitions that grade off the roster-stat surface.
 _SOCCER_LEAGUES = ("mls", "lcup", "ligamx")
@@ -291,6 +292,26 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             props,
             summary_loader=lambda: espn.summary(league, espn_event_id),
         )
+
+    # NCAAF grades the durable CFBD line first and falls back to the site
+    # boxscore for what the line cannot answer; every attempt lands in
+    # settlement_attempts. See settlement/ncaaf_settle.py.
+    if league == "ncaaf":
+        props = con.execute("""
+            SELECT p.id, p.market, p.line, p.side, p.player_id,
+                   pl.name as player_name, pl.team as player_team,
+                   pl.espn_id as espn_id
+            FROM props p
+            JOIN players pl ON pl.id = p.player_id
+            LEFT JOIN prop_results pr ON pr.prop_id = p.id
+            WHERE p.game_id = ? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        return _settle_ncaaf_props(
+            con, game, props,
+            boxscore_loader=lambda: espn.boxscore(league, espn_event_id))
 
     # Pull boxscore
     try:
