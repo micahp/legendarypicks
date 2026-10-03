@@ -141,7 +141,7 @@ def _game_season_type(lg: str, game_id: str):
 
 # A preview is written for the game a reader is about to watch, from facts that are true
 # then. The first preview hook wrote one the moment a scoreboard showed the game: NBA
-# 401902644 (Raptors at Heat, preseason, 2026-10-03) was written on 2026-08-17 from last
+# 401902644 (Heat at Raptors, played in Quebec City, preseason, 2026-10-03) was written on 2026-08-17 from last
 # season's final records and marked final forever. Nothing earlier than this is written,
 # and a cached preview written earlier than this before its own tip is not served.
 PREVIEW_HORIZON_HOURS = 48
@@ -185,6 +185,11 @@ def _standings_out_of_season(standings_season, game_season) -> bool:
     2026-08-17: NBA, MLB, NHL). Only True when both are known."""
     return (standings_season is not None and game_season is not None
             and standings_season != game_season)
+
+
+def _no_games_played(rows) -> bool:
+    """True when a standings table has rows and not one team has a win or a loss."""
+    return bool(rows) and not any((r.get("wins") or 0) + (r.get("losses") or 0) for r in rows)
 
 
 def _logs_predate_season(game_season, newest_log_season) -> bool:
@@ -293,7 +298,12 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         strength_rows = standings.get("teams") or []
     except Exception:
         standings_season, strength_rows = None, []
-    records_stale = _standings_out_of_season(standings_season, game_season)
+    # A rolled-over table where nobody has played is no record either. Measured 2026-10-02
+    # 21:10 CDT: ESPN's NBA standings already served 2026-27 with all 30 teams 0-0, the
+    # season check passed, and the "quality rank" handed over was a position among 30 ties:
+    # the 401902644 preview called Miami "ranked seventh in the league to Toronto's 14th".
+    records_stale = (_standings_out_of_season(standings_season, game_season)
+                     or _no_games_played(strength_rows))
     smap = {} if records_stale else {r["abbrev"]: r for r in strength_rows if r.get("abbrev")}
     _rank = {} if records_stale else {r["abbrev"]: i + 1 for i, r in enumerate(strength_rows)}
 

@@ -1,6 +1,6 @@
 """A preview is written for the game about to be played, from facts true of it.
 
-NBA 401902644 (Raptors at Heat, preseason, 2026-10-03) carried a preview written on
+NBA 401902644 (Heat at Raptors in Quebec City, preseason, 2026-10-03) carried a preview written on
 2026-08-17 from last season's final records, streaks and form, framed as a standings
 race, and cached as final. Three rules close it: no preview more than
 PREVIEW_HORIZON_HOURS before tip (and a cached one written earlier is not served),
@@ -106,6 +106,19 @@ def test_preseason_preview_has_no_last_season_records_form_or_stakes(harness):
     assert "no games played yet this season" in g
     assert "PRESEASON EXHIBITION" in g
     assert seen["stakes"] == 0
+
+
+def test_rolled_over_table_of_zeros_is_no_record(harness, monkeypatch):
+    import espn_client as espn
+    path, seen = harness
+    seen["standings_season"] = 2027
+    monkeypatch.setattr(espn, "team_strength_standings", lambda lg, season=None: {
+        "season": 2027, "teams": [{"abbrev": ab, "name": ab, "wins": 0, "losses": 0, "win_pct": 0}
+                                  for ab in ("ATL", "BOS", "MIA", "TOR")]})
+    _gen(_soon())
+    g = seen["grounding"][-1]
+    assert "quality rank" not in g and "0-0" not in g and "ORL" not in g
+    assert "no games played yet this season" in g
 
 
 def test_in_season_records_still_flow(harness):
