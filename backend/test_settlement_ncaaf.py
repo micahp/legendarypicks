@@ -260,4 +260,3 @@ def test_repeat_pending_attempt_writes_nothing_new(monkeypatch):
     settlement.settle_game(con, 1)
     assert con.execute(
         "SELECT COUNT(*) FROM settlement_attempts").fetchone()[0] == first
-
