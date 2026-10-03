@@ -65,3 +65,16 @@ def test_only_live_games_carry_a_situation():
     assert "situation" not in _normalize_team_events([_event("post", ND_AT_UNC)])[0]
     assert "situation" not in _normalize_team_events([_event("pre", ND_AT_UNC)])[0]
     assert "situation" not in _normalize_team_events([_event("in", {})])[0]
+
+
+def test_records_and_rank_are_carried():
+    ev = _event("in", ND_AT_UNC)
+    comp = ev["competitions"][0]["competitors"]
+    comp[0]["records"] = [{"type": "total", "summary": "4-0"}, {"type": "homerecord", "summary": "3-0"},
+                          {"type": "vsconf", "summary": "1-0"}]
+    comp[0]["curatedRank"] = {"current": 99}
+    comp[1]["records"] = [{"type": "total", "summary": "3-1"}]
+    comp[1]["curatedRank"] = {"current": 7}
+    g = _normalize_team_events([ev])[0]
+    assert (g["home"]["record"], g["home"]["home_record"], g["home"]["conf_record"], g["home"]["rank"]) == ("4-0", "3-0", "1-0", None)
+    assert (g["away"]["record"], g["away"]["rank"]) == ("3-1", 7)

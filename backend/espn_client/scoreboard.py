@@ -199,11 +199,21 @@ def _normalize_team_events(events):
             team = competitor.get("team", {})
             if competitor.get("id") is not None:
                 side_of[str(competitor.get("id"))] = competitor.get("homeAway")
+            records = {r.get("type"): r.get("summary") for r in competitor.get("records") or []
+                       if isinstance(r, dict)}
+            rank = (competitor.get("curatedRank") or {}).get("current")
             teams[competitor.get("homeAway")] = {
                 "abbrev": team.get("abbreviation"),
                 "name": team.get("displayName"),
                 "nickname": team.get("name"),
                 "score": _num(competitor.get("score")),
+                # Published on the same scoreboard response (2026-10-03: NEB overall 4-0, home
+                # 3-0, conf 1-0). curatedRank 99 is ESPN's "unranked", stored as None.
+                "record": records.get("total"),
+                "home_record": records.get("homerecord"),
+                "away_record": records.get("awayrecord"),
+                "conf_record": records.get("vsconf"),
+                "rank": rank if isinstance(rank, int) and 1 <= rank <= 25 else None,
             }
         event_season = event.get("season") or {}
         # Only a game in progress has a live situation; a finished game's last
