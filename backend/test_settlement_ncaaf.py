@@ -83,6 +83,22 @@ def _boxscore():
     }]}
 
 
+def test_total_passing_touchdowns_alias_resolves_and_settles(monkeypatch):
+    """Bovada's total_passing_touchdowns grades as the passing TD market."""
+    from settlement.market_mapping import resolve_market
+
+    assert resolve_market("ncaaf", "total_passing_touchdowns") == ("passing", "TD")
+
+    con = _database()
+    monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
+    con.execute("INSERT INTO props VALUES (20, 1, 'total_passing_touchdowns', 1.5, 'over', 10)")
+
+    assert settlement.settle_game(con, 1)["settled"] == 19
+    row = con.execute(
+        "SELECT actual_value, hit FROM prop_results WHERE prop_id=20").fetchone()
+    assert tuple(row) == (2.0, 1)
+
+
 def test_all_ingested_ncaaf_markets_settle_from_published_boxscore(monkeypatch):
     con = _database()
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())

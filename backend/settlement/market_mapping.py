@@ -141,6 +141,11 @@ MARKET_ALIASES = {
     "total_turnovers": "turnovers",
     "passing_yards": "passing_yards",
     "passing_tds": "passing_tds",
+    # Bovada prices college passing TDs as total_passing_touchdowns while the
+    # NCAAF map canonicalises passing_touchdowns. All 322 such props sat in the
+    # unlinked Bovada population, so the missing alias was invisible until the
+    # fixtures folded (2026-10-03); unaliased they would grade unmappable.
+    "total_passing_touchdowns": "passing_touchdowns",
     "rushing_yards": "rushing_yards",
     "receiving_yards": "receiving_yards",
     "total_receptions": "receptions",
