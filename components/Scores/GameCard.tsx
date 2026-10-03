@@ -174,8 +174,9 @@ export default function GameCard(g: GameProps) {
           {/* Quiet on purpose: a fact about the game, not an alert. The accent colour is
               reserved for absence (honest-data-ui), so this takes the time label's styling. */}
           {g.isPreseason && <span className="text-zinc-500">Preseason</span>}
-          {showTime && <span>{timeLabel}</span>}
         </span>
+
+        {showTime && <span>{timeLabel}</span>}
 
         {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
         <span
