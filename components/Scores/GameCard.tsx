@@ -79,7 +79,7 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
 export default function GameCard(g: GameProps) {
   const router = useRouter()
   const time = new Date(g.startTime)
-  const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const timeLabel = time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
   // UFC suppresses time on shared score surfaces; a schedule can opt in.
   const isUFC = g.league === 'UFC'
@@ -168,26 +168,15 @@ export default function GameCard(g: GameProps) {
       onClick={handleClick}
       className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
     >
-      <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        {/* Left side: quiet facts about the game */}
-        <span className="flex items-center gap-2">
-          {/* Quiet on purpose: a fact about the game, not an alert. The accent colour is
-              reserved for absence (honest-data-ui), so this takes the time label's styling. */}
-          {g.isPreseason && <span className="text-zinc-500">Preseason</span>}
-        </span>
-
-        {/* Right side: one slot for when the game is. A scheduled game's start time sits
-            where a live or final game's status badge does (DESIGN-football-scoreboard.md). */}
-        {showTime ? (
-          <span className="tabular-nums">{timeLabel}</span>
-        ) : (
-          <span
-            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
-          >
-            {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+      {/* Live or final: the status badge heads the card. A scheduled game has no header:
+          its start time sits on the team rows, where the score will be (ESPN's score rows). */}
+      {showStatusBadge && (
+        <div className="flex items-center justify-end text-xs text-zinc-400 mb-2">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusBadge(g.status)}`}>
+            {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : getStatusLabel(g.status, g.statusDetail)}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {isTennis && g.sets && g.sets.length > 0 ? (
         /* Tennis scoreboard: each player's games-per-set as aligned columns.
@@ -215,7 +204,8 @@ export default function GameCard(g: GameProps) {
           })}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
+        <div className="space-y-3 min-w-0">
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.homeTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : homeWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.homeTeam)}</span>
             {showScore && (g.homeTeam.score !== undefined || (outcomeLabel && homeWon)) && (
@@ -233,7 +223,13 @@ export default function GameCard(g: GameProps) {
             )}
           </div>
         </div>
+        {showTime && <span className="text-sm text-zinc-300 tabular-nums">{timeLabel}</span>}
+        </div>
       )}
+
+      {/* Quiet context under the teams, the way ESPN sets "Quarterfinal - Colosseum".
+          A fact about the game, not an alert: the accent colour is reserved for absence. */}
+      {g.isPreseason && <div className="mt-3 text-xs text-zinc-500">Preseason</div>}
     </div>
   )
 }
