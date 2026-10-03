@@ -69,15 +69,6 @@ ALIASES: dict[str, dict[str, str]] = {
         # is scoped to the same team on purpose. ESPN is canonical.
         "NYRB": "RBNY",
     },
-    "ncaaf": {
-        # ESPN's scoreboard flipped Jacksonville State from JVST to JXST in the
-        # 2026-09-19 snapshot; the canonical directory (2026-07-27) and the CFBD
-        # spine both say JVST (153 players) and one stale spine row says JXST.
-        # Without the alias the display name resolved to whichever spelling the
-        # last snapshot carried, and the fixture-team identity rule refused every
-        # real Jacksonville State player on the board. Measured 2026-10-02.
-        "JXST": "JVST",
-    },
 }
 
 # ---------------------------------------------------------------------------
