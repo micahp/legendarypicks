@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.9.6
+
+### The NBA comes from the NBA
+
+- **Rosters from nba.com.** All 30 team pages are read and validated as one population before
+  anything is written, then published as one snapshot (620 players). Every player now carries
+  the league's own player id in the crosswalk. Identity never rests on a name alone: team,
+  the transfer nba.com records, a move dated after our last roster, our own logged team, or a
+  reviewed birth date. Nothing is asked of ESPN.
+- **The schedule, with the league's game ids.** `nba_schedule` holds every 2026-27 game as
+  nba.com publishes it: 66 preseason games, 1,206 regular-season games and the Cup final.
+  The 24 Cup games nba.com has not created yet, and the six Cup knockout slots whose teams are
+  undecided, are recorded as exactly that.
+
+### Previews say only what is true of the game
+
+- No preview is written more than 48 hours before tip, and one written earlier is not shown.
+- When the standings belong to another season, or nobody has played yet, or they cannot be
+  read, no record, rank or recent form is given to the writer. A preseason game is written as
+  an exhibition. A game with nothing to say gets no preview rather than a paragraph about
+  having nothing to say.
+
+### Scores
+
+- Every preseason game carries a quiet preseason label, in every league that publishes one.
+- A postponed match reads as postponed, not as a 0-0 final.
+
+### Fixes
+
+- Soccer game logs fetch the box score once the scoreboard says the match is over, and a match
+  that has not kicked off no longer holds settlement.
+- Underdog props are read from the pick'em search; the bulk book now answers 426.
+
+### Data
+
+- NCAAF: the 2026 FBS roster snapshot (137 teams, 15,672 players, from CFBD) is published.
+  The code that will read it is not in this release.
+
 ## v0.9.5
 
 ### Fixes
