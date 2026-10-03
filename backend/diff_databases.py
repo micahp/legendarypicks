@@ -73,6 +73,7 @@ FEATURE_TABLES = {
     "team_stats_ingestion_failures": "team-stats proof feature",
     "team_stats_team_inventory": "team-stats proof feature",
     "team_game_results": "team-stats proof feature",
+    "settlement_attempts": "NCAAF CFBD settler (repair order step 5) -- DEV-only until step 6 authorizes PROD",
     "history_refresh_state": "environment-local scheduler state (prod-only)",
 }
 
