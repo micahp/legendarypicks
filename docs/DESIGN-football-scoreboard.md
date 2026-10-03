@@ -29,7 +29,19 @@ scores, no red LIVE box), `docs/DESIGN-game-detail-tabs.md` (football box score 
 | touchdown takeover graphic | no | yes | no: a score reads as the last play, same place, same weight |
 | odds buttons, handle, chat count | yes | no | no: priced lines live on their own surface (`priced-line-surfaces`) |
 
-## 2. Where each field comes from (no ESPN)
+## 2. Where each field comes from
+
+**Decided 2026-10-03: the ESPN scoreboard response we already fetch, then Kalshi as a fallback.**
+ESPN's `/scoreboard` carries `competitions[0].situation` for every live football game: down,
+distance, `yardLine` (yards from the HOME goal line), `downDistanceText`, `possessionText`,
+`possession` (team id), `isRedZone`, timeouts, and `lastPlay` with `drive` (summary) and
+`probability` (ESPN's win model). Parsed in `espn_client/scoreboard.py` `_football_situation`
+(`5198428`); served on `/api/{league}/games` as `situation`, typed `FootballSituation` in
+`services/sports.ts`. No new requests. Drive summary and ESPN win probability are therefore
+available after all; the probability is carried with `source: "espn"` and is shown only as
+ESPN's. The Kalshi fallback below is not built.
+
+### Fallback: Kalshi (no ESPN)
 
 Kalshi `GET /trade-api/v2/live_data/football_game/milestone/<id>`, provider **Stats Perform**,
 measured 2026-10-03 on Memphis at Charlotte and Alabama at Mississippi St.:
