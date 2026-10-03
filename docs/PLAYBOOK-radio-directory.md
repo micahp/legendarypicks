@@ -8,6 +8,26 @@ Read before writing code: `.claude/skills/honest-data-ui/SKILL.md`, `.claude/ski
 `.claude/skills/measurement-is-a-claim/SKILL.md`, `docs/sports-audio-broadcasts.md`,
 `docs/EMBEDDABLE-STREAMS-VERIFICATION-2026-07-24.md`.
 
+## 0. The philosophy (Micah, 2026-10-03)
+
+> I don't have money to pay for rights, so I will work with the leagues that are more lenient
+> with this. I don't care if they have fewer viewers or if it's not the main major league for that
+> sport. All the lenient leagues we prioritize; outside of those, if we can get it we show it; and
+> once we get big and have to take it off, we will.
+
+Three tiers, in this order of work:
+
+1. **Lenient leagues first, regardless of size or prestige.** Leagues and clubs that put their own
+   audio out free and unblocked: MLS and Leagues Cup, USL Championship and League One, NWSL, WNBA,
+   MiLB, college programs, NHL (free home and away audio in its own app), talkSPORT / BBC for
+   English soccer where reachable. Coverage depth here beats breadth in the big four.
+2. **Everyone else, when a free official route exists.** NFL, NBA, MLB local stations that stream
+   the game on their own page or on iHeartRadio/Audacy for the listener's market. Show it with its
+   blackout note; do not hide a working route because the league is strict elsewhere.
+3. **Take it down when asked.** Any rights holder's request removes the entry the same day. Keep a
+   `takedowns.json` log (who asked, when, which entries) so a removed entry is never re-added by a
+   later pass.
+
 ## 1. The rule (Micah, 2026-10-03)
 
 > As long as I'm routing people to each radio stream directly (station websites or iHeartRadio),
@@ -59,8 +79,8 @@ entry ships only with the evidence in section 5.
 | World Cup (`wc`) | `_wc` iHeart FOX Sports entry exists | event-only |
 | EPL / UCL | talkSPORT, BBC Radio 5 Live | geofencing outside the UK; check from this box |
 
-Priority order: finish MLS (13 unverified clubs), then NCAAF (Saturday volume, school-run pages), then
-NHL (one league-wide source), then the rest.
+Priority order (section 0): finish MLS (13 unverified clubs), then the other lenient leagues
+(NCAAF school pages, NHL, WNBA, USL, NWSL, MiLB), then tier 2 where a free official route exists.
 
 ## 4. Data shape
 
