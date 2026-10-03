@@ -166,7 +166,7 @@ export default function GameCard(g: GameProps) {
   return (
     <div
       onClick={handleClick}
-      className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
+      className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 pt-2 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
     >
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
