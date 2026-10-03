@@ -85,3 +85,22 @@ Nothing here is implemented. Building it needs: a collector that stores the foot
 is the pattern), a milestone-to-our-game join (date + teams), the API fields on `/games`, and
 the frontend card. Measured lag for tennis: Kalshi's live data trails its own book by ~7-9s;
 football is unmeasured.
+
+## 6. The score card's rows, every league (from ESPN's app, 2026-10-03)
+
+Two more screenshots Micah sent the same day, ESPN's app scores lists for UFC 332 and ATP Tokyo,
+show the row structure every league's card follows. `components/Scores/GameCard.tsx` now has it:
+
+| row | ESPN's app | our card |
+|---|---|---|
+| top line | left: "Match 2" / "Final" / "9:00 PM"; right: the network, or an alert bell | right: the start time before a game (`65e200f`, where the LIVE pill sits), the LIVE/FINAL pill after |
+| competitor rows | name, odds or seed, score or set games on the right | name, score on the right |
+| context row | "Women's Flyweight - Main Event - Title Fight", "Bantamweight", "Quarterfinal - Colosseum", "Semifinal - Kinoshita Group Show Court" | "Preseason" (`2ead396`), quiet `text-xs text-zinc-500` |
+
+The context row is the slot for every quiet fact about a game, one line, separated the way ESPN
+does it. Candidates, each only when a publisher states it: phase (Preseason, Bowl, Wild Card ·
+Game 1), round and court for tennis, weight class and bout order for UFC, venue. Never an alert,
+never the accent color (that is reserved for absence).
+
+Also on those screenshots, not built: fighter records under the name (UFC), odds beside the name,
+national flags, the network on the top line, an alert bell for upcoming matches.
