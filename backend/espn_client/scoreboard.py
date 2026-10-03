@@ -120,6 +120,72 @@ def neighbor_dates(date_text):
             (base + _dt.timedelta(days=1)).isoformat()]
 
 
+def _football_situation(competition, side_of):
+    """The live football state ESPN already sends on the scoreboard, or None.
+
+    The scoreboard response we fetch for scores carries `competitions[0].situation`
+    for an in-progress football game; until 2026-10-03 every field of it was dropped
+    here. Copied as published, with two conversions stated plainly:
+
+      * `yardLine` is yards from the HOME team's goal line (measured on six live
+        NCAAF games 2026-10-03: KU ball at MTSU 1 -> 99, ISU ball at ISU 14 -> 14),
+        so `field_pos_from_away_goal` is 100 - yardLine: the ball's spot on a field
+        drawn with the away end zone on the left.
+      * `possession` and the last play's `team` are competitor ids; they become
+        "home" / "away".
+
+    `win_probability` is ESPN's own model, carried with `source: "espn"` so no surface
+    can present it as ours. A field ESPN leaves out stays None.
+
+    Between plays that have no line of scrimmage (the try after a touchdown, a
+    kickoff) ESPN sends down -1, distance 0 and yardLine 0 with no text: measured on
+    Alabama at Mississippi St. right after a rushing touchdown. Read literally that
+    is a ball in the end zone. A down below 1 is no down, and with no down there is
+    no spot; the scoring play is still in `last_play`.
+    """
+    situation = competition.get("situation") or {}
+    if "down" not in situation and "downDistanceText" not in situation:
+        return None
+    down = _int(situation.get("down"))
+    if down is not None and down < 1:
+        down = None
+    yard_line = _int(situation.get("yardLine")) if down is not None else None
+    last = situation.get("lastPlay") or {}
+    drive = last.get("drive") or {}
+    probability = last.get("probability") or {}
+    text = situation.get("downDistanceText")
+    return {
+        "down": down,
+        "distance": _int(situation.get("distance")) if down is not None else None,
+        "text": text,
+        "short_text": situation.get("shortDownDistanceText"),
+        "ball_on": situation.get("possessionText"),
+        "yard_line_from_home_goal": yard_line,
+        "field_pos_from_away_goal": None if yard_line is None else 100 - yard_line,
+        "possession": side_of.get(str(situation.get("possession"))),
+        "goal_to_go": bool(text) and "& Goal" in text,
+        "red_zone": bool(situation.get("isRedZone")),
+        "home_timeouts": _int(situation.get("homeTimeouts")),
+        "away_timeouts": _int(situation.get("awayTimeouts")),
+        "last_play": {
+            "text": last.get("text"),
+            "type": (last.get("type") or {}).get("text"),
+            "team": side_of.get(str((last.get("team") or {}).get("id"))),
+            "score_value": _int(last.get("scoreValue")),
+        } if last.get("text") else None,
+        "drive": {
+            "description": drive.get("description"),
+            "start": (drive.get("start") or {}).get("text"),
+        } if drive.get("description") else None,
+        "win_probability": {
+            "home": probability.get("homeWinPercentage"),
+            "away": probability.get("awayWinPercentage"),
+            "tie": probability.get("tiePercentage"),
+            "source": "espn",
+        } if probability.get("homeWinPercentage") is not None else None,
+    }
+
+
 def _normalize_team_events(events):
     """Normalize team-vs-team scoreboard events into the shared game shape."""
     out = []
@@ -128,8 +194,11 @@ def _normalize_team_events(events):
         status = competition.get("status", {})
         status_type = status.get("type", {})
         teams = {}
+        side_of = {}
         for competitor in competition.get("competitors", []):
             team = competitor.get("team", {})
+            if competitor.get("id") is not None:
+                side_of[str(competitor.get("id"))] = competitor.get("homeAway")
             teams[competitor.get("homeAway")] = {
                 "abbrev": team.get("abbreviation"),
                 "name": team.get("displayName"),
@@ -137,6 +206,10 @@ def _normalize_team_events(events):
                 "score": _num(competitor.get("score")),
             }
         event_season = event.get("season") or {}
+        # Only a game in progress has a live situation; a finished game's last
+        # snapshot of it is not the state of anything.
+        situation = (_football_situation(competition, side_of)
+                     if status_type.get("state") == "in" else None)
         out.append({
             "game_id": event.get("id"),
             "date": event.get("date"),
@@ -158,6 +231,7 @@ def _normalize_team_events(events):
             "competition_type": (competition.get("type") or {}).get("abbreviation"),
             "home": teams.get("home"),
             "away": teams.get("away"),
+            **({"situation": situation} if situation else {}),
         })
     return out
 

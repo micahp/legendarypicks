@@ -43,6 +43,29 @@ export interface TeamSide {
   unavailable?: boolean
 }
 
+// Live football state, copied from the ESPN scoreboard response the board already fetches
+// (backend espn_client/scoreboard.py `_football_situation`). Present only while a game is
+// in progress. Every field may be absent: ESPN leaves possession empty at halftime and
+// sends no down or spot between plays (the try, a kickoff).
+export interface FootballSituation {
+  down?: number
+  distance?: number
+  text?: string                 // "2nd & 5 at MEM 47", as published
+  shortText?: string            // "2nd & 5"
+  ballOn?: string               // "MEM 47", as published
+  // The ball's spot, 0-100, on a field drawn with the AWAY end zone on the left.
+  fieldPosFromAwayGoal?: number
+  possession?: 'home' | 'away'
+  goalToGo: boolean
+  redZone: boolean
+  homeTimeouts?: number
+  awayTimeouts?: number
+  lastPlay?: { text: string; type?: string; team?: 'home' | 'away'; scoreValue?: number }
+  drive?: { description: string; start?: string }
+  // ESPN's model, not ours. Label it as ESPN's wherever it is shown.
+  winProbability?: { home: number; away: number; tie?: number; source: 'espn' }
+}
+
 export interface Game {
   gameId: string
   // Optional canonical id for a league-specific detail source. CoD scores use
@@ -70,6 +93,40 @@ export interface Game {
   outcomeMethod?: string
   outcomeRound?: number
   outcomeClock?: string
+  // Football only, live only. See FootballSituation.
+  situation?: FootballSituation
+}
+
+const _side = (v: any): 'home' | 'away' | undefined => (v === 'home' || v === 'away' ? v : undefined)
+const _n = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
+
+export function normalizeSituation(g: any): FootballSituation | undefined {
+  if (g?.state !== 'in' && g?.status !== 'LIVE') return undefined
+  const s = g?.situation
+  if (!s || typeof s !== 'object') return undefined
+  const lp = s.last_play ?? s.lastPlay
+  const dr = s.drive
+  const wp = s.win_probability ?? s.winProbability
+  return {
+    down: _n(s.down),
+    distance: _n(s.distance),
+    text: s.text ?? undefined,
+    shortText: s.short_text ?? s.shortText ?? undefined,
+    ballOn: s.ball_on ?? s.ballOn ?? undefined,
+    fieldPosFromAwayGoal: _n(s.field_pos_from_away_goal ?? s.fieldPosFromAwayGoal),
+    possession: _side(s.possession),
+    goalToGo: Boolean(s.goal_to_go ?? s.goalToGo),
+    redZone: Boolean(s.red_zone ?? s.redZone),
+    homeTimeouts: _n(s.home_timeouts ?? s.homeTimeouts),
+    awayTimeouts: _n(s.away_timeouts ?? s.awayTimeouts),
+    lastPlay: lp?.text
+      ? { text: lp.text, type: lp.type ?? undefined, team: _side(lp.team), scoreValue: _n(lp.score_value ?? lp.scoreValue) }
+      : undefined,
+    drive: dr?.description ? { description: dr.description, start: dr.start ?? undefined } : undefined,
+    winProbability: _n(wp?.home) !== undefined && _n(wp?.away) !== undefined
+      ? { home: wp.home, away: wp.away, tie: _n(wp.tie), source: 'espn' }
+      : undefined,
+  }
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -223,6 +280,7 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     outcomeMethod: g?.outcome_method ?? g?.outcomeMethod ?? undefined,
     outcomeRound: g?.outcome_round ?? g?.outcomeRound ?? undefined,
     outcomeClock: g?.outcome_clock ?? g?.outcomeClock ?? undefined,
+    situation: normalizeSituation(g),
   }
 }
 
