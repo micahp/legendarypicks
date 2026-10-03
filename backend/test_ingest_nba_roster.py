@@ -123,3 +123,17 @@ def test_last_logged_team_binds_a_stale_sole_candidate():
     assert got[1] == "matched_last_logged_team"
     assert nba._choose_unbound_candidate([row], member, known_since=since,
                                          last_logged_team=lambda pid: "PHX")[1] == "unverified_name"
+
+
+def test_nba_com_combination_positions_map_to_the_vocabulary():
+    assert nba._position("G-F") == "GF" and nba._position("f-g") == "GF"
+    assert nba._position("F-C") == "FC" and nba._position("C-F") == "FC"
+    assert nba._position("G") == "G" and nba._position("") is None
+
+
+def test_position_group_comes_from_the_published_hierarchy():
+    assert nba._position_group("G") == "Guard"
+    assert nba._position_group("PF") == "Forward"
+    assert nba._position_group("FC") == "Center"
+    assert nba._position_group("GF") == "Guard-Forward"
+    assert nba._position_group(None) is None

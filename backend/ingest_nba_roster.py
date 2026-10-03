@@ -136,9 +136,25 @@ def season_from_span(span: str) -> int:
     return normalize_season(SOURCE, "nba", f"{start}{end}")
 
 
+# nba.com writes combination positions with a hyphen, in either order; the published league
+# vocabulary (data/position-vocabulary.json, from ESPN's positions endpoint) names the same two
+# as GF "Guard-Forward" and FC "Forward-Center". Writing nba.com's spelling put "G-F" and "F-C"
+# beside the vocabulary on PROD 2026-10-03 and failed C/vocabulary[position].
+_NBA_COM_POSITIONS = {"G-F": "GF", "F-G": "GF", "F-C": "FC", "C-F": "FC"}
+
+
 def _position(value) -> str | None:
     text = str(value or "").strip().upper()
-    return text or None
+    return _NBA_COM_POSITIONS.get(text, text) or None
+
+
+def _position_group(position) -> str | None:
+    """The published group for a vocabulary position (root-of-ancestry rule, verified for NBA
+    against all 823 stored groups on both databases, 2026-10-03). None when unpublished."""
+    if not position:
+        return None
+    import backfill_position_group
+    return backfill_position_group.group_for(backfill_position_group.load_vocabulary(), "nba", position)
 
 
 def fetch_population(fetch_page=_team_page) -> tuple[int, dict[str, list[dict]], dict]:
@@ -390,9 +406,10 @@ def publish_population(connection: sqlite3.Connection, *, season: int,
         for item in plan["planned"]:
             if item["write_action"] == "insert":
                 cursor = connection.execute(
-                    "INSERT INTO players(name,league,team,position,active,updated_at) "
-                    "VALUES(?,'nba',?,?,1,?)",
-                    (item["name"], item["team"], item["position"], captured_at))
+                    "INSERT INTO players(name,league,team,position,position_group,active,updated_at) "
+                    "VALUES(?,'nba',?,?,?,1,?)",
+                    (item["name"], item["team"], item["position"], _position_group(item["position"]),
+                     captured_at))
                 player_id = int(cursor.lastrowid)
             else:
                 player_id = int(item["canonical_player_id"])
@@ -402,6 +419,13 @@ def publish_population(connection: sqlite3.Connection, *, season: int,
                     "UPDATE players SET team=?,active=1,updated_at=?,position=COALESCE(position,?) "
                     "WHERE id=? AND league='nba'",
                     (item["team"], captured_at, item["position"], player_id))
+                # A row whose position we just filled, or one that never had a group, takes the
+                # published group of whatever position it now holds. A stored group is kept.
+                held = connection.execute("SELECT position FROM players WHERE id=?", (player_id,)).fetchone()[0]
+                if _position_group(held):
+                    connection.execute(
+                        "UPDATE players SET position_group=? WHERE id=? AND COALESCE(position_group,'')=''",
+                        (_position_group(held), player_id))
             existing = connection.execute(
                 "SELECT player_id FROM player_source_ids WHERE source=? AND league='nba' AND source_player_key=?",
                 (SOURCE, item["source_player_key"])).fetchone()

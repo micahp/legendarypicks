@@ -57,7 +57,9 @@ VOCABULARY_PATH = os.path.join(HERE, "data", "position-vocabulary.json")
 # Leagues whose position_group convention is "the published name of the ROOT of the ancestry
 # chain", verified by reproducing every row that already carries one. MLB is deliberately
 # absent: it stores the immediate parent instead, and this rule would rewrite 614 of its rows.
-VERIFIED_ROOT_CONVENTION = ("mls", "ncaaf", "nfl")
+# nba added 2026-10-03: the rule reproduced all 823 stored NBA groups on both databases, zero
+# disagreements (G->Guard, PF->Forward via F, C->Center).
+VERIFIED_ROOT_CONVENTION = ("mls", "ncaaf", "nfl", "nba")
 
 
 def load_vocabulary():
