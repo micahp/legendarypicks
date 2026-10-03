@@ -50,7 +50,17 @@ ALIASES: dict[str, dict[str, str]] = {
         "SJS": "SJ",
         "NJD": "NJ",
     },
-    "nba": {},
+    "nba": {
+        # nba.com (team pages' TEAM_ABBREVIATION) -> the ESPN codes this database stores.
+        # Measured 2026-10-02: 24 of nba.com's 30 codes already agree; these six do not, and
+        # the alias table was empty, so an nba.com roster could not name these teams at all.
+        "GSW": "GS",
+        "NOP": "NO",
+        "NYK": "NY",
+        "SAS": "SA",
+        "UTA": "UTAH",
+        "WAS": "WSH",
+    },
     "mls": {
         # ESPN publishes RBNY for the New York Red Bulls; Bovada writes NYRB.
         # Measured 2026-08-16: the split held 41 players under RBNY and 4 under

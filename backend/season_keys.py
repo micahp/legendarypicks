@@ -81,7 +81,10 @@ from __future__ import annotations
 # true because NHL happens to be an end-year league for ESPN. Do NOT copy this
 # entry for a new publisher without reading that publisher's dates and ESPN's
 # dates for the same season and confirming they name the same window.
-_SPAN_TO_END_YEAR = {("nhle.com", "nhl")}
+# nba.com: team pages publish SEASON_YEAR "2026-27" AND a bare SEASON "2026" (the START
+# year). ESPN keys NBA by the year the season ends, so only the span may be passed here:
+# the bare value would sail through the plain-year branch below as last season.
+_SPAN_TO_END_YEAR = {("nhle.com", "nhl"), ("nba.com", "nba")}
 
 
 def normalize_season(source: str, league: str, season) -> int:
