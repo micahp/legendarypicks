@@ -984,6 +984,13 @@ def _game_team_abbrevs(con, game_id, league: str) -> set:
     out = set()
     for value in (row["home"], row["away"]):
         value = (value or "").strip()
+        # Bovada appends the poll rank to ranked schools ("LSU (#11)", "Oregon (#2)").
+        # Measured on the 2026-10-02 fixture-team audit: 68 stored NCAAF fixtures
+        # carry the suffix, and neither the static map nor the scoreboard vocabulary
+        # resolves a name with it, so every strict team check on those fixtures
+        # refused (or, half-resolved, misfiled the opponent side). The rank is not
+        # identity; strip it before both lookups.
+        value = re.sub(r"\s*\([^()]*#\d+[^()]*\)\s*$", "", value).strip()
         if value:
             out.add(tmap.get(value.lower(), value.upper()))
     if league not in _TEAM_MAPS and any(
