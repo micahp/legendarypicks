@@ -24,6 +24,25 @@ def _database():
           prop_id INTEGER PRIMARY KEY, actual_value REAL, hit INTEGER,
           settled_at TEXT
         );
+        CREATE TABLE player_game_logs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          player_id INTEGER, league TEXT, season INTEGER, game_no TEXT,
+          game_id TEXT, game_date TEXT, team TEXT, opponent TEXT,
+          home_away TEXT, stats TEXT NOT NULL, source TEXT,
+          source_player_key TEXT, ingested_at TEXT, game_type TEXT,
+          UNIQUE(league, source_player_key, season, game_no)
+        );
+        CREATE TABLE settlement_attempts(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          prop_id INTEGER NOT NULL,
+          game_id INTEGER NOT NULL,
+          attempted_at TEXT NOT NULL,
+          stage TEXT NOT NULL,
+          terminal TEXT NOT NULL,
+          reason TEXT,
+          actual_value REAL,
+          hit INTEGER
+        );
         INSERT INTO prop_games VALUES
           (1, 'ncaaf', 'NCSU', 'UNC', '2026-08-29', '401858202', 21, 17,
            '2026-08-29T19:30:00Z');
@@ -55,6 +74,11 @@ def _database():
           (19, 1, 'receiving_yards', 0.5, 'under', 14);
     """)
     return con
+
+
+def _cfbd_line(espn_id, stats, player_id=None):
+    return (player_id, "ncaaf", 2026, "401858202", "401858202", "2026-08-29",
+            "NCSU", "UNC", "home", stats, "cfbd", espn_id, None, "REG")
 
 
 def _athlete(espn_id, name, stats):
@@ -116,3 +140,124 @@ def test_all_ingested_ncaaf_markets_settle_from_published_boxscore(monkeypatch):
         (13, 2.0, 1), (14, 2.0, 1), (15, 2.0, 1), (16, 3.0, 1),
         (17, 9.0, 1), (18, 0.0, 1),
     ]
+
+
+def _add_cfbd_line(con, espn_id, stats):
+    con.execute(
+        "INSERT INTO player_game_logs(player_id, league, season, game_no, "
+        "game_id, game_date, team, opponent, home_away, stats, source, "
+        "source_player_key, ingested_at, game_type) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        _cfbd_line(espn_id, stats))
+
+
+def _attempts(con, prop_id):
+    return con.execute(
+        "SELECT stage, terminal, reason FROM settlement_attempts "
+        "WHERE prop_id=? ORDER BY id", (prop_id,)).fetchall()
+
+
+def test_cfbd_line_settles_without_a_request(monkeypatch):
+    """A full CFBD stat line grades the prop with no ESPN call at all."""
+    con = _database()
+    _add_cfbd_line(con, "1001",
+                   '{"att":30,"pass_yds":280,"pass_td":2,"intc":1,'
+                   '"rush_yds":10,"rush_td":0}')
+
+    def _refuse(*_args):
+        raise AssertionError("ESPN must not be called when the CFBD line answers")
+
+    monkeypatch.setattr(espn_client, "boxscore", _refuse)
+    # Only props the CFBD line covers are on the game: (3) passing_yards,
+    # (4) passing_touchdowns, (1) pass_attempts, (5) interceptions_thrown,
+    # (6) rushing_yards, (8) passing_rushing_yards. Remove the rest.
+    con.execute("DELETE FROM props WHERE id NOT IN (1,3,4,5,6,8)")
+
+    result = settlement.settle_game(con, 1)
+    assert result == {"settled": 6, "void": 0, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+    values = dict(con.execute(
+        "SELECT prop_id, actual_value FROM prop_results").fetchall())
+    assert values[3] == 280.0 and values[4] == 2.0 and values[1] == 30.0
+    assert values[5] == 1.0 and values[6] == 10.0 and values[8] == 290.0
+    stages = {tuple(r) for r in con.execute(
+        "SELECT stage, terminal, reason FROM settlement_attempts")}
+    assert stages == {("cfbd", "settled", "cfbd_line")}
+
+
+def test_total_passing_touchdowns_alias_grades_from_cfbd(monkeypatch):
+    con = _database()
+    _add_cfbd_line(con, "1001",
+                   '{"att":30,"pass_yds":280,"pass_td":2,"intc":1}')
+    con.execute("DELETE FROM props WHERE id != 4")
+    con.execute("UPDATE props SET market='total_passing_touchdowns' WHERE id=4")
+
+    def _refuse(*_args):
+        raise AssertionError("the alias must reach the CFBD line directly")
+
+    monkeypatch.setattr(espn_client, "boxscore", _refuse)
+    assert settlement.settle_game(con, 1)["settled"] == 1
+    assert con.execute(
+        "SELECT actual_value FROM prop_results WHERE prop_id=4").fetchone()[0] == 2.0
+
+
+def test_cfbd_row_missing_stat_falls_back_to_espn(monkeypatch):
+    """A row without the market's key is not evidence of zero: ESPN decides."""
+    con = _database()
+    _add_cfbd_line(con, "1002", '{"rush_yds":60,"rush_td":1}')
+    monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
+    con.execute("DELETE FROM props WHERE id != 9")  # receiving_yards for 1002
+
+    assert settlement.settle_game(con, 1) == {
+        "settled": 1, "void": 0, "unmappable": 0, "pending": 0, "errors": 0}
+    # 1002 appears in the boxscore's receiving group with 3/30, so the
+    # extractor finds 30 directly — no invented zero involved.
+    assert con.execute(
+        "SELECT actual_value FROM prop_results WHERE prop_id=9").fetchone()[0] == 30.0
+    stages = [tuple(r) for r in _attempts(con, 9)]
+    assert stages == [("espn_fallback", "settled",
+                       "cfbd_row_missing_stat+espn_boxscore")]
+
+
+def test_athlete_absent_from_boxscore_stays_pending_with_reason(monkeypatch):
+    con = _database()
+    monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
+    con.execute("DELETE FROM props WHERE id != 19")  # bench player, no CFBD row
+
+    assert settlement.settle_game(con, 1) == {
+        "settled": 0, "void": 0, "unmappable": 0, "pending": 1, "errors": 0}
+    assert [tuple(r) for r in _attempts(con, 19)] == [
+        ("espn_fallback", "pending",
+         "no_cfbd_row+athlete_absent_from_boxscore")]
+
+
+def test_markets_cfbd_does_not_publish_stay_on_the_fallback(monkeypatch):
+    """No kicking group, no completions, no carries, no return-TD components:
+    those markets never grade from the stored line even when the row exists."""
+    con = _database()
+    _add_cfbd_line(con, "1002",
+                   '{"att":2,"pass_yds":8,"rush_yds":60,"rush_td":1,'
+                   '"rec":3,"rec_yds":30,"rec_td":1}')
+    monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
+    con.execute("DELETE FROM props WHERE id NOT IN (11,14)")  # rush_attempts, total_touchdowns
+
+    assert settlement.settle_game(con, 1) == {
+        "settled": 2, "void": 0, "unmappable": 0, "pending": 0, "errors": 0}
+    # Both graded by the boxscore extractor, not by summing the line.
+    stages = {tuple(r) for r in con.execute(
+        "SELECT stage, terminal FROM settlement_attempts")}
+    assert ("cfbd", "settled") not in stages
+
+
+def test_repeat_pending_attempt_writes_nothing_new(monkeypatch):
+    """Durable reasons must not grow a row per pass for an unchanged state."""
+    con = _database()
+    monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
+    con.execute("DELETE FROM props WHERE id != 19")
+
+    settlement.settle_game(con, 1)
+    first = con.execute("SELECT COUNT(*) FROM settlement_attempts").fetchone()[0]
+    settlement.settle_game(con, 1)
+    assert con.execute(
+        "SELECT COUNT(*) FROM settlement_attempts").fetchone()[0] == first
+
