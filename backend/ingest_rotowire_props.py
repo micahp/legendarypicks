@@ -111,6 +111,10 @@ LEAGUES = {
         # vocabulary's nickname form ("App State Mountaineers"), 11 players queued.
         "appalachian state": "APP",
         "appalachian state mountaineers": "APP",
+        # Bovada writes the AP school form where the scoreboard writes the nickname
+        # ("Mississippi" vs "Ole Miss"), measured on the 2026-10-02 fixture audit:
+        # 44 stored Bovada props on Ole Miss fixtures misfiled as wrong_team.
+        "mississippi": "MISS",
         "miami (fl)": "MIA",
         "miami fl": "MIA",
         "connecticut": "CONN",
