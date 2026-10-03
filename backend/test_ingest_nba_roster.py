@@ -106,3 +106,20 @@ def test_reviewed_birth_dates_are_read_from_checked_file(tmp_path):
 
 def test_shipped_reviewed_file_parses():
     assert len(nba._reviewed_birth_dates()) == 7
+
+
+def test_last_logged_team_binds_a_stale_sole_candidate():
+    import sqlite3
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+    con.execute("CREATE TABLE p(id INT, name TEXT, team TEXT, espn_id TEXT, nba_id TEXT)")
+    con.execute("INSERT INTO p VALUES (25589,'Bradley Beal','WSH',NULL,'6580')")
+    row = con.execute("SELECT * FROM p").fetchone()
+    member = {"team": "LAC", "how_acquired": "Signed on 07/18/25", "birth_date": "JUN 28, 1993"}
+    since = nba.dt.date(2026, 8, 4)
+    assert nba._choose_unbound_candidate([row], member, known_since=since)[1] == "unverified_name"
+    got = nba._choose_unbound_candidate([row], member, known_since=since,
+                                        last_logged_team=lambda pid: "LAC")
+    assert got[1] == "matched_last_logged_team"
+    assert nba._choose_unbound_candidate([row], member, known_since=since,
+                                         last_logged_team=lambda pid: "PHX")[1] == "unverified_name"

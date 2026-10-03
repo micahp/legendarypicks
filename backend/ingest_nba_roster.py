@@ -233,7 +233,8 @@ def _normal_team(value) -> str | None:
 
 
 def _choose_unbound_candidate(candidates, member: Mapping[str, object], bound=frozenset(),
-                              known_since: dt.date | None = None, birth_date_of=None):
+                              known_since: dt.date | None = None, birth_date_of=None,
+                              last_logged_team=None):
     """Bind a name-only candidate only with team or acquired-from evidence.
 
     `bound` holds player ids already crosswalked to some OTHER nba.com id: a same-name row
@@ -259,6 +260,14 @@ def _choose_unbound_candidate(candidates, member: Mapping[str, object], bound=fr
     moved_on = move_date(member.get("how_acquired"))
     if len(unbound) == 1 and known_since and moved_on and moved_on >= known_since:
         return unbound[0], "matched_moved_since_snapshot"
+    # Our own published game logs: the sole candidate last appeared for the team nba.com lists.
+    # Measured 2026-10-03 on PROD: Bradley Beal's row still read WSH (inactive, in no roster
+    # snapshot) while its 2025-26 logs are six LAC games, and nba.com lists him LAC, "Signed on
+    # 07/18/25". A move before our snapshot, so the tier above rightly declined it.
+    if len(unbound) == 1 and last_logged_team is not None:
+        logged = last_logged_team(unbound[0]["id"]) if "id" in unbound[0].keys() else None
+        if logged and _normal_team(logged) == team:
+            return unbound[0], "matched_last_logged_team"
     # Last resort, still evidence: the sole candidate's reviewed birth date equals nba.com's,
     # looked up by whichever id our row holds (players.nba_id is hoopR's ESPN athlete id).
     # Measured 2026-10-02: seven offseason signings ESPN's 08-04 roster still showed on their
@@ -307,6 +316,12 @@ def plan_population(connection: sqlite3.Connection,
         "SELECT MAX(captured_at) FROM roster_snapshots WHERE league='nba' AND status='published'"
     ).fetchone()[0]
     known_since = dt.date.fromisoformat(str(last)[:10]) if last else None
+
+    def last_logged_team(player_id):
+        row = connection.execute(
+            "SELECT team FROM player_game_logs WHERE player_id=? AND team IS NOT NULL "
+            "ORDER BY game_date DESC LIMIT 1", (player_id,)).fetchone()
+        return row[0] if row else None
     by_source: dict[str, list] = collections.defaultdict(list)
     for key, player_id in durable.items():
         if player_id in players:
@@ -327,7 +342,7 @@ def plan_population(connection: sqlite3.Connection,
                 bound_elsewhere = frozenset(pid for key, pid in durable.items() if key != source_key)
                 candidate, action = _choose_unbound_candidate(
                     by_name.get(_identity_name_key(member["name"]), []), member, bound_elsewhere,
-                    known_since, birth_date_of)
+                    known_since, birth_date_of, last_logged_team)
                 if action in ("ambiguous_name", "unverified_name"):
                     failures.append({**member, "reason": action})
                     continue
