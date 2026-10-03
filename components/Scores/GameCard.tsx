@@ -171,9 +171,6 @@ export default function GameCard(g: GameProps) {
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
         <span className="flex items-center gap-2">
-          {/* Quiet on purpose: a fact about the game, not an alert. The accent colour is
-              reserved for absence (honest-data-ui), so this takes the time label's styling. */}
-          {g.isPreseason && <span className="text-zinc-500">Preseason</span>}
         </span>
 
         {showTime && <span>{timeLabel}</span>}
@@ -231,6 +228,11 @@ export default function GameCard(g: GameProps) {
           </div>
         </div>
       )}
+
+      {/* Context row under the teams: quiet facts about the game, the slot ESPN's app uses
+          for "Quarterfinal - Colosseum" or a weight class. Preseason is the first. The accent
+          colour is reserved for absence (honest-data-ui), so this stays the label grey. */}
+      {g.isPreseason && <div className="mt-2 text-xs text-zinc-500">Preseason</div>}
     </div>
   )
 }
