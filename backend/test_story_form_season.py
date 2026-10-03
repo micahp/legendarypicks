@@ -137,6 +137,8 @@ class TestSuppressedFormLifecycle:
         monkeypatch.setattr(espn, "summary", lambda lg, gid: _fake_summary(season_year))
         monkeypatch.setattr(espn, "team_strength_map", lambda lg: {})
         monkeypatch.setattr(espn, "team_strength", lambda lg: [])
+        monkeypatch.setattr(espn, "team_strength_standings",
+                            lambda lg, season=None: {"season": season_year, "teams": []})
         return generate_game_story("mls", "g1", home="H", away="A",
                                    state="pre", start_time="2026-08-15T23:30Z"), calls
 

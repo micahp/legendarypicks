@@ -40,11 +40,15 @@ _MAX_LEADER_CATS = 2
 _LEADER_PRIORITY = ("goals", "assists", "points", "total shots", "shots")
 
 
-def context_lines(league, game_id, summary=None, fetch=None, state=None):
+def context_lines(league, game_id, summary=None, fetch=None, state=None, current_season=True):
     """-> list of grounding strings for this matchup. Empty when nothing is derivable.
 
     `state` is the game's ESPN state. A finished game does NOT get the league-wide split —
-    see _origin_split for why that number is preview material only."""
+    see _origin_split for why that number is preview material only.
+
+    `current_season=False` means this game's season has no standings yet: lastFiveGames and
+    the leaders are then last season's (NBA 401902644, preview written 2026-08-17), so only
+    the phase is given."""
     try:
         if summary is None:
             if fetch is None:
@@ -58,7 +62,8 @@ def context_lines(league, game_id, summary=None, fetch=None, state=None):
 
     finished = (state or "").lower() == "post"
     lines = []
-    for producer in (_phase, _origin_split, _form, _leaders):
+    producers = (_phase, _origin_split, _form, _leaders) if current_season else (_phase,)
+    for producer in producers:
         try:
             if producer is _origin_split:
                 lines.extend(_origin_split(summary, include_split=not finished) or [])
