@@ -89,3 +89,70 @@ props. The 2,174 resolved = 2,152 CFBD-line settles + 22 fallback settles.
   not a defect.
 - PROD apply of all of the above requires separate authorization (repair order
   step 6).
+
+## PROD apply — 2026-10-03
+
+Step 6 was separately authorized by `TASK-ncaaf-prod-promo-2026-10-03.md`.
+Release `v0.9.7` (`e237ee9`) was cut from an isolated branch directly atop
+`v0.9.6`, after the full release dry run passed, so unrelated scoreboard work
+on `dev` did not ride the release. The production backend and frontend images
+were rebuilt from that release; both containers came up with zero restarts,
+the local and public home routes returned 200, and the public NCAAF league and
+game-props routes rendered populated data.
+
+All database counts below were measured directly from
+`backend/data/picks.db` on 2026-10-03 UTC. The stale-backlog instrument is the
+same population as the DEV replay: unsettled NCAAF props whose fixture kickoff
+was more than six hours old, split by whether the fixture has an ESPN event id.
+Before the fold, at 18:36 UTC, it measured **4,952 props / 244 fixtures**:
+2,624 props on 149 linked fixtures and 2,328 props on 95 unlinked fixtures.
+The database held 401,304 props, 2,413 prop games, and 283,844 results; orphan
+props were zero and `PRAGMA quick_check` was `ok`.
+
+The online SQLite backup
+`picks.db.pre-ncaaf-fold-20261003T184408Z.bak` was created and both source and
+backup passed `PRAGMA quick_check` before the write. A disposable PROD clone
+first printed every planned action: 96 source rows / 2,374 props, with 2,198
+props in `FOLD`, 76 in `LINK`, and 100 on three 10-02 fixtures in `LEAVE`.
+There were no `REFUSE` or result-bearing loser rows. Clone apply, repeated dry
+run, `quick_check`, and orphan checks all passed. The identical live dry run
+was then applied: **2,198 props folded and 76 linked**. Its post-apply dry run
+had zero `FOLD`/`LINK` residue and only the same 100 current-slate props in
+`LEAVE`; `quick_check` remained `ok`, orphan props remained zero, results
+remained 283,844, and prop-game rows fell from 2,413 to 2,324.
+
+The first managed PROD settlement pass reached NCAAF but was terminated by the
+existing parent service's one-hour timeout before it could print its summary.
+Its durable rows show 1,632 settlements: 1,616 from the CFBD line and 16 from
+the bounded ESPN fallback. One explicit paced continuation was therefore
+limited to the untouched range through 2026-09-05; it completed 33 games and
+settled another 184 props (182 CFBD, 2 fallback), with 572 pending, one
+game-level HTTP 403, zero unmappable, and zero voided. No retry loop or
+systemd change was made.
+
+Combined promotion-pass result: **1,816 props settled** — 1,798 directly from
+the CFBD line and 18 through the fallback — and the stale backlog moved from
+4,952 to **3,136**. At 19:14 UTC the latest durable attempt per prop was:
+
+| Disposition (latest attempt per prop) | Props |
+|---|---:|
+| settled, stage `cfbd` (`cfbd_line`) | 1,798 |
+| settled, stage `espn_fallback` | 18 |
+| pending, `no_cfbd_row+athlete_absent_from_boxscore` | 2,258 |
+| pending, `market_not_published_by_cfbd+no_cfbd_row+athlete_absent_from_boxscore` | 384 |
+| error, boxscore HTTP 403 | 66 |
+
+The interrupted managed pass had not yet attempted 374 linked stale props;
+they remain open for the ordinary scheduled passes rather than being retried
+ad hoc. Another 54 stale props remain on the two unlinked fixtures old enough
+for the six-hour query at measurement time. These 374 unattempted + 2,642
+pending-with-reason + 66 intermittent-403 errors + 54 unlinked account for all
+3,136 open stale props. `settlement_attempts` held 4,810 state-change rows for
+4,524 distinct props. Pending prop 872565 was spot-checked: exactly one row,
+with reason `no_cfbd_row+athlete_absent_from_boxscore`.
+
+Final PROD checks: 401,304 props, 285,660 results, 2,324 prop games, zero
+orphan props, and `PRAGMA quick_check` `ok`. The public NCAAF slate returned
+29 games / 857 distinct prop questions; game 401856636 returned 16 players,
+33 settled lines, and three leaders. The only settlement errors measured were
+the known intermittent ESPN 403 class.
