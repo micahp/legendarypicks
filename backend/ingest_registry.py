@@ -359,6 +359,11 @@ JOBS: List[Dict[str, object]] = [
     },
 ]
 
+# PAUSED 2026-10-04 by Micah: settlement is off until ESPN stops refusing this box. Delete this
+# line to turn it back on; the job definition above is unchanged.
+PAUSED = {"settlement"}
+JOBS = [job for job in JOBS if job["id"] not in PAUSED]
+
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
 _REQUIRED_FRESHNESS = ("table", "date_column", "stale_hours", "label")
 
