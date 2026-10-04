@@ -97,6 +97,20 @@ JOBS: List[Dict[str, object]] = [
         ],
     },
     {
+        "id": "game_summaries",
+        "cadence_min": 30,
+        "timeout_sec": 1800,
+        "host_lock": "espn",
+        "steps": [["ingest_game_summaries.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "game_summaries",
+            "date_column": "fetched_at",
+            "stale_hours": 6,
+            "label": "game summaries",
+        }],
+    },
+    {
         "id": "settlement",
         # Every 30 minutes, ALL DAY. /etc/cron.d/legendarypicks-pipeline ran settlement at
         # :23 and :53 during hours 19-23 and 0-3 only, so nothing settled between 03:53 and
