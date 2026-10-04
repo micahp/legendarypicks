@@ -36,8 +36,15 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("mlb", "triple_any"):            ("batting", "3B"),
     # ── NBA ──
     # NBA's stored ESPN box score publishes one unnamed statistics group with
-    # `names` rather than `labels`. Preseason scope is points and PRA only.
+    # `names` rather than `labels`. These fields cover the regular-season
+    # markets while preseason ingestion remains limited to points and PRA.
     ("nba", "points"):        ("statistics", "PTS"),
+    ("nba", "rebounds"):      ("statistics", "REB"),
+    ("nba", "assists"):       ("statistics", "AST"),
+    ("nba", "threes"):        ("statistics", "3PM"),
+    ("nba", "blocks"):        ("statistics", "BLK"),
+    ("nba", "steals"):        ("statistics", "STL"),
+    ("nba", "turnovers"):     ("statistics", "TO"),
     # ── NFL ──
     ("nfl", "passing_yards"): ("passing", "Yds"),
     ("nfl", "passing_tds"):   ("passing", "TD"),

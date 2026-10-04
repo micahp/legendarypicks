@@ -267,23 +267,29 @@ def test_nhl_settlement_reads_published_skater_and_goalie_groups():
     ]
 
 
-def test_nba_settlement_reads_points_and_pra_from_published_names():
+def test_nba_settlement_reads_regular_season_markets_from_published_names():
     con = _settlement_database()
     con.executescript("""
         UPDATE prop_games SET league='nba' WHERE id=1;
         UPDATE scoreboard_snapshots SET league='nba' WHERE game_id='event-1';
         DELETE FROM props;
         INSERT INTO props VALUES(1,1,'points',21.5,'over',1);
-        INSERT INTO props VALUES(2,1,'points_rebounds_assists',36.5,'over',1);
+        INSERT INTO props VALUES(2,1,'rebounds',9.5,'under',1);
+        INSERT INTO props VALUES(3,1,'assists',5.5,'over',1);
+        INSERT INTO props VALUES(4,1,'threes',3.5,'under',1);
+        INSERT INTO props VALUES(5,1,'blocks',1.5,'over',1);
+        INSERT INTO props VALUES(6,1,'steals',1.5,'under',1);
+        INSERT INTO props VALUES(7,1,'turnovers',4.5,'under',1);
+        INSERT INTO props VALUES(8,1,'points_rebounds_assists',36.5,'over',1);
     """)
     payload = stored_summary.load(con, "nhl", "event-1")
     payload["boxscore"] = {"players": [{
         "team": {"abbreviation": "BOS"},
         "statistics": [{
-            "names": ["MIN", "FG", "3PT", "REB", "AST", "PTS"],
+            "names": ["MIN", "PTS", "REB", "AST", "3PM", "BLK", "STL", "TO"],
             "athletes": [{
                 "athlete": {"id": "123", "displayName": "Published Player"},
-                "stats": ["32", "8-14", "3-7", "9", "6", "22"],
+                "stats": ["32", "22", "9", "6", "3", "2", "1", "4"],
             }],
         }],
     }]}
@@ -295,15 +301,16 @@ def test_nba_settlement_reads_points_and_pra_from_published_names():
 
     result = settlement.settle_game(con, 1)
 
-    assert result == {"settled": 2, "void": 0, "unmappable": 0,
+    assert result == {"settled": 8, "void": 0, "unmappable": 0,
                       "pending": 0, "errors": 0}
     assert [tuple(row) for row in con.execute(
         "SELECT prop_id,actual_value,hit FROM prop_results ORDER BY prop_id"
-    )] == [(1, 22.0, 1), (2, 37.0, 1)]
+    )] == [
+        (1, 22.0, 1), (2, 9.0, 1), (3, 6.0, 1), (4, 3.0, 1),
+        (5, 2.0, 1), (6, 1.0, 1), (7, 4.0, 1), (8, 37.0, 1),
+    ]
 
-    assert settlement.resolve_market("nba", "rebounds") is None
-    assert settlement.resolve_market("nba", "assists") is None
-    assert settlement.resolve_market("nba", "threes") is None
+    assert settlement.resolve_market("nba", "fantasy_points") is None
 
 
 def test_settlement_missing_summary_stays_pending_with_reason():
