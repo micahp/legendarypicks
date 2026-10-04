@@ -70,10 +70,17 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("ncaaf", "extra_points_made"):   ("kicking", "XP"),
     ("ncaaf", "kicking_points"):      ("kicking", "PTS"),
     # ── NHL ──
-    ("nhl", "shots"):         ("offensive", "Shots"),
-    ("nhl", "goals"):         ("offensive", "G"),
-    ("nhl", "assists"):       ("offensive", "A"),
-    ("nhl", "saves"):         ("goalkeeping", "Sv"),
+    # ESPN splits skaters into forwards and defenses. The synthetic skaters
+    # group is present but empty, so the extractor expands this category into
+    # both published groups. Goaltenders are published under goalies.
+    ("nhl", "shots"):         ("skaters", "S"),
+    ("nhl", "goals"):         ("skaters", "G"),
+    ("nhl", "assists"):       ("skaters", "A"),
+    ("nhl", "hits"):          ("skaters", "HT"),
+    ("nhl", "faceoffs_won"):  ("skaters", "FW"),
+    ("nhl", "time_on_ice"):   ("skaters", "TOI:minutes"),
+    ("nhl", "blocked_shots"): ("skaters", "BS"),
+    ("nhl", "saves"):         ("goalies", "SV"),
 }
 
 
@@ -97,6 +104,9 @@ COMPOUND_MARKET_STAT = {
         ("rushing", "TD"), ("receiving", "TD"),
         ("kickReturns", "TD"), ("puntReturns", "TD"),
         ("defensive", "TD"),
+    ),
+    ("nhl", "points"): (
+        ("skaters", "G"), ("skaters", "A"),
     ),
 }
 

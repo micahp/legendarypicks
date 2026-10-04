@@ -105,10 +105,10 @@ def _settlement_database(*, state="post", with_summary=True):
             "boxscore": {"players": [{
                 "team": {"abbreviation": "BOS"},
                 "statistics": [{
-                    "name": "offensive", "labels": ["G", "A"],
+                    "name": "forwards", "labels": ["G", "A", "S"],
                     "athletes": [{
                         "athlete": {"id": "123", "displayName": "Published Player"},
-                        "stats": ["1", "0"],
+                        "stats": ["1", "0", "4"],
                     }],
                 }],
             }]},
@@ -203,6 +203,68 @@ def test_settlement_uses_stored_snapshot_and_summary_without_network(monkeypatch
     assert tuple(con.execute(
         "SELECT actual_value,hit FROM prop_results WHERE prop_id=1"
     ).fetchone()) == (1.0, 1)
+
+
+def test_nhl_settlement_reads_published_skater_and_goalie_groups():
+    con = _settlement_database()
+    con.executescript("""
+        INSERT INTO players VALUES(2,'Published Defenseman','BOS','456');
+        INSERT INTO players VALUES(3,'Published Goalie','BOS','789');
+        INSERT INTO props VALUES(2,1,'shots',2.5,'over',2);
+        INSERT INTO props VALUES(3,1,'saves',20.5,'over',3);
+        INSERT INTO props VALUES(4,1,'assists',1.5,'over',1);
+        INSERT INTO props VALUES(5,1,'points',2.5,'over',1);
+        INSERT INTO props VALUES(6,1,'hits',0.5,'over',2);
+        INSERT INTO props VALUES(7,1,'faceoffs_won',6.5,'over',1);
+        INSERT INTO props VALUES(8,1,'time_on_ice',20.25,'over',1);
+        INSERT INTO props VALUES(9,1,'blocked_shots',1.5,'over',2);
+    """)
+    payload = stored_summary.load(con, "nhl", "event-1")
+    payload["boxscore"]["players"][0]["statistics"][0] = {
+        "name": "forwards",
+        "labels": ["BS", "HT", "G", "A", "S", "FW", "TOI"],
+        "athletes": [{
+            "athlete": {"id": "123", "displayName": "Published Player"},
+            "stats": ["0", "3", "1", "2", "4", "7", "20:30"],
+        }],
+    }
+    payload["boxscore"]["players"][0]["statistics"].extend([
+        {
+            "name": "defenses",
+            "labels": ["BS", "HT", "G", "A", "S", "FW", "TOI"],
+            "athletes": [{
+                "athlete": {"id": "456", "displayName": "Published Defenseman"},
+                "stats": ["2", "1", "0", "1", "3", "0", "22:15"],
+            }],
+        },
+        {
+            "name": "skaters", "labels": ["G", "A", "S"],
+            "athletes": [],
+        },
+        {
+            "name": "goalies", "labels": ["GA", "SA", "SV", "SV%"],
+            "athletes": [{
+                "athlete": {"id": "789", "displayName": "Published Goalie"},
+                "stats": ["2", "24", "22", ".917"],
+            }],
+        },
+    ])
+    con.execute(
+        "UPDATE game_summaries SET payload=? WHERE league='nhl' AND espn_event_id='event-1'",
+        (json.dumps(payload),),
+    )
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 9, "void": 0, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+    assert [tuple(row) for row in con.execute(
+        "SELECT prop_id,actual_value,hit FROM prop_results ORDER BY prop_id"
+    )] == [
+        (1, 1.0, 1), (2, 3.0, 1), (3, 22.0, 1),
+        (4, 2.0, 1), (5, 3.0, 1), (6, 1.0, 1),
+        (7, 7.0, 1), (8, 20.5, 1), (9, 2.0, 1),
+    ]
 
 
 def test_settlement_missing_summary_stays_pending_with_reason():

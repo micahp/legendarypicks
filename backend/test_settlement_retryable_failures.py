@@ -4,10 +4,13 @@
 the same prop twice: an unmapped market or an unavailable published stat must be
 seen on both runs, proving that a later mapping/data repair can still settle it.
 """
+import datetime as dt
+import json
 import sqlite3
 
 import espn_client
 import settlement
+from settlement import stored_summary
 
 
 def _connection(league, market, side="over"):
@@ -48,7 +51,7 @@ def _boxscore_without_shots():
     return {"players": [{
         "team": {"abbreviation": "BOS", "displayName": "Boston Bruins"},
         "statistics": [{
-            "name": "offensive",
+            "name": "forwards",
             "labels": ["G", "A"],
             "athletes": [{
                 "athlete": {"id": "123", "displayName": "Published Player"},
@@ -58,11 +61,22 @@ def _boxscore_without_shots():
     }]}
 
 
-def test_generic_unmapped_market_remains_retryable(monkeypatch):
+def _store_boxscore(con, boxscore):
+    stored_summary.ensure_table(con)
+    con.execute(
+        "INSERT INTO game_summaries VALUES(?,?,?,?,?,?,?)",
+        ("nhl", "event-1", json.dumps({"boxscore": boxscore}), "post", 1,
+         dt.datetime.now(dt.timezone.utc).isoformat(), "espn_summary"),
+    )
+    con.commit()
+
+
+def test_generic_unmapped_market_remains_retryable():
     # WC has a dedicated durable-log grader; NBA exercises the generic
     # unmapped-market path this regression is about.
     con = _connection("nba", "goals")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: {"players": [{}]})
+    _store_boxscore(con, {"players": [{}]})
+    con.execute("UPDATE game_summaries SET league='nba'")
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)
@@ -72,9 +86,9 @@ def test_generic_unmapped_market_remains_retryable(monkeypatch):
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 
-def test_generic_missing_stat_remains_retryable(monkeypatch):
+def test_generic_missing_stat_remains_retryable():
     con = _connection("nhl", "shots")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: _boxscore_without_shots())
+    _store_boxscore(con, _boxscore_without_shots())
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)
@@ -84,9 +98,9 @@ def test_generic_missing_stat_remains_retryable(monkeypatch):
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 
-def test_generic_invalid_side_remains_retryable(monkeypatch):
+def test_generic_invalid_side_remains_retryable():
     con = _connection("nhl", "goals", side="yes")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: _boxscore_without_shots())
+    _store_boxscore(con, _boxscore_without_shots())
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)

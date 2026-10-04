@@ -69,13 +69,16 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
         for stats_group in team_group.get("statistics", []):
             stats_name = (stats_group.get("name") or "")
-            labels = stats_group.get("labels") or []
+            labels = stats_group.get("labels") or stats_group.get("names") or []
             label_set = set(labels)
             category_norm = (category or "").lower().replace(" ", "_")
+            category_names = {category_norm}
+            if category_norm == "skaters":
+                category_names.update(("forwards", "defenses"))
 
             if category is not None:
                 if stats_name:
-                    if stats_name.lower().replace(" ", "_") != category_norm:
+                    if stats_name.lower().replace(" ", "_") not in category_names:
                         continue
                 else:
                     if category_norm in ("batting", "offensive"):
@@ -115,6 +118,12 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                             try:
                                 return float(val)
                             except (ValueError, TypeError):
+                                if pair_selector == "minutes" and isinstance(val, str):
+                                    try:
+                                        minutes, seconds = val.split(":", 1)
+                                        return float(minutes) + float(seconds) / 60.0
+                                    except (ValueError, TypeError):
+                                        return None
                                 # Kicking FG/XP and passing C/ATT are published
                                 # as made/attempted. A mapped made-stat uses the
                                 # numerator; malformed pairs still fail closed.
