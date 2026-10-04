@@ -25,7 +25,8 @@ def create_schema(path):
         con.executescript("""
             CREATE TABLE players(
               id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
-              team TEXT, league TEXT NOT NULL, active INTEGER DEFAULT 1
+              team TEXT, league TEXT NOT NULL, active INTEGER DEFAULT 1,
+              position TEXT
             );
             CREATE TABLE prop_games(
               id INTEGER PRIMARY KEY AUTOINCREMENT, league TEXT NOT NULL,
@@ -142,6 +143,33 @@ def payload(market_id=13, market_name="Passing Yards", category="Game",
              ],
              "hitRates": []},
         ],
+    }
+
+
+def nhl_payload(market_id=83, market_name="Shots on Goal"):
+    """One real-shaped row from the archived 2026-10-04 NHL board."""
+    return {
+        "markets": [{
+            "marketID": market_id, "sport": "NHL", "category": "Game",
+            "marketName": market_name,
+        }],
+        "entities": [{
+            "entityID": 59, "eventID": 26, "sport": "NHL",
+            "name": "Mikhail Sergachev", "team": "UTA", "pos": "D",
+            "link": "https://www.rotowire.com/hockey/player/mikhail-sergachev-5133",
+        }],
+        "events": [{
+            "eventID": 26, "gameID": 37127, "eventTime": 1791151200,
+            "homeTeam": "NYR", "awayTeam": "UTA",
+        }],
+        "props": [{
+            "propID": "f372a281-e5bc-581e-bba2-e4a46b905959",
+            "marketID": market_id, "entities": [59],
+            "lines": [
+                {"book": "underdog", "over": -137, "under": -137, "line": 1.5},
+                {"book": "hardrock-sb", "over": -115, "under": -115, "line": 1.5},
+            ],
+        }],
     }
 
 
@@ -348,6 +376,91 @@ class RotowirePropsTests(unittest.TestCase):
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM props"), 0)
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM prop_games"), 0)
         self.assertEqual(self.scalar("SELECT COUNT(*) FROM player_source_ids"), 0)
+
+
+class NhlUsesDurableScoreboardFixtures(unittest.TestCase):
+    EXPECTED = {
+        80: "goals",
+        81: "assists",
+        82: "points",
+        83: "shots",
+        87: "hits",
+        88: "faceoffs_won",
+        89: "blocked_shots",
+        90: "time_on_ice",
+    }
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db_path = os.path.join(self.tmp.name, "rw-nhl.db")
+        create_schema(self.db_path)
+        self.old_db = rw.DB
+        rw.DB = self.db_path
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+        self.con.execute(
+            "INSERT INTO players(name,team,league,active,position) "
+            "VALUES('Mikhail Sergachev','UTAH','nhl',1,'D')"
+        )
+        self.con.execute(
+            "INSERT INTO scoreboard_snapshots(league,payload) VALUES('nhl',?)",
+            (json.dumps({
+                "game_id": "401892443",
+                "date": "2026-10-04T22:00:00Z",
+                "home": {"abbrev": "NYR", "name": "New York Rangers"},
+                "away": {"abbrev": "UTA", "name": "Utah Mammoth"},
+            }),),
+        )
+        self.con.commit()
+
+    def tearDown(self):
+        self.con.close()
+        rw.DB = self.old_db
+        self.tmp.cleanup()
+
+    def test_verified_game_market_catalogue(self):
+        self.assertEqual(
+            {mid: key for mid, (_name, key) in rw.NHL_GAME_MARKETS.items()},
+            self.EXPECTED,
+        )
+
+    def test_real_shaped_row_resolves_fixture_player_and_books(self):
+        rows, report = rw.parse(nhl_payload(), "nhl")
+
+        summary = rw.ingest(rows, "nhl")
+
+        self.assertEqual(report["counts"]["game_props"], 1)
+        self.assertEqual(summary["new"], 4)
+        game = self.con.execute(
+            "SELECT league,date,home,away,espn_event_id,start_time FROM prop_games"
+        ).fetchone()
+        self.assertEqual(tuple(game), (
+            "nhl", "2026-10-04", "New York Rangers", "Utah Mammoth",
+            "401892443", "2026-10-04T22:00:00Z",
+        ))
+        self.assertEqual(
+            [tuple(row) for row in self.con.execute(
+                "SELECT market,source,line,side,odds FROM props "
+                "ORDER BY source,side"
+            )],
+            [
+                ("shots", "rotowire:hardrock-sb", 1.5, "over", -115),
+                ("shots", "rotowire:hardrock-sb", 1.5, "under", -115),
+                ("shots", "rotowire:underdog", 1.5, "over", -137),
+                ("shots", "rotowire:underdog", 1.5, "under", -137),
+            ],
+        )
+
+    def test_out_of_scope_power_play_points_is_visible_and_refused(self):
+        rows, report = rw.parse(
+            nhl_payload(market_id=95, market_name="Power Play Points"), "nhl"
+        )
+
+        self.assertEqual(rows, [])
+        self.assertEqual(
+            dict(report["unmapped_markets"]),
+            {(95, "Power Play Points"): 1},
+        )
 
 
 class MlbUsesDurableScoreboardVocabulary(unittest.TestCase):
@@ -870,6 +983,7 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
         "NFL": {130},
         "CFB": {138, 139},
         "MLB": {236, 237, 300},
+        "NHL": {95},
     }
     # NOT deliberate -- markets the relay publishes that we do not yet take. This
     # gate found them on 2026-08-26 the moment it stopped being Soccer-only. They
@@ -884,6 +998,7 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
         "NFL": "NFL_GAME_MARKETS",
         "CFB": "CFB_GAME_MARKETS",
         "MLB": "MLB_GAME_MARKETS",
+        "NHL": "NHL_GAME_MARKETS",
     }
 
     def _published(self, sport):

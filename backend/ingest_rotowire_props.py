@@ -94,6 +94,12 @@ SOURCE = "rotowire"
 # all. See `_fill_missing_start_time`.
 LEAGUES = {
     "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
+    # Hockey uses the same durable fixture contract as college football: both
+    # clubs and the exact kickoff must match one stored scoreboard event before
+    # a prop game can be created. RotoWire's UTA/LAK/TBL/SJS/NJD spellings are
+    # normalized into ESPN's canonical vocabulary by the reviewed aliases.
+    "nhl": {"sport": "NHL", "kind": "fixture_scoreboard",
+            "aliases": TEAM_CODE_ALIASES.get("nhl", {})},
     # College teams arrive as school names while our spine uses ESPN codes.  Resolve
     # them only through the durable ESPN scoreboard and require the exact scheduled
     # fixture before creating a prop game.  The relay also carries next week's board;
@@ -249,12 +255,25 @@ MLB_GAME_MARKETS = {
     # Singles, Wins, and both Fantasy Score ids remain absent on purpose. They
     # have no verified boxscore/scoring-formula mapping and are reported below.
 }
+NHL_GAME_MARKETS = {
+    80: ("Goals", "goals"),
+    81: ("Assists", "assists"),
+    82: ("Points", "points"),
+    83: ("Shots on Goal", "shots"),
+    87: ("Hits", "hits"),
+    88: ("Faceoffs Won", "faceoffs_won"),
+    89: ("Blocked Shots", "blocked_shots"),
+    90: ("Time on Ice", "time_on_ice"),
+    # 95 Power Play Points is outside the reviewed market set and remains
+    # reported as unmapped rather than entering a market we cannot settle.
+}
 MARKETS = {
     "nfl": NFL_GAME_MARKETS,
     "ncaaf": CFB_GAME_MARKETS,
     "mlb": MLB_GAME_MARKETS,
     "mls": SOCCER_GAME_MARKETS,
     "lcup": SOCCER_GAME_MARKETS,
+    "nhl": NHL_GAME_MARKETS,
 }
 
 _SUFFIXES = {"jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"}
@@ -395,7 +414,7 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
     # source team = roster team = one fixture team. Everywhere else the historical
     # behavior stands untouched.
-    strict = league == "ncaaf"
+    strict = LEAGUES[league]["kind"] == "fixture_scoreboard"
     key = row.get("source_player_key")
     bound_player_id = None
     if key:
@@ -821,7 +840,7 @@ def ingest(rows: List[Dict], league: str, dry_run: bool = False,
                 # resolving by name onto our stale Toronto row.
                 summary["unverifiable_fixture"] += 1
                 continue
-            if league == "ncaaf" and vocabulary is not None:
+            if LEAGUES[league]["kind"] == "fixture_scoreboard" and vocabulary is not None:
                 # Step 2, third edge: the canonical player's roster team must be one of
                 # the fixture's two teams before the prop is published. The relay's own
                 # team was already verified in resolve_player; this catches a stale
