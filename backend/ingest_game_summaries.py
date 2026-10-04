@@ -18,12 +18,13 @@ _SKIP_LEAGUES = ("atp", "wta", "wc", "mlb", "ufc")   # ufc: ESPN 404s every summ
 
 
 def _candidates(con: sqlite3.Connection):
+    skip = ",".join("?" * len(_SKIP_LEAGUES))    # sized to the list: a hardcoded 4 broke on a 5th
     return con.execute("""
         SELECT pg.league, pg.espn_event_id
         FROM prop_games pg
         WHERE pg.espn_event_id IS NOT NULL
           AND trim(pg.espn_event_id) <> ''
-          AND pg.league NOT IN (?,?,?,?)
+          AND pg.league NOT IN ({skip})
           AND datetime(COALESCE(NULLIF(pg.start_time, ''), pg.date || 'T00:00:00Z'))
               BETWEEN datetime('now', '-72 hours') AND datetime('now')
           AND EXISTS (
@@ -45,7 +46,7 @@ def _candidates(con: sqlite3.Connection):
               LIMIT 1
           )
         ORDER BY pg.league, pg.espn_event_id
-    """, _SKIP_LEAGUES).fetchall()
+    """.format(skip=skip), _SKIP_LEAGUES).fetchall()
 
 
 def ingest(con: sqlite3.Connection) -> dict:
