@@ -38,6 +38,9 @@ _ATP_MAJORS = [
     ("Cincinnati Open",        ["Cincinnati Open", "Western & Southern Open"]),
     ("Shanghai Masters",       ["Rolex Shanghai Masters", "Shanghai Masters"]),
     ("Paris Masters",          ["Rolex Paris Masters", "Paris Masters"]),
+    # ATP 500s Kalshi lists and the competition trades. ATP China Open (Beijing) is a 500, so the
+    # 1000-only list dropped it while WTA's China Open (a 1000) passed: added 2026-10-04.
+    ("China Open",             ["China Open"]),
     # Finals
     ("ATP Finals",             ["ATP Finals", "Nitto ATP Finals", "ATP World Tour Finals"]),
 ]
