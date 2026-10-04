@@ -126,9 +126,9 @@ JOBS: List[Dict[str, object]] = [
         # host is busy. A settlement run that is cut off is not an error anyone sees: it just
         # leaves props ungraded until some later run happens to reach them.
         "timeout_sec": 1800,
-        # settle_game fetches a boxscore per game, so this shares the ESPN burst budget with
-        # soccer_logs and must never run beside it.
-        "host_lock": "espn",
+        # Settlement reads stored database rows only. This lock prevents overlapping runs
+        # without reserving any publisher host budget.
+        "host_lock": "settlement",
         "steps": [["settle_props.py"]],
         "needs_api_base": False,
         "freshness": [{

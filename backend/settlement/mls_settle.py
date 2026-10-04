@@ -255,4 +255,6 @@ def _settle_mls_props(con: sqlite3.Connection, game, props: list,
         )
     if summary_failed:
         result["error_msg"] = "soccer summary fallback failed"
+    elif summary_attempted and not summary:
+        result["msg"] = "no_stored_summary"
     return result

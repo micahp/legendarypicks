@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """settle_game.py — top-level driver: grade all unsettled props for one game."""
 import datetime as dt
+import json
 import re
 import sqlite3
 
@@ -16,16 +17,60 @@ from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import (
     _settle_ufc_props,
-    _ufc_scoreboard_competition,
-    _ufcstats_game_is_final,
 )
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
 from settlement.wc_settle import _settle_wc_props
 from settlement.ncaaf_settle import _settle_ncaaf_props
+from settlement import stored_summary
 
 # The soccer competitions that grade off the roster-stat surface.
 _SOCCER_LEAGUES = ("mls", "lcup", "ligamx")
+
+
+def _latest_scoreboard_snapshot(con: sqlite3.Connection, league: str,
+                                event_id: str):
+    if not con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='scoreboard_snapshots'").fetchone():
+        return None
+    row = con.execute("""
+        SELECT state, payload
+        FROM scoreboard_snapshots
+        WHERE league=? AND game_id=?
+        ORDER BY fetched_at DESC
+        LIMIT 1
+    """, (league, str(event_id))).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"] or "{}")
+    except (TypeError, ValueError):
+        payload = {}
+    return {"state": row["state"], "payload": payload}
+
+
+def _score(value):
+    if isinstance(value, dict):
+        value = value.get("value", value.get("displayValue"))
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return int(number) if number.is_integer() else number
+
+
+def _final_scores(snapshot_payload: dict, summary_payload):
+    home = _score((snapshot_payload.get("home") or {}).get("score"))
+    away = _score((snapshot_payload.get("away") or {}).get("score"))
+    if home is not None and away is not None:
+        return home, away
+    competition = (((summary_payload or {}).get("header") or {}).get(
+        "competitions") or [{}])[0]
+    scores = {}
+    for competitor in competition.get("competitors") or []:
+        scores[competitor.get("homeAway")] = _score(competitor.get("score"))
+    return scores.get("home"), scores.get("away")
 
 
 def _unsettled_count(con: sqlite3.Connection, game_id: int) -> int:
@@ -86,8 +131,6 @@ def _publisher_cancellation_reason(result: dict):
 
 def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
     """Settle all unsettled props for one prop_games row."""
-    import espn_client as espn
-
     game_columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
     cancellation = ("cancelled_at, cancel_reason, cancel_source"
                     if "cancelled_at" in game_columns
@@ -187,55 +230,42 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         return _settle_wc_props(con, espn_event_id, props)
 
     # ── Is the game actually over? ──────────────────────────────────────────────
-    ufcstats_final = (
-        league == "ufc"
-        and _ufcstats_game_is_final(con, game_id, game["date"])
-    )
-    if game["final_home"] is None and not ufcstats_final:
-        try:
-            if league == "ufc":
-                competition = _ufc_scoreboard_competition(
-                    espn, game["date"], espn_event_id)
-                status_type = ((competition.get("status") or {}).get("type") or {})
-                result = {
-                    "state": status_type.get("state"),
-                    "completed": status_type.get("completed") is True,
-                }
-            else:
-                result = espn.game_result(league, espn_event_id)
-            if not result.get("completed"):
-                # A linked postponed game reaches this recurring fetch on every
-                # settlement pass. ESPN's explicit status text is sufficient to
-                # terminate that retry loop; state=post alone is not, because it
-                # also describes finals. Recording the durable publisher reason
-                # feeds the cancellation path already used at the top of this
-                # function and voids every still-open prop in this same pass.
-                reason = _publisher_cancellation_reason(result)
-                cancellation_columns = {
-                    "cancelled_at", "cancel_reason", "cancel_source"
-                }
-                if reason and cancellation_columns.issubset(game_columns):
-                    con.execute(
-                        "UPDATE prop_games SET cancelled_at=?, cancel_reason=?, "
-                        "cancel_source=? WHERE id=? AND cancelled_at IS NULL",
-                        (dt.datetime.now(dt.timezone.utc).isoformat(), reason,
-                         "espn", game_id),
-                    )
-                    con.commit()
-                    return _void_cancelled_game(con, game_id)
-                return _pending_result(
-                    con, game_id,
-                    msg=f"game {game_id}: not final yet (state={result['state']}, "
-                        f"completed={result.get('completed')})")
-            if league != "ufc":
+    if game["final_home"] is None:
+        snapshot = _latest_scoreboard_snapshot(con, league, espn_event_id)
+        if not snapshot:
+            return _pending_result(
+                con, game_id, msg=f"game {game_id}: no_scoreboard_snapshot")
+        snapshot_payload = snapshot["payload"]
+        result = {
+            "completed": snapshot_payload.get("completed") is True,
+            "status": snapshot_payload.get("status"),
+            "status_detail": snapshot_payload.get("status_detail"),
+        }
+        reason = _publisher_cancellation_reason(result)
+        cancellation_columns = {"cancelled_at", "cancel_reason", "cancel_source"}
+        if reason and cancellation_columns.issubset(game_columns):
+            con.execute(
+                "UPDATE prop_games SET cancelled_at=?, cancel_reason=?, "
+                "cancel_source=? WHERE id=? AND cancelled_at IS NULL",
+                (dt.datetime.now(dt.timezone.utc).isoformat(), reason,
+                 "espn", game_id),
+            )
+            con.commit()
+            return _void_cancelled_game(con, game_id)
+        if snapshot["state"] != "post":
+            return _pending_result(
+                con, game_id,
+                msg=f"game {game_id}: scoreboard snapshot is "
+                    f"{snapshot['state'] or 'unknown'}")
+        if league != "ufc":
+            summary_payload = stored_summary.load(con, league, espn_event_id)
+            home_score, away_score = _final_scores(
+                snapshot_payload, summary_payload)
+            if home_score is not None and away_score is not None:
                 con.execute(
                     "UPDATE prop_games SET final_home=?, final_away=? WHERE id=?",
-                    (result.get("home_score"), result.get("away_score"), game_id))
+                    (home_score, away_score, game_id))
                 con.commit()
-        except Exception as e:
-            return _pending_result(
-                con, game_id, errors=1,
-                error_msg=f"game {game_id}: ESPN pull failed: {e}")
 
     # ── MLB: use MLB Stats API for accurate TB/doubles/strikeouts ──
     if league == "mlb":
@@ -290,7 +320,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             con,
             game,
             props,
-            summary_loader=lambda: espn.summary(league, espn_event_id),
+            summary_loader=lambda: stored_summary.load(
+                con, league, espn_event_id),
         )
 
     # NCAAF grades the durable CFBD line first and falls back to the site
@@ -311,20 +342,13 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                     "errors": 0, "msg": f"game {game_id}: no unsettled props"}
         return _settle_ncaaf_props(
             con, game, props,
-            boxscore_loader=lambda: espn.boxscore(league, espn_event_id))
+            boxscore_loader=lambda: stored_summary.boxscore(
+                con, league, espn_event_id))
 
-    # Pull boxscore
-    try:
-        box = espn.boxscore(league, espn_event_id)
-    except Exception as e:
-        return _pending_result(
-            con, game_id, errors=1,
-            error_msg=f"game {game_id}: boxscore pull failed: {e}")
-
+    box = stored_summary.boxscore(con, league, espn_event_id)
     if not box:
         return _pending_result(
-            con, game_id, errors=1,
-            error_msg=f"game {game_id}: empty boxscore returned")
+            con, game_id, msg=f"game {game_id}: no_stored_summary")
 
     # Find unsettled props for this game
     props = con.execute("""

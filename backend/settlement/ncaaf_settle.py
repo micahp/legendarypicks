@@ -221,10 +221,10 @@ def _settle_ncaaf_props(con: sqlite3.Connection, game, props: list,
                 "pending": _unsettled_count(con, game["id"]), "errors": 1,
                 "error_msg": f"game {game['id']}: boxscore pull failed: {e}"}
     if not box:
-        _fail("error", "empty_boxscore_returned")
+        _fail("pending", "no_stored_summary")
         return {"settled": settled, "void": 0, "unmappable": 0,
-                "pending": _unsettled_count(con, game["id"]), "errors": 1,
-                "error_msg": f"game {game['id']}: empty boxscore returned"}
+                "pending": _unsettled_count(con, game["id"]), "errors": 0,
+                "msg": f"game {game['id']}: no_stored_summary"}
 
     settled_fb = unmappable = pending = 0
     for prop in unresolved:
