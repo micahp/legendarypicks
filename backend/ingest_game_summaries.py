@@ -14,7 +14,7 @@ from settlement.stored_summary import ensure_table
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-_SKIP_LEAGUES = ("atp", "wta", "wc", "mlb")
+_SKIP_LEAGUES = ("atp", "wta", "wc", "mlb", "ufc")   # ufc: ESPN 404s every summary; settles from scoreboard rows
 
 
 def _candidates(con: sqlite3.Connection):
