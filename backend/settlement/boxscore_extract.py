@@ -78,7 +78,8 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
             if category is not None:
                 if stats_name:
-                    if stats_name.lower().replace(" ", "_") not in category_names:
+                    if (category_norm != "statistics"
+                            and stats_name.lower().replace(" ", "_") not in category_names):
                         continue
                 else:
                     if category_norm in ("batting", "offensive"):
@@ -103,7 +104,7 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
             for athlete_entry in ([matched] if matched else []):
                 stats_list = athlete_entry.get("stats", [])
-                labels = stats_group.get("labels") or []
+                labels = stats_group.get("labels") or stats_group.get("names") or []
                 if isinstance(stats_list, list) and len(stats_list) > 0:
                     # ESPN's label casing varies by sport and feed: NFL
                     # publishes YDS while the established maps use Yds.

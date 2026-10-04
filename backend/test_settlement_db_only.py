@@ -267,6 +267,45 @@ def test_nhl_settlement_reads_published_skater_and_goalie_groups():
     ]
 
 
+def test_nba_settlement_reads_points_and_pra_from_published_names():
+    con = _settlement_database()
+    con.executescript("""
+        UPDATE prop_games SET league='nba' WHERE id=1;
+        UPDATE scoreboard_snapshots SET league='nba' WHERE game_id='event-1';
+        DELETE FROM props;
+        INSERT INTO props VALUES(1,1,'points',21.5,'over',1);
+        INSERT INTO props VALUES(2,1,'points_rebounds_assists',36.5,'over',1);
+    """)
+    payload = stored_summary.load(con, "nhl", "event-1")
+    payload["boxscore"] = {"players": [{
+        "team": {"abbreviation": "BOS"},
+        "statistics": [{
+            "names": ["MIN", "FG", "3PT", "REB", "AST", "PTS"],
+            "athletes": [{
+                "athlete": {"id": "123", "displayName": "Published Player"},
+                "stats": ["32", "8-14", "3-7", "9", "6", "22"],
+            }],
+        }],
+    }]}
+    con.execute(
+        "UPDATE game_summaries SET league='nba',payload=? "
+        "WHERE league='nhl' AND espn_event_id='event-1'",
+        (json.dumps(payload),),
+    )
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 2, "void": 0, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+    assert [tuple(row) for row in con.execute(
+        "SELECT prop_id,actual_value,hit FROM prop_results ORDER BY prop_id"
+    )] == [(1, 22.0, 1), (2, 37.0, 1)]
+
+    assert settlement.resolve_market("nba", "rebounds") is None
+    assert settlement.resolve_market("nba", "assists") is None
+    assert settlement.resolve_market("nba", "threes") is None
+
+
 def test_settlement_missing_summary_stays_pending_with_reason():
     con = _settlement_database(with_summary=False)
 
