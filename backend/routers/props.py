@@ -4,7 +4,9 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from prop_game_merge import fold_prop_game
+from settlement.boxscore_extract import _find_player_stat
 import league_membership
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -172,6 +174,107 @@ _SOCCER_NON_FOTMOB_HISTORY = frozenset(
     ("first_goal_scorer", "passes_attempted", "card_shown")
 )
 
+# NHL.com's durable player logs publish every reviewed market except faceoffs
+# won. They publish only faceoff percentage. ESPN's already-stored completed
+# summaries publish the count as FW, so that one chart reads those database
+# snapshots rather than deriving a count from a percentage.
+_NHL_SUMMARY_MARKETS = {"faceoffs_won": ("skaters", "FW")}
+
+
+def _nhl_summary_history(con, player, market):
+    mapping = _NHL_SUMMARY_MARKETS.get(market)
+    if not mapping:
+        return []
+    player_columns = {
+        str(row[1]) for row in con.execute("PRAGMA table_info(players)")
+    }
+    if "espn_id" not in player_columns:
+        return []
+    espn_row = con.execute(
+        "SELECT espn_id FROM players WHERE id=?", (player["id"],)
+    ).fetchone()
+    espn_id = str(espn_row["espn_id"] or "") if espn_row else ""
+    if not espn_id:
+        return []
+    has_summaries = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='game_summaries'"
+    ).fetchone()
+    if not has_summaries:
+        return []
+
+    category, stat_key = mapping
+    history = []
+    summaries = con.execute(
+        "SELECT espn_event_id,payload FROM game_summaries "
+        "WHERE league='nhl' AND completed=1"
+    ).fetchall()
+    for stored in summaries:
+        payload = json.loads(stored["payload"])
+        boxscore = payload.get("boxscore") or {}
+        value = _find_player_stat(
+            boxscore, player["name"], player["team"] or "",
+            category, stat_key, espn_id=espn_id,
+        )
+        if value is None:
+            continue
+
+        team = ""
+        for block in boxscore.get("players") or []:
+            found = any(
+                str((entry.get("athlete") or {}).get("id") or "") == espn_id
+                for group in block.get("statistics") or []
+                for entry in group.get("athletes") or []
+            )
+            if found:
+                team = str((block.get("team") or {}).get("abbreviation") or "")
+                break
+
+        competitions = (payload.get("header") or {}).get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        game_date = str(competition.get("date") or "")[:10]
+        competitors = competition.get("competitors") or []
+        mine = next(
+            (row for row in competitors
+             if str((row.get("team") or {}).get("abbreviation") or "").upper()
+             == team.upper()),
+            None,
+        )
+        opponent_row = next((row for row in competitors if row is not mine), None)
+        opponent = str(((opponent_row or {}).get("team") or {}).get("abbreviation") or "")
+        if not game_date or not team or mine is None or not opponent:
+            raise HTTPException(
+                status_code=500,
+                detail=("stored NHL summary {} has a stat for player {} but no "
+                        "complete game context").format(stored["espn_event_id"], player["id"]),
+            )
+        history.append({
+            "game_date": game_date,
+            "opponent": opponent,
+            "home_away": mine.get("homeAway"),
+            "val": value,
+        })
+    history.sort(key=lambda row: row["game_date"], reverse=True)
+    return history[:100]
+
+
+def _history_value(raw, league, market):
+    """Convert a published game-log cell to the market's numeric unit."""
+    if raw is None:
+        return None
+    if league == "nhl" and market == "time_on_ice":
+        try:
+            minutes, seconds = str(raw).split(":", 1)
+            minute_value, second_value = int(minutes), int(seconds)
+        except (TypeError, ValueError):
+            return None
+        if minute_value < 0 or second_value < 0 or second_value >= 60:
+            return None
+        return round(minute_value + second_value / 60.0, 3)
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
 
 @router.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
@@ -188,8 +291,10 @@ def prop_history(player_id: int = Query(...),
             "error": "market not published in approved FotMob history: {}".format(market),
             "games": [],
         }
-    stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
-    if not stat_key:
+    canonical_market = _base_market(market)
+    stat_key = _MARKET_STAT_KEY.get(league, {}).get(canonical_market)
+    summary_market = league == "nhl" and canonical_market in _NHL_SUMMARY_MARKETS
+    if not stat_key and not summary_market:
         return {"error": f"market not chartable from logs: {market}", "games": []}
 
     # A cross-border tournament's athletes keep their domestic logs, and the chart
@@ -274,7 +379,9 @@ def prop_history(player_id: int = Query(...),
             "SELECT 1 FROM sqlite_master WHERE type='table' "
             "AND name='player_game_logs_usopen'"
         ).fetchone() is not None
-        if league in ("atp", "wta") and has_usopen:
+        if summary_market:
+            rows = _nhl_summary_history(con, player, canonical_market)
+        elif league in ("atp", "wta") and has_usopen:
             tennis_value = f"json_extract(stats, '$.{stat_key}')"
             rows = con.execute(
                 f"""SELECT game_date, opponent, NULL AS home_away,
@@ -329,10 +436,13 @@ def prop_history(player_id: int = Query(...),
 
     games = []
     for r in rows:
-        try:
-            val = float(r["val"]) if r["val"] is not None else 0
-        except (ValueError, TypeError):
-            val = 0
+        val = _history_value(r["val"], league, canonical_market)
+        if val is None:
+            logger.warning(
+                "prop history skipped nonnumeric value player_id=%s league=%s market=%s date=%s",
+                player_id, league, canonical_market, r["game_date"],
+            )
+            continue
         hit = val >= line if side == "over" else val <= line
         games.append({
             "date": r["game_date"] or "",

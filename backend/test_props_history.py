@@ -87,9 +87,18 @@ class PropHistoryVenueTests(unittest.TestCase):
             " game_date, opponent, home_away, game_no, game_type, source)"
             " VALUES(?,?,?,?,?,?,?,?,?,?)",
             [
-                (1, "nba", 2026, json.dumps({"PTS": 24}), "2026-07-20", "OPP1", "home", 1, None, "espn"),
-                (1, "nba", 2026, json.dumps({"PTS": 18}), "2026-07-21", "OPP2", "away", 2, None, "espn"),
-                (1, "nba", 2026, json.dumps({"PTS": 21}), "2026-07-22", "OPP3", None, 3, None, "espn"),
+                (1, "nba", 2026, json.dumps({
+                    "PTS": 24, "REB": 8, "AST": 5, "3PM": 2,
+                    "BLK": 1, "STL": 2, "TO": 3,
+                }), "2026-07-20", "OPP1", "home", 1, None, "espn"),
+                (1, "nba", 2026, json.dumps({
+                    "PTS": 18, "REB": 7, "AST": 4, "3PM": 1,
+                    "BLK": 0, "STL": 1, "TO": 2,
+                }), "2026-07-21", "OPP2", "away", 2, None, "espn"),
+                (1, "nba", 2026, json.dumps({
+                    "PTS": 21, "REB": 9, "AST": 6, "3PM": 4,
+                    "BLK": 2, "STL": 3, "TO": 1,
+                }), "2026-07-22", "OPP3", None, 3, None, "espn"),
             ],
         )
         con.commit()
@@ -116,6 +125,160 @@ class PropHistoryVenueTests(unittest.TestCase):
             [g["opponent"] for g in result["games"]],
         )
         self.assertEqual([21, 18, 24], [g["value"] for g in result["games"]])
+
+    def test_every_requested_nba_market_reads_the_published_log_fields(self):
+        expected = {
+            "points": [21, 18, 24],
+            "rebounds": [9, 7, 8],
+            "assists": [6, 4, 5],
+            "threes": [4, 1, 2],
+            "blocks": [2, 0, 1],
+            "steals": [3, 1, 2],
+            "turnovers": [1, 2, 3],
+            "points_rebounds_assists": [36, 29, 37],
+        }
+        for market, values in expected.items():
+            result = props.prop_history(
+                player_id=1, market=market, line=0.5,
+                side="over", league="nba",
+            )
+            self.assertEqual(
+                values, [game["value"] for game in result["games"]], market
+            )
+
+    def test_nba_fantasy_points_stays_unmapped_without_a_published_formula(self):
+        result = props.prop_history(
+            player_id=1, market="fantasy_points", line=40.5,
+            side="over", league="nba",
+        )
+        self.assertEqual([], result["games"])
+        self.assertIn("not chartable", result["error"])
+
+
+class NhlPropHistoryTests(unittest.TestCase):
+    """NHL charts use durable logs, except FW from stored ESPN summaries."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(
+            prefix="props-history-nhl-", suffix=".db", delete=False
+        )
+        self.path = handle.name
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(self.path) and os.unlink(self.path))
+
+        con = sqlite3.connect(self.path)
+        con.executescript(
+            """
+            CREATE TABLE players(
+              id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+              position TEXT, espn_id TEXT
+            );
+            CREATE TABLE player_game_logs(
+              player_id INTEGER, league TEXT, season INTEGER, stats TEXT,
+              game_date TEXT, opponent TEXT, home_away TEXT, game_no INTEGER,
+              game_type TEXT, source TEXT
+            );
+            CREATE TABLE game_summaries(
+              league TEXT, espn_event_id TEXT, payload TEXT, state TEXT,
+              completed INTEGER, fetched_at TEXT, source TEXT
+            );
+            """
+        )
+        _provider_tables(con)
+        con.executemany(
+            "INSERT INTO players VALUES(?,?,?,?,?,?)",
+            [
+                (1, "Published Skater", "BOS", "nhl", "C", "101"),
+                (2, "Published Goalie", "BOS", "nhl", "G", "202"),
+            ],
+        )
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,"
+            " game_date,opponent,home_away,game_no,game_type,source)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "nhl", 2027, json.dumps({
+                    "goals": 1, "assists": 1, "points": 2, "shots": 4,
+                    "hits": 3, "blockedShots": 2, "toi": "20:30",
+                }), "2026-10-03", "NYR", "home", 2, "REG", "nhle.com"),
+                (1, "nhl", 2027, json.dumps({
+                    "goals": 0, "assists": 1, "points": 1, "shots": 2,
+                    "hits": 1, "blockedShots": 4, "toi": "18:15",
+                }), "2026-10-01", "MTL", "away", 1, "REG", "nhle.com"),
+                (2, "nhl", 2027, json.dumps({"saves": 31, "toi": "60:00"}),
+                 "2026-10-03", "NYR", "home", 2, "REG", "nhle.com"),
+                (2, "nhl", 2027, json.dumps({"saves": 25, "toi": "59:41"}),
+                 "2026-10-01", "MTL", "away", 1, "REG", "nhle.com"),
+            ],
+        )
+        for event_id, date, opponent, venue, faceoffs in (
+            ("event-2", "2026-10-03T23:00Z", "NYR", "home", 12),
+            ("event-1", "2026-10-01T23:00Z", "MTL", "away", 8),
+        ):
+            competitors = [
+                {"homeAway": venue, "team": {"abbreviation": "BOS"}},
+                {"homeAway": "away" if venue == "home" else "home",
+                 "team": {"abbreviation": opponent}},
+            ]
+            payload = {
+                "header": {"competitions": [{
+                    "date": date, "competitors": competitors,
+                }]},
+                "boxscore": {"players": [{
+                    "team": {"abbreviation": "BOS"},
+                    "statistics": [{
+                        "name": "forwards", "labels": ["G", "A", "FW"],
+                        "athletes": [{
+                            "athlete": {"id": "101", "displayName": "Published Skater"},
+                            "stats": ["1", "1", str(faceoffs)],
+                        }],
+                    }],
+                }]},
+            }
+            con.execute(
+                "INSERT INTO game_summaries VALUES(?,?,?,?,?,?,?)",
+                ("nhl", event_id, json.dumps(payload), "post", 1, date, "espn_summary"),
+            )
+        con.commit()
+        con.close()
+
+        def connection():
+            opened = sqlite3.connect(self.path)
+            opened.row_factory = sqlite3.Row
+            return opened
+
+        patcher = mock.patch.object(props, "_db", side_effect=connection)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _values(self, player_id, market):
+        result = props.prop_history(
+            player_id=player_id, market=market, line=0.5,
+            side="over", league="nhl",
+        )
+        self.assertNotIn("error", result)
+        return [game["value"] for game in result["games"]]
+
+    def test_counting_markets_read_durable_nhl_logs(self):
+        expected = {
+            "goals": [1, 0], "assists": [1, 1], "points": [2, 1],
+            "shots": [4, 2], "hits": [3, 1], "blocked_shots": [2, 4],
+        }
+        for market, values in expected.items():
+            self.assertEqual(values, self._values(1, market), market)
+        self.assertEqual([31, 25], self._values(2, "saves"))
+
+    def test_time_on_ice_is_converted_from_published_minutes_and_seconds(self):
+        self.assertEqual([20.5, 18.25], self._values(1, "time_on_ice"))
+
+    def test_faceoffs_won_reads_fw_from_stored_completed_summaries(self):
+        result = props.prop_history(
+            player_id=1, market="faceoffs_won", line=9.5,
+            side="over", league="nhl",
+        )
+        self.assertEqual([12.0, 8.0], [game["value"] for game in result["games"]])
+        self.assertEqual(["NYR", "MTL"], [game["opponent"] for game in result["games"]])
+        self.assertEqual([True, False], [game["hit"] for game in result["games"]])
 
 
 class UfcStatsPropHistoryTests(unittest.TestCase):

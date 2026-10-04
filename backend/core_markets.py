@@ -71,9 +71,15 @@ _MARKET_STAT_KEY = {
             "earned_runs": "earned_runs"},
     "nba": {"points": "PTS", "rebounds": "REB", "assists": "AST", "threes": "3PM",
             "steals": "STL", "blocks": "BLK", "turnovers": "TO",
-            "points_rebounds_assists": "PRA", "pra": "PRA"},
+            # ESPN publishes the three components on every box score. Keep the
+            # chart contract on those fields instead of requiring an ingest to
+            # precompute a second, competing PRA value.
+            "points_rebounds_assists": ["PTS", "REB", "AST"],
+            "pra": ["PTS", "REB", "AST"]},
     "nhl": {"goals": "goals", "assists": "assists", "points": "points",
-            "shots": "shots", "shots_on_goal": "shots"},
+            "shots": "shots", "shots_on_goal": "shots", "saves": "saves",
+            "hits": "hits", "blocked_shots": "blockedShots",
+            "time_on_ice": "toi"},
     # CORRECTED 2026-08-26: every key here named a field that does not exist.
     # The map said `receiving_yards -> receiving_yards`; NFL logs are written by
     # `nflverse_weekly` and store `rec_yds`. All eight markets resolved to 0 rows,
