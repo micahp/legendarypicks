@@ -359,9 +359,11 @@ JOBS: List[Dict[str, object]] = [
     },
 ]
 
-# PAUSED 2026-10-04 by Micah: settlement is off until ESPN stops refusing this box (game_summaries back on 05:55 so box scores are stored meanwhile). Delete this
-# line to turn it back on; the job definition above is unchanged.
-PAUSED = {"settlement"}
+# Jobs switched off by hand: put an id here and it drops out of every run. Settlement was paused
+# here 05:43-06:10 CDT on 2026-10-04 while ESPN refused this box; it now reads stored box scores
+# only (game_summaries fetches each once), re-settled NFL game 8834 identically (2,370 of 2,370)
+# with zero ESPN calls, and is back on.
+PAUSED = set()
 JOBS = [job for job in JOBS if job["id"] not in PAUSED]
 
 _REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
