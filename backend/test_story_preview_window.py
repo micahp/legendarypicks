@@ -44,6 +44,8 @@ def _db(tmp_path):
     con.execute("CREATE TABLE players(id INT, name TEXT)")
     con.execute("CREATE TABLE props(id INT, game_id INT, player_id INT, market TEXT, side TEXT, line REAL)")
     con.execute("CREATE TABLE prop_games(id INT, league TEXT, espn_event_id TEXT)")
+    con.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, "
+                "payload TEXT, fetched_at TEXT)")
     con.commit()
     con.close()
     return path
@@ -206,3 +208,63 @@ def test_team_missing_from_the_table_gets_no_invented_record(harness):
     _gen(_soon())
     g = seen["grounding"][-1]
     assert "None-None" not in g and "TOR: no published record" in g
+
+
+def test_finished_nfl_story_uses_postgame_scoreboard_record(harness, monkeypatch):
+    import json
+    import espn_client as espn
+    import matchup_context
+    path, seen = harness
+    con = _open(path)
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES (?,?,?,?,?)",
+        ("nfl", "401872967", "post", json.dumps({
+            "completed": True,
+            "away": {"abbrev": "DAL", "name": "Dallas Cowboys", "record": "2-2"},
+            "home": {"abbrev": "HOU", "name": "Houston Texans", "record": "0-4"},
+        }), "2026-10-04T20:14:00Z"),
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setattr(espn, "game_result", lambda lg, gid: {
+        "state": "post", "home": "HOU", "winner": "DAL",
+        "scores": {"DAL": 34.0, "HOU": 30.0}})
+    monkeypatch.setattr(espn, "summary", lambda lg, gid: {
+        "header": {"season": {"year": 2026, "type": 2,
+                                "name": "2026 Regular Season"}}})
+    monkeypatch.setattr(espn, "team_strength_standings", lambda lg, season=None: {
+        "season": 2026, "teams": [
+            {"abbrev": "DAL", "name": "Dallas Cowboys", "wins": 1, "losses": 2,
+             "win_pct": .333, "streak": "L1", "last10": "1-2", "differential": -2},
+            {"abbrev": "HOU", "name": "Houston Texans", "wins": 0, "losses": 3,
+             "win_pct": 0, "streak": "L3", "last10": "0-3", "differential": -4},
+        ]})
+    monkeypatch.setattr(matchup_context, "context_lines", lambda *a, **k: [])
+
+    out = cs.generate_game_story(
+        "nfl", "401872967", refresh=True, home="HOU", away="DAL",
+        state="post", start_time="2026-10-04T17:00:00Z")
+    grounding = seen["grounding"][-1]
+    assert out["story"] == "STORY"
+    assert "Dallas Cowboys (DAL): post-game record 2-2" in grounding
+    assert "Houston Texans (HOU): post-game record 0-4" in grounding
+    assert "0-3" not in grounding and "1-2" not in grounding
+    assert "quality rank" not in grounding
+
+
+def test_post_scoreboard_row_must_be_completed(harness):
+    import json
+    path, _ = harness
+    con = _open(path)
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES (?,?,?,?,?)",
+        ("nfl", "postponed", "post", json.dumps({
+            "completed": False,
+            "away": {"abbrev": "DAL", "record": "2-2"},
+            "home": {"abbrev": "HOU", "record": "0-4"},
+        }), "2026-10-04T20:14:00Z"),
+    )
+    con.commit()
+    con.close()
+
+    assert cs._finished_scoreboard_records("nfl", "postponed") == {}

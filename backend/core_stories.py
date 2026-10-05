@@ -202,6 +202,48 @@ def _logs_predate_season(game_season, newest_log_season) -> bool:
             and newest_log_season < game_season)
 
 
+_PUBLISHED_RECORD = re.compile(r"^\d+-\d+(?:-\d+)?$")
+
+
+def _finished_scoreboard_records(lg: str, game_id: str):
+    """Published post-game records from the completed scoreboard row, keyed by abbrev.
+
+    Standings are cached for 15 minutes and can still describe the pregame table
+    immediately after a final. The game's scoreboard row is refreshed through the
+    finish and publishes each side's record including that result.
+    """
+    with closing(_db()) as con:
+        if not con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' "
+                "AND name='scoreboard_snapshots'").fetchone():
+            return {}
+        row = con.execute(
+            "SELECT state,payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg.lower(), str(game_id)),
+        ).fetchone()
+    if not row or row["state"] != "post":
+        return {}
+    try:
+        payload = (json.loads(row["payload"])
+                   if isinstance(row["payload"], str) else row["payload"])
+    except (TypeError, ValueError):
+        return {}
+    if not isinstance(payload, dict) or payload.get("completed") is not True:
+        return {}
+    records = {}
+    for side in ("away", "home"):
+        team = payload.get(side) or {}
+        abbrev = str(team.get("abbrev") or "").strip()
+        record = str(team.get("record") or "").strip()
+        if abbrev and _PUBLISHED_RECORD.fullmatch(record):
+            records[abbrev] = {
+                "record": record,
+                "name": team.get("name") or abbrev,
+            }
+    return records
+
+
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                         home: str = None, away: str = None,
                         state: str = None, start_time: str = None) -> dict:
@@ -290,6 +332,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     game_season = _game_season_year(lg, game_id)
     season_type = _game_season_type(lg, game_id)
     preseason = season_type == 1
+    final_records = (_finished_scoreboard_records(lg, game_id)
+                     if finished_now and not preseason else {})
     # Records, streak, last-10 and rank are only facts about THIS game if the standings are
     # from this game's season. Before the first game they are last season's.
     try:
@@ -311,6 +355,12 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     _rank = {} if records_stale else {r["abbrev"]: i + 1 for i, r in enumerate(strength_rows)}
 
     def facts(ab):
+        if finished_now and not preseason:
+            published = final_records.get(ab)
+            if published:
+                return (f"{published['name']} ({ab}): post-game record "
+                        f"{published['record']}.")
+            return f"{ab}: no published post-game record (do not cite one)."
         if records_stale:
             return f"{ab}: no games played yet this season (no record to cite)."
         if ab not in smap:
