@@ -83,4 +83,43 @@ def backup_database(
                 integrity, backup_path
             )
         )
+    prune_backups(db_path, safe_label, keep=BACKUP_KEEP)
     return backup_path
+
+
+# 2026-10-05: nothing ever deleted these. The UFC roster refresh alone left one full
+# 0.4 GB copy per run, and 171 old backups (51 GB) had piled up by October 5.
+BACKUP_KEEP = 3
+
+
+def prune_backups(db_path: str, safe_label: str, keep: int = BACKUP_KEEP) -> list:
+    """Delete all but the newest `keep` backups for this exact label.
+
+    Matches `<db>.bak-premigrate-<label>-YYYYMMDD-HHMMSS` exactly, so the label
+    `ufc` never touches `ufc-roster` backups. Runs only after the new backup has
+    passed its integrity check, so the newest copy is always a good one. A failed
+    delete raises: a prune that silently stops is how 51 GB built up.
+    """
+    if keep < 1:
+        raise ValueError("keep must be at least 1")
+    base = os.path.abspath(db_path)
+    folder, name = os.path.split(base)
+    pattern = re.compile(
+        r"^{}\.bak-premigrate-{}-(\d{{8}}-\d{{6}})$".format(
+            re.escape(name), re.escape(safe_label)
+        )
+    )
+    found = sorted(
+        (m.group(1), entry)
+        for entry in os.listdir(folder)
+        for m in [pattern.match(entry)]
+        if m
+    )
+    removed = []
+    for _, entry in found[:-keep]:
+        for suffix in ("", "-wal", "-shm"):
+            path = os.path.join(folder, entry + suffix)
+            if os.path.exists(path):
+                os.remove(path)
+                removed.append(path)
+    return removed

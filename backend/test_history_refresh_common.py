@@ -75,6 +75,35 @@ class HistoryRefreshBackupTests(unittest.TestCase):
             finally:
                 writer.close()
 
+    def test_keeps_newest_three_backups_per_label_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = os.path.join(directory, "picks.db")
+            self._create_database(db_path).close()
+            base = os.path.abspath(db_path)
+            # Older backups of this label, a WAL side file, and a label that shares a prefix.
+            for stamp in ("20260701-000000", "20260702-000000", "20260703-000000"):
+                open("{}.bak-premigrate-ufc-{}".format(base, stamp), "w").close()
+            open("{}.bak-premigrate-ufc-20260701-000000-wal".format(base), "w").close()
+            other = "{}.bak-premigrate-ufc-roster-20260601-000000".format(base)
+            open(other, "w").close()
+
+            newest = common.backup_database(db_path, "ufc", now=self.NOW)
+
+            left = sorted(f for f in os.listdir(directory) if ".bak-premigrate-ufc-2" in f)
+            self.assertEqual(
+                [os.path.basename(p) for p in sorted([
+                    "{}.bak-premigrate-ufc-20260702-000000".format(base),
+                    "{}.bak-premigrate-ufc-20260703-000000".format(base),
+                    newest,
+                ])],
+                left,
+            )
+            self.assertTrue(os.path.exists(other), "a different label must never be pruned")
+
+    def test_prune_refuses_keep_below_one(self):
+        with self.assertRaises(ValueError):
+            common.prune_backups("/tmp/x.db", "ufc", keep=0)
+
     def test_refuses_to_overwrite_existing_backup(self):
         with tempfile.TemporaryDirectory(prefix="history-backup-test-") as temp_dir:
             db_path = os.path.join(temp_dir, "picks.db")
