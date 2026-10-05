@@ -385,7 +385,8 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                 box, prop["player_name"], prop["player_team"],
                 [component[0] for component in components],
                 [component[1] for component in components],
-                espn_id=prop["espn_id"], missing_as_zero=league == "ncaaf")
+                espn_id=prop["espn_id"],
+                missing_as_zero=league in ("ncaaf", "nfl"))
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
@@ -396,7 +397,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         # independently proves the same stable athlete appeared. A player
         # absent from the whole boxscore remains pending instead of turning a
         # possible DNP into a losing over/winning under.
-        if (actual is None and league == "ncaaf"
+        if (actual is None and league in ("ncaaf", "nfl")
                 and _player_appeared(
                     box, prop["player_name"], prop["player_team"],
                     espn_id=prop["espn_id"])):

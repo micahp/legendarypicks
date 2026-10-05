@@ -48,12 +48,24 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     # ── NFL ──
     ("nfl", "passing_yards"): ("passing", "Yds"),
     ("nfl", "passing_tds"):   ("passing", "TD"),
+    ("nfl", "passing_touchdowns"): ("passing", "TD"),
+    ("nfl", "interceptions_thrown"): ("passing", "INT"),
+    ("nfl", "pass_completions"): ("passing", "C/ATT:made"),
+    ("nfl", "pass_attempts"):    ("passing", "C/ATT:attempted"),
+    ("nfl", "total_passing_attempts"): ("passing", "C/ATT:attempted"),
     ("nfl", "rushing_yards"): ("rushing", "Yds"),
+    ("nfl", "rush_attempts"):  ("rushing", "CAR"),
+    ("nfl", "total_rush_attempts"): ("rushing", "CAR"),
+    ("nfl", "longest_rushing_attempt"): ("rushing", "LONG"),
     ("nfl", "receiving_yards"):("receiving", "Yds"),
     ("nfl", "receptions"):    ("receiving", "Rec"),
+    ("nfl", "longest_reception"): ("receiving", "LONG"),
+    ("nfl", "targets"):       ("receiving", "TGTS"),
     ("nfl", "tackles"):       ("defensive", "Tkl"),
-    ("nfl", "sacks"):         ("defensive", "Sk"),
+    ("nfl", "sacks"):         ("defensive", "SACKS"),
     ("nfl", "field_goals_made"):("kicking", "FG"),
+    ("nfl", "kicking_points"): ("kicking", "PTS"),
+    ("nfl", "total_kicking_points"): ("kicking", "PTS"),
     # ── NCAAF ──
     # College football publishes the same site-boxscore groups as NFL, but the
     # RotoWire relay uses a slightly different market vocabulary. C/ATT is one
@@ -104,6 +116,18 @@ COMPOUND_MARKET_STAT = {
         ("rushing", "TD"), ("receiving", "TD"),
     ),
     ("ncaaf", "total_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+        ("kickReturns", "TD"), ("puntReturns", "TD"),
+        ("defensive", "TD"),
+    ),
+    ("nfl", "passing_rushing_yards"): (
+        ("passing", "YDS"), ("rushing", "YDS"),
+    ),
+    ("nfl", "rushing_receiving_yards"): (
+        ("rushing", "YDS"), ("receiving", "YDS"),
+    ),
+    # A player touchdown is a score credited to the player, not a passing TD.
+    ("nfl", "total_touchdowns"): (
         ("rushing", "TD"), ("receiving", "TD"),
         ("kickReturns", "TD"), ("puntReturns", "TD"),
         ("defensive", "TD"),
