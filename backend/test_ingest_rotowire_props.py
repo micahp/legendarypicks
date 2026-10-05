@@ -1009,6 +1009,7 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
         "CFB": "CFB_GAME_MARKETS",
         "MLB": "MLB_GAME_MARKETS",
         "NHL": "NHL_GAME_MARKETS",
+        "NBA": "NBA_GAME_MARKETS",
     }
 
     def _published(self, sport):

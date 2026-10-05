@@ -100,6 +100,9 @@ LEAGUES = {
     # normalized into ESPN's canonical vocabulary by the reviewed aliases.
     "nhl": {"sport": "NHL", "kind": "fixture_scoreboard",
             "aliases": TEAM_CODE_ALIASES.get("nhl", {})},
+    # 2026-10-05: the relay's first NBA Game props (preseason Points, market 47).
+    "nba": {"sport": "NBA", "kind": "fixture_scoreboard",
+            "aliases": TEAM_CODE_ALIASES.get("nba", {})},
     # College teams arrive as school names while our spine uses ESPN codes.  Resolve
     # them only through the durable ESPN scoreboard and require the exact scheduled
     # fixture before creating a prop game.  The relay also carries next week's board;
@@ -277,6 +280,11 @@ NHL_GAME_MARKETS = {
     # 95 Power Play Points is outside the reviewed market set and remains
     # reported as unmapped rather than entering a market we cannot settle.
 }
+NBA_GAME_MARKETS = {
+    # Preseason boards carry Points (and Points + Rebounds + Assists); the regular season
+    # adds the rest. Only what the relay has actually shipped is mapped.
+    47: ("Points", "points"),
+}
 MARKETS = {
     "nfl": NFL_GAME_MARKETS,
     "ncaaf": CFB_GAME_MARKETS,
@@ -284,6 +292,7 @@ MARKETS = {
     "mls": SOCCER_GAME_MARKETS,
     "lcup": SOCCER_GAME_MARKETS,
     "nhl": NHL_GAME_MARKETS,
+    "nba": NBA_GAME_MARKETS,
 }
 
 _SUFFIXES = {"jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"}
