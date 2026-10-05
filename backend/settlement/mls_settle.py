@@ -27,6 +27,7 @@ _MLS_ROSTER_MARKETS = {
 _MLS_ROSTER_SUM_MARKETS = {
     "card_shown": ("yellow_cards", "red_cards"),
     "goal_or_assist": ("goals", "assists"),
+    "goals_assists": ("goals", "assists"),
 }
 
 _MLS_EVENT_MARKETS = {"first_goal_scorer"}

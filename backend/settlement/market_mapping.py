@@ -96,6 +96,8 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("nhl", "time_on_ice"):   ("skaters", "TOI:minutes"),
     ("nhl", "blocked_shots"): ("skaters", "BS"),
     ("nhl", "saves"):         ("goalies", "SV"),
+    ("nhl", "goals_allowed"): ("goalies", "GA"),
+    ("nhl", "plus_minus"):    ("skaters", "+/-"),
 }
 
 

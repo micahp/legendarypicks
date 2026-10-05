@@ -79,7 +79,8 @@ _MARKET_STAT_KEY = {
     "nhl": {"goals": "goals", "assists": "assists", "points": "points",
             "shots": "shots", "shots_on_goal": "shots", "saves": "saves",
             "hits": "hits", "blocked_shots": "blockedShots",
-            "time_on_ice": "toi"},
+            "time_on_ice": "toi", "goals_allowed": "goalsAgainst",
+            "plus_minus": "plusMinus"},
     # CORRECTED 2026-08-26: every key here named a field that does not exist.
     # The map said `receiving_yards -> receiving_yards`; NFL logs are written by
     # `nflverse_weekly` and store `rec_yds`. All eight markets resolved to 0 rows,
@@ -142,7 +143,7 @@ _MARKET_STAT_KEY = {
             # ligamx; this map had simply never been extended past the five
             # markets it launched with. goal_or_assist is COMPOUND -- the chart
             # sums the fields -- so it needs no stored column.
-            "goal_or_assist": ["goals", "assists"],
+            "goal_or_assist": ["goals", "assists"], "goals_assists": ["goals", "assists"],
             "fouls_committed": "fouls_committed",
             # Goalkeeper markets. `saves` is on 4,516 MLS rows and 86 board
             # rows were rendering "No history" against it; the market has been
@@ -225,7 +226,7 @@ _MARKET_STAT_KEY = {
     # one competition's props, two league labels reaching this table.
     "ligamx": {"goals": "goals", "assists": "assists", "shots": "shots",
                "shots_on_target": "sot", "shots_on_goal": "sot",
-               "goal_or_assist": ["goals", "assists"],
+               "goal_or_assist": ["goals", "assists"], "goals_assists": ["goals", "assists"],
                "fouls_committed": "fouls_committed",
                "saves": "saves", "goals_allowed": "goals_conceded",
                "card_shown": ["yellow_cards", "red_cards"],
@@ -247,7 +248,7 @@ _MARKET_STAT_KEY = {
              "first_goal_scorer": "first_goal"},
     "lcup": {"goals": "goals", "assists": "assists", "shots": "shots",
              "shots_on_target": "sot", "shots_on_goal": "sot",
-             "goal_or_assist": ["goals", "assists"],
+             "goal_or_assist": ["goals", "assists"], "goals_assists": ["goals", "assists"],
              "fouls_committed": "fouls_committed",
              "saves": "saves", "goals_allowed": "goals_conceded",
              "card_shown": ["yellow_cards", "red_cards"],

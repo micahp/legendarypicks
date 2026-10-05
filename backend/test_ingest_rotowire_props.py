@@ -388,6 +388,9 @@ class NhlUsesDurableScoreboardFixtures(unittest.TestCase):
         88: "faceoffs_won",
         89: "blocked_shots",
         90: "time_on_ice",
+        85: "goals_allowed",
+        86: "saves",
+        92: "plus_minus",
     }
 
     def setUp(self):
@@ -909,7 +912,9 @@ class TheSoccerCatalogueIsThePublishersNotOurs(unittest.TestCase):
     """
 
     EXPECTED = {
+        143: "goals_assists",
         147: "chances_created",
+        150: "goals",
         148: "fouls_committed",
         151: "goals_allowed",
         152: "shots_on_target",
@@ -980,9 +985,10 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
     # downstream could settle them, so they are refused on purpose.
     DELIBERATELY_ABSENT = {
         "Soccer": {160},
-        "NFL": {130},
+        # 129 and 479 first shipped 2026-10-05: Fantasy Score again, no published formula.
+        "NFL": {130, 129, 479},
         "CFB": {138, 139},
-        "MLB": {236, 237, 300},
+        "MLB": {236, 237, 300, 480},  # 480 first shipped 2026-10-05: Fantasy Score
         "NHL": {95},
     }
     # NOT deliberate -- markets the relay publishes that we do not yet take. This
@@ -992,6 +998,10 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
     # Singles 719, Stolen Bases 138, Batter Strikeouts 7, Wins (pitcher) low.
     KNOWN_GAPS = {
         "MLB": {215, 223, 225, 227},
+        # First shipped 2026-10-05: 1 Assisted Tackles, 27 Solo Tackles, 28 Tackles +
+        # Assists (defensive box-score lines not yet settled for NFL), 2 Completion
+        # Percentage (a ratio, no settlement mapping yet).
+        "NFL": {1, 2, 27, 28},
     }
     CATALOGUES = {
         "Soccer": "SOCCER_GAME_MARKETS",

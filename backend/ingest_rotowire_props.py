@@ -213,6 +213,11 @@ CFB_GAME_MARKETS = {
     # scoring formula, so they remain reported and unavailable for settlement.
 }
 SOCCER_GAME_MARKETS = {
+    # 143 and 150 first shipped in the 2026-10-05 relay payload. Both settle from stored
+    # MLS logs: Goals from `goals`, Goals + Assists as the sum (a numeric line, not the
+    # yes/no `goal_or_assist`: "over 1.5" and "to record one" are different questions).
+    143: ("Goals + Assists", "goals_assists"),
+    150: ("Goals", "goals"),
     147: ("Chances Created", "chances_created"),
     # 148, 156 and 158 were dropped silently until 2026-08-25. The publisher's own
     # catalogue carries twelve Soccer Game markets across the seven archived days and
@@ -264,6 +269,11 @@ NHL_GAME_MARKETS = {
     88: ("Faceoffs Won", "faceoffs_won"),
     89: ("Blocked Shots", "blocked_shots"),
     90: ("Time on Ice", "time_on_ice"),
+    # First shipped 2026-10-05. Settled from the stored ESPN box score's published
+    # fields: goalies SV and GA, skaters +/- (ESPN's `SOG` is shootout goals, not this).
+    85: ("Goals Allowed", "goals_allowed"),
+    86: ("Goalie Saves", "saves"),
+    92: ("Plus Minus", "plus_minus"),
     # 95 Power Play Points is outside the reviewed market set and remains
     # reported as unmapped rather than entering a market we cannot settle.
 }
