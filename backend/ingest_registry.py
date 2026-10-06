@@ -85,6 +85,7 @@ JOBS: List[Dict[str, object]] = [
                 "date_column": "game_date",
                 "where": "league = 'mls'",
                 "stale_hours": 48,
+                "published": {"league": "mls", "publisher": "fotmob"},
                 "label": "mls appearances (any source)",
             },
             {
@@ -92,6 +93,7 @@ JOBS: List[Dict[str, object]] = [
                 "date_column": "game_date",
                 "where": "league = 'lcup'",
                 "stale_hours": 168,
+                "published": {"league": "lcup", "publisher": "fotmob"},
                 "label": "leagues cup appearances",
             },
         ],
@@ -296,6 +298,7 @@ JOBS: List[Dict[str, object]] = [
             "date_column": "game_date",
             "where": "league = 'mls'",
             "stale_hours": 48,
+            "published": {"league": "mls", "publisher": "fotmob"},
             "label": "mls appearances (fotmob)",
         }],
     },

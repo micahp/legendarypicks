@@ -255,6 +255,30 @@ def already_held(con, league, season, match_id):
     return bool(row and row[0])
 
 
+def record_published_schedule(con, league, finished):
+    """Store the newest finished fixture FotMob publishes for this league, and when we asked.
+
+    monitor_ingest_freshness compares our newest appearance row against this instead of
+    the wall clock alone. On 2026-10-06 it alerted every hour that MLS was 101h stale and
+    Leagues Cup 701h stale, while FotMob's own fixtures list said MLS last played 10-02
+    (international break, next match 10-07) and Leagues Cup finished 09-07: we held both.
+    An alarm that fires through every break and off-season teaches people to ignore it.
+    """
+    dates = [str((m.get("status") or {}).get("utcTime") or "")[:10] for m in finished]
+    dates = [d for d in dates if d]
+    con.execute("CREATE TABLE IF NOT EXISTS publisher_schedule("
+                "league TEXT NOT NULL, publisher TEXT NOT NULL, newest_finished TEXT,"
+                " finished_count INTEGER NOT NULL, checked_at TEXT NOT NULL,"
+                " PRIMARY KEY (league, publisher))")
+    con.execute("INSERT INTO publisher_schedule VALUES (?, 'fotmob', ?, ?, ?)"
+                " ON CONFLICT(league, publisher) DO UPDATE SET"
+                " newest_finished=excluded.newest_finished,"
+                " finished_count=excluded.finished_count, checked_at=excluded.checked_at",
+                (league, max(dates) if dates else None, len(finished),
+                 time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())))
+    con.commit()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--league", default="ligamx", choices=sorted(LEAGUES))
@@ -277,6 +301,8 @@ def main(argv=None):
     fixtures = _get(f"https://www.fotmob.com/api/data/leagues?id={league_id}")
     finished = [m for m in fixtures["fixtures"]["allMatches"]
                 if (m.get("status") or {}).get("finished")]
+    if not args.dry_run:
+        record_published_schedule(con, args.league, finished)
     if args.limit:
         finished = finished[-args.limit:]
     print(f"{len(finished)} finished fixtures, 1 request each")

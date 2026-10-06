@@ -181,5 +181,62 @@ class TheMonitorFailsClosed(unittest.TestCase):
                          dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc))
 
 
+class StaleMeansBehindThePublisher(unittest.TestCase):
+    """2026-10-06: MLS on an international break and Leagues Cup finished alerted hourly
+    as 101h and 701h stale while we held every match FotMob had finished."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.db = os.path.join(self.dir, "t.db")
+        con = sqlite3.connect(self.db)
+        con.execute("CREATE TABLE player_game_logs(league TEXT, game_date TEXT)")
+        con.execute("INSERT INTO player_game_logs VALUES('mls', '2026-10-02T00:00:00+00:00')")
+        con.execute("CREATE TABLE publisher_schedule(league TEXT, publisher TEXT,"
+                    " newest_finished TEXT, finished_count INTEGER, checked_at TEXT)")
+        con.commit()
+        con.close()
+        self.now = dt.datetime(2026, 10, 6, 6, 0, tzinfo=dt.timezone.utc)
+        self.target = {"job": "j", "label": "mls", "table": "player_game_logs",
+                       "date_column": "game_date", "where": "league = 'mls'",
+                       "stale_hours": 48,
+                       "published": {"league": "mls", "publisher": "fotmob"}}
+
+    def _publish(self, newest, checked):
+        con = sqlite3.connect(self.db)
+        con.execute("INSERT INTO publisher_schedule VALUES('mls', 'fotmob', ?, 404, ?)",
+                    (newest, checked))
+        con.commit()
+        con.close()
+
+    def _levels(self):
+        return [lvl for lvl, _ in monitor.check("test", self.db, [self.target], now=self.now)]
+
+    def test_a_break_with_everything_held_passes(self):
+        self._publish("2026-10-02", "2026-10-06T05:40:00+00:00")
+        self.assertEqual(self._levels(), ["OK"])
+
+    def test_behind_the_publisher_past_the_threshold_alerts(self):
+        self._publish("2026-10-03", "2026-10-06T05:40:00+00:00")
+        self.assertEqual(self._levels(), ["ALERT"])
+
+    def test_behind_the_publisher_inside_the_threshold_passes(self):
+        self._publish("2026-10-05", "2026-10-06T05:40:00+00:00")
+        self.assertEqual(self._levels(), ["OK"])
+
+    def test_a_dead_ingest_cannot_read_as_caught_up(self):
+        self._publish("2026-10-02", "2026-10-03T05:40:00+00:00")
+        self.assertEqual(self._levels(), ["ALERT"])
+
+    def test_no_recorded_schedule_alerts(self):
+        self.assertEqual(self._levels(), ["ALERT"])
+
+    def test_a_missing_schedule_table_alerts(self):
+        con = sqlite3.connect(self.db)
+        con.execute("DROP TABLE publisher_schedule")
+        con.commit()
+        con.close()
+        self.assertEqual(self._levels(), ["ALERT"])
+
+
 if __name__ == "__main__":
     unittest.main()

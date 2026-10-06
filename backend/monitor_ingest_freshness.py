@@ -58,6 +58,46 @@ def _newest(con, target):
     return _parse_when(con.execute(sql).fetchone()[0])
 
 
+def _against_publisher(con, env, label, target, newest, now):
+    """Stale means behind what the publisher has finished, not merely old.
+
+    A league on a break or out of season publishes nothing new, so the wall clock alone
+    alerts on a table that holds everything there is. The publisher's own schedule, as
+    the ingest last recorded it, says what there is. The check itself must be recent
+    too, or a dead ingest would freeze both numbers and read as caught up.
+    """
+    pub = target["published"]
+    threshold = target["stale_hours"]
+    try:
+        row = con.execute("SELECT newest_finished, checked_at FROM publisher_schedule"
+                          " WHERE league = ? AND publisher = ?",
+                          (pub["league"], pub["publisher"])).fetchone()
+    except sqlite3.Error as exc:
+        return ("ALERT", "[{}] {}: cannot read publisher_schedule ({})".format(env, label, exc))
+    if not row or not row[1]:
+        return ("ALERT", "[{}] {}: {} {} schedule never recorded".format(
+            env, label, pub["publisher"], pub["league"]))
+    checked = _parse_when(row[1])
+    checked_h = (now - checked).total_seconds() / 3600.0
+    if checked_h > threshold:
+        return ("ALERT", "[{}] {} STALE: {} {} schedule last checked {:.1f}h ago "
+                "(threshold {}h)".format(env, label, pub["publisher"], pub["league"],
+                                         checked_h, threshold))
+    published = _parse_when(row[0]) if row[0] else None
+    if published is None or newest.date() >= published.date():
+        return ("OK", "[{}] {} caught up: newest {} {}, {} newest finished {} "
+                "(checked {:.1f}h ago)".format(env, label, target["date_column"],
+                                               newest.date(), pub["publisher"],
+                                               published.date() if published else None,
+                                               checked_h))
+    behind_h = (now - published).total_seconds() / 3600.0
+    level = "ALERT" if behind_h > threshold else "OK"
+    return (level, "[{}] {} {}: newest {} {}, {} finished {} {:.1f}h ago "
+            "(threshold {}h)".format(env, label, "STALE" if level == "ALERT" else "behind",
+                                     target["date_column"], newest.date(), pub["publisher"],
+                                     published.date(), behind_h, threshold))
+
+
 def check(env, db_path, targets, now=None):
     """Return a list of (level, message). level is OK, INFO or ALERT."""
     now = now or dt.datetime.now(dt.timezone.utc)
@@ -85,6 +125,9 @@ def check(env, db_path, targets, now=None):
                 continue
             age_h = (now - newest).total_seconds() / 3600.0
             threshold = target["stale_hours"]
+            if target.get("published"):
+                out.append(_against_publisher(con, env, label, target, newest, now))
+                continue
             if age_h > threshold:
                 out.append(("ALERT", "[{}] {} STALE: newest {} is {}, {:.1f}h old "
                             "(threshold {}h)".format(env, label, target["date_column"],
