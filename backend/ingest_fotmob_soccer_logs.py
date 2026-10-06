@@ -34,8 +34,10 @@ Usage:
 """
 import argparse
 import collections
+import datetime as dt
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -48,8 +50,22 @@ DB_PATH = os.environ.get("LP_DB_PATH", "data/picks.dev.db")
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
-# FotMob league ids, verified against its own allLeagues document.
-LEAGUES = {"ligamx": (230, 2026), "lcup": (10043, 2026), "mls": (130, 2026)}
+# FotMob league ids. The international ids were verified against FotMob's own
+# league documents on 2026-10-06: details.name, details.gender and
+# details.selectedSeason, not inferred from a URL slug. UEFA publishes four
+# Nations League divisions; LegendaryPicks presents them as one competition.
+LEAGUES = {
+    "ligamx": (230, 2026),
+    "lcup": (10043, 2026),
+    "mls": (130, 2026),
+    "unl": (9806, 2026),
+    "friendlies": (114, 2026),
+}
+LEAGUE_IDS = {
+    league: (league_id,) for league, (league_id, _season) in LEAGUES.items()
+}
+LEAGUE_IDS["unl"] = (9806, 9807, 9808, 9809)
+NATIONAL_TEAM_LEAGUES = frozenset(("unl", "friendlies"))
 
 # FotMob's own stat KEY -> the vocabulary player_game_logs already uses.
 # `passes_attempted` is deliberately absent: FotMob publishes accurate passes,
@@ -191,8 +207,45 @@ def resolve(index, name, allowed_player_ids=None):
     return matches[0] if len(matches) == 1 else None
 
 
+def fotmob_id_spine(con):
+    """FotMob player id -> canonical player, across every competition binding.
+
+    A national-team appearance must not resolve through ``players.league`` or a
+    display name: the same person still belongs to their club spine, and two
+    different people can share that name. FotMob's player id is stable across
+    club and country. Duplicate bindings to the same canonical row collapse;
+    one source id bound to two canonical rows remains ambiguous and misses.
+    """
+    index = collections.defaultdict(dict)
+    for row in con.execute(
+            "SELECT s.source_player_key,s.player_id,p.name,p.team,p.espn_id "
+            "FROM player_source_ids s JOIN players p ON p.id=s.player_id "
+            "WHERE s.source='fotmob'"):
+        index[str(row[0])][int(row[1])] = {
+            "id": row[1], "name": row[2], "team": row[3], "espn_id": row[4]
+        }
+    return {key: list(by_player.values()) for key, by_player in index.items()}
+
+
+def resolve_appearance(name_index, source_index, league, name, fotmob_id,
+                       allowed_player_ids=None):
+    """Return (canonical row, evidence), failing closed on every ambiguity."""
+    source_key = str(fotmob_id or "")
+    if source_key in source_index:
+        matches = source_index[source_key]
+        return (matches[0], "fotmob_id") if len(matches) == 1 else (None, "ambiguous_id")
+    if league in NATIONAL_TEAM_LEAGUES:
+        # No name fallback for national teams. An unresolved row is retained in
+        # the provider table and can bind later when its FotMob id reaches the
+        # canonical club spine.
+        return None, "unresolved_id"
+    player = resolve(name_index, name, allowed_player_ids)
+    return player, "name" if player else "unresolved_name"
+
+
 def upsert(con, league, season, player, match_id, date, line, dry_run,
-           fotmob_id=None):
+           fotmob_id=None, team=None, opponent=None, home_away=None,
+           game_type=None):
     """Write FotMob's own row, into FotMob's own TABLE.
 
     Two earlier shapes, both wrong:
@@ -218,19 +271,85 @@ def upsert(con, league, season, player, match_id, date, line, dry_run,
         return "inserted"
     con.execute(
         "INSERT INTO player_game_logs_fotmob"
-        "(player_id, league, season, game_no, game_id, game_date, stats,"
-        " source, source_player_key) VALUES(?,?,?,?,?,?,?,?,?) "
+        "(player_id, league, season, game_no, game_id, game_date, team, opponent,"
+        " home_away, stats, source, source_player_key, game_type) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(league,source_player_key,season,game_no) DO UPDATE SET "
         "player_id=COALESCE(excluded.player_id,player_game_logs_fotmob.player_id), "
-        "stats=excluded.stats, ingested_at=datetime('now')",
+        "team=excluded.team, opponent=excluded.opponent,"
+        "home_away=excluded.home_away, stats=excluded.stats,"
+        "game_type=excluded.game_type, ingested_at=datetime('now')",
         # source_player_key must identify the PLAYER, not the fixture. It was
         # `fotmob-{match}-{team}` -- the same string for all eleven players on a
         # side -- so UNIQUE(league, source_player_key, season, game_no) allowed
         # ONE row per team per match and INSERT OR IGNORE silently dropped the
         # rest: a run reporting 795 inserts wrote 131.
         (player_id, league, season, f"fotmob-{match_id}", str(match_id), date,
-         json.dumps(line), "fotmob", f"fotmob-{fotmob_id or player_id}"))
+         team, opponent, home_away, json.dumps(line), "fotmob",
+         f"fotmob-{fotmob_id or player_id}", game_type))
     return "inserted"
+
+
+def _score_pair(status):
+    values = re.findall(r"\d+", str((status or {}).get("scoreStr") or ""))
+    if len(values) < 2:
+        return None, None
+    return int(values[0]), int(values[1])
+
+
+def normalize_fixture(match, competition_name):
+    """FotMob fixture -> the provider-neutral scoreboard shape."""
+    status = match.get("status") or {}
+    finished = bool(status.get("finished"))
+    started = bool(status.get("started"))
+    cancelled = bool(status.get("cancelled"))
+    state = "post" if finished or cancelled else "in" if started else "pre"
+    reason = status.get("reason") or {}
+    home_score, away_score = _score_pair(status)
+
+    def side(raw, score):
+        raw = raw or {}
+        return {
+            "abbrev": str(raw.get("shortName") or raw.get("name") or ""),
+            "name": str(raw.get("name") or raw.get("shortName") or ""),
+            "score": score,
+        }
+
+    detail = reason.get("short") or reason.get("long")
+    return {
+        "game_id": str(match.get("id") or ""),
+        "date": status.get("utcTime"),
+        "state": state,
+        "completed": finished,
+        "status": detail or ("Cancelled" if cancelled else "Live" if started else "Scheduled"),
+        "status_detail": detail,
+        "home": side(match.get("home"), home_score),
+        "away": side(match.get("away"), away_score),
+        "subtitle": competition_name,
+    }
+
+
+def store_scoreboard(con, league, fixtures, dry_run=False):
+    """Persist FotMob's complete published fixture list, grouped by slate day."""
+    from espn_client.scoreboard import _slate_day
+    import scoreboard_store
+
+    by_day = collections.defaultdict(list)
+    for fixture in fixtures:
+        normalized = normalize_fixture(fixture, fixture["_competition_name"])
+        if not normalized["game_id"] or not normalized["date"]:
+            continue
+        day = _slate_day(league, normalized["date"])
+        if day:
+            by_day[day].append(normalized)
+    if dry_run:
+        return sum(len(games) for games in by_day.values()), len(by_day)
+    scoreboard_store.init(con)
+    written = 0
+    for day, games in sorted(by_day.items()):
+        written += scoreboard_store.save(league, day, games, source="fotmob", con=con)
+    con.commit()
+    return written, len(by_day)
 
 
 def already_held(con, league, season, match_id):
@@ -285,24 +404,52 @@ def main(argv=None):
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=0,
                         help="stop after N fixtures (the NEWEST N)")
+    parser.add_argument("--days-back", type=int, default=0,
+                        help="only fetch finished match details from this many UTC days; "
+                             "the complete fixture schedule is still stored")
     parser.add_argument("--force-refetch", action="store_true",
                         help="re-fetch fixtures already stored (use after changing what is "
                              "extracted from a match)")
     args = parser.parse_args(argv)
 
-    league_id, season = LEAGUES[args.league]
+    _primary_league_id, season = LEAGUES[args.league]
     # Production has frequent short-lived scoreboard and capture writers. Wait
     # through those expected lock windows instead of aborting a long serial run.
     con = sqlite3.connect(DB_PATH, timeout=60)
     con.execute("PRAGMA busy_timeout = 60000")
     index = spine(con, args.league)
-    print(f"{args.league}: {sum(len(v) for v in index.values())} spine players")
+    source_index = fotmob_id_spine(con)
+    print(f"{args.league}: {sum(len(v) for v in index.values())} league-spine players; "
+          f"{len(source_index)} cross-competition FotMob ids")
 
-    fixtures = _get(f"https://www.fotmob.com/api/data/leagues?id={league_id}")
-    finished = [m for m in fixtures["fixtures"]["allMatches"]
+    matches = []
+    for league_id in LEAGUE_IDS[args.league]:
+        document = _get(f"https://www.fotmob.com/api/data/leagues?id={league_id}")
+        details = document.get("details") or {}
+        if details.get("gender") != "male":
+            raise RuntimeError(f"FotMob league {league_id} is not men's competition data")
+        competition_name = str(details.get("name") or league_id)
+        for match in (document.get("fixtures") or {}).get("allMatches") or []:
+            match = dict(match)
+            match["_competition_name"] = competition_name
+            matches.append(match)
+    if len({str(match.get("id")) for match in matches}) != len(matches):
+        raise RuntimeError(f"{args.league}: duplicate FotMob match ids across competitions")
+    matches.sort(key=lambda match: str((match.get("status") or {}).get("utcTime") or ""))
+    scoreboard_rows, scoreboard_days = store_scoreboard(
+        con, args.league, matches, dry_run=args.dry_run)
+    print(f"{scoreboard_rows} fixtures across {scoreboard_days} scoreboard days "
+          f"({len(LEAGUE_IDS[args.league])} league-document request(s))")
+
+    finished = [m for m in matches
                 if (m.get("status") or {}).get("finished")]
     if not args.dry_run:
         record_published_schedule(con, args.league, finished)
+    if args.days_back:
+        cutoff = (dt.datetime.now(dt.timezone.utc).date()
+                  - dt.timedelta(days=args.days_back)).isoformat()
+        finished = [m for m in finished
+                    if str((m.get("status") or {}).get("utcTime") or "")[:10] >= cutoff]
     if args.limit:
         finished = finished[-args.limit:]
     print(f"{len(finished)} finished fixtures, 1 request each")
@@ -322,6 +469,13 @@ def main(argv=None):
             counts["fetch_failed"] += 1
             continue
         players = (detail.get("content") or {}).get("playerStats") or {}
+        counts["fixtures"] += 1
+        if not players:
+            # A finished result is not evidence that FotMob published player
+            # logs for it. Keep this as an explicit coverage miss; do not turn
+            # an absent payload into zero-stat appearances.
+            counts["fixtures_without_player_stats"] += 1
+            continue
         # Cross-provider identity is strongest when the exact ESPN appearance
         # roster already exists.  Date scope turns duplicate domestic-spine
         # names (Víctor Guzmán at MTY and TOL) into one match participant while
@@ -340,21 +494,36 @@ def main(argv=None):
         # `resolve` fail closed on any name it cannot make unique. That is a weaker
         # constraint, honestly weaker, and it is the difference between resolving a player
         # and resolving nobody at all.
-        appearance_ids = {row[0] for row in con.execute(
-            "SELECT DISTINCT player_id FROM player_game_logs "
-            "WHERE league=? AND game_date=? AND player_id IS NOT NULL",
-            (args.league, date),
-        )} or None
-        counts["fixtures"] += 1
+        appearance_ids = None
+        if args.league not in NATIONAL_TEAM_LEAGUES:
+            appearance_ids = {row[0] for row in con.execute(
+                "SELECT DISTINCT player_id FROM player_game_logs "
+                "WHERE league=? AND game_date=? AND player_id IS NOT NULL",
+                (args.league, date),
+            )} or None
+        home = match.get("home") or {}
+        away = match.get("away") or {}
         for fotmob_id, entry in players.items():
             line = stat_line(entry)
             if not line:
                 continue
-            who = resolve(index, entry.get("name"), appearance_ids)
-            counts["resolved" if who else "unresolved"] += 1
+            who, evidence = resolve_appearance(
+                index, source_index, args.league, entry.get("name"), fotmob_id,
+                appearance_ids)
+            counts[evidence] += 1
+            team_id = str(entry.get("teamId") or "")
+            if team_id == str(home.get("id") or ""):
+                team, opponent, home_away = home.get("name"), away.get("name"), "home"
+            elif team_id == str(away.get("id") or ""):
+                team, opponent, home_away = away.get("name"), home.get("name"), "away"
+            else:
+                team, opponent, home_away = entry.get("teamName"), None, None
             counts[upsert(con, args.league, season, who, match_id, date,
-                          line, args.dry_run, fotmob_id)] += 1
-        if not args.dry_run and counts["fixtures"] % 10 == 0:
+                          line, args.dry_run, fotmob_id, team, opponent, home_away,
+                          "EXH" if args.league == "friendlies" else "REG")] += 1
+        if not args.dry_run:
+            # Do not hold SQLite's single writer slot while the next serial
+            # FotMob request sleeps. One fixture is the atomic retry unit.
             con.commit()
 
     if not args.dry_run:

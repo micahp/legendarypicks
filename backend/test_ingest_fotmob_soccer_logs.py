@@ -99,6 +99,100 @@ class AmbiguityFailsClosed(unittest.TestCase):
         self.assertIsNone(fm.resolve({}, "Nobody Here"))
 
 
+class NationalTeamIdentityUsesThePublisherId(unittest.TestCase):
+    def setUp(self):
+        self.con = sqlite3.connect(":memory:")
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT,
+                                 league TEXT, espn_id TEXT);
+            CREATE TABLE player_source_ids(
+              source TEXT, league TEXT, source_player_key TEXT, player_id INTEGER
+            );
+        """)
+
+    def tearDown(self):
+        self.con.close()
+
+    def test_a_club_binding_resolves_the_national_appearance_by_id(self):
+        self.con.executemany("INSERT INTO players VALUES(?,?,?,?,?)", [
+            (1, "Alex Morgan", "SD", "mls", "10"),
+            (2, "Alex Morgan", "OTHER", "mls", "11"),
+        ])
+        # The same FotMob id appearing in two competitions is still one person.
+        self.con.executemany("INSERT INTO player_source_ids VALUES(?,?,?,?)", [
+            ("fotmob", "mls", "700", 1),
+            ("fotmob", "lcup", "700", 1),
+        ])
+        source_index = fm.fotmob_id_spine(self.con)
+        player, evidence = fm.resolve_appearance(
+            {"alex morgan": [{"id": 1}, {"id": 2}]}, source_index,
+            "friendlies", "Alex Morgan", "700")
+        self.assertEqual(player["id"], 1)
+        self.assertEqual(evidence, "fotmob_id")
+
+    def test_a_national_name_without_an_id_binding_stays_unresolved(self):
+        player, evidence = fm.resolve_appearance(
+            {"unique name": [{"id": 9}]}, {}, "unl", "Unique Name", "999")
+        self.assertIsNone(player)
+        self.assertEqual(evidence, "unresolved_id")
+
+    def test_a_source_id_bound_to_two_people_fails_closed(self):
+        self.con.executemany("INSERT INTO players VALUES(?,?,?,?,?)", [
+            (1, "One Person", "A", "mls", "10"),
+            (2, "Other Person", "B", "ligamx", "11"),
+        ])
+        self.con.executemany("INSERT INTO player_source_ids VALUES(?,?,?,?)", [
+            ("fotmob", "mls", "700", 1),
+            ("fotmob", "ligamx", "700", 2),
+        ])
+        player, evidence = fm.resolve_appearance(
+            {}, fm.fotmob_id_spine(self.con), "unl", "One Person", "700")
+        self.assertIsNone(player)
+        self.assertEqual(evidence, "ambiguous_id")
+
+
+class InternationalCompetitionFixtures(unittest.TestCase):
+    def test_fotmob_ids_cover_all_nations_league_divisions_and_friendlies(self):
+        self.assertEqual(fm.LEAGUE_IDS["unl"], (9806, 9807, 9808, 9809))
+        self.assertEqual(fm.LEAGUE_IDS["friendlies"], (114,))
+
+    def test_a_finished_fotmob_fixture_normalizes_for_the_shared_scoreboard(self):
+        game = fm.normalize_fixture({
+            "id": "5181855",
+            "home": {"id": "10155", "name": "Croatia", "shortName": "Croatia"},
+            "away": {"id": "6720", "name": "Spain", "shortName": "Spain"},
+            "status": {
+                "utcTime": "2026-10-06T18:45:00.000Z",
+                "started": True,
+                "finished": True,
+                "cancelled": False,
+                "scoreStr": "1 - 2",
+                "reason": {"short": "FT", "long": "Full-Time"},
+            },
+        }, "UEFA Nations League A")
+        self.assertEqual(game["state"], "post")
+        self.assertTrue(game["completed"])
+        self.assertEqual(game["home"]["score"], 1)
+        self.assertEqual(game["away"]["score"], 2)
+        self.assertEqual(game["subtitle"], "UEFA Nations League A")
+
+    def test_an_upcoming_friendly_keeps_scores_unknown(self):
+        game = fm.normalize_fixture({
+            "id": "6299694",
+            "home": {"id": "8258", "name": "Colombia"},
+            "away": {"id": "5798", "name": "Peru"},
+            "status": {
+                "utcTime": "2026-10-06T23:45:00.000Z",
+                "started": False,
+                "finished": False,
+                "cancelled": False,
+            },
+        }, "Friendlies")
+        self.assertEqual(game["state"], "pre")
+        self.assertIsNone(game["home"]["score"])
+        self.assertIsNone(game["away"]["score"])
+
+
 class TheProvidersKeepSeparateRows(unittest.TestCase):
     """Each provider owns its rows and nothing edits another's.
 

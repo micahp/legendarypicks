@@ -512,6 +512,26 @@ class TestThePastIsNeverAsked:
         assert response.headers.get("X-LP-Data-Source") == "scoreboard_snapshots"
 
 
+class TestFotMobOnlyServingPath:
+    @pytest.mark.parametrize("league", ["unl", "friendlies"])
+    def test_a_missing_snapshot_never_falls_through_to_espn(
+            self, monkeypatch, league):
+        from fastapi.testclient import TestClient
+        import espn_client
+        import sports_service
+
+        def _refuse(*args, **kwargs):
+            raise AssertionError("a FotMob-only league must never ask ESPN")
+
+        monkeypatch.setattr(espn_client, "games", _refuse)
+        client = TestClient(sports_service.app)
+        tomorrow = (dt.date.today() + dt.timedelta(days=1)).isoformat()
+        response = client.get(f"/api/{league}/games?date={tomorrow}")
+        assert response.status_code == 200
+        assert response.json() == []
+        assert response.headers.get("X-LP-Data-Source") == "unavailable"
+
+
 class TestOnlyOneRunSpendsTheBudget:
     """The per-host budget is shared; the counter that guards it is not.
 

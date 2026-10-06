@@ -236,6 +236,24 @@ MANIFEST = {
         "position_content": {},
         "single_vocabulary": [],
     },
+    "unl": {
+        # UEFA Nations League is a per-match FotMob history surface. FotMob
+        # publishes the competition as four divisions (A-D), all stored under
+        # this one product key. There is no player_stats season-totals surface,
+        # so declaring one here would make the audit bless a table we do not
+        # publish.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "friendlies": {
+        # Men's senior international friendlies, likewise per-match only.
+        # Missing player identity remains unresolved in the FotMob provider
+        # table; it must never create or name-match a second club identity.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
     "mls": {
         "stat_types": {
             "season": {

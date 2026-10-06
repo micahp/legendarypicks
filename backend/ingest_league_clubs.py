@@ -30,13 +30,16 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ingest_fotmob_soccer_logs import LEAGUES as _FOTMOB_LEAGUES, _get as _fotmob_get
+from ingest_fotmob_soccer_logs import (LEAGUES as _FOTMOB_LEAGUES,
+                                       NATIONAL_TEAM_LEAGUES,
+                                       _get as _fotmob_get)
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 # The same league ids the appearance ingest already uses, so the two cannot drift.
-_PATHS = {league: ids[0] for league, ids in _FOTMOB_LEAGUES.items()}
+_PATHS = {league: ids[0] for league, ids in _FOTMOB_LEAGUES.items()
+          if league not in NATIONAL_TEAM_LEAGUES}
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS league_clubs (
