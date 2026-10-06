@@ -305,7 +305,7 @@ def _refresh(league, date, verbose=True):
     # write so a malformed publisher shape cannot silently look successful.
     try:
         payload = espn.scoreboard_raw(league, date)
-        draws = espn.tennis_draws_from_payload(league, payload) \
+        draws = espn.current_tennis_draw(espn.tennis_draws_from_payload(league, payload)) \
             if league in ("atp", "wta") else []
         if league in ("atp", "wta") and games and not draws:
             raise ValueError(f"{league} published games without a complete major draw")

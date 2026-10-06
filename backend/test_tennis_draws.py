@@ -128,3 +128,25 @@ def test_draw_api_is_db_first_and_keeps_unavailable_reason(monkeypatch):
         "tours": [],
         "reason": "No verified major draw has been published yet.",
     }
+
+
+def _draw(tid, *matches):
+    return {"tournament_id": tid, "matches": [{"date": d, "state": s} for d, s in matches]}
+
+
+def test_two_live_draws_finish_the_one_in_progress_first():
+    # ATP 2026-10-06 as ESPN published it: China Open's final still to play,
+    # Shanghai's first round under way and its final on 10-18.
+    china = _draw("959", ("2026-10-05T08:00Z", "post"), ("2026-10-06T11:00Z", "pre"))
+    shanghai = _draw("315", ("2026-10-05T04:05Z", "in"), ("2026-10-18T04:00Z", "pre"))
+    assert espn_client.current_tennis_draw([shanghai, china]) == [china]
+    china["matches"][-1]["state"] = "post"
+    assert espn_client.current_tennis_draw([china, shanghai]) == [shanghai]
+
+
+def test_every_draw_complete_keeps_the_one_that_finished_last():
+    old = _draw("1", ("2026-09-01T00:00Z", "post"))
+    new = _draw("2", ("2026-09-08T00:00Z", "post"))
+    assert espn_client.current_tennis_draw([new, old]) == [new]
+    assert espn_client.current_tennis_draw([old]) == [old]
+    assert espn_client.current_tennis_draw([]) == []

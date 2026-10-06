@@ -431,6 +431,29 @@ def tennis_draws_from_payload(league, payload):
     return draws
 
 
+def current_tennis_draw(draws):
+    """The one draw a tour's bracket shows when ESPN publishes several at once.
+
+    ESPN lists every tournament whose event window covers the date. On 2026-10-06
+    the ATP feed carried the China Open (event window 09-27..10-12, because the
+    WTA half runs longer; men's final that day) beside Shanghai (R1 under way).
+    The tournament in progress finishes before the next one takes the bracket:
+    among draws with a match not yet final, the one whose last match is soonest;
+    when every draw is complete, the one that finished last.
+    """
+    draws = list(draws or [])
+    if len(draws) <= 1:
+        return draws
+
+    def last(draw):
+        return max(m.get("date") or "" for m in draw["matches"])
+
+    open_draws = [d for d in draws if any(m.get("state") != "post" for m in d["matches"])]
+    if open_draws:
+        return [min(open_draws, key=lambda d: (last(d), str(d["tournament_id"])))]
+    return [max(draws, key=lambda d: (last(d), str(d["tournament_id"])))]
+
+
 def tennis_rankings_from_payload(league, payload):
     """Normalize ESPN's one published ATP/WTA ranking week.
 
