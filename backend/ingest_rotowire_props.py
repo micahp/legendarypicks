@@ -680,6 +680,8 @@ def resolve_game(con: sqlite3.Connection, league: str, row: Dict, now: str,
     # display name into a table of codes, is how a second vocabulary gets started.
     if LEAGUES[league]["kind"] == "fixture_scoreboard":
         fixture = _scheduled_fixture(con, league, row, vocabulary)
+        if fixture is None:
+            return None
         home, away = fixture["home"], fixture["away"]
     elif LEAGUES[league]["kind"] == "code":
         home, away = home_code or row["home"], away_code or row["away"]
@@ -1096,10 +1098,13 @@ def _scheduled_fixture(
         })
     valid = [match for match in matches if all(match.values())]
     if len(valid) != 1:
-        raise TeamVocabularyError(
-            "{} fixture {} @ {} at {} matched {} published games".format(
-                league, row.get("away"), row.get("home"), row.get("start_time"),
-                len(valid)))
+        # A miss, not a raise (2026-10-05). The relay lists next weekend's NCAAF games
+        # before our scoreboard publishes them; raising here aborted the whole multi-league
+        # step from 12:05 on, so NHL and NBA, which run after NCAAF, never ran. The row is
+        # counted as unverifiable_fixture and nothing is minted.
+        print("  UNPUBLISHED fixture: {} {} @ {} at {} matched {} published games".format(
+            league, row.get("away"), row.get("home"), row.get("start_time"), len(valid)))
+        return None
     return valid[0]
 
 

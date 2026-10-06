@@ -454,6 +454,21 @@ class NhlUsesDurableScoreboardFixtures(unittest.TestCase):
             ],
         )
 
+    def test_an_unpublished_fixture_is_skipped_not_raised(self):
+        # 2026-10-05: the relay listed NCAAF games the scoreboard did not have yet, and the
+        # raise stopped every league after NCAAF in the same run.
+        self.con.execute(
+            "UPDATE scoreboard_snapshots SET payload=json_set(payload,'$.date',"
+            "'2026-10-11T22:00:00Z')")
+        self.con.commit()
+        rows, _ = rw.parse(nhl_payload(), "nhl")
+
+        summary = rw.ingest(rows, "nhl")
+
+        self.assertEqual(summary["unverifiable_fixture"], 4)
+        self.assertEqual(
+            self.con.execute("SELECT COUNT(*) FROM prop_games").fetchone()[0], 0)
+
     def test_out_of_scope_power_play_points_is_visible_and_refused(self):
         rows, report = rw.parse(
             nhl_payload(market_id=95, market_name="Power Play Points"), "nhl"
