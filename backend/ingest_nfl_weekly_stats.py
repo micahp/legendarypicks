@@ -81,6 +81,10 @@ _MAP = {
     "rush_td": "rushing_tds",
     "targets": "targets",
     "target_share": "target_share",
+    # 2026-10-05: the share family beside target_share, for the per-team share table.
+    "air_yards_share": "air_yards_share",
+    "wopr": "wopr",
+    "rec_air_yds": "receiving_air_yards",
     "rec": "receptions",
     "rec_yds": "receiving_yards",
     "rec_td": "receiving_tds",
@@ -138,7 +142,7 @@ _MAP = {
 _PASS_KEYS = ("att", "cmp", "pass_yds", "pass_td", "intc", "air_yds",
               "pass_epa", "cpoe", "dropbacks", "sacks_taken")
 _RUSH_KEYS = ("carries", "rush_yds", "rush_td")
-_RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
+_RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td", "rec_air_yds")
 
 # target_share is deliberately outside the gate above.  The gate asks "did this
 # player have this role *this week*" and uses week volume as the proxy -- fine
@@ -151,7 +155,7 @@ _RECV_KEYS = ("targets", "rec", "rec_yds", "rec_td")
 # only on the position-specific fields that render them, but dropping them here
 # makes a zero-target/carry week look unknown in the per-game log and removes
 # target-less weeks from season denominators.
-_ALWAYS_KEYS = ("target_share", "targets", "carries")
+_ALWAYS_KEYS = ("target_share", "air_yards_share", "wopr", "targets", "carries")
 
 # Written on every row we emit, like _ALWAYS_KEYS and for a related reason: a
 # fumble is not owned by a role. A quarterback, a returner and a receiver can all
