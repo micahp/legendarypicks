@@ -119,17 +119,24 @@ def fetch_final_schedule(start: dt.date, end: dt.date) -> Dict[str, Set[str]]:
             "endDate": end.isoformat(),
         },
     )
+    # A game belongs to its own published officialDate, not the date block it is listed under.
+    # A postponed game is listed on its original date too, with abstractGameState "Final" and
+    # detailedState "Postponed": 824785 (TOR @ BAL) sits under 2026-09-22 with officialDate
+    # 2026-09-23, so the refresh demanded it from 09-22's Statcast and refused that whole day on
+    # every run from then on.
     result: Dict[str, Set[str]] = {}
     for date_block in payload.get("dates", []):
-        date_text = str(date_block.get("date") or "")
-        final_ids = {
-            str(game.get("gamePk"))
-            for game in date_block.get("games", [])
-            if (game.get("status") or {}).get("abstractGameState") == "Final"
-            and game.get("gamePk") is not None
-        }
-        if date_text and final_ids:
-            result[date_text] = final_ids
+        block_date = str(date_block.get("date") or "")
+        for game in date_block.get("games", []):
+            status = game.get("status") or {}
+            if status.get("abstractGameState") != "Final" or game.get("gamePk") is None:
+                continue
+            if status.get("detailedState") == "Postponed":
+                continue
+            date_text = str(game.get("officialDate") or block_date)
+            if date_text != block_date:
+                continue
+            result.setdefault(date_text, set()).add(str(game.get("gamePk")))
     return result
 
 
