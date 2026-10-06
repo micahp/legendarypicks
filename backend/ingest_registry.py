@@ -227,6 +227,31 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "nhl_current",
+        # 2026-10-05: nothing scheduled NHL. The 2026-27 logs stopped at a one-off 10-01 run and
+        # production could not take them (Matthew Poitras had no nhl_id owner) until the roster
+        # publisher's first production run. run_history_refresh.py's reason for leaving NHL out
+        # ("holds a writer during player requests") predates ce7acdc: the logs ingest now
+        # fetches and validates the whole season, then publishes in one BEGIN IMMEDIATE.
+        # Roster before logs, so a new player has an owner before his first log row; shares
+        # last, from the logs just written. `current`/`latest` follow the NHL's own published
+        # season, never a hardcoded year.
+        "cadence_min": 360,
+        "timeout_sec": 1800,
+        "host_lock": "nhle",
+        "steps": [["ingest_nhl_roster.py", "--apply"],
+                  ["ingest_nhl_logs.py", "--season", "current", "--apply"],
+                  ["build_player_shares.py", "--league", "nhl", "--season", "latest"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_team_shares",
+            "date_column": "computed_at",
+            "where": "league = 'nhl'",
+            "stale_hours": 30,
+            "label": "nhl player shares",
+        }],
+    },
+    {
         "id": "ncaaf_rosters",
         # The identity spine the log ingest resolves onto, from CFBD in TWO requests where
         # the ESPN path costs 149 to site.web.api. Measured 2026-09-06: prod held 14,234

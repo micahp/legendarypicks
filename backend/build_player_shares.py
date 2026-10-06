@@ -155,10 +155,21 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--league", default="nfl", choices=["nfl", "nhl"])
-    ap.add_argument("--season", type=int, required=True)
+    ap.add_argument("--season", required=True,
+                    help="LP season key, or 'latest' for the newest regular season in that "
+                         "league's logs (what a scheduled run wants)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)
     con = sqlite3.connect(DB, timeout=60)
+    if args.season == "latest":
+        latest = con.execute("SELECT MAX(season) FROM player_game_logs WHERE league=? "
+                             "AND (game_type='REG' OR game_type IS NULL)", (args.league,)).fetchone()[0]
+        if latest is None:
+            print("no %s logs; nothing to build" % args.league)
+            return 1
+        args.season = int(latest)
+    else:
+        args.season = int(args.season)
     rows = (nhl_shares if args.league == "nhl" else nfl_shares)(con, args.season)
     teams = {r[2] for r in rows}
     print("player_team_shares %s %d: %d rows, %d teams, %d players" % (

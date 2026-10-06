@@ -637,8 +637,10 @@ def refresh_standings(
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--season", type=int, required=True,
-                        help="nhle.com season key, e.g. 20262027")
+    parser.add_argument("--season", required=True,
+                        help="nhle.com season key, e.g. 20262027, or 'current' for the "
+                             "season the NHL publishes as current (club-schedule-season/now), "
+                             "so a scheduled run never pins one year")
     parser.add_argument("--db", default=DB)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument(
@@ -646,6 +648,14 @@ def main(argv=None) -> int:
         help="fetch and publish only the official 32-team standings snapshot",
     )
     args = parser.parse_args(argv)
+    if args.season == "current":
+        raw = _get("https://api-web.nhle.com/v1/club-schedule-season/CHI/now").get("currentSeason")
+        try:
+            args.season = int(raw)
+        except (TypeError, ValueError):
+            raise NHLLogIngestError("invalid current NHL season %r" % (raw,))
+    else:
+        args.season = int(args.season)
     action = refresh_standings if args.standings_only else refresh
     result = action(
         os.path.abspath(args.db), source_season=args.season, apply=args.apply
