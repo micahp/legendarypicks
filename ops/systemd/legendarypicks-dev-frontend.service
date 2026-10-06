@@ -1,0 +1,17 @@
+[Unit]
+Description=LegendaryPicks managed development frontend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/legendarypicks
+Environment=NODE_ENV=development
+ExecStart=/root/.nvm/versions/node/v22.22.0/bin/node /root/legendarypicks/node_modules/next/dist/bin/next dev --port 3096 --hostname 127.0.0.1
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
