@@ -158,6 +158,26 @@ def _existing_logs(con: sqlite3.Connection) -> Dict[Tuple[str, str], PreparedUfc
     return existing
 
 
+def _fights_ufcstats_never_publishes(con: sqlite3.Connection) -> Set[str]:
+    """ESPN fight ids on Dana White's Contender Series cards, by ESPN's own event name.
+
+    UFCStats publishes numbered and Fight Night cards only: its event list on 2026-10-06
+    held no Contender Series card and no Tuesday at all. Books still post props on DWCS
+    fighters, so a DWCS Tuesday became a target with "no UFCStats event published within
+    one day", and that one source error failed the whole guarded prod history refresh.
+    Those fighters' UFCStats history is unknown, not an error. Without the scoreboard
+    table nothing is excluded and the old loud behavior stands.
+    """
+    try:
+        rows = con.execute(
+            "SELECT game_id FROM scoreboard_snapshots WHERE league='ufc'"
+            " AND json_extract(payload,'$.event') LIKE 'Dana White''s Contender Series%'"
+        ).fetchall()
+    except sqlite3.Error:
+        return set()
+    return {str(row[0]) for row in rows}
+
+
 def _load_prop_targets(
     con: sqlite3.Connection,
     as_of: dt.date,
@@ -194,8 +214,11 @@ def _load_prop_targets(
         for row in con.execute("SELECT id,name FROM players WHERE league='ufc'")
     }
 
+    unpublished = _fights_ufcstats_never_publishes(con)
     choices: Dict[int, List[Tuple[int, int, sqlite3.Row]]] = {}
     for row in associations:
+        if str(row["espn_event_id"] or "") in unpublished:
+            continue
         card_date = _parse_date(row["date"])
         if card_date is None or not start <= card_date <= end:
             continue
