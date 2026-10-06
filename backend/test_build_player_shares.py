@@ -59,3 +59,36 @@ class NflShares(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NhlShares(unittest.TestCase):
+    def setUp(self):
+        self.con = sqlite3.connect(":memory:")
+        self.con.execute(
+            "CREATE TABLE player_game_logs (player_id INTEGER, league TEXT, season INTEGER, "
+            "game_no TEXT, game_id TEXT, game_type TEXT, team TEXT, stats TEXT, source TEXT)")
+
+    def log(self, pid, game, **stats):
+        self.con.execute("INSERT INTO player_game_logs VALUES (?,?,?,?,?,?,?,?,?)",
+                         (pid, "nhl", 2027, game, game, "REG", "DAL", json.dumps(stats),
+                          "nhle.com"))
+
+    def shares(self):
+        return {(r[3], r[4]): r for r in mod.nhl_shares(self.con, 2027)}
+
+    def test_ice_time_is_a_share_of_game_time_overtime_included(self):
+        self.log(9, "g1", toi="60:00", saves=20, starter=True)
+        self.log(9, "g2", toi="65:00", saves=25, starter=True)   # overtime
+        self.log(1, "g1", toi="25:00", sog=3, goals=1, points=1)
+        self.log(1, "g2", toi="25:00", sog=1, goals=0, points=0)
+        row = self.shares()[(1, "toi")]
+        self.assertEqual((3000, 7500), (row[5], row[6]))
+        self.assertAlmostEqual(0.4, row[7])
+
+    def test_goalie_starts_count_against_team_games(self):
+        self.log(9, "g1", toi="60:00", saves=20, starter=True)
+        self.log(8, "g2", toi="60:00", saves=30, starter=True)
+        self.log(9, "g2", toi="0:00", saves=0, starter=False)
+        row = self.shares()[(9, "goalie_starts")]
+        self.assertEqual((1, 2), (row[5], row[6]))
+        self.assertNotIn((9, "sog"), self.shares())
