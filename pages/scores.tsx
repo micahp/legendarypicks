@@ -94,11 +94,11 @@ function LiveNow({ games, esportsLive, isPastDate }: { games: Game[]; esportsLiv
   )
 }
 
-const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'LCUP', 'MLS', 'LIGAMX', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'Leagues Cup', 'MLS', 'Liga MX', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
+const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'UNL', 'FRIENDLIES', 'LCUP', 'MLS', 'LIGAMX', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
+const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'UEFA Nations League', 'International Friendlies', 'Leagues Cup', 'MLS', 'Liga MX', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
-const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
+const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
 // `cod` is breakingpoint.gg, not ESPN. It used to 404 here on every page load
 // and every arrow click, so the board could never step to a COD day even when
 // one existed. The backend now serves cod/schedule-dates from the store like
@@ -110,6 +110,8 @@ const SCHEDULE_DATE_KEYS = LEAGUE_KEYS
 function leagueKeyFor(filter: string): string {
   return filter === 'Call of Duty' ? 'cod'
     : filter === 'FIFA World Cup' ? 'wc'
+    : filter === 'UEFA Nations League' ? 'unl'
+    : filter === 'International Friendlies' ? 'friendlies'
     : filter === 'Leagues Cup' ? 'lcup'
     : filter === 'Liga MX' ? 'ligamx'
     : filter.toLowerCase()
@@ -119,6 +121,8 @@ const LEAGUE_LABELS: Record<string, string> = {
   LCUP: 'Leagues Cup',
   MLS: 'MLS',
   LIGAMX: 'Liga MX',
+  UNL: 'UEFA Nations League',
+  FRIENDLIES: 'International Friendlies',
 }
 
 // Revalidate interval for live games (ms) — must not be statically cached

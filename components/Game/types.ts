@@ -115,7 +115,7 @@ export function isMLB(lg: string) { return lg === 'mlb' }
 export function isNFL(lg: string) { return lg === 'nfl' }
 export function isNCAAF(lg: string) { return lg === 'ncaaf' }
 export function isWC(lg: string) { return lg === 'wc' }
-export function isSoccer(lg: string) { return isWC(lg) || lg === 'lcup' || lg === 'mls' || lg === 'ligamx' }
+export function isSoccer(lg: string) { return isWC(lg) || lg === 'unl' || lg === 'friendlies' || lg === 'lcup' || lg === 'mls' || lg === 'ligamx' }
 export function isUSTeamSport(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isNCAAF(lg) }
 export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isNCAAF(lg) || isSoccer(lg) }
 export function usesDetailEndpoint(lg: string) { return isNBA(lg) || isNHL(lg) }

@@ -217,7 +217,7 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   }
 
   // Soccer: preserve the running match clock even when ESPN omits a half number.
-  if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
+  if (lg === 'wc' || lg === 'unl' || lg === 'friendlies' || lg === 'lcup' || lg === 'mls') {
     const clock = g?.clock ?? g?.status_detail
     if (clock) {
       return { type: 'half', clock }
@@ -369,7 +369,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -438,7 +438,7 @@ export const SportsService = {
   },
 
   getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },

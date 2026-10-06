@@ -12,7 +12,7 @@ from . import router
 # and `_schedule_candidates` can never answer for them. They are served from the
 # store alone: if we hold no days for one, it answers "no candidates", which is
 # honest, rather than 404 which reads to the client as a broken route.
-_LOCAL_ONLY_LEAGUES = {"cod"}
+_LOCAL_ONLY_LEAGUES = {"cod", "unl", "friendlies"}
 
 
 def _db():

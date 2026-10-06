@@ -22,6 +22,8 @@ export function livePeriodTypeForLeague(league?: string): LivePeriodType {
     case 'atp':
     case 'wta': return 'set'
     case 'wc':
+    case 'unl':
+    case 'friendlies':
     case 'lcup':
     case 'mls': return 'half'
     default: return 'period'

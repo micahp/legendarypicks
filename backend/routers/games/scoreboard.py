@@ -34,6 +34,7 @@ def kick_game_stories(*args, **kwargs):
 # Staleness that nobody can see is worse than a slow page: a frozen board looks
 # exactly like a correct one.
 _SNAPSHOT_MAX_AGE = 15 * 60
+_LOCAL_ONLY_LEAGUES = {"unl", "friendlies"}
 
 
 def _scoreboard_snapshot(league: str, game_date: str):
@@ -220,6 +221,12 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         if snapshot is not None:
             games, snapshot_age = snapshot
             data_source = "scoreboard_snapshots"
+    if lg in _LOCAL_ONLY_LEAGUES and games is None:
+        # FotMob-only competitions are populated by the registry job. A missed
+        # snapshot is unavailable evidence, not permission to call ESPN or to
+        # manufacture an empty published slate.
+        games = []
+        data_source = "unavailable"
     if is_completed_day and (games is None or data_source == "espn"):
         # A DAY THAT IS OVER IS NEVER WORTH A SECOND REQUEST. Its result cannot
         # change, so once we hold it we hold it forever and every later view is
