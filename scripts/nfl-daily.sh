@@ -49,6 +49,14 @@ for env_name in DEV PROD; do
   before=$STEP_FAILURES
   run_step 300 ingest_nfl_adp.py
   run_step 120 nfl_transactions_sync.py
+  # This season's per-game box scores (2026-10-05: never scheduled, so player_game_logs had
+  # no 2026 NFL row and no target share). nflverse rewrites the file weekly; the ingest
+  # refetches after 6 h. Season = Sep-Feb; nothing to load Mar-Aug.
+  month=$(date +%-m); year=$(date +%Y)
+  if [ "$month" -le 2 ]; then season=$(( year - 1 )); else season=$year; fi
+  if [ "$month" -ge 9 ] || [ "$month" -le 2 ]; then
+    run_step 300 ingest_nfl_weekly_stats.py --year "$season" --all-positions
+  fi
   log "--- $env_name: $(( STEP_FAILURES - before )) step(s) failed"
 done
 
