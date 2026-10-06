@@ -219,11 +219,12 @@ class UpsertTests(unittest.TestCase):
                    id INTEGER PRIMARY KEY,
                    league TEXT,
                    name TEXT,
-                   nfl_gsis_id TEXT
+                   nfl_gsis_id TEXT,
+                   espn_id TEXT
                )"""
         )
         self.con.execute(
-            "INSERT INTO players VALUES (1, 'nfl', 'Quarterback One', '00-0000001')"
+            "INSERT INTO players VALUES (1, 'nfl', 'Quarterback One', '00-0000001', '11')"
         )
         self.con.commit()
         mod.ensure_table(self.con)
@@ -296,6 +297,30 @@ class UpsertTests(unittest.TestCase):
         self.assertEqual(0.8, stats["off_pct"])
         self.assertEqual(12.3, stats["adot"])
         self.assertEqual(2.4, stats["separation"])
+
+    def _row(self, gsis):
+        return {"gsis": gsis, "week": 1, "game_id": "2026_01_ATL_NO", "team": "ATL",
+                "opponent": "NO", "position": "WR", "stats": {"targets": 2}}
+
+    def _player_of(self, gsis):
+        return self.con.execute(
+            "SELECT player_id FROM player_game_logs WHERE source_player_key=?",
+            (gsis,)).fetchone()[0]
+
+    def test_rookie_with_an_espn_style_key_resolves_through_the_crosswalk(self):
+        # 2026-10-05: Zachariah Branch is 'BRA531428' in players.nfl_gsis_id and
+        # 00-0041044 in nflverse; only espn_id joins the two.
+        self.con.execute(
+            "INSERT INTO players VALUES (2, 'nfl', 'Zachariah Branch', 'BRA531428', '4870612')")
+        mod.upsert_rows(self.con, 2026, [self._row("00-0041044")],
+                        {"00-0041044": "4870612"})
+        self.assertEqual(2, self._player_of("00-0041044"))
+
+    def test_an_espn_id_shared_by_two_players_resolves_to_neither(self):
+        self.con.execute("INSERT INTO players VALUES (2, 'nfl', 'A', 'X1', '77')")
+        self.con.execute("INSERT INTO players VALUES (3, 'nfl', 'B', 'X2', '77')")
+        mod.upsert_rows(self.con, 2026, [self._row("00-0099999")], {"00-0099999": "77"})
+        self.assertIsNone(self._player_of("00-0099999"))
 
     def test_postseason_rows_land_with_numeric_week_keys(self):
         artifact = os.path.join(self.tmp.name, "stats.parquet")

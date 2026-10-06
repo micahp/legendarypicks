@@ -43,6 +43,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import time
 import sys
 import urllib.request
 
@@ -54,6 +55,13 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
 SOURCE = "nflverse_weekly"
+CACHE_MAX_AGE_S = 6 * 3600
+# nflverse's player crosswalk (gsis_id, espn_id, ...). players.nfl_gsis_id mixes id schemes:
+# rookies carry an ESPN-style key ('BRA531428'), so a gsis-only join left 186 2026 players
+# (498 rows: Zachariah Branch, Jeremiyah Love, Kenyon Sadiq) with no player_id on 10-05.
+# gsis -> espn_id -> players.espn_id bridges them by ID, as ingest_nfl_depth_charts does.
+PLAYERS_URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
+               "players/players.parquet")
 URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
        "stats_player/stats_player_week_{year}.parquet")
 
@@ -188,7 +196,9 @@ def fetch(year: int, cache_dir: str) -> str:
     reproducible. Print it; a pinned run should compare against a known value.
     """
     path = os.path.join(cache_dir, "stats_player_week_{}.parquet".format(year))
-    if not os.path.exists(path):
+    # The current season's file is rewritten every week: a cache that never expires would
+    # load week 1 forever once this runs daily (2026-10-05).
+    if not os.path.exists(path) or time.time() - os.path.getmtime(path) > CACHE_MAX_AGE_S:
         urllib.request.urlretrieve(URL.format(year=year), path)
     with open(path, "rb") as fh:
         digest = hashlib.sha256(fh.read()).hexdigest()
@@ -323,7 +333,25 @@ def build_rows(path: str, all_positions: bool = False):
     return out
 
 
-def upsert_rows(con: sqlite3.Connection, year: int, rows) -> tuple:
+def fetch_gsis_to_espn(cache_dir: str) -> dict:
+    """{gsis_id: espn_id} from nflverse's player crosswalk; {} when unavailable."""
+    path = os.path.join(cache_dir, "nflverse_players.parquet")
+    try:
+        if not os.path.exists(path) or time.time() - os.path.getmtime(path) > CACHE_MAX_AGE_S:
+            urllib.request.urlretrieve(PLAYERS_URL, path)
+        import pyarrow.parquet as pq
+        table = pq.read_table(path, columns=["gsis_id", "espn_id"]).to_pydict()
+    except Exception as exc:  # noqa: BLE001 -- the gsis join still runs; say so
+        print("  crosswalk unavailable ({}); resolving by gsis only".format(exc))
+        return {}
+    out = {}
+    for gsis, espn in zip(table["gsis_id"], table["espn_id"]):
+        if gsis and espn is not None and str(espn).strip():
+            out[str(gsis)] = str(int(float(espn))) if str(espn).replace(".", "", 1).isdigit() else str(espn)
+    return out
+
+
+def upsert_rows(con: sqlite3.Connection, year: int, rows, gsis_to_espn=None) -> tuple:
     """Write canonical weekly rows while preserving other ingests' enrichment."""
     con.row_factory = sqlite3.Row
     ensure_table(con)
@@ -334,6 +362,16 @@ def upsert_rows(con: sqlite3.Connection, year: int, rows) -> tuple:
             "SELECT id, nfl_gsis_id FROM players WHERE league='nfl' "
             "AND nfl_gsis_id IS NOT NULL AND nfl_gsis_id != ''")
     }
+    # An espn_id shared by two spine rows resolves to neither.
+    espn_rows = {}
+    for r in con.execute("SELECT id, espn_id FROM players WHERE league='nfl' "
+                         "AND espn_id IS NOT NULL AND espn_id != ''"):
+        espn_rows.setdefault(str(r["espn_id"]), set()).add(r["id"])
+    espn_to_player = {e: next(iter(ids)) for e, ids in espn_rows.items() if len(ids) == 1}
+    gsis_to_espn = gsis_to_espn or {}
+
+    def resolve(gsis):
+        return gsis_to_player.get(gsis) or espn_to_player.get(gsis_to_espn.get(gsis))
     existing = {}
     for r in con.execute(
         "SELECT source_player_key, game_no, stats FROM player_game_logs "
@@ -387,7 +425,7 @@ def upsert_rows(con: sqlite3.Connection, year: int, rows) -> tuple:
                  opponent=excluded.opponent,
                  stats=excluded.stats,
                  source=excluded.source""",
-            (gsis_to_player.get(row["gsis"]), "nfl", year, game_no,
+            (resolve(row["gsis"]), "nfl", year, game_no,
              row["game_id"], row.get("season_type"), row["team"], row["opponent"],
              json.dumps(stats),
              SOURCE, row["gsis"]))
@@ -416,7 +454,7 @@ def main():
         return
 
     con = sqlite3.connect(DB)
-    written, preserved_rows = upsert_rows(con, args.year, rows)
+    written, preserved_rows = upsert_rows(con, args.year, rows, fetch_gsis_to_espn(args.cache_dir))
     con.close()
     print("  wrote {} rows ({} carried forward snap/NGS keys)".format(
         written, preserved_rows))
