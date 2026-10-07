@@ -43,14 +43,26 @@
 > | CBS Sports Golazo | live soccer (Bragantino v Mirassol, 16') | 1080p60, 4.6 Mbps | live picture only |
 > | Willow | live cricket (ETPL) | 1080p30, 5.3 Mbps | live picture only |
 > | CBS (panel path `CBS`) | none | 1080p30, 0.6 Mbps | **dead**: "this channel is not available" slate |
+> | truTV (panel B) | **live MLB ALDS game** | 720p60, 2.4 Mbps | live picture only |
+> | Tennis Channel, the real one (panel B) | live Shanghai match | 1080p60, 6.4 Mbps | live picture only; beats Tennis Channel 2 |
+> | ACC Network (panel B) | live college volleyball | 720p60, 4.0 Mbps | live picture only |
+> | SEC Network (panel B) | live channel | 720p60, 5.0 Mbps | live picture only |
+> | Big Ten Network (panel B) | network programming | 1080p60, 3.2 Mbps | live picture only |
+> | YES (panel B) | regional, Yankees / Nets | 1080p60, 5.3 Mbps | live picture only |
+> | NESN (panel B) | regional, Red Sox / Bruins | 720p60, 2.8 Mbps | live picture only |
+> | Chicago Sports Network (panel A path `NBC-SPORTS-CHICAGO`) | regional, Bulls / Blackhawks / White Sox | 1080p60, 4.6 Mbps | live picture only |
 >
-> Not found on the FS1/ESPNU panel (`85.237.89.160:9590/usa-s/`, no public listing; 26 channel
-> names tried by path): ESPNEWS, SEC Network, ACC Network, FS2, FOX, Big Ten, CBS Sports Network,
-> TNT, TBS, truTV, USA, MLB Network, NFL Network, RedZone, Golf, Tennis Channel, beIN, ABC.
+> Two panels, found by trying channel names as paths (29 national, 37 regional including every
+> FanDuel Sports Network region and every NBC Sports regional). Panel A `85.237.89.160:9590` and
+> panel B `23.237.104.106:8080`; the full found / not-found list is in
+> `prediction-market-trading/docs/PROVEN-SPORTS-CHANNELS.md`. Not on either: ESPNEWS, FS2, FOX,
+> CBS, national NBC, ABC, CBS Sports Network, TNT, TBS, USA, MLB Network, NFL Network, RedZone,
+> Golf, beIN, SNY, MASN, Marquee, SportsNet LA, any FanDuel Sports Network region.
 > Of iptv-org's 449 sports streams, 243 answered and 113 declare 1080p; most of the 1080p ones are
 > free ad-supported loop channels (ESPN8 The Ocho, PGA Tour, poker), not live games.
 >
-> Highest quality for live sport, measured: **FS1** (1080p60, 6.5 Mbps), **MSG** (1080p60, 6.1),
+> Highest quality for live sport, measured: **FS1** (1080p60, 6.5 Mbps), **Tennis Channel** (1080p60, 6.4),
+> **MSG** (1080p60, 6.1), **YES** (1080p60, 5.3), **Chicago Sports Network** (1080p60, 4.6),
 > **NBA TV** (1080p60, 5.5), **CBS Sports Golazo** (1080p60, 4.6), **Willow** (1080p30, 5.3),
 > **Tennis Channel 2** (1080p30, 4.5), **NHL Network** (1080p30, 4.4).
 
