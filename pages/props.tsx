@@ -89,8 +89,9 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
         type="button"
         onClick={() => { onSportChange('all'); setOpenGroup(null) }}
         aria-pressed={active === 'all'}
-        className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+        className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
       >
+        <SportIcon league="all" className="h-4 w-4 shrink-0" />
         All
       </button>
       {groups.map(group => {
