@@ -1,6 +1,11 @@
 # DRAFT: per-IP rate limit on LP's public `/api/` (2026-10-07)
 
-Status: **draft, not applied.** Nothing in `/etc/nginx` has changed. Micah asked for the draft
+Status: **applied in log-only mode 2026-10-07 17:32 CDT** (Micah's go). Backup of the site file:
+`/root/legendarypicks.xyz.conf.bak-20261007-173216`. The secret is `LP_API_BYPASS` in `~/.hermes/.env`
+and in `/etc/nginx/conf.d/lp-api-ratelimit.conf` (mode 640). Verified: 400 requests in 8 s from
+127.0.0.2 all served, 255 `dry run` lines logged; the same burst with the header logged 0.
+Those test lines (client 127.0.0.2, path `/api/__ratelimit_probe`) are ours: exclude them when reading
+the log. Not yet enforced. Micah asked for the draft
 after a check found nothing in front of LP: no CDN, no nginx limits, no IP rules, and `/api/`
 reachable by anyone.
 
