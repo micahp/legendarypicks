@@ -58,13 +58,31 @@ export const LEAGUE_SLUG_TO_SPORT: Record<string, Exclude<SportIconName, 'Trophy
   esports: 'Esports',
 }
 
-// Resolves a sport name (what the scoreboard pills pass) or a league slug
-// (what the league pages pass) to a glyph. Anything unrecognized — a brand-new
-// league card, say — falls back to the trophy, never to an emoji and never to
-// nothing: the card keeps its icon slot and the heading keeps its mark.
+// The navigation vocabulary (components/Navigation/sports.ts) names sports in
+// lowercase — group.sport is 'mma', 'football', … — and the News tab uses
+// 'home'. Those keys resolve here so callers can pass a SportGroup's own
+// values straight through without re-mapping them per page.
+export const SPORT_KEY_ALIASES: Record<string, SportIconName> = {
+  basketball: 'Basketball',
+  baseball: 'Baseball',
+  hockey: 'Hockey',
+  football: 'Football',
+  mma: 'MMA',
+  tennis: 'Tennis',
+  soccer: 'Soccer',
+  esports: 'Esports',
+  all: 'All',
+  home: 'All',
+}
+
+// Resolves a sport name (what the scoreboard pills pass), a league slug
+// (what the league pages pass), a lowercase navigation sport key, or 'home'
+// to a glyph. Anything unrecognized — a brand-new league card, say — falls
+// back to the trophy, never to an emoji and never to nothing: the card keeps
+// its icon slot and the heading keeps its mark.
 export function sportIconFor(value: string): SportIconName {
   if (value in SPORT_ICON_PATHS) return value as SportIconName
-  return LEAGUE_SLUG_TO_SPORT[value] ?? 'Trophy'
+  return SPORT_KEY_ALIASES[value] ?? LEAGUE_SLUG_TO_SPORT[value] ?? 'Trophy'
 }
 
 export default function SportIcon({

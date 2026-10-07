@@ -9,6 +9,7 @@ import {
   leagueLabel,
   relativeTime,
 } from '../components/News/LeagueSection'
+import SportIcon from '../components/SportIcon'
 import type { AiNarrative, LeagueNews, NewsItem } from '../components/News/LeagueSection'
 
 // League news engine surface (see docs/PLAN-league-news-engine.md).
@@ -69,20 +70,22 @@ export default function NewsPage() {
         <div className="flex items-center gap-2 overflow-x-auto border-b border-zinc-800 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             onClick={() => setActive('home')}
-            className={`whitespace-nowrap rounded-full px-3 py-1 transition-colors ${
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 transition-colors ${
               active === 'home' ? 'bg-emerald-500/15 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
+            <SportIcon league="home" className="h-4 w-4" />
             Home
           </button>
           {leagues.map((lg) => (
             <button
               key={lg}
               onClick={() => setActive(lg)}
-              className={`whitespace-nowrap rounded-full px-3 py-1 transition-colors ${
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 transition-colors ${
                 active === lg ? 'bg-emerald-500/15 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
+              <SportIcon league={lg} className="h-4 w-4" />
               {leagueLabel(lg)}
             </button>
           ))}

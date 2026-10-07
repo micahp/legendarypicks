@@ -40,6 +40,21 @@ describe('SportIcon', () => {
     expect(sportIconFor('Soccer')).toBe('Soccer')
   })
 
+  it('resolves the navigation vocabulary — lowercase sport keys and home', () => {
+    // components/Navigation/sports.ts names sports in lowercase; 'mma' in
+    // particular would otherwise fall through to the trophy.
+    expect(sportIconFor('mma')).toBe('MMA')
+    expect(sportIconFor('football')).toBe('Football')
+    expect(sportIconFor('basketball')).toBe('Basketball')
+    expect(sportIconFor('baseball')).toBe('Baseball')
+    expect(sportIconFor('hockey')).toBe('Hockey')
+    expect(sportIconFor('tennis')).toBe('Tennis')
+    expect(sportIconFor('soccer')).toBe('Soccer')
+    expect(sportIconFor('esports')).toBe('Esports')
+    expect(sportIconFor('home')).toBe('All')
+    expect(sportIconFor('all')).toBe('All')
+  })
+
   it('falls back to the trophy for unknown slugs — never an emoji, never nothing', () => {
     expect(sportIconFor('not-a-league')).toBe('Trophy')
     const { container } = render(<SportIcon league="not-a-league" />)

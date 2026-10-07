@@ -33,6 +33,14 @@ describe('multi-sport predict page', () => {
     expect(await screen.findByText('Call of Duty matches')).toBeTruthy()
     expect((global.fetch as jest.Mock)).toHaveBeenCalledWith('/api/esports/picks/me', expect.objectContaining({ headers: { 'X-Device-Id': 'test-device' } }))
     expect(screen.getByRole('button', { name: 'Call of Duty' })).toBeTruthy()
+    // The sport-filter nav carries the shared Material icons: its active sport
+    // button renders its glyph, aria-hidden (the visible label names the sport).
+    const nav = screen.getByRole('navigation', { name: 'Prediction sports' })
+    const activeNav = nav.querySelector('button[aria-pressed="true"]')
+    expect(activeNav).toBeTruthy()
+    const navIcon = activeNav!.querySelector('svg')
+    expect(navIcon).toBeTruthy()
+    expect(navIcon!.getAttribute('aria-hidden')).toBe('true')
     expect(screen.getByRole('button', { name: 'Previous esports titles' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Next esports titles' })).toBeTruthy()
   })

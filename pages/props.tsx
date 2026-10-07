@@ -3,6 +3,7 @@ import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
 import MatchForm from '../components/Props/MatchForm'
 import PropChart, { PropHistory } from '../components/Props/PropChart'
+import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import {
   leagueNavigationLabel,
@@ -112,6 +113,7 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
               aria-expanded={hasMenu ? menuOpen : undefined}
               className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
             >
+              <SportIcon league={selectedCompetition ? selectedCompetition.league : group.sport} className="h-4 w-4 shrink-0" />
               <span>{buttonLabel}</span>
               {hasMenu && active === group.key && (
                 <span aria-hidden="true" className="text-[10px]">▼</span>
@@ -134,7 +136,10 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
                       onClick={() => { onCompetitionChange(item.league); setOpenGroup(null) }}
                       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-300 hover:bg-zinc-800'}`}
                     >
-                      <span>{item.league === 'all' ? `All ${group.label}` : leagueNavigationLabel(item.league)}</span>
+                      <span className="flex items-center gap-2">
+                        <SportIcon league={item.league === 'all' ? group.sport : item.league} className="h-4 w-4 shrink-0" />
+                        {item.league === 'all' ? `All ${group.label}` : leagueNavigationLabel(item.league)}
+                      </span>
                       {selected && <span aria-hidden="true" className="text-emerald-400">✓</span>}
                     </button>
                   )

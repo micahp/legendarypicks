@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { getDeviceId } from '../lib/deviceId'
 import { trackPickMade } from '../lib/analytics'
 import { groupSportNavigation, leagueNavigationLabel, SportGroup } from '../components/Navigation/sports'
+import SportIcon from '../components/SportIcon'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
 
 type Side = 'A' | 'B' | 'D'
@@ -291,6 +292,7 @@ function PredictionSportPills({ groups, selectedGroup, selectedLeague, onSelectG
           aria-expanded={hasMenu ? menuOpen : undefined}
           className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
         >
+          <SportIcon league={active && selectedLeague ? selectedLeague : group.sport} className="h-4 w-4 shrink-0" />
           <span>{buttonLabel}</span>
           {hasMenu && active && <span aria-hidden="true" className="text-[10px]">▼</span>}
         </button>
@@ -305,7 +307,10 @@ function PredictionSportPills({ groups, selectedGroup, selectedLeague, onSelectG
               onClick={() => { onSelectCompetition(group, league); setOpenGroup(null) }}
               className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-300 hover:bg-zinc-800'}`}
             >
-              <span>{league ? leagueNavigationLabel(league) : `All ${group.label}`}</span>
+              <span className="flex items-center gap-2">
+                <SportIcon league={league ?? group.sport} className="h-4 w-4 shrink-0" />
+                {league ? leagueNavigationLabel(league) : `All ${group.label}`}
+              </span>
               {selected && <span aria-hidden="true" className="text-emerald-400">✓</span>}
             </button>
           })}
