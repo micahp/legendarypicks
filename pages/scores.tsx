@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
+import LeagueFilterPills, {
+  SPORT_LEAGUE_CODES,
+  SPORT_FETCH_KEYS,
+  sportForQuery,
+  type SportFilter,
+} from '../components/Scores/LeagueFilterPills'
 import { SkeletonList, ErrorBanner, EmptyState } from '../components/Scores/States'
 import ListenLive from '../components/ListenLive'
 import LiveDot from '../components/LiveDot'
@@ -95,7 +101,6 @@ function LiveNow({ games, esportsLive, isPastDate }: { games: Game[]; esportsLiv
 }
 
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'UNL', 'FRIENDLIES', 'LCUP', 'MLS', 'LIGAMX', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
-const LEAGUES = ['All', 'NBA', 'MLB', 'NHL', 'NFL', 'UEFA Nations League', 'International Friendlies', 'Leagues Cup', 'MLS', 'Liga MX', 'NCAAF', 'ATP', 'WTA', 'UFC', 'Call of Duty', 'FIFA World Cup']
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
 const LEAGUE_KEYS = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'ncaaf', 'atp', 'wta', 'cod', 'ufc', 'wc']
@@ -132,7 +137,18 @@ export default function ScoresPage() {
   const router = useRouter()
   const today = new Date().toLocaleDateString('en-CA')
   const [date, setDate] = useState<string>(today)
-  const [leagueFilter, setLeagueFilter] = useState<string>('All')
+  // The filter is a SPORT, not a league: Basketball = NBA, Football = NFL+NCAAF,
+  // Soccer = the six soccer competitions, and so on (components/Scores/
+  // LeagueFilterPills). Fetching stays per league key — SPORT_FETCH_KEYS expands
+  // the sport to every league it covers and `All` keeps expanding to
+  // LEAGUE_KEYS — so the board still renders one section per league.
+  // Seeded from the URL so a deep link (?league=ATP or a legacy league value)
+  // fetches its own sport on the first pass instead of bursting through every
+  // league once and then re-fetching (the load effect runs on mount before the
+  // query-sync effect can act).
+  const [sportFilter, setSportFilter] = useState<SportFilter>(
+    () => (typeof router.query.league === 'string' ? sportForQuery(router.query.league) : null) ?? 'All',
+  )
   const isToday = date === today
 
   // The URL is the state, not a one-way seed into it. Until 2026-08-25 the query
@@ -145,7 +161,7 @@ export default function ScoresPage() {
   // route change must not re-run getServerSideProps or refetch the page.
   const syncQuery = useCallback((next: { date?: string; league?: string }) => {
     const nextDate = next.date ?? date
-    const nextLeague = next.league ?? leagueFilter
+    const nextLeague = next.league ?? sportFilter
     const q: Record<string, string> = {}
     // Defaults stay OUT of the URL, so a shared link carries only what was chosen
     // and `/scores` keeps meaning "today, all leagues".
@@ -155,10 +171,14 @@ export default function ScoresPage() {
     // "more live games" destination). It has to survive a day or league change.
     if (router.query.live === '1') q.live = '1'
     router.push({ pathname: '/scores', query: q }, undefined, { shallow: true })
-  }, [date, leagueFilter, today, router])
+  }, [date, sportFilter, today, router])
 
   const selectDate = (d: string) => { setDate(d); syncQuery({ date: d }) }
-  const selectLeague = (l: string) => { setLeagueFilter(l); syncQuery({ league: l }) }
+  // Writes the sport name into ?league=. Legacy league values a reader already
+  // has in a URL still resolve on the way in (sportForQuery), so old links
+  // land on the right sport even though nothing new is ever written as a
+  // league name.
+  const selectSport = (s: SportFilter) => { setSportFilter(s); syncQuery({ league: s }) }
 
   const shiftDay = (delta: number) => {
     // W3 — the arrows jump to the neighbouring date that actually has games
@@ -168,9 +188,9 @@ export default function ScoresPage() {
     // distinguishable. When schedule discovery cannot answer or finds no game
     // in that direction, we do NOT invent a calendar date — the board stays
     // on the anchor, honestly showing what the anchor has.
-    const selected = leagueFilter === 'All'
+    const selected = sportFilter === 'All'
       ? SCHEDULE_DATE_KEYS
-      : [leagueKeyFor(leagueFilter)]
+      : SPORT_FETCH_KEYS[sportFilter]
     if (!selected.length) return
     SportsService.getNeighbourGameDate(selected, date, delta as -1 | 1)
       .then((target) => {
@@ -185,7 +205,13 @@ export default function ScoresPage() {
     const q = router.query.date
     if (typeof q === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(q)) setDate(q)
     const l = router.query.league
-    if (typeof l === 'string' && LEAGUES.includes(l)) setLeagueFilter(l)
+    // ?league= accepts the sport names this control writes AND every legacy
+    // league value already in circulation (sportForQuery); unknown values
+    // change nothing, as before.
+    if (typeof l === 'string') {
+      const s = sportForQuery(l)
+      if (s) setSportFilter(s)
+    }
   }, [router.query.date, router.query.league])
 
   // ?live=1 — the destination the rail's "more live games" points at. A whole
@@ -264,10 +290,13 @@ export default function ScoresPage() {
       // calendar day is resolving. Loading has a skeleton; stale games do not.
       setGames([])
       try {
-        if (leagueFilter === 'All') {
+        const keys = sportFilter === 'All' ? LEAGUE_KEYS : SPORT_FETCH_KEYS[sportFilter]
+        if (keys.length > 1) {
           // Progressive: paint each league as it resolves so the fast ones (<200ms) show
           // immediately instead of the whole board waiting on the slowest (cod ~1.3s).
-          const leagues = LEAGUE_KEYS
+          // This is also the multi-league sports' path — a sport fans out over
+          // every league it covers exactly like All does.
+          const leagues = keys
           let cleared = false
           const clearOnce = () => { if (!cleared && !ignore) { cleared = true; setLoading(false) } }
           const settled = await Promise.allSettled(leagues.map(async (l) => {
@@ -282,8 +311,7 @@ export default function ScoresPage() {
           }
           clearOnce() // clear even if every league was empty
         } else {
-          const l = leagueKeyFor(leagueFilter)
-          const data = await SportsService.getGamesByLocalDate(l, date, { strict: true })
+          const data = await SportsService.getGamesByLocalDate(keys[0], date, { strict: true })
           if (!ignore) setGames(Array.isArray(data) ? data : [])
         }
       } catch (e: any) {
@@ -294,7 +322,7 @@ export default function ScoresPage() {
     }
     load()
     return () => { ignore = true }
-  }, [date, leagueFilter])
+  }, [date, sportFilter])
 
   // ── live-score polling ──────────────────────────────────────────
   // Live scores must not be frozen; re-fetch every LIVE_POLL_MS when
@@ -322,9 +350,13 @@ export default function ScoresPage() {
   useEffect(() => {
     if (!liveLeagueKey) return
     let ignore = false
-    const polled = leagueFilter === 'All'
-      ? liveLeagueKey.split(',')
-      : [leagueKeyFor(leagueFilter)]
+    // Only the leagues of the selected sport that actually have a game in
+    // progress get re-fetched (All polls every live league; a sport polls its
+    // own — the board carries only that sport's games, so the filter is
+    // belt-and-braces, not a second data source of truth).
+    const sportCodes = sportFilter === 'All' ? null : SPORT_LEAGUE_CODES[sportFilter]
+    const polled = liveLeagueKey.split(',')
+      .filter((code) => !sportCodes || sportCodes.includes(code))
     const timer = setInterval(() => {
       const refetch = async () => {
         try {
@@ -343,7 +375,7 @@ export default function ScoresPage() {
       refetch()
     }, LIVE_POLL_MS)
     return () => { ignore = true; clearInterval(timer) }
-  }, [liveLeagueKey, date, leagueFilter])
+  }, [liveLeagueKey, date, sportFilter])
 
   const visibleGames = liveOnly ? games.filter((g) => g.status === 'LIVE') : games
 
@@ -383,27 +415,7 @@ export default function ScoresPage() {
             <h1 className="text-3xl font-extrabold tracking-tight">
             {liveOnly ? 'Live now' : 'Scoreboard'}
           </h1>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                value={leagueFilter}
-                onChange={(e) => selectLeague(e.target.value)}
-                className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {LEAGUES.map((l) => (
-                  <option key={l} value={l}>
-                    {l === 'All' ? 'All Leagues' : l}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500"
-                viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
+          <LeagueFilterPills value={sportFilter} onChange={selectSport} />
         </div>
         {/* Live right now — a fact about the present, so it sits ABOVE the
             date control and ignores the selected date (item 2). Renders
@@ -452,7 +464,7 @@ export default function ScoresPage() {
               Nothing is live right now.
             </div>
           ) : (
-            <EmptyState leagueFilter={leagueFilter} onViewAll={() => selectLeague('All')} />
+            <EmptyState leagueFilter={sportFilter} onViewAll={() => selectSport('All')} />
           )
         ) : (
           <div className="space-y-12">
