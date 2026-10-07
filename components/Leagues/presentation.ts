@@ -15,17 +15,6 @@ export const LEAGUE_NAMES: Record<string, string> = {
   ufc: 'UFC',
 }
 
-export const LEAGUE_EMOJIS: Record<string, string> = {
-  mlb: '⚾',
-  nba: '🏀',
-  nhl: '🏒',
-  nfl: '🏈',
-  mls: '⚽',
-  ncaaf: '🏈',
-  wc: '⚽',
-  ufc: '🥊',
-}
-
 // Presentation order. Which of these are actually OFFERED is decided by the coverage
 // registry at runtime (`useLeagueSwitcher`), not by this list — see
 // docs/DATA-COVERAGE-CONTRACT.md §4. This array only says how to sort and what to call
@@ -38,10 +27,6 @@ export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'mls', 'ncaaf', 'ufc'] 
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()
-}
-
-export function leagueEmoji(league: string): string {
-  return LEAGUE_EMOJIS[league] || '🏆'
 }
 
 // Leagues whose season crosses a calendar year, and which every publisher — ESPN

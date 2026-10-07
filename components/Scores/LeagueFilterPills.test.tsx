@@ -21,6 +21,9 @@ describe('LeagueFilterPills', () => {
       const icon = pill.querySelector('svg')
       expect(icon).toBeTruthy()
       expect(icon!.getAttribute('aria-hidden')).toBe('true')
+      // The scoreboard pill keeps its 16px icon — the league pages render the
+      // same glyphs at 24px; only the pill is specified at h-4 w-4.
+      expect(icon!.getAttribute('class')).toContain('h-4 w-4')
       // The label is visible text, not only an aria-label.
       expect((pill.textContent || '').length).toBeGreaterThan(0)
     }

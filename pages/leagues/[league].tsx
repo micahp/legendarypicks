@@ -24,12 +24,12 @@ import { useUfcPredictData } from '../../components/Leagues/hooks/useUfcPredictD
 import { useNflSeasonContext } from '../../components/Leagues/hooks/useNflSeasonContext'
 import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransactions'
 import {
-  LEAGUE_EMOJIS,
   LEAGUE_NAMES,
   leagueLabel,
   orderLeagues,
   localToday,
 } from '../../components/Leagues/presentation'
+import SportIcon from '../../components/SportIcon'
 import { useCoverage } from '../../components/Leagues/hooks/useCoverage'
 import NewsTab from '../../components/Leagues/NewsTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
@@ -147,7 +147,6 @@ export default function LeagueHubPage() {
   if (!route.league) return <LeagueHubSkeleton />
 
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
-  const leagueEmoji = LEAGUE_EMOJIS[route.league] || ''
 
   return (
     <>
@@ -158,7 +157,7 @@ export default function LeagueHubPage() {
       <div className="space-y-4">
         <LeagueSwitcher activeLeague={route.league} />
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{leagueEmoji}</span>
+          <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
           <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
         </div>
         {!route.offerable && !route.coverageLoading ? (
