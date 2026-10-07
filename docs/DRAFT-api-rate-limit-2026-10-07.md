@@ -40,22 +40,41 @@ Leaky bucket replayed per IP at 1-second resolution, this server and loopback ex
 180 requests a minute after the burst, or ~10,800 an hour, instead of whatever the backend can
 serve.
 
+## Home and other devices whose IP changes
+
+A home connection's IP changes whenever the ISP reassigns it, and phones change IP between Wi-Fi and
+cellular, so an IP allowlist entry for them goes stale. Two things cover them instead:
+
+- **Browsing needs nothing.** The replay refused 0 real requests, and a person on the site never gets
+  near 120 at once plus 3 a second.
+- **Scripts from home** (a scraper, a notebook, a backfill) send the header `X-LP-Bypass: <secret>`,
+  which exempts the request from any IP. The secret lives only in the conf.d file on the server and
+  in your home box's environment, never in git. Rotate it by editing that one line and reloading.
+
+Fixed servers (this one and 89.117.145.232) are allowlisted by IP, since their addresses don't change.
+
 ## The change
 
 1. New file `/etc/nginx/conf.d/lp-api-ratelimit.conf` (http context; only LP references the zone):
 
 ```nginx
 # Legendary Picks /api/ per-IP rate limit (http context). Used only by legendarypicks.xyz.conf.
-# This server and loopback are exempt: an empty key is never limited.
-geo $lp_api_exempt {
-    default       0;
-    127.0.0.1     1;
-    ::1           1;
-    5.252.52.108  1;
+# Exempt (an empty key is never limited): loopback, our two servers, and any request carrying
+# the bypass header. The header works from any IP, so it covers home and phones whose address changes.
+geo $lp_api_exempt_ip {
+    default         0;
+    127.0.0.1       1;
+    ::1             1;
+    5.252.52.108    1;   # this server
+    89.117.145.232  1;   # Micah's other server
 }
-map $lp_api_exempt $lp_api_key {
-    0 $binary_remote_addr;
-    1 "";
+map $http_x_lp_bypass $lp_api_bypass {
+    default                 0;
+    "<SECRET, set on the box only, never in git>"  1;
+}
+map "$lp_api_exempt_ip:$lp_api_bypass" $lp_api_key {
+    "0:0"   $binary_remote_addr;
+    default "";
 }
 limit_req_zone $lp_api_key zone=lp_api:10m rate=3r/s;
 ```
