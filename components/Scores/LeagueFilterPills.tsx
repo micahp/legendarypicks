@@ -116,7 +116,7 @@ export default function LeagueFilterPills({
             key={sport.name}
             aria-pressed={active}
             onClick={() => onChange(sport.name)}
-            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               active
                 ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
                 : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'
@@ -125,7 +125,7 @@ export default function LeagueFilterPills({
             <svg
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
               aria-hidden="true"
               focusable="false"
             >
