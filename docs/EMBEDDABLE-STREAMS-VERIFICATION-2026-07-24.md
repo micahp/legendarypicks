@@ -1,5 +1,60 @@
 # Embeddable streams — empirical verification (2026-07-24)
 
+> ## UPDATE 2026-10-07: audio lenience tiers, and the IPTV channels we can reach
+> Added at Micah's request. The 2026-07-24 findings below are unchanged and still stand.
+>
+> ### Audio: the three tiers of lenience (Micah, 2026-10-03; full text `PLAYBOOK-radio-directory.md` section 0)
+> 1. **Lenient leagues first, whatever their size.** Leagues and clubs that put their own audio out
+>    free and unblocked: MLS and Leagues Cup, USL Championship and League One, NWSL, WNBA, MiLB,
+>    college programs, NHL (free home and away audio in its own app), talkSPORT / BBC for English
+>    soccer where reachable.
+> 2. **Everyone else, when a free official route exists.** NFL, NBA, MLB local stations that stream
+>    the game on their own page or on iHeartRadio / Audacy, shown with their blackout note.
+> 3. **Take it down when asked.** A rights holder's request removes the entry the same day, logged in
+>    `takedowns.json` so it is never re-added.
+>
+> The routing rule (same playbook, section 1): every listen action sends the user to the publisher
+> (station page, team page, iHeartRadio / Audacy / TuneIn page or their official embed). We never
+> host or re-stream the audio.
+>
+> ### IPTV: channels reachable from the prod server, measured 2026-10-07 ~22:45Z
+> **Status: internal only.** Per the 2026-10-03 decision (`prediction-market-trading/docs/PLAY-BY-PLAY-SOURCES.md`)
+> these are unauthorized re-streams used only to transcribe commentary for the trading agents;
+> nothing in LegendaryPicks links to or plays them. Listing them here is NOT a decision to show
+> them on the site; that would be a new decision for Micah.
+>
+> Quality is **measured**, not the label: ffprobe on a live segment of the best variant (width x
+> height, frame rate, real bitrate), plus one frame looked at by eye. iptv-org's "(720p)" names are
+> often wrong: FS1 is labelled 720p and is 1080p60. The playlist's own `RESOLUTION` matched the
+> measurement on every stream checked, but a declared 1080p can still be a slate (CBS below).
+>
+> | Channel | Sport seen live | Measured | Proven how |
+> |---|---|---|---|
+> | FS1 | MLB playoffs, NCAAF | 1080p60, 6.5 Mbps | 2,359 transcript rows, 10-03 to 10-07 |
+> | Tennis Channel 2 | ATP / WTA Asian swing | 1080p30, 4.5 Mbps | 2,638 transcript rows, 10-04 to 10-07 |
+> | ESPNU | NCAAF | 720p60, 1.9 Mbps | 607 transcript rows, 10-03 to 10-04 |
+> | NBC (iptv-org WTLV) | NFL SNF | 720p30, 2.8 Mbps | 93 transcript rows, 10-05 |
+> | ESPN | live channel (ad break) | 720p60, 4.2 Mbps | live picture only |
+> | ESPN2 | live channel | 720p60, 4.8 Mbps | live picture only |
+> | NBC Sports Philadelphia (panel path `NBC-HD`) | regional, Phillies content | 720p30, 5.0 Mbps | live picture only; it is NOT national NBC |
+> | MSG | regional (Knicks / Rangers) | 1080p60, 6.1 Mbps | live picture only (ad break) |
+> | NBA TV | studio show | 1080p60, 5.5 Mbps | live picture only |
+> | NHL Network | network programming | 1080p30, 4.4 Mbps | live picture only |
+> | CBS Sports Golazo | live soccer (Bragantino v Mirassol, 16') | 1080p60, 4.6 Mbps | live picture only |
+> | Willow | live cricket (ETPL) | 1080p30, 5.3 Mbps | live picture only |
+> | CBS (panel path `CBS`) | none | 1080p30, 0.6 Mbps | **dead**: "this channel is not available" slate |
+>
+> Not found on the FS1/ESPNU panel (`85.237.89.160:9590/usa-s/`, no public listing; 26 channel
+> names tried by path): ESPNEWS, SEC Network, ACC Network, FS2, FOX, Big Ten, CBS Sports Network,
+> TNT, TBS, truTV, USA, MLB Network, NFL Network, RedZone, Golf, Tennis Channel, beIN, ABC.
+> Of iptv-org's 449 sports streams, 243 answered and 113 declare 1080p; most of the 1080p ones are
+> free ad-supported loop channels (ESPN8 The Ocho, PGA Tour, poker), not live games.
+>
+> Highest quality for live sport, measured: **FS1** (1080p60, 6.5 Mbps), **MSG** (1080p60, 6.1),
+> **NBA TV** (1080p60, 5.5), **CBS Sports Golazo** (1080p60, 4.6), **Willow** (1080p30, 5.3),
+> **Tennis Channel 2** (1080p30, 4.5), **NHL Network** (1080p30, 4.4).
+
+
 **Status:** verified findings, supersedes specific claims in two earlier research docs.
 **Corrects:** `Free_Sports__Esports_Streams_for_Embedding.md` (video) and
 `sports-audio-broadcasts.md` (audio). Both of those were desk research with no reachability
