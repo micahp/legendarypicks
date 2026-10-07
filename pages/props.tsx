@@ -84,7 +84,11 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
   }
 
   return (
-    <nav ref={navRef} aria-label="Sports" className="flex max-w-full flex-wrap gap-1.5">
+    /* Same treatment as the scoreboard's LeagueFilterPills: one scrolling line on a
+       phone (pills keep their size, the row scrolls), wrapped rows on wider screens.
+       While a competition menu is open the overflow is released so the dropdown
+       isn't clipped by the scroll container. */
+    <nav ref={navRef} aria-label="Sports" className={`flex max-w-full gap-1.5 pb-1 md:flex-wrap md:pb-0 ${openGroup ? '' : 'overflow-x-auto md:overflow-x-visible'}`}>
       <button
         type="button"
         onClick={() => { onSportChange('all'); setOpenGroup(null) }}

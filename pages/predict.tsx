@@ -276,7 +276,11 @@ function PredictionSportPills({ groups, selectedGroup, selectedLeague, onSelectG
     }
   }
 
-  return <nav ref={navRef} aria-label="Prediction sports" className="mt-6 flex max-w-full flex-wrap gap-1.5">
+  /* Same treatment as the scoreboard's LeagueFilterPills: one scrolling line on a
+     phone (pills keep their size, the row scrolls), wrapped rows on wider screens.
+     While a competition menu is open the overflow is released so the dropdown
+     isn't clipped by the scroll container. */
+  return <nav ref={navRef} aria-label="Prediction sports" className={`mt-6 flex max-w-full gap-1.5 pb-1 md:flex-wrap md:pb-0 ${openGroup ? '' : 'overflow-x-auto md:overflow-x-visible'}`}>
     {groups.map(group => {
       const active = selectedGroup.key === group.key
       const hasMenu = group.competitions.length > 1
