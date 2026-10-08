@@ -1,0 +1,514 @@
+{
+ "_meta": {
+  "built": "2026-10-07",
+  "rule": "Every href opens the publisher's own player (TuneIn or iHeart station page). Legendary Picks never proxies or re-hosts the audio (docs/PLAYBOOK-radio-directory.md section 1).",
+  "nhl": "TuneIn's dedicated team station for each club (station title == the team's full name); it carries that team's games. Page answered 200.",
+  "mlb": "Flagship = the team's most-listed English AM/FM station in MLB StatsAPI hydrate=broadcasts, 2026-09-01..10-07. Matched to a TuneIn or iHeart station whose own call sign AND frequency equal the published ones; page answered 200.",
+  "nba": "Flagship from data/radio-team-sports.json (2026-08-06 list) plus four teams checked against team sites 10-07 (MEM, OKC, CHI, POR). Same call sign + frequency match. The NBA schedule feed (cdn.nba.com) answers 403 to the server, so this is not refreshed from a league feed yet.",
+  "missing": "No verified player: MLB BAL, KC, MIL, TOR; NBA CHA, DEN, MIL, SAC, TOR. These teams render no listen link."
+ },
+ "nhl": {
+  "ANA": {
+   "label": "Ducks audio",
+   "station": "Anaheim Ducks",
+   "href": "https://tunein.com/radio/Anaheim-Ducks-s137347/",
+   "provider": "TuneIn"
+  },
+  "BOS": {
+   "label": "Bruins audio",
+   "station": "Boston Bruins",
+   "href": "https://tunein.com/radio/Boston-Bruins-s137387/",
+   "provider": "TuneIn"
+  },
+  "BUF": {
+   "label": "Sabres audio",
+   "station": "Buffalo Sabres",
+   "href": "https://tunein.com/radio/Buffalo-Sabres-s137345/",
+   "provider": "TuneIn"
+  },
+  "CAR": {
+   "label": "Hurricanes audio",
+   "station": "Carolina Hurricanes",
+   "href": "https://tunein.com/radio/Carolina-Hurricanes-s149882/",
+   "provider": "TuneIn"
+  },
+  "CBJ": {
+   "label": "Jackets audio",
+   "station": "Columbus Blue Jackets",
+   "href": "https://tunein.com/radio/Columbus-Blue-Jackets-s149869/",
+   "provider": "TuneIn"
+  },
+  "CGY": {
+   "label": "Flames audio",
+   "station": "Calgary Flames",
+   "href": "https://tunein.com/radio/Calgary-Flames-s149880/",
+   "provider": "TuneIn"
+  },
+  "CHI": {
+   "label": "Blackhawks audio",
+   "station": "Chicago Blackhawks",
+   "href": "https://tunein.com/radio/Chicago-Blackhawks-s137388/",
+   "provider": "TuneIn"
+  },
+  "COL": {
+   "label": "Avalanche audio",
+   "station": "Colorado Avalanche",
+   "href": "https://tunein.com/radio/Colorado-Avalanche-s149866/",
+   "provider": "TuneIn"
+  },
+  "DAL": {
+   "label": "Stars audio",
+   "station": "Dallas Stars",
+   "href": "https://tunein.com/radio/Dallas-Stars-s149881/",
+   "provider": "TuneIn"
+  },
+  "DET": {
+   "label": "Wings audio",
+   "station": "Detroit Red Wings",
+   "href": "https://tunein.com/radio/Detroit-Red-Wings-s137351/",
+   "provider": "TuneIn"
+  },
+  "EDM": {
+   "label": "Oilers audio",
+   "station": "Edmonton Oilers",
+   "href": "https://tunein.com/radio/Edmonton-Oilers-s149877/",
+   "provider": "TuneIn"
+  },
+  "FLA": {
+   "label": "Panthers audio",
+   "station": "Florida Panthers",
+   "href": "https://tunein.com/radio/Florida-Panthers-s149873/",
+   "provider": "TuneIn"
+  },
+  "LA": {
+   "label": "Kings audio",
+   "station": "Los Angeles Kings",
+   "href": "https://tunein.com/radio/Los-Angeles-Kings-s137394/",
+   "provider": "TuneIn"
+  },
+  "MIN": {
+   "label": "Wild audio",
+   "station": "Minnesota Wild",
+   "href": "https://tunein.com/radio/Minnesota-Wild-s149867/",
+   "provider": "TuneIn"
+  },
+  "MTL": {
+   "label": "Canadiens audio",
+   "station": "Montreal Canadiens",
+   "href": "https://tunein.com/radio/Montreal-Canadiens-s137385/",
+   "provider": "TuneIn"
+  },
+  "NJ": {
+   "label": "Devils audio",
+   "station": "New Jersey Devils",
+   "href": "https://tunein.com/radio/New-Jersey-Devils-s149887/",
+   "provider": "TuneIn"
+  },
+  "NSH": {
+   "label": "Predators audio",
+   "station": "Nashville Predators",
+   "href": "https://tunein.com/radio/Nashville-Predators-s137348/",
+   "provider": "TuneIn"
+  },
+  "NYI": {
+   "label": "Islanders audio",
+   "station": "New York Islanders",
+   "href": "https://tunein.com/radio/New-York-Islanders-s149875/",
+   "provider": "TuneIn"
+  },
+  "NYR": {
+   "label": "Rangers audio",
+   "station": "New York Rangers",
+   "href": "https://tunein.com/radio/New-York-Rangers-s137341/",
+   "provider": "TuneIn"
+  },
+  "OTT": {
+   "label": "Senators audio",
+   "station": "Ottawa Senators",
+   "href": "https://tunein.com/radio/Ottawa-Senators-s149879/",
+   "provider": "TuneIn"
+  },
+  "PHI": {
+   "label": "Flyers audio",
+   "station": "Philadelphia Flyers",
+   "href": "https://tunein.com/radio/Philadelphia-Flyers-s137344/",
+   "provider": "TuneIn"
+  },
+  "PIT": {
+   "label": "Penguins audio",
+   "station": "Pittsburgh Penguins",
+   "href": "https://tunein.com/radio/Pittsburgh-Penguins-s137342/",
+   "provider": "TuneIn"
+  },
+  "SEA": {
+   "label": "Kraken audio",
+   "station": "Seattle Kraken",
+   "href": "https://tunein.com/radio/Seattle-Kraken-s310026/",
+   "provider": "TuneIn"
+  },
+  "SJ": {
+   "label": "Sharks audio",
+   "station": "San Jose Sharks",
+   "href": "https://tunein.com/radio/San-Jose-Sharks-s137393/",
+   "provider": "TuneIn"
+  },
+  "STL": {
+   "label": "Blues audio",
+   "station": "St. Louis Blues",
+   "href": "https://tunein.com/radio/St-Louis-Blues-s149872/",
+   "provider": "TuneIn"
+  },
+  "TB": {
+   "label": "Lightning audio",
+   "station": "Tampa Bay Lightning",
+   "href": "https://tunein.com/radio/Tampa-Bay-Lightning-s137343/",
+   "provider": "TuneIn"
+  },
+  "TOR": {
+   "label": "Leafs audio",
+   "station": "Toronto Maple Leafs",
+   "href": "https://tunein.com/radio/Toronto-Maple-Leafs-s149876/",
+   "provider": "TuneIn"
+  },
+  "UTA": {
+   "label": "Mammoth audio",
+   "station": "Utah Mammoth",
+   "href": "https://tunein.com/radio/Utah-Mammoth-s137352/",
+   "provider": "TuneIn"
+  },
+  "VAN": {
+   "label": "Canucks audio",
+   "station": "Vancouver Canucks",
+   "href": "https://tunein.com/radio/Vancouver-Canucks-s137392/",
+   "provider": "TuneIn"
+  },
+  "VGK": {
+   "label": "Knights audio",
+   "station": "Vegas Golden Knights",
+   "href": "https://tunein.com/radio/Vegas-Golden-Knights-s296301/",
+   "provider": "TuneIn"
+  },
+  "WPG": {
+   "label": "Jets audio",
+   "station": "Winnipeg Jets",
+   "href": "https://tunein.com/radio/Winnipeg-Jets-s257147/",
+   "provider": "TuneIn"
+  },
+  "WSH": {
+   "label": "Capitals audio",
+   "station": "Washington Capitals",
+   "href": "https://tunein.com/radio/Washington-Capitals-s137340/",
+   "provider": "TuneIn"
+  }
+ },
+ "mlb": {
+  "ATH": {
+   "label": "KSTE 650",
+   "station": "Talk 650 KSTE",
+   "href": "https://www.iheart.com/live/talk-650-kste-229/",
+   "provider": "iHeart"
+  },
+  "ATL": {
+   "label": "WCNN 680",
+   "station": "680 The Fan - WCNN",
+   "href": "https://tunein.com/radio/680-The-Fan---WCNN-s27965/",
+   "provider": "TuneIn"
+  },
+  "ARI": {
+   "label": "KMVP 98.7",
+   "station": "Arizona Sports 98.7",
+   "href": "https://www.iheart.com/live/arizona-sports-987-11724/",
+   "provider": "iHeart"
+  },
+  "BOS": {
+   "label": "WEEI 93.7",
+   "station": "WEEI 93.7",
+   "href": "https://www.iheart.com/live/weei-937-10790/",
+   "provider": "iHeart"
+  },
+  "CHC": {
+   "label": "WSCR 104.3",
+   "station": "104.3 The Score",
+   "href": "https://tunein.com/radio/1043-The-Score-s22732/",
+   "provider": "TuneIn"
+  },
+  "CIN": {
+   "label": "WLW 700",
+   "station": "NewsRadio 700 WLW",
+   "href": "https://www.iheart.com/live/newsradio-700-wlw-1713/",
+   "provider": "iHeart"
+  },
+  "CLE": {
+   "label": "WTAM 1100",
+   "station": "NewsRadio WTAM 1100",
+   "href": "https://www.iheart.com/live/newsradio-wtam-1100-1749/",
+   "provider": "iHeart"
+  },
+  "COL": {
+   "label": "KOA 850",
+   "station": "850 / 94.1 KOA",
+   "href": "https://www.iheart.com/live/850-941-koa-389/",
+   "provider": "iHeart"
+  },
+  "CHW": {
+   "label": "WMVP 1000",
+   "station": "ESPN 1000",
+   "href": "https://www.iheart.com/live/espn-1000-7907/",
+   "provider": "iHeart"
+  },
+  "DET": {
+   "label": "WXYT 97.1",
+   "station": "97.1 The Ticket",
+   "href": "https://www.iheart.com/live/971-the-ticket-10827/",
+   "provider": "iHeart"
+  },
+  "HOU": {
+   "label": "KBME 790",
+   "station": "SportsTalk 790",
+   "href": "https://www.iheart.com/live/sportstalk-790-2257/",
+   "provider": "iHeart"
+  },
+  "LAA": {
+   "label": "KLAA 830",
+   "station": "AM830 KLAA",
+   "href": "https://tunein.com/radio/AM830-KLAA-s34679/",
+   "provider": "TuneIn"
+  },
+  "LAD": {
+   "label": "KLAC 570",
+   "station": "570 KLAC",
+   "href": "https://www.iheart.com/live/570-klac-189/",
+   "provider": "iHeart"
+  },
+  "MIA": {
+   "label": "WQAM 560",
+   "station": "FM 104.3 WQAM",
+   "href": "https://tunein.com/radio/FM-1043-WQAM-560-s22112/",
+   "provider": "TuneIn"
+  },
+  "MIN": {
+   "label": "WCCO 830",
+   "station": "830 WCCO",
+   "href": "https://tunein.com/radio/830-WCCO-s27781/",
+   "provider": "TuneIn"
+  },
+  "NYM": {
+   "label": "WHSQ 880",
+   "station": "Mets Radio",
+   "href": "https://www.iheart.com/live/mets-radio-11097/",
+   "provider": "iHeart"
+  },
+  "NYY": {
+   "label": "WFAN 660",
+   "station": "SportsRadio 101.9 / 66 WFAN",
+   "href": "https://www.iheart.com/live/sportsradio-1019-66-wfan-10930/",
+   "provider": "iHeart"
+  },
+  "PHI": {
+   "label": "WIP 94.1",
+   "station": "SportsRadio 94WIP",
+   "href": "https://www.iheart.com/live/sportsradio-94wip-10934/",
+   "provider": "iHeart"
+  },
+  "PIT": {
+   "label": "KDKA 93.7",
+   "station": "93.7 The Fan",
+   "href": "https://www.iheart.com/live/937-the-fan-10956/",
+   "provider": "iHeart"
+  },
+  "SD": {
+   "label": "KWFN 97.3",
+   "station": "97.3 The Fan",
+   "href": "https://tunein.com/radio/973-The-Fan-s26670/",
+   "provider": "TuneIn"
+  },
+  "SEA": {
+   "label": "KIRO 710",
+   "station": "Seattle Sports 710",
+   "href": "https://www.iheart.com/live/seattle-sports-710-11726/",
+   "provider": "iHeart"
+  },
+  "SF": {
+   "label": "KNBR 680",
+   "station": "680 / 104.5 KNBR",
+   "href": "https://www.iheart.com/live/680-1045-knbr-5530/",
+   "provider": "iHeart"
+  },
+  "STL": {
+   "label": "KMOX 1120",
+   "station": "104.1 KMOX",
+   "href": "https://www.iheart.com/live/1041-kmox-11121/",
+   "provider": "iHeart"
+  },
+  "TB": {
+   "label": "WDAE 95.7",
+   "station": "95.7 WDAE",
+   "href": "https://www.iheart.com/live/957-wdae-673/",
+   "provider": "iHeart"
+  },
+  "TEX": {
+   "label": "KRLD 105.3",
+   "station": "105.3 The Fan",
+   "href": "https://www.iheart.com/live/1053-the-fan-10840/",
+   "provider": "iHeart"
+  },
+  "WSH": {
+   "label": "WJFK 106.7",
+   "station": "106.7 The Fan",
+   "href": "https://www.iheart.com/live/1067-the-fan-11153/",
+   "provider": "iHeart"
+  }
+ },
+ "nba": {
+  "ATL": {
+   "label": "WZGC 92.9",
+   "station": "92-9 The Game",
+   "href": "https://www.iheart.com/live/92-9-the-game-10795/",
+   "provider": "iHeart"
+  },
+  "BKN": {
+   "label": "WFAN 660",
+   "station": "SportsRadio 101.9 / 66 WFAN",
+   "href": "https://www.iheart.com/live/sportsradio-1019-66-wfan-10930/",
+   "provider": "iHeart"
+  },
+  "BOS": {
+   "label": "WBZ 98.5",
+   "station": "98.5 The Sports Hub",
+   "href": "https://www.iheart.com/live/985-the-sports-hub-8808/",
+   "provider": "iHeart"
+  },
+  "CHI": {
+   "label": "WSCR 104.3",
+   "station": "104.3 The Score",
+   "href": "https://tunein.com/radio/1043-The-Score-s22732/",
+   "provider": "TuneIn"
+  },
+  "CLE": {
+   "label": "WTAM 1100",
+   "station": "NewsRadio WTAM 1100",
+   "href": "https://www.iheart.com/live/newsradio-wtam-1100-1749/",
+   "provider": "iHeart"
+  },
+  "DAL": {
+   "label": "KEGL 97.1",
+   "station": "97.1 The Eagle",
+   "href": "https://www.iheart.com/live/971-the-eagle-2241/",
+   "provider": "iHeart"
+  },
+  "DET": {
+   "label": "WXYT 97.1",
+   "station": "97.1 The Ticket",
+   "href": "https://www.iheart.com/live/971-the-ticket-10827/",
+   "provider": "iHeart"
+  },
+  "GS": {
+   "label": "KGMZ 95.7",
+   "station": "95.7 The Game",
+   "href": "https://www.iheart.com/live/957-the-game-11116/",
+   "provider": "iHeart"
+  },
+  "HOU": {
+   "label": "KBME 790",
+   "station": "SportsTalk 790",
+   "href": "https://www.iheart.com/live/sportstalk-790-2257/",
+   "provider": "iHeart"
+  },
+  "IND": {
+   "label": "WIBC 93.1",
+   "station": "93 WIBC",
+   "href": "https://www.iheart.com/live/93-wibc-6057/",
+   "provider": "iHeart"
+  },
+  "LAC": {
+   "label": "KLAC 570",
+   "station": "570 KLAC",
+   "href": "https://www.iheart.com/live/570-klac-189/",
+   "provider": "iHeart"
+  },
+  "LAL": {
+   "label": "KSPN 710",
+   "station": "710 ESPN LA",
+   "href": "https://www.iheart.com/live/710-espn-la-7906/",
+   "provider": "iHeart"
+  },
+  "MEM": {
+   "label": "WMFS 92.9",
+   "station": "ESPN 92.9",
+   "href": "https://www.iheart.com/live/espn-929-10914/",
+   "provider": "iHeart"
+  },
+  "MIA": {
+   "label": "WQAM 560",
+   "station": "FM 104.3 WQAM",
+   "href": "https://tunein.com/radio/FM-1043-WQAM-560-s22112/",
+   "provider": "TuneIn"
+  },
+  "MIN": {
+   "label": "KFXN 100.3",
+   "station": "KFAN FM 100.3",
+   "href": "https://www.iheart.com/live/kfan-fm-1003-1209/",
+   "provider": "iHeart"
+  },
+  "NO": {
+   "label": "WWL 870",
+   "station": "870 / 105.3 WWL",
+   "href": "https://www.iheart.com/live/870-1053-wwl-10981/",
+   "provider": "iHeart"
+  },
+  "NY": {
+   "label": "WHSQ 880",
+   "station": "Mets Radio",
+   "href": "https://www.iheart.com/live/mets-radio-11097/",
+   "provider": "iHeart"
+  },
+  "OKC": {
+   "label": "WWLS 98.1",
+   "station": "98.1 The Sports Animal",
+   "href": "https://www.iheart.com/live/981-the-sports-animal-5511/",
+   "provider": "iHeart"
+  },
+  "ORL": {
+   "label": "WYGM 740",
+   "station": "96.9 The Game",
+   "href": "https://www.iheart.com/live/969-the-game-601/",
+   "provider": "iHeart"
+  },
+  "PHI": {
+   "label": "WPEN 97.5",
+   "station": "97.5 The Fanatic",
+   "href": "https://www.iheart.com/live/975-the-fanatic-5295/",
+   "provider": "iHeart"
+  },
+  "PHX": {
+   "label": "KTAR 620",
+   "station": "ESPN 620",
+   "href": "https://www.iheart.com/live/espn-620-11714/",
+   "provider": "iHeart"
+  },
+  "POR": {
+   "label": "KPOJ 620",
+   "station": "Rip City Radio",
+   "href": "https://www.iheart.com/live/rip-city-radio-1965/",
+   "provider": "iHeart"
+  },
+  "SA": {
+   "label": "WOAI 1200",
+   "station": "NewsRadio 1200 WOAI",
+   "href": "https://www.iheart.com/live/newsradio-1200-woai-2361/",
+   "provider": "iHeart"
+  },
+  "UTAH": {
+   "label": "KSL 1160",
+   "station": "KSL NewsRadio 102.7",
+   "href": "https://www.iheart.com/live/ksl-newsradio-1027-11706/",
+   "provider": "iHeart"
+  },
+  "WSH": {
+   "label": "WTEM 980",
+   "station": "The Team 980 / 95.9",
+   "href": "https://www.iheart.com/live/the-team-980-959-11147/",
+   "provider": "iHeart"
+  }
+ }
+}
