@@ -8,9 +8,9 @@
  * per game; NBA uses LP's flagship list. Every link was matched on the station's
  * own call sign and frequency and its page answered 200.
  *
- * The browser opens the publisher's player (TuneIn or iHeart). Legendary Picks
- * never proxies or re-hosts the audio. A team with no verified player has no
- * entry and renders no link.
+ * The card plays the publisher's own direct stream in the page, like the World
+ * Cup player; nothing is relayed through LP. A team with no verified stream has
+ * no entry, and its games fall back to the other team's radio or show nothing.
  */
 import listen from '../data/radio-listen.json'
 
@@ -20,10 +20,12 @@ export interface GameAudio {
   station: string
   href: string
   provider: string
+  /** Direct HTTPS audio from the publisher, played in the page. */
+  stream: string
 }
 
 type LeagueKey = 'nhl' | 'mlb' | 'nba'
-type Entry = { label: string; station: string; href: string; provider: string }
+type Entry = { label: string; station: string; href: string; provider: string; stream?: string }
 const TABLE = listen as unknown as Record<LeagueKey, Record<string, Entry>>
 
 // The scoreboard has used both spellings for these clubs.
@@ -37,7 +39,7 @@ export function teamAudio(league: string | undefined, team: string | undefined):
   if (!team || !(lg in TABLE)) return null
   const key = ALIAS[lg]?.[team] ?? team
   const e = TABLE[lg][key]
-  return e ? { team, ...e } : null
+  return e && e.stream ? { team, ...e, stream: e.stream } : null
 }
 
 /** Home team first, then away; teams without a verified player are left out. */

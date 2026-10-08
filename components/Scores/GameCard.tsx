@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { formatLiveStatus } from '../../lib/liveGameStatus'
 import type { LivePeriod } from '../../lib/liveGameStatus'
 import { audioForGame } from '../../lib/gameAudio'
+import GameRadioButton from './GameRadioButton'
 
 interface TeamInfo {
   teamId: string
@@ -81,7 +82,8 @@ export default function GameCard(g: GameProps) {
   const router = useRouter()
   const time = new Date(g.startTime)
   const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const audio = g.status === 'FINAL' ? [] : audioForGame(g.league, g.homeTeam?.teamId, g.awayTeam?.teamId)
+  // Home team's radio first; the away team's when the home club has no verified stream.
+  const radio = g.status === 'FINAL' ? null : audioForGame(g.league, g.homeTeam?.teamId, g.awayTeam?.teamId)[0] ?? null
 
   // UFC suppresses time on shared score surfaces; a schedule can opt in.
   const isUFC = g.league === 'UFC'
@@ -239,29 +241,7 @@ export default function GameCard(g: GameProps) {
           colour is reserved for absence (honest-data-ui), so this stays the label grey. */}
       {g.isPreseason && <div className="mt-2 text-xs text-zinc-500">Preseason</div>}
 
-      {audio.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-3">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-zinc-500" aria-hidden="true">
-            <path d="M12 1a9 9 0 0 0-9 9v7a3 3 0 0 0 3 3h3v-8H5v-2a7 7 0 0 1 14 0v2h-4v8h3a3 3 0 0 0 3-3v-7a9 9 0 0 0-9-9Zm-5 17H6a1 1 0 0 1-1-1v-3h2v4Zm12-1a1 1 0 0 1-1 1h-1v-4h2v3Z" />
-          </svg>
-          {audio.map((a) => (
-            <a
-              key={a.team}
-              href={a.href}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(event) => event.stopPropagation()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-950/40 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
-              aria-label={`Listen live: ${a.team} radio, ${a.station} on ${a.provider}`}
-              title={`${a.station}. Opens ${a.provider}; some stations limit game audio by location.`}
-            >
-              <span>{a.team}</span>
-              <span className="font-normal text-zinc-500">{a.label}</span>
-              <span aria-hidden className="text-zinc-600">↗</span>
-            </a>
-          ))}
-        </div>
-      )}
+      {radio && <GameRadioButton src={radio.stream} team={radio.team} />}
     </div>
   )
 }

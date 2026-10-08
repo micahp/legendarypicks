@@ -16,7 +16,7 @@ const nhl = {
   awayTeam: { teamId: 'EDM', name: 'Edmonton Oilers' },
   startTime: '2026-10-08T02:00:00Z',
 }
-const table = listen as unknown as Record<string, Record<string, { href: string; label: string }>>
+const table = listen as unknown as Record<string, Record<string, { href: string; label: string; stream: string }>>
 
 describe('team radio data', () => {
   it('every link opens a publisher player page', () => {
@@ -24,6 +24,8 @@ describe('team radio data', () => {
       for (const [team, e] of Object.entries(table[lg])) {
         expect([team, e.href]).toEqual([team, expect.stringMatching(/^https:\/\/(tunein\.com\/radio|www\.iheart\.com\/live)\//)])
         expect(e.label).toBeTruthy()
+        // Played in an https page, so the stream must be https too
+        expect([team, e.stream]).toEqual([team, expect.stringMatching(/^https:\/\//)])
       }
     }
   })
@@ -52,22 +54,44 @@ describe('team radio data', () => {
   })
 })
 
-describe('GameCard audio', () => {
-  beforeEach(() => push.mockClear())
+describe('GameCard radio button', () => {
+  let play: jest.SpyInstance
+  beforeEach(() => {
+    push.mockClear()
+    play = jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve())
+    jest.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+    jest.spyOn(window.HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
+  })
+  afterEach(() => jest.restoreAllMocks())
 
-  it('shows home then away station and opens the player without navigating', () => {
-    render(<GameCard {...nhl} status="SCHEDULED" />)
-    const links = screen.getAllByRole('link', { name: /listen live/i })
-    expect(links.map((l) => l.getAttribute('href'))).toEqual([table.nhl.ANA.href, table.nhl.EDM.href])
-    expect(links[0].getAttribute('target')).toBe('_blank')
-    fireEvent.click(links[0])
+  it('one play button, no station names, plays the home team stream without opening the game', () => {
+    const { container } = render(<GameCard {...nhl} status="SCHEDULED" />)
+    const buttons = screen.getAllByRole('button', { name: /play live radio/i })
+    expect(buttons).toHaveLength(1)
+    expect(container.textContent).not.toContain(table.nhl.ANA.label)
+    expect(screen.queryByRole('link', { name: /listen/i })).toBeNull()
+    fireEvent.click(buttons[0])
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.nhl.ANA.stream)
     expect(push).not.toHaveBeenCalled()
   })
 
-  it('keeps the links during the game and removes them after final', () => {
-    const { rerender } = render(<GameCard {...nhl} status="LIVE" />)
-    expect(screen.getAllByRole('link', { name: /listen live/i })).toHaveLength(2)
-    rerender(<GameCard {...nhl} status="FINAL" />)
-    expect(screen.queryByRole('link', { name: /listen live/i })).toBeNull()
+  it('falls back to the away team when the home club has no stream', () => {
+    const { container } = render(
+      <GameCard gameId="1" league="MLB" status="LIVE" startTime="2026-10-08T00:00:00Z"
+        homeTeam={{ teamId: 'BAL', name: 'Baltimore Orioles' }} awayTeam={{ teamId: 'NYY', name: 'New York Yankees' }} />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /play live radio/i }))
+    expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.mlb.NYY.stream)
+  })
+
+  it('no button after final, and none when neither club has a stream', () => {
+    const { rerender } = render(<GameCard {...nhl} status="FINAL" />)
+    expect(screen.queryByRole('button', { name: /play live radio/i })).toBeNull()
+    rerender(
+      <GameCard gameId="2" league="MLB" status="LIVE" startTime="2026-10-08T00:00:00Z"
+        homeTeam={{ teamId: 'BAL', name: 'Baltimore Orioles' }} awayTeam={{ teamId: 'KC', name: 'Kansas City Royals' }} />,
+    )
+    expect(screen.queryByRole('button', { name: /play live radio/i })).toBeNull()
   })
 })
