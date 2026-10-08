@@ -467,7 +467,7 @@ export default function ScoresPage() {
             <EmptyState leagueFilter={sportFilter} onViewAll={() => selectSport('All')} />
           )
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-6">
             {sortedLeagues.map((league) => {
               const leagueGames = groupedGames[league]
               const subGroups: Record<string, Game[]> = {}
@@ -478,8 +478,8 @@ export default function ScoresPage() {
               }
               const subKeys = Object.keys(subGroups)
               return (
-                <div key={league} className="space-y-3">
-                  <h2 className="text-2xl font-bold tracking-tight text-white">{LEAGUE_LABELS[league] || league}</h2>
+                <div key={league} className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-2 space-y-2">
+                  <h2 className="text-base font-semibold text-zinc-200">{LEAGUE_LABELS[league] || league}</h2>
                   {subKeys.map((sub) => {
                     const sg = subGroups[sub]
                     // Compute shared time if all games in this group have the same start time
@@ -495,7 +495,7 @@ export default function ScoresPage() {
                           {sub}{timeLabel}
                         </h3>
                       )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
                         {sortGames(sg).map((g) => (
                           <GameCard key={g.gameId} {...g} />
                         ))}
