@@ -93,7 +93,7 @@ show the row structure every league's card follows. `components/Scores/GameCard.
 
 | row | ESPN's app | our card |
 |---|---|---|
-| top line | left: "Match 2" / "Final" / "9:00 PM"; right: the network, or an alert bell | live or final: the LIVE/FINAL pill on the right. Scheduled: the start time on that same top line, right side, exactly where the pill sits, in the line's `text-xs text-zinc-400` (Micah, 10-03: on the first team's row it read worse) |
+| top line | left: "Match 2" / "Final" / "9:00 PM"; right: the network, or an alert bell | live or final: the LIVE/FINAL pill on the right. A scheduled game has no top line: its start time sits on the first team's row, right side, in the same `text-xs text-zinc-400` |
 | competitor rows | name, odds or seed, score or set games on the right | name, score on the right |
 | context row | "Women's Flyweight - Main Event - Title Fight", "Bantamweight", "Quarterfinal - Colosseum", "Semifinal - Kinoshita Group Show Court" | "Preseason" (`2ead396`), quiet `text-xs text-zinc-500` |
 

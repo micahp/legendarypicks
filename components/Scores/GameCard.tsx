@@ -175,14 +175,10 @@ export default function GameCard(g: GameProps) {
       onClick={handleClick}
       className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
     >
-      {(showStatusBadge || showTime) && (
+      {showStatusBadge && (
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         <span className="flex items-center gap-2">
         </span>
-
-        {/* Scheduled: the start time on its own top row, at the right edge where the
-            LIVE/FINAL pill sits once the game starts. */}
-        {showTime && <span>{timeLabel}</span>}
 
         {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
         <span
@@ -227,6 +223,8 @@ export default function GameCard(g: GameProps) {
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
+            {/* Scheduled: the start time on the first team's row, in the header's own text style. */}
+            {showTime && <span className="text-xs text-zinc-400">{timeLabel}</span>}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
