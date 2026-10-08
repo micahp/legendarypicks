@@ -3,6 +3,7 @@ import { formatLiveStatus } from '../../lib/liveGameStatus'
 import type { LivePeriod } from '../../lib/liveGameStatus'
 import { audioForGame } from '../../lib/gameAudio'
 import GameRadioButton from './GameRadioButton'
+import { useRadioBlackout } from '../../lib/useRadioBlackouts'
 
 interface TeamInfo {
   teamId: string
@@ -84,6 +85,8 @@ export default function GameCard(g: GameProps) {
   const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   // Home team's radio first; the away team's when the home club has no verified stream.
   const radio = g.status === 'FINAL' ? null : audioForGame(g.league, g.homeTeam?.teamId, g.awayTeam?.teamId)[0] ?? null
+  // MLB/NBA team radio is blacked out outside the home market; the backend samples it while live.
+  const blackout = useRadioBlackout(g.gameId, !!radio && g.status === 'LIVE' && (g.league === 'MLB' || g.league === 'NBA'))
 
   // UFC suppresses time on shared score surfaces; a schedule can opt in.
   const isUFC = g.league === 'UFC'
@@ -241,7 +244,7 @@ export default function GameCard(g: GameProps) {
           colour is reserved for absence (honest-data-ui), so this stays the label grey. */}
       {g.isPreseason && <div className="mt-2 text-xs text-zinc-500">Preseason</div>}
 
-      {radio && <GameRadioButton src={radio.stream} team={radio.team} />}
+      {radio && <GameRadioButton src={radio.stream} team={radio.team} blackout={blackout} />}
     </div>
   )
 }

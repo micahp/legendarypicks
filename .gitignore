@@ -167,3 +167,7 @@ backend/data/swing_board.json
 backend/data/upcoming_board.json
 backend/data/set_watch.json
 backend/data/parlay_board.json
+
+# radio_blackout_check.py output (rewritten every 5 minutes)
+backend/data/radio-blackouts.json*
+backend/data/radio-blackouts.log

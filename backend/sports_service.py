@@ -102,6 +102,8 @@ app.include_router(nfl_usage.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)
 app.include_router(nfl_schedule_api.router)
+from routers import radio as radio_router  # noqa: E402
+app.include_router(radio_router.router)
 # League news engine router registered above (news) — see routers/news.py.
 
 

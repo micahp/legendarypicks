@@ -11,7 +11,7 @@ type State = 'idle' | 'loading' | 'playing' | 'error'
  * nothing is relayed through LP. preload="none", so nothing loads until tapped.
  * A stream that fails says so instead of sitting silent.
  */
-export default function GameRadioButton({ src, team }: { src: string; team: string }) {
+export default function GameRadioButton({ src, team, blackout = false }: { src: string; team: string; blackout?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [state, setState] = useState<State>('idle')
 
@@ -62,8 +62,9 @@ export default function GameRadioButton({ src, team }: { src: string; team: stri
           </svg>
         )}
       </button>
+      {blackout && state !== 'error' && <span className="text-xs text-zinc-500">Blackout</span>}
       {state === 'loading' && <span className="text-xs text-zinc-500">Connecting…</span>}
-      {state === 'playing' && <span className="text-xs text-emerald-400">Live radio</span>}
+      {state === 'playing' && !blackout && <span className="text-xs text-emerald-400">Live radio</span>}
       {state === 'error' && <span className="text-xs text-zinc-500">Radio unavailable in this browser</span>}
       <audio
         ref={audioRef}

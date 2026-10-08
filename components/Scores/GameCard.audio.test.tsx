@@ -85,6 +85,19 @@ describe('GameCard radio button', () => {
     expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.mlb.NYY.stream)
   })
 
+  it('labels a live MLB card Blackout when the check says so', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ stale: false, games: { '9': { team: 'NYY', blackout: true } } }) })
+    ;(global as unknown as { fetch: unknown }).fetch = fetchMock
+    render(
+      <GameCard gameId="9" league="MLB" status="LIVE" startTime="2026-10-08T00:00:00Z"
+        homeTeam={{ teamId: 'NYY', name: 'New York Yankees' }} awayTeam={{ teamId: 'TB', name: 'Tampa Bay Rays' }} />,
+    )
+    expect(await screen.findByText('Blackout')).toBeTruthy()
+    expect(fetchMock).toHaveBeenCalledWith('/api/radio/blackouts')
+    // still playable: inside the home market the game is on
+    expect(screen.getByRole('button', { name: /play live radio/i })).toBeTruthy()
+  })
+
   it('no button after final, and none when neither club has a stream', () => {
     const { rerender } = render(<GameCard {...nhl} status="FINAL" />)
     expect(screen.queryByRole('button', { name: /play live radio/i })).toBeNull()
