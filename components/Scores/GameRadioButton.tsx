@@ -11,7 +11,9 @@ type State = 'idle' | 'loading' | 'playing' | 'error'
  * nothing is relayed through LP. preload="none", so nothing loads until tapped.
  * A stream that fails says so instead of sitting silent.
  */
-export default function GameRadioButton({ src, team, blackout = false }: { src: string; team: string; blackout?: boolean }) {
+export default function GameRadioButton({ src, team, station, live = true, blackout = false }: {
+  src: string; team: string; station: string; live?: boolean; blackout?: boolean
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [state, setState] = useState<State>('idle')
 
@@ -43,6 +45,9 @@ export default function GameRadioButton({ src, team, blackout = false }: { src: 
 
   const label = state === 'playing' || state === 'loading' ? 'Stop live radio' : 'Play live radio'
 
+  // Before the game: no button, just the station, so people know they can listen once it starts.
+  if (!live) return <span className="text-xs text-zinc-500">{station}</span>
+
   return (
     <div className="flex flex-row-reverse items-center gap-2">
       <button
@@ -62,10 +67,13 @@ export default function GameRadioButton({ src, team, blackout = false }: { src: 
           </svg>
         )}
       </button>
-      {blackout && state !== 'error' && <span className="text-xs text-zinc-500">Blackout</span>}
-      {state === 'loading' && <span className="text-xs text-zinc-500">Connecting…</span>}
-      {state === 'playing' && !blackout && <span className="text-xs text-emerald-400">Live radio</span>}
-      {state === 'error' && <span className="text-xs text-zinc-500">Radio unavailable in this browser</span>}
+      {/* One status slot beside the button: the station, or what is wrong with it right now. */}
+      <span className={'text-xs ' + (state === 'playing' && !blackout ? 'text-emerald-400' : 'text-zinc-500')}>
+        {state === 'error' ? 'Radio unavailable in this browser'
+          : blackout ? 'Blackout'
+          : state === 'loading' ? 'Connecting…'
+          : station}
+      </span>
       <audio
         ref={audioRef}
         preload="none"

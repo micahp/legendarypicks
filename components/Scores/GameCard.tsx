@@ -246,7 +246,7 @@ export default function GameCard(g: GameProps) {
       {(g.isPreseason || radio) && (
         <div className="mt-2 flex items-center justify-between gap-2">
           {g.isPreseason ? <div className="text-xs text-zinc-500">Preseason</div> : <span />}
-          {radio && <GameRadioButton src={radio.stream} team={radio.team} blackout={blackout} />}
+          {radio && <GameRadioButton src={radio.stream} team={radio.team} station={radio.display} live={g.status === 'LIVE'} blackout={blackout} />}
         </div>
       )}
     </div>

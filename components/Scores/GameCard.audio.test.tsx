@@ -64,11 +64,17 @@ describe('GameCard radio button', () => {
   })
   afterEach(() => jest.restoreAllMocks())
 
-  it('one play button, no station names, plays the home team stream without opening the game', () => {
-    const { container } = render(<GameCard {...nhl} status="SCHEDULED" />)
+  it('before the game: the station name and no button', () => {
+    render(<GameCard {...nhl} status="SCHEDULED" />)
+    expect(screen.queryByRole('button', { name: /play live radio/i })).toBeNull()
+    expect(screen.getByText('Ducks radio')).toBeTruthy()
+  })
+
+  it('live: one play button beside the station, plays the home team stream without opening the game', () => {
+    const { container } = render(<GameCard {...nhl} status="LIVE" />)
     const buttons = screen.getAllByRole('button', { name: /play live radio/i })
     expect(buttons).toHaveLength(1)
-    expect(container.textContent).not.toContain(table.nhl.ANA.label)
+    expect(screen.getByText('Ducks radio')).toBeTruthy()
     expect(screen.queryByRole('link', { name: /listen/i })).toBeNull()
     fireEvent.click(buttons[0])
     expect(play).toHaveBeenCalledTimes(1)

@@ -22,6 +22,9 @@ export interface GameAudio {
   provider: string
   /** Direct HTTPS audio from the publisher, played in the page. */
   stream: string
+  /** What the card shows: an NHL club's own stream by team ("Ducks radio"), a station by its call
+   *  sign and frequency ("WFAN 660"). */
+  display: string
 }
 
 type LeagueKey = 'nhl' | 'mlb' | 'nba'
@@ -39,7 +42,9 @@ export function teamAudio(league: string | undefined, team: string | undefined):
   if (!team || !(lg in TABLE)) return null
   const key = ALIAS[lg]?.[team] ?? team
   const e = TABLE[lg][key]
-  return e && e.stream ? { team, ...e, stream: e.stream } : null
+  if (!e || !e.stream) return null
+  const display = lg === 'nhl' ? e.label.replace(/ audio$/, ' radio') : e.label
+  return { team, ...e, stream: e.stream, display }
 }
 
 /** Home team first, then away; teams without a verified player are left out. */
