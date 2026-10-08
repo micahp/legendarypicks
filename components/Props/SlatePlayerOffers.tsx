@@ -77,7 +77,7 @@ export default function SlatePlayerOffers({
   const [selectedByMarket, setSelectedByMarket] = useState<Record<string, string>>({})
 
   return (
-    <div data-slate-player-offers className="space-y-2">
+    <div data-slate-player-offers className="divide-y divide-zinc-800">
       {rows.map(row => {
         const selected = row.offers.find(offer => offer.key === selectedByMarket[row.market])
           || row.offers[0]
@@ -86,7 +86,7 @@ export default function SlatePlayerOffers({
           <div
             key={row.market}
             data-slate-market-row={row.market}
-            className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/40 px-2.5 py-2"
+            className="flex min-w-0 flex-wrap items-center gap-2 py-2"
           >
             <span className="min-w-[8rem] flex-1 text-[11px] font-medium capitalize text-zinc-300">
               {label(row.market)}

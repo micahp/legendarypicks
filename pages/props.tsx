@@ -355,7 +355,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
         groups.map(({ gameDate, leagueGroups }) => (
           <section key={gameDate} data-slate-date={gameDate} className="space-y-3">
             <div className="flex min-w-0 items-center gap-2">
-              <h2 className="shrink-0 text-sm font-bold uppercase tracking-wide text-zinc-300">
+              <h2 className="shrink-0 text-lg font-semibold text-zinc-100">
                 {formatDate(gameDate)}
               </h2>
             </div>
@@ -363,25 +363,25 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
             {leagueGroups.map(({ leagueKey, games }) => {
               const propCount = games.reduce((total, game) => total + game.prop_count, 0)
               return (
-                <section key={leagueKey} data-slate-league={leagueKey} className="space-y-4">
+                <section key={leagueKey} data-slate-league={leagueKey} className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-1">
                   <div className="flex min-w-0 items-center gap-2">
-                    <h3 className="text-base font-extrabold uppercase tracking-wide text-zinc-100">
+                    <h3 className="text-base font-semibold text-zinc-200">
                       {leagueNavigationLabel(leagueKey)}
                     </h3>
                     <span className="truncate text-xs tabular-nums text-zinc-600">
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="mt-1 grid grid-cols-1 gap-x-10 md:grid-cols-2">
                     {games.map(game => {
                       const expanded = expandedGame === game.game_id
                       return (
-                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="min-w-0 border-t border-zinc-800 first:border-t-0 md:[&:nth-child(2)]:border-t-0">
                           <button
                             type="button"
                             onClick={() => openGame(game.game_id)}
                             aria-expanded={expanded}
-                            className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-800/50"
+                            className="flex w-full min-w-0 items-center justify-between gap-3 py-3 text-left transition-colors hover:text-white"
                           >
                             <span className="min-w-0">
                               <span className="block break-words text-sm font-semibold">{game.away} @ {game.home}</span>
@@ -398,13 +398,13 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                           {expanded && (() => {
                             const gp = gameProps[game.game_id]
                             if (!gp || gp.loading) {
-                              return <div data-slate-props className="border-t border-zinc-800 px-4 py-3"><Skeleton lines={3} /></div>
+                              return <div data-slate-props className="pb-3"><Skeleton lines={3} /></div>
                             }
                             if (!gp.players.length) {
-                              return <div data-slate-props className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">No props for this game yet.</div>
+                              return <div data-slate-props className="pb-3 text-xs text-zinc-500">No props for this game yet.</div>
                             }
                             return (
-                              <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-4 py-3">
+                              <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto pb-3">
                                 {gp.players.map(player => (
                                   <div
                                     key={`${player.team}-${player.name}`}
