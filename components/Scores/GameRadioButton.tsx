@@ -44,7 +44,7 @@ export default function GameRadioButton({ src, team, blackout = false }: { src: 
   const label = state === 'playing' || state === 'loading' ? 'Stop live radio' : 'Play live radio'
 
   return (
-    <div className="mt-3 flex items-center gap-2 border-t border-zinc-800 pt-3">
+    <div className="flex flex-row-reverse items-center gap-2">
       <button
         type="button"
         onClick={toggle}

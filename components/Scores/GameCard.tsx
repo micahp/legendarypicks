@@ -242,9 +242,13 @@ export default function GameCard(g: GameProps) {
       {/* Context row under the teams: quiet facts about the game, the slot ESPN's app uses
           for "Quarterfinal - Colosseum" or a weight class. Preseason is the first. The accent
           colour is reserved for absence (honest-data-ui), so this stays the label grey. */}
-      {g.isPreseason && <div className="mt-2 text-xs text-zinc-500">Preseason</div>}
-
-      {radio && <GameRadioButton src={radio.stream} team={radio.team} blackout={blackout} />}
+      {/* Preseason label and the radio button share one row: label left, button right. */}
+      {(g.isPreseason || radio) && (
+        <div className="mt-2 flex items-center justify-between gap-2">
+          {g.isPreseason ? <div className="text-xs text-zinc-500">Preseason</div> : <span />}
+          {radio && <GameRadioButton src={radio.stream} team={radio.team} blackout={blackout} />}
+        </div>
+      )}
     </div>
   )
 }
