@@ -404,7 +404,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                               return <div data-slate-props className="pb-3 text-xs text-zinc-500">No props for this game yet.</div>
                             }
                             return (
-                              <div data-slate-props className="max-h-96 space-y-4 overflow-y-auto pb-3">
+                              <div data-slate-props className="lp-scroll max-h-96 space-y-4 overflow-y-auto pb-3 pr-3">
                                 {gp.players.map(player => (
                                   <div
                                     key={`${player.team}-${player.name}`}
@@ -419,6 +419,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                                       )}
                                       <span className="text-zinc-600">{player.team}</span>
                                     </div>
+                                    <div className="pl-4">
                                     <SlatePlayerOffers
                                       playerId={player.id}
                                       playerName={player.name}
@@ -427,6 +428,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                                         game.league, player.id, prop.market, prop.line, prop.side,
                                       )}
                                     />
+                                    </div>
                                     {player.id && openPropKey?.startsWith(`${player.id}-`) && (
                                       <div className="mt-2">
                                         {propChartLoading ? (

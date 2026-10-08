@@ -49,3 +49,14 @@ a {
 .amber-edge {
   border-left: 3px solid rgb(245 158 11 / 0.5);
 }
+
+/* Thin dark scrollbar for scrolling areas inside panels (10-08: the slate's prop list showed the
+   browser default). Firefox uses scrollbar-*, Chromium/Safari the ::-webkit-scrollbar rules. */
+.lp-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+.lp-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.lp-scroll::-webkit-scrollbar-track { background: transparent; }
+.lp-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 9999px; }
+.lp-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
