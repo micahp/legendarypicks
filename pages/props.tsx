@@ -93,7 +93,7 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
         type="button"
         onClick={() => { onSportChange('all'); setOpenGroup(null) }}
         aria-pressed={active === 'all'}
-        className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${active === 'all' ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'}`}
       >
         <SportIcon league="all" className="h-4 w-4 shrink-0" />
         All
@@ -116,7 +116,7 @@ function SportPills({ groups, active, competition, onSportChange, onCompetitionC
               aria-pressed={active === group.key}
               aria-haspopup={hasMenu ? 'menu' : undefined}
               aria-expanded={hasMenu ? menuOpen : undefined}
-              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${active === group.key ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'}`}
             >
               <SportIcon league={selectedCompetition ? selectedCompetition.league : group.sport} className="h-4 w-4 shrink-0" />
               <span>{buttonLabel}</span>

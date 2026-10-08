@@ -280,7 +280,7 @@ function PredictionSportPills({ groups, selectedGroup, selectedLeague, onSelectG
      phone (pills keep their size, the row scrolls), wrapped rows on wider screens.
      While a competition menu is open the overflow is released so the dropdown
      isn't clipped by the scroll container. */
-  return <nav ref={navRef} aria-label="Prediction sports" className={`mt-6 flex max-w-full gap-1.5 pb-1 md:flex-wrap md:pb-0 ${openGroup ? '' : 'overflow-x-auto md:overflow-x-visible'}`}>
+  return <nav ref={navRef} aria-label="Prediction sports" className={`mt-6 flex max-w-full gap-2 pb-1 md:flex-wrap md:pb-0 ${openGroup ? '' : 'overflow-x-auto md:overflow-x-visible'}`}>
     {groups.map(group => {
       const active = selectedGroup.key === group.key
       const hasMenu = group.competitions.length > 1
@@ -294,7 +294,7 @@ function PredictionSportPills({ groups, selectedGroup, selectedLeague, onSelectG
           aria-pressed={active}
           aria-haspopup={hasMenu ? 'menu' : undefined}
           aria-expanded={hasMenu ? menuOpen : undefined}
-          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${active ? 'bg-emerald-600 text-white' : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}
+          className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'}`}
         >
           <SportIcon league={active && selectedLeague ? selectedLeague : group.sport} className="h-4 w-4 shrink-0" />
           <span>{buttonLabel}</span>
