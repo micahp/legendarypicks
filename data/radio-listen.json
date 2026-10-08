@@ -4,7 +4,7 @@
   "rule": "Every href opens the publisher's own player (TuneIn or iHeart station page). Legendary Picks never proxies or re-hosts the audio (docs/PLAYBOOK-radio-directory.md section 1).",
   "nhl": "TuneIn's dedicated team station for each club (station title == the team's full name); it carries that team's games. Page answered 200.",
   "mlb": "Flagship = the team's most-listed English AM/FM station in MLB StatsAPI hydrate=broadcasts, 2026-09-01..10-07. Matched to a TuneIn or iHeart station whose own call sign AND frequency equal the published ones; page answered 200.",
-  "nba": "Flagship from data/radio-team-sports.json (2026-08-06 list) plus four teams checked against team sites 10-07 (MEM, OKC, CHI, POR). Same call sign + frequency match. The NBA schedule feed (cdn.nba.com) answers 403 to the server, so this is not refreshed from a league feed yet.",
+  "nba": "Flagship from data/radio-team-sports.json (2026-08-06 list) plus four teams checked against team sites 10-07 (MEM, OKC, CHI, POR). Same call sign + frequency match. The NBA schedule feed (cdn.nba.com) answers 403 to the server, so this is not refreshed from a league feed yet. IND corrected 10-07: the list's WIBC main signal is news/talk; the Pacers are on WFNI 1070 / 107.5 The Fan (heard: WIBC was airing a political talk show during the game).",
   "missing": "No verified player: MLB BAL, KC, MIL, TOR; NBA CHA, DEN, MIL, SAC, TOR. These teams render no listen link.",
   "stream": "Each `stream` is the publisher's own direct HTTPS audio, played in the page by a plain <audio> element like the World Cup player (ListenLive WC_STREAM); nothing is relayed through LP. Taken from the same station's iHeart API streams or TuneIn Tune.ashx list, MP3 preferred, session parameters dropped, and kept only when ffprobe read an audio stream from it (2026-10-07). `href` stays as the publisher page it came from."
  },
@@ -550,11 +550,11 @@
    "codec": "aac"
   },
   "IND": {
-   "label": "WIBC 93.1",
-   "station": "93 WIBC",
-   "href": "https://www.iheart.com/live/93-wibc-6057/",
+   "label": "WFNI 1070",
+   "station": "107.5 The Fan",
+   "href": "https://www.iheart.com/live/1075-the-fan-6056/",
    "provider": "iHeart",
-   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WIBCFM.mp3",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WIBCHD2.mp3",
    "codec": "mp3"
   },
   "LAC": {
