@@ -18,7 +18,22 @@ and to the mockups and pages we design around it. Sits beside `.claude/skills/ho
    separating. Reference set alongside it: Clutch Time (10-07 screenshots, same cache), which separates games
    with a thin line and labels groups ("Watching", "Following", "Now") with no cards.
 
-## REVISION, same day (Micah, 10-08): fewer lines, fewer cards, Apple style; keep league grouping
+## DECISION, 10-08 (Micah): LEAGUE CARDS. Supersedes the Apple-list revision below.
+
+After seeing both on dev, Micah kept the league cards: the borderless list "kind of messes up the design
+language expected" on the other pages. So, for every list of games:
+
+- **One tinted panel per league** (`bg-zinc-900`, `rounded-2xl`, no border), league name inside at the top in
+  the label style, counts beside it where the page has them.
+- **Games inside are plain rows separated by a hairline** (`border-zinc-800`), never their own box.
+- **Anything expanded inside a game** (the slate's prop rows) is plain rows on the panel colour with
+  hairlines between them: no third layer of shade or outline.
+- **Date outside the panels, as a plain heading** (`text-lg font-semibold`), left-aligned.
+- The live hero stays one panel with no accent edge.
+
+Applied 10-08 on dev: scoreboard (`829af7e`) and the props Slate tab (`d9dc8c3`). The Props tab was left as is (Micah: "it already does the thing").
+
+## REVISION, same day (Micah, 10-08): fewer lines, fewer cards, Apple style; keep league grouping (SUPERSEDED by the decision above)
 
 Micah pushed the first version further: "even less lines, and less cards too", "Apple style", and "I want
 league grouping". This supersedes rules 1-4 and 6 below for lists of items (they stay as written, marked):
