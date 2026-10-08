@@ -37,11 +37,11 @@ function LiveNow({ games, esportsLive, isPastDate }: { games: Game[]; esportsLiv
   const teamDisplay = (t: Game['awayTeam']) => t.nickname || t.name.replace(/\s*\(.*?\)\s*/g, '')
 
   return (
-    <div className="rounded-r-xl bg-zinc-900 live-edge">
+    <div className="rounded-2xl bg-zinc-900">
 
       {/* featured game */}
       <Link href={gameHref(feat)}
-            className="block px-5 py-4 hover:bg-zinc-800/50 transition-colors rounded-r-xl group">
+            className="block px-5 py-4 hover:bg-zinc-800/50 transition-colors rounded-2xl group">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-400">{feat.league}</span>
           <span className="text-[10px] text-zinc-600">·</span>
@@ -422,21 +422,21 @@ export default function ScoresPage() {
             nothing at all when nothing is live: no header, no empty state. */}
         {!liveOnly ? <LiveNow games={liveGames} esportsLive={esportsLive} isPastDate={!isToday} /> : null}
         {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => shiftDay(-1)}
             aria-label="Previous day"
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+            className="flex items-center justify-center w-9 h-9 rounded-full text-zinc-400 text-xl leading-none hover:bg-zinc-900 hover:text-zinc-200 active:scale-95"
           >
             ‹
           </button>
-          <div className="min-w-[11rem] text-center" aria-live="polite">
-            <span className="text-sm font-bold text-zinc-200">
-              {new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          <div className="order-first mr-2" aria-live="polite">
+            <span className="text-lg font-semibold text-zinc-100">
+              {new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
             </span>
             {!isToday && (
-              <button type="button" onClick={goToday} className="block mx-auto mt-0.5 text-xs font-medium text-emerald-400 hover:text-emerald-300">
+              <button type="button" onClick={goToday} className="block mt-0.5 text-xs font-medium text-emerald-400 hover:text-emerald-300">
                 Jump to today
               </button>
             )}
@@ -445,7 +445,7 @@ export default function ScoresPage() {
             type="button"
             onClick={() => shiftDay(1)}
             aria-label="Next day"
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-xl leading-none hover:bg-zinc-800 active:scale-95"
+            className="flex items-center justify-center w-9 h-9 rounded-full text-zinc-400 text-xl leading-none hover:bg-zinc-900 hover:text-zinc-200 active:scale-95"
           >
             ›
           </button>
@@ -478,11 +478,8 @@ export default function ScoresPage() {
               }
               const subKeys = Object.keys(subGroups)
               return (
-                <div key={league} className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold tracking-tight text-white">{LEAGUE_LABELS[league] || league}</h2>
-                    <div className="h-px flex-1 bg-zinc-800" />
-                  </div>
+                <div key={league} className="space-y-3">
+                  <h2 className="text-2xl font-bold tracking-tight text-white">{LEAGUE_LABELS[league] || league}</h2>
                   {subKeys.map((sub) => {
                     const sg = subGroups[sub]
                     // Compute shared time if all games in this group have the same start time
@@ -494,11 +491,11 @@ export default function ScoresPage() {
                     return (
                     <div key={sub || league} className="space-y-3">
                       {sub && (
-                        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
+                        <h3 className="text-sm font-medium text-zinc-500">
                           {sub}{timeLabel}
                         </h3>
                       )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-1">
                         {sortGames(sg).map((g) => (
                           <GameCard key={g.gameId} {...g} />
                         ))}

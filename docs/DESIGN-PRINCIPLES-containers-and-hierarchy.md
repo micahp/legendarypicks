@@ -18,7 +18,25 @@ and to the mockups and pages we design around it. Sits beside `.claude/skills/ho
    separating. Reference set alongside it: Clutch Time (10-07 screenshots, same cache), which separates games
    with a thin line and labels groups ("Watching", "Following", "Now") with no cards.
 
-## Where they disagree, and the rule that settles it
+## REVISION, same day (Micah, 10-08): fewer lines, fewer cards, Apple style; keep league grouping
+
+Micah pushed the first version further: "even less lines, and less cards too", "Apple style", and "I want
+league grouping". This supersedes rules 1-4 and 6 below for lists of items (they stay as written, marked):
+
+- **League grouping stays, as a heading, not a card.** A large league title ("NBA", "MLB") over its games;
+  no panel around the league, no rule beside the heading.
+- **No lines and no cards between items.** Each game is a borderless row; space between rows and a hover
+  shade on the row are the only separation.
+- **A container is for a distinct module only**, not for a group of like items: the live-now hero is one
+  tinted panel with no accent edge; a future news or audio module would be one panel. Never a panel per
+  league, never a panel per game.
+- Rules 5 and 7 to 11 stand (date outside and left-aligned, text left and numbers right, hierarchy from
+  size/weight/colour, one primary action, single column on phones, modules as groups).
+
+Applied to the scoreboard on dev the same day (league headings, borderless game rows, date left-aligned with
+quiet arrows, no green edge on the live hero).
+
+## Where they disagree, and the rule that settles it (first version; rules 1-4 and 6 SUPERSEDED above)
 
 ESPN draws cards; Zander says remove containers; v6 and Clutch Time use none. They agree on the thing that
 matters: **a container marks a group, never an item.** ESPN's card is a league, not a game; Zander's target is

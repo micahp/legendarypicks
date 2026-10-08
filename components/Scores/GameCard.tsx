@@ -173,7 +173,7 @@ export default function GameCard(g: GameProps) {
   return (
     <div
       onClick={handleClick}
-      className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
+      className={`-mx-3 rounded-2xl px-3 py-3 text-zinc-100 transition-colors ${hasDetail ? 'hover:bg-zinc-900 cursor-pointer' : ''}`}
     >
       {showStatusBadge && (
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
