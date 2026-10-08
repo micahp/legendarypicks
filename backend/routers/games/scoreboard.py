@@ -221,7 +221,7 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         if snapshot is not None:
             games, snapshot_age = snapshot
             data_source = "scoreboard_snapshots"
-    if lg in _LOCAL_ONLY_LEAGUES and games is None:
+    if lg in _LOCAL_ONLY_LEAGUES and data_source == "espn":
         # FotMob-only competitions are populated by the registry job. A missed
         # snapshot is unavailable evidence, not permission to call ESPN or to
         # manufacture an empty published slate.
