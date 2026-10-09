@@ -116,3 +116,63 @@ def backtest_season(con, season, overrides=None):
                 "prior_used": prior is not None, "fit_games": len(train),
             })
     return out
+
+
+def summarize(rows, reps=10000):
+    """Scores for the SPEC A 6.1 questions, from graded rows. Ties are excluded and counted.
+
+    Brier and log loss against 50/50 and a constant 57% home win, plus the market where a
+    moneyline exists. Differences come with paired bootstrap intervals. Margin and total MAE
+    against the lines. ATS record. Calibration bins for the model.
+    """
+    import nfl_metrics as mt
+    graded = [r for r in rows if r["outcome"] is not None]
+    ties = len(rows) - len(graded)
+    if not graded:
+        raise ValueError("no graded games")
+    y = [r["outcome"] for r in graded]
+    pm = [r["p_model"] for r in graded]
+    base = {"coin": [0.5] * len(y), "home57": [0.57] * len(y)}
+
+    def loss_vec(probs):
+        return [(p - o) ** 2 for p, o in zip(probs, y)]
+
+    out = {"n": len(graded), "ties": ties,
+           "brier": {"model": mt.brier(pm, y), **{k: mt.brier(v, y) for k, v in base.items()}},
+           "log_loss": {"model": mt.log_loss(pm, y),
+                        **{k: mt.log_loss(v, y) for k, v in base.items()}},
+           "brier_diff_ci": {}}
+    for k, v in base.items():
+        point, lo, hi = mt.bootstrap_mean_diff_ci(loss_vec(pm), loss_vec(v), reps=reps)
+        out["brier_diff_ci"][k] = {"model_minus_base": point, "lo": lo, "hi": hi}
+    with_mkt = [r for r in graded if r["p_market"] is not None]
+    if with_mkt:
+        ym = [r["outcome"] for r in with_mkt]
+        pmm = [r["p_model"] for r in with_mkt]
+        pk = [r["p_market"] for r in with_mkt]
+        out["market"] = {"n": len(with_mkt), "brier_model": mt.brier(pmm, ym),
+                         "brier_market": mt.brier(pk, ym),
+                         "log_loss_model": mt.log_loss(pmm, ym),
+                         "log_loss_market": mt.log_loss(pk, ym)}
+        point, lo, hi = mt.bootstrap_mean_diff_ci(
+            [(p - o) ** 2 for p, o in zip(pmm, ym)], [(p - o) ** 2 for p, o in zip(pk, ym)],
+            reps=reps)
+        out["market"]["brier_diff_ci"] = {"model_minus_market": point, "lo": lo, "hi": hi}
+    lined = [r for r in graded if r["spread_line"] is not None]
+    if lined:
+        out["margin_mae"] = {"model": mt.mae([r["proj_margin"] for r in lined],
+                                             [r["actual_margin"] for r in lined]),
+                             "spread": mt.mae([float(r["spread_line"]) for r in lined],
+                                              [r["actual_margin"] for r in lined]),
+                             "n": len(lined)}
+        out["ats"] = mt.ats_record([r["actual_margin"] for r in lined],
+                                   [float(r["spread_line"]) for r in lined])
+    tl = [r for r in graded if r["total_line"] is not None]
+    if tl:
+        out["total_mae"] = {"model": mt.mae([r["proj_total"] for r in tl],
+                                            [r["actual_total"] for r in tl]),
+                            "line": mt.mae([float(r["total_line"]) for r in tl],
+                                           [r["actual_total"] for r in tl]),
+                            "n": len(tl)}
+    out["calibration"] = mt.calibration_bins(pm, y)
+    return out

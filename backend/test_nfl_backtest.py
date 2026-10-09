@@ -105,6 +105,38 @@ class CapPoints(unittest.TestCase):
                          [(x.home_pts, x.away_pts) for x in g2])
 
 
+class Summary(unittest.TestCase):
+    def rows(self):
+        base = {"season": 2024, "week": 3, "game_id": "x", "home": "A", "away": "B",
+                "neutral": False, "proj_total": 44.0, "actual_total": 44.0, "total_line": 44.5,
+                "prior_used": True, "fit_games": 10}
+        r = []
+        for i, (p, o, mg, sp) in enumerate([(1.0, 1, 7.0, 3.0), (0.0, 0, -7.0, 3.0),
+                                            (1.0, 1, 3.0, 3.0), (0.5, None, 0.0, -2.0)]):
+            r.append(dict(base, p_model=p, outcome=o, proj_margin=mg, actual_margin=mg,
+                          spread_line=sp, p_market=None, game_id="g%d" % i))
+        return r
+
+    def test_ties_are_excluded_and_counted(self):
+        s = nb.summarize(self.rows(), reps=200)
+        self.assertEqual((s["n"], s["ties"]), (3, 1))
+
+    def test_perfect_model_scores_zero_brier_and_beats_coin(self):
+        s = nb.summarize(self.rows(), reps=200)
+        self.assertAlmostEqual(s["brier"]["model"], 0.0, places=12)
+        self.assertAlmostEqual(s["brier"]["coin"], 0.25, places=12)
+        self.assertLess(s["brier_diff_ci"]["coin"]["hi"], 0.0)
+
+    def test_ats_push_is_separated(self):
+        s = nb.summarize(self.rows(), reps=200)
+        self.assertEqual(s["ats"]["push"], 1)   # margin 3 against line 3
+        self.assertEqual((s["ats"]["cover"], s["ats"]["miss"]), (1, 1))  # +7 covers 3; -7 misses 3
+
+    def test_no_graded_games_refused(self):
+        with self.assertRaises(ValueError):
+            nb.summarize([dict(self.rows()[0], outcome=None)], reps=10)
+
+
 class Params(unittest.TestCase):
     def test_unknown_parameter_is_refused(self):
         with self.assertRaises(ValueError):
