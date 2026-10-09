@@ -31,7 +31,7 @@ FROZEN = {"half_life": 6.0, "cap": 14.0, "cap_points": None, "prior_games": 4.0,
           "shrink": nrd.DEFAULT_SHRINK, "sigma": FROZEN_SIGMA}
 
 
-def inputs(con, season, overrides=None):
+def inputs(con, season, overrides=None, as_of_week=None):
     """Everything a run needs. Played = every scored REG game of the season; remaining = every
     unscored REG game. A scored game is never dropped, whatever its week (an earlier version
     dropped scored games after a cut-off week, and that bug is covered by a test).
@@ -39,20 +39,34 @@ def inputs(con, season, overrides=None):
     The fit uses all played games, anchored at the latest played week."""
     p = dict(FROZEN)
     p.update(overrides or {})
-    scored = nrd._scored_rows(con, season)
-    if not scored:
+    scored_all = nrd._scored_rows(con, season)
+    if not scored_all:
         raise ValueError("no scored REG games for season %d" % season)
-    through_week = max(r[0] for r in scored)
+    if as_of_week is None:
+        scored = scored_all
+        through_week = max(r[0] for r in scored)
+        unplayed_sql = ("SELECT week, home_team, away_team, location FROM nfl_schedule "
+                        "WHERE season = ? AND game_type = 'REG' AND (home_score IS NULL "
+                        "OR away_score IS NULL) ORDER BY week, game_id")
+        unplayed_args = (season,)
+    else:
+        # Backtest mode: the world as it was after week as_of_week. Games after that week are
+        # remaining whatever their score, and their scores are never used.
+        scored = [r for r in scored_all if r[0] <= as_of_week]
+        if not scored:
+            raise ValueError("no scored REG games through week %d" % as_of_week)
+        through_week = as_of_week
+        unplayed_sql = ("SELECT week, home_team, away_team, location FROM nfl_schedule "
+                        "WHERE season = ? AND game_type = 'REG' AND week > ? "
+                        "ORDER BY week, game_id")
+        unplayed_args = (season, as_of_week)
     prior = nb.prior_for(con, season, p)
     teams = nrd.teams_in_season(con, season)
     train = nb.training_games([(r[0], r[1], r[2], r[3], r[4], r[5]) for r in scored],
                               through_week + 1, p["cap_points"])
     f = nr.fit(train, teams, prior=prior, half_life=p["half_life"], cap=p["cap"],
                prior_games=p["prior_games"])
-    unplayed = con.execute(
-        "SELECT week, home_team, away_team, location FROM nfl_schedule "
-        "WHERE season = ? AND game_type = 'REG' AND (home_score IS NULL OR away_score IS NULL) "
-        "ORDER BY week, game_id", (season,)).fetchall()
+    unplayed = con.execute(unplayed_sql, unplayed_args).fetchall()
     remaining = []
     for wk, h, a, loc in unplayed:
         neutral = (loc or "").strip().lower() == "neutral"

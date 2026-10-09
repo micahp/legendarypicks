@@ -108,6 +108,14 @@ class InputsFromDatabase(unittest.TestCase):
         self.assertFalse(any(r[1:3] == ("T00", "T02") for r in inp["remaining"]))
         self.assertEqual(inp["through_week"], 5)
 
+    def test_as_of_week_treats_later_games_as_remaining_and_ignores_their_scores(self):
+        inp = ns.inputs(self.con, 2026, as_of_week=4)
+        self.assertEqual(inp["through_week"], 4)
+        self.assertEqual(len(inp["played"]), 64)            # weeks 1-4 only
+        self.assertFalse(any(p[1:3] == ("T00", "T02") for p in inp["played"]))
+        self.assertTrue(any(r[1:3] == ("T00", "T02") for r in inp["remaining"]))
+        self.assertEqual(len(inp["remaining"]), 2)           # the two week-5 games
+
 
 class HotUpdate(unittest.TestCase):
     def test_home_moves_up_away_moves_down_by_k_times_residual(self):
@@ -124,6 +132,23 @@ class HotUpdate(unittest.TestCase):
         cold = ns.run(league(), 300, k=0.0, seed=9)
         hot = ns.run(league(), 300, k=0.5, seed=9)
         self.assertNotEqual(cold["teams"]["N0a"]["wins_mean"], hot["teams"]["N0a"]["wins_mean"])
+
+
+class BacktestGrading(unittest.TestCase):
+    def test_brier_is_zero_for_perfect_forecasts(self):
+        import nfl_sim_backtest as sb
+        p = {"A": 1.0, "B": 0.0}
+        self.assertEqual(sb.brier_for(p, {"A"}), 0.0)
+
+    def test_brier_penalises_a_confident_miss(self):
+        import nfl_sim_backtest as sb
+        p = {"A": 1.0, "B": 0.0}
+        self.assertEqual(sb.brier_for(p, {"B"}), 1.0)
+
+    def test_empty_refused(self):
+        import nfl_sim_backtest as sb
+        with self.assertRaises(ValueError):
+            sb.brier_for({}, set())
 
 
 if __name__ == "__main__":
