@@ -1,5 +1,5 @@
 [Unit]
-Description=Weekly NFL schedule, log dates, snap counts, and injury reports
+Description=Weekly NFL schedule, log dates, snap counts, injury reports, and play-by-play
 After=network-online.target
 Wants=network-online.target
 OnFailure=legendarypicks-ops-alert@%N.service

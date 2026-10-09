@@ -52,6 +52,10 @@ PY
   run_step 300 ingest_nfl_weekly_stats.py --year "$season" --all-positions
   run_step 300 ingest_nfl_snap_counts.py --year "$season"
   run_step 300 ingest_nfl_injuries.py --year "$season"
+  # Play-by-play (published EPA, wpa, cpoe). nflverse rewrites the season file as
+  # weeks land, so this is INSERT OR REPLACE keyed on (game_id, play_id) and stays idempotent.
+  # 2025 was ingested once by hand and then stopped: without this step the EPA table froze.
+  run_step 600 ingest_nfl_pbp_logs.py --year "$season"
   log "--- $env_name: $(( STEP_FAILURES - before )) step(s) failed"
 done
 
