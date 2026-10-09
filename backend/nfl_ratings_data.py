@@ -105,3 +105,24 @@ def walk_forward(con, season, prior=None, first_week=2, **fit_kwargs):
                         "projected": projected, "actual": actual,
                         "residual": actual - projected})
     return out
+
+
+def fit_for_week(con, season, week, prior=None, **fit_kwargs):
+    """The fit a lock for (season, week) uses: scored REG games of weeks < week only.
+
+    Anchored at week - 1, so the most recent played week carries weight 1. Returns
+    (fit, games_used). Raises if no game before `week` has a score.
+    """
+    rows = _scored_rows(con, season)
+    train = [nr.Game(weeks_ago=float((week - 1) - wk), home=h, away=a, home_pts=float(hs),
+                     away_pts=float(as_), neutral=(loc or "").strip().lower() == "neutral")
+             for wk, h, a, hs, as_, loc in rows if wk < week]
+    if not train:
+        raise ValueError("no scored REG games before week %d of %d" % (week, season))
+    return nr.fit(train, teams_in_season(con, season), prior=prior, **fit_kwargs), len(train)
+
+
+def prior_for_season(con, season, shrink=DEFAULT_SHRINK, **fit_kwargs):
+    """Prior for `season` built from the final fit of season - 1."""
+    f, _ = season_fit(con, season - 1, **fit_kwargs)
+    return prior_from_fit(f, shrink=shrink)

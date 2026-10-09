@@ -130,6 +130,32 @@ class WalkForward(SchedDB):
         self.assertEqual(len(res), 30 - 5)  # weeks 1 games (5 of 30) have no prior data
 
 
+class LockFit(SchedDB):
+    def test_fit_for_week_ignores_its_own_and_later_weeks(self):
+        self.planted_season()
+        f1, n1 = nrd.fit_for_week(self.con, 2025, 4, cap=None, prior_games=1e-6)
+        self.con.execute("UPDATE nfl_schedule SET home_score = home_score + 50 WHERE week >= 4")
+        self.con.commit()
+        f2, n2 = nrd.fit_for_week(self.con, 2025, 4, cap=None, prior_games=1e-6)
+        self.assertEqual(n1, n2)
+        for t in TEAMS:
+            self.assertAlmostEqual(f1.o[t], f2.o[t], places=12)
+        self.assertEqual(n1, 15)  # planted season: weeks 1-3 hold 15 of the 30 games
+
+    def test_fit_for_week_needs_earlier_games(self):
+        self.planted_season()
+        with self.assertRaises(ValueError):
+            nrd.fit_for_week(self.con, 2025, 1, cap=None, prior_games=1e-6)
+
+    def test_prior_for_season_is_shrunk_final_of_previous_season(self):
+        self.planted_season(season=2024)
+        f, _ = nrd.season_fit(self.con, 2024, cap=None, prior_games=1e-6)
+        prior = nrd.prior_for_season(self.con, 2025, cap=None, prior_games=1e-6)
+        for t in TEAMS:
+            self.assertAlmostEqual(prior[t][0], f.o[t] * 2.0 / 3.0, places=9)
+            self.assertAlmostEqual(prior[t][1], f.d[t] * 2.0 / 3.0, places=9)
+
+
 class RealDataSmoke(unittest.TestCase):
     """Runs against the dev DB when present. Skipped on a machine without it."""
 
