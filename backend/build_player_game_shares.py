@@ -5,6 +5,11 @@ targets, air yards and carries come from there, so a share is always a player's 
 count the publisher calls the team's. Published team codes (LA, WAS) map to ESPN's (LAR, WSH) here,
 once, at the boundary.
 
+Air yards: the denominator is TEAM PASSING air yards. The publisher names the column
+receiving_air_yards, but on every team-game it equals passing_air_yards (checked 2025 and 2026).
+Player air yards are assigned only on target records, so the residual (team total minus assigned)
+is kept as air_yards_unassigned and never renormalized into the players.
+
 Numerators and shares, per player per game:
   targets, air_yards: copy the publisher's target_share / air_yards_share, then check them against
       our log value over the published total (a mismatch above 1e-6 raises).
@@ -83,16 +88,18 @@ def build_game_rows(log_rows, totals, season, now):
     report = {m: {"copied": 0, "derived": 0, "unpublished": 0, "max_err": 0.0}
               for m in PER_GAME_METRICS}
     missing, joined, no_player = [], 0, 0
+    assigned = {}
     for player_id, team, game_id, stats_json in log_rows:
         tt = totals.get((game_id, team))
         if tt is None:
             missing.append((game_id, team))
             continue
         joined += 1
+        s = json.loads(stats_json)
+        assigned[(game_id, team)] = assigned.get((game_id, team), 0) + (s.get("rec_air_yds") or 0)
         if player_id is None:
             no_player += 1
             continue
-        s = json.loads(stats_json)
         checks = (
             ("targets", s.get("targets"), s.get("target_share"), tt["targets"]),
             ("air_yards", s.get("rec_air_yds"), s.get("air_yards_share"), tt["air_yards"]),
@@ -126,7 +133,16 @@ def build_game_rows(log_rows, totals, season, now):
     if missing:
         raise RuntimeError("%d log rows have no published team-game, e.g. %r"
                            % (len(missing), sorted(set(missing))[:5]))
-    return rows, {"joined": joined, "no_player": no_player, "metrics": report}
+    negative = []
+    for key, tt in totals.items():
+        tt["air_yards_unassigned"] = tt["air_yards"] - assigned.get(key, 0)
+        if tt["air_yards_unassigned"] < -SHARE_TOLERANCE:
+            negative.append((key[0], key[1], tt["air_yards_unassigned"]))
+    unassigned = sum(tt["air_yards_unassigned"] for tt in totals.values())
+    team_air = sum(tt["air_yards"] for tt in totals.values())
+    return rows, {"joined": joined, "no_player": no_player, "metrics": report,
+                  "air_yards_unassigned": unassigned, "air_yards_team": team_air,
+                  "air_yards_negative": sorted(negative)}
 
 
 def season_rows(game_rows, totals, season, now):
@@ -163,9 +179,11 @@ def write(con, season, totals, fetch_meta, game_rows, season_out):
     con.execute("DELETE FROM player_team_shares WHERE league=? AND season=? AND metric IN (%s)"
                 % marks, (LEAGUE, season, *PER_GAME_METRICS))
     con.executemany(
-        "INSERT INTO nfl_team_game_totals VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO nfl_team_game_totals (league, season, week, game_id, team, carries, targets, "
+        "air_yards, air_yards_unassigned, source, sha256, fetched_at) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         [(LEAGUE, season, tt["week"], game_id, team, tt["carries"], tt["targets"],
-          tt["air_yards"], "nflverse_stats_team_week", sha, fetched)
+          tt["air_yards"], tt["air_yards_unassigned"], "nflverse_stats_team_week", sha, fetched)
          for (game_id, team), tt in totals.items()])
     con.executemany("INSERT INTO player_game_shares VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", game_rows)
     con.executemany("INSERT INTO player_team_shares VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", season_out)
@@ -206,6 +224,11 @@ def main(argv=None):
         print("  %-10s copied=%d derived=%d unpublished=%d max_abs_err=%.9f" % (
             metric, r["copied"], r["derived"], r["unpublished"], r["max_err"]))
     print("per-game rows: %d" % len(game_rows))
+    print("air yards: team passing total %d, assigned to logged players %d, unassigned %d (%.2f%%)" % (
+        report["air_yards_team"], report["air_yards_team"] - report["air_yards_unassigned"],
+        report["air_yards_unassigned"], 100 * report["air_yards_unassigned"] / report["air_yards_team"]))
+    print("air yards: team-games where logged players exceed the team total: %d, e.g. %r" % (
+        len(report["air_yards_negative"]), report["air_yards_negative"][:3]))
 
     season_out = season_rows(game_rows, totals, args.season, now)
     counts = {m: sum(1 for r in season_out if r[4] == m) for m in PER_GAME_METRICS}

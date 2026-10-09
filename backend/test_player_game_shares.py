@@ -76,6 +76,19 @@ class GameRows(unittest.TestCase):
         self.assertEqual([], rows)
         self.assertEqual((1, 1), (report["joined"], report["no_player"]))
 
+    def test_unassigned_air_yards_is_the_residual_not_renormalized(self):
+        totals = mod.totals_from_rows(
+            [team_row(2026, 1, "NO", "2026_01_NO_TB", 20, 40, 200)], 2026)
+        mod.build_game_rows([self.log(1, rec_air_yds=150)], totals, 2026, NOW)
+        self.assertEqual(50, totals[("2026_01_NO_TB", "NO")]["air_yards_unassigned"])
+
+    def test_logged_air_yards_above_the_published_total_are_kept_and_reported(self):
+        totals = mod.totals_from_rows(
+            [team_row(2026, 1, "NO", "2026_01_NO_TB", 20, 40, 200)], 2026)
+        _, report = mod.build_game_rows([self.log(1, rec_air_yds=203)], totals, 2026, NOW)
+        self.assertEqual(-3, totals[("2026_01_NO_TB", "NO")]["air_yards_unassigned"])
+        self.assertEqual([("2026_01_NO_TB", "NO", -3)], report["air_yards_negative"])
+
 
 class SeasonRows(unittest.TestCase):
     def test_season_share_is_a_sum_ratio_not_an_average_of_weeks(self):

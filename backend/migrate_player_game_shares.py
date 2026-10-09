@@ -21,12 +21,15 @@ def migrate(con: sqlite3.Connection) -> None:
             team        TEXT NOT NULL,           -- ESPN vocabulary (LAR, WSH)
             carries     REAL,
             targets     REAL,
-            air_yards   REAL,
+            air_yards   REAL,               -- team PASSING air yards (published as receiving_air_yards)
+            air_yards_unassigned REAL,      -- air_yards minus the air yards assigned to logged players
             source      TEXT NOT NULL,
             sha256      TEXT NOT NULL,
             fetched_at  TEXT NOT NULL,
             PRIMARY KEY (league, game_id, team)
         )""")
+    if "air_yards_unassigned" not in {r[1] for r in con.execute("PRAGMA table_info(nfl_team_game_totals)")}:
+        con.execute("ALTER TABLE nfl_team_game_totals ADD COLUMN air_yards_unassigned REAL")
     con.execute("""
         CREATE TABLE IF NOT EXISTS player_game_shares (
             league       TEXT NOT NULL,
