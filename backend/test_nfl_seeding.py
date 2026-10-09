@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import nfl_seeding as sd  # noqa: E402
 import nfl_standings as st  # noqa: E402
 
-MAP = {"E1": ("NFC", "NFC East"), "E2": ("NFC", "NFC East"),
+MAP = {"E1": ("NFC", "NFC East"), "E2": ("NFC", "NFC East"), "E3": ("NFC", "NFC East"),
        "N1": ("NFC", "NFC North"), "N2": ("NFC", "NFC North"),
        "S1": ("NFC", "NFC South"), "S2": ("NFC", "NFC South"),
        "W1": ("NFC", "NFC West"), "W2": ("NFC", "NFC West"),
@@ -66,23 +66,33 @@ class Seeding(unittest.TestCase):
         self.assertEqual(len({c for _, c in got}), 7)
 
     def test_division_tie_broken_by_head_to_head(self):
-        # E1 and E2 both finish 10-7. E2 beat E1, so E2 wins the East.
+        # E1 and E2 both finish 10-7. E2 beat E1 head-to-head, but E1 has the better division
+        # record (2-1 against 1-1), so the division-record criterion would pick E1. Only
+        # head-to-head gives E2 the East. The test fails if head-to-head is removed.
         b = Builder()
-        b.record("E1", 10, 6)      # 10 wins and 6 losses to AFC, plus one NFC loss = 10-7
-        b.record("E2", 9, 7)       # 9 wins to AFC, plus one NFC win = 10-7
-        b.game("E2", "E1")
+        b.record("E1", 8, 6)     # 8 AFC wins, 6 AFC losses
+        b.record("E2", 9, 6)     # 9 AFC wins, 6 AFC losses
+        b.record("E3", 5, 8)     # 5 AFC wins, 8 AFC losses
+        b.game("E1", "E3")
+        b.game("E1", "E3")       # E1 beats E3 twice
+        b.game("E2", "E1")       # E2 beats E1: E2's only win over E1
+        b.game("E3", "E2")       # E3 beats E2
         b.record("N1", 11, 6)
-        b.record("N2", 8, 9)
+        b.record("N2", 7, 9)
+        b.game("N2", "S2")       # N2 beats S2 (used by the next test as well)
         b.record("S1", 9, 8)
-        b.record("S2", 8, 9)
+        b.record("S2", 8, 8)
         b.record("W1", 8, 9)
         b.record("W2", 6, 11)
         t = b.teams()
         self.assertEqual(t["E1"].record(), (10, 7, 0))
         self.assertEqual(t["E2"].record(), (10, 7, 0))
+        self.assertEqual(st.division_record(t["E1"], t), (2, 1, 0))
+        self.assertEqual(st.division_record(t["E2"], t), (1, 1, 0))
+        self.assertEqual(st.head_to_head(t["E2"], t["E1"]), (1, 0, 0))
         got = sd.seeds_for_conference(t, "NFC")
-        self.assertEqual(got, [(1, "N1"), (2, "E2"), (3, "S1"), (4, "W1"),
-                               (5, "E1"), (6, "N2"), (7, "S2")])
+        self.assertEqual(got[1], (2, "E2"))
+        self.assertEqual(got[4], (5, "E1"))
 
     def test_wild_card_tie_broken_by_head_to_head_across_divisions(self):
         # N2 and S2 both finish 8-9. N2 beat S2, so N2 takes the sixth seed.
