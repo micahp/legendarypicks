@@ -31,31 +31,34 @@ FROZEN = {"half_life": 6.0, "cap": 14.0, "cap_points": None, "prior_games": 4.0,
           "shrink": nrd.DEFAULT_SHRINK, "sigma": FROZEN_SIGMA}
 
 
-def inputs(con, season, through_week, overrides=None):
-    """Everything a run needs: played results, the fit, and the unplayed games with their
-    expected margins from that fit."""
+def inputs(con, season, overrides=None):
+    """Everything a run needs. Played = every scored REG game of the season; remaining = every
+    unscored REG game. A scored game is never dropped, whatever its week (an earlier version
+    dropped scored games after a cut-off week, and that bug is covered by a test).
+
+    The fit uses all played games, anchored at the latest played week."""
     p = dict(FROZEN)
     p.update(overrides or {})
     scored = nrd._scored_rows(con, season)
-    played = [r for r in scored if r[0] <= through_week]
-    if not played:
-        raise ValueError("no played games through week %d of %d" % (through_week, season))
+    if not scored:
+        raise ValueError("no scored REG games for season %d" % season)
+    through_week = max(r[0] for r in scored)
     prior = nb.prior_for(con, season, p)
     teams = nrd.teams_in_season(con, season)
-    train = nb.training_games([(r[0], r[1], r[2], r[3], r[4], r[5]) for r in played],
+    train = nb.training_games([(r[0], r[1], r[2], r[3], r[4], r[5]) for r in scored],
                               through_week + 1, p["cap_points"])
     f = nr.fit(train, teams, prior=prior, half_life=p["half_life"], cap=p["cap"],
                prior_games=p["prior_games"])
     unplayed = con.execute(
         "SELECT week, home_team, away_team, location FROM nfl_schedule "
         "WHERE season = ? AND game_type = 'REG' AND (home_score IS NULL OR away_score IS NULL) "
-        "AND week > ? ORDER BY week, game_id", (season, through_week)).fetchall()
+        "ORDER BY week, game_id", (season,)).fetchall()
     remaining = []
     for wk, h, a, loc in unplayed:
         neutral = (loc or "").strip().lower() == "neutral"
         ph, pa = nr.expected_points(f, h, a, neutral)
         remaining.append((wk, h, a, neutral, ph - pa))
-    played_games = [(r[0], r[1], r[2], float(r[3]), float(r[4])) for r in played]
+    played_games = [(r[0], r[1], r[2], float(r[3]), float(r[4])) for r in scored]
     tmap = bc.team_map(con)
     return {"season": season, "through_week": through_week, "fit": f, "played": played_games,
             "remaining": remaining, "tmap": tmap, "sigma": p["sigma"]}

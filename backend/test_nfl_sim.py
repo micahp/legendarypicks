@@ -66,6 +66,49 @@ class Output(unittest.TestCase):
             ns.sanity(out, CONF_OF)
 
 
+class InputsFromDatabase(unittest.TestCase):
+    """Regression: a scored game after a complete week must not be dropped from the simulation."""
+
+    def setUp(self):
+        import sqlite3
+        import tempfile
+        self._tmp = tempfile.TemporaryDirectory()
+        self.con = sqlite3.connect(os.path.join(self._tmp.name, "t.db"))
+        self.con.execute("CREATE TABLE nfl_teams (season INT, team TEXT, conference TEXT, "
+                         "division TEXT, team_name TEXT, source TEXT)")
+        codes = ["T%02d" % i for i in range(32)]
+        for i, c in enumerate(codes):
+            conf = "AFC" if i < 16 else "NFC"
+            self.con.execute("INSERT INTO nfl_teams VALUES (2026,?,?,?,'','x')",
+                             (c, conf, "%s %s" % (conf, ["East", "North", "South", "West"][(i % 16) // 4])))
+        self.con.execute("CREATE TABLE nfl_schedule (game_id TEXT, season INT, game_type TEXT, "
+                         "week INT, home_team TEXT, away_team TEXT, location TEXT, home_score REAL,"
+                         " away_score REAL, gameday TEXT, gametime TEXT)")
+        # Weeks 1-4 complete (16 games each), week 5 has one scored game and one unscored.
+        for wk in range(1, 5):
+            for i in range(16):
+                h, a = codes[2 * i], codes[2 * i + 1]
+                self.con.execute("INSERT INTO nfl_schedule VALUES (?,2026,'REG',?,?,?,'Home',20,17,"
+                                 "?,'13:00')", ("g%d_%d" % (wk, i), wk, h, a, "2026-09-%02d" % wk))
+        self.con.execute("INSERT INTO nfl_schedule VALUES ('g5_scored',2026,'REG',5,'T00','T02',"
+                         "'Home',24,16,'2026-10-08','20:15')")
+        self.con.execute("INSERT INTO nfl_schedule VALUES ('g5_open',2026,'REG',5,'T04','T06',"
+                         "'Home',NULL,NULL,'2026-10-11','13:00')")
+        self.con.commit()
+
+    def tearDown(self):
+        self.con.close()
+        self._tmp.cleanup()
+
+    def test_scored_week_five_game_is_played_not_dropped(self):
+        inp = ns.inputs(self.con, 2026)
+        total = self.con.execute("SELECT COUNT(*) FROM nfl_schedule").fetchone()[0]
+        self.assertEqual(len(inp["played"]) + len(inp["remaining"]), total)
+        self.assertTrue(any(p[1:3] == ("T00", "T02") for p in inp["played"]))
+        self.assertFalse(any(r[1:3] == ("T00", "T02") for r in inp["remaining"]))
+        self.assertEqual(inp["through_week"], 5)
+
+
 class HotUpdate(unittest.TestCase):
     def test_home_moves_up_away_moves_down_by_k_times_residual(self):
         d = ns.hot_update({}, "H", "A", residual=10.0, k=0.05)
