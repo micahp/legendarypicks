@@ -27,7 +27,14 @@ import nfl_ratings_data as nrd
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
-DEFAULT_SIGMA = 13.4
+# The frozen A3 configuration (SPEC A, 6.1, d30ea75): chosen on 2024 only, held out on 2025.
+# Week-5 2026 locks were written before this freeze with the then-default cap of 21 and sigma
+# 13.4; they stay as they are (locks are never overwritten) and are recorded as such.
+FROZEN_HALF_LIFE = 6.0
+FROZEN_CAP = 14.0
+FROZEN_PRIOR_GAMES = 4.0
+FROZEN_CAP_POINTS = None
+DEFAULT_SIGMA = 13.295
 SHRINK = nrd.DEFAULT_SHRINK
 
 
@@ -36,9 +43,11 @@ def model_version(sigma, half_life, cap, prior_games):
             % (half_life, cap, prior_games, SHRINK, sigma))
 
 
-def build(con, season, week, sigma, half_life=nr.DEFAULT_HALF_LIFE, cap=nr.DEFAULT_CAP,
-          prior_games=nr.DEFAULT_PRIOR_GAMES):
-    prior = nrd.prior_for_season(con, season, shrink=SHRINK)
+def build(con, season, week, sigma, half_life=FROZEN_HALF_LIFE, cap=FROZEN_CAP,
+          prior_games=FROZEN_PRIOR_GAMES):
+    # The prior is built with the same parameters as the fit, so one configuration is used.
+    prior = nrd.prior_for_season(con, season, shrink=SHRINK, half_life=half_life, cap=cap,
+                                 prior_games=prior_games)
     fit, used = nrd.fit_for_week(con, season, week, prior=prior, half_life=half_life,
                                  cap=cap, prior_games=prior_games)
     return fit, used, model_version(sigma, half_life, cap, prior_games)
@@ -84,8 +93,9 @@ def main(argv=None) -> int:
         nfl_lock.ensure_schema(con)
         run_id = "nfl-lock-%d-w%02d-%s" % (args.season, args.week, as_of)
         params = {"season": args.season, "week": args.week, "sigma": args.sigma,
-                  "half_life": nr.DEFAULT_HALF_LIFE, "cap": nr.DEFAULT_CAP,
-                  "prior_games": nr.DEFAULT_PRIOR_GAMES, "prior_shrink": SHRINK,
+                  "half_life": FROZEN_HALF_LIFE, "cap": FROZEN_CAP,
+                  "prior_games": FROZEN_PRIOR_GAMES, "prior_shrink": SHRINK,
+                  "cap_points": FROZEN_CAP_POINTS, "config": "A3-frozen-d30ea75",
                   "fit_games": used, "mode": "lock", "skip_scored": True}
         nfl_lock.start_run(con, run_id, args.season, args.week, version, params)
         try:

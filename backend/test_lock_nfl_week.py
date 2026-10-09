@@ -87,7 +87,9 @@ class Apply(CliDB):
         self.assertEqual(runs[0][0], rows[0][2])
         self.assertEqual(runs[0][1], "ok")
         self.assertIn("prior_shrink=0.3333", runs[0][2])
-        self.assertIn("sigma=13.4", runs[0][2])
+        self.assertIn("sigma=13.295", runs[0][2])
+        self.assertIn("cap=14", runs[0][2])
+        self.assertIn('"config": "A3-frozen-d30ea75"', runs[0][3])
 
     def test_second_apply_refreshes_without_new_locks(self):
         self.run_cli("--apply")
