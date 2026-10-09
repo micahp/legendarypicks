@@ -181,6 +181,35 @@ Report one table per season and pooled:
 Pass: our Brier beats (b) and (c) in both seasons. We do **not** need to beat the market to ship;
 we must report honestly where we stand against it, on the page.
 
+**Pre-registered A3 questions and rules** (written 2026-10-09, before any backtest run; changing
+them after a result is a new experiment and must be labelled as one):
+
+Questions the backtest answers:
+1. Does the model beat 50/50 and the constant 57% on Brier and log loss, in each season?
+2. How far behind the de-vigged moneyline market is it? Report only.
+3. Margin MAE versus `spread_line`, and total MAE versus `total_line`. Report only.
+4. Calibration in 10% bins. Bins with fewer than 20 games are flagged; no claim rests on them.
+5. Against-the-spread record versus `spread_line`, pushes listed separately. Report only.
+6. Which parameters: `half_life`, margin cap, `prior_games`, prior shrink, the `cap_points` toggle
+   (raw points capped at `mu +/- cap_points`), and `h` fitted or fixed at a league value.
+7. Is `h` stable season to season? Does fixing it improve out-of-sample Brier?
+8. Does capping raw points improve Brier or MAE over the current design?
+9. Early-season reliability: weeks 2-4 are reported separately, not pooled silently.
+10. Ties are excluded from grading and their count is reported.
+
+Pass conditions (the only ones):
+- Brier and log loss beat baselines (b) and (c) in both 2024 and 2025.
+- Added: the pooled 95% bootstrap interval of the Brier difference against (b) and against (c)
+  excludes zero. A difference of about 0.01 on about 256 games is not distinguishable from noise
+  without it.
+
+Parameter discipline:
+- Tune on 2024 only. Freeze the chosen set. Evaluate 2025 once with the frozen set.
+- Sigma is fitted from 2024 walk-forward residuals only and applied unchanged to 2025.
+- Every configuration tried is written to `model_runs` with its parameters, so no tuning happens
+  silently.
+- The 2024 fit has no prior (no 2023 season is loaded). Its early weeks are reported as such.
+
 ### 6.2 Seeding validation
 Run the seeding engine on the 2024 and 2025 final regular-season standings (real results, no
 simulation). It must reproduce the published 14 seeds (7 per conference) in both seasons, 28 of 28.
