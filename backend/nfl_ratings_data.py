@@ -65,3 +65,43 @@ def prior_from_fit(f, shrink=DEFAULT_SHRINK):
         raise ValueError("shrink must be in [0, 1)")
     keep = 1.0 - shrink
     return {t: (keep * f.o[t], keep * f.d[t]) for t in f.o}
+
+
+def _scored_rows(con, season):
+    return con.execute(
+        "SELECT week, home_team, away_team, home_score, away_score, location "
+        "FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
+        "AND home_score IS NOT NULL AND away_score IS NOT NULL "
+        "ORDER BY week, game_id", (season,)).fetchall()
+
+
+def walk_forward(con, season, prior=None, first_week=2, **fit_kwargs):
+    """Out-of-sample margin residuals for one season (spec 6.1 style).
+
+    For each week w from first_week: fit on the scored REG games of weeks < w (anchored at
+    w - 1), project the week-w games, and record actual minus projected home margin.
+    Returns a list of dicts: season, week, home, away, neutral, projected, actual, residual.
+    """
+    rows = _scored_rows(con, season)
+    if not rows:
+        raise ValueError("no scored REG games for season %d" % season)
+    teams = teams_in_season(con, season)
+    out = []
+    for w in range(first_week, max(r[0] for r in rows) + 1):
+        train = [nr.Game(weeks_ago=float((w - 1) - wk), home=h, away=a, home_pts=float(hs),
+                         away_pts=float(as_), neutral=(loc or "").strip().lower() == "neutral")
+                 for wk, h, a, hs, as_, loc in rows if wk < w]
+        if not train:
+            continue
+        f = nr.fit(train, teams, prior=prior, **fit_kwargs)
+        for wk, h, a, hs, as_, loc in rows:
+            if wk != w:
+                continue
+            neutral = (loc or "").strip().lower() == "neutral"
+            ph, pa = nr.expected_points(f, h, a, neutral)
+            projected = ph - pa
+            actual = float(hs) - float(as_)
+            out.append({"season": season, "week": w, "home": h, "away": a, "neutral": neutral,
+                        "projected": projected, "actual": actual,
+                        "residual": actual - projected})
+    return out

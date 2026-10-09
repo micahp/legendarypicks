@@ -109,6 +109,27 @@ class SeasonFitAndPrior(SchedDB):
             nrd.season_fit(self.con, 2026)
 
 
+class WalkForward(SchedDB):
+    def test_projections_do_not_see_the_week_they_project(self):
+        # Leakage check: altering week-w scores must not change week-w projections.
+        self.planted_season()
+        before = {(r["home"], r["away"]): r["projected"]
+                  for r in nrd.walk_forward(self.con, 2025) if r["week"] == 4}
+        self.con.execute("UPDATE nfl_schedule SET home_score = home_score + 40 WHERE week = 4")
+        self.con.commit()
+        after = {(r["home"], r["away"]): r["projected"]
+                 for r in nrd.walk_forward(self.con, 2025) if r["week"] == 4}
+        self.assertTrue(before)
+        for k in before:
+            self.assertAlmostEqual(before[k], after[k], places=9, msg=str(k))
+
+    def test_first_week_is_not_projected_and_all_later_games_are(self):
+        self.planted_season()
+        res = nrd.walk_forward(self.con, 2025)
+        self.assertEqual(min(r["week"] for r in res), 2)
+        self.assertEqual(len(res), 30 - 5)  # weeks 1 games (5 of 30) have no prior data
+
+
 class RealDataSmoke(unittest.TestCase):
     """Runs against the dev DB when present. Skipped on a machine without it."""
 
