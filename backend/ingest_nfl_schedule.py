@@ -53,6 +53,8 @@ Usage:
       venv/bin/python ingest_nfl_schedule.py [--season 2026] [--dry-run]
                                              [--schedule-only]
 
+  With no ``--season``, the newest season published in games.csv is selected.
+
   2025 MUST use --schedule-only: ESPN already owns that season in
   team_game_results under different game ids, so writing it would double it.
 """
@@ -65,6 +67,7 @@ import io
 import os
 import sqlite3
 import sys
+import time
 import urllib.request
 
 from team_codes import normalize
@@ -74,6 +77,7 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 SOURCE = "nflverse_games"
 URL = "https://github.com/nflverse/nfldata/raw/master/data/games.csv"
+CACHE_MAX_AGE_S = 6 * 60 * 60
 
 # nflverse abbrev -> the ESPN abbrev used everywhere else in this database.
 #
@@ -116,14 +120,25 @@ _NUMERIC = {name for name, kind in COLUMNS if kind in (_INT, _REAL)}
 _IS_INT = {name for name, kind in COLUMNS if kind == _INT}
 
 
+def _cache_needs_refresh(path: str, refresh: bool = False,
+                         now: float | None = None) -> bool:
+    """Return whether a moving schedule artifact must be downloaded again."""
+    if refresh or not os.path.exists(path):
+        return True
+    checked_at = time.time() if now is None else now
+    return checked_at - os.path.getmtime(path) > CACHE_MAX_AGE_S
+
+
 def fetch(cache_dir: str, refresh: bool = False) -> tuple[str, str]:
-    """Download games.csv once and report its sha256.
+    """Download the moving games.csv artifact and report its sha256.
 
     nfldata tracks master, so the file moves whenever a game finishes or a line
-    updates. The digest is what makes a run reproducible -- print it.
+    updates. A cache without an expiry left completed games scoreless while each
+    run refreshed ``ingested_at`` and therefore looked current. Six hours keeps
+    the twice-daily scheduled job honest. The digest makes a run reproducible.
     """
     path = os.path.join(cache_dir, "games.csv")
-    if refresh or not os.path.exists(path):
+    if _cache_needs_refresh(path, refresh):
         urllib.request.urlretrieve(URL, path)
     with open(path, "rb") as fh:
         digest = hashlib.sha256(fh.read()).hexdigest()
@@ -257,7 +272,7 @@ def write(con: sqlite3.Connection, rows: list[dict],
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", action="append", type=int,
-                    help="repeatable; default 2026 only")
+                    help="repeatable; default is newest season in games.csv")
     ap.add_argument("--all-seasons", action="store_true",
                     help="load 1999-present instead of --season")
     ap.add_argument("--dry-run", action="store_true", help="report, write nothing")
@@ -269,11 +284,21 @@ def main() -> None:
                          "season another ingest already owns there (2025 is ESPN's)")
     args = ap.parse_args()
 
-    seasons = None if args.all_seasons else set(args.season or [2026])
+    path, _digest = fetch(args.cache_dir, args.refresh)
+    if args.all_seasons:
+        seasons = None
+        rows = read_games(path, seasons)
+    elif args.season:
+        seasons = set(args.season)
+        rows = read_games(path, seasons)
+    else:
+        published = read_games(path, None)
+        if not published:
+            raise SystemExit("games.csv contains no seasons")
+        seasons = {max(row["season"] for row in published)}
+        rows = [row for row in published if row["season"] in seasons]
     print("nflverse games.csv -> nfl_schedule + team_game_results  (seasons={})".format(
         "all" if seasons is None else sorted(seasons)))
-    path, _digest = fetch(args.cache_dir, args.refresh)
-    rows = read_games(path, seasons)
     if not rows:
         raise SystemExit("no rows matched -- is the season present in the file?")
 

@@ -355,10 +355,47 @@ def fetch_gsis_to_espn(cache_dir: str) -> dict:
     return out
 
 
+def published_game_dates(con: sqlite3.Connection, year: int, rows) -> dict:
+    """Return nflverse game id -> published date from ``nfl_schedule``.
+
+    The weekly stats artifact deliberately has no date column. The matching
+    nflverse games artifact does, under the same native game id, so refusing an
+    incomplete join is safer than writing another generation of undated logs.
+    """
+    exists = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='nfl_schedule'"
+    ).fetchone()
+    if not exists:
+        raise RuntimeError(
+            "nfl_schedule is required before NFL weekly stats can publish game_date"
+        )
+    required = {str(row["game_id"]) for row in rows if row.get("game_id")}
+    dates = {
+        str(game_id): str(gameday)
+        for game_id, gameday in con.execute(
+            "SELECT game_id,gameday FROM nfl_schedule WHERE season=?",
+            (year,),
+        )
+        if game_id and gameday
+    }
+    missing = sorted(required - set(dates))
+    if missing:
+        preview = ", ".join(missing[:5])
+        raise RuntimeError(
+            "nfl_schedule has no published game date for {} of {} weekly games: {}{}"
+            .format(
+                len(missing), len(required), preview,
+                " ..." if len(missing) > 5 else "",
+            )
+        )
+    return dates
+
+
 def upsert_rows(con: sqlite3.Connection, year: int, rows, gsis_to_espn=None) -> tuple:
     """Write canonical weekly rows while preserving other ingests' enrichment."""
     con.row_factory = sqlite3.Row
     ensure_table(con)
+    game_dates = published_game_dates(con, year, rows)
 
     gsis_to_player = {
         r["nfl_gsis_id"]: r["id"]
@@ -418,19 +455,21 @@ def upsert_rows(con: sqlite3.Connection, year: int, rows, gsis_to_espn=None) -> 
         stats.update(row["stats"])
         con.execute(
             """INSERT INTO player_game_logs
-               (player_id, league, season, game_no, game_id, game_type, team, opponent,
+               (player_id, league, season, game_no, game_id, game_date, game_type, team, opponent,
                 stats, source, source_player_key)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(league, source_player_key, season, game_no) DO UPDATE SET
                  player_id=COALESCE(excluded.player_id, player_game_logs.player_id),
                  game_id=excluded.game_id,
+                 game_date=excluded.game_date,
                  game_type=excluded.game_type,
                  team=excluded.team,
                  opponent=excluded.opponent,
                  stats=excluded.stats,
                  source=excluded.source""",
             (resolve(row["gsis"]), "nfl", year, game_no,
-             row["game_id"], row.get("season_type"), row["team"], row["opponent"],
+             row["game_id"], game_dates[str(row["game_id"])],
+             row.get("season_type"), row["team"], row["opponent"],
              json.dumps(stats),
              SOURCE, row["gsis"]))
         written += 1

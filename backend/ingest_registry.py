@@ -199,7 +199,8 @@ JOBS: List[Dict[str, object]] = [
         "cadence_min": 720,
         "timeout_sec": 1200,
         # nflverse publishes as files on github, its own host, so this costs no ESPN
-        # budget. --season already defaults to 2026, so no year is hardcoded here.
+        # budget. With no --season the ingest selects the newest season published
+        # in games.csv, so this registry never pins the schedule to one year.
         "host_lock": "nflverse",
         "steps": [["ingest_nfl_schedule.py"]],
         "needs_api_base": False,

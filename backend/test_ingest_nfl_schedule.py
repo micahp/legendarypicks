@@ -98,6 +98,15 @@ class ReadGames(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.mod.read_games(path, {2026})
 
+    def test_moving_schedule_cache_expires(self):
+        path = _csv(self.tmp, UNPLAYED)
+        os.utime(path, (1_000, 1_000))
+        self.assertFalse(self.mod._cache_needs_refresh(
+            path, now=1_000 + self.mod.CACHE_MAX_AGE_S))
+        self.assertTrue(self.mod._cache_needs_refresh(
+            path, now=1_001 + self.mod.CACHE_MAX_AGE_S))
+        self.assertTrue(self.mod._cache_needs_refresh(path, refresh=True, now=1_000))
+
 
 class Write(unittest.TestCase):
     def setUp(self):

@@ -231,6 +231,16 @@ class UpsertTests(unittest.TestCase):
         self.con.execute(
             "INSERT INTO players VALUES (1, 'nfl', 'Quarterback One', '00-0000001', '11')"
         )
+        self.con.execute(
+            "CREATE TABLE nfl_schedule(game_id TEXT, season INTEGER, gameday TEXT)"
+        )
+        self.con.executemany(
+            "INSERT INTO nfl_schedule VALUES(?,?,?)",
+            [
+                ("2025_01_ARI_SEA", 2025, "2025-09-07"),
+                ("2026_01_ATL_NO", 2026, "2026-09-13"),
+            ],
+        )
         self.con.commit()
         mod.ensure_table(self.con)
 
@@ -281,18 +291,19 @@ class UpsertTests(unittest.TestCase):
         written, preserved_rows = mod.upsert_rows(self.con, 2025, rows)
 
         row = self.con.execute(
-            """SELECT id, player_id, game_id, team, opponent, stats, source
+            """SELECT id, player_id, game_id, game_date, team, opponent, stats, source
                FROM player_game_logs
                WHERE league='nfl' AND season=2025
                  AND source_player_key='00-0000001' AND game_no='1'"""
         ).fetchone()
-        stats = json.loads(row[5])
+        stats = json.loads(row[6])
         self.assertEqual((1, 1), (written, preserved_rows))
         self.assertEqual(original_id, row[0])
         self.assertEqual(1, row[1])
         self.assertEqual("2025_01_ARI_SEA", row[2])
-        self.assertEqual(("SEA", "ARI"), (row[3], row[4]))
-        self.assertEqual(mod.SOURCE, row[6])
+        self.assertEqual("2025-09-07", row[3])
+        self.assertEqual(("SEA", "ARI"), (row[4], row[5]))
+        self.assertEqual(mod.SOURCE, row[7])
         self.assertEqual(25, stats["pass_yds"])
         self.assertEqual(1, stats["fpts"])
         for key in ("attempts", "passing_yards", "interceptions",
@@ -341,6 +352,11 @@ class UpsertTests(unittest.TestCase):
             for week in range(19, 23)
         )
         _write_artifact(artifact, rows)
+        self.con.executemany(
+            "INSERT INTO nfl_schedule VALUES(?,?,?)",
+            [(row["game_id"], 2025, "2026-01-{:02d}".format(row["week"] - 18))
+             for row in rows],
+        )
 
         built = mod.build_rows(artifact)
         written, _ = mod.upsert_rows(self.con, 2025, built)
@@ -354,6 +370,20 @@ class UpsertTests(unittest.TestCase):
         ).fetchall()
         self.assertEqual(["19", "20", "21", "22"], [row[0] for row in landed])
         self.assertEqual({mod.SOURCE}, {row[1] for row in landed})
+
+    def test_missing_schedule_date_refuses_before_writing(self):
+        row = self._row("00-0000001")
+        row["game_id"] = "2026_01_MISSING"
+
+        with self.assertRaisesRegex(RuntimeError, "no published game date"):
+            mod.upsert_rows(self.con, 2026, [row])
+
+        self.assertEqual(
+            0,
+            self.con.execute(
+                "SELECT COUNT(*) FROM player_game_logs WHERE season=2026"
+            ).fetchone()[0],
+        )
 
     def test_upsert_removes_entityless_rows_and_stays_idempotent(self):
         self.con.execute(
