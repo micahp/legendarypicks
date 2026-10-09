@@ -47,13 +47,14 @@ def fetch_team_file(season, cache_dir):
     """Download the publisher's team-week file. Returns (path, sha256, bytes, fetched_at)."""
     os.makedirs(cache_dir, exist_ok=True)
     path = os.path.join(cache_dir, "stats_team_week_%d.parquet" % season)
-    part = path + ".part"
-    with urllib.request.urlopen(TEAM_URL % season, timeout=60) as resp, open(part, "wb") as out:
-        out.write(resp.read())
-    os.replace(part, path)
+    if not os.path.exists(path):
+        part = path + ".part"
+        with urllib.request.urlopen(TEAM_URL % season, timeout=60) as resp, open(part, "wb") as out:
+            out.write(resp.read())
+        os.replace(part, path)
     with open(path, "rb") as f:
         data = f.read()
-    fetched = dt.datetime.now(dt.timezone.utc).isoformat()
+    fetched = dt.datetime.fromtimestamp(os.path.getmtime(path), dt.timezone.utc).isoformat()
     return path, hashlib.sha256(data).hexdigest(), len(data), fetched
 
 

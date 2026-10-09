@@ -106,6 +106,18 @@ class SeasonRows(unittest.TestCase):
         self.assertEqual((2, 2), (row[8], row[9]))
 
 
+class Cache(unittest.TestCase):
+    def test_cached_team_file_is_read_without_a_download(self):
+        import tempfile, urllib.request
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            with open(f"{d}/stats_team_week_2026.parquet", "wb") as f:
+                f.write(b"cached")
+            with mock.patch.object(urllib.request, "urlopen", side_effect=AssertionError("network")):
+                path, sha, nbytes, fetched = mod.fetch_team_file(2026, d)
+            self.assertEqual((6, "cached"), (nbytes, open(path, "rb").read().decode()))
+
+
 class Writes(unittest.TestCase):
     def setUp(self):
         self.con = sqlite3.connect(":memory:")
@@ -132,6 +144,18 @@ class Writes(unittest.TestCase):
             mod.write(self.con, 2026, self.totals, meta, self.game_rows, self.season)
         self.assertEqual(2, self.con.execute("SELECT COUNT(*) FROM player_game_shares").fetchone()[0])
         self.assertEqual(1, self.con.execute("SELECT COUNT(*) FROM nfl_team_game_totals").fetchone()[0])
+
+    def test_negative_residual_is_written_as_is(self):
+        totals = mod.totals_from_rows(
+            [team_row(2026, 1, "NO", "2026_01_NO_TB", 20, 40, 200)], 2026)
+        logs = [(1, "NO", "2026_01_NO_TB", json.dumps({"targets": 10, "rec_air_yds": 203}))]
+        game_rows, _ = mod.build_game_rows(logs, totals, 2026, NOW)
+        season = mod.season_rows(game_rows, totals, 2026, NOW)
+        mod.write(self.con, 2026, totals, ("", "abc", 0, NOW), game_rows, season)
+        residual = self.con.execute(
+            "SELECT air_yards_unassigned FROM nfl_team_game_totals WHERE game_id='2026_01_NO_TB'"
+        ).fetchone()[0]
+        self.assertEqual(-3, residual)
 
     def test_touchdown_builder_keeps_per_game_metrics(self):
         mod.write(self.con, 2026, self.totals, ("", "abc", 0, NOW), self.game_rows, self.season)
