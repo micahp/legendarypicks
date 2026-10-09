@@ -209,6 +209,14 @@ Parameter discipline:
 - Every configuration tried is written to `model_runs` with its parameters, so no tuning happens
   silently.
 - The 2024 fit has no prior (no 2023 season is loaded). Its early weeks are reported as such.
+- Selection rule for the 2024 tuning grid, fixed before running it: primary criterion is 2024
+  Brier score over weeks 2-18; log loss is the secondary check; when two configurations tie to
+  three decimals, the one with the fewer non-default parameters wins.
+- Prior parameters (`prior_games`, prior shrink) have no effect on 2024, which has no prior. They
+  stay at the spec defaults (4 and one third) and are not tuned. Tuning them would need 2025 and
+  would spend the holdout.
+- `h` stays fitted in the gated run. Its season-to-season values are reported; the fixed-`h`
+  question is answered descriptively unless a fixed value can be chosen without 2025.
 
 ### 6.2 Seeding validation
 Run the seeding engine on the 2024 and 2025 final regular-season standings (real results, no
