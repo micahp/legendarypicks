@@ -126,5 +126,23 @@ class Validation(unittest.TestCase):
                                places=9)
 
 
+class WinProbability(unittest.TestCase):
+    def test_even_margin_is_coin_flip(self):
+        self.assertAlmostEqual(nr.win_probability(0.0, 13.5), 0.5, places=12)
+
+    def test_one_sigma_is_phi_of_one(self):
+        # Phi(1) = 0.841344746...; a margin of exactly sigma must give that.
+        self.assertAlmostEqual(nr.win_probability(13.5, 13.5), 0.8413447460685429, places=9)
+
+    def test_symmetric_and_monotone(self):
+        self.assertAlmostEqual(nr.win_probability(-3.0, 13.5) + nr.win_probability(3.0, 13.5), 1.0,
+                               places=12)
+        self.assertLess(nr.win_probability(2.0, 13.5), nr.win_probability(5.0, 13.5))
+
+    def test_bad_sigma_rejected(self):
+        with self.assertRaises(ValueError):
+            nr.win_probability(1.0, 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

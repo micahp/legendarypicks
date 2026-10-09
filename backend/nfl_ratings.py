@@ -29,6 +29,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.stats import norm
 
 DEFAULT_HALF_LIFE = 6.0
 DEFAULT_CAP = 21.0
@@ -130,3 +131,14 @@ def expected_points(f: Fit, home: str, away: str, neutral: bool = False):
     pts_home = f.mu + f.o[home] - f.d[away] + h / 2.0
     pts_away = f.mu + f.o[away] - f.d[home] - h / 2.0
     return pts_home, pts_away
+
+
+def win_probability(margin, sigma):
+    """P(team A wins) given its projected margin over B: Phi(margin / sigma).
+
+    Ties are not modelled (about 0.3% of games, spec 4.2). sigma is fitted from residuals by
+    the caller, never hard-coded here.
+    """
+    if sigma <= 0:
+        raise ValueError("sigma must be > 0")
+    return float(norm.cdf(margin / sigma))
