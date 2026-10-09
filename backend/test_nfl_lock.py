@@ -54,7 +54,7 @@ class LockDB(unittest.TestCase):
 class FirstLock(LockDB):
     def test_first_run_locks_every_game_in_the_week(self):
         out = nl.lock_week(self.con, 2026, 5, fit_for(), 13.4, "v1", as_of="2026-10-09T10:00Z")
-        self.assertEqual(out, {"new_locks": 2, "refreshes": 0})
+        self.assertEqual(out, {"new_locks": 2, "refreshes": 0, "skipped": []})
         for gid, _, _, _ in GAMES_W5:
             locked = [r for r in self.rows(gid) if r[0] == 1]
             self.assertEqual(len(locked), 1, gid)
@@ -71,7 +71,7 @@ class NeverOverwrite(LockDB):
         nl.lock_week(self.con, 2026, 5, fit_for(0.0), 13.4, "v1", as_of="t0")
         first = nl.locked_projection(self.con, "g1")
         out = nl.lock_week(self.con, 2026, 5, fit_for(5.0), 13.4, "v1", as_of="t1")
-        self.assertEqual(out, {"new_locks": 0, "refreshes": 2})
+        self.assertEqual(out, {"new_locks": 0, "refreshes": 2, "skipped": []})
         after = nl.locked_projection(self.con, "g1")
         self.assertEqual(after["projected_margin"], first["projected_margin"])
         self.assertEqual(after["as_of"], "t0")
@@ -110,6 +110,25 @@ class Refusals(LockDB):
     def test_bad_sigma_is_refused(self):
         with self.assertRaises(ValueError):
             nl.lock_week(self.con, 2026, 5, fit_for(), 0.0, "v1", as_of="t0")
+
+
+class SkipPlayed(LockDB):
+    def test_skip_mode_locks_unplayed_and_leaves_played_unwritten(self):
+        self.con.execute("UPDATE nfl_schedule SET home_score=24, away_score=20 WHERE game_id='g2'")
+        self.con.commit()
+        out = nl.lock_week(self.con, 2026, 5, fit_for(), 13.4, "v1", as_of="t0", skip_scored=True)
+        self.assertEqual(out, {"new_locks": 1, "refreshes": 0, "skipped": ["g2"]})
+        self.assertEqual(self.rows("g2"), [])
+        self.assertIsNotNone(nl.locked_projection(self.con, "g1"))
+
+    def test_skip_mode_still_refreshes_already_locked_played_game(self):
+        # A game locked before its result keeps its lock after the result arrives.
+        nl.lock_week(self.con, 2026, 5, fit_for(), 13.4, "v1", as_of="t0")
+        self.con.execute("UPDATE nfl_schedule SET home_score=24, away_score=20 WHERE game_id='g2'")
+        self.con.commit()
+        out = nl.lock_week(self.con, 2026, 5, fit_for(5.0), 13.4, "v1", as_of="t1", skip_scored=True)
+        self.assertEqual(out, {"new_locks": 0, "refreshes": 2, "skipped": []})
+        self.assertEqual(nl.locked_projection(self.con, "g2")["as_of"], "t0")
 
 
 class WinProbabilityStored(LockDB):

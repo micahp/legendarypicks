@@ -60,8 +60,14 @@ def locked_projection(con, game_id):
     return dict(zip(keys, row))
 
 
-def lock_week(con, season, week, fit, sigma, model_version, as_of=None):
-    """Project every REG game in (season, week). Returns counts of new locks and refreshes."""
+def lock_week(con, season, week, fit, sigma, model_version, as_of=None, skip_scored=False):
+    """Project every REG game in (season, week).
+
+    Default: refuse the whole week if any game without a lock already has a result.
+    skip_scored=True: lock only the games still unplayed. A played game without a lock is
+    listed in `skipped` and never written. Nothing is silently dropped.
+    Returns {"new_locks", "refreshes", "skipped"}.
+    """
     if sigma <= 0:
         raise ValueError("sigma must be > 0")
     as_of = as_of or dt.datetime.now(dt.timezone.utc).isoformat()
@@ -73,7 +79,7 @@ def lock_week(con, season, week, fit, sigma, model_version, as_of=None):
     if not games:
         raise ValueError("no REG games for %d week %d" % (season, week))
     # Pass 1: validate every game before writing any row, so a refusal leaves nothing behind.
-    plan = []
+    plan, skipped = [], []
     for gid, home, away, loc, hs, as_, spread, total in games:
         neutral = (loc or "").strip().lower() == "neutral"
         if home not in fit.o or away not in fit.o:
@@ -81,7 +87,10 @@ def lock_week(con, season, week, fit, sigma, model_version, as_of=None):
         already = con.execute("SELECT 1 FROM nfl_projections WHERE game_id = ? AND locked = 1",
                               (gid,)).fetchone()
         if already is None and hs is not None and as_ is not None:
-            raise ValueError("refusing to lock %s after its result (%s-%s)" % (gid, hs, as_))
+            if not skip_scored:
+                raise ValueError("refusing to lock %s after its result (%s-%s)" % (gid, hs, as_))
+            skipped.append(gid)
+            continue
         ph, pa = nr.expected_points(fit, home, away, neutral)
         plan.append(((season, week, gid, home, away, int(neutral), ph - pa, ph + pa,
                       nr.win_probability(ph - pa, sigma), sigma, spread, total),
@@ -100,4 +109,4 @@ def lock_week(con, season, week, fit, sigma, model_version, as_of=None):
         else:
             refreshes += 1
     con.commit()
-    return {"new_locks": new_locks, "refreshes": refreshes}
+    return {"new_locks": new_locks, "refreshes": refreshes, "skipped": skipped}
