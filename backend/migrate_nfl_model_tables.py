@@ -124,6 +124,52 @@ def migrate(con):
     con.commit()
 
 
+SUPERSEDED = "nfl_projections_superseded"
+
+
+def adopt_legacy_locks(con):
+    """Copy locks from the pre-migration table nfl_projections into game_projections.
+
+    One model_runs row per distinct (model_version, as_of) in the legacy table. The legacy table
+    never stored proj_home and proj_away, so those stay NULL. The legacy table is renamed to
+    nfl_projections_superseded, not dropped. Returns the number of rows copied (0 if there is
+    nothing to adopt, which is every run after the first).
+    """
+    legacy = con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='nfl_projections'"
+                         ).fetchone()
+    if legacy is None:
+        return 0
+    rows = con.execute(
+        "SELECT game_id, season, week, home_team, away_team, projected_margin, projected_total, "
+        "       p_home_win, market_home_margin, market_total, locked, as_of, model_version "
+        "FROM nfl_projections ORDER BY id").fetchall()
+    copied = 0
+    run_ids = {}
+    for gid, season, week, home, away, pm, pt, pw, mh, mt, locked, as_of, mv in rows:
+        key = (mv, as_of)
+        if key not in run_ids:
+            run_id = "legacy-nfl-lock-%s" % as_of
+            run_ids[key] = run_id
+            con.execute(
+                "INSERT OR IGNORE INTO model_runs (run_id, league, season, week, model, "
+                " model_version, started_at, finished_at, params_json, status, error) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (run_id, "nfl", season, week, "nfl-ratings-v1", mv, as_of, as_of,
+                 '{"source": "legacy nfl_projections", "proj_home_away": "not recorded"}',
+                 "ok", None))
+        con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
+            " market_total, market_source, locked, locked_at) "
+            "VALUES (?,?,?,?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?)",
+            (run_ids[key], "nfl", gid, season, week, home, away, pm, pt, pw, mh, mt, "nflverse",
+             locked, as_of))
+        copied += 1
+    con.execute("ALTER TABLE nfl_projections RENAME TO %s" % SUPERSEDED)
+    con.commit()
+    return copied
+
+
 def columns(con, table):
     return [r[1] for r in con.execute("PRAGMA table_info(%s)" % table).fetchall()]
 
@@ -132,6 +178,7 @@ def main(argv=None):
     con = sqlite3.connect(DB, timeout=30)
     try:
         migrate(con)
+        print("adopted legacy locks: %d" % adopt_legacy_locks(con))
         for table, want in EXPECTED_COLUMNS.items():
             got = columns(con, table)
             if got != want:
