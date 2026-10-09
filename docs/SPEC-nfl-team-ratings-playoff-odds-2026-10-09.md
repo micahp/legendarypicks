@@ -215,6 +215,15 @@ Parameter discipline:
 - Prior parameters (`prior_games`, prior shrink) have no effect on 2024, which has no prior. They
   stay at the spec defaults (4 and one third) and are not tuned. Tuning them would need 2025 and
   would spend the holdout.
+- Frozen configuration, chosen on 2024 only (grid: `backend/nfl_tune_2024.py`, 36 configurations):
+  half_life 6, margin cap 14, cap_points off, prior_games 4, prior shrink 1/3, sigma 13.295
+  (the chosen configuration's own 2024 residual sd). 2024 Brier 0.2225, log loss 0.6362.
+  The rule as written (Brier to three decimals, then fewer non-defaults) picked this over
+  half_life 12 / cap 14 / cap_points off, whose raw 2024 Brier is 0.2217. That is 0.0008 lower
+  and inside the noise. The rule is applied as written; it is not revised after the result.
+  The whole grid spans 0.2217 to 0.2276. The choice barely matters.
+- 2025 is evaluated once with this frozen configuration. 2024 numbers are tuning results, not
+  holdout results.
 - `h` stays fitted in the gated run. Its season-to-season values are reported; the fixed-`h`
   question is answered descriptively unless a fixed value can be chosen without 2025.
 
