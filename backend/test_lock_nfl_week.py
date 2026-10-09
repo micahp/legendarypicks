@@ -56,7 +56,7 @@ class CliDB(unittest.TestCase):
     def count_projections(self):
         con = sqlite3.connect(self.path)
         try:
-            return con.execute("SELECT COUNT(*) FROM nfl_projections").fetchone()[0]
+            return con.execute("SELECT COUNT(*) FROM game_projections").fetchone()[0]
         except sqlite3.OperationalError:  # table never created: nothing was written
             return 0
         finally:
@@ -79,17 +79,25 @@ class Apply(CliDB):
         self.assertIn("new_locks=1", out)
         self.assertIn("skipped=['26_played']", out)
         con = sqlite3.connect(self.path)
-        rows = con.execute("SELECT game_id, locked, model_version FROM nfl_projections").fetchall()
+        rows = con.execute("SELECT game_id, locked, run_id FROM game_projections").fetchall()
+        runs = con.execute("SELECT run_id, status, model_version, params_json FROM model_runs").fetchall()
         con.close()
         self.assertEqual([(g, l) for g, l, _ in rows], [("26_open", 1)])
-        self.assertIn("prior_shrink=0.3333", rows[0][2])
-        self.assertIn("sigma=13.4", rows[0][2])
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(runs[0][0], rows[0][2])
+        self.assertEqual(runs[0][1], "ok")
+        self.assertIn("prior_shrink=0.3333", runs[0][2])
+        self.assertIn("sigma=13.4", runs[0][2])
 
     def test_second_apply_refreshes_without_new_locks(self):
         self.run_cli("--apply")
         code, out = self.run_cli("--apply")
         self.assertIn("new_locks=0", out)
         self.assertIn("refreshes=1", out)
+        con = sqlite3.connect(self.path)
+        n, = con.execute("SELECT COUNT(*) FROM model_runs WHERE status='ok'").fetchone()
+        con.close()
+        self.assertEqual(n, 2)  # each apply records its own run
 
 
 if __name__ == "__main__":

@@ -82,10 +82,21 @@ def main(argv=None) -> int:
             print("dry run: nothing written. Re-run with --apply to lock the unplayed games.")
             return 0
         nfl_lock.ensure_schema(con)
-        out = nfl_lock.lock_week(con, args.season, args.week, fit, args.sigma, version,
-                                 as_of=as_of, skip_scored=True)
-        print("applied new_locks=%d refreshes=%d skipped=%s"
-              % (out["new_locks"], out["refreshes"], out["skipped"] or "none"))
+        run_id = "nfl-lock-%d-w%02d-%s" % (args.season, args.week, as_of)
+        params = {"season": args.season, "week": args.week, "sigma": args.sigma,
+                  "half_life": nr.DEFAULT_HALF_LIFE, "cap": nr.DEFAULT_CAP,
+                  "prior_games": nr.DEFAULT_PRIOR_GAMES, "prior_shrink": SHRINK,
+                  "fit_games": used, "mode": "lock", "skip_scored": True}
+        nfl_lock.start_run(con, run_id, args.season, args.week, version, params)
+        try:
+            out = nfl_lock.lock_week(con, run_id, args.season, args.week, fit, args.sigma,
+                                     as_of=as_of, skip_scored=True)
+        except Exception as exc:
+            nfl_lock.finish_run(con, run_id, "failed", error=str(exc))
+            raise
+        nfl_lock.finish_run(con, run_id, "ok")
+        print("applied run=%s new_locks=%d refreshes=%d skipped=%s"
+              % (run_id, out["new_locks"], out["refreshes"], out["skipped"] or "none"))
         return 0
     finally:
         con.close()
