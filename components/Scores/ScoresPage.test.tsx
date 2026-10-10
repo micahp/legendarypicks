@@ -3,8 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ScoresPage from '../../pages/scores'
 import { SportsService, type Game } from '../../services/sports'
 
+const mockPush = jest.fn()
+let mockQuery: Record<string, string> = {}
 jest.mock('next/router', () => ({
-  useRouter: () => ({ query: {} }),
+  useRouter: () => ({ query: mockQuery, push: mockPush }),
 }))
 
 jest.mock('../../services/sports', () => ({
@@ -125,12 +127,10 @@ describe('/scores day navigation', () => {
   })
 })
 
-// Item 2: the live section is a fact about the present. It renders ABOVE the
-// date control, ignores the selected date, and renders nothing at all — no
-// header, no empty state — when nothing is live. Three defects this month were
-// verified mid-slate and were wrong every morning; the empty case is tested
-// here deterministically, not by eyeballing a busy evening.
-describe('/scores live-above-the-date', () => {
+// 2026-10-08 (Micah): the live rail above the date control became a Live pill in the sport filter.
+// Live is still a fact about the present, so the pill counts today's live games whatever date is
+// showing, turning it on goes to today, and nothing renders for it when nothing is live.
+describe('/scores Live filter pill', () => {
   const today = new Date().toLocaleDateString('en-CA')
 
   function liveGame(gameId: string, name: string): Game {
@@ -145,6 +145,8 @@ describe('/scores live-above-the-date', () => {
   }
 
   beforeEach(() => {
+    mockQuery = {}
+    mockPush.mockReset()
     getGames.mockReset()
     getNeighbour.mockReset()
     getNeighbour.mockResolvedValue(null)
@@ -155,59 +157,64 @@ describe('/scores live-above-the-date', () => {
     )
   })
 
-  it('renders nothing at all in the empty window (no live games, no header)', async () => {
-    getGames.mockImplementation((league: string, date: string) => {
-      if (league !== 'mlb') return Promise.resolve([])
-      return Promise.resolve(date === today ? [game('FIN-1', today), game('FIN-2', today)] : [])
-    })
+  const livePill = () => screen.queryByRole('button', { name: /^Live\b/ })
 
+  it('has no Live pill and no rail when nothing is live', async () => {
+    getGames.mockImplementation((league: string, date: string) =>
+      Promise.resolve(league === 'mlb' ? [game('FIN-1', today)] : []))
     render(<ScoresPage />)
     await waitFor(() => expect(screen.getByText('FIN-1')).toBeTruthy())
-
-    // No live rail: no featured game, no "more live games", no jump link.
+    expect(livePill()).toBeNull()
     expect(screen.queryByText(/more live game/)).toBeNull()
-    expect(screen.queryByText('Jump to today →')).toBeNull()
-    // And no empty-state header either — the rail is simply absent.
-    expect(screen.queryByText('Live now')).toBeNull()
   })
 
-  it('shows today live games above the date control even on a past date', async () => {
+  it('shows a Live pill with the count when games are live, and no rail above the date', async () => {
+    getGames.mockImplementation((league: string) =>
+      Promise.resolve(league === 'mlb' ? [game('FIN-1', today), liveGame('LIVE-1', 'Night')] : []))
+    render(<ScoresPage />)
+    await waitFor(() => expect(livePill()).toBeTruthy())
+    expect(livePill()!.textContent).toContain('1')
+    expect(livePill()!.getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByText(/more live game/)).toBeNull()
+    expect(screen.queryByText('Jump to today →')).toBeNull()
+  })
+
+  it('turning it on writes ?live=1 and keeps the sport pick', async () => {
+    mockQuery = { league: 'Baseball' }
+    getGames.mockImplementation((league: string) =>
+      Promise.resolve(league === 'mlb' ? [liveGame('LIVE-1', 'Night')] : []))
+    render(<ScoresPage />)
+    await waitFor(() => expect(livePill()).toBeTruthy())
+    fireEvent.click(livePill()!)
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/scores', query: { league: 'Baseball', live: '1' } }, undefined, { shallow: true })
+  })
+
+  it('on a past date the pill still counts today and turning it on jumps to today', async () => {
     const previous = shift(today, -1)
-    getNeighbour.mockResolvedValue(previous)
-    getGames.mockImplementation((league: string, date: string, options: any) => {
-      if (league !== 'mlb') return Promise.resolve([])
-      return Promise.resolve(date === today ? [game('TODAY-GAME', today)] : [game('PREVIOUS-GAME', previous)])
-    })
+    mockQuery = { date: previous }
+    getGames.mockImplementation((league: string, date: string) =>
+      Promise.resolve(league === 'mlb' && date === previous ? [game('PREVIOUS-GAME', previous)] : []))
     ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([liveGame('LIVE-1', 'Night')])
-
     render(<ScoresPage />)
-    await waitFor(() => expect(screen.getByText('TODAY-GAME')).toBeTruthy())
-
-    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }))
     await waitFor(() => expect(screen.getByText('PREVIOUS-GAME')).toBeTruthy())
-
-    // The past-date board is showing, and the live rail still says what is
-    // live right now, with a quiet way back to today.
-    await waitFor(() => expect(screen.getByText('Live Night Away')).toBeTruthy())
-    expect(screen.getByText('Jump to today →')).toBeTruthy()
+    await waitFor(() => expect(livePill()).toBeTruthy())
+    fireEvent.click(livePill()!)
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/scores', query: { live: '1' } }, undefined, { shallow: true })
   })
 
-  it('renders nothing when a past date is selected and nothing is live today', async () => {
-    const previous = shift(today, -1)
-    getNeighbour.mockResolvedValue(previous)
-    getGames.mockImplementation((league: string, date: string, options: any) => {
-      if (league !== 'mlb') return Promise.resolve([])
-      return Promise.resolve(date === today ? [game('TODAY-GAME', today)] : [game('PREVIOUS-GAME', previous)])
-    })
-    ;(SportsService.getAllGamesByLocalDate as jest.Mock).mockResolvedValue([game('FIN-ONLY', today)])
-
+  it('while on it is pressed, titles the page Scoreboard, and turning it off keeps the pick', async () => {
+    mockQuery = { live: '1', league: 'Baseball' }
+    getGames.mockImplementation((league: string) =>
+      Promise.resolve(league === 'mlb' ? [liveGame('LIVE-1', 'Night'), game('FIN-1', today)] : []))
     render(<ScoresPage />)
-    await waitFor(() => expect(screen.getByText('TODAY-GAME')).toBeTruthy())
-
-    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }))
-    await waitFor(() => expect(screen.getByText('PREVIOUS-GAME')).toBeTruthy())
-
-    expect(screen.queryByText(/more live game/)).toBeNull()
-    expect(screen.queryByText('Jump to today →')).toBeNull()
+    await waitFor(() => expect(livePill()).toBeTruthy())
+    expect(livePill()!.getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('heading', { name: 'Scoreboard' })).toBeTruthy()
+    expect(screen.queryByText('← Full scoreboard')).toBeNull()
+    fireEvent.click(livePill()!)
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/scores', query: { league: 'Baseball' } }, undefined, { shallow: true })
   })
 })

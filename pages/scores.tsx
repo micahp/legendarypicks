@@ -21,85 +21,6 @@ function gameHref(game: Game) {
   return `/game/${game.league?.toLowerCase()}/${game.gameId}`
 }
 
-// ── Broadcast Rail live section (DESIGN-live-card-rail.md) ──
-// Solid surface + emerald breathing left edge. No opacity hacks, no label.
-// Featured game gets display scores; rest are compact inline chips.
-// `isPastDate`: the reader is browsing a date other than today — the rail
-// tells them something is live right now, with a quiet way back.
-function LiveNow({ games, esportsLive, isPastDate }: { games: Game[]; esportsLive: boolean; isPastDate?: boolean }) {
-  const live = games.filter((g) => g.status === 'LIVE').sort((a, b) => {
-    const pa = LEAGUE_PRIORITY.indexOf(a.league || ''), pb = LEAGUE_PRIORITY.indexOf(b.league || '')
-    return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb)
-  })
-  if (live.length === 0) return null
-  const feat = live[0]
-  const rest = live.slice(1)
-  const teamDisplay = (t: Game['awayTeam']) => t.nickname || t.name.replace(/\s*\(.*?\)\s*/g, '')
-
-  return (
-    <div className="rounded-2xl bg-zinc-900">
-
-      {/* featured game */}
-      <Link href={gameHref(feat)}
-            className="block px-5 py-4 hover:bg-zinc-800/50 transition-colors rounded-2xl group">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-400">{feat.league}</span>
-          <span className="text-[10px] text-zinc-600">·</span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">live</span>
-          {feat.subtitle ? <><span className="text-[10px] text-zinc-600">·</span><span className="text-[10px] text-zinc-500">{feat.subtitle}</span></> : null}
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-lg font-semibold text-zinc-100 truncate">{teamDisplay(feat.awayTeam)}</span>
-            <span className="font-mono text-4xl font-bold tabular-nums text-zinc-100 tracking-tight">{feat.awayTeam.score ?? 0}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-lg font-semibold text-zinc-100 truncate">{teamDisplay(feat.homeTeam)}</span>
-            <span className="font-mono text-4xl font-bold tabular-nums text-zinc-100 tracking-tight">{feat.homeTeam.score ?? 0}</span>
-          </div>
-        </div>
-      </Link>
-
-      {feat.league === 'WC' ? <ListenLive /> : null}
-
-      {/* One game, then two ways out. This used to inline a chip for every other
-          live game, which on a summer evening is fifteen MLB scores squeezed to
-          70px of team name each — a second, worse scoreboard sitting on top of
-          the scoreboard. The rail picks ONE game and points at the rest. */}
-      {(rest.length > 0 || esportsLive || isPastDate) ? (
-        <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
-          {rest.length > 0 ? (
-            <Link
-              href="/scores?live=1"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
-            >
-              {rest.length} more live game{rest.length === 1 ? '' : 's'} →
-            </Link>
-          ) : null}
-          {esportsLive ? (
-            <Link
-              href="/esports"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-500/60"
-            >
-              <LiveDot />
-              Watch live esports →
-            </Link>
-          ) : null}
-          {isPastDate ? (
-            <Link
-              href="/scores"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-medium text-emerald-400/90 transition-colors hover:border-emerald-500/50 hover:text-emerald-300"
-            >
-              Jump to today →
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 const LEAGUE_PRIORITY = ['NBA', 'MLB', 'NHL', 'NFL', 'UNL', 'FRIENDLIES', 'LCUP', 'MLS', 'LIGAMX', 'NCAAF', 'COD', 'WC', 'ATP', 'WTA', 'UFC']
 // API keys for the board's league fan-out — shared by the games load and the
 // W3 schedule-dates navigation so a day change asks the same leagues it renders.
@@ -179,6 +100,20 @@ export default function ScoresPage() {
   // land on the right sport even though nothing new is ever written as a
   // league name.
   const selectSport = (s: SportFilter) => { setSportFilter(s); syncQuery({ league: s }) }
+  // The Live pill: live is a fact about the present, so turning it on goes to today; turning it
+  // off keeps the day. The sport pick stays either way.
+  const toggleLive = () => {
+    const turningOn = router.query.live !== '1'
+    const q: Record<string, string> = {}
+    if (sportFilter !== 'All') q.league = sportFilter
+    if (turningOn) {
+      setDate(today)
+      q.live = '1'
+    } else if (date !== today) {
+      q.date = date
+    }
+    router.push({ pathname: '/scores', query: q }, undefined, { shallow: true })
+  }
 
   const shiftDay = (delta: number) => {
     // W3 — the arrows jump to the neighbouring date that actually has games
@@ -413,14 +348,16 @@ export default function ScoresPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h1 className="text-3xl font-extrabold tracking-tight">
-            {liveOnly ? 'Live now' : 'Scoreboard'}
+            Scoreboard
           </h1>
-          <LeagueFilterPills value={sportFilter} onChange={selectSport} />
+          <LeagueFilterPills
+            value={sportFilter}
+            onChange={selectSport}
+            live={liveGames.length > 0 || liveOnly
+              ? { count: liveGames.length, active: liveOnly, onToggle: toggleLive }
+              : undefined}
+          />
         </div>
-        {/* Live right now — a fact about the present, so it sits ABOVE the
-            date control and ignores the selected date (item 2). Renders
-            nothing at all when nothing is live: no header, no empty state. */}
-        {!liveOnly ? <LiveNow games={liveGames} esportsLive={esportsLive} isPastDate={!isToday} /> : null}
         {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
         <div className="flex items-center gap-1">
           <button
@@ -451,11 +388,6 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
-        {liveOnly ? (
-          <Link href="/scores" className="inline-block text-sm text-zinc-500 transition-colors hover:text-emerald-400">
-            ← Full scoreboard
-          </Link>
-        ) : null}
         {loading ? (
           <SkeletonList />
         ) : visibleGames.length === 0 ? (
