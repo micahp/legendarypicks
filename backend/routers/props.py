@@ -934,19 +934,92 @@ def ingest_props(batch: PropIngest):
     # link" is distinguishable from "the link failed" by the caller, not just in a log.
     link_outcome = "already_linked"
     with closing(_db()) as con:
-        # ensure game row — match on league+date+home+away (espn_event_id is optional)
-        if batch.espn_event_id:
+        ncaaf_fixture = None
+        ncaaf_schedule_available = False
+        ncaaf_fixture_status = "unavailable"
+        if batch.league == "ncaaf" and not batch.espn_event_id:
+            # Serialize NCAAF identity resolution with row creation. The event index
+            # protects linked rows; this closes the concurrent unlinked-row gap too.
+            con.execute("BEGIN IMMEDIATE")
+            from link_prop_games import ncaaf_scoreboard_match
+            ncaaf_fixture, ncaaf_fixture_status, ncaaf_schedule_available = (
+                ncaaf_scoreboard_match(
+                    con, batch.date, batch.home, batch.away
+                )
+            )
+            if ncaaf_fixture_status == "ambiguous":
+                logger.warning(
+                    "REFUSED ambiguous NCAAF scoreboard fixture %s @ %s on %s",
+                    batch.away, batch.home, batch.date,
+                )
+                raise HTTPException(
+                    status_code=422,
+                    detail="NCAAF fixture does not resolve to one published event",
+                )
+
+        resolved_event_id = (
+            batch.espn_event_id
+            or (ncaaf_fixture.get("game_id") if ncaaf_fixture else None)
+        )
+        if resolved_event_id:
             cur = con.execute(
                 "SELECT id,league,date,home,away,espn_event_id,start_time "
                 "FROM prop_games WHERE espn_event_id=? AND league=?",
-                (batch.espn_event_id, batch.league))
+                (resolved_event_id, batch.league))
         else:
             cur = con.execute(
                 "SELECT id,league,date,home,away,espn_event_id,start_time "
                 "FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
-        if not game_row:
+        if not game_row and ncaaf_fixture:
+            # Reuse one prior unlinked row even when its sportsbook spelling differs.
+            from link_prop_games import ncaaf_unlinked_game_match
+            game_row, prior_match_status = ncaaf_unlinked_game_match(
+                con, ncaaf_fixture
+            )
+            if prior_match_status == "ambiguous":
+                raise HTTPException(
+                    status_code=422,
+                    detail="multiple unlinked NCAAF rows match the published event",
+                )
+            if not game_row:
+                # Also detect an exact source row already linked to a different event.
+                game_row = con.execute(
+                    "SELECT id,league,date,home,away,espn_event_id,start_time "
+                    "FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                    (batch.league, batch.date, batch.home, batch.away),
+                ).fetchone()
+            if (game_row and game_row["espn_event_id"]
+                    and game_row["espn_event_id"] != ncaaf_fixture["game_id"]):
+                raise HTTPException(
+                    status_code=409,
+                    detail="NCAAF source fixture conflicts with its stored event link",
+                )
+        if (not game_row and ncaaf_schedule_available and not ncaaf_fixture):
+            logger.warning(
+                "REFUSED unmatched NCAAF fixture %s @ %s on %s: published slate "
+                "exists but its team pair did not resolve",
+                batch.away, batch.home, batch.date,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail="NCAAF fixture did not match the published scoreboard",
+            )
+        if not game_row and ncaaf_fixture:
+            fixture_home = (ncaaf_fixture.get("home") or {}).get("name") or (
+                ncaaf_fixture.get("home") or {}).get("abbrev") or batch.home
+            fixture_away = (ncaaf_fixture.get("away") or {}).get("name") or (
+                ncaaf_fixture.get("away") or {}).get("abbrev") or batch.away
+            cur = con.execute(
+                "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) "
+                "VALUES(?,?,?,?,?,?)",
+                (batch.league, ncaaf_fixture["local_date"], fixture_home,
+                 fixture_away, ncaaf_fixture["game_id"], ncaaf_fixture.get("date")),
+            )
+            game_id = cur.lastrowid
+            link_outcome = "linked"
+        elif not game_row:
             # A fixture may only be CREATED under a league it plausibly belongs to.
             #
             # On 2026-09-05 two fixtures were written as league='mls': Sassuolo @ Bologna
@@ -996,13 +1069,41 @@ def ingest_props(batch: PropIngest):
                     con, new_row, batch.league, batch.date, game_id)
         else:
             game_id = game_row["id"]
-            from link_prop_games import apply_start_time
-            apply_start_time(con, game_id, batch.start_time, game_row["start_time"],
-                             label="%s @ %s" % (batch.away, batch.home))
-            # If existing game has no espn_event_id, try to link it now
-            if not game_row["espn_event_id"] and not batch.espn_event_id:
-                game_id, link_outcome = _try_link_prop_game(
-                    con, game_row, batch.league, batch.date, game_id)
+            if ncaaf_fixture:
+                if (game_row["espn_event_id"]
+                        and game_row["espn_event_id"] != ncaaf_fixture["game_id"]):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="NCAAF fixture conflicts with its stored event link",
+                    )
+                from link_prop_games import apply_start_time
+                apply_start_time(
+                    con, game_id, ncaaf_fixture.get("date"), game_row["start_time"],
+                    label="%s @ %s" % (batch.away, batch.home),
+                )
+                fixture_home = (ncaaf_fixture.get("home") or {}).get("name") or (
+                    ncaaf_fixture.get("home") or {}).get("abbrev") or batch.home
+                fixture_away = (ncaaf_fixture.get("away") or {}).get("name") or (
+                    ncaaf_fixture.get("away") or {}).get("abbrev") or batch.away
+                con.execute(
+                    "UPDATE prop_games SET date=?,home=?,away=?,espn_event_id=? "
+                    "WHERE id=?",
+                    (ncaaf_fixture["local_date"], fixture_home, fixture_away,
+                     ncaaf_fixture["game_id"], game_id),
+                )
+                link_outcome = (
+                    "already_linked"
+                    if game_row["espn_event_id"] == ncaaf_fixture["game_id"]
+                    else "linked"
+                )
+            else:
+                from link_prop_games import apply_start_time
+                apply_start_time(con, game_id, batch.start_time, game_row["start_time"],
+                                 label="%s @ %s" % (batch.away, batch.home))
+                # If existing game has no espn_event_id, try to link it now
+                if not game_row["espn_event_id"] and not batch.espn_event_id:
+                    game_id, link_outcome = _try_link_prop_game(
+                        con, game_row, batch.league, batch.date, game_id)
         ingested = 0
         refreshed = 0
         unresolved = 0
