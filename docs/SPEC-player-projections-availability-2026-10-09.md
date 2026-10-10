@@ -231,3 +231,15 @@ retrievable for 2025, say so and grade against ESPN from 2026 week 6 onward.
 
 Order: B0 and B1 first (they also unblock SPEC A version 2), then B4/B5 (the props.cash feature is
 user-visible early), then B6-B8.
+
+## Air-yards residual decision (2026-10-09, user)
+
+- Keep the air-yard games: not raised, not dropped, not renormalized.
+- `air_yards_unassigned` is team air yards minus receiver-assigned air yards, signed. It is negative
+  where no-receiver passes carry negative air yards (throwaways). Measured: 2025 86 of 86 and 2026 24 of 24
+  overage team-games equal minus the no-receiver pass air yards exactly.
+- Player air-yard shares can therefore legitimately sum above 100%. Projection code must not force
+  published air-yard shares to total exactly 100%.
+- Known identity defect, not fixed here: 6,340 `players.nfl_gsis_id` values are not GSIS format
+  (name prefix plus digits). 109 receiver-games in 2026 fail to join to pbp because of it. Stored shares
+  are unaffected (they are the publisher's values). Fixing identities needs its own authorization.

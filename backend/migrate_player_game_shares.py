@@ -22,7 +22,7 @@ def migrate(con: sqlite3.Connection) -> None:
             carries     REAL,
             targets     REAL,
             air_yards   REAL,               -- team PASSING air yards (published as receiving_air_yards)
-            air_yards_unassigned REAL,      -- air_yards minus the air yards assigned to logged players
+            air_yards_unassigned REAL,      -- signed: air_yards minus the air yards assigned to logged players
             source      TEXT NOT NULL,
             sha256      TEXT NOT NULL,
             fetched_at  TEXT NOT NULL,

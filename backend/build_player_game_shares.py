@@ -8,7 +8,9 @@ once, at the boundary.
 Air yards: the denominator is TEAM PASSING air yards. The publisher names the column
 receiving_air_yards, but on every team-game it equals passing_air_yards (checked 2025 and 2026).
 Player air yards are assigned only on target records, so the residual (team total minus assigned)
-is kept as air_yards_unassigned and never renormalized into the players.
+is kept as air_yards_unassigned and never renormalized into the players. The residual is signed:
+no-receiver passes (throwaways) can carry negative air yards, so it can be negative and player shares
+can sum above 100% of the team. Consumers must not force these shares to total 100%.
 
 Numerators and shares, per player per game:
   targets, air_yards: copy the publisher's target_share / air_yards_share, then check them against
