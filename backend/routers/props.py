@@ -74,6 +74,52 @@ def _league_sql(column: str, league: Optional[str], leagues: Optional[str]):
         values,
     )
 
+
+def _ncaaf_slate_display(con, game_ids):
+    """Published full team names and ranks for NCAAF slate cards.
+
+    ``prop_games`` carries ingestion identity and may still contain a sportsbook's
+    school-only spelling. Rankings are volatile display metadata, so neither one
+    belongs in the identity key. Once a row is linked, the stored scoreboard event
+    is the authority for both the school-plus-nickname name and its published rank.
+    """
+    ids = sorted({int(game_id) for game_id in game_ids})
+    if not ids:
+        return {}
+    if con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' "
+        "AND name='scoreboard_snapshots'"
+    ).fetchone() is None:
+        return {}
+    placeholders = ",".join("?" for _ in ids)
+    rows = con.execute(
+        """SELECT pg.id,ss.payload
+           FROM prop_games pg
+           JOIN scoreboard_snapshots ss
+             ON LOWER(ss.league)=LOWER(pg.league)
+            AND ss.game_id=pg.espn_event_id
+           WHERE pg.league='ncaaf' AND pg.id IN ({})""".format(placeholders),
+        ids,
+    ).fetchall()
+    display = {}
+    for row in rows:
+        try:
+            payload = json.loads(row["payload"])
+        except (TypeError, ValueError):
+            continue
+        item = {}
+        for side in ("home", "away"):
+            team = payload.get(side) or {}
+            name = str(team.get("name") or "").strip()
+            rank = team.get("rank")
+            if name:
+                item[side] = name
+            if isinstance(rank, int) and 1 <= rank <= 25:
+                item[side + "_rank"] = rank
+        if item:
+            display[row["id"]] = item
+    return display
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
@@ -584,13 +630,21 @@ def props_slate(league: Optional[str] = Query(None),
         with closing(_db()) as con:
             grows = con.execute(gsql, filter_params).fetchall()
             market_rows = con.execute(market_sql, filter_params).fetchall()
+            ncaaf_display = _ncaaf_slate_display(
+                con, [row["game_id"] for row in grows]
+            )
         markets_by_game = {}
         for row in market_rows:
             markets_by_game.setdefault(row["game_id"], []).append({
                 "market": row["market"],
                 "count": row["row_count"],
             })
-        return [{"game_id": r["game_id"], "home": r["home"], "away": r["away"], "date": r["game_date"],
+        return [{"game_id": r["game_id"],
+                 "home": ncaaf_display.get(r["game_id"], {}).get("home", r["home"]),
+                 "away": ncaaf_display.get(r["game_id"], {}).get("away", r["away"]),
+                 "home_rank": ncaaf_display.get(r["game_id"], {}).get("home_rank"),
+                 "away_rank": ncaaf_display.get(r["game_id"], {}).get("away_rank"),
+                 "date": r["game_date"],
                  "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
                  "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
@@ -620,16 +674,22 @@ def props_slate(league: Optional[str] = Query(None),
     sql += " ORDER BY " + _KICKOFF + ", pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
+        ncaaf_display = _ncaaf_slate_display(
+            con, [row["game_id"] for row in rows]
+        )
 
     # Group: game → team → player → props
     games = {}
     for r in rows:
         gkey = f"{r['game_id']}"
         if gkey not in games:
+            published = ncaaf_display.get(r["game_id"], {})
             games[gkey] = {
                 "game_id": r["game_id"],
-                "home": r["home"],
-                "away": r["away"],
+                "home": published.get("home", r["home"]),
+                "away": published.get("away", r["away"]),
+                "home_rank": published.get("home_rank"),
+                "away_rank": published.get("away_rank"),
                 "date": r["game_date"],
                 "start_time": r["start_time"],
                 # The GAME's league, not the player's. `pl.league` here made the
@@ -877,11 +937,13 @@ def ingest_props(batch: PropIngest):
         # ensure game row — match on league+date+home+away (espn_event_id is optional)
         if batch.espn_event_id:
             cur = con.execute(
-                "SELECT id, espn_event_id, start_time FROM prop_games WHERE espn_event_id=? AND league=?",
+                "SELECT id,league,date,home,away,espn_event_id,start_time "
+                "FROM prop_games WHERE espn_event_id=? AND league=?",
                 (batch.espn_event_id, batch.league))
         else:
             cur = con.execute(
-                "SELECT id, espn_event_id, start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                "SELECT id,league,date,home,away,espn_event_id,start_time "
+                "FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
         if not game_row:
@@ -927,7 +989,8 @@ def ingest_props(batch: PropIngest):
             # Try to link espn_event_id for newly created games
             if not batch.espn_event_id:
                 new_row = con.execute(
-                    "SELECT id, league, date, home, away FROM prop_games WHERE id=?",
+                    "SELECT id,league,date,home,away,espn_event_id,start_time "
+                    "FROM prop_games WHERE id=?",
                     (game_id,)).fetchone()
                 game_id, link_outcome = _try_link_prop_game(
                     con, new_row, batch.league, batch.date, game_id)

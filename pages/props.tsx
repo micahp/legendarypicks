@@ -17,8 +17,13 @@ interface Player {
 }
 interface SlateGame {
   game_id: number; home: string; away: string; date: string; start_time?: string | null; league: string
+  home_rank?: number | null; away_rank?: number | null
   prop_count: number
   players: { id: number; name: string; team: string; props: { market: string; line: number; side: string; source: string }[] }[]
+}
+
+function rankedTeamName(name: string, rank?: number | null) {
+  return rank ? `${name} (#${rank})` : name
 }
 interface PerfRow {
   market: string; side: string; total_settled: number
@@ -384,7 +389,9 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                             className="flex w-full min-w-0 items-center justify-between gap-3 py-3 text-left transition-colors hover:text-white"
                           >
                             <span className="min-w-0">
-                              <span className="block break-words text-sm font-semibold">{game.away} @ {game.home}</span>
+                              <span className="block break-words text-sm font-semibold">
+                                {rankedTeamName(game.away, game.away_rank)} @ {rankedTeamName(game.home, game.home_rank)}
+                              </span>
                               <span className="mt-0.5 block text-xs tabular-nums text-zinc-500">
                                 {game.start_time
                                   ? `${new Date(game.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · `

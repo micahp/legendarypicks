@@ -124,6 +124,9 @@ LEAGUES = {
         # ("Mississippi" vs "Ole Miss"), measured on the 2026-10-02 fixture audit:
         # 44 stored Bovada props on Ole Miss fixtures misfiled as wrong_team.
         "mississippi": "MISS",
+        # Bovada keeps the former full school name while ESPN shortened the
+        # display name to Sam Houston. Both publish SHSU for the same program.
+        "sam houston state": "SHSU",
         "miami (fl)": "MIA",
         "miami fl": "MIA",
         "connecticut": "CONN",
