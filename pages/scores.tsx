@@ -427,7 +427,7 @@ export default function ScoresPage() {
                           {sub}{timeLabel}
                         </h3>
                       )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
+                      <div className="grid grid-cols-1 [&>*]:-mx-5 [&>*]:border-t [&>*]:border-zinc-800 [&>*]:px-5 [&>*:first-child]:border-t-0">
                         {sortGames(sg).map((g) => (
                           <GameCard key={g.gameId} {...g} />
                         ))}
