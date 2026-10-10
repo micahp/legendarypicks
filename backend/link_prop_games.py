@@ -162,6 +162,7 @@ _TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP,
 # refused here: MLS is precisely where it collides ("San Diego FC" and "San Jose
 # Earthquakes" both yield SAN).
 _EXHAUSTIVE_MAPS = frozenset({"mls"})
+_NCAAF_RANK_SUFFIX = re.compile(r"\s*\(\s*#\d+\s*\)\s*$", re.IGNORECASE)
 
 
 def _norm_team(team_name: str, league: str) -> str:
@@ -206,6 +207,19 @@ def _norm_team(team_name: str, league: str) -> str:
         return ""
     # Fallback: first 3 letters uppercase
     return team_name.strip()[:3].upper()
+
+
+def _ncaaf_team_code(vocabulary, team_name: str) -> str:
+    """Resolve a sportsbook school spelling through the stored ESPN vocabulary.
+
+    Rankings are slate decorations, not identity. The vocabulary itself comes
+    from durable ``scoreboard_snapshots`` and maps both ESPN's full
+    school-plus-nickname name and its school-only spelling to one abbreviation.
+    """
+    import ingest_rotowire_props as rw
+
+    school = _NCAAF_RANK_SUFFIX.sub("", str(team_name or "")).strip()
+    return rw.resolve_team(vocabulary, school) or ""
 
 
 def _instant(value):
@@ -454,8 +468,15 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     if league in ("atp", "wta"):
         return _link_tennis_match(game_row, espn_games)
 
-    home_norm = _norm_team(game_row["home"], league)
-    away_norm = _norm_team(game_row["away"], league)
+    if league == "ncaaf":
+        import ingest_rotowire_props as rw
+
+        ncaaf_vocabulary = rw.team_vocabulary(con, "ncaaf")
+        home_norm = _ncaaf_team_code(ncaaf_vocabulary, game_row["home"])
+        away_norm = _ncaaf_team_code(ncaaf_vocabulary, game_row["away"])
+    else:
+        home_norm = _norm_team(game_row["home"], league)
+        away_norm = _norm_team(game_row["away"], league)
     pg_home_name = (game_row["home"] or "").lower()
     pg_away_name = (game_row["away"] or "").lower()
 
@@ -477,6 +498,19 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
         }
 
     def _same_matchup(eg):
+        if league == "ncaaf":
+            published_home = _ncaaf_team_code(
+                ncaaf_vocabulary, (eg.get("home") or {}).get("name")
+                or (eg.get("home") or {}).get("abbrev")
+            )
+            published_away = _ncaaf_team_code(
+                ncaaf_vocabulary, (eg.get("away") or {}).get("name")
+                or (eg.get("away") or {}).get("abbrev")
+            )
+            return (
+                bool(home_norm and away_norm)
+                and (home_norm, away_norm) == (published_home, published_away)
+            )
         # Abbrevs only when BOTH sides normalised to something real. _norm_team
         # returns "" for a league with no map, and ""=="" would otherwise call
         # every game on the slate a match.
