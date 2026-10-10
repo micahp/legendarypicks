@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from audit_league_stats import _identity_name_key
 from league_stats import queue_unresolved_player
+from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 from roster_membership import (
     normalized_source_payload,
     publish_roster_snapshot,
@@ -73,6 +74,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
     # Schema changes are explicit, backup-first migrations. Do not make source
     # calls or touch compatibility fields until the roster schema is present.
     require_roster_schema(con)
+    nfl_id_crosswalk = load_espn_to_gsis() if league == "nfl" else None
     teams = list(dict.fromkeys(
         t.get("abbrev") for t in espn.team_strength(league) if t.get("abbrev")
     ))
@@ -149,8 +151,10 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
     # only one candidate, and the wrong player silently gets the match.
     name_to_rows = {}
     eid_to_ids = {}
+    player_columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    gsis_column = "nfl_gsis_id" if "nfl_gsis_id" in player_columns else "NULL AS nfl_gsis_id"
     for r in con.execute(
-        "SELECT id,name,team,espn_id FROM players WHERE league=?",
+        f"SELECT id,name,team,espn_id,{gsis_column} FROM players WHERE league=?",
         (league,),
     ):
         if r["name"]:
@@ -264,6 +268,21 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                 if candidate_eid and candidate_eid != eid:
                     reason = "name_match_conflicting_espn_id"
                 else:
+                    if league == "nfl":
+                        reason = espn_assignment_conflict(
+                            eid,
+                            candidate["nfl_gsis_id"],
+                            nfl_id_crosswalk[0],
+                            nfl_id_crosswalk[1],
+                        )
+                    if reason:
+                        identity_failures.append({
+                            "team": abbr,
+                            "name": name,
+                            "source_player_key": eid,
+                            "reason": reason,
+                        })
+                        continue
                     # A team mismatch on a name that is unique in this league
                     # is a trade, and the published roster is the newer truth.
                     # This used to fail the league, which made the sync unable

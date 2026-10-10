@@ -31,6 +31,7 @@ import os
 import sqlite3
 
 import paced_http
+from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 
 URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/players"
        "?scoringPeriodId=0&view=kona_player_info")
@@ -243,7 +244,37 @@ def _ensure_new_columns(con: sqlite3.Connection) -> None:
         con.execute("ALTER TABLE nfl_adp ADD COLUMN position TEXT")
 
 
+def _find_name_only_player(
+    con: sqlite3.Connection,
+    name: str,
+    team: str,
+    espn_id: str,
+    crosswalk: dict[str, str],
+    ambiguous_espn_ids: set[str],
+):
+    """Find a name-only row only when its stored GSIS agrees with ESPN's ID."""
+    columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    gsis_select = "nfl_gsis_id" if "nfl_gsis_id" in columns else "NULL AS nfl_gsis_id"
+    row = con.execute(
+        f"SELECT id,{gsis_select} FROM players WHERE league='nfl' "
+        "AND espn_id IS NULL AND name=? AND team=? LIMIT 1",
+        (name, team),
+    ).fetchone()
+    if row is None:
+        return None
+    conflict = espn_assignment_conflict(
+        espn_id, row["nfl_gsis_id"], crosswalk, ambiguous_espn_ids
+    )
+    if conflict:
+        raise RuntimeError(
+            "refusing ADP name+team identity backfill for {!r}: {}"
+            .format(name, conflict)
+        )
+    return row
+
+
 def ingest():
+    nfl_id_crosswalk, ambiguous_espn_ids = load_espn_to_gsis()
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
 
@@ -343,11 +374,9 @@ def ingest():
                 team = pro_team_map.get(p.get("proTeamId")) if p.get("proTeamId") else None
                 name_only = None
                 if team:
-                    name_only = con.execute(
-                        "SELECT id FROM players WHERE league='nfl' "
-                        "AND espn_id IS NULL AND name=? AND team=? LIMIT 1",
-                        (name, team),
-                    ).fetchone()
+                    name_only = _find_name_only_player(
+                        con, name, team, eid, nfl_id_crosswalk, ambiguous_espn_ids
+                    )
                 if name_only is not None:
                     pid = name_only["id"]
                     con.execute(

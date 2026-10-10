@@ -162,6 +162,31 @@ class MergeTests(unittest.TestCase):
         self.assertEqual(plan.merges, [])
         self.assertEqual(plan.refused, [])
 
+    def test_apply_refuses_to_combine_conflicting_nfl_espn_and_gsis_ids(self):
+        self.con.execute("ALTER TABLE players ADD COLUMN nfl_gsis_id TEXT")
+        self._players(
+            ("Mike Washington", "nfl", "4686658"),
+            ("Mike Washington", "nfl", None),
+        )
+        self.con.execute(
+            "UPDATE players SET nfl_gsis_id='WAS569019' WHERE id=2"
+        )
+        self.con.commit()
+        plan = sm.MergePlan(
+            merges=[sm.Merge("nfl", "Mike Washington", 1, 2, "espn_id=4686658", {})],
+            columns=sm.referencing_columns(self.con),
+        )
+
+        with self.assertRaisesRegex(ValueError, "conflicting ESPN/GSIS IDs"):
+            sm.apply_plan(self.con, plan)
+
+        self.assertEqual(
+            [tuple(row) for row in self.con.execute(
+                "SELECT id,espn_id,nfl_gsis_id FROM players ORDER BY id"
+            )],
+            [(1, "4686658", None), (2, None, "WAS569019")],
+        )
+
     def test_two_id_carrying_rows_and_one_without_refuses(self):
         self._players(("A", "nfl", "1"), ("A", "nfl", "2"), ("A", "nfl", None))
         plan = sm.build_plan(self.con)

@@ -241,12 +241,17 @@ user-visible early), then B6-B8.
 - Player air-yard shares can therefore legitimately sum above 100%. Projection code must not force
   published air-yard shares to total exactly 100%.
 - Identity classification of the 6,340 non-GSIS-format `players.nfl_gsis_id` values (read-only, dev DB,
-  nflverse `players.parquet` as the reference):
-  - 5,673 are identical to an id in nflverse's own register, with the same name. The publisher issues
-    non-GSIS ids (6,079 of 24,844 register rows). These are not corruption, but pbp receiver ids are GSIS,
-    so they cannot join to pbp.
-  - 667 are not in the register under that id. Example: Keith Abney II, `ABN189231`, where the register
-    maps his espn_id to `00-0041445`. These look like ESPN-style placeholders written by ingest (see the
-    comment in `ingest_nfl_depth_charts.py` around line 167).
-  - 109 receiver-games in 2026 fail to join to pbp. Stored shares are unaffected (they are the publisher's values).
-  - Repairing `nfl_gsis_id` is a separate decision that needs authorization, not part of this slice.
+  fresh nflverse `players.parquet` register, 24,853 rows):
+  - 5,673 of the 6,340 non-`00-` values occur in the register's `gsis_id` column; 667 do not. Five
+    standard-looking IDs are also absent. Two additional values are valid GSIS IDs for someone other
+    than the player selected by ESPN, yielding 674 clone-plan actions.
+  - Clone rehearsal set 472 IDs from publisher-ID bridges and cleared 202 unsupported values to NULL,
+    preserving all old keys in typed `player_source_ids`. It changed no player references or protected
+    table rows. `quick_check` passed; duplicate target owners: 0.
+  - 2026 PBP mismatches fell from 218 (109 each direction) to 0. Player-game-share fingerprints are
+    identical before and after. Gate G fails on 459 explicit cross-source conflicts in the baseline
+    and passes on the repaired clone; current 2026 source keys are all covered.
+  - Roster sync and ADP now validate the publisher ESPN-to-GSIS mapping before attaching an ESPN ID to
+    a row with an existing GSIS ID. Promotion and spine merge paths reject known conflicting pairs;
+    Gate G reports cross-source mismatches. Regression tests cover these paths. No recurring repair is
+    scheduled. The historical initial writer remains unidentified, and no live database was changed.
