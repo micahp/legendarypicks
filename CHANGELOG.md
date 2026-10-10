@@ -16,6 +16,7 @@
 
 - Refined slate player rows and made the props tabs scroll horizontally without a visible
   scrollbar.
+- Added desktop scroll controls to the Choose a market rail when its options overflow.
 
 ## v0.9.6
 
