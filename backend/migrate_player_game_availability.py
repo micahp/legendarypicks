@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Create and build the NFL player game availability fact table.
 
-The row universe comes only from canonical player ids in ``nfl_snap_counts``
-and ``injury_reports``. ``nfl_schedule`` supplies the published game id and
-final score state; it never supplies player presence.
+The row universe comes from canonical player ids in ``nfl_snap_counts``,
+``injury_reports`` and NFL game logs. Log-only player-games are unknown: a box
+score line is a touch, not proof of presence. ``nfl_schedule`` supplies the
+published game id and final score state; it never supplies player presence.
+A team-game is complete only when ``nfl_snap_team_sources`` shows every source
+snap row for that team-week resolved.
 """
 
 import argparse
@@ -15,6 +18,7 @@ import sqlite3
 TABLE = "player_game_availability"
 SOURCE_SNAPS = "nflverse_snap_counts"
 SOURCE_INJURIES = "nflverse_injuries"
+SOURCE_LOGS = "nflverse_weekly_logs"
 
 REQUIRED_INPUT_COLUMNS = {
     "nfl_snap_counts": {
@@ -27,6 +31,12 @@ REQUIRED_INPUT_COLUMNS = {
     "nfl_schedule": {
         "game_id", "season", "week", "home_team", "away_team",
         "home_score", "away_score",
+    },
+    "nfl_snap_team_sources": {
+        "season", "week", "team", "source_rows", "resolved_rows", "unresolved_rows",
+    },
+    "player_game_logs": {
+        "league", "season", "game_no", "player_id", "team", "source", "game_type",
     },
 }
 
@@ -139,10 +149,26 @@ def build(connection, season=None):
             raise RuntimeError(f"duplicate injury availability key: {key}")
         injuries[key] = report_status
 
+    log_where = (" WHERE league='nfl' AND source='nflverse_weekly' "
+                 "AND (game_type='REG' OR game_type IS NULL) "
+                 "AND team IS NOT NULL AND player_id IS NOT NULL AND game_no IS NOT NULL")
+    log_params = ()
+    if season is not None:
+        log_where += " AND season=?"
+        log_params = (season,)
+    logs = {
+        (int(row_season), int(game_no), str(team), int(player_id))
+        for row_season, game_no, team, player_id in connection.execute(
+            "SELECT season,CAST(game_no AS INTEGER),team,player_id "
+            "FROM player_game_logs" + log_where,
+            log_params,
+        )
+    }
+
     # Preserve publisher team assignments as separate game facts. A cross-source
     # team disagreement must not attach an injury report to a different game.
     player_weeks = {}
-    for key in set(snaps) | set(injuries):
+    for key in set(snaps) | set(injuries) | logs:
         player_week = (key[0], key[1], key[3])
         player_weeks.setdefault(player_week, set()).add(key[2])
     team_conflicts = sum(len(teams) > 1 for teams in player_weeks.values())
@@ -177,7 +203,7 @@ def build(connection, season=None):
                 raise RuntimeError(f"ambiguous schedule team-week: {key}")
             team_games[key] = game
 
-    candidates = sorted(set(snaps) | set(injuries))
+    candidates = sorted(set(snaps) | set(injuries) | logs)
     missing_games = sorted(
         {key[:3] for key in candidates if key[:3] not in team_games}
     )
@@ -187,13 +213,29 @@ def build(connection, season=None):
             f"{len(missing_games)} candidate team-weeks lack one schedule game: {sample}"
         )
 
-    snap_teams_by_game = {}
-    for row_season, week, team, _player_id in snaps:
-        game = team_games[(row_season, week, team)]
-        snap_teams_by_game.setdefault(game["game_id"], set()).add(team)
+    source_unresolved = {}
+    blocked_seasons = set()
+    source_where = " WHERE season=?" if season is not None else ""
+    source_params = (season,) if season is not None else ()
+    for row_season, week, team, unresolved in connection.execute(
+        "SELECT season,week,team,unresolved_rows FROM nfl_snap_team_sources" + source_where,
+        source_params,
+    ):
+        if week is None or team is None:
+            if unresolved:
+                blocked_seasons.add(int(row_season))
+            continue
+        source_unresolved[(int(row_season), int(week), str(team))] = int(unresolved)
+    team_complete = {
+        key for key, unresolved in source_unresolved.items()
+        if unresolved == 0 and key[0] not in blocked_seasons
+    }
     complete_games = {
         game_id for game_id, game in games.items()
-        if snap_teams_by_game.get(game_id) == {game["home"], game["away"]}
+        if all(
+            (game["season"], game["week"], team) in team_complete
+            for team in (game["home"], game["away"])
+        )
     }
 
     built_at = datetime.now(timezone.utc).isoformat()
@@ -207,8 +249,11 @@ def build(connection, season=None):
             value is not None and value > 0 for value in (snap[0], snap[2], snap[4])
         )
         complete_final = game["final"] and game["game_id"] in complete_games
+        log_only = snap is None and key not in injuries
         if any_snap:
             played, reason = 1, "played"
+        elif log_only:
+            played, reason = None, "unknown"
         elif complete_final:
             played = 0
             reason = (
@@ -223,8 +268,10 @@ def build(connection, season=None):
             source = f"{SOURCE_SNAPS}+{SOURCE_INJURIES}"
         elif snap is not None:
             source = SOURCE_SNAPS
-        else:
+        elif key in injuries:
             source = SOURCE_INJURIES
+        else:
+            source = SOURCE_LOGS
         values = snap if snap is not None else (None, None, None, None, None)
         output.append((
             "nfl", row_season, week, game["game_id"], team, player_id,

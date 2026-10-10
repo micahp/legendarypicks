@@ -23,6 +23,14 @@ class PlayerGameAvailabilityTests(unittest.TestCase):
                 home_team TEXT, away_team TEXT,
                 home_score INTEGER, away_score INTEGER
             );
+            CREATE TABLE nfl_snap_team_sources(
+                season INTEGER, week INTEGER, team TEXT,
+                source_rows INTEGER, resolved_rows INTEGER, unresolved_rows INTEGER
+            );
+            CREATE TABLE player_game_logs(
+                league TEXT, season INTEGER, game_no TEXT, player_id INTEGER,
+                team TEXT, source TEXT, game_type TEXT
+            );
             """
         )
 
@@ -36,10 +44,33 @@ class PlayerGameAvailabilityTests(unittest.TestCase):
             (game_id, week, home, away, *scores),
         )
 
+    def count_source(self, week, team, resolved=0, unresolved=0):
+        updated = self.connection.execute(
+            "UPDATE nfl_snap_team_sources SET source_rows=source_rows+?, "
+            "resolved_rows=resolved_rows+?, unresolved_rows=unresolved_rows+? "
+            "WHERE season=2026 AND week=? AND team=?",
+            (resolved + unresolved, resolved, unresolved, week, team),
+        ).rowcount
+        if not updated:
+            self.connection.execute(
+                "INSERT INTO nfl_snap_team_sources VALUES (2026,?,?,?,?,?)",
+                (week, team, resolved + unresolved, resolved, unresolved),
+            )
+
     def add_snap(self, player_id, week, team, off=0, defense=0, special=0):
         self.connection.execute(
             "INSERT INTO nfl_snap_counts VALUES (?,2026,?,?,?,NULL,?,NULL,?)",
             (player_id, week, team, off, defense, special),
+        )
+        self.count_source(week, team, resolved=1)
+
+    def add_unresolved_snap(self, week, team):
+        self.count_source(week, team, unresolved=1)
+
+    def add_log(self, player_id, week, team):
+        self.connection.execute(
+            "INSERT INTO player_game_logs VALUES ('nfl',2026,?,?,?,'nflverse_weekly','REG')",
+            (week, player_id, team),
         )
 
     def add_injury(self, player_id, week, team, status):
@@ -101,6 +132,51 @@ class PlayerGameAvailabilityTests(unittest.TestCase):
             (2, None, None, "unknown", "nflverse_snap_counts"),
             (3, None, "Out", "unknown", "nflverse_injuries"),
         ])
+
+    def test_unresolved_snap_rows_block_completeness_for_both_teams(self):
+        self.add_game("g1", 1)
+        self.add_snap(1, 1, "AAA", off=1)
+        self.add_unresolved_snap(1, "AAA")
+        self.add_snap(90, 1, "BBB", defense=1)
+        self.add_unresolved_snap(1, "BBB")
+        self.add_injury(3, 1, "AAA", "Out")
+        self.add_injury(4, 1, "BBB", "Out")
+
+        mod.build(self.connection)
+
+        self.assertEqual([(r[0], r[1], r[3]) for r in self.rows()], [
+            (1, 1, "played"),
+            (3, None, "unknown"),
+            (4, None, "unknown"),
+            (90, 1, "played"),
+        ])
+
+    def test_unattributed_source_rows_block_every_game_in_the_season(self):
+        self.add_game("g1", 1)
+        self.add_snap(1, 1, "AAA", off=1)
+        self.add_snap(90, 1, "BBB", defense=1)
+        self.connection.execute(
+            "INSERT INTO nfl_snap_team_sources VALUES (2026,NULL,NULL,1,0,1)"
+        )
+        self.add_injury(3, 1, "AAA", "Out")
+
+        mod.build(self.connection)
+
+        self.assertEqual(self.rows()[1][1:4], (None, "Out", "unknown"))
+
+    def test_log_only_player_game_is_unknown_not_absent(self):
+        self.add_game("g1", 1)
+        self.add_snap(1, 1, "AAA", off=1)
+        self.add_snap(90, 1, "BBB", defense=1)
+        self.add_log(7, 1, "AAA")
+
+        result = mod.build(self.connection)
+
+        self.assertEqual(result["stored"], 3)
+        self.assertEqual(
+            [r for r in self.rows() if r[0] == 7],
+            [(7, None, None, "unknown", "nflverse_weekly_logs")],
+        )
 
     def test_unresolved_injury_is_counted_and_not_invented(self):
         self.add_game("g1", 1)

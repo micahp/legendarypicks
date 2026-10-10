@@ -14,6 +14,8 @@ class Splits(unittest.TestCase):
             CREATE TABLE player_game_shares (league TEXT, season INTEGER, week INTEGER,
                 game_id TEXT, team TEXT, player_id INTEGER, metric TEXT, share REAL,
                 player_value REAL, team_value REAL, source TEXT, built_at TEXT);
+            CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER,
+                game_type TEXT, home_team TEXT, away_team TEXT, home_score INTEGER, away_score INTEGER);
             CREATE TABLE player_game_availability (league TEXT, season INTEGER, week INTEGER,
                 game_id TEXT, team TEXT, player_id INTEGER, played INTEGER, reason TEXT,
                 PRIMARY KEY (league, game_id, team, player_id));
@@ -90,6 +92,24 @@ class Splits(unittest.TestCase):
         self.play(1, 19, game_type="POST", targets=9)
         res = mod.splits(self.con, 1, without=[])
         self.assertEqual(1, len(res["matched"]))
+
+    def schedule(self, week, team="NO", final=True):
+        gid = "2025_%02d_%s_X" % (week, team)
+        scores = (20, 17) if final else (None, None)
+        self.con.execute("INSERT INTO nfl_schedule VALUES (?,2025,?,'REG',?,'XXX',?,?)",
+                         (gid, week, team, *scores))
+        return gid
+
+    def test_scheduled_game_without_a_box_score_is_unknown_not_dropped(self):
+        self.play(1, 1, targets=6)
+        self.schedule(1)
+        self.schedule(2)
+        self.avail(1, 2, None)
+        self.schedule(3)
+        self.avail(1, 3, 0)
+        self.schedule(4, final=False)
+        res = mod.splits(self.con, 1, without=[])
+        self.assertEqual((1, 1), (len(res["matched"]), res["excluded_unknown"]))
 
     def test_per_game_shares_ride_along(self):
         gid = self.play(1, 1, targets=6)

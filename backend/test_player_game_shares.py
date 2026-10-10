@@ -107,7 +107,17 @@ class SeasonRows(unittest.TestCase):
 
 
 class Cache(unittest.TestCase):
-    def test_cached_team_file_is_read_without_a_download(self):
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b"fresh"
+
+    def test_fresh_cached_team_file_is_read_without_a_download(self):
         import tempfile, urllib.request
         from unittest import mock
         with tempfile.TemporaryDirectory() as d:
@@ -116,6 +126,34 @@ class Cache(unittest.TestCase):
             with mock.patch.object(urllib.request, "urlopen", side_effect=AssertionError("network")):
                 path, sha, nbytes, fetched = mod.fetch_team_file(2026, d)
             self.assertEqual((6, "cached"), (nbytes, open(path, "rb").read().decode()))
+
+    def test_stale_cached_team_file_is_refetched_and_checksummed(self):
+        import hashlib, os, tempfile, time, urllib.request
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            path = f"{d}/stats_team_week_2026.parquet"
+            with open(path, "wb") as f:
+                f.write(b"cached")
+            old = time.time() - 7 * 3600
+            os.utime(path, (old, old))
+            with mock.patch.object(urllib.request, "urlopen", return_value=self._Response()) as opened:
+                got_path, sha, nbytes, _ = mod.fetch_team_file(2026, d)
+            self.assertEqual(1, opened.call_count)
+            self.assertEqual((5, b"fresh"), (nbytes, open(got_path, "rb").read()))
+            self.assertEqual(hashlib.sha256(b"fresh").hexdigest(), sha)
+
+    def test_failed_refetch_raises_instead_of_using_stale_file(self):
+        import os, tempfile, time, urllib.request
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            path = f"{d}/stats_team_week_2026.parquet"
+            with open(path, "wb") as f:
+                f.write(b"cached")
+            old = time.time() - 7 * 3600
+            os.utime(path, (old, old))
+            with mock.patch.object(urllib.request, "urlopen", side_effect=OSError("down")):
+                with self.assertRaises(OSError):
+                    mod.fetch_team_file(2026, d)
 
 
 class Writes(unittest.TestCase):

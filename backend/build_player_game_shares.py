@@ -40,16 +40,20 @@ LEAGUE = "nfl"
 PER_GAME_METRICS = build_player_shares.PER_GAME_METRICS
 TEAM_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_team/stats_team_week_%d.parquet"
 TEAM_CODE_VOCAB = {"LA": "LAR", "WAS": "WSH"}
+TEAM_FILE_MAX_AGE_S = 6 * 3600
 SHARE_TOLERANCE = 1e-6
 TEAM_COLUMNS = ["season", "week", "team", "season_type", "game_id",
                 "carries", "targets", "receiving_air_yards"]
 
 
-def fetch_team_file(season, cache_dir):
-    """Download the publisher's team-week file. Returns (path, sha256, bytes, fetched_at)."""
+def fetch_team_file(season, cache_dir, max_age_s=TEAM_FILE_MAX_AGE_S):
+    """Download the publisher's team-week file when the cache is missing or older than
+    max_age_s. Returns (path, sha256, bytes, fetched_at). A failed refetch raises; a stale
+    file is never used silently."""
     os.makedirs(cache_dir, exist_ok=True)
     path = os.path.join(cache_dir, "stats_team_week_%d.parquet" % season)
-    if not os.path.exists(path):
+    age_s = dt.datetime.now(dt.timezone.utc).timestamp() - os.path.getmtime(path) if os.path.exists(path) else None
+    if age_s is None or age_s > max_age_s:
         part = path + ".part"
         with urllib.request.urlopen(TEAM_URL % season, timeout=60) as resp, open(part, "wb") as out:
             out.write(resp.read())

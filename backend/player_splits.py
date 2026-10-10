@@ -1,12 +1,15 @@
 """player_splits.py -- one player's games, split by whether named teammates played in them.
 
-For player P, every regular-season game P logged is classified by the availability of each
+For player P, the universe is every final regular-season game of P's teams that P did not
+provably miss: each game P logged, plus each scheduled game with no box-score line unless P's own
+availability says he did not play. Each universe game is classified by the availability of each
 teammate named in ``without`` (must be played = 0) and ``with_`` (must be played = 1), read from
 player_game_availability. A game is:
   matched      every named teammate's status agrees with the filter
   not_matched  at least one teammate's known status contradicts the filter
   excluded     no known contradiction, but at least one teammate's status is unknown (NULL or no row)
 not_teammate a named teammate never wore P's team this season, so the game says nothing about him
+A scheduled game with no box-score line has no stats to show, so it is excluded and counted as unknown.
 Excluded and not-teammate games are counted, never dropped silently, and never in either bucket.
 
 Usage: LP_DB_PATH=... python3 player_splits.py --player-id 123 --without 456 [--with 789] [--season 2025]
@@ -51,6 +54,22 @@ def _teams_this_season(con, league, season, player_id):
     return teams
 
 
+def _scheduled_games(con, season, team):
+    return con.execute(
+        "SELECT CAST(week AS INTEGER), game_id FROM nfl_schedule WHERE season=? "
+        "AND game_type='REG' AND home_score IS NOT NULL AND away_score IS NOT NULL "
+        "AND (home_team=? OR away_team=?)", (season, team, team)).fetchall()
+
+
+def _availability_seasons(con, league, player_id, season):
+    sql = ("SELECT DISTINCT season FROM player_game_availability WHERE league=? AND player_id=?")
+    args = [league, player_id]
+    if season is not None:
+        sql += " AND season=?"
+        args.append(season)
+    return {s for (s,) in con.execute(sql, args)}
+
+
 def _played(con, league, season, game_id, team, teammates):
     if not teammates:
         return {}
@@ -69,13 +88,27 @@ def splits(con, player_id, without=(), with_=(), season=None, league=LEAGUE):
     result = {"player_id": player_id, "league": league, "season": season,
               "without": without, "with": with_,
               "matched": [], "not_matched": [], "excluded_unknown": 0, "excluded_not_teammate": 0}
+    logged = _player_games(con, league, player_id, season)
+    logged_keys = {(s, game_id, team) for s, _week, game_id, team, _stats in logged}
+    universe = [(s, week, game_id, team, stats) for s, week, game_id, team, stats in logged]
+    for season_ in sorted({s for s, *_ in logged} | _availability_seasons(con, league, player_id, season)):
+        for team in sorted(_teams_this_season(con, league, season_, player_id)):
+            for week, game_id in _scheduled_games(con, season_, team):
+                if (season_, game_id, team) in logged_keys:
+                    continue
+                if _played(con, league, season_, game_id, team, [player_id])[player_id] == 0:
+                    continue
+                universe.append((season_, week, game_id, team, None))
     teams = {}
-    for season_, week, game_id, team, stats in _player_games(con, league, player_id, season):
+    for season_, week, game_id, team, stats in sorted(universe, key=lambda r: (r[0], r[1])):
         for x in teammates:
             if (season_, x) not in teams:
                 teams[(season_, x)] = _teams_this_season(con, league, season_, x)
         if any(teams[(season_, x)] and team not in teams[(season_, x)] for x in teammates):
             result["excluded_not_teammate"] += 1
+            continue
+        if stats is None:
+            result["excluded_unknown"] += 1
             continue
         status = _played(con, league, season_, game_id, team, teammates)
         row = {"season": season_, "week": week, "game_id": game_id, "team": team,
