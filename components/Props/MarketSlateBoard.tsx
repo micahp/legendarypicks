@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
 import MatchForm from './MatchForm'
 import PropChart, { PropHistory } from './PropChart'
+import HorizontalScrollRail from '../HorizontalScrollRail'
 import { uniqueLineOptions } from './lineOptions'
 import { isPickem } from './odds'
 
@@ -674,7 +675,13 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
             {marketRows.length} props{marketLineCount !== marketRows.length ? ` · ${marketLineCount} lines` : ''}
           </span>
         </div>
-        <div className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <HorizontalScrollRail
+          className="min-w-0"
+          label="Prop market filters"
+          previousLabel="Scroll markets left"
+          nextLabel="Scroll markets right"
+          railClassName="flex gap-2 pb-1 overscroll-x-contain"
+        >
           {markets.map(item => (
             <button
               key={item.market}
@@ -690,7 +697,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
               {marketLabel(item.market)} <span className="ml-1 text-[10px] tabular-nums opacity-60">{item.count}</span>
             </button>
           ))}
-        </div>
+        </HorizontalScrollRail>
       </div>
 
       {/* "Sort by" sits next to the controls it labels. It used to read "Sort
