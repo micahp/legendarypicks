@@ -56,6 +56,10 @@ for env_name in DEV PROD; do
   if [ "$month" -le 2 ]; then season=$(( year - 1 )); else season=$year; fi
   if [ "$month" -ge 9 ] || [ "$month" -le 2 ]; then
     run_step 300 ingest_nfl_weekly_stats.py --year "$season" --all-positions
+    # Per-game shares (player_game_shares). DEV only: the PROD write needs its own authorization.
+    if [ "$env_name" = DEV ]; then
+      run_step 300 build_player_game_shares.py --season "$season"
+    fi
     # Each player's share of his team's targets, air yards, carries, TDs (player_team_shares).
     run_step 120 build_player_shares.py --league nfl --season "$season"
   fi
