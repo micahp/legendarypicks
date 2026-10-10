@@ -368,7 +368,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
             {leagueGroups.map(({ leagueKey, games }) => {
               const propCount = games.reduce((total, game) => total + game.prop_count, 0)
               return (
-                <section key={leagueKey} data-slate-league={leagueKey} className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-1">
+                <section key={leagueKey} data-slate-league={leagueKey} className="space-y-2 rounded-2xl bg-zinc-900 px-5 pt-4 pb-1">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="text-base font-semibold text-zinc-200">
                       {leagueNavigationLabel(leagueKey)}
@@ -377,16 +377,16 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
                     </span>
                   </div>
-                  <div className="mt-1 grid grid-cols-1 gap-x-10 md:grid-cols-2">
+                  <div className="mt-1 grid grid-cols-1">
                     {games.map(game => {
                       const expanded = expandedGame === game.game_id
                       return (
-                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="min-w-0 border-t border-zinc-800 first:border-t-0 md:[&:nth-child(2)]:border-t-0">
+                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="-mx-5 min-w-0 border-t border-zinc-800 first:border-t-0">
                           <button
                             type="button"
                             onClick={() => openGame(game.game_id)}
                             aria-expanded={expanded}
-                            className="flex w-full min-w-0 items-center justify-between gap-3 py-3 text-left transition-colors hover:text-white"
+                            className="flex w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-3 text-left transition-colors hover:bg-zinc-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/70"
                           >
                             <span className="min-w-0">
                               <span className="block break-words text-sm font-semibold">
@@ -405,54 +405,53 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                           {expanded && (() => {
                             const gp = gameProps[game.game_id]
                             if (!gp || gp.loading) {
-                              return <div data-slate-props className="pb-3"><Skeleton lines={3} /></div>
+                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3"><Skeleton lines={3} /></div>
                             }
                             if (!gp.players.length) {
-                              return <div data-slate-props className="pb-3 text-xs text-zinc-500">No props for this game yet.</div>
+                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3 text-xs text-zinc-500">No props for this game yet.</div>
                             }
                             return (
-                              <div data-slate-props className="lp-scroll max-h-96 space-y-4 overflow-y-auto pb-3 pr-3">
-                                {gp.players.map(player => (
-                                  <div
-                                    key={`${player.team}-${player.name}`}
-                                    data-slate-player={player.name}
-                                    data-slate-player-id={player.id || undefined}
-                                  >
-                                    <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
-                                      {player.id ? (
-                                        <a href={`/player/${player.id}`} className="font-bold text-zinc-300 hover:text-emerald-400">{player.name}</a>
-                                      ) : (
-                                        <span className="font-bold text-zinc-300">{player.name}</span>
-                                      )}
-                                      <span className="text-zinc-600">{player.team}</span>
-                                    </div>
-                                    <div className="pl-4">
-                                    <SlatePlayerOffers
-                                      playerId={player.id}
-                                      playerName={player.name}
-                                      props={player.props}
-                                      onOpen={prop => openPropChart(
-                                        game.league, player.id, prop.market, prop.line, prop.side,
-                                      )}
-                                    />
-                                    </div>
-                                    {player.id && openPropKey?.startsWith(`${player.id}-`) && (
-                                      <div className="mt-2">
-                                        {propChartLoading ? (
-                                          <div className="h-24 animate-pulse rounded-lg bg-zinc-800/60" />
-                                        ) : propChart ? (
-                                          <PropChart data={propChart} />
-                                        ) : game.league === 'ligamx' || game.league === 'lcup' ? (
-                                          <MatchForm playerId={player.id} player={player.name} />
+                              <div data-slate-props className="lp-scroll max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-5 py-3">
+                                {gp.players.map(player => {
+                                  const hasOpenProp = !!player.id && !!openPropKey?.startsWith(`${player.id}-`)
+                                  const chartContent = hasOpenProp ? (
+                                    propChartLoading ? (
+                                      <div className="h-24 animate-pulse rounded-lg bg-zinc-800/60" />
+                                    ) : propChart ? (
+                                      <PropChart data={propChart} />
+                                    ) : game.league === 'ligamx' || game.league === 'lcup' ? (
+                                      <MatchForm playerId={player.id} player={player.name} />
+                                    ) : (
+                                      <div data-history-empty className="text-xs text-zinc-500">No history yet.</div>
+                                    )
+                                  ) : null
+                                  return (
+                                    <div
+                                      key={`${player.team}-${player.name}`}
+                                      data-slate-player={player.name}
+                                      data-slate-player-id={player.id || undefined}
+                                    >
+                                      <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs">
+                                        {player.id ? (
+                                          <a href={`/player/${player.id}`} className="font-bold text-zinc-300 hover:text-emerald-400">{player.name}</a>
                                         ) : (
-                                          <div data-history-empty className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-600">
-                                            No history yet.
-                                          </div>
+                                          <span className="font-bold text-zinc-300">{player.name}</span>
                                         )}
+                                        <span className="text-zinc-600">{player.team}</span>
                                       </div>
-                                    )}
-                                  </div>
-                                ))}
+                                      <SlatePlayerOffers
+                                        playerId={player.id}
+                                        playerName={player.name}
+                                        props={player.props}
+                                        expandedKey={hasOpenProp ? openPropKey : null}
+                                        expandedContent={chartContent}
+                                        onOpen={prop => openPropChart(
+                                          game.league, player.id, prop.market, prop.line, prop.side,
+                                        )}
+                                      />
+                                    </div>
+                                  )
+                                })}
                               </div>
                             )
                           })()}
