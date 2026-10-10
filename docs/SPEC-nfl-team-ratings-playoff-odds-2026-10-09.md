@@ -9,6 +9,13 @@ Everything is graded in public.
 Companion: `docs/SPEC-player-projections-availability-2026-10-09.md` (SPEC B). Parent north star:
 `docs/SPEC-modeling-platform-2026-07-16.md`. Method reference: `docs/PROJECTIONS-METHODOLOGY.md`.
 
+2026-10-10 product direction: [the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md)
+sets the full game-forecast milestone. The scores-only version 1 here is an interim
+benchmark. Full completion also needs a calibrated joint score distribution,
+market-specific probabilities and grading, and the efficiency/availability context
+currently placed in section 9. Scope and test those additions as a new experiment;
+the pre-registered A3 gate below remains the rule for its existing experiment.
+
 Written for implementers (Codex, pi) who have not read the conversation. Every fact below was
 measured in the dev DB on 2026-10-09 unless marked otherwise.
 
