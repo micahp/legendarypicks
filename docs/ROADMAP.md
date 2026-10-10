@@ -12,6 +12,12 @@ document: `git log -p docs/ROADMAP.md`. The 2026-08-18 version and the old `# Le
 
 Checked = shipped to **production**, not to dev.
 
+**Current priority, 2026-10-10:** build the integrated NFL forecasting system in
+[the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md). The immediate
+tracks are the full game/season forecast in Spec A and the availability-aware player
+forecast in Spec B. The older queue below remains open where unchecked, but its dated
+priority statements do not override this decision.
+
 **Rewritten 2026-08-20.** The previous version dated itself 2026-08-18, had grown to 1,520
 lines, and had buried thirty unchecked items (`B1`-`B16`, `M1`-`M7`, `R1`-`R9`) underneath a
 `# Ledger` heading that told readers not to rewrite what was below it. Open work was sitting
@@ -23,22 +29,47 @@ the backlog as P4, and the history is a git revision rather than a second file.
 Where a measurement contradicts what the 08-18 roadmap claimed, the correction is called out
 in place, because this document has been confidently wrong before.
 
-**Partially reconciled 2026-08-25.** §1 was three releases behind while §10 carried
-same-day entries, so the document looked maintained and was not. §1 is now re-measured
-against the running containers. **Everything between §3 and §12 still dates from 08-20 and
-has not been re-measured since**, and roughly a dozen commits have landed since this file was
-last touched (`ec69941`). The live open list is `docs/CONTEXT-2026-08-24.md` §19, not this
-file. Read that first and treat unverified sections here as claims.
-
-The constraint that orders all of it: **NFL fantasy drafts are happening now**, and NCAAF
-opens **2026-08-29, nine days out**. That is the only hard date on the board.
+**Historical measurement note:** §1 was last reconciled on 2026-08-25; much of §3–§12
+still describes August conditions. Re-measure those items before acting on their counts
+or completion claims. The former draft-window and 2026-08-29 NCAAF deadlines no longer
+order the work.
 
 ---
 
-## 0. FIRST: EPL, La Liga and Serie A onto Bovada
+## NOW. NFL forecasting, from players to playoffs (2026-10-10)
 
-**Micah's call, 2026-09-05. This is the top of the board.** Not started, deliberately:
-it is a lot of work and it must not be mixed into the odds work happening now.
+The product is a projected score and a calibrated account of what that score means for
+the game, its players, its markets, and the season. Market disagreement is shown with
+probabilities, captured prices, and a permanent grading record. See the
+[forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md) for the product
+and investor framing.
+
+- [ ] **Finish the full [Spec A](SPEC-nfl-team-ratings-playoff-odds-2026-10-09.md).**
+      Verify schedule, score and team inputs; finish the baseline and the EPA/context
+      version; produce a calibrated joint score distribution, fair probabilities for
+      win, spread, total and team-total markets, and playoff simulations. Lock and
+      publicly grade forecasts against simple and market baselines. The existing
+      scores-only v1 slices are an interim benchmark, not completion of this milestone.
+- [ ] **Finish [Spec B](SPEC-player-projections-availability-2026-10-09.md).**
+      Repair the reviewed B1–B3 foundation before using it: prove complete snap
+      games, schedule the derived availability rebuild, include log-only candidates,
+      use a complete game universe for splits, refresh published team totals, and
+      reconcile season-share denominators. Then finish the with/without prop history,
+      own player projections with injury scenarios, ESPN comparison, and public
+      grading (B4–B8). The candidate remains isolated on its feature branch.
+- [ ] **Prove the joined forecast on real NFL games.** Share a versioned, pre-kickoff
+      run across player, game and season outputs; measure their consistency; publish
+      the score explanation, market comparisons and full record. Historical
+      2010–2025 coverage is a proposed modeling target to verify, and only genuinely
+      pre-kickoff 2026 forecasts count as prospective evidence.
+
+These tracks share data and run contracts. Finish their inputs first, then validate
+the joint simulation and the public page before extending the method to another sport.
+
+## 0. Earlier open priority: EPL, La Liga and Serie A onto Bovada
+
+**Micah's call, 2026-09-05.** This was the top of the board at the time. It remains
+open and follows the current NFL forecasting focus.
 
 We hold **zero** props for these three leagues. Not thin, zero. Measured the same day
 against Bovada's own sharded coupons, from this datacenter box, no workaround:

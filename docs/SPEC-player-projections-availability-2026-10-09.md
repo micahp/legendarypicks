@@ -15,6 +15,12 @@ commit per slice, published-first, unknown is never guessed, paste raw output.
 NFL first. Every table carries a `league` column so NBA (minutes) and NHL (TOI) follow the same
 shape.
 
+2026-10-10 product direction: [the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md)
+connects these player forecasts to the game's shared score simulation and the
+season forecast in Spec A. Full Spec B means B0–B8, including the prop filter,
+our own player probabilities, injury scenarios and public grading. The B1–B3
+candidate is isolated pending review fixes as of this note.
+
 ---
 
 ## 1. What exists today (measured 2026-10-09)
