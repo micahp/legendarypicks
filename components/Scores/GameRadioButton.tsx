@@ -49,7 +49,7 @@ export default function GameRadioButton({ src, team, station, live = true, black
   if (!live) return <span className="text-xs text-zinc-500">{station}</span>
 
   return (
-    <div className="flex flex-row-reverse items-center gap-2">
+    <div className="flex items-center gap-2">
       <button
         type="button"
         onClick={toggle}
