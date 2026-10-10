@@ -240,6 +240,13 @@ user-visible early), then B6-B8.
   overage team-games equal minus the no-receiver pass air yards exactly.
 - Player air-yard shares can therefore legitimately sum above 100%. Projection code must not force
   published air-yard shares to total exactly 100%.
-- Known identity defect, not fixed here: 6,340 `players.nfl_gsis_id` values are not GSIS format
-  (name prefix plus digits). 109 receiver-games in 2026 fail to join to pbp because of it. Stored shares
-  are unaffected (they are the publisher's values). Fixing identities needs its own authorization.
+- Identity classification of the 6,340 non-GSIS-format `players.nfl_gsis_id` values (read-only, dev DB,
+  nflverse `players.parquet` as the reference):
+  - 5,673 are identical to an id in nflverse's own register, with the same name. The publisher issues
+    non-GSIS ids (6,079 of 24,844 register rows). These are not corruption, but pbp receiver ids are GSIS,
+    so they cannot join to pbp.
+  - 667 are not in the register under that id. Example: Keith Abney II, `ABN189231`, where the register
+    maps his espn_id to `00-0041445`. These look like ESPN-style placeholders written by ingest (see the
+    comment in `ingest_nfl_depth_charts.py` around line 167).
+  - 109 receiver-games in 2026 fail to join to pbp. Stored shares are unaffected (they are the publisher's values).
+  - Repairing `nfl_gsis_id` is a separate decision that needs authorization, not part of this slice.
