@@ -1,4 +1,5 @@
 import SportIcon from '../SportIcon'
+import LiveDot from '../LiveDot'
 
 /**
  * The scoreboard's sport filter: a row of pills, one per sport, replacing the
@@ -95,12 +96,23 @@ export const SPORT_LEAGUE_CODES: Record<Exclude<SportFilter, 'All'>, string[]> =
   'Esports': ['COD'],
 }
 
+// A Live pill ahead of the sports, replacing the rail that used to sit above the date control
+// (Micah, 2026-10-08). It narrows whatever sport is picked to what is in progress right now;
+// the page passes it only while something is live (or the filter is on, so it can be turned off).
+export interface LivePill {
+  count: number
+  active: boolean
+  onToggle: () => void
+}
+
 export default function LeagueFilterPills({
   value,
   onChange,
+  live,
 }: {
   value: string
   onChange: (sport: SportFilter) => void
+  live?: LivePill
 }) {
   return (
     <div
@@ -110,6 +122,22 @@ export default function LeagueFilterPills({
          keep their size and the row scrolls), wrapped rows on wider screens. */
       className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0"
     >
+      {live ? (
+        <button
+          type="button"
+          aria-pressed={live.active}
+          onClick={live.onToggle}
+          className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+            live.active
+              ? 'border-red-500/40 bg-red-500/15 text-red-300'
+              : 'border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:border-red-500/40 hover:text-red-300'
+          }`}
+        >
+          <LiveDot />
+          Live
+          {live.count > 0 ? <span className="tabular-nums text-xs opacity-80">{live.count}</span> : null}
+        </button>
+      ) : null}
       {SPORTS.map((sport) => {
         const active = value === sport.name
         return (
