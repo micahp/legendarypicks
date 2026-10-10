@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.9.9
+
+### Scoreboard
+
+- Live football clocks use a padded `MM:SS` countdown and ordinal quarter; overtime is labeled
+  `OT`, `2OT`, and so on. NHL periods after the third are labeled as overtime.
+- Soccer live rows show the match minute without repeating the half, and completed matches read
+  Full Time. Break and delay wording remains visible.
+- Game detail headers show scheduled kickoff time and keep refreshing through kickoff and final.
+- The live control now sits with the league filters. Scoreboard filters scroll horizontally and
+  game rows use the full card width.
+
+### Props
+
+- Refined slate player rows and made the props tabs scroll horizontally without a visible
+  scrollbar.
+
 ## v0.9.6
 
 ### The NBA comes from the NBA

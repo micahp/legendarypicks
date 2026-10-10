@@ -1,32 +1,44 @@
 import { GameContext } from './types'
-import { formatLiveStatus, livePeriodTypeForLeague } from '../../lib/liveGameStatus'
+import { formatLiveStatus, isSoccerLeague, livePeriodTypeForLeague } from '../../lib/liveGameStatus'
 
 // ── score strip (compact ESPN-style) ──
-export default function ScoreStrip({ ctx, score, state, league, period, clock, statusDetail, isPreseason, homeName, awayName, homeRecord, awayRecord }: {
+export default function ScoreStrip({ ctx, score, state, league, period, clock, statusDetail, startTime, isPreseason, homeName, awayName, homeRecord, awayRecord }: {
   ctx: GameContext | null; score: { away: number; home: number } | null; state?: string | null
   league?: string | null; period?: number | null; clock?: string | null
-  statusDetail?: string | null
+  statusDetail?: string | null; startTime?: string | null
   isPreseason?: boolean
   homeName: string; awayName: string; homeRecord: string; awayRecord: string
 }) {
   // ESPN closes a postponed / cancelled / abandoned match as state=post with a 0-0 score.
   // It was never played, so it has no score, no winner and no loser to dim.
-  const notPlayed = state === 'post' && !!statusDetail
+  const normalizedState = (state || '').toLowerCase()
+  const terminalState = normalizedState === 'post' || normalizedState === 'final' || normalizedState === 'completed'
+  const notPlayed = terminalState && !!statusDetail
     && /postpon|cancel|abandon/i.test(statusDetail)
-  const isFinal = state === 'post' && !notPlayed
-  const isLive = state === 'in'
+  const isFinal = terminalState && !notPlayed
+  const isLive = normalizedState === 'in' || normalizedState === 'live'
+  const scheduledTime = startTime && Number.isFinite(new Date(startTime).getTime())
+    ? new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : null
+  const scheduledDetail = scheduledTime || (statusDetail && !/^(scheduled|pre|upcoming)$/i.test(statusDetail)
+    ? statusDetail
+    : null)
   const statusLabel = notPlayed
     ? (statusDetail as string).toUpperCase()
     : isFinal
-    ? (statusDetail && /susp/i.test(statusDetail) ? 'SUSPENDED' : statusDetail || 'FINAL')
+    ? (statusDetail && /susp/i.test(statusDetail)
+      ? 'SUSPENDED'
+      : isSoccerLeague(league) && !/pens|aet|shootout/i.test(statusDetail || '')
+      ? 'FULL TIME'
+      : statusDetail || 'FINAL')
     : isLive
     ? formatLiveStatus({
         type: livePeriodTypeForLeague(league || undefined),
         number: period,
         display: league?.toLowerCase() === 'mlb' ? statusDetail : undefined,
         clock,
-      }, statusDetail)
-    : 'SCHEDULED'
+      }, statusDetail, league)
+    : scheduledDetail || ''
   // Dim the loser only when the game is final; keep both bright while live/scheduled.
   const homeWon = isFinal && score ? score.home > score.away : false
   const awayWon = isFinal && score ? score.away > score.home : false

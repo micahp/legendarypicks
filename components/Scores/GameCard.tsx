@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { formatLiveStatus } from '../../lib/liveGameStatus'
+import { formatLiveStatus, isSoccerLeague } from '../../lib/liveGameStatus'
 import type { LivePeriod } from '../../lib/liveGameStatus'
 import { audioForGame } from '../../lib/gameAudio'
 import GameRadioButton from './GameRadioButton'
@@ -55,7 +55,7 @@ function getStatusBadge(status: GameProps['status']) {
     : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
 }
 
-function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
+function getStatusLabel(status: GameProps['status'], statusDetail?: string, league?: string) {
   if (status === 'LIVE') return 'LIVE'
   // Postponed / cancelled: ESPN closes the event (state=post, score 0-0) for a match that
   // never happened. Measured 2026-10-02: RBNY v STL read "0 0 FINAL" on 09-26 and was
@@ -75,7 +75,10 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   // backend computes "FT (Pens)" / "FT (AET)" (espn_client soccer branch); show it.
   if (status === 'FINAL' && statusDetail && /pens|aet|shootout/i.test(statusDetail)) return statusDetail
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
-  if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
+  if (status === 'FINAL') {
+    if (statusDetail && statusDetail.includes('/')) return statusDetail
+    return isSoccerLeague(league) ? 'FULL TIME' : 'FINAL'
+  }
   return 'SCHEDULED'
 }
 
@@ -184,7 +187,7 @@ export default function GameCard(g: GameProps) {
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail, g.league) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail, g.league) : '')}
         </span>
       </div>
       )}

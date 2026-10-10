@@ -69,6 +69,7 @@ def get_game_detail(league: str, game_id: str):
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
            "final_score": None, "live_score": None, "state": None,
            "period": None, "clock": None, "status_detail": None,
+           "start_time": None,
            # The publisher's phase (ESPN season_type 1/2/3, slug preseason/regular-season/
            # post-season), so the game page can say "preseason" the way the score cards do.
            "season_type": None, "season_slug": None}
@@ -107,6 +108,9 @@ def get_game_detail(league: str, game_id: str):
                 value = _snapshot_field(lg, game_id, field)
                 if value is not None:
                     out[field] = value
+        start_time = _snapshot_field(lg, game_id, "date")
+        if start_time is not None:
+            out["start_time"] = start_time
     except Exception:
         pass
     # Only ask the publisher for what the database could not answer.

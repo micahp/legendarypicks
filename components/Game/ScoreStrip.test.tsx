@@ -18,12 +18,20 @@ const baseProps = {
 describe('ScoreStrip live status', () => {
   it('shows the publisher minute for a live soccer game', () => {
     render(<ScoreStrip {...baseProps} state="in" league="lcup" period={2} clock="67'" statusDetail="67'" />)
-    expect(screen.getByText("2nd Half · 67'")).toBeTruthy()
+    expect(screen.getByText("67'")).toBeTruthy()
   })
 
   it('falls back honestly when the publisher clock is unavailable', () => {
     render(<ScoreStrip {...baseProps} state="in" />)
     expect(screen.getByText('LIVE')).toBeTruthy()
+  })
+
+  it('shows the kickoff time without repeating that the game is scheduled', () => {
+    const startTime = '2026-10-10T19:30:00Z'
+    const localTime = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    render(<ScoreStrip {...baseProps} state="pre" startTime={startTime} statusDetail="Scheduled" />)
+    expect(screen.getByText(localTime)).toBeTruthy()
+    expect(screen.queryByText(/scheduled/i)).toBeNull()
   })
 
   it('keeps the publisher inning state instead of ESPN\'s live 0:00 placeholder', () => {
@@ -32,9 +40,29 @@ describe('ScoreStrip live status', () => {
     expect(screen.queryByText('0:00')).toBeNull()
   })
 
-  it('shows both the NFL quarter and running clock', () => {
+  it('shows the NFL running clock and ordinal quarter', () => {
     render(<ScoreStrip {...baseProps} state="in" league="nfl" period={4} clock="1:51" statusDetail="1:51 - 4th" />)
-    expect(screen.getByText('Q4 · 1:51')).toBeTruthy()
+    expect(screen.getByText('01:51 - 4th')).toBeTruthy()
+  })
+
+  it('shows football overtime as OT rather than a fifth quarter', () => {
+    render(<ScoreStrip {...baseProps} state="in" league="ncaaf" period={5} clock="7:31" statusDetail="7:31 - OT" />)
+    expect(screen.getByText('07:31 - OT')).toBeTruthy()
+  })
+
+  it('recovers the football period from publisher wording when the period number is missing', () => {
+    render(<ScoreStrip {...baseProps} state="in" league="nfl" statusDetail="0:00 - 3rd" />)
+    expect(screen.getByText('00:00 - 3rd')).toBeTruthy()
+  })
+
+  it('treats final state aliases as finished instead of scheduled', () => {
+    render(<ScoreStrip {...baseProps} state="final" league="nfl" statusDetail="Final" />)
+    expect(screen.getByText('Final')).toBeTruthy()
+  })
+
+  it('labels a finished soccer match Full Time', () => {
+    render(<ScoreStrip {...baseProps} state="post" league="mls" statusDetail="Final" />)
+    expect(screen.getByText('FULL TIME')).toBeTruthy()
   })
 })
 

@@ -38,6 +38,7 @@ export interface GameDetail {
   period?: number | null
   clock?: string | null
   status_detail?: string | null
+  start_time?: string | null
   season_type?: number | null
   season_slug?: string | null
 }

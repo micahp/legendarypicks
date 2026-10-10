@@ -294,11 +294,12 @@ export default function GameDetailPage() {
     })()
   }, [league, gameId])
 
-  // The scoreboard refreshes live results; the detail header must not freeze
-  // at the moment the user opened it. Stop as soon as the publisher says the
-  // game is no longer in progress.
+  // Keep the detail header current across scheduled → live → final. A page
+  // opened before kickoff must keep checking so it can begin showing the
+  // period, then stop once the publisher says the game is over.
   useEffect(() => {
-    if (!league || !gameId || detail?.state !== 'in') return
+    const state = (detail?.state || '').toLowerCase()
+    if (!league || !gameId || !detail || ['post', 'final', 'completed'].includes(state)) return
     let alive = true
     const refresh = async () => {
       const next = await SportsService.getGameDetail(league, gameId)
@@ -309,7 +310,7 @@ export default function GameDetailPage() {
       alive = false
       clearInterval(timer)
     }
-  }, [league, gameId, detail?.state])
+  }, [league, gameId, detail?.state, detail?.start_time])
 
   // Lazy-fetch tab data on first open for per-tab leagues
   useEffect(() => {
@@ -365,7 +366,7 @@ export default function GameDetailPage() {
       <ScoreStrip
         ctx={ctx || null} score={displayScore} state={gameState}
         league={detail?.league || lg} period={detail?.period} clock={detail?.clock}
-        statusDetail={detail?.status_detail}
+        statusDetail={detail?.status_detail} startTime={detail?.start_time}
         isPreseason={isPreseasonGame(detail)}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
