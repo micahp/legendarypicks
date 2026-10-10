@@ -118,9 +118,9 @@ export default function LeagueFilterPills({
     <div
       role="group"
       aria-label="Filter scoreboard by sport"
-      /* One scrolling line on a phone (no squashing, no clipping — the pills
-         keep their size and the row scrolls), wrapped rows on wider screens. */
-      className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible md:pb-0"
+      /* Keep pills on one line; the parent scroll rail handles overflow and
+         provides arrow controls when the row does not fit. */
+      className="flex w-max min-w-full gap-2"
     >
       {live ? (
         <button

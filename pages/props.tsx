@@ -5,6 +5,7 @@ import MatchForm from '../components/Props/MatchForm'
 import PropChart, { PropHistory } from '../components/Props/PropChart'
 import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
+import HorizontalScrollRail from '../components/HorizontalScrollRail'
 import {
   leagueNavigationLabel,
   SportGroup,
@@ -1081,14 +1082,22 @@ export default function PropsPage() {
           <p className="text-xs text-zinc-500">Sport filters are unavailable; showing the complete board.</p>
         )}
         {/* Tab bar */}
-        <div className="flex gap-0 flex-wrap border-b border-zinc-800 -mx-4 px-4">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <HorizontalScrollRail
+          className="-mx-4 min-w-0"
+          label="Props sections"
+          previousLabel="Scroll Props tabs left"
+          nextLabel="Scroll Props tabs right"
+          railClassName="overflow-y-hidden overscroll-x-none"
+        >
+          <div className="flex w-max min-w-full flex-nowrap gap-0 border-b border-zinc-800 px-4">
+            {TABS.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`shrink-0 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-emerald-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </HorizontalScrollRail>
 
         {/* Date navigator — only on date-scoped tabs */}
         {showDateNav && (

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
+import HorizontalScrollRail from '../components/HorizontalScrollRail'
 import LeagueFilterPills, {
   SPORT_LEAGUE_CODES,
   SPORT_FETCH_KEYS,
@@ -350,13 +351,21 @@ export default function ScoresPage() {
             <h1 className="text-3xl font-extrabold tracking-tight">
             Scoreboard
           </h1>
-          <LeagueFilterPills
-            value={sportFilter}
-            onChange={selectSport}
-            live={liveGames.length > 0 || liveOnly
-              ? { count: liveGames.length, active: liveOnly, onToggle: toggleLive }
-              : undefined}
-          />
+          <HorizontalScrollRail
+            className="w-full min-w-0 md:flex-1"
+            label="Scoreboard sport filters"
+            previousLabel="Scroll scoreboard filters left"
+            nextLabel="Scroll scoreboard filters right"
+            railClassName="overscroll-x-contain"
+          >
+            <LeagueFilterPills
+              value={sportFilter}
+              onChange={selectSport}
+              live={liveGames.length > 0 || liveOnly
+                ? { count: liveGames.length, active: liveOnly, onToggle: toggleLive }
+                : undefined}
+            />
+          </HorizontalScrollRail>
         </div>
         {/* Day navigator: ‹ date › — works on mobile (just two buttons + a label) */}
         <div className="flex items-center gap-1">
