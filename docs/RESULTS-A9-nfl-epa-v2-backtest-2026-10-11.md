@@ -73,3 +73,17 @@ Reproduce:
     cd backend
     LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage tune2024 [--record]
     LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage holdout2025 --half-life 12 --lam 450 [--record]
+
+## Data version (pinned 2026-10-11)
+
+These numbers were computed before 2010 to 2023 were loaded into the dev DB, so the 2024 tuning
+season had no prior ("2023 not loaded", line 16). The full history is now loaded, and a run on the
+full DB would use a 2023 prior for 2024 and give different numbers.
+
+Pinned inputs: `nfl_schedule` 285 rows and `nfl_pbp` 47,274 plays over 272 games (2024); 285 rows and
+46,452 plays over 272 games (2025). Those seasons were not touched by the later load.
+
+Reproduced 2026-10-11 from a copy with `nfl_schedule` and `nfl_pbp` rows before 2024 deleted: the 2025
+second look gives v2 Brier 0.2291, v1 0.2288, margin MAE 10.671 for both, and total MAE 10.496 (v2) and
+10.614 (v1), matching the table above. Reproduce with `nfl_epa_backtest.py --stage holdout2025
+--half-life 12 --lam 450` against that copy. Do not use `--record` on the full DB.

@@ -134,3 +134,20 @@ LP_DB_PATH=<dev db> venv/bin/python record_nfl_backtests.py --holdout   # one-sh
 Tests: `test_nfl_backtest.py`, `test_nfl_metrics.py`, `test_nfl_tune_2024.py`,
 `test_record_nfl_backtests.py`, `test_nfl_ratings*.py`, `test_nfl_lock.py`, `test_lock_nfl_week.py`,
 `test_migrate_nfl_model_tables.py`. The bootstrap is seeded, so the reported intervals reproduce.
+
+## 7. Data version (pinned 2026-10-11)
+
+These results were computed before 2010 to 2023 were loaded into the dev DB. At that time 2023 was
+absent, so the 2024 walk-forward had no prior, as section 2 says. Since then the dev DB has the full
+2010 to 2026 history, and a rerun on the full DB would give a different 2024 prior and different
+2024 and 2025 numbers.
+
+Pinned inputs (dev DB, seasons 2024 and 2025, unchanged by the later load):
+- `nfl_schedule`: 285 rows per season, 2024 and 2025.
+- `nfl_pbp`: 47,274 plays over 272 games (2024); 46,452 plays over 272 games (2025).
+
+Reproduce the pinned numbers from a copy with pre-2024 rows removed:
+`sqlite3 copy.db "delete from nfl_schedule where season < 2024; delete from nfl_pbp where season < 2024;"`,
+then run the commands in section 6 against that copy. The 2025 holdout v1 Brier of 0.2288 reproduces
+exactly on that copy (see RESULTS-A9 section "2025 second look", which uses the same v1 configuration).
+The holdout is one-shot: never rerun it on the full DB and call it a new result.
