@@ -218,8 +218,10 @@ def elo_benchmark(con, rows, B):
                                           *nm.bootstrap_mean_diff_ci(bb, be, reps=5000)))
 
 
-def join(*cols):
-    return {k: sum((list(c[k]) for c in cols), []) for k in cols[0]}
+def join(rows, *cols):
+    """Concatenate column dicts for every base row (base rows start at week 2; a feature dict
+    may hold extra week 1 games). A base row missing from any dict raises KeyError."""
+    return {r["game_id"]: sum((list(c[r["game_id"]]) for c in cols), []) for r in rows}
 
 
 def main():
@@ -232,8 +234,8 @@ def main():
     mp, _ = fb.market_prior(con, rows)
     elo_benchmark(con, rows, B)
     models = {"B": B, "QBI": plb.stack2(rows, qm, qt), "AVAIL": plb.stack2(rows, am, at),
-              "OWN": plb.stack2(rows, join(qm, am, em), join(qt, at)),
-              "OWNMP": plb.stack2(rows, join(qm, am, em, mp), join(qt, at))}
+              "OWN": plb.stack2(rows, join(rows, qm, am, em), join(rows, qt, at)),
+              "OWNMP": plb.stack2(rows, join(rows, qm, am, em, mp), join(rows, qt, at))}
     plb.report(rows, models)
     return 0
 
