@@ -236,6 +236,49 @@ def rating_uncertainty(con, rows):
     return None, sigma_fn
 
 
+@feature
+def special_teams(con, rows):
+    """PRE-REGISTERED (before its first run): net special-teams EPA per game.
+
+    Plays: nfl_pbp play_type in (kickoff, punt, field_goal, extra_point) with epa, posteam and
+    defteam present. Per team-game: net = sum(epa where team is posteam) - sum(epa where team is
+    defteam). Rating before week w: (sum_k wt_k * net_k + 4 * prior) / (sum_k wt_k + 4) over
+    the team's games of weeks < w, wt = 0.5 ** ((w - 1 - week) / 6); prior = (2/3) * the
+    team's mean net per game in season S-1 (0 for 2010 or a team with no S-1 games).
+    Column: rating_home - rating_away. Parameters fixed here, not tuned.
+    """
+    cols = {}
+    prior = {}
+    for s in SEASONS:
+        net = {}
+        for gid, wk, pt, dt_, e in con.execute(
+                "SELECT game_id, week, posteam, defteam, epa FROM nfl_pbp WHERE season = ? "
+                "AND play_type IN ('kickoff','punt','field_goal','extra_point') "
+                "AND epa IS NOT NULL AND posteam IS NOT NULL AND defteam IS NOT NULL", (s,)):
+            for t, sgn in ((pt, 1.0), (dt_, -1.0)):
+                rec = net.setdefault((gid, t), [wk, 0.0])
+                rec[1] += sgn * e
+        g = _sched(con, s)
+        for w in sorted({x[1] for x in g}):
+            num, den = {}, {}
+            for (gid, t), (wk, v) in net.items():
+                if wk < w:
+                    wt = 0.5 ** ((w - 1 - wk) / 6.0)
+                    num[t] = num.get(t, 0.0) + wt * v
+                    den[t] = den.get(t, 0.0) + wt
+
+            def rating(t):
+                return (num.get(t, 0.0) + 4.0 * prior.get(t, 0.0)) / (den.get(t, 0.0) + 4.0)
+            for x in (x for x in g if x[1] == w):
+                cols[x[0]] = [rating(x[2]) - rating(x[3])]
+        tot, cnt = {}, {}
+        for (gid, t), (wk, v) in net.items():
+            tot[t] = tot.get(t, 0.0) + v
+            cnt[t] = cnt.get(t, 0) + 1
+        prior = {t: (2.0 / 3.0) * tot[t] / cnt[t] for t in tot}
+    return _complete(rows, cols), None
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
