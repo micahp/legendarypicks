@@ -12,6 +12,7 @@ import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
+import NflModelTab from '../../components/Leagues/NflModelTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -42,6 +43,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
+  model: 'Model',
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
@@ -272,6 +274,8 @@ export default function LeagueHubPage() {
             today={localToday}
           />
         )}
+
+        {route.activeTab === 'model' && isNFL && <NflModelTab />}
 
         {route.activeTab === 'news' && (
           <NewsTab
