@@ -23,6 +23,12 @@ Refusals, all decided before anything is written:
   listed in `started`. A game with no gameday raises: an unknown kickoff cannot be guarded.
 - result: a game with a result and no lock is refused (or listed in `skipped` with skip_scored).
 - a run that is not in model_runs, an empty week, or a team the projector cannot rate.
+
+Inputs, checked by the lock scripts before they fit anything (assert_inputs_complete): a week is
+locked only from complete earlier data. Every REG game of the season before the week must carry
+nflverse's final `result`, and for a model that reads play-by-play, every such game, and every
+REG game of the previous season, must have plays in nfl_pbp. A lock built on a half-ingested week
+would rate teams on missing games and say nothing.
 """
 from __future__ import annotations
 
@@ -73,6 +79,38 @@ def locked_projection(con, game_id, model_version):
     keys = ("run_id", "proj_home", "proj_away", "proj_margin", "proj_total", "p_home_win",
             "market_spread", "market_total", "market_source", "locked_at", "line_snapshot_id")
     return dict(zip(keys, row))
+
+
+def missing_inputs(con, season, week, pbp=False):
+    """{"unscored": [...], "no_pbp": [...]} game ids that a lock of (season, week) would need."""
+    out = {"unscored": [], "no_pbp": []}
+    rows = con.execute(
+        "SELECT game_id, result FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
+        "AND week < ? ORDER BY game_id", (season, week)).fetchall()
+    out["unscored"] = [g for g, r in rows if r is None]
+    if pbp:
+        need = [g for g, _ in rows] + [g for g, in con.execute(
+            "SELECT game_id FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
+            "ORDER BY game_id", (season - 1,)).fetchall()]
+        have = {g for g, in con.execute(
+            "SELECT DISTINCT game_id FROM nfl_pbp WHERE season IN (?, ?) "
+            "AND (pass_attempt = 1 OR rush_attempt = 1)", (season - 1, season))}
+        out["no_pbp"] = [g for g in need if g not in have]
+    return out
+
+
+def assert_inputs_complete(con, season, week, pbp=False):
+    """Raise, naming the games, unless every input of a (season, week) lock is present."""
+    miss = missing_inputs(con, season, week, pbp)
+    problems = []
+    if miss["unscored"]:
+        problems.append("%d earlier game(s) without a final result: %s"
+                        % (len(miss["unscored"]), ", ".join(miss["unscored"][:10])))
+    if miss["no_pbp"]:
+        problems.append("%d game(s) without play-by-play: %s"
+                        % (len(miss["no_pbp"]), ", ".join(miss["no_pbp"][:10])))
+    if problems:
+        raise ValueError("refusing to lock %d week %d: %s" % (season, week, "; ".join(problems)))
 
 
 def v1_projector(fit, sigma):

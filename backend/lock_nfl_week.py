@@ -79,6 +79,7 @@ def main(argv=None) -> int:
     as_of = dt.datetime.now(dt.timezone.utc).isoformat()
     con = sqlite3.connect(DB, timeout=30)
     try:
+        nfl_lock.assert_inputs_complete(con, args.season, args.week)
         fit, used, version = build(con, args.season, args.week, args.sigma)
         print("model   %s" % version)
         print("fit     %d games before week %d; mu %.2f h %.2f" % (used, args.week, fit.mu, fit.h))

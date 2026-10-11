@@ -236,5 +236,53 @@ class ModelName(LockDB):
         self.assertEqual(got, "nfl-epa-v2")
 
 
+class InputsComplete(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.con = sqlite3.connect(os.path.join(self._tmp.name, "t.db"))
+        self.con.execute("CREATE TABLE nfl_schedule (game_id TEXT, season INT, game_type TEXT, "
+                         "week INT, result REAL)")
+        self.con.execute("CREATE TABLE nfl_pbp (season INT, game_id TEXT, pass_attempt INT, "
+                         "rush_attempt INT)")
+        rows = [("25_a", 2025, 1, 3.0), ("25_b", 2025, 9, -7.0),
+                ("26_a", 2026, 1, 3.0), ("26_b", 2026, 4, 10.0), ("26_c", 2026, 5, None)]
+        for gid, season, wk, res in rows:
+            self.con.execute("INSERT INTO nfl_schedule VALUES (?,?,'REG',?,?)", (gid, season, wk, res))
+            if res is not None:
+                self.con.execute("INSERT INTO nfl_pbp VALUES (?,?,1,0)", (season, gid))
+        self.con.commit()
+
+    def tearDown(self):
+        self.con.close()
+        self._tmp.cleanup()
+
+    def test_complete_week_passes(self):
+        nl.assert_inputs_complete(self.con, 2026, 5, pbp=True)
+
+    def test_unscored_earlier_game_refuses(self):
+        self.con.execute("UPDATE nfl_schedule SET result=NULL WHERE game_id='26_b'")
+        with self.assertRaisesRegex(ValueError, "26_b"):
+            nl.assert_inputs_complete(self.con, 2026, 5)
+
+    def test_the_week_being_locked_is_not_required(self):
+        nl.assert_inputs_complete(self.con, 2026, 5)    # 26_c is week 5 and unscored: fine
+
+    def test_missing_pbp_refuses_only_a_pbp_model(self):
+        self.con.execute("DELETE FROM nfl_pbp WHERE game_id='26_b'")
+        nl.assert_inputs_complete(self.con, 2026, 5)    # v1 does not read plays
+        with self.assertRaisesRegex(ValueError, "play-by-play: 26_b"):
+            nl.assert_inputs_complete(self.con, 2026, 5, pbp=True)
+
+    def test_previous_season_pbp_is_required_too(self):
+        self.con.execute("DELETE FROM nfl_pbp WHERE game_id='25_b'")
+        with self.assertRaisesRegex(ValueError, "25_b"):
+            nl.assert_inputs_complete(self.con, 2026, 5, pbp=True)
+
+    def test_kicks_only_do_not_count_as_plays(self):
+        self.con.execute("UPDATE nfl_pbp SET pass_attempt=0 WHERE game_id='26_a'")
+        with self.assertRaisesRegex(ValueError, "26_a"):
+            nl.assert_inputs_complete(self.con, 2026, 5, pbp=True)
+
+
 if __name__ == "__main__":
     unittest.main()

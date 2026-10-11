@@ -77,6 +77,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     con = sqlite3.connect(DB, timeout=60)
     try:
+        nfl_lock.assert_inputs_complete(con, args.season, args.week, pbp=True)
         project, info = build(con, args.season, args.week)
         version = model_version(info)
         print("model   %s" % version)

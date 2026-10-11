@@ -23,7 +23,7 @@ class CliDB(unittest.TestCase):
                     " week INT, home_team TEXT, away_team TEXT, location TEXT, home_score REAL,"
                     " away_score REAL, spread_line REAL, total_line REAL, home_moneyline REAL,"
                     " away_moneyline REAL, gameday TEXT DEFAULT '2099-09-13',"
-                    " gametime TEXT DEFAULT '13:00', ingested_at TEXT)")
+                    " gametime TEXT DEFAULT '13:00', ingested_at TEXT, result REAL)")
         for i, (h, a) in enumerate(itertools.permutations(TEAMS, 2)):   # 2025: full season
             hp, ap = points(h, a)
             con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES (?,2025,'REG',?,?,?,'Home',?,?,1,40)",
@@ -40,6 +40,8 @@ class CliDB(unittest.TestCase):
                 hp, ap = points(h, a)
                 con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES (?,2026,'REG',?,?,?,'Home',?,?,1,40)",
                             ("26w%d_%d" % (wk, i), wk, h, a, hp, ap))
+        con.execute("UPDATE nfl_schedule SET result = home_score - away_score "
+                    "WHERE home_score IS NOT NULL")
         con.commit()
         con.close()
         self._orig = lw.DB
@@ -102,6 +104,17 @@ class Apply(CliDB):
         n, = con.execute("SELECT COUNT(*) FROM model_runs WHERE status='ok'").fetchone()
         con.close()
         self.assertEqual(n, 2)  # each apply records its own run
+
+
+class Inputs(CliDB):
+    def test_an_unscored_earlier_week_refuses_even_the_dry_run(self):
+        con = sqlite3.connect(self.path)
+        con.execute("UPDATE nfl_schedule SET result = NULL WHERE game_id = '26w4_0'")
+        con.commit()
+        con.close()
+        with self.assertRaisesRegex(ValueError, "26w4_0"):
+            self.run_cli()
+        self.assertEqual(self.count_projections(), 0)
 
 
 if __name__ == "__main__":
