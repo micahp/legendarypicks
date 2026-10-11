@@ -211,8 +211,8 @@ def main(argv=None):
     items = run_season(con, 2025, hl, lam, prev=prev)
     m = metrics(items, v1_rows(con, 2025))
     line("2025 second look hl %g lam %g" % (hl, lam), m)
-    lo, hi = mt.bootstrap_mean_diff_ci(m["_b2"], m["_b1"])[:2]
-    print("paired Brier diff (v2 - v1) 95%% CI: [%.4f, %.4f]; ties excluded %d" % (lo, hi, m["ties"]))
+    pt, lo, hi = mt.bootstrap_mean_diff_ci(m["_b2"], m["_b1"])
+    print("paired Brier diff (v2 - v1) %.4f, 95%% CI [%.4f, %.4f]; ties excluded %d" % (pt, lo, hi, m["ties"]))
     return 0
 
 
