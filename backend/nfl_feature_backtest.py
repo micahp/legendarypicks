@@ -121,6 +121,66 @@ def report(rows, base, feat, label):
 FEATURES = {}
 
 
+def feature(fn):
+    FEATURES[fn.__name__] = fn
+    return fn
+
+
+def _sched(con, season):
+    return con.execute(
+        "SELECT game_id, week, home_team, away_team, location, spread_line, home_rest, "
+        "away_rest, roof, wind FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
+        "ORDER BY week, game_id", (season,)).fetchall()
+
+
+@feature
+def market_prior(con, rows):
+    """PRE-REGISTERED (before its first run): a market-implied team rating.
+
+    For a game in week w of season S: fit r_t (one number per team) and a home term h by
+    weighted ridge on the closing spread_line of every REG game of season S in weeks < w:
+        spread = r_home - r_away + h (h = 0 at neutral sites)
+    weight 0.5 ** ((w - 1 - week) / 6), ridge 2.0 on each r_t toward 0, h unpenalised.
+    Column: r_home - r_away + h (h = 0 at neutral sites). Parameters 6 and 2.0 are fixed here,
+    not tuned. This rating is derived from the market. A gain here measures information the
+    market has that v1 lacks; it is not an independent forecast and must be labelled so.
+    """
+    cols = {}
+    for s in SEASONS:
+        g = _sched(con, s)
+        teams = sorted({x[2] for x in g} | {x[3] for x in g})
+        idx = {t: i for i, t in enumerate(teams)}
+        n = len(teams)
+        for w in sorted({x[1] for x in g}):
+            past = [x for x in g if x[1] < w and x[5] is not None]
+            if not past:
+                continue
+            A = np.zeros((n + 1, n + 1))
+            b = np.zeros(n + 1)
+            for gid, wk, h, a, loc, sp, *_ in past:
+                v = np.zeros(n + 1)
+                v[idx[h]] += 1.0
+                v[idx[a]] -= 1.0
+                v[n] = 0.0 if (loc or "").strip().lower() == "neutral" else 1.0
+                wt = 0.5 ** ((w - 1 - wk) / 6.0)
+                A += wt * np.outer(v, v)
+                b += wt * float(sp) * v
+            A[np.arange(n), np.arange(n)] += 2.0
+            sol = np.linalg.solve(A, b)
+            for gid, wk, h, a, loc, *_ in (x for x in g if x[1] == w):
+                hh = 0.0 if (loc or "").strip().lower() == "neutral" else sol[n]
+                cols[gid] = [sol[idx[h]] - sol[idx[a]] + hh]
+    return _complete(rows, cols), None
+
+
+def _complete(rows, cols):
+    """Every base row must have its column; a missing one is a bug, never a zero."""
+    miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
+    if miss:
+        raise ValueError("feature missing for %d base rows, e.g. %s" % (len(miss), miss[:3]))
+    return cols
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--feature", required=True, choices=["base"] + sorted(FEATURES))
