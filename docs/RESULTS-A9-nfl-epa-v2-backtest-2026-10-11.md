@@ -58,17 +58,18 @@ This is a second look, not a clean holdout: 2025 was already v1's holdout.
 - The in-sample 2025 Brier quoted when the first lock was made (0.2262) was calibrated on the games
   it scored and is not evidence; 0.2291 above is the honest figure.
 - The week-5 locks use half_life 6, lam 150 (untuned defaults), not the frozen 12 / 450. Their
-  version string says `NOT-ADOPTED untuned`. Week 6 onward should lock with the frozen choice.
+  version string says `NOT-ADOPTED untuned`. From week 6, `lock_nfl_epa.py` locks with the frozen choice through the shared lock path.
 - Neither version knows who is playing. Availability is a later layer (spec 9.5, SPEC B).
 
 ## Records
 
 `model_runs`, dev DB: 9 rows `nfl-epa-v2-tune-2024-*` (status `tuning`) and
-`nfl-epa-v2-secondlook-2025-hl12-lam450` (status `holdout`), written by
-`backend/record_nfl_epa_backtests.py` (one-shot per run id).
+`nfl-epa-v2-secondlook-2025-hl12-lam450` (status `holdout`), written by the backtest itself
+(`--record`), once per run id. (The first recording, the same morning, copied the printed numbers
+by hand; those rows were deleted and re-recorded from the run. The values are identical.)
 
 Reproduce:
 
     cd backend
-    LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage tune2024
-    LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage holdout2025 --half-life 12 --lam 450
+    LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage tune2024 [--record]
+    LP_DB_PATH=<dev db> venv/bin/python nfl_epa_backtest.py --stage holdout2025 --half-life 12 --lam 450 [--record]

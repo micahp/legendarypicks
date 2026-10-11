@@ -28,6 +28,7 @@ Pass conditions (the only ones; the prospective test in 9.4 part 2 decides adopt
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import itertools
 import json
 import math
@@ -40,6 +41,7 @@ import numpy as np
 
 import nfl_backtest as nb
 import nfl_epa_model as em
+import nfl_lock
 import nfl_metrics as mt
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
@@ -175,6 +177,25 @@ def run_season(con, season, hl, lam, prev=None):
     return graded(wf, prev_wf)
 
 
+MODEL = "nfl-epa-v2"
+
+
+def record(con, run_id, season, version, status, params, m):
+    """One model_runs row with the metrics exactly as computed; a run id is written once."""
+    if con.execute("SELECT 1 FROM model_runs WHERE run_id = ?", (run_id,)).fetchone():
+        raise SystemExit("already recorded: %s (a result is recorded once)" % run_id)
+    nfl_lock.ensure_schema(con)
+    out = dict(params)
+    out["results"] = {k: v for k, v in m.items() if not k.startswith("_")}
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    con.execute(
+        "INSERT INTO model_runs (run_id, league, season, week, model, model_version, started_at, "
+        " finished_at, params_json, status, error) VALUES (?,?,?,?,?,?,?,?,?,?,NULL)",
+        (run_id, "nfl", season, None, MODEL, version, now, now, json.dumps(out, sort_keys=True),
+         status))
+    con.commit()
+
+
 def line(label, m):
     print("%-26s n %3d  Brier v2 %.4f v1 %.4f | LL v2 %.4f v1 %.4f | margin MAE v2 %.3f v1 %.3f "
           "line %.3f | total MAE v2 %.3f v1 %.3f line %.3f"
@@ -188,6 +209,8 @@ def main(argv=None):
     ap.add_argument("--stage", choices=["tune2024", "holdout2025"], required=True)
     ap.add_argument("--half-life", type=float)
     ap.add_argument("--lam", type=float)
+    ap.add_argument("--record", action="store_true",
+                    help="write each result to model_runs as computed (once per run id)")
     args = ap.parse_args(argv)
     con = sqlite3.connect(DB, timeout=60)
     if args.stage == "tune2024":
@@ -203,6 +226,14 @@ def main(argv=None):
         best = res[0]
         print("CHOSEN (Brier to 3 decimals, then fewer non-defaults): half_life %g lam %g"
               % (best[2], best[3]))
+        if args.record:
+            for _, nd, hl, lam, m in res:
+                record(con, "nfl-epa-v2-tune-2024-hl%g-lam%g" % (hl, lam), 2024,
+                       "nfl-epa-v2 tuning 2024", "tuning",
+                       {"purpose": "tuning_2024", "half_life": hl, "lam": lam,
+                        "shrink": em.SHRINK, "start_week": START_WEEK, "min_pool": MIN_POOL,
+                        "chosen": (hl, lam) == (best[2], best[3])}, m)
+            print("recorded %d tuning rows" % len(res))
         return 0
     if args.half_life is None or args.lam is None:
         ap.error("holdout2025 needs --half-life and --lam (the frozen 2024 choice)")
@@ -213,6 +244,14 @@ def main(argv=None):
     line("2025 second look hl %g lam %g" % (hl, lam), m)
     pt, lo, hi = mt.bootstrap_mean_diff_ci(m["_b2"], m["_b1"])
     print("paired Brier diff (v2 - v1) %.4f, 95%% CI [%.4f, %.4f]; ties excluded %d" % (pt, lo, hi, m["ties"]))
+    if args.record:
+        m = dict(m, brier_diff_v2_minus_v1=pt, ci95=[lo, hi],
+                 reading="second look; 2025 was already v1's holdout")
+        record(con, "nfl-epa-v2-secondlook-2025-hl%g-lam%g" % (hl, lam), 2025,
+               "nfl-epa-v2 second look 2025 hl=%g lam=%g" % (hl, lam), "holdout",
+               {"purpose": "second_look_2025", "half_life": hl, "lam": lam,
+                "shrink": em.SHRINK, "start_week": START_WEEK, "min_pool": MIN_POOL}, m)
+        print("recorded the 2025 second look")
     return 0
 
 
