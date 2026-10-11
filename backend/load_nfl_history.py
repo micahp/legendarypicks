@@ -53,6 +53,8 @@ SOURCES = {
                       "is_catchable_ball", "is_contested_ball", "is_created_reception",
                       "is_drop", "is_qb_sneak", "n_blitzers", "n_pass_rushers",
                       "is_qb_fault_sack", "date_pulled"], set()),
+    "player_ids": ("nfl_hist_player_ids",
+                   ["gsis_id", "pfr_id", "display_name", "position"], set()),
     "elo538": ("nfl_elo_538",
                ["date", "season", "neutral", "playoff", "team1", "team2", "elo1", "elo2",
                 "elo_prob1", "score1", "score2", "result1"], set()),
@@ -60,6 +62,7 @@ SOURCES = {
 # Columns a publisher dropped from some years (injuries 2025 has no date_modified). Stored as
 # NULL and announced; any other missing column is an error.
 OPTIONAL = {"date_modified"}
+NO_SEASON = {"elo538", "player_ids"}
 ATTRIBUTION = {"ftn_charting": "FTN Data via nflverse, CC BY-SA 4.0",
                "elo538": "FiveThirtyEight nfl-elo-game, MIT licence"}
 
@@ -67,7 +70,8 @@ ATTRIBUTION = {"ftn_charting": "FTN Data via nflverse, CC BY-SA 4.0",
 def migrate(con):
     for src, (table, cols, _teams) in SOURCES.items():
         con.execute("CREATE TABLE IF NOT EXISTS %s (%s)" % (table, ", ".join(cols)))
-        con.execute("CREATE INDEX IF NOT EXISTS idx_%s_season ON %s(season)" % (table, table))
+        if "season" in cols:
+            con.execute("CREATE INDEX IF NOT EXISTS idx_%s_season ON %s(season)" % (table, table))
     con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_hist_injuries_key "
                 "ON nfl_hist_injuries(season, week, team, gsis_id)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_hist_snap_key "
@@ -99,8 +103,8 @@ def read_rows(src, path, season):
     for c in missing:
         data[c] = [None] * pf.metadata.num_rows
     n = len(data[cols[0]])
-    seasons = {int(s) for s in data["season"] if s is not None}
-    if seasons - {season}:
+    seasons = {int(s) for s in data.get("season", ()) if s is not None}
+    if season is not None and seasons - {season}:
         raise RuntimeError("%s: file holds seasons %s, expected only %d" % (path, sorted(seasons), season))
     return [[data[c][i] for c in cols] for i in range(n)], file_rows
 
@@ -164,9 +168,9 @@ def main(argv=None):
     if a.source:
         if not a.file or not os.path.isabs(a.file):
             raise SystemExit("--file must be an absolute path")
-        if a.source != "elo538" and a.season is None:
+        if a.source not in NO_SEASON and a.season is None:
             raise SystemExit("--season is required for %s" % a.source)
-        load(con, a.source, a.file, a.season if a.source != "elo538" else None)
+        load(con, a.source, a.file, None if a.source in NO_SEASON else a.season)
     return 0
 
 
