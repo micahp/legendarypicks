@@ -63,13 +63,20 @@ describe('formatLiveStatus', () => {
   })
 
   it('labels NHL periods after the third as overtime', () => {
-    expect(formatLiveStatus({ type: 'period', number: 4, clock: '12:34' }, null, 'nhl')).toBe('OT · 12:34')
-    expect(formatLiveStatus({ type: 'period', number: 5, clock: '8:02' }, null, 'nhl')).toBe('2OT · 8:02')
-    expect(formatLiveStatus(undefined, '8:02 - OT', 'nhl')).toBe('OT · 8:02')
+    expect(formatLiveStatus({ type: 'period', number: 4, clock: '12:34' }, null, 'nhl')).toBe('12:34 · OT')
+    expect(formatLiveStatus({ type: 'period', number: 5, clock: '8:02' }, null, 'nhl')).toBe('8:02 · 2OT')
+    expect(formatLiveStatus(undefined, '8:02 - OT', 'nhl')).toBe('8:02 · OT')
+  })
+
+  it('puts the NHL clock before the period', () => {
+    expect(formatLiveStatus({ type: 'period', number: 2, clock: '5:06' }, '5:06 - 2nd', 'nhl'))
+      .toBe('5:06 · P2')
+    expect(formatLiveStatus(undefined, '5:06 - 2nd', 'nhl')).toBe('5:06 · P2')
   })
 
   it('shows only the running minute for soccer and preserves break wording', () => {
     expect(formatLiveStatus({ type: 'half', number: 1, clock: "6'" }, 'First Half', 'mls')).toBe("6'")
+    expect(formatLiveStatus({ type: 'half', number: 1, clock: "45'+6'" }, 'HT', 'mls')).toBe("45+6'")
     expect(formatLiveStatus({ type: 'half', number: 2, clock: "73'" }, 'Second Half', 'lcup')).toBe("73'")
     expect(formatLiveStatus({ type: 'half', number: 2 }, 'Halftime', 'mls')).toBe('Halftime')
   })

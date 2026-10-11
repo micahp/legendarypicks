@@ -109,14 +109,15 @@ function nhlStatusFromDetail(detail?: string | null): string | null {
   const phase = match[2].toUpperCase().endsWith('OT')
     ? match[2].toUpperCase()
     : `P${parseInt(match[2], 10)}`
-  return `${phase} · ${match[1]}`
+  return `${match[1]} · ${phase}`
 }
 
 function soccerMinute(period?: LivePeriod, fallback?: string | null): string | null {
   const value = period?.clock?.trim() || fallback?.trim()
   if (!value || /^(halftime|half time|full[ -]?time|ft)$/i.test(value)) return null
-  const minute = value.match(/^(\d{1,3}(?:\+\d{1,2})?)(?:['’]|:\d{2})?$/)?.[1]
-  return minute ? `${minute}'` : null
+  // ESPN MLS clocks include stoppage time as `45'+6'`; normalize that to `45+6'`.
+  const match = value.match(/^(\d{1,3})(?:['’]?\+(\d{1,2}))?(?:['’]|:\d{2})?$/)
+  return match ? `${match[1]}${match[2] ? `+${match[2]}` : ''}'` : null
 }
 
 export function formatLiveStatus(period?: LivePeriod, fallback?: string | null, league?: string | null): string {
@@ -146,12 +147,13 @@ export function formatLiveStatus(period?: LivePeriod, fallback?: string | null, 
   if (leagueCode === 'nhl') {
     if (wording && /^intermission$/i.test(wording)) return wording
     if (!number) return nhlStatusFromDetail(wording) || 'LIVE'
+    let phase = `P${number}`
     if (number > 3) {
       const overtime = number - 3
-      const phase = overtime === 1 ? 'OT' : `${overtime}OT`
-      const clock = usableClock(period)
-      return clock ? `${phase} · ${clock}` : phase
+      phase = overtime === 1 ? 'OT' : `${overtime}OT`
     }
+    const clock = usableClock(period)
+    return clock ? `${clock} · ${phase}` : phase
   }
 
   // "LIVE · Q4 · 1:51" says the same thing twice: a quarter number IS the game
