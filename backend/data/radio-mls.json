@@ -1,7 +1,9 @@
 {
  "_meta": {
   "updated": "2026-08-27",
-  "note": "MLS radio map. MIA (Inter Miami) is the reference entry with the verified WUUB stream used by the booth pipeline. All other entries are skeleton placeholders \u2014 verified:false until a stream URL is confirmed. NEVER fabricate a callsign or URL. 2026-08-27 pass: 14 streams verified live (HTTP 200 audio probe); the rest carry confirmed callsigns but no open stream URL (private apps/audacy/tunein-only)."
+  "note": "MLS radio map. MIA (Inter Miami) is the reference entry with the verified WUUB stream used by the booth pipeline. All other entries are skeleton placeholders — verified:false until a stream URL is confirmed. NEVER fabricate a callsign or URL. 2026-08-27 pass: 14 streams verified live (HTTP 200 audio probe); the rest carry confirmed callsigns but no open stream URL (private apps/audacy/tunein-only). Official publisher-page sources are recorded separately under each team’s `sources`; the legacy top-level `verified` flag still means a raw stream was verified for the existing relay.",
+  "directory_updated": "2026-10-10",
+  "directory_note": "Verified official publisher pages are in radio-mls-directory.json. Top-level `verified` continues to describe raw stream verification for the legacy relay; linkout verification is separate."
  },
  "_wc": {
   "station": "iHeart FIFA World Cup 2026 (FOX Sports English)",
@@ -20,7 +22,7 @@
   "city": "Atlanta, GA",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "No public raw stream URL verified; official radio partner page is in radio-mls-directory.json."
  },
  "ATX": {
   "station": "Alt 97.5 (KASE-HD2, iHeartRadio)",
@@ -47,11 +49,11 @@
   "verified": true
  },
  "DAL": {
-  "station": "no English radio flagship (club streams only)",
+  "station": "FC Dallas Radio (club app; English)",
   "city": "Dallas, TX",
   "stream": null,
   "verified": false,
-  "note": "no English flagship radio found 2026-08-27"
+  "note": "Official club radio page verified; no public raw stream URL verified for the legacy player."
  },
  "DC": {
   "station": "104.7 WONK FM (WBIG-FM, iHeartRadio)",
@@ -60,32 +62,32 @@
   "verified": true
  },
  "HOU": {
-  "station": "Dynamo Radio (HDFC app/Mixlr)",
+  "station": "HDFC Soccer app (English home commentary)",
   "city": "Houston, TX",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official app commentary is home matches only; no public raw stream URL verified for the legacy player."
  },
  "LA": {
-  "station": "LA Galaxy Radio (club stream)",
+  "station": "LA Galaxy Radio (club page)",
   "city": "Los Angeles, CA",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official 2026 radio page verified; no public raw stream URL verified for the legacy player."
  },
  "LAFC": {
-  "station": "ESPN LA 710 (KSPN-AM) / KFWB 980",
+  "station": "ESPN LA 710 (English) / KFWB 980 (Spanish)",
   "city": "Los Angeles, CA",
   "stream": null,
   "verified": false,
-  "note": "flagship confirmed via lafc.com 2026-08-27; ESPN LA streams app-only"
+  "note": "Official club broadcast page verified; no public raw stream URL verified for the legacy player."
  },
  "MIN": {
-  "station": "MNUFC Radio (club app)",
+  "station": "MNUFC Radio on 1500 ESPN",
   "city": "Minneapolis, MN",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official club page confirms the match radio partner; no public raw stream URL verified for the legacy player."
  },
  "MTL": {
   "station": "TSN 690 (CKGM-AM)",
@@ -106,11 +108,11 @@
   "verified": true
  },
  "NYC": {
-  "station": "WFAN (audacy; NYCFC English radio)",
+  "station": "NYCFC Radio on TuneIn (English/Spanish)",
   "city": "New York, NY",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official club radio page links both language broadcasts; no public raw stream URL verified for the legacy player."
  },
  "ORL": {
   "station": "FM 96.9 The Game (WYGM-AM, iHeartRadio)",
@@ -131,18 +133,18 @@
   "verified": true
  },
  "RBNY": {
-  "station": "Red Bulls Radio (TuneIn club channel)",
+  "station": "Red Bulls Radio (club site/app)",
   "city": "Harrison, NJ",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official radio page verified; no public raw stream URL verified for the legacy player."
  },
  "RSL": {
-  "station": "ESPN 700 (KALL-AM)",
+  "station": "KSL Sports Zone (English) / Alpha Media (Spanish)",
   "city": "Salt Lake City, UT",
   "stream": null,
   "verified": false,
-  "note": "flagship per RSL broadcast listings; no open stream URL"
+  "note": "Official app page offers a live radio feed; no public raw stream URL verified for the legacy player."
  },
  "SD": {
   "station": "San Diego Sports 760 (KGB-AM, iHeartRadio)",
@@ -167,14 +169,14 @@
   "city": "Kansas City, MO",
   "stream": null,
   "verified": false,
-  "note": "flagship per sportingkc.com 2026-08-27; no open stream URL"
+  "note": "Official club radio embed verified; no public raw stream URL verified for the legacy player."
  },
  "STL": {
-  "station": "Y98.1 KYKY-FM (Audacy)",
+  "station": "Y98.1 KYKY-FM (English) / KXOK 102.9 (Spanish)",
   "city": "St. Louis, MO",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official club page confirms both radio partners; no public raw stream URL verified for the legacy player."
  },
  "TOR": {
   "station": "TSN 1050 (CHUM-AM)",
@@ -183,11 +185,11 @@
   "verified": true
  },
  "VAN": {
-  "station": "AM730 CKST (Corus)",
+  "station": "730 CKNW (English) / Connect FM 91.5 (Punjabi)",
   "city": "Vancouver, BC",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Official 2026 club page links English and Punjabi radio routes; no public raw stream URL verified for the legacy player."
  },
  "CHI": {
   "station": "WLS 890 AM (Cumulus)",
@@ -202,10 +204,10 @@
   "verified": true
  },
  "NYR": {
-  "station": "Red Bulls Radio (TuneIn club channel)",
+  "station": "Red Bulls Radio (club site/app)",
   "city": "Harrison, NJ",
   "stream": null,
   "verified": false,
-  "note": "station confirmed via club/broadcast listings 2026-08-27; no open stream URL found"
+  "note": "Legacy alias for RBNY; use the same club source. No separate raw stream is recorded."
  }
 }

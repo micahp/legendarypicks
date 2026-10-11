@@ -4,6 +4,7 @@ import type { LivePeriod } from '../../lib/liveGameStatus'
 import { audioForGame } from '../../lib/gameAudio'
 import GameRadioButton from './GameRadioButton'
 import { useRadioBlackout } from '../../lib/useRadioBlackouts'
+import RadioSources from '../RadioSources'
 
 interface TeamInfo {
   teamId: string
@@ -250,6 +251,9 @@ export default function GameCard(g: GameProps) {
           {radio && <GameRadioButton src={radio.stream} team={radio.team} station={radio.display} live={g.status === 'LIVE'} blackout={blackout} />}
           {g.isPreseason && <div className="text-xs text-zinc-500">Preseason</div>}
         </div>
+      )}
+      {g.league === 'MLS' && (
+        <RadioSources home={g.homeTeam?.teamId || g.homeTeam?.name} away={g.awayTeam?.teamId || g.awayTeam?.name} />
       )}
     </div>
   )

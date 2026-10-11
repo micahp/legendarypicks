@@ -10,6 +10,8 @@
  * lcup path ("Columbus Crew"). A team not in the map renders no player — an
  * unverified stream is never offered.
  */
+import radioDirectoryJson from '../data/radio-mls-directory.json'
+
 export const TEAM_RADIO: Record<string, string> = {
   // verified 2026-08-27 (HTTP 200 audio probe per entry)
   ATX: '/api/stream/atx',
@@ -101,4 +103,60 @@ export function radioForMatchup(
     }
   }
   return null
+}
+
+export interface OfficialRadioSource {
+  kind: 'station_page' | 'team_page' | 'aggregator_page' | 'official_embed'
+  label: string
+  url: string
+  language: string
+  callsign: string | null
+  verified: boolean
+  verified_at: string
+  verified_by: string
+  blackout_risk: 'none' | 'geofenced' | 'paid_out_of_market' | 'unknown'
+  coverage?: string
+}
+
+interface MlsRadioTeam {
+  name: string
+  aliases?: string[]
+  sources: OfficialRadioSource[]
+}
+
+const MLS_RADIO_DIRECTORY = radioDirectoryJson as unknown as Record<string, MlsRadioTeam>
+
+function mlsRadioCode(team?: string | null): string | null {
+  const value = team?.trim()
+  if (!value) return null
+
+  const upper = value.toUpperCase()
+  if (MLS_RADIO_DIRECTORY[upper]) return upper
+
+  const lower = value.toLocaleLowerCase('en-US')
+  for (const [code, entry] of Object.entries(MLS_RADIO_DIRECTORY)) {
+    if (entry.name.toLocaleLowerCase('en-US') === lower
+      || entry.aliases?.some(alias => alias.toLocaleLowerCase('en-US') === lower)) {
+      return code
+    }
+  }
+  return null
+}
+
+/** Verified publisher pages for clubs without a verified raw stream. */
+export function radioDirectoryForMatchup(home?: string | null, away?: string | null) {
+  const matches: Array<{ code: string; team: string; source: OfficialRadioSource }> = []
+  const seen = new Set<string>()
+
+  for (const side of [home, away]) {
+    const code = mlsRadioCode(side)
+    if (!code || seen.has(code)) continue
+    seen.add(code)
+    const entry = MLS_RADIO_DIRECTORY[code]
+    for (const source of entry.sources) {
+      if (source.verified) matches.push({ code, team: entry.name, source })
+    }
+  }
+
+  return matches
 }
