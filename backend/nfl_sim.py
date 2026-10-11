@@ -10,6 +10,12 @@ Hot updates (spec 5.1): after each simulated game the two teams' running adjustm
 k * (actual margin - expected margin): the home team +k*r, the away team -k*r. k = 0 is a cold
 simulation (no updates). Adjustments apply to all later games in the same run only.
 
+Scores are a placeholder: each simulated game splits its margin around a fixed total of 40
+(home 20 + m/2, away 20 - m/2). Playoff odds barely depend on the split (checked: a random total
+moves no team's playoff odds by more than 3.5 points at n=2000, inside Monte Carlo noise). The
+points totals of simulated seasons are not a model and must not be reported as one. Replace
+the split with the score distribution only once a model passes its gate.
+
 Seeding uses nfl_seeding (the same engine validated in A4). Coin flips inside a simulated season
 are counted and returned: a run with flips is reported with the number, not hidden.
 
