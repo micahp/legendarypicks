@@ -182,17 +182,36 @@ def epa_units(con, rows):
     final fit shrunk (none for 2010). Column: the raw EPA-points margin
     predictor(home, away) - predictor(away, home) from nfl_epa_backtest.walk_forward. Its scale
     and home term are left to the stack, so v2's own a, b, h calibration is not used.
+
+    AMENDMENT (after the first run crashed, before any result was seen): a team with no plays
+    yet in the season (2017 TB and MIA, whose week 1 game was moved) has no pace or pass rate,
+    and v2's predictor fails. For such a team, pace and pass rate come from its prior (season
+    S-1 final fit); with no prior, from the mean over teams that have them. Ratings are untouched.
     """
     import nfl_epa_backtest as eb
+    import nfl_epa_model as em
     cols = {}
     prev = None
     for s in SEASONS:
         plays = eb.season_plays(con, s)
         teams = eb.teams_of(con, s)
         prior = eb.final_prior(prev[0], prev[1], 12.0, 450.0) if prev else None
-        for wk, gid, h, a, neu, ph, pa, *_ in eb.walk_forward(plays, eb.sched(con, s), teams,
-                                                               prior, 12.0, 450.0):
-            cols[gid] = [ph - pa]
+        g = eb.sched(con, s)
+        for w in sorted({x[0] for x in g}):
+            past = [p for p in plays if p[0] < w]
+            if not past:
+                continue
+            r = em.fit(past, teams, prior=prior, half_life=12.0, lam=450.0)
+            have = [t for t in teams if r.plays_pg[t] is not None]
+            for t in teams:
+                if r.plays_pg[t] is None:
+                    if prior is not None and prior.plays_pg.get(t) is not None:
+                        r.plays_pg[t], r.pass_rate[t] = prior.plays_pg[t], prior.pass_rate[t]
+                    else:
+                        r.plays_pg[t] = sum(r.plays_pg[u] for u in have) / len(have)
+                        r.pass_rate[t] = sum(r.pass_rate[u] for u in have) / len(have)
+            for x in (x for x in g if x[0] == w):
+                cols[x[1]] = [em.predictor(r, x[2], x[3]) - em.predictor(r, x[3], x[2])]
         prev = (plays, teams)
     return _complete(rows, cols), None
 
