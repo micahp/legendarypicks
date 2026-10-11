@@ -140,7 +140,9 @@ give people a reason to return and a way to judge the system.
 3. Sam board recorder (approved 2026-10-11): projected scores and locked line per game, with capture time.
 4. swcrockett weekly import: their per-game 2026 predictions beside ours.
 5. History-window ablation on fixed test games.
-6. Then [Spec A](SPEC-nfl-team-ratings-playoff-odds-2026-10-09.md) and
+6. Model inputs research: untested levers and matchup stats
+   ([research agenda](RESEARCH-nfl-model-inputs-2026-10-11.md)).
+7. Then [Spec A](SPEC-nfl-team-ratings-playoff-odds-2026-10-09.md) and
    [Spec B](SPEC-player-projections-availability-2026-10-09.md) continue, each change graded against the
    ladder before it ships. The scores-only v1 is the interim rung, not the game-forecast product.
 
