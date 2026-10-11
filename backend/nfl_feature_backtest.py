@@ -304,6 +304,17 @@ def venue_conditions(con, rows):
     return _complete(rows, cols), None
 
 
+@feature
+def kept_combined(con, rows):
+    """PRE-REGISTERED (after the five single-feature runs, before this run): the two features
+    that met the keep rule, market_prior and epa_units, as two stack columns together. Same
+    rules; it answers how much of the market gap the kept features close jointly.
+    """
+    a, _ = market_prior(con, rows)
+    b, _ = epa_units(con, rows)
+    return {k: a[k] + b[k] for k in a}, None
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
