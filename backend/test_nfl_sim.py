@@ -151,5 +151,49 @@ class BacktestGrading(unittest.TestCase):
             sb.brier_for({}, set())
 
 
+def planted_tie_inputs(season):
+    """Every NFC club goes 4-4 against the AFC clubs (NFC i beats AFC j when i+j is even), and
+    there are no remaining games. All eight NFC records are equal, so every division and
+    wild-card step is a tie and only the coin decides seventh place."""
+    nfc = sorted(c for c in TMAP if CONF_OF[c] == "NFC")
+    afc = sorted(c for c in TMAP if CONF_OF[c] == "AFC")
+    played = []
+    wk = 0
+    for i, n in enumerate(nfc):
+        for j, a in enumerate(afc):
+            wk += 1
+            if (i + j) % 2 == 0:
+                played.append((wk, n, a, 24.0, 17.0))
+            else:
+                played.append((wk, a, n, 17.0, 24.0))
+    return {"season": season, "through_week": 0, "fit": None, "played": played,
+            "remaining": [], "tmap": TMAP, "sigma": 13.295}
+
+
+class SeasonSim(unittest.TestCase):
+    def test_planted_three_way_tie_seventh_seed_varies_with_rng(self):
+        # Seeds 1-6 are decided by the same steps every time; seventh place is the coin. Run the
+        # same tied season under different rng seeds: seventh place must change, and every run
+        # must have recorded its coin flips.
+        import random
+        inp = planted_tie_inputs(2026)
+        seventh, flips = set(), 0
+        for s in range(30):
+            seeds, _, f = ns.one_run(inp, random.Random(s))
+            flips += f
+            seventh.add(dict((seed, code) for seed, code in seeds["NFC"])[7])
+        self.assertGreater(len(seventh), 1)
+        self.assertGreater(flips, 0)
+
+    def test_six_seed_season_passes_sanity_with_six_seeds(self):
+        inp = league()
+        inp["season"] = 2019
+        out = ns.run(inp, 300, k=0.0, seed=7)
+        self.assertTrue(ns.sanity(out, CONF_OF, n_seeds=6))
+        # With the seven-seed assumption the same output must fail: the check follows the era.
+        with self.assertRaises(AssertionError):
+            ns.sanity(out, CONF_OF)
+
+
 if __name__ == "__main__":
     unittest.main()
