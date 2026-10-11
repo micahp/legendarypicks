@@ -436,10 +436,11 @@ export default function ScoresPage() {
                           {sub}{timeLabel}
                         </h3>
                       )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
+                      <div className="relative grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
                         {sortGames(sg).map((g) => (
                           <GameCard key={g.gameId} {...g} />
                         ))}
+                        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px bg-zinc-800 md:block" />
                       </div>
                     </div>
                   )})}
