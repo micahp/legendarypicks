@@ -112,6 +112,15 @@ function nhlStatusFromDetail(detail?: string | null): string | null {
   return `${match[1]} · ${phase}`
 }
 
+function nbaStatusFromDetail(detail?: string | null): string | null {
+  const match = detail?.trim().match(/^(\d{1,2}:\d{2})\s*-\s*(\d+(?:st|nd|rd|th)|\d*OT)$/i)
+  if (!match) return null
+  const phase = /OT$/i.test(match[2])
+    ? match[2].toUpperCase()
+    : `Q${parseInt(match[2], 10)}`
+  return `${match[1]} · ${phase}`
+}
+
 function soccerMinute(period?: LivePeriod, fallback?: string | null): string | null {
   const value = period?.clock?.trim() || fallback?.trim()
   if (!value || /^(halftime|half time|full[ -]?time|ft)$/i.test(value)) return null
@@ -152,6 +161,14 @@ export function formatLiveStatus(period?: LivePeriod, fallback?: string | null, 
       const overtime = number - 3
       phase = overtime === 1 ? 'OT' : `${overtime}OT`
     }
+    const clock = usableClock(period)
+    return clock ? `${clock} · ${phase}` : phase
+  }
+
+  if (leagueCode === 'nba') {
+    if (wording && BREAK_WORDING.test(wording)) return wording
+    if (!number) return nbaStatusFromDetail(wording) || 'LIVE'
+    const phase = number <= 4 ? `Q${number}` : number === 5 ? 'OT' : `${number - 4}OT`
     const clock = usableClock(period)
     return clock ? `${clock} · ${phase}` : phase
   }

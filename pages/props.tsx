@@ -378,16 +378,16 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                       {games.length} game{games.length === 1 ? '' : 's'} · {propCount} props
                     </span>
                   </div>
-                  <div className="mt-1 grid grid-cols-1">
+                  <div className="mt-1 grid grid-cols-1 gap-x-10 md:grid-cols-2 md:[&>*:nth-child(2)]:border-t-0">
                     {games.map(game => {
                       const expanded = expandedGame === game.game_id
                       return (
-                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="-mx-5 min-w-0 border-t border-zinc-800 first:border-t-0">
+                        <article key={game.game_id} data-slate-game data-slate-game-id={game.game_id} className="-mx-5 min-w-0 border-t border-zinc-800 first:border-t-0 md:mx-0">
                           <button
                             type="button"
                             onClick={() => openGame(game.game_id)}
                             aria-expanded={expanded}
-                            className="flex w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-3 text-left transition-colors hover:bg-zinc-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/70"
+                            className="flex w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-3 text-left transition-colors hover:bg-zinc-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/70 md:px-3"
                           >
                             <span className="min-w-0">
                               <span className="block break-words text-sm font-semibold">
@@ -406,13 +406,13 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                           {expanded && (() => {
                             const gp = gameProps[game.game_id]
                             if (!gp || gp.loading) {
-                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3"><Skeleton lines={3} /></div>
+                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3 md:px-3"><Skeleton lines={3} /></div>
                             }
                             if (!gp.players.length) {
-                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3 text-xs text-zinc-500">No props for this game yet.</div>
+                              return <div data-slate-props className="border-t border-zinc-800 px-5 py-3 text-xs text-zinc-500 md:px-3">No props for this game yet.</div>
                             }
                             return (
-                              <div data-slate-props className="lp-scroll max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-5 py-3">
+                              <div data-slate-props className="lp-scroll max-h-96 space-y-4 overflow-y-auto border-t border-zinc-800 px-5 py-3 md:px-3">
                                 {gp.players.map(player => {
                                   const hasOpenProp = !!player.id && !!openPropKey?.startsWith(`${player.id}-`)
                                   const chartContent = hasOpenProp ? (
