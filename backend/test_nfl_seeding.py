@@ -151,5 +151,162 @@ class Structure(unittest.TestCase):
         self.assertEqual(sorted(x.code for x in ranked), sorted(x.code for x in nfc))
 
 
+class Rules(unittest.TestCase):
+    """One test per rule. Each docstring names the rule it plants; removing that rule from
+    nfl_seeding.py makes the test fail."""
+
+    def test_wild_card_division_reduction_before_sweep(self):
+        """Plants: the division reduction in step 1 of the wild-card tie. E2 and E3 are both East
+        and tied 9-8. E2 beat E3 twice, so E2 is the East club ranked higher. E3 has the best
+        conference record of the three tied clubs, and nobody sweeps (E3 beats N2 but loses to
+        E2, so E2 does not sweep either). Only E2 enters step 1, and N2 beats E2 head-to-head.
+        Without the reduction the three clubs reach conference record and E3 takes seed 5."""
+        b = Builder()
+        b.record("N1", 12, 5)
+        b.record("E1", 11, 6)
+        b.record("S1", 10, 5)
+        b.record("W1", 7, 8)
+        b.record("E2", 7, 5)
+        b.record("E3", 6, 6)
+        b.record("N2", 8, 7)
+        b.record("S2", 8, 9)
+        b.record("W2", 6, 11)
+        b.game("E2", "E3")
+        b.game("E2", "E3")
+        b.game("E3", "N2")
+        b.game("N2", "E2")
+        b.game("E3", "S1")
+        b.game("E3", "S1")
+        b.game("W1", "E2")
+        b.game("W1", "E2")
+        t = b.teams()
+        self.assertEqual(t["E2"].record(), (9, 8, 0))
+        self.assertEqual(t["E3"].record(), (9, 8, 0))
+        self.assertEqual(t["N2"].record(), (9, 8, 0))
+        self.assertEqual(st.conference_record(t["E3"], t), (3, 2, 0))
+        self.assertEqual(st.conference_record(t["E2"], t), (2, 3, 0))
+        got = seeds(b)
+        self.assertEqual(got[4], (5, "N2"))
+        self.assertEqual(got[5], (6, "E2"))
+        self.assertEqual(got[6], (7, "E3"))
+
+    def test_head_to_head_sweep_and_its_absence(self):
+        """Plants: the sweep step. E1 beats N2 and S2, so it wins the three-club tie with step 1
+        (decision named 'head-to-head sweep'). In a three-club cycle nobody sweeps, the sweep
+        step is passed over, and it is not the step that decides."""
+        b = Builder()
+        b.game("E1", "N2")
+        b.game("E1", "S2")
+        b.game("N2", "S2")
+        t = b.teams()
+        group = [t["E1"], t["N2"], t["S2"]]
+        sd.DECISIONS.clear()
+        self.assertEqual(sd.winner(group, t, "wildcard").code, "E1")
+        self.assertEqual(sd.DECISIONS[-1][1:], ("head-to-head sweep", "E1"))
+
+        c = Builder()
+        c.game("E1", "N2")
+        c.game("N2", "S2")
+        c.game("S2", "E1")
+        t = c.teams()
+        group = [t["E1"], t["N2"], t["S2"]]
+        self.assertIsNone(sd._sweep(group, t))
+        sd.DECISIONS.clear()
+        sd.winner(group, t, "wildcard")
+        self.assertNotEqual(sd.DECISIONS[-1][1], "head-to-head sweep")
+
+    def test_positions_share_a_rank_on_ties(self):
+        """Plants: competition ranking. Two clubs tied for first both get 1, and the next club
+        gets 3, not 2. Lowest-is-best (points allowed) works the same way."""
+        self.assertEqual(sd._positions({"A": 30, "B": 30, "C": 20}, True),
+                         {"A": 1, "B": 1, "C": 3})
+        self.assertEqual(sd._positions({"A": 10, "B": 10, "C": 20}, False),
+                         {"A": 1, "B": 1, "C": 3})
+
+    def test_restart_after_elimination_uses_two_club_head_to_head(self):
+        """Plants: the restart. E1, E2 and E3 are tied 1-1 among themselves, so their
+        head-to-head does not decide. Division record eliminates E3 and leaves E1 and E2 tied.
+        The two that remain restart at two-club step 1, head-to-head, which gives E1 the title
+        even though E2 has the better conference record. Dropping the restart would let
+        conference record decide and pick E2."""
+        b = Builder()
+        b.game("E1", "E2")
+        b.game("E2", "E3")
+        b.game("E3", "E1")
+        b.game("E1", "E4")
+        b.game("E1", "E4")
+        b.game("E2", "E4")
+        b.game("E2", "E4")
+        b.game("E4", "E3")
+        b.game("E4", "E3")
+        b.game("E2", "N1")
+        b.game("E2", "N1")
+        b.game("N1", "E1")
+        b.game("N1", "E1")
+        t = st.build(dict(MAP, E4=("NFC", "NFC East")), b.games)
+        self.assertEqual(st.division_record(t["E1"], t), (3, 1, 0))
+        self.assertEqual(st.division_record(t["E2"], t), (3, 1, 0))
+        self.assertEqual(st.division_record(t["E3"], t), (1, 3, 0))
+        self.assertEqual(st.conference_record(t["E1"], t), (3, 3, 0))
+        self.assertEqual(st.conference_record(t["E2"], t), (5, 1, 0))
+        sd.DECISIONS.clear()
+        w = sd.winner([t["E1"], t["E2"], t["E3"]], t, "division")
+        self.assertEqual(w.code, "E1")
+        self.assertEqual(sd.DECISIONS[-1], (("E1", "E2"), "head-to-head", "E1"))
+
+    def test_division_winners_tied_on_record_use_wild_card_steps(self):
+        """Plants: division winners on the wild-card procedure. N1 and E1 are both 10-7 and
+        never played each other. N1 has the better division record (2-0 against N2), which
+        the division procedure would use first. The wild-card procedure goes to conference
+        record first, where E1 is 4-2 and N1 is 2-3, so E1 is first."""
+        b = Builder()
+        b.record("N1", 8, 4)
+        b.record("E1", 6, 5)
+        b.game("N1", "N2")
+        b.game("N1", "N2")
+        b.game("W2", "N1")
+        b.game("W2", "N1")
+        b.game("W2", "N1")
+        b.game("E2", "E1")
+        b.game("E2", "E1")
+        b.game("E1", "S1")
+        b.game("E1", "S1")
+        b.game("E1", "W1")
+        b.game("E1", "W1")
+        t = b.teams()
+        self.assertEqual(t["N1"].record(), (10, 7, 0))
+        self.assertEqual(t["E1"].record(), (10, 7, 0))
+        self.assertEqual(st.division_record(t["N1"], t), (2, 0, 0))
+        self.assertEqual(st.conference_record(t["N1"], t), (2, 3, 0))
+        self.assertEqual(st.conference_record(t["E1"], t), (4, 2, 0))
+        sd.DECISIONS.clear()
+        got = sd.order([t["N1"], t["E1"]], t, "wildcard")
+        self.assertEqual(got[0].code, "E1")
+        self.assertEqual(sd.DECISIONS[-1][1], "conference record")
+
+    def test_six_seed_era(self):
+        """Plants: the seed count. Before 2020 there are six seeds (two byes), since 2020
+        seven. Ignoring n_seeds would return seven clubs for 2019."""
+        self.assertEqual(sd.n_seeds_for(2019), 6)
+        self.assertEqual(sd.n_seeds_for(2020), 7)
+        six = sd.seeds_for_conference(base_teams(), "NFC", n_seeds=6)
+        seven = sd.seeds_for_conference(base_teams(), "NFC")
+        self.assertEqual(len(six), 6)
+        self.assertEqual(six, seven[:6])
+
+
+def base_teams():
+    b = Builder()
+    b.record("E1", 10, 7)
+    b.record("E2", 9, 8)
+    b.record("N1", 11, 6)
+    b.record("N2", 8, 9)
+    b.record("S1", 9, 8)
+    b.record("S2", 8, 9)
+    b.record("W1", 8, 9)
+    b.record("W2", 6, 11)
+    return b.teams()
+
+
 if __name__ == "__main__":
     unittest.main()
