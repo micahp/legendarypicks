@@ -279,6 +279,31 @@ def special_teams(con, rows):
     return _complete(rows, cols), None
 
 
+@feature
+def venue_conditions(con, rows):
+    """PRE-REGISTERED (before its first run): rest and wind.
+
+    Columns: (1) home_rest - away_rest, clipped to [-7, 7]; (2) v1 projected margin times a
+    high-wind flag, flag = 1 when roof is 'outdoors' or 'open' and recorded wind >= 15 mph.
+    Domes and closed roofs have no wind by design (flag 0). An outdoor game with no recorded
+    wind (2021: 11, 2022: 91, 2023: 41 REG games, nflverse's own gaps) gets flag 0: no wind
+    value is invented, the term is simply absent. Both are published before kickoff (rest from
+    the schedule; wind is the game-time reading, a small look-ahead the forecast would replace
+    with a forecast wind).
+    """
+    v1 = {r["game_id"]: r["proj_margin"] for r in rows}
+    cols = {}
+    for s in SEASONS:
+        for gid, wk, h, a, loc, sp, hr, ar, roof, wind in _sched(con, s):
+            if gid not in v1:
+                continue
+            rest = 0.0 if hr is None or ar is None else max(-7.0, min(7.0, float(hr - ar)))
+            windy = 1.0 if (roof in ("outdoors", "open") and wind is not None
+                            and wind >= 15) else 0.0
+            cols[gid] = [rest, v1[gid] * windy]
+    return _complete(rows, cols), None
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
