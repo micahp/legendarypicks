@@ -100,7 +100,9 @@ def one_run(inp, rng, k=0.0):
         games.append((wk, h, a, 20.0 + m / 2.0, 20.0 - m / 2.0))
     teams = st.build(inp["tmap"], games)
     sd.COIN_FLAGS.clear()
-    seeds = {conf: sd.seeds_for_conference(teams, conf) for conf in ("AFC", "NFC")}
+    n_seeds = sd.n_seeds_for(inp["season"])
+    seeds = {conf: sd.seeds_for_conference(teams, conf, n_seeds=n_seeds, rng=rng)
+             for conf in ("AFC", "NFC")}
     flips = len(sd.COIN_FLAGS)
     wins = {code: t.wins for code, t in teams.items()}
     return seeds, wins, flips
@@ -146,17 +148,19 @@ def aggregate(counts, wins_all, n, flips):
     return out
 
 
-def sanity(out, conf_of):
+def sanity(out, conf_of, n_seeds=7):
     """Assertions from spec 6.3. Raises AssertionError naming the failing quantity.
 
-    sum of p_playoffs over all teams = 14 (7 per conference); for each conference and each seed
-    k, p_seed_k sums to 1 over that conference's teams.
+    sum of p_playoffs over all teams = 2 * n_seeds (n_seeds per conference); for each conference
+    and each seed k, p_seed_k sums to 1 over that conference's teams. n_seeds: 7 since 2020, 6
+    before (nfl_seeding.n_seeds_for).
     """
     total = sum(t["p_playoffs"] for t in out["teams"].values())
-    assert abs(total - 14.0) <= 0.01, "sum of p_playoffs is %.4f, expected 14" % total
+    assert abs(total - 2.0 * n_seeds) <= 0.01, \
+        "sum of p_playoffs is %.4f, expected %d" % (total, 2 * n_seeds)
     for conf in ("AFC", "NFC"):
         members = [c for c in out["teams"] if conf_of[c] == conf]
-        for k in range(1, 8):
+        for k in range(1, n_seeds + 1):
             s = sum(out["teams"][c]["p_seed_%d" % k] for c in members)
             assert abs(s - 1.0) <= 0.01, "%s p_seed_%d sums to %.4f, expected 1" % (conf, k, s)
     return True
