@@ -46,7 +46,8 @@ STATEMENTS = [
         games INTEGER,
         as_of TEXT NOT NULL)""",
     """CREATE INDEX IF NOT EXISTS idx_team_ratings_run ON team_ratings(run_id)""",
-    # Game projections. A game has at most one locked row, enforced by the partial index.
+    # Game projections. A game has at most one locked row PER MODEL VERSION (partial unique index
+    # created in migrate(), after the model_version column is guaranteed to exist).
     """CREATE TABLE IF NOT EXISTS game_projections (
         run_id TEXT NOT NULL,
         league TEXT NOT NULL,
@@ -64,9 +65,8 @@ STATEMENTS = [
         market_total REAL,
         market_source TEXT,
         locked INTEGER NOT NULL,
-        locked_at TEXT NOT NULL)""",
-    """CREATE UNIQUE INDEX IF NOT EXISTS uq_game_projections_locked
-        ON game_projections(league, game_id, locked) WHERE locked = 1""",
+        locked_at TEXT NOT NULL,
+        model_version TEXT)""",
     """CREATE INDEX IF NOT EXISTS idx_game_projections_week
         ON game_projections(league, season, week)""",
     # Playoff odds per team per run.
@@ -108,7 +108,8 @@ EXPECTED_COLUMNS = {
                      "games", "as_of"],
     "game_projections": ["run_id", "league", "game_id", "season", "week", "home", "away",
                          "proj_home", "proj_away", "proj_margin", "proj_total", "p_home_win",
-                         "market_spread", "market_total", "market_source", "locked", "locked_at"],
+                         "market_spread", "market_total", "market_source", "locked", "locked_at",
+                         "model_version"],
     "playoff_odds": ["run_id", "league", "season", "week", "team", "p_playoffs", "p_division",
                      "p_bye"] + ["p_seed_%d" % k for k in SEEDS] +
                     ["wins_mean", "wins_p10", "wins_p90", "d_playoffs", "as_of"],
@@ -121,6 +122,17 @@ EXPECTED_COLUMNS = {
 def migrate(con):
     for stmt in STATEMENTS:
         con.execute(stmt)
+    # model_version was added after the first locks were written (2026-10-11): two model versions
+    # must be able to lock the same game. Older tables get the column and a backfill from the
+    # run that wrote each row; the one-lock-per-game index is replaced by one per game and version.
+    if "model_version" not in [r[1] for r in con.execute("PRAGMA table_info(game_projections)")]:
+        con.execute("ALTER TABLE game_projections ADD COLUMN model_version TEXT")
+    con.execute("UPDATE game_projections SET model_version = "
+                "(SELECT model_version FROM model_runs WHERE model_runs.run_id = game_projections.run_id) "
+                "WHERE model_version IS NULL")
+    con.execute("DROP INDEX IF EXISTS uq_game_projections_locked")
+    con.execute("""CREATE UNIQUE INDEX IF NOT EXISTS uq_game_projections_locked_version
+        ON game_projections(league, game_id, model_version) WHERE locked = 1""")
     con.commit()
 
 
@@ -160,10 +172,10 @@ def adopt_legacy_locks(con):
         con.execute(
             "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
             " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
-            " market_total, market_source, locked, locked_at) "
-            "VALUES (?,?,?,?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?)",
+            " market_total, market_source, locked, locked_at, model_version) "
+            "VALUES (?,?,?,?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?,?)",
             (run_ids[key], "nfl", gid, season, week, home, away, pm, pt, pw, mh, mt, "nflverse",
-             locked, as_of))
+             locked, as_of, mv))
         copied += 1
     con.execute("ALTER TABLE nfl_projections RENAME TO %s" % SUPERSEDED)
     con.commit()

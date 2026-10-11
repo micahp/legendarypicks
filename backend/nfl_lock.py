@@ -1,8 +1,9 @@
 """nfl_lock.py -- write each game's projection once, then never overwrite it (SPEC A, 4.3 and 7).
 
 Writes to `game_projections` (created by migrate_nfl_model_tables.py). Every row belongs to a run
-in `model_runs`. A game has at most one row with locked = 1, enforced by the partial unique index.
-That row is the first projection written for the game and is the only one grading uses. Later
+in `model_runs`. A game has at most one row with locked = 1 per model_version, enforced by the partial unique
+index. That row is the first projection a version wrote for the game and is the only one grading
+uses for that version. Later
 runs append rows with locked = 0 for audit.
 
 Market line at lock time: `market_spread` is the nflverse spread_line, read as the home team's
@@ -47,12 +48,13 @@ def finish_run(con, run_id, status, error=None):
     con.commit()
 
 
-def locked_projection(con, game_id):
-    """The one projection grading uses, or None if the game was never locked."""
+def locked_projection(con, game_id, model_version):
+    """The one projection grading uses for this version, or None if it never locked the game."""
     row = con.execute(
         "SELECT run_id, proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
         "       market_total, market_source, locked_at FROM game_projections "
-        "WHERE league = ? AND game_id = ? AND locked = 1", (LEAGUE, game_id)).fetchone()
+        "WHERE league = ? AND game_id = ? AND locked = 1 AND model_version = ?",
+        (LEAGUE, game_id, model_version)).fetchone()
     if row is None:
         return None
     keys = ("run_id", "proj_home", "proj_away", "proj_margin", "proj_total", "p_home_win",
@@ -60,18 +62,22 @@ def locked_projection(con, game_id):
     return dict(zip(keys, row))
 
 
-def lock_week(con, run_id, season, week, fit, sigma, as_of=None, skip_scored=False):
+def lock_week(con, run_id, season, week, fit, sigma, as_of=None, skip_scored=False,
+              skip_ids=()):
     """Project every REG game in (season, week) under `run_id`.
 
     Default: refuse the whole week if any game without a lock already has a result.
     skip_scored=True: lock only the unplayed games; played games without a lock are listed in
-    `skipped` and never written. Returns {"new_locks", "refreshes", "skipped"}.
+    `skipped` and never written. skip_ids: games listed there (already kicked off) are skipped too,
+    scored or not. Returns {"new_locks", "refreshes", "skipped"}.
     """
     if sigma <= 0:
         raise ValueError("sigma must be > 0")
     run = con.execute("SELECT 1 FROM model_runs WHERE run_id = ?", (run_id,)).fetchone()
     if run is None:
         raise ValueError("run %s is not in model_runs; call start_run first" % run_id)
+    model_version = con.execute("SELECT model_version FROM model_runs WHERE run_id = ?",
+                                (run_id,)).fetchone()[0]
     as_of = as_of or dt.datetime.now(dt.timezone.utc).isoformat()
     games = con.execute(
         "SELECT game_id, home_team, away_team, location, home_score, away_score, spread_line, "
@@ -87,9 +93,12 @@ def lock_week(con, run_id, season, week, fit, sigma, as_of=None, skip_scored=Fal
         neutral = (loc or "").strip().lower() == "neutral"
         if home not in fit.o or away not in fit.o:
             raise KeyError("fit has no rating for %s or %s" % (home, away))
+        if gid in skip_ids:
+            skipped.append(gid)
+            continue
         already = con.execute(
-            "SELECT 1 FROM game_projections WHERE league = ? AND game_id = ? AND locked = 1",
-            (LEAGUE, gid)).fetchone()
+            "SELECT 1 FROM game_projections WHERE league = ? AND game_id = ? AND locked = 1 "
+            "AND model_version = ?", (LEAGUE, gid, model_version)).fetchone()
         if already is None and hs is not None and as_ is not None:
             if not skip_scored:
                 raise ValueError("refusing to lock %s after its result (%s-%s)" % (gid, hs, as_))
@@ -97,7 +106,7 @@ def lock_week(con, run_id, season, week, fit, sigma, as_of=None, skip_scored=Fal
             continue
         ph, pa = nr.expected_points(fit, home, away, neutral)
         plan.append(((run_id, LEAGUE, gid, season, week, home, away, ph, pa, ph - pa, ph + pa,
-                      nr.win_probability(ph - pa, sigma), spread, total, MARKET_SOURCE),
+                      nr.win_probability(ph - pa, sigma), spread, total, MARKET_SOURCE, model_version),
                      already is None))
 
     # Pass 2: write.
@@ -106,8 +115,8 @@ def lock_week(con, run_id, season, week, fit, sigma, as_of=None, skip_scored=Fal
         con.execute(
             "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
             " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
-            " market_total, market_source, locked, locked_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " market_total, market_source, model_version, locked, locked_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             row + (1 if first else 0, as_of))
         if first:
             new_locks += 1

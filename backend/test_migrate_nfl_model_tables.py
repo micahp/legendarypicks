@@ -43,18 +43,21 @@ class Migration(unittest.TestCase):
     def test_one_locked_row_per_game(self):
         mg.migrate(self.con)
         row = ("r1", "nfl", "g1", 2026, 5, "AAA", "BBB", 20.0, 17.0, 3.0, 37.0, 0.6, 3.0, 44.0,
-               "nflverse", 1, "t0")
-        self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
+               "nflverse", 1, "t0", "v1")
+        self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
         with self.assertRaises(sqlite3.IntegrityError):
-            self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                             row[:15] + (1, "t1"))
+            self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                             row[:15] + (1, "t1", "v1"))
+        # a different model version may lock the same game
+        self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                         row[:15] + (1, "t1", "v2"))
 
     def test_unlocked_rows_may_repeat(self):
         mg.migrate(self.con)
         row = ("r1", "nfl", "g1", 2026, 5, "AAA", "BBB", None, None, 3.0, 37.0, 0.6, None, None,
-               None, 0, "t0")
+               None, 0, "t0", "v1")
         for _ in range(3):
-            self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
+            self.con.execute("INSERT INTO game_projections VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
         n, = self.con.execute("SELECT COUNT(*) FROM game_projections").fetchone()
         self.assertEqual(n, 3)
 

@@ -71,6 +71,8 @@ def main(argv=None) -> int:
     ap.add_argument("--season", type=int, required=True)
     ap.add_argument("--week", type=int, required=True)
     ap.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
+    ap.add_argument("--skip", action="append", default=[], metavar="GAME_ID",
+                    help="game already kicked off; never locked (repeatable)")
     ap.add_argument("--apply", action="store_true", help="write the locks (default: dry run)")
     args = ap.parse_args(argv)
     if args.sigma <= 0:
@@ -100,7 +102,7 @@ def main(argv=None) -> int:
         nfl_lock.start_run(con, run_id, args.season, args.week, version, params)
         try:
             out = nfl_lock.lock_week(con, run_id, args.season, args.week, fit, args.sigma,
-                                     as_of=as_of, skip_scored=True)
+                                     as_of=as_of, skip_scored=True, skip_ids=set(args.skip))
         except Exception as exc:
             nfl_lock.finish_run(con, run_id, "failed", error=str(exc))
             raise

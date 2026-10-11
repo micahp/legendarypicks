@@ -65,7 +65,7 @@ class FirstLock(LockDB):
 
     def test_market_line_is_stored_with_the_lock(self):
         self.lock(as_of="t0")
-        got = nl.locked_projection(self.con, "g1")
+        got = nl.locked_projection(self.con, "g1", "v1")
         self.assertEqual(got["market_spread"], 3.5)
         self.assertEqual(got["market_total"], 44.5)
         self.assertEqual(got["market_source"], "nflverse")
@@ -81,11 +81,11 @@ class FirstLock(LockDB):
 class NeverOverwrite(LockDB):
     def test_second_run_refreshes_without_touching_the_lock(self):
         self.lock(fit=fit_for(0.0), as_of="t0")
-        first = nl.locked_projection(self.con, "g1")
+        first = nl.locked_projection(self.con, "g1", "v1")
         run2 = nl.start_run(self.con, "run-b", 2026, 5, "v1", {"sigma": 13.4})
         out = self.lock(fit=fit_for(5.0), run_id=run2, as_of="t1")
         self.assertEqual(out, {"new_locks": 0, "refreshes": 2, "skipped": []})
-        after = nl.locked_projection(self.con, "g1")
+        after = nl.locked_projection(self.con, "g1", "v1")
         self.assertEqual(after["proj_margin"], first["proj_margin"])
         self.assertEqual(after["locked_at"], "t0")
         self.assertEqual(after["run_id"], "run-a")
@@ -98,8 +98,18 @@ class NeverOverwrite(LockDB):
         with self.assertRaises(sqlite3.IntegrityError):
             self.con.execute(
                 "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
-                "proj_margin, proj_total, p_home_win, locked, locked_at) "
-                "VALUES ('run-a','nfl','g1',2026,5,'AAA','BBB',1,44,0.5,1,'t9')")
+                "proj_margin, proj_total, p_home_win, locked, locked_at, model_version) "
+                "VALUES ('run-a','nfl','g1',2026,5,'AAA','BBB',1,44,0.5,1,'t9','v1')")
+
+    def test_a_second_model_version_locks_the_same_game(self):
+        self.lock(as_of="t0")
+        run2 = nl.start_run(self.con, "run-c", 2026, 5, "v2", {"sigma": 13.4})
+        out = self.lock(fit=fit_for(5.0), run_id=run2, as_of="t1")
+        self.assertEqual(out["new_locks"], 2)
+        a = nl.locked_projection(self.con, "g1", "v1")
+        b = nl.locked_projection(self.con, "g1", "v2")
+        self.assertEqual((a["run_id"], b["run_id"]), ("run-a", "run-c"))
+        self.assertNotAlmostEqual(a["proj_margin"], b["proj_margin"], places=3)
 
 
 class Refusals(LockDB):
@@ -125,7 +135,7 @@ class Refusals(LockDB):
         run2 = nl.start_run(self.con, "run-b", 2026, 5, "v1", {"sigma": 13.4})
         out = self.lock(fit=fit_for(5.0), run_id=run2, as_of="t1", skip_scored=True)
         self.assertEqual(out, {"new_locks": 0, "refreshes": 2, "skipped": []})
-        self.assertEqual(nl.locked_projection(self.con, "g2")["locked_at"], "t0")
+        self.assertEqual(nl.locked_projection(self.con, "g2", "v1")["locked_at"], "t0")
 
     def test_missing_team_rating_is_refused(self):
         fit = nr.fit([nr.Game(0.0, "AAA", "BBB", 20.0, 17.0)], ["AAA", "BBB"], prior_games=1.0)
@@ -154,7 +164,7 @@ class RunRecord(LockDB):
 class WinProbabilityStored(LockDB):
     def test_stored_probability_matches_margin_and_sigma(self):
         self.lock(as_of="t0")
-        got = nl.locked_projection(self.con, "g1")
+        got = nl.locked_projection(self.con, "g1", "v1")
         self.assertAlmostEqual(got["p_home_win"], nr.win_probability(got["proj_margin"], 13.4),
                                places=12)
 
