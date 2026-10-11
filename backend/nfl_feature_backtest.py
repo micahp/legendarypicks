@@ -216,6 +216,26 @@ def epa_units(con, rows):
     return _complete(rows, cols), None
 
 
+@feature
+def rating_uncertainty(con, rows):
+    """PRE-REGISTERED (before its first run): sigma grows with rating uncertainty.
+
+    No feature column. sigma is the sd (ddof 1) of the stack's training residuals within the
+    game's week bucket: weeks 2-4, 5-8, 9 and later. Early ratings rest on fewer games, so their
+    margin errors should be wider. Margin MAE cannot change by construction.
+    """
+    def bucket(w):
+        return 0 if w <= 4 else (1 if w <= 8 else 2)
+
+    def sigma_fn(train, res):
+        sds = {}
+        for k in (0, 1, 2):
+            v = [e for r, e in zip(train, res) if bucket(r["week"]) == k]
+            sds[k] = float(np.std(v, ddof=1))
+        return lambda r: sds[bucket(r["week"])]
+    return None, sigma_fn
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
