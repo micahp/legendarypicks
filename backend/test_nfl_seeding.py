@@ -122,9 +122,20 @@ class Flags(unittest.TestCase):
         b.record("E1", 9, 8)
         b.record("S1", 9, 8)
         sd.COIN_FLAGS.clear()
-        ranked = sd.rank_group([b.teams()["E1"], b.teams()["S1"]], b.teams(), same_division=False)
+        t = b.teams()
+        ranked = sd.order([t["E1"], t["S1"]], t, "wildcard")
         self.assertEqual(len(ranked), 2)
-        self.assertEqual(len(sd.COIN_FLAGS), 1)
+        self.assertEqual(sd.COIN_FLAGS, [("E1", "S1")])
+
+    def test_coin_with_an_rng_is_random_not_alphabetical(self):
+        import random
+        b = Builder()
+        b.record("E1", 9, 8)
+        b.record("S1", 9, 8)
+        t = b.teams()
+        firsts = {sd.order([t["E1"], t["S1"]], t, "wildcard", rng=random.Random(s))[0].code
+                  for s in range(20)}
+        self.assertEqual(firsts, {"E1", "S1"})
 
 
 class Structure(unittest.TestCase):
@@ -136,7 +147,7 @@ class Structure(unittest.TestCase):
         b.record("N2", 9, 8)
         t = b.teams()
         nfc = [x for x in t.values() if x.conference == "NFC"]
-        ranked = sd.rank_group(nfc, t, same_division=False)
+        ranked = sd.order(nfc, t, "wildcard")
         self.assertEqual(sorted(x.code for x in ranked), sorted(x.code for x in nfc))
 
 

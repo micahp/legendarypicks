@@ -12,6 +12,7 @@ Ties are counted as half a win for the strength measures and as ties in the reco
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,8 @@ class Result:
     pts_for: float
     pts_against: float
     home: bool
+    tds_for: Optional[float] = None          # only for the net-touchdowns tiebreaker step
+    tds_against: Optional[float] = None
 
     @property
     def outcome(self):
@@ -71,19 +74,22 @@ def conference_of(division_name):
 
 
 def build(teams_map, games, through_week=None):
-    """teams_map: code -> (conference, division). games: rows (week, home, away, hs, as).
+    """teams_map: code -> (conference, division). games: rows (week, home, away, hs, as), optionally
+    followed by (home_tds, away_tds) for the net-touchdowns tiebreaker.
 
     Only games with both scores and week <= through_week (if given) are used. Returns code -> Team.
     """
     teams = {code: Team(code, conf, div) for code, (conf, div) in teams_map.items()}
-    for wk, home, away, hs, as_ in games:
+    for row in games:
+        wk, home, away, hs, as_ = row[:5]
+        htd, atd = (row[5], row[6]) if len(row) >= 7 else (None, None)
         if through_week is not None and wk > through_week:
             continue
         if home not in teams or away not in teams:
             raise KeyError("game references a team with no conference/division: %s/%s" % (home, away))
         hs, as_ = float(hs), float(as_)
-        teams[home].results.append(Result(wk, home, away, hs, as_, True))
-        teams[away].results.append(Result(wk, away, home, as_, hs, False))
+        teams[home].results.append(Result(wk, home, away, hs, as_, True, htd, atd))
+        teams[away].results.append(Result(wk, away, home, as_, hs, False, atd, htd))
     return teams
 
 
@@ -123,29 +129,27 @@ def common_games_record(a, b, teams, minimum=4):
     return a.record(lambda r: r.opp in common)
 
 
+# Strength of victory and of schedule, as the NFL defines them: the COMBINED won-lost-tied
+# percentage of the teams beaten (victory) or played (schedule), each counted once per game, over
+# their full records, ties as half a win (nfl.com "NFL Tiebreaking Procedures": "Tie games count
+# as one-half win and one-half loss for both clubs"). An earlier version excluded the opponents'
+# games against the team itself and counted ties as nothing in strength of victory; neither is in
+# the NFL's definition.
+
+def _combined_pct(codes, teams):
+    w = l = t = 0
+    for c in codes:
+        cw, cl, ct = teams[c].record()
+        w, l, t = w + cw, l + cl, t + ct
+    n = w + l + t
+    return (w + 0.5 * t) / n if n else 0.0
+
+
 def strength_of_victory(team, teams):
-    """Combined winning percentage of the teams this team beat, ties not counted as wins.
-    Games those opponents played against this team are excluded from their records."""
-    beaten = [r.opp for r in team.results if r.outcome == "W"]
-    if not beaten:
-        return 0.0
-    return sum(_pct_excluding(teams[o], team.code, ties_as_half=False) for o in beaten) / len(beaten)
+    """Combined record of every team this team beat, once per win."""
+    return _combined_pct([r.opp for r in team.results if r.outcome == "W"], teams)
 
 
 def strength_of_schedule(team, teams):
-    """Combined winning percentage of all opponents, games against this team excluded."""
-    opps = [r.opp for r in team.results]
-    if not opps:
-        return 0.0
-    return sum(_pct_excluding(teams[o], team.code, ties_as_half=True) for o in opps) / len(opps)
-
-
-def _pct_excluding(opponent, excluded_code, ties_as_half):
-    rs = [r for r in opponent.results if r.opp != excluded_code]
-    w = sum(1 for r in rs if r.outcome == "W")
-    l = sum(1 for r in rs if r.outcome == "L")
-    t = sum(1 for r in rs if r.outcome == "T")
-    if ties_as_half:
-        n = w + l + t
-        return (w + 0.5 * t) / n if n else 0.0
-    return w / (w + l) if (w + l) else 0.0
+    """Combined record of every opponent, once per game played."""
+    return _combined_pct([r.opp for r in team.results], teams)

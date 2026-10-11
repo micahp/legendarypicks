@@ -2,9 +2,10 @@
 
 Published seed numbers are not in the database. What is in the database is the playoff schedule,
 and seeds determine it:
-  wild card:  2 v 7, 3 v 6, 4 v 5 in each conference (the higher seed is the home team)
-  divisional: the 1 seed plays the lowest remaining seed; the other two play each other
-              (re-seeding, the NFL rule since 2020)
+  since 2020 (7 seeds, one bye):   wild card 2 v 7, 3 v 6, 4 v 5
+  2010-2019 (6 seeds, two byes):   wild card 3 v 6, 4 v 5
+  divisional, both eras: the highest remaining seed plays the lowest remaining seed and the other
+  two play each other (re-seeding).
 
 So the check is: seeds computed from regular-season results alone must produce the same wild-card
 pairings, and the same divisional pairings once the actual wild-card winners are used. A
@@ -42,16 +43,20 @@ def playoff_games(con, season, game_type):
         "WHERE season = ? AND game_type = ? ORDER BY game_id", (season, game_type)).fetchall()
 
 
-def seeds_from_results(con, season):
-    tmap = team_map(con)
+def seeds_from_results(con, season, tmap=None):
+    tmap = tmap or team_map(con)
     teams = st.build(tmap, regular_games(con, season))
-    return {conf: sd.seeds_for_conference(teams, conf) for conf in ("AFC", "NFC")}
+    n = sd.n_seeds_for(season)
+    return {conf: sd.seeds_for_conference(teams, conf, n_seeds=n) for conf in ("AFC", "NFC")}
 
 
 def expected_wild_card(seeds):
-    """Unordered pairs (set of two codes) for 2v7, 3v6, 4v5 in one conference."""
+    """Unordered pairs for one conference: highest non-bye seed v lowest, and so on."""
     by = {s: c for s, c in seeds}
-    return {frozenset((by[2], by[7])), frozenset((by[3], by[6])), frozenset((by[4], by[5]))}
+    n = len(seeds)
+    byes = 1 if n == 7 else 2
+    field = list(range(byes + 1, n + 1))
+    return {frozenset((by[field[i]], by[field[-1 - i]])) for i in range(len(field) // 2)}
 
 
 def winners(games):
@@ -73,16 +78,14 @@ def check(seeds_by_conf, wc_rows, div_rows, conf_of):
         exp_wc = expected_wild_card(seeds)
         wc_ok = wc_pairs == exp_wc
         played = {h for h, _, _, _ in conf_wc} | {a for _, a, _, _ in conf_wc}
-        wc_field_ok = played == seeded - {seeds[0][1]}
-        # divisional: the 1 seed plays the lowest-seeded WC winner; the other two play
-        winners_wc = winners(conf_wc)
+        byes = [c for s, c in seeds if s <= (1 if len(seeds) == 7 else 2)]
+        wc_field_ok = played == seeded - set(byes)
+        # divisional: highest remaining seed v lowest, the other two play each other
         by_seed = {c: s for s, c in seeds}
-        ranked_winners = sorted(winners_wc, key=lambda c: by_seed.get(c, 99))
-        top = seeds[0][1]
-        if len(ranked_winners) == 3:
-            lowest = ranked_winners[-1]
-            middle = [c for c in ranked_winners if c not in (lowest,)]
-            exp_div = {frozenset((top, lowest)), frozenset((middle[0], middle[1]))}
+        remaining = sorted(set(byes) | winners(conf_wc), key=lambda c: by_seed.get(c, 99))
+        if len(remaining) == 4:
+            exp_div = {frozenset((remaining[0], remaining[3])),
+                       frozenset((remaining[1], remaining[2]))}
         else:
             exp_div = None
         div_pairs = {frozenset((h, a)) for h, a, _, _ in conf_div}
@@ -99,9 +102,9 @@ def check(seeds_by_conf, wc_rows, div_rows, conf_of):
     return report
 
 
-def validate_season(con, season):
-    seeds = seeds_from_results(con, season)
-    tmap = team_map(con)
+def validate_season(con, season, tmap=None):
+    tmap = tmap or team_map(con)
+    seeds = seeds_from_results(con, season, tmap)
     conf_of = {t: c for t, (c, _) in tmap.items()}
     wc = playoff_games(con, season, "WC")
     dv = playoff_games(con, season, "DIV")

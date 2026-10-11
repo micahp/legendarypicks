@@ -79,18 +79,25 @@ class CommonGames(unittest.TestCase):
 
 
 class Strength(unittest.TestCase):
-    def test_strength_of_victory_excludes_games_against_the_team(self):
-        # A beat B, C, D. Excluding games against A:
-        #   B: beat C and E, so 2-0 -> 1.0 ; C: beat only nobody, lost to B -> 0-1 -> 0.0
-        #   D: no games left -> 0.0. SOV = (1 + 0 + 0) / 3 = 1/3.
-        t = teams()
-        self.assertAlmostEqual(st.strength_of_victory(t["AAA"], t), 1.0 / 3.0, places=12)
+    """The NFL's definition: combined record of the teams beaten / played, full records, once per
+    game, ties as half (nfl.com tiebreaking procedures). Records: A 3-1, B 2-1, C 0-2, D 0-1,
+    E 1-1."""
 
-    def test_strength_of_schedule_excludes_games_against_the_team(self):
-        # A's opponents: B (1.0 excluding A), C (0.0), D (0.0), E (0-1 excluding A -> 0.0).
-        # SOS = 1 / 4.
+    def test_strength_of_victory_is_the_beaten_teams_combined_record(self):
+        # A beat B (2-1), C (0-2), D (0-1): 2-4 combined -> 1/3.
         t = teams()
-        self.assertAlmostEqual(st.strength_of_schedule(t["AAA"], t), 0.25, places=12)
+        self.assertAlmostEqual(st.strength_of_victory(t["AAA"], t), 2.0 / 6.0, places=12)
+
+    def test_strength_of_schedule_is_every_opponents_combined_record(self):
+        # A played B (2-1), C (0-2), D (0-1), E (1-1): 3-5 combined -> 0.375. Excluding games
+        # against A (the old, wrong definition) gave 0.25.
+        t = teams()
+        self.assertAlmostEqual(st.strength_of_schedule(t["AAA"], t), 3.0 / 8.0, places=12)
+
+    def test_a_tie_counts_half_in_strength_of_victory(self):
+        # E ties C: E 1-1-1, C 0-2-1. A beat B (2-1), C (0-2-1), D (0-1): 2-4-1 -> 2.5/7.
+        t = teams(GAMES + [(7, "EEE", "CCC", 10, 10)])
+        self.assertAlmostEqual(st.strength_of_victory(t["AAA"], t), 2.5 / 7.0, places=12)
 
 
 if __name__ == "__main__":
