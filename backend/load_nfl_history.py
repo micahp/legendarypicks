@@ -57,6 +57,9 @@ SOURCES = {
                ["date", "season", "neutral", "playoff", "team1", "team2", "elo1", "elo2",
                 "elo_prob1", "score1", "score2", "result1"], set()),
 }
+# Columns a publisher dropped from some years (injuries 2025 has no date_modified). Stored as
+# NULL and announced; any other missing column is an error.
+OPTIONAL = {"date_modified"}
 ATTRIBUTION = {"ftn_charting": "FTN Data via nflverse, CC BY-SA 4.0",
                "elo538": "FiveThirtyEight nfl-elo-game, MIT licence"}
 
@@ -87,9 +90,14 @@ def read_rows(src, path, season):
     pf = pq.ParquetFile(path)
     file_rows = pf.metadata.num_rows
     missing = [c for c in cols if c not in pf.schema.names]
-    if missing:
+    if set(missing) - OPTIONAL:
         raise RuntimeError("%s: file lacks columns %s" % (path, missing))
-    data = pf.read(columns=cols).to_pydict()
+    if missing:
+        print("  %s: optional columns absent from this file, stored as NULL: %s" % (
+            os.path.basename(path), missing))
+    data = pf.read(columns=[c for c in cols if c not in missing]).to_pydict()
+    for c in missing:
+        data[c] = [None] * pf.metadata.num_rows
     n = len(data[cols[0]])
     seasons = {int(s) for s in data["season"] if s is not None}
     if seasons - {season}:
