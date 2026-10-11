@@ -12,9 +12,9 @@ Companion: `docs/SPEC-player-projections-availability-2026-10-09.md` (SPEC B). P
 2026-10-10 product direction: [the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md)
 sets the full game-forecast milestone. The scores-only version 1 here is an interim
 benchmark. Full completion also needs a calibrated joint score distribution,
-market-specific probabilities and grading, and the efficiency/availability context
-currently placed in section 9. Scope and test those additions as a new experiment;
-the pre-registered A3 gate below remains the rule for its existing experiment.
+market-specific probabilities and grading, efficiency (version 2, section 9) and
+availability (the later layers in section 9.5). The pre-registered A3 gate below remains
+the rule for its existing experiment.
 
 Written for implementers (Codex, pi) who have not read the conversation. Every fact below was
 measured in the dev DB on 2026-10-09 unless marked otherwise.
@@ -40,6 +40,24 @@ measured in the dev DB on 2026-10-09 unless marked otherwise.
    with a loud error; it is never treated as a tie or skipped.
 6. **Report with raw output.** Each slice's report pastes the command and its output (row counts,
    test results, backtest table). "Done" without output is not accepted.
+
+---
+
+## Models at a glance (read this before sections 4 and 9)
+
+There are two separate models. Neither is a blend of the other.
+
+| | Version 1: points model | Version 2: pure EPA model |
+|---|---|---|
+| Section | 4 | 9 |
+| Input | Final scores, home field, schedule | Published nflverse EPA per play (pass and rush plays) |
+| Ratings | Offense and defense per team, weighted ridge on points | Offense pass, offense rush, defense pass, defense rush per team, weighted ridge on EPA per play |
+| Output | Expected score each side, margin, total, win probability | The same fields, from EPA alone (no v1 margin or total) |
+| Status | Frozen 10-09 (half_life 6, cap 14, prior_games 4, shrink 1/3, sigma 13.295). Adopted. | Being built. Not adopted until it passes the gate in 9.4. |
+
+What version 2 is not: the 10-09 candidate that blended 0.4 x v1 margin with 0.6 x an EPA
+game-total margin (`/root/lp-nfl-epa`, `e2141c0`). It failed its gate and the 10-10 review found
+defects in it (`docs/REVIEW-SPEC-A-2026-10-10.md`). It is retired; it is not version 2.
 
 ---
 
@@ -101,9 +119,8 @@ take a `league` column so NCAAF/NBA/NHL can follow the same shape).
 
 ## 4. The model, version 1 (scores only)
 
-Version 1 uses only final scores, home field and the schedule, because that is enough to ship
-playoff odds this season. Efficiency (EPA from nflverse play-by-play, already ingested by
-`ingest_nfl_pbp_logs.py`) is version 2 (section 9).
+This section is version 1, the points model. It uses only final scores, home field and the
+schedule. Version 2, the pure EPA model, is section 9.
 
 ### 4.1 Ratings
 For each team: offense rating `o` and defense rating `d`, in points versus an average team, and a
@@ -298,15 +315,54 @@ achievement. Mobile first.
 
 ---
 
-## 9. Version 2 and later (do not build now)
-- Efficiency ratings from nflverse play-by-play EPA per play (offense and defense, pass and rush),
-  regressed toward the mean, blended with the points model. Gate: must beat version 1 in the 6.1
-  backtest.
-- Quarterback adjustment: when the starting QB in `nfl_schedule.away_qb_id/home_qb_id` (published)
-  differs from the team's regular starter, apply a QB value delta. Comes from SPEC B's availability
-  layer.
+## 9. Version 2: pure EPA model
+
+Built from published nflverse EPA per play in `nfl_pbp` (ingested by `ingest_nfl_pbp_logs.py`).
+Nothing here computes EPA. Version 2 does not use version 1's margin or total.
+
+### 9.1 Ratings
+Plays: `pass_attempt = 1` or `rush_attempt = 1`, with a non-null published `epa`. Pass and rush
+plays are fitted separately:
+
+    epa_play = c_type + off[posteam, type] - def[defteam, type]      type in {pass, rush}
+
+- Weighted ridge. Play weight `0.5 ** (weeks_ago / half_life)`.
+- Prior: last season's final ratings shrunk one third toward zero. Each rating is pulled toward
+  its prior with strength `lam`, in play-weight units.
+- Defaults for the first lock: `half_life = 6`, `lam = 150` (about four games of plays). Untuned.
+
+### 9.2 EPA to expected points
+For team A against team B:
+
+    plays_A  = recency-weighted offensive plays per game of A
+    pass_A   = recency-weighted pass rate of A
+    pred_A   = plays_A * (pass_A * (offpass_A - defpass_B) + (1 - pass_A) * (offrush_A - defrush_B))
+    points_A = a + b * pred_A + h/2 (home) or - h/2 (away);  h = 0 at a neutral site
+
+- `a`, `b`, `h` are fitted by least squares on walk-forward predictions of a completed season
+  (each game predicted only from games before its week), both sides as observations.
+- `sigma` is the standard deviation of that fit's margin residuals.
+- Win probability `P(home) = Phi(margin / sigma)`, as in 4.2.
+- A lock for season S calibrates on season S-1 or earlier only.
+
+### 9.3 Locking
+Same rules as 4.3, under its own `model_version`. `game_projections` holds one locked row per game
+per model version (index changed 2026-10-11, commit `546ef62`), so v1 and v2 lock side by side.
+The first v2 locks (2026 week 5) are untuned and carry `NOT-ADOPTED untuned` in the version.
+
+### 9.4 Gate
+Version 2 replaces version 1 only if it beats version 1 on both:
+1. The 6.1 walk-forward backtest, same metrics. Tune on 2024 only; run 2025 once with the frozen
+   choice, labelled a second look (2025 was already used as version 1's holdout).
+2. The prospective test: both versions locked every week before kickoff and graded after. This
+   uses games neither model has seen and decides the gate.
+
+### 9.5 Later layers (on top of whichever version is adopted)
+- Quarterback adjustment: when the published starting QB (`nfl_schedule.away_qb_id/home_qb_id`)
+  differs from the team's regular starter, apply a QB value delta. Comes from SPEC B's
+  availability layer.
 - Roster delta from SPEC B (players out move the team rating).
-- Kalshi game and playoff-market prices as the market comparison (we capture Kalshi tape already).
+- Kalshi game and playoff-market prices as the market comparison.
 - Other leagues: NCAAF (bowl/CFP), NBA, NHL on the same tables.
 
 ---
@@ -324,6 +380,8 @@ achievement. Mobile first.
 | A6 weekly job + timer + grading + movers JSON | Codex | One full run recorded in `model_runs`; grades written for weeks 1-4; JSON file shown. |
 | A7 API router + tests | pi or Codex | Endpoint responses pasted; tests pass. |
 | A8 page | pi | Screenshot at phone and desktop width; the record section shows real graded rows. |
+| A9 version 2 model + backtest (9.1, 9.2, 9.4 part 1) | Claude or Codex | Fixture tests; 2024 tuning table and frozen choice; 2025 second look next to version 1. |
+| A10 weekly version 2 lock + prospective grading (9.3, 9.4 part 2) | Claude or Codex | Both versions locked before kickoff each week; graded side by side. |
 
 Each slice: its own commit with a message saying what and why; the report lists the files touched
 and pastes test output. Stop and report if a gate fails; do not tune parameters to pass a gate
