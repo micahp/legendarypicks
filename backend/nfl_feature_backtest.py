@@ -173,6 +173,30 @@ def market_prior(con, rows):
     return _complete(rows, cols), None
 
 
+@feature
+def epa_units(con, rows):
+    """PRE-REGISTERED (before its first run): opponent-adjusted EPA by unit (v2).
+
+    nfl_epa_model as frozen in RESULTS-A9 (half_life 12, lam 450, shrink 1/3): pass and rush
+    offense and defense ratings from plays of weeks < w of the season, prior = season S-1's
+    final fit shrunk (none for 2010). Column: the raw EPA-points margin
+    predictor(home, away) - predictor(away, home) from nfl_epa_backtest.walk_forward. Its scale
+    and home term are left to the stack, so v2's own a, b, h calibration is not used.
+    """
+    import nfl_epa_backtest as eb
+    cols = {}
+    prev = None
+    for s in SEASONS:
+        plays = eb.season_plays(con, s)
+        teams = eb.teams_of(con, s)
+        prior = eb.final_prior(prev[0], prev[1], 12.0, 450.0) if prev else None
+        for wk, gid, h, a, neu, ph, pa, *_ in eb.walk_forward(plays, eb.sched(con, s), teams,
+                                                               prior, 12.0, 450.0):
+            cols[gid] = [ph - pa]
+        prev = (plays, teams)
+    return _complete(rows, cols), None
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
