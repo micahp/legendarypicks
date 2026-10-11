@@ -21,22 +21,24 @@ class CliDB(unittest.TestCase):
         con = sqlite3.connect(self.path)
         con.execute("CREATE TABLE nfl_schedule (game_id TEXT PRIMARY KEY, season INT, game_type TEXT,"
                     " week INT, home_team TEXT, away_team TEXT, location TEXT, home_score REAL,"
-                    " away_score REAL, spread_line REAL, total_line REAL)")
+                    " away_score REAL, spread_line REAL, total_line REAL, home_moneyline REAL,"
+                    " away_moneyline REAL, gameday TEXT DEFAULT '2099-09-13',"
+                    " gametime TEXT DEFAULT '13:00', ingested_at TEXT)")
         for i, (h, a) in enumerate(itertools.permutations(TEAMS, 2)):   # 2025: full season
             hp, ap = points(h, a)
-            con.execute("INSERT INTO nfl_schedule VALUES (?,2025,'REG',?,?,?,'Home',?,?,1,40)",
+            con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES (?,2025,'REG',?,?,?,'Home',?,?,1,40)",
                         ("25_%03d" % i, i % 6 + 1, h, a, hp, ap))
         # 2026 week 5: one played game, one unplayed, both on the planted truth.
         hp, ap = points("AAA", "BBB")
-        con.execute("INSERT INTO nfl_schedule VALUES ('26_played',2026,'REG',5,'AAA','BBB','Home',"
+        con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES ('26_played',2026,'REG',5,'AAA','BBB','Home',"
                     "?,?,2.0,44)", (hp, ap))
-        con.execute("INSERT INTO nfl_schedule VALUES ('26_open',2026,'REG',5,'CCC','DDD','Home',"
+        con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES ('26_open',2026,'REG',5,'CCC','DDD','Home',"
                     "NULL,NULL,-1.0,41)")
         # 2026 weeks 1-4 so the fit has data before week 5.
         for wk in range(1, 5):
             for i, (h, a) in enumerate([("AAA", "CCC"), ("BBB", "DDD")]):
                 hp, ap = points(h, a)
-                con.execute("INSERT INTO nfl_schedule VALUES (?,2026,'REG',?,?,?,'Home',?,?,1,40)",
+                con.execute("INSERT INTO nfl_schedule (game_id, season, game_type, week, home_team, away_team, location, home_score, away_score, spread_line, total_line) VALUES (?,2026,'REG',?,?,?,'Home',?,?,1,40)",
                             ("26w%d_%d" % (wk, i), wk, h, a, hp, ap))
         con.commit()
         con.close()

@@ -7,7 +7,8 @@ Inputs are the ones the lock is defined by, and all are recorded in model_versio
 - sigma: passed in (measured in the A2 walk-forward: 13.4 for 2024-2025 pooled)
 
 Dry run by default: prints the projection for every game and writes nothing. --apply locks
-the unplayed games. Played games with no lock are listed as skipped, never written.
+the unplayed games. Played games with no lock are listed as skipped, games past kickoff as
+started; neither is written (nfl_lock decides both).
 
 Usage:
   cd backend && LP_DB_PATH=/abs/path/picks.dev.db venv/bin/python lock_nfl_week.py \\
@@ -71,8 +72,6 @@ def main(argv=None) -> int:
     ap.add_argument("--season", type=int, required=True)
     ap.add_argument("--week", type=int, required=True)
     ap.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
-    ap.add_argument("--skip", action="append", default=[], metavar="GAME_ID",
-                    help="game already kicked off; never locked (repeatable)")
     ap.add_argument("--apply", action="store_true", help="write the locks (default: dry run)")
     args = ap.parse_args(argv)
     if args.sigma <= 0:
@@ -101,14 +100,16 @@ def main(argv=None) -> int:
                   "fit_games": used, "mode": "lock", "skip_scored": True}
         nfl_lock.start_run(con, run_id, args.season, args.week, version, params)
         try:
-            out = nfl_lock.lock_week(con, run_id, args.season, args.week, fit, args.sigma,
-                                     as_of=as_of, skip_scored=True, skip_ids=set(args.skip))
+            out = nfl_lock.lock_week(con, run_id, args.season, args.week,
+                                     nfl_lock.v1_projector(fit, args.sigma),
+                                     as_of=as_of, skip_scored=True)
         except Exception as exc:
             nfl_lock.finish_run(con, run_id, "failed", error=str(exc))
             raise
         nfl_lock.finish_run(con, run_id, "ok")
-        print("applied run=%s new_locks=%d refreshes=%d skipped=%s"
-              % (run_id, out["new_locks"], out["refreshes"], out["skipped"] or "none"))
+        print("applied run=%s new_locks=%d refreshes=%d skipped=%s started=%s"
+              % (run_id, out["new_locks"], out["refreshes"], out["skipped"] or "none",
+                 out["started"] or "none"))
         return 0
     finally:
         con.close()

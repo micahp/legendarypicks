@@ -66,7 +66,22 @@ STATEMENTS = [
         market_source TEXT,
         locked INTEGER NOT NULL,
         locked_at TEXT NOT NULL,
-        model_version TEXT)""",
+        model_version TEXT,
+        line_snapshot_id INTEGER)""",
+    # The market line a lock was made against, copied at lock time with when we captured it and
+    # when the publisher's file was ingested. nfl_schedule lines change after ingest (17 differed
+    # from upstream on 10-10, REVIEW-SPEC-A), so grading reads the snapshot, never the schedule.
+    """CREATE TABLE IF NOT EXISTS nfl_line_snapshots (
+        snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        captured_at TEXT NOT NULL,
+        source_ingested_at TEXT,
+        spread_line REAL,
+        total_line REAL,
+        home_moneyline REAL,
+        away_moneyline REAL)""",
     """CREATE INDEX IF NOT EXISTS idx_game_projections_week
         ON game_projections(league, season, week)""",
     # Playoff odds per team per run.
@@ -109,7 +124,10 @@ EXPECTED_COLUMNS = {
     "game_projections": ["run_id", "league", "game_id", "season", "week", "home", "away",
                          "proj_home", "proj_away", "proj_margin", "proj_total", "p_home_win",
                          "market_spread", "market_total", "market_source", "locked", "locked_at",
-                         "model_version"],
+                         "model_version", "line_snapshot_id"],
+    "nfl_line_snapshots": ["snapshot_id", "league", "game_id", "source", "captured_at",
+                           "source_ingested_at", "spread_line", "total_line", "home_moneyline",
+                           "away_moneyline"],
     "playoff_odds": ["run_id", "league", "season", "week", "team", "p_playoffs", "p_division",
                      "p_bye"] + ["p_seed_%d" % k for k in SEEDS] +
                     ["wins_mean", "wins_p10", "wins_p90", "d_playoffs", "as_of"],
@@ -125,14 +143,20 @@ def migrate(con):
     # model_version was added after the first locks were written (2026-10-11): two model versions
     # must be able to lock the same game. Older tables get the column and a backfill from the
     # run that wrote each row; the one-lock-per-game index is replaced by one per game and version.
-    if "model_version" not in [r[1] for r in con.execute("PRAGMA table_info(game_projections)")]:
+    cols = [r[1] for r in con.execute("PRAGMA table_info(game_projections)")]
+    if "model_version" not in cols:
         con.execute("ALTER TABLE game_projections ADD COLUMN model_version TEXT")
+    if "line_snapshot_id" not in cols:
+        con.execute("ALTER TABLE game_projections ADD COLUMN line_snapshot_id INTEGER")
     con.execute("UPDATE game_projections SET model_version = "
                 "(SELECT model_version FROM model_runs WHERE model_runs.run_id = game_projections.run_id) "
                 "WHERE model_version IS NULL")
     con.execute("DROP INDEX IF EXISTS uq_game_projections_locked")
     con.execute("""CREATE UNIQUE INDEX IF NOT EXISTS uq_game_projections_locked_version
         ON game_projections(league, game_id, model_version) WHERE locked = 1""")
+    # One grade per game per model version, so re-running the grader cannot duplicate rows.
+    con.execute("""CREATE UNIQUE INDEX IF NOT EXISTS uq_projection_grades
+        ON projection_grades(league, game_id, model_version)""")
     con.commit()
 
 
