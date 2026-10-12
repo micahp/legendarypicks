@@ -210,6 +210,40 @@ def _hit_windows(settled):
 
 
 
+@router.get("/api/props/player/{player_id}/teammates-out")
+def player_teammates_out(player_id: int, season: Optional[int] = Query(None)):
+    """Teammates who missed a game this player played in: the chips behind the "Without" control.
+
+    ``games_out`` is the number of the player's own box-score games (regular season) in which that
+    teammate has availability played = 0, so it equals the matched count of a single-teammate
+    ``without`` filter. A teammate whose status is unknown in a game contributes nothing to it.
+    Offensive skill positions only (QB, RB, FB, WR, TE): those are the teammates whose absence moves
+    a player's volume, and a 40-chip list of every inactive defender would bury them.
+    """
+    with closing(_db()) as con:
+        if season is None:
+            row = con.execute(
+                "SELECT MAX(season) FROM player_game_logs WHERE league='nfl' AND player_id=? "
+                "AND source='nflverse_weekly'", (player_id,)).fetchone()
+            season = row[0] if row else None
+        if season is None:
+            return {"player_id": player_id, "season": None, "teammates": []}
+        rows = con.execute(
+            """SELECT a.player_id, p.name, p.position, COUNT(DISTINCT a.game_id) AS games_out
+                 FROM player_game_logs l
+                 JOIN player_game_availability a
+                   ON a.league='nfl' AND a.game_id=l.game_id AND a.team=l.team
+                 JOIN players p ON p.id=a.player_id
+                WHERE l.league='nfl' AND l.player_id=? AND l.season=? AND l.source='nflverse_weekly'
+                  AND (l.game_type='REG' OR l.game_type IS NULL)
+                  AND a.played=0 AND a.player_id<>? AND p.position IN ('QB','RB','FB','WR','TE')
+                GROUP BY a.player_id ORDER BY games_out DESC, p.name""",
+            (player_id, season, player_id)).fetchall()
+    return {"player_id": player_id, "season": season,
+            "teammates": [{"player_id": r[0], "name": r[1], "position": r[2], "games_out": r[3]}
+                          for r in rows]}
+
+
 @router.get("/api/props/player/{player_id}/history")
 def player_prop_history(player_id: int, market: Optional[str] = Query(None),
                         without: Optional[str] = Query(None),

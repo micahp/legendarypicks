@@ -180,6 +180,22 @@ class WithoutFilter(unittest.TestCase):
         self.assertEqual(2, res["n_excluded_unknown"])  # week 5 and the preseason game
         self.assertNotIn(50, {h["id"] for h in res["history"]})
 
+    # -- /api/props/player/{id}/teammates-out ------------------------------------------------
+
+    def test_teammates_out_lists_x_with_the_matched_count(self):
+        res = props.player_teammates_out(1, season=None)
+        self.assertEqual(2025, res["season"])
+        self.assertEqual([{"player_id": 2, "name": "X Teammate", "position": "WR", "games_out": 2}],
+                         res["teammates"])
+        # the chip count equals the single-teammate filter's matched games
+        filtered = props.prop_history(player_id=1, market="receiving_yards", line=40.5, side="over",
+                                      league="nfl", without="2", with_=None)
+        self.assertEqual(res["teammates"][0]["games_out"], filtered["n_games"])
+
+    def test_teammates_out_for_a_player_with_no_logs_is_empty(self):
+        self.assertEqual({"player_id": 2, "season": None, "teammates": []},
+                         props.player_teammates_out(2, season=None))
+
 
 if __name__ == "__main__":
     unittest.main()
