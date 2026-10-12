@@ -28,6 +28,7 @@ Usage: LP_DB_PATH=<dev db> venv/bin/python nfl_feature_backtest.py --feature <na
 from __future__ import annotations
 
 import argparse
+import bisect
 import math
 import os
 import sqlite3
@@ -301,6 +302,169 @@ def venue_conditions(con, rows):
             windy = 1.0 if (roof in ("outdoors", "open") and wind is not None
                             and wind >= 15) else 0.0
             cols[gid] = [rest, v1[gid] * windy]
+    return _complete(rows, cols), None
+
+
+# ---- stats research, 2026-10-12: pressure, sacks and touch shares (RESULTS-nfl-stability-stats-2026-10-12.md)
+PRESS_K = 200.0     # dropback shrink weight, the same as QBE's 200-dropback shrink
+PRESS_WIN = 8       # team games in the window, the same as QBE's last 8 team games
+SHARE_WIN = 4       # team games in the window, the same as AVAIL's last 4 REG games
+
+
+def _offense_records(con):
+    """One record per team-game with plays, 2010-2025, sorted by (season, week, game_id).
+
+    record = {"key": (season, week, game_id), "team", "plays", "db" (dropbacks), "hit" (QB hits
+    on dropbacks), "sack", "touches": {gsis_id: targets + carries}}. Plays are pass or rush
+    attempts. Built from nfl_pbp by the team that had the ball.
+    """
+    recs = {}
+    for s, w, g, t, pl, db, hit, sk in con.execute(
+            "SELECT season, week, game_id, posteam, SUM(pass_attempt = 1 OR rush_attempt = 1), "
+            "SUM(qb_dropback = 1), SUM(qb_dropback = 1 AND qb_hit = 1), SUM(sack = 1) "
+            "FROM nfl_pbp WHERE season BETWEEN 2010 AND 2025 AND posteam IS NOT NULL "
+            "GROUP BY season, week, game_id, posteam"):
+        recs[(g, t)] = {"key": (int(s), int(w), g), "team": t, "plays": pl or 0, "db": db or 0,
+                        "hit": hit or 0, "sack": sk or 0, "touches": {}}
+    for sql in ("SELECT game_id, posteam, receiver_player_id, COUNT(*) FROM nfl_pbp "
+                "WHERE season BETWEEN 2010 AND 2025 AND pass_attempt = 1 "
+                "AND receiver_player_id IS NOT NULL AND posteam IS NOT NULL "
+                "GROUP BY game_id, posteam, receiver_player_id",
+                "SELECT game_id, posteam, rusher_player_id, COUNT(*) FROM nfl_pbp "
+                "WHERE season BETWEEN 2010 AND 2025 AND rush_attempt = 1 "
+                "AND rusher_player_id IS NOT NULL AND posteam IS NOT NULL "
+                "GROUP BY game_id, posteam, rusher_player_id"):
+        for g, t, p, n in con.execute(sql):
+            recs[(g, t)]["touches"][p] = recs[(g, t)]["touches"].get(p, 0) + n
+    return recs
+
+
+class _Index:
+    """Team-game lookups in pbp order. Windows are the team's games strictly before a cutoff."""
+
+    def __init__(self, recs):
+        self.recs = recs
+        self.team_keys = {}
+        self.opp = {}
+        games = {}
+        for (g, t), r in recs.items():
+            self.team_keys.setdefault(t, []).append(r["key"])
+            games.setdefault(g, []).append(t)
+        for t in self.team_keys:
+            self.team_keys[t].sort()
+        for g, ts in games.items():
+            if len(ts) == 2:
+                self.opp[(g, ts[0])], self.opp[(g, ts[1])] = ts[1], ts[0]
+        self.all_recs = sorted(recs.values(), key=lambda r: r["key"])
+        self.all_keys = [r["key"] for r in self.all_recs]
+        self.cum = [[0, 0, 0]]
+        for r in self.all_recs:
+            c = self.cum[-1]
+            self.cum.append([c[0] + r["db"], c[1] + r["hit"], c[2] + r["sack"]])
+
+    def window(self, team, cutoff, n):
+        keys = self.team_keys.get(team, [])
+        i = bisect.bisect_left(keys, cutoff)
+        return [self.recs[(k[2], team)] for k in keys[max(0, i - n):i]]
+
+    def league_before(self, cutoff):
+        """(dropbacks, hits, sacks) pooled over every team-game strictly before the cutoff."""
+        return self.cum[bisect.bisect_left(self.all_keys, cutoff)]
+
+
+def _matchup(con, rows, metric):
+    """Expected offensive rate by matchup, home minus away, per dropback. metric: hit or sack."""
+    idx = _Index(_offense_records(con))
+    cols, missing = {}, 0
+    for r in rows:
+        s, w = int(r["season"]), int(r["week"])
+        cutoff = (s, w, "")
+        ldb, lhit, lsk = idx.league_before(cutoff)
+        if ldb == 0:
+            cols[r["game_id"]] = [0.0]
+            missing += 1
+            continue
+        lg = (lhit if metric == "hit" else lsk) / float(ldb)
+
+        def rate(team, own):
+            db = m = 0
+            for x in idx.window(team, cutoff, PRESS_WIN):
+                if own:
+                    d = x
+                else:
+                    d = idx.recs[(x["key"][2], idx.opp[(x["key"][2], team)])]
+                db += d["db"]; m += d[metric]
+            return (m + PRESS_K * lg) / (db + PRESS_K)
+        h, a = r["home"], r["away"]
+        exp_h = rate(h, True) + rate(a, False) - lg
+        exp_a = rate(a, True) + rate(h, False) - lg
+        cols[r["game_id"]] = [exp_h - exp_a]
+    print("%s checks: base rows with no league history before the game (column 0) %d" % (metric, missing))
+    return cols
+
+
+@feature
+def pressure_matchup(con, rows):
+    """PRE-REGISTERED (before its first run): expected QB-hit rate by matchup.
+
+    Per dropback. Team offense rate = (hits on its dropbacks in its last 8 team games + 200 x
+    league rate) / (its dropbacks in those games + 200). Team defense rate the same, using the
+    opponents' dropbacks and hits in those games. League rate = pooled over every team-game
+    before the game (any season). Expected home offense rate = home offense + away defense -
+    league; expected away offense = away offense + home defense - league. Column = expected home
+    minus expected away. Expected sign: negative (more pressure on the home QB, lower home margin).
+    The window crosses season boundaries. Week 1 of 2010 has no league history: column 0, counted.
+    """
+    return _complete(rows, _matchup(con, rows, "hit")), None
+
+
+@feature
+def sack_matchup(con, rows):
+    """PRE-REGISTERED (before its first run): expected sack rate by matchup. Same rules as
+    pressure_matchup with sacks (sacks on dropbacks) in place of QB hits. Expected sign negative.
+    """
+    return _complete(rows, _matchup(con, rows, "sack")), None
+
+
+@feature
+def share_absence(con, rows):
+    """PRE-REGISTERED (before its first run): touch share lost to listed absences.
+
+    Listed: nfl_hist_injuries REG rows with report_status Out or Doubtful and position not QB, the
+    same listing as AVAIL. A listed player's touch share = (his targets + carries over the team's
+    last 4 team games before the game) / (the team's pass and rush attempts over those games).
+    gsis_id is used directly: nfl_pbp and nfl_hist_injuries share it. Team load = sum of listed
+    players' shares. Column: load home - load away. Expected sign: negative. A listed player with
+    no touches in the window contributes 0. Counted: listings with no touches anywhere in pbp.
+    """
+    idx = _Index(_offense_records(con))
+    listed = {}
+    never = 0
+    seen = set()
+    for r in idx.recs.values():
+        seen.update(r["touches"].keys())
+    for s, w, t, g in con.execute(
+            "SELECT season, week, team, gsis_id FROM nfl_hist_injuries WHERE game_type = 'REG' "
+            "AND report_status IN ('Out', 'Doubtful') AND COALESCE(position, '') != 'QB' "
+            "AND gsis_id IS NOT NULL"):
+        if g not in seen:
+            never += 1
+            continue
+        listed.setdefault((int(s), int(w), t), []).append(g)
+    cols = {}
+    for r in rows:
+        cutoff = (int(r["season"]), int(r["week"]), "")
+        load = {}
+        for t in (r["home"], r["away"]):
+            win = idx.window(t, cutoff, SHARE_WIN)
+            plays = sum(x["plays"] for x in win)
+            lo = 0.0
+            if plays:
+                for p in listed.get((cutoff[0], cutoff[1], t), []):
+                    lo += sum(x["touches"].get(p, 0) for x in win) / float(plays)
+            load[t] = lo
+        cols[r["game_id"]] = [load[r["home"]] - load[r["away"]]]
+    print("share_absence checks: listings with no pbp touches anywhere %d" % never)
     return _complete(rows, cols), None
 
 
