@@ -99,3 +99,67 @@ Team man share, first half vs second half of a season, r = 0.81, 0.72, 0.77, 0.7
 Participation is stored as `nfl_hist_participation` (2016 to 2025, one row per play; loaded by
 `load_nfl_history.py --source participation`, file rows = stored rows for all 10 seasons, 0 mismatches,
 sha256 in `nfl_hist_loads`).
+
+
+## Step 6: contention, "has this team checked out"
+
+Pre-registered in `a8c3518` (plan) and `a6c1fe2` (code and tests, committed before the run). Definition
+as in the plan: P(playoffs) per team from `nfl_sim.run(nfl_sim.inputs(con, s, as_of_week=w - 1), 1000,
+k=0.0, seed=s * 100 + w)`, out = P < 0.01 (strict), weeks >= 10 only, column = out_home - out_away, expected
+sign negative. Division map checked on every run against `nfl_schedule.div_game` (4,175 REG games, 2010-2025).
+
+Command (single process, dev DB read-only):
+
+```
+cd /root/lp-nfl-lock-by-version/backend
+LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db nice /root/legendarypicks/backend/venv/bin/python nfl_feature_backtest.py --feature contention_keep
+```
+
+Measured run: wall clock 10:07, peak resident set 203 MB (`/usr/bin/time -v`), exit 0. Before the run: 2.4 GiB
+available, load average 1.9 (swap was fully used, which the run did not change).
+
+Output, verbatim:
+
+```
+division map check: 4175 REG games 2010-2025 agree with div_game (0 disagreements, 0 unknown codes)
+feature: contention (has this team checked out), fit from 2010
+  2011-2023 n=1635 Brier v1 0.2172 B 0.2182 F 0.2177 mkt 0.2059 | F-B -0.0006 [-0.0017,+0.0006] | F-mkt +0.0118 [+0.0077,+0.0159] | B-mkt +0.0123 [+0.0082,+0.0165]
+                   margin MAE B 10.558 F 10.562 spread 10.178 | F-B +0.003 [-0.044,+0.051]
+  2024      n= 134 Brier v1 0.1987 B 0.2036 F 0.1990 mkt 0.1808 | F-B -0.0046 [-0.0089,-0.0003] | F-mkt +0.0181 [+0.0045,+0.0329] | B-mkt +0.0227 [+0.0090,+0.0367]
+                   margin MAE B 9.947 F 9.822 spread 9.414 | F-B -0.125 [-0.312,+0.060]
+  2025      n= 137 Brier v1 0.2154 B 0.2180 F 0.2177 mkt 0.2126 | F-B -0.0003 [-0.0045,+0.0043] | F-mkt +0.0051 [-0.0103,+0.0206] | B-mkt +0.0054 [-0.0107,+0.0215]
+                   margin MAE B 9.913 F 9.891 spread 9.562 | F-B -0.022 [-0.195,+0.155]
+   diagnostic 2010 games wk>=10 126 team-games out 77 games with exactly one out 45 coin flips 0
+   diagnostic 2011 games wk>=10 126 team-games out 85 games with exactly one out 57 coin flips 0
+   diagnostic 2012 games wk>=10 124 team-games out 78 games with exactly one out 42 coin flips 0
+   diagnostic 2013 games wk>=10 123 team-games out 77 games with exactly one out 49 coin flips 0
+   diagnostic 2014 games wk>=10 122 team-games out 77 games with exactly one out 47 coin flips 0
+   diagnostic 2015 games wk>=10 124 team-games out 75 games with exactly one out 47 coin flips 0
+   diagnostic 2016 games wk>=10 123 team-games out 70 games with exactly one out 44 coin flips 0
+   diagnostic 2017 games wk>=10 124 team-games out 75 games with exactly one out 51 coin flips 0
+   diagnostic 2018 games wk>=10 122 team-games out 83 games with exactly one out 49 coin flips 0
+   diagnostic 2019 games wk>=10 121 team-games out 96 games with exactly one out 48 coin flips 0
+   diagnostic 2020 games wk>=10 123 team-games out 66 games with exactly one out 48 coin flips 0
+   diagnostic 2021 games wk>=10 136 team-games out 62 games with exactly one out 40 coin flips 0
+   diagnostic 2022 games wk>=10 135 team-games out 57 games with exactly one out 47 coin flips 0
+   diagnostic 2023 games wk>=10 136 team-games out 61 games with exactly one out 49 coin flips 0
+   diagnostic 2024 games wk>=10 134 team-games out 85 games with exactly one out 65 coin flips 0
+   diagnostic 2025 games wk>=10 137 team-games out 98 games with exactly one out 54 coin flips 0
+   fitted coef on feature, 2010-2024 fit -2.160 (base proj_margin +0.761)
+   keep rule: pooled 2011-2023 F-B -0.0006 [-0.0017,+0.0006] entirely below zero: False; 2024 point -0.0046 not above zero: True; 2025 point -0.0003 not above zero: True
+verdict contention_keep: NOT KEPT
+```
+
+Verdict: NOT KEPT. The pooled 2011-2023 interval is not entirely below zero (upper end +0.0006). The 2024
+point is -0.0046 and its interval [-0.0089, -0.0003] excludes zero; the rule is pooled, so this does not change
+the verdict, and the 2024 result is recorded here as it stands, not as support for the feature.
+
+Measured notes (not part of the rule):
+- Coin flips reported by the simulator: 0 in every season 2010-2025. This is the instrument's count; it was
+  not checked against a second source.
+- Team-games flagged out are a large share of each week 10+ slate (57 to 98 per season out of about 250 team-games).
+  Games with exactly one team out are 40 to 65 per season.
+- The fitted coefficient on the column is -2.160 (2010-2024 fit), while the base proj_margin coefficient is
+  +0.761. A coefficient that size would move margins by about two points for games with one team out, yet margin
+  MAE (F-B, 2011-2023) is +0.003. This was not reconciled and was not investigated, per the plan's rule to report
+  and stop.
