@@ -26,7 +26,13 @@ PRE-REGISTERED 2026-10-12, before any run of this file.
   2011-2023 interval of the selected config is optimistic (it was chosen on those games); 2024 is
   the honest check. Weeks 2-4 are also reported, since that is where the gap sits.
 
-Usage: LP_DB_PATH=<dev db> venv/bin/python nfl_ladder.py --ladder | --carryover
+--carryover2: PRE-REGISTERED 2026-10-12 (second grid, written before its run). Extends past the
+  corner of --carryover: shrink in {0.0, 0.1, 0.2} x prior_games in {8, 16, 32} (9 configs). Same
+  selection and rule as --carryover, against the current config, which runs as a reference and
+  is not part of the selection set. 2025 has been looked at already in
+  --carryover, so its result here is a second look only.
+
+Usage: LP_DB_PATH=<dev db> venv/bin/python nfl_ladder.py --ladder | --carryover | --carryover2
 """
 from __future__ import annotations
 
@@ -43,6 +49,8 @@ REPS = 5000
 BUCKETS = (("weeks 2-4", 2, 4), ("weeks 5-8", 5, 8), ("weeks 9+", 9, 99))
 SHRINKS = (0.2, 1.0 / 3.0, 0.5, 2.0 / 3.0)
 PRIOR_GAMES = (2.0, 4.0, 8.0)
+SHRINKS2 = (0.0, 0.1, 0.2)
+PRIOR_GAMES2 = (8.0, 16.0, 32.0)
 
 
 def rows_for(con, overrides=None):
@@ -118,18 +126,26 @@ def ladder(con):
     print("note: v1 makes no week 1 forecast, so week 1 games are not in these rows.")
 
 
-def carryover(con):
+def carryover(con, shrinks=SHRINKS, prior_games=PRIOR_GAMES):
     groups = fb.GROUPS
     results = {}
-    for sh in SHRINKS:
-        for pg in PRIOR_GAMES:
+    for sh in shrinks:
+        for pg in prior_games:
             rows = rows_for(con, {"shrink": sh, "prior_games": pg})
             base = fb.stack(rows)
             gr = fb.graded(rows)
             results[(sh, pg)] = {r["game_id"]: ((base[r["game_id"]][1] - r["outcome"]) ** 2,
                                                 r["season"], r["week"]) for r in gr}
             print("ran shrink %.3f prior_games %.0f" % (sh, pg), flush=True)
-    cur = results[(1.0 / 3.0, 4.0)]
+    grid = set(results)
+    cur_key = (1.0 / 3.0, 4.0)
+    if cur_key not in results:      # reference only: compared against, never selected
+        rows = rows_for(con, {"shrink": cur_key[0], "prior_games": cur_key[1]})
+        base = fb.stack(rows)
+        results[cur_key] = {r["game_id"]: ((base[r["game_id"]][1] - r["outcome"]) ** 2,
+                                           r["season"], r["week"]) for r in fb.graded(rows)}
+        print("ran reference shrink 0.333 prior_games 4", flush=True)
+    cur = results[cur_key]
     ids = sorted(cur)
 
     def sel(res, seasons, wk=None):
@@ -138,11 +154,12 @@ def carryover(con):
     print("\nconfig                  B Brier 2011-23  2024    2025    weeks 2-4 (2011-23)")
     for k in sorted(results):
         res = results[k]
-        print("shrink %.3f games %.0f   %.4f          %.4f  %.4f  %.4f" % (
+        tag = "  (reference)" if k not in grid else ""
+        print("shrink %.3f games %.0f   %.4f          %.4f  %.4f  %.4f%s" % (
             k[0], k[1], *(sum(x) / len(x) for x in (
                 sel(res, groups[0][1]), sel(res, groups[1][1]), sel(res, groups[2][1]),
-                sel(res, groups[0][1], (2, 4))))))
-    best = min(results, key=lambda k: sum(sel(results[k], groups[0][1])))
+                sel(res, groups[0][1], (2, 4)))), tag))
+    best = min(grid, key=lambda k: sum(sel(results[k], groups[0][1])))
     print("\nselected: shrink %.3f prior_games %.0f (current: shrink 0.333 prior_games 4)" % best)
     for name, seasons in groups:
         print("  %-9s %s" % (name, diff(sel(results[best], seasons), sel(cur, seasons),
@@ -156,10 +173,13 @@ def main(argv=None):
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--ladder", action="store_true")
     g.add_argument("--carryover", action="store_true")
+    g.add_argument("--carryover2", action="store_true")
     a = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % fb.DB, uri=True)
     if a.ladder:
         ladder(con)
+    elif a.carryover2:
+        carryover(con, SHRINKS2, PRIOR_GAMES2)
     else:
         carryover(con)
     return 0
