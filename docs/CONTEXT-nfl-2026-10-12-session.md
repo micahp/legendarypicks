@@ -4,7 +4,12 @@ Supersedes `CONTEXT-nfl-2026-10-11.md` for status. Start with `INDEX-nfl-model-r
 stats, branch inventory) and `PARKED-nfl-ratings-2026-10-12.md` (what is NOT to be re-analyzed). Nothing
 below is pushed. Every number was measured on 2026-10-12 unless it says otherwise.
 
-## 1. Is Spec B done? No.
+## 1. Is Spec B done? Built end to end, not merged, not seen in a browser (updated later 10-12).
+
+Full status and evidence: `docs/STATUS-spec-b-2026-10-12.md` on the Spec B branch (head `e361a78`). The table below
+is the earlier status; B4 to B8 are now built (B4 tested on real 2025 data; B5 and B8 only by jest and type check;
+B6 gate passed thinly, rushing not published; B7 job run once for week 6 on dev, nothing graded yet). 2024 snap
+counts were loaded and availability rebuilt with bracketed absences.
 
 Spec B (`SPEC-player-projections-availability-2026-10-09.md`, section 7) has slices B0 to B8. Branch
 `feat/player-projections-availability` (worktree `/root/lp-player-proj`, head `88d3bbe`, 12 commits not in
