@@ -179,9 +179,42 @@ def list_props(player: Optional[str] = Query(None),
              "settled_at": r["settled_at"]} for r in rows]
 
 
+def _parse_teammate_ids(raw, name):
+    """'12,34' -> [12, 34]. A malformed list is a 422, never a silent no-filter."""
+    if not isinstance(raw, str) or not raw.strip():
+        return []
+    try:
+        return [int(x) for x in raw.split(",")]
+    except ValueError:
+        raise HTTPException(status_code=422, detail="{} must be comma-separated player ids".format(name))
+
+
+def _filter_block(without, with_):
+    return {"without": without, "with": with_}
+
+
+def _filter_fields(filtering, without_ids, with_ids, n_games, counts):
+    """Response keys that exist only when a without/with filter was passed."""
+    if not filtering:
+        return {}
+    return {"filter": _filter_block(without_ids, with_ids), "n_games": n_games,
+            "n_excluded_unknown": counts["unknown"], "n_excluded_not_teammate": counts["not_teammate"]}
+
+
+def _hit_windows(settled):
+    """Hit rate over the most recent 5 / 10 / 20 settled and the whole filtered season (newest first)."""
+    def rate(sub):
+        return round(sum(1 for h in sub if h) / len(sub), 3) if sub else None
+    return ({"l5": rate(settled[:5]), "l10": rate(settled[:10]), "l20": rate(settled[:20]), "season": rate(settled)},
+            {"l5": len(settled[:5]), "l10": len(settled[:10]), "l20": len(settled[:20]), "season": len(settled)})
+
+
+
 @router.get("/api/props/player/{player_id}/history")
-def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
-    sql = """SELECT p.id, p.market, p.line, p.side, p.captured_at,
+def player_prop_history(player_id: int, market: Optional[str] = Query(None),
+                        without: Optional[str] = Query(None),
+                        with_: Optional[str] = Query(None, alias="with")):
+    sql = """SELECT p.id, p.game_id, p.market, p.line, p.side, p.captured_at,
                     r.actual_value, r.hit, r.settled_at
              FROM props p
              LEFT JOIN prop_results r ON r.prop_id = p.id
@@ -190,9 +223,25 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     if market:
         sql += " AND p.market = ?"
         params.append(market)
-    sql += " ORDER BY p.captured_at DESC LIMIT 200"
+    without_ids = _parse_teammate_ids(without, "without")
+    with_ids = _parse_teammate_ids(with_, "with")
+    filtering = bool(without_ids or with_ids)
+    # The 200-row cap applies to the filtered set, so a filter never shrinks the window it is asked about.
+    sql += " ORDER BY p.captured_at DESC" + ("" if filtering else " LIMIT 200")
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
+        if filtering:
+            import player_splits
+            status = player_splits.game_status(con, player_id, without_ids, with_ids)
+            nfl_ids = player_splits.prop_game_nfl_ids(con, {r["game_id"] for r in rows})
+            def state_of(pg):
+                nfl = nfl_ids.get(pg)
+                return "unknown" if nfl is None else status.get(nfl)
+            states = {pg: state_of(pg) for pg in {r["game_id"] for r in rows}}
+            rows = [r for r in rows if states[r["game_id"]] == "matched"][:200]
+            kept_games = {pg for pg, st in states.items() if st == "matched"}
+            excluded_unknown = sum(1 for st in states.values() if st == "unknown")
+            excluded_not_teammate = sum(1 for st in states.values() if st == "not_teammate")
     history = [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
                 "captured_at": r["captured_at"], "actual_value": r["actual_value"],
                 "hit": bool(r["hit"]) if r["hit"] is not None else None,
@@ -200,7 +249,13 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     # rolling hit rate (last 20 settled)
     settled = [h for h in history if h["hit"] is not None]
     hit_rate = round(sum(1 for h in settled[-20:] if h["hit"]) / max(len(settled[-20:]), 1), 3) if settled else None
-    return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
+    out = {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
+    if filtering:
+        rates, rates_n = _hit_windows([h["hit"] for h in settled])
+        out.update(_filter_fields(True, without_ids, with_ids, len(kept_games),
+                                  {"unknown": excluded_unknown, "not_teammate": excluded_not_teammate}))
+        out.update({"hit_rates": rates, "hit_rate_n": rates_n})
+    return out
 
 
 # Which log leagues a chart may read for a prop in this league. Only a
@@ -327,8 +382,21 @@ def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
                  line: float = Query(...),
                  side: str = Query("over"),
-                 league: str = Query(...)):
-    """Per-game stat history for a prop's player+market, with the line."""
+                 league: str = Query(...),
+                 without: Optional[str] = Query(None),
+                 with_: Optional[str] = Query(None, alias="with")):
+    """Per-game stat history for a prop's player+market, with the line.
+
+    ``without`` / ``with`` (comma-separated teammate player ids, NFL only) keep only the games where
+    every ``without`` teammate had played = 0 and every ``with`` teammate played = 1, read through
+    player_splits (one definition of "did X play"). Games with unknown availability are excluded and
+    counted, never folded into either side.
+    """
+    without_ids = _parse_teammate_ids(without, "without")
+    with_ids = _parse_teammate_ids(with_, "with")
+    filtering = bool(without_ids or with_ids)
+    if filtering and league != "nfl":
+        return {"error": "without/with filters are NFL only", "games": []}
     if (
         league in _SOCCER_CHART_LEAGUES
         and _base_market(market) in _SOCCER_NON_FOTMOB_HISTORY
@@ -457,13 +525,25 @@ def prop_history(player_id: int = Query(...),
             # Get game logs with this stat, most recent first. One row per
             # appearance comes from the view, so there is nothing to dedupe here.
             rows = con.execute(
-                f"""SELECT game_date, opponent, home_away, {val_expr} AS val
+                f"""SELECT game_id, game_date, opponent, home_away, {val_expr} AS val
                       FROM player_game_logs_all
                      WHERE player_id=? AND league IN ({league_placeholders})
                        AND {where_clause}{_PLAYED}
-                     ORDER BY game_date DESC LIMIT 100""",
+                     ORDER BY game_date DESC{'' if filtering else ' LIMIT 100'}""",
                 (player_id, *log_leagues)
             ).fetchall()
+        if filtering:
+            import player_splits
+            status = player_splits.game_status(con, player_id, without_ids, with_ids)
+            filter_counts = {"unknown": 0, "not_teammate": 0}
+            kept_rows = []
+            for r in rows:
+                state = status.get(r["game_id"], "unknown")
+                if state == "matched":
+                    kept_rows.append(r)
+                elif state in filter_counts:
+                    filter_counts[state] += 1
+            rows = kept_rows[:100]
 
     if not rows:
         return {
@@ -478,6 +558,7 @@ def prop_history(player_id: int = Query(...),
             "hit_rate": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
             "hit_rate_n": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
             "games": [],
+            **_filter_fields(filtering, without_ids, with_ids, 0, filter_counts if filtering else None),
         }
 
     games = []
@@ -496,6 +577,7 @@ def prop_history(player_id: int = Query(...),
             "opponent": r["opponent"] or "",
             "home": (r["home_away"] == "home") if r["home_away"] else None,
             "hit": hit,
+            **({"game_id": r["game_id"]} if filtering else {}),
         })
 
     def _rate(games_subset, ln):
@@ -504,7 +586,8 @@ def prop_history(player_id: int = Query(...),
         return round(hits / len(games_subset), 3)
 
     # Projection: recency-weighted EV from the shared projections module (games is recent-first).
-    proj = proj_mod.project_stat([g["value"] for g in games])
+    # A conditional sample is not the player's projection: with a filter, none is published.
+    proj = None if filtering else proj_mod.project_stat([g["value"] for g in games])
     projection = proj["projection"] if proj else None
 
     return {
@@ -535,6 +618,7 @@ def prop_history(player_id: int = Query(...),
             "season": _rate(games, line),
         },
         "games": games,
+        **_filter_fields(filtering, without_ids, with_ids, len(games), filter_counts if filtering else None),
     }
 
 

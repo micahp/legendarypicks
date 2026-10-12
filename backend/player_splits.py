@@ -87,7 +87,8 @@ def splits(con, player_id, without=(), with_=(), season=None, league=LEAGUE):
     shares = _shares(con, league, player_id, season)
     result = {"player_id": player_id, "league": league, "season": season,
               "without": without, "with": with_,
-              "matched": [], "not_matched": [], "excluded_unknown": 0, "excluded_not_teammate": 0}
+              "matched": [], "not_matched": [], "excluded_unknown": 0, "excluded_not_teammate": 0,
+              "excluded_unknown_games": [], "excluded_not_teammate_games": []}
     logged = _player_games(con, league, player_id, season)
     logged_keys = {(s, game_id, team) for s, _week, game_id, team, _stats in logged}
     universe = [(s, week, game_id, team, stats) for s, week, game_id, team, stats in logged]
@@ -106,9 +107,11 @@ def splits(con, player_id, without=(), with_=(), season=None, league=LEAGUE):
                 teams[(season_, x)] = _teams_this_season(con, league, season_, x)
         if any(teams[(season_, x)] and team not in teams[(season_, x)] for x in teammates):
             result["excluded_not_teammate"] += 1
+            result["excluded_not_teammate_games"].append(game_id)
             continue
         if stats is None:
             result["excluded_unknown"] += 1
+            result["excluded_unknown_games"].append(game_id)
             continue
         status = _played(con, league, season_, game_id, team, teammates)
         row = {"season": season_, "week": week, "game_id": game_id, "team": team,
@@ -121,9 +124,44 @@ def splits(con, player_id, without=(), with_=(), season=None, league=LEAGUE):
             result["not_matched"].append(row)
         elif unknown:
             result["excluded_unknown"] += 1
+            result["excluded_unknown_games"].append(game_id)
         else:
             result["matched"].append(row)
     return result
+
+
+def game_status(con, player_id, without=(), with_=(), season=None, league=LEAGUE):
+    """game_id -> 'matched' | 'not_matched' | 'unknown' | 'not_teammate' for one player's games.
+
+    One reading of ``splits()`` so a caller that filters its own rows (the props history
+    routes) never re-implements "did X play". A game_id absent from the map is outside the
+    player's universe (a game he provably missed, or not a final regular-season game).
+    """
+    res = splits(con, player_id, without=without, with_=with_, season=season, league=league)
+    out = {}
+    for key, rows in (("matched", res["matched"]), ("not_matched", res["not_matched"])):
+        for row in rows:
+            out[row["game_id"]] = key
+    for gid in res["excluded_unknown_games"]:
+        out[gid] = "unknown"
+    for gid in res["excluded_not_teammate_games"]:
+        out[gid] = "not_teammate"
+    return out
+
+
+def prop_game_nfl_ids(con, prop_game_ids):
+    """prop_games.id -> nflverse game_id, joined on (date, home, away) to nfl_schedule.
+
+    A prop game with no regular-season schedule row (preseason) is absent from the map.
+    """
+    ids = list(prop_game_ids)
+    if not ids:
+        return {}
+    marks = ",".join("?" * len(ids))
+    return {pg: gid for pg, gid in con.execute(
+        "SELECT g.id, s.game_id FROM prop_games g JOIN nfl_schedule s "
+        "ON s.gameday=g.date AND s.home_team=g.home AND s.away_team=g.away "
+        "WHERE g.league='nfl' AND g.id IN (%s)" % marks, ids)}
 
 
 def main(argv=None):
