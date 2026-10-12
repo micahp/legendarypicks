@@ -122,3 +122,37 @@ c. Run the focused suite (52 tests at `fd9ad96`) and report the count. Commit by
 ## Rules (from the context file, still binding)
 Dev DB only. Pre-register before running, never loosen after. Keep rule is pooled. `git add` by file
 name. No `git stash`, no push, no merge into `dev`, no timers. No em dashes. Check `free -h` before runs.
+
+## Step 6 (added after steps 1 to 5 were handed off): contention, "has this team checked out"
+
+Micah, 10-12: the first quarter and the last quarter of a season differ because by the end many teams
+have nothing to play for. Split-half stability does not show it (ranks persist; a team that quits
+changes its level, not its rank), so test it directly as a feature.
+
+Built only from what is already on this branch, with the real NFL rules:
+- `nfl_sim.inputs(con, season, as_of_week=w - 1)` rebuilds the season as it stood before week w
+  (scores after that week are never used), and `nfl_sim.run(inp, n, seed=...)` plays out the rest
+  and seeds each conference with `nfl_seeding` (official tie-break order, 6 seeds before 2020 and 7
+  from 2020 via `n_seeds_for`). Tried 10-12 on 2012 wk 9, 2017 wk 13, 2023 wk 15: about 2 s per 500 runs.
+- `nfl_bracket_check.team_map` uses the 2026 division map for every season. Checked 10-12 against the
+  published `nfl_schedule.div_game` flag: 0 of 4,175 REG games 2010 to 2025 disagree, 0 unknown codes.
+  Add this check to the feature as an assertion that runs every time.
+
+Definition, fixed here (copy it, do not change it):
+- For every REG game in week w >= 10 of seasons 2010 to 2025: P(playoffs) per team from
+  `nfl_sim.run(nfl_sim.inputs(con, s, as_of_week=w - 1), 1000, k=0.0, seed=s * 100 + w)`.
+  `out` = 1 if P(playoffs) < 0.01, else 0. Weeks < 10: column 0.
+- Column = out_home - out_away. Expected coefficient sign: negative.
+- P(playoffs) uses v1 ratings for unplayed games, so "out" partly reflects team quality; the stack
+  already carries proj_margin, so the column measures being out beyond the rating.
+- Grading: the main walk-forward stack (fit on all earlier seasons, as every other feature), but the
+  report covers only games in week >= 10: groups 2011-2023 pooled, 2024, 2025. Keep rule as before:
+  pooled interval entirely below zero, 2024 and 2025 points not above zero.
+- Diagnostics to print, not part of the rule: per season, team-games flagged out, and games with
+  exactly one team out; the fitted coefficient; coin flips reported by the simulator.
+- Tests before the run (`test_nfl_contention.py`): week < 10 gives 0; the threshold is strict
+  (P = 0.01 is not out); the division map assertion fails on a doctored map.
+- CLI: `--feature contention_keep` (a keep-test function like `participation_keep_test`, since the
+  graded subset differs). Compute cost: about 15 seasons x 9 weeks x 1000 runs, roughly 10 minutes,
+  single process, under 300 MB. Check `free -h` first.
+- Record in the same RESULTS file as steps 2 and 3, and a row in the INDEX section 1.
