@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { trackPropChartOpened } from '../../lib/analytics'
+import WithoutControl, { TeammateOut, WithoutSample } from './WithoutControl'
 
 // ── types ────────────────────────────────────────────────
 export interface GameLog {
@@ -26,6 +27,10 @@ export interface PropHistory {
   // twenty-game record. Optional so an older payload still renders.
   hit_rate_n?: { l5: number; l10: number; l20: number; season: number }
   games: GameLog[]
+  // Present only on a response filtered by teammate availability (?without=).
+  n_games?: number
+  n_excluded_unknown?: number
+  n_excluded_not_teammate?: number
 }
 
 type Window = 'l5' | 'l10' | 'l20' | 'season'
@@ -58,8 +63,34 @@ function chartOpponent(opponent: string, league: string): string {
 }
 
 // ── component ─────────────────────────────────────────────
-export default function PropChart({ data, window: initialWindow = 'l10' }: { data: PropHistory; window?: Window }) {
+// The chart reads the shared URL's ?without=<player id> and writes it back, so a filtered view can be sent
+// to someone; it is applied only when that id is one of this player's teammates who missed games.
+function readWithoutParam(): number | null {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('without')
+    const id = raw === null ? NaN : Number(raw)
+    return Number.isInteger(id) ? id : null
+  } catch { return null }
+}
+
+function writeWithoutParam(id: number | null) {
+  try {
+    const url = new URL(window.location.href)
+    if (id === null) url.searchParams.delete('without')
+    else url.searchParams.set('without', String(id))
+    window.history.replaceState(window.history.state, '', url.toString())
+  } catch { /* a view without history support just does not carry the filter */ }
+}
+
+export default function PropChart({ data: base, window: initialWindow = 'l10' }: { data: PropHistory; window?: Window }) {
   const [win, setWin] = useState<Window>(initialWindow)
+  const [without, setWithout] = useState<number | null>(null)
+  const [teammates, setTeammates] = useState<TeammateOut[]>([])
+  const [filtered, setFiltered] = useState<PropHistory | null>(null)
+  const [filterLoading, setFilterLoading] = useState(false)
+  const [filterFailed, setFilterFailed] = useState(false)
+  // Everything below reads `data`: the unfiltered history, or the one for the selected teammate once it lands.
+  const data = without !== null && filtered && !filterLoading ? filtered : base
   const [venue, setVenue] = useState<Venue>('all')
   const [vsOpp, setVsOpp] = useState(false)
 
@@ -67,12 +98,58 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
   // this component (e.g. clicking between prop buttons on the same card). Reset
   // filters whenever the underlying series identity changes so a filter chosen for
   // the last chart doesn't silently blank out the new one.
-  const seriesKey = `${data.player_id}:${data.market}:${data.side}:${data.line}`
+  const seriesKey = `${base.player_id}:${base.market}:${base.side}:${base.line}`
   useEffect(() => {
     setWin(initialWindow)
     setVenue('all')
     setVsOpp(false)
+    setWithout(null)
+    setFiltered(null)
+    setFilterFailed(false)
   }, [seriesKey, initialWindow])
+
+  // Teammates who missed games, NFL only (availability exists for no other league).
+  const playerId = base.player_id
+  const isNfl = base.league === 'nfl'
+  useEffect(() => {
+    setTeammates([])
+    if (!isNfl || !playerId) return
+    let live = true
+    fetch(`/api/props/player/${playerId}/teammates-out`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then(d => {
+        if (!live) return
+        const list: TeammateOut[] = Array.isArray(d?.teammates) ? d.teammates : []
+        setTeammates(list)
+        const fromUrl = readWithoutParam()
+        if (fromUrl !== null && list.some(t => t.player_id === fromUrl)) setWithout(fromUrl)
+      })
+      .catch(() => { if (live) setTeammates([]) })
+    return () => { live = false }
+  }, [playerId, isNfl, seriesKey])
+
+  // The history for the selected teammate, from the same route the unfiltered chart uses.
+  useEffect(() => {
+    if (without === null) { setFiltered(null); setFilterFailed(false); return }
+    let live = true
+    setFilterLoading(true); setFilterFailed(false)
+    const params = new URLSearchParams({
+      player_id: String(base.player_id), market: base.market, line: String(base.line),
+      side: base.side, league: base.league, without: String(without),
+    })
+    fetch(`/api/props/history?${params}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then(d => {
+        if (!live) return
+        if (!Array.isArray(d?.games)) throw new Error('no games')
+        setFiltered(d)
+      })
+      .catch(() => { if (live) { setFiltered(null); setFilterFailed(true) } })
+      .finally(() => { if (live) setFilterLoading(false) })
+    return () => { live = false }
+  }, [without, seriesKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectWithout = (id: number | null) => { setWithout(id); writeWithoutParam(id) }
 
   // Keyed on seriesKey rather than mount: callers swap `data` between prop buttons
   // without remounting, and each of those is a chart opened.
@@ -126,8 +203,14 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
     return displayGames.reduce((sum, g) => sum + g.value, 0) / displayGames.length
   }, [displayGames])
 
-  const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp
-  const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false) }
+  const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp && without === null
+  const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false); selectWithout(null) }
+  const selectedName = teammates.find(t => t.player_id === without)?.name ?? `player ${without}`
+  const sample: WithoutSample | null = without !== null && filtered && !filterLoading
+    ? { n_games: filtered.n_games ?? filtered.games.length,
+        n_excluded_unknown: filtered.n_excluded_unknown ?? 0,
+        n_excluded_not_teammate: filtered.n_excluded_not_teammate ?? 0 }
+    : null
 
   const hasGames = displayGames.length > 0
   const maxVal = hasGames ? Math.max(data.line, ...displayGames.map(g => g.value)) : data.line
@@ -195,6 +278,9 @@ export default function PropChart({ data, window: initialWindow = 'l10' }: { dat
           </button>
         )}
       </div>
+
+      <WithoutControl teammates={teammates} selected={without} selectedName={selectedName}
+        sample={sample} loading={filterLoading} failed={filterFailed} onSelect={selectWithout} />
 
       {!hasGames ? (
         <div className="flex flex-col items-center gap-2 py-6 text-center">
