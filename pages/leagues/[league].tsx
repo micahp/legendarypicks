@@ -161,6 +161,14 @@ export default function LeagueHubPage() {
         <div className="flex items-center gap-3">
           <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
           <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
+          {isNFL && (
+            <Link
+              href="/nfl/playoff-odds"
+              className="ml-auto whitespace-nowrap text-sm text-zinc-400 transition-colors hover:text-emerald-400"
+            >
+              Playoff odds
+            </Link>
+          )}
         </div>
         {!route.offerable && !route.coverageLoading ? (
           <LeagueUnavailable league={route.league} />
