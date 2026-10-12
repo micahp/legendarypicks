@@ -21,7 +21,7 @@ interface Lock {
   p_home_win: number
   locked_at: string
   line: Line
-  grade: { brier: number | null; margin_err: number; total_err: number; ats: string } | null
+  grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null } | null
 }
 
 interface ModelInfo {
@@ -42,12 +42,30 @@ interface ModelGame {
   locks: Record<string, Lock>
 }
 
+interface Tally {
+  win: number
+  loss: number
+  tie?: number
+  push?: number
+  no_pick: number
+  no_line?: number
+}
+
+interface RecordRow extends ModelInfo {
+  locked: number
+  graded: number
+  awaiting: number
+  su: Tally | null
+  ats: Tally | null
+}
+
 interface Payload {
   season: number
   week: number | null
   weeks: number[]
   models: ModelInfo[]
   games: ModelGame[]
+  record: RecordRow[]
 }
 
 const one = (x: number) => x.toFixed(1)
@@ -83,6 +101,50 @@ function atsText(ats: string) {
   return { win: 'ATS W', loss: 'ATS L', push: 'Push', no_pick: 'No pick', no_line: 'No line' }[ats] || ats
 }
 
+function suText(su: string | null) {
+  return su ? { win: '✓', loss: '✗', tie: 'Tie', no_pick: 'No pick' }[su] || su : ''
+}
+
+// "8-3" plus the third outcome only when it happened. Wins first, then losses.
+function tally(t: Tally, third: 'tie' | 'push') {
+  const extra = t[third] ?? 0
+  return `${t.win}-${t.loss}${extra ? ` · ${extra} ${third}` : ''}`
+}
+
+function RecordPanel({ rows }: { rows: RecordRow[] }) {
+  if (!rows.length) return null
+  return (
+    <section className="space-y-2">
+      <h2 className="text-lg font-semibold text-zinc-100">Season record</h2>
+      <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+        {rows.map(r => (
+          <div key={r.version} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
+            <span className={`min-w-0 truncate ${r.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={r.version}>
+              {r.label}
+            </span>
+            {r.graded === 0 || !r.su || !r.ats ? (
+              <span className="text-zinc-500">No graded games yet · {r.awaiting} awaiting a final</span>
+            ) : (
+              <span className="flex flex-wrap justify-end gap-x-4 tabular-nums text-zinc-300">
+                <span>Winner {tally(r.su, 'tie')}</span>
+                <span>Against the line {tally(r.ats, 'push')}</span>
+                <span className="text-zinc-500">
+                  {r.graded} graded{r.awaiting ? ` · ${r.awaiting} awaiting` : ''}
+                </span>
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-zinc-500">
+        Counts over graded games only; a lock whose game is not final yet is not counted. Winner: the side with the
+        higher win probability. Against the line: the model&apos;s side against the line it was locked with.
+        These are small samples; do not rank models on them yet.
+      </p>
+    </section>
+  )
+}
+
 function LockRow({ game, model, lock }: { game: ModelGame; model: ModelInfo; lock?: Lock }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 py-1 text-sm">
@@ -99,9 +161,9 @@ function LockRow({ game, model, lock }: { game: ModelGame; model: ModelInfo; loc
               ? <span className="text-zinc-500">{lock.margin >= 0 ? game.home : game.away} by {one(Math.abs(lock.margin))}</span>
               : <>{game.away} {one(lock.proj_away)} · {game.home} {one(lock.proj_home)}</>}
           </span>
-          <span className="w-28 text-right tabular-nums text-zinc-400">
+          <span className="min-w-[10.5rem] text-right tabular-nums text-zinc-400">
             {lock.grade
-              ? <>off {one(Math.abs(lock.grade.margin_err))} · {atsText(lock.grade.ats)}</>
+              ? <>off {one(Math.abs(lock.grade.margin_err))} · {atsText(lock.grade.ats)} · <span title="Picked the winner">Pick {suText(lock.grade.su)}</span></>
               : winnerText(game, lock)}
           </span>
         </>
@@ -192,6 +254,8 @@ export default function NflModelTab() {
         </div>
       </div>
 
+      <RecordPanel rows={data.record ?? []} />
+
       {groups.map(([day, games]) => (
         <section key={day} className="space-y-2">
           <h2 className="text-lg font-semibold text-zinc-100">{day}</h2>
@@ -203,7 +267,7 @@ export default function NflModelTab() {
 
       <p className="text-xs text-zinc-500">
         Win % is the chance the named team wins. After a final, each row shows how far its margin was off
-        and its result against the line it was locked with. Lines are nflverse&apos;s, copied at lock time.
+        its result against the line it was locked with, and whether the pick won (Pick ✓ or ✗). Lines are nflverse&apos;s, copied at lock time.
       </p>
     </div>
   )

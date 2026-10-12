@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily grading of finished NFL locks (DEV)
+
+[Timer]
+# Daily: a run with nothing new to grade writes nothing. The grader itself refuses to grade a game
+# until the publisher reports the final and kickoff was at least 4 hours ago.
+OnCalendar=*-*-* 06:30:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-grade.service
+
+[Install]
+WantedBy=timers.target

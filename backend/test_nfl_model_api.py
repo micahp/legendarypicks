@@ -80,6 +80,51 @@ class Payload(unittest.TestCase):
         self.assertEqual(g["locks"][m.ADOPTED]["grade"]["ats"], "win")
         self.assertEqual(g["kickoff_utc"], "2026-10-11T17:00:00Z")
 
+    def _final(self, hs, as_, ats="win"):
+        self.con.execute("UPDATE nfl_schedule SET home_score=?, away_score=?, result=?",
+                         (hs, as_, hs - as_))
+        brier = None if hs == as_ else 0.03                     # the grader stores no Brier for a tie
+        self.con.execute("INSERT INTO projection_grades VALUES ('nfl','g1',?,?,?,?,0.2,"
+                         "4.5,-1.3,?,'t9')", (m.ADOPTED, hs, as_, brier, ats))
+
+    def test_su_result_cases(self):
+        self.assertEqual(m.su_result(0.19, 20, 27), "win")      # picked away, away won
+        self.assertEqual(m.su_result(0.19, 27, 20), "loss")     # picked away, home won
+        self.assertEqual(m.su_result(0.70, 27, 20), "win")
+        self.assertEqual(m.su_result(0.70, 20, 27), "loss")
+        self.assertEqual(m.su_result(0.70, 24, 24), "tie")      # nobody won
+        self.assertEqual(m.su_result(0.50, 27, 20), "no_pick")  # exactly 50%
+        self.assertIsNone(m.su_result(0.70, None, None))        # not final: no result
+
+    def test_grade_carries_the_straight_up_result(self):
+        self._final(20, 27)                                     # CHI (away) won; lock favoured CHI
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(g["locks"][m.ADOPTED]["grade"]["su"], "win")
+
+    def test_record_counts_only_graded_and_says_what_is_waiting(self):
+        before = {r["version"]: r for r in m.locks_payload(self.con, 2026, 5)["record"]}
+        self.assertEqual((before[m.ADOPTED]["locked"], before[m.ADOPTED]["graded"],
+                          before[m.ADOPTED]["awaiting"]), (1, 0, 1))
+        self.assertIsNone(before[m.ADOPTED]["su"])              # no graded game: no record, not 0-0
+        self._final(20, 27)
+        rec = {r["version"]: r for r in m.locks_payload(self.con, 2026, 5)["record"]}
+        v1 = rec[m.ADOPTED]
+        self.assertEqual((v1["locked"], v1["graded"], v1["awaiting"]), (1, 1, 0))
+        self.assertEqual(v1["su"], {"win": 1, "loss": 0, "tie": 0, "no_pick": 0})
+        self.assertEqual(v1["ats"], {"win": 1, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0})
+        self.assertAlmostEqual(v1["mean_brier"], 0.03)
+        self.assertAlmostEqual(v1["mean_abs_margin_err"], 4.5)
+        legacy = rec["nfl-v1 cap=21.0 sigma=13.4"]             # locked, not graded: still waiting
+        self.assertEqual((legacy["locked"], legacy["graded"], legacy["awaiting"]), (1, 0, 1))
+        self.assertEqual([r["version"] for r in m.locks_payload(self.con, 2026, 5)["record"]],
+                         [m.ADOPTED, "nfl-v1 cap=21.0 sigma=13.4"])
+
+    def test_a_tied_game_is_a_tie_not_a_loss(self):
+        self._final(24, 24, ats="push")
+        v1 = {r["version"]: r for r in m.locks_payload(self.con, 2026, 5)["record"]}[m.ADOPTED]
+        self.assertEqual(v1["su"], {"win": 0, "loss": 0, "tie": 1, "no_pick": 0})
+        self.assertIsNone(v1["mean_brier"])                     # the grader stores no Brier for a tie
+
     def test_no_locks_is_an_empty_payload_not_an_error(self):
         p = m.locks_payload(self.con, 2025, None)
         self.assertEqual((p["week"], p["games"], p["weeks"]), (None, [], []))
