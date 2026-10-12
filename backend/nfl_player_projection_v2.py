@@ -357,7 +357,7 @@ def marcel(hist, season, week, pid, col, both_seasons=False):
 # R and G are fitted on 2024 by method of moments (backtest_nfl_player_projection_v2.py --fit-dist) and
 # frozen in DIST. Graded on 2025 by the share of actual values inside the simulated p10 to p90 band
 # (target 80%) and the share below p10 and above p90 (target 10% each).
-DIST = {"R": 8.0, "G": 1.0}
+DIST = {"R": 3.41, "G": 1.23}   # frozen from --fit-dist on 2024
 
 
 def simulate(mean_tgt, catch, yards_per_rec, td_per_tgt, n=2000, seed=0, dist=None):
