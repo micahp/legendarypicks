@@ -78,14 +78,23 @@ relative to the league and excluded sacks.
 - **Ran it 10-12 on the dev DB**: graded 37, a second run graded 0 (idempotent). Checked before writing: an
   independent ATS calculation matched on 37 of 37, and the spread sign was tested against outcomes
   (positive spread, home wins 71.6%, n=109).
-- Result, 2026 week 5 only (tiny n, not evidence): v1 ATS 11-13-1, Brier 0.213; EPA v2 ATS 5-6-1,
-  Brier 0.218. Straight up (computed separately): v1 17 of 23, EPA 7 of 11.
-- The live Model tab already shows each lock's grade ("off X, ATS W/L"), so the 37 grades appear.
-- **In progress, not committed**: branch `feat/nfl-grading-record` (worktree `/root/lp-nfl-grading-record`,
-  off `dev`). Done so far, uncommitted and untested: `su_result()`, a season `record_payload()`, and the
-  straight-up result added to each grade in `backend/routers/nfl_model.py`. Still to do: tests, the tab UI
-  (a pick mark and a season record panel, counts with n and pushes separate, no win-rate percentages, neutral
-  marks not green and red), and a grading timer file (not installed). Then a look at `/leagues/nfl?tab=model`.
+- Result, 2026 week 5 only, graded games (tiny n, not evidence; straight up counts are winner-picked
+  wins-losses, ties apart): adopted v1 8-3 with 1 tie, against the spread 5-6 with 1 push, 12 graded;
+  v2 EPA (untuned first lock) 7-4 with 1 tie, ATS 5-6 with 1 push, 12 graded; the pre-freeze 10-09 v1 9-3 with
+  1 tie, ATS 6-7, 13 graded. **An earlier figure of "v1 17 of 23, 11-13-1" added the adopted and the
+  pre-freeze v1 together, counting the same games twice; do not use it.** Each version still has 1 lock
+  awaiting a final.
+- The live Model tab already showed each lock's grade ("off X, ATS W/L"), so the 37 grades appear.
+- **Finished**: branch `feat/nfl-grading-record` (worktree `/root/lp-nfl-grading-record`, head `397d944`,
+  one commit, a fast-forward of `dev`, not merged). Adds the straight-up result to each graded lock
+  (`Pick ✓/✗/Tie`), a season record panel per model (winner W-L plus ties, against the line W-L plus pushes,
+  n graded, locks awaiting a final; counts only, no win-rate percentages, "No graded games yet" instead of
+  0-0), and `ops/systemd/legendarypicks-nfl-grade.{service,timer}` (daily 06:30 Chicago, NOT installed; the
+  grader is idempotent and refuses games not final). Verified: 45 backend tests pass (7 new, expected values
+  worked by hand); 3 new jest component tests pass; the record on the real dev DB matches an independent count
+  (sums of 17-6 and 11-13-1 across the two v1 versions, 7-4 and 5-6-1 for EPA); strict type check of the tab
+  passes and a deliberate type error is caught by the same setup. **Not checked: the tab in a browser.** It
+  appears on `/leagues/nfl?tab=model` only after the merge.
 
 ## 5. Playoff odds and ratings (`feat/nfl-playoff-odds`, head `ce5c7f9`, 2 commits ahead of `dev`)
 
@@ -105,7 +114,7 @@ duplicated the grader and read dropped columns. Parked and dropped items, with r
 ## 6. Branches and worktrees
 
 Live NFL work: `feat/nfl-model-foundation`, `feat/player-projections-availability`, `feat/nfl-playoff-odds`,
-`feat/nfl-grading-record`, and `feat/nfl-epa-efficiency` (holds the weekly pbp step; remove once moved).
+`feat/nfl-grading-record` (finished, unmerged), and `feat/nfl-epa-efficiency` (holds the weekly pbp step; remove once moved).
 Deleted today with an archive tag each (17 `archive/*` tags exist): 15 branches already in `dev` plus the old
 ratings branch; worktrees `lp-nfl-data-foundation`, `lp-nfl-schedule-a0`, `lp-nfl-ratings` removed (their ignored
 files were checked first; three run logs copied to `/root/lp-archive/2026-10-12/`). Restore with
@@ -138,7 +147,7 @@ GameCard front-end edits, sim output JSONs, four docs): left alone.
 ## 9. Next steps, in order
 
 1. 10-13 morning: 2026 play-by-play ingest (after BUF at LA lands), then `build_player_game_shares.py`.
-2. Finish `feat/nfl-grading-record` (tests, UI, timer file) and look at the Model tab.
+2. Merge `feat/nfl-grading-record` when Micah says (disjoint from the playoff-odds branch, either order), then look at `/leagues/nfl?tab=model` once.
 3. Merge `feat/nfl-playoff-odds` when Micah says; add the "v1 trails the market" sentence first.
 4. Land the research branch's pbp ingest in `dev`, then add the weekly pbp step.
 5. Spec B: B4 backend, then B5.
