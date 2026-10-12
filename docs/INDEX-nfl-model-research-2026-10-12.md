@@ -156,12 +156,12 @@ Open decisions for Micah:
 | Model research (harness, features, ladder, participation loader) | `feat/nfl-model-foundation`, worktree `/root/lp-nfl-lock-by-version` | 11 commits not in `dev` |
 | Spec B (player projections) | `feat/player-projections-availability`, worktree `/root/lp-player-proj` | 11 commits not in `dev` |
 | Model page (v1 locks), Spec A, seeding, sim, lock grader (`grade_nfl_locks.py`) | `dev` | merged 10-10 to 10-12 |
-| NFL ratings WIP | worktree `/root/lp-nfl-ratings`, nothing committed | **keep, unique:** playoff-odds API (`routers/models/nfl.py`), `pages/nfl/playoff-odds.tsx`, `jobs/nfl_weekly_model.py` and its systemd unit and timer, `nfl_tiebreaker_data.py` (touchdowns for deep tiebreakers). **Overlaps `dev`:** 10 files (seeding, sim, lock, standings, bracket check, migrate, their tests, spec) that `dev` also changed after 10-10; needs a reconcile, not a plain commit. `nfl_grading.py` is superseded by `dev`'s `grade_nfl_locks.py` |
+| NFL ratings WIP | worktree `/root/lp-nfl-ratings`, branch `feat/nfl-ratings-playoff-odds`, committed as-is 10-12 (`dd17544`, 32 files) | **keep, unique:** playoff-odds API (`routers/models/nfl.py`), `pages/nfl/playoff-odds.tsx`, `jobs/nfl_weekly_model.py` and its systemd unit and timer, `nfl_tiebreaker_data.py` (touchdowns for deep tiebreakers). **Overlaps `dev`:** 10 files (seeding, sim, lock, standings, bracket check, migrate, their tests, spec) that `dev` also changed after 10-10; needs a reconcile, not a plain commit. `nfl_grading.py` is superseded by `dev`'s `grade_nfl_locks.py` |
 | Old EPA blend (retired) | branch `feat/nfl-epa-efficiency`, no worktree | 2 commits; only the weekly pbp step is worth taking (see open decisions) |
 | All Day lineups (not model) | `feat/nfl-allday`, worktree `/root/lp-nfl-allday` | 4 commits never landed; product call |
 | Identity publishers (July) | branch `codex/nfl-v1` | 4 commits never landed; `dev` split every file it touched into packages on 08-18; probably superseded |
 | Prop market suffix fix | branch `feat/prop-repair` | 13-line fix never landed, no equivalent in `dev` (not NFL) |
-| Already in `dev`, safe to remove | `lp-nfl-data-foundation`; `lp-nfl-schedule-a0` (both timer files byte-identical in `dev`); branches `feat/nfl-season-proj`, `feat/projections-nfl` (patch-equivalent), `feat/nfl-adp` (same subject landed 07-22), and 8 fully merged NFL branches | not removed yet; archive tag before deleting |
+| Removed 10-12 (were already in `dev`) | worktrees `lp-nfl-data-foundation`, `lp-nfl-schedule-a0`; 13 branches | each branch tagged `archive/<branch>` first (`git branch <name> archive/<name>` restores it); the data-foundation worktree's 3 ignored run logs copied to `/root/lp-archive/2026-10-12/` |
 
 ## 6. Rules that apply to all of this
 
