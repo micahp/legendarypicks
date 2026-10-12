@@ -37,7 +37,9 @@ import sys
 import numpy as np
 
 import nfl_backtest as nb
+import nfl_bracket_check as bc
 import nfl_metrics as nm
+import nfl_sim as ns
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
@@ -959,6 +961,115 @@ def coverage_keep_test(con):
     print("verdict coverage_keep: %s" % ("KEPT" if kept else "NOT KEPT"))
 
 
+# ---- contention, 2026-10-12 (step 6). PRE-REGISTERED (before its first run).
+# Question: has this team checked out? A team with almost no playoff chance may play differently.
+# Column per base row (REG game) in week >= 10 of 2010-2025: P(playoffs) per team from
+# nfl_sim.run(nfl_sim.inputs(con, s, as_of_week=w - 1), CON_RUNS, k=CON_K, seed=s * 100 + w).
+# out = 1 if P < CON_THRESH (strict), else 0. Weeks < 10: column 0 (counted, never simulated).
+# Column = out_home - out_away. Expected coefficient sign: negative.
+# P uses v1 ratings for unplayed games, so "out" partly reflects quality; the stack already carries
+# proj_margin, so the column measures being out beyond the rating.
+# Grading: the main walk-forward stack (fit on all earlier seasons, as every other feature); base B
+# refit on the same rows; the report covers only week >= 10. Groups 2011-2023 pooled, 2024, 2025.
+# Keep rule (same as the other tests): pooled 2011-2023 F-B interval entirely below zero, AND the
+# 2024 and 2025 F-B points not above zero.
+# Division map: nfl_bracket_check.team_map (the 2026 map) must agree with nfl_schedule.div_game on
+# every REG game 2010-2025. An unknown code or a disagreement raises, on every run.
+CON_WEEK_MIN = 10
+CON_THRESH = 0.01
+CON_RUNS = 1000
+CON_K = 0.0
+CON_SEASONS = list(range(2010, 2026))
+CON_GROUPS = (("2011-2023", range(2011, 2024)), ("2024", (2024,)), ("2025", (2025,)))
+
+
+def division_map_check(con, tmap, seasons=CON_SEASONS):
+    """Assert tmap (code -> (conference, division)) agrees with nfl_schedule.div_game on every REG
+    game in seasons. Returns the number of games checked. Raises AssertionError otherwise."""
+    games = con.execute(
+        "SELECT season, week, home_team, away_team, div_game FROM nfl_schedule "
+        "WHERE game_type = 'REG' AND season BETWEEN ? AND ?",
+        (min(seasons), max(seasons))).fetchall()
+    unknown, bad = [], []
+    for s, w, h, a, dg in games:
+        if h not in tmap or a not in tmap or dg not in (0, 1):
+            unknown.append((s, w, h, a, dg))
+            continue
+        if int(tmap[h][1] == tmap[a][1]) != dg:
+            bad.append((s, w, h, a, dg))
+    if unknown or bad:
+        raise AssertionError("division map check failed: %d disagreements with div_game (e.g. %s), "
+                             "%d unknown codes or flags (e.g. %s)"
+                             % (len(bad), bad[:3], len(unknown), unknown[:3]))
+    return len(games)
+
+
+def _out(teams, code, s, w):
+    if code not in teams:
+        raise ValueError("no simulated record for %s in season %d week %d" % (code, s, w))
+    return 1 if teams[code]["p_playoffs"] < CON_THRESH else 0
+
+
+def contention_columns(rows, sim):
+    """game_id -> [out_home - out_away], and game_id -> (out_home, out_away) for week >= 10.
+
+    sim(season, week) returns an nfl_sim.aggregate dict. Week < CON_WEEK_MIN is column 0 and is
+    never simulated."""
+    cols, flags = {}, {}
+    for r in rows:
+        s, w = int(r["season"]), int(r["week"])
+        if w < CON_WEEK_MIN:
+            cols[r["game_id"]] = [0.0]
+            continue
+        teams = sim(s, w)["teams"]
+        oh, oa = _out(teams, r["home"], s, w), _out(teams, r["away"], s, w)
+        cols[r["game_id"]] = [float(oh - oa)]
+        flags[r["game_id"]] = (oh, oa)
+    return cols, flags
+
+
+def contention_keep_test(con):
+    tmap = bc.team_map(con)
+    n_div = division_map_check(con, tmap)
+    print("division map check: %d REG games 2010-2025 agree with div_game (0 disagreements, "
+          "0 unknown codes)" % n_div)
+    rows = base_rows(con)
+    cache, flips = {}, {}
+
+    def sim(s, w):
+        if (s, w) not in cache:
+            agg = ns.run(ns.inputs(con, s, as_of_week=w - 1), CON_RUNS, k=CON_K, seed=s * 100 + w)
+            cache[(s, w)] = agg
+            flips[s] = flips.get(s, 0) + agg["coin_flips"]
+        return cache[(s, w)]
+    cols, flags = contention_columns(rows, sim)
+    cols = _complete(rows, cols)
+    base = stack(rows)
+    feat = stack(rows, cols)
+    g_rows = [r for r in rows if int(r["week"]) >= CON_WEEK_MIN]
+    report(g_rows, base, feat, "contention (has this team checked out), fit from 2010", CON_GROUPS)
+    for s in CON_SEASONS:
+        sg = [r for r in g_rows if r["season"] == s]
+        both = sum(flags[r["game_id"]][0] + flags[r["game_id"]][1] for r in sg)
+        one = sum(1 for r in sg if flags[r["game_id"]][0] != flags[r["game_id"]][1])
+        print("   diagnostic %d games wk>=10 %d team-games out %d games with exactly one out %d "
+              "coin flips %d" % (s, len(sg), both, one, flips.get(s, 0)))
+    tr = [r for r in rows if r["season"] < 2025]
+    beta = ols([[1.0, r["proj_margin"], cols[r["game_id"]][0]] for r in tr],
+               [r["actual_margin"] for r in tr])
+    print("   fitted coef on feature, 2010-2024 fit %+.3f (base proj_margin %+.3f)"
+          % (beta[2], beta[1]))
+    pooled = _fb_interval(g_rows, base, feat, range(2011, 2024))
+    p24 = _fb_interval(g_rows, base, feat, (2024,))
+    p25 = _fb_interval(g_rows, base, feat, (2025,))
+    kept = pooled[2] < 0 and p24[0] <= 0 and p25[0] <= 0
+    print("   keep rule: pooled 2011-2023 F-B %+.4f [%+.4f,%+.4f] entirely below zero: %s; "
+          "2024 point %+.4f not above zero: %s; 2025 point %+.4f not above zero: %s"
+          % (pooled[0], pooled[1], pooled[2], pooled[2] < 0, p24[0], p24[0] <= 0,
+             p25[0], p25[0] <= 0))
+    print("verdict contention_keep: %s" % ("KEPT" if kept else "NOT KEPT"))
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
@@ -969,7 +1080,7 @@ def _complete(rows, cols):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep", "participation_keep", "coverage_keep"] + sorted(FEATURES))
+    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep", "participation_keep", "coverage_keep", "contention_keep"] + sorted(FEATURES))
     a = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True)
     if a.feature == "ftn_keep":
@@ -980,6 +1091,9 @@ def main(argv=None):
         return 0
     if a.feature == "coverage_keep":
         coverage_keep_test(con)
+        return 0
+    if a.feature == "contention_keep":
+        contention_keep_test(con)
         return 0
     rows = base_rows(con)
     base = stack(rows)
