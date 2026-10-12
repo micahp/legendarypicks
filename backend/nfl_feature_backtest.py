@@ -828,6 +828,137 @@ def participation_keep_test(con):
     print("   fitted coef on feature, 2016-2024 fit %+.3f (base proj_margin %+.3f)" % (beta[2], beta[1]))
 
 
+# ---- participation coverage, 2026-10-12. PRE-REGISTERED (before its first run).
+# Question: does a team's man-vs-zone profile predict margin as a MATCHUP? Man/zone is a style, not
+# a quality, so the column is an offense that is good against one coverage facing a defense that
+# plays it a lot. Labels: defense_man_zone_type MAN_COVERAGE or ZONE_COVERAGE, on qb_dropback = 1 AND
+# sack = 0 plays joined to nfl_hist_participation on (nflverse_game_id, play_id). Sacks never enter a
+# share. A labelled dropback with null epa has no value to average and is dropped: one play in
+# 2018-2025 (2019 week 1, PIT at NE, zone). Seasons 2018-2025 (2016-17 have no labels).
+# Window: the same season only, team games strictly before the game (weeks below this week). Week 1
+# column = 0, counted and printed. A week 2+ game with no labelled history before it raises.
+# League per season to date: L_man = man / labelled dropbacks; L_eM and L_eZ = mean epa on man and
+# on zone dropbacks. Offense: eM = (sum epa vs man + 200 x L_eM) / (man dropbacks + 200), eZ the
+# same with zone. Defense: m = (man dropbacks faced + 200 x L_man) / (labelled dropbacks faced + 200).
+# Home edge = (eM_home - eZ_home) x (m_away - L_man); away edge = (eM_away - eZ_away) x (m_home -
+# L_man). Column = home edge - away edge. Expected coefficient sign: positive.
+# Walk-forward stack from 2018 (fit on 2018..S-1, grade S); base B refit on the same rows.
+# Graded: 2019-2023 pooled, 2024, 2025. Keep rule (same as test 1): the pooled 2019-2023 F-B interval
+# is entirely below zero, AND the 2024 and 2025 F-B points are not above zero.
+COV_K = 200.0
+COV_LABELS = ("MAN_COVERAGE", "ZONE_COVERAGE")
+COV_SEASONS = list(range(2018, 2026))
+COV_GROUPS = (("2019-2023", range(2019, 2024)), ("2024", (2024,)), ("2025", (2025,)))
+
+
+def _coverage_plays(con):
+    """qb_dropback plays with sack = 0 and a participation row, 2018-2025, as dicts."""
+    return [{"season": int(s), "week": int(w), "posteam": o, "defteam": d, "sack": sk,
+             "cov": c, "epa": e}
+            for s, w, o, d, sk, c, e in con.execute(
+                "SELECT p.season, p.week, p.posteam, p.defteam, p.sack, x.defense_man_zone_type, "
+                "p.epa FROM nfl_pbp p JOIN nfl_hist_participation x "
+                "ON x.nflverse_game_id = p.game_id AND x.play_id = p.play_id "
+                "WHERE p.season BETWEEN 2018 AND 2025 AND p.qb_dropback = 1 AND p.sack = 0 "
+                "AND p.posteam IS NOT NULL")]
+
+
+def _sum_before(store, s, w, n, team=None):
+    """Element-wise sum of store lists over the season's weeks before w (team None = league)."""
+    out = [0] * n
+    for ww in range(1, w):
+        v = store.get(((s, ww), team)) if team is not None else store.get((s, ww))
+        if v is not None:
+            out = [a + b for a, b in zip(out, v)]
+    return out
+
+
+def coverage_columns(plays, rows):
+    """game_id -> [expected home minus away coverage edge], and the count of week-1 zeros.
+
+    plays: dicts with season, week, posteam, defteam, sack, cov, epa. A play with sack = 1, a cov
+    outside COV_LABELS, or null epa is skipped everywhere (it is in no count and no sum).
+    rows: base rows with game_id, season, week, home, away.
+    """
+    off, dfn, lg = {}, {}, {}
+    for p in plays:
+        if p["sack"] == 1 or p["cov"] not in COV_LABELS or p["epa"] is None:
+            continue
+        man = p["cov"] == "MAN_COVERAGE"
+        k = (p["season"], p["week"])
+        o = off.setdefault((k, p["posteam"]), [0, 0.0, 0, 0.0])   # man n, man epa, zone n, zone epa
+        o[0 if man else 2] += 1
+        o[1 if man else 3] += p["epa"]
+        d = dfn.setdefault((k, p["defteam"]), [0, 0])              # man faced, labelled faced
+        d[0] += 1 if man else 0
+        d[1] += 1
+        L = lg.setdefault(k, [0, 0, 0.0, 0.0])                     # man n, zone n, man epa, zone epa
+        L[0 if man else 1] += 1
+        L[2 if man else 3] += p["epa"]
+    cols, zeros = {}, 0
+    for r in rows:
+        s, w = int(r["season"]), int(r["week"])
+        if w == 1:
+            cols[r["game_id"]] = [0.0]
+            zeros += 1
+            continue
+        man_n, zone_n, man_e, zone_e = _sum_before(lg, s, w, 4)
+        if man_n == 0 or zone_n == 0:
+            raise ValueError("no labelled man and zone history before game %s" % r["game_id"])
+        l_man = man_n / float(man_n + zone_n)
+        l_em, l_ez = man_e / man_n, zone_e / zone_n
+
+        def offense(team):
+            m_n, m_e, z_n, z_e = _sum_before(off, s, w, 4, team)
+            return ((m_e + COV_K * l_em) / (m_n + COV_K), (z_e + COV_K * l_ez) / (z_n + COV_K))
+
+        def defense(team):
+            m_n, lab_n = _sum_before(dfn, s, w, 2, team)
+            return (m_n + COV_K * l_man) / (lab_n + COV_K)
+        h, a = r["home"], r["away"]
+        eh_m, eh_z = offense(h)
+        ea_m, ea_z = offense(a)
+        home_edge = (eh_m - eh_z) * (defense(a) - l_man)
+        away_edge = (ea_m - ea_z) * (defense(h) - l_man)
+        cols[r["game_id"]] = [home_edge - away_edge]
+    return cols, zeros
+
+
+def _fb_interval(rows, base, feat, seasons):
+    g = [r for r in graded(rows) if r["season"] in seasons]
+    bb = [(base[r["game_id"]][1] - r["outcome"]) ** 2 for r in g]
+    bf = [(feat[r["game_id"]][1] - r["outcome"]) ** 2 for r in g]
+    return nm.bootstrap_mean_diff_ci(bf, bb, reps=REPS)
+
+
+def coverage_keep_test(con):
+    rows = [r for r in base_rows(con) if r["season"] >= 2018]
+    cols, zeros = coverage_columns(_coverage_plays(con), rows)
+    print("coverage checks: week-1 rows with column 0 (counted) %d" % zeros)
+    cols = _complete(rows, cols)
+    base = stack(rows, seasons=COV_SEASONS)
+    feat = stack(rows, cols, seasons=COV_SEASONS)
+    report(rows, base, feat, "coverage matchup (fit from 2018)", COV_GROUPS)
+    for s in COV_SEASONS[1:]:
+        g = [r for r in graded(rows) if r["season"] == s]
+        d = sum((feat[r["game_id"]][1] - r["outcome"]) ** 2 - (base[r["game_id"]][1] - r["outcome"]) ** 2
+                for r in g) / len(g)
+        print("   diagnostic %d n=%d F-B %+.4f" % (s, len(g), d))
+    tr = [r for r in rows if r["season"] < 2025]
+    beta = ols([[1.0, r["proj_margin"], cols[r["game_id"]][0]] for r in tr],
+               [r["actual_margin"] for r in tr])
+    print("   fitted coef on feature, 2018-2024 fit %+.3f (base proj_margin %+.3f)" % (beta[2], beta[1]))
+    pooled = _fb_interval(rows, base, feat, range(2019, 2024))
+    p24 = _fb_interval(rows, base, feat, (2024,))
+    p25 = _fb_interval(rows, base, feat, (2025,))
+    kept = pooled[2] < 0 and p24[0] <= 0 and p25[0] <= 0
+    print("   keep rule: pooled 2019-2023 F-B %+.4f [%+.4f,%+.4f] entirely below zero: %s; "
+          "2024 point %+.4f not above zero: %s; 2025 point %+.4f not above zero: %s"
+          % (pooled[0], pooled[1], pooled[2], pooled[2] < 0, p24[0], p24[0] <= 0,
+             p25[0], p25[0] <= 0))
+    print("verdict coverage_keep: %s" % ("KEPT" if kept else "NOT KEPT"))
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
@@ -838,7 +969,7 @@ def _complete(rows, cols):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep", "participation_keep"] + sorted(FEATURES))
+    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep", "participation_keep", "coverage_keep"] + sorted(FEATURES))
     a = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True)
     if a.feature == "ftn_keep":
@@ -846,6 +977,9 @@ def main(argv=None):
         return 0
     if a.feature == "participation_keep":
         participation_keep_test(con)
+        return 0
+    if a.feature == "coverage_keep":
+        coverage_keep_test(con)
         return 0
     rows = base_rows(con)
     base = stack(rows)
