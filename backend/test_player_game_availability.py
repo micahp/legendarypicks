@@ -234,5 +234,48 @@ class PlayerGameAvailabilityTests(unittest.TestCase):
         self.assertEqual(self.rows(), before)
 
 
+    def test_a_gap_between_two_snap_weeks_is_a_recorded_absence(self):
+        for week in (1, 2, 4):
+            self.add_game("g%d" % week, week)
+        # week 3 is a bye for AAA: no schedule row, so nothing to record
+        self.add_snap(1, 1, "AAA", off=30)
+        self.add_snap(1, 4, "AAA", off=30)
+        self.add_snap(2, 2, "AAA", off=30)    # another player keeps week 2 complete for the team
+        self.add_snap(99, 1, "AAA", off=30)
+        self.add_snap(99, 4, "AAA", off=30)
+        for week in (1, 2, 4):
+            self.add_snap(80, week, "BBB", off=30)   # the opponent's file, so each game is complete
+        mod.build(self.connection)
+        got = self.connection.execute(
+            "SELECT week,played,reason,source FROM player_game_availability "
+            "WHERE player_id=1 ORDER BY week").fetchall()
+        self.assertEqual([(1, 1, "played", "nflverse_snap_counts"),
+                          (2, 0, "inactive_no_report", "nflverse_snap_counts_bracketed"),
+                          (4, 1, "played", "nflverse_snap_counts")], got)
+
+    def test_a_gap_before_the_first_or_after_the_last_snap_stays_unknown(self):
+        for week in (1, 2, 3):
+            self.add_game("g%d" % week, week)
+        self.add_snap(1, 2, "AAA", off=30)
+        self.add_snap(2, 1, "AAA", off=30)
+        self.add_snap(2, 3, "AAA", off=30)
+        mod.build(self.connection)
+        weeks = [w for (w,) in self.connection.execute(
+            "SELECT week FROM player_game_availability WHERE player_id=1")]
+        self.assertEqual([2], weeks)   # no row for weeks 1 and 3
+
+    def test_a_bracketed_gap_in_an_incomplete_game_is_unknown_not_out(self):
+        for week in (1, 2, 3):
+            self.add_game("g%d" % week, week)
+        self.add_snap(1, 1, "AAA", off=30)
+        self.add_snap(1, 3, "AAA", off=30)
+        self.add_snap(2, 2, "AAA", off=30)
+        self.add_unresolved_snap(2, "AAA")      # an unmapped snap row in week 2: the file is not complete
+        mod.build(self.connection)
+        got = self.connection.execute(
+            "SELECT played,reason FROM player_game_availability WHERE player_id=1 AND week=2").fetchall()
+        self.assertEqual([(None, "unknown")], got)
+
+
 if __name__ == "__main__":
     unittest.main()

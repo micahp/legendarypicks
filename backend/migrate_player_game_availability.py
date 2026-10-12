@@ -19,6 +19,7 @@ TABLE = "player_game_availability"
 SOURCE_SNAPS = "nflverse_snap_counts"
 SOURCE_INJURIES = "nflverse_injuries"
 SOURCE_LOGS = "nflverse_weekly_logs"
+SOURCE_BRACKET = "nflverse_snap_counts_bracketed"
 
 REQUIRED_INPUT_COLUMNS = {
     "nfl_snap_counts": {
@@ -203,7 +204,23 @@ def build(connection, season=None):
                 raise RuntimeError(f"ambiguous schedule team-week: {key}")
             team_games[key] = game
 
-    candidates = sorted(set(snaps) | set(injuries) | logs)
+    # A player with snaps for a team before and after a week the team played, and no row of any kind in
+    # that week, was on its roster and did not play (injured reserve and healthy scratches produce no
+    # snap row and no report row). The fact is only recorded where the game's snap files are complete
+    # and final, below; an unbracketed gap (before his first or after his last snap) stays unknown.
+    snap_weeks = {}
+    for (row_season, week, team, player_id), values in snaps.items():
+        if any(value is not None and value > 0 for value in (values[0], values[2], values[4])):
+            snap_weeks.setdefault((row_season, team, player_id), set()).add(week)
+    known = set(snaps) | set(injuries) | logs
+    bracketed = set()
+    for (row_season, team, player_id), weeks in snap_weeks.items():
+        for week in range(min(weeks) + 1, max(weeks)):
+            key = (row_season, week, team, player_id)
+            if key not in known and (row_season, week, team) in team_games:
+                bracketed.add(key)
+
+    candidates = sorted(known | bracketed)
     missing_games = sorted(
         {key[:3] for key in candidates if key[:3] not in team_games}
     )
@@ -249,7 +266,7 @@ def build(connection, season=None):
             value is not None and value > 0 for value in (snap[0], snap[2], snap[4])
         )
         complete_final = game["final"] and game["game_id"] in complete_games
-        log_only = snap is None and key not in injuries
+        log_only = snap is None and key not in injuries and key not in bracketed
         if any_snap:
             played, reason = 1, "played"
         elif log_only:
@@ -270,6 +287,8 @@ def build(connection, season=None):
             source = SOURCE_SNAPS
         elif key in injuries:
             source = SOURCE_INJURIES
+        elif key in bracketed:
+            source = SOURCE_BRACKET
         else:
             source = SOURCE_LOGS
         values = snap if snap is not None else (None, None, None, None, None)
