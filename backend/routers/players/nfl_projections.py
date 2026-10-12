@@ -91,10 +91,17 @@ def nfl_player_projection(player_id: int, week: Optional[int] = Query(None), sea
 
 
 @router.get("/api/nfl/projections")
-def nfl_projection_slate(week: int = Query(...), season: Optional[int] = Query(None)):
+def nfl_projection_slate(week: Optional[int] = Query(None), season: Optional[int] = Query(None)):
     with closing(_db_pkg()) as con:
         if season is None:
             season = con.execute("SELECT MAX(season) FROM player_projections").fetchone()[0]
+        weeks = [w for (w,) in con.execute(
+            "SELECT DISTINCT week FROM player_projections WHERE league='nfl' AND season=? AND model_version='v2' "
+            "ORDER BY week", (season,))]
+        if week is None:
+            week = weeks[-1] if weeks else None
+        if week is None:
+            return {"season": season, "week": None, "weeks": [], "conditional_on_playing": True, "players": []}
         names = {pid: (n, pos) for pid, n, pos in con.execute(
             "SELECT id, name, position FROM players WHERE league='nfl'")}
         by = {}
@@ -113,7 +120,7 @@ def nfl_projection_slate(week: int = Query(...), season: Optional[int] = Query(N
                 e["espn"][r[3]] = r[4]
         players = sorted((e for e in by.values() if e["v2"]),
                          key=lambda e: -(e["v2"].get("rec_yds") or {"mean": 0})["mean"])
-    return {"season": season, "week": week, "conditional_on_playing": True, "players": players}
+    return {"season": season, "week": week, "weeks": weeks, "conditional_on_playing": True, "players": players}
 
 
 @router.get("/api/nfl/projections/record")
