@@ -58,9 +58,10 @@ OUT_STATUSES = ("Out", "Doubtful")
 RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td")))
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
-# fitted on 2024 by backtest_nfl_player_projection_v2.fit(); replaced by the frozen values there
-DEFAULTS = {"H": 4.0, "K_S": 3.0, "K_T": 4.0, "OTHER": 0.03,
-            "K_CR": 40.0, "K_YPT": 40.0, "K_TDT": 160.0, "K_YPC": 80.0, "K_TDC": 160.0}
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424,
+            "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
+# Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
+# H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
 
 
 def _num(v):
