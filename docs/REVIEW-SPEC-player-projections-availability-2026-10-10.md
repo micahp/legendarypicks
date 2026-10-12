@@ -163,3 +163,16 @@ matched 16, not matched 1, excluded unknown 0, excluded not-teammate 0
   matched     2025 w18 2025_18_ARI_LA LAR {"air_yards_share": 0, "air_yds": 359, "att": 40, "carries": 1, "cmp": 25, "cpoe": -1.8891859698939968, "def_pct": 0, "def_snaps": 0, "dropbacks": 41, "fpts": 26.66, "fpts_ppr": 26.66, "fum": 0, "fum_lost": 0, "fum_rec_td": 0, "intc": 0, "off_pct": 0.96, "off_snaps": 72, "pass_2pt": 0, "pass_epa": 15.790981256604955, "pass_td": 4, "pass_yds": 259, "rec_2pt": 0, "rush_2pt": 0, "rush_td": 0, "rush_yds": 3, "sacks_taken": 1, "st_pct": 0, "st_snaps": 0, "st_td": 0, "target_share": 0, "targets": 0, "wopr": 0, "xfpts_ppr": 26.96}
   not_matched 2025 w07 2025_07_LA_JAX LAR {"air_yards_share": 0, "air_yds": 363, "att": 33, "carries": 2, "cmp": 21, "cpoe": 4.221847292148706, "def_pct": 0, "def_snaps": 0, "dropbacks": 33, "fpts": 27.380000000000003, "fpts_ppr": 27.380000000000003, "fum": 0, "fum_lost": 0, "fum_rec_td": 0, "intc": 0, "off_pct": 0.96, "off_snaps": 67, "pass_2pt": 0, "pass_epa": 8.782921106321737, "pass_td": 5, "pass_yds": 182, "rec_2pt": 0, "rush_2pt": 0, "rush_td": 0, "rush_yds": 1, "sacks_taken": 0, "st_pct": 0, "st_snaps": 0, "st_td": 0, "target_share": 0, "targets": 0, "wopr": 0, "xfpts_ppr": 23.61}
 ```
+
+## B2 rebuild applied, 2026-10-12 (dev DB only)
+
+Fresh publisher file `stats_team_week_2026.parquet` (78,530 bytes, publisher modified 2026-10-12 16:00 GMT,
+sha256 747de563...bcf): 156 team-games, weeks 1 to 4 plus 14 of the 15 week 5 games (BUF at LA plays
+10-12 night). Dry run reconciled (all 5,425 log rows joined; targets and air-yards copies with max
+abs error 0), then `build_player_game_shares.py --season 2026` was applied: 156 team-game rows, 12,098
+per-game rows, 977 season rows (targets 385, air_yards 378, carries 214; the same counts as before).
+
+Acceptance, checked against the publisher file and not against the builder's own output: for all 32
+teams the season `team_value` for `air_yards` equals the publisher's sum of weekly team passing air
+yards (0 differences). The ARI and SEA week 5 gap is closed. Rerun after BUF at LA lands (expected
+10-13) to pick up the last week 5 game.
