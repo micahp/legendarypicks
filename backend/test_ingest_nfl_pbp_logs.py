@@ -142,13 +142,13 @@ class PbpRetentionTests(unittest.TestCase):
         )
         con.close()
 
-    def test_retained_table_has_the_curated_fifty_four_columns(self):
+    def test_retained_table_has_the_curated_fifty_eight_columns(self):
         _, con = self._run()
         columns = [
             row[1] for row in con.execute("PRAGMA table_info(nfl_pbp)").fetchall()
         ]
         con.close()
-        self.assertEqual(54, len(columns))
+        self.assertEqual(58, len(columns))
         self.assertEqual(mod._PLAY_COLS, columns)
 
     def test_retained_play_keeps_chart_fields(self):
@@ -201,13 +201,17 @@ STORED = [
 ]
 FILE = [
     {"game_id": "2025_01_ARI_SEA", "play_id": 1.0, "season": 2025,
-     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0},
+     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0,
+     "penalty": 0.0, "penalty_team": None, "fumble_lost": 0.0, "fumble": 0.0},
     {"game_id": "2025_01_ARI_SEA", "play_id": 2.0, "season": 2025,
-     "qb_hit": 0.0, "qb_scramble": 1.0, "qb_dropback": 1.0, "no_huddle": 1.0},
+     "qb_hit": 0.0, "qb_scramble": 1.0, "qb_dropback": 1.0, "no_huddle": 1.0,
+     "penalty": 1.0, "penalty_team": "SEA", "fumble_lost": 1.0, "fumble": 1.0},
     {"game_id": "2025_01_ARI_SEA", "play_id": 3.0, "season": 2025,
-     "qb_hit": None, "qb_scramble": 0.0, "qb_dropback": None, "no_huddle": 0.0},
+     "qb_hit": None, "qb_scramble": 0.0, "qb_dropback": None, "no_huddle": 0.0,
+     "penalty": None, "penalty_team": None, "fumble_lost": None, "fumble": None},
     {"game_id": "2025_19_ARI_SEA", "play_id": 1.0, "season": 2025, "season_type": "POST",
-     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0},
+     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0,
+     "penalty": 0.0, "penalty_team": None, "fumble_lost": 0.0, "fumble": 0.0},
 ]
 
 
@@ -292,9 +296,9 @@ class PbpBackfillTests(unittest.TestCase):
         rows = self._rows()
         self.assertEqual(3, len(rows))  # the POST play is not inserted
         added = lambda pid: tuple(rows[pid][c] for c in mod._ADDED_COLS)
-        self.assertEqual((1.0, 0.0, 1.0, 0.0), added(1.0))
-        self.assertEqual((0.0, 1.0, 1.0, 1.0), added(2.0))
-        self.assertEqual((None, 0.0, None, 0.0), added(3.0))
+        self.assertEqual((1.0, 0.0, 1.0, 0.0, 0.0, None, 0.0, 0.0), added(1.0))
+        self.assertEqual((0.0, 1.0, 1.0, 1.0, 1.0, "SEA", 1.0, 1.0), added(2.0))
+        self.assertEqual((None, 0.0, None, 0.0, None, None, None, None), added(3.0))
         self.assertEqual(0.5, rows[1.0]["epa"])  # the file's 9.9 is not copied
         self.assertEqual({"null": 1, "one": 1}, report["qb_hit"])
         self.assertEqual(1.0, report["aligned_qb_hit"])

@@ -217,6 +217,278 @@ def epa_units(con, rows):
     return _complete(rows, cols), None
 
 
+PRIOR_K = 400.0  # plays of shrinkage: a team's season-S-1 EPA mean counts n / (n + K) of its gap
+
+
+def shrunk_ratings(off, dfn, k=PRIOR_K):
+    """off, dfn: team -> (mean EPA per play, plays). Returns team -> offense - defense rating.
+
+    Each unit's mean is pulled toward the league mean of the teams in it by n / (n + k). Offense
+    is the EPA the team's offense gains per play; defense is the EPA it allows, so a rating is
+    higher when the team's offense is better or its defense is better. Teams in one dict but not
+    the other are not rated.
+    """
+    m_off = sum(v for v, _ in off.values()) / len(off)
+    m_def = sum(v for v, _ in dfn.values()) / len(dfn)
+    out = {}
+    for t in off.keys() & dfn.keys():
+        o, n_o = off[t]
+        d, n_d = dfn[t]
+        out[t] = (m_off + (o - m_off) * n_o / (n_o + k)) - (m_def + (d - m_def) * n_d / (n_d + k))
+    return out
+
+
+@feature
+def preseason_prior(con, rows):
+    """PRE-REGISTERED (before its first run): an independent preseason rating from published
+    play-by-play only, with no market input.
+
+    For season S, the rating of team t is last season's (S-1, regular season) EPA per play,
+    offense minus defense, each shrunk toward the league mean by n / (n + 400) plays (shrunk_ratings).
+    Column: rating(home) - rating(away) for every REG game of S, in every week. The stack takes its
+    scale; the column carries no home term. Only the play-by-play columns epa, posteam, defteam and
+    play_type (pass or run) are read.
+
+    A team with no plays in S-1 gets rating 0, the league average, and the count is printed. This
+    happens to every 2010 game, since play-by-play starts in 2010 and 2010 has no S-1. Those games
+    carry column 0 and the count reports them. Nothing else is tuned: 400 is fixed here.
+
+    NOT in this version (each would be its own pre-registered feature): QB change, coach change
+    (both from nfl_schedule's starters and coaches) and returning starters (snap counts, needs the
+    pfr to gsis crosswalk). The epa_units feature already carries S-1 information through v2's
+    prior; this one is a simpler, published-only version of that and is judged on its own.
+    """
+    cols = {}
+    missing = 0
+    for s in SEASONS:
+        prev = {}
+        for side, col in (("off", "posteam"), ("def", "defteam")):
+            prev[side] = {
+                t: (float(m), int(n)) for t, m, n in con.execute(
+                    "SELECT %s, AVG(epa), COUNT(*) FROM nfl_pbp WHERE season = ? "
+                    "AND play_type IN ('pass', 'run') AND epa IS NOT NULL AND %s IS NOT NULL "
+                    "GROUP BY %s" % (col, col, col), (s - 1,))}
+        ratings = shrunk_ratings(prev["off"], prev["def"]) if prev["off"] and prev["def"] else {}
+        for gid, h, a in con.execute(
+                "SELECT game_id, home_team, away_team FROM nfl_schedule "
+                "WHERE season = ? AND game_type = 'REG'", (s,)):
+            rh, ra = ratings.get(h), ratings.get(a)
+            if rh is None or ra is None:
+                missing += 1
+            cols[gid] = [(rh or 0.0) - (ra or 0.0)]
+    if missing:
+        print("preseason_prior: %d scheduled games had a team with no S-1 plays (rated 0)" % missing)
+    return _complete(rows, cols), None
+
+
+TO_K = 8.0  # games of shrinkage for the season-to-date turnover and penalty features (fixed here)
+
+
+def _team_week_events(con, season):
+    """team -> week -> [giveaways, takeaways, penalties committed] from the stored REG plays.
+
+    A giveaway is a fumble lost or an interception by the offense (posteam); a takeaway is the same
+    play counted for the defense (defteam). A penalty is charged to penalty_team.
+    """
+    out = {}
+
+    def add(team, week, i):
+        if team is None:
+            return
+        out.setdefault(team, {}).setdefault(week, [0, 0, 0])[i] += 1
+    for week, pos, dfn, pen_team, lost, intc in con.execute(
+            "SELECT week, posteam, defteam, penalty_team, fumble_lost, interception "
+            "FROM nfl_pbp WHERE season = ?", (season,)):
+        if (lost == 1 or intc == 1):
+            add(pos, week, 0)
+            add(dfn, week, 1)
+        if pen_team is not None:
+            add(pen_team, week, 2)
+    return out
+
+
+def _to_date(con, season, w, team_week):
+    """team -> (games to date, giveaways, takeaways, penalties) over weeks < w."""
+    games = {}
+    for week, h, a in con.execute(
+            "SELECT week, home_team, away_team FROM nfl_schedule "
+            "WHERE season = ? AND game_type = 'REG'", (season,)):
+        for t in (h, a):
+            if week < w:
+                games[t] = games.get(t, 0) + 1
+    res = {}
+    for t, n in games.items():
+        g = tk = tp = 0
+        for week, (gv, tkw, pn) in team_week.get(t, {}).items():
+            if week < w:
+                g += gv
+                tk += tkw
+                tp += pn
+        res[t] = (n, g, tk, tp)
+    return res
+
+
+@feature
+def turnover_margin(con, rows):
+    """PRE-REGISTERED (before its first run): season-to-date turnover margin, shrunk.
+
+    For a game in week w of season S, a team's rating is its takeaways minus giveaways per game,
+    counted over weeks < w of S (fumbles lost and interceptions from the stored plays), times
+    n / (n + 8), where n is its games to date. Column: rating(home) - rating(away). Teams with no
+    games yet rate 0. Zero-sum by construction, so the league mean is 0. The feature tests luck:
+    turnovers are thought to carry over weakly, so a small coefficient is the expected outcome.
+    """
+    cols = {}
+    for s in SEASONS:
+        tw = _team_week_events(con, s)
+        for gid, w, h, a in con.execute(
+                "SELECT game_id, week, home_team, away_team FROM nfl_schedule "
+                "WHERE season = ? AND game_type = 'REG'", (s,)):
+            d = _to_date(con, s, w, tw)
+            cols[gid] = [_turnover_rating(d.get(h)) - _turnover_rating(d.get(a))]
+    return _complete(rows, cols), None
+
+
+def _turnover_rating(v):
+    if v is None or v[0] == 0:
+        return 0.0
+    n, g, tk, _ = v
+    return (n / (n + TO_K)) * (tk - g) / n
+
+
+@feature
+def penalty_rate(con, rows):
+    """PRE-REGISTERED (before its first run): season-to-date penalties committed, shrunk.
+
+    Column: -(penalties per game of home - of away), counted over weeks < w of S (penalty = 1 is
+    charged to penalty_team). Each team's rate is shrunk toward the league average to date by
+    n / (n + 8). Negative sign: more penalties is worse, so a positive coefficient is the expected
+    direction. Teams with no games yet count as the league average (their term is 0).
+    """
+    cols = {}
+    for s in SEASONS:
+        tw = _team_week_events(con, s)
+        for gid, w, h, a in con.execute(
+                "SELECT game_id, week, home_team, away_team FROM nfl_schedule "
+                "WHERE season = ? AND game_type = 'REG'", (s,)):
+            d = _to_date(con, s, w, tw)
+            cols[gid] = [-(_penalty_rating(d, h) - _penalty_rating(d, a))]
+    return _complete(rows, cols), None
+
+
+def _penalty_rating(d, team):
+    played = [(n, pn) for n, _, _, pn in d.values() if n > 0]
+    if not played:
+        return 0.0
+    league = sum(pn / n for n, pn in played) / len(played)
+    v = d.get(team)
+    if v is None or v[0] == 0:
+        return league
+    n, _, _, pn = v
+    return league + (n / (n + TO_K)) * (pn / n - league)
+
+
+# ---- FTN blitz, PRE-REGISTERED 2026-10-12, before any run of ftn_keep_test ----
+# FTN charting exists for 2022 to 2025 only, so the walk-forward stack cannot grade it. Instead:
+#   variant A: fit on 2022-2023, grade 2024-2025 (two graded seasons)
+#   variant B: fit on 2022,      grade 2023-2025 (three graded seasons)
+# Each variant fixes its coefficients on the fitting seasons and applies them unchanged to the
+# graded seasons, so no graded game is used to fit. Base B is refit the same way (proj_margin only),
+# so the comparison is paired on the same games.
+# Feature: each team's season-to-date blitzers per dropback on the defense (FTN n_blitzers over
+# dropbacks, weeks < w), shrunk toward the league rate by n / (n + 8) games. Column: rating(home) -
+# rating(away). Teams with no games to date are at the league rate.
+# Keep rule (pooled interval only, no per-season rule): the pooled graded-season F-B interval is
+# entirely below zero. Each variant is judged on its own. Per-season numbers are printed as
+# diagnostics and are not part of the rule.
+FTN_BLITZ_K = 8.0
+FTN_VARIANTS = {"A (fit 2022-23, grade 2024-25)": ((2022, 2023), (2024, 2025)),
+                "B (fit 2022, grade 2023-25)": ((2022,), (2023, 2024, 2025))}
+
+
+def _ftn_defense_week(con, season):
+    """defteam -> week -> (dropbacks, blitzers) on FTN-charted dropbacks."""
+    out = {}
+    for week, team, n, blitz in con.execute(
+            "SELECT p.week, p.defteam, COUNT(*), SUM(f.n_blitzers) FROM nfl_hist_ftn_charting f "
+            "JOIN nfl_pbp p ON p.game_id = f.nflverse_game_id AND p.play_id = f.nflverse_play_id "
+            "WHERE f.season = ? AND p.qb_dropback = 1 AND f.n_blitzers IS NOT NULL "
+            "GROUP BY p.week, p.defteam", (season,)):
+        out.setdefault(team, {})[week] = (n, blitz)
+    return out
+
+
+def _ftn_rate_to_date(con, season, w, week_map):
+    """team -> (games to date, blitz rate to date) for weeks < w; league rate over all teams."""
+    games = {}
+    teams = set()
+    for week, h, a in con.execute(
+            "SELECT week, home_team, away_team FROM nfl_schedule "
+            "WHERE season = ? AND game_type = 'REG'", (season,)):
+        teams.update((h, a))
+        if week < w:
+            games[h] = games.get(h, 0) + 1
+            games[a] = games.get(a, 0) + 1
+    raw = {}
+    for t, weeks in week_map.items():
+        n = sum(d for wk, (d, _) in weeks.items() if wk < w)
+        b = sum(bl for wk, (_, bl) in weeks.items() if wk < w)
+        if n:
+            raw[t] = (n, b)
+    total_n = sum(n for n, _ in raw.values())
+    league = sum(b for _, b in raw.values()) / total_n if total_n else 0.0
+    out = {}
+    for t in teams:
+        g = games.get(t, 0)
+        if t in raw and g:
+            n, b = raw[t]
+            out[t] = league + (g / (g + FTN_BLITZ_K)) * (b / n - league)
+        else:
+            out[t] = league
+    return out
+
+
+def ftn_blitz_columns(con, seasons):
+    """game_id -> [home rating - away rating] for every REG game of the given seasons."""
+    cols = {}
+    for s in seasons:
+        week_map = _ftn_defense_week(con, s)
+        for gid, w, h, a in con.execute(
+                "SELECT game_id, week, home_team, away_team FROM nfl_schedule "
+                "WHERE season = ? AND game_type = 'REG'", (s,)):
+            r = _ftn_rate_to_date(con, s, w, week_map)
+            cols[gid] = [r[h] - r[a]]
+    return cols
+
+
+def ftn_keep_test(con):
+    """Runs both pre-registered variants. Prints pooled point and interval, and per-season diagnostics."""
+    rows = [r for r in base_rows(con) if r["season"] >= 2022]
+    cols = ftn_blitz_columns(con, range(2022, 2026))
+    g = [r for r in graded(rows)]
+    for label, (fit, grade) in FTN_VARIANTS.items():
+        tr = [r for r in g if r["season"] in fit]
+        te = [r for r in g if r["season"] in grade]
+        xb = lambda r: [1.0, r["proj_margin"]]
+        xf = lambda r: [1.0, r["proj_margin"], cols[r["game_id"]][0]]
+        bb_ = ols([xb(r) for r in tr], [r["actual_margin"] for r in tr])
+        bf_ = ols([xf(r) for r in tr], [r["actual_margin"] for r in tr])
+        sd_b = float(np.std([r["actual_margin"] - np.dot(xb(r), bb_) for r in tr], ddof=1))
+        sd_f = float(np.std([r["actual_margin"] - np.dot(xf(r), bf_) for r in tr], ddof=1))
+        lb = [(phi(float(np.dot(xb(r), bb_)) / sd_b) - r["outcome"]) ** 2 for r in te]
+        lf = [(phi(float(np.dot(xf(r), bf_)) / sd_f) - r["outcome"]) ** 2 for r in te]
+        d, lo, hi = nm.bootstrap_mean_diff_ci(lf, lb, reps=REPS)
+        verdict = "KEEP" if hi < 0 else "NOT KEPT"
+        print("FTN blitz, variant %s: n=%d F-B %+.4f [%+.4f,%+.4f]  -> %s"
+              % (label, len(te), d, lo, hi, verdict))
+        for s in grade:
+            idx = [i for i, r in enumerate(te) if r["season"] == s]
+            dd = [lf[i] - lb[i] for i in idx]
+            print("   diagnostic %d n=%d F-B %+.4f" % (s, len(idx), sum(dd) / len(dd)))
+        print("   fitted coef on feature %+.4f (base proj_margin %+.3f)" % (bf_[2], bf_[1]))
+    return None
+
+
 @feature
 def rating_uncertainty(con, rows):
     """PRE-REGISTERED (before its first run): sigma grows with rating uncertainty.
@@ -489,9 +761,12 @@ def _complete(rows, cols):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--feature", required=True, choices=["base"] + sorted(FEATURES))
+    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep"] + sorted(FEATURES))
     a = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True)
+    if a.feature == "ftn_keep":
+        ftn_keep_test(con)
+        return 0
     rows = base_rows(con)
     base = stack(rows)
     if a.feature == "base":

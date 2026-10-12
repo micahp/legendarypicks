@@ -49,11 +49,17 @@ _PLAY_COLS = [
     # Added 2026-10-11 (docs/RESEARCH-nfl-model-inputs-2026-10-11.md). Appended last so a
     # widened existing table and a freshly created one have the same column order.
     "qb_hit", "qb_scramble", "qb_dropback", "no_huddle",
+    # Added 2026-10-12 (docs/INDEX-nfl-model-research-2026-10-12.md, step 3: penalties and turnovers).
+    "penalty", "penalty_team", "fumble_lost", "fumble",
 ]
 
 # The columns added after 2010-2026 were stored. backfill_columns() fills them on stored
 # plays from a published file without rewriting any other column.
-_ADDED_COLS = ["qb_hit", "qb_scramble", "qb_dropback", "no_huddle"]
+_ADDED_COLS = ["qb_hit", "qb_scramble", "qb_dropback", "no_huddle",
+               "penalty", "penalty_team", "fumble_lost", "fumble"]
+
+# Flags are 0, 1 or null. penalty_team is the penalised team's code, or null.
+_TEXT_COLS = {"penalty_team"}
 
 # Each flag belongs on known kinds of play; values joined onto the wrong plays break this.
 # On the 2010-2023 files (measured 2026-10-11) every season is at least 0.9964.
@@ -145,11 +151,18 @@ def ingest(year: int = 2025) -> int:
     return retained
 
 
+def _valid(column, value):
+    """A flag is 0, 1 or null; a text column is a string or null."""
+    if column in _TEXT_COLS:
+        return value is None or isinstance(value, str)
+    return value in (None, 0, 1)
+
+
 def read_added_columns(path, season):
     """REG plays of one nflverse play_by_play parquet as {(game_id, play_id): values}.
 
     values follow _ADDED_COLS. Raises if a column is missing, the file holds another season,
-    a play has no key, a key repeats, or a value is not 0, 1 or null.
+    a play has no key, a key repeats, or a value is not valid for its column (see _valid).
     """
     import pyarrow.parquet as pq
 
@@ -173,9 +186,10 @@ def read_added_columns(path, season):
         if key in plays:
             raise RuntimeError("{}: play key {} appears twice".format(path, key))
         values = tuple(data[c][i] for c in _ADDED_COLS)
-        if any(v not in (None, 0, 1) for v in values):
-            raise RuntimeError("{}: play {} has a value outside 0, 1, null: {}".format(
-                path, key, values))
+        bad = [c for c, v in zip(_ADDED_COLS, values) if not _valid(c, v)]
+        if bad:
+            raise RuntimeError("{}: play {} has a bad value in {}: {}".format(
+                path, key, bad, values))
         plays[key] = values
     return plays, pf.metadata.num_rows
 
