@@ -161,7 +161,7 @@ Open decisions for Micah:
 | All Day lineups (not model) | `feat/nfl-allday`, worktree `/root/lp-nfl-allday` | 4 commits never landed; product call |
 | Identity publishers (July) | branch `codex/nfl-v1` | 4 commits never landed; `dev` split every file it touched into packages on 08-18; probably superseded |
 | Prop market suffix fix | branch `feat/prop-repair` | 13-line fix never landed, no equivalent in `dev` (not NFL) |
-| Removed 10-12 (were already in `dev`) | worktrees `lp-nfl-data-foundation`, `lp-nfl-schedule-a0`; 13 branches | each branch tagged `archive/<branch>` first (`git branch <name> archive/<name>` restores it); the data-foundation worktree's 3 ignored run logs copied to `/root/lp-archive/2026-10-12/` |
+| Removed 10-12 (were already in `dev`) | worktrees `lp-nfl-data-foundation`, `lp-nfl-schedule-a0`; 15 local branches (incl. `docs/forecasting-north-star-2026-10-10`, superseded by `dev`'s rewrite `33fed50`, and `feat/job15-dst-published-adp`, landed); their origin copies are untouched | each branch tagged `archive/<branch>` first (`git branch <name> archive/<name>` restores it); the data-foundation worktree's 3 ignored run logs copied to `/root/lp-archive/2026-10-12/` |
 
 ## 6. Rules that apply to all of this
 
