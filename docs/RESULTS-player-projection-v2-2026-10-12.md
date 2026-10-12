@@ -68,3 +68,25 @@ fall below it, and the upper tail is a little heavy, consistent with the negativ
 floor of zero for low-volume players and do not read the band as calibrated. Not yet built: the questionable
 player scenarios (Spec B 4.4); the fitted P(plays | Questionable) from 2025 is 801 of 1,147 = 0.70 and
 Doubtful 0 of 98, measured on `player_game_availability`.
+
+## Against ESPN's published weekly projections (2025, pre-registered, no gate)
+
+`capture_espn_weekly_projections.py` pulled ESPN's weekly projection for the 400 most-owned RB/WR/TE in 8
+requests (3 second spacing, under the host budget): 14,604 rows, 344 players, weeks 3 to 18, 0 players unmatched
+to ours. Same player-games for all three columns (n = 2,427, the intersection of the v2 sample and ESPN's
+players), MAE:
+
+| Stat | v2 | Marcel-lite | ESPN | v2 - ESPN [95% CI] |
+|---|---|---|---|---|
+| receptions | 1.394 | 1.439 | 1.377 | +0.017 [-0.015, +0.048] |
+| receiving yards | 18.285 | 19.088 | 18.360 | -0.076 [-0.447, +0.294] |
+| targets | 1.809 | 1.835 | 1.732 | +0.077 [+0.031, +0.123] |
+| receiving TDs | 0.275 | 0.289 | 0.289 | -0.014 [-0.017, -0.011] |
+
+v2 is level with ESPN on receptions and receiving yards, worse on targets, better on receiving TDs, and both beat
+Marcel-lite. It does not beat ESPN. Three caveats, none corrected for: the sample is ESPN's most-owned players;
+ESPN's number is an expectation that includes the chance the player sits while ours is conditional on playing and
+scored only on games played (this favours us); and ESPN returns its current stored value for a past week, so
+whether it equals the number shown before kickoff is unverified (the values look smooth across weeks, which
+fits a rest-of-season model more than a weekly matchup one). The real comparison is the 2026 one: ESPN's
+projection captured before kickoff, graded by `grade_nfl_player_projections.py`.
