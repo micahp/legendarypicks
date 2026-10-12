@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""nfl_player_projections_job.py -- write one week of player projections (Spec B sections 4 and 6).
+
+For every unplayed regular-season game of the week, every RB/WR/TE who logged for the team in its last 3
+games, has 3+ games earlier this season and is not Out or Doubtful on the final injury report: the
+version 2 receiving line (targets, receptions, receiving yards, receiving TDs) with p10, median and p90,
+beside Marcel-lite for the same player-game. Rushing is NOT published: v2 did not beat Marcel-lite on
+carries (docs/RESULTS-player-projection-v2-2026-10-12.md).
+
+Scenarios (Spec B 4.4). A Questionable teammate who is a candidate plays with probability P_PLAYS_QUESTIONABLE.
+  if_plays  every Questionable teammate plays;  if_out  every Questionable teammate is out;
+  base      the mixture of the two with weight P^k on if_plays, k = number of Questionable teammates.
+Players with no Questionable teammate get identical rows in all three scenarios, written once as 'base'.
+p_plays on a row is the player's own chance of playing (1.0, or P_PLAYS_QUESTIONABLE if he is Questionable);
+the mean and quantiles are conditional on playing.
+
+A game that already has a final score is skipped and counted: a projection written after the result is not
+a projection. Every run appends rows under a new run_id; grading picks the last run before kickoff
+(grade_nfl_player_projections.py), so reruns on Friday and Sunday refine and never overwrite.
+
+Usage: LP_DB_PATH=... python3 nfl_player_projections_job.py --season 2026 --week 6 [--dry-run]
+"""
+import argparse
+import contextlib
+import datetime as dt
+import json
+import os
+import sqlite3
+import sys
+import zlib
+
+import nfl_player_projection_v2 as eng
+
+MODEL_VERSION = "v2"
+MARCEL_VERSION = "marcel-lite"
+# 801 of 1,147 Questionable players with a known result played in 2025 (player_game_availability, measured
+# 2026-10-12). Doubtful: 0 of 98, so Doubtful is treated as out by the engine.
+P_PLAYS_QUESTIONABLE = 0.70
+RECV_POS = ("RB", "WR", "TE")
+MIN_EARLIER_GAMES = 3
+STATS = ("tgt", "rec", "rec_yds", "rec_td")
+
+
+@contextlib.contextmanager
+def extra_out(hist, key, pids):
+    """Treat `pids` as Out for the game `key` while projecting, then restore the report."""
+    original = hist.status.get(key)
+    patched = dict(original or {})
+    for pid in pids:
+        patched[pid] = ("Out", None)
+    hist.status[key] = patched
+    try:
+        yield
+    finally:
+        if original is None:
+            hist.status.pop(key, None)
+        else:
+            hist.status[key] = original
+
+
+def _draws(line, n, seed):
+    tgt = line["tgt"]
+    if tgt <= 0:
+        return None
+    c = line["rec"] / tgt
+    ypr = line["rec_yds"] / line["rec"] if line["rec"] > 0 else 0.0
+    return eng.simulate(tgt, c, ypr, line["rec_td"] / tgt, n=n, seed=seed)
+
+
+def _stat_rows(line, draws):
+    """{stat: (mean, median, p10, p90)} for the four receiving stats."""
+    idx = {"rec": 0, "rec_yds": 1, "rec_td": 2, "tgt": 3}
+    out = {}
+    for stat in STATS:
+        if draws:
+            s = eng.summarize(draws, idx[stat])
+            out[stat] = (line[stat], s["median"], s["p10"], s["p90"])
+        else:
+            out[stat] = (line[stat], None, None, None)
+    return out
+
+
+def project_week(con, season, week, n_sims=1000, hist=None):
+    """Yield dicts (one per player-game) and a summary; no database writes."""
+    hist = hist or eng.History.load(con, [season - 1, season])
+    games = con.execute(
+        "SELECT game_id, away_team, home_team, home_score, away_score FROM nfl_schedule "
+        "WHERE season=? AND week=? AND game_type='REG' ORDER BY game_id", (season, week)).fetchall()
+    if not games:
+        raise ValueError("no REG games for %d week %d" % (season, week))
+    out = []
+    skipped_final = 0
+    for gid, away, home, hs, aws in games:
+        if hs is not None and aws is not None:
+            skipped_final += 1
+            continue
+        for team, opp in ((away, home), (home, away)):
+            key = (season, gid, team)
+            report = hist.status.get(key, {})
+            outs = {p for p, (rep, _) in report.items() if rep in eng.OUT_STATUSES}
+            questionable = {p for p, (rep, _) in report.items() if rep == "Questionable"}
+            cands = hist.candidates(season, team, week)
+            for pid, pos in sorted(cands.items()):
+                if pos not in RECV_POS or pid in outs:
+                    continue
+                if sum(1 for r in hist.by_player.get((season, pid), []) if r.week < week) < MIN_EARLIER_GAMES:
+                    continue
+                plays = eng.project(hist, season, week, pid, pos, team, opp, gid)
+                if plays is None or "tgt" not in plays:
+                    continue
+                mates = sorted(q for q in questionable if q != pid and q in cands)
+                entry = {"game_id": gid, "player_id": pid, "team": team, "pos": pos,
+                         "p_plays": P_PLAYS_QUESTIONABLE if pid in questionable else 1.0,
+                         "scenarios": {}, "marcel": {}}
+                seed = zlib.crc32(("%s|%d" % (gid, pid)).encode()) & 0xffff
+                d_plays = _draws(plays, n_sims, seed)
+                if mates:
+                    with extra_out(hist, key, mates):
+                        gone = eng.project(hist, season, week, pid, pos, team, opp, gid)
+                    p_all = P_PLAYS_QUESTIONABLE ** len(mates)
+                    gone = gone if gone is not None and "tgt" in gone else plays
+                    d_gone = _draws(gone, n_sims, seed + 1)
+                    k = int(round(n_sims * p_all))
+                    mix = ((d_plays or [])[:k] + (d_gone or [])[:n_sims - k]) or None
+                    base = {s: p_all * plays[s] + (1 - p_all) * gone[s] for s in ("tgt", "rec", "rec_yds", "rec_td")}
+                    entry["scenarios"] = {"base": _stat_rows(base, mix),
+                                          "if_plays": _stat_rows(plays, d_plays),
+                                          "if_out": _stat_rows(gone, d_gone)}
+                    entry["questionable_teammates"] = mates
+                else:
+                    entry["scenarios"] = {"base": _stat_rows(plays, d_plays)}
+                for stat in STATS:
+                    m = eng.marcel(hist, season, week, pid, stat)
+                    if m is not None:
+                        entry["marcel"][stat] = m
+                entry["rules"] = plays["_rules"]
+                out.append(entry)
+    return out, {"games": len(games), "skipped_final": skipped_final, "player_games": len(out)}
+
+
+def write_week(con, season, week, entries, as_of, params):
+    run_id = "pp-%d-w%02d-%s" % (season, week, as_of.replace(":", "").replace("-", "")[:15])
+    con.execute(
+        "INSERT INTO model_runs (run_id, league, season, week, model, model_version, started_at, "
+        " params_json, status) VALUES (?,?,?,?,?,?,?,?,?)",
+        (run_id, "nfl", season, week, "nfl-player-v2", MODEL_VERSION, as_of,
+         json.dumps(params, sort_keys=True), "running"))
+    rows = []
+    for e in entries:
+        for scenario, stats in e["scenarios"].items():
+            for stat, (mean, median, p10, p90) in stats.items():
+                rows.append((run_id, "nfl", season, week, e["game_id"], e["player_id"], e["team"], stat,
+                             mean, median, p10, p90, scenario, MODEL_VERSION, "lp", e["p_plays"], as_of))
+        for stat, mean in e["marcel"].items():
+            rows.append((run_id, "nfl", season, week, e["game_id"], e["player_id"], e["team"], stat,
+                         mean, None, None, None, "base", MARCEL_VERSION, "lp", e["p_plays"], as_of))
+    con.executemany(
+        "INSERT INTO player_projections (run_id, league, season, week, game_id, player_id, team, stat, mean, "
+        "median, p10, p90, scenario, model_version, source, p_plays, as_of) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    con.execute("UPDATE model_runs SET status='ok', finished_at=? WHERE run_id=?",
+                (dt.datetime.now(dt.timezone.utc).isoformat(), run_id))
+    con.commit()
+    return run_id, len(rows)
+
+
+def next_week(con, season):
+    row = con.execute(
+        "SELECT MIN(week) FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NULL",
+        (season,)).fetchone()
+    return row[0]
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--season", type=int, required=True)
+    ap.add_argument("--week", type=int)
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--sims", type=int, default=1000)
+    a = ap.parse_args(argv)
+    path = os.environ.get("LP_DB_PATH")
+    if not path:
+        raise SystemExit("LP_DB_PATH is required")
+    con = sqlite3.connect(path, timeout=30)
+    week = a.week or next_week(con, a.season)
+    if week is None:
+        raise SystemExit("no unplayed regular-season week in %d" % a.season)
+    entries, summary = project_week(con, a.season, week, n_sims=a.sims)
+    print("season %d week %d: %s" % (a.season, week, summary))
+    if a.dry_run:
+        for e in entries[:5]:
+            print(e["game_id"], e["player_id"], e["pos"], {k: round(v[0], 2) for k, v in e["scenarios"]["base"].items()})
+        return
+    as_of = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+    run_id, n = write_week(con, a.season, week, entries, as_of, {"sims": a.sims, "p_plays_questionable": P_PLAYS_QUESTIONABLE,
+                                                                 "constants": eng.DEFAULTS, "dist": eng.DIST})
+    print("wrote %d rows under %s" % (n, run_id))
+
+
+if __name__ == "__main__":
+    main()
