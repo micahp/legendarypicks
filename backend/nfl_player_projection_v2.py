@@ -345,3 +345,62 @@ def marcel(hist, season, week, pid, col, both_seasons=False):
     vals = [getattr(r, col) for r in reversed(rows)]
     res = project_stat(vals)
     return res["projection"] if res else None
+
+
+# -- distribution (Spec B 4.5) ---------------------------------------------------------------------
+# PRE-REGISTERED 2026-10-12 before any 2025 coverage was computed. For a receiver with projected mean
+# targets T, catch rate c, yards per reception y and TD per target d:
+#   targets ~ NegBin(mean T, dispersion R)         var = T + T^2 / R
+#   receptions ~ Binomial(targets, c)
+#   yards = sum over receptions of Gamma(mean y, shape G)
+#   receiving TDs ~ Binomial(targets, d)
+# R and G are fitted on 2024 by method of moments (backtest_nfl_player_projection_v2.py --fit-dist) and
+# frozen in DIST. Graded on 2025 by the share of actual values inside the simulated p10 to p90 band
+# (target 80%) and the share below p10 and above p90 (target 10% each).
+DIST = {"R": 8.0, "G": 1.0}
+
+
+def simulate(mean_tgt, catch, yards_per_rec, td_per_tgt, n=2000, seed=0, dist=None):
+    """n simulated (receptions, yards, tds, targets) draws for one player-game."""
+    dist = dict(DIST, **(dist or {}))
+    rng = random.Random(seed)
+    out = []
+    r = dist["R"]
+    for _ in range(n):
+        # NB as a gamma-Poisson mixture
+        lam = rng.gammavariate(r, mean_tgt / r) if mean_tgt > 0 else 0.0
+        t = _poisson(rng, lam)
+        rec = sum(1 for _ in range(t) if rng.random() < catch)
+        yds = sum(rng.gammavariate(dist["G"], yards_per_rec / dist["G"]) for _ in range(rec)) if yards_per_rec > 0 else 0.0
+        td = sum(1 for _ in range(t) if rng.random() < td_per_tgt)
+        out.append((rec, yds, td, t))
+    return out
+
+
+def _poisson(rng, lam):
+    if lam <= 0:
+        return 0
+    if lam > 30:
+        return max(0, int(round(rng.gauss(lam, math.sqrt(lam)))))
+    limit, k, prod = math.exp(-lam), 0, 1.0
+    while True:
+        prod *= rng.random()
+        if prod <= limit:
+            return k
+        k += 1
+
+
+def quantile(sorted_vals, q):
+    k = (len(sorted_vals) - 1) * q
+    f = int(k)
+    c = min(f + 1, len(sorted_vals) - 1)
+    return sorted_vals[f] + (sorted_vals[c] - sorted_vals[f]) * (k - f)
+
+
+def summarize(draws, index, line=None):
+    vals = sorted(d[index] for d in draws)
+    res = {"mean": sum(vals) / len(vals), "median": quantile(vals, 0.5),
+           "p10": quantile(vals, 0.1), "p90": quantile(vals, 0.9)}
+    if line is not None:
+        res["p_over"] = sum(1 for v in vals if v > line) / len(vals)
+    return res

@@ -191,14 +191,72 @@ def run(hist_with, hist_plain):
     return cols
 
 
+def fit_dist(hist):
+    """Method of moments on 2024 projections: NB dispersion R for targets, gamma shape G for yards per reception."""
+    p = dict(eng.DEFAULTS)
+    num = den = 0.0
+    ysq = ysum = 0.0
+    for r in eligible(hist, 2024):
+        v = eng.project(hist, 2024, r.week, r.pid, r.pos, r.team, r.opp, r.game_id, p)
+        if v is None or "tgt" not in v:
+            continue
+        mu = v["tgt"]
+        num += mu * mu
+        den += (r.tgt - mu) ** 2 - mu
+        if r.rec > 0 and v["rec"] > 0:
+            ypr = v["rec_yds"] / v["rec"]
+            ysq += (r.rec_yds - r.rec * ypr) ** 2
+            ysum += r.rec
+    big_r = num / den if den > 0 else 1e6
+    var_rec = ysq / ysum          # per-reception variance of yards
+    big_g = 11.0 ** 2 / var_rec
+    print("DIST R=%.2f (over-dispersion of targets)  G=%.2f (gamma shape; mean 11 yd, var %.1f)" % (big_r, big_g, var_rec))
+    return {"R": round(big_r, 2), "G": round(big_g, 2)}
+
+
+def run_dist(hist):
+    p = dict(eng.DEFAULTS)
+    games = sorted(eligible(hist, 2025), key=lambda r: (r.week, r.pid))
+    below = above = inside = n = 0
+    below_r = above_r = inside_r = 0
+    for i, r in enumerate(games):
+        v = eng.project(hist, 2025, r.week, r.pid, r.pos, r.team, r.opp, r.game_id, p)
+        if v is None or "tgt" not in v or v["tgt"] <= 0:
+            continue
+        c = v["rec"] / v["tgt"]
+        ypr = v["rec_yds"] / v["rec"] if v["rec"] > 0 else 0.0
+        d = v["rec_td"] / v["tgt"]
+        draws = eng.simulate(v["tgt"], c, ypr, d, n=1000, seed=i)
+        ys = eng.summarize(draws, 1)
+        rs = eng.summarize(draws, 0)
+        n += 1
+        below += r.rec_yds < ys["p10"]
+        above += r.rec_yds > ys["p90"]
+        inside += ys["p10"] <= r.rec_yds <= ys["p90"]
+        below_r += r.rec < rs["p10"]
+        above_r += r.rec > rs["p90"]
+        inside_r += rs["p10"] <= r.rec <= rs["p90"]
+    print("2025 p10-p90 band, n=%d" % n)
+    print("  receiving yards: inside %.1f%%  below p10 %.1f%%  above p90 %.1f%%  (targets 80 / 10 / 10)" % (
+        100.0 * inside / n, 100.0 * below / n, 100.0 * above / n))
+    print("  receptions:      inside %.1f%%  below p10 %.1f%%  above p90 %.1f%%" % (
+        100.0 * inside_r / n, 100.0 * below_r / n, 100.0 * above_r / n))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fit", action="store_true")
     ap.add_argument("--run", action="store_true")
+    ap.add_argument("--fit-dist", action="store_true")
+    ap.add_argument("--run-dist", action="store_true")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.fit_dist:
+        fit_dist(eng.History.load(con, [2024]))
+    if a.run_dist:
+        run_dist(eng.History.load(con, [2024, 2025]))
     if a.run:
         with_report = eng.History.load(con, [2024, 2025])
         plain = eng.History(with_report.rows, {})
