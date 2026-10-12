@@ -51,3 +51,20 @@ for what it is:
   clean measure of the redistribution rule; rule counts: proportional 6,994, observed blend 146, none out 750.
 - Not done: next-man-up weighting (Spec B 4.3), game-script adjustment (needs SPEC A margin), quarterback
   passing, ESPN's weekly projections as a benchmark.
+
+## Simulated distribution (Spec B 4.5), same 3,945 player-games
+
+Targets are negative binomial, receptions binomial, yards a gamma sum per reception, TDs binomial. Dispersion
+fitted on 2024 by method of moments (targets R = 3.41, gamma shape G = 1.23 with a fixed 11 yard mean), frozen,
+graded once on 2025. Nominal 80% inside p10 to p90, 10% in each tail.
+
+| Stat | Inside | Below p10 | Above p90 |
+|---|---|---|---|
+| receiving yards | 86.9% | 1.8% | 11.3% |
+| receptions | 91.8% | 0.3% | 7.9% |
+
+The band is conservative (too wide), the low tail is nearly empty because p10 is often 0 and an outcome cannot
+fall below it, and the upper tail is a little heavy, consistent with the negative bias above. Treat p10 as a
+floor of zero for low-volume players and do not read the band as calibrated. Not yet built: the questionable
+player scenarios (Spec B 4.4); the fitted P(plays | Questionable) from 2025 is 801 of 1,147 = 0.70 and
+Doubtful 0 of 98, measured on `player_game_availability`.
