@@ -77,6 +77,34 @@ only four FTN seasons (roughly 1,100 games), which invites finding matchups in n
 memory, to verify on our data rather than cite: defensive pressure rate is fairly stable season to season;
 QB performance under pressure is less stable than clean-pocket performance.
 
+## Next: stats research plan
+
+Why the four columns were added to `nfl_pbp` ([results](RESULTS-nfl-pbp-qb-columns-2026-10-11.md)), for the
+matchup hypothesis above:
+
+| Column | Role |
+|---|---|
+| `qb_hit` | Pressure: how often a defense hits the QB, and how often an offense's QB gets hit. |
+| `qb_scramble` | Mobility: whether a QB escapes pressure (the Raiders QB who cannot move around). |
+| `qb_dropback` | Denominator for per-dropback rates (hit rate, sack rate, scramble rate). |
+| `no_huddle` | Pace and tempo. |
+
+Steps, all read-only on the dev DB, each a filter on the next:
+
+1. **Build rates** per team and season, offense and defense: `qb_hit` per dropback, sack rate, scramble
+   rate, no-huddle rate (nflverse, 2010 to 2026); blitz rate, pass rushers, QB out of pocket and QB-fault
+   sack rate (FTN, 2022 to 2025 only).
+2. **Stability.** Does the first half of a season predict the second half? Drop every rate that does not.
+3. **Predictive value.** For the survivors, does the rate predict next-game margin or points once EPA per
+   play is in the model? FTN covers about 1,100 games, so keep the feature count small; many features on
+   few games find matchups in noise.
+4. **Interactions.** Only on stats that clear step 3 (for example, a pressure-generating defense against a
+   QB who is hit often), walk-forward, on identical games, scored on the benchmark ladder.
+
+Write results to a new `docs/RESULTS-` file. Offseason carryover (lever 1) runs first, alongside steps 1
+and 2. Position-vs-defense stats (the CBS idea) are computed from our play-by-play and belong to player
+props in [Spec B](SPEC-player-projections-availability-2026-10-09.md), not the game model.
+
 ## Open items
 
 - Done 2026-10-11: `qb_hit`, `qb_scramble`, `qb_dropback` and `no_huddle` in `nfl_pbp` for 2010 to 2026 ([results](RESULTS-nfl-pbp-qb-columns-2026-10-11.md)).
