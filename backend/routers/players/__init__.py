@@ -27,6 +27,7 @@ from .profile import (  # noqa: E402
 )
 from .matchups import player_matchups  # noqa: E402
 from .projections import player_projections  # noqa: E402
+from . import nfl_projections  # noqa: E402,F401
 from .news import player_news, player_fantasy_news  # noqa: E402
 from .stats import (  # noqa: E402
     player_stats, _metric, _empty_leaders, _format_leader_value,
