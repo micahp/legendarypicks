@@ -1,5 +1,7 @@
 # NFL model context, updated 2026-10-12
 
+**Superseded for status by [CONTEXT-nfl-2026-10-12-session.md](CONTEXT-nfl-2026-10-12-session.md).** Kept for the rules and the Spec B notes below.
+
 Read `docs/INDEX-nfl-model-research-2026-10-12.md` first. It has every lever, the stat stability table,
 the data inventory, the next steps, and the rules. This file is the state of play for today.
 
