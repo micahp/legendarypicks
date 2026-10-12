@@ -12,25 +12,35 @@ B6 gate passed thinly, rushing not published; B7 job run once for week 6 on dev,
 counts were loaded and availability rebuilt with bracketed absences.
 
 Spec B (`SPEC-player-projections-availability-2026-10-09.md`, section 7) has slices B0 to B8. Branch
-`feat/player-projections-availability` (worktree `/root/lp-player-proj`, head `88d3bbe`, 12 commits not in
-`dev`, nothing uncommitted).
+`feat/player-projections-availability` (worktree `/root/lp-player-proj`, head `e361a78`, about 30 commits not in
+`dev`, based on an older `dev` (`a6921c9`), nothing pushed). Evidence and caveats: `docs/STATUS-spec-b-2026-10-12.md`
+on that branch and `docs/RESULTS-player-projection-v2-2026-10-12.md`.
 
 | Slice | Status |
 |---|---|
-| B0 date fix, snap counts, injuries | Not on this branch. The review says the inputs already exist in the base and the weekly availability refresh includes injuries. Publisher reconciliation for them was not re-run. |
-| B1 availability table | Built and reviewed. The five review findings are fixed in `fd9ad96`. |
-| B2 per-game shares | Built. Rebuilt on a fresh publisher file 10-12: season denominators equal the publisher's weekly sums for 32 of 32 teams. One game is still missing (BUF at LA plays 10-12 night); rerun `build_player_game_shares.py --season 2026` on 10-13 morning. |
-| B3 splits | Built. Real example: Puka Nacua out 2025 week 7, Stafford with and without (one game, shows the feature works, not an effect size). In the review doc. |
-| B4 "without" filter, backend | **Not started** |
-| B5 "without" filter, frontend | **Not started** |
-| B6 projection engine v2 and redistribution | **Not started** |
-| B7 weekly job, grading, ESPN benchmark | **Not started** |
-| B8 API and projection record panel | **Not started** |
+| B0 date fix, snap counts, injuries | Not on this branch as a slice. 2024 snap counts were missing from the dev DB and are now loaded (see below). |
+| B1 availability table | Built and reviewed (`fd9ad96`). New 10-12: "bracketed absence" rule (`08c143c`) for players on injured reserve who have no row in any source. |
+| B2 per-game shares | Built. Season denominators equal the publisher's weekly sums for 32 of 32 teams. BUF at LA plays 10-12 night; rerun `build_player_game_shares.py --season 2026` on 10-13 morning. |
+| B3 splits | Built. Adds `game_status` and excluded-game lists. |
+| B4 "without" filter, backend | Built. `without`/`with` on `/api/props/history` and `/api/props/player/{id}/history`, plus `/api/props/player/{id}/teammates-out`. 11 tests, negative control done. |
+| B5 "without" filter, frontend | Built (`WithoutControl.tsx`, `PropChart.tsx`, URL `?without=`). 8 jest tests, strict tsc clean. **Not seen in a browser.** |
+| B6 projection engine v2 and redistribution | Built; gate passes thinly. 2025 weeks 3 to 18 (n=3,945): receiving yards MAE 15.91 vs Marcel-lite 16.43 (CI [-0.81,-0.22]); receptions 1.216 vs 1.237 (CI [-0.041,+0.000]); targets tie; carries worse (+0.074), so **rushing is not published**. v2 under-projects (targets -0.49, rec_yds -3.6). Constants fitted on 2024 only and frozen; seven sit on grid edges. |
+| B7 weekly job, grading, ESPN benchmark | Built. Tables, job, grader, ESPN capture. Job run once on dev for 2026 week 6 (290 player-games, 2,320 rows). Nothing graded yet. No timers installed. |
+| B8 API and projection record panel | Built. `/api/nfl/projections/player/{id}`, `/api/nfl/projections`, `/api/nfl/projections/record`; page `/nfl/projections`. **Not seen in a browser**; record panel empty until week 6 is graded. Default `/api/projections/player/{id}` still Marcel-lite. |
 
-Still true about B1 to B3: the focused suite passes but the "52 tests" figure in the old notes does not
-reproduce (44 on the review's file list, 59 with the shares and identity tests, all passing). Not merged into
-`dev`, not on prod. The checklist in the HANDOFF doc ("Before anything goes to dev") is not satisfied yet.
-Order in the spec after B1 to B3: B4 and B5 next (the user-visible props.cash feature), then B6 to B8.
+ESPN weekly benchmark (2025, 2,427 most-owned RB/WR/TE player-weeks, pre-registered): v2 vs ESPN MAE receptions
+1.394 / 1.377, receiving yards 18.285 / 18.360 (tie), targets 1.809 / 1.732 (worse), receiving TD 0.275 / 0.289
+(better). ESPN's 2025 values were captured after the games, so they may not be the pre-kickoff numbers; the real
+comparison starts with week 6.
+
+Unknown games fix (Micah: "18 unknown? i dont like that"): the dev DB had no 2024 snap counts and injured-reserve
+players have no row anywhere. Loaded 2024 snaps (25,357 of 25,398 rows; 41 skipped), rebuilt availability per season
+(a whole-table rebuild hits "database is locked"). 3,416 new absences, 0 contradicted by play-by-play touches.
+Stafford without Nacua: 2 games and 22 unknown became 6 games, 29 with, 7 not counted.
+
+Open for "before anything goes to dev": rebase or merge with `feat/nfl-playoff-odds` and `feat/nfl-grading-record`,
+full suite against both DBs, browser look at the chart control and `/nfl/projections`. Flags not fixed: 2024 player
+logs have no `game_date`; `player_prop_history` takes the oldest 20 of a newest-first list; v2 negative bias unexplained.
 
 ## 2. NFL model research (`feat/nfl-model-foundation`, head `c84f880`, 14 commits not in `dev`)
 
@@ -146,8 +156,12 @@ GameCard front-end edits, sim output JSONs, four docs): left alone.
 - Decisions for Micah: merge `feat/nfl-playoff-odds` into `dev` (and open `/nfl/playoff-odds` once); merge
   order for the research ingest; install timers; whether to keep `codex/nfl-v1` and `feat/prop-repair`;
   whether the 2026 week 6 locks resume (skipped on instruction).
-- Not done and not started: Spec B slices B4 to B8; coverage and other FTN-style features need new
-  pre-registered variants; the CONTEXT/INDEX files are unpushed.
+- Decisions for Micah on Spec B: switch the default NFL projection route to v2; run the week 6 job and ESPN capture
+  again Fri and Sun; install the job and grading timers (none installed).
+- Not done: next-man-up weighting, game-script adjustment, QB passing, rushing distribution; coverage and other
+  FTN-style features need new pre-registered variants; the CONTEXT/INDEX files are unpushed.
+- Dev DB changed 10-12 by Spec B work: 2024 snap counts loaded, availability rebuilt for 2024 to 2026, projection
+  tables created, 2026 week 6 v2 and ESPN rows written.
 
 ## 9. Next steps, in order
 
@@ -155,4 +169,6 @@ GameCard front-end edits, sim output JSONs, four docs): left alone.
 2. Merge `feat/nfl-grading-record` when Micah says (disjoint from the playoff-odds branch, either order), then look at `/leagues/nfl?tab=model` once.
 3. Merge `feat/nfl-playoff-odds` when Micah says; add the "v1 trails the market" sentence first.
 4. Land the research branch's pbp ingest in `dev`, then add the weekly pbp step.
-5. Spec B: B4 backend, then B5.
+5. Spec B: before week 6 kickoff (Thu 10-15) rerun the job and `capture_espn_weekly_projections.py --season 2026 --weeks 6`
+   (Fri/Sun), then `grade_nfl_player_projections.py --season 2026 --week 6 --summary` after the games. Then the merge
+   order and browser checks above.
