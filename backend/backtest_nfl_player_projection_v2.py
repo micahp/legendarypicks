@@ -4,6 +4,14 @@ PRE-REGISTERED with nfl_player_projection_v2.py before any 2025 number was compu
 
   --fit   Walk-forward inside 2024 weeks 3 to 18 over the grids in the engine docstring. Prints the chosen
           constants. They are then copied into DEFAULTS by hand and committed BEFORE --run.
+  --vs-espn  PRE-REGISTERED 2026-10-12 before it was run. On the 2025 player-games in the --run sample for
+          which ESPN's weekly projection (player_projections, model_version 'espn-weekly', captured 2026-10-12
+          for the 400 most-owned RB/WR/TE) exists: MAE of v2, Marcel-lite (this season) and ESPN on the SAME
+          player-games, for receptions, receiving yards, targets and receiving TDs, with a paired bootstrap
+          95% interval of MAE(v2) - MAE(ESPN). No gate. Two things bias it and are stated, not corrected:
+          the sample is ESPN's most-owned players, and ESPN's number is an expectation that includes the chance
+          the player sits, while v2 and Marcel-lite are conditional on playing and scored only on games played.
+          Whether ESPN's stored weekly value for a past week is what it showed before kickoff is unverified.
   --run   Walk-forward 2025 weeks 3 to 18 with the frozen constants. Run once per commit.
 
 Eligible player-game: RB/WR/TE (FB counts as RB) who played the game (a log row exists) and has at least 3
@@ -243,18 +251,50 @@ def run_dist(hist):
         100.0 * inside_r / n, 100.0 * below_r / n, 100.0 * above_r / n))
 
 
+def vs_espn(con, hist):
+    p = dict(eng.DEFAULTS)
+    espn = {}
+    for gid, pid, stat, mean in con.execute(
+            "SELECT game_id, player_id, stat, mean FROM player_projections WHERE season=2025 "
+            "AND model_version='espn-weekly' AND scenario='base'"):
+        espn[(gid, pid, stat)] = mean
+    cells = {st: [] for st in ("rec", "rec_yds", "tgt", "rec_td")}
+    for r in sorted(eligible(hist, 2025), key=lambda r: (r.week, r.pid)):
+        v2 = eng.project(hist, 2025, r.week, r.pid, r.pos, r.team, r.opp, r.game_id, p)
+        if v2 is None:
+            continue
+        for st in cells:
+            e = espn.get((r.game_id, r.pid, st))
+            m = eng.marcel(hist, 2025, r.week, r.pid, st)
+            if e is not None and m is not None and st in v2:
+                cells[st].append((getattr(r, st), v2[st], m, e))
+    print("%-8s %5s %8s %8s %8s   %-26s %s" % ("stat", "n", "MAE v2", "MAE m1", "MAE espn", "v2 - espn [95% CI]", "m1 - espn"))
+    for st, rows in cells.items():
+        if not rows:
+            continue
+        n = len(rows)
+        mae = lambda i: sum(abs(x[i] - x[0]) for x in rows) / n
+        d_v2 = [abs(x[1] - x[0]) - abs(x[3] - x[0]) for x in rows]
+        lo, hi = bootstrap_diff(d_v2)
+        print("%-8s %5d %8.3f %8.3f %8.3f   %+7.3f [%+.3f, %+.3f]    %+.3f" % (
+            st, n, mae(1), mae(2), mae(3), mae(1) - mae(3), lo, hi, mae(2) - mae(3)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fit", action="store_true")
     ap.add_argument("--run", action="store_true")
     ap.add_argument("--fit-dist", action="store_true")
     ap.add_argument("--run-dist", action="store_true")
+    ap.add_argument("--vs-espn", action="store_true")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
     if a.fit_dist:
         fit_dist(eng.History.load(con, [2024]))
+    if a.vs_espn:
+        vs_espn(con, eng.History.load(con, [2024, 2025]))
     if a.run_dist:
         run_dist(eng.History.load(con, [2024, 2025]))
     if a.run:
