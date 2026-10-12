@@ -25,6 +25,8 @@ Source plan: [RESEARCH-nfl-model-inputs-2026-10-11.md](RESEARCH-nfl-model-inputs
 | Penalties committed, season to date (per game, shrunk 8 games) | tested, not kept | F-B 2011-2023 +0.0000 [-0.0003, +0.0004]; 2024 +0.0008; 2025 -0.0006. Re-run after a fix (a team with no games to date now sits at the league average, as the registration says; 2 of 4,175 games changed, both in 2017 week 2) | `penalty_rate` in `nfl_feature_backtest.py`, run 2026-10-12 |
 | FTN blitz, season to date (blitzers per dropback, shrunk 8 games). Variant A: fit 2022-23, grade 2024-25. Variant B: fit 2022, grade 2023-25 | tested, not kept (both) | A: F-B +0.0001 [-0.0001, +0.0003]; B: -0.0002 [-0.0009, +0.0005]. Fitted coefficient flips sign (A -0.99, B +3.84) | `ftn_keep_test` in `nfl_feature_backtest.py`, run 2026-10-12 |
 | Independent preseason prior (last season's EPA per play, shrunk; no market data) | tested, not kept | F-B 2011-2023 -0.0008 [-0.0017, +0.0002]; 2024 +0.0007; 2025 +0.0016 | `preseason_prior` in `nfl_feature_backtest.py`, run 2026-10-12 |
+| Participation pressure matchup (charted pressure, sacks count; 2016 to 2025) | tested, not kept | F-B 2017-2023 -0.0003 [-0.0010, +0.0005]; 2024 +0.0008; 2025 +0.0002 | `participation_keep` in `nfl_feature_backtest.py`; [RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md) |
+| Participation coverage matchup (man vs zone, same season, sacks excluded; 2018 to 2025) | tested, not kept | F-B 2019-2023 +0.0002 [-0.0002, +0.0006]; 2024 -0.0001; 2025 +0.0000 (positive at full precision) | `coverage_keep` in `nfl_feature_backtest.py` (definition and tests in `test_nfl_participation_features.py`); [RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md) |
 
 ## 2. Stats: stability and status
 
@@ -60,7 +62,7 @@ subset, so none of these are in the DB yet.
 | Pass rate over expected | `xpass`, `pass_oe` | no | new idea, untested |
 | Yards after catch and expected EPA | `yards_after_catch`, `xyac_epa` | no | new idea, untested |
 | Win probability and field goal probability | `vegas_wp`, `fg_prob` | no | probably not needed (market-derived) |
-| Participation (formations, personnel, defenders in the box, coverage) | not in the nflverse pbp file; a separate release | no | which seasons are covered is **not checked** |
+| Participation (formations, personnel, defenders in the box, coverage) | not in the nflverse pbp file; a separate release | yes: `nfl_hist_participation`, 2016 to 2025 (10 seasons), keyed on `(nflverse_game_id, play_id)`; columns `was_pressure`, `defense_man_zone_type`, `defense_coverage_type`, `defenders_in_box`, `number_of_pass_rushers`, `time_to_throw`, personnel and formation | pressure and coverage matchups tested, not kept (section 1); coverage labels are null through 2017 and unlabelled sacks through 2022 |
 | Time to throw, Next Gen Stats | not in the pbp file; separate release | no | which seasons are covered is **not checked** |
 
 ## 4. Next, in the order we agreed
