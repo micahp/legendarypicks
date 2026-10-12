@@ -53,6 +53,12 @@ SOURCES = {
                       "is_catchable_ball", "is_contested_ball", "is_created_reception",
                       "is_drop", "is_qb_sneak", "n_blitzers", "n_pass_rushers",
                       "is_qb_fault_sack", "date_pulled"], set()),
+    "participation": ("nfl_hist_participation",
+                      ["nflverse_game_id", "play_id", "season", "possession_team",
+                       "offense_formation", "offense_personnel", "defenders_in_box",
+                       "defense_personnel", "number_of_pass_rushers", "was_pressure",
+                       "defense_man_zone_type", "defense_coverage_type", "time_to_throw",
+                       "n_offense", "n_defense"], {"possession_team"}),
     "player_ids": ("nfl_hist_player_ids",
                    ["gsis_id", "pfr_id", "display_name", "position"], set()),
     "elo538": ("nfl_elo_538",
@@ -63,6 +69,9 @@ SOURCES = {
 # NULL and announced; any other missing column is an error.
 OPTIONAL = {"date_modified"}
 NO_SEASON = {"elo538", "player_ids"}
+# Files with no season column. The season comes from --season, and every game id must start
+# with it (nflverse ids are "<season>_<week>_<away>_<home>"); any other id raises.
+SEASON_FROM_ARG = {"participation"}
 ATTRIBUTION = {"ftn_charting": "FTN Data via nflverse, CC BY-SA 4.0",
                "elo538": "FiveThirtyEight nfl-elo-game, MIT licence"}
 
@@ -78,6 +87,8 @@ def migrate(con):
                 "ON nfl_hist_snap_counts(season, week, team)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_hist_depth_key "
                 "ON nfl_hist_depth_charts(season, week, club_code, position)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_hist_participation_key "
+                "ON nfl_hist_participation(nflverse_game_id, play_id)")
     con.execute("CREATE TABLE IF NOT EXISTS nfl_hist_loads (source, season, file, sha256, "
                 "file_rows, stored_rows, attribution, loaded_at)")
     con.commit()
@@ -93,13 +104,20 @@ def read_rows(src, path, season):
     import pyarrow.parquet as pq
     pf = pq.ParquetFile(path)
     file_rows = pf.metadata.num_rows
-    missing = [c for c in cols if c not in pf.schema.names]
+    missing = [c for c in cols if c not in pf.schema.names
+               and not (src in SEASON_FROM_ARG and c == "season")]
     if set(missing) - OPTIONAL:
         raise RuntimeError("%s: file lacks columns %s" % (path, missing))
     if missing:
         print("  %s: optional columns absent from this file, stored as NULL: %s" % (
             os.path.basename(path), missing))
-    data = pf.read(columns=[c for c in cols if c not in missing]).to_pydict()
+    data = pf.read(columns=[c for c in cols if c not in missing and c in pf.schema.names]).to_pydict()
+    if src in SEASON_FROM_ARG:
+        bad = {g for g in data["nflverse_game_id"] if not str(g).startswith("%d_" % season)}
+        if bad:
+            raise RuntimeError("%s: %d game ids are not season %d, e.g. %s" % (
+                path, len(bad), season, sorted(bad)[:3]))
+        data["season"] = [season] * pf.metadata.num_rows
     for c in missing:
         data[c] = [None] * pf.metadata.num_rows
     n = len(data[cols[0]])

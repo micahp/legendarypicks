@@ -63,15 +63,15 @@ def ols(X, y):
     return beta
 
 
-def stack(rows, cols=None, sigma_fn=None):
+def stack(rows, cols=None, sigma_fn=None, seasons=SEASONS):
     """Return game_id -> (proj_margin, p_home) for seasons 2011-2025.
 
     cols: game_id -> list of feature values (None = baseline B).
     sigma_fn(train_rows, residuals) -> function(row) -> sigma, or None for one sigma.
     """
     out = {}
-    for s in SEASONS[1:]:
-        train = [r for r in rows if r["season"] < s]
+    for s in seasons[1:]:
+        train = [r for r in rows if seasons[0] <= r["season"] < s]
         test = [r for r in rows if r["season"] == s]
 
         def x(r):
@@ -94,9 +94,9 @@ def graded(rows):
             and r["spread_line"] is not None and r["season"] >= 2011]
 
 
-def report(rows, base, feat, label):
+def report(rows, base, feat, label, groups=GROUPS):
     print("feature: %s" % label)
-    for name, seasons in GROUPS:
+    for name, seasons in groups:
         g = [r for r in graded(rows) if r["season"] in seasons]
         y = [r["outcome"] for r in g]
         bb = [(base[r["game_id"]][1] - o) ** 2 for r, o in zip(g, y)]
@@ -751,6 +751,83 @@ def kept_combined(con, rows):
     return {k: a[k] + b[k] for k in a}, None
 
 
+# ---- participation, 2026-10-12. PRE-REGISTERED (before its first run).
+# Question: does charted pressure (nflverse pbp_participation) predict margin where QB hits did not
+# (pressure_matchup, not kept)? Same matchup construction as pressure_matchup, only the event
+# changes. Measured before registering (2016-2025 files joined to nfl_pbp on game_id, play_id):
+# every REG dropback joins; `was_pressure` is null on sacks in 2016-2022 and true on sacks in
+# 2023-2025, so a pressure here is `was_pressure = 1 OR sack = 1`, which reads the same in all ten
+# seasons. A dropback counts only when it has a participation row and (was_pressure is not null or
+# sack = 1). Coverage (man/zone) is not used: absent 2016-17 and its level jumps in 2023-24.
+# Window: the data starts in 2016, so the stack is walk-forward from 2016 (fit on 2016..S-1, grade
+# S). Graded: 2017-2023 pooled, 2024, 2025. Base B is refit on the same training rows.
+# Keep rule (fixed here): the pooled 2017-2023 F-B interval is entirely below zero, and the 2024
+# and 2025 F-B points are not above zero. Expected coefficient sign: negative.
+# Week 1 of 2016 has no league history: column 0, counted. PRESS_K and PRESS_WIN as above.
+PART_SEASONS = list(range(2016, 2026))
+PART_GROUPS = (("2017-2023", range(2017, 2024)), ("2024", (2024,)), ("2025", (2025,)))
+
+
+def _participation_records(con):
+    """team-game offense records, 2016-2025: dropbacks with a participation row and pressures."""
+    recs = {}
+    for s, w, g, t, db, pr in con.execute(
+            "SELECT p.season, p.week, p.game_id, p.posteam, COUNT(*), "
+            "SUM(p.sack = 1 OR x.was_pressure = 1) "
+            "FROM nfl_pbp p JOIN nfl_hist_participation x "
+            "ON x.nflverse_game_id = p.game_id AND x.play_id = p.play_id "
+            "WHERE p.season BETWEEN 2016 AND 2025 AND p.qb_dropback = 1 AND p.posteam IS NOT NULL "
+            "AND (x.was_pressure IS NOT NULL OR p.sack = 1) "
+            "GROUP BY p.season, p.week, p.game_id, p.posteam"):
+        recs[(g, t)] = {"key": (int(s), int(w), g), "team": t, "plays": 0, "db": db or 0,
+                        "hit": pr or 0, "sack": 0, "touches": {}}
+    return recs
+
+
+def participation_pressure_columns(con, rows):
+    """game_id -> [expected home pressure rate - expected away], the _matchup construction."""
+    idx = _Index(_participation_records(con))
+    cols, missing = {}, 0
+    for r in rows:
+        s, w = int(r["season"]), int(r["week"])
+        cutoff = (s, w, "")
+        ldb, lpr, _ = idx.league_before(cutoff)
+        if ldb == 0:
+            cols[r["game_id"]] = [0.0]
+            missing += 1
+            continue
+        lg = lpr / float(ldb)
+
+        def rate(team, own):
+            db = m = 0
+            for x in idx.window(team, cutoff, PRESS_WIN):
+                d = x if own else idx.recs[(x["key"][2], idx.opp[(x["key"][2], team)])]
+                db += d["db"]; m += d["hit"]
+            return (m + PRESS_K * lg) / (db + PRESS_K)
+        h, a = r["home"], r["away"]
+        cols[r["game_id"]] = [(rate(h, True) + rate(a, False)) - (rate(a, True) + rate(h, False))]
+    print("participation checks: base rows with no league history before the game (column 0) %d"
+          % missing)
+    return cols
+
+
+def participation_keep_test(con):
+    rows = [r for r in base_rows(con) if r["season"] >= 2016]
+    cols = _complete(rows, participation_pressure_columns(con, rows))
+    base = stack(rows, seasons=PART_SEASONS)
+    feat = stack(rows, cols, seasons=PART_SEASONS)
+    report(rows, base, feat, "participation pressure matchup (fit from 2016)", PART_GROUPS)
+    for s in PART_SEASONS[1:]:
+        g = [r for r in graded(rows) if r["season"] == s]
+        d = sum((feat[r["game_id"]][1] - r["outcome"]) ** 2 - (base[r["game_id"]][1] - r["outcome"]) ** 2
+                for r in g) / len(g)
+        print("   diagnostic %d n=%d F-B %+.4f" % (s, len(g), d))
+    tr = [r for r in rows if r["season"] < 2025]
+    beta = ols([[1.0, r["proj_margin"], cols[r["game_id"]][0]] for r in tr],
+               [r["actual_margin"] for r in tr])
+    print("   fitted coef on feature, 2016-2024 fit %+.3f (base proj_margin %+.3f)" % (beta[2], beta[1]))
+
+
 def _complete(rows, cols):
     """Every base row must have its column; a missing one is a bug, never a zero."""
     miss = [r["game_id"] for r in rows if r["game_id"] not in cols]
@@ -761,11 +838,14 @@ def _complete(rows, cols):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep"] + sorted(FEATURES))
+    ap.add_argument("--feature", required=True, choices=["base", "ftn_keep", "participation_keep"] + sorted(FEATURES))
     a = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True)
     if a.feature == "ftn_keep":
         ftn_keep_test(con)
+        return 0
+    if a.feature == "participation_keep":
+        participation_keep_test(con)
         return 0
     rows = base_rows(con)
     base = stack(rows)

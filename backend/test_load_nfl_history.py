@@ -59,3 +59,30 @@ def test_prod_db_refused(monkeypatch):
     monkeypatch.setenv("LP_DB_PATH", "/root/legendarypicks/backend/data/picks.db")
     with pytest.raises(SystemExit):
         L.main(["--migrate"])
+
+
+def _part(path, game_ids):
+    cols = [c for c in L.SOURCES["participation"][1] if c != "season"]
+    data = {c: [None] * len(game_ids) for c in cols}
+    data["nflverse_game_id"] = game_ids
+    data["play_id"] = [float(i + 1) for i in range(len(game_ids))]
+    data["possession_team"] = ["LA"] * len(game_ids)
+    pq.write_table(pa.table(data), path)
+
+
+def test_participation_season_comes_from_the_argument(tmp_path):
+    f = str(tmp_path / "p.parquet")
+    _part(f, ["2016_01_LA_SF", "2016_01_LA_SF"])
+    con = _con(tmp_path)
+    L.load(con, "participation", f, 2016)
+    rows = con.execute("SELECT season, possession_team FROM nfl_hist_participation").fetchall()
+    assert rows == [(2016, "LAR"), (2016, "LAR")]
+
+
+def test_participation_game_id_from_another_season_raises(tmp_path):
+    f = str(tmp_path / "p.parquet")
+    _part(f, ["2016_01_LA_SF", "2017_01_LA_SF"])
+    con = _con(tmp_path)
+    with pytest.raises(RuntimeError):
+        L.load(con, "participation", f, 2016)
+    assert con.execute("SELECT COUNT(*) FROM nfl_hist_participation").fetchone()[0] == 0
