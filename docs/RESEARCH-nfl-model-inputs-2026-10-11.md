@@ -51,10 +51,9 @@ What we have (dev DB, measured 2026-10-11):
 | Source | Table | Seasons | Relevant fields |
 |---|---|---|---|
 | FTN charting (CC BY-SA) | `nfl_hist_ftn_charting` | 2022 to 2025, 185,215 plays | `n_blitzers`, `n_pass_rushers`, `is_qb_out_of_pocket`, `is_qb_fault_sack`, `is_play_action`, `is_rpo`, `is_screen_pass`, `is_motion`, `n_defense_box`, `is_drop`, `is_throw_away` |
-| nflverse play-by-play | `nfl_pbp` | 2010 to 2026 | `sack`, `shotgun`, `air_yards`, `pass_location`, `run_gap`, `epa`, `success`, `cpoe` |
+| nflverse play-by-play | `nfl_pbp` | 2010 to 2026 | `sack`, `shotgun`, `air_yards`, `pass_location`, `run_gap`, `epa`, `success`, `cpoe`, `qb_hit`, `qb_scramble`, `qb_dropback`, `no_huddle` (added 2026-10-11) |
 
-FTN is loaded but untested. Not in the DB: `qb_hit`, `qb_scramble` and `no_huddle` (published in nflverse
-play-by-play, not ingested by us), the nflverse participation data (formation, personnel, defenders in the
+FTN is loaded but untested. Not in the DB: the nflverse participation data (formation, personnel, defenders in the
 box, and for some seasons coverage type and pressure) and Next Gen Stats (time to throw). Which seasons
 those publishers cover is unverified.
 
@@ -80,7 +79,7 @@ QB performance under pressure is less stable than clean-pocket performance.
 
 ## Open items
 
-- Ingest `qb_hit`, `qb_scramble` and `no_huddle` from nflverse play-by-play (needs a yes).
+- Done 2026-10-11: `qb_hit`, `qb_scramble`, `qb_dropback` and `no_huddle` in `nfl_pbp` for 2010 to 2026 ([results](RESULTS-nfl-pbp-qb-columns-2026-10-11.md)).
 - Check participation and Next Gen Stats season coverage at the publisher before deciding to ingest.
 - Run lever 1 (offseason carryover) first; run inventory and stability (steps 1 and 2) for matchup stats
   alongside it. Both read-only on the dev DB.
