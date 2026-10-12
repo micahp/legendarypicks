@@ -10,7 +10,7 @@ Source plan: [RESEARCH-nfl-model-inputs-2026-10-11.md](RESEARCH-nfl-model-inputs
 | Lever | Status | Result | Where |
 |---|---|---|---|
 | Offseason carryover (shrink, prior games) | tested, no change | 21 settings, none passes the rule on 2024 and 2025 | [RESULTS-nfl-ladder-carryover-2026-10-12.md](RESULTS-nfl-ladder-carryover-2026-10-12.md), `backend/nfl_ladder.py` |
-| Preseason market prior | tested, kept | +0.0055 Brier gain, market-derived, so not our own forecast | [RESULTS-nfl-features-vs-market-2026-10-11.md](RESULTS-nfl-features-vs-market-2026-10-11.md) |
+| Preseason market prior | tested, kept | +0.0055 Brier gain, market-derived. **Micah 10-12: not our forecast.** Our own model is v1 plus EPA by unit | [RESULTS-nfl-features-vs-market-2026-10-11.md](RESULTS-nfl-features-vs-market-2026-10-11.md) |
 | EPA per play by unit (v2 stack column) | tested, kept (marginal) | +0.0019 gain, 2011 to 2023 | same as above |
 | Rating uncertainty (sigma by week) | tested, not kept | 0 change | same as above |
 | Margin spread by game | covered by the rating uncertainty test | not kept | same as above |
@@ -32,7 +32,29 @@ Source plan: [RESEARCH-nfl-model-inputs-2026-10-11.md](RESEARCH-nfl-model-inputs
 ## 2. Stats: stability and status
 
 Stability = first half of a season against the second half (r). Each season is its own test: the
-per-season spread is shown, not pooled, because the r moves a lot from one year to the next. Source:
+per-season spread is shown, not pooled, because the r moves a lot from one year to the next.
+
+**Which split (Micah, 10-12: early season and late season differ, many teams check out).** Measured
+10-12, 2010 to 2025, median r across seasons, team level. Computed by a read-only query in that
+session, not a committed script; re-derive before citing a number to two decimals.
+
+| Stat | 1st v 2nd half | odd v even weeks | wk 1-4 v last 4-5 | wk 5-8 v 9-12 | season to season |
+|---|---|---|---|---|---|
+| Offense EPA/play | +0.58 | +0.59 | +0.42 | +0.36 | +0.39 |
+| Turnover margin | +0.17 | +0.17 | +0.09 | +0.06 | +0.21 |
+| Giveaways | +0.21 | +0.17 | +0.10 | +0.07 | +0.16 |
+| Takeaways | +0.09 | +0.07 | +0.08 | +0.04 | +0.14 |
+| Penalties | +0.78 | +0.79 | +0.66 | +0.61 | +0.86 |
+| Pressure, charted (2016+) | +0.33 | +0.41 | +0.24 | +0.21 | +0.36 |
+| Man share (2018+) | +0.71 | +0.81 | +0.65 | +0.53 | +0.48 |
+
+Read: first quarter v last quarter is no less similar than the two middle quarters (same 4-week size),
+so the late-season change does not show up as a change in team rank. Odd v even is the cleaner split
+(both halves span the season); it reads a little higher for pressure and man share. Turnover luck is
+near zero under every split. The late-season effect is a level change, which r cannot see, so it was
+tested directly as the contention feature (section 1, not kept). The keep tests never used this split.
+
+Source for the table below:
 [RESULTS-nfl-stability-stats-2026-10-12.md](RESULTS-nfl-stability-stats-2026-10-12.md).
 
 | Stat | Stored in dev DB? | Stability r, per season: median (min to max) | Predictive test | Note |
@@ -53,7 +75,7 @@ per-season spread is shown, not pooled, because the r moves a lot from one year 
 ## 3. Stats not yet in the model: published, not stored
 
 Checked 2026-10-12 against the 2024 nflverse play-by-play file (372 columns). `nfl_pbp` stores a curated
-subset, so none of these are in the DB yet.
+subset. Since then penalties, turnovers and participation were stored (the Stored column says which).
 
 | Idea | Published columns (nflverse pbp) | Stored? | Notes |
 |---|---|---|---|
@@ -64,7 +86,7 @@ subset, so none of these are in the DB yet.
 | Yards after catch and expected EPA | `yards_after_catch`, `xyac_epa` | no | new idea, untested |
 | Win probability and field goal probability | `vegas_wp`, `fg_prob` | no | probably not needed (market-derived) |
 | Participation (formations, personnel, defenders in the box, coverage) | not in the nflverse pbp file; a separate release | yes: `nfl_hist_participation`, 2016 to 2025 (10 seasons), keyed on `(nflverse_game_id, play_id)`; columns `was_pressure`, `defense_man_zone_type`, `defense_coverage_type`, `defenders_in_box`, `number_of_pass_rushers`, `time_to_throw`, personnel and formation | pressure and coverage matchups tested, not kept (section 1); coverage labels are null through 2017 and unlabelled sacks through 2022 |
-| Time to throw, Next Gen Stats | not in the pbp file; separate release | no | which seasons are covered is **not checked** |
+| Time to throw, Next Gen Stats | not in the pbp file; `time_to_throw` is in the participation release | yes, in `nfl_hist_participation`, 2016 to 2025, about 38 to 44% of rows filled (measured 10-12) | the NGS release itself is not checked; untested |
 
 ## 4. Next, in the order we agreed
 
@@ -91,41 +113,55 @@ subset, so none of these are in the DB yet.
    16. FTN is stored for 2022 to 2025 (about 48k plays a season). **FTN blitz tested 2026-10-12, two
    pre-registered variants, both not kept.** Variant A fits 2022-23 and grades 2024-25; variant B fits 2022
    and grades 2023-25. The fitted coefficient changes sign between the two, so the feature is not stable
-   enough to carry into a model. Participation is not tested.
+   enough to carry into a model. **Participation tested 10-12: pressure and coverage matchups, both not kept**
+   ([RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md)). Coverage labels change in
+   2023 (sacks labelled from then, league man share 29% in 2022, 41% and 49% in 2023-24, 31% in 2025), so the
+   coverage test used shares relative to each season's league and a same-season window.
 5. **Spec B** (player projections), **start on the Spec B branch, not on this one.** Branch
    `feat/player-projections-availability`, worktree `/root/lp-player-proj`. Its work is B1 to B3
-   (10 commits not in `dev`, plus 1 uncommitted doc). Order:
+   (11 commits not in `dev`, nothing uncommitted, 10-12). Order:
    a. Review findings (`docs/REVIEW-SPEC-player-projections-availability-2026-10-10.md`). Status
       2026-10-12: the five findings (partial snap feed, refresh never rebuilds, log-only player-games,
       splits universe, stale team-file cache) are addressed in commit `fd9ad96`, with tests. The
-      focused suite passes, 52 tests. **Still open:** the B2 air-yards denominator (355 of 355 2026
-      season rows differ from the team-game totals, ARI 935 vs 944), and the real 2025 WR1-out example
-      for B3. Both need the dev DB rebuild from a fresh publisher file.
+      focused suite passes (the "52" does not reproduce: 44 on the review's file list, 59 with the
+      shares and identity tests, all passing, 10-12). **B2 cause measured 10-12 (`585d2dd`):** the season
+      rows (now 378, not 355) differ from team totals by the no-receiver pass air yards (KC, BUF, DAL exact)
+      and, for ARI and SEA, by 2026 week 5 games that are in the player logs but not yet in the team file
+      or `nfl_pbp`. No rebuild yet; it waits on week 5 (see open decisions). **B3 done 10-12:** Puka Nacua
+      out 2025 week 7 (injury report Out), Stafford with and without, in the review doc. One game.
    b. Read `docs/SPEC-player-projections-availability-2026-10-09.md` sections 2 and 4 only.
    c. Use the target and carry shares from this branch as inputs. Do not rebuild them here.
    d. The checklist before anything goes to `dev` is in `docs/HANDOFF-nfl-model-2026-10-11.md`
       (Task 4.4 and "Before anything goes to dev").
 
+Decided by Micah 10-12: the market prior is not our forecast; no paying for timestamped odds; participation
+tested; step 6 (contention) tested.
+
 Open decisions for Micah:
-- Schedule the weekly pbp ingest in `dev`: `scripts/nfl-availability.sh` on branch
-  `feat/nfl-epa-efficiency` has the step (Tuesday 09:30); `dev` does not.
+- **2026 week 5 pbp:** only 1 of 15 games stored on 10-12 although nflverse had 14 (file updated 10-12
+  09:05 GMT); BUF at LA plays 10-12 night. Agreed: ingest once on 10-13 morning, after nflverse updates.
+- **Weekly pbp ingest in `dev`.** Nothing schedules it. The step exists only on `feat/nfl-epa-efficiency`
+  (`ingest_nfl_pbp_logs.py --year`, INSERT OR REPLACE of whole rows). Three versions of that ingest exist:
+  `dev`, this branch (writes `penalty`, `penalty_team`, `fumble`, `fumble_lost`) and `lp-nfl-ratings`
+  (a small uncommitted edit). Order: land this branch's ingest in `dev`, reconcile the ratings edit, then
+  add the step. Otherwise the weekly replace writes rows without the four columns. The `dev` timer
+  `legendarypicks-nfl-availability` (Tue 09:30) is installed and had not fired yet on 10-12.
 - Push `dev` (local, 58 commits ahead of origin's `dev`, not pushed) and this branch.
 - Recurring line capture and the Sam recorder (approved 10-11, not set up).
 
-## 5. Where the code and the branches are
+## 5. Where the code and the branches are (inventory 2026-10-12, compared file by file with `dev`)
 
 | Thing | Location | Status |
 |---|---|---|
-| Model harness, features | `backend/nfl_feature_backtest.py` on `feat/nfl-model-foundation` | committed `cde089a` |
-| Ladder and carryover | `backend/nfl_ladder.py` on `feat/nfl-model-foundation` | committed `f3b5dda` |
-| Model page (v1 locks) | `dev` | merged 10-12, live on :3096 `/leagues/nfl?tab=model` |
-| Spec A doc (v1 and v2 separate) | `dev` | merged 10-12 (`8d7840f`) |
-| Old EPA blend (retired) | branch `feat/nfl-epa-efficiency` | worktree removed; code kept on branch only |
-| Old EPA blend result and review | `dev` (docs only) | archived 10-12 (`3e5d3cc`) |
-| Spec B (player projections) | branch `feat/player-projections-availability`, worktree `/root/lp-player-proj` | 10 commits not in dev, 1 uncommitted doc |
-| NFL ratings, grading, tiebreakers | worktree `/root/lp-nfl-ratings` | **keep**: 31 uncommitted entries (10-12), 6 not in dev (`nfl_grading.py`, `nfl_tiebreaker_data.py`, their tests, model systemd unit and timer) |
-| All Day lineups (not model) | worktree `/root/lp-nfl-allday` | unrelated to the model |
-| Clean worktrees with nothing unique | `/root/lp-nfl-data-foundation`, `/root/lp-nfl-schedule-a0` | safe to remove, not removed yet |
+| Model research (harness, features, ladder, participation loader) | `feat/nfl-model-foundation`, worktree `/root/lp-nfl-lock-by-version` | 11 commits not in `dev` |
+| Spec B (player projections) | `feat/player-projections-availability`, worktree `/root/lp-player-proj` | 11 commits not in `dev` |
+| Model page (v1 locks), Spec A, seeding, sim, lock grader (`grade_nfl_locks.py`) | `dev` | merged 10-10 to 10-12 |
+| NFL ratings WIP | worktree `/root/lp-nfl-ratings`, nothing committed | **keep, unique:** playoff-odds API (`routers/models/nfl.py`), `pages/nfl/playoff-odds.tsx`, `jobs/nfl_weekly_model.py` and its systemd unit and timer, `nfl_tiebreaker_data.py` (touchdowns for deep tiebreakers). **Overlaps `dev`:** 10 files (seeding, sim, lock, standings, bracket check, migrate, their tests, spec) that `dev` also changed after 10-10; needs a reconcile, not a plain commit. `nfl_grading.py` is superseded by `dev`'s `grade_nfl_locks.py` |
+| Old EPA blend (retired) | branch `feat/nfl-epa-efficiency`, no worktree | 2 commits; only the weekly pbp step is worth taking (see open decisions) |
+| All Day lineups (not model) | `feat/nfl-allday`, worktree `/root/lp-nfl-allday` | 4 commits never landed; product call |
+| Identity publishers (July) | branch `codex/nfl-v1` | 4 commits never landed; `dev` split every file it touched into packages on 08-18; probably superseded |
+| Prop market suffix fix | branch `feat/prop-repair` | 13-line fix never landed, no equivalent in `dev` (not NFL) |
+| Already in `dev`, safe to remove | `lp-nfl-data-foundation`; `lp-nfl-schedule-a0` (both timer files byte-identical in `dev`); branches `feat/nfl-season-proj`, `feat/projections-nfl` (patch-equivalent), `feat/nfl-adp` (same subject landed 07-22), and 8 fully merged NFL branches | not removed yet; archive tag before deleting |
 
 ## 6. Rules that apply to all of this
 
