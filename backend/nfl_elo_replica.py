@@ -167,7 +167,8 @@ def e2(con):
     games, neutral, rows, graded = _setup(con)
     start = start_ratings(con)
     g = [r for r in graded if 2011 <= r["season"] <= 2023]
-    ref = _brier(g, lambda r: prob(run_elo(games, start)[r["game_id"]], neutral[r["game_id"]]))
+    pre0 = run_elo(games, start)
+    ref = _brier(g, lambda r: prob(pre0[r["game_id"]], neutral[r["game_id"]]))
     print("E2 538 constants, 2011-2023 n=%d: Brier %.4f; v1 %.4f; market %.4f" % (
         len(g), ref, _brier(g, lambda r: r["p_model"]), _brier(g, lambda r: r["p_market"])))
     variants = ([("K", k) for k in (10.0, 30.0, 40.0)] + [("hfa", h) for h in (0.0, 35.0, 95.0)]
