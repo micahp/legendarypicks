@@ -179,6 +179,7 @@ def one_run(inp, rng, k=0.0, observe=None):
     games = simulate_games(inp, rng, k)
     teams = st.build(inp["tmap"], games)
     sd.COIN_FLAGS.clear()
+    sd.DECISIONS.clear()          # per run; it grew without bound over n runs before
     n_seeds = sd.n_seeds_for(inp["season"])
     seeds = {conf: sd.seeds_for_conference(teams, conf, n_seeds=n_seeds, rng=rng)
              for conf in ("AFC", "NFC")}
