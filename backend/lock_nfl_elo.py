@@ -41,7 +41,7 @@ import nfl_lock
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
-LEAD = dt.timedelta(minutes=90)
+LEAD = nfl_lock.LOCK_LEAD
 MODEL = "nfl-v1-elo-stack"
 HFA = er.BASE["hfa"]
 CARRY = er.BASE["carry"]

@@ -1,4 +1,5 @@
 """Tests for lock_nfl_week.py: dry run writes nothing; apply locks unplayed games only."""
+import datetime as dt
 import io
 import itertools
 import os
@@ -7,10 +8,12 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import lock_nfl_week as lw  # noqa: E402
+import nfl_lock  # noqa: E402
 from test_nfl_ratings_data import TEAMS, points  # noqa: E402
 
 
@@ -77,6 +80,15 @@ class DryRun(CliDB):
 
 
 class Apply(CliDB):
+    """The fixture's game is days away, so the 90 minute window is widened for these tests; the rule itself
+    is checked in TooEarly below and in test_nfl_lock.MinLead."""
+
+    def setUp(self):
+        super().setUp()
+        patch = mock.patch.object(nfl_lock, "LOCK_LEAD", dt.timedelta(days=36500))
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def test_apply_locks_unplayed_and_skips_played(self):
         code, out = self.run_cli("--apply")
         self.assertEqual(code, 0)
@@ -104,6 +116,15 @@ class Apply(CliDB):
         n, = con.execute("SELECT COUNT(*) FROM model_runs WHERE status='ok'").fetchone()
         con.close()
         self.assertEqual(n, 2)  # each apply records its own run
+
+
+class TooEarly(CliDB):
+    def test_the_manual_script_writes_nothing_before_the_window(self):
+        code, out = self.run_cli("--apply")
+        self.assertEqual(code, 0)
+        self.assertIn("new_locks=0", out)
+        self.assertIn("too_early=2", out)
+        self.assertEqual(self.count_projections(), 0)
 
 
 class Inputs(CliDB):
