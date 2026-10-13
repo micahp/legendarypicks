@@ -579,7 +579,8 @@ def summarize(draws, index, line=None):
 # GATE, to publish passing: MAE below Marcel-lite on BOTH passing yards and attempts (point estimates),
 # paired bootstrap 95% interval reported. Completions and TDs and the p10 to p90 coverage are reported.
 PASSING = ("att", (("cmp", "K_CMP"), ("pass_yds", "K_YPA"), ("pass_td", "K_PTD")))
-QB_DEFAULTS = {"K_CMP": None, "K_YPA": None, "K_PTD": None, "R_ATT": None, "G_PASS": None}
+# Frozen 2026-10-13 from backtest --fit-qb on 2024 (410 QB player-games); every K interior to its grid.
+QB_DEFAULTS = {"K_CMP": 160.0, "K_YPA": 160.0, "K_PTD": 320.0, "R_ATT": 14.62, "G_PASS": 1.15}
 
 
 def project_qb(hist, season, week, pid, team, opp, game_id, p_in=None):
