@@ -75,14 +75,6 @@ def player(con, pid, name, n_games, yards=100):
                      "OPP", "home", k + 1, "espn"))
 
 
-def prop(con, pid, captured, market="receiving_yards", line=90.5, league="nfl", side="over"):
-    gid = con.execute("INSERT INTO prop_games(league,date,home,away,start_time) "
-                      "VALUES (?,?,?,?,?)", (league, "2026-10-18", "T01", "T00",
-                                              "2026-10-18T17:00:00Z")).lastrowid
-    con.execute("INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
-                "VALUES (?,?,?,?,?,?,?)", (gid, pid, market, line, side, "src", captured))
-
-
 class Base(unittest.TestCase):
     with_odds = True
 
@@ -112,42 +104,98 @@ class Base(unittest.TestCase):
             c.close()
 
 
+def offer(con, pid, line, n_sources, captured=RECENT, market="receiving_yards", league="nfl",
+          side="over", prefix="s"):
+    gid = con.execute("INSERT INTO prop_games(league,date,home,away,start_time) VALUES (?,?,?,?,?)",
+                      (league, "2026-10-18", "T01", "T00", "2026-10-18T17:00:00Z")).lastrowid
+    for k in range(n_sources):
+        con.execute("INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
+                    "VALUES (?,?,?,?,?,?,?)", (gid, pid, market, line, side, "%s%d" % (prefix, k), captured))
+
+
 class PropRule(Base):
-    def test_most_settled_games_wins_and_short_history_loses(self):
-        player(self.con, 1, "Short", 21)
-        player(self.con, 2, "Long", 30)
-        player(self.con, 3, "TooShort", 19)
-        for pid in (1, 2, 3):
-            prop(self.con, pid, RECENT)
+    def test_highest_consensus_line_wins(self):
+        player(self.con, 1, "Low", 25)
+        player(self.con, 2, "High", 25)
+        player(self.con, 3, "Mid", 25)
+        offer(self.con, 1, 60.5, 9)
+        offer(self.con, 2, 93.5, 11)
+        offer(self.con, 3, 75.5, 12)
         self.con.commit()
         p = self.payload()["prop"]
-        self.assertEqual(p["player_id"], 2)
-        self.assertEqual(p["hit_rate_n"]["season"], 30)
+        self.assertEqual((p["player_id"], p["line"], p["sources"]), (2, 93.5, 11))
 
-    def test_stale_other_league_and_under_rows_are_not_candidates(self):
-        player(self.con, 1, "Stale", 40)
-        player(self.con, 2, "Wrong league", 40)
-        player(self.con, 3, "Under only", 40)
-        player(self.con, 4, "Eligible", 25)
-        prop(self.con, 1, STALE)
-        prop(self.con, 2, RECENT, league="nba")
-        prop(self.con, 3, RECENT, side="under")
-        prop(self.con, 4, RECENT)
+    def test_consensus_line_beats_a_thin_outlier_line(self):
+        player(self.con, 1, "Outlier", 25)
+        offer(self.con, 1, 29.5, 2, captured="2026-10-13T06:00:00+00:00")    # newer, 2 sources
+        offer(self.con, 1, 31.5, 9, captured="2026-10-13T04:00:00+00:00")    # consensus
         self.con.commit()
-        self.assertEqual(self.payload()["prop"]["player_id"], 4)
+        p = self.payload()["prop"]
+        self.assertEqual((p["line"], p["sources"]), (31.5, 9))
 
-    def test_tie_goes_to_latest_capture_then_lowest_player_id(self):
+    def test_a_player_line_tie_goes_to_latest_capture_then_higher_line(self):
+        player(self.con, 1, "Tie", 25)
+        offer(self.con, 1, 70.5, 9, captured="2026-10-13T04:00:00+00:00")
+        offer(self.con, 1, 72.5, 9, captured="2026-10-13T05:00:00+00:00")
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["line"], 72.5)
+        offer(self.con, 1, 74.5, 9, captured="2026-10-13T05:00:00+00:00")   # same capture: higher line
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["line"], 74.5)
+
+    def test_same_line_ties_go_to_more_sources_then_lowest_player_id(self):
         for pid in (5, 6, 7):
             player(self.con, pid, "P%d" % pid, 25)
-        prop(self.con, 5, "2026-10-13T04:00:00+00:00")
-        prop(self.con, 6, "2026-10-13T06:00:00+00:00")
-        prop(self.con, 7, "2026-10-13T06:00:00+00:00")
+        offer(self.con, 7, 80.5, 10)
+        offer(self.con, 6, 80.5, 9)
+        offer(self.con, 5, 80.5, 9)
         self.con.commit()
-        self.assertEqual(self.payload()["prop"]["player_id"], 6)
+        self.assertEqual(self.payload()["prop"]["player_id"], 7)
+        self.con.execute("DELETE FROM props WHERE player_id=7")
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 5)
+
+    def test_threshold_history_and_filters(self):
+        player(self.con, 1, "SevenSources", 25)
+        player(self.con, 2, "ShortHistory", 19)
+        player(self.con, 3, "Stale", 25)
+        player(self.con, 4, "Rushing", 25)
+        player(self.con, 5, "Under", 25)
+        player(self.con, 6, "Wrong league", 25)
+        player(self.con, 7, "Eligible", 25)
+        offer(self.con, 1, 120.5, 7)
+        offer(self.con, 2, 120.5, 12)
+        offer(self.con, 3, 120.5, 12, captured=STALE)
+        offer(self.con, 4, 120.5, 12, market="rushing_yards")
+        offer(self.con, 5, 120.5, 12, side="under")
+        offer(self.con, 6, 120.5, 12, league="nba")
+        offer(self.con, 7, 50.5, 8)
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 7)
+
+    def test_relaxes_once_to_five_sources(self):
+        player(self.con, 1, "Five", 25)
+        player(self.con, 2, "Six", 25)
+        offer(self.con, 1, 100.5, 5)
+        offer(self.con, 2, 60.5, 6)
+        self.con.commit()
+        p = self.payload()["prop"]
+        self.assertEqual((p["player_id"], p["sources"]), (1, 5))      # highest line among >= 5
+        self.con.execute("DELETE FROM props WHERE player_id=1")
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 2)
+
+    def test_the_strict_rule_is_tried_before_the_relaxed_one(self):
+        player(self.con, 1, "Five", 25)
+        player(self.con, 2, "Eight", 25)
+        offer(self.con, 1, 100.5, 5)
+        offer(self.con, 2, 60.5, 8)
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 2)
 
     def test_numbers_equal_prop_history(self):
         player(self.con, 1, "Same", 25)
-        prop(self.con, 1, RECENT, line=110.5)
+        offer(self.con, 1, 110.5, 9)
         self.con.commit()
         out = self.payload()["prop"]
         h = props.prop_history(player_id=1, market="receiving_yards", line=110.5, side="over",
@@ -158,20 +206,16 @@ class PropRule(Base):
         self.assertEqual(out["games"][-1]["value"], h["games"][0]["value"])   # oldest first
         self.assertEqual(out["source"]["as_of"], RECENT)
 
-    def test_latest_line_for_a_player_market_is_used(self):
-        player(self.con, 1, "Moved", 25)
-        prop(self.con, 1, "2026-10-13T01:00:00+00:00", line=80.5)
-        prop(self.con, 1, "2026-10-13T05:00:00+00:00", line=95.5)
-        self.con.commit()
-        self.assertEqual(self.payload()["prop"]["line"], 95.5)
-
     def test_null_when_nobody_qualifies_and_chain_player_follows(self):
-        player(self.con, 1, "Short", 5)
-        prop(self.con, 1, RECENT)
+        player(self.con, 1, "FewSources", 25)
+        player(self.con, 2, "ShortHistory", 5)
+        offer(self.con, 1, 90.5, 4)
+        offer(self.con, 2, 90.5, 12)
         self.con.commit()
         out = self.payload()
         self.assertIsNone(out["prop"])
         self.assertIn("prop", out["absent"])
+        self.assertIn("5 sources", out["absent"]["prop"])
         self.assertIsNone(out["chain"]["player"])
         self.assertIn("chain.player", out["absent"])
 
