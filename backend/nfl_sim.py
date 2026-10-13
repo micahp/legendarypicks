@@ -174,7 +174,8 @@ def hot_update(deltas, home, away, residual, k):
 
 
 def one_run(inp, rng, k=0.0, observe=None):
-    """One simulated season. Returns (seeds_by_conf, wins_by_team, coin_flips).
+    """One simulated season. Returns (seeds_by_conf, wins_by_team, coin_flips); wins count a tie
+    as half a win.
     observe(games, teams, seeds), if given, sees every simulated season (backtests, gates)."""
     games = simulate_games(inp, rng, k)
     teams = st.build(inp["tmap"], games)
@@ -184,7 +185,9 @@ def one_run(inp, rng, k=0.0, observe=None):
     seeds = {conf: sd.seeds_for_conference(teams, conf, n_seeds=n_seeds, rng=rng)
              for conf in ("AFC", "NFC")}
     flips = len(sd.COIN_FLAGS)
-    wins = {code: t.wins for code, t in teams.items()}
+    # A tie is half a win (NFL standings). A team with no tie keeps its integer win count, so a
+    # season without ties gives exactly the numbers it gave before ties were counted.
+    wins = {code: (t.wins + 0.5 * t.ties if t.ties else t.wins) for code, t in teams.items()}
     if observe is not None:
         observe(games, teams, seeds)
     return seeds, wins, flips
