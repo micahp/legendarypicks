@@ -160,6 +160,36 @@ class DefaultRedistribution(unittest.TestCase):
         self.assertEqual("v2.0", mod.DEFAULTS["REDIST"])
 
 
+class PLog(unittest.TestCase):
+    def test_a_candidate_who_stopped_logging_counts_at_his_fitted_chance(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [row(1, w, 5), row(9, w, 10, team="B")]
+            if w == 1:
+                rows.append(row(2, w, 5))          # player 2 logged week 1 only: k=1, last=0
+        hist = build(rows)
+        self.assertEqual((1, False), hist.recent_form(2025, "A", 4, 2))
+        self.assertEqual((3, True), hist.recent_form(2025, "A", 4, 1))
+        q = dict(P, REDIST="v2.0", P_LOG={"10": 0.2, "31": 0.95})
+        res = mod.project(hist, 2025, 4, 1, "WR", "A", "B", gid(4), q)
+        # raw shares over games played: p1 .5, 1, 1 -> .8333; p2 .5 in his one game
+        s1, s2 = (0.5 + 1 + 1) / 3, 0.5
+        team = (10 + 5 + 5) / 3                            # own and allowed are both A's 10, 5, 5
+        self.assertAlmostEqual(team * s1 / (s1 + 0.2 * s2), res["tgt"])
+        plain = mod.project(hist, 2025, 4, 1, "WR", "A", "B", gid(4), dict(q, P_LOG=None))
+        self.assertAlmostEqual(team * s1 / (s1 + s2), plain["tgt"])
+
+    def test_the_projected_player_counts_in_full(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [row(1, w, 5), row(2, w, 5), row(9, w, 10, team="B")]
+        hist = build(rows)
+        q = dict(P, REDIST="v2.0", P_LOG={"31": 0.5})
+        res = mod.project(hist, 2025, 4, 1, "WR", "A", "B", gid(4), q)
+        # p1 counts 1, p2 counts .5: share .5 / (.5 + .25)
+        self.assertAlmostEqual(10 * 0.5 / 0.75, res["tgt"])
+
+
 class Load(unittest.TestCase):
     """History.load against a real-shaped database: schedule teams are LAR and WSH, the game id says LA."""
 

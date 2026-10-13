@@ -234,6 +234,35 @@ def diagnose_bias(hist, season=2025):
                   season, col, n, vb / n, absorbed / n, proj_sh / n, act_sh / n))
 
 
+def fit_plog(hist, season=2024):
+    """P_LOG by (k, last), PRE-REGISTERED with History.p_log. Prints the table to freeze."""
+    counts = {}
+    for (s, team), weeks in hist.team_weeks.items():
+        if s != season:
+            continue
+        for w in sorted(weeks):
+            if w < 3 or w > 18:
+                continue
+            rows = hist.by_team[(s, team)][w]
+            gid = rows[0].game_id
+            removed = hist.out_before(s, gid, team)
+            played = {r.pid for r in rows}
+            for j in hist.candidates(s, team, w):
+                if j in removed:
+                    continue
+                key = "%d%d" % tuple(int(x) for x in hist.recent_form(s, team, w, j))
+                c = counts.setdefault(key, [0, 0])
+                c[0] += j in played
+                c[1] += 1
+    table = {}
+    for key in sorted(counts):
+        logged, n = counts[key]
+        table[key] = round(logged / n, 3)
+        print("P_LOG %s %s: %d of %d logged = %.3f" % (season, key, logged, n, logged / n))
+    print("FROZEN P_LOG", table)
+    return table
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -399,11 +428,15 @@ def main():
     ap.add_argument("--vs-espn", action="store_true")
     ap.add_argument("--fit-nmu", action="store_true")
     ap.add_argument("--diagnose-bias", action="store_true")
+    ap.add_argument("--fit-plog", action="store_true")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.fit_plog:
+        fit_plog(eng.History.load(con, [2024]))
+        fit_plog(eng.History.load(con, [2024, 2025]), season=2025)
     if a.diagnose_bias:
         diagnose_bias(eng.History.load(con, [2024, 2025]))
     if a.fit_nmu:

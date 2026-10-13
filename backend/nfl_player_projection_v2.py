@@ -60,7 +60,7 @@ OUT_STATUSES = ("Out", "Doubtful")
 RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td")))
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
-DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0",
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0", "P_LOG": None,
             "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
 # Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
 # H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
@@ -251,6 +251,24 @@ class History(object):
                 seen[r.pid] = r.pos
         return seen
 
+    def recent_form(self, season, team, week, pid):
+        """(k, last): how many of the team's last LAST_GAMES games before `week` `pid` logged in, and
+        whether he logged in the most recent one."""
+        weeks = sorted(w for w in self.team_weeks[(season, team)] if w < week)[-LAST_GAMES:]
+        logged = [any(r.pid == pid for r in self.by_team[(season, team)][w]) for w in weeks]
+        return sum(logged), bool(logged and logged[-1])
+
+    def p_log(self, season, team, week, pid, table):
+        """Fitted chance a candidate appears in the box score of the target game, from recent_form.
+
+        P_LOG is PRE-REGISTERED 2026-10-13: for every candidate not removed by the report, in 2024 team-games
+        weeks 3 to 18, the share who logged in the target game, by (k, last). Fitted by backtest --fit-plog,
+        frozen in DEFAULTS before the 2025 run. Gate: adopted only if on 2025 weeks 3 to 18 the paired MAE of
+        targets, receptions and receiving yards are each no higher than the engine without it (1.562, 1.207,
+        15.849 on the dev DB copied 2026-10-13) and the Spec B 5 gate still passes."""
+        k, last = self.recent_form(season, team, week, pid)
+        return table.get("%d%d" % (k, int(last)), 1.0)
+
     def out_before(self, season, game_id, team):
         return {pid for pid, (rep, _p) in self.status.get((season, game_id, team), {}).items()
                 if rep in OUT_STATUSES}
@@ -344,7 +362,14 @@ class History(object):
                 continue
             val = self.raw_share(season, j, jpos, week, col, p, caches)
             raw[j] = val[0]
-        total = sum(raw.values())
+        if p.get("P_LOG"):
+            # Bias fix, PRE-REGISTERED 2026-10-13 (see recent_form / P_LOG): the projection is conditional
+            # on `pid` playing, so he counts in full; every other candidate counts at his fitted chance
+            # of appearing in the box score, so share is not handed to players who will not play.
+            total = sum(v * (1.0 if j == pid else self.p_log(season, team, week, j, p["P_LOG"]))
+                        for j, v in raw.items())
+        else:
+            total = sum(raw.values())
         if total <= 0 or pid not in raw:
             return None
         share = raw[pid] * (1.0 - p["OTHER"]) / total
