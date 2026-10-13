@@ -40,6 +40,7 @@ import migrate_nfl_model_tables as mg
 import nfl_ratings as nr
 
 LEAGUE = "nfl"
+LOCK_LEAD = dt.timedelta(minutes=90)   # no lock earlier than this before kickoff (every model)
 MARKET_SOURCE = "nflverse"
 
 
