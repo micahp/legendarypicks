@@ -160,6 +160,41 @@ class DefaultRedistribution(unittest.TestCase):
         self.assertEqual("v2.0", mod.DEFAULTS["REDIST"])
 
 
+class Load(unittest.TestCase):
+    """History.load against a real-shaped database: schedule teams are LAR and WSH, the game id says LA."""
+
+    def db(self, schedule_away="LAR"):
+        import json
+        import sqlite3
+        con = sqlite3.connect(":memory:")
+        con.executescript("""
+            CREATE TABLE players(id INTEGER, league TEXT, position TEXT);
+            CREATE TABLE player_game_logs(player_id INTEGER, league TEXT, season INTEGER, team TEXT,
+                game_id TEXT, stats TEXT, source TEXT, game_type TEXT);
+            CREATE TABLE nfl_schedule(game_id TEXT, season INTEGER, away_team TEXT, home_team TEXT);
+            CREATE TABLE player_game_availability(league TEXT, season INTEGER, game_id TEXT, team TEXT,
+                player_id INTEGER, report_status TEXT, played INTEGER);
+        """)
+        con.execute("INSERT INTO players VALUES (1,'nfl','WR'), (2,'nfl','WR')")
+        con.execute("INSERT INTO nfl_schedule VALUES ('2025_01_LA_NO',2025,?,'NO')", (schedule_away,))
+        for pid, team in ((1, "LAR"), (2, "NO")):
+            con.execute("INSERT INTO player_game_logs VALUES (?,'nfl',2025,?,'2025_01_LA_NO',?,"
+                        "'nflverse_weekly','REG')", (pid, team, json.dumps({"targets": 5})))
+        return con
+
+    def test_the_rams_opponent_is_the_saints_not_themselves(self):
+        hist = mod.History.load(self.db(), [2025])
+        by = {r.pid: r for r in hist.rows}
+        self.assertEqual("NO", by[1].opp)
+        self.assertEqual("LAR", by[2].opp)
+        # the Saints' defence allowed the Rams' 5 targets, not a 0-target game against "LA"
+        self.assertEqual(5, hist.team_game(2025, by[2].opp, 1, "tgt"))
+
+    def test_a_log_team_missing_from_its_game_raises(self):
+        with self.assertRaises(RuntimeError):
+            mod.History.load(self.db(schedule_away="ARI"), [2025])
+
+
 class Marcel(unittest.TestCase):
     def test_marcel_is_the_live_route_on_earlier_games(self):
         rows = [row(1, w, 5, rec=w, yds=10 * w) for w in range(1, 6)]

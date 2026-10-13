@@ -113,7 +113,13 @@ class History(object):
     @classmethod
     def load(cls, con, seasons):
         pos = {pid: p for pid, p in con.execute("SELECT id, position FROM players WHERE league='nfl'")}
-        rows = []
+        # The opponent comes from the published schedule row, whose team columns use the same codes as the
+        # logs (LAR, WSH). The game id string uses nflverse's (LA, WAS); comparing a log team to it made the
+        # Rams and Commanders their own opponent until 2026-10-13.
+        sched = {gid: (away, home) for gid, away, home in con.execute(
+            "SELECT game_id, away_team, home_team FROM nfl_schedule WHERE season IN (%s)"
+            % ",".join("?" * len(seasons)), list(seasons))}
+        rows, unplaced = [], []
         for season in seasons:
             for pid, team, game_id, stats in con.execute(
                     "SELECT player_id, team, game_id, stats FROM player_game_logs WHERE league='nfl' "
@@ -121,12 +127,19 @@ class History(object):
                     "AND team IS NOT NULL AND game_id IS NOT NULL", (season,)):
                 if pos.get(pid) not in SKILL:
                     continue
-                s_, week, away, home = parse_game_id(game_id)
+                s_, week, _away, _home = parse_game_id(game_id)
                 if week > 18:
+                    continue
+                away, home = sched.get(game_id, (None, None))
+                if team not in (away, home):
+                    unplaced.append((game_id, team))
                     continue
                 import json
                 rows.append(Row(pid, s_, week, team, home if team == away else away, game_id,
                                 "RB" if pos[pid] == "FB" else pos[pid], json.loads(stats)))
+        if unplaced:
+            raise RuntimeError("%d log rows whose team is not in their schedule game, e.g. %s"
+                               % (len(unplaced), unplaced[:3]))
         status = defaultdict(dict)
         for season, game_id, team, pid, rep, played in con.execute(
                 "SELECT season, game_id, team, player_id, report_status, played FROM player_game_availability "
