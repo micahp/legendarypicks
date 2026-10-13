@@ -162,3 +162,31 @@ Rows above are kept as written. These supersede where they overlap.
 | # | was | now |
 |---|---|---|
 | 2 / 41 | **Tennis discarded every ATP/WTA prop and correctly made the timer exit 3.** | Candidate `feat/tennis-spine` adds `ingest_tennis_players.py`, which reads ESPN's one-request-per-league ATP/WTA rankings payload and publishes its verbatim athlete names plus ESPN IDs (150 ATP, 150 WTA; NULL team). Against managed DEV, Bovada ATP resolved **168 of 168** scraped props with exit 0. Candidate code is unmerged; production remains unchanged. |
+
+### Updated 2026-10-13 - non-ESPN tennis spine
+
+This supersedes the ESPN source and candidate status in the prior note. The dev
+spine now stores publisher IDs from TennisExplorer and the official WTA ranked
+players API. Counts below were read back from the dev database after apply.
+
+- ATP: TennisExplorer `/ranking/atp-men/2026/?page=N` returned 2,304 of 2,304
+  ranked rows across 47 of 47 pages and 47 requests. The database stores 2,304
+  of 2,304 unique publisher IDs across 2,314 ATP player rows. Source-name
+  coverage is 221 of 227 unresolved Underdog names and 119 of 126 unresolved
+  Bovada names. Underdog source IDs now bind 221 of those 227 keys; the table
+  has 323 of 323 ATP Underdog mappings.
+- WTA: `api.wtatennis.com/tennis/players/ranked?type=rankSingles&metric=singles&page=N&pageSize=100`
+  returned 1,545 of 1,545 ranked rows across 16 of 16 pages and 16 requests.
+  The database stores 1,545 of 1,545 unique publisher IDs across 1,551 WTA
+  player rows. Source-name coverage, including one reviewed publisher-backed
+  alias, is 77 of 83 unresolved Underdog names and 131 of 134 unresolved
+  Bovada names. Underdog source IDs bind 77 of those 83 keys; the table has
+  156 of 156 WTA Underdog mappings.
+- Live dev prop checks resolved 144 of 144 ATP props across 12 games and 159
+  of 159 WTA props across 16 games. Both runs reported 0 unresolved and 0
+  players created from sportsbook display names. The WTA alias maps "Maria
+  Camila Osorio" to WTA publisher ID 325898, whose published profile name is
+  Camila Osorio.
+- Backup `/tmp/picks.dev.db.pre-tennis-spine-20261013.sqlite` and the updated
+  dev database both passed `PRAGMA quick_check`. Focused tests: 6 passed.
+  Production was not touched; no service was restarted and nothing was pushed.
