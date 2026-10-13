@@ -135,6 +135,14 @@ class PropRule(Base):
         self.con.commit()
         self.assertEqual(self.payload()["prop"]["player_id"], 2)
 
+    def test_start_time_formats_compare_as_instants(self):
+        player(self.con, 1, "Just started", 25)
+        player(self.con, 2, "Just ahead", 25)
+        offer(self.con, 1, 120.5, 10, start="2026-10-13T11:59:00+00:00")
+        offer(self.con, 2, 60.5, 8, start="2026-10-13T12:00:30+00:00")
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 2)
+
     def test_null_when_only_finished_games_have_lines(self):
         player(self.con, 1, "Played", 25)
         offer(self.con, 1, 120.5, 14, start="2026-10-13T00:15:00Z")
