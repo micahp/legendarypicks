@@ -81,7 +81,7 @@ def start_ratings(con):
     return out
 
 
-def run_elo(games, start, K=20.0, hfa=65.0, carry=1.0 / 3.0, mov=True):
+def run_elo(games, start, K=20.0, hfa=65.0, carry=1.0 / 3.0, mov=True, return_state=False):
     """{game_id: (pre_home, pre_away)} for every game, see the module docstring."""
     rating = dict(start)
     season_of = {t: 2010 for t in rating}
@@ -109,6 +109,8 @@ def run_elo(games, start, K=20.0, hfa=65.0, carry=1.0 / 3.0, mov=True):
         delta = K * mult * (res - p)
         rating[h] += delta
         rating[a] -= delta
+    if return_state:
+        return out, rating, season_of
     return out
 
 

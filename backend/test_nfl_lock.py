@@ -286,3 +286,32 @@ class InputsComplete(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MinLead(LockDB):
+    """The 90 minute rule: no lock earlier than min_lead before kickoff (kickoff here is 17:00Z)."""
+
+    LEAD = dt.timedelta(minutes=90)
+
+    def test_a_game_more_than_the_lead_away_is_not_written(self):
+        out = self.lock(as_of="t0", now=dt.datetime(2026, 10, 11, 15, 29, tzinfo=dt.timezone.utc),
+                        min_lead=self.LEAD)
+        self.assertEqual(out, {"new_locks": 0, "refreshes": 0, "skipped": [], "started": [],
+                               "too_early": ["g1", "g2"]})
+        self.assertEqual(self.rows("g1"), [])
+
+    def test_exactly_at_the_lead_and_later_is_written(self):
+        out = self.lock(as_of="t0", now=dt.datetime(2026, 10, 11, 15, 30, tzinfo=dt.timezone.utc),
+                        min_lead=self.LEAD)
+        self.assertEqual(out["new_locks"], 2)
+        self.assertEqual(out["too_early"], [])
+
+    def test_the_kickoff_guard_still_applies_with_a_lead(self):
+        out = self.lock(as_of="t0", now=dt.datetime(2026, 10, 11, 17, 0, tzinfo=dt.timezone.utc),
+                        min_lead=self.LEAD)
+        self.assertEqual(out["started"], ["g1", "g2"])
+        self.assertEqual(out["new_locks"], 0)
+
+    def test_without_a_lead_the_result_has_no_too_early_key(self):
+        out = self.lock(as_of="t0")
+        self.assertNotIn("too_early", out)

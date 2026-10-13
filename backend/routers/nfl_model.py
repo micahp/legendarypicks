@@ -23,6 +23,7 @@ import check_nfl_schedule_scores as cs
 router = APIRouter()
 
 ADOPTED = "nfl-v1 half_life=6 cap=14.0 prior_games=4 prior_shrink=0.3333 sigma=13.295"
+ELO_STACK = "nfl-v1+elo stack"   # prefix of every version string lock_nfl_elo.py writes
 
 
 def describe(model: Optional[str], version: str) -> Dict[str, Any]:
@@ -31,6 +32,8 @@ def describe(model: Optional[str], version: str) -> Dict[str, Any]:
         untuned = "untuned" in version
         return {"family": "v2", "label": "v2 EPA" + (" (untuned first lock)" if untuned else ""),
                 "adopted": False, "order": 2 if untuned else 1}
+    if version.startswith(ELO_STACK):
+        return {"family": "v1+elo", "label": "v1 + Elo", "adopted": False, "order": 1.5}
     if version == ADOPTED:
         return {"family": "v1", "label": "v1 points", "adopted": True, "order": 0}
     return {"family": "v1", "label": "v1 points (10-09, before the freeze)", "adopted": False,
