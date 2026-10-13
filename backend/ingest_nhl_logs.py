@@ -19,6 +19,7 @@ from typing import Any
 import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import nhl_identity  # noqa: E402
 from ingest_nfl_logs import ensure_table  # noqa: E402
 from nhl_standings_store import (  # noqa: E402
     # This module defines its own SOURCE ("nhle.com"); import the standings
@@ -55,6 +56,9 @@ SCHEDULE_URL = "https://api-web.nhle.com/v1/club-schedule-season/{team}/{season}
 BOXSCORE_URL = "https://api-web.nhle.com/v1/gamecenter/{game_id}/boxscore"
 RIGHT_RAIL_URL = "https://api-web.nhle.com/v1/gamecenter/{game_id}/right-rail"
 LANDING_URL = "https://api-web.nhle.com/v1/gamecenter/{game_id}/landing"
+PLAYER_LANDING_URL = "https://api-web.nhle.com/v1/player/{player_id}/landing"
+# A handful of call-ups is normal. Dozens at once is a changed source, not a straggler.
+MAX_UNOWNED_PARTICIPANTS = 60
 COMPLETED_STATES = frozenset(("OFF", "FINAL"))
 TEAM_STAT_CATEGORIES = frozenset((
     "sog", "faceoffWinningPctg", "powerPlay", "pim", "hits",
@@ -350,6 +354,56 @@ def _player_rows(game: dict, boxscore: dict) -> list[dict]:
     return rows
 
 
+def resolve_unowned_participants(db_path: str, player_rows: list[dict],
+                                 unresolved: list[str]) -> dict:
+    """Give a participant with no `nhl_id` owner one, by the shared identity rule.
+
+    A boxscore names a player "H. Stanley", which is no basis for a match, so the full
+    name and position come from the player's own landing page; the team is the one he
+    played for in these games. Nothing is written here: the plan is applied inside the
+    publish transaction. A participant the rule cannot place safely stops the run, by name.
+    """
+    if len(unresolved) > MAX_UNOWNED_PARTICIPANTS:
+        raise NHLLogIngestError(
+            f"{len(unresolved)} participants have no nhl_id owner "
+            f"(more than {MAX_UNOWNED_PARTICIPANTS}); not minting identities in bulk: "
+            + ", ".join(unresolved[:10])
+        )
+    teams: dict[str, list[str]] = collections.defaultdict(list)
+    for row in player_rows:
+        if row["team"] not in teams[row["source_player_key"]]:
+            teams[row["source_player_key"]].append(row["team"])
+    items = []
+    for key in unresolved:
+        landing = _get(PLAYER_LANDING_URL.format(player_id=key))
+        name = " ".join(
+            part for part in (
+                str((landing.get("firstName") or {}).get("default") or "").strip(),
+                str((landing.get("lastName") or {}).get("default") or "").strip(),
+            ) if part
+        )
+        position = {"LW": "L", "RW": "R"}.get(
+            str(landing.get("position") or "").upper(),
+            str(landing.get("position") or "").upper() or None,
+        )
+        items.append({"source_key": key, "name": name, "position": position,
+                      "teams": teams[key]})
+    connection = sqlite3.connect(f"file:{os.path.abspath(db_path)}?mode=ro", uri=True)
+    connection.row_factory = sqlite3.Row
+    try:
+        plan = nhl_identity.resolve(connection, items)
+    finally:
+        connection.close()
+    if plan["skipped"]:
+        raise NHLLogIngestError(
+            f"{len(plan['skipped'])} participants have no nhl_id owner and none can be "
+            "assigned safely: " + "; ".join(
+                f"{i['source_key']} {i['name']} ({i['team']}/{i['position']}): {i['reason']}"
+                for i in plan["skipped"][:10])
+        )
+    return plan
+
+
 def build_publication(db_path: str, *, source_season: int) -> dict:
     publication = fetch_schedule(source_season)
     player_rows, result_rows, stat_rows = [], [], []
@@ -392,19 +446,19 @@ def build_publication(db_path: str, *, source_season: int) -> dict:
         row["source_player_key"] for row in player_rows
         if row["source_player_key"] not in owners
     })
+    identity_plan = {"binds": [], "mints": [], "skipped": []}
     if unresolved:
-        raise NHLLogIngestError(
-            f"{len(unresolved)} participants have no nhl_id owner: "
-            + ", ".join(unresolved[:10])
-        )
+        identity_plan = resolve_unowned_participants(db_path, player_rows, unresolved)
     for row in player_rows:
-        row["player_id"] = owners[row["source_player_key"]][0]
+        known = owners.get(row["source_player_key"])
+        row["player_id"] = known[0] if known else None  # set in publish() from the plan
 
     publication.update({
         "player_rows": player_rows,
         "result_rows": result_rows,
         "stat_rows": stat_rows,
         "completed_games": completed_games,
+        "identity_plan": identity_plan,
         "checked_through": max(
             (game["game_date"] for game in publication["completed"].values()),
             default=None,
@@ -425,6 +479,8 @@ def publish(db_path: str, publication: dict, *, apply: bool) -> dict:
         "player_logs": len(publication["player_rows"]),
         "standings_teams": len(publication["standings"]["teams"]),
         "checked_through": publication["checked_through"],
+        "identity_binds": len((publication.get("identity_plan") or {}).get("binds", [])),
+        "identity_mints": len((publication.get("identity_plan") or {}).get("mints", [])),
     }
     if not apply:
         return summary
@@ -454,6 +510,12 @@ def publish(db_path: str, publication: dict, *, apply: bool) -> dict:
         )
     try:
         connection.execute("BEGIN IMMEDIATE")
+        identity_plan = publication.get("identity_plan")
+        if identity_plan and (identity_plan["binds"] or identity_plan["mints"]):
+            new_owners = nhl_identity.apply(connection, identity_plan, captured_at)
+            for row in publication["player_rows"]:
+                if row["player_id"] is None:
+                    row["player_id"] = new_owners[row["source_player_key"]]
         connection.execute(
             "DELETE FROM team_game_stats WHERE league='nhl' AND game_id IN "
             "(SELECT game_id FROM team_game_results WHERE league='nhl' AND season=?)",

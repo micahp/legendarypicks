@@ -255,6 +255,29 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "nhl_season_stats",
+        # 2026-10-13: nothing scheduled the NHL season totals, and the ingest refused the
+        # whole season when ONE published player had no nhl_id owner (49 for 2025-26, 1
+        # for 2026-27). It now binds or mints the owner itself, in its own transaction
+        # (nhl_identity.py), and exits 2 only for a player it cannot place safely.
+        # Its own job, not a step of nhl_current: a held player must show as a failed run
+        # of THIS job, never stop the roster, logs and shares chain.
+        "cadence_min": 720,
+        "timeout_sec": 900,
+        "host_lock": "nhle",
+        "steps": [["ingest_nhl_season_stats.py", "--season", "current"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # player_stats carries no timestamp, so the ledger is the instrument: the last
+            # run of this job that finished ok.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nhl_season_stats' AND status = 'ok'",
+            "stale_hours": 36,
+            "label": "nhl season stats",
+        }],
+    },
+    {
         "id": "ncaaf_rosters",
         # The identity spine the log ingest resolves onto, from CFBD in TWO requests where
         # the ESPN path costs 149 to site.web.api. Measured 2026-09-06: prod held 14,234

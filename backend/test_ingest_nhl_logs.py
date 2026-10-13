@@ -287,3 +287,120 @@ def test_a_season_published_without_an_end_date_fails_closed():
     with mock.patch.object(ingest, "_get", return_value=broken):
         with pytest.raises(ingest.NHLStandingsError, match="standingsEnd"):
             ingest.standings_endpoint(20252026)
+
+
+# --- participants with no nhl_id owner: resolved at the ingest, not by a repair job ---
+
+def identity_database(path: Path, *players):
+    """`database()` plus a players table that can carry identities."""
+    database(path)
+    connection = sqlite3.connect(path)
+    connection.executescript(
+        """
+        DROP TABLE players;
+        CREATE TABLE players(
+          id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, league TEXT, team TEXT,
+          position TEXT, active INTEGER, updated_at TEXT, nhl_id TEXT);
+        CREATE TABLE player_source_ids(
+          id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
+          league TEXT NOT NULL, source_player_key TEXT NOT NULL,
+          player_id INTEGER NOT NULL, first_seen TEXT, last_seen TEXT,
+          UNIQUE(source, league, source_player_key));
+        """
+    )
+    connection.executemany(
+        "INSERT INTO players(name,league,team,position,nhl_id,active) VALUES(?,'nhl',?,?,?,0)",
+        players,
+    )
+    connection.commit()
+    connection.close()
+
+
+def landing(first, last, position):
+    return {"firstName": {"default": first}, "lastName": {"default": last},
+            "position": position}
+
+
+def rows_for(key, team="ANA"):
+    return [{"source_player_key": key, "team": team, "game_id": GAME["game_id"]}]
+
+
+def test_a_call_up_with_no_owner_is_minted_and_logged_in_one_publish(tmp_path):
+    path = tmp_path / "candidate.db"
+    identity_database(path, ("Known Guy", "ANA", "C", "101"))
+    with mock.patch.object(ingest, "_get", lambda url: landing("Hoyt", "Stanley", "C")):
+        plan = ingest.resolve_unowned_participants(str(path), rows_for("8484409"), ["8484409"])
+    assert (len(plan["binds"]), len(plan["mints"])) == (0, 1)
+
+    pub = publication()
+    pub["identity_plan"] = plan
+    pub["player_rows"][0].update(player_id=None, source_player_key="8484409")
+    with mock.patch.object(ingest, "EXPECTED_TEAMS", 2):
+        ingest.publish(str(path), pub, apply=True)
+
+    connection = sqlite3.connect(path)
+    minted = connection.execute(
+        "SELECT id,name,active,nhl_id FROM players WHERE nhl_id='8484409'").fetchall()
+    assert [(r[1], r[2], r[3]) for r in minted] == [("Hoyt Stanley", 0, "8484409")]
+    logged = connection.execute(
+        "SELECT player_id FROM player_game_logs WHERE source_player_key='8484409'").fetchall()
+    assert logged == [(minted[0][0],)]
+    assert connection.execute(
+        "SELECT player_id FROM player_source_ids WHERE source_player_key='8484409'"
+    ).fetchall() == [(minted[0][0],)]
+
+
+def test_an_unbound_same_name_row_is_bound_not_duplicated(tmp_path):
+    path = tmp_path / "candidate.db"
+    identity_database(path, ("Hoyt Stanley", "ANA", "C", None))
+    with mock.patch.object(ingest, "_get", lambda url: landing("Hoyt", "Stanley", "C")):
+        plan = ingest.resolve_unowned_participants(str(path), rows_for("8484409"), ["8484409"])
+    assert (len(plan["binds"]), len(plan["mints"])) == (1, 0)
+    pub = publication()
+    pub["identity_plan"] = plan
+    pub["player_rows"][0].update(player_id=None, source_player_key="8484409")
+    with mock.patch.object(ingest, "EXPECTED_TEAMS", 2):
+        ingest.publish(str(path), pub, apply=True)
+    connection = sqlite3.connect(path)
+    assert connection.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 1
+    assert connection.execute("SELECT nhl_id FROM players").fetchone()[0] == "8484409"
+
+
+def test_a_participant_that_cannot_be_placed_safely_stops_the_run_by_name(tmp_path):
+    path = tmp_path / "candidate.db"
+    identity_database(path, ("Sam Smith", "ANA", "C", None), ("Sam Smith", "ANA", "C", None))
+    with mock.patch.object(ingest, "_get", lambda url: landing("Sam", "Smith", "C")), \
+            pytest.raises(ingest.NHLLogIngestError, match="8479999 Sam Smith.*ambiguous"):
+        ingest.resolve_unowned_participants(str(path), rows_for("8479999"), ["8479999"])
+
+
+def test_a_flood_of_unowned_participants_is_not_minted_in_bulk(tmp_path):
+    path = tmp_path / "candidate.db"
+    identity_database(path)
+    keys = [str(8480000 + i) for i in range(ingest.MAX_UNOWNED_PARTICIPANTS + 1)]
+    fetched = []
+
+    def fake_get(url):
+        fetched.append(url)
+        return landing("A", "B", "C")
+
+    with mock.patch.object(ingest, "_get", fake_get), \
+            pytest.raises(ingest.NHLLogIngestError, match="not minting identities in bulk"):
+        ingest.resolve_unowned_participants(str(path), [], keys)
+    assert fetched == []  # refused before asking the league for anyone
+
+
+def test_a_failed_publish_leaves_no_minted_player_behind(tmp_path):
+    path = tmp_path / "candidate.db"
+    identity_database(path)
+    with mock.patch.object(ingest, "_get", lambda url: landing("Hoyt", "Stanley", "C")):
+        plan = ingest.resolve_unowned_participants(str(path), rows_for("8484409"), ["8484409"])
+    pub = publication()
+    pub["identity_plan"] = plan
+    pub["player_rows"][0].update(player_id=None, source_player_key="8484409")
+    del pub["stat_rows"]  # the publish fails after the identity is written
+    with mock.patch.object(ingest, "EXPECTED_TEAMS", 2), pytest.raises(KeyError):
+        ingest.publish(str(path), pub, apply=True)
+    connection = sqlite3.connect(path)
+    assert connection.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 0
+    assert connection.execute("SELECT COUNT(*) FROM player_source_ids").fetchone()[0] == 0

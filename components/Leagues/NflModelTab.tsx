@@ -118,14 +118,14 @@ function RecordPanel({ rows }: { rows: RecordRow[] }) {
       <h2 className="text-lg font-semibold text-zinc-100">Season record</h2>
       <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
         {rows.map(r => (
-          <div key={r.version} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
-            <span className={`min-w-0 truncate ${r.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={r.version}>
+          <div key={r.version} className="flex flex-col gap-y-1 py-2 text-sm sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-4">
+            <span className={`min-w-0 sm:truncate ${r.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={r.version}>
               {r.label}
             </span>
             {r.graded === 0 || !r.su || !r.ats ? (
               <span className="text-zinc-500">No graded games yet · {r.awaiting} awaiting a final</span>
             ) : (
-              <span className="flex flex-wrap justify-end gap-x-4 tabular-nums text-zinc-300">
+              <span className="flex flex-wrap gap-x-4 tabular-nums text-zinc-300 sm:justify-end">
                 <span>Winner {tally(r.su, 'tie')}</span>
                 <span>Against the line {tally(r.ats, 'push')}</span>
                 <span className="text-zinc-500">
@@ -147,26 +147,26 @@ function RecordPanel({ rows }: { rows: RecordRow[] }) {
 
 function LockRow({ game, model, lock }: { game: ModelGame; model: ModelInfo; lock?: Lock }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 py-1 text-sm">
-      <span className={`truncate ${model.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={model.version}>
+    <div className="flex flex-col gap-y-0.5 py-1 text-sm sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-baseline sm:gap-x-4 sm:gap-y-0">
+      <span className={`sm:truncate ${model.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={model.version}>
         {model.label}
       </span>
       {!lock ? (
         // Absence gets the accent: this model has no locked projection for this game.
-        <span className="col-span-2 text-right text-amber-400">Not locked</span>
+        <span className="text-amber-400 sm:col-span-2 sm:text-right">Not locked</span>
       ) : (
-        <>
-          <span className="text-right tabular-nums text-zinc-200">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 sm:contents">
+          <span className="whitespace-nowrap text-right tabular-nums text-zinc-200">
             {lock.proj_home == null || lock.proj_away == null
               ? <span className="text-zinc-500">{lock.margin >= 0 ? game.home : game.away} by {one(Math.abs(lock.margin))}</span>
               : <>{game.away} {one(lock.proj_away)} · {game.home} {one(lock.proj_home)}</>}
           </span>
-          <span className="min-w-[10.5rem] text-right tabular-nums text-zinc-400">
+          <span className="text-right tabular-nums text-zinc-400 sm:min-w-[10.5rem]">
             {lock.grade
               ? <>off {one(Math.abs(lock.grade.margin_err))} · {atsText(lock.grade.ats)} · <span title="Picked the winner">Pick {suText(lock.grade.su)}</span></>
               : winnerText(game, lock)}
           </span>
-        </>
+        </div>
       )}
     </div>
   )

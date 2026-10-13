@@ -280,9 +280,9 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None),
                 "captured_at": r["captured_at"], "actual_value": r["actual_value"],
                 "hit": bool(r["hit"]) if r["hit"] is not None else None,
                 "settled_at": r["settled_at"]} for r in rows]
-    # rolling hit rate (last 20 settled)
+    # rolling hit rate (newest 20 settled; history is newest first)
     settled = [h for h in history if h["hit"] is not None]
-    hit_rate = round(sum(1 for h in settled[-20:] if h["hit"]) / max(len(settled[-20:]), 1), 3) if settled else None
+    hit_rate = round(sum(1 for h in settled[:20] if h["hit"]) / max(len(settled[:20]), 1), 3) if settled else None
     out = {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
     if filtering:
         rates, rates_n = _hit_windows([h["hit"] for h in settled])

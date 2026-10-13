@@ -86,8 +86,54 @@ What the sweep does show:
 3. 2025 was v1's holdout and has now been looked at for every config. It is a second look only.
 4. No unit tests were added for `nfl_ladder.py`; the two runs are the check.
 
+## Second grid (pre-registered after the first)
+
+shrink {0.0, 0.1, 0.2} x prior_games {8, 16, 32}, same selection and rule, current config run as a
+reference outside the selection set. The first launch of this grid crashed at the comparison step
+(the current config was not in the grid) after all 9 runs, and its output was never read. The code was
+fixed to run the reference separately; the grid and the rule did not change.
+
+| shrink | prior_games | 2011-2023 | 2024 | 2025 | Wk 2-4 (2011-2023) |
+|---|---|---|---|---|---|
+| 0.000 | 8 | .2206 | .2218 | .2295 | .2316 |
+| 0.000 | 16 | .2202 | .2236 | .2315 | .2285 |
+| 0.000 | 32 | .2214 | .2275 | .2348 | .2283 |
+| 0.100 | 8 | .2207 | .2217 | .2294 | .2323 |
+| 0.100 | 16 | .2203 | .2232 | .2312 | .2293 |
+| 0.100 | 32 | .2214 | .2269 | .2345 | .2292 |
+| 0.200 | 8 | .2209 | .2215 | .2293 | .2333 |
+| 0.200 | 16 | .2204 | .2228 | .2309 | .2303 |
+| 0.200 | 32 | .2215 | .2264 | .2342 | .2303 |
+| 0.333 | 4 (reference) | .2229 | .2223 | .2292 | .2391 |
+
+Selected (lowest pooled 2011-2023): shrink 0.000, prior_games 16. Against the current config:
+
+| Group | Selected - current |
+|---|---|
+| 2011-2023 | -0.0027 [-0.0042, -0.0011] |
+| 2024 | +0.0013 [-0.0042, +0.0067] |
+| 2025 | +0.0023 [-0.0029, +0.0073] |
+| Wk 2-4, 2011-2023 | -0.0106 [-0.0151, -0.0061] |
+
+**Not adopted.** The pooled interval is below zero, but both holdout seasons are above zero.
+
+What the two grids show together:
+- On 2011-2023, more weight on last season's ratings keeps helping until prior_games 16, then turns
+  (prior_games 32 is worse than 16 at every shrink).
+- On 2024 and 2025 the direction is the opposite: Brier gets worse as prior_games rises from 8 to 32 at
+  every shrink. The recent seasons are best near prior_games 4 to 8.
+- So the setting that wins on the 2011-2023 pool is not the one that holds up on the last two seasons.
+  It could be a change in how much rosters turn over, or chance (about 256 games per holdout season, with
+  intervals that include zero), or a fit to the older seasons. These runs cannot tell them apart.
+- The early-weeks gain (weeks 2-4) is large in-sample and is the only part that is consistent across
+  every setting that carries more of last year's ratings.
+
+No setting in either grid meets the rule. v1 keeps shrink 1/3 and prior_games 4.
+
 ## Next
 
-A second grid, pre-registered, extending past the corner: shrink {0.0, 0.1, 0.2} and prior_games
-{8, 16, 32}. Select on 2011-2023, confirm on 2024 and 2025 with the same rule. It is a new labelled
-experiment; 2025 is no longer untouched.
+1. Leave v1's carryover unchanged for the 2026 locks.
+2. Ask what differs about recent offseasons before any further grid: a third grid would only be fit to
+   the same 13 seasons again, and 2024 and 2025 have now each been looked at twice.
+3. The independent preseason prior (last season's EPA by unit regressed, QB change, returning starters)
+   is the other route to the weeks 2-4 gap that does not depend on this one setting.

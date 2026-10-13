@@ -45,6 +45,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 
 import paced_http
 
@@ -54,6 +55,8 @@ from league_stats import (  # noqa: E402
     publish_player_stats,
 )
 from season_keys import normalize_season  # noqa: E402
+import nhl_identity  # noqa: E402
+from ingest_nhl_roster import _position  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -256,7 +259,7 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                 f"{len(ambiguous)} NHL ids have duplicate canonical owners"
             )
         counts = {"goalies": 0, "defence": 0, "forwards": 0,
-                  "unresolved": 0, "rejected": 0}
+                  "bound": 0, "minted": 0, "skipped": 0, "rejected": 0}
         espn_season = normalize_season(SOURCE, "nhl", season)
 
         work = [(row, goalie_values(row), "goalies", row.get("goalieFullName"))
@@ -273,22 +276,36 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
             source_key = str(row.get("playerId"))
             player_id = nhl_id_to_player.get(source_key)
             if player_id is None:
-                counts["unresolved"] += 1
-                unresolved.append((source_key, str(name or "")))
+                unresolved.append((source_key, row, values, bucket, name))
                 continue
             planned.append((player_id, row, values, bucket, name))
             counts[bucket] += 1
 
-        if unresolved:
-            raise NHLStatsIngestError(
-                f"{len(unresolved)} published players have no canonical nhl_id owner: "
-                + ", ".join(f"{key} {name}" for key, name in unresolved[:10])
-            )
+        identity_plan = nhl_identity.resolve(connection, [
+            {"source_key": source_key, "name": name,
+             "position": "G" if bucket == "goalies" else _position(row.get("positionCode")),
+             "teams": str(row.get("teamAbbrevs") or "").split(",")}
+            for source_key, row, values, bucket, name in unresolved])
+        counts["bound"] = len(identity_plan["binds"])
+        counts["minted"] = len(identity_plan["mints"])
+        counts["skipped"] = len(identity_plan["skipped"])
+        skipped_keys = {item["source_key"] for item in identity_plan["skipped"]}
+        for source_key, row, values, bucket, name in unresolved:
+            if source_key not in skipped_keys:
+                counts[bucket] += 1
+        for item in identity_plan["skipped"]:
+            print(f"SKIPPED {item['source_key']} {item['name']} "
+                  f"({item['team']}/{item['position']}): {item['reason']}")
         if dry_run:
             return counts
 
         try:
             connection.execute("BEGIN IMMEDIATE")
+            now = datetime.now(timezone.utc).isoformat()
+            owners = nhl_identity.apply(connection, identity_plan, now)
+            for source_key, row, values, bucket, name in unresolved:
+                if source_key in owners:
+                    planned.append((owners[source_key], row, values, bucket, name))
             connection.execute(
                 "DELETE FROM player_stats WHERE league='nhl' AND season=?",
                 (espn_season,),
@@ -315,17 +332,28 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--season", type=int, required=True,
-                        help="nhle.com season key, e.g. 20252026")
+    parser.add_argument("--season", required=True,
+                        help="nhle.com season key, e.g. 20252026, or 'current' for the "
+                             "season the NHL publishes as current")
     parser.add_argument("--db", default=DB)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
+    if args.season == "current":
+        raw = _get("https://api-web.nhle.com/v1/club-schedule-season/CHI/now").get("currentSeason")
+        try:
+            args.season = int(raw)
+        except (TypeError, ValueError):
+            raise NHLStatsIngestError(f"invalid current NHL season {raw!r}")
+    else:
+        args.season = int(args.season)
     print(f"database: {args.db}  season: {args.season}"
           f"{'  (dry run)' if args.dry_run else ''}")
     counts = refresh(args.db, season=args.season, dry_run=args.dry_run)
     print(json.dumps(counts, indent=2, sort_keys=True))
-    return 0
+    # Published players with no safe owner were left out. Say so with the exit
+    # code, so the registry shows a failed step instead of a quiet gap.
+    return 2 if counts["skipped"] else 0
 
 
 if __name__ == "__main__":
