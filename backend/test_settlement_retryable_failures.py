@@ -4,10 +4,13 @@
 the same prop twice: an unmapped market or an unavailable published stat must be
 seen on both runs, proving that a later mapping/data repair can still settle it.
 """
+import datetime as dt
+import json
 import sqlite3
 
 import espn_client
 import settlement
+from settlement import stored_summary
 
 
 def _connection(league, market, side="over"):
@@ -48,7 +51,7 @@ def _boxscore_without_shots():
     return {"players": [{
         "team": {"abbreviation": "BOS", "displayName": "Boston Bruins"},
         "statistics": [{
-            "name": "offensive",
+            "name": "forwards",
             "labels": ["G", "A"],
             "athletes": [{
                 "athlete": {"id": "123", "displayName": "Published Player"},
@@ -58,9 +61,22 @@ def _boxscore_without_shots():
     }]}
 
 
-def test_generic_unmapped_market_remains_retryable(monkeypatch):
-    con = _connection("wc", "goals")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: {"players": [{}]})
+def _store_boxscore(con, boxscore):
+    stored_summary.ensure_table(con)
+    con.execute(
+        "INSERT INTO game_summaries VALUES(?,?,?,?,?,?,?)",
+        ("nhl", "event-1", json.dumps({"boxscore": boxscore}), "post", 1,
+         dt.datetime.now(dt.timezone.utc).isoformat(), "espn_summary"),
+    )
+    con.commit()
+
+
+def test_generic_unmapped_market_remains_retryable():
+    # WC has a dedicated durable-log grader; NBA exercises the generic
+    # unmapped-market path this regression is about.
+    con = _connection("nba", "goals")
+    _store_boxscore(con, {"players": [{}]})
+    con.execute("UPDATE game_summaries SET league='nba'")
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)
@@ -70,9 +86,9 @@ def test_generic_unmapped_market_remains_retryable(monkeypatch):
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 
-def test_generic_missing_stat_remains_retryable(monkeypatch):
+def test_generic_missing_stat_remains_retryable():
     con = _connection("nhl", "shots")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: _boxscore_without_shots())
+    _store_boxscore(con, _boxscore_without_shots())
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)
@@ -82,12 +98,37 @@ def test_generic_missing_stat_remains_retryable(monkeypatch):
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 
-def test_generic_invalid_side_remains_retryable(monkeypatch):
+def test_generic_invalid_side_remains_retryable():
     con = _connection("nhl", "goals", side="yes")
-    monkeypatch.setattr(espn_client, "boxscore", lambda *args: _boxscore_without_shots())
+    _store_boxscore(con, _boxscore_without_shots())
 
     first = settlement.settle_game(con, 1)
     second = settlement.settle_game(con, 1)
 
     assert first["unmappable"] == second["unmappable"] == 1
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
+
+
+def test_publisher_confirmed_cancellation_voids_once_without_a_live_fetch(monkeypatch):
+    con = _connection("ufc", "significant_strikes")
+    con.executescript("""
+        ALTER TABLE prop_games ADD COLUMN cancelled_at TEXT;
+        ALTER TABLE prop_games ADD COLUMN cancel_reason TEXT;
+        ALTER TABLE prop_games ADD COLUMN cancel_source TEXT;
+        UPDATE prop_games SET cancelled_at='2026-07-25T00:00:00Z',
+          cancel_reason='illness', cancel_source='https://www.ufc.com/news/update';
+    """)
+    monkeypatch.setattr(
+        espn_client, "game_result",
+        lambda *args: (_ for _ in ()).throw(
+            AssertionError("cancelled game performed a live fetch")),
+    )
+
+    first = settlement.settle_game(con, 1)
+    second = settlement.settle_game(con, 1)
+
+    assert first["void"] == 1
+    assert second["void"] == 0
+    assert tuple(con.execute(
+        "SELECT actual_value,hit FROM prop_results WHERE prop_id=1"
+    ).fetchone()) == (None, None)

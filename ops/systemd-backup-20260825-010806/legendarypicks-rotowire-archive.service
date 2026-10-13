@@ -1,0 +1,9 @@
+[Unit]
+Description=Archive the whole RotoWire picks relay (all sports, prop history)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/ingest_rotowire_archive.py
+TimeoutStartSec=600

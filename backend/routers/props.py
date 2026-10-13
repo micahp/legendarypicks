@@ -4,6 +4,12 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from _core import *
 from prop_game_merge import fold_prop_game
+from settlement.boxscore_extract import _find_player_stat
+import league_membership
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -50,12 +56,78 @@ _CorePropIngest = PropIngest
 class PropIngest(_CorePropIngest):
     start_time: Optional[str] = None
 
+
+def _league_sql(column: str, league: Optional[str], leagues: Optional[str]):
+    """A bound league predicate supporting one legacy key or a sport rollup."""
+    if isinstance(league, str) and league.strip():
+        return f" AND LOWER({column}) = ?", [league.strip().lower()]
+    league_rollup = leagues if isinstance(leagues, str) else ""
+    values = sorted({
+        value.strip().lower()
+        for value in league_rollup.split(",")
+        if value.strip()
+    })
+    if not values:
+        return "", []
+    return (
+        f" AND LOWER({column}) IN ({','.join('?' for _ in values)})",
+        values,
+    )
+
+
+def _ncaaf_slate_display(con, game_ids):
+    """Published full team names and ranks for NCAAF slate cards.
+
+    ``prop_games`` carries ingestion identity and may still contain a sportsbook's
+    school-only spelling. Rankings are volatile display metadata, so neither one
+    belongs in the identity key. Once a row is linked, the stored scoreboard event
+    is the authority for both the school-plus-nickname name and its published rank.
+    """
+    ids = sorted({int(game_id) for game_id in game_ids})
+    if not ids:
+        return {}
+    if con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' "
+        "AND name='scoreboard_snapshots'"
+    ).fetchone() is None:
+        return {}
+    placeholders = ",".join("?" for _ in ids)
+    rows = con.execute(
+        """SELECT pg.id,ss.payload
+           FROM prop_games pg
+           JOIN scoreboard_snapshots ss
+             ON LOWER(ss.league)=LOWER(pg.league)
+            AND ss.game_id=pg.espn_event_id
+           WHERE pg.league='ncaaf' AND pg.id IN ({})""".format(placeholders),
+        ids,
+    ).fetchall()
+    display = {}
+    for row in rows:
+        try:
+            payload = json.loads(row["payload"])
+        except (TypeError, ValueError):
+            continue
+        item = {}
+        for side in ("home", "away"):
+            team = payload.get(side) or {}
+            name = str(team.get("name") or "").strip()
+            rank = team.get("rank")
+            if name:
+                item[side] = name
+            if isinstance(rank, int) and 1 <= rank <= 25:
+                item[side + "_rank"] = rank
+        if item:
+            display[row["id"]] = item
+    return display
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
                league: Optional[str] = Query(None),
+               leagues: Optional[str] = Query(None),
                date: Optional[str] = Query(None),
-               limit: int = Query(50, ge=1, le=500)):
+               limit: int = Query(50, ge=1, le=500),
+               offset: int = Query(0, ge=0)):
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at,
                     p.odds,
                     p.player_id,
@@ -76,14 +148,19 @@ def list_props(player: Optional[str] = Query(None),
         # `total_bases___player_slug` under their base market.
         sql += " AND (p.market = ? OR instr(p.market, ? || '___') = 1)"
         params.extend((market, market))
-    if league:
-        sql += " AND pl.league = ?"
-        params.append(league)
+    # Filter on the game's competition. Leagues Cup athletes belong to their
+    # MLS or Liga MX identity spine, so filtering on pl.league drops the board.
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if date:
         sql += " AND pg.date = ?"
         params.append(date)
-    sql += " ORDER BY p.captured_at DESC LIMIT ?"
-    params.append(limit)
+    # `captured_at` is shared by every row in one ingest. The id tie-breaker is
+    # required for deterministic offset pagination; without it, offers can move
+    # between pages and an alternate line can be omitted or duplicated.
+    sql += " ORDER BY p.captured_at DESC, p.id DESC LIMIT ? OFFSET ?"
+    params.extend((limit, offset))
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
     return [{"id": r["id"], "market": r["market"], "line": r["line"], "side": r["side"],
@@ -94,6 +171,11 @@ def list_props(player: Optional[str] = Query(None),
              "game_away": r["game_away"], "game_date": r["game_date"],
              "actual_value": r["actual_value"],
              "hit": bool(r["hit"]) if r["hit"] is not None else None,
+             "result_status": (
+                 "graded" if r["hit"] is not None else
+                 "push" if r["actual_value"] is not None else
+                 "void" if r["settled_at"] is not None else "pending"
+             ),
              "settled_at": r["settled_at"]} for r in rows]
 
 
@@ -121,6 +203,125 @@ def player_prop_history(player_id: int, market: Optional[str] = Query(None)):
     return {"player_id": player_id, "history": history, "hit_rate": hit_rate, "total_settled": len(settled)}
 
 
+# Which log leagues a chart may read for a prop in this league. Only a
+# cross-border competition needs more than its own.
+_CHART_LOG_LEAGUES = {
+    "lcup": ("lcup", "mls", "ligamx"),
+    # A Liga MX athlete's history is his domestic season plus the
+    # tournament, and the row reaches here labelled `ligamx` because
+    # /api/props returns the player's league rather than the game's.
+    "ligamx": ("ligamx", "lcup"),
+    "mls": ("mls", "lcup"),
+}
+
+_SOCCER_CHART_LEAGUES = frozenset(("mls", "ligamx", "lcup"))
+_FOTMOB_STAT_KEYS = {"sot": "shots_on_target"}
+_SOCCER_NON_FOTMOB_HISTORY = frozenset(
+    ("first_goal_scorer", "passes_attempted", "card_shown")
+)
+
+# NHL.com's durable player logs publish every reviewed market except faceoffs
+# won. They publish only faceoff percentage. ESPN's already-stored completed
+# summaries publish the count as FW, so that one chart reads those database
+# snapshots rather than deriving a count from a percentage.
+_NHL_SUMMARY_MARKETS = {"faceoffs_won": ("skaters", "FW")}
+
+
+def _nhl_summary_history(con, player, market):
+    mapping = _NHL_SUMMARY_MARKETS.get(market)
+    if not mapping:
+        return []
+    player_columns = {
+        str(row[1]) for row in con.execute("PRAGMA table_info(players)")
+    }
+    if "espn_id" not in player_columns:
+        return []
+    espn_row = con.execute(
+        "SELECT espn_id FROM players WHERE id=?", (player["id"],)
+    ).fetchone()
+    espn_id = str(espn_row["espn_id"] or "") if espn_row else ""
+    if not espn_id:
+        return []
+    has_summaries = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='game_summaries'"
+    ).fetchone()
+    if not has_summaries:
+        return []
+
+    category, stat_key = mapping
+    history = []
+    summaries = con.execute(
+        "SELECT espn_event_id,payload FROM game_summaries "
+        "WHERE league='nhl' AND completed=1"
+    ).fetchall()
+    for stored in summaries:
+        payload = json.loads(stored["payload"])
+        boxscore = payload.get("boxscore") or {}
+        value = _find_player_stat(
+            boxscore, player["name"], player["team"] or "",
+            category, stat_key, espn_id=espn_id,
+        )
+        if value is None:
+            continue
+
+        team = ""
+        for block in boxscore.get("players") or []:
+            found = any(
+                str((entry.get("athlete") or {}).get("id") or "") == espn_id
+                for group in block.get("statistics") or []
+                for entry in group.get("athletes") or []
+            )
+            if found:
+                team = str((block.get("team") or {}).get("abbreviation") or "")
+                break
+
+        competitions = (payload.get("header") or {}).get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        game_date = str(competition.get("date") or "")[:10]
+        competitors = competition.get("competitors") or []
+        mine = next(
+            (row for row in competitors
+             if str((row.get("team") or {}).get("abbreviation") or "").upper()
+             == team.upper()),
+            None,
+        )
+        opponent_row = next((row for row in competitors if row is not mine), None)
+        opponent = str(((opponent_row or {}).get("team") or {}).get("abbreviation") or "")
+        if not game_date or not team or mine is None or not opponent:
+            raise HTTPException(
+                status_code=500,
+                detail=("stored NHL summary {} has a stat for player {} but no "
+                        "complete game context").format(stored["espn_event_id"], player["id"]),
+            )
+        history.append({
+            "game_date": game_date,
+            "opponent": opponent,
+            "home_away": mine.get("homeAway"),
+            "val": value,
+        })
+    history.sort(key=lambda row: row["game_date"], reverse=True)
+    return history[:100]
+
+
+def _history_value(raw, league, market):
+    """Convert a published game-log cell to the market's numeric unit."""
+    if raw is None:
+        return None
+    if league == "nhl" and market == "time_on_ice":
+        try:
+            minutes, seconds = str(raw).split(":", 1)
+            minute_value, second_value = int(minutes), int(seconds)
+        except (TypeError, ValueError):
+            return None
+        if minute_value < 0 or second_value < 0 or second_value >= 60:
+            return None
+        return round(minute_value + second_value / 60.0, 3)
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 @router.get("/api/props/history")
 def prop_history(player_id: int = Query(...),
                  market: str = Query(...),
@@ -128,30 +329,84 @@ def prop_history(player_id: int = Query(...),
                  side: str = Query("over"),
                  league: str = Query(...)):
     """Per-game stat history for a prop's player+market, with the line."""
-    stat_key = _MARKET_STAT_KEY.get(league, {}).get(_base_market(market))
-    if not stat_key:
+    if (
+        league in _SOCCER_CHART_LEAGUES
+        and _base_market(market) in _SOCCER_NON_FOTMOB_HISTORY
+    ):
+        return {
+            "error": "market not published in approved FotMob history: {}".format(market),
+            "games": [],
+        }
+    canonical_market = _base_market(market)
+    stat_key = _MARKET_STAT_KEY.get(league, {}).get(canonical_market)
+    summary_market = league == "nhl" and canonical_market in _NHL_SUMMARY_MARKETS
+    if not stat_key and not summary_market:
         return {"error": f"market not chartable from logs: {market}", "games": []}
+
+    # A cross-border tournament's athletes keep their domestic logs, and the chart
+    # is about the PLAYER, not the competition the prop happens to sit in. Reading
+    # `league='lcup'` alone gave a Liga MX player his three group games and an MLS
+    # player three games instead of a season. The union is the same one the
+    # resolver and the settler use.
+    log_leagues = _CHART_LOG_LEAGUES.get(league, (league,))
+    league_placeholders = ",".join("?" for _ in log_leagues)
+
+    # A match the player never entered is not a 0. Both are stored -- the row is
+    # a real record of not playing -- but charting it as zero shots would count
+    # an absence as a measured performance and drag every hit-rate window down.
+    # 2026-08-25: a bench player charted five games, four of them DNPs, as
+    # 0/0/0/0/0 shots.
+    #
+    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Each provider owns
+    # its own TABLE -- `player_game_logs` is ESPN's and stays one row per
+    # appearance, `player_game_logs_fotmob` is FotMob's -- and the view joins
+    # them on (player_id, game_date), putting each provider's line in its own
+    # COLUMN. A value's provenance is the column it was read from: nothing to
+    # stamp, nothing to drift.
+    #
+    # This replaces a ROW_NUMBER() PARTITION BY game_date that existed to hide
+    # a duplication. Both providers had been kept as separate ROWS in one
+    # table, so 2,619 appearances existed twice and every reader had to know to
+    # dedupe or double-count. Federico Vinas charted 12 games,
+    # [7,7,4,4,3,3,1,1,1,1,1,1], for six he played.
+    #
+    # Soccer prop history is deliberately FotMob-only. ESPN may still supply a
+    # canonical player id elsewhere in the application, but the user-visible
+    # history value must come from the requested non-ESPN publisher. Other
+    # leagues retain the established ESPN/FotMob coalescing contract.
+    def _val(key):
+        if league in _SOCCER_CHART_LEAGUES:
+            fotmob_key = _FOTMOB_STAT_KEYS.get(key, key)
+            return f"json_extract(fotmob_stats, '$.{fotmob_key}')"
+        return (f"COALESCE(json_extract(espn_stats, '$.{key}'),"
+                f" json_extract(fotmob_stats, '$.{key}'))")
+
+    def _present(key):
+        if league in _SOCCER_CHART_LEAGUES:
+            fotmob_key = _FOTMOB_STAT_KEYS.get(key, key)
+            return f"json_extract(fotmob_stats, '$.{fotmob_key}') IS NOT NULL"
+        return (f"(json_extract(espn_stats, '$.{key}') IS NOT NULL"
+                f" OR json_extract(fotmob_stats, '$.{key}') IS NOT NULL)")
+
+    # A match the player never entered is not a 0. The summary ingest writes
+    # `appearances`, the lazy core read-through writes `minutes`; either at 0
+    # means absent, and a row carrying neither is left alone rather than
+    # assumed. Checked across BOTH providers so one silent blob cannot readmit
+    # a DNP the other correctly marked.
+    _PLAYED = (f" AND COALESCE({_val('minutes')}, 1) != 0"
+               f" AND COALESCE({_val('appearances')}, 1) != 0")
 
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
         keys = stat_key
         # SUM with COALESCE so missing fields don't null the whole row
-        coalesce_terms = [
-            f"COALESCE(json_extract(stats, '$.{k}'), 0)" for k in keys
-        ]
-        val_expr = f"({' + '.join(coalesce_terms)})"
+        val_expr = "(" + " + ".join(f"COALESCE({_val(k)}, 0)" for k in keys) + ")"
         # WHERE: at least one key must be non-null (found_any semantics)
-        non_null_terms = " OR ".join(
-            f"json_extract(stats, '$.{k}') IS NOT NULL" for k in keys
-        )
-        where_clause = f"({non_null_terms})"
-        params_for_query = ()  # no bind params needed, keys are hardcoded per market
+        where_clause = "(" + " OR ".join(_present(k) for k in keys) + ")"
     else:
-        val_expr = "json_extract(stats, ?)"
-        where_clause = "json_extract(stats, ?) IS NOT NULL"
-        stat_path = f"$.{stat_key}"
-        params_for_query = (stat_path, stat_path)
-        keys = None  # unused for non-compound
+        keys = None
+        val_expr = _val(stat_key)
+        where_clause = _present(stat_key)
 
     with closing(_db()) as con:
         con.row_factory = sqlite3.Row
@@ -162,26 +417,52 @@ def prop_history(player_id: int = Query(...),
         if not player:
             return {"error": "player not found", "games": []}
 
-        # Get game logs with this stat, most recent first
-        if isinstance(stat_key, list):
+        has_ufcstats = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_ufcstats'"
+        ).fetchone() is not None
+        has_usopen = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='player_game_logs_usopen'"
+        ).fetchone() is not None
+        if summary_market:
+            rows = _nhl_summary_history(con, player, canonical_market)
+        elif league in ("atp", "wta") and has_usopen:
+            tennis_value = f"json_extract(stats, '$.{stat_key}')"
             rows = con.execute(
-                f"""SELECT game_date, opponent, home_away,
-                           {val_expr} AS val
-                    FROM player_game_logs
-                    WHERE player_id=? AND league=?
-                      AND {where_clause}
-                    ORDER BY game_date DESC LIMIT 100""",
-                (player_id, league)
+                f"""SELECT game_date, opponent, NULL AS home_away,
+                            {tennis_value} AS val
+                       FROM player_game_logs_usopen
+                      WHERE player_id=? AND league=?
+                        AND {tennis_value} IS NOT NULL
+                      ORDER BY game_date DESC LIMIT 100""",
+                (player_id, league),
+            ).fetchall()
+        elif league == "ufc" and has_ufcstats:
+            # UFCStats is provider-separated because its native fighter/fight
+            # ids do not share ESPN's vocabulary. The profile publishes the
+            # completed last-five directly; read that table rather than
+            # creating duplicate provider rows in player_game_logs_all.
+            ufc_value = f"json_extract(stats, '$.{stat_key}')"
+            rows = con.execute(
+                f"""SELECT game_date, opponent, NULL AS home_away,
+                            {ufc_value} AS val
+                       FROM player_game_logs_ufcstats
+                      WHERE player_id=? AND league='ufc'
+                        AND {ufc_value} IS NOT NULL
+                      ORDER BY game_date DESC LIMIT 100""",
+                (player_id,),
             ).fetchall()
         else:
+            # Get game logs with this stat, most recent first. One row per
+            # appearance comes from the view, so there is nothing to dedupe here.
             rows = con.execute(
-                f"""SELECT game_date, opponent, home_away,
-                           json_extract(stats, ?) AS val
-                    FROM player_game_logs
-                    WHERE player_id=? AND league=?
-                      AND json_extract(stats, ?) IS NOT NULL
-                    ORDER BY game_date DESC LIMIT 100""",
-                (stat_path, player_id, league, stat_path)
+                f"""SELECT game_date, opponent, home_away, {val_expr} AS val
+                      FROM player_game_logs_all
+                     WHERE player_id=? AND league IN ({league_placeholders})
+                       AND {where_clause}{_PLAYED}
+                     ORDER BY game_date DESC LIMIT 100""",
+                (player_id, *log_leagues)
             ).fetchall()
 
     if not rows:
@@ -195,15 +476,19 @@ def prop_history(player_id: int = Query(...),
             "side": side,
             "projection": None,
             "hit_rate": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
+            "hit_rate_n": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
             "games": [],
         }
 
     games = []
     for r in rows:
-        try:
-            val = float(r["val"]) if r["val"] is not None else 0
-        except (ValueError, TypeError):
-            val = 0
+        val = _history_value(r["val"], league, canonical_market)
+        if val is None:
+            logger.warning(
+                "prop history skipped nonnumeric value player_id=%s league=%s market=%s date=%s",
+                player_id, league, canonical_market, r["game_date"],
+            )
+            continue
         hit = val >= line if side == "over" else val <= line
         games.append({
             "date": r["game_date"] or "",
@@ -231,6 +516,18 @@ def prop_history(player_id: int = Query(...),
         "line": line,
         "side": side,
         "projection": projection,
+        # The SAMPLE behind each window, because a window's NAME is not its
+        # size. `games[:20]` on a player with three matches is three matches,
+        # so L5, L10 and L20 all report the same number and it reads as a
+        # twenty-game record. Surfaced on Liga MX first only because those
+        # players have three games where an MLS player has forty; the
+        # arithmetic was always this.
+        "hit_rate_n": {
+            "l5": len(games[:5]),
+            "l10": len(games[:10]),
+            "l20": len(games[:20]),
+            "season": len(games),
+        },
         "hit_rate": {
             "l5": _rate(games[:5], line),
             "l10": _rate(games[:10], line),
@@ -253,6 +550,7 @@ def prop_stats(market: Optional[str] = Query(None),
              FROM props p
              JOIN prop_results r ON r.prop_id = p.id
              JOIN players pl ON pl.id = p.player_id
+             JOIN prop_games pg ON pg.id = p.game_id
              WHERE r.hit IS NOT NULL
                AND p.captured_at >= date('now', ? || ' days')"""
     params = [f"-{window}"]
@@ -260,7 +558,9 @@ def prop_stats(market: Optional[str] = Query(None),
         sql += " AND p.market = ?"
         params.append(market)
     if league:
-        sql += " AND pl.league = ?"
+        # Same rule as /api/props: hit rates for `lcup` are a property of the
+        # competition, not of whichever spine each athlete happens to sit in.
+        sql += " AND pg.league = ?"
         params.append(league)
     sql += " GROUP BY p.market, p.side ORDER BY total DESC"
     with closing(_db()) as con:
@@ -274,6 +574,7 @@ def prop_stats(market: Optional[str] = Query(None),
 
 @router.get("/api/props/slate")
 def props_slate(league: Optional[str] = Query(None),
+                leagues: Optional[str] = Query(None),
                 date: Optional[str] = Query(None),
                 game_id: Optional[int] = Query(None),
                 summary: bool = Query(False)):
@@ -285,17 +586,23 @@ def props_slate(league: Optional[str] = Query(None),
     if summary:
         filters = ""
         filter_params = []
-        if league:
-            filters += " AND pg.league = ?"
-            filter_params.append(league)
+        league_sql, league_params = _league_sql("pg.league", league, leagues)
+        filters += league_sql
+        filter_params.extend(league_params)
         if date:
             filters += " AND pg.date = ?"
             filter_params.append(date)
         else:
             filters += " AND " + _UPCOMING
 
+        # COUNT(p.id) counted the same question twice once a second book
+        # priced a line another already had, so the card header said 495
+        # while the card itself listed 454. One number, computed two ways,
+        # in one endpoint -- count the distinct questions, as the expanded
+        # path does when it dedupes on (market, line, side) per player.
         gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
-                "pg.league, COUNT(p.id) AS prop_count "
+                "pg.league, COUNT(DISTINCT p.player_id || '|' || p.market || '|' || "
+                "p.line || '|' || p.side) AS prop_count "
                 "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
         # Order by when the game starts, NOT by `pg.date`. That column carries two
         # conventions (some rows file a 21:30 ET kickoff under the next UTC day), so
@@ -315,7 +622,7 @@ def props_slate(league: Optional[str] = Query(None),
                            JOIN props p ON p.game_id = pg.id
                            JOIN players pl ON pl.id = p.player_id
                            WHERE 1=1 {filters}
-                           GROUP BY pg.id, p.player_id, {base_market}, p.line, p.source,
+                           GROUP BY pg.id, p.player_id, {base_market}, p.line,
                                     pg.date, pg.home, pg.away
                          ) grouped_markets
                          GROUP BY game_id, market
@@ -323,27 +630,36 @@ def props_slate(league: Optional[str] = Query(None),
         with closing(_db()) as con:
             grows = con.execute(gsql, filter_params).fetchall()
             market_rows = con.execute(market_sql, filter_params).fetchall()
+            ncaaf_display = _ncaaf_slate_display(
+                con, [row["game_id"] for row in grows]
+            )
         markets_by_game = {}
         for row in market_rows:
             markets_by_game.setdefault(row["game_id"], []).append({
                 "market": row["market"],
                 "count": row["row_count"],
             })
-        return [{"game_id": r["game_id"], "home": r["home"], "away": r["away"], "date": r["game_date"],
+        return [{"game_id": r["game_id"],
+                 "home": ncaaf_display.get(r["game_id"], {}).get("home", r["home"]),
+                 "away": ncaaf_display.get(r["game_id"], {}).get("away", r["away"]),
+                 "home_rank": ncaaf_display.get(r["game_id"], {}).get("home_rank"),
+                 "away_rank": ncaaf_display.get(r["game_id"], {}).get("away_rank"),
+                 "date": r["game_date"],
                  "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
                  "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
 
-    sql = """SELECT p.id, p.market, p.line, p.side, p.source,
-                    pl.name AS player_name, pl.team AS player_team, pl.league,
-                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
+                    pl.id AS player_id, pl.name AS player_name, pl.team AS player_team, pl.league,
+                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time,
+                    pg.league AS game_league
              FROM props p
              JOIN players pl ON pl.id = p.player_id
              JOIN prop_games pg ON pg.id = p.game_id
              WHERE 1=1"""
     params = []
-    if league:
-        sql += " AND pl.league = ?"
-        params.append(league)
+    league_sql, league_params = _league_sql("pg.league", league, leagues)
+    sql += league_sql
+    params.extend(league_params)
     if game_id is not None:
         sql += " AND pg.id = ?"
         params.append(game_id)
@@ -358,39 +674,74 @@ def props_slate(league: Optional[str] = Query(None),
     sql += " ORDER BY " + _KICKOFF + ", pg.home, pg.away, pl.name, p.market, p.side"
     with closing(_db()) as con:
         rows = con.execute(sql, params).fetchall()
+        ncaaf_display = _ncaaf_slate_display(
+            con, [row["game_id"] for row in rows]
+        )
 
     # Group: game → team → player → props
     games = {}
     for r in rows:
         gkey = f"{r['game_id']}"
         if gkey not in games:
+            published = ncaaf_display.get(r["game_id"], {})
             games[gkey] = {
                 "game_id": r["game_id"],
-                "home": r["home"],
-                "away": r["away"],
+                "home": published.get("home", r["home"]),
+                "away": published.get("away", r["away"]),
+                "home_rank": published.get("home_rank"),
+                "away_rank": published.get("away_rank"),
                 "date": r["game_date"],
                 "start_time": r["start_time"],
-                "league": r["league"],
+                # The GAME's league, not the player's. `pl.league` here made the
+                # expanded slate label Leagues Cup fixture 1494 `mls`, and the
+                # value flipped to `ligamx` with whichever athlete sorted first,
+                # while `summary=1` (which reads pg.league) said `lcup`. Same
+                # endpoint, two answers for one game. Fourth site of the shape
+                # fixed in b8c3bd7/b8a3f60; those were WHERE clauses, this one is
+                # the response body, so no filter test could reach it.
+                "league": r["game_league"],
                 "players": {}
             }
         pkey = r["player_name"]
         if pkey not in games[gkey]["players"]:
             games[gkey]["players"][pkey] = {
+                "id": r["player_id"],
                 "name": r["player_name"],
                 "team": r["player_team"],
-                "props": []
+                "props": [],
+                "_seen": {},
             }
-        games[gkey]["players"][pkey]["props"].append({
+        # One question, one row. Two sources can price the same player at the
+        # same line -- Bovada's anytime goal scorer and PrizePicks' `goals 0.5`
+        # are the same bet -- and appending both put 146 duplicate `goals 0.5
+        # OVER` rows on the Leagues Cup cards the day PrizePicks was added.
+        #
+        # The priced row wins. That is not a preference between books: a line
+        # carrying odds answers strictly more than the same line without them
+        # (here all 163 Bovada goal rows have odds and all 217 PrizePicks ones
+        # do not). Ranking books by name would be a trust list keyed on a name.
+        entry = {
             "market": r["market"],
             "line": r["line"],
             "side": r["side"],
             "source": r["source"],
-        })
+            "odds": r["odds"],
+        }
+        seen = games[gkey]["players"][pkey]["_seen"]
+        key = (r["market"], r["line"], r["side"])
+        held = seen.get(key)
+        if held is None:
+            seen[key] = entry
+            games[gkey]["players"][pkey]["props"].append(entry)
+        elif held["odds"] is None and r["odds"] is not None:
+            held.update(entry)
 
     # Convert to list sorted by date
     result = sorted(games.values(), key=lambda g: g["date"])
     for g in result:
         g["players"] = sorted(g["players"].values(), key=lambda p: p["name"])
+        for player in g["players"]:
+            player.pop("_seen", None)
         g["prop_count"] = sum(len(p["props"]) for p in g["players"])
 
     return result
@@ -508,22 +859,201 @@ def _link_or_fold(con, game_id, league, espn_id):
         return fold_prop_game(con, game_id, keep)
 
 
+def _roster_league_for_ingest(con, league: str, team: str) -> str:
+    """The spine allowed to own this player, which is not always the competition.
+
+    A cross-league tournament is filed under its own competition key, so a Leagues
+    Cup game is `lcup` while the athletes playing it are `mls` and `ligamx`. The
+    resolver matches on `players.league`, and `players WHERE league='lcup'` has
+    always held ZERO rows -- so every prop posted under `lcup` resolved against an
+    empty spine and was rejected. Measured 2026-08-25: 370 of 370 Bovada Leagues
+    Cup props, "REJECTED all 370 -- nothing in `players` matched".
+
+    This is the same defect `0746e83` fixed inside `ingest_rotowire_props.py`, at a
+    second site. That fix does not reach here: this is the HTTP ingest endpoint, a
+    different path with its own resolver, which the Bovada scraper posts to.
+
+    Routed by the club's own membership rather than a hand-written club list, and
+    AMBIGUOUS FAILS CLOSED: `ATL` is Atlanta United in MLS and Atlante in Liga MX,
+    so a code naming two spines resolves to neither and the athlete goes to the
+    review queue. Widening `mls` to swallow the tournament is the shadow-player
+    defect this whole route exists to avoid.
+    """
+    if league != "lcup" or not team:
+        return league
+    rows = con.execute(
+        "SELECT DISTINCT league FROM players WHERE team=? AND league IN ('mls','ligamx')",
+        (team.strip().upper(),)).fetchall()
+    if len(rows) == 1:
+        return rows[0][0]
+    return league
+
+
+def _try_link_prop_game(con, row, league, date, game_id):
+    """Link a new prop_games row to its ESPN event, and SAY what happened.
+
+    This was `except Exception: pass`, commented "crosswalk is best-effort; don't block
+    ingest". The best-effort part is right: this runs inside a request handler, and a
+    serving path must not wait on a publisher. Swallowing the exception is the part that
+    was wrong. It discarded the only proof the step ever ran.
+
+    What that cost, measured on prod 2026-09-06: 130 prop_games with no espn_event_id
+    carrying 1,828 props, and settlement keys on that link for every league except MLB, so
+    all 1,828 are permanently unsettleable. Not one of those failures was ever recorded.
+    A prop that can never earn a result is a hole in the record of a product whose name is
+    picks plus an earned record.
+
+    Never raises: the caller must still ingest the props. Returns (game_id, outcome), where
+    outcome is one of linked / no_match / failed, and the caller reports it either way.
+    """
+    try:
+        from link_prop_games import link_prop_game
+        import espn_client as _espn
+        espn_games = _espn.games(league, date)
+        espn_id = link_prop_game(con, row, espn_games)
+    except Exception as exc:
+        logger.warning(
+            "prop_game %s (%s %s): ESPN crosswalk FAILED, game stays unlinked and its "
+            "props cannot settle: %s: %s",
+            game_id, league, date, type(exc).__name__, exc)
+        return game_id, "failed"
+    if not espn_id:
+        logger.warning(
+            "prop_game %s (%s %s): no ESPN match among %d candidates, game stays unlinked "
+            "and its props cannot settle",
+            game_id, league, date, len(espn_games or []))
+        return game_id, "no_match"
+    return _link_or_fold(con, game_id, league, espn_id), "linked"
+
+
 @router.post("/api/props/ingest")
 def ingest_props(batch: PropIngest):
     """Ingest a batch of props for one game. Creates player/game rows as needed."""
     now = dt.datetime.now(dt.timezone.utc).isoformat()
+    # Say the zero: every response reports the crosswalk outcome, so "we did not need to
+    # link" is distinguishable from "the link failed" by the caller, not just in a log.
+    link_outcome = "already_linked"
     with closing(_db()) as con:
-        # ensure game row — match on league+date+home+away (espn_event_id is optional)
-        if batch.espn_event_id:
+        ncaaf_fixture = None
+        ncaaf_schedule_available = False
+        ncaaf_fixture_status = "unavailable"
+        if batch.league == "ncaaf" and not batch.espn_event_id:
+            # Serialize NCAAF identity resolution with row creation. The event index
+            # protects linked rows; this closes the concurrent unlinked-row gap too.
+            con.execute("BEGIN IMMEDIATE")
+            from link_prop_games import ncaaf_scoreboard_match
+            ncaaf_fixture, ncaaf_fixture_status, ncaaf_schedule_available = (
+                ncaaf_scoreboard_match(
+                    con, batch.date, batch.home, batch.away
+                )
+            )
+            if ncaaf_fixture_status == "ambiguous":
+                logger.warning(
+                    "REFUSED ambiguous NCAAF scoreboard fixture %s @ %s on %s",
+                    batch.away, batch.home, batch.date,
+                )
+                raise HTTPException(
+                    status_code=422,
+                    detail="NCAAF fixture does not resolve to one published event",
+                )
+
+        resolved_event_id = (
+            batch.espn_event_id
+            or (ncaaf_fixture.get("game_id") if ncaaf_fixture else None)
+        )
+        if resolved_event_id:
             cur = con.execute(
-                "SELECT id, espn_event_id, start_time FROM prop_games WHERE espn_event_id=? AND league=?",
-                (batch.espn_event_id, batch.league))
+                "SELECT id,league,date,home,away,espn_event_id,start_time "
+                "FROM prop_games WHERE espn_event_id=? AND league=?",
+                (resolved_event_id, batch.league))
         else:
             cur = con.execute(
-                "SELECT id, espn_event_id, start_time FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                "SELECT id,league,date,home,away,espn_event_id,start_time "
+                "FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
                 (batch.league, batch.date, batch.home, batch.away))
         game_row = cur.fetchone()
-        if not game_row:
+        if not game_row and ncaaf_fixture:
+            # Reuse one prior unlinked row even when its sportsbook spelling differs.
+            from link_prop_games import ncaaf_unlinked_game_match
+            game_row, prior_match_status = ncaaf_unlinked_game_match(
+                con, ncaaf_fixture
+            )
+            if prior_match_status == "ambiguous":
+                raise HTTPException(
+                    status_code=422,
+                    detail="multiple unlinked NCAAF rows match the published event",
+                )
+            if not game_row:
+                # Also detect an exact source row already linked to a different event.
+                game_row = con.execute(
+                    "SELECT id,league,date,home,away,espn_event_id,start_time "
+                    "FROM prop_games WHERE league=? AND date=? AND home=? AND away=?",
+                    (batch.league, batch.date, batch.home, batch.away),
+                ).fetchone()
+            if (game_row and game_row["espn_event_id"]
+                    and game_row["espn_event_id"] != ncaaf_fixture["game_id"]):
+                raise HTTPException(
+                    status_code=409,
+                    detail="NCAAF source fixture conflicts with its stored event link",
+                )
+        if (not game_row and ncaaf_schedule_available and not ncaaf_fixture):
+            logger.warning(
+                "REFUSED unmatched NCAAF fixture %s @ %s on %s: published slate "
+                "exists but its team pair did not resolve",
+                batch.away, batch.home, batch.date,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail="NCAAF fixture did not match the published scoreboard",
+            )
+        if not game_row and ncaaf_fixture:
+            fixture_home = (ncaaf_fixture.get("home") or {}).get("name") or (
+                ncaaf_fixture.get("home") or {}).get("abbrev") or batch.home
+            fixture_away = (ncaaf_fixture.get("away") or {}).get("name") or (
+                ncaaf_fixture.get("away") or {}).get("abbrev") or batch.away
+            cur = con.execute(
+                "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) "
+                "VALUES(?,?,?,?,?,?)",
+                (batch.league, ncaaf_fixture["local_date"], fixture_home,
+                 fixture_away, ncaaf_fixture["game_id"], ncaaf_fixture.get("date")),
+            )
+            game_id = cur.lastrowid
+            link_outcome = "linked"
+        elif not game_row:
+            # A fixture may only be CREATED under a league it plausibly belongs to.
+            #
+            # On 2026-09-05 two fixtures were written as league='mls': Sassuolo @ Bologna
+            # (Serie A) and Guadalajara @ Atletico San Luis (Liga MX). The RotoWire ingest
+            # had a guard for exactly this and it was skipped because the vocabulary it
+            # reads comes from a live ESPN request that had been refused. But the guard
+            # lived in ONE ingest, and this endpoint creates prop_games too, on trust: by
+            # row count bovada made 54 of prod's MLS games against RotoWire's 45. A rule
+            # enforced on one surface is not enforced.
+            #
+            # league_membership reads only what the database already holds and issues no
+            # request, because this is a request handler and a serving path must never wait
+            # on a publisher. It returns None for "cannot check", which is NOT a refusal:
+            # a league we barely cover must not have its real fixtures rejected.
+            # strict: BOTH clubs must be on record. A fixture in a league is played
+            # between two of its members, so one recognised club proves nothing; that is
+            # precisely what a cross-competition fixture looks like. This is only safe to
+            # demand because `league_clubs` now holds the publisher's complete list.
+            belongs = league_membership.belongs(
+                con, batch.league, batch.home, batch.away, strict=True)
+            if belongs is False:
+                logger.warning(
+                    "REFUSED %s fixture %s @ %s: neither club is on record in this league, "
+                    "so creating it would file every prop under the wrong league",
+                    batch.league, batch.away, batch.home)
+                raise HTTPException(
+                    status_code=422,
+                    detail="{} @ {} does not belong to {}".format(
+                        batch.away, batch.home, batch.league))
+            if belongs is None:
+                logger.info(
+                    "%s fixture %s @ %s created unchecked: too few clubs on record to "
+                    "judge. audit_foreign_fixtures.py is the surface that catches this.",
+                    batch.league, batch.away, batch.home)
             cur = con.execute(
                 "INSERT INTO prop_games(league,date,home,away,espn_event_id,start_time) VALUES(?,?,?,?,?,?)",
                 (batch.league, batch.date, batch.home, batch.away,
@@ -531,39 +1061,57 @@ def ingest_props(batch: PropIngest):
             game_id = cur.lastrowid
             # Try to link espn_event_id for newly created games
             if not batch.espn_event_id:
-                try:
-                    from link_prop_games import link_prop_game
-                    import espn_client as _espn
-                    new_row = con.execute("SELECT id, league, date, home, away FROM prop_games WHERE id=?", (game_id,)).fetchone()
-                    espn_games = _espn.games(batch.league, batch.date)
-                    espn_id = link_prop_game(con, new_row, espn_games)
-                    if espn_id:
-                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
-                except Exception:
-                    pass
+                new_row = con.execute(
+                    "SELECT id,league,date,home,away,espn_event_id,start_time "
+                    "FROM prop_games WHERE id=?",
+                    (game_id,)).fetchone()
+                game_id, link_outcome = _try_link_prop_game(
+                    con, new_row, batch.league, batch.date, game_id)
         else:
             game_id = game_row["id"]
-            from link_prop_games import apply_start_time
-            apply_start_time(con, game_id, batch.start_time, game_row["start_time"],
-                             label="%s @ %s" % (batch.away, batch.home))
-            # If existing game has no espn_event_id, try to link it now
-            if not game_row["espn_event_id"] and not batch.espn_event_id:
-                try:
-                    from link_prop_games import link_prop_game
-                    import espn_client as _espn
-                    espn_games = _espn.games(batch.league, batch.date)
-                    espn_id = link_prop_game(con, game_row, espn_games)
-                    if espn_id:
-                        game_id = _link_or_fold(con, game_id, batch.league, espn_id)
-                except Exception:
-                    pass  # crosswalk is best-effort; don't block ingest
+            if ncaaf_fixture:
+                if (game_row["espn_event_id"]
+                        and game_row["espn_event_id"] != ncaaf_fixture["game_id"]):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="NCAAF fixture conflicts with its stored event link",
+                    )
+                from link_prop_games import apply_start_time
+                apply_start_time(
+                    con, game_id, ncaaf_fixture.get("date"), game_row["start_time"],
+                    label="%s @ %s" % (batch.away, batch.home),
+                )
+                fixture_home = (ncaaf_fixture.get("home") or {}).get("name") or (
+                    ncaaf_fixture.get("home") or {}).get("abbrev") or batch.home
+                fixture_away = (ncaaf_fixture.get("away") or {}).get("name") or (
+                    ncaaf_fixture.get("away") or {}).get("abbrev") or batch.away
+                con.execute(
+                    "UPDATE prop_games SET date=?,home=?,away=?,espn_event_id=? "
+                    "WHERE id=?",
+                    (ncaaf_fixture["local_date"], fixture_home, fixture_away,
+                     ncaaf_fixture["game_id"], game_id),
+                )
+                link_outcome = (
+                    "already_linked"
+                    if game_row["espn_event_id"] == ncaaf_fixture["game_id"]
+                    else "linked"
+                )
+            else:
+                from link_prop_games import apply_start_time
+                apply_start_time(con, game_id, batch.start_time, game_row["start_time"],
+                                 label="%s @ %s" % (batch.away, batch.home))
+                # If existing game has no espn_event_id, try to link it now
+                if not game_row["espn_event_id"] and not batch.espn_event_id:
+                    game_id, link_outcome = _try_link_prop_game(
+                        con, game_row, batch.league, batch.date, game_id)
         ingested = 0
         refreshed = 0
         unresolved = 0
         for p in batch.props:
             # Resolve player via identity spine (NEVER silently create)
+            roster_league = _roster_league_for_ingest(con, batch.league, p.get("team", ""))
             player_id, confidence = _resolve_player_for_ingest(
-                con, p["player_name"], p.get("team", ""), batch.league,
+                con, p["player_name"], p.get("team", ""), roster_league,
                 source=p.get("source", "props"), game_id=game_id)
             if player_id is None:
                 unresolved += 1
@@ -614,7 +1162,7 @@ def ingest_props(batch: PropIngest):
                 ingested += 1
         con.commit()
     return {"status": "ok", "game_id": game_id, "ingested": ingested,
-            "refreshed": refreshed, "unresolved": unresolved}
+            "refreshed": refreshed, "unresolved": unresolved, "link": link_outcome}
 
 
 @router.post("/api/capture-odds")

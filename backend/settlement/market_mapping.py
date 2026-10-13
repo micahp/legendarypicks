@@ -35,26 +35,113 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("mlb", "double_any"):            ("batting", "2B"),
     ("mlb", "triple_any"):            ("batting", "3B"),
     # ── NBA ──
-    ("nba", "points"):        ("offensive", "Pts"),
-    ("nba", "rebounds"):      ("offensive", "Reb"),
-    ("nba", "assists"):       ("offensive", "Ast"),
-    ("nba", "threes"):        ("offensive", "3PT"),
-    ("nba", "blocks"):        ("defensive", "Blk"),
-    ("nba", "steals"):        ("defensive", "Stl"),
-    ("nba", "turnovers"):     ("offensive", "TO"),
+    # NBA's stored ESPN box score publishes one unnamed statistics group with
+    # `names` rather than `labels`. These fields cover the regular-season
+    # markets while preseason ingestion remains limited to points and PRA.
+    ("nba", "points"):        ("statistics", "PTS"),
+    ("nba", "rebounds"):      ("statistics", "REB"),
+    ("nba", "assists"):       ("statistics", "AST"),
+    ("nba", "threes"):        ("statistics", "3PM"),
+    ("nba", "blocks"):        ("statistics", "BLK"),
+    ("nba", "steals"):        ("statistics", "STL"),
+    ("nba", "turnovers"):     ("statistics", "TO"),
     # ── NFL ──
     ("nfl", "passing_yards"): ("passing", "Yds"),
     ("nfl", "passing_tds"):   ("passing", "TD"),
+    ("nfl", "passing_touchdowns"): ("passing", "TD"),
+    ("nfl", "interceptions_thrown"): ("passing", "INT"),
+    ("nfl", "pass_completions"): ("passing", "C/ATT:made"),
+    ("nfl", "pass_attempts"):    ("passing", "C/ATT:attempted"),
+    ("nfl", "total_passing_attempts"): ("passing", "C/ATT:attempted"),
     ("nfl", "rushing_yards"): ("rushing", "Yds"),
+    ("nfl", "rush_attempts"):  ("rushing", "CAR"),
+    ("nfl", "total_rush_attempts"): ("rushing", "CAR"),
+    ("nfl", "longest_rushing_attempt"): ("rushing", "LONG"),
     ("nfl", "receiving_yards"):("receiving", "Yds"),
     ("nfl", "receptions"):    ("receiving", "Rec"),
+    ("nfl", "longest_reception"): ("receiving", "LONG"),
+    ("nfl", "targets"):       ("receiving", "TGTS"),
     ("nfl", "tackles"):       ("defensive", "Tkl"),
-    ("nfl", "sacks"):         ("defensive", "Sk"),
+    ("nfl", "sacks"):         ("defensive", "SACKS"),
+    ("nfl", "field_goals_made"):("kicking", "FG"),
+    ("nfl", "kicking_points"): ("kicking", "PTS"),
+    ("nfl", "total_kicking_points"): ("kicking", "PTS"),
+    # ── NCAAF ──
+    # College football publishes the same site-boxscore groups as NFL, but the
+    # RotoWire relay uses a slightly different market vocabulary. C/ATT is one
+    # published cell, so the selector suffix tells the extractor which half is
+    # the measured value instead of treating both markets as completions.
+    ("ncaaf", "passing_yards"):       ("passing", "YDS"),
+    ("ncaaf", "passing_touchdowns"):  ("passing", "TD"),
+    ("ncaaf", "interceptions_thrown"): ("passing", "INT"),
+    ("ncaaf", "pass_completions"):    ("passing", "C/ATT:made"),
+    ("ncaaf", "pass_attempts"):       ("passing", "C/ATT:attempted"),
+    ("ncaaf", "rushing_yards"):       ("rushing", "YDS"),
+    ("ncaaf", "rushing_touchdowns"):  ("rushing", "TD"),
+    ("ncaaf", "rush_attempts"):       ("rushing", "CAR"),
+    ("ncaaf", "receiving_yards"):     ("receiving", "YDS"),
+    ("ncaaf", "receptions"):          ("receiving", "REC"),
+    ("ncaaf", "field_goals_made"):    ("kicking", "FG"),
+    ("ncaaf", "extra_points_made"):   ("kicking", "XP"),
+    ("ncaaf", "kicking_points"):      ("kicking", "PTS"),
     # ── NHL ──
-    ("nhl", "shots"):         ("offensive", "Shots"),
-    ("nhl", "goals"):         ("offensive", "G"),
-    ("nhl", "assists"):       ("offensive", "A"),
-    ("nhl", "saves"):         ("goalkeeping", "Sv"),
+    # ESPN splits skaters into forwards and defenses. The synthetic skaters
+    # group is present but empty, so the extractor expands this category into
+    # both published groups. Goaltenders are published under goalies.
+    ("nhl", "shots"):         ("skaters", "S"),
+    ("nhl", "goals"):         ("skaters", "G"),
+    ("nhl", "assists"):       ("skaters", "A"),
+    ("nhl", "hits"):          ("skaters", "HT"),
+    ("nhl", "faceoffs_won"):  ("skaters", "FW"),
+    ("nhl", "time_on_ice"):   ("skaters", "TOI:minutes"),
+    ("nhl", "blocked_shots"): ("skaters", "BS"),
+    ("nhl", "saves"):         ("goalies", "SV"),
+    ("nhl", "goals_allowed"): ("goalies", "GA"),
+    ("nhl", "plus_minus"):    ("skaters", "+/-"),
+}
+
+
+# Compounds are explicit component lists rather than invented stored keys.
+# A football athlete missing from one component group recorded zero in that
+# category; at least one component still has to identify the athlete.
+COMPOUND_MARKET_STAT = {
+    ("mlb", "hits_runs_rbis"): (
+        ("batting", "H"), ("batting", "R"), ("batting", "RBI"),
+    ),
+    ("ncaaf", "passing_rushing_yards"): (
+        ("passing", "YDS"), ("rushing", "YDS"),
+    ),
+    ("ncaaf", "rushing_receiving_yards"): (
+        ("rushing", "YDS"), ("receiving", "YDS"),
+    ),
+    ("ncaaf", "rushing_receiving_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+    ),
+    ("ncaaf", "total_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+        ("kickReturns", "TD"), ("puntReturns", "TD"),
+        ("defensive", "TD"),
+    ),
+    ("nfl", "passing_rushing_yards"): (
+        ("passing", "YDS"), ("rushing", "YDS"),
+    ),
+    ("nfl", "rushing_receiving_yards"): (
+        ("rushing", "YDS"), ("receiving", "YDS"),
+    ),
+    # A player touchdown is a score credited to the player, not a passing TD.
+    ("nfl", "total_touchdowns"): (
+        ("rushing", "TD"), ("receiving", "TD"),
+        ("kickReturns", "TD"), ("puntReturns", "TD"),
+        ("defensive", "TD"),
+    ),
+    ("nhl", "points"): (
+        ("skaters", "G"), ("skaters", "A"),
+    ),
+    ("nba", "points_rebounds_assists"): (
+        ("statistics", "PTS"),
+        ("statistics", "REB"),
+        ("statistics", "AST"),
+    ),
 }
 
 
@@ -86,6 +173,7 @@ MARKET_ALIASES = {
     "total_strikeouts": "strikeouts",
     "total_hits_allowed": "hits_allowed",
     "total_pitcher_outs": "outs",
+    "total_pitcher_walks": "walks",
     "total_earned_runs": "earned_runs",
     "total_walks": "walks",
     "total_points": "points",
@@ -97,6 +185,11 @@ MARKET_ALIASES = {
     "total_turnovers": "turnovers",
     "passing_yards": "passing_yards",
     "passing_tds": "passing_tds",
+    # Bovada prices college passing TDs as total_passing_touchdowns while the
+    # NCAAF map canonicalises passing_touchdowns. All 322 such props sat in the
+    # unlinked Bovada population, so the missing alias was invisible until the
+    # fixtures folded (2026-10-03); unaliased they would grade unmappable.
+    "total_passing_touchdowns": "passing_touchdowns",
     "rushing_yards": "rushing_yards",
     "receiving_yards": "receiving_yards",
     "total_receptions": "receptions",
@@ -113,4 +206,16 @@ def resolve_market(league: str, raw_market: str) -> Optional[Tuple[str, str]]:
     Returns None if the market can't be mapped (should go to unmappable queue)."""
     canonical = normalize_market(raw_market)
     canonical = MARKET_ALIASES.get(canonical, canonical)
-    return MARKET_STAT.get((league, canonical))
+    direct = MARKET_STAT.get((league, canonical))
+    if direct is not None:
+        return direct
+    if (league, canonical) in COMPOUND_MARKET_STAT:
+        return (None, canonical)
+    return None
+
+
+def resolve_compound_market(league: str, raw_market: str):
+    """Return the published component fields for a supported compound."""
+    normalized = normalize_market(raw_market)
+    canonical = MARKET_ALIASES.get(normalized, normalized)
+    return COMPOUND_MARKET_STAT.get((league, canonical))

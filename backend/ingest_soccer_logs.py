@@ -108,6 +108,48 @@ _STAT_ORDER = ("goals", "assists", "shots", "sot", "yellow_cards", "red_cards",
                "saves", "shots_faced", "goals_conceded", "appearances", "sub_ins")
 
 
+# The SUMMARY publishes 14 per-player fields. The CORE api publishes 108 for the
+# same fixture, and five of them answer markets we had recorded as unpublishable:
+# on 2026-08-25 this file's own comment above said "a gap is a statement about
+# which endpoint we asked", and we then wrote "ESPN publishes no tackles" into a
+# changelog after measuring exactly one endpoint. It publishes them; we were
+# asking `summary`.
+#
+# Kept separate from _TARGET_STATS because these are NOT zero-filled. A shallow
+# run must leave them absent rather than writing 0, which would be a fabricated
+# measurement rather than a missing one.
+_CORE_TARGET_STATS = {
+    "tackles": "totaltackles",
+    "clearances": "totalclearance",
+    "crosses": "totalcrosses",
+    "passes_attempted": "totalpasses",
+    "passes": "accuratepasses",
+    "shots_assisted": "shotassists",
+    "interceptions": "interceptions",
+    "touches": "touches",
+}
+
+# Written only by a --deep run. A row carrying it has the core stats; a row
+# without it does not, and re-running with --deep re-fetches exactly those.
+# Deliberately NOT the shallow key: a shallow run must not be forced to
+# re-fetch every match just because deep stats are absent.
+_DEEP_FRESHNESS_KEY = "tackles"
+
+
+def _core_line(raw_stats) -> dict:
+    """The core-api fields we map, present-only. Never zero-filled."""
+    found = {}
+    for category in (raw_stats or {}).get("splits", {}).get("categories", []) or []:
+        for stat in category.get("stats", []) or []:
+            name = _key(stat.get("name"))
+            for target, alias in _CORE_TARGET_STATS.items():
+                if name == alias:
+                    value = _number(stat)
+                    if value is not None:
+                        found[target] = value
+    return found
+
+
 def _key(value) -> str:
     return "".join(ch for ch in str(value or "").lower() if ch.isalnum())
 
@@ -165,13 +207,14 @@ def _boxscore_players(summary: dict):
         for stat_group in block.get("statistics", []):
             names = stat_group.get("names") or stat_group.get("labels") or []
             for row in stat_group.get("athletes", []):
-                if row.get("didNotPlay"):
-                    continue
                 athlete = row.get("athlete") or {}
                 athlete_id = athlete.get("id") or row.get("id")
                 name = athlete.get("displayName") or athlete.get("fullName")
-                raw = dict(zip(names, row.get("stats") or []))
-                stats = _target_line(raw)
+                if row.get("didNotPlay") is True:
+                    stats = {"did_not_play": 1}
+                else:
+                    raw = dict(zip(names, row.get("stats") or []))
+                    stats = _target_line(raw)
                 if athlete_id and name and stats:
                     yield str(athlete_id), name, team, home_away, stats
 
@@ -181,8 +224,9 @@ def _boxscore_players(summary: dict):
 _FRESHNESS_KEY = "yellow_cards"
 
 
-def _already_ingested(con, league: str, season: int, game_id: str) -> bool:
-    """True when this match is already stored at the current stat shape."""
+def _already_ingested(con, league: str, season: int, game_id: str,
+                      key: str = None) -> bool:
+    """True when this match is already stored at the requested stat shape."""
     row = con.execute(
         "SELECT stats FROM player_game_logs "
         "WHERE league=? AND season=? AND game_id=? AND stats IS NOT NULL LIMIT 1",
@@ -190,7 +234,7 @@ def _already_ingested(con, league: str, season: int, game_id: str) -> bool:
     if not row:
         return False
     try:
-        return _FRESHNESS_KEY in json.loads(row[0])
+        return (key or _FRESHNESS_KEY) in json.loads(row[0])
     except (TypeError, ValueError):
         return False
 
@@ -248,12 +292,13 @@ def _roster_players(summary: dict):
         home_away = block.get("homeAway")
         for row in block.get("roster", []):
             raw_stats = row.get("stats") or []
-            if not raw_stats or not _appeared(raw_stats):
+            if not raw_stats:
                 continue
             athlete = row.get("athlete") or {}
             athlete_id = athlete.get("id") or row.get("id")
             name = athlete.get("displayName") or athlete.get("fullName")
-            stats = _target_line(raw_stats)
+            stats = ({"did_not_play": 1} if not _appeared(raw_stats)
+                     else _target_line(raw_stats))
             if athlete_id and name and stats:
                 yield str(athlete_id), name, team, home_away, stats
 
@@ -275,7 +320,85 @@ def _get_core(url: str, attempts: int = 4) -> dict:
     raise RuntimeError(f"{url} failed after {attempts} attempts: {last}")
 
 
-def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
+def _core_event_stats(league: str, game_id: str) -> tuple:
+    """{athlete_id: {our_key: value}} from the core api, and the requests spent.
+
+    Costs roughly one request per athlete -- ~45 for a soccer fixture -- against
+    a host whose limit is a BURST RATE, so it is opt-in per run and paced by the
+    shared Fetcher like every other core call here. The summary path stays the
+    default precisely because it answers a whole match in one request.
+
+    Failure of one athlete is not failure of the match: the stats we did get are
+    still true. A failure of the roster walk returns what it has.
+    """
+    base = "{}/{}/events/{}/competitions/{}".format(
+        CORE, _core_path(league), game_id, game_id)
+    spent = 0
+    out = {}
+    try:
+        spent += 1
+        competitors = _get_core(f"{base}/competitors?limit=10")
+    except Exception as exc:  # noqa: BLE001
+        print(f"      core competitors failed ({exc})")
+        return out, spent
+    for item in competitors.get("items", []) or []:
+        try:
+            spent += 1
+            competitor = _get_core(item["$ref"])
+            spent += 1
+            roster = _get_core(competitor["roster"]["$ref"])
+        except Exception as exc:  # noqa: BLE001
+            print(f"      core roster failed ({exc})")
+            continue
+        for entry in roster.get("entries", []) or []:
+            ref = (entry.get("statistics") or {}).get("$ref")
+            athlete_id = str(entry.get("playerId") or "")
+            if not ref or not athlete_id:
+                continue
+            try:
+                spent += 1
+                line = _core_line(_get_core(ref))
+            except Exception:  # noqa: BLE001
+                continue
+            if line:
+                out[athlete_id] = line
+    return out, spent
+
+
+_BATCH_DECLARED = []
+
+
+class _SummaryBudgetExhausted(Exception):
+    """Internal control flow: the declared site.web request share is spent."""
+
+
+def _declare_batch():
+    """Tell the shared ESPN client this process is a batch job, once.
+
+    espn_client defaults to on_exhausted="refuse" because the request handlers
+    import it directly -- a page load must never sit through a cooldown. This
+    ingest enters through the same module and is the opposite kind of caller,
+    and it never said so: on 2026-08-25 a Liga MX backfill spent the per-host
+    count, then every remaining fixture failed with "refusing rather than
+    pausing 60s, because this caller has someone waiting". Nobody was waiting.
+    153 fixtures, 0 rows written.
+
+    The docstring below already called this a batch job and set a retry ladder
+    for it; the one knob that decides refuse-vs-wait was left at the handler's
+    value. config.set_on_exhausted documents exactly this: "a batch job that
+    enters through the same module (every ingest does) says so explicitly".
+    """
+    if _BATCH_DECLARED:
+        return
+    try:
+        espn.set_on_exhausted("sleep")
+    except Exception:  # noqa: BLE001 - an older client without the knob still runs
+        pass
+    _BATCH_DECLARED.append(True)
+
+
+def _summary_retry(league: str, game_id: str, attempts: int = 4,
+                   before_request=None) -> dict:
     """espn.summary with retry/backoff.
 
     espn_client's shared fetcher deliberately has empty retry_waits (a page
@@ -284,10 +407,15 @@ def _summary_retry(league: str, game_id: str, attempts: int = 4) -> dict:
     skipping the game. Measured 2026-08-06: the wall tripped mid-run and the
     ingest burned the rest of the season printing 403s per event.
     """
+    _declare_batch()
     last = None
     for i in range(attempts):
         try:
+            if before_request:
+                before_request()
             return espn.summary(league, game_id)
+        except _SummaryBudgetExhausted:
+            raise
         except Exception as e:  # noqa: BLE001 - any failure is retried
             last = e
             time.sleep(min(60, 2.0 * (i + 1)))
@@ -303,6 +431,19 @@ def _core_path(league: str) -> str:
             f"'path' to backend/espn_leagues.py before ingesting it"
         )
     return entry["path"]
+
+
+def _published_current_season(league: str) -> int:
+    """The current season key from this league's published season collection."""
+    url = f"{CORE}/{_core_path(league)}/seasons?limit=1"
+    doc = _get_core(url)
+    items = doc.get("items") or []
+    ref = items[0].get("$ref") if items and isinstance(items[0], dict) else ""
+    match = re.search(r"/seasons/(\d{4})(?:\?|/|$)", ref or "")
+    if not match:
+        raise RuntimeError(
+            f"ESPN published no current season for {league} (asked {url})")
+    return int(match.group(1))
 
 
 def _team_code(league: str, abbrev: Optional[str]) -> str:
@@ -358,7 +499,20 @@ def _published_types(league: str, season: int) -> Tuple[str, List[dict]]:
     return display_name, types
 
 
-def _game_type_for_type(type_doc: dict) -> str:
+def _game_type_for_name(name: str, league: Optional[str] = None) -> str:
+    """Map a publisher phase name onto our shared game-type vocabulary."""
+    normalized = str(name or "").lower()
+    if "all-star" in normalized or "allstar" in normalized:
+        return ALLSTAR
+    regular = str(
+        (ESPN_LEAGUES.get(league) or {}).get("regular_type_name") or "regular season"
+    ).lower()
+    if regular and regular in normalized:
+        return REG
+    return POST
+
+
+def _game_type_for_type(type_doc: dict, league: Optional[str] = None) -> str:
     """Our phase for one published soccer season type, from its own name.
 
     The vocabulary is game_types.py's ``REG | POST | ALLSTAR``. Mapping is by
@@ -366,13 +520,152 @@ def _game_type_for_type(type_doc: dict) -> str:
     measured basketball/baseball league, and DATA-COVERAGE-CONTRACT §6 forbids
     hardcoding ids. MLS files its All-Star Game as its own type (id 2), so
     every remaining non-regular-season type is a knockout phase — POST.
+
+    The regular-season phase is named by the league's own registry entry, not by
+    the literal string "regular season". Leagues Cup calls its group stage
+    "League Phase", so matching the literal would have filed all five of its
+    phases as knockout rounds -- roughly 50 group matches misread as POST.
     """
-    name = str(type_doc.get("name") or "").lower()
-    if "all-star" in name or "allstar" in name:
-        return ALLSTAR
-    if "regular season" in name:
-        return REG
-    return POST
+    return _game_type_for_name(type_doc.get("name") or "", league)
+
+
+def _settlement_waiting_on(con, league: str) -> dict:
+    """ESPN event ids whose props are still unsettled, mapped to the game's date.
+
+    These are the matches settlement is actually blocked on. Everything else in a season is
+    history: useful, but nobody is waiting for it.
+    """
+    try:
+        rows = con.execute(
+            """SELECT g.espn_event_id, g.date
+                 FROM prop_games g
+                 JOIN props p ON p.game_id = g.id
+                 LEFT JOIN prop_results r ON r.prop_id = p.id
+                WHERE g.league = ?
+                  AND COALESCE(g.espn_event_id, '') <> ''
+                  AND r.prop_id IS NULL
+                GROUP BY g.id""",
+            (league,)).fetchall()
+    except sqlite3.Error as exc:
+        # Degrade to recency alone, and SAY so. A silent fallback here would look exactly
+        # like a season with nothing outstanding.
+        print(f"  ordering: cannot read outstanding props ({exc}); falling back to recency")
+        return {}
+    return {str(event_id): str(date or "") for event_id, date in rows}
+
+
+def _not_started(con, league: str, now_iso: str) -> set:
+    """ESPN event ids we already know have not kicked off yet, read from our own tables.
+
+    Fetching an unplayed match's summary returns no box score, writes nothing, and so
+    leaves the match "not held" -- and it ranks first again next run. Measured 2026-10-02:
+    the twelve matches at the front of the queue were all dated 10-10 and 10-11, priced
+    early so they counted as "waiting on settlement", and every hourly run spent its whole
+    12-request budget re-asking ESPN about them. Dev's held count never moved in seven runs,
+    and RBNY v STL, played 09-30 with no props, sat behind them in the group the budget
+    never reached. A match that has not started costs nothing to skip.
+
+    Two sources, both ours: prop_games (start_time, else the date when no time is stored)
+    and the scoreboard capture. An event in neither is unknown, not future, and is still
+    fetched; ESPN's own `completed` flag below catches it, at the price of one request.
+    """
+    today = now_iso[:10]
+    future = set()
+    queries = (
+        ("SELECT espn_event_id FROM prop_games WHERE league=? AND COALESCE(espn_event_id,'')<>''"
+         " AND ((start_time IS NOT NULL AND start_time > ?)"
+         "      OR (start_time IS NULL AND date > ?))", (league, now_iso, today)),
+        ("SELECT game_id FROM scoreboard_snapshots WHERE league=? AND state='pre'"
+         " AND start_time > ?", (league, now_iso)),
+    )
+    for sql, args in queries:
+        try:
+            future.update(str(row[0]) for row in con.execute(sql, args))
+        except sqlite3.Error as exc:
+            # Say it, and fall back to fetching: skipping on a guess would be worse than
+            # paying for an unplayed match.
+            print(f"  not-started check unavailable ({exc}); those matches will be fetched")
+    return future
+
+
+def _fetch_order(waiting: dict, event_ids: List[str], final: Optional[set] = None) -> List[str]:
+    """Order a phase's matches by what settlement is waiting on, newest first.
+
+    The publisher returns a season's events oldest-first, and this loop stops at
+    --request-budget, so a bounded run spent itself on the START of the season. Measured
+    2026-09-06: the first scheduled run wrote 440 MLS logs and every one was from 2026-05-02
+    and 05-03, while the games holding unsettled props were four months newer and the table's
+    newest date did not move at all. A 28-day gap would have taken about 30 hourly runs to
+    close, in the wrong direction the whole time.
+
+    Two keys, in this order:
+
+    1. Matches with unsettled props, newest first. This is the purpose, read from our own
+       database rather than guessed: settlement is blocked on exactly these.
+    2. Everything else, by descending event id. That is a PROXY for recency, not a fact:
+       measured across 626 stored MLS matches, id order agrees with date order 95.4% of the
+       time, so 4.6% of pairs are out of sequence. Good enough to break a tie between
+       matches nobody is waiting on, and never used to decide anything else.
+    """
+    def key(event_id: str):
+        eid = str(event_id)
+        try:
+            numeric = int(eid)
+        except (TypeError, ValueError):
+            numeric = 0
+        if eid in waiting:
+            return (0, waiting[eid], numeric)
+        return (1, "", numeric)
+
+    ordered = sorted(event_ids, key=key, reverse=True)
+    # sorted(reverse=True) would put group 1 first; group 0 must lead.
+    if final is None:
+        return ([e for e in ordered if str(e) in waiting]
+                + [e for e in ordered if str(e) not in waiting])
+    # With the scoreboard's word on which matches are over, "is it final" leads and the
+    # event-id recency proxy only breaks ties. A box score exists exactly when the match
+    # is final, which is the same signal the game detail page uses to call it over.
+    done = lambda e: str(e) in final
+    return ([e for e in ordered if str(e) in waiting and done(e)]
+            + [e for e in ordered if str(e) not in waiting and done(e)]
+            + [e for e in ordered if str(e) in waiting and not done(e)]
+            + [e for e in ordered if str(e) not in waiting and not done(e)])
+
+
+def _finished_on_scoreboard(con, league: str) -> set:
+    """ESPN event ids the scoreboard capture has recorded as final (state post).
+
+    The scoreboard timers refresh about once a minute during games, and the game detail
+    page reads the same rows to decide a game is over, so this is the moment a summary
+    first has a box score to give. RBNY v STL was recorded post at 01:39Z on 10-01, about
+    two hours after kickoff, and never fetched: with no props it ranked behind matches
+    nobody had played yet.
+
+    `state = post` alone is not "played", which espn_client/scoreboard.py says in as many
+    words: a POSTPONED game is also state post, with a 0-0 score. The soccer rows we store
+    do not carry ESPN's `completed` flag, and on 2026-10-02 two MLS rows were post with
+    detail "Postponed" -- RBNY v STL among them, stored as a 0-0 final on 09-26 before it was
+    played 09-30. So trust `completed` where a row has it, and otherwise refuse any detail
+    that names a match that did not finish.
+    """
+    try:
+        rows = con.execute(
+            "SELECT game_id, json_extract(payload,'$.completed'),"
+            "       LOWER(COALESCE(json_extract(payload,'$.status_detail'),''))"
+            "  FROM scoreboard_snapshots WHERE league=? AND state='post'",
+            (league,)).fetchall()
+    except sqlite3.Error as exc:
+        print(f"  scoreboard final check unavailable ({exc}); ordering by recency alone")
+        return set()
+    unplayed = ("postpon", "cancel", "abandon", "suspend", "delay")
+    final = set()
+    for game_id, completed, detail in rows:
+        if completed is not None:
+            if completed:
+                final.add(str(game_id))
+        elif not any(word in detail for word in unplayed):
+            final.add(str(game_id))
+    return final
 
 
 def _type_events(league: str, season: int, type_id: str) -> List[str]:
@@ -416,18 +709,33 @@ def _verify_season(season: int, type_doc: dict) -> None:
         )
 
 
+# A cross-border tournament is its own competition key, but its athletes are
+# owned by the domestic spines. `players WHERE league='lcup'` has always held
+# ZERO rows, so every Leagues Cup athlete resolved against an empty roster:
+# 1,640 logs from 52 completed fixtures, 0 resolved. Same defect the props
+# endpoint fixed with `_roster_league_for_ingest`, at a third site.
+#
+# The union is safe here because resolution is team-scoped and each Leagues Cup
+# club code belongs to exactly one spine; where a code names two clubs the
+# existing uniqueness check already returns None rather than guessing.
+ROSTER_LEAGUES = {"lcup": ("mls", "ligamx")}
+
+
 class SoccerPlayerResolver:
     """Resolve ESPN names to existing players without fabricating rows.
 
-    The same tiers as WCPlayerResolver, scoped to the league being ingested
-    (``players WHERE league=?``) so a shared soccer ingest never resolves an
-    MLS athlete against a WC roster or vice versa.
+    The same tiers as WCPlayerResolver, scoped to the spine(s) that own the
+    league's athletes so a shared soccer ingest never resolves an MLS athlete
+    against a WC roster or vice versa.
     """
 
     def __init__(self, con: sqlite3.Connection, league: str, allowed_player_ids=None):
+        spines = ROSTER_LEAGUES.get(league, (league,))
+        placeholders = ",".join("?" for _ in spines)
         try:
             self.rows = [dict(row) for row in con.execute(
-                "SELECT id, name, team FROM players WHERE league=?", (league,)
+                "SELECT id, name, team, espn_id FROM players WHERE league IN ({})".format(
+                    placeholders), tuple(spines)
             )]
         except sqlite3.OperationalError:
             # No players table (e.g. a bare dry-run DB): resolve nothing,
@@ -453,7 +761,14 @@ class SoccerPlayerResolver:
                 rows = team_rows
         return rows[0]["id"] if len(rows) == 1 else None
 
-    def resolve(self, name: str, team: str):
+    def resolve(self, name: str, team: str, athlete_id: str = ""):
+        if athlete_id:
+            source_matches = [
+                row for row in self.rows
+                if str(row.get("espn_id") or "") == str(athlete_id)
+            ]
+            if len(source_matches) == 1:
+                return source_matches[0]["id"]
         normalized = _normalize_name(name)
         exact = [row for row in self.rows if row["name_norm"] == normalized]
         resolved = self._unique(exact, team)
@@ -535,14 +850,19 @@ def _opponent(team: str, home_away: str, home: str, away: str):
     return None
 
 
-def ingest(league: str, season: int, dry_run: bool = False,
-           request_budget: int = 80, force_refetch: bool = False) -> int:
+def ingest(league: str, season: Optional[int] = None, dry_run: bool = False,
+           request_budget: int = 80, force_refetch: bool = False,
+           deep: bool = False) -> int:
     # The summary fetches below go through espn_client's shared fetcher, which
     # defaults to NO pacing (page loads must not pause). A 510-game season is
     # a batch job, and an unpaced burst is exactly what trips ESPN's 403 wall
     # with no Retry-After (measured 2026-08-06; the wall outlives short
     # backoffs). Pace the shared fetcher for the duration of the run.
     espn.set_min_interval(float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5))
+    # A season is a publisher definition, not the server's calendar year. Reuse
+    # the existing ESPN /seasons?limit=1 resolver so this recurring pipeline does
+    # not silently pin itself to 2026. An explicit season still supports backfills.
+    season = int(season) if season is not None else _published_current_season(league)
     display_name, types = _published_types(league, season)
     print(f"{league} {season} ({display_name or 'no published label'}): "
           f"{len(types)} published types")
@@ -556,28 +876,58 @@ def ingest(league: str, season: int, dry_run: bool = False,
     ingested = 0
     resolved = 0
     unresolved = 0
+    deep_events = 0
+    deep_matched = 0
     completed_games = 0
     incomplete_events = 0
     phase_mismatches = 0
     matches_without_events = 0
     skipped_already_held = 0
+    skipped_not_started = 0
     requests_spent = 0
     budget_exhausted = False
+
+    def spend_summary_request():
+        """Count and cap every site.web attempt, including retries."""
+        nonlocal requests_spent, budget_exhausted
+        if requests_spent >= request_budget:
+            budget_exhausted = True
+            raise _SummaryBudgetExhausted
+        requests_spent += 1
+
+    # Read once, not per phase: the answer cannot change inside a single run.
+    settlement_waiting = _settlement_waiting_on(con, league)
+    import datetime as _dt
+    not_started = _not_started(
+        con, league, _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"))
+    # A priced match that has not kicked off is not something settlement can be
+    # waiting on yet; ranking it first is what starved the whole job. See _not_started.
+    settlement_waiting = {e: d for e, d in settlement_waiting.items()
+                          if e not in not_started}
+    finished = _finished_on_scoreboard(con, league)
+
     for type_doc in types:
         type_id = type_doc.get("id") or ""
-        name = type_doc.get("name") or f"type {type_id}"
+        type_name = type_doc.get("name") or f"type {type_id}"
         try:
             event_ids = _type_events(league, season, type_id)
         except Exception as exc:  # noqa: BLE001 - one type must not kill the run
-            print(f"  [{type_id}] {name}: events fetch failed ({exc})")
+            print(f"  [{type_id}] {type_name}: events fetch failed ({exc})")
             continue
         if not event_ids:
             # An empty published collection is a fact, not a failure: MLS
             # type 0 "Combined" publishes 0 events every season.
-            print(f"  [{type_id}] {name}: 0 events — published empty, nothing to ingest")
+            print(f"  [{type_id}] {type_name}: 0 events — published empty, nothing to ingest")
             continue
         _verify_season(season, type_doc)
-        game_type = _game_type_for_type(type_doc)
+        # A bounded budget must buy the matches settlement is waiting on, not the oldest
+        # ones the publisher happens to list first. See _fetch_order.
+        waiting_here = sum(1 for e in event_ids if str(e) in settlement_waiting)
+        if waiting_here:
+            print(f"  [{type_id}] {type_name}: {waiting_here} of {len(event_ids)} matches "
+                  f"have unsettled props; those are fetched first")
+        event_ids = _fetch_order(settlement_waiting, event_ids, finished)
+        game_type = _game_type_for_type(type_doc, league)
         type_logs = 0
         type_games = 0
         type_resolved = 0
@@ -589,15 +939,21 @@ def ingest(league: str, season: int, dry_run: bool = False,
             #
             # Every run used to re-fetch every completed match's summary whether or not we
             # already had it, so re-running a season was always full price -- 511 requests
-            # for MLS 2026. ESPN's limit is a COUNT per host (~100 measured), so a full
-            # season could not complete in one run and a resumed run started from zero
-            # again. Skipping what is already stored makes the backfill chunkable: each run
-            # spends its budget on matches nobody has fetched yet.
+            # for MLS 2026. That creates an avoidable burst against the shared host, and a
+            # resumed run used to start from zero again. Skipping what is already stored
+            # makes the refresh resumable: each run
+            # spends its paced burst-rate share on matches nobody has fetched yet.
             #
             # The freshness key is a stat introduced with the widened set. A row written by
             # the old 4-stat version does not carry it, so widening re-fetches exactly the
             # matches that need it and nothing else.
-            if not force_refetch and _already_ingested(con, league, season, game_id):
+            if game_id in not_started:
+                skipped_not_started += 1
+                continue
+
+            freshness_key = _DEEP_FRESHNESS_KEY if deep else None
+            if not force_refetch and _already_ingested(
+                    con, league, season, game_id, freshness_key):
                 skipped_already_held += 1
                 continue
 
@@ -606,8 +962,10 @@ def ingest(league: str, season: int, dry_run: bool = False,
                 break
 
             try:
-                requests_spent += 1
-                summary = _summary_retry(league, game_id)
+                summary = _summary_retry(
+                    league, game_id, before_request=spend_summary_request)
+            except _SummaryBudgetExhausted:
+                break
             except Exception as exc:  # noqa: BLE001
                 print(f"    {league} {season} [{type_id}] event {game_id}: "
                       f"summary failed ({exc})")
@@ -625,10 +983,23 @@ def ingest(league: str, season: int, dry_run: bool = False,
             # "stamp the data, not the URL" discipline as game_types.py.
             envelope_season = header.get("season") or comp.get("season") or {}
             envelope_type = str(envelope_season.get("type") or "")
-            if envelope_type and envelope_type != str(type_id):
+            envelope_name = str(envelope_season.get("name") or "")
+            # Core season collections and site-summary envelopes use different
+            # numeric phase vocabularies for soccer (for example, MLS regular
+            # season is Core type 1 but summary type 13846). Their published
+            # names carry the comparable meaning, so compare that meaning and
+            # retain the ids only as diagnostic detail.
+            envelope_game_type = (
+                _game_type_for_name(envelope_name, league) if envelope_name else None
+            )
+            if envelope_game_type and envelope_game_type != game_type:
                 phase_mismatches += 1
-                print(f"    event {game_id}: envelope files season.type={envelope_type}, "
-                      f"enumerated from type {type_id} — written as {game_type}")
+                print(
+                    f"    event {game_id}: envelope phase {envelope_name!r} "
+                    f"(type {envelope_type or 'unknown'}) disagrees with "
+                    f"collection {type_name!r} (type {type_id}) — written as "
+                    f"{game_type}"
+                )
 
             # Support both the generic contract and ESPN's current soccer
             # roster contract. Roster rows win if both exist.
@@ -637,6 +1008,21 @@ def ingest(league: str, season: int, dry_run: bool = False,
                 player_lines[line[0]] = line
             for line in _roster_players(summary):
                 player_lines[line[0]] = line
+
+            if deep:
+                core_stats, core_spent = _core_event_stats(league, game_id)
+                requests_spent += core_spent
+                for athlete_id, extra in core_stats.items():
+                    line = player_lines.get(athlete_id)
+                    if line:
+                        # Merge, never overwrite: the summary's own value wins
+                        # where both publish one, so widening cannot silently
+                        # restate a number this ingest already recorded.
+                        for key, value in extra.items():
+                            line[4].setdefault(key, value)
+                deep_matched += len(
+                    [a for a in core_stats if a in player_lines])
+                deep_events += 1
 
             first_scorer, goal_events_published = _first_goal_scorer(summary)
             if goal_events_published:
@@ -655,14 +1041,14 @@ def ingest(league: str, season: int, dry_run: bool = False,
             away = competitors.get("away") or ""
             game_date = str(comp.get("date") or "")[:10] or None
 
-            for athlete_id, name, team, home_away, stats in player_lines.values():
+            for athlete_id, player_name, team, home_away, stats in player_lines.values():
                 team = _team_code(league, team)
                 if not home_away:
                     if team and home and team.upper() == home.upper():
                         home_away = "home"
                     elif team and away and team.upper() == away.upper():
                         home_away = "away"
-                player_id = resolver.resolve(name, team)
+                player_id = resolver.resolve(player_name, team, athlete_id)
                 if player_id is None:
                     unresolved += 1
                     type_unresolved += 1
@@ -708,7 +1094,7 @@ def ingest(league: str, season: int, dry_run: bool = False,
             time.sleep(0.05)
 
         print(
-            f"  [{type_id}] {name}: {len(event_ids)} published events, "
+            f"  [{type_id}] {type_name}: {len(event_ids)} published events, "
             f"{type_games} completed games, "
             f"{type_logs} player logs ({type_resolved} resolved, "
             f"{type_unresolved} unresolved)  game_type={game_type}"
@@ -742,33 +1128,51 @@ def ingest(league: str, season: int, dry_run: bool = False,
     print(f"  {matches_without_events} of {completed_games} matches published no keyEvents"
           f" — first_goal omitted so those props void rather than grade as losses")
     print(f"  {requests_spent} summary requests spent on site.web.api"
-          f" (budget {request_budget}); {skipped_already_held} matches already held")
+          f" (budget {request_budget}); {skipped_already_held} matches already held;"
+          f" {skipped_not_started} not yet kicked off, skipped at no cost")
+    if deep:
+        # Say what the deep pass actually attached, not just that it ran. An
+        # athlete the core api answered for but the summary never listed is a
+        # match we did NOT enrich, and that difference is invisible otherwise.
+        print(f"  deep: {deep_events} events read from the core api, "
+              f"{deep_matched} athletes matched to a summary line")
     if budget_exhausted:
         print(f"  BUDGET EXHAUSTED — stopped at {request_budget} requests with matches "
-              f"still unfetched. ESPN's limit is a COUNT per host, so this run stopped on "
-              f"purpose rather than discovering the wall. Re-run to continue; matches "
+              f"still unfetched. ESPN's limit is a BURST RATE per host; this run stopped "
+              f"at its declared share. Re-run to continue; matches "
               f"already stored are skipped and cost nothing.")
     print(f"{league} {season} table now has {total} logs, {linked} linked.")
     return ingested
 
 
-if __name__ == "__main__":
+def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Ingest per-match soccer player logs from ESPN by season type."
     )
     ap.add_argument("--league", default="mls",
                     help="ESPN soccer league key (mls today, epl later)")
-    ap.add_argument("--season", type=int, required=True,
-                    help="Season key to ingest (e.g. 2025 for MLS)")
+    ap.add_argument("--season", type=int,
+                    help="Season key to ingest; default is ESPN's published current season")
     ap.add_argument("--dry-run", action="store_true",
                     help="Fetch, resolve and report without writing any rows")
     ap.add_argument("--request-budget", type=int, default=80,
-                    help="Stop after this many summary requests to site.web.api. ESPN's "
-                         "limit is a COUNT per host (~100 measured), so a season is "
-                         "ingested over several runs; already-stored matches are free.")
+                    help="Stop after this many summary attempts to site.web.api, including "
+                         "retries. ESPN's limit is a burst rate per host; already-stored "
+                         "matches are free.")
+    ap.add_argument("--deep", action="store_true",
+                    help="also read the core api per-athlete stats (tackles, "
+                         "clearances, crosses, passes, shot assists). Costs about "
+                         "one request PER ATHLETE -- ~45 a fixture -- against a "
+                         "host whose limit is a burst rate, so budget it: the "
+                         "summary path answers a whole match in one request.")
     ap.add_argument("--force-refetch", action="store_true",
                     help="Re-fetch matches already stored (use after changing what is "
                          "extracted from the summary)")
-    args = ap.parse_args()
-    raise SystemExit(ingest(args.league, args.season, args.dry_run,
-                            args.request_budget, args.force_refetch))
+    args = ap.parse_args(argv)
+    ingest(args.league, args.season, args.dry_run,
+           args.request_budget, args.force_refetch, args.deep)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

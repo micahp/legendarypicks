@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh NFL schedule and verify score coverage (DEV)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+Nice=10
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/ingest_nfl_schedule.py --refresh
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/check_nfl_schedule_scores.py
+TimeoutStartSec=600

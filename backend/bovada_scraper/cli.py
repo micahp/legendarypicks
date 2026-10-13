@@ -10,7 +10,7 @@ import urllib.request
 
 import datetime as dt
 import sys
-from .config import API_BASE, LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
+from .config import API_BASE, LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
 from .backoff import _load_backoff, _record_result, _save_backoff, _should_fetch  # noqa: E402
 from .client import fetch_events, parse_player_props  # noqa: E402
 from .direct import _event_start_iso, _ufc_direct_ingest, _wc_direct_ingest, _wc_event_date  # noqa: E402
@@ -180,6 +180,14 @@ def _run_report(resolve_counts: dict, did_ingest: bool) -> int:
         print(f"      MINTED {league} {name!r} — no espn_id, no game logs")
     if len(_MINTED_PLAYERS) > 20:
         print(f"      ... and {len(_MINTED_PLAYERS) - 20} more")
+
+    print(f"  team markets parsed as player props and dropped: "
+          f"{sum(_TEAM_LEVEL_OUTCOMES.values())}")
+    _tl = {}
+    for (lg, head, club), n in _TEAM_LEVEL_OUTCOMES.items():
+        _tl[lg] = _tl.get(lg, 0) + n
+    for lg, n in sorted(_tl.items()):
+        print(f"      TEAM MARKET {lg} — {n} outcomes named one of the fixture's own clubs")
 
     print(f"  outcomes tagged with a club not in the fixture: {len(_STALE_TEAM_TAGS)}")
     for (name, code), game in sorted(_STALE_TEAM_TAGS.items()):

@@ -17,8 +17,13 @@ LEAGUES = {
     "mlb":  ("baseball", "mlb"),
     "nba":  ("basketball", "nba"),
     "nfl":  ("football", "nfl"),
+    # NCAAF, added 2026-09-05. We have carried NCAAF props since Aug 29 but every one
+    # came from the RotoWire relay, and 3,802 of them are priced at a fabricated -137.
+    # Bovada carries 637 player-attributed markets across 67 college fixtures with real
+    # prices, and was never configured here. Path is `football/college-football`;
+    # `football/ncaaf` is not a Bovada slug.
+    "ncaaf": ("football", "college-football"),
     "nhl":  ("hockey", "nhl"),
-    "wnba": ("basketball", "wnba"),
     "wc":   ("soccer", "fifa-world-cup/fifa-world-cup-matches"),
     # MLS was here from 2026-08-16 until later the same day, on the continent path
     # `soccer/north-america/united-states/mls` (`soccer/usa/mls` 404s). It scraped fine —
@@ -35,9 +40,55 @@ LEAGUES = {
     # Historical Bovada MLS rows are kept, not deleted; the reader's source policy selects
     # the relay. `_parse_mls_props` stays in this file — it is measured, tested, and the
     # league is one line away if the relay does not work out.
+    #
+    # RESTORED 2026-09-05. It did not work out, and the removal reason above no longer
+    # holds. That reason was "two sources disagreeing on goals and assists". There is no
+    # disagreement to create, because the relay writes ZERO of both: measured on tonight's
+    # 13-fixture slate, 428 props across 8 markets, all rotowire:prizepicks, and not one
+    # goal or assist line. The newest goals/assists row in the whole database is
+    # 2026-08-17, the day MLS was removed here. So the board has been shipping a soccer
+    # league with no goalscorer market for 19 days.
+    #
+    # Bovada prices 2 of the 11 and that has not changed. But 2 that nobody else prices
+    # beats 0, and the relay's 7 are untouched by this: they are different markets, not a
+    # competing opinion on the same one. If PrizePicks direct ever comes back it prices
+    # all 11 and supersedes both, which is a separate question from tonight's slate.
+    "mls":  ("soccer", "north-america/united-states/mls"),
+    # Leagues Cup, added 2026-08-25. The MLS coupon above was removed because Bovada
+    # priced 2 of the 11 markets this league is built for; that judgement was about
+    # MLS, where the RotoWire/PrizePicks relay prices seven and is the better source.
+    # It does not transfer to this tournament, because the relay carries NO Leagues
+    # Cup at all -- measured across the live payload and all seven archived days --
+    # so the choice here is Bovada or an empty board, not Bovada or a better source.
+    #
+    # The path is `north-america/leagues-cup`. Both `concacaf-leagues-cup` guesses
+    # were wrong: one 404s, the other returns 200 with ZERO events, which would have
+    # read as "Bovada does not carry it". Found by pulling Bovada's whole 1,084-event
+    # soccer tree and matching on club name instead of guessing slugs.
+    #
+    # What it yields, measured: 45-51 players per fixture on Anytime Goal Scorer and
+    # the same on First Goal Scorer, 636 outcomes across the four fixtures. That is
+    # goals and assists -- 2 of 11 -- and the stat lines (shots, passes, saves) are
+    # simply absent: the coupon's only player stat outcome in all four fixtures is a
+    # one-off `Hugo Cuypers 1+ Shots on Target` under Requested Specials.
+    "lcup": ("soccer", "north-america/leagues-cup"),
     "ufc":  ("ufc-mma", "ufc"),
-    "atp":  ("tennis", "atp"),
-    "wta":  ("tennis", "wta"),
+    # Bovada files tennis under the TOURNAMENT, not the tour. `tennis/atp` and
+    # `tennis/wta` both return 200 with ZERO events, which reads as "out of
+    # season" and is why this lane died on 2026-08-29 -- mid US Open, the
+    # biggest tennis fortnight of the year, while we were actively trading it.
+    #
+    # Measured 2026-09-05: `tennis` (the bare sport) carries 102 events and the
+    # US Open ones link to /tennis/us-open/men-s-singles/... Both singles draws
+    # carry the groups this product wants: Player Props, Service Game Props,
+    # Break Props, Ace/Double Fault Props, Set Props, Match Props.
+    #
+    # These slugs are TOURNAMENT-SPECIFIC and will go stale when the US Open
+    # ends. That is the same trap as the Leagues Cup slug above, and the durable
+    # fix is to walk the `tennis` tree and match on tournament name rather than
+    # guess paths. Until that exists, these are correct and dated.
+    "atp":  ("tennis", "us-open/men-s-singles"),
+    "wta":  ("tennis", "us-open/women-s-singles"),
 }
 
 HDR = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36"}
@@ -120,7 +171,7 @@ _BACKOFF_PATH = os.path.join(
     "data", "bovada-league-backoff.json")
 
 # An out-of-season league is asked for again after this long. UFC sits at zero players
-# between cards, tennis between tournaments, WNBA/NBA out of season — and this scraper ran
+# between cards, tennis between tournaments, NBA out of season — and this scraper ran
 # `all` every 30 minutes regardless, so each of those cost 48 requests a day to be told
 # "no board" 48 times. Bovada gives this API away with no auth and no key; asking it 48
 # times for an answer that changed once is a cost we push onto them for nothing.
@@ -205,6 +256,24 @@ _MINTED_PLAYERS = []
 # Leagues skipped this run by the backoff, named in the report so a rest is never
 # mistaken for a league that produced nothing.
 _RESTED_LEAGUES = []
+
+# {(league, market_head, team_name): n} for outcomes whose "player" is one of the fixture's
+# own competitors. Bovada files team totals inside groups named "Game Props" and "Score
+# Props" -- "Highest Scoring Quarter Total Points O/U - Boston Celtics" splits exactly like
+# a player market does, so the club lands in player_name and the resolver rejects it. On
+# 2026-08-24 that was all 120 NBA outcomes, and the resulting "resolved 0 of 120" exit 3
+# took the whole unit down while Bovada was publishing no NBA player props at all.
+# Counted, not silenced: a league whose only offering is team markets must read differently
+# from a league that scraped nothing.
+_TEAM_LEVEL_OUTCOMES = {}
+# Every display group the parser walked, per league. The group-name filter that used to
+# gate this parser silently discarded 347 NFL and 292 NCAAF player-attributed markets,
+# and nothing reported it because a group that is never visited leaves no trace. Now it
+# does.
+_GROUP_SEEN = {}
+# Alternate-line ladder rungs seen and deliberately not ingested ("10+ Receiving Yards").
+# A decision we made, kept distinct from data the publisher stopped sending.
+_LADDER_OUTCOMES = {}
 
 # UFC has no per-fighter STAT props on Bovada; the fighter-attributed market is Method of Victory. Map
 # each outcome to a yes/no prop on the fighter (o0.5), mirroring the WC anytime-goal shape. Fight-level

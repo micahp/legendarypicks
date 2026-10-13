@@ -12,6 +12,12 @@ document: `git log -p docs/ROADMAP.md`. The 2026-08-18 version and the old `# Le
 
 Checked = shipped to **production**, not to dev.
 
+**Current priority, 2026-10-10:** build the integrated NFL forecasting system in
+[the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md). The immediate
+tracks are the full game/season forecast in Spec A and the availability-aware player
+forecast in Spec B. The older queue below remains open where unchecked, but its dated
+priority statements do not override this decision.
+
 **Rewritten 2026-08-20.** The previous version dated itself 2026-08-18, had grown to 1,520
 lines, and had buried thirty unchecked items (`B1`-`B16`, `M1`-`M7`, `R1`-`R9`) underneath a
 `# Ledger` heading that told readers not to rewrite what was below it. Open work was sitting
@@ -23,37 +29,157 @@ the backlog as P4, and the history is a git revision rather than a second file.
 Where a measurement contradicts what the 08-18 roadmap claimed, the correction is called out
 in place, because this document has been confidently wrong before.
 
-The constraint that orders all of it: **NFL fantasy drafts are happening now**, and NCAAF
-opens **2026-08-29, nine days out**. That is the only hard date on the board.
+**Historical measurement note:** §1 was last reconciled on 2026-08-25; much of §3–§12
+still describes August conditions. Re-measure those items before acting on their counts
+or completion claims. The former draft-window and 2026-08-29 NCAAF deadlines no longer
+order the work.
+
+---
+
+## NOW. NFL forecasting, from players to playoffs (2026-10-10)
+
+The product is a projected score and a calibrated account of what that score means for
+the game, its players, its markets, and the season. Market disagreement is shown with
+probabilities, captured prices, and a permanent grading record. See the
+[forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md) for the product
+and investor framing.
+
+- [ ] **Finish the full [Spec A](SPEC-nfl-team-ratings-playoff-odds-2026-10-09.md).**
+      Verify schedule, score and team inputs; finish the baseline and the EPA/context
+      version; produce a calibrated joint score distribution, fair probabilities for
+      win, spread, total and team-total markets, and playoff simulations. Lock and
+      publicly grade forecasts against simple and market baselines. The existing
+      scores-only v1 slices are an interim benchmark, not completion of this milestone.
+- [ ] **Finish [Spec B](SPEC-player-projections-availability-2026-10-09.md).**
+      Repair the reviewed B1–B3 foundation before using it: prove complete snap
+      games, schedule the derived availability rebuild, include log-only candidates,
+      use a complete game universe for splits, refresh published team totals, and
+      reconcile season-share denominators. Then finish the with/without prop history,
+      own player projections with injury scenarios, ESPN comparison, and public
+      grading (B4–B8). The candidate remains isolated on its feature branch.
+- [ ] **Prove the joined forecast on real NFL games.** Share a versioned, pre-kickoff
+      run across player, game and season outputs; measure their consistency; publish
+      the score explanation, market comparisons and full record. Historical
+      2010–2025 coverage is a proposed modeling target to verify, and only genuinely
+      pre-kickoff 2026 forecasts count as prospective evidence.
+
+These tracks share data and run contracts. Finish their inputs first, then validate
+the joint simulation and the public page before extending the method to another sport.
+
+## 0. Earlier open priority: EPL, La Liga and Serie A onto Bovada
+
+**Micah's call, 2026-09-05.** This was the top of the board at the time. It remains
+open and follows the current NFL forecasting focus.
+
+We hold **zero** props for these three leagues. Not thin, zero. Measured the same day
+against Bovada's own sharded coupons, from this datacenter box, no workaround:
+
+```
+league   events  player-prop markets  priced outcomes
+epl          12                  528             3178
+laliga       17                  586             2254
+seriea       17                  546             2243
+                              1,660            7,675
+```
+
+Groups carried: EPL `Shots 145, Player Props 94, Goal Props 40, Cards 8, Corners 8`;
+La Liga `Game Props 171, Shots 70, Goal Props 65, Player Props 51`.
+
+Why it is more than a config line, and why it is not being done today:
+
+- Bovada is already in `LEAGUES` for six leagues and the soccer parser exists, so the
+  FETCH is close to free. Everything after it is not.
+- These are new leagues to the spine: fixtures, clubs, and players all have to resolve,
+  and `_MLS_CLUB_CODES` style club-membership sets do not exist for them.
+- `prop_games` has no epl/laliga/seriea rows, so there is nothing for a prop to attach
+  to until a fixture ingest runs.
+- The coverage contract requires a MANIFEST entry written BEFORE the ingest, per
+  COV-statset. Three leagues, three entries.
+- `player_game_logs` has no rows for any of them, so every prop lands unchartable until
+  a log ingest exists, exactly as tennis does today.
+
+Underdog also publishes these under `sport_id=FIFA` (413 players, 1,309 balanced lines
+including Goals, Assists, Shots on Target, Saves and Fouls Committed), and
+`ingest_underdog_props.py` now takes a sport parameter, so that path is one map away.
+Its odds are real, unlike the relay's.
 
 ---
 
 ## 1. What production is actually running
 
-**v0.8.4 on the frontend; the backend is FOUR COMMITS AHEAD OF ANY TAG.** Read off the
-containers rather than the tags:
+**STALE — the section below described the 2026-08-25 measurement. Re-measured 2026-08-31:
+prod is current.** v0.9.0 was cut and deployed 2026-08-29 (`dc4bbdb`, took over from a
+codex run that died at its usage limit mid-deploy), including the `player_game_logs_ufcstats`
+schema migration applied directly against prod. The backend container was rebuilt again
+2026-08-30 18:41 to carry the NCAAF zero-stat settlement fix; frontend was rebuilt
+2026-08-29 17:32.
 
 ```
-legendarypicks-frontend   image built 2026-08-19 19:30   == v0.8.4 (tagged 19:21)
-legendarypicks-backend    image built 2026-08-19 23:13   == v0.8.4 + 4 untagged commits
+legendarypicks-frontend-1   up since 2026-08-29 17:32
+legendarypicks-backend-1    up since 2026-08-30 18:41
 ```
 
-The four commits prod's backend carries beyond `v0.8.4`, all pushed to `dev`:
+Proven by content, same method as the stale measurement below used:
 
 ```
-0473bc1  fix(props): the ingest filed a game on the UTC day, not the day it is played
-2775169  fix(split): a caller that is not an import is a caller a split cannot see
-8fc93a4  fix(clock): two more places comparing a local slate day against a UTC today
-7013ef1  fix(db): prod served 500s because SQLite gave up on the lock after 5 seconds
+md5 backend/ingest_scoreboards.py (dev HEAD)        4f1aab5baa6aff8390e1220808ce5a24
+md5 /app/ingest_scoreboards.py in prod container     4f1aab5baa6aff8390e1220808ce5a24
 ```
+
+Byte-identical. The v0.8.5/v0.8.6/v0.8.7 drift this section originally documented is
+closed — don't re-open the "rebuild and redeploy" or "cut v0.8.5" items below, they're done.
+
+**The failure mode that produced the stale section is still live and worth keeping.** The
+08-20 version of this section said v0.8.4 plus four untagged commits, and stayed unedited
+through three releases while other sections got updated — a stale "what's running" section
+reads as maintained right up until someone acts on it. Re-measure this section (containers +
+one byte-identical file, not tags or dates) before trusting it, every time it's read for a
+decision.
+
+<details>
+<summary>Prior measurement (2026-08-25, superseded above)</summary>
+
+**PROD IS RUNNING v0.8.5 CODE. Two tagged releases, v0.8.6 and v0.8.7, have never reached
+it.**
+
+```
+legendarypicks-frontend   image built 2026-08-21 11:41   up 3 days
+legendarypicks-backend    image built 2026-08-21 11:41   up 3 days
+
+v0.8.5  tagged 2026-08-20 08:47   <- in the image
+v0.8.6  tagged 2026-08-22 14:31   <- NOT in the image
+v0.8.7  tagged 2026-08-24 09:38   <- NOT in the image
+```
+
+```
+md5 backend/ingest_scoreboards.py @ v0.8.5   c3aa055ab7fe0b89148c7e5b9e70c1bd
+md5 backend/ingest_scoreboards.py @ v0.8.7   d5b840308b65efe19c50102a1d6a4d23
+md5 /app/ingest_scoreboards.py in container  c3aa055ab7fe0b89148c7e5b9e70c1bd
+```
+
+Byte-identical to v0.8.5. **Twelve backend modules changed between v0.8.5 and v0.8.7 and
+none of those changes are running in production**, including `ingest_scoreboards.py`,
+`scoreboard_store.py`, `_core.py`, `core_stories.py`, `monitor_props_freshness.py` and
+`routers/games/game_detail.py`.
+
+**This is not a contradiction of the changelog, and that is what makes it dangerous.** The
+v0.8.7 work was largely systemd units, cadence state and ingest runs, and those are host and
+data level, so they genuinely did take effect the moment they ran. "v0.8.7 shipped" is true
+of the scheduling half and false of the code half, and nothing on either database
+distinguishes the two. This is `feedback_dev_fix_prod_never_ran` at release scale rather than
+fix scale.
+
+- [x] **Rebuild and redeploy prod, or state in writing which of v0.8.6 and v0.8.7 is
+      deliberately withheld.** DONE 2026-08-29 — v0.9.0 deploy rebuilt both containers.
 
 **This was a deliberate rebuild, not drift, but it breaks the tag convention.** The container
 was rebuilt on 2026-08-19 at 23:13 to carry the busy-timeout half of the SQLite contention
 fix, which could not reach prod as data.
 
-- [ ] **Cut `v0.8.5` so the running image has a name again.** Use `scripts/release.sh`, never
-      by hand. Until then "what is on prod" cannot be answered by a tag, which is the one
-      thing a tag exists for.
+- [x] **Cut `v0.8.5` so the running image has a name again.** Superseded — prod now runs a
+      tagged v0.9.0 image built from the same commit as the running containers.
+
+</details>
 
 **`backend/data` is bind-mounted; code is baked into the image.** That single fact splits
 every fix into two classes and it has not changed:
@@ -68,7 +194,7 @@ at image-build time.
 
 ---
 
-## 2. Nothing is release-blocking as of 2026-08-20
+## 2. Release-blocking status, as measured 2026-08-20
 
 The 08-18 roadmap led with "the scoreboard fix is written, tested, and not deployed" as the
 one thing a visitor experienced as the site being broken. **All three faults are fixed and
@@ -81,7 +207,7 @@ deployed.** Re-measured against the live prod API today, not inferred from relea
 | `/api/mlb/schedule-dates` | `source=unavailable, available=false` | `source=local, available=true`, `future_event_starts` populated |
 
 **A second production fault in the same area was found and closed on 2026-08-19: SQLite lock
-contention.** `legendarypicks-props-prod` exited 3 with "2 of 14 mlb games failed to POST"
+contention.** The former `legendarypicks-props-prod` unit exited 3 with "2 of 14 mlb games failed to POST"
 every 30 minutes, because `sqlite3.OperationalError: database is locked` came back out of the
 API as an HTTP 500.
 
@@ -99,7 +225,8 @@ write; WAL and the 30s busy timeout are confirmed present in the running contain
 quiet evening slate.
 
 - [ ] **Watch a full daytime slate before calling the contention fix closed.**
-      `journalctl -u legendarypicks-props-prod.service | grep "failed to POST"`. If any run
+      `journalctl -u legendarypicks-props-prod.service | grep "failed to POST"`. This name now
+      refers to the registry runner's production unit. If any run
       exits 3, the busy timeout needs to reach past the two helpers changed so far
       (`_core._db`, `scoreboard_store._db`); 174 other `sqlite3.connect(` sites pass no
       timeout at all.
@@ -113,10 +240,18 @@ quiet evening slate.
 - [ ] **Week-grouped navigation for NFL and NCAAF.** A drafter and a viewer both move through
       these sports by week, not by date.
       **Reuse, do not rebuild:** `docs/API-nfl-schedule-weeks-v1.md` already serves ESPN's own
-      week calendar and is live on `pages/leagues/[league].tsx`.
+      week calendar and is live on `pages/leagues/[league].tsx`. **Candidate 2026-08-24:**
+      the shared week UI now covers both leagues. NCAAF uses ESPN's published week boundaries,
+      not the capped `week=` response: Week 1 returned 99 verified games by range versus 25 by
+      direct week query, and ESPN's postseason `CFP` key `3:999` is preserved. Unchecked until
+      browser/release gates pass and it ships.
 - [ ] **Confirm NCAAF has anything to show on opening weekend.** NCAAF has **zero props** on
-      both databases (measured 08-16, unchanged). A league that opens with an empty board is
-      worse than a hidden one.
+      both databases (remeasured on the copied production DB 2026-08-24). ESPN currently
+      publishes eight games for August 29, including UNC-TCU, San Jose State-USC, and
+      NC State-Virginia; all eight were captured into the candidate DB. The runtime props
+      navigation consequently withholds NCAAF because it has no stored props, while the league
+      hub has a real Week 1 schedule. A league that opens with an empty props board is worse
+      than a hidden one.
 
 **The gate that was blocking this is now answered and should be removed.** The 08-18 roadmap
 said "do not spec the remainder until the request-budget question is answered". It was
@@ -137,11 +272,13 @@ something specific.
 
 ### The list
 
-- [ ] **Render `PK` as `K`.** Storage is right; four files leak the publisher's code into the
-      filter chips: `useNflDraftBoard.ts:10`, `NflDraftRoom.tsx:93`,
-      `PlayerDetailOverlay.tsx:78`, `MockDraft/columns.tsx:43`.
 - [ ] **Give the draft board its own route.** It is reachable only as a tab named `camp`
-      inside the league hub. A drafter cannot link a friend to it.
+      inside the league hub. A drafter cannot link a friend to it. **Candidate 2026-08-24:**
+      `/draft-board` is a stable standalone destination, wired through the exact same
+      `NflDraftBoardSurface` hook/component owner as the embedded NFL hub board. The hub links
+      to the full board, and the full board links back to NFL and into `/mock-draft`; notes,
+      filters, search, pagination and player overlays therefore cannot drift by route.
+      Unchecked until browser/release gates pass and it ships.
 - [ ] **Decide what a drafter still cannot answer on the board.** The one piece of genuine
       product thinking left in the window, and it needs the user, not us. The board has eight
       sort dimensions; nobody has asked her which question it fails to answer.
@@ -186,22 +323,97 @@ or different than recorded:**
 
 - [ ] **NFL props settle zero.** 1,080 on prod, 1,082 on dev, all from the 2026-08-19 RotoWire
       relay, none graded. New since the last roadmap and the largest unsettled block outside
-      tennis. **The props exist and look healthy on the board.**
+      tennis. **The props exist and look healthy on the board. Copied-candidate proof
+      2026-08-24:** the refreshed copy holds 1,774 NFL props, but 1,694 belong to Sept. 9-14
+      games that have not happened. Of the 80 props on 13 completed preseason games, the
+      case-insensitive ESPN stat-label repair plus `field_goals_made` mapping produced 76
+      numeric outcomes, zero errors, and zero unmappable markets. Four receiving-yard props
+      remain pending because Jack Bech and Chris Godwin have no published stat line. Future
+      props received zero result rows. Candidate DB only; production and managed dev are
+      unchanged.**
 - [ ] **Link tennis `prop_games`.** 274 of 325 prod ATP/WTA rows have no `espn_event_id` (16%
       linked); dev is 132 of 299. The matcher and budget guards already landed (`b8886e9`);
       this needs a run, not a build. Note `reference_espn_folds_tennis_names`: ESPN folds
-      accents in tennis names but not soccer ones.
-- [ ] **Settle tennis.** 0 of 913 on prod, 0 of 979 on dev.
+      accents in tennis names but not soccer ones. **Copied-candidate proof 2026-08-24:** after
+      candidate ingest, 301 of 356 rows were unlinked and 706 of 1,253 props could not reach a
+      game. The conservative two-player matcher linked 239 rows, folded duplicate slate rows
+      without losing a prop, and left 62 of 289 rows unlinked; reachable props rose from 547 to
+      945. Candidate DB only; production and managed dev are unchanged.
+- [ ] **Settle tennis.** 0 of 913 on prod, 0 of 979 on dev. **Copied-candidate proof
+      2026-08-24:** DB-first settlement from durable completed set-score snapshots produced 658
+      numeric outcomes (ATP 386, WTA 272), zero void placeholders, and zero errors. It correctly
+      left 38 props pending on one walkover and one suspended match; another 249 linked props
+      lack a durable final snapshot and 308 remain behind unlinked games. Candidate DB only;
+      production and managed dev are unchanged.
 - [ ] **Grade or void the World Cup rows honestly.** 392 prod and 1,128 dev `prop_results`
       rows have `actual_value` NULL **and** `hit` NULL. A settled count that grades nothing is
-      presence, not integrity.
+      presence, not integrity. **Copied-candidate proof 2026-08-24:** all 392 rows belong to
+      two completed matches. Durable ESPN player logs provide unique numeric evidence for
+      267 (goals, assists, shots, and shots on target); the official final rosters mark all
+      remaining 14 players as zero appearances/zero substitutions, accounting for the other
+      125 rows as DNP voids. The guarded repair produced 267 numeric outcomes, retained 125
+      voids, left zero unexplained rows, and was idempotent. The game API now distinguishes
+      graded results, pushes, voids, and pending props instead of rendering every NULL verdict
+      as pending. Candidate DB only; production and managed dev are unchanged.
 - [ ] **Get UFC settlement onto dev.** Until then a green dev suite says nothing about UFC.
+      **Copied-candidate proof 2026-08-24:** the refreshed copy holds 198 UFC props and now
+      has 139 numeric outcomes after a bounded four-game run added three. Of the remainder,
+      52 belong to the Aug. 29 card, six belong to an unlinked fight absent from ESPN, and
+      one Aleksandr Rakić decision prop remains pending because the durable fight log contains
+      only Marcin Tybura's side. Zero errors and zero unmappable markets. Candidate DB only;
+      managed dev was not run or changed.
 - [ ] **`team_game_stats` holds 16 MLB rows.** Find out whether that is a stalled ingest or a
-      table nothing writes any more.
-- [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories 0 vs 30,
+      table nothing writes any more. **Copied-candidate diagnosis 2026-08-24:** these are
+      obsolete residue, not a stalled MLB source. All 16 were written in one four-second
+      burst on June 9; every typed stat, JSON blob, run id, and source is empty. The public
+      team-stats route rejects MLB, MLB aggregates deliberately use `team_game_results`, and
+      current snapshot/backfill writers do not target MLB. A fail-closed cleanup removed the
+      16 empty rows on the copy and deleted zero on rerun; it refuses the whole operation if
+      any MLB row carries data or provenance. Production and managed dev are unchanged.
+- [ ] **Promote MLS to prod parity:** game logs **10,603 prod vs 21,177 dev**, stories **0 prod
+      vs 45 dev** (30 at the original measurement),
       leaders stuck on 2025 while standings serve 2026. All data jobs, none needs a deploy.
+      **Copied-candidate progress 2026-08-24:** a local rollup published 697 current-season
+      leaderboard rows from the copied ESPN logs, so the candidate API now defaults to 2026,
+      offers `[2026, 2025]`, and all 697 leaders reach a same-season game log. One paced,
+      low-priority 80-summary catch-up chunk added 1,497 logs across 49 completed May games
+      (10,603 -> 12,100 total; 2026 now 6,013 logs across 196 games), then hit ESPN's explicit
+      request wall and stopped at its declared budget. A dry-run-first story promotion then
+      copied all 45 DEV MLS stories into the candidate by stable `(league, game_id)` key;
+      source and candidate field hashes match and a rerun planned zero writes. Held log
+      coverage still ends Aug. 8 and production stories remain zero, so promotion remains
+      open. The run also exposed two diagnostics
+      bugs: Core type `1` and summary type `13846` both name the MLS regular season and must
+      be compared semantically (now regression-tested), and a player-name variable must not
+      overwrite the phase label. Production and managed dev are unchanged.
 - [ ] **MLS and NCAAF scoring plays: zero on both.** Confirm the publisher has them before
-      recording it as a gap (`feedback_we_systematically_underread_publishers`).
+      recording it as a gap (`feedback_we_systematically_underread_publishers`). **Confirmed
+      and copied-candidate proof 2026-08-24:** the publisher has them in two league-specific
+      collections the existing parser never read. A completed NCAAF summary publishes seven
+      entries under `scoringPlays`; a completed MLS summary publishes four goals under
+      `keyEvents`; both expose an empty `plays` array. The parser now reads the published
+      collection, maps team identity without prose guessing, reconstructs soccer's running
+      score from explicit home/away team ids, and records the first participant as scorer.
+      A game-id-required backfill advertises its exact request count and is dry-run by default.
+      The copy wrote 7 NCAAF + 4 MLS proof rows and wrote zero on rerun. Production and managed
+      dev are unchanged; full historical backfill remains a separate bounded data operation.
+
+- [ ] **Prop CHART coverage, measured 2026-08-26 through the endpoint's own map and log
+      union (not SQL, which answers a different question).** Chart rate by board, as
+      player/market combos: `wc` 90.7%, `mls` 86.0%, `lcup` 83.1%, `mlb` 72.8%, and then a
+      cliff:
+      - [ ] **ATP 0% (294 combos) and WTA 0% (232 combos).** Every tennis market is mapped to
+            `None` or absent from `_MARKET_STAT_KEY`, so nothing charts by construction. Note
+            tennis *settlement* now exists on `feat/sport-first-navigation`, so results are
+            arriving while history stays empty. The chart map was never extended.
+      - [ ] **UFC 6.1% (440 combos, 27 chart).** Mostly method-of-victory, which is
+            categorical and deliberately not charted -- the board renders FightForm instead.
+            **Confirm that before treating it as a defect**; the number is only a gap if the
+            markets under it are numeric ones.
+      NFL was 0% here too and is fixed: the map named eight keys the logs do not hold
+      (`receiving_yards` vs the stored `rec_yds`), so 0 of 488 combos charted against 24,996
+      log rows. Now 69.3%. The remaining NFL 126 not-chartable are led by `field_goals_made`,
+      left unmapped on purpose because `nflverse_weekly` publishes no kicking fields.
 
 **Not a defect, recorded so it is not "found" again:** grouping `props` by
 `(game_id, player_id, market, line, side)` reports 240 duplicate groups on prod and 1,085 on
@@ -242,23 +454,39 @@ Spec: `docs/SPEC-featured-events-scoreboard.md`. Reuse `docs/API-nfl-schedule-we
 detailed enough to act on: every cell is a single count, and a count cannot say what it is OF.
 Each item below is a question the matrix cannot currently answer.
 
-- [ ] **Split the log surfaces:** game logs, player game logs, player stats, team stats are four
-      different products rendered as one line today.
-- [ ] **What YEARS are available**, per league per surface. Report the **set**, not a min-max
+- [x] **Split the log surfaces:** DONE 2026-08-24. The derived matrix now names and counts
+      `player_game_logs`, `player_stats`, `team_game_results`, and `team_game_stats` as four
+      distinct products instead of hiding their table identity behind “game logs”, “season
+      stats”, and “game detail”. League discovery also reads every matrix table, so a league
+      represented on only one of these surfaces is not silently omitted.
+- [x] **What YEARS are available**, per league per surface. DONE 2026-08-24. Report the **set**, not a min-max
       range: the interesting case is a GAP, and a range hides it. Live example, not
       hypothetical: prod MLS standings serve 2026 while `/api/mls/leaders` offers
-      `available_seasons: [2025]`.
-- [ ] **What PROPS exist per league**, meaning distinct `props.market` values and counts. A book
+      `available_seasons: [2025]`. The candidate matrix now derives explicit season sets on
+      every run and reports unassigned rows separately. It makes the remaining MLS split
+      visible: player logs/stats `{2025, 2026}` versus team results/stats `{2025}`. Because
+      `team_game_stats` has no season column, its years come only from a same-game
+      `team_game_results` join; unmatched rows stay marked `+N?` rather than inheriting a
+      calendar year from `captured_at`.
+- [x] **What PROPS exist per league**, meaning distinct `props.market` values and counts. DONE
+      2026-08-24: the matrix derives every source/market count; the default prints distinct
+      market totals and `--props-detail` prints every stored value (kept opt-in because the
+      copied MLB inventory alone has 1,435 distinct strings). A book
       pricing a market our grader cannot map produces props that land, look healthy and never
       grade. **NFL's 1,080 unsettled props are that shape.**
-- [ ] **WHERE the props come from.** `props.source` per league. We ingest from Bovada, Underdog,
-      RotoWire and PrizePicks and render them as one number.
-- [ ] **Are they RESOLVED**, split by source and by market. Key settlement on
+- [x] **WHERE the props come from.** DONE 2026-08-24. `props.source` is now a first-class
+      grouping per league (including an explicit `(blank)` bucket), rather than Bovada,
+      Underdog, RotoWire, and PrizePicks rendering as one number.
+- [x] **Are they RESOLVED**, split by source and by market. DONE 2026-08-24. Key settlement on
       `actual_value IS NOT NULL`, **never `settled_at`**: settlement stamps a timestamp on props
       it could not map, so the timestamp records that something RAN, not that anything landed.
-- [ ] **Are settled props REACHABLE.** One explicit ratio per league: of the props settled, how
+      Copied MLS evidence now separates Bovada `718 graded / 2,207 total` from RotoWire
+      PrizePicks `0 / 478`, instead of hiding the latter behind the former.
+- [x] **Are settled props REACHABLE.** DONE 2026-08-24. One explicit count per source and
+      market now says: of the props graded, how
       many hang off a `prop_games` row with an `espn_event_id`. Everything else is data we hold
-      and nobody can see.
+      and nobody can see. The query uses `EXISTS` so a malformed duplicate result row cannot
+      inflate either the graded or reachable count.
 
 Everything above must be **derived on the run**. Anything needing an ESPN request stays
 `UNPROBED` rather than rendering as a zero, because a hand-maintained matrix is a claim that
@@ -268,38 +496,90 @@ outlives its code.
 
 ## 8. Measurement debt: checks that stay green by not being asked
 
-- [ ] **`atp`, `wta`, `wnba` have no MANIFEST entry** (`audit_league_stats/cli.py:22`). The audit
-      only fails a missing entry for a league that serves `player_stats`, and these three serve
-      zero, so it stays green by never asking. WNBA does not exist in either database.
-- [ ] **`DURING / live state` is UNPROBED for every league.**
-- [ ] **`league_feature_matrix.py`'s docstring is stale:** it cites NCAAF as the example of a
-      league hidden on prod, and NCAAF is OFFERED on both.
-- [ ] **Dev's migration ledger is unreliable.** `legacy_merge_nba_identities` reports
-      `unknown: registry row missing` on dev though dev's data is clean. A ledger that cannot
-      answer "did this run" is not a ledger.
-- [ ] **`docs/BACKLOG-holes.md` is dated 08-18** and its P0 list still leads with items this file
-      has since falsified. Regenerate from the matrix or delete the P0 section rather than leave
-      two documents contradicting each other.
-- [ ] `B/position-content` for **mlb** and **nba**: what must a catcher's or a guard's log record?
-- [ ] `DATA-COVERAGE-CONTRACT.md` §7 rewrite: what each of the 8 checks needs from a new league.
-- [ ] `ufc` / `wc` UNVERIFIED x6, likely "no leaderboard surface to serve" rather than a missing
-      fetcher. Confirm which.
+- [x] **`atp`, `wta`, `wnba` have no MANIFEST entry.** DONE 2026-08-24. All three are now
+      explicit audit subjects with `stat_types: {}`: ATP/WTA currently expose draws, matches,
+      and props but no season-totals leaderboard, while WNBA has no offered product or copied-DB
+      population. The copied audit now emits four concrete results for each league instead of
+      staying green by never asking; ATP/WTA pass the held ESPN-id spine check and all three
+      remain honestly UNVERIFIED for undeclared position content, leaderboard reachability,
+      and published identity evidence.
+- [x] **`DURING / live state` is UNPROBED for every league.** DONE 2026-08-24. The matrix
+      now derives current stored evidence from `scoreboard_snapshots`, reporting live/total
+      rows with the latest `fetched_at` timestamp; a league with no rows says `NO SNAPSHOT`
+      rather than `0`, and a missing table says `n/a`. Copied evidence currently includes
+      MLB 4 live rows, ATP 3, and WTA 2, each with period/clock or set detail in the stored
+      payload. This measures durable backend evidence, not rendered pixels or current ESPN
+      freshness; standings and scoreboard freshness remain explicitly UNPROBED.
+- [x] **`league_feature_matrix.py`'s docstring is stale.** DONE 2026-08-24. It no longer cites
+      offered NCAAF as hidden; the current copied-DB example is ATP/WTA, whose identity and
+      prop rows are populated while the registry still marks both leagues HIDDEN.
+- [x] **Dev's migration ledger is unreliable.** DONE 2026-08-24. The NBA adoption probe no
+      longer asks for a numbered repair row that correctly never existed on already-clean DEV.
+      It now measures the migration's durable state: zero ESPN/legacy split pairs and zero
+      duplicate NBA ESPN ids; either defect keeps the result `unknown`. Current managed DEV
+      passes that read-only probe. On a fresh managed-DEV database copy, `apply_legacy`
+      changed `legacy_merge_nba_identities` from `unknown: registry row missing` to `applied`;
+      three other touched rows refreshed checksums only, with no other status change, and the
+      clone retained `PRAGMA quick_check=ok`. Managed DEV itself was not written.
+- [x] **Refresh `docs/BACKLOG-holes.md` P0.** DONE 2026-08-24. The five production-facing
+      rows were remeasured from current prod and managed-DEV databases using the matrix's
+      source/market/graded/reachable contract with zero ESPN requests. Candidate repairs are
+      identified as candidate evidence, not used to close managed defects: prod still has
+      746 unreachable tennis props, zero graded tennis/World Cup/NFL props, and 138/214 UFC
+      graded while managed DEV remains 0/663.
+- [x] `B/position-content` for **MLB and NBA.** DONE 2026-08-24. The manifest declares
+      publisher-shaped classes rather than inventing position-specific stats: every MLB
+      batter position (including catcher) requires `PA/H/R/RBI/HR`, pitchers require
+      `batters_faced/hits_allowed/outs`, and every NBA position (including guards) requires
+      `PTS/REB/AST/MIN/FGM`. Copied-DB audit: all 20 position checks pass, normally at 100%;
+      the lowest observation is MLB TWP batting fields at 126/129 (98%) and NBA PG minutes
+      at 76/77 (99%), both above the declared 80% floor. The complete MLB/NBA audit is
+      37/37 PASS.
+- [x] `DATA-COVERAGE-CONTRACT.md` §7 rewrite. DONE 2026-08-24. It now matches the executable
+      eight-check contract: three universal MANIFEST keys, conditional injury coverage,
+      spine IDs outside MANIFEST, per-check evidence requirements, and the exact distinction
+      between UNVERIFIED and checks that emit no row for an undeclared surface. Package paths
+      and the ATP/WTA/WNBA/UFC/World Cup examples are current.
+- [x] `ufc` / `wc` UNVERIFIED classification. DONE 2026-08-24. The old “x6” count is stale:
+      the copied audit now gives each league three PASS results (game-log content, identity
+      crosswalk, published identity) and exactly one UNVERIFIED result. That remaining D check
+      is intentional absence, not a missing fetcher: neither league is in
+      `LEADERBOARD_LEAGUES`; UFC serves rankings and World Cup serves standings/historical
+      match logs, while both explicitly declare `stat_types: {}`.
 
 ---
 
 ## 9. In flight
 
-- [ ] **Tournament games under their own league key.** Leagues Cup (`concacaf.leagues.cup`), CCC
-      and Campeones Cup are separate ESPN slugs, so their logs must not inflate MLS
-      regular-season denominators. **Props half shipped** (`a77ecb1`); **logs and denominators
-      half is open.**
+- [x] **Tournament games under their own league key — Leagues Cup half. Re-measured
+      2026-08-31.** `player_game_logs` cleanly separates the two: `league='lcup'` holds 1,640
+      REG rows (dev) / 1,169 REG + 63 POST (prod), zero of them under `league='mls'`.
+      `ingest_mls_season_stats.py` scopes its regular-season query to `league='mls'`
+      explicitly, so Leagues Cup appearances cannot inflate that denominator. **Props half
+      shipped** (`a77ecb1`, 2026-08-18); **logs half also closed**, landed with this week's
+      Leagues Cup props work (2026-08-25) without a matching roadmap update.
+      - [ ] **CCC and Campeones Cup remain genuinely open, not just undocumented.**
+            `backend/espn_leagues.py` has no registry entry for either — they are not ingested
+            under any key today. No denominator-inflation risk (nothing to leak in), but also
+            no coverage. Follows the same `lcup` pattern once someone picks it up: new
+            `ESPN_LEAGUES` entry, `--league` value, roster-spine mapping in
+            `ROSTER_LEAGUES` (`ingest_soccer_logs.py`).
 - [ ] **Player identity, steps 2 to 4** (`docs/TASK-next-release-player-identity.md`). Step 1
-      done: `UNIQUE(espn_id, league)` on both DBs, 0 duplicate groups. Remaining: populate
-      `player_source_ids` (10 rows today, all underdog/ufc, while Bovada and RotoWire still
-      resolve by name), re-run promotion, reconcile diverged ids.
+      done: `UNIQUE(espn_id, league)` on both DBs, 0 duplicate groups. **Re-measured
+      2026-08-31: `player_source_ids` moved from 10 rows to 1,395 on dev** (1,283 rotowire,
+      22 ufcstats, 90 underdog) / 1,062 on prod (978/22/62) — RotoWire now resolves by source
+      id as a side effect of this week's props backfills. **Bovada still resolves by name**:
+      no `bovada` rows in `player_source_ids`, and no Bovada ingest module writes to that
+      table. Remaining: Bovada source-id population, re-run promotion, reconcile diverged
+      ids — none of those three verified this pass.
       `feedback_ambiguous_key_never_raises` is why this matters.
 - [ ] **Player detail: year and league selectors**, keyed off `position_group` so a keeper surface
-      shows saves, not shots.
+      shows saves, not shots. **Candidate complete 2026-08-24; not promoted.** The profile API
+      now publishes and fail-closed selects distinct `(league, season)` log contexts, while the
+      page keeps those choices in the URL. Copied-DB proof covers MLS 2025/2026; 2026 keeper
+      rows render saves/shots faced/goals allowed, and 2025 honestly reports that the stored
+      appearances lack keeper stats instead of falling back to shots. Synthetic contract proof
+      covers one durable MLS identity switching to a Leagues Cup log context.
 - [ ] **Backend directory contract** (`docs/BACKEND-DATA-AUDIT-2026-08-18.md`). Proposed split is
       app data / seeds / cache / state / logs. The physical move is the open work.
 
@@ -307,13 +587,173 @@ outlives its code.
 
 ## 10. Queued, named by the user, not started
 
+- [ ] **Preserved deferred WNBA and retired MLS-props work.** The former `stash@{1}` WNBA
+      enablement for the scoreboard sweep and predictions `_SPORTS` is preserved at
+      `preserve/stash-wnba-sport-first-20260826` (`bf0a8e8b`) and the verified stash entry
+      was retired 2026-09-02. It is not wanted now: dev's
+      `test_wnba_is_not_an_offered_prediction_league` explicitly expects a 404, so the
+      unique work was deliberately reversed. The retired MLS/NCAAF worktree's MLS-props
+      artifacts remain at `preserve/mls-ncaaf-worktree-20260902` for later review.
+- [x] **Un-park and replace the Bovada-only props timers.** DONE 2026-08-24. They were never deliberately
+      parked: the former `legendarypicks-props{,-prod}.timer` pair used `OnBootSec=3min` +
+      `OnUnitActiveSec=30min` and sat in `SubState=elapsed` with no next elapse from
+      2026-08-21 11:08, while reporting `enabled` and `active` the whole time. A monotonic
+      timer whose reference activation systemd has forgotten has nothing left to schedule.
+      The replacement registry-runner timers are `OnCalendar`, staggered 15 minutes, and use
+      one in-process host lock per publisher. It also exposed a real defect: Bovada files NBA team totals inside a display
+      group called "Score Props", and "Highest Scoring Quarter Total Points O/U - Boston
+      Celtics" splits on " - " exactly like a player market, so the club landed in
+      `player_name`. All 120 NBA outcomes were rejected by the resolver, `resolved 0 of 120`
+      raised exit 3, and the exit took the whole unit down -- on a day Bovada published no NBA
+      player props at all. Team markets are now dropped at the parser and counted in the run
+      report. Bovada currently publishes NBA game/team markets only.
 - [ ] **Bovada and Kalshi live games**, plus a game detail from each.
 - [ ] **Daily RotoWire props dump.** Save everything that endpoint gives us to a directory once a
       day, in case we expand to those leagues.
-- [ ] **Schedule the RotoWire relay ingest.** Built 2026-08-19
-      (`backend/ingest_rotowire_props.py`), live on both databases, **nothing schedules it** and
-      the cadence is an open decision. Still uncovered by it: NCAAF (opens Aug 29), WNBA (0 of
-      17, in season), NBA, NHL.
+- [x] **Schedule the RotoWire relay ingest.** DONE 2026-08-24, shipped in v0.8.7. NFL and MLS
+      now run through `run_props_ingest.py` on both databases; its DB-backed cadence is
+      matched to the existing probe so no new request rate hits the publisher. Coverage went
+      from 5 days stale to same-day; NFL had no other source at all since Bovada publishes
+      none. The temporary per-provider units were retired into the provider runner
+      (`/root/TASK-props-provider-runner.md`). Still uncovered by the relay: NCAAF (opens
+      Aug 29), WNBA (0 of 17, in season), NBA, NHL.
+- [ ] **Audit the RotoWire props we store and never use.** Named by Micah 2026-08-24, and the
+      numbers are worse than "unused": **0.0% of RotoWire props are graded, in both databases**,
+      against Bovada's 78.7%. Prod holds 2,034 RotoWire rows and 0 `prop_results`. Three
+      distinct causes, measured, and they need separating before anything is deleted:
+      (1) **894 of 2,034 sit on markets `settlement.market_mapping.resolve_market()` cannot
+      resolve at all.** Every MLS market is in this bucket -- all 478 rows across
+      `passes_attempted`, `saves`, `shots`, `chances_created`, `clearances`, `crosses`,
+      `shots_on_target` -- plus NFL `interceptions_thrown` (102), `kicking_points` (82),
+      `field_goals_made` (64), `total_touchdowns` (46), `passing_touchdowns` (34),
+      `rushing_receiving_touchdowns` (32), `passing_rushing_yards` (30),
+      `rushing_receiving_yards` (14), `extra_points_made` (12). These are exactly the depth
+      markets RotoWire was brought in FOR, so an unmappable market is a market we paid to
+      collect and cannot settle.
+      (2) **10 of 25 RotoWire MLS fixtures carry an empty-string `espn_event_id`**, not NULL,
+      so `settle_game()` returns `no espn_event_id, cannot pull boxscore` and every prop on
+      them is unsettleable regardless of mapping. Note the shape: a coalesce-blind `IS NULL`
+      count reports 0 missing on these rows. Count with `coalesce(espn_event_id,'')=''`.
+      (3) The remaining 1,140 ARE mappable and simply have not been settled, because nothing
+      schedules settlement over RotoWire-sourced games.
+      Separately, on the collection side: the daily archive stores **the entire relay**, 3,191
+      props on 2026-08-24, of which we ingest ~9%. Unused every day: MLB Game 1050, WNBA Game
+      298, CFB Game 286, CS2 Game 205, NFL Season 743, NHL Season 81, CFB Season 59, MLB
+      Season 42, NBA Season 18, Valorant 3. That is cheap to keep (3.7 MB total, ~600 KB/day)
+      and deliberate per the dump item above, but it has **no retention policy**, and the
+      NFL Season bucket is 743 props a day we discard at ingest for having no fixture -- those
+      are season-long futures and want their own table rather than a daily drop.
+      Also still dropped at ingest for want of a mapping entry, counted every run: NFL
+      `Targets`, `Fantasy Score`, `Rushing Touchdowns`; MLS `Passes`, `Tackles`,
+      `Fouls Committed`.
+
+- [ ] **Props should leave the board at kickoff.** Named by Micah 2026-08-24: a prop stops
+      being offerable once its game starts, *unless* the game has not actually started yet or
+      is cancelled, in which case it stays. So the rule keys on the game's real state, not on
+      the clock alone: `start_time` passed AND the game is not postponed/cancelled AND we have
+      evidence it began. We already store `prop_games.start_time` and final scores, and
+      `scoreboard_store` knows live state, so this is a serve-time filter plus a state source,
+      not a new ingest. Two traps to design around: (1) 17 of 30 MLS rows carried NO
+      `start_time` on 2026-08-19, so a missing start time must not silently expire a prop or
+      silently keep it; (2) doing this as a batch sweep re-introduces the
+      serve-path-enforcing-a-batch-budget shape. Efficient version is an indexed predicate on
+      the existing serve query, not a job that walks the table.
+- [ ] **Sport-first navigation on `/props` and `/leagues`** (`docs/DESIGN-sport-first-navigation.md`).
+      Named by Micah 2026-08-24. The top-level entity becomes the SPORT; a competition row
+      appears underneath only where we cover more than one competition in that sport. The
+      trigger was Leagues Cup being unreachable on `/props`, which shows league chips, but
+      adding an `lcup` chip returns the same question for Campeones Cup, CCC and every
+      tournament after them.
+      The measured argument is stronger than the aesthetic one: **RotoWire publishes soccer as
+      ONE bucket.** In the 2026-08-24 relay archive the sport key is the literal string
+      `Soccer`, there is no competition field on the market, the props carry no `eventID`, and
+      the 113 soccer props were Chelsea/Fulham (EPL), Bologna/Fiorentina/Lazio/Roma (Serie A),
+      Levante/Osasuna/Real Madrid/Real Sociedad (La Liga) and Deportivo/Málaga (Segunda).
+      **Zero MLS**, and Underdog publishes none either (`reference_underdog_no_mls`). So a
+      soccer tab whose contents are the two buttons `MLS` and `Leagues Cup` would have shown
+      two competitions with no props that day and hidden four that had them.
+      Decisions already made, so they are not re-argued: **football keeps NFL and NCAAF as two
+      top-level chips** (a chip between a drafter and the NFL is a cost, not a tidy-up);
+      **UFC stays UFC** until a second promotion is carried; storage keys (`atp`, `wta`,
+      `mls`, `lcup`) do not change, this is the top of the page only. Derive the sport from
+      the ESPN path in the complete `backend/espn_client/config.py` registry rather than a
+      hand-kept slug map.
+- [ ] **Consolidate ATP and WTA into one Tennis surface.** Falls out of the item above:
+      `pages/props.tsx:36` offers `atp` and `wta` as separate chips, so a visitor who wants
+      tennis must know to click two, which is the PrizePicks `EPL`-next-to-`Soccer` defect at
+      small scale. Consolidating on `/props` forces a Tennis entry on `/leagues`, and there is
+      no tennis hub today. Scope it to what tennis HAS: scores (`atp`/`wta` are in
+      `BOARD_LEAGUES` and ingest per-day), props (`_parse_tennis_props`), and news. Game logs
+      and season stats are declared not-applicable for both tours in
+      `backend/league_feature_matrix.py:61`, which is why every tennis market in
+      `core_markets.py:53` charts as `None`. A Draws tab for the current major is the one new
+      build. **Measured 2026-08-24:** ESPN's existing tennis scoreboard response publishes
+      the complete singles grouping as `groupings[].competitions[]`, including tournament id,
+      round id/name, competitors, future TBD slots, and an official bracket link. The isolated
+      candidate now validates and stores that whole draw from the already-fetched response,
+      serves it DB-first at `/api/tennis/draws`, and adds `/leagues/tennis` with Scores,
+      Draws, and News plus a Both/ATP/WTA toggle. This remains unchecked until the candidate
+      passes the browser/release gates and is actually shipped. We cover majors, not the tour; Challengers, 250s and
+      500s are not ingested and the hub says so on screen rather than looking like a tour page
+      with holes in it.
+- [ ] **A new league or promotion is only worth adding if we can get its props.** Named by
+      Micah 2026-08-24 and recorded as a gate rather than re-argued per case. Props are the
+      product, so a second MMA promotion (which is what would rename UFC to MMA), a second
+      basketball league, or another soccer competition each has to clear this before it earns
+      a chip. NCAAF is the standing counter-example already on this board: it opens 08-29 with
+      **zero props on both databases**.
+- [ ] **Ingest esports props from the RotoWire relay.** Named by Micah 2026-08-24, and the
+      relay already carries them. Measured in the 2026-08-24 archive: **CS2 205 props** quoted
+      by sleeper (158), underdog (149) and prizepicks (139), plus **Valorant 3** (prizepicks
+      only). Markets are `Map 1 Kills`, `Map 1 Headshots`, `Maps 1+2 Kills`,
+      `Maps 1+2 Headshots`, `Maps 1+2+3 Kills`. No LoL, Dota or COD that day. We discard all
+      of it today, as the props-audit item above records.
+      **The catch is which CS2.** The 22 teams quoted were tier-2 and academy sides:
+      `Spirit Academy`, `CYBERSHOKE Prospects`, `ex-RUBY`, `Bushido Wildcats`,
+      `Chinggis Warriors`. Real props on real matches, not the tier a visitor means by "CS2".
+      Settlement needs an esports game spine these props can link to, which is the actual size
+      of this item.
+- [ ] **An option to hide esports props.** Named by Micah 2026-08-24. One account preference,
+      default on, that removes esports from the props board. Not a per-title matrix. The
+      reason is the uneven tier of the supply above, not the sport. **Do not build it before
+      the ingest**: an option that hides an empty board is untestable.
+
+- [ ] **ATP and WTA rankings on scoreboard cards** (`docs/DESIGN-sport-first-navigation.md`).
+      Named by Micah 2026-08-24. Two different values, and conflating them is what makes this
+      look like one item.
+      **The seed is already published and we discard it.** `competitors[].curatedRank.current`
+      rides on the tennis scoreboard payload we already fetch. Measured in `backend/.espn-cache`:
+      Winston-Salem men's singles 16 of 118 competitors carry it, values exactly 1..16, so it
+      is the tournament SEED and not a world ranking. `backend/espn_client/scoreboard.py:270`
+      builds the player dict as `{abbrev, name, score}` and drops the rest of the competitor,
+      including the seed AND the ESPN athlete id. Carrying both through is one change, costs
+      no requests, and the athlete id is the key every later tennis join needs.
+      **The world ranking is published too, and verified against both publishers.**
+      `sports.core.api.espn.com/v2/sports/tennis/leagues/{atp,wta}/rankings` returns an index
+      pointing at a week document with 150 ranks carrying `current`, `previous`, `points`,
+      `trend` and an athlete `$ref`. The id is in the ref URL, so it joins to the scoreboard
+      competitor with **no name matching and no per-athlete fan-out**: validated 38 of 56 at
+      Winston-Salem. Cost is 4 requests per week for both tours.
+      Verified rank for rank on points, since an unvalidated rank is worse than none:
+      **WTA vs `api.wtatennis.com`, ranks 1..100, 0 mismatches. ATP vs tennisexplorer.com,
+      ranks 1..50, 0 mismatches.**
+      Three traps measured and worth not re-deriving: (1) **150 is a hard cap**, `&limit=1000`
+      returns exactly 150; (2) **ESPN publishes ONE week, not a series** (weeks 33 and 35 both
+      404, and week 34 is flagged `occurrence.last: false`), so `captured_at` must be in the
+      primary key or we get no history at all; (3) do not key the table on the player name the
+      way `ufc_rankings` does, because ESPN folds tennis names and a surname collision misses
+      silently rather than raising.
+      Still unmeasured: **seed coverage on a real main draw.** The cached US Open payload is
+      the QUALIFYING draw, which is why it showed 0 seeds on 478 competitor slots and only 35
+      of 128 entrants inside the top 150. Re-measure once the main draw publishes, before
+      deciding whether a second ranking source is needed at all.
+      Dead ends, so nobody spends the requests again: every `atptour.com` host including
+      `app.atptour.com/api/v2/gateway` is Cloudflare-403 from this box, `api.atptour.com` does
+      not resolve at all, `api.sofascore.com` is walled, `live-tennis.eu` is 403, and
+      **Jeff Sackmann's `tennis_atp` and `tennis_wta` repos no longer exist** (that account now
+      holds one repo). `tennisexplorer.com` answers, and `ultimatetennisstatistics.com` answers
+      but is stale with no working date endpoint.
+
 - [ ] **Story generation deserves its own timer.** It rides on `ingest_scoreboards.py` only
       because that is where we now learn a game exists. Nothing ties it to the scoreboard.
       Related: story generation reaches `site.api.espn.com` through `stakes.py`, a host walled

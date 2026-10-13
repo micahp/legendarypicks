@@ -1,16 +1,38 @@
 [Unit]
-Description=League news collect + narratives + summaries (daily, dev DB)
+# Replaces legendarypicks-news{,-prod}: one script, two databases, two schedules
+# (03:35 dev / 04:20 prod). The duplication was per ENVIRONMENT.
+#
+# Deliberately NOT merged with legendarypicks-news-x. That job runs
+# `ingest_league_news.py --x-only` every two hours; this one adds narratives and
+# topic discovery and runs once a day. Folding them together would run the
+# expensive model work twelve times a day instead of once.
+Description=League news: collect + narratives + topics, DEV then PROD
 After=network-online.target
 Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
 
 [Service]
 Type=oneshot
 WorkingDirectory=/root/legendarypicks/backend
-Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
-ExecStart=/root/legendarypicks/scripts/news-collect.sh
-# Must exceed the sum of news-collect.sh's per-step budgets (600+420+300
-# = 1440). systemd is now the backstop, not the mechanism: the script
-# bounds each step itself so a hung collector loses only its own step.
-# At 900 the whole job died at the first hang and steps 2-3 never ran.
-TimeoutStartSec=1800
 Nice=10
+# One ExecStart, not two: systemd abandons the remaining ExecStart lines of a
+# oneshot once one exits non-zero, which would let a DEV failure silently cancel
+# PROD. This runs both regardless and fails the unit if EITHER failed. Same
+# reasoning as legendarypicks-props.service.
+#
+# news-collect.sh already does per-step accounting via news-lib.sh: every step
+# runs even after an earlier one fails, and the script exits 1 naming what broke.
+ExecStart=/bin/sh -c '\
+  rc=0; \
+  echo "=== DEV ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db \
+  LP_STEP_LABEL=DEV \
+  /root/legendarypicks/scripts/news-collect.sh || rc=$?; \
+  echo "=== PROD ==="; \
+  LP_DB_PATH=/root/legendarypicks/backend/data/picks.db \
+  LP_NEWS_LOG=/var/log/legendarypicks-news-prod.log \
+  LP_STEP_LABEL=PROD \
+  /root/legendarypicks/scripts/news-collect.sh || rc=$?; \
+  exit $rc'
+# Both environments at the old per-environment budget of 1800s, plus margin.
+TimeoutStartSec=3900

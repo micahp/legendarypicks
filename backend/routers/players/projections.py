@@ -49,7 +49,7 @@ def player_projections(player_id: int,
         q = f"SELECT stats FROM player_game_logs WHERE player_id=? {reg_filter}"
         if season is not None:
             q += " AND season=?"; params.append(season)
-        # most-recent-first; game_date is NULL for NFL (week-keyed) → fall back to week
+        # Most-recent-first; legacy undated rows still fall back to week.
         q += " ORDER BY COALESCE(game_date,'') DESC, CAST(game_no AS INTEGER) DESC"
         rows = con.execute(q, params).fetchall()
 

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface FightResult {
   result: 'W' | 'L' | 'D' | 'NC'
   method: string
+  round?: number | null
+  time?: string | null
   opponent: string
   date: string
   event_id: string
@@ -12,7 +14,6 @@ export interface FightResult {
 interface FightFormResponse {
   player_id: number
   fighter: string
-  espn_id?: string
   source: string
   fights: FightResult[]
 }
@@ -52,47 +53,53 @@ function resultTone(result: FightResult['result']): string {
   return 'border-zinc-700 bg-zinc-800/60 text-zinc-300'
 }
 
+function isFinish(method: string): boolean {
+  return ['KO/TKO', 'SUB', 'DQ'].includes(method.toUpperCase())
+}
+
 export default function FightForm({ playerId, fighter }: { playerId: number; fighter: string }) {
-  const [open, setOpen] = useState(false)
+  // Recent form is primary evidence for UFC props, not secondary detail. Show
+  // and fetch it on mount; the disclosure remains available to collapse a long
+  // card after the reader has seen it.
+  const [open, setOpen] = useState(true)
   const [data, setData] = useState<FightFormResponse | null>(() => formCache.get(playerId) || null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(() => !formCache.has(playerId))
   const [error, setError] = useState(false)
 
-  const toggle = async () => {
-    if (open) {
-      setOpen(false)
+  useEffect(() => {
+    const cached = formCache.get(playerId)
+    if (cached) {
+      setData(cached)
+      setLoading(false)
+      setError(false)
       return
     }
-    setOpen(true)
-    if (data) return
+    let active = true
     setLoading(true)
     setError(false)
-    try {
-      setData(await loadForm(playerId))
-    } catch {
-      setError(true)
-    } finally {
-      setLoading(false)
-    }
-  }
+    loadForm(playerId)
+      .then(result => { if (active) setData(result) })
+      .catch(() => { if (active) setError(true) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [playerId])
 
   return (
-    <div data-fight-form data-fight-form-state={open ? loading ? 'loading' : 'open' : 'closed'}>
+    <div data-fight-form data-fight-player-id={playerId} data-fight-form-state={open ? loading ? 'loading' : 'open' : 'closed'}>
       <button
         type="button"
-        onClick={() => void toggle()}
+        onClick={() => setOpen(current => !current)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900/60"
       >
         <span>
           <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-300">Last 5 fights</span>
-          <span className="mt-0.5 block text-[11px] text-zinc-600">ESPN form for {fighter}</span>
         </span>
         <span className="shrink-0 text-sm text-zinc-500" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>
 
       {open && (
-        <div className="border-t border-zinc-800 px-3 py-3 sm:px-4">
+        <div data-fight-form-content className="px-3 pb-3 sm:px-4">
           {loading ? (
             <div className="flex gap-2 overflow-hidden animate-pulse" aria-label="Loading recent fights">
               {[0, 1, 2, 3, 4].map(index => (
@@ -102,7 +109,7 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
           ) : error ? (
             <p className="text-xs text-zinc-500">Recent fight form could not be loaded.</p>
           ) : !data?.fights.length ? (
-            <p className="text-xs text-zinc-500">No completed UFC fights are available from ESPN.</p>
+            <p className="text-xs text-zinc-500">No completed UFC fights are available.</p>
           ) : (
             <ol className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`${fighter} recent fight form`}>
               {data.fights.map(fight => (
@@ -118,6 +125,11 @@ export default function FightForm({ playerId, fighter }: { playerId: number; fig
                   <div className="mt-2 truncate text-[11px] font-medium text-zinc-200" title={fight.opponent}>
                     {fight.opponent}
                   </div>
+                  {isFinish(fight.method) && fight.round && fight.time && (
+                    <div data-fight-finish-time className="mt-1 text-[10px] font-medium tabular-nums opacity-70">
+                      Round {fight.round} · {fight.time}
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>

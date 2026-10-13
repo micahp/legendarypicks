@@ -38,6 +38,9 @@ export interface GameDetail {
   period?: number | null
   clock?: string | null
   status_detail?: string | null
+  start_time?: string | null
+  season_type?: number | null
+  season_slug?: string | null
 }
 
 export type Tab = 'boxscore' | 'playbyplay' | 'props' | 'info' | 'booth'
@@ -111,12 +114,16 @@ export function isNBA(lg: string) { return lg === 'nba' }
 export function isNHL(lg: string) { return lg === 'nhl' }
 export function isMLB(lg: string) { return lg === 'mlb' }
 export function isNFL(lg: string) { return lg === 'nfl' }
+export function isNCAAF(lg: string) { return lg === 'ncaaf' }
 export function isWC(lg: string) { return lg === 'wc' }
-export function isSoccer(lg: string) { return isWC(lg) || lg === 'lcup' || lg === 'mls' }
-export function isUSTeamSport(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) }
-export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isSoccer(lg) }
+export function isSoccer(lg: string) { return isWC(lg) || lg === 'unl' || lg === 'friendlies' || lg === 'lcup' || lg === 'mls' || lg === 'ligamx' }
+export function isUSTeamSport(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isNCAAF(lg) }
+export function hasGameTabs(lg: string) { return isNBA(lg) || isNHL(lg) || isMLB(lg) || isNFL(lg) || isNCAAF(lg) || isSoccer(lg) }
 export function usesDetailEndpoint(lg: string) { return isNBA(lg) || isNHL(lg) }
-export function usesPerTabEndpoints(lg: string) { return isMLB(lg) || isNFL(lg) || isSoccer(lg) }
+// NCAAF's boxscore/playbyplay/gameinfo endpoints serve the identical shape NFL's do
+// (same ESPN American-football payload), so it reuses NFLBoxScore rather than a
+// separate component — verified 2026-08-30: both return {available, teams, players}.
+export function usesPerTabEndpoints(lg: string) { return isMLB(lg) || isNFL(lg) || isNCAAF(lg) || isSoccer(lg) }
 
 export function fmt(v: any, dec?: boolean): string {
   if (v === null || v === undefined) return '-'

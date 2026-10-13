@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily league-news collect — PROD
+
+[Timer]
+# 04:20, offset from dev's 03:35. Both runs hit the same ESPN hosts and the
+# limit there is a request COUNT per host, not a rate — overlapping them would
+# spend one budget twice for no benefit. Also gives dev's run time to surface a
+# failure before prod repeats it.
+OnCalendar=*-*-* 04:20:00
+Persistent=true
+Unit=legendarypicks-news-prod.service
+
+[Install]
+WantedBy=timers.target

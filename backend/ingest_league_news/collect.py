@@ -1,4 +1,9 @@
 """Social collection: X timelines (Nitter), Google News search, Bluesky search."""
+import collections
+import datetime as dt
+import json
+import os
+import pathlib
 import re
 import sys
 import urllib.parse
@@ -54,10 +59,28 @@ _BLUE_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
 # TIMELINES ONLY. Nitter's /search/rss returns an empty document — X's search
 # endpoint is closed to it — so keyword queries stay on Bluesky. That is fine:
 # we came here for these accounts' own posts, not for search.
+#
+# 2026-08-27, THE MIRROR LADDER WAS BURNING THE FLEET (see newsletter repo's
+# corpus/README.md for the full autopsy): every public mirror died the week of
+# Aug 24 — nitter.net 410 Gone, xcancel served a cease-and-desist from X Corp,
+# and tiekoetter began 429ing all account surfaces while its front page stayed
+# 200. The spend report attributed ~130 nitter requests/day to this repo
+# against 12/day from the newsletter: two timers/day x (3-mirror probe ladder
+# + 15 handles), all of it hammering hosts that rate-limit BY IP — which we
+# share with the Innovative Hype brief, the podcast corpus, and everything
+# else on this box.
+#
+# Rules since then, both measured not guessed:
+# - ONE attempt per host per run. The ladder below exists only so recovery is
+#   automatic the day something comes back; it must never be walked twice in
+#   one fire, and no caller may retry it inside a run.
+# - When every host fails, print it LOUDLY with the per-host status and stop.
+#   A silent empty return reads as "quiet day", which is exactly how the
+#   frozen-corpus incident went unnoticed for 2.4 days.
 NITTER_INSTANCES = [
-    "https://nitter.net",
-    "https://nitter.privacyredirect.com",
     "https://nitter.tiekoetter.com",
+    "https://nitter.net",
+    "https://xcancel.com",
 ]
 
 # (handle, league) — the league is the handle's OWN label, which beats guessing.
@@ -70,6 +93,112 @@ NITTER_INSTANCES = [
 # Posting rates over the 20-post window: UnderdogNFL 83/day, TheAthletic 23,
 # UnderdogMLB 22, Underdog 7, TheAthleticNFL 6, UnderdogNBA 4, BleacherReport 3.
 # @UnderdogNHL, @UnderdogCFB, @BR_NFL and @BR_NBA do not exist.
+# Where the residential machine leaves its scrape. One folder per pull date,
+# one JSONL per handle, rows of {id, date, text}. Written by the home PC and
+# pushed through git: nothing on this box listens, and a missing directory is a
+# normal state, not an error.
+X_DESKTOP_DROPS = pathlib.Path(
+    os.environ.get("LP_X_DESKTOP_DROPS",
+                   "/root/legendarypicks/data/x_desktop"))
+# Rows older than this are not news. The lane exists for "sat out practice" and
+# "not travelling", which are worthless by the weekend, so a stale drop must not
+# quietly refill the board with last week's availability.
+X_DESKTOP_MAX_AGE_H = float(os.environ.get("LP_X_DESKTOP_MAX_AGE_H", "72"))
+
+
+def _x_permalink(handle, tweet_id):
+    """The canonical post URL.
+
+    Better provenance than the mirror path this replaces: the drop carries the
+    tweet id, so we can name x.com itself. Nitter's RSS <link> pointed at
+    whichever mirror happened to answer, which is not a citable source and dies
+    with the mirror. This lane distinguishes receipts from chatter and these
+    are receipts.
+    """
+    return "https://x.com/%s/status/%s" % (handle, tweet_id)
+
+
+def collect_x_desktop():
+    """X posts from the residential drop, in the same shape as collect_x().
+
+    Returns [] when there is no drop at all, which is the normal state on a box
+    that has never received one. Every other outcome is counted and printed:
+    a drop that exists but yields nothing usable must not look like no drop.
+    """
+    if not X_DESKTOP_DROPS.exists():
+        return []
+    folders = sorted((d for d in X_DESKTOP_DROPS.iterdir() if d.is_dir()),
+                     reverse=True)
+    if not folders:
+        print("  x-desktop: %s exists but holds no drop folders" % X_DESKTOP_DROPS)
+        return []
+
+    known = {h.lower(): league for h, league in X_ACCOUNTS}
+    now = dt.datetime.now(dt.timezone.utc)
+    items, seen = [], set()
+    stats = collections.Counter()
+
+    # Newest folder first, and stop once every handle has been seen. Older
+    # folders are history, not news.
+    for folder in folders[:4]:
+        for path in sorted(folder.glob("*.jsonl")):
+            handle = path.stem
+            if handle.lower() not in known:
+                stats["unknown_handle_%s" % handle] += 1
+                continue
+            league = known[handle.lower()]
+            for line in path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except json.JSONDecodeError:
+                    stats["unparseable_line"] += 1
+                    continue
+                tid, text = r.get("id"), (r.get("text") or "").strip()
+                if not isinstance(tid, str) or not tid.isdigit():
+                    # Ids exceed 2^53; a number-typed id arrived corrupted.
+                    stats["bad_id"] += 1
+                    continue
+                if not text:
+                    stats["empty_text"] += 1
+                    continue
+                if tid in seen:
+                    continue
+                published = _iso(r.get("date") or "")
+                if not published:
+                    stats["undateable"] += 1
+                    continue
+                try:
+                    age_h = (now - dt.datetime.fromisoformat(
+                        published.replace("Z", "+00:00"))).total_seconds() / 3600.0
+                except ValueError:
+                    stats["undateable"] += 1
+                    continue
+                if age_h > X_DESKTOP_MAX_AGE_H:
+                    stats["too_old"] += 1
+                    continue
+                seen.add(tid)
+                items.append({
+                    "source": "x",
+                    "league_hint": league,
+                    "headline": "[@%s] %s" % (handle, text[:140]),
+                    "body": text,
+                    "url": _x_permalink(handle, tid),
+                    "published": published,
+                })
+
+    print("  x-desktop: %d usable post(s) from %s (newest folder %s)%s"
+          % (len(items), X_DESKTOP_DROPS, folders[0].name,
+             "" if not stats else
+             " | skipped: " + ", ".join("%s=%d" % kv for kv in sorted(stats.items()))))
+    if not items and stats:
+        print("  x-desktop: a drop EXISTS but produced nothing usable. That is a "
+              "defect in the drop, not a quiet day.")
+    return items
+
+
 X_ACCOUNTS = [
     ("UnderdogNFL", "nfl"),          # 83/day — the densest player-news feed we have
     ("UnderdogMLB", "mlb"),
@@ -117,19 +246,39 @@ _X_FETCHER = Fetcher(min_interval=1.5, retry_waits=(2,), cache_dir=CACHE_DIR,
                      cache_ttl=1800, host_budget=0)
 
 def collect_x():
-    """Timelines for X_ACCOUNTS through whichever Nitter mirror is alive."""
+    """Timelines for X_ACCOUNTS through whichever Nitter mirror is alive,
+    falling back to the residential desktop drop when none is."""
     items = []
     instance = None
+    probe_failures = []
+    # ONE attempt per host per run, first success wins. Every attempt is
+    # logged so a dead fleet is VISIBLE in the unit log, not inferred.
     for base in NITTER_INSTANCES:
+        url = "%s/%s/rss" % (base, X_ACCOUNTS[0][0])
         try:
-            _X_FETCHER.text("%s/%s/rss" % (base, X_ACCOUNTS[0][0]))
+            _X_FETCHER.text(url)
             instance = base
             break
-        except Exception:
+        except Exception as e:
+            status = getattr(e, "code", None)
+            probe_failures.append("%s:%s" % (base.replace("https://", ""),
+                                             status or repr(e)[:60]))
             continue
     if instance is None:
-        print("  x: no working nitter mirror (tried %d)" % len(NITTER_INSTANCES))
-        return []
+        # LOUD skip. Empty output == "quiet day" was the bug class that froze
+        # the newsletter corpus for 2.4 days; refuse to look like it.
+        print("  x: NO WORKING NITTER MIRROR after %d single attempts (%s)" %
+              (len(NITTER_INSTANCES), "; ".join(probe_failures)))
+        # Every public mirror has been dead since X's 2026-08-24 cease-and-desist
+        # and this lane has contributed nothing since 2026-08-20. The residential
+        # desktop drop is the only surface that still reaches these handles; see
+        # docs/TASK-desktop-pull-x-news.md. It is a FALLBACK, never the primary:
+        # if a mirror ever comes back it wins, because it is fresher than a
+        # once-or-twice-daily pull and this lane's value is perishable.
+        items = collect_x_desktop()
+        if not items:
+            print("  x: no desktop drop either — skipping X collection this run")
+        return items
     for handle, league in X_ACCOUNTS:
         try:
             root = ET.fromstring(_X_FETCHER.text("%s/%s/rss" % (instance, handle)))

@@ -1,0 +1,13 @@
+[Unit]
+Description=League news — X timelines only (fast lane) — PROD
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+Environment=LP_NEWS_LOG=/var/log/legendarypicks-news-prod.log
+ExecStart=/root/legendarypicks/scripts/news-x-collect.sh
+TimeoutStartSec=900
+Nice=10

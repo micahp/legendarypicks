@@ -13,6 +13,7 @@ to make that mistake, so it is pinned here.
 """
 import time
 import unittest
+from unittest import mock
 
 import paced_http
 
@@ -66,6 +67,15 @@ class RateLimitTests(unittest.TestCase):
         paced_http.HOST_RATE = 0
         for _ in range(50):
             paced_http._pace_rate("https://example.test/a", "refuse")
+
+    def test_process_lifetime_does_not_exhaust_a_serving_path(self):
+        """The API must still work after its hundredth lifetime request."""
+        for _ in range(250):
+            paced_http._charge(
+                "https://example.test/a", budget=100, cooldown=60,
+                on_exhausted="refuse",
+            )
+        self.assertEqual(paced_http._host_spend, {})
 
 
 class ProcessLabelTests(unittest.TestCase):

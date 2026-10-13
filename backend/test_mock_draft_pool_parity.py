@@ -218,15 +218,15 @@ class MockDraftPoolParityTests(unittest.TestCase):
         self.assertIsNotNone(defense["dst_pts_per_game"])
         self.assertIsNone(defense["ppr_per_game_played"])
 
-    def test_pool_is_the_fantasy_position_universe_with_32_defenses(self):
-        """The pool has no cap or ownership filter inside the six supported
-        fantasy positions, and all 32 defenses are present."""
+    def test_pool_is_the_adp_backed_fantasy_universe_with_32_defenses(self):
+        """The pool contains every selectable fantasy player and all defenses."""
         import sqlite3 as _sqlite3
         with _sqlite3.connect(self.db_path) as _con:
             expected = _con.execute(
                 """SELECT COUNT(*) FROM nfl_adp
                    WHERE season=2026
-                     AND position IN ('QB','RB','WR','TE','PK','DEF')"""
+                     AND position IN ('QB','RB','WR','TE','PK','DEF')
+                     AND (CASE WHEN position='DEF' THEN adp_ppr ELSE adp END) IS NOT NULL"""
             ).fetchone()[0]
         self.assertEqual(self.pool["count"], expected)
         self.assertEqual(

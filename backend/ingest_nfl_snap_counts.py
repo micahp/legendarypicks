@@ -18,11 +18,14 @@ Environment:
     LP_DB_PATH — the sqlite database (default: backend/data/picks.db)
 """
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import sys
 import os
 import json
 import sqlite3
+import time
+import urllib.request
 import warnings
 from typing import Optional
 
@@ -33,6 +36,12 @@ from team_codes import normalize_optional
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
+SOURCE = "nflverse_snap_counts"
+PLAYERS_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    "players/players.parquet"
+)
+CACHE_MAX_AGE_S = 6 * 60 * 60
 
 # nflverse snap column -> key written into the stats JSON blob
 SNAP_FIELDS = {
@@ -88,16 +97,73 @@ def ensure_snap_table(con: sqlite3.Connection) -> None:
     )
 
 
-def _pfr_to_gsis():
+def ensure_unresolved_table(con: sqlite3.Connection) -> None:
+    con.execute(
+        """CREATE TABLE IF NOT EXISTS unresolved_players(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             source TEXT NOT NULL, raw_name TEXT NOT NULL,
+             league TEXT NOT NULL, team TEXT, first_seen TEXT NOT NULL,
+             count INTEGER DEFAULT 1, source_player_key TEXT, reason TEXT
+           )"""
+    )
+    con.execute(
+        "CREATE INDEX IF NOT EXISTS idx_unresolved_players_source_key "
+        "ON unresolved_players(source,league,source_player_key)"
+    )
+
+
+def _pfr_to_gsis(ids):
     """Crosswalk PFR player ids -> GSIS ids. nflverse ships both in one id table."""
 
-    ids = nfl.import_ids()
     out = {}
     for pfr, gsis in zip(ids.get("pfr_id"), ids.get("gsis_id")):
         if isinstance(pfr, str) and pfr and isinstance(gsis, str) and gsis:
             out[pfr] = gsis
     out.update(_PFR_TO_GSIS_OVERRIDES)
     return out
+
+
+def _gsis_to_espn(ids):
+    """Crosswalk GSIS ids to ESPN ids without using a player name."""
+    out = {}
+    for gsis, espn in zip(ids.get("gsis_id"), ids.get("espn_id")):
+        if not isinstance(gsis, str) or not gsis or espn is None or espn != espn:
+            continue
+        value = str(espn).strip()
+        if value:
+            out[gsis] = str(int(float(value))) if value.replace(".", "", 1).isdigit() else value
+    return out
+
+
+def _load_identity_ids(
+    cache_dir: str = "/tmp",
+    artifact_path: Optional[str] = None,
+    refresh: bool = False,
+):
+    """Load nflverse's current player file, which owns PFR/GSIS/ESPN ids.
+
+    The prior dynastyprocess crosswalk omitted 1,110 of 5,970 current-season
+    snap rows. The publisher's current players artifact misses only identities
+    it genuinely has not crosswalked, and its checksum makes the run auditable.
+    """
+    path = os.path.abspath(
+        artifact_path or os.path.join(cache_dir, "nflverse_players.parquet")
+    )
+    if artifact_path is None and (
+        refresh
+        or not os.path.exists(path)
+        or time.time() - os.path.getmtime(path) > CACHE_MAX_AGE_S
+    ):
+        urllib.request.urlretrieve(PLAYERS_URL, path)
+    if not os.path.isfile(path):
+        raise RuntimeError(f"identity artifact does not exist: {path}")
+    with open(path, "rb") as handle:
+        digest = hashlib.sha256(handle.read()).hexdigest()
+    print(f"  identity artifact: {path} ({os.path.getsize(path)} bytes)")
+    print(f"  identity sha256  : {digest}")
+    import pandas as pd
+
+    return pd.read_parquet(path, columns=["pfr_id", "gsis_id", "espn_id"])
 
 
 def _load_snap_counts(
@@ -131,6 +197,9 @@ def ingest(
     year: int = 2025,
     dry_run: bool = False,
     artifact_path: Optional[str] = None,
+    identity_artifact_path: Optional[str] = None,
+    cache_dir: str = "/tmp",
+    refresh: bool = False,
 ) -> dict:
     """Run both paths: game-log enrichment + snap-counts table population.
 
@@ -145,8 +214,17 @@ def ingest(
         df = df[df["game_type"] == "REG"]
     print(f"  {len(df)} snap rows (REG)")
 
-    crosswalk = _pfr_to_gsis()
-    print(f"  {len(crosswalk)} pfr->gsis id pairs")
+    source_ids = _load_identity_ids(
+        cache_dir=cache_dir,
+        artifact_path=identity_artifact_path,
+        refresh=refresh,
+    )
+    crosswalk = _pfr_to_gsis(source_ids)
+    gsis_to_espn = _gsis_to_espn(source_ids)
+    print(
+        f"  {len(crosswalk)} pfr->gsis and "
+        f"{len(gsis_to_espn)} gsis->espn id pairs"
+    )
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
@@ -160,6 +238,7 @@ def ingest(
     ).fetchone() is not None
     if not dry_run:
         ensure_snap_table(con)
+        ensure_unresolved_table(con)
         snap_table_exists = True
 
     gsis_to_player = {
@@ -169,7 +248,21 @@ def ingest(
             "WHERE league='nfl' AND nfl_gsis_id IS NOT NULL AND nfl_gsis_id != ''"
         )
     }
-    print(f"  {len(gsis_to_player)} gsis-resolved players in spine")
+    espn_owners = {}
+    for r in con.execute(
+        "SELECT id, espn_id FROM players "
+        "WHERE league='nfl' AND espn_id IS NOT NULL AND espn_id != ''"
+    ):
+        espn_owners.setdefault(str(r["espn_id"]), set()).add(r["id"])
+    espn_to_player = {
+        key: next(iter(owners))
+        for key, owners in espn_owners.items()
+        if len(owners) == 1
+    }
+    print(
+        f"  {len(gsis_to_player)} direct GSIS and "
+        f"{len(espn_to_player)} unique ESPN owners in spine"
+    )
 
     # (player_id, week) -> game log id
     log_index = {}
@@ -196,27 +289,59 @@ def ingest(
     updated = 0
     snap_inserted = 0
     snap_updated = 0
-    no_pfr = no_gsis = no_log = 0
+    no_pfr = no_gsis = bad_week = no_log = via_espn = 0
     pending = []  # game-log patches
     snap_pending = []  # (snap-count record, existing key)
+    unresolved = {}
+    resolved_source_keys = set()
+
+    def note_unresolved(source_key, row, reason):
+        key = str(source_key) if source_key else str(getattr(row, "player", "unknown"))
+        raw_team = getattr(row, "team", None)
+        team = (
+            normalize_optional("nfl", str(raw_team))
+            if raw_team is not None and raw_team == raw_team
+            else None
+        )
+        item = unresolved.setdefault(key, {
+            "name": str(getattr(row, "player", "") or key),
+            "team": team,
+            "reason": reason,
+            "count": 0,
+        })
+        item["count"] += 1
 
     for row in df.itertuples(index=False):
         pfr = getattr(row, "pfr_player_id", None)
         if not isinstance(pfr, str) or not pfr:
             no_pfr += 1
+            note_unresolved(pfr, row, "snap row has no stable PFR id")
             continue
         gsis = crosswalk.get(pfr)
         if not gsis:
             no_pfr += 1
+            note_unresolved(
+                pfr, row, "PFR id absent from nflverse player crosswalk"
+            )
             continue
         pid = gsis_to_player.get(gsis)
         if pid is None:
+            pid = espn_to_player.get(gsis_to_espn.get(gsis))
+            if pid is not None:
+                via_espn += 1
+        if pid is None:
             no_gsis += 1
+            note_unresolved(
+                gsis, row, "no canonical owner for published GSIS id"
+            )
             continue
         try:
             week = int(getattr(row, "week"))
         except (TypeError, ValueError):
+            bad_week += 1
+            note_unresolved(gsis, row, "snap row has no valid published week")
             continue
+        resolved_source_keys.update((pfr, gsis))
 
         raw_team = getattr(row, "team", None)
         if raw_team is not None and raw_team == raw_team:
@@ -249,10 +374,21 @@ def ingest(
             snap_add[col] = int(fv) if fv.is_integer() else fv
         snap_pending.append((snap_add, (pid, week) in existing_snap_keys))
 
+    accounted = len(snap_pending) + no_pfr + no_gsis + bad_week
+    if accounted != len(df):
+        raise RuntimeError(
+            f"snap source reconciliation failed: {len(df)} source rows != "
+            f"{len(snap_pending)} resolved + {no_pfr + no_gsis + bad_week} unresolved"
+        )
+    resolved_keys = [(snap["player_id"], snap["week"]) for snap, _ in snap_pending]
+    if len(resolved_keys) != len(set(resolved_keys)):
+        raise RuntimeError("multiple snap source rows resolved to one player/week key")
+
     print(
         f"  matched {len(pending)} snap rows to game logs "
         f"(skipped: {no_pfr} unmapped pfr id, {no_gsis} not in spine, "
-        f"{no_log} no game log)"
+        f"{bad_week} invalid week, {no_log} no game log; "
+        f"{via_espn} resolved through GSIS->ESPN)"
     )
     print(
         f"  snap-counts table: "
@@ -284,6 +420,10 @@ def ingest(
             "inserted_snaps": 0,
             "updated_snaps": 0,
             "deleted_stale_snaps": 0,
+            "source_rows": len(df),
+            "resolved_snap_rows": len(snap_pending),
+            "unresolved_snap_rows": no_pfr + no_gsis + bad_week,
+            "unresolved_snap_ids": len(unresolved),
         }
 
     # ── Synchronize the published snapshot ───────────────────────────────
@@ -312,6 +452,38 @@ def ingest(
         "WHERE player_id=? AND season=? AND week=?",
         [(player_id, year, week) for player_id, week in stale_snap_keys],
     )
+    if resolved_source_keys:
+        placeholders = ",".join("?" for _ in resolved_source_keys)
+        con.execute(
+            "DELETE FROM unresolved_players WHERE source=? AND league='nfl' "
+            f"AND source_player_key IN ({placeholders})",
+            [SOURCE] + sorted(resolved_source_keys),
+        )
+    now = datetime.now(timezone.utc).isoformat()
+    for source_key, item in unresolved.items():
+        existing = con.execute(
+            """SELECT id FROM unresolved_players
+               WHERE source=? AND league='nfl' AND source_player_key=?""",
+            (SOURCE, source_key),
+        ).fetchone()
+        values = (
+            item["name"], item["team"], item["count"], item["reason"]
+        )
+        if existing:
+            con.execute(
+                """UPDATE unresolved_players
+                   SET raw_name=?,team=?,count=?,reason=? WHERE id=?""",
+                values + (existing[0],),
+            )
+        else:
+            con.execute(
+                """INSERT INTO unresolved_players(
+                     source,raw_name,league,team,first_seen,count,
+                     source_player_key,reason
+                   ) VALUES(?,?,'nfl',?,?,?,?,?)""",
+                (SOURCE, item["name"], item["team"], now, item["count"],
+                 source_key, item["reason"]),
+            )
 
     # ── Apply game-log patches ───────────────────────────────────────────
     for log_id, add in pending:
@@ -339,8 +511,6 @@ def ingest(
         else:
             snap_inserted += 1
 
-    con.commit()
-
     have = con.execute(
         "SELECT COUNT(*) FROM player_game_logs "
         "WHERE league='nfl' AND season=? AND json_extract(stats,'$.off_snaps') IS NOT NULL",
@@ -349,6 +519,14 @@ def ingest(
     snap_total = con.execute(
         "SELECT COUNT(*) FROM nfl_snap_counts WHERE season=?", (year,)
     ).fetchone()[0]
+    if snap_total != len(resolved_snap_keys):
+        con.rollback()
+        con.close()
+        raise RuntimeError(
+            f"snap target reconciliation failed: {snap_total} stored rows != "
+            f"{len(resolved_snap_keys)} resolved publisher rows"
+        )
+    con.commit()
 
     print(f"  Updated {updated} game logs; {have} {year} logs now carry off_snaps")
     print(
@@ -363,6 +541,10 @@ def ingest(
         "inserted_snaps": snap_inserted,
         "updated_snaps": snap_updated,
         "deleted_stale_snaps": len(stale_snap_keys),
+        "source_rows": len(df),
+        "resolved_snap_rows": len(snap_pending),
+        "unresolved_snap_rows": no_pfr + no_gsis + bad_week,
+        "unresolved_snap_ids": len(unresolved),
     }
 
 
@@ -377,9 +559,15 @@ if __name__ == "__main__":
             "avoids a moving network fetch"
         ),
     )
+    parser.add_argument("--identity-artifact", help="pinned nflverse players parquet")
+    parser.add_argument("--cache-dir", default="/tmp")
+    parser.add_argument("--refresh", action="store_true")
     arguments = parser.parse_args()
     ingest(
         arguments.year,
         dry_run=arguments.dry_run,
         artifact_path=arguments.artifact,
+        identity_artifact_path=arguments.identity_artifact,
+        cache_dir=arguments.cache_dir,
+        refresh=arguments.refresh,
     )

@@ -1,0 +1,18 @@
+[Unit]
+# Replaces legendarypicks-nfl-adp{,-prod} and legendarypicks-nfl-transactions{,-prod}:
+# four units running two scripts against two databases on four schedules. The
+# duplication was per ENVIRONMENT, not per league. See scripts/nfl-daily.sh.
+Description=Daily NFL refresh (ADP + transactions), DEV then PROD, in one job
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+ExecStart=/root/legendarypicks/scripts/nfl-daily.sh
+# Sum of the four per-step budgets (300+120 twice = 840) plus margin. Each step
+# carries its OWN timeout inside run_step, so one hung fetch cannot eat the
+# budget of the steps after it; this is only the backstop for the whole job.
+TimeoutStartSec=1200

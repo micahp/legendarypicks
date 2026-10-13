@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh NFL schedule daily and Tuesday morning (DEV)
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 America/Chicago
+OnCalendar=Tue *-*-* 09:00:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-schedule.service
+
+[Install]
+WantedBy=timers.target

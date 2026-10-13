@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh NFL fantasy ADP once daily — PROD
+
+[Timer]
+OnCalendar=*-*-* 04:15:00
+Persistent=true
+Unit=legendarypicks-nfl-adp-prod.service
+
+[Install]
+WantedBy=timers.target

@@ -45,17 +45,18 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 
 import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from league_stats import (  # noqa: E402
-    LeagueStatContractError,
     load_unique_source_id_map,
     publish_player_stats,
-    queue_unresolved_player,
 )
 from season_keys import normalize_season  # noqa: E402
+import nhl_identity  # noqa: E402
+from ingest_nhl_roster import _position  # noqa: E402
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
@@ -104,6 +105,13 @@ def fetch_report(report: str, season: int) -> list[dict]:
             "isGame": "false",
             "start": start,
             "limit": PAGE,
+            # Current-season totals can change between page requests. Without
+            # a stable publisher-side order, a player can move across a page
+            # boundary and arrive twice while another player is omitted.
+            "sort": json.dumps(
+                [{"property": "playerId", "direction": "ASC"}],
+                separators=(",", ":"),
+            ),
             "cayenneExp": f"seasonId={int(season)} and gameTypeId=2",
         })
         document = _get(f"{BASE.format(report=report)}?{query}")
@@ -202,52 +210,107 @@ def _toi(seconds) -> str | None:
 def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
     goalies = fetch_report("goalie/summary", season)
     skaters = fetch_report("skater/summary", season)
-    realtime = {
-        int(row["playerId"]): row for row in fetch_report("skater/realtime", season)
-    }
+    realtime_rows = fetch_report("skater/realtime", season)
+
+    def unique_by_id(label: str, rows: list[dict]) -> dict[int, dict]:
+        indexed: dict[int, dict] = {}
+        duplicates = []
+        for row in rows:
+            player_id = int(row.get("playerId") or 0)
+            if not player_id:
+                raise NHLStatsIngestError(f"{label}: row has no playerId")
+            if player_id in indexed:
+                duplicates.append(player_id)
+            indexed[player_id] = row
+        if duplicates:
+            raise NHLStatsIngestError(
+                f"{label}: {len(set(duplicates))} duplicate playerId values"
+            )
+        return indexed
+
+    goalie_by_id = unique_by_id("goalie/summary", goalies)
+    skater_by_id = unique_by_id("skater/summary", skaters)
+    realtime = unique_by_id("skater/realtime", realtime_rows)
+    if set(skater_by_id) != set(realtime):
+        missing = sorted(set(skater_by_id) - set(realtime))
+        extra = sorted(set(realtime) - set(skater_by_id))
+        raise NHLStatsIngestError(
+            "skater report populations disagree: "
+            f"summary={len(skater_by_id)} realtime={len(realtime)} "
+            f"missing={missing[:5]} extra={extra[:5]}"
+        )
+    overlap = sorted(set(goalie_by_id) & set(skater_by_id))
+    if overlap:
+        raise NHLStatsIngestError(
+            f"goalie and skater reports overlap on {len(overlap)} playerId values"
+        )
     print(f"published: {len(goalies)} goalies, {len(skaters)} skaters, "
           f"{len(realtime)} realtime rows")
 
-    connection = sqlite3.connect(db_path)
+    connection = sqlite3.connect(db_path, timeout=60, isolation_level=None)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA busy_timeout=60000")
     try:
         nhl_id_to_player, ambiguous = load_unique_source_id_map(
             connection, league="nhl", id_column="nhl_id"
         )
+        if ambiguous:
+            raise NHLStatsIngestError(
+                f"{len(ambiguous)} NHL ids have duplicate canonical owners"
+            )
         counts = {"goalies": 0, "defence": 0, "forwards": 0,
-                  "unresolved": 0, "rejected": 0}
+                  "bound": 0, "minted": 0, "skipped": 0, "rejected": 0}
         espn_season = normalize_season(SOURCE, "nhl", season)
 
         work = [(row, goalie_values(row), "goalies", row.get("goalieFullName"))
-                for row in goalies]
-        for row in skaters:
+                for row in goalie_by_id.values()]
+        for row in skater_by_id.values():
             position = str(row.get("positionCode") or "?").upper()
             bucket = "defence" if position == "D" else "forwards"
             work.append((row, skater_values(row, realtime.get(int(row["playerId"]))),
                          bucket, row.get("skaterFullName")))
 
+        planned = []
+        unresolved = []
         for row, values, bucket, name in work:
             source_key = str(row.get("playerId"))
             player_id = nhl_id_to_player.get(source_key)
             if player_id is None:
-                counts["unresolved"] += 1
-                if not dry_run:
-                    queue_unresolved_player(
-                        connection,
-                        source=SOURCE,
-                        raw_name=str(name or ""),
-                        league="nhl",
-                        team=values.get("nhl_team"),
-                        source_player_key=source_key,
-                        reason=("duplicate_spine_nhl_id"
-                                if source_key in ambiguous
-                                else "nhl_id_not_in_spine"),
-                    )
+                unresolved.append((source_key, row, values, bucket, name))
                 continue
-            if dry_run:
+            planned.append((player_id, row, values, bucket, name))
+            counts[bucket] += 1
+
+        identity_plan = nhl_identity.resolve(connection, [
+            {"source_key": source_key, "name": name,
+             "position": "G" if bucket == "goalies" else _position(row.get("positionCode")),
+             "teams": str(row.get("teamAbbrevs") or "").split(",")}
+            for source_key, row, values, bucket, name in unresolved])
+        counts["bound"] = len(identity_plan["binds"])
+        counts["minted"] = len(identity_plan["mints"])
+        counts["skipped"] = len(identity_plan["skipped"])
+        skipped_keys = {item["source_key"] for item in identity_plan["skipped"]}
+        for source_key, row, values, bucket, name in unresolved:
+            if source_key not in skipped_keys:
                 counts[bucket] += 1
-                continue
-            try:
+        for item in identity_plan["skipped"]:
+            print(f"SKIPPED {item['source_key']} {item['name']} "
+                  f"({item['team']}/{item['position']}): {item['reason']}")
+        if dry_run:
+            return counts
+
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            now = datetime.now(timezone.utc).isoformat()
+            owners = nhl_identity.apply(connection, identity_plan, now)
+            for source_key, row, values, bucket, name in unresolved:
+                if source_key in owners:
+                    planned.append((owners[source_key], row, values, bucket, name))
+            connection.execute(
+                "DELETE FROM player_stats WHERE league='nhl' AND season=?",
+                (espn_season,),
+            )
+            for player_id, row, values, bucket, name in planned:
                 publish_player_stats(
                     connection,
                     player_id=player_id,
@@ -258,13 +321,10 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
                     games=row.get("gamesPlayed"),
                     values=values,
                 )
-                counts[bucket] += 1
-            except LeagueStatContractError as exc:
-                counts["rejected"] += 1
-                print(f"  rejected {name}: {exc}")
-
-        if not dry_run:
             connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
         return counts
     finally:
         connection.close()
@@ -272,17 +332,28 @@ def refresh(db_path: str, *, season: int, dry_run: bool = False) -> dict:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--season", type=int, required=True,
-                        help="nhle.com season key, e.g. 20252026")
+    parser.add_argument("--season", required=True,
+                        help="nhle.com season key, e.g. 20252026, or 'current' for the "
+                             "season the NHL publishes as current")
     parser.add_argument("--db", default=DB)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
+    if args.season == "current":
+        raw = _get("https://api-web.nhle.com/v1/club-schedule-season/CHI/now").get("currentSeason")
+        try:
+            args.season = int(raw)
+        except (TypeError, ValueError):
+            raise NHLStatsIngestError(f"invalid current NHL season {raw!r}")
+    else:
+        args.season = int(args.season)
     print(f"database: {args.db}  season: {args.season}"
           f"{'  (dry run)' if args.dry_run else ''}")
     counts = refresh(args.db, season=args.season, dry_run=args.dry_run)
     print(json.dumps(counts, indent=2, sort_keys=True))
-    return 0
+    # Published players with no safe owner were left out. Say so with the exit
+    # code, so the registry shows a failed step instead of a quiet gap.
+    return 2 if counts["skipped"] else 0
 
 
 if __name__ == "__main__":

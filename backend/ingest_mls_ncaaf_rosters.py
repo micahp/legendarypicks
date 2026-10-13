@@ -9,6 +9,16 @@ This walks every team's ESPN roster for mls + ncaaf, upserts `players` rows
 the log ingests re-run with a working resolver.
 
 Measured shapes (2026-08-06):
+- Liga MX rosters: site.web .../soccer/mex.1/teams/{id}/roster, 18 teams.
+  Added 2026-08-25 for Leagues Cup identity: `lcup` is MLS vs Liga MX, so
+  half of every fixture had players in no spine we hold, and the only
+  alternatives were minting them under `mls` (the shadow-player defect)
+  or leaving every Liga MX prop unresolved. Its 18 display names match
+  our stored `lcup` scoreboard payloads exactly, so no crosswalk.
+  ESPN publishes `ATL` for BOTH Atlanta United and Atlante, in different
+  leagues; that is why these rows are filed under `ligamx` and not
+  merged into the soccer bucket, and why the roster is what resolves the
+  collision (a player is on one of them, and the publisher says which).
 - MLS rosters: site.web .../soccer/usa.1/teams/{id}/roster?season=2025 — the
   season param works (2025 roster = 31 for ATL vs 28 current). 30 teams.
 - NCAAF rosters: site.web .../football/college-football/teams/{id}/roster
@@ -29,6 +39,7 @@ Measured shapes (2026-08-06):
 
 Request count (state BEFORE running, per espn-request-budget):
 - mls:  1 (site teams) + 30 (rosters)                     = 31 site.web
+- ligamx: 1 (site teams) + 18 (rosters)                   = 19 site.web
 - ncaaf: 1 (site teams) + 2 (group-80 whitelist, 2 pages) + 146 (rosters)
        = 149 site.web + 2 sports.core
 The shared fetcher self-throttles past ~100/host; the disk cache makes a
@@ -58,14 +69,16 @@ _CORE = "https://sports.core.api.espn.com/v2/sports/{path}"
 # site path (espn_client LEAGUES) -> core path (espn_leagues registry)
 _SITE_PATH = {
     "mls": "soccer/usa.1",
+    "ligamx": "soccer/mex.1",
     "ncaaf": "football/college-football",
 }
 _CORE_PATH = {
     "mls": "soccer/leagues/usa.1",
+    "ligamx": "soccer/leagues/mex.1",
     "ncaaf": "football/leagues/college-football",
 }
-_SCOPE_GROUP = {"mls": None, "ncaaf": "80"}
-_REG_TYPE_ID = {"mls": "1", "ncaaf": "2"}
+_SCOPE_GROUP = {"mls": None, "ligamx": None, "ncaaf": "80"}
+_REG_TYPE_ID = {"mls": "1", "ligamx": "1", "ncaaf": "2"}
 _SEASON_CACHE = {}
 
 
@@ -113,7 +126,7 @@ def _vocabulary():
     with open(path) as fh:
         d = json.load(fh)
     out = {}
-    for lg in ("mls", "ncaaf"):
+    for lg in d.get("leagues", {}):
         v = d.get("leagues", {}).get(lg, {})
         out[lg] = (v.get("positions", {}), v.get("ancestry", {}))
     return out
@@ -364,5 +377,14 @@ def main(leagues):
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a in ("mls", "ncaaf")]
+    known = ("mls", "ncaaf", "ligamx")
+    args = [a for a in sys.argv[1:] if a in known]
+    unknown = [a for a in sys.argv[1:] if a not in known]
+    if unknown:
+        raise SystemExit("unknown league(s): {} (known: {})".format(
+            ", ".join(unknown), ", ".join(known)))
+    # `ligamx` is deliberately NOT in the default set. It exists for
+    # Leagues Cup identity only: no board, no stat manifest, no coverage
+    # gate. A caller asks for it by name rather than acquiring it by
+    # running the job that already existed.
     main(args or ["mls", "ncaaf"])

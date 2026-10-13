@@ -495,15 +495,20 @@ def ingest():
 
     # Show top 10 by ADP and the D/ST PPR ranks for the report
     top = con.execute(
-        """SELECT na.adp, na.adp_ppr, na.percent_owned, p.name, p.team, p.position
+        """SELECT na.adp, na.adp_ppr, na.percent_owned, p.name, p.team,
+                  COALESCE(p.position, na.position) AS position
            FROM nfl_adp na JOIN players p ON p.id=na.player_id
            WHERE na.season=? AND na.adp IS NOT NULL
            ORDER BY na.adp ASC LIMIT 10""",
         (SEASON,),
     ).fetchall()
     print("\nTop 10 by ADP:")
+    # A team entity (ESPN's "Bills TQB") carries no players.position, and any row
+    # can lack a team or ownership: a NULL here crashed the job AFTER the commit
+    # (2026-10-02, -03), so the report renders missing values as "-".
     for t in top:
-        print(f"  {t['adp']:7.1f}  {t['name']:25s} {t['position']:3s} {t['team']:4s}  owned {t['percent_owned']:.1f}%")
+        owned = "-" if t["percent_owned"] is None else f"{t['percent_owned']:.1f}%"
+        print(f"  {t['adp']:7.1f}  {t['name']:25s} {t['position'] or '-':3s} {t['team'] or '-':4s}  owned {owned}")
 
     den = con.execute(
         f"""SELECT na.adp_ppr FROM nfl_adp na JOIN players p ON p.id=na.player_id

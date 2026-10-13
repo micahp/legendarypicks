@@ -1,0 +1,15 @@
+[Unit]
+Description=Refresh all registered props providers (dev and prod) every 30 minutes
+
+[Timer]
+# ABSOLUTE, never OnBootSec + OnUnitActiveSec. A monotonic timer whose reference activation
+# systemd has forgotten enters SubState=elapsed with no next elapse while still reporting
+# `enabled` and `active`. That parked the Bovada timers from 2026-08-21 11:08 to 08-24 and
+# two sessions wrote it up as a deliberate park.
+OnCalendar=*-*-* *:04:00
+OnCalendar=*-*-* *:34:00
+Persistent=true
+Unit=legendarypicks-props.service
+
+[Install]
+WantedBy=timers.target

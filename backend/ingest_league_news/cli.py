@@ -60,8 +60,24 @@ def main():
         if args.dry_run:
             print("DRY RUN — %d x posts" % len(items))
             return
+        wrote_new, refreshed = upsert(items)
         print("x-only: collected %d, wrote %d new / %d refreshed"
-              % (len(items), *upsert(items)))
+              % (len(items), wrote_new, refreshed))
+        # FAIL LOUD on an empty lane. This path returned 0 while collecting
+        # nothing for 86 consecutive runs between 2026-08-20 and 2026-09-03,
+        # twelve times a day, because every nitter mirror died the week of the
+        # Aug 24 cease-and-desist and "no working mirror" was only ever printed.
+        # A job that reports OK while contributing nothing is indistinguishable
+        # from a quiet day, which is exactly how the newsletter's frozen corpus
+        # went unnoticed for 2.4 days. The timer is the retry policy, so a
+        # non-zero exit here is a VISIBLE skip, not an incident: it turns the
+        # unit red and fires OnFailure, and idempotent upserts mean the next
+        # fire costs nothing extra.
+        if not items:
+            print("X LANE EMPTY: every transport returned nothing. The lane has "
+                  "contributed no rows since 2026-08-20; see collect_x() for the "
+                  "per-host status printed above.")
+            raise SystemExit(1)
         return
 
     if args.ingest_story:

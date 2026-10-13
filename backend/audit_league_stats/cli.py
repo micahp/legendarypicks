@@ -221,6 +221,39 @@ MANIFEST = {
         },
         "single_vocabulary": [],
     },
+    "atp": {
+        # ATP/WTA currently expose tournament draws, match pages, and props.
+        # They do not expose a season-totals leaderboard and publish no rows in
+        # player_stats. Saying that here is materially different from omitting
+        # the league: every audit run now records that the surface was asked
+        # about and deliberately has no stat_types to measure.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "wta": {
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "unl": {
+        # UEFA Nations League is a per-match FotMob history surface. FotMob
+        # publishes the competition as four divisions (A-D), all stored under
+        # this one product key. There is no player_stats season-totals surface,
+        # so declaring one here would make the audit bless a table we do not
+        # publish.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
+    "friendlies": {
+        # Men's senior international friendlies, likewise per-match only.
+        # Missing player identity remains unresolved in the FotMob provider
+        # table; it must never create or name-match a second club identity.
+        "stat_types": {},
+        "position_content": {},
+        "single_vocabulary": [],
+    },
     "mls": {
         "stat_types": {
             "season": {

@@ -58,6 +58,7 @@ RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
 HOST_BUDGET = int(os.environ.get("LP_HTTP_HOST_BUDGET", "100"))
 HOST_COOLDOWN = float(os.environ.get("LP_HTTP_HOST_COOLDOWN", "60"))
 _host_spend: dict[str, int] = {}
+_host_spend_started: dict[str, float] = {}
 
 # ── the burst rate, measured ──────────────────────────────────────────────────
 #
@@ -88,6 +89,7 @@ _host_recent: dict[str, "collections.deque"] = {}
 def reset_host_budget():
     """Forget what has been spent. For tests, and after a deliberate long wait."""
     _host_spend.clear()
+    _host_spend_started.clear()
     _host_recent.clear()
 
 
@@ -149,9 +151,9 @@ def _pace_rate(url, on_exhausted="sleep"):
 # A plain append-only JSONL file rather than SQLite on purpose: 18 timers write
 # this concurrently, and an O_APPEND write below PIPE_BUF is atomic on Linux,
 # so there is no lock to contend and no job can be wedged behind one.
-SPEND_LOG = os.environ.get(
-    "LP_HTTP_SPEND_LOG",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "http-spend.jsonl"))
+_PROD_SPEND_LOG = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "http-spend.jsonl")
+SPEND_LOG = os.environ.get("LP_HTTP_SPEND_LOG", _PROD_SPEND_LOG)
 
 # Who is spending. argv[0] is the job, and the whole point is telling eighteen
 # timers apart in one file.
@@ -189,6 +191,27 @@ def _path_family(parts):
     return "/" + "/".join(trimmed)
 
 
+# A test run is not spend. Measured 2026-08-24: `test_ingest_nba_stats.py` drives
+# a mocked urlopen through 403/429/404 against a real NBA core URL, and this
+# function recorded all 8 attempts as if they had left the box. They read as a
+# live host refusing us, on the exact endpoint this project has documented as
+# gated, and I reported them to Micah as the suite hammering a walled endpoint.
+# They never happened. The same shape produced 102 phantom 403s to a league named
+# `test` in the 08-19 sample, which that analysis had to detect and exclude by
+# hand.
+#
+# So the PRODUCTION log records production traffic and nothing else. A log that
+# mixes simulated events with real ones will eventually be read as if all of them
+# were real, and the reader cannot tell which is which from the row.
+#
+# Keyed on the destination, not on the caller: a test that points SPEND_LOG
+# somewhere else, by monkeypatch or by LP_HTTP_SPEND_LOG, is measuring on purpose
+# and still gets its rows. Only the default production path is protected. The
+# suite's genuinely-live calls stop appearing there too, which is the intended
+# trade: to attribute those, run the suite with a probe that patches urlopen.
+_IS_TEST_RUN = _PROCESS == "pytest"
+
+
 def record_spend(url, status, cached=False, note=""):
     """Append one line describing a request. NEVER raises: this is measurement.
 
@@ -196,6 +219,8 @@ def record_spend(url, status, cached=False, note=""):
     or the disk is full we lose the record, which is strictly better than
     losing the request.
     """
+    if _IS_TEST_RUN and os.path.abspath(SPEND_LOG) == os.path.abspath(_PROD_SPEND_LOG):
+        return
     try:
         parts = urllib.parse.urlsplit(url)
         line = json.dumps({
@@ -233,7 +258,24 @@ def _charge(url, budget, cooldown, on_exhausted="sleep"):
     """
     if not budget or budget <= 0:
         return
+    # Request handlers are already protected by `_pace_rate`, the measured
+    # short-window limit above. A cumulative process-lifetime counter has no
+    # time window and therefore never recovers in a long-running API process:
+    # after its 100th request every later page load was refused until deploy or
+    # restart. Keep the count/cooldown circuit for bounded batch jobs, but do
+    # not turn normal process uptime into an outage for serving paths.
+    if on_exhausted == "refuse":
+        return
     host = urllib.parse.urlsplit(url).netloc
+    now = time.time()
+    started = _host_spend_started.setdefault(host, now)
+    # A refusing request handler must not sleep, but it must recover once the
+    # publisher's cooldown has elapsed. Previously only the sleeping branch
+    # reset this counter, so a long-running server that reached the budget was
+    # poisoned permanently: every later ESPN call failed until process restart.
+    if cooldown > 0 and now - started >= cooldown:
+        _host_spend[host] = 0
+        _host_spend_started[host] = now
     if _host_spend.get(host, 0) >= budget:
         if on_exhausted == "refuse":
             raise BudgetExhausted(
@@ -252,6 +294,7 @@ def _charge(url, budget, cooldown, on_exhausted="sleep"):
               file=sys.stderr, flush=True)
         time.sleep(cooldown)
         _host_spend[host] = 0
+        _host_spend_started[host] = time.time()
     _host_spend[host] = _host_spend.get(host, 0) + 1
 
 
@@ -314,6 +357,16 @@ class Fetcher:
         except (OSError, json.JSONDecodeError):
             # A corrupt or absent entry is a miss, never an error -- the caller's
             # job is to get the data, not to care where it came from.
+            return None
+
+    def _read_disk_stale(self, url):
+        """Read a valid cached payload regardless of age for outage fallback."""
+        if not self.cache_dir:
+            return None
+        try:
+            with open(self._path(url)) as f:
+                return json.load(f)
+        except (OSError, json.JSONDecodeError):
             return None
 
     def _sweep(self):
@@ -491,6 +544,10 @@ class Fetcher:
             self._memory[url] = (now + ttl, on_disk)
             record_spend(url, 200, cached=True, note="disk")
             return on_disk
+        # Only interactive readers may use stale-on-error. A batch publisher
+        # must fail instead of treating an expired response as fresh input.
+        stale_disk = (self._read_disk_stale(url)
+                      if self.on_exhausted == "refuse" else None)
         try:
             # Retry hard only when failing is the alternative. With a stale
             # payload in hand the ladder is pure latency on a request somebody
@@ -506,6 +563,10 @@ class Fetcher:
             if hit is not None:
                 self._memory[url] = (now + min(ttl, 60), hit[1])
                 return hit[1]
+            if stale_disk is not None:
+                self._memory[url] = (now + min(ttl, 60), stale_disk)
+                record_spend(url, 200, cached=True, note="stale-disk")
+                return stale_disk
             raise
         self._memory[url] = (now + ttl, data)
         self._write_disk(url, data)

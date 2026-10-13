@@ -11,6 +11,8 @@ public functions resolve through the `espn_client` package at call time so
 monkeypatching `espn_client._get` / `espn_client.summary` (as the test suite
 does) keeps working.
 """
+import re
+
 import espn_client
 
 
@@ -294,12 +296,12 @@ def game_result(league, game_id):
     """Clean grading info for one game: {state, scores{abbrev:score}, winner|None}.
 
     Robust to date (queries the game directly), so it grades predictions regardless of when
-    the game was played. winner is None until the game is final. Soccer (wc, lcup, mls) uses the
+    the game was played. winner is None until the game is final. Soccer uses the
     competitor.winner flag — penalty/AET aware, and the only honest grade for a drawn match:
     the score heuristic below would file an MLS Cup final decided on penalties by the
     90-minute scoreline.
     """
-    if league in ("wc", "lcup", "mls"):
+    if league in ("wc", "lcup", "mls", "ligamx"):
         return espn_client.game_result_soccer(league, game_id)
     d = espn_client.summary(league, game_id)
     comp = (d.get("header", {}).get("competitions") or [{}])[0]
@@ -485,7 +487,7 @@ def mls_conference_standings(season=None):
     }
 
 
-def ncaaf_conference_standings():
+def ncaaf_conference_standings(season=None):
     """NCAAF per-conference standings — the {group, rows} shape the league
     hub's ConferenceStandings table renders.
 
@@ -497,12 +499,26 @@ def ncaaf_conference_standings():
     points column and no gf/ga/gd — those soccer-only fields are omitted
     rather than fabricated as zeros (honest-data-ui: dash != zero).
 
-    Returns [{group: "Big Ten Conference", rows: [{rank, abbrev, name,
-    played, wins, losses}]}]. Conferences with no published entries are
-    skipped entirely (a table with zero rows is a dead surface).
+    Returns a season-named envelope whose ``groups`` contain the published
+    conference rows. Conferences with no published entries are skipped
+    entirely (a table with zero rows is a dead surface).
     """
     _, path = espn_client._check("ncaaf")
-    d = espn_client._get(espn_client._CORE.format(path=path) + "/standings", ttl=900)
+    url = espn_client._CORE.format(path=path) + "/standings"
+    if season is not None:
+        url += "?season=%d" % int(season)
+    d = espn_client._get(url, ttl=900)
+    season_doc = d.get("season") or {}
+    year = espn_client._int(season_doc.get("year"))
+    if year is None:
+        raise ValueError("NCAAF standings: publisher named no season")
+    available = sorted({
+        entry_year
+        for entry in d.get("seasons") or []
+        for entry_year in [espn_client._int(entry.get("year"))]
+        if entry_year is not None
+        and any(t.get("hasStandings") for t in (entry.get("types") or []))
+    }, reverse=True)
     groups = []
     for child in d.get("children", []):
         gname = child.get("name", "")
@@ -524,4 +540,216 @@ def ncaaf_conference_standings():
                 "losses": l,
             })
         groups.append({"group": gname, "rows": rows})
-    return groups
+    if not groups:
+        raise ValueError(f"NCAAF standings: publisher returned no groups for {year}")
+    return {
+        "league": "ncaaf",
+        "season": year,
+        "season_label": season_doc.get("displayName") or str(year),
+        "available_seasons": available or [year],
+        "groups": groups,
+    }
+
+
+_LCUP_ROUND_ORDER = {
+    "quarterfinals": 1,
+    "semifinals": 2,
+    "third-place": 3,
+    "third-place-game": 3,
+    "3rd-place-match": 3,
+    "final": 4,
+}
+
+
+def lcup_competition_snapshot_from_payload(scoreboard, statistics):
+    """Build the Leagues Cup bracket and published leader categories.
+
+    The scoreboard's season slug is the round authority.  League-phase games
+    are deliberately excluded from the knockout bracket, and unpublished
+    future rounds are not reconstructed from presumed winners.
+    """
+    scoreboard_season = espn_client._int(
+        (((scoreboard.get("leagues") or [{}])[0].get("season") or {}).get("year"))
+    )
+    statistics_season = espn_client._int((statistics.get("season") or {}).get("year"))
+    if not scoreboard_season or statistics_season != scoreboard_season:
+        raise ValueError(
+            f"Leagues Cup source season mismatch: scoreboard={scoreboard_season} "
+            f"statistics={statistics_season}"
+        )
+
+    grouped = {}
+    for event in scoreboard.get("events", []) or []:
+        season = event.get("season") or {}
+        slug = str(season.get("slug") or "").lower()
+        if slug == "league-phase" or slug not in _LCUP_ROUND_ORDER:
+            continue
+        comp = (event.get("competitions") or [{}])[0]
+        status = comp.get("status") or event.get("status") or {}
+        status_type = status.get("type") or {}
+        state = status_type.get("state")
+        teams = {}
+        for competitor in comp.get("competitors", []) or []:
+            team = competitor.get("team") or {}
+            score = espn_client._num(competitor.get("score")) if state != "pre" else None
+            teams[competitor.get("homeAway")] = {
+                "id": str(team.get("id") or ""),
+                "abbrev": team.get("abbreviation"),
+                "name": team.get("displayName") or team.get("name") or "TBD",
+                "score": score,
+                "winner": competitor.get("winner") is True,
+            }
+        game_id = str(event.get("id") or comp.get("id") or "")
+        if not game_id or not teams.get("home") or not teams.get("away"):
+            raise ValueError(f"incomplete Leagues Cup {slug} match id={game_id or '<missing>'}")
+        grouped.setdefault(slug, []).append({
+            "game_id": game_id,
+            "date": event.get("date") or comp.get("date"),
+            "state": state,
+            "status": status_type.get("description") or status_type.get("shortDetail"),
+            "home": teams["home"],
+            "away": teams["away"],
+        })
+
+    labels = {
+        "quarterfinals": "Quarterfinals",
+        "semifinals": "Semifinals",
+        "third-place": "Third Place",
+        "third-place-game": "Third Place",
+        "3rd-place-match": "Third Place",
+        "final": "Final",
+    }
+    rounds = []
+    for slug in sorted(grouped, key=lambda value: (_LCUP_ROUND_ORDER[value], value)):
+        matches = sorted(grouped[slug], key=lambda row: (row.get("date") or "", row["game_id"]))
+        rounds.append({"key": slug, "label": labels[slug], "matches": matches})
+    if not rounds:
+        raise ValueError("Leagues Cup publisher has not published a knockout round")
+
+    leader_categories = []
+    for category in statistics.get("stats", []) or []:
+        key = str(category.get("name") or "")
+        if key not in ("goalsLeaders", "assistsLeaders"):
+            continue
+        leaders = []
+        for rank, item in enumerate(category.get("leaders", []) or [], start=1):
+            athlete = item.get("athlete") or {}
+            athlete_id = str(athlete.get("id") or "")
+            value = espn_client._int(item.get("value"))
+            if not athlete_id or not athlete.get("displayName") or value is None:
+                raise ValueError(f"incomplete Leagues Cup {key} row")
+            display = str(item.get("displayValue") or "")
+            match_count = re.search(r"Matches:\s*(\d+)", display)
+            team = athlete.get("team") or {}
+            leaders.append({
+                "rank": rank,
+                "espn_athlete_id": athlete_id,
+                "name": athlete.get("displayName"),
+                "team": team.get("displayName") or team.get("name"),
+                "team_abbrev": team.get("abbreviation"),
+                "matches": int(match_count.group(1)) if match_count else None,
+                "value": value,
+            })
+        leader_categories.append({
+            "key": "goals" if key == "goalsLeaders" else "assists",
+            "label": category.get("displayName") or category.get("shortDisplayName"),
+            "leaders": leaders,
+        })
+
+    return {
+        "league": "lcup",
+        "season": scoreboard_season,
+        "phase": (statistics.get("season") or {}).get("name"),
+        "rounds": rounds,
+        "leader_categories": leader_categories,
+    }
+
+
+def lcup_competition_snapshot(season):
+    """Fetch the current full-season bracket and published leader tables."""
+    season = int(season)
+    scoreboard = espn_client.scoreboard_raw("lcup", str(season), ttl=3600)
+    _, path = espn_client._check("lcup")
+    stats_url = (
+        espn_client._SITE.format(path=path)
+        + f"/statistics?season={season}&limit=50"
+    )
+    statistics = espn_client._get(stats_url, ttl=3600)
+    return lcup_competition_snapshot_from_payload(scoreboard, statistics)
+
+
+def soccer_athlete_form(league, athlete_id, season, limit=5):
+    """Last `limit` played matches for one athlete, with the CORE api stat line.
+
+    Lazy and per-athlete, the same shape as `ufc_fight_history`: nothing is
+    ingested, a click pays for a live read, and the shared Fetcher's cache makes
+    the second click free.
+
+    Why the core api and not the summary: the summary's per-player surface
+    carries 14 fields and none of tackles, clearances, crosses or passes. The
+    core api carries ~92 for the same appearance and publishes all of them. See
+    docs/PROPS-SOURCE-AUDIT-2026-08-25.md "CORRECTION 2".
+
+    Costs 1 + 2N requests (eventlog, then statistics and event per match), which
+    is why it is a click and not a page load.
+    """
+    import espn_client
+
+    base = "https://sports.core.api.espn.com/v2/sports/soccer/leagues"
+    path = espn_client._check(league)[1].split("/")[-1]
+    log = espn_client._get(
+        f"{base}/{path}/seasons/{season}/athletes/{athlete_id}/eventlog", ttl=900)
+
+    played = [i for i in ((log.get("events") or {}).get("items") or [])
+              if i.get("played")]
+    # The publisher lists oldest first; the form strip wants the most recent.
+    played = list(reversed(played))[:int(limit)]
+
+    out = []
+    for item in played:
+        try:
+            stats = espn_client._get(item["statistics"]["$ref"], ttl=900)
+            event = espn_client._get(item["event"]["$ref"], ttl=900)
+        except Exception:  # noqa: BLE001 - one missing match is not a failed form
+            continue
+
+        line = {}
+        for category in (stats.get("splits") or {}).get("categories", []) or []:
+            for stat in category.get("stats", []) or []:
+                line[stat.get("name")] = stat.get("value")
+
+        team_id = str(item.get("teamId") or "")
+        home = None
+        for competitor in ((event.get("competitions") or [{}])[0]
+                           .get("competitors") or []):
+            if str(competitor.get("id") or "") == team_id:
+                home = competitor.get("homeAway") == "home"
+        # The opponent comes off the event's own name rather than a second
+        # request per match for the team document: "A at B" / "A vs B", minus
+        # whichever side is ours. A ref would cost 5 more requests a click for a
+        # string the publisher already sent.
+        label = str(event.get("shortName") or event.get("name") or "")
+        opponent = label
+        out.append({
+            "date": str(event.get("date") or "")[:10],
+            "event_id": str(event.get("id") or ""),
+            "matchup": opponent,
+            "home": home,
+            "minutes": line.get("minutes"),
+            "goals": line.get("totalGoals"),
+            "assists": line.get("goalAssists"),
+            "shots": line.get("totalShots"),
+            "shots_on_target": line.get("shotsOnTarget"),
+            "tackles": line.get("totalTackles"),
+            "clearances": line.get("totalClearance"),
+            "crosses": line.get("totalCrosses"),
+            # `passes_attempted`, not `passes`: that is the key
+            # ingest_soccer_logs and core_markets already use for totalPasses.
+            # One column, one vocabulary -- a second name for one stat is how a
+            # chart silently finds nothing.
+            "passes_attempted": line.get("totalPasses"),
+            "passes": line.get("accuratePasses"),
+            "fouls_committed": line.get("foulsCommitted"),
+            "saves": line.get("saves"),
+        })
+    return out

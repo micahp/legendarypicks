@@ -171,6 +171,84 @@ against a second day.
 
 ---
 
+## 1c. CONFIRMED 2026-08-24, and the collateral is the serving path
+
+The 08-19 finding was a shape derived from a day of history. On 2026-08-24 it played out
+live, minute by minute, and the log recorded the whole thing. Baseline that day was
+`ingest_scoreboards` at a steady 4/min:
+
+```
+16:48  n=56   run_ufc_current_card_ingest=52   all 200
+16:55  n=67   run_ufc_current_card_ingest=52   all 200
+17:00  n=65   settle_props=50, link_prop_games=11
+17:01  n=50   403:6      <- refusals begin
+17:02  n=11   403:11
+17:04  n=30   403:30     <- 26 of these are UVICORN
+17:05  n=12   403:8
+17:06  n=4    all 200    <- cleared. four minutes, start to finish.
+```
+
+Three things this settles that §1b could only imply:
+
+1. **The refusal follows the minute, not the run.** Two jobs each well inside any plausible
+   per-run ceiling combined into a rate that was not.
+2. **The budget is shared with the request handlers.** 26 refusals landed on `uvicorn`. A
+   batch fan-out made the live site read as broken. Any batch job must be sized against what
+   the box is already spending, never against zero.
+3. **The block clears in minutes.** A session that day recorded "that budget is spent for a
+   while" and stopped work on the strength of it. It was spent for four minutes, and the
+   spend log could have said so for free.
+
+### What shipped in response
+
+`espn_client.batch_pacing()` is the short-window limiter §1b asked for, in the only form the
+measurement justifies: a context manager that sets `min_interval=1.5` (about 40 req/min,
+below the measured 36-to-63 onset band), a per-host budget with a cooldown, a retry ladder,
+and `on_exhausted="sleep"`, then restores all four. No cross-process ledger, no durable
+state.
+
+It restores because the fetcher is process-global: a plan built inside a longer-lived process
+must not leave a request handler with a 1.5s pause bolted on. It is applied to the function
+that FANS OUT, not to a `main()`, because a test and an in-process caller enter through the
+function (`roster_sync.py`, 2026-08-04, paid all 128 requests twice for exactly this).
+
+Callers converted so far: `ingest_ufc_fight_stats.plan.build_plan` and
+`build_current_card_plan`, and `settle_props.main`. `ingest_scoreboards` already paced itself
+and is unchanged.
+
+### The suite was NOT hitting the gated endpoint. The instrument was lying again.
+
+Recorded here in full because I reported the opposite to Micah before checking.
+
+The spend log showed 8 requests per suite run to
+`sports.core.api.espn.com/v2/sports/basketball/leagues/nba`, 6 of them 403, labelled
+`proc=pytest`. That is the endpoint §1b says should never be asked again, so it read as the
+test suite hammering a walled path. **Zero of those requests exist.**
+`test_ingest_nba_stats.py::FetchPacingTest` drives a MOCKED `urlopen` through a fixed
+403/429/404 sequence against a real NBA core URL, and `record_spend` logged every attempt.
+Proven by running that one file with the log redirected: 8 rows, 6/1/1, no network.
+
+This is the third appearance of the same defect, after the 102 phantom 403s to a league named
+`test` that §1b had to exclude by hand. **A log that records simulated events beside real ones
+will be read as if all of them were real.** The row carries no field that distinguishes them.
+
+Fixed at the instrument: `record_spend` refuses to write when a test run targets the
+production log. Keyed on the DESTINATION rather than on the caller, so a test that redirects
+the log by monkeypatch or `LP_HTTP_SPEND_LOG` is measuring on purpose and still gets its rows.
+The suite's genuinely-live ESPN calls (13 under the prod DB, 16 under dev, attributed below)
+stop appearing in the production log too, which is the intended trade.
+
+To attribute live calls to the test that makes them, patch `urllib.request.urlopen` in a
+pytest plugin and record the nodeid. Measured that way, the whole suite makes **13 to 16 live
+ESPN requests**, none of them to a gated endpoint:
+
+```
+9  test_leagues_hub_assertions.py::test_leagues_hub_contract
+3  test_story_form_season.py::TestAgainstTheRealDatabases (prod DB)
+3  test_team_aggregates_contract.py, 3 test_ufc_rankings_pipeline.py (dev DB)
+1  test_scoreboard_range_backfill.py::TestFetchRangeChunk
+```
+
 ## 2. What is actually broken today, regardless of which limit is real
 
 This part does not depend on the answer to §1.

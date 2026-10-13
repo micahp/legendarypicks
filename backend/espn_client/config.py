@@ -10,13 +10,13 @@ The module used to be one file; it is now a package whose __init__ re-exports
 the names below, so `import espn_client as espn; espn.games(...)` and
 `monkeypatch.setattr(espn_client, "_get", fake)` keep working unchanged.
 """
+import contextlib
 import os
 
 import paced_http
 
 LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "nba":  ("basketball/nba", 4),
-    "wnba": ("basketball/wnba", 4),
     "nhl":  ("hockey/nhl", 3),
     "mlb":  ("baseball/mlb", 9),
     "nfl":  ("football/nfl", 4),
@@ -27,6 +27,10 @@ LEAGUES = {  # our key -> (espn "sport/league" path, regulation periods)
     "wc":   ("soccer/fifa.world", 2),
     "lcup": ("soccer/concacaf.leagues.cup", 2),
     "mls":  ("soccer/usa.1", 2),
+    # Liga MX has its own board and identity namespace. Leagues Cup is MLS vs
+    # Liga MX, so filing its Mexican participants under MLS creates shadow
+    # players. `mex.1` publishes the schedule and 18-team vocabulary.
+    "ligamx": ("soccer/mex.1", 2),
 }
 
 # These were both `site.api.espn.com`, which refused this box for a full day on
@@ -117,6 +121,51 @@ def set_host_budget(budget, cooldown=None):
     if cooldown is not None:
         _FETCHER.host_cooldown = float(cooldown)
     return prev
+
+
+# --- batch callers -----------------------------------------------------------
+# ESPN's limit is a BURST RATE per host: measured 2026-08-19 over 27,801 requests,
+# the 60s window before a 403 held a median 63 requests and the 60s window before a
+# 200 held 36, while the 1h window was flat. So a job that fans out has to declare
+# itself, because the defaults above are the SERVING path's defaults and a fan-out
+# that inherits them spends the budget the request handlers need. On 2026-08-24 an
+# unpaced UFC plan fired 52 requests in one minute and 26 of the resulting refusals
+# landed on uvicorn.
+#
+# Two batch jobs had already hand-rolled this same set-four-knobs-and-restore block.
+# One home for it, so the next one does not have to remember all four.
+BATCH_MIN_INTERVAL = 1.5      # <= 40 req/min, below the measured 36-to-63 onset band
+BATCH_HOST_BUDGET = 60
+BATCH_HOST_COOLDOWN = 60.0
+BATCH_RETRY_WAITS = (5.0, 20.0, 60.0)
+
+
+@contextlib.contextmanager
+def batch_pacing(min_interval=None):
+    """Pace a fan-out, then hand the client back exactly as it was found.
+
+    Restoring is not politeness: this fetcher is process-global, so a batch plan
+    built inside a longer-lived process would otherwise leave every later caller,
+    including a request handler, with a 1.5s pause and a 60s cooldown bolted on.
+
+    Wrap the function that FANS OUT, not only main(). A caller that enters by
+    import gets nothing from a main() that it never runs, which is how
+    roster_sync.py paid for all 128 requests twice on 2026-08-04.
+    """
+    prev_interval = set_min_interval(BATCH_MIN_INTERVAL if min_interval is None
+                                    else min_interval)
+    prev_budget = set_host_budget(BATCH_HOST_BUDGET, BATCH_HOST_COOLDOWN)
+    prev_retries = set_retry_waits(BATCH_RETRY_WAITS)
+    # Nobody is waiting on a batch job, so waiting out a spent budget is right for
+    # it and wrong for a request handler.
+    prev_exhausted = set_on_exhausted("sleep")
+    try:
+        yield
+    finally:
+        set_on_exhausted(prev_exhausted)
+        set_retry_waits(prev_retries)
+        set_host_budget(prev_budget)
+        set_min_interval(prev_interval)
 
 
 # The in-memory cache is the Fetcher's dict, exposed under the name this module

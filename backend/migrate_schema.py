@@ -168,6 +168,44 @@ MIGRATIONS: tuple[Migration, ...] = (
             ),
         ),
     ),
+    Migration(
+        migration_id="20260826_001_predictions_multi_sport_ledger",
+        table="predictions",
+        additions=tuple(
+            ColumnAddition(
+                contract=ColumnContract(name, declared_type),
+                sql=f"ALTER TABLE predictions ADD COLUMN {name} {declared_type}",
+            )
+            for name, declared_type in (
+                ("device_id", "TEXT"),
+                ("match_key", "TEXT"),
+                ("side", "TEXT"),
+                ("team_a", "TEXT"),
+                ("team_b", "TEXT"),
+                ("event_date", "TEXT"),
+                ("created_at_ms", "INTEGER"),
+                ("lock_at", "INTEGER"),
+                ("settled_at", "INTEGER"),
+                ("result", "TEXT"),
+                ("points", "REAL"),
+                ("crowd_share_at_lock", "REAL"),
+            )
+        ),
+    ),
+    # A cancelled event is terminal but has no score or appearance log.  Keep
+    # the publisher evidence on the game row so settlement can void its props
+    # idempotently instead of guessing from a missing event id.
+    Migration(
+        migration_id="20260827_001_prop_game_cancellation",
+        table="prop_games",
+        additions=tuple(
+            ColumnAddition(
+                contract=ColumnContract(name, "TEXT"),
+                sql=f"ALTER TABLE prop_games ADD COLUMN {name} TEXT",
+            )
+            for name in ("cancelled_at", "cancel_reason", "cancel_source")
+        ),
+    ),
 )
 
 REGISTRY_CONTRACT = (

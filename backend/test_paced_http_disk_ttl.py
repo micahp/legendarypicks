@@ -13,6 +13,7 @@ import os
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 import paced_http
 
@@ -53,6 +54,22 @@ class DiskCacheHonoursCallerTtl(unittest.TestCase):
     def test_no_cache_dir_is_always_a_miss(self):
         bare = paced_http.Fetcher(min_interval=0.0, retry_waits=(), cache_dir="")
         self.assertIsNone(bare._read_disk("http://x/anything", ttl=20))
+
+    def test_serving_path_uses_expired_disk_payload_only_after_fetch_failure(self):
+        url = "http://x/summary?event=1"
+        payload = {"boxscore": {"players": ["persisted"]}}
+        self.seed(url, payload, age_seconds=60)
+        self.fetcher.on_exhausted = "refuse"
+        with mock.patch.object(self.fetcher, "fetch", side_effect=OSError("offline")):
+            self.assertEqual(self.fetcher.json(url, ttl=20), payload)
+
+    def test_batch_does_not_publish_an_expired_disk_payload(self):
+        url = "http://x/summary?event=1"
+        self.seed(url, {"old": True}, age_seconds=60)
+        self.fetcher.on_exhausted = "sleep"
+        with mock.patch.object(self.fetcher, "fetch", side_effect=OSError("offline")):
+            with self.assertRaises(OSError):
+                self.fetcher.json(url, ttl=20)
 
 
 class DiskCacheIsBounded(unittest.TestCase):

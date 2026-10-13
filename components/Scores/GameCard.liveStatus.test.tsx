@@ -24,8 +24,18 @@ describe('GameCard live status', () => {
     expect(screen.queryByText('0:00')).toBeNull()
   })
 
-  it('shows a quarter and clock for live football', () => {
+  it('shows the clock and ordinal quarter for live football', () => {
     render(<GameCard {...baseGame} league="NFL" livePeriod={{ type: 'quarter', number: 4, clock: '1:51' }} />)
-    expect(screen.getByText('Q4 · 1:51')).toBeTruthy()
+    expect(screen.getByText('01:51 - 4th')).toBeTruthy()
+  })
+
+  it('labels football overtime as OT rather than a fifth quarter', () => {
+    render(<GameCard {...baseGame} league="NCAAF" livePeriod={{ type: 'quarter', number: 5, clock: '7:31' }} />)
+    expect(screen.getByText('07:31 - OT')).toBeTruthy()
+  })
+
+  it('labels a finished soccer game Full Time', () => {
+    render(<GameCard {...baseGame} league="MLS" status="FINAL" statusDetail="Final" />)
+    expect(screen.getByText('FULL TIME')).toBeTruthy()
   })
 })

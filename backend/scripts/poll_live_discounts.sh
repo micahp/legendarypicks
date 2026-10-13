@@ -2,7 +2,8 @@
 # Keep the live-discounts widget alive without a browser: hitting the endpoint is what
 # writes price snapshots, sets Class C pregame levels, and fires receipts.
 set -u
-URL="http://localhost:8095/api/live/discounts?league=mlb,wc"
+# World Cup is historical-only; this recurring poll must not touch it.
+URL="http://localhost:8095/api/live/discounts?league=mlb"
 LOG="/root/legendarypicks/logs/live-discounts-poll.log"
 
 resp=$(curl -s --max-time 55 "$URL") || { echo "$(date -u +%FT%TZ) curl-fail" >> "$LOG"; exit 0; }

@@ -15,10 +15,10 @@ whatever the last successful run left behind.
 
 | Unit | Interval | Feeds |
 |---|---|---|
-| `legendarypicks-props.timer` / `-props-prod.timer` | 30 min | `python -m bovada_scraper all --ingest` — player props, all leagues, dev + prod |
+| `legendarypicks-props.timer` / `-props-prod.timer` | 30 min, staggered | `run_props_ingest.py` — registry-driven Bovada, UnderDog, and RotoWire publication, one environment per unit |
 | `legendarypicks-wc-props.timer` / `-wc-props-prod.timer` | 15 min | `python -m bovada_scraper wc --ingest` — World Cup props |
 | `legendarypicks-mlb-capture.timer` | 5 min | `python -m bovada_scraper mlb --capture` — opening/closing odds snapshots |
-| `legendarypicks-props-freshness.timer` | 30 min | not a data feed itself — watchdog: checks each env's latest `captured_at`, alerts + self-heals (re-triggers ingest) if >3h stale |
+| `legendarypicks-props-freshness.timer` | 30 min | not a data feed itself — watchdog: checks each provider in each env and alerts only; it never starts ingest |
 
 Common thread: **high-value-per-hour-of-staleness** data (live odds, in-progress capture) feeding a
 **page that gets traffic** (props page). The timer cadence roughly matches how fast the underlying

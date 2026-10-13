@@ -5,6 +5,9 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from _core import *
 from provenance import publishers_for
+from sport_navigation import league_directory_navigation, prop_navigation
+import scoreboard_store
+import league_readiness
 from . import router
 from .contexts import _LCUP_RADIO
 
@@ -125,6 +128,86 @@ def coverage():
         d["publishers"] = pubs.get(d["league"], [])
         out.append(d)
     return out
+
+
+@router.get("/api/readiness/leagues")
+def readiness_leagues(as_of: str = None):
+    """Current-season product readiness from persisted calendars and data.
+
+    This is deliberately separate from `/api/health` (process liveness) and
+    `/api/coverage` (the historical certification registry).  It performs no
+    publisher requests.  `as_of` exists so season-boundary behavior can be
+    inspected and tested without changing the server clock.
+    """
+    try:
+        day = dt.date.fromisoformat(as_of) if as_of else dt.date.today()
+    except ValueError:
+        raise HTTPException(400, "as_of must be YYYY-MM-DD")
+    with closing(_db()) as con:
+        return league_readiness.build_readiness(con, day)
+
+
+@router.get("/api/navigation/sports")
+def sport_navigation():
+    """DB-backed competition coverage with sport derived from publisher paths."""
+    with closing(_db()) as con:
+        return {
+            "props": prop_navigation(con),
+            "leagues": league_directory_navigation(con),
+        }
+
+
+@router.get("/api/tennis/draws")
+def tennis_draws(tour: str = "all"):
+    """Persisted major singles draws; this serving route never calls ESPN."""
+    tour = str(tour or "all").lower()
+    if tour not in ("all", "atp", "wta"):
+        raise HTTPException(400, "tour must be all, atp, or wta")
+    draws = scoreboard_store.read_tennis_draws(None if tour == "all" else tour)
+    return {
+        "available": bool(draws),
+        "source": "tennis_draw_snapshots",
+        "tours": draws,
+        "reason": None if draws else "No verified major draw has been published yet.",
+    }
+
+
+@router.get("/api/tennis/rankings")
+def tennis_rankings(tour: str = "all", limit: int = Query(50, ge=1, le=150)):
+    """Latest persisted ATP/WTA top-150 snapshots; never calls ESPN."""
+    tour = str(tour or "all").lower()
+    if tour not in ("all", "atp", "wta"):
+        raise HTTPException(400, "tour must be all, atp, or wta")
+    snapshots = scoreboard_store.read_tennis_rankings(
+        None if tour == "all" else tour,
+        limit=limit,
+    )
+    return {
+        "available": bool(snapshots),
+        "source": "tennis_ranking_snapshots",
+        "tours": snapshots,
+        "reason": None if snapshots else "No verified ATP or WTA ranking snapshot has been published yet.",
+    }
+
+
+@router.get("/api/soccer/competitions/{league}")
+def soccer_competition(league: str):
+    """Persisted competition hub data for Soccer; never calls ESPN."""
+    league = str(league or "").lower()
+    if league not in ("mls", "lcup"):
+        raise HTTPException(404, "competition snapshot is not supported")
+    snapshot = scoreboard_store.read_soccer_competition(league)
+    if snapshot is None:
+        return {
+            "available": False,
+            "league": league,
+            "reason": (
+                "MLS standings have not been published into this environment yet."
+                if league == "mls"
+                else "The Leagues Cup bracket has not been published into this environment yet."
+            ),
+        }
+    return {"available": True, **snapshot}
 
 
 @router.get("/api/stream/{league}")

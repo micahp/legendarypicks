@@ -27,11 +27,11 @@ from typing import Iterable
 # the server serves and the hub hides is the bug this module exists to close.
 VOUCHED_STATUSES = frozenset({"complete", "in_progress"})
 
-# UFC and the World Cup are not team-stats leagues and are not in
-# team_stats_coverage at all, so they are named here as SHAPE, not as permission
-# — the same exception useLeagueRouteState makes. Gating them on a team-stats row
-# they will never have would hide two leagues that ship today.
-ALWAYS_OFFERED = frozenset({"ufc", "wc"})
+# UFC, tennis, and the World Cup are not team-stats leagues and are not in
+# team_stats_coverage at all, so they are named here as SHAPE, not as permission.
+# Gating them on a team-stats row they will never have would hide leagues whose
+# shipped surfaces are vouched by their own persisted contracts.
+ALWAYS_OFFERED = frozenset({"atp", "ufc", "wc", "wta"})
 
 
 def offered_leagues(con: sqlite3.Connection) -> frozenset[str]:

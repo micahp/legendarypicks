@@ -23,7 +23,11 @@ interface NflScheduleState {
   dateGroups: [string, Game[]][]
 }
 
-export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | null): NflScheduleState {
+export function useFootballScheduleWeeks(
+  league: 'nfl' | 'ncaaf',
+  enabled: boolean,
+  explicitWeek: string | null,
+): NflScheduleState {
   const [catalog, setCatalog] = useState<NflScheduleWeeksResponse | null>(null)
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [catalogLoading, setCatalogLoading] = useState(true)
@@ -76,22 +80,22 @@ export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | nul
     let ignore = false
     setCatalogLoading(true)
     setCatalogError(null)
-    SportsService.getNflScheduleWeeks(localToday()).then(data => {
+    SportsService.getFootballScheduleWeeks(league, localToday()).then(data => {
       if (ignore) return
       if (data) {
         setCatalog(data)
       } else {
-        setCatalogError('Unable to load NFL schedule.')
+        setCatalogError(`Unable to load ${league.toUpperCase()} schedule.`)
       }
       setCatalogLoading(false)
     }).catch(() => {
       if (!ignore) {
-        setCatalogError('Unable to load NFL schedule.')
+        setCatalogError(`Unable to load ${league.toUpperCase()} schedule.`)
         setCatalogLoading(false)
       }
     })
     return () => { ignore = true }
-  }, [enabled])
+  }, [enabled, league])
 
   // Fetch games for selected week
   useEffect(() => {
@@ -103,12 +107,12 @@ export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | nul
     setGames([])
     setGamesLoading(true)
     setGamesError(null)
-    SportsService.getNflScheduleWeek(catalog.season, weekEntry.season_type, weekEntry.week).then(data => {
+    SportsService.getFootballScheduleWeek(league, catalog.season, weekEntry.season_type, weekEntry.week).then(data => {
       if (ignore) return
       if (data && Array.isArray(data.games)) {
         setGames(data.games.map((g: any) => ({
-          ...normalizeGame(g, 'nfl'),
-          league: 'NFL',
+          ...normalizeGame(g, league),
+          league: league.toUpperCase(),
         })))
       } else {
         setGamesError('Unable to load games.')
@@ -121,7 +125,7 @@ export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | nul
       }
     })
     return () => { ignore = true }
-  }, [enabled, catalog?.season, weekEntry?.season_type, weekEntry?.week])
+  }, [enabled, league, catalog?.season, weekEntry?.season_type, weekEntry?.week])
 
   // Group games by local date
   const dateGroups = useMemo(() => {
@@ -149,4 +153,8 @@ export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | nul
     nextWeekKey,
     dateGroups,
   }
+}
+
+export function useNflScheduleWeeks(enabled: boolean, explicitWeek: string | null): NflScheduleState {
+  return useFootballScheduleWeeks('nfl', enabled, explicitWeek)
 }

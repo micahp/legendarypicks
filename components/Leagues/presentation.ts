@@ -6,20 +6,13 @@ export const LEAGUE_NAMES: Record<string, string> = {
   nhl: 'NHL',
   nfl: 'NFL',
   mls: 'MLS',
+  lcup: 'Leagues Cup',
+  ccc: 'Concacaf Champions Cup',
+  campeones: 'Campeones Cup',
+  usoc: 'U.S. Open Cup',
   ncaaf: 'NCAAF',
   wc: 'FIFA World Cup',
   ufc: 'UFC',
-}
-
-export const LEAGUE_EMOJIS: Record<string, string> = {
-  mlb: '⚾',
-  nba: '🏀',
-  nhl: '🏒',
-  nfl: '🏈',
-  mls: '⚽',
-  ncaaf: '🏈',
-  wc: '⚽',
-  ufc: '🥊',
 }
 
 // Presentation order. Which of these are actually OFFERED is decided by the coverage
@@ -34,10 +27,6 @@ export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'mls', 'ncaaf', 'ufc'] 
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()
-}
-
-export function leagueEmoji(league: string): string {
-  return LEAGUE_EMOJIS[league] || '🏆'
 }
 
 // Leagues whose season crosses a calendar year, and which every publisher — ESPN

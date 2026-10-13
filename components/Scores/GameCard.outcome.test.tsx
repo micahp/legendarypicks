@@ -82,6 +82,20 @@ describe('GameCard method of victory', () => {
     expect(screen.queryByText('FINAL')).toBeNull()
   })
 
+  it('shows tournament seeds on tennis match cards and no number for unseeded players', () => {
+    render(<GameCard
+      gameId="x"
+      league="ATP"
+      homeTeam={{ teamId: 'Sinner', name: 'Jannik Sinner', seed: 1 }}
+      awayTeam={{ teamId: 'Player', name: 'Unseeded Player' }}
+      startTime="2026-08-26T15:00:00Z"
+      status="SCHEDULED"
+    />)
+    expect(screen.getByText('(1) Jannik Sinner')).toBeTruthy()
+    expect(screen.getByText('Unseeded Player')).toBeTruthy()
+    expect(screen.queryByText(/undefined.*Unseeded Player/)).toBeNull()
+  })
+
   it('labels a shootout-decided soccer final with the pens result', () => {
     render(<GameCard
       gameId="401863611"
@@ -106,5 +120,39 @@ describe('GameCard method of victory', () => {
       statusDetail="Final/OT"
     />)
     expect(screen.getByText('Final/OT')).toBeTruthy()
+  })
+})
+
+describe('GameCard postponed match', () => {
+  it('says POSTPONED and shows no 0-0 score for a match that was never played', () => {
+    // The real 09-26 row: state post, status FT, 0-0, detail Postponed.
+    render(<GameCard
+      gameId="761833"
+      league="MLS"
+      homeTeam={{ teamId: 'RBNY', name: 'Red Bull New York', score: 0, winner: false }}
+      awayTeam={{ teamId: 'STL', name: 'St. Louis CITY SC', score: 0, winner: false }}
+      startTime="2026-09-26T23:30:00Z"
+      status="FINAL"
+      statusDetail="Postponed"
+    />)
+    expect(screen.getByText('POSTPONED')).toBeTruthy()
+    expect(screen.queryByText('FINAL')).toBeNull()
+    expect(screen.queryAllByText('0')).toHaveLength(0)
+  })
+})
+
+describe('GameCard preseason label', () => {
+  it('labels a publisher-filed preseason game', () => {
+    render(<GameCard gameId="401902644" league="NBA" isPreseason
+      homeTeam={{ teamId: 'TOR', name: 'Toronto Raptors' }} awayTeam={{ teamId: 'MIA', name: 'Miami Heat' }}
+      startTime="2026-10-03T23:00:00Z" status="SCHEDULED" />)
+    expect(screen.getByText('Preseason')).toBeTruthy()
+  })
+
+  it('shows no label on a regular-season game', () => {
+    render(<GameCard gameId="401900001" league="NBA"
+      homeTeam={{ teamId: 'OKC', name: 'Thunder' }} awayTeam={{ teamId: 'HOU', name: 'Rockets' }}
+      startTime="2026-10-20T23:30:00Z" status="SCHEDULED" />)
+    expect(screen.queryByText('Preseason')).toBeNull()
   })
 })

@@ -68,16 +68,61 @@ def get_game_detail(league: str, game_id: str):
     out = {"game_id": game_id, "league": lg,
            "team_stats": [], "scoring_plays": [], "context": None, "strength": {},
            "final_score": None, "live_score": None, "state": None,
-           "period": None, "clock": None, "status_detail": None}
+           "period": None, "clock": None, "status_detail": None,
+           "start_time": None,
+           # The publisher's phase (ESPN season_type 1/2/3, slug preseason/regular-season/
+           # post-season), so the game page can say "preseason" the way the score cards do.
+           "season_type": None, "season_slug": None}
     # Game state up front so we NEVER label a live/upcoming game "final".
+    #
+    # DB FIRST. The scoreboard ingest writes a snapshot per minute for a live
+    # game carrying state, period, clock and status_detail -- the same four
+    # fields this used to open with a publisher request for. Asking ESPN first
+    # meant every game-page load spent the budget the live board spends, and a
+    # 403 (routine on this box) left the page unable to say whether the game had
+    # started. Measured 2026-08-26 on Leagues Cup 401911270: two ESPN calls per
+    # page load for values already on disk.
+    _gr = {}
     try:
-        _gr = espn.game_result(league, game_id)
-        out["state"] = _gr.get("state")
-        out["period"] = _gr.get("period")
-        out["clock"] = _gr.get("clock")
-        out["status_detail"] = _gr.get("status_detail")
+        snap_state, snap_score = _state_and_score_from_snapshot(lg, game_id)
+        if snap_state:
+            out["state"] = snap_state
+            # The score was discarded here (`_`) on the theory that
+            # `_final_score_from_db` below would supply it properly. But that
+            # reads scoring_plays/team_game_results, which for leagues without a
+            # live boxscore capture (mls/lcup/ligamx/ncaaf/atp/wta/nfl) can lag a
+            # game that just went final by hours, or never carry it at all for
+            # this specific game. Once `context` gets populated from the
+            # snapshot's team names a few lines below, the ESPN fallback block
+            # that is the ONLY other source of `final_score` never runs, because
+            # its guard is `not team_stats and not context` — team_stats is
+            # always empty for these leagues, so context alone decided whether
+            # a finished game ever got a score. Measured on MLS 761758/761769
+            # (2026-08-30): state='post', score in scoreboard_snapshots, and
+            # `final_score` stuck at null — the game page rendered "-" instead
+            # of the final. Take the score right here so a leaguewide-lagging
+            # source-of-record can never blank out a number we already have.
+            if snap_state == "post" and snap_score:
+                out["final_score"] = snap_score
+            for field in ("period", "clock", "status_detail", "season_type", "season_slug"):
+                value = _snapshot_field(lg, game_id, field)
+                if value is not None:
+                    out[field] = value
+        start_time = _snapshot_field(lg, game_id, "date")
+        if start_time is not None:
+            out["start_time"] = start_time
     except Exception:
-        _gr = {}
+        pass
+    # Only ask the publisher for what the database could not answer.
+    if out["state"] is None:
+        try:
+            _gr = espn.game_result(league, game_id)
+            out["state"] = _gr.get("state")
+            out["period"] = _gr.get("period")
+            out["clock"] = _gr.get("clock")
+            out["status_detail"] = _gr.get("status_detail")
+        except Exception:
+            _gr = {}
     if out["state"] is None:
         # ESPN is the only thing that ever told this page a game was over, so a
         # walled host (403s are routine here) made every finished game render as
@@ -135,8 +180,31 @@ def get_game_detail(league: str, game_id: str):
         except Exception:
             pass
 
-    # A DB context row means the ESPN fallback below is skipped, but the live
-    # score is not persisted — fill it from ESPN whenever the game is live.
+    # A live score IS persisted: the scoreboard ingest writes a snapshot per
+    # minute for a live game, carrying both sides plus period, clock and status
+    # detail. This used to go straight to ESPN with the comment "the live score
+    # is not persisted", which was wrong -- and because the fetch is wrapped in a
+    # bare except, a 403 or a slow host silently produced NO SCORE on a game the
+    # database could already answer. Reported 2026-08-26 on Leagues Cup
+    # 401911270, where the snapshot said America 2 - 0 Columbus at Halftime and
+    # the page showed nothing.
+    #
+    # DB first, ESPN only as the fallback. The serving path should not need a
+    # publisher for a number it already stores.
+    if out["state"] == "in" and not out["live_score"]:
+        try:
+            snap_state, snap_score = _state_and_score_from_snapshot(lg, game_id)
+            if snap_state == "in" and snap_score:
+                out["live_score"] = snap_score
+                for field, key in (("period", "period"), ("clock", "clock"),
+                                   ("status_detail", "status_detail")):
+                    if out[field] is None:
+                        value = _snapshot_field(lg, game_id, key)
+                        if value is not None:
+                            out[field] = value
+        except Exception:
+            pass
+
     if out["state"] == "in" and not out["live_score"]:
         try:
             result = espn.game_result(league, game_id)
@@ -152,6 +220,26 @@ def get_game_detail(league: str, game_id: str):
                 }
                 if out["live_score"]["home"] is None or out["live_score"]["away"] is None:
                     out["live_score"] = None
+        except Exception:
+            pass
+
+    # Team names from the snapshot before the ESPN fallback below. For a league
+    # with no persisted boxscore (everything except nba/nhl), `context` was only
+    # ever produced by that fallback, so a game page cost a publisher request
+    # purely to learn who was playing -- a fact the scoreboard ingest already
+    # wrote down. Venue/attendance/officials stay empty here: the snapshot does
+    # not carry them, and an empty string is the honest answer rather than a
+    # reason to go ask.
+    if not out["context"]:
+        try:
+            home_name = (_snapshot_field(lg, game_id, "home") or {}).get("name")
+            away_name = (_snapshot_field(lg, game_id, "away") or {}).get("name")
+            if home_name and away_name:
+                out["context"] = {
+                    "venue_name": "", "venue_city": "",
+                    "attendance": None, "officials": [],
+                    "home_team": home_name, "away_team": away_name,
+                }
         except Exception:
             pass
 
@@ -190,10 +278,15 @@ def get_game_detail(league: str, game_id: str):
 
                 if result.get("home_score") is not None and result.get("away_score") is not None:
                     sc = {"home": result["home_score"], "away": result["away_score"]}
-                    # Only "final" when the game is over; otherwise it's the live score.
+                    # Only "final" when the game is over; otherwise it's the live
+                    # score -- and NEVER overwrite one the DB already answered.
+                    # This assigned unconditionally, so the snapshot score set
+                    # above was replaced by this fetch on every request: the DB
+                    # said 2-0 and the page still depended on ESPN for it.
                     if is_final:
-                        out["final_score"] = sc
-                    else:
+                        if not out["final_score"]:
+                            out["final_score"] = sc
+                    elif not out["live_score"]:
                         out["live_score"] = sc
 
                 if home_abbrev or away_abbrev:
@@ -224,7 +317,7 @@ def get_game_detail(league: str, game_id: str):
                     continue
                 try:
                     if ab not in out["strength"]:
-                        out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                        out["strength"][ab] = _strength_for(lg, ab)
                 except Exception:
                     pass
     else:
@@ -233,7 +326,7 @@ def get_game_detail(league: str, game_id: str):
             for ab in [out["context"]["home_team"], out["context"]["away_team"]]:
                 if not ab: continue
                 try:
-                    out["strength"][ab] = espn.team_strength_map(lg).get(ab)
+                    out["strength"][ab] = _strength_for(lg, ab)
                 except Exception:
                     pass
 
@@ -274,7 +367,7 @@ def get_game_boxscore(league: str, game_id: str):
     bs = sm["boxscore"]
 
     # ── Soccer (WC / Leagues Cup / MLS) shape ──
-    if lg in ("wc", "lcup", "mls"):
+    if lg in ("wc", "lcup", "mls", "ligamx"):
         team_stats_raw = []
         for t in bs.get("teams", []):
             ha = t.get("homeAway", "")
@@ -363,7 +456,7 @@ def get_game_playbyplay(league: str, game_id: str):
         return {"available": False}
 
     # ── Soccer (WC / Leagues Cup / MLS) shape ──
-    if lg in ("wc", "lcup", "mls"):
+    if lg in ("wc", "lcup", "mls", "ligamx"):
         try:
             ev = espn.match_events(league, game_id)
         except Exception:

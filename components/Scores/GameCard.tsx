@@ -1,10 +1,16 @@
 import { useRouter } from 'next/router'
-import { formatLiveStatus } from '../../lib/liveGameStatus'
+import { formatLiveStatus, isSoccerLeague } from '../../lib/liveGameStatus'
 import type { LivePeriod } from '../../lib/liveGameStatus'
+import { audioForGame } from '../../lib/gameAudio'
+import GameRadioButton from './GameRadioButton'
+import { useRadioBlackout } from '../../lib/useRadioBlackouts'
+import RadioSources from '../RadioSources'
 
 interface TeamInfo {
   teamId: string
   name: string
+  athleteId?: string
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -28,6 +34,7 @@ interface GameProps {
   startTime: string
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   statusDetail?: string   // ESPN "Final/10" etc.
+  isPreseason?: boolean   // publisher-filed preseason; labelled on every league that says so
   subtitle?: string
   showScheduledTime?: boolean
   // Tennis: array of set scores [home, away] for each set
@@ -49,8 +56,14 @@ function getStatusBadge(status: GameProps['status']) {
     : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
 }
 
-function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
+function getStatusLabel(status: GameProps['status'], statusDetail?: string, league?: string) {
   if (status === 'LIVE') return 'LIVE'
+  // Postponed / cancelled: ESPN closes the event (state=post, score 0-0) for a match that
+  // never happened. Measured 2026-10-02: RBNY v STL read "0 0 FINAL" on 09-26 and was
+  // actually played 09-30. Same shape as SUSPENDED below, and checked before it.
+  if (status === 'FINAL' && statusDetail && /postpon/i.test(statusDetail)) return 'POSTPONED'
+  if (status === 'FINAL' && statusDetail && /cancel/i.test(statusDetail)) return 'CANCELED'
+  if (status === 'FINAL' && statusDetail && /abandon/i.test(statusDetail)) return 'ABANDONED'
   // Suspended ≠ final: ESPN closes the event (state=post) but the match isn't over.
   if (status === 'FINAL' && statusDetail && /susp/i.test(statusDetail)) return 'SUSPENDED'
   // Walkover: the publisher ended the match before it started — not a "Final" with a score.
@@ -63,7 +76,10 @@ function getStatusLabel(status: GameProps['status'], statusDetail?: string) {
   // backend computes "FT (Pens)" / "FT (AET)" (espn_client soccer branch); show it.
   if (status === 'FINAL' && statusDetail && /pens|aet|shootout/i.test(statusDetail)) return statusDetail
   // Extra innings / OT: ESPN gives "Final/10", "Final/OT" — show it instead of plain FINAL.
-  if (status === 'FINAL') return statusDetail && statusDetail.includes('/') ? statusDetail : 'FINAL'
+  if (status === 'FINAL') {
+    if (statusDetail && statusDetail.includes('/')) return statusDetail
+    return isSoccerLeague(league) ? 'FULL TIME' : 'FINAL'
+  }
   return 'SCHEDULED'
 }
 
@@ -71,6 +87,10 @@ export default function GameCard(g: GameProps) {
   const router = useRouter()
   const time = new Date(g.startTime)
   const timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  // Home team's radio first; the away team's when the home club has no verified stream.
+  const radio = g.status === 'FINAL' ? null : audioForGame(g.league, g.homeTeam?.teamId, g.awayTeam?.teamId)[0] ?? null
+  // MLB/NBA team radio is blacked out outside the home market; the backend samples it while live.
+  const blackout = useRadioBlackout(g.gameId, !!radio && g.status === 'LIVE' && (g.league === 'MLB' || g.league === 'NBA'))
 
   // UFC suppresses time on shared score surfaces; a schedule can opt in.
   const isUFC = g.league === 'UFC'
@@ -84,6 +104,7 @@ export default function GameCard(g: GameProps) {
   const isSoccer = g.league === 'WC' || g.league === 'LCUP' || g.league === 'MLS'
 
   const teamLabel = (t: GameProps['homeTeam']) => {
+    if (isTennis && t.seed) return `(${t.seed}) ${t.name}`
     // An unresolved EWC participant renders its dependency label, never a bare TBD.
     if (t.label) return t.label
     if (!isTeamSport) return t.name
@@ -102,11 +123,15 @@ export default function GameCard(g: GameProps) {
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
   const showStatusBadge = g.status === 'LIVE' || g.status === 'FINAL'
-  // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck
-  const showScore = g.status === 'LIVE' || g.status === 'FINAL'
+  // A postponed, cancelled or abandoned match is closed (FINAL) but was never played.
+  const notPlayed = g.status === 'FINAL' && !!g.statusDetail
+    && /postpon|cancel|abandon/i.test(g.statusDetail)
+  // Scores only exist once a game starts — never render 0–0 before first pitch/tip/puck,
+  // and never for a match that did not happen.
+  const showScore = (g.status === 'LIVE' || g.status === 'FINAL') && !notPlayed
 
   // Winner/loser dimming — same treatment as ScoreStrip on the detail page
-  const isFinal = g.status === 'FINAL'
+  const isFinal = g.status === 'FINAL' && !notPlayed
   // Soccer (WC, LCUP, MLS): the winner comes from the publisher's flag, never from the
   // score — a shootout-decided final is 1-1 with a winner. ESPN publishes the flag on
   // every finished competitor (measured 2026-08-19: all 11 MLS finals and 6 LCUP
@@ -152,21 +177,21 @@ export default function GameCard(g: GameProps) {
   return (
     <div
       onClick={handleClick}
-      className={`bg-zinc-900 text-zinc-100 rounded-xl p-4 shadow border border-zinc-800 transition-colors ${hasDetail ? 'hover:border-blue-500/50 cursor-pointer' : 'hover:border-zinc-700'}`}
+      className={`-mx-3 rounded-lg px-3 py-3 text-zinc-100 transition-colors ${hasDetail ? 'hover:bg-zinc-800/50 cursor-pointer' : ''}`}
     >
+      {showStatusBadge && (
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        {/* Left side: time (for scheduled, non-UFC) or period info (for live) */}
         <span className="flex items-center gap-2">
-          {showTime && <span>{timeLabel}</span>}
         </span>
 
         {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
         <span
           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
         >
-          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail) : '')}
+          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail, g.league) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail, g.league) : '')}
         </span>
       </div>
+      )}
 
       {isTennis && g.sets && g.sets.length > 0 ? (
         /* Tennis scoreboard: each player's games-per-set as aligned columns.
@@ -178,7 +203,7 @@ export default function GameCard(g: GameProps) {
             const won = isFinal && (side === 'home' ? homeSets > awaySets : awaySets > homeSets)
             return (
             <div key={side} className="flex items-center justify-between gap-3">
-              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{team.name}</span>
+              <span className={`font-semibold truncate ${isFinal ? (won ? 'text-white' : 'text-zinc-500') : 'text-zinc-200'}`}>{teamLabel(team)}</span>
               <div className="flex gap-1 shrink-0 tabular-nums">
                 {g.sets!.map((set, i) => {
                   const mine = side === 'home' ? set.homeScore : set.awayScore
@@ -202,6 +227,8 @@ export default function GameCard(g: GameProps) {
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
+            {/* Scheduled: the start time on the first team's row, in the header's own text style. */}
+            {showTime && <span className="text-xs text-zinc-400">{timeLabel}</span>}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
@@ -212,6 +239,21 @@ export default function GameCard(g: GameProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Context row under the teams: quiet facts about the game, the slot ESPN's app uses
+          for "Quarterfinal - Colosseum" or a weight class. Preseason is the first. The accent
+          colour is reserved for absence (honest-data-ui), so this stays the label grey. */}
+      {/* Radio and the Preseason label share one row: radio left (Micah, 10-08), label right.
+          Either one alone sits on the left. */}
+      {(g.isPreseason || radio) && (
+        <div className="mt-2 flex items-center justify-between gap-2">
+          {radio && <GameRadioButton src={radio.stream} team={radio.team} station={radio.display} live={g.status === 'LIVE'} blackout={blackout} />}
+          {g.isPreseason && <div className="text-xs text-zinc-500">Preseason</div>}
+        </div>
+      )}
+      {g.league === 'MLS' && (
+        <RadioSources home={g.homeTeam?.teamId || g.homeTeam?.name} away={g.awayTeam?.teamId || g.awayTeam?.name} />
       )}
     </div>
   )

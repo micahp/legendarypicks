@@ -181,19 +181,30 @@ def test_leagues_hub_contract():
     finally:
         games_router._db = _orig_db
 
-    print("== [6] ncaaf standings: conference-grouped {group, rows} shape ==")
+    print("== [6] ncaaf standings: season envelope with conference groups ==")
     ncaaf = games_router.get_standings("ncaaf")
-    check("ncaaf standings is a list", isinstance(ncaaf, list), type(ncaaf))
-    check("ncaaf has conference groups", len(ncaaf) >= 8, f"got {len(ncaaf)} groups")
-    if ncaaf:
-        first = ncaaf[0]
+    # Shape moved to the season envelope 2026-08-29 (readStandings consumes it
+    # for the season picker), matching the MLS [7] and NBA [8] contracts.
+    check("ncaaf standings is a season envelope", isinstance(ncaaf, dict), type(ncaaf))
+    ncaaf_groups = ncaaf.get("groups") if isinstance(ncaaf, dict) else None
+    check("ncaaf envelope carries groups", isinstance(ncaaf_groups, list),
+          type(ncaaf_groups))
+    check("ncaaf names its season", isinstance(ncaaf.get("season"), int),
+          f"season={ncaaf.get('season')!r}")
+    check("ncaaf offers available_seasons",
+          isinstance(ncaaf.get("available_seasons"), list) and ncaaf["available_seasons"],
+          f"available_seasons={ncaaf.get('available_seasons')!r}")
+    if ncaaf_groups:
+        check("ncaaf has conference groups", len(ncaaf_groups) >= 5,
+              f"got {len(ncaaf_groups)} groups")
+        first = ncaaf_groups[0]
         check("first group has group+rows", isinstance(first, dict)
               and isinstance(first.get("group"), str) and first.get("group")
               and isinstance(first.get("rows"), list) and first["rows"],
               f"first={str(first)[:120]}")
         # every row carries the football columns; no fabricated soccer fields
         bad = []
-        for g in ncaaf:
+        for g in ncaaf_groups:
             for r in g["rows"]:
                 for key in ("rank", "abbrev", "name", "played", "wins", "losses"):
                     if key not in r:
@@ -201,13 +212,12 @@ def test_leagues_hub_contract():
                 if "points" in r or "draws" in r or "gf" in r:
                     bad.append(f"{g['group']}:{r.get('abbrev')} has soccer-only field")
         check("every row has football columns and no soccer-only fields", not bad, f"{bad[:3]}")
-        ranks = [r["rank"] for g in ncaaf for r in g["rows"]]
         per_group_ok = all(
             [r["rank"] for r in g["rows"]] == list(range(1, len(g["rows"]) + 1))
-            for g in ncaaf
+            for g in ncaaf_groups
         )
         check("ranks are 1..N per conference", per_group_ok,
-              f"first ranks {ranks[:5]}")
+              f"first ranks {[r['rank'] for r in ncaaf_groups[0]['rows']][:5]}")
 
     print("== [7] mls standings: seasoned, conference-grouped soccer shape ==")
     # Shape changed 2026-08-17: MLS now returns {season, phase, in_progress, groups}

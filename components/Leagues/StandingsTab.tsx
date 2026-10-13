@@ -352,22 +352,22 @@ function TeamSportStandings({ teams }: { teams: TeamStats[] }) {
               <td className="py-3 px-3 text-right text-zinc-200">{team.wins}</td>
               <td className="py-3 px-3 text-right text-zinc-200">{team.losses}</td>
               <td className="py-3 px-3 text-right text-zinc-200 font-mono tabular-nums">
-                {(team.win_pct * 100).toFixed(1)}%
+                {typeof team.win_pct === 'number' ? `${(team.win_pct * 100).toFixed(1)}%` : '—'}
               </td>
               <td className="py-3 px-3 text-right">
-                <span className={team.differential > 0 ? 'text-emerald-400' : team.differential < 0 ? 'text-red-400' : 'text-zinc-400'}>
-                  {team.differential > 0 ? '+' : ''}{team.differential}
+                <span className={typeof team.differential === 'number' && team.differential > 0 ? 'text-emerald-400' : typeof team.differential === 'number' && team.differential < 0 ? 'text-red-400' : 'text-zinc-400'}>
+                  {typeof team.differential === 'number' ? `${team.differential > 0 ? '+' : ''}${team.differential}` : '—'}
                 </span>
               </td>
               <td className="py-3 px-3 text-right">
-                <span className={team.streak?.startsWith('W') ? 'text-emerald-400' : 'text-red-400'}>
-                  {team.streak}
+                <span className={team.streak?.startsWith('W') ? 'text-emerald-400' : team.streak ? 'text-red-400' : 'text-zinc-400'}>
+                  {team.streak ?? '—'}
                 </span>
               </td>
               {/* NHL's L10 is three parts (`7-2-1`) where every other league's is two,
                   so it is the one that wraps to a second line on a phone. */}
               <td className="py-3 pl-3 pr-4 text-right text-zinc-400 font-mono tabular-nums whitespace-nowrap">
-                {team.last10}
+                {team.last10 ?? '—'}
               </td>
             </tr>
           ))}

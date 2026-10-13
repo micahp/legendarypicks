@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh NFL transactions ticker (ESPN, incremental)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/nfl_transactions_sync.py
+TimeoutStartSec=120
+Nice=10

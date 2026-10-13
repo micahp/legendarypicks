@@ -19,6 +19,16 @@ from .targets import FighterTarget  # noqa: E402
 from .card import CardIdentity  # noqa: E402
 from .fetch import SourceUnavailable  # noqa: E402
 
+# ESPN's limit is a burst rate per host and the budget is shared with the serving
+# path: on 2026-08-24 this plan inherited espn_client's min_interval=0, fired 52
+# requests inside one minute twice, and 26 of the resulting refusals landed on
+# uvicorn. The knobs and the reasoning now live in espn_client.batch_pacing().
+#
+# Applied to the two functions that FAN OUT rather than to the runner's main(),
+# because a test and a hand-rebuilt in-process plan enter through them too.
+_batch_pacing = espn.batch_pacing
+
+
 @dataclass(frozen=True)
 class PreparedLog:
     player_id: int
@@ -89,7 +99,10 @@ def _resolve_target_for_plan(
         )
         return None, games
     else:
-        identity = ingest.resolve_from_card(target.name, target.opponent, games)
+        identity = ingest.resolve_from_card(
+            target.name, target.opponent, games,
+            opponent_espn_id=target.opponent_espn_id,
+        )
     if identity is None:
         plan.unresolved.append(
             "{} (card={}, opponent={})".format(
@@ -143,6 +156,17 @@ def build_plan(
     emit: Callable[[str], None] = print,
 ) -> IngestPlan:
     """Complete all source work and return an immutable-to-DB write plan."""
+    with _batch_pacing():
+        return _build_plan(targets, existing_keys, owner_by_espn, limit, emit)
+
+
+def _build_plan(
+    targets: Sequence[FighterTarget],
+    existing_keys: Set[Tuple[str, str, int, str]],
+    owner_by_espn: Dict[str, int],
+    limit: int,
+    emit: Callable[[str], None] = print,
+) -> IngestPlan:
     plan = IngestPlan(target_count=len(targets))
     card_cache: Dict[Optional[str], object] = {}
     prepared_by_key: Dict[Tuple[str, str, int, str], PreparedLog] = {}
@@ -247,6 +271,16 @@ def build_current_card_plan(
     emit: Callable[[str], None] = print,
 ) -> IngestPlan:
     """Plan only completed fights on the scoped card, without athlete-history calls."""
+    with _batch_pacing():
+        return _build_current_card_plan(targets, existing_keys, owner_by_espn, emit)
+
+
+def _build_current_card_plan(
+    targets: Sequence[FighterTarget],
+    existing_keys: Set[Tuple[str, str, int, str]],
+    owner_by_espn: Dict[str, int],
+    emit: Callable[[str], None] = print,
+) -> IngestPlan:
     plan = IngestPlan(target_count=len(targets))
     card_cache: Dict[Optional[str], object] = {}
     status_cache: Dict[Tuple[str, str], object] = {}

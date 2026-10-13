@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh production UFC fight stats four times daily
+
+[Timer]
+OnCalendar=*-*-* 05,11,17,23:17:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=legendarypicks-ufc-fight-stats-prod.service
+
+[Install]
+WantedBy=timers.target

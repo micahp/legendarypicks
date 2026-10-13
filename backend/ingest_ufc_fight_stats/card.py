@@ -74,6 +74,11 @@ def _fighters_from_card(games: Sequence[dict]) -> List[dict]:
                         "id": athlete_id,
                         "name": name,
                         "opponent": str(opponent.get("name") or ""),
+                        # The publisher's id for the OTHER side of this fight. A fighter we
+                        # cannot name-match is still uniquely identified by who they are
+                        # standing across from, and an id is a fact where a spelling is a
+                        # vocabulary. See the opponent_id ladder in resolve_from_card.
+                        "opponent_id": str(opponent.get("id") or "") or None,
                         "fight_id": str(game.get("game_id") or "") or None,
                         "event_id": str(game.get("event_id") or "") or None,
                     }
@@ -84,6 +89,7 @@ def resolve_from_card(
     name: str,
     opponent: Optional[str],
     games: Sequence[dict],
+    opponent_espn_id: Optional[str] = None,
 ) -> Optional[CardIdentity]:
     """Resolve one source fighter using conservative card and pair context."""
     fighters = _fighters_from_card(games)
@@ -94,6 +100,31 @@ def resolve_from_card(
         return CardIdentity(
             row["id"], row["name"], row["fight_id"], "exact", row["event_id"]
         )
+
+    # A fight has two sides. If we already own the publisher's id for the OTHER side, the
+    # fight identifies this side without comparing this side's name to anything, which is
+    # the only kind of repair that is safe on an identity.
+    #
+    # Every ladder below this one compares the target's own spelling, and that is exactly
+    # what a two-vocabulary case defeats. On 2026-08-24 both standing SKIPs were first-name
+    # divergences: we held "Sergey Spivak" where ESPN publishes "Serghei Spivac", and
+    # "Stanley Dorsainvil" where ESPN publishes "Stan Dorsainvil". Neither is a typo to be
+    # corrected; they are two publishers' spellings of one person. The prefix, first_last and
+    # paired-name ladders all refused, correctly, and the fighters were skipped every run.
+    # Their opponents, Vitor Petrino and Gauge Young, were already resolved on our side, and
+    # ESPN's own card pairs 4421246 with 5060483 and 5397038 with 5085318. The answer was
+    # sitting in the payload the whole time under a key we were discarding.
+    #
+    # Deliberately NOT gated on any name agreement. Adding "and the surname must match" would
+    # have re-broken Spivak/Spivac and bought nothing: the opponent id is already unique on
+    # the card, and a second, weaker condition cannot make a unique match safer.
+    if opponent_espn_id:
+        by_opponent = [row for row in fighters if row.get("opponent_id") == opponent_espn_id]
+        if len(by_opponent) == 1:
+            row = by_opponent[0]
+            return CardIdentity(
+                row["id"], row["name"], row["fight_id"], "opponent_id", row["event_id"]
+            )
     if len(target) >= 7:
         prefix = [
             row

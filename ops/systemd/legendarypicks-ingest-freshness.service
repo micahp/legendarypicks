@@ -1,0 +1,21 @@
+[Unit]
+Description=Alert if any ingest_registry job's table has stopped advancing (dev and prod)
+After=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+Environment=PYTHONUNBUFFERED=1
+
+# SEPARATE from legendarypicks-ingest-jobs on purpose. If the check lived inside the ingest
+# unit, "the ingest failed" and "the data is stale" would share one colour, and the second
+# is the one that matters: soccer logs went 28 days stale while nothing failed at all.
+#
+# This reads ingest_registry's own freshness declarations, so it cannot drift from the job
+# list; a job that is added is automatically checked, which is the entire point of the
+# registry. It reports only and never starts an ingest.
+ExecStart=/root/legendarypicks/backend/venv/bin/python monitor_ingest_freshness.py
+
+TimeoutStartSec=300

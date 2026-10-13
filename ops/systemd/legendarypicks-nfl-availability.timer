@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh NFL availability inputs after the weekly schedule ingest
+
+[Timer]
+OnCalendar=Tue *-*-* 09:30:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-availability.service
+
+[Install]
+WantedBy=timers.target

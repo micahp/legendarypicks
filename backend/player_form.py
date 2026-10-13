@@ -40,15 +40,43 @@ HEADLINE_STATS = {
 _MIN_GAMES = 3       # fewer than this is not form, it is a sample
 _PER_TEAM = 3
 _RECENT = 5
+# A gap this wide between a player's newest log and their own team's newest log is
+# past a normal week off (soccer's longest scheduled gaps run 2-3 weeks for
+# internationals) and into "no longer on this roster" territory -- transferred,
+# long-term injury, or released. 21 days, not 35: the Cuypers case was a 4-month
+# gap while teammates kept playing weekly, so this only needs to clear one normal
+# international window, not guess at the exact length of every possible absence.
+_STALE_DAYS = 21
 
 
-def lines(league, teams, db_path=None, con=None, per_team=_PER_TEAM):
+def _parse_date(s):
+    import datetime
+    return datetime.date.fromisoformat(str(s)[:10])
+
+
+def _today():
+    import datetime
+    return datetime.date.today()
+
+
+def lines(league, teams, db_path=None, con=None, per_team=_PER_TEAM, as_of=None):
     """-> list of grounding strings, one per player. Empty for a league with no declared
-    headline stat, no logs, or no team column. Never raises."""
+    headline stat, no logs, or no team column. Never raises.
+
+    `as_of`: the date to judge "current" against for the transfer/injury staleness
+    filter in `_team_lines` -- the story's own game date when the caller has one,
+    real today otherwise. Threading the game date through (rather than always
+    reading the wall clock) is what makes this testable with fixed fixture dates,
+    and is also more correct: a story pre-generated days before kickoff should
+    judge staleness against the game it is written for, not the moment the batch
+    job happened to run.
+    """
     league = (league or "").lower()
     stats = HEADLINE_STATS.get(league)
     if not stats or not teams:
         return []
+    if as_of is None:
+        as_of = _today()
     try:
         owned = con is None
         if owned:
@@ -60,7 +88,7 @@ def lines(league, teams, db_path=None, con=None, per_team=_PER_TEAM):
                 return []
             out = []
             for team in teams:
-                out.extend(_team_lines(con, league, team, season, stats, per_team))
+                out.extend(_team_lines(con, league, team, season, stats, per_team, as_of))
             return out
         finally:
             if owned:
@@ -75,7 +103,7 @@ def _latest_season(con, league):
     return row["s"] if row and row["s"] is not None else None
 
 
-def _team_lines(con, league, team, season, stats, per_team):
+def _team_lines(con, league, team, season, stats, per_team, as_of):
     """The team's most productive players on its headline stat, with their last five."""
     rows = con.execute(
         """SELECT l.player_id, p.name, l.stats, l.game_date, l.game_no
@@ -87,14 +115,38 @@ def _team_lines(con, league, team, season, stats, per_team):
     key, _label = stats[0]
     by_player = {}
     for r in rows:
-        bucket = by_player.setdefault(r["player_id"], {"name": r["name"], "logs": []})
+        bucket = by_player.setdefault(r["player_id"], {"name": r["name"], "logs": [], "latest": None})
+        if bucket["latest"] is None:
+            bucket["latest"] = r["game_date"]  # rows are DESC, so the first hit is the newest
         if len(bucket["logs"]) < _RECENT:
             bucket["logs"].append(r["stats"])
+
+    # A player transferred out (or on long-term injury) does not stop having played well
+    # for this team -- their last five logs are real -- but naming them in a CURRENT
+    # preview reads as if they are still on the roster. Reported 2026-08-30: a Chicago
+    # Fire preview cited Hugo Cuypers, who had already been transferred to Monterrey;
+    # his last MLS game log is from 2026-04-26, four months before the story ran, and
+    # every other Chicago player's newest log was ALSO April 26 -- the whole team's
+    # capture had stalled, not just his. A gap measured against teammates would have
+    # missed this exact case (everyone tied at zero days apart), so this measures
+    # against the real calendar: if a player's newest log is not within `_STALE_DAYS` of
+    # today, they are not safe to call "in form" right now, whether that is because they
+    # left or because our own capture for this team stopped. No roster-membership feed
+    # is wired to this reader (`roster_snapshots` exists in the schema but has never been
+    # published for mls) -- a player's own log recency is the only signal already in hand.
+    def _is_current(info):
+        if not info["latest"]:
+            return True  # no date to compare against -- do not invent a reason to exclude
+        try:
+            gap = (as_of - _parse_date(info["latest"])).days
+        except Exception:
+            return True
+        return gap <= _STALE_DAYS
 
     ranked = []
     for pid, info in by_player.items():
         values = _values(info["logs"], key)
-        if len(values) < _MIN_GAMES or not info["name"]:
+        if len(values) < _MIN_GAMES or not info["name"] or not _is_current(info):
             continue
         ranked.append((sum(values) / len(values), pid, info))
     ranked.sort(key=lambda x: x[0], reverse=True)

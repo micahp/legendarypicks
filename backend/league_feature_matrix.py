@@ -4,8 +4,8 @@
     venv/bin/python league_feature_matrix.py --db data/picks.dev.db
     venv/bin/python league_feature_matrix.py --db data/picks.db --compare data/picks.dev.db
 
-Every cell is a COUNT of the rows that back a surface, turned into a mark. That is
-the point: a hand-maintained feature matrix is a claim about the product, and the
+Every count cell is paired with the explicit season keys behind that surface. That
+is the point: a hand-maintained feature matrix is a claim about the product, and the
 claims in this repo have a habit of outliving the code
 (`docs/DATA-SPINE.md` asserted MLB carried no espn_id for a week after 783 landed).
 This one cannot drift, because it is derived on every run.
@@ -18,9 +18,10 @@ Marks:
     HIDDEN  the league is not offered by this database at all
 
 `offered` comes from `league_offering.offered_leagues`, the same registry the hub
-and the search gate read. A league can be fully populated and still HIDDEN — that
-is exactly NCAAF on production today, and the row shows both facts at once rather
-than letting one hide the other.
+and the search gate read. A league can be populated and still HIDDEN — ATP and
+WTA on the copied 2026-08-24 database carry identities and props while remaining
+unoffered, and the row shows both facts at once rather than letting one hide the
+other.
 
 What this does NOT measure: whether a page renders. Rows are necessary and not
 sufficient, and a green row here is a claim about the database, not about the
@@ -40,9 +41,9 @@ from league_offering import offered_leagues
 # means the check is computed specially below.
 FEATURES = [
     ("players",      "players",             ""),
-    ("game logs",    "player_game_logs",    ""),
-    ("season stats", "player_stats",        ""),
-    ("game detail",  "team_game_results",   ""),
+    ("player game logs", "player_game_logs",  ""),
+    ("player stats", "player_stats",        ""),
+    ("team game results", "team_game_results", ""),
     ("team stats",   "team_game_stats",     ""),
     ("coverage row", "team_stats_coverage", ""),
     ("scoring plays", "scoring_plays",      ""),
@@ -56,12 +57,12 @@ FEATURES = [
 # Stated per league rather than inferred: "we never built it" and "it broke" look
 # identical in a count, and only one of them is a defect.
 NOT_APPLICABLE = {
-    "ufc":   {"game detail", "team stats", "coverage row", "scoring plays", "game context"},
+    "ufc":   {"team game results", "team stats", "coverage row", "scoring plays", "game context"},
     "wc":    {"team stats"},
-    "atp":   {"game detail", "team stats", "coverage row", "scoring plays",
-              "game context", "game logs", "season stats"},
-    "wta":   {"game detail", "team stats", "coverage row", "scoring plays",
-              "game context", "game logs", "season stats"},
+    "atp":   {"team game results", "team stats", "coverage row", "scoring plays",
+              "game context", "player stats"},
+    "wta":   {"team game results", "team stats", "coverage row", "scoring plays",
+              "game context", "player stats"},
     "lcup":  {"team stats", "coverage row"},
 }
 
@@ -113,14 +114,128 @@ def _linked_prop_games(con, league: str, tables: set[str]) -> tuple[int, int] | 
     return (row[0] or 0, row[1] or 0)
 
 
+def _prop_inventory(con, league: str, tables: set[str]):
+    """Counts by source and market: total, graded, and reachable graded rows."""
+    if not {"props", "prop_games", "prop_results"} <= tables:
+        return None
+    prop_columns = {row[1] for row in con.execute("PRAGMA table_info(props)")}
+    game_columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
+    result_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(prop_results)")
+    }
+    if not {"game_id", "market", "source"} <= prop_columns:
+        return None
+    if not {"id", "league", "espn_event_id"} <= game_columns:
+        return None
+    if not {"prop_id", "actual_value"} <= result_columns:
+        return None
+    rows = con.execute(
+        """SELECT COALESCE(NULLIF(TRIM(p.source), ''), '(blank)') AS source,
+                  COALESCE(NULLIF(TRIM(p.market), ''), '(blank)') AS market,
+                  COUNT(*) AS total,
+                  SUM(EXISTS(SELECT 1 FROM prop_results r
+                              WHERE r.prop_id=p.id AND r.actual_value IS NOT NULL)) AS graded,
+                  SUM(EXISTS(SELECT 1 FROM prop_results r
+                              WHERE r.prop_id=p.id AND r.actual_value IS NOT NULL)
+                      AND g.espn_event_id IS NOT NULL
+                      AND g.espn_event_id != '') AS reachable
+             FROM props p
+             JOIN prop_games g ON g.id=p.game_id
+            WHERE LOWER(g.league)=?
+            GROUP BY source, market
+            ORDER BY source, total DESC, market""",
+        (league,),
+    ).fetchall()
+    return [
+        {
+            "source": row[0],
+            "market": row[1],
+            "total": row[2],
+            "graded": row[3] or 0,
+            "reachable": row[4] or 0,
+        }
+        for row in rows
+    ]
+
+
+YEAR_SURFACES = {
+    "player game logs": ("player_game_logs", "season"),
+    "player stats": ("player_stats", "season"),
+    "team game results": ("team_game_results", "season"),
+    # team_game_stats has no season column. Its only durable season evidence is
+    # the reciprocal result row for the same league/game. Report rows that
+    # cannot make that join instead of assigning captured_at's calendar year.
+    "team stats": ("team_game_stats", None),
+}
+
+
+def _years(con, label: str, league: str, tables: set[str]):
+    """Return explicit season set plus rows with no season evidence."""
+    table, season_column = YEAR_SURFACES[label]
+    if table not in tables:
+        return None
+    columns = {row[1] for row in con.execute(f"PRAGMA table_info({table})")}
+    if "league" not in columns:
+        return None
+    if season_column is not None:
+        if season_column not in columns:
+            return None
+        years = tuple(
+            row[0]
+            for row in con.execute(
+                f"SELECT DISTINCT {season_column} FROM {table} "
+                f"WHERE LOWER(league)=? AND {season_column} IS NOT NULL "
+                f"ORDER BY {season_column}",
+                (league,),
+            )
+        )
+        unassigned = con.execute(
+            f"SELECT COUNT(*) FROM {table} "
+            f"WHERE LOWER(league)=? AND {season_column} IS NULL",
+            (league,),
+        ).fetchone()[0]
+        return {"years": years, "unassigned": unassigned, "basis": "explicit"}
+
+    if "team_game_results" not in tables:
+        return None
+    result_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(team_game_results)")
+    }
+    if not {"league", "game_id", "season"} <= result_columns or "game_id" not in columns:
+        return None
+    years = tuple(
+        row[0]
+        for row in con.execute(
+            """SELECT DISTINCT r.season
+                 FROM team_game_stats s
+                 JOIN team_game_results r
+                   ON LOWER(r.league)=LOWER(s.league) AND r.game_id=s.game_id
+                WHERE LOWER(s.league)=? AND r.season IS NOT NULL
+                ORDER BY r.season""",
+            (league,),
+        )
+    )
+    unassigned = con.execute(
+        """SELECT COUNT(*) FROM team_game_stats s
+             WHERE LOWER(s.league)=?
+               AND NOT EXISTS(
+                   SELECT 1 FROM team_game_results r
+                    WHERE LOWER(r.league)=LOWER(s.league)
+                      AND r.game_id=s.game_id AND r.season IS NOT NULL)""",
+        (league,),
+    ).fetchone()[0]
+    return {"years": years, "unassigned": unassigned, "basis": "result join"}
+
+
 # ── product surfaces ──────────────────────────────────────────────────────────
 #
 # Rows in a table do not prove a page works. These ask the next question: is
 # there anything BEHIND each surface a user actually opens, and can they reach
 # it? Every one is measured from the database, deliberately — the ESPN-backed
-# surfaces (standings, scoreboard) cannot be probed without spending a request
-# budget that is a count per host, so they are listed as UNPROBED rather than
-# guessed at. See .claude/skills/espn-request-budget.
+# surfaces (standings, scoreboard freshness) cannot be probed without spending
+# a request budget that is a count per host, so they are listed as UNPROBED
+# rather than guessed at. Live-state *storage* is measurable from the durable
+# scoreboard snapshot, including when it was last fetched.
 SURFACE_SQL = {
     # A player page is worth opening if the person has anything on it at all.
     "player detail": """
@@ -236,13 +351,41 @@ LIFECYCLE_SQL = {
 
 # Surfaces we cannot measure without an ESPN request. Never render these as a
 # pass or a fail: "evidence unavailable" is neither.
-UNPROBED = ("standings", "scoreboard / scores", "live game state")
+UNPROBED = ("standings", "scoreboard / scores freshness")
 
-# The DURING state is one of them, and it is not an oversight. Whether a page
-# says anything useful mid-game is answered by the live scoreboard, and probing
-# it costs a request budget that is a COUNT per host. Rendered as UNPROBED so the
-# gap stays visible instead of reading as a zero.
-LIFECYCLE_UNPROBED = "DURING — live state"
+
+def _live_snapshot(con, league: str, tables: set[str]):
+    """Current stored live-state evidence and its freshness, or None."""
+    if "scoreboard_snapshots" not in tables:
+        return None
+    columns = {
+        row[1] for row in con.execute("PRAGMA table_info(scoreboard_snapshots)")
+    }
+    if not {"league", "state", "fetched_at"} <= columns:
+        return None
+    row = con.execute(
+        """SELECT COUNT(*) AS total,
+                  SUM(LOWER(COALESCE(state,'')) IN ('in','live')) AS live,
+                  MAX(fetched_at) AS fetched_at
+             FROM scoreboard_snapshots WHERE LOWER(league)=?""",
+        (league,),
+    ).fetchone()
+    return {
+        "total": row[0] or 0,
+        "live": row[1] or 0,
+        "fetched_at": row[2],
+    }
+
+
+def _format_live_snapshot(value) -> str:
+    if value is None:
+        return "n/a"
+    if not value["total"]:
+        return "NO SNAPSHOT"
+    fetched = str(value["fetched_at"] or "unknown")
+    if len(fetched) >= 16:
+        fetched = fetched[5:16].replace("T", " ")
+    return f"{value['live']}/{value['total']} @ {fetched}"
 
 
 def _surface(con, sql: str, league: str, tables: set[str]) -> int | None:
@@ -262,8 +405,7 @@ def measure(path: str) -> dict:
         # Leagues Cup has game_story rows and nothing else, so a narrower probe
         # would leave it off the matrix entirely — the exact blind spot this
         # tool exists to remove.
-        for t in ("players", "prop_games", "team_stats_coverage",
-                  "game_story", "news_items", "team_game_results"):
+        for t in {table for _, table, _ in FEATURES} | {"prop_games"}:
             if t in tables:
                 leagues |= {r[0] for r in con.execute(
                     f"SELECT DISTINCT LOWER(league) FROM {t}")
@@ -275,12 +417,18 @@ def measure(path: str) -> dict:
             cells["props"] = _props_count(con, lg, tables)
             surfaces = {k: _surface(con, q, lg, tables) for k, q in SURFACE_SQL.items()}
             lifecycle = {k: _surface(con, q, lg, tables) for k, q in LIFECYCLE_SQL.items()}
+            years = {
+                label: _years(con, label, lg, tables) for label in YEAR_SURFACES
+            }
             out[lg] = {
                 "offered": lg in offered,
                 "cells": cells,
                 "prop_link": _linked_prop_games(con, lg, tables),
                 "surfaces": surfaces,
                 "lifecycle": lifecycle,
+                "years": years,
+                "prop_inventory": _prop_inventory(con, lg, tables),
+                "live_snapshot": _live_snapshot(con, lg, tables),
             }
         return out
 
@@ -293,14 +441,29 @@ def mark(label: str, league: str, n: int | None) -> str:
     return f"{n:,}" if n else "--"
 
 
-def render(data: dict, title: str) -> None:
+def render(data: dict, title: str, *, props_detail: bool = False) -> None:
     labels = [l for l, _, _ in FEATURES] + ["props"]
     # Every block shares one label column so the league columns line up down the
     # whole page — a row that shifts by two characters is a row you read wrong.
     width = max(len(l) for l in
-                labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL) + [LIFECYCLE_UNPROBED]) + 2
+                labels + list(SURFACE_SQL) + list(LIFECYCLE_SQL)
+                + ["DURING — live snapshot"]) + 2
     leagues = list(data)
-    colw = max(9, max(len(l) for l in leagues) + 2)
+    evidence_width = max(
+        (
+            len(value)
+            for league in leagues
+            for value in (
+                *(
+                    _format_years(data[league]["years"].get(label))
+                    for label in YEAR_SURFACES
+                ),
+                _format_live_snapshot(data[league].get("live_snapshot")),
+            )
+        ),
+        default=0,
+    )
+    colw = max(9, max(len(l) for l in leagues) + 2, evidence_width + 2)
 
     print(f"\n{title}")
     print("=" * (width + colw * len(leagues)))
@@ -313,6 +476,15 @@ def render(data: dict, title: str) -> None:
                       for l in leagues)
         print(f"{label:<{width}}{row}")
 
+    print("\nyears by data surface — explicit sets; gaps stay visible")
+    print("-" * (width + colw * len(leagues)))
+    for label in YEAR_SURFACES:
+        row = "".join(
+            f"{_format_years(data[league]['years'].get(label)):>{colw}}"
+            for league in leagues
+        )
+        print(f"{label:<{width}}{row}")
+
     # Everything above counts rows. Everything below asks whether a reader can
     # reach them — which is a different question and the one that kept being
     # answered by assumption. These were computed on every run since this file
@@ -321,7 +493,12 @@ def render(data: dict, title: str) -> None:
            list(SURFACE_SQL)[:3])
     _block(data, leagues, width, colw,
            "game detail, by state — the page does four jobs, not one",
-           list(LIFECYCLE_SQL), unprobed=LIFECYCLE_UNPROBED)
+           list(LIFECYCLE_SQL))
+    live_row = "".join(
+        f"{_format_live_snapshot(data[league].get('live_snapshot')):>{colw}}"
+        for league in leagues
+    )
+    print(f"{'DURING — live snapshot':<{width}}{live_row}")
 
     print("\nprop_games linked to an ESPN event (unlinked props never reach a game page):")
     for l in leagues:
@@ -329,6 +506,39 @@ def render(data: dict, title: str) -> None:
         if pl and pl[1]:
             flag = "" if pl[0] == pl[1] else "   <-- gap"
             print(f"  {l:<8} {pl[0]:>4} / {pl[1]:<4}{flag}")
+
+    print("\nprops by source / market (graded, reachable, total):")
+    for league in leagues:
+        inventory = data[league].get("prop_inventory")
+        if inventory is None:
+            print(f"  {league}: n/a")
+            continue
+        if not inventory:
+            print(f"  {league}: --")
+            continue
+        markets = {row["market"] for row in inventory}
+        print(f"  {league}: {len(markets)} distinct market(s)")
+        sources = []
+        for row in inventory:
+            if row["source"] not in sources:
+                sources.append(row["source"])
+        for source in sources:
+            source_rows = [row for row in inventory if row["source"] == source]
+            graded = sum(row["graded"] for row in source_rows)
+            reachable = sum(row["reachable"] for row in source_rows)
+            total = sum(row["total"] for row in source_rows)
+            print(
+                f"    {source}: {graded:,} graded / {reachable:,} reachable / "
+                f"{total:,} total"
+            )
+            if props_detail:
+                for row in source_rows:
+                    print(
+                        f"      {row['market']}: {row['graded']:,} / "
+                        f"{row['reachable']:,} / {row['total']:,}"
+                    )
+        if not props_detail:
+            print("    market rows hidden; pass --props-detail to print every stored value")
 
     print(f"\nnot measured here: {', '.join(UNPROBED)} — every one is an ESPN read,")
     print("and the budget is a count per host. Absent evidence is not a zero.")
@@ -347,16 +557,30 @@ def _block(data, leagues, width, colw, title, labels, unprobed=None):
         print(f"{unprobed:<{width}}" + "".join(f"{'UNPROBED':>{colw}}" for _ in leagues))
 
 
+def _format_years(value) -> str:
+    if value is None:
+        return "n/a"
+    years = ",".join(str(year) for year in value["years"]) or "--"
+    if value["unassigned"]:
+        years += f" +{value['unassigned']}?"
+    return years
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True)
     ap.add_argument("--compare", help="second database to render alongside")
+    ap.add_argument(
+        "--props-detail",
+        action="store_true",
+        help="print every source/market row (MLB alone can exceed 1,000 rows)",
+    )
     args = ap.parse_args()
     for path in filter(None, (args.db, args.compare)):
         if not os.path.exists(path):
             print(f"no such database: {path}", file=sys.stderr)
             return 2
-        render(measure(path), os.path.basename(path))
+        render(measure(path), os.path.basename(path), props_detail=args.props_detail)
     return 0
 
 

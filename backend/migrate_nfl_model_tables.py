@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""migrate_nfl_model_tables.py -- create the NFL model tables defined by SPEC A, section 7.
+
+Idempotent: every statement is CREATE ... IF NOT EXISTS. Running it twice changes nothing.
+Columns are exactly those named in the spec; the test suite compares them to the spec's list.
+Nothing is dropped and no existing table is altered.
+
+Usage:
+  cd backend && LP_DB_PATH=/abs/path/picks.dev.db venv/bin/python migrate_nfl_model_tables.py
+"""
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+DB = os.environ.get("LP_DB_PATH") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
+
+SEEDS = [1, 2, 3, 4, 5, 6, 7]
+SEED_COLS = ", ".join("p_seed_%d REAL" % k for k in SEEDS)
+
+STATEMENTS = [
+    # One row per model run: tuning grid points, holdouts, weekly runs.
+    """CREATE TABLE IF NOT EXISTS model_runs (
+        run_id TEXT PRIMARY KEY,
+        league TEXT NOT NULL,
+        season INTEGER,
+        week INTEGER,
+        model TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        params_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        error TEXT)""",
+    """CREATE TABLE IF NOT EXISTS team_ratings (
+        run_id TEXT NOT NULL,
+        league TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        week INTEGER NOT NULL,
+        team TEXT NOT NULL,
+        "off" REAL,
+        "def" REAL,
+        overall REAL,
+        games INTEGER,
+        as_of TEXT NOT NULL)""",
+    """CREATE INDEX IF NOT EXISTS idx_team_ratings_run ON team_ratings(run_id)""",
+    # Game projections. A game has at most one locked row PER MODEL VERSION (partial unique index
+    # created in migrate(), after the model_version column is guaranteed to exist).
+    """CREATE TABLE IF NOT EXISTS game_projections (
+        run_id TEXT NOT NULL,
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        week INTEGER NOT NULL,
+        home TEXT NOT NULL,
+        away TEXT NOT NULL,
+        proj_home REAL,
+        proj_away REAL,
+        proj_margin REAL NOT NULL,
+        proj_total REAL NOT NULL,
+        p_home_win REAL NOT NULL,
+        market_spread REAL,
+        market_total REAL,
+        market_source TEXT,
+        locked INTEGER NOT NULL,
+        locked_at TEXT NOT NULL,
+        model_version TEXT,
+        line_snapshot_id INTEGER)""",
+    # The market line a lock was made against, copied at lock time with when we captured it and
+    # when the publisher's file was ingested. nfl_schedule lines change after ingest (17 differed
+    # from upstream on 10-10, REVIEW-SPEC-A), so grading reads the snapshot, never the schedule.
+    """CREATE TABLE IF NOT EXISTS nfl_line_snapshots (
+        snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        captured_at TEXT NOT NULL,
+        source_ingested_at TEXT,
+        spread_line REAL,
+        total_line REAL,
+        home_moneyline REAL,
+        away_moneyline REAL)""",
+    """CREATE INDEX IF NOT EXISTS idx_game_projections_week
+        ON game_projections(league, season, week)""",
+    # Playoff odds per team per run.
+    """CREATE TABLE IF NOT EXISTS playoff_odds (
+        run_id TEXT NOT NULL,
+        league TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        week INTEGER NOT NULL,
+        team TEXT NOT NULL,
+        p_playoffs REAL,
+        p_division REAL,
+        p_bye REAL,
+        %s,
+        wins_mean REAL,
+        wins_p10 REAL,
+        wins_p90 REAL,
+        d_playoffs REAL,
+        as_of TEXT NOT NULL)""" % SEED_COLS,
+    """CREATE INDEX IF NOT EXISTS idx_playoff_odds_run ON playoff_odds(run_id)""",
+    # Public grading, one row per graded game per model version.
+    """CREATE TABLE IF NOT EXISTS projection_grades (
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        actual_home REAL,
+        actual_away REAL,
+        brier REAL,
+        logloss REAL,
+        margin_err REAL,
+        total_err REAL,
+        ats_result TEXT,
+        graded_at TEXT NOT NULL)""",
+]
+
+EXPECTED_COLUMNS = {
+    "model_runs": ["run_id", "league", "season", "week", "model", "model_version", "started_at",
+                   "finished_at", "params_json", "status", "error"],
+    "team_ratings": ["run_id", "league", "season", "week", "team", "off", "def", "overall",
+                     "games", "as_of"],
+    "game_projections": ["run_id", "league", "game_id", "season", "week", "home", "away",
+                         "proj_home", "proj_away", "proj_margin", "proj_total", "p_home_win",
+                         "market_spread", "market_total", "market_source", "locked", "locked_at",
+                         "model_version", "line_snapshot_id"],
+    "nfl_line_snapshots": ["snapshot_id", "league", "game_id", "source", "captured_at",
+                           "source_ingested_at", "spread_line", "total_line", "home_moneyline",
+                           "away_moneyline"],
+    "playoff_odds": ["run_id", "league", "season", "week", "team", "p_playoffs", "p_division",
+                     "p_bye"] + ["p_seed_%d" % k for k in SEEDS] +
+                    ["wins_mean", "wins_p10", "wins_p90", "d_playoffs", "as_of"],
+    "projection_grades": ["league", "game_id", "model_version", "actual_home", "actual_away",
+                          "brier", "logloss", "margin_err", "total_err", "ats_result",
+                          "graded_at"],
+}
+
+
+def migrate(con):
+    for stmt in STATEMENTS:
+        con.execute(stmt)
+    # model_version was added after the first locks were written (2026-10-11): two model versions
+    # must be able to lock the same game. Older tables get the column and a backfill from the
+    # run that wrote each row; the one-lock-per-game index is replaced by one per game and version.
+    cols = [r[1] for r in con.execute("PRAGMA table_info(game_projections)")]
+    if "model_version" not in cols:
+        con.execute("ALTER TABLE game_projections ADD COLUMN model_version TEXT")
+    if "line_snapshot_id" not in cols:
+        con.execute("ALTER TABLE game_projections ADD COLUMN line_snapshot_id INTEGER")
+    con.execute("UPDATE game_projections SET model_version = "
+                "(SELECT model_version FROM model_runs WHERE model_runs.run_id = game_projections.run_id) "
+                "WHERE model_version IS NULL")
+    con.execute("DROP INDEX IF EXISTS uq_game_projections_locked")
+    con.execute("""CREATE UNIQUE INDEX IF NOT EXISTS uq_game_projections_locked_version
+        ON game_projections(league, game_id, model_version) WHERE locked = 1""")
+    # One grade per game per model version, so re-running the grader cannot duplicate rows.
+    con.execute("""CREATE UNIQUE INDEX IF NOT EXISTS uq_projection_grades
+        ON projection_grades(league, game_id, model_version)""")
+    con.commit()
+
+
+SUPERSEDED = "nfl_projections_superseded"
+
+
+def adopt_legacy_locks(con):
+    """Copy locks from the pre-migration table nfl_projections into game_projections.
+
+    One model_runs row per distinct (model_version, as_of) in the legacy table. The legacy table
+    never stored proj_home and proj_away, so those stay NULL. The legacy table is renamed to
+    nfl_projections_superseded, not dropped. Returns the number of rows copied (0 if there is
+    nothing to adopt, which is every run after the first).
+    """
+    legacy = con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='nfl_projections'"
+                         ).fetchone()
+    if legacy is None:
+        return 0
+    rows = con.execute(
+        "SELECT game_id, season, week, home_team, away_team, projected_margin, projected_total, "
+        "       p_home_win, market_home_margin, market_total, locked, as_of, model_version "
+        "FROM nfl_projections ORDER BY id").fetchall()
+    copied = 0
+    run_ids = {}
+    for gid, season, week, home, away, pm, pt, pw, mh, mt, locked, as_of, mv in rows:
+        key = (mv, as_of)
+        if key not in run_ids:
+            run_id = "legacy-nfl-lock-%s" % as_of
+            run_ids[key] = run_id
+            con.execute(
+                "INSERT OR IGNORE INTO model_runs (run_id, league, season, week, model, "
+                " model_version, started_at, finished_at, params_json, status, error) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (run_id, "nfl", season, week, "nfl-ratings-v1", mv, as_of, as_of,
+                 '{"source": "legacy nfl_projections", "proj_home_away": "not recorded"}',
+                 "ok", None))
+        con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
+            " market_total, market_source, locked, locked_at, model_version) "
+            "VALUES (?,?,?,?,?,?,?,NULL,NULL,?,?,?,?,?,?,?,?,?)",
+            (run_ids[key], "nfl", gid, season, week, home, away, pm, pt, pw, mh, mt, "nflverse",
+             locked, as_of, mv))
+        copied += 1
+    con.execute("ALTER TABLE nfl_projections RENAME TO %s" % SUPERSEDED)
+    con.commit()
+    return copied
+
+
+def columns(con, table):
+    return [r[1] for r in con.execute("PRAGMA table_info(%s)" % table).fetchall()]
+
+
+def main(argv=None):
+    con = sqlite3.connect(DB, timeout=30)
+    try:
+        migrate(con)
+        print("adopted legacy locks: %d" % adopt_legacy_locks(con))
+        for table, want in EXPECTED_COLUMNS.items():
+            got = columns(con, table)
+            if got != want:
+                raise SystemExit("%s columns differ from spec: got %s" % (table, got))
+        print("ok: %s" % DB)
+        return 0
+    finally:
+        con.close()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

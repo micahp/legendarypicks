@@ -15,6 +15,8 @@ from fastapi import HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+import published_roster
+
 import espn_client as espn
 from analytics import ev as ev_mod, clv as clv_mod, calibration as calib_mod, projections as proj_mod
 from history_refresh_common import BUSY_TIMEOUT_SECONDS
@@ -48,6 +50,24 @@ def _db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
     con = sqlite3.connect(DB, timeout=BUSY_TIMEOUT_SECONDS)
     con.row_factory = sqlite3.Row
+    # SQLite defaults foreign_keys OFF, PER CONNECTION. `props.player_id`,
+    # `props.game_id` and `prop_results.prop_id` have all DECLARED their
+    # references since the schema was written, and none of them had ever fired:
+    # only three scripts in this repo set the pragma, and neither the API nor
+    # settlement is one of them. A constraint that reads as protection in the
+    # schema and enforces nothing is worse than no constraint, because it stops
+    # anyone looking.
+    #
+    # What that cost, found 2026-08-26: 78 props on both databases pointed at 15
+    # `players` rows that had been deleted by an identity repair, and 4
+    # `prop_results` outlived the props they graded. Nothing raised, nothing
+    # counted them. Both databases are at ZERO `PRAGMA foreign_key_check`
+    # violations as of that cleanup, so turning this on rejects no existing row.
+    #
+    # NULL is still allowed: an unresolved prop keeps `player_id IS NULL`, which
+    # is the fail-closed path the resolvers already use. What this stops is a
+    # non-NULL id pointing at nothing.
+    con.execute("PRAGMA foreign_keys=ON")
     return con
 
 
@@ -515,17 +535,37 @@ REPORTER_ROSTER = {
 #               Static API key, so it works when the OAuth token is stale.
 #               4x the price and still a fifth of a cent.
 #
-# MODEL: `deepseek/deepseek-v4-flash-0731`, dated on purpose. The old code
-# asked for `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it
-# points at without renaming it. Measured 2026-08-19 on OpenRouter's price
-# list, which is the visible edge of that move:
+# MODEL: `deepseek/deepseek-v4.1-flash`, 2026-09-10. Version-pinned on purpose.
+# The rule that got us here, learned 2026-08-19: the old code asked for
+# `deepseek-v4-pro`, an UNDATED alias, and DeepSeek moved what it points at
+# without renaming it, onto something twice the price. Measured then on
+# OpenRouter's price list, which is the visible edge of that move:
 #
 #     deepseek-v4-pro         in $1.44/M  out $2.88/M   <- the alias we called
 #     deepseek-v4-pro-0813    in $0.66/M  out $1.98/M   <- the dated snapshot
-#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- this
+#     deepseek-v4-flash-0731  in $0.14/M  out $0.28/M   <- what we moved to
 #
-# Never ask for an undated alias again. A model name without a date is a
-# moving target, and it moved us onto something twice the price.
+# Re-read 2026-09-10 on the same list, the day v4.1 flash was published:
+#
+#     deepseek-v4.1-flash     in $0.15/M  out $0.60/M   <- this
+#     deepseek-v4-flash-0731  in $0.065/M out $0.18/M   <- what this replaces
+#     deepseek-v4-pro         in $0.955/M out $1.911/M
+#
+# Note the direction: v4.1 flash costs 2.3x the input and 3.3x the output of
+# the 07-31 snapshot. It is still a sixth of v4-pro, and it is what Micah asked
+# for, but do not describe this move as a saving.
+#
+# `v4.1` is a VERSION, not an undated alias, so it satisfies the 08-19 rule:
+# `deepseek-v4-flash` with no version is the shape that moves under you.
+#
+# NOUS CANNOT RELIABLY SERVE IT YET. Measured 2026-09-10, the day after
+# publication: 1 of 4 calls succeeded, the other three answered HTTP 429 "the
+# requested model is temporarily at capacity upstream". That is a fall-through
+# to OpenRouter, not a failure -- the loop below treats a non-401/402/403 as
+# retryable and moves to the next provider -- but it means most LLM calls now
+# spend a wasted request on nous and print a request-failed line first. Expect
+# that in the logs and re-measure before calling it a defect. OpenRouter served
+# it 2 of 2 with `is_byok: true`, so it bills this box's own DeepSeek key.
 #
 # Quality was measured, not assumed: 3 runs of a real game-story prompt, every
 # claim checked against the grounding. flash-0731 invented nothing. Of the
@@ -533,7 +573,7 @@ REPORTER_ROSTER = {
 # contradicted itself inside one blurb (Houston "leads the division" and "sits
 # 13 games back"), and liquid/lfm-2.5-2.6b inverted which club led the division
 # and flipped the sign of a run differential.
-_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4-flash-0731")
+_LLM_MODEL = os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4.1-flash")
 _LLM_PROVIDERS = [p.strip() for p in
                   os.environ.get("LP_LLM_PROVIDERS", "nous,openrouter").split(",") if p.strip()]
 _HERMES_AUTH = os.environ.get("LP_HERMES_AUTH", "/root/.hermes/auth.json")
@@ -808,13 +848,20 @@ _NBA_MARKET_STAT = {
     "turnovers": ("TO",  "espn"),
 }
 
-# NHL: nhle.com source, skater stats confirmed: goals,assists,points,shots.
-# "saves" is a goalie stat — zero NHL rows have a non-null $.saves key.
-# Goalie game logs are not ingested at all; leave "saves" unmapped.
+# NHL: the current season is published by the gamecenter boxscore; every season
+# before it was written under the bare "nhle.com". Both are the same publisher
+# reporting the same quantity, so a market names BOTH and the projection window
+# spans the rollover. Naming only the new one looked tidy and silently cut the
+# NHL projection off from 51,143 rows the moment the season turned -- the whole
+# history -- leaving it the handful of games played since September.
+#
+# "saves" is new-source only: no legacy row carries a non-null $.saves.
+_NHL_LOG_SOURCES = ("nhle.com", "nhle.com:gamecenter/boxscore")
 _NHL_MARKET_STAT = {
-    "goals":   ("goals",   "nhle.com"),
-    "shots":   ("shots",   "nhle.com"),
-    "assists": ("assists", "nhle.com"),
+    "goals":   ("goals",   _NHL_LOG_SOURCES),
+    "shots":   ("shots",   _NHL_LOG_SOURCES),
+    "assists": ("assists", _NHL_LOG_SOURCES),
+    "saves":   ("saves",   ("nhle.com:gamecenter/boxscore",)),
 }
 
 _LEAGUE_MARKET_STAT = {
@@ -837,15 +884,20 @@ def _query_game_log_values(player_id: int, market: str, line: float, league: str
     if league_markets is None or market not in league_markets:
         return None
     stat_key, source = league_markets[market]
+    # A market may name one source or several: a league whose publisher changed
+    # endpoints mid-history still has one continuous series behind it.
+    sources = (source,) if isinstance(source, str) else tuple(source)
+    placeholders = ",".join("?" for _ in sources)
     with closing(_db()) as con:
         rows = con.execute(
-            """SELECT json_extract(stats, ?) AS val
+            f"""SELECT json_extract(stats, ?) AS val
                FROM player_game_logs
-               WHERE player_id = ? AND league = ? AND source = ?
+               WHERE player_id = ? AND league = ? AND source IN ({placeholders})
                  AND json_extract(stats, ?) IS NOT NULL
                ORDER BY game_date DESC
                LIMIT ?""",
-            (f"$.{stat_key}", player_id, league, source, f"$.{stat_key}", _PROJECTION_WINDOW_GAMES),
+            (f"$.{stat_key}", player_id, league, *sources, f"$.{stat_key}",
+             _PROJECTION_WINDOW_GAMES),
         ).fetchall()
     vals = [float(r["val"]) for r in rows]
     if len(vals) < _PROJECTION_MIN_GAMES:
@@ -888,12 +940,36 @@ def _compute_ev_with_projection(r, player_id: int, market: str, line: float) -> 
     return ev_mod.compute_ev(odds, odds_opp, status)
 
 
+_GAME_TEAM_VOCAB_CACHE: dict = {}
+
+
+def _scoreboard_vocabulary(con, league: str):
+    """The stored scoreboard vocabulary for a league with no static team map.
+
+    prop_games.ncaaf home/away are full display names ("UNLV Rebels"); the same
+    vocabulary the relay ingest trusts maps them onto canonical codes. Cached once per
+    process: the snapshot list a vocabulary misses is one the NEXT process will read,
+    and a miss degrades to the source-team probe, never to a wrong identity.
+    """
+    if league not in _GAME_TEAM_VOCAB_CACHE:
+        try:
+            from ingest_rotowire_props import resolve_team, team_vocabulary
+            _GAME_TEAM_VOCAB_CACHE[league] = (
+                team_vocabulary(con, league), resolve_team)
+        except Exception:
+            _GAME_TEAM_VOCAB_CACHE[league] = (None, None)
+    return _GAME_TEAM_VOCAB_CACHE[league]
+
+
 def _game_team_abbrevs(con, game_id, league: str) -> set:
     """The two teams of a prop_games row as ESPN abbrevs, or an empty set.
 
     prop_games writes home/away in two vocabularies — "Los Angeles Dodgers" from the
     Bovada competitor list, "LAD" from other callers — so both are folded through the
-    same published map link_prop_games already uses for the ESPN crosswalk.
+    same published map link_prop_games already uses for the ESPN crosswalk. A league
+    without a static map (NCAAF: 137 schools change display names every season) falls
+    back to the stored scoreboard vocabulary; a name neither map knows stays unknown,
+    which refuses rather than guesses.
     """
     if not game_id:
         return set()
@@ -903,24 +979,50 @@ def _game_team_abbrevs(con, game_id, league: str) -> set:
     try:
         from link_prop_games import _TEAM_MAPS
     except Exception:
-        return set()
+        _TEAM_MAPS = {}
     tmap = _TEAM_MAPS.get(league, {})
     out = set()
     for value in (row["home"], row["away"]):
         value = (value or "").strip()
+        # Bovada appends the poll rank to ranked schools ("LSU (#11)", "Oregon (#2)").
+        # Measured on the 2026-10-02 fixture-team audit: 68 stored NCAAF fixtures
+        # carry the suffix, and neither the static map nor the scoreboard vocabulary
+        # resolves a name with it, so every strict team check on those fixtures
+        # refused (or, half-resolved, misfiled the opponent side). The rank is not
+        # identity; strip it before both lookups.
+        value = re.sub(r"\s*\([^()]*#\d+[^()]*\)\s*$", "", value).strip()
         if value:
             out.add(tmap.get(value.lower(), value.upper()))
+    if league not in _TEAM_MAPS and any(
+            len(code) > 4 for code in out):
+        # The static map had no entry, so the fallback above emitted raw display
+        # strings ("UNLV REBELS"). Translate them through the scoreboard vocabulary
+        # when one is stored; a partial translation stays partial, honestly.
+        vocab, resolve = _scoreboard_vocabulary(con, league)
+        if vocab is not None and resolve is not None:
+            out = {resolve(vocab, code) or code for code in out}
     return out
 
 
-def _pick_one(rows, nteam: str, game_teams: set):
+def _pick_one(rows, nteam: str, game_teams: set, require_team_match: bool = False):
     """Choose a single candidate row, or None when the name stays ambiguous.
 
     Two same-named players are separated by the team the prop was written for, and
     failing that by which of them is actually IN the game. Neither signal present
     means we do not know, and guessing writes the prop onto the wrong man.
+
+    `require_team_match` (NCAAF step 2) goes further: a SOLE league-wide match whose
+    team is neither the source's nor the fixture's is a wrong human, not a
+    resolution — Winston Watkins (TOW) is not LSU's Watkins no matter how unique
+    the name is.
     """
     if len(rows) == 1:
+        if require_team_match:
+            team = (rows[0]["team"] or "").strip().upper()
+            probes = {str(t).strip().upper() for t in ({nteam} if nteam else set())}
+            probes |= {str(t).strip().upper() for t in (game_teams or set())}
+            if not probes or team not in probes:
+                return None
         return rows[0]["id"]
     for probe in ({nteam} if nteam else set(), game_teams):
         if not probe:
@@ -972,12 +1074,14 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
                                game_id=None):
     """Resolve a player name to players.id via the identity spine.
 
-    Resolution order (deterministic, NO silent creates):
+    Resolution order (deterministic, and a create only ever carries a publisher id):
     1. Exact name + league (fast path for already-matched players)
     2. Normalized name + team + league (deterministic spine match)
     2b. Folded name on both sides + league (diacritics/case/punctuation)
     3. name_alias table (known nicknames/alternate spellings)
-    4. If nothing matches → write to unresolved_players, return None
+    4. The PUBLISHER'S OWN ROSTER (`published_roster`), read from a stored table: return the
+       canonical identity already published by the roster job
+    5. If nothing matches → write to unresolved_players, return None
 
     A name that matches more than one row in the league is NOT a match. `game_id`
     is what breaks the tie when the source's team parenthetical is missing or in a
@@ -993,6 +1097,10 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     nname = _normalize_name(player_name)
     nteam = team.strip().upper() if team else ""
     game_teams = _game_team_abbrevs(con, game_id, league)
+    # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
+    # source team = roster team = one fixture team. Everywhere else the historical
+    # behavior stands untouched.
+    strict_team = league == "ncaaf"
 
     # 1. Fast path: exact name + league (already-matched players)
     rows = con.execute(
@@ -1000,7 +1108,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
         (player_name, league)
     ).fetchall()
     if rows:
-        picked = _pick_one(rows, nteam, game_teams)
+        picked = _pick_one(rows, nteam, game_teams, require_team_match=strict_team)
         if picked is not None:
             return (picked, "high")
         # The name exists but points at more than one player. Fall through to the
@@ -1032,7 +1140,7 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     # refused -- _pick_one is the same tiebreak the exact-name path uses.
     cands = _folded_name_index(con, league).get(nname) or []
     if cands:
-        picked = _pick_one(cands, nteam, game_teams)
+        picked = _pick_one(cands, nteam, game_teams, require_team_match=strict_team)
         if picked is not None:
             return (picked, "high")
 
@@ -1044,13 +1152,37 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     if row:
         # Verify the aliased player is in the right league
         pl = con.execute(
-            "SELECT id FROM players WHERE id=? AND league=?",
+            "SELECT id, team FROM players WHERE id=? AND league=?",
             (row["player_id"], league)
         ).fetchone()
         if pl:
-            return (pl["id"], "high")
+            if strict_team:
+                # A reviewed alias is a name judgment, not a team judgment: the NCAAF
+                # strict rule still applies to where the aliased human sits.
+                alias_team = (pl["team"] or "").strip().upper()
+                probes = {str(t).strip().upper() for t in ({nteam} if nteam else set())}
+                probes |= {str(t).strip().upper() for t in (game_teams or set())}
+                if not probes or alias_team not in probes:
+                    pl = None
+            if pl is not None:
+                return (pl["id"], "high")
 
-    # 4. No match — log to unresolved_players (review queue, never silently drop)
+    # 4. The publisher's own roster, read from a stored table.
+    #
+    # Giving up here used to mean dropping every prop for a real player. Measured on prod
+    # 2026-09-06: 1,254 names and 873,559 attempts from bovada alone, plus 254 names from
+    # espn_roster, which proves our spine is missing people ESPN itself names. The queue
+    # recorded each miss and nothing ever acted on it.
+    #
+    # READS a table and never fetches, because this runs inside /api/props/ingest and a
+    # serving path must not wait on a publisher or mint identity. The roster job owns the
+    # durable cross-publisher decision; an unbound row is unresolved, not permission to
+    # recompute that decision from names during every request.
+    published_player_id = published_roster.lookup_player(con, league, player_name, nteam)
+    if published_player_id is not None:
+        return (published_player_id, "high")
+
+    # 5. No match anywhere — log to unresolved_players (review queue, never silently drop)
     existing = con.execute(
         "SELECT id, count FROM unresolved_players WHERE raw_name=? AND league=? AND source=?",
         (player_name, league, source)
@@ -1165,6 +1297,30 @@ def _state_from_db(league: str, game_id: str):
     return "post" if row else None
 
 
+def _snapshot_field(league: str, game_id: str, key: str):
+    """One field out of the newest scoreboard snapshot, or None. DB-ONLY.
+
+    The snapshot carries `period`, `clock` and `status_detail` alongside the
+    score -- the same values the detail page would otherwise fetch live. Reading
+    them here keeps a live game page answerable with zero publisher requests.
+    """
+    lg = league.lower()
+    with closing(_db()) as con:
+        row = con.execute(
+            "SELECT payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg, game_id),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+    except Exception:
+        return None
+    value = payload.get(key)
+    return value if value not in ("", None) else None
+
+
 def _state_and_score_from_snapshot(league: str, game_id: str):
     """Read state + final score from scoreboard_snapshots, or (None, None).
 
@@ -1194,7 +1350,15 @@ def _state_and_score_from_snapshot(league: str, game_id: str):
         return None, None
     state = row["state"]
     score = None
-    if state == "post":
+    # The score is read for ANY state that published one, not just 'post'. The
+    # payload shape is identical for a live game -- the 2026-08-26 Leagues Cup
+    # snapshot carried home 2, away 0 at Halftime -- and gating on 'post' meant a
+    # live game's score was thrown away here and then re-fetched from ESPN by the
+    # detail handler, which is a live request for a number already on disk.
+    #
+    # Callers decide what a score MEANS: game_detail still only promotes it to
+    # `final_score` when the state is 'post'.
+    if state in ("post", "in"):
         try:
             payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
             home = (payload.get("home") or {}).get("score")
@@ -1204,6 +1368,29 @@ def _state_and_score_from_snapshot(league: str, game_id: str):
         except Exception:
             score = None
     return state, score
+
+
+def _strength_for(league: str, team_key: str):
+    """Resolve a team's quality-prior row from `espn.team_strength_map`, which is
+    keyed by ABBREVIATION ("WSH"), against a `context.home_team`/`away_team` value
+    that is sometimes an abbreviation and sometimes a full display name ("Washington
+    Nationals") depending which fallback populated `context` in game_detail.py.
+
+    A direct `.get(team_key)` silently missed on every league whose context comes
+    from the snapshot's team NAME (nfl/mlb/ncaaf/mls/lcup/atp/wta) -- confirmed
+    2026-08-30: MLB 401816747 and NFL 401873302 both returned strength=None for
+    both sides despite `team_strength_map` holding real rows for WSH/MIA/BAL/WSH.
+    The Season Records card on GameInfo then rendered its heading over an empty
+    grid. Try the key as an abbrev first (the common case, and free); only fall
+    back to a full scan by display name when that misses.
+    """
+    smap = espn.team_strength_map(league)
+    if team_key in smap:
+        return smap[team_key]
+    for row in smap.values():
+        if row.get("name") == team_key:
+            return row
+    return None
 
 
 def _snapshot_result_info(league: str, game_id: str):

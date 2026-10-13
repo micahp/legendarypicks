@@ -1,0 +1,13 @@
+[Unit]
+Description=Grade finished locked NFL projections (DEV; idempotent, reads the local database only)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+Nice=15
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/grade_nfl_locks.py
+TimeoutStartSec=120

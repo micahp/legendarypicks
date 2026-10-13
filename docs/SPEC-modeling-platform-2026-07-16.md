@@ -5,10 +5,16 @@ maps will be played based on game context. I want historical AND live data power
 can predict everything from who wins a map to who wins the tournament across all these leagues. Then I
 want to let people do brackets (playoffs/tournaments) and lineups."
 
-This spec is phased. **Phase 1 (market-tape capture) is the clock-sensitive foundation and should start
-immediately** — Kalshi's public API does NOT backfill historical order books, so price history only
-accrues from the moment we capture it. Everything downstream (modeling, brackets, lineups) sits on that
-tape.
+**Priority update, 2026-10-10:** the consumer-prediction vision below remains the parent idea.
+[The forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md) makes the projected
+game score, connected player outcomes, market probabilities, season odds, and public record the
+current product focus. Finishing the full NFL Spec A and Spec B tracks is next on the
+[roadmap](ROADMAP.md). The market-tape sequence below records the July plan and remains useful
+for price history and grading; its former “build now” order is superseded.
+
+This spec is phased. Kalshi's public API does not backfill historical order books, so price
+history only accrues from the moment it is captured. Capture still matters for a trustworthy
+market comparison, but it does not by itself make a complete forecast.
 
 ---
 
@@ -54,7 +60,7 @@ per-player props. Brackets/lineups must offer whatever granularity the league ac
 
 ---
 
-## Phase 1 — MARKET-TAPE CAPTURE (build now)
+## Phase 1 — MARKET-TAPE CAPTURE (July 2026 sequence)
 
 Goal: capture the price tape **only where it earns its place in the product** — where it powers a
 prediction the user reads, or a signal we can surface. NOT "all props, whole game." Two gates decide
@@ -156,7 +162,7 @@ Same modeling spine, two engagement surfaces (both auto-generate receipts, per t
 - **Cross-repo contract:** capture lives in `prediction-market-trading`; modeling + product in
   `legendarypicks`; the normalized `market_tape` schema is the shared boundary.
 
-## First actions (sequence)
+## First actions (July 2026 sequence; see the current roadmap)
 1. **Extend `watch_live.py` to the full ladder + auto-discovery** (Phase 1a) — smallest diff, biggest
    unlock, and the clock-sensitive one. Verify a live CoD map + total-maps book captured.
 2. Bovada tape mode (1b) → normalized store (1d) → settled backfill (1c).

@@ -127,6 +127,71 @@ def _game_season_year(lg: str, game_id: str):
         return None
 
 
+def _game_season_type(lg: str, game_id: str):
+    """The publisher's season type for this game: 1 preseason, 2 regular, 3 postseason.
+
+    Same summary payload as _game_season_year (header.season.type), so no request."""
+    try:
+        season = ((espn.summary(lg, game_id) or {}).get("header") or {}).get("season") or {}
+        value = season.get("type")
+        return int(value) if value is not None else None
+    except Exception:
+        return None
+
+
+# A preview is written for the game a reader is about to watch, from facts that are true
+# then. The first preview hook wrote one the moment a scoreboard showed the game: NBA
+# 401902644 (Heat at Raptors, played in Quebec City, preseason, 2026-10-03) was written on 2026-08-17 from last
+# season's final records and marked final forever. Nothing earlier than this is written,
+# and a cached preview written earlier than this before its own tip is not served.
+PREVIEW_HORIZON_HOURS = 48
+
+
+def _parse_instant(value):
+    import datetime as _d
+    try:
+        instant = _d.datetime.fromisoformat(str(value).strip().replace("Z", "+00:00"))
+    except Exception:
+        return None
+    return instant if instant.tzinfo else instant.replace(tzinfo=_d.timezone.utc)
+
+
+def _too_early_for_preview(start_time, now=None) -> bool:
+    """True when tip is more than PREVIEW_HORIZON_HOURS away. Unknown start: False."""
+    import datetime as _d
+    start = _parse_instant(start_time) if start_time else None
+    if start is None:
+        return False
+    now = now or _d.datetime.now(_d.timezone.utc)
+    return start - now > _d.timedelta(hours=PREVIEW_HORIZON_HOURS)
+
+
+def _preview_written_too_early(generated_at, start_time) -> bool:
+    """True when a cached story was written more than the horizon before this game's tip.
+
+    generated_at is SQLite datetime('now'), UTC with no zone. Unknown either side: False."""
+    import datetime as _d
+    written = _parse_instant(str(generated_at or "").replace(" ", "T")) if generated_at else None
+    start = _parse_instant(start_time) if start_time else None
+    if written is None or start is None:
+        return False
+    return start - written > _d.timedelta(hours=PREVIEW_HORIZON_HOURS)
+
+
+def _standings_out_of_season(standings_season, game_season) -> bool:
+    """True when the published standings belong to another season than this game.
+
+    Before a season's first game the standings document still serves last season (measured
+    2026-08-17: NBA, MLB, NHL). Only True when both are known."""
+    return (standings_season is not None and game_season is not None
+            and standings_season != game_season)
+
+
+def _no_games_played(rows) -> bool:
+    """True when a standings table has rows and not one team has a win or a loss."""
+    return bool(rows) and not any((r.get("wins") or 0) + (r.get("losses") or 0) for r in rows)
+
+
 def _logs_predate_season(game_season, newest_log_season) -> bool:
     """True when a league's newest game log is older than the season a game is in.
 
@@ -135,6 +200,48 @@ def _logs_predate_season(game_season, newest_log_season) -> bool:
     """
     return (game_season is not None and newest_log_season is not None
             and newest_log_season < game_season)
+
+
+_PUBLISHED_RECORD = re.compile(r"^\d+-\d+(?:-\d+)?$")
+
+
+def _finished_scoreboard_records(lg: str, game_id: str):
+    """Published post-game records from the completed scoreboard row, keyed by abbrev.
+
+    Standings are cached for 15 minutes and can still describe the pregame table
+    immediately after a final. The game's scoreboard row is refreshed through the
+    finish and publishes each side's record including that result.
+    """
+    with closing(_db()) as con:
+        if not con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' "
+                "AND name='scoreboard_snapshots'").fetchone():
+            return {}
+        row = con.execute(
+            "SELECT state,payload FROM scoreboard_snapshots "
+            "WHERE league=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+            (lg.lower(), str(game_id)),
+        ).fetchone()
+    if not row or row["state"] != "post":
+        return {}
+    try:
+        payload = (json.loads(row["payload"])
+                   if isinstance(row["payload"], str) else row["payload"])
+    except (TypeError, ValueError):
+        return {}
+    if not isinstance(payload, dict) or payload.get("completed") is not True:
+        return {}
+    records = {}
+    for side in ("away", "home"):
+        team = payload.get(side) or {}
+        abbrev = str(team.get("abbrev") or "").strip()
+        record = str(team.get("record") or "").strip()
+        if abbrev and _PUBLISHED_RECORD.fullmatch(record):
+            records[abbrev] = {
+                "record": record,
+                "name": team.get("name") or abbrev,
+            }
+    return records
 
 
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
@@ -180,8 +287,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
             cached = con.execute(
                 "SELECT story, has_form, has_stakes, form_suppressed, generated_at FROM game_story "
                 "WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
-            stale_preview = cached and _story_is_stale_preview(
-                cached["generated_at"], state, start_time)
+            stale_preview = cached and (
+                _story_is_stale_preview(cached["generated_at"], state, start_time)
+                or ((state or "").lower() != "post"
+                    and _preview_written_too_early(cached["generated_at"], start_time)))
             if cached and cached["has_form"] and not cached["form_suppressed"] and not stale_preview:
                 import stakes as _stakes_mod
                 # Final unless this league HAS a stakes model and the story predates it —
@@ -212,14 +321,51 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     if len(teams) != 2:
         return {"league": lg, "game_id": game_id,
                 "story": cached["story"] if cached else None, "cached": bool(cached)}
-    smap = espn.team_strength_map(lg)
-    try:  # quality rank: position in the strength table (same rows smap is built from)
-        _rank = {r["abbrev"]: i + 1 for i, r in enumerate(espn.team_strength(lg))}
+    _start = start_time or _game_start_instant(lg, game_id)
+    finished_now = (state or gr.get("state") or "").lower() == "post"
+    if not finished_now and (gr.get("state") or state or "pre").lower() == "pre" \
+            and _too_early_for_preview(_start):
+        # Too early to write a preview, and a cached one written too early is not served.
+        keep = cached["story"] if cached and not stale_preview else None
+        return {"league": lg, "game_id": game_id, "story": keep, "cached": bool(keep)}
+
+    game_season = _game_season_year(lg, game_id)
+    season_type = _game_season_type(lg, game_id)
+    preseason = season_type == 1
+    final_records = (_finished_scoreboard_records(lg, game_id)
+                     if finished_now and not preseason else {})
+    # Records, streak, last-10 and rank are only facts about THIS game if the standings are
+    # from this game's season. Before the first game they are last season's.
+    try:
+        standings = espn.team_strength_standings(lg)
+        standings_season = standings.get("season")
+        strength_rows = standings.get("teams") or []
     except Exception:
-        _rank = {}
+        standings_season, strength_rows = None, []
+    # A rolled-over table where nobody has played is no record either. Measured 2026-10-02
+    # 21:10 CDT: ESPN's NBA standings already served 2026-27 with all 30 teams 0-0, the
+    # season check passed, and the "quality rank" handed over was a position among 30 ties:
+    # the 401902644 preview called Miami "ranked seventh in the league to Toronto's 14th".
+    # And a table we could not read is no record: ESPN answered 403 on 2026-10-02 22:00 CDT
+    # and the writer was handed "None-None" for both clubs.
+    records_stale = (not strength_rows
+                     or _standings_out_of_season(standings_season, game_season)
+                     or _no_games_played(strength_rows))
+    smap = {} if records_stale else {r["abbrev"]: r for r in strength_rows if r.get("abbrev")}
+    _rank = {} if records_stale else {r["abbrev"]: i + 1 for i, r in enumerate(strength_rows)}
 
     def facts(ab):
-        s = smap.get(ab) or {}
+        if finished_now and not preseason:
+            published = final_records.get(ab)
+            if published:
+                return (f"{published['name']} ({ab}): post-game record "
+                        f"{published['record']}.")
+            return f"{ab}: no published post-game record (do not cite one)."
+        if records_stale:
+            return f"{ab}: no games played yet this season (no record to cite)."
+        if ab not in smap:
+            return f"{ab}: no published record (do not cite one)."
+        s = smap[ab]
         rk = f", quality rank #{_rank[ab]} of {len(_rank)}" if ab in _rank else ""
         # ".500 winning percentage", not "0.5 win%". Measured 2026-08-19: two of
         # three runs turned `0.5 win%` into "leads the AL West by half a game",
@@ -243,17 +389,33 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # New York day, DST-aware, because that is how every game in the store is
     # bucketed and a UTC date is the previous evening in the US.
     when = ""
-    _start = start_time or _game_start_instant(lg, game_id)
+    story_date = None
     if _start:
         try:
             from espn_client.scoreboard import _ny_date
             import datetime as _d
             _m = _d.datetime.fromisoformat(str(_start).replace("Z", "+00:00"))
-            when = f" Date: {_ny_date(_m).strftime('%A %b %-d, %Y')}."
+            story_date = _ny_date(_m)
+            when = f" Date: {story_date.strftime('%A %b %-d, %Y')}."
         except Exception:
             when = ""
     grounding = (f"Matchup: {teams[0]} vs {teams[1]}. Game state: {gr.get('state')}.{when}\n"
                  f"{facts(teams[0])}\n{facts(teams[1])}")
+    if preseason:
+        grounding += ("\nPHASE: PRESEASON EXHIBITION. The result does not count toward the "
+                      "standings and nothing is at stake in the table. Write it as an exhibition.")
+
+    # Host city/venue was never in the grounding, so nothing stopped the writer from
+    # guessing one out of its own knowledge of where a team is usually based. Reported
+    # 2026-08-30: MLB 401816747 (Nationals home at Nationals Park, Washington -- ESPN's
+    # own venue data) came back "Two also-rans meet in Miami", because the Marlins were
+    # named first in `teams` and the model defaulted to "the team named first is playing
+    # at home" -- true often enough in this league's writing to pass unnoticed, false
+    # here since Washington was hosting. Ground it explicitly instead of leaving the
+    # model to infer a location from team identity.
+    host_abbrev = gr.get("home") or home
+    if host_abbrev and host_abbrev in teams:
+        grounding += f"\nHost: {host_abbrev} — this game is played at {host_abbrev}'s home venue."
 
     # THE RESULT. It was never in the grounding — `gr` carried scores and a winner and none
     # of it was passed on, so a finished game's facts said only "state: post". The soccer
@@ -314,7 +476,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # Stakes: what each team is playing for in THIS game (stakes.py — certain facts only).
     try:
         import stakes as _stakes
-        stakes_lines = _stakes.for_matchup(lg, teams[0], teams[1])
+        stakes_lines = ([] if (preseason or records_stale)
+                        else _stakes.for_matchup(lg, teams[0], teams[1]))
     except Exception:
         stakes_lines = []
     if stakes_lines:
@@ -337,7 +500,6 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # 2025-09-14..2025-11-25). Suppress the whole section instead: a preview
     # with no form line is honest; one with last year's form presented as this
     # year's is not. The records and the matchup context are current and stay.
-    game_season = _game_season_year(lg, game_id)
     with closing(_db()) as con:
         newest_log_season = con.execute(
             "SELECT MAX(season) FROM player_game_logs WHERE league=?", (lg,)).fetchone()[0]
@@ -395,7 +557,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
             if len(form_lines) < 6:
                 try:
                     import player_form as _pform
-                    for line in _pform.lines(lg, teams, con=con):
+                    for line in _pform.lines(lg, teams, con=con, as_of=story_date):
                         if len(form_lines) >= 6:
                             break
                         form_lines.append(line)
@@ -412,7 +574,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     try:
         import matchup_context as _mctx
         context_lines = _mctx.context_lines(
-            lg, game_id, state=state or gr.get("state"))
+            lg, game_id, state=state or gr.get("state"), current_season=not records_stale)
     except Exception:
         context_lines = []
     if context_lines:
@@ -468,6 +630,19 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         if not new_form and not new_stakes and not stale_preview:
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
+    # Nothing to write from. With no record, form or stakes (a preseason opener before any
+    # game is played) the only facts are the matchup, the date and the phase, and the writer
+    # said exactly that: 401902644 came back "there is no factual basis for a preview of this
+    # matchup". No preview is honest; a paragraph about having nothing to say is not. A
+    # stored story for such a game was written from facts that are no longer given, so it
+    # goes too, and the page shows nothing.
+    finished_game = (state or "").lower() == "post" or (gr.get("state") or "").lower() == "post"
+    if records_stale and not form_lines and not stakes_lines and not finished_game:
+        with closing(_db()) as con:
+            con.execute("DELETE FROM game_story WHERE league=? AND game_id=?", (lg, game_id))
+            con.commit()
+        return {"league": lg, "game_id": game_id, "story": None, "cached": False}
+
     # A finished game gets a recap, not a preview. Without this the writer keeps setting up
     # a match whose result is sitting in the facts it was handed — "Chicago look to advance"
     # under a scoreline that says they already did.
@@ -487,8 +662,9 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
               "specific with numbers, but NEVER "
               "state the same stat twice in different units, and never pad — if the facts are "
               "thin, one sharp sentence beats four generic ones. 1-4 sentences. Do NOT invent "
-              "injuries, trades, lineup news, or anything not in the facts. No clichés, no hype, "
-              "plain confident tone.")
+              "injuries, trades, lineup news, or a host city/venue — only the Host fact (if "
+              "given) says who is playing at home; never assume it from a team's usual city. "
+              "No clichés, no hype, plain confident tone.")
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
@@ -539,7 +715,11 @@ def kick_game_stories(lg: str, games: list):
         # A cached story is enough UNLESS it is a preview of a game that has since ended —
         # then this scoreboard load is exactly when we find out the recap is owed, the same
         # way it is when we first find out the game exists.
-        if gid in cached and not _story_is_stale_preview(cached[gid], state, start_time):
+        if (state or "pre").lower() == "pre" and _too_early_for_preview(start_time):
+            continue
+        if gid in cached and not _story_is_stale_preview(cached[gid], state, start_time) \
+                and not ((state or "").lower() != "post"
+                         and _preview_written_too_early(cached[gid], start_time)):
             continue
         with _story_lock:
             if gid in _story_inflight:

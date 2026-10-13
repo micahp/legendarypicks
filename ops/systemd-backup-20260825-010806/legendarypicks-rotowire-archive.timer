@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily RotoWire relay archive (midnight local)
+
+[Timer]
+OnCalendar=*-*-* 00:05:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

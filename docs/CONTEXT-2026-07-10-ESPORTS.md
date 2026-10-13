@@ -237,4 +237,4 @@ Post-tag on `dev` (AFTER `v0.3.0`):
   it). A broad `pkill -f "uvicorn sports_service"` hits BOTH prod and the dev `:8095` backend — always
   scope to `--port 8095` for dev. (Cost me real time this session.)
 - Deploy mechanism saved to Claude memory `reference_lp_prod_deploy.md`; full session handoff at
-  `/root/CONTEXT-2026-07-10.md`.
+  `/root/legendarypicks/docs/CONTEXT-2026-07-10.md`.

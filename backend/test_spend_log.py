@@ -92,3 +92,34 @@ def test_concurrent_writers_do_not_interleave(tmp_path, monkeypatch):
     rows = _lines(str(log))
     assert len(rows) == 200
     assert len({r["host"] for r in rows}) == 3
+
+
+def test_a_test_run_never_writes_to_the_production_log(monkeypatch):
+    """A simulated request must not land in the file we measure ESPN with.
+
+    2026-08-24: test_ingest_nba_stats drives a MOCKED urlopen through 403/429/404
+    against a real NBA core URL, and all 8 attempts were recorded here as if they
+    had left the box. They read as the live host refusing us on the endpoint this
+    project has documented as gated, and were reported as exactly that. They never
+    happened. The 08-19 sample carried the same shape as 102 phantom 403s to a
+    league named `test`, which that analysis had to find and exclude by hand.
+    """
+    monkeypatch.setattr(paced_http, "SPEND_LOG", paced_http._PROD_SPEND_LOG)
+    monkeypatch.setattr(paced_http, "_IS_TEST_RUN", True)
+    calls = []
+    monkeypatch.setattr(paced_http, "open", lambda *a, **k: calls.append(a), raising=False)
+    paced_http.record_spend("https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba", 403)
+    assert calls == [], "a mocked refusal was written to the production spend log"
+
+
+def test_a_redirected_log_still_records_under_test(tmp_path, monkeypatch):
+    """The guard is keyed on the DESTINATION, not on who is calling.
+
+    A test that points the log somewhere else is measuring on purpose. Keying on
+    "am I pytest" alone would have silently broken every assertion in this file.
+    """
+    log = tmp_path / "spend.jsonl"
+    monkeypatch.setattr(paced_http, "SPEND_LOG", str(log))
+    monkeypatch.setattr(paced_http, "_IS_TEST_RUN", True)
+    paced_http.record_spend("https://site.web.api.espn.com/apis/site/v2/sports/baseball/mlb", 200)
+    assert len(_lines(str(log))) == 1

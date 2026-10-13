@@ -74,6 +74,14 @@ class EsportsPredictApiTests(unittest.TestCase):
         self.assertEqual("league-of-legends", result["selected_title"]["slug"])
         self.assertEqual(["Live A"], [row["teamA"] for row in result["matches"]])
 
+    def test_all_title_combines_every_supported_open_match_live_first(self):
+        result = predict.build_predict_slate(self.upcoming, title="all")
+
+        self.assertEqual({"slug": "all", "label": "All Esports"}, result["selected_title"])
+        self.assertEqual(3, result["match_count"])
+        self.assertEqual(["Live A", "COD A", "CS A"], [row["teamA"] for row in result["matches"]])
+        self.assertEqual(["LoL", "Call of Duty", "CS2"], [row["title"] for row in result["matches"]])
+
     def test_all_supported_titles_are_stable_even_when_empty(self):
         result = predict.build_predict_slate(self.upcoming, title="overwatch")
         options = {row["slug"]: row for row in result["titles"]}

@@ -8,6 +8,7 @@ export interface Projection {
 export interface RecentGame { date: string | null; opponent: string | null; home: boolean | null; game_no?: string | number | null; stats: Record<string, number | string> }
 export interface NflScheduleGame { week: number; phase: 'regular' | 'postseason' | 'preseason'; opponent: string; home: boolean }
 export interface PropRow { market: string; side: string; line: number }
+export interface PlayerLogContext { league: string; season: number; games: number }
 export interface SeasonStatBlock {
   window?: string
   games?: number
@@ -24,6 +25,7 @@ export interface MlbSeasonStats {
 export type SeasonStats = SeasonStatBlock | MlbSeasonStats
 export interface PlayerProfile {
   id: number; name: string; team: string; league: string; position: string | null
+  selected_league: string; position_group: string | null; log_contexts: PlayerLogContext[]
   season: number | null; regular_season_games: number; postseason_games: number; preseason_games: number
   recent_games: RecentGame[]
   postseason_recent_games: RecentGame[]
@@ -32,7 +34,11 @@ export interface PlayerProfile {
   projections: Record<string, Projection>
   props: PropRow[]
   season_stats: SeasonStats | null
-  coverage: { game_logs: boolean; props: boolean; season_stats: boolean }
+  tennis_ranking?: {
+    tour: 'atp' | 'wta'; rank: number; previous_rank: number | null
+    points: number | null; captured_at: string; source: string | null
+  } | null
+  coverage: { game_logs: boolean; props: boolean; season_stats: boolean; rankings?: boolean }
   data_status: 'ready' | 'unavailable'
   injury_status?: string | null
   last_news_date?: number | null

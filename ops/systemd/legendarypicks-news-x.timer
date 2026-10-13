@@ -1,10 +1,11 @@
 [Unit]
-Description=Collect X timelines every 2 hours (feeds hold ~6h at current post rates)
+Description=League news, X timelines only (fast lane), DEV then PROD
 
 [Timer]
+# ABSOLUTE, never monotonic. Keeps the DEV half's slot; PROD follows in the same
+# job rather than 30 minutes later.
 OnCalendar=*-*-* 0/2:15:00
 Persistent=true
-RandomizedDelaySec=300
 
 [Install]
 WantedBy=timers.target

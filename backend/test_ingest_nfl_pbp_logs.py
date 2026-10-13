@@ -1,6 +1,6 @@
 """Tests for additive NFL play-by-play retention.
 
-No network: nfl_data_py.import_pbp_data is replaced with a synthetic frame.
+No network: nfl_data_py.import_pbp_data is replaced with a synthetic frame. Backfill tests write a small parquet with pyarrow.
 """
 import os
 import sqlite3
@@ -142,13 +142,13 @@ class PbpRetentionTests(unittest.TestCase):
         )
         con.close()
 
-    def test_retained_table_has_the_curated_fifty_columns(self):
+    def test_retained_table_has_the_curated_fifty_four_columns(self):
         _, con = self._run()
         columns = [
             row[1] for row in con.execute("PRAGMA table_info(nfl_pbp)").fetchall()
         ]
         con.close()
-        self.assertEqual(50, len(columns))
+        self.assertEqual(54, len(columns))
         self.assertEqual(mod._PLAY_COLS, columns)
 
     def test_retained_play_keeps_chart_fields(self):
@@ -191,6 +191,182 @@ class PbpRetentionTests(unittest.TestCase):
         }
         con.close()
         self.assertNotIn("player_game_logs", tables)
+
+
+OLD_COLS = [c for c in mod._PLAY_COLS if c not in mod._ADDED_COLS]
+STORED = [
+    {"game_id": "2025_01_ARI_SEA", "play_id": 1.0, "season": 2025, "play_type": "pass", "epa": 0.5},
+    {"game_id": "2025_01_ARI_SEA", "play_id": 2.0, "season": 2025, "play_type": "run", "epa": -0.2},
+    {"game_id": "2025_01_ARI_SEA", "play_id": 3.0, "season": 2025, "play_type": None, "epa": None},
+]
+FILE = [
+    {"game_id": "2025_01_ARI_SEA", "play_id": 1.0, "season": 2025,
+     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0},
+    {"game_id": "2025_01_ARI_SEA", "play_id": 2.0, "season": 2025,
+     "qb_hit": 0.0, "qb_scramble": 1.0, "qb_dropback": 1.0, "no_huddle": 1.0},
+    {"game_id": "2025_01_ARI_SEA", "play_id": 3.0, "season": 2025,
+     "qb_hit": None, "qb_scramble": 0.0, "qb_dropback": None, "no_huddle": 0.0},
+    {"game_id": "2025_19_ARI_SEA", "play_id": 1.0, "season": 2025, "season_type": "POST",
+     "qb_hit": 1.0, "qb_scramble": 0.0, "qb_dropback": 1.0, "no_huddle": 0.0},
+]
+
+
+def _old_table(db, plays):
+    """nfl_pbp as the dev DB stores it before the added columns."""
+    con = sqlite3.connect(db)
+    quoted = ", ".join('"{}"'.format(c) for c in OLD_COLS)
+    con.execute("CREATE TABLE nfl_pbp ({}, UNIQUE(game_id, play_id))".format(quoted))
+    for play in plays:
+        row = {c: None for c in OLD_COLS}
+        row.update(play)
+        con.execute("INSERT INTO nfl_pbp ({}) VALUES ({})".format(
+            quoted, ", ".join("?" for _ in OLD_COLS)), [row[c] for c in OLD_COLS])
+    con.commit()
+    con.close()
+
+
+def _file(path, plays):
+    """A published-shaped parquet. epa is 9.9 so a writer that copies whole rows is caught."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    cols = ["game_id", "play_id", "season", "season_type", "epa"] + mod._ADDED_COLS
+    data = {c: [] for c in cols}
+    for play in plays:
+        row = {"season_type": "REG", "epa": 9.9}
+        row.update(play)
+        for c in cols:
+            data[c].append(row.get(c))
+    pq.write_table(pa.table(data), path)
+
+
+class PbpBackfillTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = os.path.join(self.tmp.name, "dev.db")
+        self.file = os.path.join(self.tmp.name, "play_by_play_2025.parquet")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _con(self):
+        return sqlite3.connect(self.db, isolation_level=None)
+
+    def _columns(self):
+        con = sqlite3.connect(self.db)
+        cols = [row[1] for row in con.execute("PRAGMA table_info(nfl_pbp)")]
+        con.close()
+        return cols
+
+    def _rows(self):
+        con = sqlite3.connect(self.db)
+        con.row_factory = sqlite3.Row
+        rows = {row["play_id"]: dict(row) for row in con.execute("SELECT * FROM nfl_pbp")}
+        con.close()
+        return rows
+
+    def test_widening_an_old_table_appends_the_added_columns_last(self):
+        _old_table(self.db, STORED)
+        con = self._con()
+        mod.ensure_pbp_table(con)
+        con.close()
+        self.assertEqual(mod._PLAY_COLS, self._columns())
+        self.assertEqual(0.5, self._rows()[1.0]["epa"])
+        self.assertIsNone(self._rows()[1.0]["qb_hit"])
+
+    def test_dry_run_writes_nothing(self):
+        _old_table(self.db, STORED)
+        _file(self.file, FILE)
+        con = self._con()
+        report = mod.backfill_columns(con, self.file, 2025)
+        con.close()
+        self.assertEqual(3, report["matched"])
+        self.assertEqual(OLD_COLS, self._columns())
+
+    def test_apply_fills_only_the_added_columns(self):
+        _old_table(self.db, STORED)
+        _file(self.file, FILE)
+        con = self._con()
+        report = mod.backfill_columns(con, self.file, 2025, apply=True)
+        con.close()
+        rows = self._rows()
+        self.assertEqual(3, len(rows))  # the POST play is not inserted
+        added = lambda pid: tuple(rows[pid][c] for c in mod._ADDED_COLS)
+        self.assertEqual((1.0, 0.0, 1.0, 0.0), added(1.0))
+        self.assertEqual((0.0, 1.0, 1.0, 1.0), added(2.0))
+        self.assertEqual((None, 0.0, None, 0.0), added(3.0))
+        self.assertEqual(0.5, rows[1.0]["epa"])  # the file's 9.9 is not copied
+        self.assertEqual({"null": 1, "one": 1}, report["qb_hit"])
+        self.assertEqual(1.0, report["aligned_qb_hit"])
+
+    def test_a_stored_play_missing_from_the_file_writes_nothing(self):
+        _old_table(self.db, STORED)
+        _file(self.file, FILE[:2] + FILE[3:])
+        con = self._con()
+        with self.assertRaises(RuntimeError) as ctx:
+            mod.backfill_columns(con, self.file, 2025, apply=True)
+        con.close()
+        self.assertIn("stored plays are not in the file", str(ctx.exception))
+        self.assertEqual(OLD_COLS, self._columns())
+
+    def test_unstored_file_plays_need_allow_new_games_and_a_new_game(self):
+        _old_table(self.db, STORED)
+        _file(self.file, FILE + [dict(FILE[0], game_id="2025_02_SEA_ARI")])
+        con = self._con()
+        with self.assertRaises(RuntimeError):
+            mod.backfill_columns(con, self.file, 2025)
+        report = mod.backfill_columns(con, self.file, 2025, apply=True, allow_new_games=True)
+        con.close()
+        self.assertEqual(["2025_02_SEA_ARI"], report["new_games_skipped"])
+        self.assertEqual(3, len(self._rows()))
+
+    def test_a_missing_play_inside_a_stored_game_is_refused_even_with_allow_new_games(self):
+        _old_table(self.db, STORED)
+        _file(self.file, FILE + [dict(FILE[0], play_id=99.0)])
+        con = self._con()
+        with self.assertRaises(RuntimeError) as ctx:
+            mod.backfill_columns(con, self.file, 2025, apply=True, allow_new_games=True)
+        con.close()
+        self.assertIn("missing from stored games", str(ctx.exception))
+
+    def test_a_value_outside_zero_one_null_is_refused(self):
+        _old_table(self.db, STORED)
+        _file(self.file, [dict(FILE[0], qb_hit=2.0)] + FILE[1:])
+        con = self._con()
+        with self.assertRaises(RuntimeError):
+            mod.backfill_columns(con, self.file, 2025)
+        con.close()
+
+    def test_a_file_from_another_season_is_refused(self):
+        _old_table(self.db, STORED)
+        _file(self.file, [dict(play, season=2024) for play in FILE])
+        con = self._con()
+        with self.assertRaises(RuntimeError):
+            mod.backfill_columns(con, self.file, 2025)
+        con.close()
+
+    def test_values_on_the_wrong_kind_of_play_roll_back(self):
+        _old_table(self.db, [dict(STORED[0], play_type="kickoff")] + STORED[1:])
+        _file(self.file, FILE)
+        con = self._con()
+        with self.assertRaises(RuntimeError) as ctx:
+            mod.backfill_columns(con, self.file, 2025, apply=True)
+        con.close()
+        self.assertIn("qb_hit", str(ctx.exception))
+        self.assertTrue(all(row["qb_hit"] is None for row in self._rows().values()))
+
+    def test_cli_refuses_picks_db(self):
+        _file(self.file, FILE)
+        old = os.environ.get("LP_DB_PATH")
+        os.environ["LP_DB_PATH"] = os.path.join(self.tmp.name, "picks.db")
+        try:
+            with self.assertRaises(SystemExit):
+                mod.main(["--backfill-file", self.file, "--season", "2025"])
+        finally:
+            if old is None:
+                os.environ.pop("LP_DB_PATH")
+            else:
+                os.environ["LP_DB_PATH"] = old
 
 
 if __name__ == "__main__":

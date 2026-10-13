@@ -1,0 +1,17 @@
+[Unit]
+# Production news. Prod carried 0 rows in all six news tables until 2026-08-12
+# because no prod news job had ever existed — and could not have worked if it
+# had, since news-collect.sh unconditionally exported the DEV database path over
+# whatever its unit set. Both are fixed; this is the job.
+Description=League news collect + narratives (daily) — PROD
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+Environment=LP_NEWS_LOG=/var/log/legendarypicks-news-prod.log
+ExecStart=/root/legendarypicks/scripts/news-collect.sh
+TimeoutStartSec=1800
+Nice=10

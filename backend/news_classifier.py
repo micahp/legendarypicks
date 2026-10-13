@@ -118,11 +118,31 @@ LEAGUE_TERMS: Dict[str, List[str]] = {
             "panthers", "hurricanes", "stars", "penguins", "blues", "red wings"],
     "ufc": ["ufc", "mma", "octagon", "paddy pimblett", "islam makhachev", "jon jones",
             "alex pereira", "conor mcgregor", "dana white"],
+    # "the international" (Dota 2's championship) used to be here and matched
+    # "brought to tears during his induction speech at the International Tennis
+    # Hall of Fame" whole-word, correctly by the letter of `_term_present` and
+    # wrong by any reading — surfaced 2026-08-30 the moment tennis had any real
+    # content to collide with. "dota 2" already covers the genuine case.
     "esports": ["esports", "league of legends", "lol esports", "lcs", "lec", "worlds",
                 "valorant", "vct", "champions tour", "counter-strike", "cs2", "csgo",
-                "dota 2", "the international", "rainbow six", "overwatch league", "owl",
+                "dota 2", "rainbow six", "overwatch league", "owl",
                 "call of duty league", "cdl", "giantx", "fnatic", "g2 esports", "t1 esports",
                 "faker", "sentinels", "navi", "vitality", "team liquid", "cloud9"],
+    # Added 2026-08-30 alongside `atp`/`wta` in ingest_league_news/fetch.py's
+    # ESPN_NEWS. Both feed keys equal their canonical league (no
+    # _ESPN_LEAGUE_HINT remap needed), so an ATP/WTA article's source_hint
+    # already resolves it there without these terms ever being read. These
+    # exist for the no-hint path (an X post or RSS item) and are deliberately
+    # PLAYER NAMES ONLY, not tournament names: "US Open"/"Wimbledon"/"grand
+    # slam" are played by both tours, so putting a shared term in one tour's
+    # list would win it for every ambiguous headline from the other tour too
+    # (dict iteration checks "atp" before "wta"). A player name does not have
+    # that problem — the men's and women's fields never share one.
+    "atp": ["atp tour", "sinner", "alcaraz", "djokovic", "medvedev", "zverev",
+            "fritz", "shelton", "rublev", "tsitsipas", "ruud", "de minaur"],
+    "wta": ["wta tour", "swiatek", "sabalenka", "coco gauff", "rybakina",
+            "pegula", "jasmine paolini", "keys", "andreeva", "krejcikova",
+            "vondrousova", "zheng qinwen"],
 }
 
 # Non-trade layers first (most specific). Staff = decision verbs only; "fired up"
@@ -220,6 +240,8 @@ NOTABLE: Dict[str, List[str]] = {
     "nhl": ["mcdavid", "draisaitl", "mackinnon", "pastrnak", "panarin", "bedard"],
     "ufc": ["mcgregor", "makhachev", "jon jones", "pereira", "dana white"],
     "esports": ["faker", "chovy", "s1mple", "zywoo", "demon1", "tenz", "aspas"],
+    "atp": ["sinner", "alcaraz", "djokovic", "medvedev"],
+    "wta": ["swiatek", "sabalenka", "coco gauff"],
 }
 
 

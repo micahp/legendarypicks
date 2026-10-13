@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { DraftPlayerRow } from './NflDraftRoom'
+import NflDraftRoom, { DraftPlayerRow } from './NflDraftRoom'
 import type { NflDraftPlayer } from './types'
 
 
@@ -84,5 +84,32 @@ describe('DraftPlayerRow', () => {
     expect(screen.queryByRole('link', { name: 'Josh Allen' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Josh Allen' }))
     expect(onClick).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('draft board route affordance', () => {
+  const props = {
+    data: null,
+    loading: true,
+    error: null,
+    position: 'all' as const,
+    sort: 'rank' as const,
+    offset: 0,
+    query: '',
+    notes: { rank: {}, watch: {}, fade: {} },
+    syncError: null,
+    onSelectPosition: jest.fn(), onSelectSort: jest.fn(), onSetQuery: jest.fn(),
+    onClearQuery: jest.fn(), onSetOffset: jest.fn(), onSetRank: jest.fn(),
+    onToggleWatch: jest.fn(), onToggleFade: jest.fn(),
+  }
+
+  it('links the embedded NFL hub board to its stable route', () => {
+    render(<NflDraftRoom {...props} />)
+    expect(screen.getByRole('link', { name: /Open full board/ }).getAttribute('href')).toBe('/draft-board')
+  })
+
+  it('does not link the standalone board back to itself', () => {
+    render(<NflDraftRoom {...props} standalone />)
+    expect(screen.queryByRole('link', { name: /Open full board/ })).toBeNull()
   })
 })

@@ -18,6 +18,7 @@ import re
 import sqlite3
 import sys
 import urllib.request
+import collections
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -25,7 +26,16 @@ from typing import Dict, List, Optional, Set, Tuple
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db"
 )
-API = "https://api.underdogfantasy.com/beta/v5/over_under_lines"
+# The bulk /beta/v5/over_under_lines book answered HTTP 426 "upgrade_required" from
+# 2026-09-07, and /beta/v6 does too, so Underdog props were dead on both databases for
+# 25 days while the freshness monitor alerted every 30 minutes. The pick'em search the
+# app uses publishes the same object families (appearances, over_under_lines, players,
+# solo_games) per sport, and the parsers below read it unchanged. Measured 2026-10-02:
+# MMA 86 board rows reconciling to 86 scheduled props; tennis 36 ATP and 35 WTA rows.
+API = "https://api.underdogfantasy.com/v2/pickem_search/search_results?sport_id={sport}"
+# Our league -> Underdog's sport id. Tennis is one sport upstream; parse_tennis splits
+# it into ATP and WTA from Underdog's own competition grouping.
+SPORT_ID = {"ufc": "MMA", "atp": "TENNIS", "wta": "TENNIS"}
 HDR = {
     "User-Agent": (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -42,6 +52,40 @@ _UFC_MARKETS = {
     "fight_time": "fight_time",
     "finishes": "finishes",
 }
+
+# TENNIS, added 2026-09-05. Underdog publishes 49 tennis players and 366 balanced
+# lines in the SAME payload this file already fetches every 30 minutes, and we
+# had never asked: the parser filtered on sport_id == "MMA" and discarded 2,106
+# of 2,134 players. Tennis is the shape this board wants and could not get
+# anywhere else -- Bovada's tennis coupon has exactly ONE fantasy-style player
+# over/under (Total Games) among 71 market shapes, and the RotoWire relay
+# carries no tennis at all.
+#
+# Mapped: the counting stats a tennis game log can settle from.
+_TENNIS_MARKETS = {
+    "games_won": "games_won",
+    "aces": "aces",
+    "double_faults": "double_faults",
+    "breakpoints_won": "breakpoints_won",
+    "points_won": "points_won",
+    "sets_won": "sets_won",
+}
+# DEFERRED, deliberately, and reported as unmapped rather than dropped in
+# silence. Two different reasons and they should not be conflated:
+#
+#   period_1_games_won, period_1_aces, period_1_games_played
+#       First-set-only. A single set is not a player's match performance and
+#       settling it needs set-scoped logs we do not have.
+#   games_played, sets_played, tie_breakers_played
+#       Match LENGTH, not player performance. Both players share the value, so
+#       it is the same row written twice under two names.
+#
+# These are useful to the tennis reprice model and wrong for a props board,
+# which is the same split as the Bovada Service Game props.
+_TENNIS_DEFERRED = {
+    "period_1_games_won", "period_1_aces", "period_1_games_played",
+    "games_played", "sets_played", "tie_breakers_played",
+}
 _SUBHEADER_RE = re.compile(r"^(Higher|Lower)\s+([\d.]+)\s")
 
 
@@ -49,19 +93,64 @@ class SourceIdentityConflict(RuntimeError):
     """A supposedly stable source key now names a different canonical row."""
 
 
-def fetch() -> Dict:
-    """Fetch the public book once; callers must reuse the returned payload."""
-    req = urllib.request.Request(API, headers=HDR)
+def fetch(league: str) -> Dict:
+    """Fetch the public pick'em book for one league's sport."""
+    sport = SPORT_ID.get(league)
+    if sport is None:
+        raise ValueError(f"no Underdog sport id for league {league!r}")
+    req = urllib.request.Request(API.format(sport=sport), headers=HDR)
     with urllib.request.urlopen(req, timeout=30) as response:
         return json.loads(response.read().decode())
 
 
 def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
     """Return board rows plus the source-side count needed for reconciliation."""
+    return parse_solo(data, "MMA", _UFC_MARKETS)
+
+
+def tennis_tour(game: Dict) -> Optional[str]:
+    """-> 'atp' | 'wta' | None, from Underdog's own competition grouping.
+
+    Underdog files every tennis match under sport_id TENNIS with no tour field,
+    but `sport_group_name` names the draw: "US Open Men's Singles", "US Open
+    Women's Singles", "ATP Challenger Como". LP keys tennis fixtures as atp/wta,
+    so a match we cannot classify is returned as None and DROPPED rather than
+    guessed -- filing a women's match under atp would silently create a second
+    fixture for a match we already hold.
+    """
+    name = (game.get("sport_group_name") or "")
+    low = name.lower()
+    if "women" in low or low.startswith("wta"):
+        return "wta"
+    if "men" in low or low.startswith("atp"):
+        return "atp"
+    return None
+
+
+def parse_tennis(data: Dict, tour: str) -> Tuple[List[Dict], Dict]:
+    """Tennis over/unders from the same payload UFC already reads, one tour."""
+    return parse_solo(data, "TENNIS", _TENNIS_MARKETS,
+                      deferred=_TENNIS_DEFERRED,
+                      game_filter=lambda g: tennis_tour(g) == tour)
+
+
+def parse_solo(data: Dict, sport_id: str, market_map: Dict,
+               deferred: set = frozenset(),
+               game_filter=None) -> Tuple[List[Dict], Dict]:
+    """One parser for every 1v1 sport Underdog files under `solo_games`.
+
+    Was hardcoded to MMA. Parameterised rather than copied, because a second
+    copy is a second ruler for the same question and they drift.
+
+    `deferred` names stats we CHOSE not to map. They are counted separately from
+    stats we simply do not recognise, because "we decided against this" and "the
+    publisher started sending something new" are different facts and a single
+    unmapped bucket cannot tell them apart.
+    """
     players = {
         str(player["id"]): player
         for player in data.get("players", [])
-        if player.get("sport_id") == "MMA" and player.get("id") is not None
+        if player.get("sport_id") == sport_id and player.get("id") is not None
     }
     appearances = {
         str(appearance["id"]): appearance
@@ -71,23 +160,34 @@ def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
     games = {
         str(game["id"]): game
         for game in data.get("solo_games", [])
-        if game.get("sport_id") == "MMA" and game.get("id") is not None
+        if game.get("sport_id") == sport_id and game.get("id") is not None
+        and (game_filter is None or game_filter(game))
     }
     scheduled_game_keys = {
         key for key, game in games.items() if game.get("status") == "scheduled"
     }
 
     props = []
+    unmapped, deferred_hits = collections.Counter(), collections.Counter()
     for source_line in data.get("over_under_lines", []):
         if source_line.get("line_type") != "balanced":
             continue
         over_under = source_line.get("over_under") or {}
         appearance_stat = over_under.get("appearance_stat") or {}
-        market = _UFC_MARKETS.get(appearance_stat.get("stat"))
-        if not market:
-            continue
+        # Resolve the appearance FIRST. This is one unfiltered bulk book covering
+        # every sport Underdog runs, so testing the market before knowing whose
+        # line it is counts NFL and MLB stats as unmapped for tennis -- which is
+        # exactly the noise that makes an unmapped report unreadable and then
+        # ignored.
         appearance = appearances.get(str(appearance_stat.get("appearance_id")))
         if not appearance:
+            continue
+        stat = appearance_stat.get("stat")
+        market = market_map.get(stat)
+        if not market:
+            # Counted, never silently dropped. A stat we chose to defer and a
+            # stat the publisher just invented must not look the same.
+            (deferred_hits if stat in deferred else unmapped)[stat] += 1
             continue
         game_key = str(appearance.get("match_id"))
         game = games.get(game_key)
@@ -132,6 +232,12 @@ def parse_ufc(data: Dict) -> Tuple[List[Dict], Dict]:
                 "start_time": game.get("scheduled_at"),
             })
 
+    if unmapped:
+        print("  UNMAPPED %s stats (publisher sent something we do not know): %s"
+              % (sport_id, ", ".join("%s=%d" % kv for kv in unmapped.most_common())))
+    if deferred_hits:
+        print("  deferred %s stats (mapped out on purpose): %s"
+              % (sport_id, ", ".join("%s=%d" % kv for kv in deferred_hits.most_common())))
     return props, {
         "scheduled_games": len(scheduled_game_keys),
         "scheduled_players": len({p["source_player_key"] for p in props}),
@@ -279,10 +385,13 @@ def _game_exists(con: sqlite3.Connection, game_id: int) -> bool:
 
 
 def _game_with_fighters(con: sqlite3.Connection, game_id: int, player_ids: Set[int]) -> bool:
+    placeholders = ",".join("?" for _ in player_ids)
     found = {
         row["player_id"]
         for row in con.execute(
-            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN (?,?)",
+            "SELECT DISTINCT player_id FROM props WHERE game_id=? AND player_id IN ({})".format(
+                placeholders
+            ),
             (game_id, *sorted(player_ids)),
         )
     }
@@ -333,12 +442,13 @@ def resolve_game(
     # match minted a second row for a fight we already had under its ESPN event id.
     # Two fighters meeting twice inside two days is not a thing, so the window is safe,
     # and an ambiguous result still refuses below rather than guessing.
+    placeholders = ",".join("?" for _ in player_ids)
     candidates = con.execute(
         "SELECT pg.id FROM prop_games pg JOIN props pr ON pr.game_id=pg.id "
         "WHERE pg.league=? AND pg.date BETWEEN date(?,'-1 day') AND date(?,'+1 day') "
-        "AND pr.player_id IN (?,?) "
-        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=2",
-        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids)),
+        "AND pr.player_id IN ({}) "
+        "GROUP BY pg.id HAVING COUNT(DISTINCT pr.player_id)=?".format(placeholders),
+        (LEAGUE, group[0]["date"], group[0]["date"], *sorted(player_ids), len(player_ids)),
     ).fetchall()
     if len(candidates) > 1:
         raise SourceIdentityConflict(
@@ -387,7 +497,7 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
     summary = {
         "parsed_props": len(props), "source_games": 0, "eligible_games": 0,
         "skipped_games": 0, "written_props": 0, "resolved_players": 0,
-        "unresolved_players": 0,
+        "unresolved_players": 0, "conflicted_games": 0,
     }
     try:
         ensure_source_identity_schema(con)
@@ -429,7 +539,29 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
 
             for source_player_key, player_id in resolved.items():
                 bind_player_source_key(con, source_player_key, player_id, now)
-            game_id = resolve_game(con, group, set(resolved.values()), now)
+            # A game whose identity cannot be confirmed is skipped, NOT fatal.
+            # `resolve_game` fails closed on purpose -- it refuses to write props
+            # onto a game whose fighter set does not match what Underdog is
+            # sending -- but raising out of the loop aborted the WHOLE run, so one
+            # bad fixture blocked every other event.
+            #
+            # It did: from 2026-08-25T01:04 until this change, every run fetched
+            # 149 balanced props across 13 events and wrote ZERO, on
+            # `source game key 295987 conflicts with canonical fighters` (game
+            # 1274, Xiao Long vs Francesco Nuzzi, which holds only one of the two
+            # fighters). The board showed 3 UFC markets instead of 6 because
+            # win_by_decision comes from Bovada and kept updating while every
+            # Underdog market froze. Same lesson the stale-mapping branch in
+            # `resolve_game` already records from 2026-08-19.
+            try:
+                game_id = resolve_game(con, group, set(resolved.values()), now)
+            except SourceIdentityConflict as conflict:
+                summary["skipped_games"] += 1
+                summary["conflicted_games"] += 1
+                summary.setdefault("conflicts", []).append(str(conflict))
+                print("  CONFLICT source game {}: {} -- skipped, run continues".format(
+                    source_game_key, conflict))
+                continue
             for prop in group:
                 upsert_prop(con, game_id, resolved[prop["source_player_key"]], prop, now)
                 summary["written_props"] += 1
@@ -447,13 +579,25 @@ def direct_ingest(props: List[Dict], dry_run: bool = False) -> Dict:
 
 
 def main() -> int:
-    if len(sys.argv) < 2 or sys.argv[1] != LEAGUE:
+    global LEAGUE
+    league = sys.argv[1] if len(sys.argv) > 1 else ""
+    if league not in ("ufc", "atp", "wta"):
         print(__doc__)
         return 1
+    # LEAGUE is a module constant threaded through twelve DB call sites (source
+    # ids, aliases, unresolved players, fixture keys). Rebinding it once here,
+    # before any of that runs, is deliberate: adding a parameter to twelve
+    # signatures to support a second sport is a bigger and riskier diff than
+    # setting the value the whole write path already reads. One process, one
+    # league, one run.
+    LEAGUE = league
     dry_run = "--dry-run" in sys.argv
-    print("Fetching one Underdog public bulk book...")
-    data = fetch()
-    props, source_counts = parse_ufc(data)
+    print(f"Fetching the Underdog pick'em book for {SPORT_ID.get(league, league)}...")
+    data = fetch(league)
+    if league == "ufc":
+        props, source_counts = parse_ufc(data)
+    else:
+        props, source_counts = parse_tennis(data, league)
     print(
         "Source: {scheduled_games} scheduled MMA games, {scheduled_players} fighters, "
         "{scheduled_props} balanced UFC props".format(**source_counts)
@@ -465,11 +609,16 @@ def main() -> int:
     print(
         "Ingest: {written_props} props from {eligible_games} eligible of {source_games} source games; "
         "{resolved_players} of {resolved_players_plus_unresolved} participant IDs resolved; "
-        "{skipped_games} rejected games, {unresolved_players} queued fighters.".format(
+        "{skipped_games} skipped games ({conflicted_games} identity conflicts), "
+        "{unresolved_players} queued fighters.".format(
             resolved_players_plus_unresolved=(summary["resolved_players"] + summary["unresolved_players"]),
             **summary
         )
     )
+    # A skipped game is a REPORTED game. These were fatal until 2026-08-26, which
+    # at least made them loud; now that the run continues, silence would be worse.
+    for line in summary.get("conflicts", []):
+        print("  UNWRITTEN (identity conflict): {}".format(line))
     if summary["written_props"] == 0:
         print("ERROR: non-empty Underdog UFC board produced zero eligible props.")
         return 2

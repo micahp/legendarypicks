@@ -1,0 +1,15 @@
+[Unit]
+Description=Sweep for missing game recaps every 3 hours
+
+# Three hours, not one. The scoreboard hook already writes the recap for any game a reader
+# opens, so this only catches games nobody looked at — and a recap of a game from this
+# morning is no less accurate for arriving at noon. A tighter cadence would buy nothing and
+# spend ESPN request budget, which is a COUNT per host, not a rate.
+
+[Timer]
+OnCalendar=*-*-* 1/3:40:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

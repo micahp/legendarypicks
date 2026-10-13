@@ -90,8 +90,15 @@ class TestAgainstTheRealDatabases:
     @pytest.mark.parametrize(
         "league,game_season,expect_stale",
         [
-            ("mls", 2026, True),    # logs stop at 2025, 2026 games are being previewed
-            ("ncaaf", 2026, True),  # logs stop at 2025, 2026 season starts Aug 29
+            # 2026-08-24: was True ("logs stop at 2025"). The MLS backfill landed and dev
+            # and prod now both hold 4,516 MLS 2026 logs spanning 2026-02-21..2026-08-08,
+            # so the season is no longer stale and the expectation was asserting history.
+            ("mls", 2026, False),
+            # 2026-09-06: was True ("logs stop at 2025, 2026 season starts Aug 29"). The
+            # season started and ingest_cfbd_logs ran, so both databases now hold 6,726
+            # NCAAF 2026 logs spanning 2026-08-29..2026-09-06. Same shape as the MLS line
+            # above: the expectation had begun asserting history rather than behaviour.
+            ("ncaaf", 2026, False),
             ("nfl", 2026, True),    # logs stop at 2025, 2026 preseason underway
             ("mlb", 2026, False),   # 2026 logs exist
             ("nba", 2026, False),   # 2026 logs exist
@@ -130,6 +137,9 @@ class TestSuppressedFormLifecycle:
         monkeypatch.setattr(espn, "summary", lambda lg, gid: _fake_summary(season_year))
         monkeypatch.setattr(espn, "team_strength_map", lambda lg: {})
         monkeypatch.setattr(espn, "team_strength", lambda lg: [])
+        monkeypatch.setattr(espn, "team_strength_standings",
+                            lambda lg, season=None: {"season": season_year, "teams": [
+                                {"abbrev": "H", "name": "Home", "wins": 10, "losses": 8, "win_pct": 0.556}]})
         return generate_game_story("mls", "g1", home="H", away="A",
                                    state="pre", start_time="2026-08-15T23:30Z"), calls
 
@@ -163,10 +173,13 @@ class TestSuppressedFormLifecycle:
         con.close()
         _, calls = self._generate(path, monkeypatch, season_year=2026)
         assert len(calls) == 1
-        # 2026 logs land for the home team (3+ games = real form).
+        # 2026 logs land for the home team (3+ games = real form), close enough to this
+        # story's own start_time (2026-08-15) to be current — a gap of months would trip
+        # the transfer/injury staleness filter in player_form._team_lines, which is a
+        # different concern from the one this test exercises.
         con = _open(path)
         con.execute("INSERT INTO players(id, name) VALUES (7, 'Test Striker')")
-        for i, date in enumerate(["2026-03-01", "2026-03-08", "2026-03-15"]):
+        for i, date in enumerate(["2026-08-01", "2026-08-05", "2026-08-10"]):
             _log(con, 7, "mls", 2026, "H", date, i + 1, '{"goals": 1}')
         con.close()
         _, calls2 = self._generate(path, monkeypatch, season_year=2026, story_text="WITH FORM")

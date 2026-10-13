@@ -1,0 +1,13 @@
+[Unit]
+Description=X-timeline news fast lane — PROD
+
+[Timer]
+# Every 2h at :45, offset from dev's :15 on the same 2-hour cadence. This lane
+# reads X timelines rather than ESPN, so the concern is duplicate work and rate
+# limits on that source, not the ESPN host budget.
+OnCalendar=*-*-* 0/2:45:00
+Persistent=true
+Unit=legendarypicks-news-x-prod.service
+
+[Install]
+WantedBy=timers.target

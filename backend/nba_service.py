@@ -2,7 +2,7 @@
 """nba_service.py — DEPRECATED.
 
 This NBA-only FastAPI app (built on nba_api) was merged into the unified, multi-league
-`sports_service.py`, which is ESPN-backed and covers NBA/WNBA/NHL/MLB/NFL with one service,
+`sports_service.py`, which is ESPN-backed and covers NBA/NHL/MLB/NFL with one service,
 real data, and persisted predictions. It also bound the same port (8000) as sports_service,
 so the two could never run together.
 

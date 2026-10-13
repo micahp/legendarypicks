@@ -126,6 +126,7 @@ def refuse_unmigrated(path: str) -> None:
         "legacy_migrate_player_entity_type",
         "legacy_migrate_player_injury_columns",
         "legacy_migrate_prop_games_start_time",
+        "legacy_migrate_team_evidence_schema",
     )
     for migration_id, status, note in check_legacy(absolute):
         if migration_id not in required_schema:

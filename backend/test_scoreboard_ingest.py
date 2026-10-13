@@ -183,6 +183,8 @@ class TestScoreboardStore:
         targets = scoreboard_store.live_targets()
         assert ("mlb", "2026-08-18") in targets
         assert ("nhl", "2026-08-18") not in targets
+        scoreboard_store.save("wc", "2026-08-18", [self._game("stale-wc", -1, "in")])
+        assert ("wc", "2026-08-18") not in scoreboard_store.live_targets()
         # A game 30 hours past its start and still not final is a row nobody
         # closed, not a live game. Polling it forever is a permanent cost.
         assert ("nba", "2026-08-18") not in targets
@@ -294,16 +296,30 @@ class TestServingPath:
         from routers.games import _scoreboard_snapshot
         assert _scoreboard_snapshot("nhl", "2026-08-18") is None
 
+    def test_a_stale_scheduled_slate_remains_visible(self):
+        """The hourly refresh boundary must not erase tomorrow's games."""
+        import sqlite3
+        from routers.games import _scoreboard_snapshot
+        scoreboard_store.save("mlb", "2026-08-18", [
+            {"game_id": "1", "date": "2026-08-18T22:35Z", "state": "pre"}])
+        old = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=2)).isoformat()
+        con = sqlite3.connect(_DB_PATH)
+        con.execute("UPDATE scoreboard_refresh SET fetched_at=? WHERE league='mlb'", (old,))
+        con.commit()
+        con.close()
+        games, age = _scoreboard_snapshot("mlb", "2026-08-18")
+        assert [game["game_id"] for game in games] == ["1"]
+        assert age > 3600
+
 
 class TestServingPathNeverSleeps:
-    def test_an_exhausted_budget_refuses_instead_of_pausing(self):
+    def test_the_obsolete_lifetime_budget_does_not_refuse_a_handler(self):
         import paced_http
         paced_http.reset_host_budget()
         paced_http._host_spend["site.web.api.espn.com"] = 500
         try:
-            with pytest.raises(paced_http.BudgetExhausted):
-                paced_http._charge("https://site.web.api.espn.com/x", 100, 60,
-                                   "refuse")
+            paced_http._charge("https://site.web.api.espn.com/x", 100, 60,
+                               "refuse")
         finally:
             paced_http.reset_host_budget()
 
@@ -496,6 +512,31 @@ class TestThePastIsNeverAsked:
         assert response.headers.get("X-LP-Data-Source") == "scoreboard_snapshots"
 
 
+class TestFotMobOnlyServingPath:
+    @pytest.mark.parametrize("league", ["unl", "friendlies"])
+    @pytest.mark.parametrize("day_delta", [-3, 1])
+    def test_a_missing_snapshot_never_falls_through_to_espn(
+            self, monkeypatch, league, day_delta):
+        from fastapi.testclient import TestClient
+        import espn_client
+        import sports_service
+
+        calls = []
+
+        def _refuse(*args, **kwargs):
+            calls.append((args, kwargs))
+            raise AssertionError("a FotMob-only league must never ask ESPN")
+
+        monkeypatch.setattr(espn_client, "games", _refuse)
+        client = TestClient(sports_service.app)
+        requested = (dt.date.today() + dt.timedelta(days=day_delta)).isoformat()
+        response = client.get(f"/api/{league}/games?date={requested}")
+        assert response.status_code == 200
+        assert response.json() == []
+        assert response.headers.get("X-LP-Data-Source") == "unavailable"
+        assert calls == []
+
+
 class TestOnlyOneRunSpendsTheBudget:
     """The per-host budget is shared; the counter that guards it is not.
 
@@ -577,3 +618,103 @@ class TestTheLiveRunWaitsRatherThanSkipping:
                 assert ingest_scoreboards._only_one_run(tmp.name, wait_seconds=1.0) is None
             finally:
                 held.close()
+
+
+class TestAFutureSlateIsNotRepolled:
+    """A slate that has not started is re-read 144 times a day for nothing.
+
+    Measured 2026-08-24, prod: `needs_refresh` answered `True, "N not final"`
+    for tomorrow on every league carrying a published slate (atp, wta, mlb,
+    ufc, lcup). The schedule run fires every 10 minutes, so five leagues cost
+    720 requests a day per environment to re-read a schedule that cannot have
+    changed, on a box that had already been 403'd twice that day.
+
+    The asymmetry is what makes it a defect rather than a cost: a league that
+    published NOTHING for tomorrow got the 3h empty backoff, while a league
+    that published a schedule got no backoff at all. The more a publisher told
+    us, the more we asked it.
+    """
+
+    def _game(self, gid, offset_hours, state):
+        when = dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=offset_hours)
+        return {"game_id": gid, "date": when.isoformat().replace("+00:00", "Z"),
+                "state": state, "home": {"abbrev": "AAA"}, "away": {"abbrev": "BBB"}}
+
+    def _tomorrow(self, league="mlb"):
+        return (dt.date.fromisoformat(scoreboard_store._today_for(league))
+                + dt.timedelta(days=1)).isoformat()
+
+    def test_tomorrows_unstarted_slate_is_not_asked_again_immediately(self):
+        tomorrow = self._tomorrow()
+        scoreboard_store.save("mlb", tomorrow,
+                              [self._game("A", 26, "pre"), self._game("B", 28, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
+        assert not wanted, reason
+        assert "future slate" in reason
+
+    def test_the_backoff_expires_so_a_postponement_still_lands(self):
+        """Backed off, not abandoned. A slate really can change."""
+        tomorrow = self._tomorrow()
+        scoreboard_store.save("mlb", tomorrow, [self._game("A", 26, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh(
+            "mlb", tomorrow, future_backoff=dt.timedelta(seconds=0))
+        assert wanted and "future slate" in reason, reason
+
+    def test_todays_unstarted_slate_is_still_asked(self):
+        """The whole point is the DATE, not the state.
+
+        Today's games are `pre` for hours before first pitch and that window is
+        exactly when a lineup, a start time or a postponement moves. Backing off
+        here would be a regression, not a saving.
+        """
+        today = scoreboard_store._today_for("mlb")
+        scoreboard_store.save("mlb", today, [self._game("A", 4, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", today)
+        assert wanted and "not final" in reason, reason
+
+    def test_one_game_in_flight_overrides_the_date(self):
+        """`game_date` is a slate day, so the clock can roll over mid-game.
+
+        A date comparison alone would park a live board. One started game hands
+        the day straight back to the unfinished path.
+        """
+        tomorrow = self._tomorrow()
+        scoreboard_store.save("mlb", tomorrow,
+                              [self._game("A", 1, "in"), self._game("B", 26, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
+        assert wanted and "not final" in reason, reason
+
+    def test_a_finished_game_on_a_future_date_also_overrides(self):
+        tomorrow = self._tomorrow()
+        scoreboard_store.save("mlb", tomorrow,
+                              [self._game("A", -1, "post"), self._game("B", 26, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
+        assert wanted and "not final" in reason, reason
+
+    def test_a_past_day_is_unaffected(self):
+        """The finished-day rule still owns yesterday."""
+        today = scoreboard_store._today_for("mlb")
+        yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
+        scoreboard_store.save("mlb", yesterday, [self._game("A", -20, "post")])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", yesterday)
+        assert not wanted and reason == "every game final", reason
+
+    def test_tennis_gets_the_backoff_on_its_own_clock(self):
+        """Tennis buckets `game_date` by UTC and every other league by ET.
+
+        `_today_for` is league-aware for that reason, and the backoff must ask
+        the same question on the same ruler rather than reintroducing the
+        two-clock bug the empty backoff already had.
+        """
+        tomorrow = self._tomorrow("atp")
+        scoreboard_store.save("atp", tomorrow, [self._game("A", 26, "pre")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", tomorrow)
+        assert not wanted and "future slate" in reason, reason
+
+    def test_an_empty_future_day_still_uses_the_empty_backoff(self):
+        """The two backoffs must not fight. Empty is the publisher saying
+        nothing is scheduled; future-unstarted is it saying something is."""
+        tomorrow = self._tomorrow()
+        scoreboard_store.save("mlb", tomorrow, [])
+        wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
+        assert not wanted and "no games" in reason, reason

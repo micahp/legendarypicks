@@ -1,0 +1,11 @@
+[Unit]
+Description=Surface LegendaryPicks unit failure for %i
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger -p daemon.alert -t legendarypicks-alert Unit %i failed; inspect systemctl status and journalctl
+# Quoted. Unquoted, systemd splits on whitespace and printf takes `ALERT:` as the
+# whole format string with every remaining word as an excess argument, so the alert
+# that exists to make a failure loud was itself emitting a warning.
+ExecStart=/usr/bin/printf 'ALERT: LegendaryPicks unit %%s failed; inspect systemctl status and journalctl\n' '%i'
+StandardOutput=journal+console

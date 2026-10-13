@@ -28,6 +28,9 @@ export const STAT_LABELS: Record<string, string> = {
   goals: 'Goals', assists: 'Assists', points: 'Points', shots: 'Shots',
   shooting_pct: 'Shooting %', plus_minus: '+/-', pim: 'PIM', ppg: 'PP Goals',
   ppp: 'PP Points', shg: 'SH Goals', toi: 'TOI', faceoff_pct: 'Faceoff %',
+  saves: 'Saves', shots_against: 'Shots Against', goals_against: 'Goals Against',
+  save_pct: 'Save %', gaa: 'GAA', shutouts: 'Shutouts', wins: 'Wins',
+  losses: 'Losses', ot_losses: 'OT Losses', games_started: 'Games Started',
   // NBA
   pts: 'Points', reb: 'Rebounds', ast: 'Assists', stl: 'Steals', blk: 'Blocks',
   fg_pct: 'FG %', fg3_pct: '3PT %', ft_pct: 'FT %', min_pg: 'Minutes/G',
@@ -99,4 +102,3 @@ export function projForMarket(projections: Record<string, Projection>, market: s
   }
   return null
 }
-

@@ -41,4 +41,15 @@ describe('normalizeGame method of victory passthrough', () => {
     expect(g.outcomeRound).toBe(3)
     expect(g.outcomeClock).toBe('1:24')
   })
+
+  it('keeps a tennis tournament seed and athlete id separate from world rank', () => {
+    const g = normalizeGame({
+      game_id: '184663', date: '2026-08-26T15:00:00Z', state: 'pre',
+      home: { athlete_id: '3623', abbrev: 'J. Sinner', name: 'Jannik Sinner', seed: 1 },
+      away: { athlete_id: '9999', abbrev: 'Player', name: 'Unseeded Player', seed: null },
+    }, 'atp')
+    expect(g.homeTeam).toMatchObject({ athleteId: '3623', seed: 1 })
+    expect(g.awayTeam.athleteId).toBe('9999')
+    expect(g.awayTeam.seed).toBeUndefined()
+  })
 })

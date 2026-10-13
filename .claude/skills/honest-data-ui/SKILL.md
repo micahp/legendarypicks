@@ -118,6 +118,15 @@ with zero radius. They are defaults, not choices.
 
 ---
 
+## 8. Layout: containers mark groups, never items
+
+Before laying out any surface, read `docs/DESIGN-PRINCIPLES-containers-and-hierarchy.md` (2026-10-08, from
+ESPN's scores page, Zander Whitehurst's "stop doing X" rules and our v6 mockup). The short form: one
+container level and only around a group (a league on a day, a news module), even when the group has one
+item; items inside separated by a hairline or space; the container edge a surface tint, not a border; page
+context (title, date) outside the containers, left-aligned; text left, numbers right in a column; one
+primary action per surface.
+
 ## 7. The sibling rule
 
 This skill governs what a surface may *show*. `.claude/skills/fail-loudly/SKILL.md` governs

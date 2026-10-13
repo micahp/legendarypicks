@@ -1,0 +1,10 @@
+[Unit]
+Description=Collect X timelines every 2 hours (feeds hold ~6h at current post rates)
+
+[Timer]
+OnCalendar=*-*-* 0/2:15:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

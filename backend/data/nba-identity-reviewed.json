@@ -1,0 +1,65 @@
+{
+  "_provenance": {
+    "written": "2026-10-02",
+    "decision": "Each nba.com PLAYER_ID below is the same person as the ESPN athlete id beside it. Verified by birth date: nba.com's team page and ESPN's core athlete record (sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/<id>) publish the same date for every entry. All seven signed new contracts in late July 2026 that ESPN's 2026-08-04 roster had not yet reflected, so team and transaction-date evidence could not bind them. Two of the ESPN ids sit in players.nba_id, which holds hoopR's ESPN athlete ids, not NBA ids.",
+    "used_by": "ingest_nba_roster.py, as evidence for a sole name candidate whose ESPN id matches. Needed once: after the first publish these players carry an nba.com crosswalk row and resolve by exact id."
+  },
+  "nba": {
+    "1641761": {
+      "espn_id": 4702670,
+      "name": "Grant Nelson",
+      "nba_com_team": "BKN",
+      "nba_com_birth_date": "MAR 18, 2002",
+      "espn_birth_date": "2002-03-18",
+      "nba_com_how_acquired": "Signed on 10/15/25"
+    },
+    "1641763": {
+      "espn_id": 5105553,
+      "name": "Julian Phillips",
+      "nba_com_team": "HOU",
+      "nba_com_birth_date": "NOV 05, 2003",
+      "espn_birth_date": "2003-11-05",
+      "nba_com_how_acquired": "Signed on 07/24/26"
+    },
+    "1631131": {
+      "espn_id": 4432827,
+      "name": "Oscar Tshiebwe",
+      "nba_com_team": "HOU",
+      "nba_com_birth_date": "NOV 27, 1999",
+      "espn_birth_date": "1999-11-27",
+      "nba_com_how_acquired": "Signed on 07/23/26"
+    },
+    "1631219": {
+      "espn_id": 4432588,
+      "name": "John Butler Jr.",
+      "nba_com_team": "MIL",
+      "nba_com_birth_date": "DEC 04, 2002",
+      "espn_birth_date": "2002-12-04",
+      "nba_com_how_acquired": "Signed on 10/15/25"
+    },
+    "1641723": {
+      "espn_id": 4683736,
+      "name": "Kobe Bufkin",
+      "nba_com_team": "NO",
+      "nba_com_birth_date": "SEP 21, 2003",
+      "espn_birth_date": "2003-09-21",
+      "nba_com_how_acquired": "Signed on 07/25/26"
+    },
+    "1631132": {
+      "espn_id": 4431778,
+      "name": "Christian Koloko",
+      "nba_com_team": "NO",
+      "nba_com_birth_date": "JUN 20, 2000",
+      "espn_birth_date": "2000-06-20",
+      "nba_com_how_acquired": "Signed on 07/28/26"
+    },
+    "1631127": {
+      "espn_id": 4433618,
+      "name": "Harrison Ingram",
+      "nba_com_team": "UTAH",
+      "nba_com_birth_date": "NOV 27, 2002",
+      "espn_birth_date": "2002-11-27",
+      "nba_com_how_acquired": "Signed on 07/25/26"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 """Regression coverage for the shared scoreboard/detail live-status contract."""
 import os
 import sys
+from importlib import import_module
 import unittest
 from unittest.mock import patch
 
@@ -8,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import espn_client
 from routers import games
+game_detail_module = import_module("routers.games.game_detail")
 
 
 class GameResultStatusTests(unittest.TestCase):
@@ -78,7 +80,13 @@ class DetailContractTests(unittest.TestCase):
             out["live_score"] = {"home": 1, "away": 0}
 
         with patch.object(games.espn, "game_result", return_value=published), \
-             patch.object(games, "_read_game_detail_from_db", side_effect=read_context), \
+             patch.object(game_detail_module, "_state_and_score_from_snapshot", return_value=(None, None)), \
+             patch.object(game_detail_module, "_state_from_db", return_value=None), \
+             patch.object(
+                 game_detail_module, "_snapshot_field",
+                 side_effect=lambda _lg, _gid, key: "2026-10-10T19:30:00Z" if key == "date" else None,
+             ), \
+             patch.object(game_detail_module, "_read_game_detail_from_db", side_effect=read_context), \
              patch.object(games.espn, "team_strength_map", return_value={}):
             detail = games.get_game_detail("lcup", "401000001")
 
@@ -86,6 +94,7 @@ class DetailContractTests(unittest.TestCase):
         self.assertEqual(detail["period"], 2)
         self.assertEqual(detail["clock"], "67'")
         self.assertEqual(detail["status_detail"], "67'")
+        self.assertEqual(detail["start_time"], "2026-10-10T19:30:00Z")
 
 
 if __name__ == "__main__":

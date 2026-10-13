@@ -6,7 +6,7 @@ import LiveDot from '../components/LiveDot'
 // The homepage leads with props — the most differentiated surface we have.
 // Micah's framing: "props" alone is a noun; the differentiator is the HISTORY,
 // that we say how the line landed. Scoreboard and predictions are secondary;
-// news, live esports and mock drafts are surfaced instead of under-sold.
+// news, live esports and the current NFL phase are surfaced instead of under-sold.
 // honest-data-ui: no number on this page that is not sourced. Everything here
 // is static copy except the esports live dot, which reads /api/esports/upcoming
 // and is ABSENT when the read fails — never a hardcoded "live", never a zero.
@@ -34,11 +34,11 @@ export default function Home() {
     <>
       <Head>
         <title>Legendary Picks: props with history, and how every line landed</title>
-        <meta name="description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <meta name="description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
         <link rel="canonical" href="https://legendarypicks.xyz/" />
         {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
         <meta property="og:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta property="og:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <meta property="og:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
         <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -48,7 +48,7 @@ export default function Home() {
         {/* Twitter / X card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta name="twitter:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and mock drafts." />
+        <meta name="twitter:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
@@ -109,7 +109,7 @@ export default function Home() {
       </div>
 
       {/* The surfaces the homepage used to under-sell. */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <Link href="/news" className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-700 transition-colors">
           <h3 className="font-bold text-lg mb-2">News</h3>
           <p className="text-sm text-zinc-400">League news and features behind the slate.</p>
@@ -120,10 +120,6 @@ export default function Home() {
             <EsportsLiveIndicator />
           </div>
           <p className="text-sm text-zinc-400">Live broadcasts, brackets and matches across the circuit.</p>
-        </Link>
-        <Link href="/mock-draft" className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-700 transition-colors">
-          <h3 className="font-bold text-lg mb-2">Mock Draft</h3>
-          <p className="text-sm text-zinc-400">Run a mock draft against the full player pool.</p>
         </Link>
       </div>
     </>

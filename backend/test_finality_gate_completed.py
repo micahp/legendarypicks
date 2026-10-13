@@ -115,11 +115,12 @@ def _db():
     con.executescript("""
         CREATE TABLE prop_games (id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT,
             home TEXT, away TEXT, date TEXT, final_home REAL, final_away REAL,
-            start_time TEXT);
+            start_time TEXT, cancelled_at TEXT, cancel_reason TEXT, cancel_source TEXT);
         CREATE TABLE props (id INTEGER PRIMARY KEY, game_id INTEGER, market TEXT, line REAL,
             side TEXT, player_id INTEGER);
         CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT, team TEXT, espn_id TEXT);
-        CREATE TABLE prop_results (prop_id INTEGER PRIMARY KEY, hit INTEGER, actual REAL);
+        CREATE TABLE prop_results (prop_id INTEGER PRIMARY KEY, hit INTEGER,
+            actual_value REAL, settled_at TEXT);
     """)
     con.execute("INSERT INTO prop_games (id, league, espn_event_id, home, away, date,"
                 " final_home, final_away) VALUES (1, 'mlb', '401815805', 'Atlanta Braves',"
@@ -128,15 +129,27 @@ def _db():
     return con
 
 
-def test_settlement_refuses_a_postponed_game(espn):
+def test_settlement_records_and_voids_a_publisher_postponed_game(espn):
     espn(_POSTPONED)
     con = _db()
+    con.executemany(
+        "INSERT INTO props(id,game_id,market,line,side) VALUES(?,1,'hits',0.5,'over')",
+        [(1,), (2,)],
+    )
+    con.commit()
     out = settlement.settle_game(con, 1)
-    row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
+    row = con.execute(
+        "SELECT final_home, final_away, cancelled_at, cancel_reason, cancel_source "
+        "FROM prop_games WHERE id=1"
+    ).fetchone()
     assert row["final_home"] is None and row["final_away"] is None, \
         "a game that was never played must not be stamped 0-0"
     assert out["settled"] == 0
-    assert "not final" in out["msg"]
+    assert out["void"] == 2
+    assert row["cancelled_at"] is not None
+    assert row["cancel_reason"] == "Postponed"
+    assert row["cancel_source"] == "espn"
+    assert "publisher-confirmed cancellation" in out["msg"]
 
 
 def test_settlement_records_the_final_of_a_completed_game(espn):

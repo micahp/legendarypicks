@@ -1,0 +1,30 @@
+[Unit]
+Description=Legendary Picks guarded production player-history refresh
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/root/legendarypicks/backend/data/picks.db
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/flock --nonblock /run/lock/legendarypicks-history-prod.lock /root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/run_history_refresh.py --apply
+TimeoutStartSec=20min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CPUQuota=75%
+MemoryHigh=1200M
+MemoryMax=1600M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+

@@ -13,9 +13,11 @@ module.exports = {
       // The CoD-only league desk is generalized into the shared esports title
       // surface — keep the old URL working as a compatibility redirect.
       { source: '/cod', destination: '/esports/call-of-duty', permanent: false },
-      // Plays is a locked dead-product decision — no value in its current
-      // state. Point the old URL at Props instead of a dead board.
-      { source: '/plays', destination: '/props', permanent: false },
+      // /plays was redirected here as "a locked dead-product decision". That was true of
+      // the OLD curated board, fed by plays_board.json, which has not been written since
+      // 2026-07-19 — and the redirect is why the live surface vanished from the app.
+      // Revived 2026-09-02 as a different product: the live swing board plus upcoming
+      // tradeable markets. Do not re-point this at /props without checking what is on it.
     ]
   },
   async rewrites() {

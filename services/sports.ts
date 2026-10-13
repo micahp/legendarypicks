@@ -29,6 +29,10 @@ export type { LivePeriod } from '../lib/liveGameStatus'
 export interface TeamSide {
   teamId: string
   name: string
+  athleteId?: string
+  // Tennis tournament seed from ESPN competitors[].curatedRank.current.
+  // This is deliberately separate from the weekly ATP/WTA world ranking.
+  seed?: number
   nickname?: string
   score?: number
   winner?: boolean
@@ -37,6 +41,29 @@ export interface TeamSide {
   label?: string
   pending?: boolean
   unavailable?: boolean
+}
+
+// Live football state, copied from the ESPN scoreboard response the board already fetches
+// (backend espn_client/scoreboard.py `_football_situation`). Present only while a game is
+// in progress. Every field may be absent: ESPN leaves possession empty at halftime and
+// sends no down or spot between plays (the try, a kickoff).
+export interface FootballSituation {
+  down?: number
+  distance?: number
+  text?: string                 // "2nd & 5 at MEM 47", as published
+  shortText?: string            // "2nd & 5"
+  ballOn?: string               // "MEM 47", as published
+  // The ball's spot, 0-100, on a field drawn with the AWAY end zone on the left.
+  fieldPosFromAwayGoal?: number
+  possession?: 'home' | 'away'
+  goalToGo: boolean
+  redZone: boolean
+  homeTimeouts?: number
+  awayTimeouts?: number
+  lastPlay?: { text: string; type?: string; team?: 'home' | 'away'; scoreValue?: number }
+  drive?: { description: string; start?: string }
+  // ESPN's model, not ours. Label it as ESPN's wherever it is shown.
+  winProbability?: { home: number; away: number; tie?: number; source: 'espn' }
 }
 
 export interface Game {
@@ -51,6 +78,11 @@ export interface Game {
   status: 'SCHEDULED' | 'LIVE' | 'FINAL'
   // ESPN short detail, e.g. "Final/10" (extra innings) or "Final/OT" — shown on the FINAL badge
   statusDetail?: string
+  // The publisher's phase. ESPN files every league it covers as season_slug "preseason" /
+  // "regular-season" / "post-season" (season_type 1/2/3); measured 2026-10-02 on NFL, NHL,
+  // NBA, MLB and NCAAF. Soccer, tennis and UFC payloads carry no phase, so they are never
+  // labelled rather than guessed.
+  isPreseason?: boolean
   subtitle?: string
   // Tennis: array of set scores [home, away] for each set
   sets?: TennisSet[]
@@ -61,6 +93,40 @@ export interface Game {
   outcomeMethod?: string
   outcomeRound?: number
   outcomeClock?: string
+  // Football only, live only. See FootballSituation.
+  situation?: FootballSituation
+}
+
+const _side = (v: any): 'home' | 'away' | undefined => (v === 'home' || v === 'away' ? v : undefined)
+const _n = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
+
+export function normalizeSituation(g: any): FootballSituation | undefined {
+  if (g?.state !== 'in' && g?.status !== 'LIVE') return undefined
+  const s = g?.situation
+  if (!s || typeof s !== 'object') return undefined
+  const lp = s.last_play ?? s.lastPlay
+  const dr = s.drive
+  const wp = s.win_probability ?? s.winProbability
+  return {
+    down: _n(s.down),
+    distance: _n(s.distance),
+    text: s.text ?? undefined,
+    shortText: s.short_text ?? s.shortText ?? undefined,
+    ballOn: s.ball_on ?? s.ballOn ?? undefined,
+    fieldPosFromAwayGoal: _n(s.field_pos_from_away_goal ?? s.fieldPosFromAwayGoal),
+    possession: _side(s.possession),
+    goalToGo: Boolean(s.goal_to_go ?? s.goalToGo),
+    redZone: Boolean(s.red_zone ?? s.redZone),
+    homeTimeouts: _n(s.home_timeouts ?? s.homeTimeouts),
+    awayTimeouts: _n(s.away_timeouts ?? s.awayTimeouts),
+    lastPlay: lp?.text
+      ? { text: lp.text, type: lp.type ?? undefined, team: _side(lp.team), scoreValue: _n(lp.score_value ?? lp.scoreValue) }
+      : undefined,
+    drive: dr?.description ? { description: dr.description, start: dr.start ?? undefined } : undefined,
+    winProbability: _n(wp?.home) !== undefined && _n(wp?.away) !== undefined
+      ? { home: wp.home, away: wp.away, tie: _n(wp.tie), source: 'espn' }
+      : undefined,
+  }
 }
 
 function statusFromState(state?: string): Game['status'] {
@@ -78,6 +144,8 @@ function side(s: any): Game['homeTeam'] {
   return {
     teamId: s?.abbrev ?? '',
     name: name + record,
+    athleteId: s?.athlete_id != null ? String(s.athlete_id) : s?.athleteId != null ? String(s.athleteId) : undefined,
+    seed: Number.isInteger(s?.seed) && s.seed > 0 ? s.seed : undefined,
     nickname: s?.nickname,
     score: s?.score ?? undefined,
     winner: s?.winner ?? undefined,
@@ -149,7 +217,7 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   }
 
   // Soccer: preserve the running match clock even when ESPN omits a half number.
-  if (lg === 'wc' || lg === 'lcup' || lg === 'mls') {
+  if (lg === 'wc' || lg === 'unl' || lg === 'friendlies' || lg === 'lcup' || lg === 'mls') {
     const clock = g?.clock ?? g?.status_detail
     if (clock) {
       return { type: 'half', clock }
@@ -157,6 +225,16 @@ function normalizeLivePeriod(g: any, league?: string): LivePeriod | undefined {
   }
 
   return undefined
+}
+
+// Preseason by the publisher's own word: the season slug first, the numeric type only when
+// no slug was stored, and a soccer `stage` of "preseason" for the leagues that file one.
+export function isPreseasonGame(g: any): boolean {
+  const slug = String(g?.season_slug ?? g?.seasonSlug ?? '').toLowerCase()
+  if (slug) return slug === 'preseason'
+  const type = g?.season_type ?? g?.seasonType
+  if (type !== undefined && type !== null && type !== '') return Number(type) === 1
+  return String(g?.stage ?? '').toLowerCase() === 'preseason'
 }
 
 export function normalizeGame(g: any, leagueOverride?: string): Game {
@@ -195,12 +273,14 @@ export function normalizeGame(g: any, leagueOverride?: string): Game {
     startTime: g?.date ?? g?.startTime ?? '',
     status: g?.status && ['SCHEDULED', 'LIVE', 'FINAL'].includes(g.status) ? g.status : statusFromState(g?.state),
     statusDetail: g?.status_detail ?? g?.statusDetail ?? specialStatus,   // ESPN shortDetail, e.g. "Final/10"
+    isPreseason: isPreseasonGame(g),
     subtitle: subtitle || undefined,
     sets: normalizeSets(g),
     livePeriod: normalizeLivePeriod(g, league),
     outcomeMethod: g?.outcome_method ?? g?.outcomeMethod ?? undefined,
     outcomeRound: g?.outcome_round ?? g?.outcomeRound ?? undefined,
     outcomeClock: g?.outcome_clock ?? g?.outcomeClock ?? undefined,
+    situation: normalizeSituation(g),
   }
 }
 
@@ -289,7 +369,7 @@ export const SportsService = {
   },
 
   getAllGamesByDate: async (date: string): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const promises = leagues.map((l) => SportsService.getGamesByDate(l, date))
     const results = await Promise.all(promises)
     return results.flat()
@@ -330,13 +410,24 @@ export const SportsService = {
         }
       }),
     )
+    // A LIVE game that started very early in its UTC day belongs, by local-day
+    // arithmetic, to the PREVIOUS local calendar day for any timezone west of it --
+    // Venus Williams vs Sofia Kenin, 2026-08-31T04:10Z, is 2026-08-30 23:10 in
+    // Chicago. That is a correct reading of "which day this started" and a wrong
+    // reading of "should this be on today's board": a match still being played
+    // right now is relevant today regardless of which local date its start instant
+    // falls on. Only exempts a live game on the CALLER'S OWN today (never a past
+    // or future date being browsed) -- a live game is "now", not "whichever date
+    // it is now".
+    const todayLocal = new Date().toLocaleDateString('en-CA')
+    const isTodayView = localDate === todayLocal
     const seen = new Set<string>()
     const kept: Game[] = []
     for (const { d, games } of perDate) {
       for (const g of games) {
         const day = localDayOf(g.startTime)
-        // valid instant → keep on its local day; undated (TBD) → keep on its own backend bucket
-        if (!(day ? day === localDate : d === localDate)) continue
+        const onRequestedDay = day ? day === localDate : d === localDate
+        if (!onRequestedDay && !(isTodayView && g.status === 'LIVE')) continue
         const key = `${g.league}:${g.gameId}`
         if (seen.has(key)) continue
         seen.add(key)
@@ -347,7 +438,7 @@ export const SportsService = {
   },
 
   getAllGamesByLocalDate: async (localDate: string, opts?: { strict?: boolean }): Promise<Game[]> => {
-    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'lcup', 'mls', 'atp', 'wta', 'cod', 'ufc', 'wc']
+    const leagues = ['nba', 'mlb', 'nhl', 'nfl', 'unl', 'friendlies', 'lcup', 'mls', 'ligamx', 'atp', 'wta', 'cod', 'ufc', 'wc']
     const results = await Promise.all(leagues.map((l) => SportsService.getGamesByLocalDate(l, localDate, opts)))
     return results.flat()
   },
@@ -521,27 +612,33 @@ export const SportsService = {
     return delta < 0 ? candidates[candidates.length - 1] : candidates[0]
   },
 
-  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> => {
+  getFootballScheduleWeeks: async (league: 'nfl' | 'ncaaf', anchor: string): Promise<NflScheduleWeeksResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-weeks`, { params: { anchor } })
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-weeks`, { params: { anchor } })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule weeks', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule weeks`, err)
       return null
     }
   },
 
-  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
+  getFootballScheduleWeek: async (league: 'nfl' | 'ncaaf', season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/nfl/schedule-week`, {
+      const res = await axios.get(`${API_BASE_URL}/${league}/schedule-week`, {
         params: { season, season_type: seasonType, week },
       })
       return res.data
     } catch (err) {
-      console.error('Error fetching NFL schedule week', err)
+      console.error(`Error fetching ${league.toUpperCase()} schedule week`, err)
       return null
     }
   },
+
+  getNflScheduleWeeks: async (anchor: string): Promise<NflScheduleWeeksResponse | null> =>
+    SportsService.getFootballScheduleWeeks('nfl', anchor),
+
+  getNflScheduleWeek: async (season: number, seasonType: number, week: number): Promise<NflScheduleWeekResponse | null> =>
+    SportsService.getFootballScheduleWeek('nfl', season, seasonType, week),
 }
 
 export interface ScheduleDatesResponse {

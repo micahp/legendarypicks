@@ -38,6 +38,11 @@ run_step(){
   # 2026-08-18 split turned several scripts into packages, so `-m` is now the
   # normal way to call them.
   local name="$1"; [ "$name" = "-m" ] && name="$2"
+  # Optional caller-set prefix, so a job that runs the SAME script against two
+  # databases can tell its failures apart: LP_STEP_LABEL=PROD logs
+  # `PROD/ingest_nfl_adp.py`. Unset, this is a no-op and every existing caller
+  # behaves exactly as it did before.
+  name="${LP_STEP_LABEL:+$LP_STEP_LABEL/}$name"
   local t0=$SECONDS
   local rc took
   timeout --signal=TERM --kill-after=30 "$budget" "$PY" -u "$@" 2>&1 | tee -a "$LOG"

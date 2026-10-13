@@ -1,0 +1,12 @@
+[Unit]
+Description=Weekly NFL schedule, log dates, snap counts, and injury reports
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+ExecStart=/root/legendarypicks/scripts/nfl-availability.sh
+TimeoutStartSec=1800

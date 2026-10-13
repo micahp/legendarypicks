@@ -1,0 +1,13 @@
+[Unit]
+Description=Capture Bovada MLB prop odds snapshots (opening/closing price history) — PROD
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+Environment=LP_API_BASE=http://127.0.0.1:8100
+ExecStart=/usr/bin/flock -n -E 75 /run/lock/legendarypicks-provider-bovada.lock /root/legendarypicks/backend/venv/bin/python -m bovada_scraper mlb --capture
+TimeoutStartSec=120
+Nice=10

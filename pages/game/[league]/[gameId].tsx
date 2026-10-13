@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { SportsService } from '../../../services/sports'
+import { SportsService, isPreseasonGame } from '../../../services/sports'
 import {
-  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isWC, isSoccer,
+  GameDetail, Tab, isNBA, isNHL, isMLB, isNFL, isNCAAF, isWC, isSoccer,
   hasGameTabs, usesDetailEndpoint, usesPerTabEndpoints,
   BoxScoreData, PbPData, SoccerBoxScoreData, SoccerPbPData, GameInfoData,
 } from '../../../components/Game/types'
@@ -19,6 +19,8 @@ import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
+import RadioSources from '../../../components/RadioSources'
+import { RADIO_LABELS, radioForMatchup } from '../../../lib/radio'
 import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
 const TAB_DEFS: { key: Tab; label: string }[] = [
@@ -33,7 +35,7 @@ const LIVE_DETAIL_POLL_MS = 30_000
 // ── Loading skeletons ──
 function BoxScoreSkeleton({ league }: { league: string }) {
   const isMLBLeague = league === 'mlb'
-  const isNFLLeague = league === 'nfl'
+  const isNFLLeague = league === 'nfl' || league === 'ncaaf'
   const isWCLeague = league === 'wc'
   const isUS = isMLBLeague || isNFLLeague
 
@@ -181,13 +183,30 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
   const [loadingBoxscore, setLoadingBoxscore] = useState(false)
   const [loadingPbp, setLoadingPbp] = useState(false)
   const [loadingInfo, setLoadingInfo] = useState(false)
+  // Two defects fixed here on 2026-08-25, both of which render a tab permanently
+  // EMPTY rather than raising anything:
+  //
+  // 1. The latch was keyed on the tab alone. Next.js reuses this component across
+  //    `/game/[league]/[gameId]` navigations, so moving from one game to another
+  //    kept the previous game's `{boxscore: true}` and the new game never fetched.
+  //    The key now carries the game identity, so a different game is a different
+  //    latch and old entries simply stop matching.
+  // 2. The latch was set BEFORE the await resolved and nothing caught a rejection,
+  //    so one failed request marked the tab loaded forever. It now un-latches on
+  //    failure, which makes leaving the tab and returning a real retry.
   const [tabLoaded, setTabLoaded] = useState<Record<string, boolean>>({})
 
   const fetchTab = useCallback(async (tab: Tab) => {
     if (!league || !gameId) return
-    if (tabLoaded[tab]) return
+    const key = `${league.toLowerCase()}:${gameId}:${tab}`
+    if (tabLoaded[key]) return
 
-    setTabLoaded(prev => ({ ...prev, [tab]: true }))
+    setTabLoaded(prev => ({ ...prev, [key]: true }))
+    const unlatch = () => setTabLoaded(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
     const lg = league.toLowerCase()
 
     if (tab === 'boxscore') {
@@ -199,6 +218,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
         } else {
           setBoxscore(d as BoxScoreData)
         }
+      } catch {
+        unlatch()
       } finally {
         setLoadingBoxscore(false)
       }
@@ -211,6 +232,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
         } else {
           setPbp(d as PbPData)
         }
+      } catch {
+        unlatch()
       } finally {
         setLoadingPbp(false)
       }
@@ -219,6 +242,8 @@ function useTabData(league: string | undefined, gameId: string | undefined, acti
       try {
         const d = await SportsService.getGameInfo(league, gameId)
         setGameInfo(d as GameInfoData)
+      } catch {
+        unlatch()
       } finally {
         setLoadingInfo(false)
       }
@@ -270,11 +295,12 @@ export default function GameDetailPage() {
     })()
   }, [league, gameId])
 
-  // The scoreboard refreshes live results; the detail header must not freeze
-  // at the moment the user opened it. Stop as soon as the publisher says the
-  // game is no longer in progress.
+  // Keep the detail header current across scheduled → live → final. A page
+  // opened before kickoff must keep checking so it can begin showing the
+  // period, then stop once the publisher says the game is over.
   useEffect(() => {
-    if (!league || !gameId || detail?.state !== 'in') return
+    const state = (detail?.state || '').toLowerCase()
+    if (!league || !gameId || !detail || ['post', 'final', 'completed'].includes(state)) return
     let alive = true
     const refresh = async () => {
       const next = await SportsService.getGameDetail(league, gameId)
@@ -285,7 +311,7 @@ export default function GameDetailPage() {
       alive = false
       clearInterval(timer)
     }
-  }, [league, gameId, detail?.state])
+  }, [league, gameId, detail?.state, detail?.start_time])
 
   // Lazy-fetch tab data on first open for per-tab leagues
   useEffect(() => {
@@ -315,6 +341,14 @@ export default function GameDetailPage() {
   }
 
   const ctx = detail?.context
+  // Which club (if either) has a verified English radio stream — null hides the player.
+  // TEAM_RADIO is an MLS-only map keyed by bare abbreviation ("TOR", "MIA", "CHI",
+  // "DC", "COL", "SD", "SEA", ...), and those codes collide with other leagues'
+  // team abbreviations. Calling this unconditionally sent an NBA Raptors or NHL
+  // Maple Leafs page to Toronto FC's soccer radio stream, and a Heat/Marlins/Dolphins
+  // page to Inter Miami's — found 2026-08-30 sweeping NBA/NHL game pages. Scope the
+  // lookup to the leagues the map actually covers (mls, lcup — see lib/radio.ts).
+  const radioMatch = isSoccer(lg) ? radioForMatchup(ctx?.home_team, ctx?.away_team) : null
   const sHome = detail?.strength ? detail.strength[ctx?.home_team || ''] : undefined
   const sAway = detail?.strength ? detail.strength[ctx?.away_team || ''] : undefined
   const homeRecord = sHome ? `${sHome.wins}-${sHome.losses}` : ''
@@ -333,17 +367,21 @@ export default function GameDetailPage() {
       <ScoreStrip
         ctx={ctx || null} score={displayScore} state={gameState}
         league={detail?.league || lg} period={detail?.period} clock={detail?.clock}
-        statusDetail={detail?.status_detail}
+        statusDetail={detail?.status_detail} startTime={detail?.start_time}
+        isPreseason={isPreseasonGame(detail)}
         homeName={sHome?.name || ctx?.home_team || ''}
         awayName={sAway?.name || ctx?.away_team || ''}
         homeRecord={homeRecord} awayRecord={awayRecord}
       />
 
-      {/* Leagues Cup live audio: ESPN 106.3 West Palm (WUUB-FM), Inter Miami's
-          official English radio partner — relayed to MP3 via /api/stream/lcup. */}
-      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' ? (
-        <ListenLive streamUrl="/api/stream/lcup" streamPageUrl={LCUP_PAGE} label="ESPN 106.3 West Palm · English radio (free)" />
+      {/* Live audio: per-team English radio, sourced from data/radio-mls.json
+          (verified streams only) and relayed to MP3 by /api/stream/<key>.
+          Renders only when one of the two clubs has a verified station —
+          an unverified stream is never offered. */}
+      {lg === 'wc' ? <ListenLive /> : radioMatch ? (
+        <ListenLive streamUrl={radioMatch.streamUrl} streamPageUrl={LCUP_PAGE} label={RADIO_LABELS[radioMatch.key] || 'English radio (free)'} />
       ) : null}
+      {lg === 'mls' && <RadioSources home={ctx?.home_team} away={ctx?.away_team} />}
 
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
@@ -380,7 +418,7 @@ export default function GameDetailPage() {
                   )
                 ) : tabData.boxscore ? (
                   isMLB(lg) ? <MLBBoxScore data={tabData.boxscore} />
-                  : isNFL(lg) ? <NFLBoxScore data={tabData.boxscore} />
+                  : (isNFL(lg) || isNCAAF(lg)) ? <NFLBoxScore data={tabData.boxscore} />
                   : <p className="text-zinc-500 text-sm">No box score data.</p>
                 ) : (
                   <p className="text-zinc-500 text-sm">No box score data.</p>

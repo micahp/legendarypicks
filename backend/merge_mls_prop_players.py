@@ -38,6 +38,10 @@ second run finds nothing to do.
 """
 from __future__ import annotations
 
+import superseded  # noqa: E402  (must precede any work this script would do)
+superseded.refuse("merge_mls_prop_players")
+
+
 import argparse
 import collections
 import os

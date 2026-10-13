@@ -15,10 +15,11 @@ bound to the wrong game of a series (85 MLB rows on 2026-08-11).
 """
 from __future__ import annotations  # this box runs 3.8; `int | None` is 3.10 syntax
 
-import sys, os, sqlite3, re, unicodedata
+import sys, os, sqlite3, re, unicodedata, json, datetime as _dt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
+from espn_client.scoreboard import _slate_day
 from prop_game_merge import fold_prop_game
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
@@ -162,6 +163,7 @@ _TEAM_MAPS = {"mlb": _MLB_TEAM_MAP, "nba": _NBA_TEAM_MAP, "nfl": _NFL_TEAM_MAP,
 # refused here: MLS is precisely where it collides ("San Diego FC" and "San Jose
 # Earthquakes" both yield SAN).
 _EXHAUSTIVE_MAPS = frozenset({"mls"})
+_NCAAF_RANK_SUFFIX = re.compile(r"\s*\(\s*#\d+\s*\)\s*$", re.IGNORECASE)
 
 
 def _norm_team(team_name: str, league: str) -> str:
@@ -206,6 +208,150 @@ def _norm_team(team_name: str, league: str) -> str:
         return ""
     # Fallback: first 3 letters uppercase
     return team_name.strip()[:3].upper()
+
+
+def _ncaaf_team_code(vocabulary, team_name: str) -> str:
+    """Resolve a sportsbook school spelling through the stored ESPN vocabulary.
+
+    Rankings are slate decorations, not identity. The vocabulary itself comes
+    from durable ``scoreboard_snapshots`` and maps both ESPN's full
+    school-plus-nickname name and its school-only spelling to one abbreviation.
+    """
+    import ingest_rotowire_props as rw
+
+    school = _NCAAF_RANK_SUFFIX.sub("", str(team_name or "")).strip()
+    return rw.resolve_team(vocabulary, school) or ""
+
+
+def ncaaf_scoreboard_match(con, game_date: str, home: str, away: str):
+    """Resolve a NCAAF source fixture to its locally published scoreboard event.
+
+    Bovada can add poll ranks to school names and can retain a kickoff that ESPN has
+    since moved. Those fields are not fixture identity. Match the two canonical school
+    codes on the same local slate day, and return only a unique published event. This
+    reads durable snapshots only; it never calls ESPN from the request handler.
+
+    Returns ``(fixture, status, schedule_available)``. ``fixture`` is the original
+    scoreboard payload plus ``local_date`` when status is ``matched``. An ambiguous or
+    unresolvable fixture must fail closed when that slate has been published.
+    """
+    try:
+        requested_day = _dt.date.fromisoformat(str(game_date)).isoformat()
+    except (TypeError, ValueError):
+        return None, "unavailable", False
+
+    tables = {row[0] for row in con.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+        "('scoreboard_snapshots','scoreboard_refresh')"
+    )}
+    if "scoreboard_snapshots" not in tables:
+        return None, "unavailable", False
+    columns = {row[1] for row in con.execute(
+        "PRAGMA table_info(scoreboard_snapshots)"
+    )}
+    if not {"league", "game_date", "game_id", "payload"} <= columns:
+        return None, "unavailable", False
+
+    available = False
+    if "scoreboard_refresh" in tables:
+        available = con.execute(
+            "SELECT 1 FROM scoreboard_refresh "
+            "WHERE LOWER(league)='ncaaf' AND game_date=? LIMIT 1",
+            (requested_day,),
+        ).fetchone() is not None
+
+    order = "fetched_at DESC" if "fetched_at" in columns else "game_date DESC"
+    rows = con.execute(
+        """SELECT game_date,game_id,payload
+           FROM scoreboard_snapshots
+           WHERE LOWER(league)='ncaaf'
+             AND game_date BETWEEN date(?,'-1 day') AND date(?,'+1 day')
+           ORDER BY """ + order,
+        (requested_day, requested_day),
+    ).fetchall()
+    games = {}
+    for row in rows:
+        try:
+            game = json.loads(row["payload"])
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError("malformed NCAAF scoreboard snapshot payload") from exc
+        event_id = str(game.get("game_id") or row["game_id"] or "")
+        if not event_id:
+            raise RuntimeError("NCAAF scoreboard snapshot is missing game_id")
+        event_day = _slate_day("ncaaf", game.get("date")) or row["game_date"]
+        if event_day != requested_day:
+            continue
+        available = True
+        if event_id not in games:
+            game = dict(game)
+            game["game_id"] = event_id
+            game["local_date"] = event_day
+            games[event_id] = game
+
+    if not available:
+        return None, "unavailable", False
+
+    import ingest_rotowire_props as rw
+
+    vocabulary = rw.team_vocabulary(con, "ncaaf")
+    home_code = _ncaaf_team_code(vocabulary, home)
+    away_code = _ncaaf_team_code(vocabulary, away)
+    if not home_code or not away_code:
+        return None, "unresolved_teams", True
+
+    matches = []
+    for game in games.values():
+        published_home = _ncaaf_team_code(
+            vocabulary, (game.get("home") or {}).get("name")
+            or (game.get("home") or {}).get("abbrev")
+        )
+        published_away = _ncaaf_team_code(
+            vocabulary, (game.get("away") or {}).get("name")
+            or (game.get("away") or {}).get("abbrev")
+        )
+        if (home_code, away_code) == (published_home, published_away):
+            matches.append(game)
+
+    if len(matches) > 1:
+        return None, "ambiguous", True
+    if not matches:
+        return None, "not_found", True
+    return matches[0], "matched", True
+
+
+def ncaaf_unlinked_game_match(con, fixture):
+    """Find one existing unlinked row for a resolved NCAAF fixture, if present."""
+    import ingest_rotowire_props as rw
+
+    vocabulary = rw.team_vocabulary(con, "ncaaf")
+    home_code = _ncaaf_team_code(
+        vocabulary, (fixture.get("home") or {}).get("name")
+        or (fixture.get("home") or {}).get("abbrev")
+    )
+    away_code = _ncaaf_team_code(
+        vocabulary, (fixture.get("away") or {}).get("name")
+        or (fixture.get("away") or {}).get("abbrev")
+    )
+    if not home_code or not away_code:
+        return None, "unresolved_teams"
+
+    rows = con.execute(
+        """SELECT id,league,date,home,away,espn_event_id,start_time
+           FROM prop_games
+           WHERE LOWER(league)='ncaaf'
+             AND COALESCE(espn_event_id,'')=''
+             AND date BETWEEN date(?,'-1 day') AND date(?,'+1 day')""",
+        (fixture["local_date"], fixture["local_date"]),
+    ).fetchall()
+    matches = [row for row in rows
+               if (_ncaaf_team_code(vocabulary, row["home"]),
+                   _ncaaf_team_code(vocabulary, row["away"]))
+               == (home_code, away_code)]
+    if len(matches) > 1:
+        return None, "ambiguous"
+    if not matches:
+        return None, "not_found"
+    return matches[0], "matched"
 
 
 def _instant(value):
@@ -309,6 +455,58 @@ def _same_fighter(prop_name, espn_name):
             and prop_parts[-1] == espn_parts[-1])
 
 
+def _same_tennis_player(prop_name, espn_name):
+    """Match ESPN's full player name to Bovada's displayed, often-cut prefix."""
+    prop_key = _fighter_key(prop_name)
+    espn_key = _fighter_key(espn_name)
+    if not prop_key or not espn_key:
+        return False
+    if prop_key == espn_key:
+        return True
+    return (min(len(prop_key), len(espn_key)) >= 7
+            and (prop_key.startswith(espn_key) or espn_key.startswith(prop_key)))
+
+
+def _link_tennis_match(game_row, espn_games):
+    """Resolve a possibly truncated tennis pair, failing closed on ambiguity.
+
+    Tennis feed start times are estimates, not stable identity.  On the copied
+    production database, 112 previously unlinked ATP rows had one published
+    player-pair match in the three-day ESPN window, but only 15 were within 15
+    minutes of ESPN's eventual court time.  Require both players and uniqueness;
+    use an exact published instant only to break a duplicate-pair tie.
+    """
+    prop_names = [game_row["away"], game_row["home"]]
+
+    def published_names(game):
+        return [((game.get("away") or {}).get("name") or ""),
+                ((game.get("home") or {}).get("name") or "")]
+
+    candidates = {}
+    wanted_start = _instant(game_row["start_time"])
+    for game in espn_games:
+        names = published_names(game)
+        same_pair = (
+            (_same_tennis_player(prop_names[0], names[0])
+             and _same_tennis_player(prop_names[1], names[1]))
+            or (_same_tennis_player(prop_names[0], names[1])
+                and _same_tennis_player(prop_names[1], names[0]))
+        )
+        if not same_pair:
+            continue
+        game_id = str(game.get("game_id") or "")
+        if game_id:
+            candidates[game_id] = game
+    if len(candidates) == 1:
+        return next(iter(candidates))
+    if wanted_start is not None:
+        exact = [game_id for game_id, game in candidates.items()
+                 if _instant(game.get("date")) == wanted_start]
+        if len(exact) == 1:
+            return exact[0]
+    return ""
+
+
 def _link_ufc_fight(game_row, espn_games):
     """Resolve an unordered fighter pair to one UFC competition id.
 
@@ -356,6 +554,26 @@ def _link_ufc_fight(game_row, espn_games):
     return ""
 
 
+# Soccer competitions whose stored club names may carry a decoration the
+# scoreboard drops. Scoped deliberately: widening spelling alternates across
+# every sport risks matching two different clubs that share a city word.
+_SOCCER_LINK_LEAGUES = ("mls", "lcup", "ligamx", "epl", "wc")
+
+
+def _SOCCER_SPELLINGS_OK(league: str) -> bool:
+    return str(league or "").lower() in _SOCCER_LINK_LEAGUES
+
+
+def _spellings_match(ours: str, published: set) -> bool:
+    """True when any spelling of our club equals any name the publisher sent."""
+    import ingest_rotowire_props as rw
+
+    theirs = {rw.normalize_name(name) for name in published if name}
+    mine = set(rw._club_spellings(rw.normalize_name(ours)))
+    mine.add(rw.normalize_name(ours))
+    return bool(mine & theirs)
+
+
 def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     """Link one prop_game to an ESPN game. Returns espn_event_id or ''.
 
@@ -379,9 +597,18 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
     league = game_row["league"]
     if league == "ufc":
         return _link_ufc_fight(game_row, espn_games)
+    if league in ("atp", "wta"):
+        return _link_tennis_match(game_row, espn_games)
 
-    home_norm = _norm_team(game_row["home"], league)
-    away_norm = _norm_team(game_row["away"], league)
+    if league == "ncaaf":
+        import ingest_rotowire_props as rw
+
+        ncaaf_vocabulary = rw.team_vocabulary(con, "ncaaf")
+        home_norm = _ncaaf_team_code(ncaaf_vocabulary, game_row["home"])
+        away_norm = _ncaaf_team_code(ncaaf_vocabulary, game_row["away"])
+    else:
+        home_norm = _norm_team(game_row["home"], league)
+        away_norm = _norm_team(game_row["away"], league)
     pg_home_name = (game_row["home"] or "").lower()
     pg_away_name = (game_row["away"] or "").lower()
 
@@ -403,6 +630,19 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
         }
 
     def _same_matchup(eg):
+        if league == "ncaaf":
+            published_home = _ncaaf_team_code(
+                ncaaf_vocabulary, (eg.get("home") or {}).get("name")
+                or (eg.get("home") or {}).get("abbrev")
+            )
+            published_away = _ncaaf_team_code(
+                ncaaf_vocabulary, (eg.get("away") or {}).get("name")
+                or (eg.get("away") or {}).get("abbrev")
+            )
+            return (
+                bool(home_norm and away_norm)
+                and (home_norm, away_norm) == (published_home, published_away)
+            )
         # Abbrevs only when BOTH sides normalised to something real. _norm_team
         # returns "" for a league with no map, and ""=="" would otherwise call
         # every game on the slate a match.
@@ -410,6 +650,20 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
             if (eg["home"]["abbrev"].upper() == home_norm
                     and eg["away"]["abbrev"].upper() == away_norm):
                 return True
+        if _SOCCER_SPELLINGS_OK(league):
+            # Our stored soccer names carry decorations ESPN drops: we hold
+            # `CF Monterrey`, `Club Leon` and `Club America` where the scoreboard
+            # publishes `Monterrey`, `Leon` and `America`. Exact containment
+            # therefore matched Toluca and nothing else -- 3 of 4 Leagues Cup
+            # fixtures stayed unlinked, and an unlinked game cannot settle at
+            # all, because settle_game returns early without an espn_event_id.
+            #
+            # Reuses the published-spelling generator the RotoWire ingest already
+            # relies on rather than adding a third club-name matcher, and folds
+            # accents on BOTH sides: ESPN writes `Leon` with an accent here and
+            # without one in other payloads.
+            return (_spellings_match(pg_home_name, _team_names(eg["home"]))
+                    and _spellings_match(pg_away_name, _team_names(eg["away"])))
         return (pg_home_name in _team_names(eg["home"])
                 and pg_away_name in _team_names(eg["away"]))
 
@@ -426,6 +680,22 @@ def link_prop_game(con: sqlite3.Connection, game_row, espn_games: list) -> str:
         for eg in candidates:
             if _instant(eg.get("date")) == want:
                 return eg["game_id"]
+    if league == "ncaaf":
+        # Bovada's kickoff can lag a published ESPN reschedule while the school pair
+        # and local slate day still identify exactly one event. Accept that evidence
+        # only when it is unique on the stored date; never choose among same-day twins.
+        try:
+            wanted_day = str(game_row["date"] or "")
+        except (KeyError, IndexError):
+            wanted_day = ""
+        same_slate = [
+            eg for eg in candidates
+            if _slate_day("ncaaf", eg.get("date")) == wanted_day
+        ] if wanted_day else []
+        if len(same_slate) == 1:
+            return same_slate[0].get("game_id") or ""
+        return ""
+    if want is not None:
         return ""  # fail closed: known instant, no event at it
 
     return candidates[0]["game_id"]
@@ -465,12 +735,33 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
     writes when the answer actually changes.
 
     `league` scopes the run to one league. This is a REQUEST BUDGET control, not a
-    convenience: ESPN's limit is a count per host (~100), not a rate, so the only
-    lever that works is issuing fewer requests. An unscoped run fetches a
-    scoreboard for every distinct date across every league that has props —
+    convenience. It fetches a scoreboard per distinct date per league, and the
+    unscoped run is a genuine fan-out.
+
+    The budget model here was wrong and it cost a live outage. This said ESPN's
+    limit is "a count per host (~100), not a rate, so the only lever that works is
+    issuing fewer requests". The 2026-08-19 measurement over 27,801 requests is the
+    opposite: the 1h window is FLAT (1238 before a 403 vs 1266 before a 200) and the
+    60s window is not (63 vs 36). Both levers are real, and this function had neither
+    — it inherited espn_client's serving-path default of min_interval=0. Measured
+    2026-08-24 21:00 UTC, this fired 18 requests inside one minute alongside
+    settle_props' 44 and ingest_scoreboards' 30; site.web.api refused for minutes and
+    13 of those refusals landed on UVICORN. A batch job spent the budget the page
+    loads needed. An unscoped run fetches a scoreboard for every distinct date across
+    every league that has props —
     tennis alone contributes dozens — and spends that budget whether or not you
     care about the league you are fixing. See .claude/skills/espn-request-budget.
     """
+    # Paced at the function that FANS OUT, not at main(): a caller that imports this
+    # gets the pacing too, and this is not reachable from a request handler so it can
+    # never pause a page load.
+    with espn.batch_pacing():
+        return _link_existing_games(con, dry_run, relink, league, days)
+
+
+def _link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
+                         relink: bool = False, league: str = "",
+                         days: int | None = None) -> int:
     where, params = _scope(league, relink, days)
     unlinked = con.execute(f"""
         SELECT id, league, date, start_time, home, away, espn_event_id
@@ -512,6 +803,9 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
             espn_id = link_prop_game(con, g, espn_games)
             prev = g["espn_event_id"] or ""
             if espn_id:
+                ncaaf_event = next((eg for eg in espn_games
+                                    if str(eg.get("game_id")) == str(espn_id)), None) \
+                    if league == "ncaaf" else None
                 if espn_id != prev:
                     # Another row may already BE this event. That is not an error and not
                     # a bad link -- it is the same fixture stored twice under two calendar
@@ -529,6 +823,25 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
                         merged_into = existing["id"] if hasattr(existing, "keys") else existing[0]
                         if not dry_run:
                             fold_prop_game(con, g["id"], merged_into)
+                            if ncaaf_event:
+                                current = con.execute(
+                                    "SELECT start_time FROM prop_games WHERE id=?",
+                                    (merged_into,),
+                                ).fetchone()
+                                published_start = ncaaf_event.get("date")
+                                published_day = _slate_day("ncaaf", published_start)
+                                apply_start_time(
+                                    con, merged_into, published_start,
+                                    current["start_time"],
+                                    label="%s @ %s" % (g["away"], g["home"]),
+                                )
+                                con.execute(
+                                    "UPDATE prop_games SET date=?,home=?,away=? WHERE id=?",
+                                    (published_day,
+                                     (ncaaf_event.get("home") or {}).get("name") or g["home"],
+                                     (ncaaf_event.get("away") or {}).get("name") or g["away"],
+                                     merged_into),
+                                )
                         print(f"    game {g['id']}: {g['away']} @ {g['home']} is event "
                               f"{espn_id}, already held by game {merged_into} — props "
                               f"repointed, duplicate row removed")
@@ -536,6 +849,19 @@ def link_existing_games(con: sqlite3.Connection, dry_run: bool = False,
                         linked += 1
                         continue
                     if not dry_run:
+                        if ncaaf_event:
+                            published_start = ncaaf_event.get("date")
+                            apply_start_time(
+                                con, g["id"], published_start, g["start_time"],
+                                label="%s @ %s" % (g["away"], g["home"]),
+                            )
+                            con.execute(
+                                "UPDATE prop_games SET date=?,home=?,away=? WHERE id=?",
+                                (_slate_day("ncaaf", published_start),
+                                 (ncaaf_event.get("home") or {}).get("name") or g["home"],
+                                 (ncaaf_event.get("away") or {}).get("name") or g["away"],
+                                 g["id"]),
+                            )
                         con.execute("UPDATE prop_games SET espn_event_id=? WHERE id=?", (espn_id, g["id"]))
                     changed += 1
                     tag = f"→ {espn_id}" if not prev else f"{prev} → {espn_id}  CORRECTED"

@@ -2,6 +2,7 @@
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from _core import *
+from nhl_standings_store import NHLStandingsError, read_snapshot
 from . import router
 
 
@@ -81,7 +82,14 @@ def _offer_only_seasons_we_hold(payload, league: str):
         return payload
     held = _pkg_seasons_we_hold(league)
     served = payload.get("season")
-    kept = [year for year in offered if year in held or year == served]
+    # Keep the publisher's newest season even while an older year is selected.
+    # Otherwise selecting the last season we hold removes the current year from
+    # the response and traps the picker on the historical table.
+    current = max((year for year in offered if isinstance(year, int)), default=None)
+    kept = [
+        year for year in offered
+        if year in held or year == served or year == current
+    ]
     if served is not None and served not in kept:
         kept.append(served)
     payload["available_seasons"] = sorted(set(kept), reverse=True)
@@ -164,13 +172,31 @@ def get_standings(league: str, season: int = None):
     'Group' (progression gate via espn.wc_is_knockout — never serve stale groups
     once knockouts have begun)."""
     lg = league.lower()
+    if lg == "nhl":
+        try:
+            with closing(_db()) as con:
+                stored = read_snapshot(con, league=lg, season=season)
+        except (sqlite3.Error, NHLStandingsError) as exc:
+            raise HTTPException(
+                503, f"NHL standings snapshot unavailable: {exc}"
+            ) from exc
+        if stored is not None:
+            return JSONResponse(
+                content=stored,
+                headers={
+                    "Cache-Control": "public, max-age=300",
+                    "X-LP-Data-Source": str(stored.get("source") or "nhle.com"),
+                },
+            )
     if lg == "ncaaf":
         # Conference-grouped tables - CFB's /standings payload has no
         # rank/gamesPlayed/losses keys; the record lives in `overall` and
         # entries arrive pre-ordered by conference standing. See
         # espn_client.ncaaf_conference_standings.
         try:
-            return espn.ncaaf_conference_standings()
+            return _offer_only_seasons_we_hold(
+                espn.ncaaf_conference_standings(season=season), lg
+            )
         except ValueError as e:
             raise HTTPException(404, str(e))
         except HTTPException:

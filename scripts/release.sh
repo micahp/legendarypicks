@@ -219,6 +219,34 @@ if [ -x backend/venv/bin/python ]; then
   echo
 fi
 
+# ── preflight: does the props pipeline still grade what it graded last release? ──
+# audit_league_stats above grades the STATS surface. Nothing graded the PROPS pipeline,
+# and "are props working?" was answered by a different ad-hoc query every time it was
+# asked -- each measuring a different stage, so no two answers were comparable and no
+# trend existed. The stage that was actually broken kept being mis-attributed: identity
+# was blamed for MLB's settlement gap when identity is 19% of it, and prop LINKAGE was
+# blamed for everything when linkage has been 100% on every league the whole time.
+#
+# So this reports all five stages per league, and BLOCKS only on a regression against
+# `docs/props-coverage-baseline.json`. The baseline is COMMITTED so that lowering it is
+# a diff someone has to write and review, rather than a number quietly drifting down.
+# Raise it deliberately when a league improves; that one-line diff is the record that it
+# did. Both databases are checked, because green on one and broken on the other has
+# hidden real defects here before.
+#
+# A missing baseline is a FAIL, not a skip: a check that cannot run is not a check that
+# passed. Same reason the audit above refuses to step over a missing runner.
+[ -f backend/props_coverage.py ] \
+  || die "backend/props_coverage.py is missing -- the props pipeline check cannot run, and a check that did not run is not a check that passed"
+if [ -x backend/venv/bin/python ]; then
+  echo "release: props pipeline coverage, per league, both databases"
+  if ! backend/venv/bin/python backend/props_coverage.py --check 2>&1 | sed 's/^/  /'; then
+    echo
+    die "a league's settled grading regressed against docs/props-coverage-baseline.json -- repair it, or change the baseline deliberately and say why in the commit"
+  fi
+  echo
+fi
+
 # ── the atomic part ───────────────────────────────────────────────────────
 if [ -n "$DRY_RUN" ]; then
   echo "  [dry-run] set package.json version to $VERSION"

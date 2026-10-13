@@ -77,39 +77,76 @@ def _extract_team_stats(league, game_id, summary):
 
 
 def _extract_scoring_plays(league, game_id, summary):
-    """Parse plays[] filtered to scoringPlay=true → list of dicts."""
-    plays = summary.get("plays", [])
+    """Parse the league's published scoring-event collection.
+
+    Clock sports normally expose ``plays``; college football exposes the
+    already-filtered ``scoringPlays`` collection; soccer exposes goals inside
+    ``keyEvents``.  Treating all three as ``plays`` made MLS and NCAAF look as
+    if the publisher supplied nothing.
+    """
+    if league in ("mls", "wc", "lcup"):
+        plays = summary.get("keyEvents") or []
+        prefiltered_scoring = False
+    elif summary.get("scoringPlays") is not None:
+        plays = summary.get("scoringPlays") or []
+        prefiltered_scoring = True
+    else:
+        plays = summary.get("plays") or []
+        prefiltered_scoring = False
+
+    comp = (summary.get("header", {}).get("competitions") or [{}])[0]
+    competitors = comp.get("competitors") or []
+    team_by_id = {
+        str((competitor.get("team") or {}).get("id") or ""):
+            (competitor.get("team") or {}).get("abbreviation", "")
+        for competitor in competitors
+    }
+    side_by_team_id = {
+        str((competitor.get("team") or {}).get("id") or ""):
+            competitor.get("homeAway")
+        for competitor in competitors
+    }
+    previous_home = previous_away = 0
     out = []
     for p in plays:
-        if not p.get("scoringPlay"):
+        if not prefiltered_scoring and not p.get("scoringPlay"):
             continue
         period = p.get("period", {})
         clock = p.get("clock", {})
         ptype = p.get("type", {})
-        # Determine scoring team from text: "[Team] Goal" / "[Player] made..."
         text = p.get("text", "")
-        team_abbrev = ""
+        event_team = p.get("team") or {}
+        team_id = str(event_team.get("id") or "")
+        team_abbrev = event_team.get("abbreviation") or team_by_id.get(team_id, "")
+        participants = p.get("participants") or []
         scorer = ""
-        # Try to extract team from competitors or text pattern
-        comp = (summary.get("header", {}).get("competitions") or [{}])[0]
-        competitors = comp.get("competitors", [])
-        if p.get("homeScore", 0) > p.get("_prev_home", -1) if "_prev_home" in p else (len(out) > 0 and p["homeScore"] > out[-1]["home_score"]):
-            # home scored
-            for c in competitors:
-                if c.get("homeAway") == "home":
-                    team_abbrev = c.get("team", {}).get("abbreviation", "")
-        elif len(competitors) == 2:
-            # away scored (or we guess from context)
-            for c in competitors:
-                if c.get("homeAway") == "away":
-                    team_abbrev = c.get("team", {}).get("abbreviation", "")
+        if participants:
+            scorer = ((participants[0].get("athlete") or {}).get("displayName") or "")
+
+        home_score = _parse_int(p.get("homeScore"))
+        away_score = _parse_int(p.get("awayScore"))
+        # Soccer keyEvents publish the scoring team but not the running score.
+        # One scoring event is one goal; reconstruct from the explicit home/away
+        # team identity, never from prose.
+        if home_score is None or away_score is None:
+            side = side_by_team_id.get(team_id)
+            if side == "home":
+                previous_home += 1
+                home_score, away_score = previous_home, previous_away
+            elif side == "away":
+                previous_away += 1
+                home_score, away_score = previous_home, previous_away
+            else:
+                home_score = away_score = None
+        else:
+            previous_home, previous_away = home_score, away_score
         out.append({
             "play_id": str(p.get("id", "")),
             "period": _parse_int(period.get("number")) if period else None,
             "period_disp": period.get("displayValue", "") if period else "",
             "clock": clock.get("displayValue", "") if clock else "",
-            "away_score": _parse_int(p.get("awayScore")),
-            "home_score": _parse_int(p.get("homeScore")),
+            "away_score": away_score,
+            "home_score": home_score,
             "team_abbrev": team_abbrev,
             "scorer_name": scorer,
             "play_text": text,

@@ -15,6 +15,9 @@ export const LEAGUE_LABELS: Record<string, string> = {
   mls: 'MLS',
   ncaaf: 'NCAAF',
   ufc: 'UFC',
+  atp: 'ATP',
+  wta: 'WTA',
+  tennis: 'Tennis',
   esports: 'Esports',
   wc: 'FIFA World Cup',
 }
@@ -58,6 +61,35 @@ export type LeagueNews = {
   narratives: NewsItem[]
   granular: NewsItem[]
   other: number
+}
+
+
+function uniqueBy<T>(items: T[], key: (item: T) => string | number): T[] {
+  const seen = new Set<string | number>()
+  return items.filter(item => {
+    const value = key(item)
+    if (seen.has(value)) return false
+    seen.add(value)
+    return true
+  })
+}
+
+
+// ATP and WTA are classified as separate leagues (see backend/news_classifier.py —
+// player-name term lists can't be shared without one tour's headlines winning the
+// other's ambiguous matches), but the product surfaces them as one Tennis tab. This
+// merges the two feeds so callers with both a `tennis` tab and per-item league tags
+// (via `showLeague`) can render one combined, deduped, newest-first feed.
+export function combineTennisNews(atp: LeagueNews | null, wta: LeagueNews | null): LeagueNews | null {
+  if (!atp && !wta) return null
+  const feeds = [atp, wta].filter((feed): feed is LeagueNews => Boolean(feed))
+  return {
+    conversations: uniqueBy(feeds.flatMap(feed => feed.conversations), item => item.conv_id)
+      .sort((a, b) => new Date(b.story_time || b.generated_at).getTime() - new Date(a.story_time || a.generated_at).getTime()),
+    narratives: uniqueBy(feeds.flatMap(feed => feed.narratives), item => item.id),
+    granular: uniqueBy(feeds.flatMap(feed => feed.granular), item => item.id),
+    other: feeds.reduce((total, feed) => total + feed.other, 0),
+  }
 }
 
 
@@ -143,7 +175,11 @@ export function AiNarrativeCard({ ai, showLeague }: { ai: AiNarrative; showLeagu
 }
 
 
-export function LeagueSection({ league, data }: { league: string; data: LeagueNews }) {
+export function LeagueSection({ league, data, showLeague = false }: {
+  league: string
+  data: LeagueNews
+  showLeague?: boolean
+}) {
   // One flat news list: narrative headlines + trades/staff/injuries mixed,
   // newest first, no layer tags (Micah, 2026-08-08).
   const news = [...data.narratives, ...data.granular].sort(
@@ -154,11 +190,11 @@ export function LeagueSection({ league, data }: { league: string; data: LeagueNe
       <h2 className="flex items-center gap-2 text-lg font-bold text-zinc-100">
         <span>{leagueLabel(league)}</span>
       </h2>
-      {data.conversations.map((c) => <AiNarrativeCard key={c.conv_id} ai={c} />)}
+      {data.conversations.map((c) => <AiNarrativeCard key={c.conv_id} ai={c} showLeague={showLeague} />)}
       {news.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">More news</h3>
-          {news.map((n) => <NewsCard key={n.id} item={n} />)}
+          {news.map((n) => <NewsCard key={n.id} item={n} showLeague={showLeague} />)}
         </div>
       )}
       {data.conversations.length === 0 && news.length === 0 && (
@@ -167,4 +203,3 @@ export function LeagueSection({ league, data }: { league: string; data: LeagueNe
     </section>
   )
 }
-

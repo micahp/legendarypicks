@@ -32,6 +32,10 @@ def api(monkeypatch):
         INSERT INTO props VALUES (100, 1, 10, 'total_bases', 1.5, 'over',  '2026-08-09T00:00Z');
         INSERT INTO props VALUES (101, 1, 10, 'hits',        0.5, 'over',  '2026-08-09T00:00Z');
         INSERT INTO props VALUES (102, 1, 10, 'strikeouts',  1.5, 'under', '2026-08-09T00:00Z');
+        INSERT INTO props VALUES (104, 1, 10, 'walks',       2.0, 'over',  '2026-08-09T00:00Z');
+        INSERT INTO prop_results VALUES (104, 2.0, NULL, '2026-08-09T04:00Z');
+        INSERT INTO props VALUES (105, 1, 10, 'dnp',         0.5, 'over',  '2026-08-09T00:00Z');
+        INSERT INTO prop_results VALUES (105, NULL, NULL, '2026-08-09T04:00Z');
         INSERT INTO prop_results VALUES (100, 3.0, 1, '2026-08-09T04:00Z');
         INSERT INTO prop_results VALUES (101, 0.0, 0, '2026-08-09T04:00Z');
     """)
@@ -74,13 +78,25 @@ def test_an_unsettled_prop_is_null_rather_than_a_loss(api):
     assert props["strikeouts"]["result"] is None
 
 
+def test_push_and_void_are_visible_and_distinct_from_pending(api):
+    props = {p["market"]: p for p in api("mlb", "999")["players"][0]["props"]}
+    assert props["walks"]["result"] == {
+        "actual": 2.0, "hit": None, "settled_at": "2026-08-09T04:00Z",
+        "cashed": None, "status": "push",
+    }
+    assert props["dnp"]["result"] == {
+        "status": "void", "actual": None, "hit": None,
+        "settled_at": "2026-08-09T04:00Z", "cashed": None,
+    }
+
+
 def test_settled_lines_counts_lines_not_rows_and_there_is_no_hit_rate(api):
     """We hold both sides of most lines, so exactly one side of each pair hits by
     construction. A win-loss record built on that describes our storage layout, not our
     judgement — for game 401816457, 35 of 51 lines are stored both ways. The endpoint
     reports lines settled and deliberately publishes no hit count."""
     out = api("mlb", "999")
-    assert out["settled_lines"] == 2
+    assert out["settled_lines"] == 3
     assert "hit_count" not in out
     assert "settled_count" not in out
 
@@ -92,7 +108,7 @@ def test_a_nameless_player_is_not_served_at_all(api):
     inflate the hit count with results nobody can attribute."""
     out = api("mlb", "999")
     assert [p["name"] for p in out["players"]] == ["Aaron Judge"]
-    assert out["settled_lines"] == 2
+    assert out["settled_lines"] == 3
 
 
 def test_a_game_with_no_props_reports_zero_rather_than_omitting_the_counts(api):
@@ -106,7 +122,7 @@ def test_leaders_are_settled_lines_sorted_by_margin(api):
     margin 0.5. The bigger margin leads."""
     out = api("mlb", "999")
     markets = [l["market"] for l in out["leaders"]]
-    assert markets == ["total_bases", "hits"]
+    assert markets == ["total_bases", "hits", "walks"]
     assert out["leaders"][0]["margin"] == 1.5
     assert out["leaders"][0]["cashed"] == "over"
 

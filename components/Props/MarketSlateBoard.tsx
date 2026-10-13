@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
+import MatchForm from './MatchForm'
 import PropChart, { PropHistory } from './PropChart'
+import HorizontalScrollRail from '../HorizontalScrollRail'
+import { uniqueLineOptions } from './lineOptions'
+import { isPickem } from './odds'
 
 interface BoardProp {
   id: number
@@ -19,6 +23,15 @@ interface BoardProp {
   game_date: string
 }
 
+interface BoardLine {
+  offerKey: string
+  rawMarket: string
+  line: number
+  source: string
+  over?: BoardProp
+  under?: BoardProp
+}
+
 interface BoardRow {
   key: string
   playerId: number
@@ -26,14 +39,16 @@ interface BoardRow {
   team: string
   league: string
   market: string
-  rawMarket: string
-  line: number
-  source: string
   home: string
   away: string
   date: string
-  over?: BoardProp
-  under?: BoardProp
+  lines: BoardLine[]
+}
+
+type ActiveBoardRow = BoardRow & BoardLine
+
+function historyKey(row: ActiveBoardRow): string {
+  return `${row.key}::${row.offerKey}`
 }
 
 interface HistoryState {
@@ -50,7 +65,7 @@ interface SlateMarketSummary {
   markets?: MarketOption[]
 }
 
-type SortKey = 'hit-rate' | 'edge' | 'line'
+type SortKey = 'hit-rate' | 'confidence' | 'odds' | 'edge' | 'line'
 type SortDirection = 'asc' | 'desc'
 
 
@@ -75,6 +90,17 @@ function baseMarket(market: string): string {
 
 function marketLabel(market: string): string {
   return MARKET_LABELS[market] || market.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// Books that quote no per-leg price. PrizePicks, Underdog, Sleeper and Pick6 are
+// The pick'em rule and the price formatter live in ./odds so this file and
+// SlatePlayerOffers cannot disagree about what counts as a real price.
+
+function sourceLabel(source: string): string {
+  // Keep the full value (for example `rotowire:underdog`) in the data model:
+  // it records how the offer reached us. The reader only needs the app where
+  // the offer can be played, so the relay prefix does not belong on the card.
+  return source.replace(/^rotowire:/i, '')
 }
 
 function formatOdds(odds: number | null | undefined): string {
@@ -103,7 +129,11 @@ function groupProps(props: BoardProp[]): BoardRow[] {
     const market = baseMarket(prop.market)
     const home = prop.game_home || ''
     const away = prop.game_away || ''
-    const key = [prop.player_id, market, prop.line, prop.source, prop.game_date, home, away].join('|')
+    // One card is one player's market in one game. Provider+line belongs one
+    // level below as a selectable offer; putting it in this key produced up to
+    // 26 duplicate cards for one player/market/game.
+    const identity = prop.player_id ?? `name:${prop.player_name}:${prop.player_team || ''}`
+    const key = [identity, market, prop.game_date, home, away].join('|')
     let row = grouped.get(key)
     if (!row) {
       row = {
@@ -113,38 +143,149 @@ function groupProps(props: BoardProp[]): BoardRow[] {
         team: prop.player_team || '',
         league: prop.league,
         market,
-        rawMarket: prop.market,
-        line: prop.line,
-        source: prop.source,
         home,
         away,
         date: prop.game_date,
+        lines: [],
       }
       grouped.set(key, row)
     }
 
+    // Equal numbers at two providers are still two offers. Over and under at
+    // one provider+line are the two sides of one offer, not two dropdown items.
+    const offerKey = `${String(prop.line)}|${prop.source}`
+    let offer = row.lines.find(item => item.offerKey === offerKey)
+    if (!offer) {
+      offer = {
+        offerKey,
+        rawMarket: prop.market,
+        line: prop.line,
+        source: prop.source,
+      }
+      row.lines.push(offer)
+    }
+
     const side = prop.side.toLowerCase()
     if (side === 'under' || side === 'no') {
-      if (!row.under) row.under = prop
-    } else if (!row.over) {
-      row.over = prop
-      row.rawMarket = prop.market
+      if (!offer.under) offer.under = prop
+    } else if (!offer.over) {
+      offer.over = prop
+      offer.rawMarket = prop.market
     }
   }
 
-  return Array.from(grouped.values())
+  return Array.from(grouped.values()).map(row => ({
+    ...row,
+    lines: row.lines.sort((a, b) =>
+      a.line - b.line
+      || sourceLabel(a.source).localeCompare(sourceLabel(b.source))
+      || a.source.localeCompare(b.source)),
+  }))
 }
 
-function RateChip({ label, value }: { label: string; value: number }) {
+const PROP_PAGE_SIZE = 500
+// 60,000 rows of headroom. The old cap was 20 pages / 10,000 rows and it did not
+// merely truncate: hitting it THREW, the caller caught it, and the whole board
+// rendered "The prop board could not be loaded" with zero games. On 2026-09-05 a
+// day's props reached 12,545 across all leagues (ncaaf 6,722 alone), so the All
+// view died outright and several league views were one ingest away from it.
+//
+// A board that is too large must DEGRADE, never disappear. The size of a slate is
+// not an error condition, and a growing product hitting a constant is a certainty,
+// not an edge case.
+const MAX_PROP_PAGES = 120
+
+// How many rows the board renders, and requests per-row history for, at once.
+// The board fires ONE /api/props/history fetch per rendered row, so this number
+// is a concurrency budget, not a layout preference. On 2026-09-05 the ncaaf
+// `receiving_yards` market alone held 2,470 rows: unbounded, the board opened
+// 2,470 fetches, exhausted the browser's per-host connection pool, and
+// re-rendered the whole list on every response. The page stopped answering
+// clicks entirely, which is what "the league selects are broken" looked like.
+// Narrowing to one league does not save it -- that 2,470 IS one league.
+const ROW_WINDOW = 150
+
+export interface PropFetchResult {
+  rows: BoardProp[]
+  truncated: boolean
+}
+
+async function fetchAllProps(
+  params: URLSearchParams,
+  signal: AbortSignal,
+): Promise<PropFetchResult> {
+  const rows: BoardProp[] = []
+  for (let page = 0; page < MAX_PROP_PAGES; page += 1) {
+    const pageParams = new URLSearchParams(params)
+    pageParams.set('limit', String(PROP_PAGE_SIZE))
+    pageParams.set('offset', String(page * PROP_PAGE_SIZE))
+    const response = await fetch(`/api/props?${pageParams}`, { signal })
+    if (!response.ok) throw new Error(`Props request failed (${response.status})`)
+    const data = await response.json()
+    if (!Array.isArray(data)) throw new Error('Props response was not a list')
+    rows.push(...data)
+    if (data.length < PROP_PAGE_SIZE) return { rows, truncated: false }
+  }
+  // Every row we did fetch is still shown, and the board says it is incomplete.
+  // Silently serving a partial board would be worse than the crash this replaces.
+  return { rows, truncated: true }
+}
+
+// A window's NAME is a claim about its SAMPLE. The API computes L20 as
+// games[:20], which on a player with three matches is three matches, so L5,
+// L10 and L20 all print the same figure and a 3-for-3 player reads as a
+// perfect twenty-game record. Reported from the board 2026-08-26 on Liga MX,
+// whose players have ~8 appearances where an MLS player has 40.
+//
+// `sample` is hit_rate_n from the API: the games actually behind this window.
+// Short of the window's own count there is no L10 to report, so the chip shows
+// a dash. Undefined (an older payload) keeps the previous behaviour rather
+// than blanking every chip.
+
+// The lower edge of the range of true hit rates a record is consistent with
+// (Wilson score interval, 95%). Ranking on it answers "how likely is this to
+// hit again", where the raw rate answers "what fraction hit so far" -- and
+// those differ most exactly where this board lives.
+//
+// A Liga MX player has ~8 appearances because the Apertura is five matchdays
+// old; an MLS player has 40. Sorting their raw rates against each other puts a
+// 3-for-3 above a 28-for-48, because the percentage discards the sample size,
+// which is most of the information. 3/3 is consistent with a true rate
+// anywhere in 43.8%..100%; 28/48 with 44.3%..71.2%. The bottom of the range is
+// the pessimistic read, and it can only be high when a record is BOTH good and
+// well evidenced.
+//
+// As n grows every correction term vanishes and this converges on the raw
+// rate, so a 40-game player is ranked on his actual number. It needs no
+// minimum-games threshold, which is the thing a "hide rows under 10 games"
+// rule cannot avoid -- and such a rule would bury all but three Liga MX
+// players for a reason that is about the calendar, not the player.
+function confidenceFloor(hits: number, games: number): number {
+  if (games <= 0) return 0
+  const z = 1.96
+  const p = hits / games
+  const denom = 1 + (z * z) / games
+  const centre = p + (z * z) / (2 * games)
+  const margin = z * Math.sqrt((p * (1 - p)) / games + (z * z) / (4 * games * games))
+  return Math.max(0, (centre - margin) / denom)
+}
+
+function RateChip({ label, value, sample, required }: {
+  label: string; value: number; sample?: number; required: number
+}) {
+  const short = sample !== undefined && sample < required
   const pct = Math.round(value * 100)
-  const tone = pct >= 60
-    ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
-    : pct < 40
-      ? 'border-red-900/60 bg-red-950/30 text-red-300'
-      : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
+  const tone = short
+    ? 'border-zinc-800 bg-zinc-900/60 text-zinc-600'
+    : pct >= 60
+      ? 'border-emerald-800/70 bg-emerald-950/40 text-emerald-300'
+      : pct < 40
+        ? 'border-red-900/60 bg-red-950/30 text-red-300'
+        : 'border-zinc-700 bg-zinc-800/70 text-zinc-300'
   return (
-    <span className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
-      <span className="text-zinc-500">{label}</span> {pct}%
+    <span data-rate-chip={label}
+          className={`rounded-md border px-2 py-1 text-[11px] tabular-nums ${tone}`}>
+      <span className="text-zinc-500">{label}</span> {short ? '—' : `${pct}%`}
     </span>
   )
 }
@@ -157,37 +298,81 @@ function LoadingEvidence() {
   )
 }
 
-function EmptyBoard({ date }: { date: string }) {
+function EmptyBoard({ filterLabel, onViewAll }: {
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-16 text-center">
-      <p className="text-sm font-medium text-zinc-300">No prop markets for this slate.</p>
-      <p className="mt-1 text-xs text-zinc-500">Try another league or move off {date}.</p>
+    <div className="py-16 text-center text-sm text-zinc-500">
+      <p>No upcoming games with props. Check back closer to game time.</p>
+      {filterLabel && onViewAll && (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+        >
+          View All Leagues
+        </button>
+      )}
     </div>
   )
 }
 
-export default function MarketSlateBoard({ league, date }: { league: string; date: string }) {
+export default function MarketSlateBoard({ league, date, filterLabel, onViewAll }: {
+  league: string
+  date: string
+  filterLabel?: string
+  onViewAll?: () => void
+}) {
   const [props, setProps] = useState<BoardProp[]>([])
   const [marketOptions, setMarketOptions] = useState<MarketOption[]>([])
   const [loadedMarket, setLoadedMarket] = useState('')
   const [selectedMarket, setSelectedMarket] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('hit-rate')
+  const [helpOpen, setHelpOpen] = useState(false)
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // A partial board is a fact the reader must see, not a silent shortfall.
+  const [truncated, setTruncated] = useState(false)
+  const [rowLimit, setRowLimit] = useState(ROW_WINDOW)
   const [historyByRow, setHistoryByRow] = useState<Record<string, HistoryState>>({})
+  const [selectedLineByRow, setSelectedLineByRow] = useState<Record<string, string>>({})
   const historyRequest = useRef(0)
+  const requestedHistory = useRef(new Set<string>())
+  const historyControllers = useRef(new Map<string, AbortController>())
+
+  useEffect(() => {
+    const closeOpenLineMenus = (event: PointerEvent) => {
+      document.querySelectorAll<HTMLDetailsElement>('[data-line-selector][open]').forEach(menu => {
+        if (!menu.contains(event.target as Node)) menu.removeAttribute('open')
+      })
+    }
+    const closeLineMenusOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      document.querySelectorAll<HTMLDetailsElement>('[data-line-selector][open]')
+        .forEach(menu => menu.removeAttribute('open'))
+    }
+
+    document.addEventListener('pointerdown', closeOpenLineMenus)
+    document.addEventListener('keydown', closeLineMenusOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOpenLineMenus)
+      document.removeEventListener('keydown', closeLineMenusOnEscape)
+    }
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
     const summaryParams = new URLSearchParams({ date, summary: '1' })
-    if (league !== 'All') summaryParams.set('league', league)
+    if (league !== 'All') summaryParams.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)
     setProps([])
     setMarketOptions([])
     setLoadedMarket('')
+    setSelectedLineByRow({})
 
     const loadMarketSummary = async () => {
       const response = await fetch(`/api/props/slate?${summaryParams}`, { signal: controller.signal })
@@ -212,12 +397,11 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
         return
       }
 
-      const fallbackParams = new URLSearchParams({ date, limit: '500' })
-      if (league !== 'All') fallbackParams.set('league', league)
-      const fallbackResponse = await fetch(`/api/props?${fallbackParams}`, { signal: controller.signal })
-      if (!fallbackResponse.ok) throw new Error(`Props request failed (${fallbackResponse.status})`)
-      const fallbackProps = await fallbackResponse.json()
-      if (!Array.isArray(fallbackProps)) throw new Error('Props response was not a list')
+      const fallbackParams = new URLSearchParams({ date })
+      if (league !== 'All') fallbackParams.set(league.includes(',') ? 'leagues' : 'league', league)
+      const fallback = await fetchAllProps(fallbackParams, controller.signal)
+      const fallbackProps = fallback.rows
+      setTruncated(fallback.truncated)
       const counts = new Map<string, number>()
       for (const row of groupProps(fallbackProps)) {
         counts.set(row.market, (counts.get(row.market) || 0) + 1)
@@ -240,6 +424,11 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   }, [date, league])
 
   const allRows = useMemo(() => groupProps(props), [props])
+  const activeRows = useMemo<ActiveBoardRow[]>(() => allRows.map(row => {
+    const selected = row.lines.find(line => line.offerKey === selectedLineByRow[row.key])
+      || row.lines[0]
+    return { ...row, ...selected }
+  }), [allRows, selectedLineByRow])
   const markets = useMemo(
     () => [...marketOptions].sort((a, b) =>
       b.count - a.count || marketLabel(a.market).localeCompare(marketLabel(b.market))),
@@ -257,19 +446,15 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   useEffect(() => {
     if (!activeMarket || loadedMarket === '*' || loadedMarket === activeMarket) return
     const controller = new AbortController()
-    const params = new URLSearchParams({ date, limit: '500', market: activeMarket })
-    if (league !== 'All') params.set('league', league)
+    const params = new URLSearchParams({ date, market: activeMarket })
+    if (league !== 'All') params.set(league.includes(',') ? 'leagues' : 'league', league)
 
     setLoading(true)
     setError(null)
-    fetch(`/api/props?${params}`, { signal: controller.signal })
-      .then(response => {
-        if (!response.ok) throw new Error(`Props request failed (${response.status})`)
-        return response.json()
-      })
-      .then(data => {
-        if (!Array.isArray(data)) throw new Error('Props response was not a list')
-        setProps(data)
+    fetchAllProps(params, controller.signal)
+      .then(result => {
+        setProps(result.rows)
+        setTruncated(result.truncated)
         setLoadedMarket(activeMarket)
         setLoading(false)
       })
@@ -284,25 +469,127 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
   }, [activeMarket, date, league, loadedMarket])
 
   const marketRows = useMemo(
-    () => allRows.filter(row => row.market === activeMarket),
-    [activeMarket, allRows],
+    () => activeRows.filter(row => row.market === activeMarket),
+    [activeMarket, activeRows],
   )
 
+  // Which rows are in the window is decided from the history-INDEPENDENT order
+  // and then held fixed. Slicing the live hit-rate sort instead would let a row
+  // that comes back with no history sink out of the window, promote an unloaded
+  // row into it, fetch that one, and walk the whole market a row at a time --
+  // the unbounded fan-out this window exists to prevent.
+  const windowRows = useMemo(() => marketRows.slice(0, rowLimit), [marketRows, rowLimit])
+
+  // A different market or slate is a different list, so the window starts over.
+  useEffect(() => { setRowLimit(ROW_WINDOW) }, [activeMarket, date, league])
+
+  const marketLineCount = useMemo(
+    () => marketRows.reduce((count, row) => count + row.lines.length, 0),
+    [marketRows],
+  )
+
+  // A new slate or market invalidates the history population. Selecting one
+  // alternate does not: histories for already-viewed offers stay cached.
   useEffect(() => {
     const requestId = ++historyRequest.current
-    const controller = new AbortController()
-    const initial: Record<string, HistoryState> = {}
-    for (const row of marketRows) {
-      initial[row.key] = { loading: row.league !== 'ufc', data: null }
+    for (const controller of historyControllers.current.values()) controller.abort()
+    historyControllers.current.clear()
+    requestedHistory.current.clear()
+    setHistoryByRow({})
+    return () => {
+      if (historyRequest.current !== requestId) return
+      for (const controller of historyControllers.current.values()) controller.abort()
+      historyControllers.current.clear()
     }
-    setHistoryByRow(initial)
+  }, [activeMarket, date, league])
 
-    for (const row of marketRows) {
+
+  const sortedRows = useMemo(() => {
+    const valueFor = (row: ActiveBoardRow): number | null => {
+      const history = historyByRow[historyKey(row)]?.data
+      if (sortKey === 'line') return row.line
+      // American odds are MONOTONIC as raw integers: -400, -160, +120, +900 is
+      // 80%, 61.5%, 45.5%, 10% -- strictly decreasing probability across the
+      // negative/positive boundary. So a plain numeric sort is already
+      // shortest-price-to-longest, and needs no conversion.
+      //
+      // A pick'em row returns null and therefore sorts LAST in either direction
+      // (see the comparator). Its stored -137 is the relay's constant for books
+      // that quote no per-leg price, so ranking it against a real -160 would be
+      // ranking a placeholder against a measurement.
+      if (sortKey === 'odds') {
+        if (isPickem(row.source)) return null
+        const price = row.over?.odds ?? row.under?.odds
+        return price === null || price === undefined ? null : price
+      }
+      if (!history) return null
+      if (sortKey === 'hit-rate') return history.hit_rate.l10
+      // Over EVERY game held, not a window: the point of this sort is to use
+      // all the evidence rather than to truncate it.
+      if (sortKey === 'confidence') {
+        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
+      }
+      return history.projection === null ? null : Math.abs(history.projection - row.line)
+    }
+    // Hit rate over ten games takes eleven distinct values, so ties are the common
+    // case, not the edge case: a real slate put six rows on 40% at once. Falling
+    // through to the player's name turned the research board into an alphabetical
+    // list — the reader sees an order and reads meaning into it, and there is none.
+    // So every tie breaks on another number, in a stated order, and the row key is
+    // only ever a determinism guard so React keys stay stable across renders.
+    const tiebreakers: ((row: ActiveBoardRow) => number)[] = [
+      row => {
+        const h = historyByRow[historyKey(row)]?.data
+        return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
+      },
+      row => historyByRow[historyKey(row)]?.data?.hit_rate.season ?? -Infinity,
+      row => historyByRow[historyKey(row)]?.data?.games.length ?? -Infinity,
+      row => row.line,
+    ]
+    return [...windowRows].sort((a, b) => {
+      const av = valueFor(a)
+      const bv = valueFor(b)
+      if (av === null && bv !== null) return 1
+      if (av !== null && bv === null) return -1
+      if (av !== null && bv !== null && av !== bv) {
+        return sortDirection === 'desc' ? bv - av : av - bv
+      }
+      // Ties always resolve most-evidence-first, whichever way the primary points.
+      for (const key of tiebreakers) {
+        const d = key(b) - key(a)
+        if (d) return d
+      }
+      return a.key.localeCompare(b.key)
+    })
+  }, [historyByRow, sortDirection, sortKey, windowRows])
+
+  // `sortedRows` already covers only the window, so this is what renders.
+  const visibleRows = sortedRows
+
+  // Driven by the stable window: the board opens at most `rowLimit` history
+  // requests, however large the market is.
+  useEffect(() => {
+    const requestId = historyRequest.current
+    for (const row of windowRows) {
+      const key = historyKey(row)
+      if (requestedHistory.current.has(key)) continue
+      requestedHistory.current.add(key)
+      const isUfcNumeric = row.league === 'ufc'
+        && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
+      setHistoryByRow(current => ({
+        ...current,
+        [key]: { loading: row.league !== 'ufc' || isUfcNumeric, data: null },
+      }))
+
       // Method-of-victory props are categorical. FightForm lazily loads the
-      // fighter's ESPN form only when its disclosure is opened.
-      if (row.league === 'ufc') continue
+      // fighter's completed form only when its disclosure is opened. UFC's
+      // significant-strike and fight-time markets are numeric and use the
+      // same chart contract as every other numeric market.
+      if (row.league === 'ufc' && !isUfcNumeric) continue
       const chartProp = row.over || row.under
       if (!chartProp) continue
+      const controller = new AbortController()
+      historyControllers.current.set(key, controller)
       const params = new URLSearchParams({
         player_id: String(row.playerId),
         market: row.rawMarket,
@@ -320,62 +607,34 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           const history = !data.error && Array.isArray(data.games) && data.games.length
             ? data as PropHistory
             : null
-          setHistoryByRow(current => ({ ...current, [row.key]: { loading: false, data: history } }))
+          setHistoryByRow(current => ({ ...current, [key]: { loading: false, data: history } }))
         })
         .catch(err => {
           if (err.name === 'AbortError' || historyRequest.current !== requestId) return
-          setHistoryByRow(current => ({ ...current, [row.key]: { loading: false, data: null } }))
+          setHistoryByRow(current => ({ ...current, [key]: { loading: false, data: null } }))
+        })
+        .finally(() => {
+          if (historyControllers.current.get(key) === controller) {
+            historyControllers.current.delete(key)
+          }
         })
     }
+  }, [windowRows])
 
-    return () => controller.abort()
-  }, [marketRows])
-
-  const sortedRows = useMemo(() => {
-    const valueFor = (row: BoardRow): number | null => {
-      const history = historyByRow[row.key]?.data
-      if (sortKey === 'line') return row.line
-      if (!history) return null
-      if (sortKey === 'hit-rate') return history.hit_rate.l10
-      return history.projection === null ? null : Math.abs(history.projection - row.line)
-    }
-    // Hit rate over ten games takes eleven distinct values, so ties are the common
-    // case, not the edge case: a real slate put six rows on 40% at once. Falling
-    // through to the player's name turned the research board into an alphabetical
-    // list — the reader sees an order and reads meaning into it, and there is none.
-    // So every tie breaks on another number, in a stated order, and the row key is
-    // only ever a determinism guard so React keys stay stable across renders.
-    const tiebreakers: ((row: BoardRow) => number)[] = [
-      row => {
-        const h = historyByRow[row.key]?.data
-        return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
-      },
-      row => historyByRow[row.key]?.data?.hit_rate.season ?? -Infinity,
-      row => historyByRow[row.key]?.data?.games.length ?? -Infinity,
-      row => row.line,
-    ]
-    return [...marketRows].sort((a, b) => {
-      const av = valueFor(a)
-      const bv = valueFor(b)
-      if (av === null && bv !== null) return 1
-      if (av !== null && bv === null) return -1
-      if (av !== null && bv !== null && av !== bv) {
-        return sortDirection === 'desc' ? bv - av : av - bv
-      }
-      // Ties always resolve most-evidence-first, whichever way the primary points.
-      for (const key of tiebreakers) {
-        const d = key(b) - key(a)
-        if (d) return d
-      }
-      return a.key.localeCompare(b.key)
-    })
-  }, [historyByRow, marketRows, sortDirection, sortKey])
+  // Descending is the right default for every key where BIGGER IS BETTER -- hit
+  // rate, confidence, edge. Odds is the exception: ascending is shortest price
+  // first, which is the favourite. Sorting it descending opens on +10000
+  // longshots, which is the least useful end of the board.
+  const DEFAULT_DIRECTION: Record<SortKey, 'asc' | 'desc'> = {
+    'hit-rate': 'desc', confidence: 'desc', edge: 'desc', line: 'desc',
+    odds: 'asc',
+  }
 
   const chooseSort = (next: SortKey) => {
     if (next === sortKey) setSortDirection(direction => direction === 'desc' ? 'asc' : 'desc')
     else {
       setSortKey(next)
-      setSortDirection('desc')
+      setSortDirection(DEFAULT_DIRECTION[next])
     }
   }
 
@@ -392,19 +651,37 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
     return <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-4 text-sm text-red-200">{error}</div>
   }
 
-  if (!markets.length) return <EmptyBoard date={date} />
+  if (!markets.length) return <EmptyBoard filterLabel={filterLabel} onViewAll={onViewAll} />
 
   return (
     <section className="min-w-0 space-y-4" aria-label="Market-first prop board">
+      {truncated && (
+        <div
+          role="status"
+          data-board-truncated
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+        >
+          This slate is larger than the board loads at once. Everything shown is real, but
+          some lines are missing. Pick a single league or market to see all of them.
+        </div>
+      )}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-zinc-200">Choose a market</h2>
             <p className="text-xs text-zinc-500">Every available player line across this slate</p>
           </div>
-          <span className="shrink-0 text-xs text-zinc-500 tabular-nums">{marketRows.length} lines</span>
+          <span className="shrink-0 text-xs text-zinc-500 tabular-nums">
+            {marketRows.length} props{marketLineCount !== marketRows.length ? ` · ${marketLineCount} lines` : ''}
+          </span>
         </div>
-        <div className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <HorizontalScrollRail
+          className="min-w-0"
+          label="Prop market filters"
+          previousLabel="Scroll markets left"
+          nextLabel="Scroll markets right"
+          railClassName="flex gap-2 pb-1 overscroll-x-contain"
+        >
           {markets.map(item => (
             <button
               key={item.market}
@@ -420,71 +697,199 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
               {marketLabel(item.market)} <span className="ml-1 text-[10px] tabular-nums opacity-60">{item.count}</span>
             </button>
           ))}
-        </div>
+        </HorizontalScrollRail>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-zinc-500">Sort the research board</p>
-        <div className="flex flex-wrap gap-1.5" aria-label="Sort prop board">
+      {/* "Sort by" sits next to the controls it labels. It used to read "Sort
+          the research board" and was pushed to the far side of a
+          justify-between row, so the label and the buttons it described were at
+          opposite ends of the screen. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="shrink-0 text-xs text-zinc-500">Sort by</p>
+        <div className="flex flex-wrap items-center gap-1.5" aria-label="Sort prop board">
           {([
             ['hit-rate', 'Hit rate'],
+            ['confidence', 'Confidence'],
+            ['odds', 'Odds'],
             ['edge', 'Edge'],
             ['line', 'Line'],
           ] as [SortKey, string][]).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => chooseSort(key)}
-              aria-pressed={sortKey === key}
-              className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
-                sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
-            </button>
+            <span key={key} className="inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => chooseSort(key)}
+                aria-pressed={sortKey === key}
+                className={`rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                  sortKey === key ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {label}{sortKey === key ? (sortDirection === 'desc' ? ' ↓' : ' ↑') : ''}
+              </button>
+            </span>
           ))}
+          {/* Anchored at the END of the controls rather than mid-row beside its
+              own button, where it broke the rhythm of the group. Still a tap
+              target, not a hover tooltip: hover does not exist on touch and
+              this board is read on phones. The panel opens right-aligned so it
+              cannot push the layout sideways on a narrow screen. */}
+          <span className="relative ml-auto inline-flex items-center">
+            <button
+              type="button"
+              aria-label="What Confidence means"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen(open => !open)}
+              className="grid h-5 w-5 place-items-center rounded-full border border-zinc-700 text-[10px] leading-none text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300"
+            >
+              i
+            </button>
+            {helpOpen && (
+              <div
+                role="dialog"
+                aria-label="About Confidence"
+                className="absolute right-0 top-full z-20 mt-1.5 w-72 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-400 shadow-xl"
+              >
+                <p>
+                  <span className="text-zinc-200">Confidence</span> ranks by the hit
+                  rate a record can actually support, not the rate it happens to
+                  show. A player who is 3-for-3 has too few games to prove much, so
+                  he sits below someone at 58% over 48 games. The more games behind
+                  a rate, the closer this gets to the rate itself.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(false)}
+                  className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-300"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </span>
         </div>
       </div>
 
+      {marketRows.length > visibleRows.length && (
+        <div
+          role="status"
+          data-row-window
+          className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-xs text-zinc-400"
+        >
+          Showing <span className="tabular-nums text-zinc-200">{visibleRows.length}</span> of{' '}
+          <span className="tabular-nums text-zinc-200">{marketRows.length}</span> lines in this
+          market. Hit rate is loaded only for the lines shown, so this ranks the lines on
+          screen, not the whole market.
+        </div>
+      )}
+
       <div className="space-y-3">
-        {sortedRows.map(row => {
-          const historyState = historyByRow[row.key]
+        {visibleRows.map(row => {
+          const historyState = historyByRow[historyKey(row)]
           const history = historyState?.data
           const isUfc = row.league === 'ufc'
+          const isUfcNumeric = isUfc
+            && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
+          // Providers remain distinct offers in the data model, but this control
+          // answers only one question: which numeric threshold should be shown?
+          const lineOptions = uniqueLineOptions(row.lines)
+          const hasAlternates = lineOptions.length > 1
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
           return (
-            <article key={row.key} data-market-row className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+            <article key={row.key} data-market-row className="min-w-0 overflow-visible rounded-xl border border-zinc-800 bg-zinc-900">
               <div className="grid min-w-0 gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <h3 className="truncate font-semibold text-zinc-100">{row.player}</h3>
+                    <h3 className="truncate font-semibold text-zinc-100">
+                      {row.playerId ? (
+                        <a href={`/player/${row.playerId}`} className="hover:text-emerald-400">{row.player}</a>
+                      ) : row.player}
+                    </h3>
                     <span className="text-xs font-medium text-zinc-500">{row.team}</span>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-zinc-500">{matchup(row)}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>
-                    <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
-                      O <strong>{formatOdds(row.over?.odds)}</strong>
+                    {hasAlternates ? (
+                      <details data-line-selector className="group relative inline-block max-w-full">
+                        <summary
+                          aria-label={`Line for ${row.player} ${marketLabel(row.market)}`}
+                          aria-haspopup="listbox"
+                          className="inline-flex cursor-pointer list-none items-center gap-1 text-2xl font-bold text-white tabular-nums marker:content-none"
+                        >
+                          <span data-selected-line>{formatValue(row.line)}</span>
+                          <span aria-hidden="true">▾</span>
+                        </summary>
+                        <div
+                          role="listbox"
+                          aria-label={`Alternate lines for ${row.player} ${marketLabel(row.market)}`}
+                          className="absolute left-0 z-30 mt-2 min-w-max overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
+                        >
+                          {lineOptions.map(line => (
+                            <button
+                              key={line.offerKey}
+                              type="button"
+                              role="option"
+                              aria-selected={line.offerKey === row.offerKey}
+                              onClick={event => {
+                                setSelectedLineByRow(current => ({
+                                  ...current,
+                                  [row.key]: line.offerKey,
+                                }))
+                                event.currentTarget.closest('details')?.removeAttribute('open')
+                              }}
+                              className={`block w-full px-3 py-2 text-left text-sm font-medium tabular-nums transition-colors hover:bg-zinc-800 focus:bg-zinc-800 focus:outline-none ${
+                                line.offerKey === row.offerKey ? 'bg-zinc-800 text-emerald-300' : 'text-zinc-100'
+                              }`}
+                            >
+                              {formatValue(line.line)}
+                            </button>
+                          ))}
+                        </div>
+                      </details>
+                    ) : (
+                      <span className="text-2xl font-bold text-white tabular-nums">{formatValue(row.line)}</span>
+                    )}
+                    {isPickem(row.source) ? (
+                      /* No price to show. The book has none, so the row says so
+                         rather than printing the relay's constant. */
+                      <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-500">
+                        pick&rsquo;em &middot; no line price
+                      </span>
+                    ) : (
+                      <>
+                        <span className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-2 py-1 text-xs text-emerald-300 tabular-nums">
+                          O <strong>{formatOdds(row.over?.odds)}</strong>
+                        </span>
+                        <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
+                          U <strong>{formatOdds(row.under?.odds)}</strong>
+                        </span>
+                      </>
+                    )}
+                    <span data-provider-label className="text-[10px] uppercase tracking-wide text-zinc-600">
+                      {sourceLabel(row.source)}
                     </span>
-                    <span className="rounded-md border border-zinc-700 bg-zinc-800/70 px-2 py-1 text-xs text-zinc-300 tabular-nums">
-                      U <strong>{formatOdds(row.under?.odds)}</strong>
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">{row.source}</span>
                   </div>
                 </div>
 
                 <div className="min-w-0 md:text-right">
-                  {isUfc ? (
+                  {isUfc && !isUfcNumeric ? (
                     <p className="text-xs text-zinc-600">Method-of-victory market</p>
                   ) : historyState?.loading ? <LoadingEvidence /> : history ? (
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-1.5 md:justify-end">
-                        <RateChip label="L5" value={history.hit_rate.l5} />
-                        <RateChip label="L10" value={history.hit_rate.l10} />
-                        <RateChip label="L20" value={history.hit_rate.l20} />
+                        <RateChip label="L5" value={history.hit_rate.l5} sample={history.hit_rate_n?.l5} required={5} />
+                        <RateChip label="L10" value={history.hit_rate.l10} sample={history.hit_rate_n?.l10} required={10} />
+                        <RateChip label="L20" value={history.hit_rate.l20} sample={history.hit_rate_n?.l20} required={20} />
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:justify-end">
+                        {/* Every other sort key is a number the reader can see on the
+                            row -- hit rate in the chips, edge and line here. Sorting by
+                            a value that is nowhere on screen asks someone to trust an
+                            order they cannot check. */}
+                        <span className="text-zinc-500">Confidence <strong className="text-zinc-200 tabular-nums">
+                          {history.games.length
+                            ? `${Math.round(confidenceFloor(history.games.filter(g => g.hit).length, history.games.length) * 100)}%`
+                            : '—'}
+                        </strong></span>
                         <span className="text-zinc-500">Projection <strong className="text-zinc-200 tabular-nums">{projection === null ? '—' : formatValue(projection)}</strong></span>
                         <span className="text-zinc-500">Edge <strong className={`${edge !== null && Math.abs(edge) > 0 ? 'text-emerald-300' : 'text-zinc-300'} tabular-nums`}>
                           {edge === null ? '—' : edge === 0 ? 'Even' : `${edge > 0 ? 'O' : 'U'} +${Math.abs(edge).toFixed(1)}`}
@@ -497,13 +902,26 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
                 </div>
               </div>
 
-              {isUfc ? (
+              {isUfc && !isUfcNumeric ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40">
                   <FightForm playerId={row.playerId} fighter={row.player} />
                 </div>
               ) : history?.games.length ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
                   <PropChart data={history} />
+                </div>
+              ) : (row.league === 'lcup' || row.league === 'ligamx') ? (
+                // No chart because we hold no logs for this player: Liga MX has
+                // no qualifying numeric history for this market. The fallback
+                // is read-only and uses the stored FotMob publisher history.
+                //
+                // Matches BOTH labels. /api/props returns the PLAYER's league,
+                // so a Leagues Cup prop on a Liga MX athlete arrives as
+                // `ligamx` and one on an MLS athlete as `mls`. Checking only
+                // 'lcup' matched neither, and every Liga MX row fell through to
+                // "No history" with nothing to click.
+                <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40">
+                  <MatchForm playerId={row.playerId} player={row.player} />
                 </div>
               ) : historyState?.loading ? (
                 <div data-market-chart className="min-w-0 overflow-hidden border-t border-zinc-800 bg-zinc-950/40 p-3 sm:p-4">
@@ -518,6 +936,17 @@ export default function MarketSlateBoard({ league, date }: { league: string; dat
           )
         })}
       </div>
+
+      {marketRows.length > visibleRows.length && (
+        <button
+          type="button"
+          data-show-more-rows
+          onClick={() => setRowLimit(current => current + ROW_WINDOW)}
+          className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+        >
+          Show {Math.min(ROW_WINDOW, marketRows.length - visibleRows.length)} more
+        </button>
+      )}
     </section>
   )
 }

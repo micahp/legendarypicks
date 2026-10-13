@@ -10,7 +10,7 @@ import urllib.request
 
 import collections
 import re
-from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
+from .config import (MARKET_MAP, _MLS_CLUB_CODES, _MLS_NON_PLAYER_OUTCOMES, _MLS_PLAYER_GROUPS, _MLS_PLAYER_MARKETS, _SOCCER_MARKET_RULES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _GROUP_SEEN, _LADDER_OUTCOMES, _UFC_METHOD, _UNMAPPED_PLAYER_MARKETS, _WC_SKIP_KW)  # noqa: E402
 
 def _parse_ufc_props(event: dict) -> list:
     comps = [c.get("name") for c in event.get("competitors", []) if c.get("name")]
@@ -53,16 +53,19 @@ def _parse_ufc_props(event: dict) -> list:
 # ATP Montreal + WTA Toronto). Four match-level markets carry player attribution:
 #   Moneyline                             -> match_winner  (each outcome = a player; yes/no "wins the match")
 #   Total Games O/U - <Player>            -> total_games   (player's games won over/under; handicap = line)
-#   Set Betting                           -> set_betting   (exact-set-score ladder: "<Player> 2 - 0")
+#   Set Betting                           -> NOT INGESTED (see below)
 #   Will <Player> Win At Least One Set?   -> win_a_set     (yes/no; "Yes" outcome carries the player)
 # Match-level only: markets are filtered to period.abbreviation == "MT" (pre-match "Match" and live
 # "Live Match"); per-set variants (" - S1" / " - LS2" outcome suffixes) are out of scope for the
 # props schema. Match-level markets with NO player attribution (Total Sets O/U 2.5, match Total
 # games, Game/Set spreads, tie-break, odd/even, tournament Outrights) are deferred — the same
-# deferral as UFC fight-level markets (see _UFC_METHOD). Set-betting scores ride in the market key
-# ("set_betting___2_0") so the per-player ladders don't collide on the ingest dedup key
-# (game_id, player_id, market, line, side, source); _base_market() still groups them under
-# "set_betting" for boards/charting.
+# deferral as UFC fight-level markets (see _UFC_METHOD).
+#
+# DROPPED 2026-08-26: Set Betting. It carries a player's name, which is why it was read as
+# player-attributed, but "<Player> 2 - 0" is the MATCH's scoreline -- the same event described
+# from one side. It is not a measure of a player's performance, nothing in player_game_logs can
+# ever chart it, and it belongs with the other match-level markets already deferred above.
+# 438 such props existed on dev and 442 on prod when this was removed.
 def _parse_tennis_props(event: dict, league: str) -> list:
     """Extract player-attributed tennis props from a single Bovada tennis event."""
     import re
@@ -85,8 +88,6 @@ def _parse_tennis_props(event: dict, league: str) -> list:
                 canonical, kind = "match_winner", "win"
             elif mdesc_lower.startswith("total games o/u - "):
                 canonical, kind = "total_games", "ou"
-            elif mdesc_lower == "set betting":
-                canonical, kind = "set_betting", "setscore"
             elif mdesc_lower.startswith("will ") and mdesc_lower.endswith(" win at least one set?"):
                 canonical, kind = "win_a_set", "winset"
             else:
@@ -114,12 +115,6 @@ def _parse_tennis_props(event: dict, league: str) -> list:
                     market = canonical
                     line = float(handicap) if handicap is not None else None
                     side = "over" if od.lower() == "over" else "under"
-                elif kind == "setscore":
-                    sm = re.search(r"(\d+)\s*-\s*(\d+)\s*$", od)
-                    if not sm or not player:
-                        continue
-                    market = "set_betting___{}_{}".format(sm.group(1), sm.group(2))
-                    line, side = 0.5, "over"
                 else:  # winset — the "No" outcome is the complement; keep the "Yes" price only
                     if od.lower() != "yes":
                         continue
@@ -438,12 +433,30 @@ def _parse_standard_props(event: dict, league: str) -> list:
         else:
             away_team = c.get("name", "")
 
+    # The fixture's own two clubs, for the team-market check below.
+    fixture_clubs = {n.strip().lower() for n in (home_team, away_team) if n and n.strip()}
+
     for dg in event.get("displayGroups", []):
         group_desc = (dg.get("description") or "").lower()
 
-        # Only process player/pitcher props
-        if "prop" not in group_desc:
-            continue
+        # NO GROUP-NAME FILTER. This used to be `if "prop" not in group_desc: continue`,
+        # which asked whether Bovada happened to put the word "prop" in a display group's
+        # NAME. It does for "Batter Props" and "TD Scorer Props"; it does not for
+        # "Receiving Yards", "Rushing Yards" or "Passing Yards", which are the groups
+        # carrying the yardage over/unders that most of football's player props live in.
+        #
+        # Measured 2026-09-05, player-attributed markets discarded by that one line:
+        #   nfl    347 skipped vs 275 kept  (Receiving 156, Rushing 90, Passing 57)
+        #   ncaaf  292 skipped vs 145 kept  (Alternate 156, Receiving 71, Passing 36)
+        #   mlb     60 skipped vs 958 kept  (Alternate 60)
+        #
+        # It is safe to drop because the group name was never the real gate. Every
+        # market still has to yield an Over/Under outcome, still has to split a player
+        # off its description, and still gets dropped if that "player" is one of the
+        # fixture's own clubs. Those three guards are what actually decides a player
+        # prop, and they run below regardless of what the group is called.
+        _GROUP_SEEN[(league, dg.get("description") or "")] = (
+            _GROUP_SEEN.get((league, dg.get("description") or ""), 0) + 1)
 
         for market in dg.get("markets", []):
             market_desc = (market.get("description") or "").strip()
@@ -475,6 +488,16 @@ def _parse_standard_props(event: dict, league: str) -> list:
                     side = "over"
                 elif desc_lower == "under":
                     side = "under"
+                elif re.match(r"^[\d.]+\+\s", desc):
+                    # An ALTERNATE-LINE LADDER rung: "10+ Receiving Yards -725",
+                    # "20+ -200", eleven of them per market (key=GAME-PROP-12). These are
+                    # real priced player props and we do not take them yet, because a rung
+                    # is not an over/under: one market becomes eleven rows and the board
+                    # would bury the single-line props under them. Counted so that
+                    # "we decided not to" never looks like "the publisher stopped sending".
+                    _LADDER_OUTCOMES[(league, market_head)] = (
+                        _LADDER_OUTCOMES.get((league, market_head), 0) + 1)
+                    continue
                 else:
                     # Not an over/under outcome — it's a player name for yes/no props
                     # e.g., "Kyle Schwarber (PHI)"
@@ -496,6 +519,19 @@ def _parse_standard_props(event: dict, league: str) -> list:
                 # Errors"), and anything whose description we cannot parse. A prop we cannot
                 # attribute is not a prop we can serve.
                 if not player_name:
+                    continue
+
+                # A "player" that IS one of the fixture's two clubs is a team market wearing
+                # a player market's shape. Bovada writes "Highest Scoring Quarter Total
+                # Points O/U - Boston Celtics" inside a group called "Score Props", and it
+                # splits on " - " exactly like "Total Strikeouts - Ryan Gusto (MIA)" does.
+                # Dropped here rather than at the resolver: the resolver can only report that
+                # nothing matched, which is indistinguishable from a broken feed, and on
+                # 2026-08-24 that read as "REJECTED all 120 nba props" on a day Bovada
+                # published no NBA player props at all. Counted so the league still reports.
+                if player_name.strip().lower() in fixture_clubs:
+                    key = (league, market_head, player_name.strip())
+                    _TEAM_LEVEL_OUTCOMES[key] = _TEAM_LEVEL_OUTCOMES.get(key, 0) + 1
                     continue
 
                 results.append({

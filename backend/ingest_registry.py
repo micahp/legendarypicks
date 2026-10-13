@@ -1,0 +1,511 @@
+#!/usr/bin/env python3
+"""ingest_registry.py: the jobs that keep non-props tables fed, and how to tell they are fed.
+
+WHY THIS EXISTS.
+
+`backend/` holds 49 `ingest_*.py` against about 14 systemd timers. Writing an ingest and
+scheduling an ingest were two separate acts joined by nothing but somebody remembering, and
+on 2026-09-06 that cost was measured: `ingest_soccer_logs.py` appeared in no unit, no
+crontab and no runner script. It worked, it was tested, and it had only ever run by hand.
+MLS appearance rows stopped on 2026-08-08 while finaled games ran to 2026-09-05. Behind that
+28-day gap sat 1,150 unsettled `goals` props, 409 `assists`, and every card market, and
+`settlement/mls_settle.py` turned each missing appearance into `pending` with no error, so
+settlement kept reporting success the whole time.
+
+A registry entry makes those two acts ONE act. You cannot add a job here without declaring
+its cadence, the host budget it shares, and -- the part that matters -- how an outsider can
+tell whether it actually ran. `validate()` refuses the import otherwise, so the failure
+happens at load, loudly, instead of as a table that quietly stops advancing.
+
+WHAT IT IS NOT. This is not a second runner. `run_props_ingest.py` already owns the durable
+`ingest_runs` ledger, `ingest_provider_state.last_ok_at` keyed per (job, db_path), cadence
+skipping, host locks and the run lock. `run_ingest_jobs.py` drives THIS registry through
+THAT code. Two registries, one engine, because two engines would drift.
+
+`freshness` is the declaration `monitor_ingest_freshness.py` reads. It answers "this table
+should be advancing and is not", which grep over unit files cannot: reachability by name
+over-counts (a mention in a comment reads as an edge) and under-counts (runners import
+runners). Whether rows arrive is the only honest instrument.
+"""
+from typing import Dict, List, Optional
+
+# Jobs share the shape `run_props_ingest.PROVIDERS` uses, plus two keys that registry
+# understands: `env` (per-job child environment) and `freshness` (required, see above).
+#
+# host_lock: jobs naming the same host_lock never run concurrently. ESPN's limit is a BURST
+# RATE per host shared with the serving path, not a per-run count, so two ESPN jobs at once
+# is the failure mode that took all three ESPN hosts down on 2026-08-18. See
+# `.claude/skills/espn-request-budget`.
+JOBS: List[Dict[str, object]] = [
+    {
+        "id": "soccer_logs",
+        "cadence_min": 60,
+        "timeout_sec": 1800,
+        "host_lock": "espn",
+        # NO LONGER THE PRIMARY SOURCE OF MLS APPEARANCES. As of 2026-09-06 the FotMob job
+        # supplies goals, assists and shots on its own host, so this exists for the keys
+        # FotMob does not publish at all: yellow_cards, red_cards, offsides, own_goals,
+        # sub_ins and first_goal. Cards alone are 203 unsettled props with no other source.
+        #
+        # The summary path answers a whole match in one request. `--deep` is roughly one
+        # core-api request PER ATHLETE (~45 a fixture) and buys only
+        # tackles/clearances/crosses/passes, all of which FotMob already publishes, so it is
+        # deliberately not scheduled: it belongs in a hand-run backfill, not an hourly job.
+        #
+        # DEPENDENCY, and it is deliberate that this fails loudly until it lands: these
+        # steps omit `--season`, which on `dev` today is a REQUIRED argument, so the job
+        # exits 2 with argparse's own message. The fix is on branch
+        # `fix/soccer-logs-pipeline`, where `--season` defaults to ESPN's published current
+        # season via /seasons?limit=1. Hardcoding `--season 2026` here would make the job
+        # run and silently pin the pipeline to one year, which is the failure this registry
+        # exists to prevent. A job that refuses is better than a job that lies.
+        "steps": [
+            ["ingest_soccer_logs.py", "--league", "mls", "--request-budget", "12"],
+            ["ingest_soccer_logs.py", "--league", "lcup", "--request-budget", "12"],
+        ],
+        # MEASURED, not estimated. The first end-to-end run on 2026-09-06 at 4.0s spacing
+        # peaked at 42 requests/min on site.web.api against a predicted ~20, and every one
+        # of 506 requests in that window returned 200. The prediction was wrong twice: the
+        # scoreboard baseline is higher than the ~5/min it was sized against, and
+        # --request-budget counts SUMMARY requests only, so phase and season enumeration
+        # spend on top of it. 42 clears the 63/min median that precedes a 403 but sits above
+        # the 36/min median that precedes a 200, which is less margin than intended for a
+        # job that shares this host with the serving path. 6.0s buys that margin back; the
+        # run takes longer and nobody waits on it.
+        "env": {"LP_INGEST_MIN_INTERVAL": "6.0"},
+        "needs_api_base": False,
+        "freshness": [
+            {
+                # The VIEW, not the ESPN table. The question this check exists to answer is
+                # "can we grade a recent MLS game", and after 2026-09-06 either publisher can
+                # answer it: player_game_logs_all unions ESPN's rows with FotMob's. Pointing
+                # at the ESPN table alone would report a hole that FotMob has already filled,
+                # which is a claim about one source dressed up as a claim about our coverage.
+                "table": "player_game_logs_all",
+                "date_column": "game_date",
+                "where": "league = 'mls'",
+                "stale_hours": 48,
+                "published": {"league": "mls", "publisher": "fotmob"},
+                "label": "mls appearances (any source)",
+            },
+            {
+                "table": "player_game_logs",
+                "date_column": "game_date",
+                "where": "league = 'lcup'",
+                "stale_hours": 168,
+                "published": {"league": "lcup", "publisher": "fotmob"},
+                "label": "leagues cup appearances",
+            },
+        ],
+    },
+    {
+        "id": "game_summaries",
+        "cadence_min": 30,
+        "timeout_sec": 1800,
+        "host_lock": "espn",
+        "steps": [["ingest_game_summaries.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "game_summaries",
+            "date_column": "fetched_at",
+            "stale_hours": 6,
+            "label": "game summaries",
+        }],
+    },
+    {
+        "id": "settlement",
+        # Every 30 minutes, ALL DAY. /etc/cron.d/legendarypicks-pipeline ran settlement at
+        # :23 and :53 during hours 19-23 and 0-3 only, so nothing settled between 03:53 and
+        # 19:23 no matter how many games finished. Measured on prod 2026-09-06: MLB's median
+        # time from kickoff to settled was 57.5h across 65,875 props, against 4.9h for NCAAF
+        # and 2.7h for Leagues Cup on the same machinery. Most of that gap is a game waiting
+        # for a window, not a game that is hard to grade.
+        "cadence_min": 30,
+        # 1800, not 300. run_pipeline.py capped this step at 300s and prod recorded 207
+        # TIMEOUTs against 1,267 successes, 14% of every run killed mid-backlog. settle_props
+        # wraps itself in espn.batch_pacing(), which deliberately sleeps out an ESPN cooldown
+        # because nobody waits on a batch job, so a 300s cap guarantees a kill whenever the
+        # host is busy. A settlement run that is cut off is not an error anyone sees: it just
+        # leaves props ungraded until some later run happens to reach them.
+        "timeout_sec": 1800,
+        # Settlement reads stored database rows only. This lock prevents overlapping runs
+        # without reserving any publisher host budget.
+        "host_lock": "settlement",
+        "steps": [["settle_props.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "prop_results",
+            "date_column": "settled_at",
+            "stale_hours": 6,
+            "label": "settlement",
+        }],
+    },
+    {
+        "id": "mlb_pitcher_logs",
+        # statcast_pitcher stopped on 2026-08-02 while MLB played on, because
+        # ingest_statcast (batters) had a timer and this one never got one. That single
+        # omission is what leaves settlement re-fetching a publisher for the three biggest
+        # unsettled MLB markets: strikeouts (816 props), outs (816) and hits_allowed (544),
+        # all of which are already stored keys -- K, outs, hits_allowed -- on a table that
+        # simply stopped advancing 35 days ago.
+        "cadence_min": 360,
+        # The Statcast pull is one large query over a date window, minutes not seconds.
+        "timeout_sec": 2400,
+        # Its own publisher. This costs ZERO ESPN budget, which is why it is the cheapest
+        # large win available: 2,176 props unblocked without touching the host everything
+        # else is queued behind.
+        "host_lock": "statcast",
+        # 45 days covers the 35-day hole with margin; the script's own default is 60.
+        "steps": [["ingest_mlb_pitcher_logs.py", "--days", "45"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_game_logs",
+            "date_column": "game_date",
+            "where": "source = 'statcast_pitcher'",
+            # Statcast publishes with roughly a day's lag, so 72h is the honest threshold:
+            # tighter would alert on the publisher's own cadence rather than on our failure.
+            "stale_hours": 72,
+            "label": "mlb pitcher logs",
+        }],
+    },
+    {
+        "id": "ncaaf_logs",
+        # cfbd rows stopped on 2025-12-13, the end of LAST season, while NCAAF played
+        # through 2026-09-05 and became the biggest prop league on the board. 266 days.
+        # NCAAF settlement grades off the ESPN boxscore directly, so this does not block
+        # settling; it starves the charts and every hit-rate denominator behind them.
+        "cadence_min": 720,
+        "timeout_sec": 2400,
+        # CFBD is its own publisher, so this costs no ESPN budget either.
+        "host_lock": "cfbd",
+        # No --season: it now defaults to the season of the newest NCAAF game already in
+        # the schedule. Hardcoding a year here is the failure this registry exists to stop.
+        "steps": [["ingest_cfbd_logs.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_game_logs",
+            "date_column": "game_date",
+            "where": "source = 'cfbd'",
+            # Games are weekly, so a week plus slack. Tighter would alert every Tuesday.
+            "stale_hours": 240,
+            "label": "ncaaf logs",
+        }],
+    },
+    {
+        "id": "nfl_schedule",
+        # nfl_schedule stopped 2026-08-05 and the season started 2026-08-29, so the
+        # schedule went stale three weeks before it mattered most. ingest_nfl_schedule was
+        # in no unit, no cron and no runner script.
+        "cadence_min": 720,
+        "timeout_sec": 1200,
+        # nflverse publishes as files on github, its own host, so this costs no ESPN
+        # budget. With no --season the ingest selects the newest season published
+        # in games.csv, so this registry never pins the schedule to one year.
+        "host_lock": "nflverse",
+        "steps": [["ingest_nfl_schedule.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "nfl_schedule",
+            "date_column": "ingested_at",
+            # A schedule is a definition and rarely moves, but "we refreshed it" is the
+            # claim being checked, not "it changed".
+            "stale_hours": 48,
+            "label": "nfl schedule",
+        }],
+    },
+    {
+        "id": "nfl_depth_charts",
+        # Depth charts move weekly in season and stopped on 2026-07-29, before a snap was
+        # played. They feed the sit/start and waiver surfaces directly.
+        "cadence_min": 720,
+        "timeout_sec": 1200,
+        "host_lock": "nflverse",
+        "steps": [["ingest_nfl_depth_charts.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "nfl_depth_chart",
+            "date_column": "ingested_at",
+            "stale_hours": 48,
+            "label": "nfl depth charts",
+        }],
+    },
+    {
+        "id": "nhl_current",
+        # 2026-10-05: nothing scheduled NHL. The 2026-27 logs stopped at a one-off 10-01 run and
+        # production could not take them (Matthew Poitras had no nhl_id owner) until the roster
+        # publisher's first production run. run_history_refresh.py's reason for leaving NHL out
+        # ("holds a writer during player requests") predates ce7acdc: the logs ingest now
+        # fetches and validates the whole season, then publishes in one BEGIN IMMEDIATE.
+        # Roster before logs, so a new player has an owner before his first log row; shares
+        # last, from the logs just written. `current`/`latest` follow the NHL's own published
+        # season, never a hardcoded year.
+        "cadence_min": 360,
+        "timeout_sec": 1800,
+        "host_lock": "nhle",
+        "steps": [["ingest_nhl_roster.py", "--apply"],
+                  ["ingest_nhl_logs.py", "--season", "current", "--apply"],
+                  ["build_player_shares.py", "--league", "nhl", "--season", "latest"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "player_team_shares",
+            "date_column": "computed_at",
+            "where": "league = 'nhl'",
+            "stale_hours": 30,
+            "label": "nhl player shares",
+        }],
+    },
+    {
+        "id": "nhl_season_stats",
+        # 2026-10-13: nothing scheduled the NHL season totals, and the ingest refused the
+        # whole season when ONE published player had no nhl_id owner (49 for 2025-26, 1
+        # for 2026-27). It now binds or mints the owner itself, in its own transaction
+        # (nhl_identity.py), and exits 2 only for a player it cannot place safely.
+        # Its own job, not a step of nhl_current: a held player must show as a failed run
+        # of THIS job, never stop the roster, logs and shares chain.
+        "cadence_min": 720,
+        "timeout_sec": 900,
+        "host_lock": "nhle",
+        "steps": [["ingest_nhl_season_stats.py", "--season", "current"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # player_stats carries no timestamp, so the ledger is the instrument: the last
+            # run of this job that finished ok.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nhl_season_stats' AND status = 'ok'",
+            "stale_hours": 36,
+            "label": "nhl season stats",
+        }],
+    },
+    {
+        "id": "ncaaf_rosters",
+        # The identity spine the log ingest resolves onto, from CFBD in TWO requests where
+        # the ESPN path costs 149 to site.web.api. Measured 2026-09-06: prod held 14,234
+        # NCAAF players and CFBD published 30,635 roster rows; this minted 8,609 of them.
+        # Ordered before the logs by cadence, not by sequence: a log row for a player the
+        # spine has never heard of is the defect this prevents.
+        "cadence_min": 1440,
+        "timeout_sec": 900,
+        "host_lock": "cfbd",
+        "steps": [["ingest_ncaaf_rosters_cfbd.py"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "players",
+            "date_column": "updated_at",
+            "where": "league = 'ncaaf'",
+            # Daily sync, so two days of slack before it is our problem rather than a quiet
+            # week in the transfer portal.
+            "stale_hours": 72,
+            "label": "ncaaf spine",
+        }],
+    },
+    {
+        "id": "fotmob_soccer_logs",
+        # MLS appearances WITHOUT ESPN. This is the point of the job: settlement was blocked
+        # on a publisher whose per-minute budget is shared with the serving path, for stats
+        # another publisher gives away on its own host.
+        #
+        # Cheap only because the fixture skip landed with it. Before that every run fetched
+        # matchDetails for every finished fixture in the season; on 2026-09-06 a full MLS run
+        # touched 343 fixtures to learn nothing. With the skip: 314 skipped, 29 fetched. An
+        # hourly job costs a handful of requests on a match day and nearly nothing otherwise.
+        "cadence_min": 60,
+        "timeout_sec": 1800,
+        # FotMob's own host. Deliberately NOT the "espn" lock: the whole point is that this
+        # can run while an ESPN job is running, because it spends a different budget.
+        "host_lock": "fotmob",
+        "steps": [["ingest_fotmob_soccer_logs.py", "--league", "mls"],
+                  ["ingest_fotmob_soccer_logs.py", "--league", "lcup"],
+                  ["ingest_fotmob_soccer_logs.py", "--league", "unl",
+                   "--days-back", "14"],
+                  ["ingest_fotmob_soccer_logs.py", "--league", "friendlies",
+                   "--days-back", "14"]],
+        "needs_api_base": False,
+        "freshness": [
+            {
+                "table": "player_game_logs_fotmob",
+                "date_column": "game_date",
+                "where": "league = 'mls'",
+                "stale_hours": 48,
+                "published": {"league": "mls", "publisher": "fotmob"},
+                "label": "mls appearances (fotmob)",
+            },
+            {
+                "table": "player_game_logs_fotmob",
+                "date_column": "game_date",
+                "where": "league = 'unl'",
+                "stale_hours": 48,
+                "published": {"league": "unl", "publisher": "fotmob"},
+                "label": "uefa nations league appearances (fotmob)",
+            },
+            {
+                "table": "player_game_logs_fotmob",
+                "date_column": "game_date",
+                "where": "league = 'friendlies'",
+                "stale_hours": 48,
+                "published": {"league": "friendlies", "publisher": "fotmob"},
+                "label": "international friendly appearances (fotmob)",
+            },
+        ],
+    },
+    {
+        "id": "published_rosters",
+        # The roster `_resolve_player_for_ingest` consults before giving up on a player.
+        # Without this the table is a snapshot: it resolves whoever was on a squad the day
+        # somebody ran the script by hand, and every player signed afterwards goes back to
+        # being dropped. That is the exact shape this registry exists to remove.
+        #
+        # Both steps here, in this order, on purpose. The roster ingest reads `league_clubs`
+        # for its club list and prints "no published clubs stored" without one, so a stale
+        # club list is a silently smaller roster rather than an error. Keeping them one job
+        # means they cannot disagree about which clubs exist.
+        "cadence_min": 1440,
+        "timeout_sec": 1200,
+        # FotMob's own host, and the same lock fotmob_soccer_logs takes, so the two never
+        # spend that budget at the same time. One request per club, ~60 clubs across the
+        # three leagues.
+        "host_lock": "fotmob",
+        "steps": [["ingest_league_clubs.py"],
+                  ["ingest_published_rosters.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [
+            {
+                "table": "published_roster",
+                "date_column": "updated_at",
+                "where": "league = 'mls'",
+                # Daily job, two days of slack. A roster that stops advancing does not break
+                # anything visibly: props for new signings just quietly go unresolved again,
+                # which is precisely why it needs an instrument rather than a reader.
+                "stale_hours": 72,
+                "label": "published rosters (mls)",
+            },
+            {
+                "table": "league_clubs",
+                "date_column": "updated_at",
+                "where": "league = 'mls'",
+                "stale_hours": 72,
+                "label": "published clubs (mls)",
+            },
+        ],
+    },
+    {
+        "id": "ufc_dk_pool",
+        # The optimizer fetched RotoWire inside the request that drew the page, so the
+        # pool only existed while somebody was looking at it. A publisher blip at that
+        # instant emptied the board, and a slate nobody opened was never captured at all.
+        # This makes the capture independent of page views and gives the board something
+        # to serve when RotoWire is slow.
+        # Twice a day, midnight and noon, which is Micah's call. The serving path
+        # covers the hours between: a page view older than four hours refreshes the
+        # pool itself and stores what it got, so the cadence here is the floor on
+        # capture, not the only way a pool gets refreshed.
+        #
+        # 720 is also what keeps the hourly registry sweep from running this job as
+        # well. The engine skips a job whose last_ok_at is inside its cadence, so the
+        # dedicated timer does the work and the sweep is only a backstop.
+        #
+        # It is a backstop that gets used. The run lock is per database, and the hourly
+        # sweep occupies DEV from :10 to :43 and PROD from :43 to :10, so at midnight
+        # and noon the dedicated timer's DEV half runs and its PROD half reports
+        # skipped_lock. The sweep then picks PROD up on this cadence inside the hour.
+        # Capture is therefore twice a day WITHIN AN HOUR of midnight and noon, not on
+        # the minute, and that is the honest description of it.
+        "cadence_min": 720,
+        "timeout_sec": 300,
+        # RotoWire's own host. The props provider runner also talks to RotoWire, so they
+        # share this lock rather than spending that budget at the same time.
+        "host_lock": "rotowire",
+        "steps": [["ingest_ufc_dk_pool.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [
+            {
+                "table": "dk_pool_snapshots",
+                "date_column": "captured_at",
+                "where": "league = 'ufc'",
+                # Deliberately a week, not an hour. Between cards RotoWire publishes no
+                # unlocked Classic pool at all, and the job reports `no_pool` rather than
+                # writing -- that is the publisher answering, not the job failing. Seven
+                # days with no capture is the real defect, because UFC runs most weekends.
+                "stale_hours": 168,
+                "label": "DraftKings MMA pool",
+            },
+        ],
+    },
+]
+
+# Jobs switched off by hand: put an id here and it drops out of every run. Settlement was paused
+# here 05:43-06:10 CDT on 2026-10-04 while ESPN refused this box; it now reads stored box scores
+# only (game_summaries fetches each once), re-settled NFL game 8834 identically (2,370 of 2,370)
+# with zero ESPN calls, and is back on.
+PAUSED = set()
+JOBS = [job for job in JOBS if job["id"] not in PAUSED]
+
+_REQUIRED = ("id", "cadence_min", "timeout_sec", "host_lock", "steps", "freshness")
+_REQUIRED_FRESHNESS = ("table", "date_column", "stale_hours", "label")
+
+
+class RegistryError(ValueError):
+    """A job declaration that would schedule work nobody can verify ran."""
+
+
+def validate(jobs: Optional[List[Dict[str, object]]] = None) -> None:
+    """Refuse a job that cannot be scheduled or cannot be checked.
+
+    Deliberately raises at import rather than returning a bool. A registry that silently
+    accepts an unverifiable job is the exact defect this module exists to remove.
+    """
+    jobs = JOBS if jobs is None else jobs
+    seen = set()
+    for job in jobs:
+        job_id = job.get("id")
+        if not job_id or not isinstance(job_id, str):
+            raise RegistryError("a job has no string id: {!r}".format(job))
+        if job_id in seen:
+            raise RegistryError("duplicate job id {!r}".format(job_id))
+        seen.add(job_id)
+        for key in _REQUIRED:
+            if key not in job:
+                raise RegistryError("job {!r} is missing {!r}".format(job_id, key))
+        if not job["steps"]:
+            raise RegistryError("job {!r} declares no steps".format(job_id))
+        for step in job["steps"]:
+            if not isinstance(step, (list, tuple)) or not step:
+                raise RegistryError("job {!r} has a malformed step {!r}".format(job_id, step))
+        for key in ("cadence_min", "timeout_sec"):
+            value = job[key]
+            if not isinstance(value, (int, float)) or value <= 0:
+                raise RegistryError(
+                    "job {!r} has a non-positive {}: {!r}".format(job_id, key, value))
+        if not job["freshness"]:
+            raise RegistryError(
+                "job {!r} declares no freshness target. Every job must say how an outsider "
+                "can tell it ran; a job nobody can check is how the soccer logs went 28 "
+                "days stale while every instrument read healthy.".format(job_id))
+        for target in job["freshness"]:
+            for key in _REQUIRED_FRESHNESS:
+                if key not in target:
+                    raise RegistryError(
+                        "job {!r} freshness target is missing {!r}: {!r}".format(
+                            job_id, key, target))
+            if not isinstance(target["stale_hours"], (int, float)) or target["stale_hours"] <= 0:
+                raise RegistryError(
+                    "job {!r} target {!r} has a non-positive stale_hours".format(
+                        job_id, target["label"]))
+
+
+def job_ids(jobs: Optional[List[Dict[str, object]]] = None) -> List[str]:
+    return [job["id"] for job in (JOBS if jobs is None else jobs)]
+
+
+def freshness_targets(jobs: Optional[List[Dict[str, object]]] = None):
+    """Every declared target, tagged with the job responsible for feeding it."""
+    for job in (JOBS if jobs is None else jobs):
+        for target in job["freshness"]:
+            merged = dict(target)
+            merged["job"] = job["id"]
+            merged["cadence_min"] = job["cadence_min"]
+            yield merged
+
+
+# Import-time, on purpose. See validate().
+validate()
