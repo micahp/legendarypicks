@@ -51,11 +51,11 @@ class Api(unittest.TestCase):
         self.addCleanup(patch.stop)
 
     def put(self, run, stat, mean, p10=None, p90=None, model="v2", scenario="base", source="lp",
-            as_of="2026-10-15T12:00:00+00:00"):
+            as_of="2026-10-15T12:00:00+00:00", player=1):
         self.con.execute(
             "INSERT INTO player_projections (run_id, league, season, week, game_id, player_id, team, stat, mean, median, "
             "p10, p90, scenario, model_version, source, p_plays, as_of) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (run, "nfl", 2026, 6, "g1", 1, "A", stat, mean, None, p10, p90, scenario, model, source,
+            (run, "nfl", 2026, 6, "g1", player, "A", stat, mean, None, p10, p90, scenario, model, source,
              0.7 if model == "v2" else None, as_of))
 
     def test_player_endpoint_shows_latest_v2_with_marcel_and_espn_beside(self):
@@ -72,6 +72,26 @@ class Api(unittest.TestCase):
         lo = api.nfl_player_projection(1, 6, 2026, "receptions", 2.5)["prob_over"]["p_over"]
         hi = api.nfl_player_projection(1, 6, 2026, "receptions", 6.5)["prob_over"]["p_over"]
         self.assertTrue(0 < hi < lo < 1)
+
+    def qb(self):
+        self.con.execute("INSERT INTO players VALUES (3,'Q Passer','A','nfl','QB')")
+        for stat, mean in (("att", 34.0), ("cmp", 22.0), ("pass_yds", 245.0), ("pass_td", 1.6)):
+            self.put("r1", stat, mean, p10=mean * 0.6, p90=mean * 1.4, player=3)
+        self.con.commit()
+
+    def test_passing_prob_over_falls_as_the_line_rises(self):
+        self.qb()
+        lo = api.nfl_player_projection(3, 6, 2026, "passing_yards", 200.5)["prob_over"]
+        hi = api.nfl_player_projection(3, 6, 2026, "passing_yards", 290.5)["prob_over"]
+        self.assertEqual("passing_yards", lo["market"])
+        self.assertTrue(0 < hi["p_over"] < lo["p_over"] < 1)
+
+    def test_slate_carries_the_quarterback_with_his_passing_line(self):
+        self.qb()
+        res = api.nfl_projection_slate(week=6, season=2026)
+        qb = [p for p in res["players"] if p["position"] == "QB"]
+        self.assertEqual(1, len(qb))
+        self.assertEqual(245.0, qb[0]["v2"]["pass_yds"]["mean"])
 
     def test_a_player_with_no_projection_says_why_rather_than_zero(self):
         self.con.execute("INSERT INTO players VALUES (2,'No Rows','A','nfl','WR')")

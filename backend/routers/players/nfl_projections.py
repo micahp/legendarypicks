@@ -18,6 +18,8 @@ from fastapi import APIRouter, HTTPException, Query
 from . import router
 
 MARKET_STAT = {"receiving_yards": "rec_yds", "receptions": "rec", "receiving_tds": "rec_td", "targets": "tgt"}
+PASS_MARKET_STAT = {"passing_yards": "pass_yds", "pass_attempts": "att", "pass_completions": "cmp",
+                    "passing_touchdowns": "pass_td"}
 V2, MARCEL, ESPN = "v2", "marcel-lite", "espn-weekly"
 
 
@@ -61,7 +63,8 @@ def nfl_player_projection(player_id: int, week: Optional[int] = Query(None), sea
         if not rows:
             return {"player_id": player_id, "name": player[1], "season": season, "week": week, "projection": None,
                     "reason": "no version 2 projection for this week (fewer than 3 earlier games, listed Out or "
-                              "Doubtful, or not a running back, wide receiver or tight end)"}
+                              "Doubtful, not a running back, wide receiver or tight end, or not the team's "
+                              "expected passer)"}
         game_id = rows[0][0]
         out = {"player_id": player_id, "name": player[1], "team": rows[0][2], "season": season, "week": week,
                "game_id": game_id, "model": "v2", "scenarios": {}, "marcel": {}, "espn": {}, "p_plays": None,
@@ -86,6 +89,17 @@ def nfl_player_projection(player_id: int, week: Optional[int] = Query(None), sea
                                          base["rec_td"]["mean"] / t, n=4000, seed=7)
                     out["prob_over"] = {"market": market, "line": line, "p_over": round(
                         eng.summarize(draws, {"rec": 0, "rec_yds": 1, "rec_td": 2, "tgt": 3}[stat], line)["p_over"], 4),
+                        "given": "plays"}
+            pstat = PASS_MARKET_STAT.get(market)
+            if pstat and set(PASS_MARKET_STAT.values()) <= set(base):
+                import nfl_player_projection_v2 as eng
+                a = base["att"]["mean"]
+                c = base["cmp"]["mean"]
+                if a > 0:
+                    draws = eng.simulate_qb(a, c / a, base["pass_yds"]["mean"] / c if c > 0 else 0.0,
+                                            base["pass_td"]["mean"] / a, n=4000, seed=7)
+                    out["prob_over"] = {"market": market, "line": line, "p_over": round(
+                        eng.summarize(draws, {"cmp": 0, "pass_yds": 1, "pass_td": 2, "att": 3}[pstat], line)["p_over"], 4),
                         "given": "plays"}
         return out
 

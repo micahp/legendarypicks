@@ -26,7 +26,8 @@ import sys
 import pytz
 
 ET = pytz.timezone("America/New_York")
-LOG_KEY = {"tgt": "targets", "rec": "rec", "rec_yds": "rec_yds", "rec_td": "rec_td"}
+LOG_KEY = {"tgt": "targets", "rec": "rec", "rec_yds": "rec_yds", "rec_td": "rec_td",
+           "att": "att", "cmp": "cmp", "pass_yds": "pass_yds", "pass_td": "pass_td"}
 
 
 def kickoff_utc(gameday, gametime):

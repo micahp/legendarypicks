@@ -196,3 +196,38 @@ slopes are +0.00130 and +0.00387, so the targets effect does not even keep its s
 fail, so it is **not adopted** (`SCRIPT_2024`, `--run --script` reproduce it). The live job does not attach
 margins. The 2026 SPEC A lock exists for week 5 only on the dev DB, so a live margin would also be missing for
 most weeks today.
+
+### Slice 4.5: quarterback passing (built, gate passed, in the weekly job)
+
+Rule pre-registered in the engine (dad94e5) before the fit: team pass attempts (own and allowed, K_T 8) x the
+quarterback's own regressed share of team attempts (not normalised against backups), x completion rate, yards
+per attempt and TD per attempt regressed to the QB mean. Fitted on 2024 (410 QB-games, weeks 3 to 18):
+K_CMP 160, K_YPA 160, K_PTD 320 pseudo-attempts (all interior to the grid 40 to 640); attempts negative
+binomial R_ATT 14.62; yards a gamma sum per completion, shape G_PASS 1.15 (mean 11.07 yards per completion).
+
+2025, weeks 3 to 18, a QB with 3+ earlier games who led his team in attempts (403 QB-games), MAE with the
+paired bootstrap 95% interval of v2 minus Marcel-lite:
+
+| Stat | v2 | Marcel-lite | Bias v2 | v2 - Marcel [95% CI] |
+|---|---|---|---|---|
+| attempts | 6.835 | 7.512 | -1.270 | -0.677 [-0.997, -0.363] |
+| completions | 4.769 | 5.279 | -0.595 | -0.510 [-0.734, -0.286] |
+| passing yards | 59.324 | 63.458 | -9.267 | -4.135 [-6.854, -1.471] |
+| passing TDs | 0.971 | 1.010 | -0.106 | -0.039 [-0.076, -0.001] |
+
+**Gate (passing yards and attempts below Marcel-lite): PASS**, every interval excludes zero. The simulated
+p10 to p90 band holds 86.6% of attempts, 88.3% of completions, 87.3% of yards and 94.3% of TDs (nominal 80):
+too wide, like the receiving band; do not read it as calibrated. The graded sample is "the QB who turned out to
+lead his team in attempts"; the job publishes the expected passer chosen before the game (last game's
+attempt leader unless Out or Doubtful), so a surprise starter is not projected.
+
+**TD per opportunity** for receivers and rushers already existed (receiving TDs per target, K_TDT 160;
+rushing TDs per carry, K_TDC 320). On the baseline 2025 run: receiving TDs MAE 0.234 vs Marcel-lite 0.239
+(interval -0.011 to -0.001), rushing TDs 0.112 vs 0.112 (a tie).
+
+**Rushing stays unpublished.** On the same baseline run carries are worse than Marcel-lite (1.153 vs 1.108,
+interval +0.010 to +0.077) and rushing yards tie (6.512 vs 6.536, interval -0.213 to +0.152). No rushing rule
+was changed in these slices, so there was no new rushing gate to run.
+
+Not run: the job for 2026 (left to the coordinator). The stored week 6 rows on the dev DB predate these
+changes and have no quarterbacks.

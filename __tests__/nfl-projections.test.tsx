@@ -45,6 +45,22 @@ describe('/nfl/projections', () => {
     expect(container.textContent).toContain('if the player plays')
   })
 
+  it('puts quarterbacks in their own table and keeps them out of the receiver table', async () => {
+    mockFetch({ '/api/nfl/projections': { ok: true, body: {
+      season: 2026, week: 6, weeks: [6],
+      players: [player(1), {
+        game_id: '2026_06_LA_BAL', player_id: 7, team: 'LAR', name: 'Q Passer', position: 'QB', p_plays: 0.682,
+        v2: { pass_yds: line(244.6, 170, 320), att: line(34.2), cmp: line(22.1), pass_td: line(1.6) },
+        marcel: { pass_yds: 251.0 }, espn: {},
+      }],
+    } } })
+    const { container } = render(<NflProjections />)
+    await waitFor(() => expect(container.querySelector('[data-projection-passers]')).not.toBeNull())
+    expect(container.querySelectorAll('[data-projection-slate] tbody tr').length).toBe(1)
+    const qb = Array.from(container.querySelectorAll('[data-projection-passers] tbody td')).map(td => td.textContent)
+    expect(qb).toEqual(['Q PasserLAR', '245', '170 to 320', '34.2', '22.1', '1.6', '251', '68%'])
+  })
+
   it('says nothing is projected instead of drawing an empty table', async () => {
     mockFetch({ '/api/nfl/projections': { ok: true, body: { season: 2026, week: null, weeks: [], players: [] } } })
     const { container } = render(<NflProjections />)

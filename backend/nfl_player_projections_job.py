@@ -14,6 +14,12 @@ Players with no Questionable teammate get identical rows in all three scenarios,
 p_plays on a row is the player's own chance of playing (1.0, or P_PLAYS_QUESTIONABLE if he is Questionable);
 the mean and quantiles are conditional on playing.
 
+Quarterbacks (Spec B 4.5, gate passed 2026-10-13, docs/RESULTS-player-projection-v2-2026-10-12.md): one per team,
+the passer the team is expected to start, PRE-REGISTERED 2026-10-13: the team's attempt leader in its most recent
+game if he is not Out or Doubtful, otherwise the not-removed QB with the most attempts over the team's last 3
+games. Attempts, completions, passing yards and passing TDs, base scenario only, conditional on him playing as the
+passer; p_plays is his own designation's rate.
+
 A game that already has a final score is skipped and counted: a projection written after the result is not
 a projection. Every run appends rows under a new run_id; grading picks the last run before kickoff
 (grade_nfl_player_projections.py), so reruns on Friday and Sunday refine and never overwrite.
@@ -73,6 +79,7 @@ def brier(rate, played_flags):
 RECV_POS = ("RB", "WR", "TE")
 MIN_EARLIER_GAMES = 3
 STATS = ("tgt", "rec", "rec_yds", "rec_td")
+QB_STATS = ("att", "cmp", "pass_yds", "pass_td")
 
 
 @contextlib.contextmanager
@@ -112,6 +119,50 @@ def _stat_rows(line, draws):
         else:
             out[stat] = (line[stat], None, None, None)
     return out
+
+
+def expected_passer(hist, season, team, week, removed):
+    """The QB the team is expected to start (rule in the module docstring), or None."""
+    weeks = sorted(w for w in hist.team_weeks[(season, team)] if w < week)
+    if not weeks:
+        return None
+    last = [r for r in hist.by_team[(season, team)][weeks[-1]] if r.pos == "QB" and r.att > 0]
+    if last:
+        lead = max(last, key=lambda r: (r.att, -r.pid))
+        if lead.pid not in removed:
+            return lead.pid
+    totals = {}
+    for w in weeks[-3:]:
+        for r in hist.by_team[(season, team)][w]:
+            if r.pos == "QB" and r.pid not in removed:
+                totals[r.pid] = totals.get(r.pid, 0.0) + r.att
+    if not totals:
+        return None
+    return max(totals, key=lambda pid: (totals[pid], -pid))
+
+
+def _qb_entry(hist, season, week, gid, team, opp, pid, report, n_sims):
+    line = eng.project_qb(hist, season, week, pid, team, opp, gid)
+    if line is None or line["att"] <= 0:
+        return None
+    seed = zlib.crc32(("%s|%d|qb" % (gid, pid)).encode()) & 0xffff
+    draws = eng.simulate_qb(line["att"], line["cmp"] / line["att"],
+                            line["pass_yds"] / line["cmp"] if line["cmp"] > 0 else 0.0,
+                            line["pass_td"] / line["att"], n=n_sims, seed=seed)
+    idx = {"cmp": 0, "pass_yds": 1, "pass_td": 2, "att": 3}
+    rows = {}
+    for stat in QB_STATS:
+        q = eng.summarize(draws, idx[stat])
+        rows[stat] = (line[stat], q["median"], q["p10"], q["p90"])
+    rep = report.get(pid, (None, None))[0]
+    entry = {"game_id": gid, "player_id": pid, "team": team, "pos": "QB",
+             "p_plays": P_PLAYS.get(rep, 1.0),
+             "scenarios": {"base": rows}, "marcel": {}, "rules": {"att": "expected_passer"}}
+    for stat in QB_STATS:
+        m = eng.marcel(hist, season, week, pid, stat)
+        if m is not None:
+            entry["marcel"][stat] = m
+    return entry
 
 
 def project_week(con, season, week, n_sims=1000, hist=None):
@@ -169,6 +220,11 @@ def project_week(con, season, week, n_sims=1000, hist=None):
                         entry["marcel"][stat] = m
                 entry["rules"] = plays["_rules"]
                 out.append(entry)
+            qb = expected_passer(hist, season, team, week, outs)
+            if qb is not None and sum(1 for r in hist.by_player.get((season, qb), []) if r.week < week) >= MIN_EARLIER_GAMES:
+                qe = _qb_entry(hist, season, week, gid, team, opp, qb, report, n_sims)
+                if qe is not None:
+                    out.append(qe)
     return out, {"games": len(games), "skipped_final": skipped_final, "player_games": len(out)}
 
 

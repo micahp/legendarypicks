@@ -28,6 +28,45 @@ def fixture_hist(status=None):
     return eng.History(rows, status or {})
 
 
+def qb(pid, week, att, team="A"):
+    opp = "B" if team == "A" else "A"
+    return eng.Row(pid, 2025, week, team, opp, gid(week), "QB",
+                   {"att": att, "cmp": int(att * 0.6), "pass_yds": att * 7, "pass_td": 1})
+
+
+class Passer(unittest.TestCase):
+    def hist(self, status=None):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [qb(10, w, 30 if w < 3 else 5), row(9, w, 10, team="B")]
+        rows.append(qb(11, 3, 28))                     # 11 took over in week 3
+        return eng.History(rows, status or {})
+
+    def test_the_last_game_attempt_leader_is_the_expected_passer(self):
+        self.assertEqual(11, job.expected_passer(self.hist(), 2025, "A", 4, set()))
+
+    def test_if_he_is_out_the_most_attempts_over_three_games_starts(self):
+        self.assertEqual(10, job.expected_passer(self.hist(), 2025, "A", 4, {11}))
+
+    def test_job_writes_one_qb_with_four_passing_stats(self):
+        con = sqlite3.connect(":memory:")
+        con.execute("CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER, game_type TEXT, "
+                    "away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER)")
+        con.execute("INSERT INTO nfl_schedule VALUES (?,2025,4,'REG','A','B',NULL,NULL)", (gid(4),))
+        h = self.hist({(2025, gid(4), "A"): {10: ("Questionable", None)}})
+        entries, _ = job.project_week(con, 2025, 4, n_sims=200, hist=h)
+        qbs = [e for e in entries if e["pos"] == "QB"]
+        # 11 has only one earlier game, so no projection; 10 is not the expected passer: nobody is written
+        self.assertEqual([], qbs)
+        h2 = self.hist({(2025, gid(4), "A"): {11: ("Out", None), 10: ("Questionable", None)}})
+        entries, _ = job.project_week(con, 2025, 4, n_sims=200, hist=h2)
+        qbs = [e for e in entries if e["pos"] == "QB"]
+        self.assertEqual([10], [e["player_id"] for e in qbs])
+        self.assertEqual(set(job.QB_STATS), set(qbs[0]["scenarios"]["base"]))
+        self.assertEqual(job.P_PLAYS["Questionable"], qbs[0]["p_plays"])
+        self.assertEqual(set(job.QB_STATS), set(qbs[0]["marcel"]))
+
+
 class Db(unittest.TestCase):
     def setUp(self):
         self.con = sqlite3.connect(":memory:")
