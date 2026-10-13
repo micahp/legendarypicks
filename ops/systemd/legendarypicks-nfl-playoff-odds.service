@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the NFL playoff-odds and ratings forecast (DEV; does not lock or grade projections)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+Nice=15
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/jobs/nfl_playoff_odds.py
+TimeoutStartSec=300

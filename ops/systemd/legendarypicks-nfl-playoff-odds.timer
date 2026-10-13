@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly NFL playoff-odds forecasts (DEV)
+
+[Timer]
+OnCalendar=Tue *-*-* 10:00:00 America/Chicago
+OnCalendar=Thu *-*-* 12:00:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-playoff-odds.service
+
+[Install]
+WantedBy=timers.target

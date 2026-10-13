@@ -80,6 +80,7 @@ app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credenti
                    allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(games.router)
+from routers.models import nfl as nfl_playoff_odds  # noqa: E402
 from routers.games import soccer_form  # noqa: E402
 app.include_router(soccer_form.router)
 from routers.games import ufc_optimizer  # noqa: E402
@@ -101,6 +102,7 @@ app.include_router(ufc_picks.router)
 app.include_router(nfl_offseason.router)
 app.include_router(nfl_usage.router)
 app.include_router(nfl_model.router)
+app.include_router(nfl_playoff_odds.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)
 app.include_router(nfl_schedule_api.router)
