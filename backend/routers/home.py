@@ -6,7 +6,9 @@ cannot be computed is null and `absent` names it with a reason; the frontend hid
 card instead of drawing a placeholder.
 
 Selection rules
-  prop       Market receiving_yards, side over, NFL props captured in the last 36 hours. For each
+  prop       Market receiving_yards, side over, NFL props captured in the last 36 hours that belong
+             to a game that has not started (prop_games.start_time after now, UTC; a game with no
+             start time is excluded). A finished game's line is never featured. For each
              player take the line offered by the most distinct sources (ties: the most recently
              captured line, then the higher line). Keep players whose line has at least 8 distinct
              sources and at least 20 settled games of history (hit_rate_n.season, from
@@ -92,8 +94,8 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
         "SELECT p.id, p.player_id, p.market, p.line, p.captured_at, p.source, p.game_id "
         "FROM props p JOIN prop_games g ON g.id = p.game_id "
         "WHERE g.league = ? AND p.market = ? AND p.side = 'over' AND p.captured_at >= ? "
-        "AND p.player_id IS NOT NULL ORDER BY p.captured_at, p.id",
-        (PROP_LEAGUE, PROP_MARKET, cutoff)).fetchall()
+        "AND g.start_time > ? AND p.player_id IS NOT NULL ORDER BY p.captured_at, p.id",
+        (PROP_LEAGUE, PROP_MARKET, cutoff, _iso(now))).fetchall()
     # Per player and line: the distinct sources offering it and its latest capture row.
     lines: Dict[Any, Dict[str, Any]] = {}
     for r in rows:                       # ascending, so the last row per line is the latest
@@ -126,9 +128,7 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
             break
     if best is None:
         return {"prop": None, "history": None,
-                "reason": "no NFL %s over line captured in the last %d hours is offered by at least %d "
-                          "sources for a player with %d settled games"
-                          % (PROP_MARKET, PROP_WINDOW_HOURS, PROP_MIN_SOURCES[-1], PROP_MIN_GAMES)}
+                "reason": "no upcoming game has a widely offered receiving yards line"}
     r, h, n_sources = best
     game = con.execute("SELECT home, away, date, start_time FROM prop_games WHERE id = ?",
                        (r[6],)).fetchone()
