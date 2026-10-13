@@ -86,8 +86,10 @@ class TennisSpineTest(unittest.TestCase):
                 [
                     ("underdog", "Carlos Alcaraz", "atp", 2, "ud-a", "source_id_not_in_spine"),
                     ("underdog", "Unlisted ATP Name", "atp", 1, "ud-miss", "source_id_not_in_spine"),
+                    ("underdog", "Abdullah Shelbayh", "atp", 1, "ud-shelbayh", "source_id_not_in_spine"),
                     ("bovada", "Jannik Sinner", "atp", 3, None, None),
                     ("bovada", "Bovada Only Name", "atp", 1, None, None),
+                    ("bovada", "Felix Auger-Aliassime", "atp", 1, None, None),
                     ("underdog", "Coco Gauff", "wta", 1, "ud-w", "source_id_not_in_spine"),
                     ("bovada", "Iga Swiatek", "wta", 1, None, None),
                     ("bovada", "Maria Camila Osorio", "wta", 1, None, None),
@@ -98,6 +100,8 @@ class TennisSpineTest(unittest.TestCase):
         atp_html = atp_page([
             (1, "Alcaraz Carlos", "alcaraz-5ab70"),
             (2, "Sinner Jannik", "sinner-8b8e8"),
+            (3, "Shelbayh Abedallah", "shelbayh"),
+            (4, "Auger Aliassime Felix", "auger-aliassime"),
         ])
         return (
             lambda url: (200, atp_html),
@@ -157,12 +161,15 @@ class TennisSpineTest(unittest.TestCase):
             dry_run=True,
             sleeper=lambda _seconds: None,
         )
-        self.assertEqual(1, result["atp"]["underdog_covered"])
-        self.assertEqual(1, result["atp"]["bovada_covered"])
+        self.assertEqual(2, result["atp"]["underdog_covered"])
+        self.assertEqual(2, result["atp"]["bovada_covered"])
         self.assertEqual(1, result["atp"]["underdog_key_unmatched"])
         self.assertEqual(1, result["wta"]["underdog_covered"])
         self.assertEqual(2, result["wta"]["bovada_covered"])
         self.assertEqual(1, result["wta"]["verified_aliases"])
+        self.assertEqual(4, result["atp"]["ranked_rows"])
+        self.assertEqual(2, result["atp"]["profile_supplements_added"])
+        self.assertEqual(6, result["atp"]["source_rows"])
         self.assertFalse(result["schema_written"])
         self.assertEqual(1, counts[tennis.ATP_HOST])
         self.assertEqual(1, counts[tennis.WTA_HOST])
@@ -187,10 +194,12 @@ class TennisSpineTest(unittest.TestCase):
         )
         self.assertEqual("ok", result["backup_quick_check"])
         self.assertTrue(os.path.isfile(backup))
-        self.assertEqual(2, result["atp"]["stored_current"])
+        self.assertEqual(6, result["atp"]["stored_current"])
         self.assertEqual(3, result["wta"]["stored_current"])
-        self.assertEqual(1, result["atp"]["underdog_new_bindings"])
+        self.assertEqual(2, result["atp"]["underdog_new_bindings"])
         self.assertEqual(1, result["wta"]["underdog_new_bindings"])
+        self.assertEqual(2, result["atp"]["verified_aliases_stored"])
+        self.assertEqual(2, result["atp"]["verified_aliases_inserted"])
         self.assertEqual(1, result["wta"]["verified_aliases_stored"])
         self.assertEqual(1, result["wta"]["verified_aliases_inserted"])
         with sqlite3.connect(self.db_path) as connection:
@@ -229,11 +238,54 @@ class TennisSpineTest(unittest.TestCase):
                 ).fetchone(),
             )
             self.assertEqual(
+                ("Abedallah Shelbayh", "tennisexplorer.com", "shelbayh"),
+                connection.execute(
+                    "SELECT name,publisher,publisher_id FROM players "
+                    "WHERE league='atp' AND publisher_id='shelbayh'"
+                ).fetchone(),
+            )
+            self.assertEqual(
+                ("abdullah shelbayh",),
+                connection.execute(
+                    "SELECT alias_norm FROM name_alias WHERE player_id=("
+                    "SELECT id FROM players WHERE league='atp' AND publisher_id='shelbayh')"
+                ).fetchone(),
+            )
+            self.assertEqual(
+                ("felix augeraliassime",),
+                connection.execute(
+                    "SELECT alias_norm FROM name_alias WHERE player_id=("
+                    "SELECT id FROM players WHERE league='atp' AND publisher_id='auger-aliassime')"
+                ).fetchone(),
+            )
+            self.assertEqual(
+                ("Kei Nishikori", "tennisexplorer.com", "nishikori"),
+                connection.execute(
+                    "SELECT name,publisher,publisher_id FROM players "
+                    "WHERE league='atp' AND publisher_id='nishikori'"
+                ).fetchone(),
+            )
+            self.assertEqual(
+                ("Thanh Minh Truong", "tennisexplorer.com", "truong-914c5"),
+                connection.execute(
+                    "SELECT name,publisher,publisher_id FROM players "
+                    "WHERE league='atp' AND publisher_id='truong-914c5'"
+                ).fetchone(),
+            )
+            self.assertEqual(
                 ("ud-a",),
                 connection.execute(
                     "SELECT source_player_key FROM player_source_ids "
                     "WHERE source='underdog' AND league='atp' AND player_id=("
                     "SELECT id FROM players WHERE name='Carlos Alcaraz')"
+                ).fetchone(),
+            )
+            self.assertEqual(
+                ("ud-shelbayh",),
+                connection.execute(
+                    "SELECT source_player_key FROM player_source_ids "
+                    "WHERE source='underdog' AND league='atp' AND player_id=("
+                    "SELECT id FROM players WHERE publisher_id='shelbayh')"
                 ).fetchone(),
             )
             self.assertEqual(
@@ -244,8 +296,8 @@ class TennisSpineTest(unittest.TestCase):
                     "SELECT id FROM players WHERE name='Coco Gauff')"
                 ).fetchone(),
             )
-            self.assertEqual(5, connection.execute("SELECT COUNT(*) FROM players").fetchone()[0])
-            self.assertEqual(2, connection.execute("SELECT COUNT(*) FROM player_source_ids").fetchone()[0])
+            self.assertEqual(9, connection.execute("SELECT COUNT(*) FROM players").fetchone()[0])
+            self.assertEqual(3, connection.execute("SELECT COUNT(*) FROM player_source_ids").fetchone()[0])
 
     def test_duplicate_publisher_names_and_ids_fail_before_any_write(self):
         duplicate_names = atp_page([
