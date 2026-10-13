@@ -460,7 +460,10 @@ def consistency(hist, points, season=2025, out_path=None):
         cov = sum((r[a] - ma) * (r[b] - mb) for r in rows_out)
         va = sum((r[a] - ma) ** 2 for r in rows_out)
         vb = sum((r[b] - mb) ** 2 for r in rows_out)
-        return cov / (va * vb) ** 0.5
+        return cov / (va * vb) ** 0.5 if va > 0 and vb > 0 else float("nan")
+    if n < 3:
+        print("%d team-games: too few for a summary" % n)
+        return rows_out
     gaps = sorted(r["gap"] for r in rows_out)
     print("%d team-games, %d weeks 3 to 18" % (n, season))
     for k in ("proj_yds", "actual_skill_yds", "proj_tds", "actual_skill_tds", "speca_points", "actual_points", "gap"):

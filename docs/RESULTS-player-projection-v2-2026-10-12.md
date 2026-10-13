@@ -231,3 +231,27 @@ was changed in these slices, so there was no new rushing gate to run.
 
 Not run: the job for 2026 (left to the coordinator). The stored week 6 rows on the dev DB predate these
 changes and have no quarterbacks.
+
+### Slice 4.6: team consistency gap (measured, nothing forced)
+
+`backtest --consistency` (pre-registered in its docstring, committed before the run): every
+2025 team-game, weeks 3 to 18 (480), every candidate not removed by the report projected by the default
+engine (receiving and rushing, conditional on playing) and summed per team, beside SPEC A version 1's
+walk-forward projected points. Per team-game rows: `docs/RESULTS-nfl-team-consistency-2025.csv`.
+
+| Measure (mean per team-game) | Value |
+|---|---|
+| projected skill yards (receiving + rushing) | 336.2 |
+| actual skill yards (same players' logs) | 342.4 |
+| projected skill TDs | 2.36 |
+| actual skill TDs | 2.43 |
+| SPEC A projected points | 23.21 |
+| actual points | 23.04 |
+| gap = SPEC A points - 7 x projected TDs | 6.72 (sd 3.53, p10 2.21, p90 11.53) |
+
+At team level the sum of player projections is close to the actual totals (yards -1.8%, TDs -0.07), which
+is consistent with the bias finding above: the volume is there, it is spread over candidates who do not all
+play. Across team-games, projected TDs correlate 0.532 with SPEC A's points and 0.474 for yards, but only 0.171
+with actual points (SPEC A's own points: 0.331). The gap holds field goals and every other non-skill score,
+so its level is expected; its spread is the inconsistency. By team, the mean gap runs from 1.48 (NO) to 9.71
+(DAL) over 15 games each. Not used to adjust anything in this version.
