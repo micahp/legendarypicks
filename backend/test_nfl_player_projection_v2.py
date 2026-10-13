@@ -6,7 +6,8 @@ import nfl_player_projection_v2 as mod
 
 P = {"H": 1e9, "K_S": 0.0, "K_T": 0.0, "OTHER": 0.0,
      "K_CR": 0.0, "K_YPT": 0.0, "K_TDT": 0.0, "K_YPC": 0.0, "K_TDC": 0.0,
-     "NMU_tgt": 0.6, "NMU_car": 0.6}
+     "NMU_tgt": 0.6, "NMU_car": 0.6, "REDIST": "4.3"}
+P20 = dict(P, REDIST="v2.0")   # the default rule, 2026-10-12
 
 
 def gid(week):
@@ -127,6 +128,36 @@ class Projection(unittest.TestCase):
         # and he also takes the TE share because TE 5 is on rule 1
         self.assertEqual({2: "observed", 3: "next_man_up", 5: "observed", 6: "observed"}, rules)
         self.assertAlmostEqual(0.9, sum(shares.values()))
+
+
+class DefaultRedistribution(unittest.TestCase):
+    two_receiver_team = Projection.two_receiver_team
+
+    def test_out_teammate_is_removed_and_the_rest_renormalised(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [row(1, w, 5), row(2, w, 3), row(3, w, 2), row(9, w, 10, team="B")]
+        status = {(2025, gid(4), "A"): {3: ("Out", None)}}
+        res = mod.project(build(rows, status), 2025, 4, 1, "WR", "A", "B", gid(4), P20)
+        # shares .5 .3 .2 with the .2 player out: .5 / .8 of 10 team targets
+        self.assertAlmostEqual(10 * 0.5 / 0.8, res["tgt"])
+        self.assertEqual("proportional", res["_rules"]["tgt"])
+
+    def test_three_games_together_without_him_blend_the_observed_share(self):
+        rows, status = [], {}
+        for w in (1, 2, 3):          # player 2 out: shares .6 and .4
+            rows += [row(1, w, 6), row(3, w, 4), row(9, w, 10, team="B")]
+            status[(2025, gid(w), "A")] = {2: ("Out", 0)}
+        for w in (4, 5, 6):          # player 2 back: .4 .4 .2
+            rows += [row(1, w, 4), row(2, w, 4), row(3, w, 2), row(9, w, 10, team="B")]
+        status[(2025, gid(7), "A")] = {2: ("Out", None)}
+        res = mod.project(build(rows, status), 2025, 7, 1, "WR", "A", "B", gid(7), P20)
+        # raw shares: p1 .5, p3 .3 -> proportional .625; observed .6 over n=3 -> weight .5 -> .6125
+        self.assertAlmostEqual(10 * 0.6125, res["tgt"])
+        self.assertEqual("observed_blend", res["_rules"]["tgt"])
+
+    def test_default_is_v20(self):
+        self.assertEqual("v2.0", mod.DEFAULTS["REDIST"])
 
 
 class Marcel(unittest.TestCase):

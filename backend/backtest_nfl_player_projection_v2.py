@@ -195,8 +195,8 @@ def bootstrap_diff(diffs, seed=7, n=2000):
     return means[int(0.025 * n)], means[int(0.975 * n) - 1]
 
 
-def run(hist_with, hist_plain):
-    p = dict(eng.DEFAULTS)
+def run(hist_with, hist_plain, overrides=None):
+    p = dict(eng.DEFAULTS, **(overrides or {}))
     games = sorted(eligible(hist_with, 2025), key=lambda r: (r.week, r.pid))
     print("2025 eligible player-games (RB/WR/TE, week 3 to 18, 3+ earlier games): %d" % len(games))
     stats = (("tgt", "tgt"), ("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td"),
@@ -352,6 +352,7 @@ def main():
     ap.add_argument("--run-dist", action="store_true")
     ap.add_argument("--vs-espn", action="store_true")
     ap.add_argument("--fit-nmu", action="store_true")
+    ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
     con = connect()
     if a.fit:
@@ -368,7 +369,7 @@ def main():
     if a.run:
         with_report = eng.History.load(con, [2024, 2025])
         plain = eng.History(with_report.rows, {})
-        run(with_report, plain)
+        run(with_report, plain, {"REDIST": a.redist} if a.redist else None)
 
 
 if __name__ == "__main__":

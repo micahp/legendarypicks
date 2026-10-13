@@ -60,7 +60,7 @@ OUT_STATUSES = ("Out", "Doubtful")
 RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td")))
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
-DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519,
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0",
             "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
 # Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
 # H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
@@ -319,8 +319,49 @@ class History(object):
             return {}, {}
         return {j: v * (1.0 - p["OTHER"]) / total for j, v in pre.items()}, rules
 
+    def share_v20(self, season, week, team, pid, pos, col, p, game_id, caches):
+        """The 2026-10-12 rule (REDIST 'v2.0'): removed players' share spread over every candidate in
+        proportion, observed share blended at n / (n + MIN_TOGETHER). (share, rule) or None."""
+        cands = self.candidates(season, team, week)
+        cands.setdefault(pid, pos)
+        out = self.out_before(season, game_id, team) - {pid}
+        raw = {}
+        for j, jpos in cands.items():
+            if j in out:
+                continue
+            val = self.raw_share(season, j, jpos, week, col, p, caches)
+            raw[j] = val[0]
+        total = sum(raw.values())
+        if total <= 0 or pid not in raw:
+            return None
+        share = raw[pid] * (1.0 - p["OTHER"]) / total
+        rule = "proportional" if out else "none_out"
+        if out:
+            observed = []
+            for r in self.by_player.get((season, pid), []):
+                if r.week >= week:
+                    continue
+                st = self.status.get((season, r.game_id, r.team), {})
+                if all(st.get(x, (None, None))[1] == 0 for x in out):
+                    tt = self.team_game(season, r.team, r.week, col)
+                    if tt > 0:
+                        observed.append(getattr(r, col) / tt)
+            if len(observed) >= MIN_TOGETHER:
+                n = len(observed)
+                wgt = n / (n + MIN_TOGETHER)
+                share = wgt * (sum(observed) / n) + (1 - wgt) * share
+                rule = "observed_blend"
+        return share, rule
+
     def share(self, season, week, team, pid, pos, col, p, game_id, caches):
-        """(projected share of the team's `col`, rule used) or None if there is no basis."""
+        """(projected share of the team's `col`, rule used) or None if there is no basis.
+
+        REDIST 'v2.0' (default) is the 2026-10-12 rule; '4.3' is team_shares. On 2025 weeks 3 to 18
+        (3,945 player-games, dev DB 2026-10-13) '4.3' had higher MAE than 'v2.0' on targets (1.590 vs
+        1.567), receptions (1.225 vs 1.209) and receiving yards (15.910 vs 15.832), so it is not the default.
+        """
+        if p.get("REDIST", "v2.0") == "v2.0":
+            return self.share_v20(season, week, team, pid, pos, col, p, game_id, caches)
         shares, rules = self.team_shares(season, week, team, col, p, game_id, keep=pid, keep_pos=pos)
         if pid not in shares:
             return None

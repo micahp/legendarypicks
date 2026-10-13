@@ -90,3 +90,36 @@ scored only on games played (this favours us); and ESPN returns its current stor
 whether it equals the number shown before kickoff is unverified (the values look smooth across weeks, which
 fits a rest-of-season model more than a weekly matchup one). The real comparison is the 2026 one: ESPN's
 projection captured before kickoff, graded by `grade_nfl_player_projections.py`.
+
+## 2026-10-13 slices (same harness, dev DB copied 2026-10-13 02:04 CDT)
+
+The dev DB was re-ingested on 2026-10-13 (2024 logs now dated), so the baseline engine was re-run on the
+same copy before any slice. Baseline v2.0 on 2025 weeks 3 to 18 (n = 3,945): targets MAE 1.567 (bias
+-0.477), receptions 1.209 (-0.289), receiving yards 15.832 (-3.527), carries 1.157, rushing yards 6.503.
+Gate PASS (receiving yards -0.599 [-0.888, -0.313], receptions -0.028 [-0.049, -0.008] vs Marcel-lite).
+Every slice below is compared to this baseline on the same 3,945 player-games.
+
+### Slice 4.3: observed and next-man-up redistribution (built, not the default)
+
+Rule pre-registered in `History.team_shares` (commit 580a056) before the fit. Fitted on 2024 starter
+absences (the top-share player of a position group removed by the report, 2+ group mates played):
+
+| Metric | Cases | Next man up's fraction of the group's gain | Plain proportional would give |
+|---|---|---|---|
+| targets, 2024 (frozen) | 68 | 0.590 | 0.525 |
+| carries, 2024 (frozen) | 58 | 0.519 | 0.571 |
+| targets, 2025 (check only) | 67 | 0.475 | 0.570 |
+| carries, 2025 (check only) | 57 | 0.726 | 0.722 |
+
+The fitted rule is "next man up takes about 0.59 of the freed targets and 0.52 of the freed carries",
+which is close to proportional and does not hold up on 2025, so at this sample size there is no stable
+next-man-up premium. The next man up is the remaining group player with the highest base share, not the
+depth chart: weekly depth charts on this box stop at 2024 (`nfl_hist_depth_charts`), so 2025 has none.
+
+2025 run with `--redist 4.3`: gate PASS against Marcel-lite, but worse than the baseline on every
+receiving stat (targets 1.590 vs 1.567, receptions 1.225 vs 1.209, receiving yards 15.910 vs 15.832,
+carries 1.178 vs 1.157). The keep criterion written in the pre-registration compared target MAE on
+"games where the redistribution fired", but the two rules fire on different sets (1,049 vs 3,570
+player-games), so it was not a valid comparison and is not used. The paired same-sample comparison
+decides: `REDIST` stays `v2.0` by default and the 4.3 rule is available behind the switch. Rule counts
+under 4.3: none_out 4,134, proportional 2,047, group 759, observed 556, next_man_up 394.
