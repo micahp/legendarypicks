@@ -155,6 +155,43 @@ class PropHistoryVenueTests(unittest.TestCase):
         self.assertIn("not chartable", result["error"])
 
 
+class RollingHitRateUsesTheNewestGames(unittest.TestCase):
+    """`history` is newest first, so the last 20 settled props are the OLDEST 20."""
+
+    def test_hit_rate_is_over_the_newest_twenty_settled(self):
+        handle = tempfile.NamedTemporaryFile(prefix="hit-rate-", suffix=".db", delete=False)
+        handle.close()
+        self.addCleanup(lambda: os.path.exists(handle.name) and os.unlink(handle.name))
+        con = sqlite3.connect(handle.name)
+        con.executescript(
+            """
+            CREATE TABLE props(id INTEGER PRIMARY KEY, player_id INTEGER, market TEXT,
+              line REAL, side TEXT, captured_at TEXT);
+            CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL, hit INTEGER,
+              settled_at TEXT);
+            """
+        )
+        # 25 settled props, day 1 oldest. The 5 oldest hit; the 20 newest all miss.
+        for day in range(1, 26):
+            con.execute("INSERT INTO props VALUES(?,?,?,?,?,?)",
+                        (day, 7, "points", 20.5, "over", "2026-09-%02dT12:00:00" % day))
+            con.execute("INSERT INTO prop_results VALUES(?,?,?,?)",
+                        (day, 25.0 if day <= 5 else 10.0, 1 if day <= 5 else 0, "x"))
+        con.commit()
+        con.close()
+
+        def connection():
+            c = sqlite3.connect(handle.name)
+            c.row_factory = sqlite3.Row
+            return c
+
+        with mock.patch.object(props, "_db", side_effect=connection):
+            result = props.player_prop_history(player_id=7, market=None)
+
+        self.assertEqual(25, result["total_settled"])
+        self.assertEqual(0.0, result["hit_rate"])
+
+
 class NhlPropHistoryTests(unittest.TestCase):
     """NHL charts use durable logs, except FW from stored ESPN summaries."""
 
