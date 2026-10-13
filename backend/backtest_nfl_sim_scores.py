@@ -28,6 +28,7 @@ import nfl_metrics as mt
 import nfl_score_dist as nsd
 import nfl_seeding as sd
 import nfl_sim as ns
+import nfl_sim_margin_source as msrc
 import nfl_sim_scores as nss
 import nfl_standings as st
 
@@ -61,7 +62,10 @@ def truth(con, season):
 
 
 # ---------------------------------------------------------------- G1, G2 (draws), G3
-def per_game_draws(rows, con):
+def per_game_draws(rows, con, v1_margin=None):
+    """v1_margin: optional {game_id: v1 expected margin}; when given, the Brier of the v1 Normal on
+    the same games is also reported (the elo-source trade-off, not gated)."""
+    brier_v1 = []
     bins = [[0, 0, 0.0] for _ in range(10)]       # decisive draws, home draws, sum p * decisive
     ties = draws = 0
     t_sum = 0.0
@@ -118,6 +122,8 @@ def per_game_draws(rows, con):
                 y = 1.0 if r["hs"] > r["as_"] else 0.0
                 brier_hat.append((counts["H"] / dec - y) ** 2)
                 brier_norm.append((p - y) ** 2)
+                if v1_margin is not None:
+                    brier_v1.append((nss.phi(v1_margin[r["game_id"]] / nsd.SIGMA_NORMAL) - y) ** 2)
             if r["total"] is not None and r["spread"] is not None:
                 push = int((totals == r["total"]).sum())
                 graded = DRAWS - push
@@ -156,6 +162,8 @@ def per_game_draws(rows, con):
           "pass_a": ok_a, "brier_sim": b_hat, "brier_normal": b_norm, "brier_games": len(brier_hat),
           "pass_b": b_hat <= b_norm + 0.0005, "games": len(actual_totals), "draws": draws}
     g1["pass"] = g1["pass_a"] and g1["pass_b"]
+    if brier_v1:
+        g1["brier_v1_normal_same_games"] = sum(brier_v1) / len(brier_v1)
     g3 = {"mean_sim": mean_sim, "mean_actual": mean_act, "sd_sim": sd_sim, "sd_actual": sd_act,
           "games": len(actual_totals), "over_games": len(over_ok),
           "over_sse_sim": over_c[0], "over_bins_sim": over_c[1], "over_sse_normal": over_n[0],
@@ -264,19 +272,34 @@ def clip_ll(p, y, n):
     return -(y * math.log(p) + (1 - y) * math.log(1 - p))
 
 
-def playoff_backtest(con, rows, n):
+def playoff_backtest(con, rows, n, source="v1", pool_elo=None):
     res = {}
     g2 = {"games": 0, "ties": 0, "invalid": 0, "invalid_examples": []}
     g4 = {}
     g6 = {"seasons": 0, "tie_seasons": 0, "seed_changed": 0, "field_changed": 0,
           "violations": 0, "exceptions": 0}
     per_team = []
+    m1 = {"S_v1": [], "S_elo": [], "S_stack": []}
+    m3 = {"x": [], "y": []}
     for season in TEST_SEASONS:
         playoff, winners = truth(con, season)
         finals = actual_finals(con, season)
         for w in CUTOFFS:
             inps = {"placeholder": ns.inputs(con, season, as_of_week=w),
                     "history": ns.inputs(con, season, as_of_week=w, scores="history", pool=rows)}
+            v1_hist = inps["history"]
+            if source == "elo":
+                inps["history"] = msrc.elo_inputs(con, inps["placeholder"], pool_elo)
+            if w == 5:
+                rem, tots = v1_hist["remaining"], v1_hist["remaining_totals"]
+                m1["S_v1"].append(statistics.pstdev(msrc.expected_ppg(rem, tots).values()))
+                elo_m = [g[4] for g in (inps["history"]["remaining"] if source == "elo" else
+                                        msrc.elo_inputs(con, inps["placeholder"], pool_elo)["remaining"])]
+                m1["S_elo"].append(statistics.pstdev(msrc.expected_ppg(rem, tots, elo_m).values()))
+                m1["S_stack"].append(statistics.pstdev(
+                    msrc.expected_ppg(rem, tots, msrc.stack_margins(con, v1_hist)).values()))
+                exp_hist = msrc.expected_ppg(inps["history"]["remaining"],
+                                             inps["history"]["remaining_totals"])
             if w == 5:
                 real = {}
                 for r in con.execute("SELECT home_team, away_team, home_score, away_score FROM "
@@ -290,14 +313,11 @@ def playoff_backtest(con, rows, n):
                 g4.setdefault("real_sd_teams", []).append(statistics.pstdev(vals))
             for opt, inp in inps.items():
                 for tag, seed in (("A", 1000 + w), ("B", 50000 + w)):
-                    ppg = {} if (w == 5 and tag == "A") else None
+                    ppg = {} if w == 5 else None
                     obs = Observer(inp, finals if opt == "history" else None, ppg,
                                    g6 if opt == "history" else None)
-                    try:
-                        out = ns.run(inp, n, k=0.0, seed=seed, observe=obs)
-                    except Exception as exc:                      # counted, then re-raised
-                        g6["exceptions"] += 1
-                        raise
+                    # An exception stops the harness, so finishing is the "no exception" evidence.
+                    out = ns.run(inp, n, k=0.0, seed=seed, observe=obs)
                     conf_of = {t: c for t, (c, _) in inp["tmap"].items()}
                     ns.sanity(out, conf_of, n_seeds=sd.n_seeds_for(season))
                     pp = {t: v["p_playoffs"] for t, v in out["teams"].items()}
@@ -310,7 +330,13 @@ def playoff_backtest(con, rows, n):
                         g2["invalid_examples"] += obs.invalid[:3]
                         g6["seasons"] += n
                     g6["violations"] += len(obs.violations)
-                    if ppg is not None:
+                    if ppg is not None and tag == "B":
+                        g4.setdefault(opt + "_sd_teams_B", []).append(statistics.fmean(ppg["sd_teams"]))
+                    if ppg is not None and tag == "A":
+                        if opt == "history":
+                            for t, v in obs.team_ppg.items():
+                                m3["x"].append(exp_hist[t])
+                                m3["y"].append(statistics.fmean(v))
                         g4.setdefault(opt + "_league", []).append(statistics.fmean(ppg["league"]))
                         g4.setdefault(opt + "_sd_teams", []).append(statistics.fmean(ppg["sd_teams"]))
                         g4.setdefault(opt + "_across_runs_sd", []).append(statistics.fmean(
@@ -360,6 +386,14 @@ def playoff_backtest(con, rows, n):
     g4_out["per_season"] = g4
     g4_out["pass"] = (abs(g4_out["history_league"] - g4_out["real_league"]) <= 1.0 and
                       0.80 <= g4_out["history_sd_teams"] / g4_out["real_sd_teams"] <= 1.25)
+    g4_out["ratio_A"] = g4_out["history_sd_teams"] / g4_out["real_sd_teams"]
+    g4_out["ratio_B"] = g4_out["history_sd_teams_B"] / g4_out["real_sd_teams"]
+    g4_out["M1"] = {k: statistics.fmean(v) for k, v in m1.items()}
+    g4_out["M1"]["per_season"] = m1
+    g4_out["M3_slope"] = msrc.ols_slope(m3["x"], m3["y"])
+    g4_out["M3_predicted_ratio"] = math.sqrt(
+        g4_out["M1"]["S_elo" if source == "elo" else "S_v1"] ** 2 +
+        g4_out["history_across_runs_sd"] ** 2) / g4_out["real_sd_teams"]
     g6["pass"] = g6["exceptions"] == 0 and g6["violations"] == 0
     return g5, g2, g4_out, g6
 
@@ -385,6 +419,8 @@ def main(argv=None):
     ap.add_argument("--db", default=nsd.DEV_DB)
     ap.add_argument("--n-sims", type=int, default=2000)
     ap.add_argument("--current", type=int, default=20000)
+    ap.add_argument("--source", choices=("v1", "elo"), default="v1",
+                    help="expected-margin source for the history option (nfl_sim_margin_source)")
     ap.add_argument("--out-json", required=True)
     args = ap.parse_args(argv)
     con = sqlite3.connect("file:%s?mode=ro" % args.db, uri=True)
@@ -400,15 +436,20 @@ def main(argv=None):
     equiv = {"history_rows": len(hist), "matched": len(diffs), "max_abs_diff": max(diffs),
              "score_mismatch": score_diff,
              "db_rows_2010_2023": sum(1 for r in rows if r["season"] <= 2023)}
-    g1, g3, g2a, pool_check = per_game_draws(rows, con)
+    pool_elo = msrc.elo_pool_rows(con, rows)
+    if args.source == "elo":
+        v1_margin = {r["game_id"]: r["eh"] - r["ea"] for r in rows}
+        g1, g3, g2a, pool_check = per_game_draws(pool_elo, con, v1_margin)
+    else:
+        g1, g3, g2a, pool_check = per_game_draws(rows, con)
     print("G1/G3 done %.0fs" % (time.time() - t0), file=sys.stderr, flush=True)
-    g5, g2b, g4, g6 = playoff_backtest(con, rows, args.n_sims)
+    g5, g2b, g4, g6 = playoff_backtest(con, rows, args.n_sims, args.source, pool_elo)
     print("G5 done %.0fs" % (time.time() - t0), file=sys.stderr, flush=True)
     g2 = {"draws": g2a, "sim": g2b}
     g2["pass"] = (g2a["invalid_count"] == 0 and g2b["invalid"] == 0 and
                   0.001 <= g2b["tie_rate"] <= 0.004)
     cur = current(con, rows, args.current) if args.current else None
-    doc = {"equivalence": equiv, "pool_check": pool_check, "G1": g1, "G2": g2, "G3": g3, "G4": g4,
+    doc = {"source": args.source, "equivalence": equiv, "pool_check": pool_check, "G1": g1, "G2": g2, "G3": g3, "G4": g4,
            "G5": g5, "G6": g6, "current": cur, "elapsed": time.time() - t0,
            "all_pass": all(x["pass"] for x in (g1, g2, g3, g4, g5, g6))}
     with open(args.out_json, "w") as fh:
