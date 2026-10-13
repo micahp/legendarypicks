@@ -33,9 +33,41 @@ import nfl_player_projection_v2 as eng
 
 MODEL_VERSION = "v2"
 MARCEL_VERSION = "marcel-lite"
-# 801 of 1,147 Questionable players with a known result played in 2025 (player_game_availability, measured
-# 2026-10-12). Doubtful: 0 of 98, so Doubtful is treated as out by the engine.
-P_PLAYS_QUESTIONABLE = 0.70
+# Spec B 4.4, P(plays | final injury report designation). PRE-REGISTERED 2026-10-13 before it was run:
+#   rate = played / (played known) over player_game_availability rows of REG games in 2024 and 2025 whose
+#   report_status is the designation, offensive skill positions (QB, RB, FB, WR, TE) per `players`. Rows
+#   with played NULL (no complete snap file) are counted and excluded. Frozen into P_PLAYS by hand from
+#   `--fit-p-plays`. Out-of-sample check, reported and not a gate: the same rate fitted on 2024 alone, scored
+#   by Brier on 2025 Questionable rows against the flat 0.70 used until now.
+# Doubtful and Out stay removed from the engine's candidates (OUT_STATUSES); their rates are reported.
+P_PLAYS = {"Questionable": None, "Doubtful": None, "Out": None}
+P_PLAYS_QUESTIONABLE = 0.70   # replaced by P_PLAYS["Questionable"] once fitted
+SKILL_POSITIONS = ("QB", "RB", "FB", "WR", "TE")
+
+
+def fit_p_plays(con, seasons=(2024, 2025), positions=SKILL_POSITIONS):
+    """{designation: (played, known, unknown)} for REG games of `seasons`."""
+    marks = ",".join("?" * len(seasons))
+    pmarks = ",".join("?" * len(positions))
+    out = {}
+    for status, played, n in con.execute(
+            "SELECT a.report_status, a.played, COUNT(*) FROM player_game_availability a "
+            "JOIN nfl_schedule s ON s.game_id = a.game_id AND s.game_type = 'REG' "
+            "JOIN players p ON p.id = a.player_id "
+            "WHERE a.league = 'nfl' AND a.season IN (%s) AND p.position IN (%s) "
+            "AND a.report_status IN ('Questionable', 'Doubtful', 'Out') "
+            "GROUP BY 1, 2" % (marks, pmarks), list(seasons) + list(positions)):
+        cur = out.setdefault(status, [0, 0, 0])
+        if played is None:
+            cur[2] += n
+        else:
+            cur[1] += n
+            cur[0] += n if played == 1 else 0
+    return {k: tuple(v) for k, v in out.items()}
+
+
+def brier(rate, played_flags):
+    return sum((rate - y) ** 2 for y in played_flags) / len(played_flags) if played_flags else None
 RECV_POS = ("RB", "WR", "TE")
 MIN_EARLIER_GAMES = 3
 STATS = ("tgt", "rec", "rec_yds", "rec_td")
@@ -177,11 +209,29 @@ def main(argv=None):
     ap.add_argument("--week", type=int)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--sims", type=int, default=1000)
+    ap.add_argument("--fit-p-plays", action="store_true", help="print the fitted P(plays | designation); no writes")
     a = ap.parse_args(argv)
     path = os.environ.get("LP_DB_PATH")
     if not path:
         raise SystemExit("LP_DB_PATH is required")
     con = sqlite3.connect(path, timeout=30)
+    if a.fit_p_plays:
+        for label, seasons, pos in (("2024+2025 skill", (2024, 2025), SKILL_POSITIONS),
+                                    ("2024 skill", (2024,), SKILL_POSITIONS),
+                                    ("2025 skill", (2025,), SKILL_POSITIONS)):
+            for status, (played, known, unknown) in sorted(fit_p_plays(con, seasons, pos).items()):
+                print("%-16s %-12s played %4d of %4d known = %.3f   unknown %d" % (
+                    label, status, played, known, played / known if known else float("nan"), unknown))
+        rate24 = fit_p_plays(con, (2024,))["Questionable"]
+        q25 = [row[0] for row in con.execute(
+            "SELECT a.played FROM player_game_availability a JOIN nfl_schedule s ON s.game_id = a.game_id "
+            "AND s.game_type = 'REG' JOIN players p ON p.id = a.player_id WHERE a.league = 'nfl' "
+            "AND a.season = 2025 AND a.report_status = 'Questionable' AND a.played IS NOT NULL "
+            "AND p.position IN (%s)" % ",".join("?" * len(SKILL_POSITIONS)), SKILL_POSITIONS)]
+        r24 = rate24[0] / rate24[1]
+        print("2025 Questionable n=%d: Brier with the 2024 rate %.3f = %.4f, with flat 0.70 = %.4f" % (
+            len(q25), r24, brier(r24, q25), brier(0.70, q25)))
+        return
     week = a.week or next_week(con, a.season)
     if week is None:
         raise SystemExit("no unplayed regular-season week in %d" % a.season)
