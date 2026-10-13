@@ -255,3 +255,41 @@ play. Across team-games, projected TDs correlate 0.532 with SPEC A's points and 
 with actual points (SPEC A's own points: 0.331). The gap holds field goals and every other non-skill score,
 so its level is expected; its spread is the inconsistency. By team, the mean gap runs from 1.48 (NO) to 9.71
 (DAL) over 15 games each. Not used to adjust anything in this version.
+
+### Section 5, props: our P(over) against the books (built, measured, no gate)
+
+`grade_nfl_prop_probabilities.py` (rules pre-registered in its docstring, committed before the run). Props on the
+dev DB exist for 2026 only, so our number is the default engine run walk-forward for 2026 (earlier games and the
+final injury report only, constants fitted on 2024), recomputed now, not captured before kickoff. Sportsbooks
+only (bovada and six rotowire sportsbook feeds); every line a book posted is an item, alternates included, so
+items are many per player-game and not independent. Weeks 2 to 5 with a final score.
+
+Excluded: 8,899 items outside those weeks, 2,126 where the player has no box-score line, 178 with no
+projection, 163 passing props on a QB who did not lead his team in attempts, 2 with one side only. On 38 graded
+items our box-score outcome disagrees with the book's own settlement (`prop_results.hit`); not investigated.
+
+| Group | Items | Player-games | Brier ours | Brier market | "Our side" items | Hit | Market's expected hit |
+|---|---|---|---|---|---|---|---|
+| all | 32,810 | 902 | 0.2746 | 0.2458 | 26,394 | 0.489 | 0.497 |
+| receiving yards | 18,713 | 779 | 0.2722 | 0.2479 | 15,607 | 0.508 | 0.497 |
+| receptions | 5,362 | 768 | 0.2777 | 0.2420 | 4,519 | 0.501 | 0.504 |
+| passing yards | 6,541 | 120 | 0.2809 | 0.2433 | 4,823 | 0.410 | 0.490 |
+| pass attempts | 783 | 120 | 0.2718 | 0.2507 | 519 | 0.522 | 0.501 |
+| pass completions | 688 | 120 | 0.2952 | 0.2490 | 474 | 0.439 | 0.498 |
+| passing TDs | 723 | 120 | 0.2396 | 0.2368 | 452 | 0.540 | 0.487 |
+
+("Our side": our P(over) more than 0.05 from the market's devigged P(over); hit is how often our side won;
+the last column is the hit rate the market's own prices imply for those same sides.)
+
+Calibration, all items (our P(over) bin: n, mean predicted, observed over rate): 0.0-0.1: 845, 0.041, 0.280;
+0.1-0.2: 1,501, 0.160, 0.460; 0.2-0.3: 5,853, 0.259, 0.505; 0.3-0.4: 10,214, 0.351, 0.508; 0.4-0.5: 8,664,
+0.446, 0.499; 0.5-0.6: 4,106, 0.541, 0.543; 0.6-0.7: 1,181, 0.638, 0.555; 0.7-0.8: 369, 0.743, 0.499;
+0.8-0.9: 76, 0.827, 0.487.
+
+Read plainly: our probabilities are worse than the market's on every market, and badly calibrated. Most of our
+mass sits below 0.5 while the overs land about half the time, which is the downward bias above showing up as
+probability; and the observed rate barely moves across our bins, so our spread between players carries little
+information the line does not already have. Receiving yards "our side" at 0.508 against 0.497 is not evidence of
+an edge at 767 correlated player-games; passing yards at 0.410 is evidence against ours. Nothing here should be
+shown as a betting signal. The 2026 week 6 job plus pre-kickoff capture is the first test with numbers fixed
+before the game.
