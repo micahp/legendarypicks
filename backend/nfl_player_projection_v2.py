@@ -80,7 +80,8 @@ def _num(v):
 
 class Row(object):
     __slots__ = ("pid", "season", "week", "team", "opp", "game_id", "pos",
-                 "tgt", "rec", "rec_yds", "rec_td", "car", "rush_yds", "rush_td")
+                 "tgt", "rec", "rec_yds", "rec_td", "car", "rush_yds", "rush_td",
+                 "att", "cmp", "pass_yds", "pass_td")
 
     def __init__(self, pid, season, week, team, opp, game_id, pos, stats):
         self.pid, self.season, self.week, self.team, self.opp = pid, season, week, team, opp
@@ -92,6 +93,10 @@ class Row(object):
         self.car = _num(stats.get("carries"))
         self.rush_yds = _num(stats.get("rush_yds"))
         self.rush_td = _num(stats.get("rush_td"))
+        self.att = _num(stats.get("att"))
+        self.cmp = _num(stats.get("cmp"))
+        self.pass_yds = _num(stats.get("pass_yds"))
+        self.pass_td = _num(stats.get("pass_td"))
 
 
 def parse_game_id(game_id):
@@ -554,3 +559,57 @@ def summarize(draws, index, line=None):
     if line is not None:
         res["p_over"] = sum(1 for v in vals if v > line) / len(vals)
     return res
+
+
+# -- quarterback passing (Spec B 4.5) -----------------------------------------------------------
+# PRE-REGISTERED 2026-10-13, before any fit or 2025 number.
+# Projection, conditional on the quarterback playing as his team's passer:
+#   attempts   team pass attempts per game (team_volume on 'att', same K_T) x his share of team attempts:
+#              his own recency-weighted share over games he played, regressed with K_S to his prior (last
+#              season's share if 6+ games, else the QB mean), capped at 1. NOT normalised against the other
+#              quarterbacks: a backup's garbage-time attempts must not shrink the starter's projection.
+#   completions, yards, TDs = attempts x completion rate, yards per attempt, TD per attempt, each regressed
+#              toward the QB mean (this season and last) with K_CMP, K_YPA, K_PTD pseudo-attempts.
+# Constants fitted on 2024 walk-forward weeks 3 to 18 (backtest --fit-qb), grid {40, 80, 160, 320, 640} for
+# each K, minimising squared error of the stat given the actual attempts. Distribution: attempts NegBin with
+# dispersion R_ATT, completions Binomial(attempts, rate), yards a Gamma(shape G_PASS) sum per completion, TDs
+# Binomial(attempts, TD rate); R_ATT and G_PASS by method of moments on 2024 (backtest --fit-qb).
+# Graded QB player-game: 2025 weeks 3 to 18, a QB with 3+ earlier 2025 games who led his team in attempts
+# in that game (the starter, as it turned out; Marcel-lite is graded on the same games).
+# GATE, to publish passing: MAE below Marcel-lite on BOTH passing yards and attempts (point estimates),
+# paired bootstrap 95% interval reported. Completions and TDs and the p10 to p90 coverage are reported.
+PASSING = ("att", (("cmp", "K_CMP"), ("pass_yds", "K_YPA"), ("pass_td", "K_PTD")))
+QB_DEFAULTS = {"K_CMP": None, "K_YPA": None, "K_PTD": None, "R_ATT": None, "G_PASS": None}
+
+
+def project_qb(hist, season, week, pid, team, opp, game_id, p_in=None):
+    """{att, cmp, pass_yds, pass_td} for one QB-game given he plays as the passer, or None."""
+    p = dict(DEFAULTS, **QB_DEFAULTS)
+    p.update(p_in or {})
+    vol = hist.team_volume(season, team, opp, week, "att", p["K_T"])
+    if vol is None:
+        return None
+    if not [r for r in hist.by_player.get((season, pid), []) if r.week < week]:
+        return None
+    share = min(1.0, hist.raw_share(season, pid, "QB", week, "att", p, None)[0])
+    att = vol * share
+    out = {"att": att}
+    for stat, k in PASSING[1]:
+        out[stat] = att * hist.eff(season, week, pid, "QB", "att", stat, p[k], None)
+    return out
+
+
+def simulate_qb(mean_att, cmp_rate, yards_per_cmp, td_rate, n=2000, seed=0, dist=None):
+    """n simulated (completions, yards, tds, attempts) draws for one QB-game."""
+    d = dict(QB_DEFAULTS, **(dist or {}))
+    rng = random.Random(seed)
+    out = []
+    for _ in range(n):
+        lam = rng.gammavariate(d["R_ATT"], mean_att / d["R_ATT"]) if mean_att > 0 else 0.0
+        a = _poisson(rng, lam)
+        c = sum(1 for _ in range(a) if rng.random() < cmp_rate)
+        yds = sum(rng.gammavariate(d["G_PASS"], yards_per_cmp / d["G_PASS"]) for _ in range(c)) if yards_per_cmp > 0 else 0.0
+        td = sum(1 for _ in range(a) if rng.random() < td_rate)
+        out.append((c, yds, td, a))
+    return out
+

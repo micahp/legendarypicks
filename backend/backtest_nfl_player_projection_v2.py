@@ -314,6 +314,100 @@ def team_volume_check(hist, p, season=2025):
         print("team %s %s, %d team-games: MAE without script %.3f, with %.3f" % (col, season, n, e0 / n, e1 / n))
 
 
+QB_GRID = (40.0, 80.0, 160.0, 320.0, 640.0)
+
+
+def qb_games(hist, season):
+    """Graded QB player-games, as pre-registered in the engine: weeks 3 to 18, 3+ earlier games this season,
+    and the team's attempt leader in that game."""
+    for (s, pid), rows in hist.by_player.items():
+        if s != season:
+            continue
+        for i, r in enumerate(rows):
+            if r.pos != "QB" or r.week not in HIST_WEEKS or i < 3 or r.att <= 0:
+                continue
+            team_rows = hist.by_team[(s, r.team)][r.week]
+            if max(x.att for x in team_rows) == r.att and max(team_rows, key=lambda x: (x.att, -x.pid)).pid == pid:
+                yield r
+
+
+def fit_qb(hist, season=2024):
+    """K_CMP, K_YPA, K_PTD on the pre-registered grid, then R_ATT and G_PASS by method of moments."""
+    games = list(qb_games(hist, season))
+    print("%d QB player-games in %d" % (len(games), season))
+    ks = {}
+    for stat, k in eng.PASSING[1]:
+        best = None
+        for kv in QB_GRID:
+            sse = sum((getattr(r, stat) - r.att * hist.eff(season, r.week, r.pid, "QB", "att", stat, kv, None)) ** 2
+                      for r in games)
+            if best is None or sse < best[0]:
+                best = (sse, kv)
+        ks[k] = best[1]
+        print("%s = %s (mean sq err %.3f)" % (k, best[1], best[0] / len(games)))
+    p = dict(eng.DEFAULTS, **ks)
+    num = den = ysq = ysum = ypc_n = ypc_d = 0.0
+    for r in games:
+        v = eng.project_qb(hist, season, r.week, r.pid, r.team, r.opp, r.game_id, p)
+        if v is None:
+            continue
+        mu = v["att"]
+        num += mu * mu
+        den += (r.att - mu) ** 2 - mu
+        if r.cmp > 0 and v["cmp"] > 0:
+            ypc = v["pass_yds"] / v["cmp"]
+            ysq += (r.pass_yds - r.cmp * ypc) ** 2
+            ysum += r.cmp
+            ypc_n += r.pass_yds
+            ypc_d += r.cmp
+    r_att = num / den if den > 0 else 1e6
+    mean_ypc = ypc_n / ypc_d
+    g = mean_ypc ** 2 / (ysq / ysum)
+    print("R_ATT = %.2f  G_PASS = %.2f (mean yards per completion %.2f)" % (r_att, g, mean_ypc))
+    print("FROZEN QB", dict(ks, R_ATT=round(r_att, 2), G_PASS=round(g, 2)))
+
+
+def run_qb(hist, season=2025):
+    p = dict(eng.DEFAULTS, **eng.QB_DEFAULTS)
+    games = sorted(qb_games(hist, season), key=lambda r: (r.week, r.pid))
+    cols = {st: [] for st in ("att", "cmp", "pass_yds", "pass_td")}
+    band = {st: [0, 0, 0] for st in cols}
+    for i, r in enumerate(games):
+        v = eng.project_qb(hist, season, r.week, r.pid, r.team, r.opp, r.game_id, p)
+        if v is None:
+            continue
+        ms = {st: eng.marcel(hist, season, r.week, r.pid, st) for st in cols}
+        if any(m is None for m in ms.values()):
+            continue
+        for st in cols:
+            cols[st].append((getattr(r, st), v[st], ms[st]))
+        draws = eng.simulate_qb(v["att"], v["cmp"] / v["att"] if v["att"] else 0.0,
+                                v["pass_yds"] / v["cmp"] if v["cmp"] else 0.0,
+                                v["pass_td"] / v["att"] if v["att"] else 0.0, n=1000, seed=i)
+        for idx, st in ((3, "att"), (0, "cmp"), (1, "pass_yds"), (2, "pass_td")):
+            q = eng.summarize(draws, idx)
+            actual = getattr(r, st)
+            band[st][0] += actual < q["p10"]
+            band[st][1] += q["p10"] <= actual <= q["p90"]
+            band[st][2] += actual > q["p90"]
+    print("2025 QB player-games graded: %d" % len(cols["att"]))
+    print("%-9s %5s %8s %8s %8s   %s" % ("stat", "n", "MAE v2", "MAE m1", "bias v2", "v2 - marcel [95% CI]"))
+    verdict = {}
+    for st, rows in cols.items():
+        n = len(rows)
+        d = [abs(v - a) - abs(m - a) for a, v, m in rows]
+        lo, hi = bootstrap_diff(d)
+        verdict[st] = sum(d) / n
+        print("%-9s %5d %8.3f %8.3f %+8.3f   %+.3f [%+.3f, %+.3f]" % (
+            st, n, sum(abs(v - a) for a, v, m in rows) / n, sum(abs(m - a) for a, v, m in rows) / n,
+            sum(v - a for a, v, m in rows) / n, sum(d) / n, lo, hi))
+    print("GATE (pass_yds and att both lower than Marcel-lite): %s" % (
+        "PASS" if verdict["pass_yds"] < 0 and verdict["att"] < 0 else "FAIL"))
+    for st, (b, inside, a) in band.items():
+        n = b + inside + a
+        print("band %-9s inside %.1f%%  below p10 %.1f%%  above p90 %.1f%%" % (st, 100.0 * inside / n, 100.0 * b / n, 100.0 * a / n))
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -481,6 +575,8 @@ def main():
     ap.add_argument("--diagnose-bias", action="store_true")
     ap.add_argument("--fit-plog", action="store_true")
     ap.add_argument("--fit-script", action="store_true")
+    ap.add_argument("--fit-qb", action="store_true")
+    ap.add_argument("--run-qb", action="store_true")
     ap.add_argument("--script", action="store_true", help="--run with SPEC A margins and SCRIPT_2024 (not the default)")
     ap.add_argument("--plog", action="store_true", help="--run with P_LOG_2024 (not the default)")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
@@ -488,6 +584,10 @@ def main():
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.fit_qb:
+        fit_qb(eng.History.load(con, [2024]))
+    if a.run_qb:
+        run_qb(eng.History.load(con, [2024, 2025]))
     if a.fit_script:
         import nfl_game_script as gs
         h = eng.History.load(con, [2024, 2025])

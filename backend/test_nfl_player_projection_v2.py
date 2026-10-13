@@ -213,6 +213,39 @@ class GameScript(unittest.TestCase):
         self.assertEqual(1.0, mod.script_factor(h, 2025, gid(5), "A", "tgt", {"B_tgt": -0.05}))
 
 
+class Quarterback(unittest.TestCase):
+    def qb_row(self, pid, week, att, cmp_, yds, td, team="A"):
+        opp = "B" if team == "A" else "A"
+        return mod.Row(pid, 2025, week, team, opp, gid(week), "QB",
+                       {"att": att, "cmp": cmp_, "pass_yds": yds, "pass_td": td})
+
+    def test_attempts_times_rates_and_a_backup_does_not_shrink_the_starter(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [self.qb_row(1, w, 30, 20, 210, 3), self.qb_row(9, w, 30, 0, 0, 0, team="B")]
+        rows.append(self.qb_row(2, 3, 10, 5, 40, 0))        # backup mop-up in week 3: 40 team attempts
+        q = dict(P, K_CMP=0.0, K_YPA=0.0, K_PTD=0.0)
+        res = mod.project_qb(build(rows), 2025, 4, 1, "A", "B", gid(4), q)
+        team_att = (30 + 30 + 40) / 3                      # own and allowed are both A's 30, 30, 40
+        share = (1 + 1 + 0.75) / 3
+        self.assertAlmostEqual(team_att * share, res["att"])
+        self.assertAlmostEqual(res["att"] * 60 / 90, res["cmp"])
+        self.assertAlmostEqual(res["att"] * 630 / 90, res["pass_yds"])
+        self.assertAlmostEqual(res["att"] * 9 / 90, res["pass_td"])
+
+    def test_no_earlier_game_no_projection(self):
+        rows = [self.qb_row(1, 1, 30, 20, 210, 3), self.qb_row(9, 1, 30, 0, 0, 0, team="B")]
+        q = dict(P, K_CMP=0.0, K_YPA=0.0, K_PTD=0.0)
+        self.assertIsNone(mod.project_qb(build(rows), 2025, 4, 2, "A", "B", gid(4), q))
+
+    def test_simulated_qb_means_are_near_the_inputs(self):
+        draws = mod.simulate_qb(32.0, 0.65, 11.0, 0.045, n=4000, seed=3, dist={"R_ATT": 20.0, "G_PASS": 1.5})
+        mean = lambda i: sum(d[i] for d in draws) / len(draws)
+        self.assertAlmostEqual(32.0, mean(3), delta=0.6)
+        self.assertAlmostEqual(32.0 * 0.65, mean(0), delta=0.5)
+        self.assertAlmostEqual(32.0 * 0.65 * 11.0, mean(1), delta=6.0)
+
+
 class Load(unittest.TestCase):
     """History.load against a real-shaped database: schedule teams are LAR and WSH, the game id says LA."""
 
