@@ -15,4 +15,4 @@ ExecStart=/root/legendarypicks/scripts/nfl-daily.sh
 # Sum of the four per-step budgets (300+120 twice = 840) plus margin. Each step
 # carries its OWN timeout inside run_step, so one hung fetch cannot eat the
 # budget of the steps after it; this is only the backstop for the whole job.
-TimeoutStartSec=1200
+TimeoutStartSec=2700

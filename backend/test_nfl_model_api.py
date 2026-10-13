@@ -71,6 +71,13 @@ class Payload(unittest.TestCase):
                          ["v1 points", "v1 points (10-09, before the freeze)"])
         self.assertEqual([x["adopted"] for x in models], [True, False])
 
+    def test_the_elo_stack_is_a_fourth_trial_model_after_v1_and_v2(self):
+        v = "nfl-v1+elo stack season=2026 train=2010-2025 elo=538 K=20 hfa=65 carry=0.3333 lead=90min"
+        d = m.describe("nfl-v1-elo-stack", v)
+        self.assertEqual((d["family"], d["label"], d["adopted"]), ("v1+elo", "v1 + Elo", False))
+        self.assertGreater(d["order"], m.describe("nfl-ratings-v1", m.ADOPTED)["order"])
+        self.assertLess(d["order"], m.describe("nfl-epa-v2", "nfl-epa-v2 untuned")["order"])
+
     def test_final_and_grade_appear_together(self):
         self.con.execute("UPDATE nfl_schedule SET home_score=20, away_score=27, result=-7")
         self.con.execute("INSERT INTO projection_grades VALUES ('nfl','g1',?,20,27,0.03,0.2,"

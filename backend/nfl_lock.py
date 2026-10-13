@@ -40,6 +40,7 @@ import migrate_nfl_model_tables as mg
 import nfl_ratings as nr
 
 LEAGUE = "nfl"
+LOCK_LEAD = dt.timedelta(minutes=90)   # no lock earlier than this before kickoff (every model)
 MARKET_SOURCE = "nflverse"
 
 
@@ -134,11 +135,17 @@ def _snapshot(con, gid, captured_at, ingested_at, spread, total, home_ml, away_m
     return cur.lastrowid
 
 
-def lock_week(con, run_id, season, week, project, as_of=None, skip_scored=False, now=None):
+def lock_week(con, run_id, season, week, project, as_of=None, skip_scored=False, now=None,
+              min_lead=None):
     """Project every REG game in (season, week) under `run_id` with `project`.
 
     Returns {"new_locks", "refreshes", "skipped", "started"}: `started` lists games past kickoff
     (never written), `skipped` lists scored games without a lock (skip_scored=True only).
+
+    min_lead (a timedelta, default None = no rule): a game whose kickoff is more than min_lead away
+    is not written and is listed in "too_early" (a key that exists only when min_lead is given, so
+    callers that do not use the rule see the same dict as before). The 90 minute rule: a lock is
+    made no earlier than 90 minutes before kickoff, after the inactive lists and late news.
     """
     run = con.execute("SELECT model_version FROM model_runs WHERE run_id = ?",
                       (run_id,)).fetchone()
@@ -156,13 +163,17 @@ def lock_week(con, run_id, season, week, project, as_of=None, skip_scored=False,
         raise ValueError("no REG games for %d week %d" % (season, week))
 
     # Pass 1: validate every game before writing any row, so a refusal leaves nothing behind.
-    plan, skipped, started = [], [], []
+    plan, skipped, started, too_early = [], [], [], []
     for (gid, home, away, loc, hs, as_, spread, total, hml, aml, gameday, gametime,
          ingested_at) in games:
         if not gameday:
             raise ValueError("%s has no gameday; its kickoff cannot be guarded" % gid)
-        if cs.kickoff_utc(gameday, gametime) <= now:
+        kickoff = cs.kickoff_utc(gameday, gametime)
+        if kickoff <= now:
             started.append(gid)
+            continue
+        if min_lead is not None and kickoff - min_lead > now:
+            too_early.append(gid)
             continue
         neutral = (loc or "").strip().lower() == "neutral"
         already = con.execute(
@@ -193,5 +204,7 @@ def lock_week(con, run_id, season, week, project, as_of=None, skip_scored=False,
         else:
             refreshes += 1
     con.commit()
-    return {"new_locks": new_locks, "refreshes": refreshes, "skipped": skipped,
-            "started": started}
+    out = {"new_locks": new_locks, "refreshes": refreshes, "skipped": skipped, "started": started}
+    if min_lead is not None:
+        out["too_early"] = too_early
+    return out

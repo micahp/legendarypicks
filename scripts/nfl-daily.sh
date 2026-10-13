@@ -62,6 +62,13 @@ for env_name in DEV PROD; do
     fi
     # Each player's share of his team's targets, air yards, carries, TDs (player_team_shares).
     run_step 120 build_player_shares.py --league nfl --season "$season"
+    # Play-by-play, DEV only: the v2 EPA lock refuses a week whose earlier games have no plays
+    # (nfl_lock.assert_inputs_complete, pbp=True), and nothing else ingested it. The ingest replaces every
+    # stored row of the season it is given, so it only ever gets the current season, never a past one.
+    # nflverse publishes a game's plays overnight, so Monday night's game lands in the Tuesday run.
+    if [ "$env_name" = DEV ]; then
+      run_step 900 ingest_nfl_pbp_logs.py --year "$season"
+    fi
   fi
   log "--- $env_name: $(( STEP_FAILURES - before )) step(s) failed"
 done

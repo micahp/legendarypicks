@@ -1,0 +1,11 @@
+[Unit]
+Description=Check every 5 minutes for NFL games that kick off within 90 minutes and are not locked by every model
+
+[Timer]
+# Wall-clock, not monotonic. A tick with nothing due exits at once without fitting or writing.
+OnCalendar=*-*-* *:00/5:00
+Persistent=false
+Unit=legendarypicks-nfl-lock.service
+
+[Install]
+WantedBy=timers.target

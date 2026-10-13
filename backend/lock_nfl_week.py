@@ -103,14 +103,14 @@ def main(argv=None) -> int:
         try:
             out = nfl_lock.lock_week(con, run_id, args.season, args.week,
                                      nfl_lock.v1_projector(fit, args.sigma),
-                                     as_of=as_of, skip_scored=True)
+                                     as_of=as_of, skip_scored=True, min_lead=nfl_lock.LOCK_LEAD)
         except Exception as exc:
             nfl_lock.finish_run(con, run_id, "failed", error=str(exc))
             raise
         nfl_lock.finish_run(con, run_id, "ok")
-        print("applied run=%s new_locks=%d refreshes=%d skipped=%s started=%s"
+        print("applied run=%s new_locks=%d refreshes=%d skipped=%s started=%s too_early=%d"
               % (run_id, out["new_locks"], out["refreshes"], out["skipped"] or "none",
-                 out["started"] or "none"))
+                 out["started"] or "none", len(out["too_early"])))
         return 0
     finally:
         con.close()

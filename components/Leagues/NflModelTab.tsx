@@ -236,7 +236,9 @@ export default function NflModelTab() {
       <div className="space-y-2">
         <p className="max-w-prose text-sm text-zinc-400">
           Each projection is locked before kickoff and never changed. v1 points is the model in use;
-          v2 EPA is on trial beside it and is graded on the same games.
+          v2 EPA and v1 + Elo are on trial beside it and are graded on the same games. From week 6
+          every model is locked 90 minutes before kickoff, once the inactive lists are out; earlier
+          weeks were locked earlier than that.
         </p>
         <div className="flex flex-wrap gap-2">
           {data.weeks.map(w => (
