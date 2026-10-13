@@ -188,6 +188,52 @@ def fit_nmu(hist, season=2024):
     return out
 
 
+def diagnose_bias(hist, season=2025):
+    """Where does the negative bias come from? PRE-REGISTERED 2026-10-13 before it was run. Measures only.
+
+    Over `season` weeks 3 to 18, every team-game (team, week) with an earlier game:
+      volume   projected team targets and carries (team_volume, frozen K_T) minus actual. Mean = volume bias.
+      absorbed share of the team's projected targets and carries (engine shares, v2.0 rule) held by
+               candidates who are neither removed by the report nor in the game's box score: the share
+               the status doc's hypothesis says is lost to unavailable but unreported players.
+      shares   sum of projected shares of the players who did log, against their actual summed share.
+    The player-level bias decomposes as roughly volume bias x share + volume x share bias; both printed.
+    """
+    p = dict(eng.DEFAULTS)
+    for col in ("tgt", "car"):
+        vb, absorbed, proj_sh, act_sh, n = 0.0, 0.0, 0.0, 0.0, 0
+        for (s, team), weeks in sorted(hist.team_weeks.items()):
+            if s != season:
+                continue
+            for w in sorted(weeks):
+                if w < 3 or w > 18:
+                    continue
+                rows = hist.by_team[(s, team)][w]
+                gid, opp = rows[0].game_id, rows[0].opp
+                vol = hist.team_volume(s, team, opp, w, col, p["K_T"])
+                actual = hist.team_game(s, team, w, col)
+                if vol is None or actual <= 0:
+                    continue
+                cands = hist.candidates(s, team, w)
+                removed = hist.out_before(s, gid, team)
+                played = {r.pid for r in rows}
+                shares = {}
+                for j, jp in cands.items():
+                    if j in removed:
+                        continue
+                    got = hist.share_v20(s, w, team, j, jp, col, p, gid, {})
+                    if got is not None:
+                        shares[j] = got[0]
+                vb += vol - actual
+                absorbed += sum(v for j, v in shares.items() if j not in played)
+                proj_sh += sum(v for j, v in shares.items() if j in played)
+                act_sh += sum(getattr(r, col) for r in rows if r.pid in shares) / actual
+                n += 1
+        print("%s %s team-games %d: volume bias %+.3f per team-game; absorbed share %.4f; "
+              "projected share of players who logged %.4f vs actual %.4f" % (
+                  season, col, n, vb / n, absorbed / n, proj_sh / n, act_sh / n))
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -352,11 +398,14 @@ def main():
     ap.add_argument("--run-dist", action="store_true")
     ap.add_argument("--vs-espn", action="store_true")
     ap.add_argument("--fit-nmu", action="store_true")
+    ap.add_argument("--diagnose-bias", action="store_true")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.diagnose_bias:
+        diagnose_bias(eng.History.load(con, [2024, 2025]))
     if a.fit_nmu:
         fit_nmu(eng.History.load(con, [2024]))
         fit_nmu(eng.History.load(con, [2024, 2025]), season=2025)
