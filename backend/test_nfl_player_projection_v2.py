@@ -6,7 +6,7 @@ import nfl_player_projection_v2 as mod
 
 P = {"H": 1e9, "K_S": 0.0, "K_T": 0.0, "OTHER": 0.0,
      "K_CR": 0.0, "K_YPT": 0.0, "K_TDT": 0.0, "K_YPC": 0.0, "K_TDC": 0.0,
-     "NMU_tgt": 0.6, "NMU_car": 0.6, "REDIST": "4.3"}
+     "NMU_tgt": 0.6, "NMU_car": 0.6, "REDIST": "4.3", "P_LOG": None}
 P20 = dict(P, REDIST="v2.0")   # the default rule, 2026-10-12
 
 

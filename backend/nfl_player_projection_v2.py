@@ -60,10 +60,12 @@ OUT_STATUSES = ("Out", "Doubtful")
 RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td")))
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
-DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0", "P_LOG": None,
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0",
+            "P_LOG": {"10": 0.343, "11": 0.596, "20": 0.505, "21": 0.801, "31": 0.917},
             "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
 # Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
 # H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
+# P_LOG frozen 2026-10-13 from backtest --fit-plog on 2024 (6,319 candidate-games); 2025 alone agrees within 0.04.
 # NMU_tgt and NMU_car frozen 2026-10-13 from backtest --fit-nmu on 2024 (68 and 58 starter absences).
 # Plain proportional would give 0.525 and 0.571; the 2025 cases alone give 0.475 and 0.726, so the split is not stable.
 
