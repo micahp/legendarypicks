@@ -35,6 +35,18 @@ def margins_walk_forward(con, seasons):
     return out
 
 
+def points_walk_forward(con, seasons):
+    """{(season, game_id, team): (projected points, actual points)} from SPEC A v1 walk-forward predictions."""
+    out = {}
+    for season in seasons:
+        for r in nb.backtest_season(con, season, V1):
+            m, t = r["proj_margin"], r["proj_total"]
+            am, at = r["actual_margin"], r["actual_total"]
+            out[(season, r["game_id"], r["home"])] = ((t + m) / 2.0, (at + am) / 2.0)
+            out[(season, r["game_id"], r["away"])] = ((t - m) / 2.0, (at - am) / 2.0)
+    return out
+
+
 def margins_live(con, season, week):
     """{(season, game_id, team): margin} from the latest nfl-ratings-v1 lock for the week, or {}."""
     row = con.execute(

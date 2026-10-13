@@ -408,6 +408,78 @@ def run_qb(hist, season=2025):
         print("band %-9s inside %.1f%%  below p10 %.1f%%  above p90 %.1f%%" % (st, 100.0 * inside / n, 100.0 * b / n, 100.0 * a / n))
 
 
+def consistency(hist, points, season=2025, out_path=None):
+    """Spec B 4.6 team consistency gap. PRE-REGISTERED 2026-10-13 as a measurement; nothing is forced or gated.
+
+    For every team-game of `season`, weeks 3 to 18: project (engine defaults) every candidate the report does
+    not remove, for receiving and rushing, conditional on playing, and sum per team: yards (receiving + rushing)
+    and TDs (receiving + rushing). Shares of those candidates sum to 1 - OTHER by construction, so the sum is a
+    team total. Beside it: SPEC A version 1's projected points for the team (walk-forward) and the actual points.
+    Reported: mean of each; gap = SPEC A points - 7 x projected TDs (field goals, passing-only TDs to non-skill
+    players, defensive scores and extra-point misses all live in the gap); correlation across team-games of
+    projected TDs with SPEC A points and with actual points, and of SPEC A points with actual points. Rows go to
+    `out_path` as CSV, one per team-game.
+    """
+    import csv
+    p = dict(eng.DEFAULTS)
+    rows_out = []
+    for (s, team), weeks in sorted(hist.team_weeks.items()):
+        if s != season:
+            continue
+        for w in sorted(weeks):
+            if w < 3 or w > 18:
+                continue
+            rows = hist.by_team[(s, team)][w]
+            gid, opp = rows[0].game_id, rows[0].opp
+            pts = points.get((s, gid, team))
+            if pts is None:
+                continue
+            removed = hist.out_before(s, gid, team)
+            yds = tds = 0.0
+            for j, jp in hist.candidates(s, team, w).items():
+                if j in removed:
+                    continue
+                v = eng.project(hist, s, w, j, jp, team, opp, gid, p)
+                if v is None:
+                    continue
+                yds += v.get("rec_yds", 0.0) + v.get("rush_yds", 0.0)
+                tds += v.get("rec_td", 0.0) + v.get("rush_td", 0.0)
+            act_yds = sum(r.rec_yds + r.rush_yds for r in rows)
+            act_tds = sum(r.rec_td + r.rush_td for r in rows)
+            rows_out.append({"season": s, "week": w, "team": team, "game_id": gid,
+                             "proj_yds": round(yds, 1), "proj_tds": round(tds, 3), "speca_points": round(pts[0], 2),
+                             "actual_points": pts[1], "actual_skill_yds": act_yds, "actual_skill_tds": act_tds,
+                             "gap": round(pts[0] - 7.0 * tds, 2)})
+    n = len(rows_out)
+
+    def mean(k):
+        return sum(r[k] for r in rows_out) / n
+
+    def corr(a, b):
+        ma, mb = mean(a), mean(b)
+        cov = sum((r[a] - ma) * (r[b] - mb) for r in rows_out)
+        va = sum((r[a] - ma) ** 2 for r in rows_out)
+        vb = sum((r[b] - mb) ** 2 for r in rows_out)
+        return cov / (va * vb) ** 0.5
+    gaps = sorted(r["gap"] for r in rows_out)
+    print("%d team-games, %d weeks 3 to 18" % (n, season))
+    for k in ("proj_yds", "actual_skill_yds", "proj_tds", "actual_skill_tds", "speca_points", "actual_points", "gap"):
+        print("  mean %-17s %.2f" % (k, mean(k)))
+    print("  gap sd %.2f, p10 %.2f, p90 %.2f" % (
+        (sum((g - mean("gap")) ** 2 for g in gaps) / (n - 1)) ** 0.5, gaps[n // 10], gaps[(9 * n) // 10]))
+    print("  corr(proj TDs, SPEC A points) %.3f   corr(proj TDs, actual points) %.3f   "
+          "corr(SPEC A points, actual points) %.3f   corr(proj yds, SPEC A points) %.3f" % (
+              corr("proj_tds", "speca_points"), corr("proj_tds", "actual_points"),
+              corr("speca_points", "actual_points"), corr("proj_yds", "speca_points")))
+    if out_path:
+        with open(out_path, "w", newline="") as f:
+            wr = csv.DictWriter(f, fieldnames=list(rows_out[0]))
+            wr.writeheader()
+            wr.writerows(rows_out)
+        print("  per team-game rows: %s" % out_path)
+    return rows_out
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -576,6 +648,7 @@ def main():
     ap.add_argument("--fit-plog", action="store_true")
     ap.add_argument("--fit-script", action="store_true")
     ap.add_argument("--fit-qb", action="store_true")
+    ap.add_argument("--consistency", metavar="CSV", help="Spec B 4.6 gap report for 2025; per team-game rows to CSV")
     ap.add_argument("--run-qb", action="store_true")
     ap.add_argument("--script", action="store_true", help="--run with SPEC A margins and SCRIPT_2024 (not the default)")
     ap.add_argument("--plog", action="store_true", help="--run with P_LOG_2024 (not the default)")
@@ -584,6 +657,10 @@ def main():
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.consistency:
+        import nfl_game_script as gs
+        consistency(eng.History.load(con, [2024, 2025]), gs.points_walk_forward(con, [2025]),
+                    out_path=a.consistency)
     if a.fit_qb:
         fit_qb(eng.History.load(con, [2024]))
     if a.run_qb:
