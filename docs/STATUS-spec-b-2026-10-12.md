@@ -15,26 +15,39 @@ pushed, no timer installed. All database work below was on the dev DB (`picks.de
 | B7 tables, job, grading, ESPN capture | Built and run once for 2026 week 6 on dev | 290 player-games, 2,320 rows; ESPN 936 rows; nothing graded yet (needs week 6 to finish) |
 | B8 API and record panel | Built, **not seen in a browser** | 5 endpoint tests, 4 jest tests; panel has no real rows until week 6 is graded |
 
-## What is true and unfinished
+## Update 2026-10-13 (branch `scratch/spec-b-rebase`, dev merged in at 9020531)
 
-- **The gate result is thin.** Receiving yards clearly better than Marcel-lite; receptions better with an interval
-  touching zero; targets a tie; carries worse; v2 under-projects every stat (receiving yards -3.6 per player-game).
-  Rushing is therefore not published. v2 only ties ESPN's weekly projection (and that comparison has caveats).
-- **Not built:** next-man-up weighting (4.3), game-script adjustment (needs SPEC A margin), quarterback passing,
-  rushing distribution, a Friday/Sunday timer (the job is idempotent and appends runs; no timer installed).
-- **The default projection route is unchanged.** `/api/projections/player/{id}` still returns Marcel-lite. The new
-  routes are `/api/nfl/projections/player/{id}`, `/api/nfl/projections?week=` and `/api/nfl/projections/record`.
-  Switching the default is Micah's call.
-- **Pre-kickoff ESPN capture has not happened.** The 2025 ESPN rows were captured after the games; their grading
-  is excluded by the kickoff rule. The first real comparison is week 6: run the job and
-  `capture_espn_weekly_projections.py --season 2026 --weeks 6` on Friday and Sunday before kickoff, then
-  `grade_nfl_player_projections.py --season 2026 --week 6 --summary` after the games.
-- **Spotted, not fixed:** the 2024 player logs carry no `game_date`, so the prop chart orders them as a block after
-  dated games and prints a blank date; `player_prop_history` takes `settled[-20:]` of a newest-first list, which is
-  the OLDEST 20 (existing code, left alone; the new `hit_rates` field uses the newest).
+Every number below is on a copy of the dev DB taken 2026-10-13 02:04 CDT; details and game sets in
+`RESULTS-player-projection-v2-2026-10-12.md` (sections dated 2026-10-13).
+
+| Spec item | State |
+|---|---|
+| Review findings P1 x4, P2 | Each has a test that fails when its fix is reverted (checked by mutation). The refresh test runs the real script with steps stubbed. |
+| 4.3 redistribution | Built (`REDIST='4.3'`), not the default: worse than v2.0 on 2025. Next-man-up fraction 0.590 (targets) / 0.519 (carries) on 2024, close to proportional and unstable on 2025. |
+| 4.4 P(plays) | Questionable 0.682 (493 of 723, 2024-2025 skill), Doubtful 0 of 84, Out 0 of 602. In the job. |
+| 4.1 game script | Built (`SCRIPT_2024`, `--run --script`), not adopted: 2025 team and player MAE rose. |
+| Bias | Defect fixed: LAR/WSH opponent (6.6% of logs). Remaining bias is share held by non-playing candidates (13.3% of targets). P_LOG fixes the bias and RMSE but raises MAE, so not adopted under the MAE rule: mean vs median is Micah's call. |
+| 4.5 QB passing | Built, gate passed (403 QB-games, every stat beats Marcel-lite). In job, grader, API (P(over) for passing markets) and page. Rushing still unpublished (carries worse than Marcel-lite). |
+| 4.6 consistency | Measured for 2025, `RESULTS-nfl-team-consistency-2025.csv`. |
+| 5 props grading | Built (`grade_nfl_prop_probabilities.py`), read-only. Our P(over) loses to the market on Brier in every market on 2026 weeks 2 to 5. |
+
+Fixed on the way: the prop chart ordered undated logs (all 2024 and 2025 NFL logs on PROD) oldest first; the
+hit-rate test fixture lacked `props.game_id`; the availability rebuild would have run on PROD through the
+installed timer and is now DEV only; em dashes in the new UI.
+
+## What is still not built or not decided
+
+- Rushing publication (gate not passed). The default projection route `/api/projections/player/{id}` is still
+  Marcel-lite; switching it is Micah's call. Mean or median projection (P_LOG) is Micah's call.
+- No timer for the weekly job. The 2026 week 6 job and ESPN capture have not been run with these changes; the
+  stored week 6 rows predate them (no quarterbacks, P(plays) 0.70).
+- Props grading is not stored or shown on a page; the projection record panel shows stat-level grading only.
+- Nothing has been seen in a browser: the worktree cannot be served.
 
 ## Before anything goes to dev
 
-The HANDOFF checklist is still open: merge order with `feat/nfl-playoff-odds` and `feat/nfl-grading-record` (this
-branch is based on an older `dev`, `a6921c9`, so a rebase or merge is needed and the Model tab files are not here),
-the full suite against both DBs, and a browser look at the chart control and `/nfl/projections`.
+- The installed `legendarypicks-nfl-availability.timer` (Tuesdays 09:30) runs the main checkout's
+  `scripts/nfl-availability.sh` against DEV and PROD. With this branch merged, its snap ingest creates the
+  new table `nfl_snap_team_sources` on PROD (the availability rebuild itself is DEV only). Decide before merging.
+- Browser checks after the merge: the Without control on a prop chart, `/nfl/projections` (receivers and the new
+  quarterbacks table), and the projection record panel.
