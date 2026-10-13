@@ -141,3 +141,42 @@ Brier 0.2129 against 0.2124 for the flat 0.70, so the fitted rate is no better o
 it is used because it is the measured rate for the population the job projects. Doubtful and Out stay
 removed (0 played in 686 known cases). The rate does not vary by anything else in this version
 (position, practice status and team were not fitted).
+
+### The under-projection bias (one defect fixed, one rule measured and not adopted)
+
+**Defect fixed (56ddd26).** The engine took a player's opponent by comparing his log team (LAR, WSH, the
+codes `player_game_logs` and `nfl_schedule` use) to the codes inside the nflverse game id (LA, WAS). On 2,882
+of 43,786 NFL logs (2024 to 2026) the Rams or Commanders came out as their own opponent, and every team that
+played them got a 0-target game in its "allowed" volume. The opponent now comes from the schedule row and a
+log whose team is not in its game raises. Effect on 2025 (n = 3,945): targets MAE 1.567 to 1.562 (bias -0.477
+to -0.433), receptions 1.209 to 1.207, receiving yards 15.832 to 15.849 (bias -3.527 to -3.197). Gate PASS.
+This fixed engine is the baseline below.
+
+**Where the rest of the bias is (`--diagnose-bias`, 2025 weeks 3 to 18, 480 team-games).** Team volume is
+not low: projected minus actual team targets +0.76 per team-game, carries -0.59. The loss is in shares: 13.3%
+of the projected targets (11.8% of carries) is held by candidates who were not removed by the report and do
+not appear in the box score, so the players who did log were given 0.827 of the team's targets against an
+actual 0.968. This supports the status doc's hypothesis.
+
+**Rule tested (P_LOG, pre-registered c5233f3, frozen aa69707).** Weight every other candidate by his fitted
+chance of logging, by how many of the team's last 3 games he logged and whether he logged the last one:
+
+| Recent form (games of last 3, logged last) | 2024 (frozen) | 2025 (check) |
+|---|---|---|
+| 1, no | 271 of 790 = 0.343 | 0.329 |
+| 1, yes | 326 of 547 = 0.596 | 0.621 |
+| 2, no | 222 of 440 = 0.505 | 0.539 |
+| 2, yes | 877 of 1,095 = 0.801 | 0.798 |
+| 3, yes | 3,161 of 3,447 = 0.917 | 0.919 |
+
+2025 result (n = 3,945): bias nearly gone (targets +0.085, receptions +0.098, receiving yards +0.660), share of
+players who logged 0.984 against 0.968 actual. But MAE rose on every gated stat: targets 1.582 vs 1.562,
+receptions 1.229 vs 1.207, receiving yards 16.308 vs 15.849. The pre-registered rule required no rise, so
+**P_LOG is not adopted** (`P_LOG_2024` and `backtest --run --plog` keep it reproducible).
+
+Why, measured but not pre-registered (information only): root mean squared error, which rewards the mean,
+goes the other way. With P_LOG: targets 2.141 vs 2.202, receptions 1.659 vs 1.686, receiving yards 23.23 vs
+23.61. The median of actual minus projection is -0.05 targets without P_LOG and -0.36 with it. The current
+engine behaves like a median projection, and MAE rewards a median for right-skewed stats; the "bias" is
+largely that. Which one to publish is a product decision: the mean (P_LOG) is what P(over) and the team
+consistency check need; the gate as written (MAE) prefers the median. Not decided here.

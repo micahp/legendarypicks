@@ -429,6 +429,7 @@ def main():
     ap.add_argument("--fit-nmu", action="store_true")
     ap.add_argument("--diagnose-bias", action="store_true")
     ap.add_argument("--fit-plog", action="store_true")
+    ap.add_argument("--plog", action="store_true", help="--run with P_LOG_2024 (not the default)")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
     con = connect()
@@ -451,7 +452,12 @@ def main():
     if a.run:
         with_report = eng.History.load(con, [2024, 2025])
         plain = eng.History(with_report.rows, {})
-        run(with_report, plain, {"REDIST": a.redist} if a.redist else None)
+        over = {}
+        if a.redist:
+            over["REDIST"] = a.redist
+        if a.plog:
+            over["P_LOG"] = eng.P_LOG_2024
+        run(with_report, plain, over)
 
 
 if __name__ == "__main__":
