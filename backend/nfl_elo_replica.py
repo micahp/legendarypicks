@@ -18,13 +18,16 @@ PRE-REGISTERED (written 2026-10-13 before any run of this file). Plumbing is nfl
 E4 says the choice is made only from earlier seasons.
 
 Replica: start from the 538 file's pre-game rating of each team in its first 2010 game; every later game updates
-with the constants above (K 20, home 65, neutral 0, mult as above, tie result 0.5 with mult 1), ordered by game date
+with the constants above (K 20, home 65, neutral 0, mult as above; a tie uses the constant multiplier 1.525 with result 0.5. That constant is an E0 finding: the first
+E0 run with mult 1 left a 3.8 Elo gap after the 2012 SF-STL tie, and the file's 11 ties (2002-2020) all imply
+exactly 1.525; it is not a fitted parameter), ordered by game date
 then game id; a team's first game of a new season first applies the 2/3 + 1/3 x 1505 carryover. All scored games are
 used, playoffs included, as 538 did. Team code OAK is read as LV.
 
 E0 replication: pre-game ratings of the replica against the file's elo1 and elo2, 2010-2020. Reported: mean absolute
-difference, the share within 0.1 Elo, and the games that differ most. Not a model result; it says whether we know
-538's method.
+difference, the share within 0.1 Elo, and the games that differ most, twice: with the schedule's neutral flag, and
+with the file's own neutral flag (they disagree on 6 relocated home games, which 538 kept as home games). Not a model
+result; it says whether we know 538's method.
 E1 level: Brier of the replica's probabilities on the harness's graded set (2011-2023 pooled, 2024, 2025), beside
 frozen v1 and the market, and on the identical 2010-2020 ladder games beside the file's elo_prob1.
 E2 ablation (descriptive: explains 538's number, selects nothing): from the constants above change ONE at a time,
@@ -56,6 +59,7 @@ import nfl_feature_backtest as fb
 CODE = {"OAK": "LV"}
 BASE = {"K": 20.0, "hfa": 65.0, "carry": 1.0 / 3.0, "mov": True}
 MEAN = 1505.0
+TIE_MULT = 1.525
 
 
 def load_games(con):
@@ -95,11 +99,13 @@ def run_elo(games, start, K=20.0, hfa=65.0, carry=1.0 / 3.0, mov=True):
         p = 1.0 / (10.0 ** (-d / 400.0) + 1.0)
         res = 1.0 if hs > as_ else (0.0 if hs < as_ else 0.5)
         m = abs(hs - as_)
-        if mov and m > 0:
+        if not mov:
+            mult = 1.0
+        elif m == 0:
+            mult = TIE_MULT  # measured from the 538 file: the same constant in all 11 ties (found by E0)
+        else:
             wd = d if hs > as_ else -d
             mult = math.log(m + 1.0) * 2.2 / (wd * 0.001 + 2.2)
-        else:
-            mult = 1.0
         delta = K * mult * (res - p)
         rating[h] += delta
         rating[a] -= delta
@@ -127,30 +133,44 @@ GROUPS = fb.GROUPS
 
 def e0(con):
     games = load_games(con)
-    pre = run_elo(games, start_ratings(con))
     day = {g: d for g, d in con.execute("SELECT game_id, gameday FROM nfl_schedule WHERE season BETWEEN 2010 AND 2020")}
     file_ = {}
-    for date, t1, t2, e1, e2 in con.execute(
-            "SELECT date, team1, team2, elo1, elo2 FROM nfl_elo_538 WHERE CAST(season AS INTEGER) BETWEEN 2010 AND 2020"):
-        file_[(date, CODE.get(t1, t1), CODE.get(t2, t2))] = (float(e1), float(e2))
-    diffs, worst, missing = [], [], 0
+    for date, t1, t2, e1, e2, neu in con.execute(
+            "SELECT date, team1, team2, elo1, elo2, neutral FROM nfl_elo_538 "
+            "WHERE CAST(season AS INTEGER) BETWEEN 2010 AND 2020"):
+        file_[(date, CODE.get(t1, t1), CODE.get(t2, t2))] = (float(e1), float(e2), int(neu) == 1)
+    file_neutral, lookup = {}, {}
     for g, season, neutral, h, a, hs, as_ in games:
         if season > 2020:
             continue
         k = (day[g], h, a)
-        f = file_.get(k)
-        if f is None and (day[g], a, h) in file_:
-            f = tuple(reversed(file_[(day[g], a, h)]))
-        if f is None:
-            missing += 1
+        if k in file_:
+            f = file_[k]
+        elif (day[g], a, h) in file_:
+            f = (file_[(day[g], a, h)][1], file_[(day[g], a, h)][0], file_[(day[g], a, h)][2])
+        else:
+            lookup[g] = None
             continue
-        d = max(abs(pre[g][0] - f[0]), abs(pre[g][1] - f[1]))
-        diffs.append(d)
-        worst.append((d, g))
-    worst.sort(reverse=True)
-    print("E0 games compared %d (no file row: %d); mean abs diff %.4f; share within 0.1 Elo %.4f; max %.2f"
-          % (len(diffs), missing, stt.mean(diffs), sum(d < 0.1 for d in diffs) / len(diffs), max(diffs)))
-    print("   largest differences:", [(round(d, 1), g) for d, g in worst[:6]])
+        lookup[g] = f
+        file_neutral[g] = f[2]
+    games_file = [(g, s, file_neutral.get(g, n), h, a, hs, as_) for g, s, n, h, a, hs, as_ in games]
+    for label, gm in (("schedule neutral flag", games), ("file neutral flag", games_file)):
+        pre = run_elo(gm, start_ratings(con))
+        diffs, worst, missing = [], [], 0
+        for g, season, neutral, h, a, hs, as_ in games:
+            if season > 2020:
+                continue
+            f = lookup[g]
+            if f is None:
+                missing += 1
+                continue
+            d = max(abs(pre[g][0] - f[0]), abs(pre[g][1] - f[1]))
+            diffs.append(d)
+            worst.append((d, g))
+        worst.sort(reverse=True)
+        print("E0 [%s] games %d (no file row: %d); mean abs diff %.4f; within 0.1 Elo %.4f; max %.2f"
+              % (label, len(diffs), missing, stt.mean(diffs), sum(d < 0.1 for d in diffs) / len(diffs), max(diffs)))
+        print("   largest:", [(round(d, 1), g) for d, g in worst[:5]])
 
 
 def e1(con):
