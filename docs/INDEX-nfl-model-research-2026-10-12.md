@@ -9,6 +9,8 @@ Source plan: [RESEARCH-nfl-model-inputs-2026-10-11.md](RESEARCH-nfl-model-inputs
 
 | Lever | Status | Result | Where |
 |---|---|---|---|
+| Offense-EPA blend into v1 margin (old v2, `nfl_epa_efficiency.py`; ridge on team-game offensive EPA, blended walk-forward, weight tuned on a grid) | tested 10-09, **gate failed, not adopted, retired** | 2025 holdout (n 255): blend Brier 0.2304 vs v1 0.2287, margin MAE 10.73 vs 10.67; both lose to the market (0.2137). Pooled 2024+2025 favours the blend (0.2232 vs 0.2256) only because of 2024, which is why the holdout is the gate. Weeks 5-18: blend 0.2134 vs 0.2163; weeks 2-4: tie | [RESULT-nfl-epa-v2-2026-10-09.md](RESULT-nfl-epa-v2-2026-10-09.md), [REVIEW-nfl-epa-v2-2026-10-09.md](REVIEW-nfl-epa-v2-2026-10-09.md); code stays on branch `feat/nfl-epa-efficiency`. Superseded by the per-play model in `nfl_epa_model.py` |
+| Shotgun share (offense takes snaps from shotgun instead of under center; a regime change, so test as a level and a trend, season to date, home minus away) | **idea 10-13, untested** | none. `nfl_pbp.shotgun` is stored for 2010 to 2026. League share of plays: 28.8% in 2010, 50.3% in 2025, peak 55.1% in 2023 (counted 10-13 from the dev DB; not monotonic after 2023) | needs a pre-registered definition before any run; see section 4 |
 | Offseason carryover (shrink, prior games) | tested, no change | 21 settings, none passes the rule on 2024 and 2025 | [RESULTS-nfl-ladder-carryover-2026-10-12.md](RESULTS-nfl-ladder-carryover-2026-10-12.md), `backend/nfl_ladder.py` |
 | Preseason market prior | tested, kept | +0.0055 Brier gain, market-derived. **Micah 10-12: not our forecast.** Our own model is v1 plus EPA by unit | [RESULTS-nfl-features-vs-market-2026-10-11.md](RESULTS-nfl-features-vs-market-2026-10-11.md) |
 | EPA per play by unit (v2 stack column) | tested, kept (marginal) | +0.0019 gain, 2011 to 2023 | same as above |
@@ -149,15 +151,31 @@ Open decisions for Micah:
 - Push `dev` (local, 58 commits ahead of origin's `dev`, not pushed) and this branch.
 - Recurring line capture and the Sam recorder (approved 10-11, not set up).
 
+## 4b. Idea: the shift from under center to shotgun, and combining features
+
+Raised by Micah's friend, 10-13. The shotgun share of league plays went from 28.8% (2010) to 50.3% (2025),
+so a team's style in that dimension is a candidate rating input, and a regime change in how the game is played
+is the case where a fixed-weight model drifts. Nothing is run. The data is already stored (`nfl_pbp.shotgun`,
+2010 to 2026). Rules that apply before any run, from section 6: write the definition and the keep rule first.
+
+Open design points, to settle before registering the test:
+- Team shotgun rate season to date, shrunk like the others, versus the league's rate that season (a level shift
+  moves every team, so a raw rate would mostly measure the year).
+- Alone, and as a pair with EPA per play or pass rate. Combining features means fitting them together in the
+  stack and grading the pair against each feature alone, on the same ladder and the same pooled 2011 to 2023 rule.
+  Every pair tested counts against the keep rule, so the list of pairs is registered up front.
+- Kept features so far are few (preseason market prior, EPA by unit). Most features here moved Brier by under
+  0.001, so a combination needs a pooled interval entirely below zero to count.
+
 ## 5. Where the code and the branches are (inventory 2026-10-12, compared file by file with `dev`)
 
 | Thing | Location | Status |
 |---|---|---|
 | Model research (harness, features, ladder, participation loader) | `feat/nfl-model-foundation`, worktree `/root/lp-nfl-lock-by-version` | 11 commits not in `dev` |
-| Spec B (player projections) | `feat/player-projections-availability`, worktree `/root/lp-player-proj` | 11 commits not in `dev` |
+| Spec B (player projections) | `scratch/spec-b-rebase`, worktree `/root/lp-player-proj` (30 commits, 12 behind `dev`). `feat/player-projections-availability` is superseded: all 30 of its commits are patch-equivalent to commits in `scratch/spec-b-rebase` (`git cherry`, 10-13) | not in `dev`; status in `STATUS-spec-b-2026-10-12.md` on that branch |
 | Model page (v1 locks), Spec A, seeding, sim, lock grader (`grade_nfl_locks.py`) | `dev` | merged 10-10 to 10-12 |
 | NFL playoff odds and team ratings (from the 10-10 ratings WIP) | branch `feat/nfl-playoff-odds`, worktree `/root/lp-nfl-playoff-odds` (`ce5c7f9`), a fast-forward of `dev` (contains the `dev` tip `3e5d3cc`, no conflicts possible), **not merged** | The old branch `feat/nfl-ratings-playoff-odds` is deleted (tag `archive/feat/nfl-ratings-playoff-odds`). Everything parked, superseded or dropped, with the reason and the retrieval command, is in [PARKED-nfl-ratings-2026-10-12.md](PARKED-nfl-ratings-2026-10-12.md); do not re-analyze it. Landed: `/api/nfl/playoff-odds`, `/api/nfl/ratings`, odds-only job `jobs/nfl_playoff_odds.py`, the page and its link, timer and service files (NOT installed). 97 NFL tests pass |
-| Old EPA blend (retired) | branch `feat/nfl-epa-efficiency`, no worktree | 2 commits; only the weekly pbp step is worth taking (see open decisions) |
+| Old EPA blend (retired) | branch `feat/nfl-epa-efficiency`, no worktree | 2 commits. Its RESULT and REVIEW docs are in `dev`. Code (`nfl_epa_efficiency.py`, `nfl_tune_epa.py`, tests) and the weekly pbp step in `scripts/nfl-availability.sh` are only on the branch; the weekly pbp step is the one piece worth taking (see open decisions) |
 | All Day lineups (not model) | `feat/nfl-allday`, worktree `/root/lp-nfl-allday` | 4 commits never landed; product call |
 | Identity publishers (July) | branch `codex/nfl-v1` | 4 commits never landed; `dev` split every file it touched into packages on 08-18; probably superseded |
 | Prop market suffix fix | branch `feat/prop-repair` | 13-line fix never landed, no equivalent in `dev` (not NFL) |
