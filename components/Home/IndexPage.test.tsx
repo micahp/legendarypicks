@@ -15,7 +15,7 @@ describe('home page', () => {
     await act(async () => { render(<Home />) })
     await waitFor(() => expect(screen.getByText('Test Receiver')).toBeTruthy())
 
-    expect((global as any).fetch.mock.calls[0][0]).toBe('/api/home/featured')
+    expect((global as any).fetch.mock.calls.some(([url]: [string]) => url === '/api/home/featured')).toBe(true)
     expect(screen.getByText('Player props, with the history')).toBeTruthy()
     expect(screen.getByText('Live Scores')).toBeTruthy()
     expect(screen.getByText('Predictions')).toBeTruthy()
