@@ -215,5 +215,46 @@ class SimHistory(unittest.TestCase):
             ns.attach_history(inp, nss.HistorySampler(synthetic_pool(), 25, 0.003))
 
 
+
+class WinsCountTiesHalf(unittest.TestCase):
+    """wins_mean and the win percentiles count a tie as half a win, for both score options."""
+
+    def played_tie(self, inp):
+        inp = dict(inp)
+        inp["played"] = [(1, "A0a", "A0b", 17.0, 17.0)]
+        return inp
+
+    def check(self, inp, seed):
+        rng = random.Random(seed)
+        _, wins, _ = ns.one_run(inp, rng)
+        games = ns.simulate_games(inp, random.Random(seed))
+        teams = __import__("nfl_standings").build(inp["tmap"], games)
+        for code in ("A0a", "A0b"):
+            t = teams[code]
+            self.assertGreaterEqual(t.ties, 1)
+            self.assertEqual(wins[code], t.wins + 0.5 * t.ties)
+
+    def test_placeholder_counts_a_played_tie_half(self):
+        self.check(self.played_tie(tsim.league()), 3)
+
+    def test_history_counts_a_played_tie_half(self):
+        self.check(self.played_tie(history_league()), 4)
+
+    def test_wins_mean_includes_the_half(self):
+        inp = tsim.league()
+        inp["played"] = [(1, "A0a", "A0b", 17.0, 17.0)]
+        inp["remaining"] = []
+        out = ns.run(inp, 5, seed=1)
+        self.assertEqual(out["teams"]["A0a"]["wins_mean"], 0.5)
+        self.assertEqual(out["teams"]["A0a"]["wins_p10"], 0.5)
+        self.assertEqual(out["teams"]["A1a"]["wins_mean"], 0)
+
+    def test_placeholder_without_ties_is_unchanged(self):
+        # No ties possible: integer win counts, exactly as before the change.
+        out = ns.run(tsim.league(), 50, seed=9)
+        for t in out["teams"].values():
+            self.assertIsInstance(t["wins_p10"], int)
+
+
 if __name__ == "__main__":
     unittest.main()
