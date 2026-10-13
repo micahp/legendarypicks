@@ -48,8 +48,8 @@ tie and postseason handling. A number from a different game set is context, not 
 | Rung | Brier | Source and status |
 |---|---|---|
 | Coin flip | 0.250 | Arithmetic |
-| Home field only | to compute | Our harness |
-| 538 Elo | to compute | `nfl_elo_538.elo_prob1`, 2010 to 2020 in our dev DB. Flattering bar: 538 fit its constants on this history and backfilled it with its later method. Our table has no QB-Elo columns. |
+| Home field only | 0.2467 (2010 to 2020, 2,633 games; v1 0.2217 on the same games) | Our harness, [results](RESULTS-benchmark-ladder-2010-2020-2026-10-13.md) |
+| 538 Elo | 0.2193 (same 2,633 games; v1 trails it by 0.0024, interval includes zero) | `nfl_elo_538.elo_prob1`, 2010 to 2020 in our dev DB. Flattering bar: 538 fit its constants on this history and backfilled it with its later method. Our table has no QB-Elo columns. | Measured 2026-10-13, [results](RESULTS-benchmark-ladder-2010-2020-2026-10-13.md).
 | swcrockett win-probability model | 0.2244 (2025), 0.2213 to 0.2233 (2020 to 2024 fold means), 0.2336 (2026 wk 1 to 4, 64 games) | Their reported numbers, their game sets, ties excluded ([repo](https://github.com/swcrockett/nfl-win-probability-model), commit `5d8d047`, MIT) |
 | Our v1 | 0.2244 | Pooled 2010 to 2025, 3,909 games |
 | Closing market | 0.2105 | Same 3,909 games |
