@@ -120,6 +120,8 @@ export default function NflPlayoffOddsPage() {
           Scores-only version 1. Played games keep their results. Each remaining game draws a margin
           from the team ratings, and the two scores are a placeholder split of a fixed total, so the
           points are not a forecast. Game win probabilities and the season record are on the NFL Model tab.
+          The team ratings behind this page trail the betting market: in backtests over the 2010 to 2025
+          seasons their game probabilities scored worse than the market's in 15 of 16 seasons.
         </p>
 
         {loading && <div className="h-28 animate-pulse rounded-xl bg-zinc-800" aria-label="Loading NFL playoff odds" />}
