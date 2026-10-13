@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LiveDot from '../components/LiveDot'
-import HeroCarousel from '../components/Home/HeroCarousel'
+import FirstHero from '../components/Home/FirstHero'
 import { useFeatured } from '../components/Home/useFeatured'
 
 // The homepage leads with props — the most differentiated surface we have.
@@ -37,12 +37,12 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Legendary Picks: props with history, and how every line landed</title>
-        <meta name="description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <title>Legendary Picks: live prop lines and hit rate history across 11 leagues</title>
+        <meta name="description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <link rel="canonical" href="https://legendarypicks.xyz/" />
         {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
-        <meta property="og:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta property="og:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <meta property="og:title" content="Legendary Picks: live prop lines and hit rate history across 11 leagues" />
+        <meta property="og:description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -51,12 +51,12 @@ export default function Home() {
         <meta property="og:site_name" content="Legendary Picks" />
         {/* Twitter / X card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta name="twitter:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <meta name="twitter:title" content="Legendary Picks: live prop lines and hit rate history across 11 leagues" />
+        <meta name="twitter:description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
-      <HeroCarousel featured={featured} />
+      <FirstHero featured={featured} />
 
       {/* Primary surface: props and their history. Position and space carry the
           hierarchy — the props card is the first and largest; everything else
