@@ -124,6 +124,70 @@ def fit(hist):
     return p
 
 
+def fit_nmu(hist, season=2024):
+    """Spec B 4.3 next-man-up split, PRE-REGISTERED 2026-10-13 before it was run.
+
+    Case: a team-game in `season`, weeks 3 to 18, where the injury report removes (Out or Doubtful) the
+    candidate with the highest base share in his position group, and 2 or more other candidates of that
+    group played the game. Base shares are the engine's raw_share for every candidate (the removed ones
+    included), scaled by (1 - OTHER) / their sum: what each would have got with everyone playing.
+    For each remaining group player who played: gain = actual share - scaled base share. The next man up
+    is the remaining player with the highest base share. NMU_<col> = sum of the next man up's gains /
+    sum of the group's gains, over all cases. Reported beside it: the fraction plain proportional
+    redistribution would give him (his base / the group's base), averaged over the same cases.
+    Fitted on 2024 only for the 2025 gate; the value on 2025 cases alone is printed as a stability check and
+    not used. Slice gate: the Spec B 5 gate above, run once on 2025 with the frozen NMU. The slice is kept only
+    if the gate passes and target MAE on player-games where the redistribution fired is not above the
+    previous engine's (1.595, docs/RESULTS-player-projection-v2-2026-10-12.md).
+    """
+    p = dict(eng.DEFAULTS)
+    out = {}
+    for col in ("tgt", "car"):
+        g_nmu = g_all = 0.0
+        prop, cases = [], 0
+        for (s, team), weeks in hist.team_weeks.items():
+            if s != season:
+                continue
+            for w in sorted(weeks):
+                if w < 3 or w > 18:
+                    continue
+                rows = hist.by_team[(s, team)][w]
+                gid = rows[0].game_id
+                cands = hist.candidates(s, team, w)
+                removed = hist.out_before(s, gid, team) & set(cands)
+                if not removed:
+                    continue
+                base = {j: hist.raw_share(s, j, jp, w, col, p, None)[0] for j, jp in cands.items()}
+                b_tot = sum(base.values())
+                tt = hist.team_game(s, team, w, col)
+                if b_tot <= 0 or tt <= 0:
+                    continue
+                played = {r.pid: getattr(r, col) / tt for r in rows}
+                for g in {cands[x] for x in removed}:
+                    group = [j for j in cands if cands[j] == g]
+                    top = max(group, key=lambda j: (base[j], -j))
+                    if top not in removed:
+                        continue
+                    rest = sorted((j for j in group if j not in removed and j in played),
+                                  key=lambda j: (-base[j], j))
+                    if len(rest) < 2:
+                        continue
+                    scale = (1.0 - p["OTHER"]) / b_tot
+                    gains = {j: played[j] - base[j] * scale for j in rest}
+                    g_nmu += gains[rest[0]]
+                    g_all += sum(gains.values())
+                    r_base = sum(base[j] for j in rest)
+                    if r_base > 0:
+                        prop.append(base[rest[0]] / r_base)
+                    cases += 1
+        frac = g_nmu / g_all if g_all > 0 else None
+        out[col] = frac
+        print("NMU_%s season %s: %d cases, fitted %.3f, group gain %.4f, proportional would give %.3f" % (
+            col, season, cases, frac if frac is not None else float("nan"), g_all,
+            sum(prop) / len(prop) if prop else float("nan")))
+    return out
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -287,10 +351,14 @@ def main():
     ap.add_argument("--fit-dist", action="store_true")
     ap.add_argument("--run-dist", action="store_true")
     ap.add_argument("--vs-espn", action="store_true")
+    ap.add_argument("--fit-nmu", action="store_true")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.fit_nmu:
+        fit_nmu(eng.History.load(con, [2024]))
+        fit_nmu(eng.History.load(con, [2024, 2025]), season=2025)
     if a.fit_dist:
         fit_dist(eng.History.load(con, [2024]))
     if a.vs_espn:

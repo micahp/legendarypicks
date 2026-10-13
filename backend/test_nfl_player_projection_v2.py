@@ -5,7 +5,8 @@ import unittest
 import nfl_player_projection_v2 as mod
 
 P = {"H": 1e9, "K_S": 0.0, "K_T": 0.0, "OTHER": 0.0,
-     "K_CR": 0.0, "K_YPT": 0.0, "K_TDT": 0.0, "K_YPC": 0.0, "K_TDC": 0.0}
+     "K_CR": 0.0, "K_YPT": 0.0, "K_TDT": 0.0, "K_YPC": 0.0, "K_TDC": 0.0,
+     "NMU_tgt": 0.6, "NMU_car": 0.6}
 
 
 def gid(week):
@@ -50,15 +51,19 @@ class Projection(unittest.TestCase):
         self.assertIsNone(mod.project(build(self.two_receiver_team()), 2025, 1, 1, "WR", "A", "B",
                                       gid(1), P))
 
-    def test_out_teammate_is_removed_and_the_rest_renormalised(self):
+    def test_out_teammate_share_goes_to_the_next_man_up_in_his_group(self):
         rows = []
         for w in (1, 2, 3):
             rows += [row(1, w, 5), row(2, w, 3), row(3, w, 2), row(9, w, 10, team="B")]
         status = {(2025, gid(4), "A"): {3: ("Out", None)}}
-        res = mod.project(build(rows, status), 2025, 4, 1, "WR", "A", "B", gid(4), P)
-        # shares .5 .3 .2 with the .2 player out: .5 / .8 of 10 team targets
-        self.assertAlmostEqual(10 * 0.5 / 0.8, res["tgt"])
-        self.assertEqual("proportional", res["_rules"]["tgt"])
+        hist = build(rows, status)
+        res = mod.project(hist, 2025, 4, 1, "WR", "A", "B", gid(4), P)
+        # shares .5 .3 .2, the .2 WR out: next man up (player 1) takes .6 of it, player 2 the other .4
+        self.assertAlmostEqual(10 * (0.5 + 0.6 * 0.2), res["tgt"])
+        self.assertEqual("next_man_up", res["_rules"]["tgt"])
+        other = mod.project(hist, 2025, 4, 2, "WR", "A", "B", gid(4), P)
+        self.assertAlmostEqual(10 * (0.3 + 0.4 * 0.2), other["tgt"])
+        self.assertEqual("group", other["_rules"]["tgt"])
 
     def test_questionable_teammate_is_not_removed(self):
         rows = []
@@ -69,7 +74,7 @@ class Projection(unittest.TestCase):
         self.assertAlmostEqual(5.0, res["tgt"])
         self.assertEqual("none_out", res["_rules"]["tgt"])
 
-    def test_three_games_together_without_him_blend_the_observed_share(self):
+    def test_three_games_together_without_him_use_the_observed_share(self):
         rows, status = [], {}
         for w in (1, 2, 3):          # player 2 out: shares .6 and .4
             rows += [row(1, w, 6), row(3, w, 4), row(9, w, 10, team="B")]
@@ -78,9 +83,50 @@ class Projection(unittest.TestCase):
             rows += [row(1, w, 4), row(2, w, 4), row(3, w, 2), row(9, w, 10, team="B")]
         status[(2025, gid(7), "A")] = {2: ("Out", None)}
         res = mod.project(build(rows, status), 2025, 7, 1, "WR", "A", "B", gid(7), P)
-        # raw shares: p1 .5, p3 .3 -> proportional .625; observed .6 over n=3 -> weight .5 -> .6125
-        self.assertAlmostEqual(10 * 0.6125, res["tgt"])
-        self.assertEqual("observed_blend", res["_rules"]["tgt"])
+        # both remaining players have 3 games without player 2: observed .6 and .4, already summing to 1
+        self.assertAlmostEqual(6.0, res["tgt"])
+        self.assertEqual("observed", res["_rules"]["tgt"])
+
+    def test_last_season_games_together_count(self):
+        rows, status = [], {}
+        for w in (1, 2, 3):          # 2024: player 2 out, player 1 took .7
+            rows.append(mod.Row(1, 2024, w, "A", "B", "2024_%02d_A_B" % w, "WR",
+                                {"targets": 7, "rec": 0, "rec_yds": 0, "rec_td": 0}))
+            rows.append(mod.Row(3, 2024, w, "A", "B", "2024_%02d_A_B" % w, "WR",
+                                {"targets": 3, "rec": 0, "rec_yds": 0, "rec_td": 0}))
+            status[(2024, "2024_%02d_A_B" % w, "A")] = {2: ("Out", 0)}
+        for w in (1, 2, 3):
+            rows += [row(1, w, 4), row(2, w, 4), row(3, w, 2), row(9, w, 10, team="B")]
+        status[(2025, gid(4), "A")] = {2: ("Out", None)}
+        shares, rules = build(rows, status).team_shares(2025, 4, "A", "tgt", P, gid(4))
+        self.assertEqual({1: "observed", 3: "observed"}, rules)
+        self.assertAlmostEqual(0.7, shares[1])
+
+    def test_a_group_with_nobody_left_spreads_in_proportion(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [row(1, w, 5), row(2, w, 3), row(3, w, 2, pos="TE"), row(9, w, 10, team="B")]
+        status = {(2025, gid(4), "A"): {3: ("Out", None)}}
+        shares, rules = build(rows, status).team_shares(2025, 4, "A", "tgt", P, gid(4))
+        self.assertAlmostEqual(0.5 / 0.8, shares[1])
+        self.assertAlmostEqual(0.3 / 0.8, shares[2])
+        self.assertEqual({1: "proportional", 2: "proportional"}, rules)
+
+    def test_shares_sum_to_one_minus_other_for_every_rule_mix(self):
+        rows, status = [], {}
+        q = dict(P, OTHER=0.1, NMU_tgt=0.75)
+        for w in (1, 2, 3):          # players 1 and 4 out: 2, 5 and 6 get 3 games without both
+            rows += [row(2, w, 5), row(5, w, 3, pos="TE"), row(6, w, 2, pos="RB"), row(9, w, 10, team="B")]
+            status[(2025, gid(w), "A")] = {1: ("Out", 0), 4: ("Out", 0)}
+        for w in (4, 5):
+            rows += [row(1, w, 6), row(2, w, 3), row(3, w, 2), row(4, w, 4, pos="TE"),
+                     row(5, w, 1, pos="TE"), row(6, w, 1, pos="RB"), row(9, w, 10, team="B")]
+        status[(2025, gid(6), "A")] = {1: ("Out", None), 4: ("Doubtful", None)}
+        shares, rules = build(rows, status).team_shares(2025, 6, "A", "tgt", q, gid(6))
+        # player 3 (WR, no games without them) is the only rule-2 player: next man up for the WR share,
+        # and he also takes the TE share because TE 5 is on rule 1
+        self.assertEqual({2: "observed", 3: "next_man_up", 5: "observed", 6: "observed"}, rules)
+        self.assertAlmostEqual(0.9, sum(shares.values()))
 
 
 class Marcel(unittest.TestCase):

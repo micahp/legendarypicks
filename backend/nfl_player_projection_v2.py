@@ -16,10 +16,12 @@ Method (Spec B 4.1 to 4.5), every input uses only games BEFORE the target week:
      6 or more games, else the position mean share. Shares of the available candidates are normalised to
      1 - OTHER, where OTHER is fitted in 2024.
   3. Availability. Candidates are players who logged for the team in its last 3 games. Teammates whose
-     final injury report status is Out or Doubtful are removed and the rest renormalised (proportional
-     redistribution). If the player has at least MIN_TOGETHER games this season in which every removed
-     teammate had played = 0, the observed mean share in those games is blended in at n / (n + MIN_TOGETHER).
-     The next-man-up weighting of Spec B 4.3 is NOT built; the rule fired this often is reported.
+     final injury report status is Out or Doubtful are removed. Their share is redistributed by Spec B 4.3
+     (History.team_shares, pre-registered 2026-10-13): observed shares where a player has MIN_TOGETHER
+     games without them this season or last, otherwise within the position group with the next man up
+     taking a fitted fraction NMU_<col> (fitted on 2024 starter absences, backtest --fit-nmu).
+     (Until 2026-10-12 the removed share was spread proportionally over every candidate and the observed
+     share was blended at n / (n + MIN_TOGETHER).)
   4. Efficiency. Catch rate, yards per target, TD per target, yards per carry, TD per carry from the
      player's games in the current and previous season, regressed to the position mean with K_CR, K_YPT,
      K_TDT, K_YPC, K_TDC pseudo-opportunities.
@@ -58,7 +60,7 @@ OUT_STATUSES = ("Out", "Doubtful")
 RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td")))
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
-DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424,
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": None, "NMU_car": None,
             "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
 # Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
 # H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
@@ -238,38 +240,89 @@ class History(object):
         return {pid for pid, (rep, _p) in self.status.get((season, game_id, team), {}).items()
                 if rep in OUT_STATUSES}
 
-    def share(self, season, week, team, pid, pos, col, p, game_id, caches):
-        """(projected share of the team's `col`, rule used) or None if there is no basis."""
-        cands = self.candidates(season, team, week)
-        cands.setdefault(pid, pos)
-        out = self.out_before(season, game_id, team) - {pid}
-        raw = {}
-        for j, jpos in cands.items():
-            if j in out:
-                continue
-            val = self.raw_share(season, j, jpos, week, col, p, caches)
-            raw[j] = val[0]
-        total = sum(raw.values())
-        if total <= 0 or pid not in raw:
-            return None
-        share = raw[pid] * (1.0 - p["OTHER"]) / total
-        rule = "proportional" if out else "none_out"
-        if out:
-            observed = []
-            for r in self.by_player.get((season, pid), []):
-                if r.week >= week:
+    def observed_without(self, season, week, team, pid, col, out):
+        """Shares of team `col` in games this season (before `week`) or last season in which `pid`
+        played for `team` and every player in `out` had played = 0."""
+        observed = []
+        for s in (season - 1, season):
+            for r in self.by_player.get((s, pid), []):
+                if r.team != team or (s == season and r.week >= week):
                     continue
-                st = self.status.get((season, r.game_id, r.team), {})
+                st = self.status.get((s, r.game_id, r.team), {})
                 if all(st.get(x, (None, None))[1] == 0 for x in out):
-                    tt = self.team_game(season, r.team, r.week, col)
+                    tt = self.team_game(s, r.team, r.week, col)
                     if tt > 0:
                         observed.append(getattr(r, col) / tt)
-            if len(observed) >= MIN_TOGETHER:
-                n = len(observed)
-                wgt = n / (n + MIN_TOGETHER)
-                share = wgt * (sum(observed) / n) + (1 - wgt) * share
-                rule = "observed_blend"
-        return share, rule
+        return observed
+
+    def team_shares(self, season, week, team, col, p, game_id, keep=None, keep_pos=None):
+        """Projected share of team `col` for every available candidate, and the rule behind each.
+
+        Spec B 4.3, PRE-REGISTERED 2026-10-13 before the 2025 run:
+          base     each candidate's raw_share, the Out/Doubtful ones included (the world where all play).
+          rule 1   'observed': an available player with MIN_TOGETHER or more games this season or last
+                   in which every removed teammate had played = 0 takes his mean share in those games.
+          rule 2   the removed players' base shares are freed per position group (RB with FB, WR, TE,
+                   QB). Within a group, the remaining player with the highest base share not on rule 1
+                   is the next man up and takes NMU_<col> of the group's freed share; the rest goes to the
+                   group's other rule-2 players in proportion to base ('next_man_up' / 'group').
+                   A group with no rule-2 player left frees its share to every rule-2 player in
+                   proportion to base ('proportional'). With nobody removed the rule is 'none_out'.
+          last     shares of the available candidates are scaled to sum to 1 - OTHER.
+        `keep` is projected as available even if the report lists him (shares are conditional on
+        playing). Returns ({pid: share}, {pid: rule}); empty when there is no basis.
+        """
+        cands = self.candidates(season, team, week)
+        if keep is not None:
+            cands.setdefault(keep, keep_pos)
+        out = self.out_before(season, game_id, team) - {keep}
+        base = {j: self.raw_share(season, j, jpos, week, col, p, None)[0] for j, jpos in cands.items()}
+        avail = [j for j in cands if j not in out]
+        removed = [j for j in cands if j in out]
+        if not removed:
+            pre = {j: base[j] for j in avail}
+            rules = {j: "none_out" for j in avail}
+        else:
+            pre, rules = {}, {}
+            for j in avail:
+                obs = self.observed_without(season, week, team, j, col, removed)
+                if len(obs) >= MIN_TOGETHER:
+                    pre[j], rules[j] = sum(obs) / len(obs), "observed"
+            rest = [j for j in avail if j not in pre]
+            for j in rest:
+                pre[j], rules[j] = base[j], "proportional"
+            spill = 0.0
+            for g in sorted({cands[x] for x in removed}):
+                freed = sum(base[x] for x in removed if cands[x] == g)
+                group = sorted((j for j in rest if cands[j] == g), key=lambda j: (-base[j], j))
+                if not group:
+                    spill += freed
+                    continue
+                nmu, others = group[0], group[1:]
+                o_tot = sum(base[j] for j in others)
+                if not others or o_tot <= 0:
+                    pre[nmu] += freed
+                else:
+                    pre[nmu] += p["NMU_" + col] * freed
+                    for j in others:
+                        pre[j] += (1.0 - p["NMU_" + col]) * freed * base[j] / o_tot
+                        rules[j] = "group"
+                rules[nmu] = "next_man_up"
+            r_tot = sum(base[j] for j in rest)
+            if spill > 0 and r_tot > 0:
+                for j in rest:
+                    pre[j] += spill * base[j] / r_tot
+        total = sum(pre.values())
+        if total <= 0:
+            return {}, {}
+        return {j: v * (1.0 - p["OTHER"]) / total for j, v in pre.items()}, rules
+
+    def share(self, season, week, team, pid, pos, col, p, game_id, caches):
+        """(projected share of the team's `col`, rule used) or None if there is no basis."""
+        shares, rules = self.team_shares(season, week, team, col, p, game_id, keep=pid, keep_pos=pos)
+        if pid not in shares:
+            return None
+        return shares[pid], rules[pid]
 
     # -- efficiency -------------------------------------------------------------------------
 
