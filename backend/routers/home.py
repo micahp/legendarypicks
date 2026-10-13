@@ -19,6 +19,8 @@ Selection rules
              locks), never the live schedule.
   playoffs   Top five teams by p_playoffs (ties by team code) from the latest complete run, found
              with the same helpers as /api/nfl/playoff-odds. `sims` is the run's own params_json n.
+  record     The adopted model's win-loss-push against the line for the latest locked season, from
+             projection_grades via nfl_model.record_payload; null with no graded game against a line.
   chain      player = the featured prop's player with the recency-weighted projection that
              prop_history returns (null when the prop is null); game = the featured game; market =
              the featured game's model win probability beside the market's, from the locked
@@ -215,6 +217,29 @@ def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
     return {"game": game, "reason": None}
 
 
+# ---------------------------------------------------------------- record
+
+def featured_record(con) -> Dict[str, Any]:
+    """Adopted model's against-the-line tally for the latest locked season (nfl_model.record_payload).
+    `games` counts win + loss + push only; a graded game with no pick or no line is not in it."""
+    row = con.execute("SELECT MAX(season) FROM game_projections WHERE league = 'nfl' AND locked = 1"
+                      ).fetchone()
+    if row is None or row[0] is None:
+        return {"record": None, "reason": "no locked NFL projection exists"}
+    season = int(row[0])
+    mine = [r for r in nfl_model.record_payload(con, season) if r["version"] == nfl_model.ADOPTED]
+    if not mine or not mine[0]["ats"]:
+        return {"record": None, "reason": "no graded game for the adopted model in %d" % season}
+    ats = mine[0]["ats"]
+    w, l, p = ats["win"], ats["loss"], ats["push"]
+    if w + l + p == 0:
+        return {"record": None, "reason": "no graded game against a line for the adopted model"}
+    return {"record": {"season": season, "win": w, "loss": l, "push": p, "games": w + l + p,
+                       "model_label": mine[0]["label"],
+                       "source": {"table": "projection_grades", "model_version": nfl_model.ADOPTED}},
+            "reason": None}
+
+
 # ---------------------------------------------------------------- playoff odds
 
 def featured_playoffs(con) -> Dict[str, Any]:
@@ -256,12 +281,15 @@ def featured_payload(con, now: Optional[dt.datetime] = None) -> Dict[str, Any]:
     fp = featured_prop(con, now)
     fg = featured_game(con, now)
     fo = featured_playoffs(con)
+    fr = featured_record(con)
     prop, game, odds = fp["prop"], fg["game"], fo["playoff_odds"]
     for name, piece, reason in (("prop", prop, fp["reason"]), ("game", game, fg["reason"]),
                                 ("playoff_odds", odds, fo["reason"])):
         if piece is None:
             absent[name] = reason
 
+    if fr["record"] is None:
+        absent["record"] = fr["reason"]
     market_p = game.pop("_market_p_home") if game else None
     player_chain = None
     if prop is not None and fp["history"].get("projection") is not None:
@@ -287,7 +315,7 @@ def featured_payload(con, now: Optional[dt.datetime] = None) -> Dict[str, Any]:
         season_chain = {"top": odds["top"][0], "next": odds["top"][1:4], "sims": odds["sims"],
                         "week": odds["week"], "source": odds["source"]}
     return {"contract": "home-featured-v1", "generated_at": _iso(now),
-            "prop": prop, "game": game, "playoff_odds": odds,
+            "prop": prop, "game": game, "playoff_odds": odds, "record": fr["record"],
             "chain": {"player": player_chain, "game": game, "market": market_chain,
                       "season": season_chain},
             "absent": absent}
