@@ -8,13 +8,19 @@ probability is therefore Phi(expected / sigma), which matches the single-game mo
 
 Hot updates (spec 5.1): after each simulated game the two teams' running adjustments move by
 k * (actual margin - expected margin): the home team +k*r, the away team -k*r. k = 0 is a cold
-simulation (no updates). Adjustments apply to all later games in the same run only.
+simulation (no updates). Adjustments apply to all later games in the same run only. With
+"history" scores the actual margin is the integer margin of the drawn score, and the adjusted
+expected margin sets both the outcome probability and the neighbour search.
 
-Scores are a placeholder: each simulated game splits its margin around a fixed total of 40
-(home 20 + m/2, away 20 - m/2). Playoff odds barely depend on the split (checked: a random total
-moves no team's playoff odds by more than 3.5 points at n=2000, inside Monte Carlo noise). The
-points totals of simulated seasons are not a model and must not be reported as one. Replace
-the split with the score distribution only once a model passes its gate.
+Scores, two options (`scores=`):
+- "placeholder": each simulated game splits its Normal margin around a fixed total of 40 (home
+  20 + m/2, away 20 - m/2). Non-integer, never a tie; its points are not a model and must not be
+  reported as one.
+- "history": nfl_sim_scores (pre-registered there, gates G1-G6). The outcome (home win, away win,
+  tie) is drawn from the same Phi(expected / sigma) with the historical tie rate taken out
+  proportionally, and the score is an actual NFL final with that outcome, from the nearest
+  historical games in (expected margin, expected total). Integer scores, real ties.
+DEFAULT_SCORES says which one runs when the caller does not choose.
 
 Seeding uses nfl_seeding (the same engine validated in A4). Coin flips inside a simulated season
 are counted and returned: a run with flips is reported with the number, not hidden.
@@ -30,19 +36,29 @@ import nfl_bracket_check as bc
 import nfl_ratings as nr
 import nfl_ratings_data as nrd
 import nfl_seeding as sd
+import nfl_sim_scores as nss
 import nfl_standings as st
 
 FROZEN_SIGMA = 13.295
 FROZEN = {"half_life": 6.0, "cap": 14.0, "cap_points": None, "prior_games": 4.0,
           "shrink": nrd.DEFAULT_SHRINK, "sigma": FROZEN_SIGMA}
+SCORES = ("placeholder", "history")
+DEFAULT_SCORES = "placeholder"
+HISTORY_K = 25      # chosen by nfl_sim_scores.select_k on 2011-2019 (pre-registered rule)
 
 
-def inputs(con, season, overrides=None, as_of_week=None):
+def inputs(con, season, overrides=None, as_of_week=None, scores=None, pool=None):
     """Everything a run needs. Played = every scored REG game of the season; remaining = every
     unscored REG game. A scored game is never dropped, whatever its week (an earlier version
     dropped scored games after a cut-off week, and that bug is covered by a test).
 
-    The fit uses all played games, anchored at the latest played week."""
+    The fit uses all played games, anchored at the latest played week.
+
+    scores: "placeholder" or "history" (None = DEFAULT_SCORES). pool: optional precomputed
+    nfl_sim_scores.pool_rows covering the seasons before `season` (saves rebuilding it)."""
+    scores = DEFAULT_SCORES if scores is None else scores
+    if scores not in SCORES:
+        raise ValueError("scores must be one of %s, got %r" % (SCORES, scores))
     p = dict(FROZEN)
     p.update(overrides or {})
     scored_all = nrd._scored_rows(con, season)
@@ -74,14 +90,78 @@ def inputs(con, season, overrides=None, as_of_week=None):
                prior_games=p["prior_games"])
     unplayed = con.execute(unplayed_sql, unplayed_args).fetchall()
     remaining = []
+    totals = []
     for wk, h, a, loc in unplayed:
         neutral = (loc or "").strip().lower() == "neutral"
         ph, pa = nr.expected_points(f, h, a, neutral)
         remaining.append((wk, h, a, neutral, ph - pa))
+        totals.append(ph + pa)
     played_games = [(r[0], r[1], r[2], float(r[3]), float(r[4])) for r in scored]
     tmap = bc.team_map(con)
-    return {"season": season, "through_week": through_week, "fit": f, "played": played_games,
-            "remaining": remaining, "tmap": tmap, "sigma": p["sigma"]}
+    out = {"season": season, "through_week": through_week, "fit": f, "played": played_games,
+           "remaining": remaining, "remaining_totals": totals, "tmap": tmap, "sigma": p["sigma"],
+           "scores": scores}
+    if scores == "history":
+        out["sampler"] = nss.build(con, season, HISTORY_K, rows=pool)
+    return out
+
+
+def attach_history(inp, sampler):
+    """Switch an inputs dict to history scores with a given sampler (tests, synthetic leagues).
+    remaining_totals must be present, one per remaining game."""
+    if len(inp.get("remaining_totals") or []) != len(inp["remaining"]):
+        raise ValueError("remaining_totals must have one expected total per remaining game")
+    out = dict(inp)
+    out["scores"] = "history"
+    out["sampler"] = sampler
+    out.pop("_tables", None)
+    return out
+
+
+def _tables(inp):
+    """Cold-run neighbour tables, one per remaining game, computed once per inputs dict."""
+    t = inp.get("_tables")
+    if t is None:
+        s = inp["sampler"]
+        t = [s.game_table(g[4], tot) for g, tot in zip(inp["remaining"], inp["remaining_totals"])]
+        inp["_tables"] = t
+    return t
+
+
+def simulate_games(inp, rng, k=0.0):
+    """Played games plus one simulated result for every remaining game: rows
+    (week, home, away, home_score, away_score)."""
+    deltas = {}
+    sigma = inp["sigma"]
+    games = list(inp["played"])
+    scores = inp.get("scores", "placeholder")
+    if scores == "placeholder":
+        for wk, h, a, neutral, em in inp["remaining"]:
+            e = em + deltas.get(h, 0.0) - deltas.get(a, 0.0)
+            m = rng.gauss(e, sigma)
+            if k:
+                deltas = hot_update(deltas, h, a, m - e, k)
+            games.append((wk, h, a, 20.0 + m / 2.0, 20.0 - m / 2.0))
+        return games
+    if scores != "history":
+        raise ValueError("unknown scores option %r" % scores)
+    s = inp["sampler"]
+    if s.sigma != sigma:
+        raise ValueError("sampler sigma %r differs from the run's %r" % (s.sigma, sigma))
+    if not k:
+        for (wk, h, a, neutral, em), (p, table) in zip(inp["remaining"], _tables(inp)):
+            hs, as_ = s.draw(rng, p, table)
+            games.append((wk, h, a, hs, as_))
+        return games
+    for (wk, h, a, neutral, em), tot in zip(inp["remaining"], inp["remaining_totals"]):
+        e = em + deltas.get(h, 0.0) - deltas.get(a, 0.0)
+        p = s.p_home(e)
+        outcome = s.outcome(p, rng.random())
+        pairs = s.pairs(e, tot, outcome)
+        hs, as_ = pairs[rng.randrange(len(pairs))]
+        deltas = hot_update(deltas, h, a, (hs - as_) - e, k)
+        games.append((wk, h, a, hs, as_))
+    return games
 
 
 def hot_update(deltas, home, away, residual, k):
@@ -93,35 +173,31 @@ def hot_update(deltas, home, away, residual, k):
     return out
 
 
-def one_run(inp, rng, k=0.0):
-    """One simulated season. Returns (seeds_by_conf, wins_by_team, coin_flips)."""
-    deltas = {}
-    sigma = inp["sigma"]
-    games = list(inp["played"])
-    for wk, h, a, neutral, em in inp["remaining"]:
-        e = em + deltas.get(h, 0.0) - deltas.get(a, 0.0)
-        m = rng.gauss(e, sigma)
-        if k:
-            deltas = hot_update(deltas, h, a, m - e, k)
-        games.append((wk, h, a, 20.0 + m / 2.0, 20.0 - m / 2.0))
+def one_run(inp, rng, k=0.0, observe=None):
+    """One simulated season. Returns (seeds_by_conf, wins_by_team, coin_flips).
+    observe(games, teams, seeds), if given, sees every simulated season (backtests, gates)."""
+    games = simulate_games(inp, rng, k)
     teams = st.build(inp["tmap"], games)
     sd.COIN_FLAGS.clear()
+    sd.DECISIONS.clear()          # per run; it grew without bound over n runs before
     n_seeds = sd.n_seeds_for(inp["season"])
     seeds = {conf: sd.seeds_for_conference(teams, conf, n_seeds=n_seeds, rng=rng)
              for conf in ("AFC", "NFC")}
     flips = len(sd.COIN_FLAGS)
     wins = {code: t.wins for code, t in teams.items()}
+    if observe is not None:
+        observe(games, teams, seeds)
     return seeds, wins, flips
 
 
-def run(inp, n, k=0.0, seed=1):
+def run(inp, n, k=0.0, seed=1, observe=None):
     """n simulated seasons. Returns the aggregate dict described in aggregate()."""
     rng = random.Random(seed)
     counts = {}
     wins_all = {}
     flips = 0
     for _ in range(n):
-        seeds, wins, f = one_run(inp, rng, k)
+        seeds, wins, f = one_run(inp, rng, k, observe)
         flips += f
         for conf, lst in seeds.items():
             for s, code in lst:
