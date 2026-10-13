@@ -40,8 +40,10 @@ MARCEL_VERSION = "marcel-lite"
 #   `--fit-p-plays`. Out-of-sample check, reported and not a gate: the same rate fitted on 2024 alone, scored
 #   by Brier on 2025 Questionable rows against the flat 0.70 used until now.
 # Doubtful and Out stay removed from the engine's candidates (OUT_STATUSES); their rates are reported.
-P_PLAYS = {"Questionable": None, "Doubtful": None, "Out": None}
-P_PLAYS_QUESTIONABLE = 0.70   # replaced by P_PLAYS["Questionable"] once fitted
+# Frozen 2026-10-13 from --fit-p-plays on the dev DB: Questionable 493 of 723 (57 unknown), Doubtful 0 of 84
+# (18 unknown), Out 0 of 602 (138 unknown). 2024 alone 0.671, 2025 alone 0.694.
+P_PLAYS = {"Questionable": 0.682, "Doubtful": 0.0, "Out": 0.0}
+P_PLAYS_QUESTIONABLE = P_PLAYS["Questionable"]
 SKILL_POSITIONS = ("QB", "RB", "FB", "WR", "TE")
 
 

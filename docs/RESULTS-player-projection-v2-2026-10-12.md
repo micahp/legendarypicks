@@ -123,3 +123,21 @@ carries 1.178 vs 1.157). The keep criterion written in the pre-registration comp
 player-games), so it was not a valid comparison and is not used. The paired same-sample comparison
 decides: `REDIST` stays `v2.0` by default and the 4.3 rule is available behind the switch. Rule counts
 under 4.3: none_out 4,134, proportional 2,047, group 759, observed 556, next_man_up 394.
+
+### Slice 4.4: P(plays) by designation (built, in the weekly job)
+
+Pre-registered in `nfl_player_projections_job.py` (commit before the fit), measured on
+`player_game_availability`, REG games, offensive skill positions, played known from snap counts:
+
+| Designation | 2024+2025 (frozen) | 2024 | 2025 | Unknown (no complete snap file) |
+|---|---|---|---|---|
+| Questionable | 493 of 723 = 0.682 | 257 of 383 = 0.671 | 236 of 340 = 0.694 | 57 |
+| Doubtful | 0 of 84 | 0 of 63 | 0 of 21 | 18 |
+| Out | 0 of 602 | 0 of 241 | 0 of 361 | 138 |
+
+The 0.70 used until now came from all positions in 2025 (801 of 1,147); skill positions alone give 0.682.
+Out-of-sample check: the 2024 rate (0.671) scored on the 340 Questionable skill player-games of 2025 has
+Brier 0.2129 against 0.2124 for the flat 0.70, so the fitted rate is no better or worse at this sample;
+it is used because it is the measured rate for the population the job projects. Doubtful and Out stay
+removed (0 played in 686 known cases). The rate does not vary by anything else in this version
+(position, practice status and team were not fitted).

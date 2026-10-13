@@ -72,13 +72,13 @@ class Db(unittest.TestCase):
         entries, _ = self.week_rows(status)
         by = {e["player_id"]: e for e in entries if e["team"] == "A"}
         self.assertNotIn(3, by)                       # Out: no projection
-        self.assertEqual(0.70, by[2]["p_plays"])      # Questionable himself
+        self.assertEqual(0.682, by[2]["p_plays"])     # Questionable himself, fitted rate
         self.assertEqual({"base", "if_plays", "if_out"}, set(by[1]["scenarios"]))   # player 1's teammate 2 is Questionable
         plays = by[1]["scenarios"]["if_plays"]["tgt"][0]
         gone = by[1]["scenarios"]["if_out"]["tgt"][0]
         base = by[1]["scenarios"]["base"]["tgt"][0]
         self.assertGreater(gone, plays)               # 2 out, 3 out: player 1 gets the whole pool
-        self.assertAlmostEqual(0.7 * plays + 0.3 * gone, base)
+        self.assertAlmostEqual(0.682 * plays + 0.318 * gone, base)
 
     def test_write_week_stores_marcel_beside_v2_and_a_run_row(self):
         entries, _ = self.week_rows()
