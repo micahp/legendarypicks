@@ -180,3 +180,19 @@ goes the other way. With P_LOG: targets 2.141 vs 2.202, receptions 1.659 vs 1.68
 engine behaves like a median projection, and MAE rewards a median for right-skewed stats; the "bias" is
 largely that. Which one to publish is a product decision: the mean (P_LOG) is what P(over) and the team
 consistency check need; the gate as written (MAE) prefers the median. Not decided here.
+
+### Slice 4.1: game script from SPEC A's projected margin (built, not adopted)
+
+Rule pre-registered in `nfl_game_script.py` (22002fa): projected team targets and carries scaled by
+clamp(1 + B x margin, 0.75, 1.25), margin from SPEC A version 1 (the adopted model the weekly lock publishes,
+half_life 6, cap 14) walk-forward from earlier weeks only. The engine has no separate pass rate; targets and
+carries are its pass and rush volumes. Fitted on 2024 weeks 3 to 18 (480 team-games): B_tgt -0.00259 and
+B_car +0.00812 per point of margin (a 7-point favourite: targets -1.8%, carries +5.7%). On 2025 alone the
+slopes are +0.00130 and +0.00387, so the targets effect does not even keep its sign.
+
+2025 (`--run --script`): team MAE of targets 5.790 with the factor vs 5.784 without, carries 5.957 vs 5.939
+(480 team-games); player MAE targets 1.563 vs 1.562, receptions 1.209 vs 1.207, receiving yards 15.880 vs
+15.849 (n = 3,945). Gate against Marcel-lite still PASS, but parts (a) and (b) of the pre-registered rule
+fail, so it is **not adopted** (`SCRIPT_2024`, `--run --script` reproduce it). The live job does not attach
+margins. The 2026 SPEC A lock exists for week 5 only on the dev DB, so a live margin would also be missing for
+most weeks today.

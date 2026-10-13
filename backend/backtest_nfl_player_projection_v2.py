@@ -481,7 +481,7 @@ def main():
     ap.add_argument("--diagnose-bias", action="store_true")
     ap.add_argument("--fit-plog", action="store_true")
     ap.add_argument("--fit-script", action="store_true")
-    ap.add_argument("--script", action="store_true", help="--run with SPEC A margins attached (factor needs B_tgt/B_car)")
+    ap.add_argument("--script", action="store_true", help="--run with SPEC A margins and SCRIPT_2024 (not the default)")
     ap.add_argument("--plog", action="store_true", help="--run with P_LOG_2024 (not the default)")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
@@ -511,11 +511,12 @@ def main():
     if a.run:
         with_report = eng.History.load(con, [2024, 2025])
         plain = eng.History(with_report.rows, {})
+        over = {}
         if a.script:
             import nfl_game_script as gs
             with_report.margins = plain.margins = gs.margins_walk_forward(con, [2024, 2025])
-            team_volume_check(with_report, dict(eng.DEFAULTS))
-        over = {}
+            over.update(eng.SCRIPT_2024)
+            team_volume_check(with_report, dict(eng.DEFAULTS, **over))
         if a.redist:
             over["REDIST"] = a.redist
         if a.plog:
