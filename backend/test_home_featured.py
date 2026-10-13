@@ -105,9 +105,9 @@ class Base(unittest.TestCase):
 
 
 def offer(con, pid, line, n_sources, captured=RECENT, market="receiving_yards", league="nfl",
-          side="over", prefix="s"):
+          side="over", prefix="s", start="2026-10-18T17:00:00Z"):
     gid = con.execute("INSERT INTO prop_games(league,date,home,away,start_time) VALUES (?,?,?,?,?)",
-                      (league, "2026-10-18", "T01", "T00", "2026-10-18T17:00:00Z")).lastrowid
+                      (league, "2026-10-18", "T01", "T00", start)).lastrowid
     for k in range(n_sources):
         con.execute("INSERT INTO props(game_id,player_id,market,line,side,source,captured_at) "
                     "VALUES (?,?,?,?,?,?,?)", (gid, pid, market, line, side, "%s%d" % (prefix, k), captured))
@@ -124,6 +124,32 @@ class PropRule(Base):
         self.con.commit()
         p = self.payload()["prop"]
         self.assertEqual((p["player_id"], p["line"], p["sources"]), (2, 93.5, 11))
+
+    def test_a_finished_game_is_excluded_even_with_more_sources(self):
+        player(self.con, 1, "Played", 25)
+        player(self.con, 2, "Upcoming", 25)
+        player(self.con, 3, "NoStart", 25)
+        offer(self.con, 1, 120.5, 14, start="2026-10-13T00:15:00Z")    # kicked off before NOW
+        offer(self.con, 3, 130.5, 14, start=None)
+        offer(self.con, 2, 60.5, 8)
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 2)
+
+    def test_start_time_formats_compare_as_instants(self):
+        player(self.con, 1, "Just started", 25)
+        player(self.con, 2, "Just ahead", 25)
+        offer(self.con, 1, 120.5, 10, start="2026-10-13T11:59:00+00:00")
+        offer(self.con, 2, 60.5, 8, start="2026-10-13T12:00:30+00:00")
+        self.con.commit()
+        self.assertEqual(self.payload()["prop"]["player_id"], 2)
+
+    def test_null_when_only_finished_games_have_lines(self):
+        player(self.con, 1, "Played", 25)
+        offer(self.con, 1, 120.5, 14, start="2026-10-13T00:15:00Z")
+        self.con.commit()
+        out = self.payload()
+        self.assertIsNone(out["prop"])
+        self.assertEqual(out["absent"]["prop"], "no upcoming game has a widely offered receiving yards line")
 
     def test_consensus_line_beats_a_thin_outlier_line(self):
         player(self.con, 1, "Outlier", 25)
@@ -215,7 +241,7 @@ class PropRule(Base):
         out = self.payload()
         self.assertIsNone(out["prop"])
         self.assertIn("prop", out["absent"])
-        self.assertIn("5 sources", out["absent"]["prop"])
+        self.assertIn("widely offered", out["absent"]["prop"])
         self.assertIsNone(out["chain"]["player"])
         self.assertIn("chain.player", out["absent"])
 
