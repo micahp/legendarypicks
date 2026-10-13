@@ -81,7 +81,7 @@ export default function ProjectionRecord() {
                           const m = row[c.key]?.mae
                           return (
                             <td key={c.key} className={`py-1 text-right ${m === best && best !== null ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
-                              {typeof m === 'number' ? m.toFixed(s.digits) : '—'}
+                              {typeof m === 'number' ? m.toFixed(s.digits) : '-'}
                             </td>
                           )
                         })}

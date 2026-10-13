@@ -9,7 +9,7 @@ interface SlatePlayer {
 }
 interface Slate { season: number | null; week: number | null; weeks: number[]; players: SlatePlayer[] }
 
-const fmt = (v: number | undefined | null, d = 1) => (typeof v === 'number' ? v.toFixed(d) : '—')
+const fmt = (v: number | undefined | null, d = 1) => (typeof v === 'number' ? v.toFixed(d) : '-')
 const SHOWN = 40
 
 export default function NflProjections() {
@@ -83,7 +83,7 @@ export default function NflProjections() {
                       <td className="py-1.5 text-right text-zinc-400">{fmt(p.espn.rec_yds)}</td>
                       <td className="py-1.5 text-right text-zinc-400">{fmt(p.marcel.rec_yds)}</td>
                       <td className="px-4 py-1.5 text-right text-zinc-500">
-                        {typeof p.p_plays === 'number' ? `${Math.round(p.p_plays * 100)}%` : '—'}
+                        {typeof p.p_plays === 'number' ? `${Math.round(p.p_plays * 100)}%` : '-'}
                       </td>
                     </tr>
                   ))}

@@ -35,7 +35,7 @@ describe('ProjectionRecord', () => {
     const { container } = render(<ProjectionRecord />)
     await waitFor(() => expect(container.querySelector('[data-record-week="7"]')).not.toBeNull())
     expect(Array.from(container.querySelectorAll('tbody td')).map(td => td.textContent))
-      .toEqual(['Receptions', '1.20', '1.30', '—', '5'])
+      .toEqual(['Receptions', '1.20', '1.30', '-', '5'])
   })
 
   it('reports a load failure', async () => {

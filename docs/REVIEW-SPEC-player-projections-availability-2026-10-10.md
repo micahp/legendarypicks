@@ -15,7 +15,7 @@ B4–B8 are not implemented in this candidate: there is no “without” props A
 
 ## Findings
 
-### P1 — A partially observed game can be treated as a complete snap feed
+### P1: A partially observed game can be treated as a complete snap feed
 
 The availability builder considers a game complete when it sees at least one snap row for each scheduled team, then assigns played=0 to a candidate without a snap row in a final game. It does not establish that the game’s full publisher snap population was resolved. The snap ingest accounts for unresolved source rows, but those rows do not make this builder’s two-team test fail. A player whose snap identity was unresolved or whose row is missing can therefore be classified as not having played.
 
@@ -25,7 +25,7 @@ Evidence: [availability completeness and classification](../backend/migrate_play
 
 **Required before promotion:** establish and enforce per-game publisher completeness, including unresolved rows. Keep played=NULL for any game that fails that proof; add a fixture with incomplete rows on both teams.
 
-### P1 — The recurring availability refresh never rebuilds the derived table
+### P1: The recurring availability refresh never rebuilds the derived table
 
 The weekly refresh ingests weekly stats, snap counts, and injuries, then exits. It does not run the availability builder with --build, and no other recurring invocation was found in the candidate. As those inputs change, player_game_availability can remain stale.
 
@@ -33,7 +33,7 @@ Evidence: [weekly input refresh](../scripts/nfl-availability.sh#L52), [availabil
 
 **Required before promotion:** run the build after all its inputs refresh in the same scheduled workflow, and make a build failure fail that workflow visibly.
 
-### P1 — B1 omits log-only player-games
+### P1: B1 omits log-only player-games
 
 The candidate set is the union of snap rows and injury reports, but the spec requires an availability row for players appearing in snaps, logs, or injury reports. A log-only player-game is absent from the table rather than represented with unknown availability.
 
@@ -41,7 +41,7 @@ This should not turn a log into proof that a player played: the existing contrac
 
 Evidence: [candidate construction](../backend/migrate_player_game_availability.py#L180), [B1 row population](SPEC-player-projections-availability-2026-10-09.md#L56), [logs are not presence](SPEC-player-projections-availability-2026-10-09.md#L33).
 
-### P1 — B3 uses recorded stat logs as the player-game universe
+### P1: B3 uses recorded stat logs as the player-game universe
 
 splits() starts from player_game_logs. The spec explicitly notes that a log means the player recorded a stat, not that the player appeared; a player who played but recorded no logged stat may have no row. Such games cannot appear in the matched, contradicted, or unknown counts, and prop history for a no-stat game may be omitted from the shared filtering logic.
 
@@ -49,7 +49,7 @@ Evidence: [splits game selection](../backend/player_splits.py#L23), [presence co
 
 **Required before B4 consumes this helper:** define a complete game universe for the player/prop sample, and preserve missing availability as unknown rather than silently dropping the game.
 
-### P2 — The team-week publisher cache can be stale indefinitely
+### P2: The team-week publisher cache can be stale indefinitely
 
 fetch_team_file() downloads only when the cache path does not exist. The DEV daily job invokes the share builder, but a cached file is not refreshed or expiry-checked, so newer weekly publisher data can be missed. The focused cache test currently codifies reuse of any existing file.
 
