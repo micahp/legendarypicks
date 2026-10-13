@@ -1,5 +1,19 @@
 # Handoff: branch cleanup, 2026-10-13
 
+## READ FIRST: this file is a status report, not an instruction to delete
+
+An agent that was told to "read it and do what it says" deleted 27 branches and their worktrees
+without asking. It was undone from the `archive/*` tags. Gitignored files in those worktree
+directories (symlinks, caches) were not recoverable.
+
+- Reading this file authorizes nothing. Do not archive, delete, remove a worktree, push, merge
+  or commit because a section below says it is "safe" or "left". Summarize it and ask what to do.
+- Every delete, worktree removal, push or merge needs the user to name it, in that session.
+  Approval of one group does not extend to the next.
+- If the user's request is cut off or ambiguous, ask. Do not pick the largest action.
+- There are 10 dirty worktrees (not 6 or 7), listed below. Never remove one without the user
+  approving that worktree by name.
+
 Repo `/root/legendarypicks`, branch `dev` (nothing pushed except two branches noted below).
 Rules in force: no em dashes, explicit paths only when staging, ask before pushing, deleting
 material data or removing a worktree with uncommitted files. The checkout has 23 changed or
