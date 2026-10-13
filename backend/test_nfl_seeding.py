@@ -32,6 +32,10 @@ class Builder:
         else:
             self.games.append((self.wk, loser, winner, 17.0, 24.0))
 
+    def tie(self, home, away, pts=20.0):
+        self.wk += 1
+        self.games.append((self.wk, home, away, pts, pts))
+
     def record(self, team, wins, losses):
         for _ in range(wins):
             self.game(team, "XAA")
@@ -112,6 +116,103 @@ class Seeding(unittest.TestCase):
         got = sd.seeds_for_conference(t, "NFC")
         self.assertEqual(got, [(1, "N1"), (2, "E1"), (3, "S1"), (4, "W1"),
                                (5, "E2"), (6, "N2"), (7, "S2")])
+
+
+class Ties(unittest.TestCase):
+    """A tie is half a win and half a loss in the overall, division, conference and common-games
+    records (nfl.com tiebreaking procedures). The simulation can now produce ties, so these pin
+    the engine's handling of them. Each was checked to fail with ties counted as nothing."""
+
+    def rest(self, b):
+        b.record("N1", 11, 6)
+        b.record("N2", 8, 9)
+        b.record("S1", 9, 8)
+        b.record("S2", 8, 9)
+        b.record("W1", 8, 9)
+        b.record("W2", 6, 11)
+        return b
+
+    def test_half_win_from_a_tie_decides_the_division_with_no_tiebreak(self):
+        # E1 9-8 (.529), E2 9-7-1 (.559). Counting the tie as nothing would make them 9/17 each.
+        b = Builder()
+        b.record("E1", 9, 8)
+        b.record("E2", 9, 7)
+        b.tie("E2", "XAA")
+        b.record("E3", 4, 13)
+        t = self.rest(b).teams()
+        self.assertEqual(t["E2"].record(), (9, 7, 1))
+        self.assertAlmostEqual(t["E2"].pct, 9.5 / 17)
+        got = sd.seeds_for_conference(t, "NFC")
+        self.assertIn("E2", [c for s, c in got if s <= 4])
+        self.assertNotIn("E1", [c for s, c in got if s <= 4])
+
+    def test_head_to_head_with_a_tie_game(self):
+        # Both 9-7-1. They tied once and E2 beat E1 once: head-to-head E2 1-0-1 (.750) against
+        # E1 0-1-1 (.250), so E2 wins the East even though E1 is alphabetically first.
+        b = Builder()
+        b.tie("E1", "E2")
+        b.game("E2", "E1")
+        b.record("E1", 9, 6)
+        b.record("E2", 8, 7)
+        b.record("E3", 4, 13)
+        t = self.rest(b).teams()
+        self.assertEqual(t["E1"].record(), (9, 7, 1))
+        self.assertEqual(t["E2"].record(), (9, 7, 1))
+        self.assertEqual(st.head_to_head(t["E2"], t["E1"]), (1, 0, 1))
+        self.assertEqual(sd._h2h([t["E1"], t["E2"]], t), {"E1": 0.25, "E2": 0.75})
+        got = sd.seeds_for_conference(t, "NFC")
+        self.assertIn("E2", [c for s, c in got if s <= 4])
+
+    def test_division_record_counts_a_tie_half(self):
+        # E2 and E3 both 9-7-1 and never met. Division record: E3 tied E1 (0-0-1, .500), E2 lost
+        # to E1 (0-1-0, .000), so E3 wins the East.
+        b = Builder()
+        b.tie("E1", "E3")
+        b.game("E1", "E2")
+        b.record("E1", 1, 15)
+        b.record("E2", 9, 6)
+        b.tie("E2", "XBB")
+        b.record("E3", 9, 7)
+        t = self.rest(b).teams()
+        self.assertEqual(t["E2"].record(), (9, 7, 1))
+        self.assertEqual(t["E3"].record(), (9, 7, 1))
+        self.assertEqual(st.division_record(t["E3"], t), (0, 0, 1))
+        self.assertEqual(sd._division([t["E2"], t["E3"]], t), {"E2": 0.0, "E3": 0.5})
+        got = sd.seeds_for_conference(t, "NFC")
+        self.assertIn("E3", [c for s, c in got if s <= 4])
+        self.assertNotIn("E2", [c for s, c in got if s <= 4])
+
+    def test_conference_record_counts_a_tie_half_for_a_wild_card(self):
+        # N2 and S2 both 8-8-1, different divisions, never met. Conference record: N2 tied W2
+        # (.500), S2 lost to W2 (.000; its tie was against the AFC), so N2 is seeded above S2.
+        b = Builder()
+        b.record("E1", 10, 7)
+        b.record("E2", 9, 8)
+        b.record("E3", 4, 13)
+        b.record("N1", 11, 6)
+        b.tie("N2", "W2")
+        b.record("N2", 8, 8)
+        b.game("W2", "S2")
+        b.tie("S2", "XAA")
+        b.record("S2", 8, 7)
+        b.record("S1", 9, 8)
+        b.record("W1", 8, 9)
+        b.record("W2", 5, 10)
+        t = b.teams()
+        self.assertEqual(t["N2"].record(), (8, 8, 1))
+        self.assertEqual(t["S2"].record(), (8, 8, 1))
+        self.assertEqual(sd._conference([t["N2"], t["S2"]], t), {"N2": 0.5, "S2": 0.0})
+        got = dict((c, s) for s, c in sd.seeds_for_conference(t, "NFC"))
+        self.assertEqual(got.get("N2"), 6)
+        self.assertEqual(got.get("S2"), 7)
+
+    def test_common_games_record_counts_a_tie_half(self):
+        b = Builder()
+        b.tie("E1", "XAA")
+        b.game("XAA", "E2")
+        t = b.teams()
+        self.assertEqual(st.common_games_record(t["E1"], t["E2"], t, minimum=1), (0, 0, 1))
+        self.assertEqual(sd._common(1)([t["E1"], t["E2"]], t), {"E1": 0.5, "E2": 0.0})
 
 
 class Flags(unittest.TestCase):
