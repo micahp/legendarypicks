@@ -6,12 +6,14 @@ cannot be computed is null and `absent` names it with a reason; the frontend hid
 card instead of drawing a placeholder.
 
 Selection rules
-  prop       Among NFL 'over' props whose latest line was captured within the last 36 hours, keep one
-             row per (player, market): the latest capture (ties: highest props.id). Its history is
-             routers/props.py prop_history, called as is, so hit rates and games equal the chart on the
-             prop board. Keep those with at least 20 settled games (hit_rate_n.season). Pick the most
-             settled games; ties by most recent capture, then lowest player id, then market name.
-             prop_history reads at most 100 games, so 100 is the ceiling of "most".
+  prop       Market receiving_yards, side over, NFL props captured in the last 36 hours. For each
+             player take the line offered by the most distinct sources (ties: the most recently
+             captured line, then the higher line). Keep players whose line has at least 8 distinct
+             sources and at least 20 settled games of history (hit_rate_n.season, from
+             routers/props.py prop_history, called as is so hit rates and games equal the prop board
+             chart). Pick the highest line; ties by more sources, then lowest player id. If nobody
+             qualifies, relax once to at least 5 sources; if still nobody, the prop is null and
+             `absent` says why. prop_history reads at most 100 games.
   game       Adopted model only (nfl_model.ADOPTED, label 'v1 points'), locked = 1. The most recent
              game (by gameday, gametime, game_id) with a final score in nfl_schedule and a row in
              projection_grades; if none, the next locked game not yet final whose kickoff is not in
@@ -53,6 +55,8 @@ router = APIRouter()
 PROP_LEAGUE = "nfl"
 PROP_WINDOW_HOURS = 36
 PROP_MIN_GAMES = 20
+PROP_MARKET = "receiving_yards"
+PROP_MIN_SOURCES = (8, 5)      # the rule, then its one stated relaxation
 CHART_GAMES = 20
 PLAYOFF_TOP_N = 5
 
@@ -87,31 +91,45 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
     rows = con.execute(
         "SELECT p.id, p.player_id, p.market, p.line, p.captured_at, p.source, p.game_id "
         "FROM props p JOIN prop_games g ON g.id = p.game_id "
-        "WHERE g.league = ? AND p.side = 'over' AND p.captured_at >= ? AND p.player_id IS NOT NULL "
-        "ORDER BY p.captured_at, p.id", (PROP_LEAGUE, cutoff)).fetchall()
-    latest: Dict[Any, Any] = {}
-    for r in rows:                       # ascending, so the last write per key is the latest
-        latest[(r[1], r[2])] = r
+        "WHERE g.league = ? AND p.market = ? AND p.side = 'over' AND p.captured_at >= ? "
+        "AND p.player_id IS NOT NULL ORDER BY p.captured_at, p.id",
+        (PROP_LEAGUE, PROP_MARKET, cutoff)).fetchall()
+    # Per player and line: the distinct sources offering it and its latest capture row.
+    lines: Dict[Any, Dict[str, Any]] = {}
+    for r in rows:                       # ascending, so the last row per line is the latest
+        d = lines.setdefault((r[1], float(r[3])), {"sources": set(), "row": r})
+        if r[5]:
+            d["sources"].add(r[5])
+        d["row"] = r
+    # One line per player: most sources, then latest capture, then the higher line.
+    consensus: Dict[Any, Any] = {}
+    for (player_id, line), d in lines.items():
+        stamp = _parse_ts(d["row"][4])
+        key = (len(d["sources"]), stamp.timestamp() if stamp else 0.0, line)
+        if player_id not in consensus or key > consensus[player_id][0]:
+            consensus[player_id] = (key, d["row"], len(d["sources"]))
     best = None
-    best_key = None
-    for (player_id, market), r in latest.items():
-        h = props_router.prop_history(player_id=player_id, market=market, line=float(r[3]),
-                                      side="over", league=PROP_LEAGUE)
-        if h.get("error") or not h.get("games"):
-            continue
-        n = h["hit_rate_n"]["season"]
-        if n < PROP_MIN_GAMES:
-            continue
-        # sort ascending on: -games, newest capture first, lowest player id, market
-        stamp = _parse_ts(r[4])
-        key = (-n, -(stamp.timestamp() if stamp else 0.0), player_id, market)
-        if best_key is None or key < best_key:
-            best, best_key = (r, h), key
+    for min_sources in PROP_MIN_SOURCES:
+        ranked = []
+        for player_id, (key, r, n_src) in consensus.items():
+            if n_src < min_sources:
+                continue
+            h = props_router.prop_history(player_id=player_id, market=PROP_MARKET, line=float(r[3]),
+                                          side="over", league=PROP_LEAGUE)
+            if h.get("error") or not h.get("games") or h["hit_rate_n"]["season"] < PROP_MIN_GAMES:
+                continue
+            # highest line first, then more sources, then lowest player id
+            ranked.append(((-float(r[3]), -n_src, player_id), r, h, n_src))
+        if ranked:
+            _, r0, h0, n0 = min(ranked, key=lambda t: t[0])
+            best = (r0, h0, n0)
+            break
     if best is None:
         return {"prop": None, "history": None,
-                "reason": "no NFL prop line captured in the last %d hours has %d settled games"
-                          % (PROP_WINDOW_HOURS, PROP_MIN_GAMES)}
-    r, h = best
+                "reason": "no NFL %s over line captured in the last %d hours is offered by at least %d "
+                          "sources for a player with %d settled games"
+                          % (PROP_MARKET, PROP_WINDOW_HOURS, PROP_MIN_SOURCES[-1], PROP_MIN_GAMES)}
+    r, h, n_sources = best
     game = con.execute("SELECT home, away, date, start_time FROM prop_games WHERE id = ?",
                        (r[6],)).fetchone()
     recent = list(reversed(h["games"][:CHART_GAMES]))      # oldest first for the chart
@@ -123,7 +141,8 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
         "hit_rate": h["hit_rate"], "hit_rate_n": h["hit_rate_n"],
         "games": [{"date": g["date"], "opponent": g["opponent"], "home": g["home"],
                    "value": g["value"], "hit": g["hit"]} for g in recent],
-        "source": {"line": "props board, source %s" % (r[5] or "unknown"),
+        "sources": n_sources,
+        "source": {"line": "props board, offered by %d sources" % n_sources,
                    "history": "player game logs via /api/props/history",
                    "as_of": r[4]},
     }
@@ -321,7 +340,7 @@ def featured_payload(con, now: Optional[dt.datetime] = None) -> Dict[str, Any]:
             "absent": absent}
 
 
-# Selecting the prop reads a game log per candidate (about 2.5 s on the dev DB), so the response is
+# Selecting the prop reads a game log per qualifying player (about 0.3 s on the dev DB), so the response is
 # kept for CACHE_SECONDS. This is a speed-up for an identical read, not a source of truth: the next
 # request after expiry recomputes from the database.
 CACHE_SECONDS = 300
