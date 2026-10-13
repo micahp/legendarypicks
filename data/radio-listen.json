@@ -6,7 +6,8 @@
   "mlb": "Flagship = the team's most-listed English AM/FM station in MLB StatsAPI hydrate=broadcasts, 2026-09-01..10-07. Matched to a TuneIn or iHeart station whose own call sign AND frequency equal the published ones; page answered 200.",
   "nba": "Flagship from data/radio-team-sports.json (2026-08-06 list) plus four teams checked against team sites 10-07 (MEM, OKC, CHI, POR). Same call sign + frequency match. The NBA schedule feed (cdn.nba.com) answers 403 to the server, so this is not refreshed from a league feed yet. IND corrected 10-07: the list's WIBC main signal is news/talk; the Pacers are on WFNI 1070 / 107.5 The Fan (heard: WIBC was airing a political talk show during the game).",
   "missing": "No verified player: MLB BAL, KC, MIL, TOR; NBA CHA, DEN, MIL, SAC, TOR. These teams render no listen link.",
-  "stream": "Each `stream` is the publisher's own direct HTTPS audio, played in the page by a plain <audio> element like the World Cup player (ListenLive WC_STREAM); nothing is relayed through LP. Taken from the same station's iHeart API streams or TuneIn Tune.ashx list, MP3 preferred, session parameters dropped, and kept only when ffprobe read an audio stream from it (2026-10-07). `href` stays as the publisher page it came from."
+  "stream": "Each `stream` is the publisher's own direct HTTPS audio, played in the page by a plain <audio> element like the World Cup player (ListenLive WC_STREAM); nothing is relayed through LP. Taken from the same station's iHeart API streams or TuneIn Tune.ashx list, MP3 preferred, session parameters dropped, and kept only when ffprobe read an audio stream from it (2026-10-07). `href` stays as the publisher page it came from.",
+  "mls": "Seven direct MLS station streams verified with ffprobe on 2026-10-13; marked-verified feeds that timed out or resolved only as HLS playlists are omitted from this plain audio player."
  },
  "nhl": {
   "ANA": {
@@ -676,6 +677,57 @@
    "provider": "iHeart",
    "stream": "https://live.amperwave.net/direct/audacy-wtemammp3-imc",
    "codec": "mp3"
+  }
+ },
+ "mls": {
+  "CLT": {
+   "label": "Sports Radio WFNZ",
+   "station": "Sports Radio WFNZ (WFNZ-AM 92.7 FM)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WFNZAMAAC.aac",
+   "codec": "aac"
+  },
+  "COL": {
+   "label": "Altitude Sports Radio",
+   "station": "Altitude Sports Radio (KKSE-FM 94.9)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/KKSEFMAAC.aac",
+   "codec": "aac"
+  },
+  "MTL": {
+   "label": "TSN 690",
+   "station": "TSN 690 (CKGM-AM)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/CKGMAMAAC.aac",
+   "codec": "aac"
+  },
+  "NE": {
+   "label": "98.5 The Sports Hub",
+   "station": "98.5 The Sports Hub (WBZ-FM)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WBZFMAAC.aac",
+   "codec": "aac"
+  },
+  "NSH": {
+   "label": "104.5 The Zone",
+   "station": "104.5 The Zone (WGFX-FM)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WGFXFMAAC.aac",
+   "codec": "aac"
+  },
+  "PHI": {
+   "label": "97.5 The Fanatic",
+   "station": "97.5 The Fanatic (WPEN-FM)",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/WPENFMAAC.aac",
+   "codec": "aac"
+  },
+  "SJ": {
+   "label": "KSFO 810 AM",
+   "station": "KSFO 810 AM",
+   "provider": "StreamTheWorld",
+   "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/KSFOAMAAC.aac",
+   "codec": "aac"
   }
  }
 }

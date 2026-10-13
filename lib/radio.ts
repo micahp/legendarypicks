@@ -135,6 +135,7 @@ function mlsRadioCode(team?: string | null): string | null {
 
   const lower = value.toLocaleLowerCase('en-US')
   for (const [code, entry] of Object.entries(MLS_RADIO_DIRECTORY)) {
+    if (typeof entry.name !== 'string') continue
     if (entry.name.toLocaleLowerCase('en-US') === lower
       || entry.aliases?.some(alias => alias.toLocaleLowerCase('en-US') === lower)) {
       return code
