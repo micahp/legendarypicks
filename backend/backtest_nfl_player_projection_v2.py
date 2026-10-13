@@ -263,6 +263,57 @@ def fit_plog(hist, season=2024):
     return table
 
 
+def fit_script(hist, season=2024):
+    """B_tgt and B_car, PRE-REGISTERED in nfl_game_script.py. Least squares without intercept of
+    (actual / projected team volume - 1) on the team's projected margin, weeks 3 to 18."""
+    p = dict(eng.DEFAULTS)
+    out = {}
+    for col in ("tgt", "car"):
+        sxy = sxx = 0.0
+        n = 0
+        for (s, team), weeks in hist.team_weeks.items():
+            if s != season:
+                continue
+            for w in sorted(weeks):
+                if w < 3 or w > 18:
+                    continue
+                rows = hist.by_team[(s, team)][w]
+                m = hist.margins.get((s, rows[0].game_id, team))
+                vol = hist.team_volume(s, team, rows[0].opp, w, col, p["K_T"])
+                if m is None or not vol:
+                    continue
+                y = hist.team_game(s, team, w, col) / vol - 1.0
+                sxy += m * y
+                sxx += m * m
+                n += 1
+        out[col] = sxy / sxx
+        print("B_%s season %s: %+.5f per point of margin over %d team-games" % (col, season, out[col], n))
+    return out
+
+
+def team_volume_check(hist, p, season=2025):
+    """Team-level MAE of projected targets and carries with and without the script factor (gate part a)."""
+    for col in ("tgt", "car"):
+        e0 = e1 = 0.0
+        n = 0
+        for (s, team), weeks in hist.team_weeks.items():
+            if s != season:
+                continue
+            for w in sorted(weeks):
+                if w < 3 or w > 18:
+                    continue
+                rows = hist.by_team[(s, team)][w]
+                vol = hist.team_volume(s, team, rows[0].opp, w, col, p["K_T"])
+                if vol is None:
+                    continue
+                f = eng.script_factor(hist, s, rows[0].game_id, team, col, p)
+                actual = hist.team_game(s, team, w, col)
+                e0 += abs(vol - actual)
+                e1 += abs(vol * f - actual)
+                n += 1
+        print("team %s %s, %d team-games: MAE without script %.3f, with %.3f" % (col, season, n, e0 / n, e1 / n))
+
+
 def bootstrap_diff(diffs, seed=7, n=2000):
     rng = random.Random(seed)
     m = len(diffs)
@@ -429,12 +480,20 @@ def main():
     ap.add_argument("--fit-nmu", action="store_true")
     ap.add_argument("--diagnose-bias", action="store_true")
     ap.add_argument("--fit-plog", action="store_true")
+    ap.add_argument("--fit-script", action="store_true")
+    ap.add_argument("--script", action="store_true", help="--run with SPEC A margins attached (factor needs B_tgt/B_car)")
     ap.add_argument("--plog", action="store_true", help="--run with P_LOG_2024 (not the default)")
     ap.add_argument("--redist", choices=("v2.0", "4.3"), help="redistribution rule for --run (default: engine's)")
     a = ap.parse_args()
     con = connect()
     if a.fit:
         fit(eng.History.load(con, [2024]))
+    if a.fit_script:
+        import nfl_game_script as gs
+        h = eng.History.load(con, [2024, 2025])
+        h.margins = gs.margins_walk_forward(con, [2024, 2025])
+        fit_script(h)
+        fit_script(h, season=2025)
     if a.fit_plog:
         fit_plog(eng.History.load(con, [2024]))
         fit_plog(eng.History.load(con, [2024, 2025]), season=2025)
@@ -452,6 +511,10 @@ def main():
     if a.run:
         with_report = eng.History.load(con, [2024, 2025])
         plain = eng.History(with_report.rows, {})
+        if a.script:
+            import nfl_game_script as gs
+            with_report.margins = plain.margins = gs.margins_walk_forward(con, [2024, 2025])
+            team_volume_check(with_report, dict(eng.DEFAULTS))
         over = {}
         if a.redist:
             over["REDIST"] = a.redist

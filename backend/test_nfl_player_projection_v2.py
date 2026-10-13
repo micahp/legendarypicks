@@ -190,6 +190,29 @@ class PLog(unittest.TestCase):
         self.assertAlmostEqual(10 * 0.5 / 0.75, res["tgt"])
 
 
+class GameScript(unittest.TestCase):
+    def hist(self):
+        rows = []
+        for w in (1, 2, 3):
+            rows += [row(1, w, 5), row(2, w, 5), row(9, w, 10, team="B")]
+        return build(rows)
+
+    def test_margin_scales_team_volume_by_the_fitted_slope(self):
+        h = self.hist()
+        h.margins[(2025, gid(4), "A")] = 7.0
+        q = dict(P, REDIST="v2.0", B_tgt=-0.01)
+        res = mod.project(h, 2025, 4, 1, "WR", "A", "B", gid(4), q)
+        self.assertAlmostEqual(10 * 0.5 * (1 - 0.07), res["tgt"])   # a favourite throws less
+
+    def test_factor_is_clamped_and_off_without_a_margin_or_slope(self):
+        h = self.hist()
+        h.margins[(2025, gid(4), "A")] = 40.0
+        self.assertEqual(0.75, mod.script_factor(h, 2025, gid(4), "A", "tgt", {"B_tgt": -0.05}))
+        self.assertEqual(1.25, mod.script_factor(h, 2025, gid(4), "A", "car", {"B_car": 0.05}))
+        self.assertEqual(1.0, mod.script_factor(h, 2025, gid(4), "A", "tgt", {"B_tgt": None}))
+        self.assertEqual(1.0, mod.script_factor(h, 2025, gid(5), "A", "tgt", {"B_tgt": -0.05}))
+
+
 class Load(unittest.TestCase):
     """History.load against a real-shaped database: schedule teams are LAR and WSH, the game id says LA."""
 

@@ -61,7 +61,7 @@ RECEIVING = ("tgt", (("rec", "rec"), ("rec_yds", "rec_yds"), ("rec_td", "rec_td"
 RUSHING = ("car", (("rush_yds", "rush_yds"), ("rush_td", "rush_td")))
 
 P_LOG_2024 = {"10": 0.343, "11": 0.596, "20": 0.505, "21": 0.801, "31": 0.917}
-DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0", "P_LOG": None,
+DEFAULTS = {"H": 8.0, "K_S": 1.0, "K_T": 8.0, "OTHER": 0.0424, "NMU_tgt": 0.590, "NMU_car": 0.519, "REDIST": "v2.0", "P_LOG": None, "B_tgt": None, "B_car": None,
             "K_CR": 80.0, "K_YPT": 160.0, "K_TDT": 160.0, "K_YPC": 160.0, "K_TDC": 320.0}
 # Frozen 2026-10-12 from backtest_nfl_player_projection_v2.py --fit (2024 only, 3,298 player-games).
 # H, K_T, K_YPT, K_YPC and K_TDC sit on the edge of their pre-registered grids: the true optimum may be beyond.
@@ -112,6 +112,7 @@ class History(object):
             self.team_weeks[(r.season, r.team)].add(r.week)
         self._team_game = {}
         self._memo = {}
+        self.margins = {}   # (season, game_id, team) -> SPEC A projected margin (nfl_game_script); empty = none
 
     @classmethod
     def load(cls, con, seasons):
@@ -445,7 +446,16 @@ def opportunities(hist, season, week, pid, pos, team, opp, game_id, opp_col, p, 
     sh = hist.share(season, week, team, pid, pos, opp_col, p, game_id, caches if caches is not None else {})
     if vol is None or sh is None:
         return None
-    return vol * sh[0], sh[1]
+    return vol * script_factor(hist, season, game_id, team, opp_col, p) * sh[0], sh[1]
+
+
+def script_factor(hist, season, game_id, team, col, p):
+    """Spec B 4.1 game script, rule pre-registered in nfl_game_script.py: clamp(1 + B_col * margin)."""
+    b = p.get("B_" + col)
+    margin = hist.margins.get((season, game_id, team))
+    if b is None or margin is None:
+        return 1.0
+    return min(1.25, max(0.75, 1.0 + b * margin))
 
 
 _EFF_K = {"rec": "K_CR", "rec_yds": "K_YPT", "rec_td": "K_TDT", "rush_yds": "K_YPC", "rush_td": "K_TDC"}
