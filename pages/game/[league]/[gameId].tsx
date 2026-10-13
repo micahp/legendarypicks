@@ -19,7 +19,6 @@ import { useGameProps } from '../../../components/Game/useGameProps'
 import WCContext from '../../../components/Game/WCContext'
 import BoothFeed from '../../../components/Game/BoothFeed'
 import ListenLive, { LCUP_PAGE } from '../../../components/ListenLive'
-import RadioSources from '../../../components/RadioSources'
 import { RADIO_LABELS, radioForMatchup } from '../../../lib/radio'
 import { SHOW_BOOTH } from '../../../lib/featureFlags'
 
@@ -378,11 +377,9 @@ export default function GameDetailPage() {
           (verified streams only) and relayed to MP3 by /api/stream/<key>.
           Renders only when one of the two clubs has a verified station —
           an unverified stream is never offered. */}
-      {lg === 'wc' ? <ListenLive /> : radioMatch ? (
+      {lg === 'wc' ? <ListenLive /> : lg === 'lcup' && radioMatch ? (
         <ListenLive streamUrl={radioMatch.streamUrl} streamPageUrl={LCUP_PAGE} label={RADIO_LABELS[radioMatch.key] || 'English radio (free)'} />
       ) : null}
-      {lg === 'mls' && <RadioSources home={ctx?.home_team} away={ctx?.away_team} />}
-
       {/* Game context: WC gets the broadcast+market+form summary; others the AI matchup story */}
       {league && gameId && (lg === 'wc'
         ? <WCContext gameId={gameId} />

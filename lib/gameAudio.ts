@@ -18,7 +18,7 @@ export interface GameAudio {
   team: string
   label: string
   station: string
-  href: string
+  href?: string
   provider: string
   /** Direct HTTPS audio from the publisher, played in the page. */
   stream: string
@@ -27,8 +27,8 @@ export interface GameAudio {
   display: string
 }
 
-type LeagueKey = 'nhl' | 'mlb' | 'nba'
-type Entry = { label: string; station: string; href: string; provider: string; stream?: string }
+type LeagueKey = 'nhl' | 'mlb' | 'nba' | 'mls'
+type Entry = { label: string; station: string; href?: string; provider: string; stream?: string }
 const TABLE = listen as unknown as Record<LeagueKey, Record<string, Entry>>
 
 // The scoreboard has used both spellings for these clubs.
