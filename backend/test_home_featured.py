@@ -213,6 +213,21 @@ class GameRule(Base):
         self.assertEqual(g["pick"]["line"], 3.0)
         self.assertEqual(g["home_name"], "Team 01")
 
+    def test_record_counts_the_adopted_model_against_the_line(self):
+        lock_game(self.con, "r1", "2026-10-04", 20, 17)
+        lock_game(self.con, "r2", "2026-10-11", 23, 30)
+        lock_game(self.con, "r3", "2026-10-12", 10, 3, version="nfl-v1 cap=21.0 sigma=13.4")
+        self.con.execute("UPDATE projection_grades SET ats_result='loss' WHERE game_id='r1'")
+        self.con.commit()
+        rec = self.payload()["record"]
+        self.assertEqual((rec["win"], rec["loss"], rec["push"], rec["games"]), (1, 1, 0, 2))
+
+    def test_record_is_null_with_no_grades(self):
+        lock_game(self.con, "r1", "2026-10-25", None, None)
+        out = self.payload()
+        self.assertIsNone(out["record"])
+        self.assertIn("record", out["absent"])
+
     def test_falls_back_to_next_upcoming_locked_game(self):
         lock_game(self.con, "u1", "2026-10-25", None, None)
         lock_game(self.con, "u2", "2026-10-18", None, None)
