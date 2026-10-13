@@ -153,6 +153,18 @@ class WithoutFilter(unittest.TestCase):
         self.assertEqual([], res["games"])
         self.assertEqual(5, res["n_excluded_unknown"])
 
+    def test_undated_logs_are_ordered_newest_first_by_season_and_week(self):
+        # Prod's 2024 and 2025 NFL logs have no game_date (25,000 rows on 2026-10-13). ORDER BY
+        # game_date alone leaves them in storage order, oldest first, and the LIMIT keeps the wrong ones.
+        con = sqlite3.connect(self.path)
+        con.execute("UPDATE player_game_logs SET game_date=NULL")
+        con.commit()
+        con.close()
+        res = props.prop_history(player_id=1, market="receiving_yards", line=40.5, side="over",
+                                 league="nfl", without=None, with_=None)
+        self.assertEqual([10, 70, 30, 90, 50], [g["value"] for g in res["games"]])
+        self.assertEqual([""] * 5, [g["date"] for g in res["games"]])
+
     # -- /api/props/player/{id}/history ------------------------------------------------------
 
     def test_player_history_filters_props_by_game(self):

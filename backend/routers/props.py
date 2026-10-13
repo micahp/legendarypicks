@@ -558,12 +558,14 @@ def prop_history(player_id: int = Query(...),
         else:
             # Get game logs with this stat, most recent first. One row per
             # appearance comes from the view, so there is nothing to dedupe here.
+            # Undated rows (prod's 2024 and 2025 NFL logs) sort after dated ones; season and
+            # game number then keep them newest first instead of in storage order.
             rows = con.execute(
                 f"""SELECT game_id, game_date, opponent, home_away, {val_expr} AS val
                       FROM player_game_logs_all
                      WHERE player_id=? AND league IN ({league_placeholders})
                        AND {where_clause}{_PLAYED}
-                     ORDER BY game_date DESC{'' if filtering else ' LIMIT 100'}""",
+                     ORDER BY game_date DESC, season DESC, CAST(game_no AS INTEGER) DESC{'' if filtering else ' LIMIT 100'}""",
                 (player_id, *log_leagues)
             ).fetchall()
         if filtering:
