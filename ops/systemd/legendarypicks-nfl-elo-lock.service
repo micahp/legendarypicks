@@ -1,0 +1,12 @@
+[Unit]
+Description=Lock NFL games with the v1 + Elo stack, 90 minutes before kickoff
+After=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Nice=10
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+ExecStart=/root/legendarypicks/backend/venv/bin/python lock_nfl_elo.py --apply
+TimeoutStartSec=900
