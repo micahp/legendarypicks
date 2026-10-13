@@ -91,11 +91,13 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
     """Return {'prop': dict or None, 'reason': str or None, 'history': raw prop_history or None}."""
     cutoff = _iso(now - dt.timedelta(hours=PROP_WINDOW_HOURS))
     rows = con.execute(
-        "SELECT p.id, p.player_id, p.market, p.line, p.captured_at, p.source, p.game_id "
+        "SELECT p.id, p.player_id, p.market, p.line, p.captured_at, p.source, p.game_id, g.start_time "
         "FROM props p JOIN prop_games g ON g.id = p.game_id "
         "WHERE g.league = ? AND p.market = ? AND p.side = 'over' AND p.captured_at >= ? "
-        "AND g.start_time > ? AND p.player_id IS NOT NULL ORDER BY p.captured_at, p.id",
-        (PROP_LEAGUE, PROP_MARKET, cutoff, _iso(now))).fetchall()
+        "AND g.start_time IS NOT NULL AND p.player_id IS NOT NULL ORDER BY p.captured_at, p.id",
+        (PROP_LEAGUE, PROP_MARKET, cutoff)).fetchall()
+    # start_time is stored with either a Z or a +00:00 suffix, so compare parsed instants, not strings.
+    rows = [r for r in rows if (_parse_ts(r[7]) or now) > now]
     # Per player and line: the distinct sources offering it and its latest capture row.
     lines: Dict[Any, Dict[str, Any]] = {}
     for r in rows:                       # ascending, so the last row per line is the latest
@@ -112,19 +114,18 @@ def featured_prop(con, now: dt.datetime) -> Dict[str, Any]:
             consensus[player_id] = (key, d["row"], len(d["sources"]))
     best = None
     for min_sources in PROP_MIN_SOURCES:
-        ranked = []
-        for player_id, (key, r, n_src) in consensus.items():
-            if n_src < min_sources:
-                continue
+        # Best first, and stop at the first player with enough history: the same pick as scoring
+        # everyone, without reading a game log for every candidate.
+        order = sorted(((-float(r[3]), -n_src, player_id, r) for player_id, (key, r, n_src)
+                        in consensus.items() if n_src >= min_sources), key=lambda t: t[:3])
+        for _, neg_src, player_id, r in order:
             h = props_router.prop_history(player_id=player_id, market=PROP_MARKET, line=float(r[3]),
                                           side="over", league=PROP_LEAGUE)
             if h.get("error") or not h.get("games") or h["hit_rate_n"]["season"] < PROP_MIN_GAMES:
                 continue
-            # highest line first, then more sources, then lowest player id
-            ranked.append(((-float(r[3]), -n_src, player_id), r, h, n_src))
-        if ranked:
-            _, r0, h0, n0 = min(ranked, key=lambda t: t[0])
-            best = (r0, h0, n0)
+            best = (r, h, -neg_src)
+            break
+        if best is not None:
             break
     if best is None:
         return {"prop": None, "history": None,
