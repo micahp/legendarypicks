@@ -83,6 +83,16 @@ CREATE TABLE IF NOT EXISTS scoreboard_snapshots(
 );
 CREATE INDEX IF NOT EXISTS idx_scoreboard_live
   ON scoreboard_snapshots(state, start_time);
+CREATE TABLE IF NOT EXISTS tennis_model_locks(
+  league TEXT NOT NULL,
+  game_date TEXT NOT NULL,
+  game_id TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  locked_at TEXT NOT NULL,
+  projection TEXT NOT NULL,
+  model_version TEXT,
+  PRIMARY KEY(league, game_id)
+);
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   league     TEXT NOT NULL,
   game_date  TEXT NOT NULL,
