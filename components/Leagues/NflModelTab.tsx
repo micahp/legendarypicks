@@ -161,18 +161,22 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-xs uppercase tracking-wider text-zinc-500">Projected</span>
         <span className="text-right text-xs uppercase tracking-wider text-zinc-500">{record ? 'Final' : ''}</span>
         <span className="text-zinc-200">{game.away}</span>
-        <span className="text-right text-zinc-400">{projected(lock.proj_away)}</span>
-        <span className="text-right font-semibold text-zinc-100">{record && game.final ? one(game.final.away) : ''}</span>
+        <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_away)}</span>
+        <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.away) : ''}</span>
         <span className="text-zinc-200">{game.home}</span>
-        <span className="text-right text-zinc-400">{projected(lock.proj_home)}</span>
-        <span className="text-right font-semibold text-zinc-100">{record && game.final ? one(game.final.home) : ''}</span>
+        <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
+        <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
         <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
-        <span>Our line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
+        <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
+        <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-400">
-        <span>Our pick <b className="font-medium text-zinc-100">{pickSide(game, lock) || 'No line'}</b></span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
+        </div>
         {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
       </div>
     </article>
