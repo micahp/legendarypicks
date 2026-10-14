@@ -1,0 +1,13 @@
+[Unit]
+Description=Tennis projection precompute every six hours (PROD)
+
+[Timer]
+# Every six hours, UTC, at :30 to stay clear of the top-of-hour jobs. Tennis matches
+# run worldwide, so no local hour is better than another; the job covers three UTC
+# days, which keeps each day current between runs.
+OnCalendar=*-*-* 00,06,12,18:30:00 UTC
+Persistent=true
+Unit=legendarypicks-tennis-precompute-prod.service
+
+[Install]
+WantedBy=timers.target
