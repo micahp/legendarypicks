@@ -63,7 +63,7 @@ class SourceFight:
     opponent_source_key: str
     result: str
     method: str
-    significant_strikes: int
+    significant_strikes: Optional[int]
     round_number: int
     clock_display: str
     fight_time_seconds: int
@@ -350,6 +350,9 @@ def parse_fighter_profile(
             for match in [re.search(r"\b(\d+)\b", value)]
             if match
         ]
+        # Pre-UFC bouts (Strikeforce and similar) publish "--" for strikes: no count exists, so it is unknown.
+        if not strike_values and all(value.strip() in ("--", "") for value in _cell_values(row.cells[3])):
+            strike_values = [None, None]
         event_link = next(
             (link for link in row.cells[6].links if "/event-details/" in link.href), None
         )
