@@ -11,7 +11,7 @@
 
 The goal is not to recover the match-winner result by asserting that a coherent simulator must be more accurate. The immediate question is whether simulating service-point **opportunities** and outcomes produces better **player-statistic count distributions** than simpler methods.
 
-The 2023–2026 match-winner window has been inspected and is a development set, **not** untouched confirmation:
+The 2023 to 2026 match-winner window has been inspected and is a development set, **not** untouched confirmation:
 
 | Tour | Matches | Elo Brier | Point-model simulator Brier | Elo log loss | Simulator log loss |
 |---|---:|---:|---:|---:|---:|
@@ -114,7 +114,7 @@ Only after P2 passes should P3 add match-level latent serve-day effects and oppo
 ## Backtest protocol
 
 - Chronological walk-forward; no future data in ratings, opponent histories, player match stats, event rules or expected lineup.
-- Treat 2023–2026 as explored **development** for model selection. Use older chronological folds for tuning where viable; true confirmation requires future, previously unseen matches after the 2026-10-14 freeze.
+- Treat 2023 to 2026 as explored **development** for model selection. Use older chronological folds for tuning where viable; true confirmation requires future, previously unseen matches after the 2026-10-14 freeze.
 - Compare only on matched samples and provide a second coverage report for all eligible matches.
 - Declare one primary proper scoring metric per stage; report Brier skill score for exceedance predictions against the *best direct prop baseline*, not match-winner Elo.
 - Bootstrap at an appropriate match or tournament cluster level and report intervals, not only the point estimate.
