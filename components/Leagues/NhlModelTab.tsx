@@ -60,7 +60,26 @@ interface Payload {
   source: string
   state?: 'available' | 'awaiting_first_lock' | 'missed_locks'
   games: NhlGame[]
+  previews?: NhlPreview[]
+  lines?: Record<string, BovadaLine>
   missed_locks?: { game_id: string; home_team: string; away_team: string; model_key: ModelName; model_version: string; observed_at_utc: string; scheduled_start_utc: string }[]
+}
+
+interface BovadaLine {
+  home_team: string
+  away_team: string
+  captured_at_utc: string
+  home_puck_line: number | null
+  total_line: number | null
+}
+
+interface NhlPreview {
+  game_id: number
+  game_date: string
+  scheduled_start_utc: string
+  home_team: string
+  away_team: string
+  models: Record<ModelName, Forecast & { forecasted_at_utc: string; previewed_at_utc: string; preview: true }>
 }
 
 const MODEL_LABELS: Record<ModelName, string> = {
@@ -71,6 +90,7 @@ const MODEL_LABELS: Record<ModelName, string> = {
 
 const one = (value: number) => value.toFixed(1)
 const pct = (value: number) => `${Math.round(value * 100)}%`
+const signed = (value: number) => `${value > 0 ? '+' : ''}${one(value)}`
 
 function dateLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
@@ -80,42 +100,80 @@ function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
-function modelRole(model: ModelName) {
-  if (model === 'B3_elo') return 'Moneyline incumbent'
-  if (model === 'B5_xg_poisson') return 'Expected-goals baseline'
-  return 'Experimental score-model challenger'
+function cardLines(home: string, away: string, forecast: Forecast, line?: BovadaLine) {
+  const margin = forecast.projected_goal_differential_home
+  const homeLine = line?.home_puck_line ?? null
+  const vegas = homeLine == null ? 'n/a' : homeLine < 0 ? `${home} ${signed(homeLine)}` : `${away} ${signed(-homeLine)}`
+  return [
+    { label: 'Vegas line', value: vegas },
+    { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
+    { label: 'Edge', value: homeLine == null ? 'n/a' : `${one(Math.abs(homeLine + margin))} pts` },
+  ]
 }
 
-function latestMarketCapture(game: NhlGame) {
-  return [...game.markets.sides].sort((a, b) => b.captured_at_utc.localeCompare(a.captured_at_utc))[0]
+function totalLines(forecast: Forecast, line?: BovadaLine) {
+  const vegas = line?.total_line ?? null
+  return [
+    { label: 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
+    { label: 'Model total', value: one(forecast.projected_total_goals) },
+    { label: 'Edge', value: vegas == null ? 'n/a' : `${one(Math.abs(forecast.projected_total_goals - vegas))} pts` },
+  ]
 }
 
-function ProjectionCard({ game, model }: { game: NhlGame; model: ModelName }) {
-  const forecast = game.models[model]
+function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals }: {
+  away: string
+  home: string
+  startUtc: string
+  forecast: Forecast
+  status: string | null
+  lines: { label: string; value: string }[]
+  totals: { label: string; value: string }[]
+}) {
   const homePick = forecast.home_win_probability >= 0.5
-  const market = latestMarketCapture(game)
   return (
-    <article className="py-4">
+    <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h3>
-        <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.scheduled_start_utc)}</span>
+        <h3 className="font-semibold text-zinc-100">{away} @ {home}</h3>
+        <span className="flex items-center gap-3">
+          {status && <span className="rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide text-emerald-400">{status}</span>}
+          <span className="text-sm tabular-nums text-zinc-400">{timeLabel(startUtc)}</span>
+        </span>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
-        <Metric label={game.away_team} value={`${one(forecast.away_expected_goals)} goals`} />
-        <Metric label={game.home_team} value={`${one(forecast.home_expected_goals)} goals`} />
-        <Metric label="Projected total" value={`${one(forecast.projected_total_goals)} goals`} />
-        <Metric label="Model pick" value={`${homePick ? game.home_team : game.away_team} ${pct(homePick ? forecast.home_win_probability : 1 - forecast.home_win_probability)}`} />
-        <Metric label="Over 5.5" value={pct(forecast['p_over_5.5'])} />
+      <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
+        <span className="text-zinc-200">{away}</span>
+        <span className="text-right text-2xl font-semibold text-zinc-100">{one(forecast.away_expected_goals)}</span>
+        <span className="text-zinc-200">{home}</span>
+        <span className="text-right text-2xl font-semibold text-zinc-100">{one(forecast.home_expected_goals)}</span>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-        <span>Projection locked {new Date(forecast.locked_at_utc || game.locked_at_utc).toLocaleString()}</span>
-        {game.markets.comparison_usable_at_lock ? (
-          <span>Kalshi quote captured · line comparison available</span>
-        ) : (
-          <span>Kalshi quote unavailable at lock{market ? ` · last capture ${new Date(market.captured_at_utc).toLocaleTimeString()}` : ''}</span>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {lines.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
+        </div>
+        <div className="text-right">
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xl font-semibold text-zinc-100">{homePick ? home : away} {pct(homePick ? forecast.home_win_probability : 1 - forecast.home_win_probability)}</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
+        {totals.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
       </div>
     </article>
+  )
+}
+
+function ProjectionCard({ game, model, line }: { game: NhlGame; model: ModelName; line?: BovadaLine }) {
+  const forecast = game.models[model]
+  return (
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="LOCKED"
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
+  )
+}
+
+function PreviewCard({ game, model, line }: { game: NhlPreview; model: ModelName; line?: BovadaLine }) {
+  const forecast = game.models[model]
+  return (
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null}
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
   )
 }
 
@@ -216,9 +274,14 @@ export default function NhlModelTab() {
   if (!payload) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
 
   const games = [...payload.games].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
-  const groups = games.reduce<Record<string, NhlGame[]>>((result, game) => {
-    const label = dateLabel(game.scheduled_start_utc)
-    result[label] = [...(result[label] || []), game]
+  const previews = [...(payload.previews || [])].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
+  const items = [
+    ...games.map(game => ({ start: game.scheduled_start_utc, node: <ProjectionCard key={`locked-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} /> })),
+    ...previews.map(game => ({ start: game.scheduled_start_utc, node: <PreviewCard key={`preview-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} /> })),
+  ].sort((a, b) => a.start.localeCompare(b.start))
+  const groups = items.reduce<Record<string, typeof items>>((result, item) => {
+    const label = dateLabel(item.start)
+    result[label] = [...(result[label] || []), item]
     return result
   }, {})
   return (
@@ -231,8 +294,8 @@ export default function NhlModelTab() {
       </div>
 
       {view === 'projections' && <>
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">2026–27 projections · {MODEL_LABELS[model]}</h2><p className="text-xs text-zinc-500">{modelRole(model)} · {games.length} locked games · {payload.frozen_at_utc ? `latest lock ${new Date(payload.frozen_at_utc).toLocaleString()}` : 'waiting for first T−90 lock'}</p></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
-        {games.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-1"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{entries.map(game => <ProjectionCard key={game.game_id} game={game} model={model} />)}</div></section>)}
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
+        {items.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="grid gap-3 sm:grid-cols-2">{entries.map(item => item.node)}</div></section>)}
       </>}
       {view === 'record' && <RecordView games={games} model={model} missedLocks={payload.missed_locks || []} />}
       {view === 'ratings' && <TeamRatings games={games} />}
