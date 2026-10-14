@@ -28,7 +28,18 @@ from datetime import date as _date
 from itertools import groupby
 from typing import Any, Iterable
 
-TOUR_LEVELS = {"atp": ("G", "M", "A", "F")}
+# Tour-level filter per tour, as SQL over tennis_<tour>_matches. ATP: the four tour levels.
+# WTA (approved 2026-10-14): Grand Slams, season-ending, Premier and International, historical Tier I to V,
+# and the generic W code only before 2010. From 2010, W also covers WTA 125 events (e.g. "Buenos Aires 125"),
+# so those rows wait for review. Excluded: C and CC (ITF and low-tier circuits), numeric ITF prize-money
+# codes, D (team competitions), O (Olympics), E (exhibition), J (juniors), and the +H codes.
+TOUR_FILTER = {
+    "atp": "tourney_level IN ('G', 'M', 'A', 'F')",
+    "wta": (
+        "(tourney_level IN ('G', 'F', 'P', 'PM', 'I', 'T1', 'T2', 'T3', 'T4', 'T5') "
+        "OR (tourney_level = 'W' AND tourney_date < 20100101))"
+    ),
+}
 K_GRID = (100, 250, 500, 1000, 2000, 4000)
 EPS = 1e-6
 COLD_START_BASELINE = 0.64  # used only before a surface has any history
@@ -49,17 +60,15 @@ def point_prob(serve: float, return_opp: float, baseline: float) -> float:
 
 
 def load_matches(conn: sqlite3.Connection, tour: str, start: int, end: int) -> list[tuple]:
-    levels = TOUR_LEVELS[tour]
-    marks = ",".join("?" for _ in levels)
     sql = (
         f"SELECT tourney_date, surface, winner_id, loser_id, w_svpt, w_1stWon, w_2ndWon, "
         f"l_svpt, l_1stWon, l_2ndWon FROM tennis_{tour}_matches "
-        f"WHERE tourney_level IN ({marks}) AND tourney_date BETWEEN ? AND ? "
+        f"WHERE {TOUR_FILTER[tour]} AND tourney_date BETWEEN ? AND ? "
         f"AND surface IS NOT NULL AND winner_id IS NOT NULL AND loser_id IS NOT NULL "
         f"AND w_svpt > 0 AND l_svpt > 0 AND w_1stWon IS NOT NULL AND w_2ndWon IS NOT NULL "
         f"AND l_1stWon IS NOT NULL AND l_2ndWon IS NOT NULL ORDER BY tourney_date"
     )
-    return list(conn.execute(sql, (*levels, start, end)))
+    return list(conn.execute(sql, (start, end)))
 
 
 def _add_player_counts(player: dict, row: tuple) -> None:
@@ -391,7 +400,7 @@ def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--db", required=True)
-    parser.add_argument("--tour", default="atp", choices=sorted(TOUR_LEVELS))
+    parser.add_argument("--tour", default="atp", choices=sorted(TOUR_FILTER))
     parser.add_argument("--from-date", type=int, default=20000101)
     parser.add_argument("--validate-start", type=int, required=True)
     parser.add_argument("--test-start", type=int, required=True)
