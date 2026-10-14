@@ -53,7 +53,10 @@ export default function ModelsSlide() {
           <p className="mt-1 text-xs text-zinc-400">Sport-specific prediction models with transparent metrics.</p>
           <ul className="mt-3 flex flex-col gap-2">
             {MODELS.map((m) => (
-              <li key={m.name} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2">
+              <li
+                key={m.name}
+                className={`flex min-w-0 items-center justify-between gap-3 rounded-lg border px-3 py-2 ${m.status === 'Live' ? 'border-emerald-500/60 bg-emerald-500/5' : 'border-zinc-800'}`}
+              >
                 <span className="flex min-w-0 items-center gap-3">
                   <span
                     aria-hidden
