@@ -18,18 +18,58 @@
 
 - Projections are game cards with the model pick on the right, and team records under team names.
 - The record tab lists graded weeks only.
-- Playoff odds is a tab on the NFL hub.
+- Playoff odds is a tab on the NFL hub. The page says the ratings trail the market.
+- Models: v1 points, v2 EPA and v1 plus Elo, each locked no earlier than 90 minutes before kickoff.
+- Every locked projection per model version, with the line it was locked against and its grade once final.
+- Locks refuse to run unless every earlier game has its final result.
 
 ### Homepage
 
 - Hero carousel with a prop preview and a models slide.
 - The featured prop comes only from games that have not started.
 
+### Scoreboard
+
+- Live status labels for soccer and NHL are fixed.
+- NBA live clock order is restored.
+- Scoreboard cards are two columns again, with a center divider and a calmer row hover.
+- The radio row layout is adjusted.
+
+### Props
+
+- Prop history hit rate uses the newest 20 settled props, not the oldest 20.
+- The Props Slate columns are restored.
+
+### Tennis
+
+- A daily tennis model tab.
+- A Kalshi live points reader for ATP and WTA. The backend reads it; no points panel ships in this release.
+- Tennis identities resolve from publisher data, and the tennis ingest fails on an incomplete roster or an empty ESPN spine instead of discarding props.
+
+### MLS
+
+- MLS radio uses a play button, as MLB and NHL do. The station page links are removed, and verified radio directory links are added.
+
+### Navigation and Watch
+
+- The Predict link moves to the end of the header nav.
+- A Watch page lists verified broadcasts and a registry of free stream sources. The Watch tab is hidden from navigation in this release.
+
 ### Data
 
 - NFL xpass and pass_oe backfill for 2010 to 2025, kept in the daily ingest.
+- NFL play-by-play adds qb_hit, qb_scramble, qb_dropback and no_huddle, with a dry-run-by-default backfill.
+- NFL game lines are captured from Bovada and The Odds API before kickoff. Each capture is dry run by default.
+- NFL playoff seeding follows the NFL's published tiebreaking procedure. It matches the playoff bracket actually played in 32 of 32 conference-seasons from 2010 to 2025.
+- UFC fight stats: a published fight with no strike counts is stored as unknown instead of failing the whole run. September and October 2026 UFC fight logs are backfilled for the current props board.
+- NHL ingests resolve a published player's NHL ID owner themselves instead of refusing the run.
 - Tennis identities resolve from publisher data when names don't match.
 - MLS radio uses a play button, as MLB and NHL do.
+
+### Operations
+
+- The backend Docker image no longer includes host data. The compose file mounts the NHL research feed read-only.
+- The daily NHL grade timer refreshes the NHL previews and standings.
 
 ## v0.9.9
 
