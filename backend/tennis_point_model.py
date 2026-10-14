@@ -59,9 +59,12 @@ def point_prob(serve: float, return_opp: float, baseline: float) -> float:
     return min(max(o / (1.0 + o), EPS), 1.0 - EPS)
 
 
-def load_matches(conn: sqlite3.Connection, tour: str, start: int, end: int) -> list[tuple]:
+def load_matches(conn: sqlite3.Connection, tour: str, start: int, end: int, by_level: bool = False) -> list[tuple]:
+    """Tour-level matches in [start, end]. With by_level, the surface field becomes 'surface|level', so every
+    baseline and shrinkage target is per surface and tournament level. Everything downstream is unchanged."""
+    surface_field = "surface || '|' || tourney_level" if by_level else "surface"
     sql = (
-        f"SELECT tourney_date, surface, winner_id, loser_id, w_svpt, w_1stWon, w_2ndWon, "
+        f"SELECT tourney_date, {surface_field} AS surface, winner_id, loser_id, w_svpt, w_1stWon, w_2ndWon, "
         f"l_svpt, l_1stWon, l_2ndWon FROM tennis_{tour}_matches "
         f"WHERE {TOUR_FILTER[tour]} AND tourney_date BETWEEN ? AND ? "
         f"AND surface IS NOT NULL AND winner_id IS NOT NULL AND loser_id IS NOT NULL "
@@ -336,14 +339,14 @@ def fit_shift(records: list[tuple]) -> float:
 
 
 def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int, test_end: int,
-        half_lives: tuple[float, ...] = (0.0,), baseline_years: int = 0) -> dict[str, Any]:
+        half_lives: tuple[float, ...] = (0.0,), baseline_years: int = 0, by_level: bool = False) -> dict[str, Any]:
     """Choose (half-life, k) on the validation window, then score the test window once with that choice.
 
     A half-life of 0 means a cumulative baseline (no time weighting).
     """
     conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
-        rows = load_matches(conn, tour, from_date, test_end)
+        rows = load_matches(conn, tour, from_date, test_end, by_level)
     finally:
         conn.close()
     results: dict[float, dict[str, Any]] = {}
@@ -365,6 +368,7 @@ def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int
     delta = fit_shift(val_records)
     report: dict[str, Any] = {
         "tour": tour,
+        "by_level": by_level,
         "evaluation": "walk-forward",
         "matches": counts,
         "chosen": {"half_life_years": best_h, "k": k},
@@ -406,9 +410,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--test-start", type=int, required=True)
     parser.add_argument("--test-end", type=int, default=20261231)
     parser.add_argument("--half-lives", default="0,0.5,1,2,4", help="comma-separated half-lives in years; 0 = cumulative baseline")
+    parser.add_argument("--by-level", action="store_true", help="key the baseline and shrinkage by surface and tournament level")
     args = parser.parse_args(argv)
     half_lives = tuple(float(x) for x in args.half_lives.split(","))
-    report = run(args.db, args.tour, args.from_date, args.validate_start, args.test_start, args.test_end, half_lives)
+    report = run(args.db, args.tour, args.from_date, args.validate_start, args.test_start, args.test_end, half_lives,
+                 by_level=args.by_level)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 
