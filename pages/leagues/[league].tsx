@@ -13,6 +13,7 @@ import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import NflModelTab from '../../components/Leagues/NflModelTab'
+import NhlModelTab from '../../components/Leagues/NhlModelTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -284,6 +285,7 @@ export default function LeagueHubPage() {
         )}
 
         {route.activeTab === 'model' && isNFL && <NflModelTab />}
+        {route.activeTab === 'model' && route.league === 'nhl' && <NhlModelTab />}
 
         {route.activeTab === 'news' && (
           <NewsTab

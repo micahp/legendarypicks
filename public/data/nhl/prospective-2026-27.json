@@ -1,0 +1,294 @@
+{
+  "model_version": "nhl-prospective-2026-27-v1",
+  "default_model": "B7_elo_xg_poisson",
+  "frozen_at_utc": "2026-10-14T08:04:23Z",
+  "source": "research/nhl/prospective-2026-27/forecasts.jsonl",
+  "games": [
+    {
+      "game_id": 2026020106,
+      "game_date": "2026-10-14",
+      "scheduled_start_utc": "2026-10-14T23:30:00.000000Z",
+      "home_team": "WSH",
+      "away_team": "MTL",
+      "forecasted_at_utc": "2026-10-14T08:06:15.555412Z",
+      "feature_snapshot": {
+        "as_of_utc": "2026-10-14T08:06:15.555412Z",
+        "away_team": "MTL",
+        "elo_pre_game": {
+          "away": 1546.407237851869,
+          "home": 1532.6366754994574,
+          "home_ice": 35,
+          "k": 10
+        },
+        "elo_recent_schedule_evidence": [
+          {
+            "response_sha256": "82502f90494e3aac56d7a705fc3ac6ec647744d478442e197766ca929e9d9f2c",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-09-29",
+            "week_start": "2026-09-29"
+          },
+          {
+            "response_sha256": "226e465a2f86af5cae6e99f24f6101ffaf4d408edf8908a336c2580f218fb9c3",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-10-06",
+            "week_start": "2026-10-06"
+          },
+          {
+            "response_sha256": "1d73463cbd495aa46d1374beb1984c7f9f9c856edf4af9148db27fe8e0fc30e5",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-10-13",
+            "week_start": "2026-10-13"
+          }
+        ],
+        "feature_max_source_dates": {
+          "away": "2026-10-10",
+          "home": "2026-10-11"
+        },
+        "game_id": 2026020106,
+        "home_team": "WSH",
+        "model_artifact_sha256": "da90a3c07aca3227c1013c5c94468cde76d980d05326dc1a98660bce04176bcb",
+        "rolling_window_game_ids": {
+          "away": [
+            2025021233,
+            2025021248,
+            2025021271,
+            2025021277,
+            2025021294,
+            2026020002,
+            2026020026,
+            2026020045,
+            2026020058,
+            2026020075
+          ],
+          "home": [
+            2025021227,
+            2025021245,
+            2025021263,
+            2025021276,
+            2025021295,
+            2026020018,
+            2026020024,
+            2026020053,
+            2026020067,
+            2026020084
+          ]
+        },
+        "schedule_source": {
+          "sha256": "d3a4d5ad2fc235017bb5d06aadbe88415c09a8de80a21a53c3408085885a11a9",
+          "url": "https://api-web.nhle.com/v1/schedule/2026-10-14"
+        },
+        "scheduled_start_utc": "2026-10-14T23:30:00.000000Z",
+        "xg_features": {
+          "away_rolling10_5v5_score_venue_xga": 1.9417,
+          "away_rolling10_5v5_score_venue_xgf": 1.9912,
+          "home_rolling10_5v5_score_venue_xga": 2.105,
+          "home_rolling10_5v5_score_venue_xgf": 2.2399999999999998
+        },
+        "xg_source_hashes": {
+          "MTL": "c1aac813f718dc26b2347823c5933f9db8d6e31ddda2d601d3979e25ed52b602",
+          "WSH": "c343d067782c27f8e74a4741adc3d044d9c759cba7c415dedc15d1bca7b51d3d"
+        },
+        "xg_source_versions": {
+          "MTL": "MoneyPuck 2026-27 model; publisher states rebuilt for this season",
+          "WSH": "MoneyPuck 2026-27 model; publisher states rebuilt for this season"
+        }
+      },
+      "models": {
+        "B3_elo": {
+          "forecast_id": "98cb21479c8b53ce5db24d37fe2658e475c0463366bd366d9497e3f16ad35c8e",
+          "home_expected_goals": 2.9526904083443726,
+          "away_expected_goals": 2.768252876198893,
+          "projected_total_goals": 5.7209432845432655,
+          "projected_goal_differential_home": 0.18443753214547964,
+          "home_win_probability": 0.5305136508037983,
+          "p_over_5.5": 0.5085242301411683,
+          "p_over_6.5": 0.34897333030844857
+        },
+        "B5_xg_poisson": {
+          "forecast_id": "371f6f5a6ad29da4a99d191ab1095d999300da1a945fb478debbfd6dc92b8ad1",
+          "home_expected_goals": 3.1665633113052447,
+          "away_expected_goals": 2.867598494550441,
+          "projected_total_goals": 6.034161805855685,
+          "projected_goal_differential_home": 0.2989648167548036,
+          "home_win_probability": 0.5460572953566801,
+          "p_over_5.5": 0.5597917966160564,
+          "p_over_6.5": 0.3991842167553285
+        },
+        "B7_elo_xg_poisson": {
+          "forecast_id": "9d5ac231b408ef566d7881d035daacdd63325302f26b19a89ceb2682807d4d29",
+          "home_expected_goals": 3.093917789843701,
+          "away_expected_goals": 2.865194784173902,
+          "projected_total_goals": 5.9591125740176025,
+          "projected_goal_differential_home": 0.22872300566979886,
+          "home_win_probability": 0.5351528687777606,
+          "p_over_5.5": 0.5477307200015098,
+          "p_over_6.5": 0.38713005679408535
+        }
+      },
+      "markets": {
+        "source": "Kalshi",
+        "sides": [
+          {
+            "team": "WSH",
+            "captured_at_utc": "2026-10-14T08:12:46.168419Z",
+            "yes_bid": 0.01,
+            "yes_ask": 0.99,
+            "spread": 0.98,
+            "quote_quality": "wide_spread_over_20c",
+            "ticker": "KXNHLGAME-26OCT14MTLWSH-WSH"
+          },
+          {
+            "team": "MTL",
+            "captured_at_utc": "2026-10-14T08:12:46.224724Z",
+            "yes_bid": 0.01,
+            "yes_ask": 0.99,
+            "spread": 0.98,
+            "quote_quality": "wide_spread_over_20c",
+            "ticker": "KXNHLGAME-26OCT14MTLWSH-MTL"
+          }
+        ],
+        "usable": false
+      }
+    },
+    {
+      "game_id": 2026020107,
+      "game_date": "2026-10-14",
+      "scheduled_start_utc": "2026-10-15T00:30:00.000000Z",
+      "home_team": "COL",
+      "away_team": "DAL",
+      "forecasted_at_utc": "2026-10-14T08:06:15.555412Z",
+      "feature_snapshot": {
+        "as_of_utc": "2026-10-14T08:06:15.555412Z",
+        "away_team": "DAL",
+        "elo_pre_game": {
+          "away": 1551.0283829201178,
+          "home": 1599.6033186570667,
+          "home_ice": 35,
+          "k": 10
+        },
+        "elo_recent_schedule_evidence": [
+          {
+            "response_sha256": "82502f90494e3aac56d7a705fc3ac6ec647744d478442e197766ca929e9d9f2c",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-09-29",
+            "week_start": "2026-09-29"
+          },
+          {
+            "response_sha256": "226e465a2f86af5cae6e99f24f6101ffaf4d408edf8908a336c2580f218fb9c3",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-10-06",
+            "week_start": "2026-10-06"
+          },
+          {
+            "response_sha256": "1d73463cbd495aa46d1374beb1984c7f9f9c856edf4af9148db27fe8e0fc30e5",
+            "url": "https://api-web.nhle.com/v1/schedule/2026-10-13",
+            "week_start": "2026-10-13"
+          }
+        ],
+        "feature_max_source_dates": {
+          "away": "2026-10-10",
+          "home": "2026-10-10"
+        },
+        "game_id": 2026020107,
+        "home_team": "COL",
+        "model_artifact_sha256": "da90a3c07aca3227c1013c5c94468cde76d980d05326dc1a98660bce04176bcb",
+        "rolling_window_game_ids": {
+          "away": [
+            2025021239,
+            2025021254,
+            2025021268,
+            2025021285,
+            2025021301,
+            2026020020,
+            2026020030,
+            2026020043,
+            2026020057,
+            2026020077
+          ],
+          "home": [
+            2025021256,
+            2025021274,
+            2025021289,
+            2025021298,
+            2025021312,
+            2026020007,
+            2026020032,
+            2026020054,
+            2026020064,
+            2026020080
+          ]
+        },
+        "schedule_source": {
+          "sha256": "d3a4d5ad2fc235017bb5d06aadbe88415c09a8de80a21a53c3408085885a11a9",
+          "url": "https://api-web.nhle.com/v1/schedule/2026-10-14"
+        },
+        "scheduled_start_utc": "2026-10-15T00:30:00.000000Z",
+        "xg_features": {
+          "away_rolling10_5v5_score_venue_xga": 1.7026999999999999,
+          "away_rolling10_5v5_score_venue_xgf": 1.8958,
+          "home_rolling10_5v5_score_venue_xga": 1.7263,
+          "home_rolling10_5v5_score_venue_xgf": 2.6747
+        },
+        "xg_source_hashes": {
+          "COL": "fc7221b135702da28efe0a04341f0919407a0fdc0b590a8c0cad77c2a3eef165",
+          "DAL": "54ecabf408d8acd28849391e66e0e1691636576cb550a0a31a744043e9f05c01"
+        },
+        "xg_source_versions": {
+          "COL": "MoneyPuck 2026-27 model; publisher states rebuilt for this season",
+          "DAL": "MoneyPuck 2026-27 model; publisher states rebuilt for this season"
+        }
+      },
+      "models": {
+        "B3_elo": {
+          "forecast_id": "8a5d720f5b2e7f502939e974b10b00488324cd28725ff7a57b2a24b80e39120a",
+          "home_expected_goals": 3.1279304860204196,
+          "away_expected_goals": 2.6131634804402215,
+          "projected_total_goals": 5.741093966460641,
+          "projected_goal_differential_home": 0.5147670055801981,
+          "home_win_probability": 0.618006646482508,
+          "p_over_5.5": 0.5118918017265428,
+          "p_over_6.5": 0.35218993046309954
+        },
+        "B5_xg_poisson": {
+          "forecast_id": "446d719fab8a778c91b4cada0abbfd813c6a2f16edaba0d528230530c9e2c989",
+          "home_expected_goals": 3.2047464501974563,
+          "away_expected_goals": 2.6551376914975537,
+          "projected_total_goals": 5.8598841416950105,
+          "projected_goal_differential_home": 0.5496087586999026,
+          "home_win_probability": 0.5865863156182343,
+          "p_over_5.5": 0.5315601939835589,
+          "p_over_6.5": 0.3712037809315966
+        },
+        "B7_elo_xg_poisson": {
+          "forecast_id": "00bde51d013cf709e947f161c5202e82d3ba5657448bebb61b4ceb9cfc340ad2",
+          "home_expected_goals": 3.273594200888963,
+          "away_expected_goals": 2.5710880236924707,
+          "projected_total_goals": 5.844682224581433,
+          "projected_goal_differential_home": 0.7025061771964922,
+          "home_win_probability": 0.6106962642029993,
+          "p_over_5.5": 0.529061408553687,
+          "p_over_6.5": 0.3687665154383645
+        }
+      },
+      "markets": {
+        "source": "Kalshi",
+        "sides": [
+          {
+            "team": "COL",
+            "captured_at_utc": "2026-10-14T08:12:46.342915Z",
+            "yes_bid": 0.01,
+            "yes_ask": 0.99,
+            "spread": 0.98,
+            "quote_quality": "wide_spread_over_20c",
+            "ticker": "KXNHLGAME-26OCT14DALCOL-COL"
+          },
+          {
+            "team": "DAL",
+            "captured_at_utc": "2026-10-14T08:12:46.282940Z",
+            "yes_bid": 0.01,
+            "yes_ask": 0.99,
+            "spread": 0.98,
+            "quote_quality": "wide_spread_over_20c",
+            "ticker": "KXNHLGAME-26OCT14DALCOL-DAL"
+          }
+        ],
+        "usable": false
+      }
+    }
+  ]
+}
