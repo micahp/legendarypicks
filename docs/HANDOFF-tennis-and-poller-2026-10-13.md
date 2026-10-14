@@ -18,22 +18,26 @@ where they disagree. Micah approved both changes below on 2026-10-14 around 01:0
   then the panel says "Point scores unavailable: schema_version None, expected 2", which is correct.
 - Step 2 done: worktree `/root/lp-tennis-points`, branch `feat/tennis-points`, commit `bccf487`.
   Reader `backend/kalshi_live_state.py`, endpoint `/api/{atp|wta}/kalshi-live`, 10 pytest tests pass.
-  NOT verified live: the dev server does not have the route until someone restarts it (Micah's call).
+  Live on :8096 since the 2026-10-14 reload (uvicorn --reload picked up the merge). It returns 200 with
+  an honest unavailable reason until the poller writes schema 2.
 - Step 3 done: commit `00d0ce0`. `components/Scores/KalshiLivePanel.tsx`, wired into
   `pages/scores.tsx` under the Tennis filter when the date is today. 56 jest tests in
   `components/Scores` pass. Run jest with: `NODE_PATH=/root/legendarypicks/node_modules
   /root/legendarypicks/node_modules/.bin/jest -c /root/legendarypicks/jest.config.js --rootDir
   /root/lp-tennis-points components/Scores` (the worktree has no node_modules of its own).
-  NOT done: headless page check (needs a running server).
+  Headless page check, 2026-10-14 01:36 UTC: both panels render at 1280 and 390 px, zero page errors,
+  no horizontal overflow (Playwright, scratch script; not committed).
 - Step 4 done: loader `backend/ingest_kalshi_tennis_points.py`, commit `84ecc3e`. Applied to the dev
   DB: table `kalshi_tennis_points`, 32,038 rows, 239 matches, from 32,306 lines in 11 files (268
   identical repeats skipped). Backup before the write:
   `backend/data/backups-kalshi-points-20261014/picks.dev.db.pre-kalshi-points-20261014T011843Z.bak`
   (2,070,048,768 bytes, same size as the source). Re-running is a no-op. Tested on a scratch DB: a
   same-key conflict and a malformed line both abort with no table written.
-- Step 5 (live check) not started. Waiting on a live Shanghai or Wuhan match and a dev server restart.
-- Not pushed: `feat/tennis-points` is local only. `dev` in `/root/legendarypicks` has the handoff
-  commit `850a963`. `main` in prediction-market-trading has `c71456b`.
+- Step 5 (live check) not started. Waiting on a live Shanghai or Wuhan match. The poller's new code
+  should write schema 2 about 01:55 UTC.
+- Merged, not pushed: `feat/tennis-points` merged `dev` (`391cb32`), then `dev` in
+  `/root/legendarypicks` fast-forwarded to it. The worktree `/root/lp-tennis-points` is kept for step 5.
+  `main` in prediction-market-trading has `c71456b`.
 
 ### What changed from the plan, and why
 1. **No copy job into the dev DB.** The API reads `KALSHI_LIVE_STATE.json` directly. The box
