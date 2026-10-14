@@ -132,6 +132,29 @@ reasons for the difference. It should let a fan see how a starter being out chan
 score distribution, and the team's season odds. Playoff odds, weekly movers, and a permanent model record
 give people a reason to return and a way to judge the system.
 
+## Tennis: a second proof of the design (added 2026-10-14)
+
+Tennis follows the same design: simulate the opportunities (points, then service points and games), simulate their
+outcomes, and aggregate correlated player-level distributions. Its event structure is simpler than the NFL's, and the
+data already exists. The Sackmann match rows carry service points, aces, double faults, first serves in and break points
+for both players. Live focus stays NFL; tennis is a second track with its own ladder.
+
+- The benchmark ladder applies unchanged. For match winners: coin flip (0.250), surface Elo, blended Elo, Elo plus
+  serve and return, then the market where a trustworthy line exists. The 2026-10-14 backtest put our standalone point
+  model behind Elo on both tours (ATP Brier 0.2353 against 0.2280; WTA 0.2288 against 0.2160). Match winners are
+  therefore not where tennis can prove the design.
+- The proof is player projections. Simulated service-point and ace distributions must beat an independent player-stat
+  baseline (negative-binomial or beta-binomial counts) on held-out matches, by log score and interval coverage, before
+  any prop line is priced.
+- Prop claims meet the same bar as game claims: historical sportsbook lines with their capture time, over and under
+  calibration, and no edge claim from a small run. Self-reported public win rates and ROI are not evidence.
+- The known gap is shared variance. Fixed per-point probabilities understate how much counts spread from match to
+  match. The first test compares observed and simulated variance of service points and aces, before the point-level
+  event model is extended.
+- Licence: tennis data is research-only until D1 is decided. A product line needs a licensed source.
+
+Detail: `docs/BRIEF-tennis-prediction-model.md` on branch `docs/tennis-prediction-brief`.
+
 ## Near-term work
 
 1. Benchmark harness: home field, 538 Elo, v1 and market on identical 2010 to 2020 games, read-only on the
@@ -145,6 +168,7 @@ give people a reason to return and a way to judge the system.
 7. Then [Spec A](SPEC-nfl-team-ratings-playoff-odds-2026-10-09.md) and
    [Spec B](SPEC-player-projections-availability-2026-10-09.md) continue, each change graded against the
    ladder before it ships. The scores-only v1 is the interim rung, not the game-forecast product.
+8. Tennis Track B: the shared-variance test, then the count baselines, as set out in the tennis brief above.
 
 Investor one-liner: **Legendary Picks connects what individual players are likely to do with game scores
 and season outcomes, and publishes the record of every forecast.**
