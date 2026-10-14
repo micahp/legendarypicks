@@ -226,14 +226,11 @@ export default function TennisModelTab({ tour }: {
   return (
     <div className="space-y-5">
       <section className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-lg bg-zinc-900 p-1">
-          {(['projections', 'record'] as const).map(item => (
-            <button key={item} type="button" onClick={() => setView(item)} aria-pressed={view === item}
-              className={`rounded-md px-3 py-2 text-sm capitalize ${view === item ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'}`}>
-              {item}
-            </button>
+        <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="Tennis model views">
+          {([['projections', 'Projections'], ['record', 'Record']] as const).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
           ))}
-        </div>
+        </nav>
         {view === 'record' ? <div className="flex items-center gap-3">
           <button type="button" aria-label="Previous day" onClick={() => setRecordDate(shiftDate(recordDate, -1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">‹</button>
