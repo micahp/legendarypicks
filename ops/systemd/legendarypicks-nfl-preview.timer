@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly unlocked NFL projections for the upcoming week (DEV)
+
+[Timer]
+# Each run replaces the previews of the upcoming week. Locks are not touched: the lock job still writes them 90
+# minutes before kickoff.
+OnCalendar=*-*-* *:05:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-preview.service
+
+[Install]
+WantedBy=timers.target

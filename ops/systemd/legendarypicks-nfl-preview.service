@@ -1,0 +1,12 @@
+[Unit]
+Description=Preview the upcoming NFL week's v1 projections, not locked (DEV; reads the local database only)
+After=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+Nice=10
+ExecStart=/root/legendarypicks/backend/venv/bin/python nfl_projection_preview.py --apply
+TimeoutStartSec=600
