@@ -46,7 +46,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   stats: 'Stats',
   schedule: 'Schedule',
   model: 'Model',
-  'playoff-odds': 'Playoff odds',
+  'playoff-odds': 'Playoff Odds',
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
