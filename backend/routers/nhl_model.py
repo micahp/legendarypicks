@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from capture_nhl_game_lines import fetch_events, refresh_lines
 from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, export_locked, export_previews,
-                             latest_game_lines, open_db)
+                             latest_game_lines, latest_standings, open_db)
 
 router = APIRouter()
 MODEL_DB = os.environ.get("NHL_MODEL_DB_PATH", DEFAULT_DB)
@@ -22,13 +22,14 @@ def locks_payload(db_path: str, season: int) -> dict:
         return {"model_version": "per-model-locked", "model_versions": {},
                 "default_model": "B7_elo_xg_poisson", "frozen_at_utc": None,
                 "source": "standalone NHL model database", "state": "awaiting_first_lock",
-                "games": [], "missed_locks": [], "previews": [], "lines": {}}
+                "games": [], "missed_locks": [], "previews": [], "lines": {}, "standings": {}}
     try:
         con = open_db(db_path, readonly=True)
         try:
             payload = export_locked(con, season)
             payload["previews"] = export_previews(con, season, dt.datetime.now(dt.timezone.utc))
             payload["lines"] = latest_game_lines(con)
+            payload["standings"] = latest_standings(con, season)
         finally:
             con.close()
     except sqlite3.Error as exc:

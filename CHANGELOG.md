@@ -12,6 +12,7 @@
 - The model pick suggests the moneyline side or the over or under at 5.5 or 6.5 with the largest edge against the no-vig Bovada price.
 - Bovada lines refresh when the page loads if the newest snapshot is more than 15 minutes old.
 - The record lists graded games only.
+- Team record and points show under each team name, from the NHL standings. The daily grade run refreshes them.
 
 ### NFL model
 

@@ -62,7 +62,17 @@ interface Payload {
   games: NhlGame[]
   previews?: NhlPreview[]
   lines?: Record<string, BovadaLine>
+  standings?: Record<string, NhlStanding>
   missed_locks?: { game_id: string; home_team: string; away_team: string; model_key: ModelName; model_version: string; observed_at_utc: string; scheduled_start_utc: string }[]
+}
+
+interface NhlStanding {
+  games_played: number
+  wins: number
+  losses: number
+  overtime_losses: number
+  points: number
+  standings_date: string
 }
 
 interface BovadaLine {
@@ -102,6 +112,11 @@ function dateLabel(iso: string) {
 
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+function recordLine(standings: Payload['standings'], team: string) {
+  const row = standings?.[team]
+  return row ? `${row.wins}-${row.losses}-${row.overtime_losses} · ${row.points} pts` : undefined
 }
 
 function cardLines(home: string, away: string, forecast: Forecast, line?: BovadaLine) {
@@ -154,7 +169,7 @@ function totalLines(forecast: Forecast, line?: BovadaLine) {
   ]
 }
 
-function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, pick }: {
+function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, pick, awayRecord, homeRecord }: {
   away: string
   home: string
   startUtc: string
@@ -163,6 +178,8 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   lines: { label: string; value: string }[]
   totals: { label: string; value: string }[]
   pick: { label: string; edge: number } | null
+  awayRecord?: string
+  homeRecord?: string
 }) {
   return (
     <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -174,9 +191,9 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
         </span>
       </div>
       <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
-        <span className="text-zinc-200">{away}</span>
+        <span className="text-zinc-200">{away}{awayRecord && <span className="block text-xs text-zinc-500">{awayRecord}</span>}</span>
         <span className="text-right text-2xl font-semibold text-zinc-100">{one(forecast.away_expected_goals)}</span>
-        <span className="text-zinc-200">{home}</span>
+        <span className="text-zinc-200">{home}{homeRecord && <span className="block text-xs text-zinc-500">{homeRecord}</span>}</span>
         <span className="text-right text-2xl font-semibold text-zinc-100">{one(forecast.home_expected_goals)}</span>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
@@ -196,18 +213,18 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   )
 }
 
-function ProjectionCard({ game, model, line }: { game: NhlGame; model: ModelName; line?: BovadaLine }) {
+function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="LOCKED"
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="LOCKED" awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
       lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
   )
 }
 
-function PreviewCard({ game, model, line }: { game: NhlPreview; model: ModelName; line?: BovadaLine }) {
+function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null}
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
       lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
   )
 }
@@ -316,8 +333,8 @@ export default function NhlModelTab() {
   const games = [...payload.games].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
   const previews = [...(payload.previews || [])].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
   const items = [
-    ...games.map(game => ({ start: game.scheduled_start_utc, node: <ProjectionCard key={`locked-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} /> })),
-    ...previews.map(game => ({ start: game.scheduled_start_utc, node: <PreviewCard key={`preview-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} /> })),
+    ...games.map(game => ({ start: game.scheduled_start_utc, node: <ProjectionCard key={`locked-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} standings={payload.standings} /> })),
+    ...previews.map(game => ({ start: game.scheduled_start_utc, node: <PreviewCard key={`preview-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} standings={payload.standings} /> })),
   ].sort((a, b) => a.start.localeCompare(b.start))
   const groups = items.reduce<Record<string, typeof items>>((result, item) => {
     const label = dateLabel(item.start)
