@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { SportsService, Game } from '../services/sports'
 import GameCard from '../components/Scores/GameCard'
-import KalshiLivePanel from '../components/Scores/KalshiLivePanel'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
 import LeagueFilterPills, {
   SPORT_LEAGUE_CODES,
@@ -398,12 +397,6 @@ export default function ScoresPage() {
           </button>
         </div>
         {error && <ErrorBanner message={error} />}
-        {sportFilter === 'Tennis' && (
-          <div className="mb-6 space-y-4">
-            <KalshiLivePanel league="atp" active={isToday} />
-            <KalshiLivePanel league="wta" active={isToday} />
-          </div>
-        )}
         {loading ? (
           <SkeletonList />
         ) : visibleGames.length === 0 ? (
