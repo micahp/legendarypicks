@@ -266,3 +266,58 @@ The order is pedagogical (framework → simulators → player-rating inputs), **
 - **No dedicated NHL modeling article located** in this public review. Lack of a located article is not evidence that DraftKings does not model hockey.
 
 This guide covers the method and identifies what to read. Any implementation plan must start with an LP data/identity/coverage audit and an explicit historical baseline for its target market.
+
+---
+
+## 10. Further reading: 2024–2026 advances beyond DraftKings
+
+**Updated October 14, 2026.** The DraftKings technical posts above are from 2023–2024. Recent public work extends the guide in three directions: **(a) forecasts of player actions and movement from spatial context, (b) uncertainty-aware player state models, and (c) evaluation of information sources beyond box scores.** These are independent papers, league features and open-source implementations, not a single unified system. **No external result listed here is a demonstrated improvement for Legendary Picks** until replayed on LP's own time-split data.
+
+### A. Player movement and tactical interactions
+
+**Google DeepMind and Liverpool FC, [*TacticAI: an AI assistant for football tactics*](https://doi.org/10.1038/s41467-024-45965-x), Nature Communications, March 19, 2024.** Uses graph neural networks and player location/velocity to predict the first receiver and the chance of a shot on a corner, and proposes alternative positioning. Peer-reviewed and evaluated with Liverpool FC analysts; the underlying club tracking data are not generally available as an open commercial dataset. **LP use:** a pattern for modeling relationships between players *before the action*, especially set pieces. Not an end-to-end match or goalscorer-prop simulator. Do not quote the reported expert preference rate as a forecast accuracy metric.
+
+**NFL, [2026 Big Data Bowl](https://operations.nfl.com/gameday/analytics/big-data-bowl), official NFL competition.** Teams predict **where players move while the football is in the air**, conditional on information before the pass, using prior 2023–2024 tracking and a 2025 evaluation period. Distinguish the *movement prediction task* from pass-completion/receiver-yardage props. **LP use:** study competition tasks and public entries as spatial prediction benchmarks; then ask whether predicted defender/receiver trajectories improve downstream catch/YAC distributions beyond nontracking baselines. Check the competition's license before reusing tracking data.
+
+**Radke and Tilbury, [*Simulating Tracking Data to Advance Sports Analytics Research*](https://arxiv.org/abs/2503.19809), AAMAS 2025.** Provides a workflow and a sample of **3,000 synthetic soccer games** from Google Research Football, expressed in player-and-ball tracking schemas with examples for expected goals and pitch control. **LP use:** test feature engineering and the training infrastructure for MLS/Liga MX/NHL-style spatial data without implying simulated soccer motion is statistically representative of professional play. Assess data and code terms separately.
+
+### B. Public movement features are becoming more accessible
+
+**MLB / Statcast, [*New Statcast swing metrics*](https://www.mlb.com/news/new-statcast-swing-metrics-2025), May 20, 2025; [Baseball Savant leaderboard](https://baseballsavant.mlb.com/leaderboard/bat-tracking/swing-path-attack-angle).** Added published **swing path, attack angle, ideal attack angle and attack direction** metrics to previously available bat speed/swing length measures. **LP use:** test whether changes in mechanical measurements add predictive information about subsequent contact quality, hits or total bases beyond conventional rolling statistics. Descriptions of swing mechanics are not automatically independent of measured outcomes; test feature lag and sample depth. Review the provider's access and commercial terms.
+
+**NHL, [NHL EDGE public stats](https://www.nhl.com/nhl-edge/skaters/20252026/2) and [2025 trends reviewed January 2026](https://www.nhl.com/news/nhl-edge-stats-trends-and-storylines-for-2025).** Skating bursts/speed and distance, puck/shot speed, zone time and shot locations are publicly displayed in player/team aggregate form. **LP use:** potential movement and shot-quality features to benchmark with/without in NHL shots/saves models. Public **aggregate** EDGE leaderboards are not evidence of open raw frame-by-frame puck/skater trajectories or an available bulk commercial API.
+
+**NFL Next Gen Stats, [2025 new advanced metrics](https://www.nfl.com/news-migrated-v2/next-gen-stats-new-advanced-metrics-you-need-to-know-for-the-2025-nfl-season).** NFL describes improvements to its completion-probability modeling and a new pre-snap coverage-disguise classifier inspired by Big Data Bowl work. **LP use:** evidence that *pre-event defensive context* can be modeled; explore independently reproducible proxies and licensed tracking data rather than copying headline rates into prop probabilities.
+
+### C. Updating latent player skills; falsifying momentum
+
+**[Wimbledon 2026 Bayesian forecasting and momentum study](https://github.com/AndyYinGL/wimbledon-2026-forecast), independent open-source project, 2026.** A dynamic serve/return Gaussian-belief model with approximate Kalman updates, **surface-specific effects shrunk toward overall form**, a hierarchical Markov game/set/match model, post-hoc calibration, and point-by-point tests of momentum. The author reports little incremental point-forecast value from observed streaks after controlling for baseline ability, and overconfidence in uncalibrated match projections. **LP use:** directly relevant to the observed thin-surface-history failure. Treat the author's numerical findings as **self-reported, not independently verified**. Its ATP point data and odds sources have separate restrictions from its MIT-licensed code; no automatic product use.
+
+**[Funaki Bayesian player ratings demonstration](https://github.com/tjermann/funaki_demo), independent public NBA sample.** Includes play-by-play data processing and Bayesian offensive/defensive player ratings. The repo explicitly says its game-level market prediction layer is not public. **LP use:** compare dynamic lineup-adjusted ability priors against simple regularized player ratings; not a source of verified prop-probability forecasts.
+
+**[NBA Sim](https://github.com/OorjitSethi/nba-sim) and [NFL Sim](https://github.com/tim-foldy-porto/nflsim), independent open-source implementations.** Provide inspectable possession/play state machines and validation/replay ideas; repository documentation includes self-reported modeling capabilities. **LP use:** implementation references for state machine invariants and opportunity allocation, **not** validated sportsbooks or proof of accuracy. Audit source dependencies, licensing and historical feature timestamps before borrowing any part.
+
+### D. Commentary and multimodal signals: a separate, unproven hypothesis
+
+**Afzal et al., [*Real-Time Generation of Game Video Commentary with Multimodal LLMs: Pause-Aware Decoding Approaches*](https://aclanthology.org/2026.lrec-1.722/), LREC 2026.** Research on **generating commentary at appropriate times** from video for racing and fighting games, with released benchmark materials and code. It is relevant to alignment, segmentation and timing; **it does not show that hearing commentary improves sports forecasts**.
+
+**Gregori et al., [*Forecasting sports outcomes through machine learning*](https://doi.org/10.3389/fcomp.2026.1883327), Frontiers in Computer Science, September 2026.** Systematic review of 118 English-language papers from 2020–2025. It emphasizes heterogeneous metrics/validation and notes fewer studies of in-game prediction versus outcome forecasting. **LP use:** a research landscape and evaluation checklist, **not** evidence that commentary is predictive.
+
+For LP's commentary hypothesis, preserve four signal classes (stat recitation, interpretation, physical/tactical observation, narrative speculation) and compare **identical statistical models with and without each class**. Forecast cutoffs must use *actual availability time*, accounting for delay between the event, commentator speech, captured audio, transcription, and market tick. Historical commentary rights require separate review. The value claim is **incremental out-of-sample probability accuracy**, not novelty of transcription or a guaranteed betting edge.
+
+### E. A recent warning on evaluation methodology
+
+**Chang and Chuang, [*Simple versus complex metrics in single-game baseball prediction: A temporal validation study*](https://doi.org/10.1177/22150218261493344), Journal of Sports Analytics, September 30, 2026.** On Chinese Professional Baseball League data, the paper reports seemingly high classification accuracies in an **in-game outcome attribution** setup. Importantly, it also reports *strictly pregame*, prior-information-only prediction near chance (roughly **43.6–52.0%**, depending on model). **LP use:** never confuse an outcome-explanation model with an actionable pregame forecast. Read the target/timestamp definition and compare proper probability scores; do not import the headline 82–89% classification numbers as a betting benchmark.
+
+### Relevance and experiment priority for Legendary Picks
+
+| Research input | Best LP first experiment | What would make it worth retaining? |
+|---|---|---|
+| **Bayesian skill tracking and partial pooling (tennis, basketball)** | Compare shrunk overall-to-surface serve skill against the current surface-only history; compare possession-level player priors to rolling baselines | Matched-sample proper-score improvement, especially for sparse histories |
+| **Movement prediction (NFL, soccer)** | Predict next-play receiver/catch or corner-shot likelihood from lagged relative positions where legally available | Improves action forecasting *beyond* pre-event numerical models |
+| **Published bat/EDGE mechanics (MLB, NHL)** | Add only known-before-event mechanical features to direct player-stat models | Improves future-stat count distributions and tail calibration |
+| **Event-based full-game simulators** | Compare player opportunity and count distributions with direct models | Better proper scoring rule on the same outcomes while maintaining coherent trajectories |
+| **Commentary observations** | Time-aligned ablation: stats only vs stats + identified observations vs stats + market + observations | Nonmarginal, replicated incremental prediction improvement without timestamp leakage |
+| **Model evaluation research** | Audit all training/test features for as-of validity; compare simple and complex models | Eliminates spurious gains before adding computation |
+
+**Bottom line:** recent public work increasingly models *the conditions and interactions preceding an event*, not just the resulting score. The immediate LP advantage is not adopting every new architecture, but **testing which extra information actually changes a well-calibrated player or game forecast**. None of these external papers overturns the recorded LP tennis match-winner no-go.
