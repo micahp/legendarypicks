@@ -132,7 +132,6 @@ function MatchCard({ match }: { match: ModelMatch }) {
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
           </div>
         </div>
-        <p className="text-[11px] text-zinc-600">Walk-forward research projections · {projection.modelVersion ?? 'development model'}</p>
         </div>
       )}
 
