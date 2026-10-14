@@ -193,28 +193,40 @@ def tennis_rankings(tour: str = "all", limit: int = Query(50, ge=1, le=150)):
 
 
 @router.get("/api/tennis/model")
-def tennis_model(date: str, tour: str = "all"):
-    """Read the persisted tennis slate and resolve participants through the tennis spine.
+def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
+    """Read a local-day slate and resolve participants through the tennis spine.
 
-    Predictions are deliberately absent until an immutable model lock exists for a
-    match. A schedule row is not evidence that a forecast was generated.
+    Future matches carry a preview; only forecasts frozen before start are eligible
+    for a final grade.
     """
     tour = str(tour or "all").lower()
     if tour not in ("all", "atp", "wta"):
         raise HTTPException(400, "tour must be all, atp, or wta")
     try:
-        dt.date.fromisoformat(date)
+        selected_day = dt.date.fromisoformat(date)
     except (TypeError, ValueError):
         raise HTTPException(400, "date must be YYYY-MM-DD")
+    if not -840 <= utc_offset_minutes <= 840:
+        raise HTTPException(400, "utc_offset_minutes must be between -840 and 840")
 
     tours = ("atp", "wta") if tour == "all" else (tour,)
+    local_midnight = dt.datetime.combine(selected_day, dt.time())
+    utc_start = local_midnight + dt.timedelta(minutes=utc_offset_minutes)
+    utc_end = utc_start + dt.timedelta(days=1)
+    date_from = utc_start.date().isoformat()
+    date_through = (utc_end - dt.timedelta(microseconds=1)).date().isoformat()
     out = []
     with closing(_db()) as con:
+        con.execute(
+            "CREATE TABLE IF NOT EXISTS tennis_model_locks("
+            "league TEXT NOT NULL,game_date TEXT NOT NULL,game_id TEXT NOT NULL,start_time TEXT NOT NULL,"
+            "locked_at TEXT NOT NULL,projection TEXT NOT NULL,model_version TEXT,PRIMARY KEY(league,game_id))"
+        )
         for league in tours:
             rows = con.execute(
                 "SELECT game_id,payload,state,start_time FROM scoreboard_snapshots "
-                "WHERE league=? AND game_date=? ORDER BY start_time,game_id",
-                (league, date),
+                "WHERE league=? AND game_date BETWEEN ? AND ? ORDER BY start_time,game_id",
+                (league, date_from, date_through),
             ).fetchall()
             slate = []
             for row in rows:
@@ -277,10 +289,54 @@ def tennis_model(date: str, tour: str = "all"):
                     "identity": {"home": spine.get(home_id), "away": spine.get(away_id)},
                 })
             from tennis_daily_projections import project_day
-            projections = project_day(con, league, date, slate) if slate else {}
+            now = dt.datetime.now(dt.timezone.utc)
+            candidates = {}
+            by_model_day = {}
             for match in slate:
-                projection = projections.get(match["gameId"])
+                if match["status"] != "scheduled" or not match["startTime"]:
+                    continue
+                try:
+                    starts_at = dt.datetime.fromisoformat(match["startTime"].replace("Z", "+00:00"))
+                    if starts_at.tzinfo is None:
+                        starts_at = starts_at.replace(tzinfo=dt.timezone.utc)
+                except (TypeError, ValueError):
+                    continue
+                starts_at_utc = starts_at.astimezone(dt.timezone.utc)
+                if (utc_start.replace(tzinfo=dt.timezone.utc) <= starts_at_utc
+                        < utc_end.replace(tzinfo=dt.timezone.utc) and starts_at_utc > now):
+                    by_model_day.setdefault(starts_at_utc.date().isoformat(), []).append(match)
+            for model_day, day_matches in by_model_day.items():
+                candidates.update(project_day(con, league, model_day, day_matches))
+            for match in slate:
+                candidate = candidates.get(match["gameId"])
+                starts_at = None
+                try:
+                    if match["startTime"]:
+                        starts_at = dt.datetime.fromisoformat(match["startTime"].replace("Z", "+00:00"))
+                        if starts_at.tzinfo is None:
+                            starts_at = starts_at.replace(tzinfo=dt.timezone.utc)
+                except (TypeError, ValueError):
+                    pass
+                # Freeze a forecast during the hour before the published start.
+                # A final can only be graded from this pregame snapshot.
+                if (candidate is not None and match["status"] == "scheduled" and starts_at is not None
+                        and now < starts_at.astimezone(dt.timezone.utc) <= now + dt.timedelta(hours=1)):
+                    con.execute(
+                        "INSERT OR IGNORE INTO tennis_model_locks(league,game_date,game_id,start_time,locked_at,projection,model_version) "
+                        "VALUES(?,?,?,?,?,?,?)",
+                        (league, starts_at.astimezone(dt.timezone.utc).date().isoformat(), match["gameId"], match["startTime"],
+                         now.isoformat(), json.dumps(candidate), candidate.get("modelVersion")),
+                    )
+                lock = con.execute(
+                    "SELECT projection,locked_at FROM tennis_model_locks WHERE league=? AND game_id=?",
+                    (league, match["gameId"]),
+                ).fetchone()
+                projection = json.loads(lock["projection"]) if lock else (
+                    candidate if match["status"] == "scheduled" and starts_at is not None and starts_at > now else None
+                )
                 match["projection"] = projection
+                match["lockedAt"] = lock["locked_at"] if lock else None
+                match["preview"] = bool(projection and not lock)
                 result = match["result"]
                 match["grades"] = ({
                     "winner": ("correct" if projection.get("projectedWinner") == result.get("winner") else "incorrect")
@@ -295,6 +351,7 @@ def tennis_model(date: str, tour: str = "all"):
                 match.pop("awayAthleteId", None)
                 match.pop("tournamentId", None)
                 out.append(match)
+        con.commit()
     return {
         "available": True,
         "reason": None if out else "No persisted tennis matches are available for this date.",

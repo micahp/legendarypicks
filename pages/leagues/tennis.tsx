@@ -214,7 +214,7 @@ export default function TennisLeaguePage() {
         )}
         {tab === 'draws' && <DrawsPanel data={draws} error={drawsError} />}
         {tab === 'rankings' && <RankingsPanel data={rankings} error={rankingsError} />}
-        {tab === 'model' && <TennisModelTab date={date} setDate={setDate} tour={tour} />}
+        {tab === 'model' && <TennisModelTab tour={tour} />}
         {tab === 'news' && (
           <NewsTab
             league="tennis"

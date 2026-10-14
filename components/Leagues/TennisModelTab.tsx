@@ -28,6 +28,8 @@ interface ModelMatch {
   event: string | null
   round: string | null
   startTime: string | null
+  lockedAt?: string | null
+  preview?: boolean
   status: 'scheduled' | 'live' | 'final' | 'unknown'
   home: string
   away: string
@@ -59,6 +61,17 @@ function shiftDate(value: string, offset: number) {
   return date.toLocaleDateString('en-CA')
 }
 
+function localDateKey(value: string | null) {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`
+}
+
+function todayKey() {
+  return localDateKey(new Date().toISOString())
+}
+
 function number(value: number | null, digits = 1) {
   return value == null || !Number.isFinite(value) ? '—' : value.toFixed(digits)
 }
@@ -77,6 +90,7 @@ function MatchCard({ match }: { match: ModelMatch }) {
         </div>
         <p className="text-sm tabular-nums text-zinc-400">
           {status ?? (match.startTime ? new Date(match.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : 'Start time unknown')}
+          {match.status === 'scheduled' && <span className="ml-2 text-xs text-zinc-500">{match.lockedAt ? 'Locked' : 'Preview'}</span>}
         </p>
       </header>
 
@@ -136,11 +150,12 @@ function MatchCard({ match }: { match: ModelMatch }) {
   )
 }
 
-export default function TennisModelTab({ date, setDate, tour }: {
-  date: string
-  setDate: (date: string) => void
+export default function TennisModelTab({ tour }: {
   tour: Tour
 }) {
+  const [view, setView] = useState<'projections' | 'record'>('projections')
+  const [recordDate, setRecordDate] = useState(todayKey())
+  const date = view === 'projections' ? todayKey() : recordDate
   const [payload, setPayload] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -149,7 +164,8 @@ export default function TennisModelTab({ date, setDate, tour }: {
     let active = true
     setLoading(true)
     setError(null)
-    fetch(`/api/tennis/model?date=${encodeURIComponent(date)}&tour=${tour}`, { cache: 'no-store' })
+    const utcOffsetMinutes = new Date().getTimezoneOffset()
+    fetch(`/api/tennis/model?date=${encodeURIComponent(date)}&tour=${tour}&utc_offset_minutes=${utcOffsetMinutes}`, { cache: 'no-store' })
       .then(async response => {
         if (!response.ok) throw new Error(`Tennis model data did not load (HTTP ${response.status}).`)
         return response.json() as Promise<Payload>
@@ -162,17 +178,23 @@ export default function TennisModelTab({ date, setDate, tour }: {
 
   return (
     <div className="space-y-5">
-      <section className="flex items-center justify-center gap-3">
-        <button type="button" aria-label="Previous day" onClick={() => setDate(shiftDate(date, -1))}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">‹</button>
-        <h2 className="min-w-[15rem] text-center text-sm font-semibold text-zinc-200" aria-live="polite">{dateLabel(date)}</h2>
-        <button type="button" aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">›</button>
+      <section className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-lg bg-zinc-900 p-1">
+          {(['projections', 'record'] as const).map(item => (
+            <button key={item} type="button" onClick={() => setView(item)} aria-pressed={view === item}
+              className={`rounded-md px-3 py-2 text-sm capitalize ${view === item ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'}`}>
+              {item}
+            </button>
+          ))}
+        </div>
+        {view === 'record' ? <div className="flex items-center gap-3">
+          <button type="button" aria-label="Previous day" onClick={() => setRecordDate(shiftDate(recordDate, -1))}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">‹</button>
+          <h2 className="min-w-[13rem] text-center text-sm font-semibold text-zinc-200" aria-live="polite">{dateLabel(recordDate)}</h2>
+          <button type="button" aria-label="Next day" disabled={recordDate >= todayKey()} onClick={() => setRecordDate(shiftDate(recordDate, 1))}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800 disabled:opacity-40">›</button>
+        </div> : <h2 className="text-sm font-semibold text-zinc-200">Today’s projections · {dateLabel(date)}</h2>}
       </section>
-
-      <p className="max-w-prose text-sm text-zinc-400">
-        Free walk-forward projections use 2020 onward match history dated before the selected day and resolve player history through the tennis spine. Winner probabilities blend global and surface Elo; ace means use the per-match baseline; total games use the point simulator where the event surface is mapped. Final score data includes set scores but no ace statistics, so ace grades are unavailable.
-      </p>
 
       {error ? <p role="alert" className="rounded-xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</p> : null}
       {loading && !payload ? <div className="h-36 animate-pulse rounded-2xl bg-zinc-800" /> : null}
@@ -180,11 +202,17 @@ export default function TennisModelTab({ date, setDate, tour }: {
       {payload?.available && payload.reason && <p className="rounded-xl bg-zinc-900 px-4 py-3 text-sm text-zinc-400">{payload.reason}</p>}
       {payload?.available && payload.matches.length === 0 ? <p className="text-sm text-zinc-400">No matches for this tour and date.</p> : null}
 
-      {payload?.available && payload.matches.length > 0 && (
+      {payload?.available && payload.matches.length > 0 && (() => {
+        const matches = payload.matches.filter(match => localDateKey(match.startTime) === date)
+        const visible = view === 'projections'
+          ? matches.filter(match => match.status === 'scheduled' && match.startTime && Date.parse(match.startTime) > Date.now())
+          : matches.filter(match => match.status === 'final')
+        return visible.length ? (
         <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-          {payload.matches.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} />)}
+          {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} />)}
         </section>
-      )}
+        ) : <p className="text-sm text-zinc-400">{view === 'projections' ? 'No upcoming matches today.' : 'No completed matches for this day.'}</p>
+      })()}
     </div>
   )
 }
