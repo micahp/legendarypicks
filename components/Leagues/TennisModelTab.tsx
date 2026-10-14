@@ -117,7 +117,8 @@ function MatchCard({ match }: { match: ModelMatch }) {
   // Edge on the total is the model's projected games minus the Bovada line, in games.
   const totalLine = match.odds?.totalGames ?? null
   const totalEdge = totalLine && projection?.totalGames != null ? projection.totalGames - totalLine.line : null
-  const totalEdgeLabel = totalEdge == null ? 'n/a' : `${Math.abs(totalEdge).toFixed(1)} games ${totalEdge >= 0 ? 'over' : 'under'}`
+  const totalSide = totalEdge == null ? null : totalEdge >= 0 ? 'over' : 'under'
+  const totalEdgeLabel = totalEdge == null ? 'n/a' : `${Math.abs(totalEdge).toFixed(1)} games on ${totalSide}`
 
   return (
     <article className="space-y-3 py-4">
@@ -162,7 +163,7 @@ function MatchCard({ match }: { match: ModelMatch }) {
             {projection.totalGamesLabel && <p className="text-xs text-amber-400">{projection.totalGamesLabel}</p>}
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
             <p className="text-xs tabular-nums text-zinc-500">Vegas line {totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</p>
-            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.totalGames == null ? 'n/a' : number(projection.totalGames)}</p>
+            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.totalGames == null ? 'n/a' : totalSide && totalLine ? `${totalSide === 'over' ? 'Over' : 'Under'} ${totalLine.line} · ${number(projection.totalGames)} games` : `${number(projection.totalGames)} games`}</p>
             <p className="text-xs tabular-nums text-zinc-500">Edge {totalEdgeLabel}</p>
           </div>
         </div>
