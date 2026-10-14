@@ -59,14 +59,16 @@ describe('NHL model tab previews', () => {
   })
 
   it('shows the Bovada puck line and total in the Vegas columns', async () => {
-    const withLines = { ...payload, lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, total_line: 6.5 } } }
+    const withLines = { ...payload, lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, total_line: 6.5, home_moneyline: -128, away_moneyline: 107, over_price: -115, under_price: -105 } } }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(withLines) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
     expect(screen.getByText('WSH -1.5')).toBeTruthy()
     expect(screen.getByText('WSH -0.4')).toBeTruthy()
-    expect(screen.getByText('1.1 pts')).toBeTruthy()
+    expect(screen.getByText('+1.1 pts')).toBeTruthy()
     expect(screen.getByText('6.5')).toBeTruthy()
-    expect(screen.getByText('0.7 pts')).toBeTruthy()
+    expect(screen.getByText('-0.7 pts')).toBeTruthy()
+    expect(screen.getByText('Under 6.5')).toBeTruthy()
+    expect(screen.getByText('+21.1% edge')).toBeTruthy()
   })
 })

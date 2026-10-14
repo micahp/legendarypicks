@@ -71,6 +71,10 @@ interface BovadaLine {
   captured_at_utc: string
   home_puck_line: number | null
   total_line: number | null
+  home_moneyline: number | null
+  away_moneyline: number | null
+  over_price: number | null
+  under_price: number | null
 }
 
 interface NhlPreview {
@@ -107,8 +111,38 @@ function cardLines(home: string, away: string, forecast: Forecast, line?: Bovada
   return [
     { label: 'Vegas line', value: vegas },
     { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-    { label: 'Edge', value: homeLine == null ? 'n/a' : `${one(Math.abs(homeLine + margin))} pts` },
+    { label: 'Edge', value: homeLine == null ? 'n/a' : `${signed(-homeLine - margin)} pts` },
   ]
+}
+
+function impliedProbability(price: number) {
+  return price < 0 ? -price / (-price + 100) : 100 / (price + 100)
+}
+
+function noVigPair(first: number, second: number) {
+  const a = impliedProbability(first)
+  const b = impliedProbability(second)
+  return [a / (a + b), b / (a + b)]
+}
+
+// Candidates are the moneyline sides and Over/Under at the 5.5 and 6.5 lines, the only totals the model prices.
+// The pick is the candidate with the largest model probability minus the no-vig Bovada probability.
+function modelPick(home: string, away: string, forecast: Forecast, line?: BovadaLine): { label: string; edge: number } | null {
+  const candidates: { label: string; edge: number }[] = []
+  if (line?.home_moneyline != null && line.away_moneyline != null) {
+    const [homeMarket, awayMarket] = noVigPair(line.home_moneyline, line.away_moneyline)
+    candidates.push({ label: `${home} ML`, edge: forecast.home_win_probability - homeMarket })
+    candidates.push({ label: `${away} ML`, edge: 1 - forecast.home_win_probability - awayMarket })
+  }
+  const total = line?.total_line
+  const overModel = total === 5.5 ? forecast['p_over_5.5'] : total === 6.5 ? forecast['p_over_6.5'] : null
+  if (total != null && overModel != null && line?.over_price != null && line.under_price != null) {
+    const [overMarket, underMarket] = noVigPair(line.over_price, line.under_price)
+    candidates.push({ label: `Over ${one(total)}`, edge: overModel - overMarket })
+    candidates.push({ label: `Under ${one(total)}`, edge: 1 - overModel - underMarket })
+  }
+  if (!candidates.length) return null
+  return candidates.reduce((best, candidate) => (candidate.edge > best.edge ? candidate : best))
 }
 
 function totalLines(forecast: Forecast, line?: BovadaLine) {
@@ -116,11 +150,11 @@ function totalLines(forecast: Forecast, line?: BovadaLine) {
   return [
     { label: 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
     { label: 'Model total', value: one(forecast.projected_total_goals) },
-    { label: 'Edge', value: vegas == null ? 'n/a' : `${one(Math.abs(forecast.projected_total_goals - vegas))} pts` },
+    { label: 'Edge', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} pts` },
   ]
 }
 
-function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals }: {
+function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, pick }: {
   away: string
   home: string
   startUtc: string
@@ -128,8 +162,8 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   status: string | null
   lines: { label: string; value: string }[]
   totals: { label: string; value: string }[]
+  pick: { label: string; edge: number } | null
 }) {
-  const homePick = forecast.home_win_probability >= 0.5
   return (
     <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -151,7 +185,8 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
         </div>
         <div className="text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
-          <span className="block text-xl font-semibold text-zinc-100">{homePick ? home : away} {pct(homePick ? forecast.home_win_probability : 1 - forecast.home_win_probability)}</span>
+          <span className="block text-xl font-semibold text-zinc-100">{pick ? pick.label : 'n/a'}</span>
+          {pick && <span className="block text-xs tabular-nums text-zinc-400">{signed(pick.edge * 100)}% edge</span>}
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
@@ -165,7 +200,7 @@ function ProjectionCard({ game, model, line }: { game: NhlGame; model: ModelName
   const forecast = game.models[model]
   return (
     <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="LOCKED"
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
   )
 }
 
@@ -173,7 +208,7 @@ function PreviewCard({ game, model, line }: { game: NhlPreview; model: ModelName
   const forecast = game.models[model]
   return (
     <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null}
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
   )
 }
 
