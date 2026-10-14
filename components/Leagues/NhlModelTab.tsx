@@ -87,9 +87,9 @@ interface NhlPreview {
 }
 
 const MODEL_LABELS: Record<ModelName, string> = {
-  B3_elo: 'B3 Elo',
-  B5_xg_poisson: 'B5 xG Poisson',
-  B7_elo_xg_poisson: 'B7 Elo + xG',
+  B3_elo: 'Elo',
+  B5_xg_poisson: 'xG Poisson',
+  B7_elo_xg_poisson: 'Elo + xG',
 }
 
 const one = (value: number) => value.toFixed(1)
@@ -295,13 +295,18 @@ export default function NhlModelTab() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/nhl/model/locks?season=2026')
+    const loadLocks = (first: boolean) => fetch('/api/nhl/model/locks?season=2026')
       .then(async response => {
         if (!response.ok) throw new Error(`NHL forecasts did not load (HTTP ${response.status}).`)
         return response.json() as Promise<Payload>
       })
-      .then(data => { if (!cancelled) { setPayload(data); setModel(data.default_model) } })
+      .then(data => { if (!cancelled) { setPayload(data); if (first) setModel(data.default_model) } })
       .catch(reason => { if (!cancelled) setError(reason.message) })
+    loadLocks(true)
+    fetch('/api/nhl/model/lines/refresh', { method: 'POST' })
+      .then(async response => (response.ok ? response.json() : null))
+      .then(result => { if (!cancelled && result?.refreshed) loadLocks(false) })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
