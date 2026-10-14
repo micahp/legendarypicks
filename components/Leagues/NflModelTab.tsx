@@ -129,7 +129,7 @@ function edge(lock: Lock) {
 }
 
 function statusLabel(lock: Lock) {
-  if (lock.preview) return 'PROJECTION · NOT LOCKED'
+  if (lock.preview) return 'NOT LOCKED'
   if (!lock.grade) return 'AWAITING'
   return { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }[lock.grade.ats] || lock.grade.ats.toUpperCase()
 }
