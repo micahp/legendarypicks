@@ -153,10 +153,13 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
   const tone = record ? statusClass(lock) : lock.preview ? 'text-amber-300' : 'text-emerald-400'
   const projected = (value: number | null) => (value == null ? '—' : one(value))
   return (
-    <article className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+    <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</h3>
-        <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
+        <span className="flex items-center gap-3">
+          {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
+          <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
+        </span>
       </div>
       <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
         <span />
@@ -169,14 +172,13 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
-        <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
-        <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
-        <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
-        <div className="ml-auto min-w-0 text-right">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
+          <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
+          <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
+        </div>
+        <div className="text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
           <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
         </div>
@@ -185,6 +187,53 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
   )
 }
 
+
+function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
+  return (
+    <article className="py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</h3>
+        {!game.final && <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>}
+      </div>
+      {!lock ? <p className="mt-2 text-sm text-amber-400">No locked projection for this game.</p> : (
+        <>
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6">
+            <Metric label="Vegas line" value={lineSide(game.home, game.away, lock.line.spread)} />
+            <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
+            <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
+            <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
+            <div className="min-w-0">
+              <div className="text-xs text-zinc-500">Final</div>
+              <div className="mt-0.5 truncate text-sm font-normal tabular-nums text-zinc-200">
+                {game.final ? `${game.away} ${one(game.final.away)} · ${game.home} ${one(game.final.home)}` : 'Pending'}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs text-zinc-500">Result</div>
+              <div className={`mt-0.5 truncate text-sm tabular-nums ${statusClass(lock)}`}>{statusLabel(lock)}</div>
+            </div>
+          </div>
+          {lock.proj_home == null || lock.proj_away == null ? (
+            <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-500">
+              Projected {game.away} {one(lock.proj_away)} · {game.home} {one(lock.proj_home)}
+            </p>
+          )}
+        </>
+      )}
+    </article>
+  )
+}
+
+function Metric({ label, value, emphasis, resultClass }: { label: string; value: string; emphasis?: boolean; resultClass?: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-xs text-zinc-500">{label}</div>
+      <div className={`mt-0.5 truncate tabular-nums ${emphasis ? 'text-lg font-semibold text-zinc-100' : 'text-sm text-zinc-200'} ${resultClass || ''}`}>{value}</div>
+    </div>
+  )
+}
 
 function RecordCards({ games, version, threshold }: { games: ModelGame[]; version: string; threshold: EdgeFilter }) {
   const rows = games.flatMap(game => {
@@ -197,8 +246,8 @@ function RecordCards({ games, version, threshold }: { games: ModelGame[]; versio
 
   if (!rows.length) return <p className="text-sm text-zinc-400">No picks match this filter for this week.</p>
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {rows.map(({ game, lock }) => <GameCard key={game.game_id} game={game} lock={lock} mode="record" />)}
+    <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+      {rows.map(({ game, lock }) => <GameProjection key={game.game_id} game={game} lock={lock} />)}
     </div>
   )
 }
@@ -296,8 +345,7 @@ export default function NflModelTab() {
 
   // The record's week defaults to the latest week with a graded pick, so an unplayed week's preview never opens it.
   const gradedWeeks = useMemo(() => Array.from(new Set(recordGames.filter(game => game.locks[version]?.grade).map(game => game.week))).sort((a, b) => a - b), [recordGames, version])
-  const recordWeeks = useMemo(() => Array.from(new Set(recordGames.map(game => game.week))).sort((a, b) => a - b), [recordGames])
-  const activeRecordWeek = recordWeek ?? gradedWeeks[gradedWeeks.length - 1] ?? recordWeeks[recordWeeks.length - 1] ?? null
+  const activeRecordWeek = (recordWeek != null && gradedWeeks.includes(recordWeek) ? recordWeek : null) ?? gradedWeeks[gradedWeeks.length - 1] ?? null
 
   if (error) return <div className="rounded-2xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</div>
   if (loading && !data) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
@@ -335,7 +383,7 @@ export default function NflModelTab() {
       {view === 'record' && <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="ATS" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Winner" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={activeRecordWeek ?? ''} onChange={event => setRecordWeek(event.target.value ? Number(event.target.value) : null)}>{recordWeeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
+            <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={activeRecordWeek ?? ''} onChange={event => setRecordWeek(event.target.value ? Number(event.target.value) : null)}>{gradedWeeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
             <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
           </div>
         </div>
