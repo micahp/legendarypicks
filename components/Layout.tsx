@@ -17,7 +17,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/news" className="hover:text-emerald-400 whitespace-nowrap">News</Link>
               <Link href="/esports" className="hover:text-emerald-400 whitespace-nowrap">Esports</Link>
               <Link href="/predict" className="hover:text-emerald-400 whitespace-nowrap">Predict</Link>
-              <Link href="/watch" className="hover:text-emerald-400 whitespace-nowrap">Watch</Link>
             </nav>
             <GlobalSearch />
           </div>
