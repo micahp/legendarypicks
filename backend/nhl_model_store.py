@@ -132,6 +132,45 @@ def ensure_schema(con: sqlite3.Connection) -> None:
         feed_game_sha256 TEXT NOT NULL,
         PRIMARY KEY (game_id,model_key,model_version,event_type)
     );
+    -- Bovada full-game snapshots (puck line, total, moneyline). Append-only; the latest per game is shown.
+    CREATE TABLE IF NOT EXISTS nhl_game_lines (
+        game_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        captured_at_utc TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        home_puck_line REAL,
+        home_puck_price INTEGER,
+        away_puck_price INTEGER,
+        total_line REAL,
+        over_price INTEGER,
+        under_price INTEGER,
+        home_moneyline INTEGER,
+        away_moneyline INTEGER,
+        PRIMARY KEY (game_id, source, captured_at_utc)
+    );
+    -- Display-only previews for unlocked games. Replaced on every run; never graded or locked.
+    CREATE TABLE IF NOT EXISTS nhl_game_previews (
+        game_id TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        game_date TEXT NOT NULL,
+        scheduled_start_utc TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        forecast_id TEXT NOT NULL,
+        forecasted_at_utc TEXT NOT NULL,
+        previewed_at_utc TEXT NOT NULL,
+        home_expected_goals REAL NOT NULL,
+        away_expected_goals REAL NOT NULL,
+        projected_total_goals REAL NOT NULL,
+        home_win_probability REAL NOT NULL,
+        p_over_5_5 REAL NOT NULL,
+        p_over_6_5 REAL NOT NULL,
+        forecast_output_json TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version)
+    );
     CREATE TRIGGER IF NOT EXISTS nhl_projection_immutable_update
     BEFORE UPDATE ON nhl_game_projections BEGIN
         SELECT RAISE(ABORT, 'NHL locked projections are immutable');
@@ -463,6 +502,50 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
     return report
 
 
+def preview_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
+    """Replace this model version's previews with feed games still more than the T-90 lead before puck drop.
+
+    Previews are display only: never graded, never written to the lock tables, and a game drops out
+    once it is inside its lock window, whether or not the lock job has run.
+    """
+    now = now.astimezone(UTC)
+    report = {"feed_games": len(payload["games"]), "preview_rows": 0,
+              "already_locked": 0, "not_previewable": 0}
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        con.execute("DELETE FROM nhl_game_previews WHERE model_version=?", (payload["model_version"],))
+        for game in payload["games"]:
+            start, _features_as_of, models = validate_game(game, payload["model_version"])
+            if start - now <= LOCK_LEAD:
+                report["not_previewable"] += 1
+                continue
+            gid = str(game["game_id"])
+            for model_key, forecast in models.items():
+                locked = con.execute(
+                    "SELECT 1 FROM nhl_game_projections WHERE game_id=? AND model_key=? AND model_version=?",
+                    (gid, model_key, payload["model_version"])).fetchone()
+                if locked:
+                    report["already_locked"] += 1
+                    continue
+                con.execute("""INSERT INTO nhl_game_previews
+                    (game_id,season,game_date,scheduled_start_utc,home_team,away_team,model_key,model_version,
+                     forecast_id,forecasted_at_utc,previewed_at_utc,home_expected_goals,away_expected_goals,
+                     projected_total_goals,home_win_probability,p_over_5_5,p_over_6_5,forecast_output_json)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (gid, int(gid[:4]), str(game.get("game_date") or "")[:10], iso_utc(start),
+                     str(game["home_team"]), str(game["away_team"]), model_key, str(payload["model_version"]),
+                     str(forecast["forecast_id"]), iso_utc(parse_time(game["forecasted_at_utc"])), iso_utc(now),
+                     float(forecast["home_expected_goals"]), float(forecast["away_expected_goals"]),
+                     float(forecast["projected_total_goals"]), float(forecast["home_win_probability"]),
+                     float(forecast["p_over_5.5"]), float(forecast["p_over_6.5"]), canonical_json(forecast)))
+                report["preview_rows"] += 1
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return report
+
+
 def normalize_official_result(game_id: str, document: dict) -> dict | None:
     """Return official winner and non-shootout scoring target from an NHL landing payload."""
     if str(document.get("id") or "") != str(game_id):
@@ -613,5 +696,52 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
                 (g["locked_at_utc"] for g in games.values()), default=None),
             "source": "NHL model lock database", "games": list(games.values()),
             "missed_locks": missed}
+
+
+def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime) -> list[dict]:
+    """Preview rows for unlocked games still more than the T-90 lead before puck drop. Never graded."""
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_game_previews'").fetchone():
+        return []
+    cutoff = iso_utc(now.astimezone(UTC) + LOCK_LEAD)
+    rows = con.execute("""
+      SELECT pv.* FROM nhl_game_previews pv
+      WHERE pv.season=? AND pv.scheduled_start_utc>?
+        AND NOT EXISTS (SELECT 1 FROM nhl_game_projections p
+                        WHERE p.game_id=pv.game_id AND p.model_key=pv.model_key
+                          AND p.model_version=pv.model_version)
+      ORDER BY pv.scheduled_start_utc,pv.game_id,pv.model_key
+    """, (int(season), cutoff)).fetchall()
+    games: dict[str, dict] = {}
+    for row in rows:
+        game = games.setdefault(row["game_id"], {
+            "game_id": int(row["game_id"]), "game_date": row["game_date"],
+            "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"], "models": {},
+        })
+        game["models"][row["model_key"]] = {
+            **json.loads(row["forecast_output_json"]),
+            "forecast_id": row["forecast_id"], "model_version": row["model_version"],
+            "forecasted_at_utc": row["forecasted_at_utc"], "previewed_at_utc": row["previewed_at_utc"],
+            "home_expected_goals": row["home_expected_goals"], "away_expected_goals": row["away_expected_goals"],
+            "projected_total_goals": row["projected_total_goals"],
+            "home_win_probability": row["home_win_probability"],
+            "p_over_5.5": row["p_over_5_5"], "p_over_6.5": row["p_over_6_5"],
+            "preview": True,
+        }
+    return list(games.values())
+
+
+def latest_game_lines(con: sqlite3.Connection) -> dict:
+    """Latest Bovada snapshot per game, keyed by game id string. Empty if the table is missing."""
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_game_lines'").fetchone():
+        return {}
+    rows = con.execute("""
+      SELECT l.* FROM nhl_game_lines l
+      JOIN (SELECT game_id, MAX(captured_at_utc) AS latest FROM nhl_game_lines
+            WHERE source='bovada' GROUP BY game_id) m
+        ON l.game_id=m.game_id AND l.captured_at_utc=m.latest
+      WHERE l.source='bovada'
+    """).fetchall()
+    return {row["game_id"]: {key: row[key] for key in row.keys() if key != "game_id"} for row in rows}
 
 
