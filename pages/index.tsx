@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LiveDot from '../components/LiveDot'
 import FirstHero from '../components/Home/FirstHero'
+import HeroCarousel from '../components/Home/HeroCarousel'
+import ModelsSlide from '../components/Home/ModelsSlide'
 import { useFeatured } from '../components/Home/useFeatured'
 
 // The homepage leads with props — the most differentiated surface we have.
@@ -56,7 +58,12 @@ export default function Home() {
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
-      <FirstHero featured={featured} />
+      <HeroCarousel
+        slides={[
+          { label: 'Player props', node: <FirstHero featured={featured} /> },
+          { label: 'Prediction models', node: <ModelsSlide /> },
+        ]}
+      />
 
       {/* Primary surface: props and their history. Position and space carry the
           hierarchy — the props card is the first and largest; everything else
