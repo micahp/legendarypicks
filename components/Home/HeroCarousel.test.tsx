@@ -52,4 +52,13 @@ describe('ModelsSlide', () => {
     expect(icons.map((el) => el.textContent)).toEqual(MODELS.map((m) => m.icon))
     icons.forEach((el) => expect(el.getAttribute('aria-hidden')).toBe('true'))
   })
+
+  it('highlights the border of live models and leaves the others plain', () => {
+    render(<ModelsSlide />)
+    for (const m of MODELS) {
+      const row = screen.getByText(m.name).closest('li') as HTMLElement
+      expect(row.className.includes('border-emerald-500/60')).toBe(m.status === 'Live')
+      expect(row.className.includes('border-zinc-800')).toBe(m.status !== 'Live')
+    }
+  })
 })
