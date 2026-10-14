@@ -19,7 +19,8 @@ Best-of-three matches with complete scores. Brier skill score (BSS) is against E
 | Point model + simulator, standalone | 0.2353 (BSS -0.032) | 0.6628 | 0.2288 (BSS -0.060) | 0.6486 |
 
 Verdict: the standalone point model and simulator do not beat Elo on match winners, on either tour. The simulator's
-game, set and tiebreak outputs are not yet validated against outcomes. Details: `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md`
+probability arithmetic is verified: it agrees with a point-by-point Monte Carlo at 200,000 matches per case, over 48
+cases. Its game, set and tiebreak outputs are not yet validated against historical outcomes. Details: `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md`
 and `docs/TENNIS-MATCH-SIM-2026-10-14.md`, both on branch `feat/tennis-point-model`.
 
 ## Brier score spectrum
