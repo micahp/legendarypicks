@@ -5,12 +5,13 @@ import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
 import HorizontalScrollRail from '../../components/HorizontalScrollRail'
 import NewsTab from '../../components/Leagues/NewsTab'
+import TennisModelTab from '../../components/Leagues/TennisModelTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { combineTennisNews } from '../../components/News/LeagueSection'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
-type HubTab = 'scores' | 'draws' | 'rankings' | 'news'
+type HubTab = 'scores' | 'draws' | 'rankings' | 'model' | 'news'
 type Tour = 'all' | 'atp' | 'wta'
 
 type DrawMatch = {
@@ -64,6 +65,7 @@ const TABS: { key: HubTab; label: string }[] = [
   { key: 'scores', label: 'Scores' },
   { key: 'draws', label: 'Draws' },
   { key: 'rankings', label: 'Rankings' },
+  { key: 'model', label: 'Model' },
   { key: 'news', label: 'News' },
 ]
 
@@ -212,6 +214,7 @@ export default function TennisLeaguePage() {
         )}
         {tab === 'draws' && <DrawsPanel data={draws} error={drawsError} />}
         {tab === 'rankings' && <RankingsPanel data={rankings} error={rankingsError} />}
+        {tab === 'model' && <TennisModelTab date={date} setDate={setDate} tour={tour} />}
         {tab === 'news' && (
           <NewsTab
             league="tennis"

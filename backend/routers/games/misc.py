@@ -1,4 +1,6 @@
 """routers/games/misc.py — root/health/coverage and the audio stream endpoint."""
+import datetime as dt
+import json
 import os
 
 from fastapi import HTTPException
@@ -187,6 +189,117 @@ def tennis_rankings(tour: str = "all", limit: int = Query(50, ge=1, le=150)):
         "source": "tennis_ranking_snapshots",
         "tours": snapshots,
         "reason": None if snapshots else "No verified ATP or WTA ranking snapshot has been published yet.",
+    }
+
+
+@router.get("/api/tennis/model")
+def tennis_model(date: str, tour: str = "all"):
+    """Read the persisted tennis slate and resolve participants through the tennis spine.
+
+    Predictions are deliberately absent until an immutable model lock exists for a
+    match. A schedule row is not evidence that a forecast was generated.
+    """
+    tour = str(tour or "all").lower()
+    if tour not in ("all", "atp", "wta"):
+        raise HTTPException(400, "tour must be all, atp, or wta")
+    try:
+        dt.date.fromisoformat(date)
+    except (TypeError, ValueError):
+        raise HTTPException(400, "date must be YYYY-MM-DD")
+
+    tours = ("atp", "wta") if tour == "all" else (tour,)
+    out = []
+    with closing(_db()) as con:
+        for league in tours:
+            rows = con.execute(
+                "SELECT game_id,payload,state,start_time FROM scoreboard_snapshots "
+                "WHERE league=? AND game_date=? ORDER BY start_time,game_id",
+                (league, date),
+            ).fetchall()
+            slate = []
+            for row in rows:
+                try:
+                    game = json.loads(row["payload"])
+                except (TypeError, ValueError):
+                    continue
+                home, away = game.get("home") or {}, game.get("away") or {}
+                home_id = str(home.get("athlete_id") or "")
+                away_id = str(away.get("athlete_id") or "")
+                # ESPN athlete IDs resolve into canonical players.id. Historical
+                # model identities are then reached only through player_source_ids.
+                spine = {}
+                ids = [value for value in (home_id, away_id) if value]
+                if ids:
+                    placeholders = ",".join("?" for _ in ids)
+                    for player in con.execute(
+                        f"SELECT id,espn_id,name FROM players WHERE league=? AND espn_id IN ({placeholders})",
+                        (league, *ids),
+                    ):
+                        sackmann = con.execute(
+                            "SELECT source_player_key FROM player_source_ids "
+                            "WHERE source='sackmann' AND league=? AND player_id=?",
+                            (league, player["id"]),
+                        ).fetchone()
+                        spine[str(player["espn_id"])] = {
+                            "espn_id": str(player["espn_id"]),
+                            "player_id": int(player["id"]),
+                            "sackmann_player_id": str(sackmann[0]) if sackmann else None,
+                        }
+
+                status = str(row["state"] or game.get("state") or "unknown").lower()
+                hs, aws = home.get("sets") or [], away.get("sets") or []
+                total_games = (sum(int(v) for v in hs) + sum(int(v) for v in aws)
+                               if status == "post" and hs and len(hs) == len(aws) else None)
+                hscore, ascore = home.get("score"), away.get("score")
+                winner = (home.get("name") if hscore is not None and ascore is not None and hscore > ascore
+                          else away.get("name") if hscore is not None and ascore is not None and ascore > hscore
+                          else None)
+                set_breakdown = None
+                if status == "post" and hs and len(hs) == len(aws):
+                    set_breakdown = {
+                        "home": [int(value) for value in hs],
+                        "away": [int(value) for value in aws],
+                    }
+                slate.append({
+                    "gameId": str(row["game_id"]), "tour": league,
+                    "event": game.get("event"), "round": game.get("round"),
+                    "tournamentId": str(game.get("tournament_id") or ""),
+                    "startTime": row["start_time"],
+                    "status": {"pre": "scheduled", "in": "live", "post": "final"}.get(status, "unknown"),
+                    "home": home.get("name") or home.get("abbrev") or "Home",
+                    "away": away.get("name") or away.get("abbrev") or "Away",
+                    "homeAthleteId": home_id,
+                    "awayAthleteId": away_id,
+                    "projection": None,
+                    "result": {"winner": winner, "homeAces": None, "awayAces": None,
+                               "totalGames": total_games,
+                               "sets": set_breakdown} if status == "post" else None,
+                    "identity": {"home": spine.get(home_id), "away": spine.get(away_id)},
+                })
+            from tennis_daily_projections import project_day
+            projections = project_day(con, league, date, slate) if slate else {}
+            for match in slate:
+                projection = projections.get(match["gameId"])
+                match["projection"] = projection
+                result = match["result"]
+                match["grades"] = ({
+                    "winner": ("correct" if projection.get("projectedWinner") == result.get("winner") else "incorrect")
+                    if projection and projection.get("projectedWinner") and result and result.get("winner") else None,
+                    "homeAcesError": None,
+                    "awayAcesError": None,
+                    "totalGamesError": abs(projection["totalGames"] - result["totalGames"])
+                    if projection and projection.get("totalGames") is not None and result and result.get("totalGames") is not None else None,
+                } if projection else None)
+                # IDs are needed only while calculating; keep the public match payload tidy.
+                match.pop("homeAthleteId", None)
+                match.pop("awayAthleteId", None)
+                match.pop("tournamentId", None)
+                out.append(match)
+    return {
+        "available": True,
+        "reason": None if out else "No persisted tennis matches are available for this date.",
+        "source": "scoreboard_snapshots + tennis spine + pre-match Sackmann history",
+        "matches": out,
     }
 
 
