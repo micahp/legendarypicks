@@ -1,8 +1,4 @@
-import { useEffect, useState } from 'react'
-
-// Every projection here was locked before kickoff and is never rewritten
-// (backend/nfl_lock.py). The page shows the locked row only, beside the line it
-// was locked against, and the grade once nflverse publishes the final.
+import { useEffect, useMemo, useState } from 'react'
 
 interface Line {
   spread: number | null
@@ -26,7 +22,7 @@ interface Lock {
 
 interface ModelInfo {
   version: string
-  family: 'v1' | 'v2'
+  family: 'v1' | 'v2' | 'v1+elo'
   label: string
   adopted: boolean
   locks: number
@@ -68,209 +64,285 @@ interface Payload {
   record: RecordRow[]
 }
 
-const one = (x: number) => x.toFixed(1)
-
-function kickoffLabel(iso: string | null) {
-  if (!iso) return 'Kickoff unknown'
-  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+interface RatingTeam {
+  team: string
+  team_name: string
+  conference: string
+  division: string
+  off: number | null
+  def: number | null
+  overall: number | null
+  games: number
 }
+
+interface RatingsPayload {
+  season: number
+  week: number | null
+  model_version: string
+  as_of: string | null
+  teams: RatingTeam[]
+}
+
+type ModelView = 'projections' | 'record' | 'ratings'
+type EdgeFilter = 'all' | '3' | '6'
+
+const one = (value: number) => value.toFixed(1)
+const signed = (value: number) => `${value > 0 ? '+' : ''}${one(value)}`
 
 function dayLabel(iso: string | null) {
   if (!iso) return 'Date unknown'
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
-// nflverse spread_line is the home team's expected margin: positive means home favored.
-function marketText(g: ModelGame, line: Line) {
-  const parts: string[] = []
-  if (line.spread != null) {
-    if (line.spread === 0) parts.push('Pick')
-    else parts.push(line.spread > 0 ? `${g.home} -${line.spread}` : `${g.away} -${Math.abs(line.spread)}`)
-  }
-  if (line.total != null) parts.push(`O/U ${line.total}`)
-  return parts.length ? parts.join(' · ') : 'No line'
+function timeLabel(iso: string | null) {
+  if (!iso) return 'Kickoff unknown'
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
-function winnerText(g: ModelGame, lock: Lock) {
-  const homeFav = lock.p_home_win >= 0.5
-  const p = homeFav ? lock.p_home_win : 1 - lock.p_home_win
-  return `${homeFav ? g.home : g.away} ${Math.round(p * 100)}%`
+// nflverse spread_line is the market's expected home margin: positive means home favored.
+function lineSide(home: string, away: string, homeMargin: number | null) {
+  if (homeMargin == null) return 'No line'
+  if (homeMargin === 0) return 'Pick'
+  return homeMargin > 0 ? `${home} -${one(homeMargin)}` : `${away} -${one(Math.abs(homeMargin))}`
 }
 
-function atsText(ats: string) {
-  return { win: 'ATS W', loss: 'ATS L', push: 'Push', no_pick: 'No pick', no_line: 'No line' }[ats] || ats
+function modelSide(home: string, away: string, homeMargin: number) {
+  if (homeMargin === 0) return 'Pick'
+  return homeMargin > 0 ? `${home} -${one(homeMargin)}` : `${away} -${one(Math.abs(homeMargin))}`
 }
 
-function suText(su: string | null) {
-  return su ? { win: '✓', loss: '✗', tie: 'Tie', no_pick: 'No pick' }[su] || su : ''
+function pickSide(game: ModelGame, lock: Lock) {
+  const marketMargin = lock.line.spread
+  if (marketMargin == null) return null
+  const homePick = lock.margin > marketMargin
+  const spread = Math.abs(marketMargin)
+  if (marketMargin === 0) return `${homePick ? game.home : game.away} Pick`
+  if (homePick) return `${game.home} ${marketMargin > 0 ? `-${one(spread)}` : `+${one(spread)}`}`
+  return `${game.away} ${marketMargin < 0 ? `-${one(spread)}` : `+${one(spread)}`}`
 }
 
-// "8-3" plus the third outcome only when it happened. Wins first, then losses.
-function tally(t: Tally, third: 'tie' | 'push') {
-  const extra = t[third] ?? 0
-  return `${t.win}-${t.loss}${extra ? ` · ${extra} ${third}` : ''}`
+function edge(lock: Lock) {
+  return lock.line.spread == null ? null : Math.abs(lock.margin - lock.line.spread)
 }
 
-function RecordPanel({ rows }: { rows: RecordRow[] }) {
-  if (!rows.length) return null
+function statusLabel(lock: Lock) {
+  if (!lock.grade) return 'AWAITING'
+  return { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }[lock.grade.ats] || lock.grade.ats.toUpperCase()
+}
+
+function statusClass(lock: Lock) {
+  if (!lock.grade) return 'text-zinc-500'
+  if (lock.grade.ats === 'win') return 'text-emerald-400'
+  if (lock.grade.ats === 'loss') return 'text-rose-400'
+  return 'text-zinc-300'
+}
+
+function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-semibold text-zinc-100">Season record</h2>
-      <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-        {rows.map(r => (
-          <div key={r.version} className="flex flex-col gap-y-1 py-2 text-sm sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-4">
-            <span className={`min-w-0 sm:truncate ${r.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={r.version}>
-              {r.label}
-            </span>
-            {r.graded === 0 || !r.su || !r.ats ? (
-              <span className="text-zinc-500">No graded games yet · {r.awaiting} awaiting a final</span>
-            ) : (
-              <span className="flex flex-wrap gap-x-4 tabular-nums text-zinc-300 sm:justify-end">
-                <span>Winner {tally(r.su, 'tie')}</span>
-                <span>Against the line {tally(r.ats, 'push')}</span>
-                <span className="text-zinc-500">
-                  {r.graded} graded{r.awaiting ? ` · ${r.awaiting} awaiting` : ''}
-                </span>
-              </span>
-            )}
-          </div>
-        ))}
+    <article className="py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</h3>
+        {!game.final && <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>}
       </div>
-      <p className="text-xs text-zinc-500">
-        Counts over graded games only; a lock whose game is not final yet is not counted. Winner: the side with the
-        higher win probability. Against the line: the model&apos;s side against the line it was locked with.
-        These are small samples; do not rank models on them yet.
-      </p>
+      {!lock ? <p className="mt-2 text-sm text-amber-400">No locked projection for this game.</p> : (
+        <>
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6">
+            <Metric label="Vegas line" value={lineSide(game.home, game.away, lock.line.spread)} />
+            <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
+            <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
+            <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
+            <div className="min-w-0">
+              <div className="text-xs text-zinc-500">Final</div>
+              <div className="mt-0.5 truncate text-sm font-normal tabular-nums text-zinc-200">
+                {game.final ? `${game.away} ${one(game.final.away)} · ${game.home} ${one(game.final.home)}` : 'Pending'}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs text-zinc-500">Result</div>
+              <div className={`mt-0.5 truncate text-sm tabular-nums ${statusClass(lock)}`}>{statusLabel(lock)}</div>
+            </div>
+          </div>
+          {lock.proj_home == null || lock.proj_away == null ? (
+            <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-500">
+              Projected {game.away} {one(lock.proj_away)} · {game.home} {one(lock.proj_home)}
+            </p>
+          )}
+        </>
+      )}
+    </article>
+  )
+}
+
+function Metric({ label, value, emphasis, resultClass }: { label: string; value: string; emphasis?: boolean; resultClass?: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-xs text-zinc-500">{label}</div>
+      <div className={`mt-0.5 truncate tabular-nums ${emphasis ? 'text-lg font-semibold text-zinc-100' : 'text-sm text-zinc-200'} ${resultClass || ''}`}>{value}</div>
+    </div>
+  )
+}
+
+function RecordList({ games, version, threshold }: { games: ModelGame[]; version: string; threshold: EdgeFilter }) {
+  const rows = games.flatMap(game => {
+    const lock = game.locks[version]
+    if (!lock) return []
+    const pointEdge = edge(lock)
+    if (threshold !== 'all' && (pointEdge == null || pointEdge < Number(threshold))) return []
+    return [{ game, lock }]
+  }).sort((a, b) => (b.game.kickoff_utc || '').localeCompare(a.game.kickoff_utc || ''))
+
+  if (!rows.length) return <p className="text-sm text-zinc-400">No picks match this filter yet.</p>
+  return (
+    <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+      {rows.map(({ game, lock }) => (
+        <article key={game.game_id} className="py-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <div className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</div>
+            <div className={`text-xs font-semibold tracking-wide ${statusClass(lock)}`}>{statusLabel(lock)}</div>
+          </div>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums text-zinc-400">
+            <span>Pick {pickSide(game, lock) || 'No line'}</span>
+            <span>Edge {edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</span>
+            <span>Projected {lock.proj_away == null || lock.proj_home == null ? '—' : `${one(lock.proj_away)}–${one(lock.proj_home)}`}</span>
+            <span>Final {game.final ? `${one(game.final.away)}–${one(game.final.home)}` : 'Pending'}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function TeamRatings({ payload }: { payload: RatingsPayload }) {
+  const teams = [...payload.teams].sort((a, b) => (b.overall ?? -Infinity) - (a.overall ?? -Infinity))
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100">Team ratings</h2>
+        <p className="text-xs text-zinc-500">{payload.season} · {payload.model_version}{payload.as_of ? ` · as of ${new Date(payload.as_of).toLocaleDateString()}` : ''}</p>
+      </div>
+      <div className="overflow-x-auto rounded-2xl bg-zinc-900 px-4">
+        <table className="w-full min-w-[620px] text-sm">
+          <thead className="text-xs text-zinc-500"><tr className="border-b border-zinc-800 text-left"><th className="py-2 font-medium">Team</th><th className="py-2 text-right font-medium">Offense</th><th className="py-2 text-right font-medium">Defense</th><th className="py-2 text-right font-medium">Overall</th><th className="py-2 text-right font-medium">Games</th></tr></thead>
+          <tbody className="divide-y divide-zinc-800">
+            {teams.map(team => <tr key={team.team} className="text-zinc-300"><th className="py-2 text-left font-medium text-zinc-100">{team.team} <span className="font-normal text-zinc-500">{team.team_name}</span></th><td className="py-2 text-right tabular-nums">{team.off == null ? '—' : signed(team.off)}</td><td className="py-2 text-right tabular-nums">{team.def == null ? '—' : signed(team.def)}</td><td className="py-2 text-right tabular-nums">{team.overall == null ? '—' : signed(team.overall)}</td><td className="py-2 text-right tabular-nums">{team.games}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }
 
-function LockRow({ game, model, lock }: { game: ModelGame; model: ModelInfo; lock?: Lock }) {
-  return (
-    <div className="flex flex-col gap-y-0.5 py-1 text-sm sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-baseline sm:gap-x-4 sm:gap-y-0">
-      <span className={`sm:truncate ${model.adopted ? 'text-zinc-100' : 'text-zinc-400'}`} title={model.version}>
-        {model.label}
-      </span>
-      {!lock ? (
-        // Absence gets the accent: this model has no locked projection for this game.
-        <span className="text-amber-400 sm:col-span-2 sm:text-right">Not locked</span>
-      ) : (
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 sm:contents">
-          <span className="whitespace-nowrap text-right tabular-nums text-zinc-200">
-            {lock.proj_home == null || lock.proj_away == null
-              ? <span className="text-zinc-500">{lock.margin >= 0 ? game.home : game.away} by {one(Math.abs(lock.margin))}</span>
-              : <>{game.away} {one(lock.proj_away)} · {game.home} {one(lock.proj_home)}</>}
-          </span>
-          <span className="text-right tabular-nums text-zinc-400 sm:min-w-[10.5rem]">
-            {lock.grade
-              ? <>off {one(Math.abs(lock.grade.margin_err))} · {atsText(lock.grade.ats)} · <span title="Picked the winner">Pick {suText(lock.grade.su)}</span></>
-              : winnerText(game, lock)}
-          </span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function GameRow({ game, models }: { game: ModelGame; models: ModelInfo[] }) {
-  const anyLock = Object.values(game.locks)[0]
-  return (
-    <div className="space-y-1 py-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="font-semibold text-zinc-100">
-          {game.away} {game.neutral ? 'vs' : '@'} {game.home}
-        </span>
-        <span className="text-right text-sm tabular-nums text-zinc-400">
-          {game.final ? `Final ${game.away} ${game.final.away} · ${game.home} ${game.final.home}` : kickoffLabel(game.kickoff_utc)}
-        </span>
-      </div>
-      {models.map(m => <LockRow key={m.version} game={game} model={m} lock={game.locks[m.version]} />)}
-      <div className="text-xs text-zinc-500">
-        Line at lock: {anyLock ? marketText(game, game.locks[models.find(m => game.locks[m.version])!.version].line) : 'none'}
-      </div>
-    </div>
-  )
+function TallyLabel({ title, tally }: { title: string; tally: Tally | null }) {
+  if (!tally) return <span>{title} —</span>
+  const extras = (tally.push ?? tally.tie ?? 0) > 0 ? ` · ${tally.push ?? tally.tie} ${tally.push ? 'push' : 'tie'}` : ''
+  return <span>{title} {tally.win}-{tally.loss}{extras}</span>
 }
 
 export default function NflModelTab() {
+  const [view, setView] = useState<ModelView>('projections')
   const [week, setWeek] = useState<number | null>(null)
+  const [version, setVersion] = useState('')
+  const [threshold, setThreshold] = useState<EdgeFilter>('all')
   const [data, setData] = useState<Payload | null>(null)
+  const [recordGames, setRecordGames] = useState<ModelGame[]>([])
+  const [ratings, setRatings] = useState<RatingsPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     fetch(`/api/nfl/model/locks${week ? `?week=${week}` : ''}`)
-      .then(async res => {
-        if (!res.ok) throw new Error(`The projections did not load (HTTP ${res.status}).`)
-        return res.json() as Promise<Payload>
+      .then(async response => {
+        if (!response.ok) throw new Error(`The projections did not load (HTTP ${response.status}).`)
+        return response.json() as Promise<Payload>
       })
-      .then(p => { if (!cancelled) setData(p) })
-      .catch(e => { if (!cancelled) setError(e.message) })
+      .then(payload => {
+        if (cancelled) return
+        setData(payload)
+        const preferred = payload.models.find(model => model.adopted) || payload.models[0]
+        setVersion(current => payload.models.some(model => model.version === current) ? current : preferred?.version || '')
+      })
+      .catch(reason => { if (!cancelled) setError(reason.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [week])
 
-  if (error) {
-    return <div className="rounded-2xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</div>
-  }
-  if (loading && !data) {
-    return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
-  }
-  if (!data || data.week == null) {
-    return <p className="text-sm text-zinc-400">No projections have been locked for this season yet.</p>
-  }
+  useEffect(() => {
+    if (view !== 'record' || !data) return
+    let cancelled = false
+    Promise.all(data.weeks.map(w => fetch(`/api/nfl/model/locks?week=${w}`).then(response => {
+      if (!response.ok) throw new Error(`The record did not load (HTTP ${response.status}).`)
+      return response.json() as Promise<Payload>
+    }))).then(payloads => {
+      if (!cancelled) setRecordGames(payloads.flatMap(payload => payload.games))
+    }).catch(reason => { if (!cancelled) setError(reason.message) })
+    return () => { cancelled = true }
+  }, [view, data])
 
-  const groups: [string, ModelGame[]][] = []
-  for (const g of data.games) {
-    const day = dayLabel(g.kickoff_utc)
-    const last = groups[groups.length - 1]
-    if (last && last[0] === day) last[1].push(g)
-    else groups.push([day, [g]])
-  }
+  useEffect(() => {
+    if (view !== 'ratings' || !data) return
+    let cancelled = false
+    fetch(`/api/nfl/ratings?season=${data.season}`).then(async response => {
+      if (!response.ok) throw new Error(`Team ratings did not load (HTTP ${response.status}).`)
+      return response.json() as Promise<RatingsPayload>
+    }).then(payload => { if (!cancelled) setRatings(payload) }).catch(reason => { if (!cancelled) setError(reason.message) })
+    return () => { cancelled = true }
+  }, [view, data])
+
+  const selectedModel = data?.models.find(model => model.version === version)
+  const selectedRecord = data?.record.find(record => record.version === version)
+  const games = useMemo(() => {
+    if (!data) return []
+    const grouped = new Map<string, ModelGame[]>()
+    for (const game of data.games) {
+      if (!game.locks[version]) continue
+      const day = dayLabel(game.kickoff_utc)
+      grouped.set(day, [...(grouped.get(day) || []), game])
+    }
+    return Array.from(grouped.entries())
+  }, [data, version])
+
+  if (error) return <div className="rounded-2xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</div>
+  if (loading && !data) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
+  if (!data) return <p className="text-sm text-zinc-400">No NFL model data is available.</p>
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="max-w-prose text-sm text-zinc-400">
-          Each projection is locked before kickoff and never changed. v1 points is the model in use;
-          v2 EPA and v1 + Elo are on trial beside it and are graded on the same games. From week 6
-          every model is locked 90 minutes before kickoff, once the inactive lists are out; earlier
-          weeks were locked earlier than that.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {data.weeks.map(w => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => setWeek(w)}
-              className={`rounded-full px-3 py-1 text-sm tabular-nums ${
-                w === data.week ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              Week {w}
-            </button>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NFL model views">
+          {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [ModelView, string][]).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => { setView(key); setError(null) }} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
           ))}
-        </div>
+        </nav>
+        <label className="flex items-center gap-2 text-sm text-zinc-500">
+          Model
+          <select value={version} onChange={event => setVersion(event.target.value)} className="max-w-[18rem] rounded-lg bg-zinc-900 px-3 py-2 text-zinc-100">
+            {data.models.map(model => <option key={model.version} value={model.version}>{model.label}</option>)}
+          </select>
+        </label>
       </div>
 
-      <RecordPanel rows={data.record ?? []} />
+      {view === 'projections' && <>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-lg font-semibold text-zinc-100">{data.season} projections · {selectedModel?.label}</h2></div>
+          <label className="flex items-center gap-2 text-sm text-zinc-500">Week <select value={week ?? data.week ?? ''} onChange={event => setWeek(event.target.value ? Number(event.target.value) : null)} className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-100">{data.weeks.map(w => <option key={w} value={w}>{w}</option>)}</select></label>
+        </div>
+        {!games.length ? <p className="text-sm text-zinc-400">No projections have been locked for this week.</p> : games.map(([day, entries]) => (
+          <section key={day} className="space-y-1"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{entries.map(game => <GameProjection key={game.game_id} game={game} lock={game.locks[version]} />)}</div></section>
+        ))}
+      </>}
 
-      {groups.map(([day, games]) => (
-        <section key={day} className="space-y-2">
-          <h2 className="text-lg font-semibold text-zinc-100">{day}</h2>
-          <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-            {games.map(g => <GameRow key={g.game_id} game={g} models={data.models} />)}
-          </div>
-        </section>
-      ))}
+      {view === 'record' && <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="ATS" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Winner" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
+          <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
+        </div>
+        {recordGames.length === 0 ? <p className="text-sm text-zinc-400">{data.weeks.length ? 'Loading season picks…' : 'No season picks have been locked yet.'}</p> : <RecordList games={recordGames} version={version} threshold={threshold} />}
+        <p className="text-xs text-zinc-500">ATS counts include graded picks only. Pending games are not counted.</p>
+      </section>}
 
-      <p className="text-xs text-zinc-500">
-        Win % is the chance the named team wins. After a final, each row shows how far its margin was off
-        its result against the line it was locked with, and whether the pick won (Pick ✓ or ✗). Lines are nflverse&apos;s, copied at lock time.
-      </p>
+      {view === 'ratings' && (ratings ? <TeamRatings payload={ratings} /> : <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />)}
     </div>
   )
 }
