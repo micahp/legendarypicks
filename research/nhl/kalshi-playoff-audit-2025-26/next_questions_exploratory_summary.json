@@ -1,0 +1,286 @@
+{
+  "status": "exploratory; does not alter preregistered results",
+  "new_model": {
+    "name": "Elo+xG independent Poisson",
+    "feature_groups": [
+      "score/venue-adjusted 5v5 rolling xGF/xGA",
+      "pre-game Elo rating difference",
+      "home indicator"
+    ],
+    "validation_alpha_grid": [
+      {
+        "alpha": 0.01,
+        "validation_team_goal_nll": 1.9256209912852589
+      },
+      {
+        "alpha": 0.1,
+        "validation_team_goal_nll": 1.933137787527906
+      },
+      {
+        "alpha": 1.0,
+        "validation_team_goal_nll": 1.9459440518408637
+      },
+      {
+        "alpha": 10.0,
+        "validation_team_goal_nll": 1.9505259247099653
+      }
+    ],
+    "selected_alpha": 0.01,
+    "refit_seasons": "2008-2021",
+    "shootout_home_rate_fit_through_2021": 0.4908883826879271
+  },
+  "baseline_input_hashes": {
+    "canonical": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52",
+    "features": "62dcceb77085bc59fcad3ca9a0a981e0e462909cd09815cde98e45b7e9caf458"
+  },
+  "paired_brier_differences": [
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "xG score dist.",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": 0.005504012372385029,
+      "ci95_low": 0.002025025349831996,
+      "ci95_high": 0.008908435587003953,
+      "n_games": 4193
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "goals+xG score dist.",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": 0.004630054201761775,
+      "ci95_low": 0.0014251202613183328,
+      "ci95_high": 0.007786861318822703,
+      "n_games": 4193
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG Poisson",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": -0.001643569626773541,
+      "ci95_low": -0.003273029161261284,
+      "ci95_high": -7.305575124251837e-05,
+      "n_games": 4193
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "xG score dist.",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": -0.005034986852708387,
+      "ci95_low": -0.010019022360934193,
+      "ci95_high": -9.613863580439673e-05,
+      "n_games": 1394
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "goals+xG score dist.",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": -0.005163664236898743,
+      "ci95_low": -0.00994775400800635,
+      "ci95_high": -0.00048273124703521625,
+      "n_games": 1394
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG Poisson",
+      "metric": "moneyline_brier_minus_Elo",
+      "delta_a_minus_b": -0.005291393214090953,
+      "ci95_low": -0.007785124802735938,
+      "ci95_high": -0.0028044887347163146,
+      "n_games": 1394
+    }
+  ],
+  "paired_goal_differences": [
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B3",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.011257102952497969,
+        "ci95_low": -0.015346486842509461,
+        "ci95_high": -0.007136599805959326,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B3",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.02633664330001947,
+        "ci95_low": -0.031342911695742916,
+        "ci95_high": -0.02129887369674427,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.018628499670864412,
+        "ci95_low": -0.02457813180647537,
+        "ci95_high": -0.012665027275751974,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B4",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.03317631579386356,
+        "ci95_low": -0.04034131692479331,
+        "ci95_high": -0.02619057847728595,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B5",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.012847168949607742,
+        "ci95_low": -0.017807577950169868,
+        "ci95_high": -0.007870506519254809,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B5",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.01849890136762443,
+        "ci95_low": -0.02412615238061004,
+        "ci95_high": -0.012905519732833324,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B6",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.012105958185900916,
+        "ci95_low": -0.016793094695278662,
+        "ci95_high": -0.007463151231745398,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "exploratory previously-seen 2022-2024",
+      "model": "Elo+xG",
+      "comparator": "B6",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.013679556993929821,
+        "ci95_low": -0.019069911078190182,
+        "ci95_high": -0.008095467195924933,
+        "n_games": 4193
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B3",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.012083272271438846,
+        "ci95_low": -0.018351922172623485,
+        "ci95_high": -0.0059533708625650016,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B3",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.02657401465114077,
+        "ci95_low": -0.03434641275619937,
+        "ci95_high": -0.019215677925610273,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -0.007335711480051881,
+        "ci95_low": -0.015513151337837167,
+        "ci95_high": 0.0009592777038664027,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B4",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.014544183258772927,
+        "ci95_low": -0.024431430794362538,
+        "ci95_high": -0.004781379955199093,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B5",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": 0.0005432624658486268,
+        "ci95_low": -0.005891539265563987,
+        "ci95_high": 0.006893974293318301,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B5",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": -0.0020164153868183874,
+        "ci95_low": -0.009660889300458948,
+        "ci95_high": 0.005567144171693799,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B6",
+      "metric": "per_game_team_goals_mae",
+      "delta_ci": {
+        "delta_a_minus_b": -7.628034132841507e-05,
+        "ci95_low": -0.006944461809574864,
+        "ci95_high": 0.006773690231768382,
+        "n_games": 1394
+      }
+    },
+    {
+      "sample": "diagnostic only 2025-2026",
+      "model": "Elo+xG",
+      "comparator": "B6",
+      "metric": "joint_goal_nll",
+      "delta_ci": {
+        "delta_a_minus_b": 0.001492879416123641,
+        "ci95_low": -0.006885221220676791,
+        "ci95_high": 0.009629413454727705,
+        "n_games": 1394
+      }
+    }
+  ]
+}
