@@ -103,6 +103,22 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
     return sorted(rows, key=lambda r: r["order"])
 
 
+def record_before(results: List[tuple], team: str, week: int) -> str:
+    """A team's regular-season record from completed games in earlier weeks: W-L, or W-L-T when there is a tie."""
+    w = l = t = 0
+    for game_week, home, away, hs, as_ in results:
+        if game_week >= week or team not in (home, away):
+            continue
+        mine, theirs = (hs, as_) if team == home else (as_, hs)
+        if mine > theirs:
+            w += 1
+        elif mine < theirs:
+            l += 1
+        else:
+            t += 1
+    return "%d-%d" % (w, l) if not t else "%d-%d-%d" % (w, l, t)
+
+
 def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
     weeks = [r[0] for r in con.execute(
         "SELECT DISTINCT week FROM game_projections WHERE league = 'nfl' AND locked IN (0, 1) "
@@ -147,6 +163,9 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
             "proj_home": _f(ph), "proj_away": _f(pa), "margin": _f(pm), "total": _f(pt),
             "p_home_win": _f(pw), "locked_at": locked_at if is_locked else None,
             "previewed_at": None if is_locked else locked_at, "line": line, "grade": grade}
+    results = con.execute(
+        "SELECT week, home_team, away_team, home_score, away_score FROM nfl_schedule WHERE season = ? "
+        "AND game_type = 'REG' AND home_score IS NOT NULL AND away_score IS NOT NULL", (season,)).fetchall()
     sched = con.execute(
         "SELECT game_id, home_team, away_team, location, gameday, gametime, home_score, "
         "       away_score, result FROM nfl_schedule WHERE season = ? AND week = ? "
@@ -155,6 +174,7 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
         kick = cs.kickoff_utc(gameday, gametime) if gameday else None
         out["games"].append({
             "game_id": gid, "week": week, "home": home, "away": away,
+            "home_record": record_before(results, home, week), "away_record": record_before(results, away, week),
             "neutral": (loc or "").strip().lower() == "neutral",
             "kickoff_utc": kick.strftime("%Y-%m-%dT%H:%M:%SZ") if kick else None,
             "final": ({"home": _f(hs), "away": _f(as_)}

@@ -34,6 +34,8 @@ interface ModelInfo {
 interface ModelGame {
   game_id: string
   week: number
+  home_record: string | null
+  away_record: string | null
   home: string
   away: string
   neutral: boolean
@@ -157,27 +159,27 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
       </div>
       <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
-        <span className="text-xs uppercase tracking-wider text-zinc-500">Team</span>
-        <span className="text-right text-xs uppercase tracking-wider text-zinc-500">Projected</span>
+        <span />
+        <span />
         <span className="text-right text-xs uppercase tracking-wider text-zinc-500">{record ? 'Final' : ''}</span>
-        <span className="text-zinc-200">{game.away}</span>
+        <span className="text-zinc-200">{game.away}{game.away_record && <span className="block text-xs text-zinc-500">{game.away_record}</span>}</span>
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_away)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.away) : ''}</span>
-        <span className="text-zinc-200">{game.home}</span>
+        <span className="text-zinc-200">{game.home}{game.home_record && <span className="block text-xs text-zinc-500">{game.home_record}</span>}</span>
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
-      <div className="flex flex-col items-end gap-1 border-t border-zinc-800 pt-3 text-right text-sm text-zinc-400">
+      <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
         <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
         <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
         <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
+        {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
+        <div className="min-w-0 text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
           <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
         </div>
-        {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
       </div>
     </article>
   )
