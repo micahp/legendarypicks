@@ -15,7 +15,7 @@ from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_resu
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
                              export_previews, preview_feed, latest_game_lines, parse_time)
 from grade_nhl_models import grade_due
-from capture_nhl_game_lines import TEAM_CODES, game_lines
+from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
 
 UTC = dt.timezone.utc
@@ -244,6 +244,45 @@ class NHLModelLocks(unittest.TestCase):
         payload = locks_payload(path, 2026)
         self.assertEqual(payload["state"], "available")
         self.assertEqual(set(payload["games"][0]["models"]), set(MODEL_KEYS))
+
+
+def bovada_event():
+    return {"description": "Montreal Canadiens @ Washington Capitals", "startTime": 1792020600000,
+            "competitors": [{"name": "Washington Capitals", "home": True}, {"name": "Montreal Canadiens", "home": False}],
+            "displayGroups": [{"description": "Game Lines", "markets": [
+                {"description": "Puck Line", "period": {"description": "Game"},
+                 "outcomes": [{"type": "A", "price": {"handicap": "1.5", "american": "-235"}},
+                              {"type": "H", "price": {"handicap": "-1.5", "american": "+195"}}]},
+                {"description": "Total", "period": {"description": "Game"},
+                 "outcomes": [{"type": "O", "price": {"handicap": "6.5", "american": "-115"}},
+                              {"type": "U", "price": {"handicap": "6.5", "american": "-105"}}]},
+            ]}]}
+
+
+class NHLLineRefresh(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = os.path.join(self.tmp.name, "nhl-model.db")
+        con = sqlite3.connect(self.db)
+        ensure_schema(con)
+        con.close()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_bovada_is_fetched_only_when_the_newest_snapshot_is_older_than_fifteen_minutes(self):
+        now = dt.datetime(2026, 10, 14, 15, 0, tzinfo=UTC)
+        quiet = lambda *args: None
+        def fetch(sport, league):
+            return [bovada_event()]
+        def no_fetch(sport, league):
+            raise AssertionError("Bovada must not be fetched while the newest snapshot is fresh")
+        first = refresh_lines(self.db, DEFAULT_FEED, fetch, now, log=quiet)
+        self.assertEqual((first["refreshed"], first["rows"]), (True, 1))
+        fresh = refresh_lines(self.db, DEFAULT_FEED, no_fetch, now + dt.timedelta(minutes=10), log=quiet)
+        self.assertEqual(fresh["reason"], "fresh")
+        stale = refresh_lines(self.db, DEFAULT_FEED, fetch, now + dt.timedelta(minutes=16), log=quiet)
+        self.assertEqual((stale["refreshed"], stale["rows"]), (True, 1))
 
 
 if __name__ == "__main__":

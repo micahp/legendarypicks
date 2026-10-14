@@ -4,11 +4,14 @@ from __future__ import annotations
 import datetime as dt
 import os
 import sqlite3
+import threading
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
-from nhl_model_store import DEFAULT_DB, export_locked, export_previews, latest_game_lines, open_db
+from capture_nhl_game_lines import fetch_events, refresh_lines
+from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, export_locked, export_previews,
+                             latest_game_lines, open_db)
 
 router = APIRouter()
 MODEL_DB = os.environ.get("NHL_MODEL_DB_PATH", DEFAULT_DB)
@@ -42,3 +45,19 @@ def nhl_model_locks(response: Response, season: int = Query(2026, ge=2020, le=21
     response.headers["Cache-Control"] = "no-store"
     return JSONResponse(payload, headers={"X-LP-Data-Source": "standalone NHL model database",
                                         "Cache-Control": "no-store"})
+
+
+_REFRESH_LOCK = threading.Lock()
+
+
+@router.post("/api/nhl/model/lines/refresh")
+def refresh_nhl_lines():
+    """Pull Bovada NHL lines when the newest snapshot is older than 15 minutes; otherwise do nothing."""
+    if not _REFRESH_LOCK.acquire(blocking=False):
+        return {"refreshed": False, "reason": "in_progress"}
+    try:
+        return refresh_lines(MODEL_DB, DEFAULT_FEED, fetch_events, dt.datetime.now(dt.timezone.utc))
+    except (OSError, ValueError, KeyError, sqlite3.Error) as exc:
+        return JSONResponse({"refreshed": False, "reason": "error", "detail": str(exc)}, status_code=502)
+    finally:
+        _REFRESH_LOCK.release()
