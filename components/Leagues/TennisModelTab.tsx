@@ -34,6 +34,11 @@ interface ModelMatch {
   home: string
   away: string
   projection: ModelProjection | null
+  odds?: {
+    matchWinner: { home: number | null; away: number | null }
+    totalGames: { line: number; over: number | null; under: number | null } | null
+    capturedAt: string | null
+  } | null
   result: ModelResult | null
   grades: {
     winner: 'correct' | 'incorrect' | null
@@ -80,6 +85,7 @@ function MatchCard({ match }: { match: ModelMatch }) {
   const projection = match.projection
   const result = match.result
   const status = match.status === 'final' ? 'Final' : match.status === 'live' ? 'In progress' : null
+  const price = (value: number | null | undefined) => (value == null ? 'n/a' : value > 0 ? `+${value}` : `${value}`)
 
   return (
     <article className="space-y-3 py-4">
@@ -93,6 +99,13 @@ function MatchCard({ match }: { match: ModelMatch }) {
           {match.status === 'scheduled' && <span className="ml-2 text-xs text-zinc-500">{match.lockedAt ? 'Locked' : 'Preview'}</span>}
         </p>
       </header>
+
+      {match.odds && (
+        <p className="text-xs tabular-nums text-zinc-400">
+          Bovada · {match.away} {price(match.odds.matchWinner.away)} · {match.home} {price(match.odds.matchWinner.home)}
+          {match.odds.totalGames && ` · Total ${match.odds.totalGames.line} over ${price(match.odds.totalGames.over)} / under ${price(match.odds.totalGames.under)}`}
+        </p>
+      )}
 
       {!projection ? (
         <p className="text-sm text-amber-400">No projection is available for this match.</p>

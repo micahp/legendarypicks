@@ -222,6 +222,8 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
             "league TEXT NOT NULL,game_date TEXT NOT NULL,game_id TEXT NOT NULL,start_time TEXT NOT NULL,"
             "locked_at TEXT NOT NULL,projection TEXT NOT NULL,model_version TEXT,PRIMARY KEY(league,game_id))"
         )
+        from tennis_bovada_odds import bovada_odds
+        now_utc = dt.datetime.now(dt.timezone.utc)
         for league in tours:
             rows = con.execute(
                 "SELECT game_id,payload,state,start_time FROM scoreboard_snapshots "
@@ -287,6 +289,9 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                                "totalGames": total_games,
                                "sets": set_breakdown} if status == "post" else None,
                     "identity": {"home": spine.get(home_id), "away": spine.get(away_id)},
+                    "odds": bovada_odds(con, row["game_id"], league,
+                                        (spine.get(home_id) or {}).get("player_id"),
+                                        (spine.get(away_id) or {}).get("player_id"), now_utc),
                 })
             from tennis_daily_projections import project_day
             now = dt.datetime.now(dt.timezone.utc)
