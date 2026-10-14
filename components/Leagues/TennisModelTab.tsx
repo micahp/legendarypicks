@@ -128,7 +128,7 @@ function MatchCard({ match }: { match: ModelMatch }) {
         </div>
         <p className="text-sm tabular-nums text-zinc-400">
           {status ?? (match.startTime ? new Date(match.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : 'Start time unknown')}
-          {match.status === 'scheduled' && <span className="ml-2 text-xs text-zinc-500">{match.lockedAt ? 'Locked' : 'Preview'}</span>}
+          {match.status === 'scheduled' && match.lockedAt && <span className="ml-2 text-xs text-zinc-500">Locked</span>}
         </p>
       </header>
 
