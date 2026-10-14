@@ -45,3 +45,23 @@ def test_score_is_a_log_loss_per_point_and_the_baseline_equals_the_surface_rate(
     expected = -(60 * math.log(0.64) + 40 * math.log(0.36) + 40 * math.log(0.64) + 60 * math.log(0.36)) / 200
     assert result["log_loss_per_point"] == pytest.approx(expected)
     assert result["points"] == 200
+
+
+def test_rolling_baseline_forgets_matches_older_than_the_window():
+    state = tpm.OnlineStats(baseline_years=1)
+    state.add((20200101, "Hard", "A", "B", 100, 50, 0, 100, 40, 0))   # serve pts 200, won 90
+    assert state.baseline("Hard") == pytest.approx(90 / 200)
+    state.add((20230101, "Hard", "C", "D", 100, 30, 30, 100, 30, 30))  # serve pts 200, won 120
+    state.expire(20230101)  # 2020 match is now older than one year
+    assert state.baseline("Hard") == pytest.approx(120 / 200)
+
+
+def test_same_day_matches_do_not_inform_each_other():
+    rows = [
+        (20240101, "Hard", "A", "B", 100, 60, 0, 100, 60, 0),
+        (20240101, "Hard", "A", "C", 100, 60, 0, 100, 60, 0),
+    ]
+    acc = tpm.walk_forward(rows, validate_start=20240101, test_start=20250101, test_end=20251231, baseline_years=0)
+    # Both matches are validation rows, predicted with no history: every serve is predicted at the cold-start baseline.
+    assert acc[("validation", "Hard", "baseline", None)][1] == 400
+    assert acc[("validation", "Hard", "baseline", None)][3] == pytest.approx(400 * tpm.COLD_START_BASELINE)
