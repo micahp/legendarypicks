@@ -6,6 +6,8 @@ type ModelName = 'B3_elo' | 'B5_xg_poisson' | 'B7_elo_xg_poisson'
 
 interface Forecast {
   forecast_id: string
+  model_version?: string
+  locked_at_utc?: string
   home_expected_goals: number
   away_expected_goals: number
   projected_total_goals: number
@@ -13,6 +15,19 @@ interface Forecast {
   home_win_probability: number
   'p_over_5.5': number
   'p_over_6.5': number
+  grade?: {
+    official_home_goals: number
+    official_away_goals: number
+    statistical_home_goals: number
+    statistical_away_goals: number
+    official_winner: 'home' | 'away'
+    shootout_decided: boolean
+    home_win_brier: number
+    home_win_logloss: number
+    home_goal_error: number
+    away_goal_error: number
+    graded_at_utc: string
+  } | null
 }
 
 interface NhlGame {
@@ -22,24 +37,30 @@ interface NhlGame {
   home_team: string
   away_team: string
   forecasted_at_utc: string
+  locked_at_utc: string
   feature_snapshot: {
     elo_pre_game: { home: number; away: number }
     xg_features: Record<string, number>
   }
   models: Record<ModelName, Forecast>
+  result: Forecast['grade']
   markets: {
     source: string
     usable: boolean
+    comparison_usable_at_lock?: boolean
     sides: { team: string; captured_at_utc: string; spread: number | null; quote_quality: string }[]
   }
 }
 
 interface Payload {
   model_version: string
+  model_versions?: Partial<Record<ModelName, string>>
   default_model: ModelName
-  frozen_at_utc: string
+  frozen_at_utc: string | null
   source: string
+  state?: 'available' | 'awaiting_first_lock' | 'missed_locks'
   games: NhlGame[]
+  missed_locks?: { game_id: string; home_team: string; away_team: string; model_key: ModelName; model_version: string; observed_at_utc: string; scheduled_start_utc: string }[]
 }
 
 const MODEL_LABELS: Record<ModelName, string> = {
@@ -87,11 +108,11 @@ function ProjectionCard({ game, model }: { game: NhlGame; model: ModelName }) {
         <Metric label="Over 5.5" value={pct(forecast['p_over_5.5'])} />
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-        <span>Forecast saved {new Date(game.forecasted_at_utc).toLocaleString()}</span>
-        {game.markets.usable ? (
+        <span>Projection locked {new Date(forecast.locked_at_utc || game.locked_at_utc).toLocaleString()}</span>
+        {game.markets.comparison_usable_at_lock ? (
           <span>Kalshi quote captured · line comparison available</span>
         ) : (
-          <span>Kalshi line unavailable · {market ? `${Math.round((market.spread ?? 0) * 100)}¢ spread at capture` : 'no usable quote'}</span>
+          <span>Kalshi quote unavailable at lock{market ? ` · last capture ${new Date(market.captured_at_utc).toLocaleTimeString()}` : ''}</span>
         )}
       </div>
     </article>
@@ -102,27 +123,43 @@ function Metric({ label, value }: { label: string; value: string }) {
   return <div className="min-w-0"><div className="text-xs text-zinc-500">{label}</div><div className="mt-0.5 truncate tabular-nums text-sm text-zinc-100">{value}</div></div>
 }
 
-function RecordView({ games, model }: { games: NhlGame[]; model: ModelName }) {
-  const ordered = [...games].sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
-  if (!ordered.length) return <p className="text-sm text-zinc-400">No prospective NHL forecasts have been saved.</p>
+function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) {
+  const forecast = game.models[model]
+  const grade = forecast.grade
+  const pickHome = forecast.home_win_probability >= 0.5
+  const pickWon = grade ? (pickHome ? grade.official_winner === 'home' : grade.official_winner === 'away') : null
+  return (
+    <article className="py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h3>
+        <span className="text-sm tabular-nums text-zinc-400">{dateLabel(game.scheduled_start_utc)}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
+        <Metric label="Model pick" value={`${pickHome ? game.home_team : game.away_team} ${pct(pickHome ? forecast.home_win_probability : 1 - forecast.home_win_probability)}`} />
+        <Metric label="Projected" value={`${one(forecast.away_expected_goals)}–${one(forecast.home_expected_goals)}`} />
+        <Metric label="Final" value={grade ? `${grade.official_away_goals}–${grade.official_home_goals}` : 'Pending'} />
+        <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
+        <div className="min-w-0">
+          <div className="text-xs text-zinc-500">Result</div>
+          <div className={`mt-0.5 truncate text-sm tabular-nums ${pickWon ? 'text-emerald-400' : 'text-red-400'}`}>{pickWon == null ? 'Pending' : pickWon ? 'Pick ✓' : 'Pick ✗'}</div>
+        </div>
+      </div>
+      <div className="mt-3 text-xs text-zinc-500">Locked {new Date(forecast.locked_at_utc || game.locked_at_utc).toLocaleString()}</div>
+    </article>
+  )
+}
+
+function RecordView({ games, model, missedLocks }: { games: NhlGame[]; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
+  const ordered = games.filter(game => game.models[model].grade).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
+  const missed = missedLocks.filter(row => row.model_key === model)
+  if (!ordered.length && !missed.length) return <p className="text-sm text-zinc-400">No graded NHL projections yet.</p>
   return (
     <section className="space-y-3">
-      <div><h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {MODEL_LABELS[model]}</h2><p className="text-sm text-zinc-400">No graded games yet · {ordered.length} forecasts awaiting finals. Results are not collected automatically yet.</p></div>
-      <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-        {ordered.map(game => {
-          const forecast = game.models[model]
-          const pickHome = forecast.home_win_probability >= 0.5
-          return <article key={game.game_id} className="py-3">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</div><span className="text-xs text-zinc-500">AWAITING FINAL</span></div>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums text-zinc-400">
-              <span>Pick {pickHome ? game.home_team : game.away_team} moneyline</span>
-              <span>Win probability {pct(pickHome ? forecast.home_win_probability : 1 - forecast.home_win_probability)}</span>
-              <span>Projected {one(forecast.away_expected_goals)}–{one(forecast.home_expected_goals)}</span>
-              <span>Final pending</span>
-            </div>
-          </article>
-        })}
-      </div>
+      <div><h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {MODEL_LABELS[model]}</h2><p className="text-sm text-zinc-400">Per-model forecasts lock 90 minutes before puck drop and grade from official NHL results.</p></div>
+      {ordered.length > 0 && <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+        {ordered.map(game => <RecordProjection key={game.game_id} game={game} model={model} />)}
+      </div>}
+      {missed.length > 0 && <section className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">Missed lock window</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{missed.map(row => <article key={`${row.game_id}-${row.model_version}`} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><span className="font-medium text-zinc-200">{row.away_team} @ {row.home_team}</span><span className="text-zinc-500">No forecast locked · {new Date(row.scheduled_start_utc).toLocaleString()}</span></article>)}</div></section>}
     </section>
   )
 }
@@ -165,7 +202,7 @@ export default function NhlModelTab() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/data/nhl/prospective-2026-27.json')
+    fetch('/api/nhl/model/locks?season=2026')
       .then(async response => {
         if (!response.ok) throw new Error(`NHL forecasts did not load (HTTP ${response.status}).`)
         return response.json() as Promise<Payload>
@@ -194,10 +231,10 @@ export default function NhlModelTab() {
       </div>
 
       {view === 'projections' && <>
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">2026–27 projections · {MODEL_LABELS[model]}</h2><p className="text-xs text-zinc-500">{modelRole(model)} · {games.length} saved games · frozen {new Date(payload.frozen_at_utc).toLocaleDateString()} · forecasts are not collected automatically yet</p></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
-        {games.length === 0 ? <p className="text-sm text-zinc-400">No prospective NHL forecasts have been saved.</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-1"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{entries.map(game => <ProjectionCard key={game.game_id} game={game} model={model} />)}</div></section>)}
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">2026–27 projections · {MODEL_LABELS[model]}</h2><p className="text-xs text-zinc-500">{modelRole(model)} · {games.length} locked games · {payload.frozen_at_utc ? `latest lock ${new Date(payload.frozen_at_utc).toLocaleString()}` : 'waiting for first T−90 lock'}</p></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
+        {games.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-1"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{entries.map(game => <ProjectionCard key={game.game_id} game={game} model={model} />)}</div></section>)}
       </>}
-      {view === 'record' && <RecordView games={games} model={model} />}
+      {view === 'record' && <RecordView games={games} model={model} missedLocks={payload.missed_locks || []} />}
       {view === 'ratings' && <TeamRatings games={games} />}
       <p className="text-xs text-zinc-500">Win probability includes overtime and shootouts. Goal projections exclude the shootout-deciding goal. Regulation win probability is not available in this model version.</p>
     </div>
