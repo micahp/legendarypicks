@@ -132,6 +132,19 @@ def ensure_schema(con: sqlite3.Connection) -> None:
         feed_game_sha256 TEXT NOT NULL,
         PRIMARY KEY (game_id,model_key,model_version,event_type)
     );
+    -- Team standings snapshots from the NHL API, written by the daily grade run. The latest per team is shown.
+    CREATE TABLE IF NOT EXISTS nhl_team_standings (
+        season INTEGER NOT NULL,
+        team TEXT NOT NULL,
+        captured_at_utc TEXT NOT NULL,
+        standings_date TEXT NOT NULL,
+        games_played INTEGER NOT NULL,
+        wins INTEGER NOT NULL,
+        losses INTEGER NOT NULL,
+        overtime_losses INTEGER NOT NULL,
+        points INTEGER NOT NULL,
+        PRIMARY KEY (season, team, captured_at_utc)
+    );
     -- Bovada full-game snapshots (puck line, total, moneyline). Append-only; the latest per game is shown.
     CREATE TABLE IF NOT EXISTS nhl_game_lines (
         game_id TEXT NOT NULL,
@@ -743,5 +756,33 @@ def latest_game_lines(con: sqlite3.Connection) -> dict:
       WHERE l.source='bovada'
     """).fetchall()
     return {row["game_id"]: {key: row[key] for key in row.keys() if key != "game_id"} for row in rows}
+
+
+def write_standings(con: sqlite3.Connection, standings: list, captured_at: str) -> int:
+    """Append one standings snapshot per team from the NHL standings API. Commits."""
+    rows = [(int(str(team["seasonId"])[:4]), str(team["teamAbbrev"]["default"]), captured_at, str(team["date"]),
+             int(team["gamesPlayed"]), int(team["wins"]), int(team["losses"]), int(team["otLosses"]),
+             int(team["points"])) for team in standings]
+    con.executemany(
+        "INSERT INTO nhl_team_standings (season, team, captured_at_utc, standings_date, games_played, wins, "
+        "losses, overtime_losses, points) VALUES (?,?,?,?,?,?,?,?,?)", rows)
+    con.commit()
+    return len(rows)
+
+
+def latest_standings(con: sqlite3.Connection, season: int) -> dict:
+    """Newest standings row per team for one season, keyed by team code. Empty if the table is missing."""
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_team_standings'").fetchone():
+        return {}
+    rows = con.execute("""
+      SELECT s.* FROM nhl_team_standings s
+      JOIN (SELECT team, MAX(captured_at_utc) AS latest FROM nhl_team_standings
+            WHERE season=? GROUP BY team) m
+        ON s.team=m.team AND s.captured_at_utc=m.latest
+      WHERE s.season=?
+    """, (int(season), int(season))).fetchall()
+    return {row["team"]: {"games_played": row["games_played"], "wins": row["wins"], "losses": row["losses"],
+                          "overtime_losses": row["overtime_losses"], "points": row["points"],
+                          "standings_date": row["standings_date"]} for row in rows}
 
 

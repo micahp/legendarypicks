@@ -59,10 +59,12 @@ describe('NHL model tab previews', () => {
   })
 
   it('shows the Bovada puck line and total in the Vegas columns', async () => {
-    const withLines = { ...payload, lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, total_line: 6.5, home_moneyline: -128, away_moneyline: 107, over_price: -115, under_price: -105 } } }
+    const withLines = { ...payload, standings: { WSH: { games_played: 6, wins: 3, losses: 3, overtime_losses: 0, points: 6, standings_date: '2026-10-13' }, MTL: { games_played: 6, wins: 3, losses: 2, overtime_losses: 1, points: 7, standings_date: '2026-10-13' } }, lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, total_line: 6.5, home_moneyline: -128, away_moneyline: 107, over_price: -115, under_price: -105 } } }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(withLines) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
+    expect(screen.getByText('3-2-1 · 7 pts')).toBeTruthy()
+    expect(screen.getByText('3-3-0 · 6 pts')).toBeTruthy()
     expect(screen.getByText('WSH -1.5')).toBeTruthy()
     expect(screen.getByText('WSH -0.4')).toBeTruthy()
     expect(screen.getByText('+1.1 pts')).toBeTruthy()

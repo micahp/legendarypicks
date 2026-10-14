@@ -8,12 +8,14 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_result, lock_feed,
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
-                             export_previews, preview_feed, latest_game_lines, parse_time)
+                             export_previews, preview_feed, latest_game_lines, latest_standings,
+                             write_standings, parse_time)
 from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
@@ -238,10 +240,20 @@ class NHLModelLocks(unittest.TestCase):
     def test_applied_daily_grade_run_also_refreshes_upcoming_previews(self):
         self.con.commit()
         path = os.path.join(self.tmp.name, "nhl-model.db")
-        code = grade_main(["--db", path, "--feed", DEFAULT_FEED, "--now", "2026-10-14T12:00:00Z", "--apply"])
+        with mock.patch("grade_nhl_models.fetch_standings", return_value=[]):
+            code = grade_main(["--db", path, "--feed", DEFAULT_FEED, "--now", "2026-10-14T12:00:00Z", "--apply"])
         self.assertEqual(code, 0)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_previews").fetchone()[0], 6)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 0)
+
+    def test_latest_standings_keeps_the_newest_snapshot_per_team(self):
+        def team(day, wins, points):
+            return {"teamAbbrev": {"default": "WSH"}, "date": day, "seasonId": 20262027, "gamesPlayed": wins + 3,
+                    "wins": wins, "losses": 3, "otLosses": 0, "points": points}
+        write_standings(self.con, [team("2026-10-13", 3, 6)], "2026-10-13T08:00:00Z")
+        write_standings(self.con, [team("2026-10-14", 4, 8)], "2026-10-14T08:00:00Z")
+        latest = latest_standings(self.con, 2026)["WSH"]
+        self.assertEqual((latest["wins"], latest["points"], latest["standings_date"]), (4, 8, "2026-10-14"))
 
     def test_read_api_reads_only_the_standalone_database_and_empty_state_is_explicit(self):
         missing = locks_payload(os.path.join(self.tmp.name, "not-created.sqlite3"), 2026)

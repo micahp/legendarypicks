@@ -16,8 +16,17 @@ import urllib.error
 import urllib.request
 
 from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, FINAL_GRACE, NHLModelError, ensure_schema,
-                             grade_result, normalize_official_result, open_db, parse_time,
-                             preview_feed, read_feed)
+                             grade_result, iso_utc, normalize_official_result, open_db, parse_time,
+                             preview_feed, read_feed, write_standings)
+
+STANDINGS_API = "https://api-web.nhle.com/v1/standings/now"
+
+
+def fetch_standings() -> list:
+    """Current NHL standings. A failure here raises, so the timer's OnFailure alert fires."""
+    request = urllib.request.Request(STANDINGS_API, headers={"User-Agent": "legendarypicks/1.0"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.loads(response.read().decode())["standings"]
 
 API = "https://api-web.nhle.com/v1/gamecenter/{game_id}/landing"
 
@@ -99,6 +108,7 @@ def main(argv=None) -> int:
         raise SystemExit("refusing Legendary Picks database path: %s" % args.db)
     now = parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
     preview = None
+    standings = None
     try:
         con = open_db(args.db, readonly=not args.apply)
         try:
@@ -108,6 +118,7 @@ def main(argv=None) -> int:
             # Previews are rebuilt from the feed on every applied run, so the grade timer is the daily refresh.
             if args.apply:
                 preview = preview_feed(con, read_feed(args.feed), now)
+                standings = write_standings(con, fetch_standings(), iso_utc(now))
         finally:
             con.close()
     except NHLModelError as exc:
@@ -120,6 +131,8 @@ def main(argv=None) -> int:
     if preview is not None:
         print("previews refreshed: {preview_rows} rows for upcoming games, {not_previewable} not previewable, "
               "{already_locked} already locked".format(**preview))
+    if standings is not None:
+        print("standings refreshed: %d teams" % standings)
     return 0
 
 
