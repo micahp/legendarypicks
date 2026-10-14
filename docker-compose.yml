@@ -45,6 +45,8 @@ services:
       # backend image (built from ./backend only). Read-only bind so the container
       # sees the same files dev does, same pattern as ./backend/data above.
       - ./docs:/docs:ro
+      # NHL feed for the Bovada refresh and previews. Read-only; the feed path resolves to /research.
+      - ./research:/research:ro
       # Cache only. Capped so a runaway writer fills a bounded volume instead of
       # the host disk — the old cache reached 134MB with no eviction at all.
       - type: volume
