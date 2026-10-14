@@ -73,7 +73,8 @@ def write_previews(con, season, week, model_version, plan, run_id, now):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--season", type=int, default=2026)
-    ap.add_argument("--week", type=int, required=True)
+    ap.add_argument("--week", type=int, default=None,
+                    help="default: the earliest REG week that still has an unscored game (the upcoming slate)")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--now", default=None, help="ISO time (default: now); a game kicked off before it is not previewed")
     args = ap.parse_args(argv)
@@ -83,6 +84,13 @@ def main(argv=None) -> int:
 
     con = sqlite3.connect(DB, timeout=60)
     try:
+        if args.week is None:
+            row = con.execute("SELECT MIN(week) FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
+                              "AND (home_score IS NULL OR away_score IS NULL)", (args.season,)).fetchone()
+            if row[0] is None:
+                print("no unscored REG game in %d; nothing to preview" % args.season)
+                return 0
+            args.week = int(row[0])
         nfl_lock.assert_inputs_complete(con, args.season, args.week)
         fit, used, version = lw.build(con, args.season, args.week, lw.DEFAULT_SIGMA)
         project = nfl_lock.v1_projector(fit, lw.DEFAULT_SIGMA)
