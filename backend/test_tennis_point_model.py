@@ -65,3 +65,28 @@ def test_same_day_matches_do_not_inform_each_other():
     # Both matches are validation rows, predicted with no history: every serve is predicted at the cold-start baseline.
     assert acc[("validation", "Hard", "baseline", None)][1] == 400
     assert acc[("validation", "Hard", "baseline", None)][3] == pytest.approx(400 * tpm.COLD_START_BASELINE)
+
+
+def test_wta_filter_keeps_main_tour_levels_and_only_historical_w():
+    import sqlite3
+
+    con = sqlite3.connect(":memory:")
+    con.execute(
+        "CREATE TABLE tennis_wta_matches (tourney_date INTEGER, tourney_level TEXT, surface TEXT, "
+        "winner_id INTEGER, loser_id INTEGER, w_svpt INTEGER, w_1stWon INTEGER, w_2ndWon INTEGER, "
+        "l_svpt INTEGER, l_1stWon INTEGER, l_2ndWon INTEGER)"
+    )
+    cases = [
+        ("G", 20000101), ("F", 20000101), ("P", 20150101), ("PM", 20150101), ("I", 20150101),
+        ("T3", 19990101), ("W", 19990101),          # kept: main tour, historical W
+        ("W", 20150101),                             # dropped: W from 2010 is held for review
+        ("C", 19990101), ("CC", 19990101), ("25", 20000101), ("D", 20000101),
+        ("O", 20000101), ("E", 20000101), ("J", 20000101), ("35+H", 20250101),   # dropped
+    ]
+    for level, date in cases:
+        con.execute(
+            "INSERT INTO tennis_wta_matches VALUES (?, ?, 'Hard', 1, 2, 100, 60, 15, 100, 55, 15)", (date, level)
+        )
+    rows = tpm.load_matches(con, "wta", 0, 99999999)
+    assert len(rows) == 7
+    assert sum(1 for r in rows if r[0] == 20150101) == 3  # P, PM and I, not the 2015 W
