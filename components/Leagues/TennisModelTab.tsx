@@ -159,7 +159,7 @@ function MatchCard({ match }: { match: ModelMatch }) {
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total games</p>
-            <p className="text-zinc-200">{number(projection.totalGames)}{projection.totalGamesInterval ? ` · ${number(projection.totalGamesInterval[0], 0)}–${number(projection.totalGamesInterval[1], 0)}` : ''}</p>
+            <p className="text-zinc-200">{number(projection.totalGames)} games{projection.totalGamesInterval ? ` · 80% range ${number(projection.totalGamesInterval[0], 0)} to ${number(projection.totalGamesInterval[1], 0)}` : ''}</p>
             {projection.totalGamesLabel && <p className="text-xs text-amber-400">{projection.totalGamesLabel}</p>}
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
             <p className="text-xs tabular-nums text-zinc-500">Vegas line {totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</p>
