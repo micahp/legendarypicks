@@ -1,5 +1,35 @@
 # Changelog
 
+## v10.0.0
+
+### NHL model
+
+- New NHL model page with three views: Projections, Record and Team Ratings. Models are labelled Elo, xG Poisson and Elo + xG.
+- Per-model forecasts lock 90 minutes before puck drop, one immutable row per game, model and model version. A missed lock window is recorded and never backfilled.
+- Games are graded daily against official NHL results after a four-hour finality grace period. The official winner and score are kept separately from the goal target, which excludes the shootout-deciding goal.
+- Unlocked games appear as previews. They are rebuilt from the forecast feed on each daily grading run, are never graded, and never enter the lock tables.
+- Projection cards show the Bovada puck line and total next to the model's margin and total, with edges measured as model minus Vegas.
+- The model pick suggests the moneyline side or the over or under at 5.5 or 6.5 with the largest edge against the no-vig Bovada price.
+- Bovada lines refresh when the page loads if the newest snapshot is more than 15 minutes old.
+- The record lists graded games only.
+
+### NFL model
+
+- Projections are game cards with the model pick on the right, and team records under team names.
+- The record tab lists graded weeks only.
+- Playoff odds is a tab on the NFL hub.
+
+### Homepage
+
+- Hero carousel with a prop preview and a models slide.
+- The featured prop comes only from games that have not started.
+
+### Data
+
+- NFL xpass and pass_oe backfill for 2010 to 2025, kept in the daily ingest.
+- Tennis identities resolve from publisher data when names don't match.
+- MLS radio uses a play button, as MLB and NHL do.
+
 ## v0.9.9
 
 ### Scoreboard

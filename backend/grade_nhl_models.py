@@ -15,8 +15,9 @@ import sys
 import urllib.error
 import urllib.request
 
-from nhl_model_store import (DEFAULT_DB, FINAL_GRACE, NHLModelError, ensure_schema,
-                             grade_result, normalize_official_result, open_db, parse_time)
+from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, FINAL_GRACE, NHLModelError, ensure_schema,
+                             grade_result, normalize_official_result, open_db, parse_time,
+                             preview_feed, read_feed)
 
 API = "https://api-web.nhle.com/v1/gamecenter/{game_id}/landing"
 
@@ -90,18 +91,23 @@ def _dry_grade_count(con, game_id: str) -> int:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=os.environ.get("NHL_MODEL_DB_PATH", DEFAULT_DB))
+    parser.add_argument("--feed", default=DEFAULT_FEED, help="forecast feed the daily previews are built from")
     parser.add_argument("--now", help="timezone-qualified ISO time, for deterministic checks")
-    parser.add_argument("--apply", action="store_true", help="write immutable grade rows")
+    parser.add_argument("--apply", action="store_true", help="write immutable grade rows and refresh previews")
     args = parser.parse_args(argv)
     if os.path.basename(os.path.realpath(args.db)) in {"picks.db", "picks.dev.db"}:
         raise SystemExit("refusing Legendary Picks database path: %s" % args.db)
     now = parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
+    preview = None
     try:
         con = open_db(args.db, readonly=not args.apply)
         try:
             if args.apply:
                 ensure_schema(con)
             report = grade_due(con, now, args.apply)
+            # Previews are rebuilt from the feed on every applied run, so the grade timer is the daily refresh.
+            if args.apply:
+                preview = preview_feed(con, read_feed(args.feed), now)
         finally:
             con.close()
     except NHLModelError as exc:
@@ -111,6 +117,9 @@ def main(argv=None) -> int:
           "{graded_games} games / {graded_model_rows} model rows graded, "
           "{not_final_or_grace} pending, {already_graded} already graded".format(
               mode="applied" if args.apply else "dry-run", time=now.isoformat(), **report))
+    if preview is not None:
+        print("previews refreshed: {preview_rows} rows for upcoming games, {not_previewable} not previewable, "
+              "{already_locked} already locked".format(**preview))
     return 0
 
 
