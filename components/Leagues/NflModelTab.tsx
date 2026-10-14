@@ -16,7 +16,9 @@ interface Lock {
   margin: number
   total: number
   p_home_win: number
-  locked_at: string
+  locked_at: string | null
+  preview: boolean
+  previewed_at: string | null
   line: Line
   grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null } | null
 }
@@ -127,11 +129,13 @@ function edge(lock: Lock) {
 }
 
 function statusLabel(lock: Lock) {
+  if (lock.preview) return 'PROJECTION · NOT LOCKED'
   if (!lock.grade) return 'AWAITING'
   return { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }[lock.grade.ats] || lock.grade.ats.toUpperCase()
 }
 
 function statusClass(lock: Lock) {
+  if (lock.preview) return 'text-amber-300'
   if (!lock.grade) return 'text-zinc-500'
   if (lock.grade.ats === 'win') return 'text-emerald-400'
   if (lock.grade.ats === 'loss') return 'text-rose-400'

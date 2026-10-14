@@ -105,7 +105,7 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
 
 def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
     weeks = [r[0] for r in con.execute(
-        "SELECT DISTINCT week FROM game_projections WHERE league = 'nfl' AND locked = 1 "
+        "SELECT DISTINCT week FROM game_projections WHERE league = 'nfl' AND locked IN (0, 1) "
         "AND season = ? ORDER BY week", (season,))]
     if week is None:
         week = weeks[-1] if weeks else None
@@ -118,20 +118,22 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
         "       g.proj_total, g.p_home_win, g.locked_at, g.market_spread, g.market_total, "
         "       s.snapshot_id, s.spread_line, s.total_line, s.home_moneyline, s.away_moneyline, "
         "       s.captured_at, pg.brier, pg.margin_err, pg.total_err, pg.ats_result, "
-        "       pg.actual_home, pg.actual_away "
+        "       pg.actual_home, pg.actual_away, g.locked "
         "FROM game_projections g "
         "LEFT JOIN model_runs r ON r.run_id = g.run_id "
         "LEFT JOIN nfl_line_snapshots s ON s.snapshot_id = g.line_snapshot_id "
         "LEFT JOIN projection_grades pg ON pg.league = g.league AND pg.game_id = g.game_id "
         "     AND pg.model_version = g.model_version "
-        "WHERE g.league = 'nfl' AND g.locked = 1 AND g.season = ? AND g.week = ?",
+        "WHERE g.league = 'nfl' AND g.locked IN (0, 1) AND g.season = ? AND g.week = ?",
         (season, week)).fetchall()
     models: Dict[str, Dict[str, Any]] = {}
     locks: Dict[str, Dict[str, Any]] = {}
     for (gid, mv, model, ph, pa, pm, pt, pw, locked_at, msp, mtot, snap, ssp, stot, hml, aml,
-         cap, brier, merr, terr, ats, ah, aa) in rows:
-        d = models.setdefault(mv, dict(describe(model, mv), version=mv, locks=0))
-        d["locks"] += 1
+         cap, brier, merr, terr, ats, ah, aa, is_locked) in rows:
+        if not is_locked and mv in locks.get(gid, {}) and not locks[gid][mv]["preview"]:
+            continue  # a real lock for this game and model always wins over its preview
+        d = models.setdefault(mv, dict(describe(model, mv), version=mv, locks=0, previews=0))
+        d["locks" if is_locked else "previews"] += 1
         line = ({"spread": _f(ssp), "total": _f(stot), "home_moneyline": _f(hml),
                  "away_moneyline": _f(aml), "captured_at": cap, "source": "snapshot"}
                 if snap is not None else
@@ -141,8 +143,10 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
                  {"brier": _f(brier), "margin_err": _f(merr), "total_err": _f(terr), "ats": ats,
                   "su": su_result(pw, ah, aa)})
         locks.setdefault(gid, {})[mv] = {
+            "preview": not is_locked,
             "proj_home": _f(ph), "proj_away": _f(pa), "margin": _f(pm), "total": _f(pt),
-            "p_home_win": _f(pw), "locked_at": locked_at, "line": line, "grade": grade}
+            "p_home_win": _f(pw), "locked_at": locked_at if is_locked else None,
+            "previewed_at": None if is_locked else locked_at, "line": line, "grade": grade}
     sched = con.execute(
         "SELECT game_id, home_team, away_team, location, gameday, gametime, home_score, "
         "       away_score, result FROM nfl_schedule WHERE season = ? AND week = ? "
