@@ -11,6 +11,30 @@ Nothing here is pushed. Nothing has been written to prod (`picks.db`).
 This section replaces the architecture in `docs/PLAN-tennis-points-scoreboard-2026-10-13.md`
 where they disagree. Micah approved both changes below on 2026-10-14 around 01:00 UTC.
 
+### Status at 2026-10-14 01:20 UTC (nothing pushed, no server restarted)
+- Step 1 done: PMT commit `c71456b` on `main` (competitor ids, server side, sets won, tournament,
+  names, `schema_version` 2). The poller that runs now started at 01:00 UTC on the OLD code, so the
+  state file still lacks `schema_version`. The next run (about 01:55 UTC) loads the new code. Until
+  then the panel says "Point scores unavailable: schema_version None, expected 2", which is correct.
+- Step 2 done: worktree `/root/lp-tennis-points`, branch `feat/tennis-points`, commit `bccf487`.
+  Reader `backend/kalshi_live_state.py`, endpoint `/api/{atp|wta}/kalshi-live`, 10 pytest tests pass.
+  NOT verified live: the dev server does not have the route until someone restarts it (Micah's call).
+- Step 3 done: commit `00d0ce0`. `components/Scores/KalshiLivePanel.tsx`, wired into
+  `pages/scores.tsx` under the Tennis filter when the date is today. 56 jest tests in
+  `components/Scores` pass. Run jest with: `NODE_PATH=/root/legendarypicks/node_modules
+  /root/legendarypicks/node_modules/.bin/jest -c /root/legendarypicks/jest.config.js --rootDir
+  /root/lp-tennis-points components/Scores` (the worktree has no node_modules of its own).
+  NOT done: headless page check (needs a running server).
+- Step 4 done: loader `backend/ingest_kalshi_tennis_points.py`, commit `84ecc3e`. Applied to the dev
+  DB: table `kalshi_tennis_points`, 32,038 rows, 239 matches, from 32,306 lines in 11 files (268
+  identical repeats skipped). Backup before the write:
+  `backend/data/backups-kalshi-points-20261014/picks.dev.db.pre-kalshi-points-20261014T011843Z.bak`
+  (2,070,048,768 bytes, same size as the source). Re-running is a no-op. Tested on a scratch DB: a
+  same-key conflict and a malformed line both abort with no table written.
+- Step 5 (live check) not started. Waiting on a live Shanghai or Wuhan match and a dev server restart.
+- Not pushed: `feat/tennis-points` is local only. `dev` in `/root/legendarypicks` has the handoff
+  commit `850a963`. `main` in prediction-market-trading has `c71456b`.
+
 ### What changed from the plan, and why
 1. **No copy job into the dev DB.** The API reads `KALSHI_LIVE_STATE.json` directly. The box
    has all 4 GB of swap in use and 1.8 GB RAM free, and the dev DB is 1.8 GB; a writer every
