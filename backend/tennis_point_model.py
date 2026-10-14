@@ -24,6 +24,7 @@ import math
 import sqlite3
 import sys
 from collections import defaultdict, deque
+from datetime import date as _date
 from itertools import groupby
 from typing import Any, Iterable
 
@@ -31,6 +32,10 @@ TOUR_LEVELS = {"atp": ("G", "M", "A", "F")}
 K_GRID = (100, 250, 500, 1000, 2000, 4000)
 EPS = 1e-6
 COLD_START_BASELINE = 0.64  # used only before a surface has any history
+
+
+def _ordinal(yyyymmdd: int) -> int:
+    return _date(yyyymmdd // 10000, (yyyymmdd // 100) % 100, yyyymmdd % 100).toordinal()
 
 
 def odds(p: float) -> float:
@@ -102,25 +107,38 @@ class Stats:
 class OnlineStats:
     """Player counts and surface baseline as they stand before a given date."""
 
-    def __init__(self, baseline_years: int):
+    def __init__(self, baseline_years: int, half_life_years: float | None = None):
         self.baseline_years = baseline_years
+        self.half_life_years = half_life_years
         self.player = defaultdict(lambda: [0, 0, 0, 0])
         self.cum_won = defaultdict(int)
         self.cum_pts = defaultdict(int)
         self.win_won = defaultdict(int)
         self.win_pts = defaultdict(int)
         self.window: deque = deque()
+        self.ew_won = defaultdict(float)  # exponentially weighted, as of ew_day
+        self.ew_pts = defaultdict(float)
+        self.ew_day: int | None = None
 
     def expire(self, date: int) -> None:
-        if not self.baseline_years:
-            return
-        lower = date - 10000 * self.baseline_years
-        while self.window and self.window[0][0] < lower:
-            _, surface, won, pts = self.window.popleft()
-            self.win_won[surface] -= won
-            self.win_pts[surface] -= pts
+        day = _ordinal(date)
+        if self.half_life_years:
+            if self.ew_day is not None and day > self.ew_day:
+                factor = 0.5 ** ((day - self.ew_day) / (self.half_life_years * 365.25))
+                for surface in list(self.ew_won):
+                    self.ew_won[surface] *= factor
+                    self.ew_pts[surface] *= factor
+            self.ew_day = day
+        if self.baseline_years:
+            lower = date - 10000 * self.baseline_years
+            while self.window and self.window[0][0] < lower:
+                _, surface, won, pts = self.window.popleft()
+                self.win_won[surface] -= won
+                self.win_pts[surface] -= pts
 
     def baseline(self, surface: str) -> float:
+        if self.half_life_years and self.ew_pts[surface] > 0:
+            return self.ew_won[surface] / self.ew_pts[surface]
         if self.baseline_years and self.win_pts[surface] > 0:
             return self.win_won[surface] / self.win_pts[surface]
         if self.cum_pts[surface] > 0:
@@ -140,6 +158,9 @@ class OnlineStats:
         won, pts = (w1 + w2) + (l1 + l2), wsv + lsv
         self.cum_won[surface] += won
         self.cum_pts[surface] += pts
+        if self.half_life_years:
+            self.ew_won[surface] += won
+            self.ew_pts[surface] += pts
         if self.baseline_years:
             self.win_won[surface] += won
             self.win_pts[surface] += pts
@@ -187,9 +208,9 @@ def score(rows: list[tuple], stats: Stats, k: float | None, mode: str) -> dict[s
     }
 
 
-def walk_forward(rows: list[tuple], validate_start: int, test_start: int, test_end: int, baseline_years: int) -> dict:
+def walk_forward(rows: list[tuple], validate_start: int, test_start: int, test_end: int, baseline_years: int, half_life_years: float | None = None) -> dict:
     """Predict each match from matches dated earlier, for every k in K_GRID, then add the match."""
-    state = OnlineStats(baseline_years)
+    state = OnlineStats(baseline_years, half_life_years)
     acc: dict = {}
     for date, group in groupby(rows, key=lambda r: r[0]):
         group = list(group)
@@ -237,30 +258,124 @@ def summarise(acc: dict, window: str, mode: str, k: int | None, surface: str | N
     }
 
 
-def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int, test_end: int, baseline_years: int = 0) -> dict[str, Any]:
+def walk_records(rows: list[tuple], validate_start: int, test_start: int, test_end: int, baseline_years: int,
+                 half_life_years: float | None, k: float) -> list[tuple]:
+    """Per-side records (window, p, served, won) for the combined model, for one (half-life, k) setting."""
+    state = OnlineStats(baseline_years, half_life_years)
+    records: list[tuple] = []
+    for date, group in groupby(rows, key=lambda r: r[0]):
+        group = list(group)
+        state.expire(date)
+        if validate_start <= date < test_start:
+            window = "validation"
+        elif test_start <= date <= test_end:
+            window = "test"
+        else:
+            window = None
+        if window:
+            for row in group:
+                surface, winner, loser = row[1], row[2], row[3]
+                wsv, w1, w2, lsv, l1, l2 = row[4:10]
+                for server, returner, served, won in (
+                    (winner, loser, wsv, w1 + w2),
+                    (loser, winner, lsv, l1 + l2),
+                ):
+                    b = state.baseline(surface)
+                    p = point_prob(state.serve(server, surface, k), state.returns(returner, surface, k), b)
+                    records.append((window, p, served, won))
+        for row in group:
+            state.add(row)
+    return records
+
+
+def _logit(p: float) -> float:
+    return math.log(p / (1.0 - p))
+
+
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + math.exp(-x))
+
+
+def shift_metrics(records: list[tuple], delta: float) -> dict[str, float]:
+    """Log loss, mean predicted and observed rate after adding delta to every logit."""
+    loss, served_total, won_total, predicted = 0.0, 0, 0, 0.0
+    for _, p, served, won in records:
+        q = min(max(_sigmoid(_logit(p) + delta), EPS), 1.0 - EPS)
+        loss += -(won * math.log(q) + (served - won) * math.log(1.0 - q))
+        served_total += served
+        won_total += won
+        predicted += q * served
+    return {
+        "points": served_total,
+        "log_loss_per_point": loss / served_total,
+        "observed_rate": won_total / served_total,
+        "predicted_rate": predicted / served_total,
+    }
+
+
+def fit_shift(records: list[tuple]) -> float:
+    """The logit shift that makes the predicted rate equal the observed rate on these records (bisection)."""
+    target = sum(won for _, _, _, won in records) / sum(served for _, _, served, _ in records)
+    lo, hi = -0.5, 0.5
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if shift_metrics(records, mid)["predicted_rate"] < target:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int, test_end: int,
+        half_lives: tuple[float, ...] = (0.0,), baseline_years: int = 0) -> dict[str, Any]:
+    """Choose (half-life, k) on the validation window, then score the test window once with that choice.
+
+    A half-life of 0 means a cumulative baseline (no time weighting).
+    """
     conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
         rows = load_matches(conn, tour, from_date, test_end)
     finally:
         conn.close()
-    acc = walk_forward(rows, validate_start, test_start, test_end, baseline_years)
-    grid = {k: summarise(acc, "validation", "combined", k)["log_loss_per_point"] for k in K_GRID}
-    best = min(grid, key=grid.get)
+    results: dict[float, dict[str, Any]] = {}
+    for h in half_lives:
+        acc = walk_forward(rows, validate_start, test_start, test_end, baseline_years, h or None)
+        grid = {k: summarise(acc, "validation", "combined", k)["log_loss_per_point"] for k in K_GRID}
+        best_k = min(grid, key=grid.get)
+        results[h] = {"acc": acc, "validation_by_k": grid, "best_k": best_k}
+    best_h = min(results, key=lambda h: results[h]["validation_by_k"][results[h]["best_k"]])
+    chosen = results[best_h]
+    acc, k = chosen["acc"], chosen["best_k"]
     counts = {
         "validation": sum(1 for r in rows if validate_start <= r[0] < test_start),
         "test": sum(1 for r in rows if test_start <= r[0] <= test_end),
     }
+    records = walk_records(rows, validate_start, test_start, test_end, 0, best_h or None, k)
+    val_records = [r for r in records if r[0] == "validation"]
+    test_records = [r for r in records if r[0] == "test"]
+    delta = fit_shift(val_records)
     report: dict[str, Any] = {
         "tour": tour,
-        "baseline_years": baseline_years,
         "evaluation": "walk-forward",
         "matches": counts,
-        "chosen_k": best,
-        "validation_log_loss_by_k": grid,
+        "chosen": {"half_life_years": best_h, "k": k},
+        "calibration": {
+            "validation_logit_shift": delta,
+            "validation_uncalibrated": shift_metrics(val_records, 0.0),
+            "test_uncalibrated": shift_metrics(test_records, 0.0),
+            "test_calibrated": shift_metrics(test_records, delta),
+        },
+        "validation_log_loss_by_half_life": {
+            str(h): results[h]["validation_by_k"][results[h]["best_k"]] for h in half_lives
+        },
+        "validation_best_k_by_half_life": {str(h): results[h]["best_k"] for h in half_lives},
         "test": {
             "baseline": summarise(acc, "test", "baseline", None),
-            "serve_only": summarise(acc, "test", "serve_only", best),
-            "combined": summarise(acc, "test", "combined", best),
+            "serve_only": summarise(acc, "test", "serve_only", k),
+            "combined": summarise(acc, "test", "combined", k),
+        },
+        "test_combined_by_half_life": {
+            str(h): summarise(results[h]["acc"], "test", "combined", results[h]["best_k"]) for h in half_lives
         },
         "test_by_surface": {},
     }
@@ -268,7 +383,7 @@ def run(db: str, tour: str, from_date: int, validate_start: int, test_start: int
     for surface in surfaces:
         report["test_by_surface"][surface] = {
             "baseline": summarise(acc, "test", "baseline", None, surface),
-            "combined": summarise(acc, "test", "combined", best, surface),
+            "combined": summarise(acc, "test", "combined", k, surface),
         }
     return report
 
@@ -281,9 +396,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--validate-start", type=int, required=True)
     parser.add_argument("--test-start", type=int, required=True)
     parser.add_argument("--test-end", type=int, default=20261231)
-    parser.add_argument("--baseline-years", type=int, default=0, help="years of matches behind the surface baseline; 0 = all history")
+    parser.add_argument("--half-lives", default="0,0.5,1,2,4", help="comma-separated half-lives in years; 0 = cumulative baseline")
     args = parser.parse_args(argv)
-    report = run(args.db, args.tour, args.from_date, args.validate_start, args.test_start, args.test_end, args.baseline_years)
+    half_lives = tuple(float(x) for x in args.half_lives.split(","))
+    report = run(args.db, args.tour, args.from_date, args.validate_start, args.test_start, args.test_end, half_lives)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 
