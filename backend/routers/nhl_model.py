@@ -1,13 +1,14 @@
 """Read-only API for NHL model locks stored outside the LP picks databases."""
 from __future__ import annotations
 
+import datetime as dt
 import os
 import sqlite3
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
-from nhl_model_store import DEFAULT_DB, export_locked, open_db
+from nhl_model_store import DEFAULT_DB, export_locked, export_previews, latest_game_lines, open_db
 
 router = APIRouter()
 MODEL_DB = os.environ.get("NHL_MODEL_DB_PATH", DEFAULT_DB)
@@ -18,11 +19,13 @@ def locks_payload(db_path: str, season: int) -> dict:
         return {"model_version": "per-model-locked", "model_versions": {},
                 "default_model": "B7_elo_xg_poisson", "frozen_at_utc": None,
                 "source": "standalone NHL model database", "state": "awaiting_first_lock",
-                "games": [], "missed_locks": []}
+                "games": [], "missed_locks": [], "previews": [], "lines": {}}
     try:
         con = open_db(db_path, readonly=True)
         try:
             payload = export_locked(con, season)
+            payload["previews"] = export_previews(con, season, dt.datetime.now(dt.timezone.utc))
+            payload["lines"] = latest_game_lines(con)
         finally:
             con.close()
     except sqlite3.Error as exc:

@@ -13,8 +13,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_result, lock_feed,
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
-                             parse_time)
+                             export_previews, preview_feed, latest_game_lines, parse_time)
 from grade_nhl_models import grade_due
+from capture_nhl_game_lines import TEAM_CODES, game_lines
 from routers.nhl_model import locks_payload
 
 UTC = dt.timezone.utc
@@ -189,6 +190,50 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(set(game["models"]), set(MODEL_KEYS))
         self.assertEqual(game["models"]["B3_elo"]["grade"]["official_home_goals"], 3)
         self.assertEqual(game["models"]["B3_elo"]["grade"]["statistical_home_goals"], 2)
+
+    def test_preview_is_display_only_and_never_shows_a_locked_or_started_game(self):
+        early = dt.datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
+        report = preview_feed(self.con, feed(), early)
+        self.assertEqual((report["preview_rows"], report["not_previewable"]), (3, 0))
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 0)
+        previews = export_previews(self.con, 2026, early)
+        self.assertEqual(len(previews), 1)
+        self.assertEqual(set(previews[0]["models"]), set(MODEL_KEYS))
+        self.assertTrue(all(model["preview"] for model in previews[0]["models"].values()))
+        self.assertEqual(export_locked(self.con, 2026)["games"], [])
+        lock_feed(self.con, feed(), LOCK_AT)
+        self.assertEqual(export_previews(self.con, 2026, early), [])
+        self.assertEqual(len(export_locked(self.con, 2026)["games"]), 1)
+        inside = dt.datetime(2026, 10, 14, 16, 45, tzinfo=UTC)
+        self.assertEqual(preview_feed(self.con, feed(), inside)["not_previewable"], 1)
+        self.assertEqual(export_previews(self.con, 2026, inside), [])
+
+    def test_latest_bovada_snapshot_wins_and_parser_reads_full_game_lines(self):
+        for captured, line in (("2026-10-14T14:00:00Z", -1.0), ("2026-10-14T14:54:42Z", -1.5)):
+            self.con.execute("INSERT INTO nhl_game_lines (game_id, source, captured_at_utc, home_team, away_team, "
+                             "home_puck_line, total_line) VALUES (?,?,?,?,?,?,?)",
+                             (GAME_ID, "bovada", captured, "WSH", "MTL", line, 6.5))
+        self.con.commit()
+        latest = latest_game_lines(self.con)[GAME_ID]
+        self.assertEqual((latest["captured_at_utc"], latest["home_puck_line"]), ("2026-10-14T14:54:42Z", -1.5))
+        event = {"displayGroups": [{"description": "Game Lines", "markets": [
+            {"description": "Moneyline", "period": {"description": "Game"},
+             "outcomes": [{"type": "A", "price": {"american": "+107"}}, {"type": "H", "price": {"american": "-128"}}]},
+            {"description": "Puck Line", "period": {"description": "Game"},
+             "outcomes": [{"type": "A", "price": {"handicap": "1.5", "american": "-235"}},
+                          {"type": "H", "price": {"handicap": "-1.5", "american": "+195"}}]},
+            {"description": "Total", "period": {"description": "Game"},
+             "outcomes": [{"type": "O", "price": {"handicap": "6.5", "american": "-115"}},
+                          {"type": "U", "price": {"handicap": "6.5", "american": "-105"}}]},
+        ]}, {"description": "Alternate Lines", "markets": [
+            {"description": "Total", "period": {"description": "Game"},
+             "outcomes": [{"type": "O", "price": {"handicap": "4.5", "american": "-550"}}]},
+        ]}]}
+        lines = game_lines(event)
+        self.assertEqual((lines["home_puck_line"], lines["home_puck_price"], lines["away_puck_price"]), (-1.5, 195, -235))
+        self.assertEqual((lines["total_line"], lines["over_price"], lines["under_price"]), (6.5, -115, -105))
+        self.assertEqual((lines["home_moneyline"], lines["away_moneyline"]), (-128, 107))
+        self.assertEqual(TEAM_CODES["Washington Capitals"], "WSH")
 
     def test_read_api_reads_only_the_standalone_database_and_empty_state_is_explicit(self):
         missing = locks_payload(os.path.join(self.tmp.name, "not-created.sqlite3"), 2026)
