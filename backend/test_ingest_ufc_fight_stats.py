@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime as dt
+import gzip
 import json
 import os
 import sqlite3
@@ -16,6 +17,7 @@ sys.path.insert(0, HERE)
 
 import ingest_ufc_fight_stats as ingest
 from ingest_ufc_fight_stats import roster
+from ingest_ufc_fight_stats import ufcstats_source as ufc_source
 
 
 def _create_fixture(path):
@@ -598,6 +600,18 @@ class OffCardResolveTest(unittest.TestCase):
         ids = roster.ufc_athlete_ids(fetch)
         self.assertEqual(ids, {"1", "2"})
         self.assertEqual(len(calls), 2)
+
+
+class PreUfcStrikeCountTest(unittest.TestCase):
+    ARCHIVE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ufcstats-archive",
+                           "fighter-887961364be5ceb3.html.gz")
+
+    @unittest.skipUnless(os.path.exists(ARCHIVE), "archived UFCStats profile not present")
+    def test_a_fighter_page_with_a_pre_ufc_bout_parses_instead_of_failing_closed(self):
+        document = gzip.open(self.ARCHIVE, "rt", errors="ignore").read()
+        profile = ufc_source.parse_fighter_profile(document, "887961364be5ceb3", limit=5)
+        self.assertTrue(profile.fights)
+        self.assertTrue(all(f.significant_strikes is None or f.significant_strikes >= 0 for f in profile.fights))
 
 
 if __name__ == "__main__":
