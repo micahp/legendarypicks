@@ -45,4 +45,11 @@ describe('ModelsSlide', () => {
     expect(screen.getByText('Built for transparent forecasting and research.')).toBeTruthy()
     expect(screen.getByText('Sport-specific prediction models with transparent metrics.')).toBeTruthy()
   })
+
+  it('gives each model row one sport icon, hidden from screen readers', () => {
+    const { container } = render(<ModelsSlide />)
+    const icons = Array.from(container.querySelectorAll('.material-symbols-outlined'))
+    expect(icons.map((el) => el.textContent)).toEqual(MODELS.map((m) => m.icon))
+    icons.forEach((el) => expect(el.getAttribute('aria-hidden')).toBe('true'))
+  })
 })
