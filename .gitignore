@@ -58,6 +58,8 @@ backend/venv/
 # Same root cause as the .dockerignore miss that baked 7.45GB into an image.
 backend/data/picks.db*
 backend/data/picks.dev.db*
+backend/data/nhl-model.dev.sqlite3*
+backend/nhl-venv/
 *.bak
 *.bak-*
 backend/data/*.bak*
