@@ -68,6 +68,7 @@ problem that was already fixed.
 - Is this one sample, when a series is on disk?
 - Is this the path that actually runs, or a path that resembles it?
 - If this turns out to be wrong later, what will have made it *look* settled?
+- Did the measuring PROCESS load the code I just changed? A long-lived kernel/REPL caches imported modules — a measurement after an edit runs the OLD code and looks like the edit did nothing. `importlib.reload` or a fresh process before trusting a delta.
 
 ## 4. Related
 
