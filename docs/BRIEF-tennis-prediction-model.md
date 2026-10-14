@@ -15,14 +15,13 @@ faults, break points won and games won? Those are the stat lines behind player p
 
 ## Two tracks, one simulator
 
-- Every point updates the match state and the players' statistics. A simulated match therefore gives the winner, the
-  score and each player's stat line together, so joint outcomes stay correlated: an ace-heavy match that goes to a
-  tiebreak, for example.
+- Track A is match outcomes: winners, set scores, total games and tiebreaks. Track B is player counts: service points,
+  aces, double faults and break points.
 - Each track has its own baseline and its own validation. Track A is judged by Brier against Elo. Track B is judged by
-  the log score and interval coverage of count distributions, against independent player-stat baselines. Success on one
-  track does not count toward the other.
-- The current simulator is points-only. It needs to know who wins each point, not what happened during the point. Track B
-  needs a point-level event model (below). That is a build, not yet done.
+  log score, interval coverage and exceedance calibration against direct statistical baselines. Success on one track
+  does not count toward the other.
+- Track B does not start with the simulator. Its first steps are a data audit and direct count baselines, which need no
+  simulation. The simulator enters at Gate C, if the gates before it pass.
 
 ## Architecture (target)
 
@@ -137,56 +136,67 @@ Start from Elo, not from the point model.
 |---|---|---|
 | M1 Elo | Global Elo, K = 32, no surface term | Reference. The incumbent every model must beat. |
 | M2 Blended Elo | About 50/50 overall Elo and surface Elo | Does cross-surface transfer help? |
-| M3 Elo plus serve/return | M2 plus the point model's probability, weighted by serving history (above) | Does serve/return data add anything Elo does not know? This is the candidate match model. |
+| M3 Elo plus serve/return | M2 plus the point model's probability, weighted by serving history (above) | Does serve/return data add anything Elo does not know? The candidate match model. |
 | M4 Full feature model | M3 plus form, workload, rank and experience. Regularised logistic regression first; XGBoost only if it beats logistic on rolling validation | Does pre-match context add anything after M3? |
 | Diagnostic: point model plus simulator | Standalone, no Elo | Reported for the record. Not a candidate model. |
 
-Track B models: B1, an independent player-stat baseline, is the incumbent for props. It fits negative-binomial or
-beta-binomial counts for aces, double faults and service points, using player and surface rates. B2 is the simulator's
-counts from the event model. A prop claim needs B2 to beat B1 on held-out matches.
+Track B models follow the plan's ladder. P0 and P1 are the direct baselines, called B1 here: per-match and per-service-point
+rates, with count families compared. B1 is the incumbent for props. P2 is the simulator with event labels (B2). P3 is the
+calibrated joint simulator. A prop claim needs P2 to beat B1 on held-out matches at Gate C.
 
-M1 and M2 need no serve statistics, so they can use every match. M3, M4 and B2 use the matches that have serve
-statistics, and their scores should also be reported on the full population so that coverage differences are visible.
+M1 and M2 need no serve statistics, so they can use every match. M3, M4 and P2 use the matches that have serve statistics.
+Their scores should also be reported on the full population, so that coverage differences are visible.
 
 ## Track B: player projections
 
-Experiments, in order, each with its success criterion:
+This is the next research milestone. The plan is `docs/RESEARCH-tennis-player-projections-2026-10-14.md` on this branch.
+Each gate has to pass before the next step counts.
 
-| Priority | Experiment | Success criterion |
+| Step | Work | Gate |
 |---|---|---|
-| 1 | Validate simulated service-point and total-game distributions | Better distributional accuracy than simple historical baselines |
-| 2 | Model ace and double-fault rates with surface and opponent adjustments | Better held-out count and probability forecasts |
-| 3 | Extend point simulation to record those events | Player counts agree with scoring outcomes |
-| 4 | Compare full prop distributions with direct negative-binomial and beta-binomial baselines | Better log score, calibration and interval coverage |
-| 5 | Elo as a prior for thin-history players (both tracks) | Less cold-start error without degrading prop distributions |
-| 6 | Evaluate over and under calibration on historical sportsbook lines | Calibrated over/under probabilities before any claim of edge |
+| 1 | Data audit: column inventory, counts, definitions, missingness, retirements, scoring rules and licensing | None. Finished before any model is fitted. |
+| 2 | Direct baselines. P0: rolling ace and double-fault rates per match, shrunk to a tour prior, with Poisson and negative-binomial counts. P1: service points times ace and double-fault rates per service point, comparing Poisson, binomial, beta-binomial and negative-binomial | Gate B: count distributions with full coverage, and tested interval and exceedance calibration |
+| 3 | Phase A: does the existing simulator predict the number of service points each player faces, against the P1 exposure baseline? | Gate A: a simulator that loses on exposure is not used for prop prediction |
+| 4 | Phase C: P2, the simulator with event labels, against the best direct baseline | Gate C: beats the strongest direct baseline on a predeclared proper scoring rule, without unacceptable miscalibration |
+| 5 | P3: opponent and surface adjustment, partial pooling, and per-match shared variation | Only after Gate C. Joint distributions and tails, validated separately. |
 
-**Shared variation within a match.** A simulator that draws every point from fixed probabilities can understate how
-much counts spread from match to match. Conditions are shared within a match: a day when serving is strong affects
-both the aces and the hold probability. The first test, before the event model is extended, compares the observed
-between-match variance of service points and aces with the variance the fixed-probability simulator produces for the
-same players. If the observed variance is larger, add a per-match draw of serve effectiveness before the points are
-generated. Its variance is estimated from history.
+The event model splits each service point into a win, an ace, a double fault and another loss. It requires that an ace
+always wins the point and a double fault always loses it, and it never clips probabilities silently after fitting. The
+data has aggregated ace counts only, with no first-serve ace labels. Do not invent those labels.
+
+**Cold start.** The surface-only point model is weakest where serving history is thin. Pool overall, other-surface and
+same-surface evidence, with explicit effective sample sizes. Match-outcome Elo is a prior for these distributions only
+once the service-point and exposure distributions validate on their own.
+
+**Shared variation within a match.** A simulator that draws each point from fixed probabilities can understate how much
+counts spread between matches. Estimate that variance from history before adding it (P3). Step 3 checks it: compare the
+observed and simulated between-match variance of service points and aces for the same players.
 
 Not used as evidence: social-media win rates and ROI claims, which are self-reported and unverified. The public tennis
 projects above are reference architectures for the event model, not benchmarks for our numbers.
 
+Sportsbook lines come last, after the licence for the line source is cleared and Gate C has passed. Each quote keeps its
+timestamp, line, side, venue and grading rule.
+
 ## Build order
 
-Track A:
+Next research milestone: Track B, starting with the data audit. Track A continues in parallel, and no longer comes first.
 
-1. M1 and M2 on rolling validation. Set the reference and test cross-surface transfer.
-2. M3: add the point-model probability with the history weight. Test the increment over M2.
-3. M4: add pre-match context, only if M3 is stable across years.
-4. Simulator set, game and tiebreak outputs: validate separately against historical set and game outcomes, not against
-   winners.
+Track B, in the order the plan sets:
 
-Track B:
+1. Data audit, written to `TENNIS-PROPS-DATA-AUDIT-2026-10-14.md`.
+2. Direct baselines P0 and P1, with Gate B on the ace and double-fault count distributions.
+3. Phase A, Gate A: does the existing simulator predict service-point volume well enough against the P1 exposure baseline?
+4. Phase C, Gate C: P2, the simulator with event labels, against the best direct baseline.
+5. P3, only after Gate C: opponent and surface adjustment, pooling, and per-match shared variation.
+6. Sportsbook lines last, after the licence is cleared and Gate C has passed.
 
-5. The shared-variation test above.
-6. Priorities 1 to 4 of the Track B table, with B1 as the baseline.
-7. Elo prior for thin history (priority 5), applied to both tracks.
-8. Sportsbook lines (priority 6), only after the licence for the line source is cleared.
+Track A, in parallel:
+
+A1. M1 and M2 on rolling validation. Set the reference and test cross-surface transfer.
+A2. M3: add the point-model probability with the history weight. Test the increment over M2. Use the same cold-start pooling as the props track.
+A3. M4: add pre-match context, only if M3 is stable across years.
+A4. Simulator set, game and tiebreak outputs: validate separately against historical set and game outcomes, not against winners.
 
 ## Evaluation
 
@@ -194,9 +204,13 @@ Track B:
   validation: for each year Y from 2019 to 2025, fit on matches before Y and predict Y. A confirmatory claim needs matches
   played after the 2026-10-14 freeze, scored once, with no change after seeing them.
 - **Track A primary metric:** Brier per match. Report the Brier skill score against M1.
-- **Track B primary metric:** the log score of each observed count under the predicted distribution, the coverage of
-  80% and 95% intervals, and the calibration of over and under at each line. Compare on identical matches, always against
-  B1.
+- **Track B primary metric:** declared for each gate before the run. Count distributions are scored by held-out log score
+  where a discrete probability mass is supported, and by CRPS. Coverage is reported at 50%, 80% and 90%. Mean bias and MAE
+  are secondary. Over and under scores are reported for every preregistered threshold, grouped by threshold and player,
+  with the sample in each bin. Every Track B score is compared against the best direct baseline, not against match-winner Elo.
+- **Track B intervals:** paired differences with bootstrap intervals at the match or tournament cluster level, by tour,
+  year, surface, format, history depth and count size. Simulation seed stability is checked, so simulation noise is much
+  smaller than the differences being tested.
 - **Also:** log loss, a paired bootstrap 95% interval for each difference, calibration by probability bin, results by
   history size (thin, middling, deep), by year, by surface, by tour and by best-of.
 - **Sides:** assign A and B at random, not winner first, so the target is not the winner.
@@ -218,6 +232,7 @@ Track B:
 
 ## Start here
 
+- `docs/RESEARCH-tennis-player-projections-2026-10-14.md` (this branch): the Track B plan, its gates and its data limits.
 - `docs/TENNIS-POINT-MODEL-STEP1-2026-10-14.md` (ATP) and `docs/TENNIS-POINT-MODEL-WTA-2026-10-14.md` (WTA), on
   `feat/tennis-point-model`: point model, form, rest caveat, WTA event decisions.
 - `docs/TENNIS-MATCH-BACKTEST-PROTOCOL-2026-10-14.md` and `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md`, on
@@ -236,12 +251,17 @@ Track B:
 
 ## Deliverable
 
-A short report in `docs/` covering:
+Reports in `docs/`, named as the plan sets out (planned names, not yet written):
 
-- what the data supports, with sample sizes and coverage by era;
+- `TENNIS-PROPS-DATA-AUDIT-2026-10-14.md`: the data audit;
+- `TENNIS-PROPS-BASELINES-2026-10-14.md`: P0 and P1 with Gate B;
+- `TENNIS-PROPS-SIM-BACKTEST-2026-10-14.md`: P2 and P3, only after the earlier gates;
+- `TENNIS-PROPS-DECISION-2026-10-14.md`: separate go or no-go decisions for exposure, ace and double-fault distributions, and
+  simulation value.
+
+Track A also reports, separately from Track B:
+
 - Brier and log loss for M1 to M4, against the same matches, with Brier skill scores and paired intervals;
 - the chronological backtest against Elo and blended Elo;
-- Track B: the count distributions for service points, aces, double faults and breaks against B1, with log score,
-  interval coverage and sample sizes;
-- a go or no-go for the simulator's set, game and tiebreak outputs, and a separate go or no-go for player projections,
-  each separate from the winner decision.
+- a go or no-go for the simulator's set, game and tiebreak outputs, separate from the winner decision.
+
