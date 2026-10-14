@@ -6,6 +6,7 @@ the tennis spine; unresolved IDs simply have no player-level projection.
 """
 from __future__ import annotations
 
+import json
 import math
 import sqlite3
 from collections import defaultdict
@@ -20,6 +21,45 @@ ELO_K = 32.0
 P0_SHRINK_MATCHES = 10.0
 SURFACE_BY_EVENT = {"315": "Hard", "381": "Hard"}  # Shanghai and Wuhan, reviewed event map.
 HISTORY_START = 20200101
+
+
+def _ensure_store(con: sqlite3.Connection) -> None:
+    con.execute("CREATE TABLE IF NOT EXISTS tennis_projection_days ("
+                "league TEXT NOT NULL, model_day TEXT NOT NULL, computed_at TEXT NOT NULL, "
+                "PRIMARY KEY (league, model_day))")
+    con.execute("CREATE TABLE IF NOT EXISTS tennis_projection_candidates ("
+                "league TEXT NOT NULL, model_day TEXT NOT NULL, game_id TEXT NOT NULL, projection TEXT NOT NULL, "
+                "PRIMARY KEY (league, model_day, game_id))")
+
+
+def stored_candidates(con: sqlite3.Connection, league: str, model_day: str) -> dict[str, Any] | None:
+    """Projections precomputed for one league and UTC model day, or None if that day was never computed."""
+    _ensure_store(con)
+    if con.execute("SELECT 1 FROM tennis_projection_days WHERE league=? AND model_day=?",
+                   (league, model_day)).fetchone() is None:
+        return None
+    rows = con.execute("SELECT game_id, projection FROM tennis_projection_candidates WHERE league=? AND model_day=?",
+                       (league, model_day)).fetchall()
+    return {game_id: json.loads(projection) for game_id, projection in rows}
+
+
+def store_candidates(con: sqlite3.Connection, league: str, model_day: str,
+                     candidates: dict[str, Any], computed_at: str) -> None:
+    """Replace the stored projections for one league and UTC model day."""
+    _ensure_store(con)
+    con.execute("DELETE FROM tennis_projection_candidates WHERE league=? AND model_day=?", (league, model_day))
+    con.executemany("INSERT INTO tennis_projection_candidates (league, model_day, game_id, projection) VALUES (?,?,?,?)",
+                    [(league, model_day, game_id, json.dumps(projection)) for game_id, projection in candidates.items()])
+    con.execute("INSERT OR REPLACE INTO tennis_projection_days (league, model_day, computed_at) VALUES (?,?,?)",
+                (league, model_day, computed_at))
+
+
+def forget_days(con: sqlite3.Connection, league: str, model_days: list[str]) -> None:
+    """Drop stored projections for these days so the next read recomputes them."""
+    _ensure_store(con)
+    for model_day in model_days:
+        con.execute("DELETE FROM tennis_projection_candidates WHERE league=? AND model_day=?", (league, model_day))
+        con.execute("DELETE FROM tennis_projection_days WHERE league=? AND model_day=?", (league, model_day))
 
 
 def _logistic(value: float) -> float:

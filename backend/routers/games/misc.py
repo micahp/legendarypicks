@@ -293,7 +293,7 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                                         (spine.get(home_id) or {}).get("player_id"),
                                         (spine.get(away_id) or {}).get("player_id"), now_utc),
                 })
-            from tennis_daily_projections import project_day
+            from tennis_daily_projections import project_day, stored_candidates, store_candidates
             now = dt.datetime.now(dt.timezone.utc)
             candidates = {}
             by_model_day = {}
@@ -311,7 +311,12 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                         < utc_end.replace(tzinfo=dt.timezone.utc) and starts_at_utc > now):
                     by_model_day.setdefault(starts_at_utc.date().isoformat(), []).append(match)
             for model_day, day_matches in by_model_day.items():
-                candidates.update(project_day(con, league, model_day, day_matches))
+                # Serve the stored projections; compute and store only a day that was never computed.
+                stored = stored_candidates(con, league, model_day)
+                if stored is None:
+                    stored = project_day(con, league, model_day, day_matches)
+                    store_candidates(con, league, model_day, stored, now.isoformat())
+                candidates.update(stored)
             for match in slate:
                 candidate = candidates.get(match["gameId"])
                 starts_at = None
