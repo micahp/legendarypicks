@@ -156,7 +156,8 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <h3 className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</h3>
         <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
+      <div className="flex items-start justify-between gap-6">
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
         <span className="text-xs uppercase tracking-wider text-zinc-500">Team</span>
         <span className="text-right text-xs uppercase tracking-wider text-zinc-500">Projected</span>
         <span className="text-right text-xs uppercase tracking-wider text-zinc-500">{record ? 'Final' : ''}</span>
@@ -167,10 +168,11 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
-        <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
-        <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
-        <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
+        <div className="shrink-0 space-y-1 text-right text-sm text-zinc-400">
+          <div>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></div>
+          <div>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></div>
+          <div>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></div>
+        </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
