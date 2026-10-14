@@ -108,7 +108,7 @@ export default function NflPlayoffOddsTab({ showIntro = true }: { showIntro?: bo
           <Link href="/leagues/nfl" className="text-sm text-zinc-500 hover:text-zinc-300">
             NFL
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight">Playoff odds</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Playoff Odds</h1>
           {page?.odds && (
             <p className="text-sm text-zinc-500 tabular-nums">
               {`${page.odds.season} · Week ${page.odds.week} · ${page.odds.model_version} · as of ${dateTime(page.odds.as_of)}`}
@@ -136,7 +136,7 @@ export default function NflPlayoffOddsTab({ showIntro = true }: { showIntro?: bo
           <>
             <section aria-labelledby="odds-heading" className="space-y-3">
               <div>
-                <h2 id="odds-heading" className="text-xl font-bold">Playoff odds by division</h2>
+                <h2 id="odds-heading" className="text-xl font-bold">Playoff Odds by Division</h2>
                 <p className="mt-1 text-sm text-zinc-500">Projected wins show the mean and 10th–90th percentile.</p>
               </div>
               {conferences.map(({ conference, divisions }) => (
