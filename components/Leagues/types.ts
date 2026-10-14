@@ -178,7 +178,7 @@ export interface KnockoutRound {
 }
 
 export type SubView = 'players' | 'teams'
-export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'model' | 'news' | 'rankings' | 'predict' | 'optimizer'
+export type HubTab = 'camp' | 'standings' | 'stats' | 'schedule' | 'model' | 'playoff-odds' | 'news' | 'rankings' | 'predict' | 'optimizer'
 
 // ── NFL camp-mode contracts ──────────────────────────────────────────────
 

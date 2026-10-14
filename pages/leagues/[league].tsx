@@ -13,6 +13,7 @@ import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import NflModelTab from '../../components/Leagues/NflModelTab'
+import NflPlayoffOddsTab from '../../components/Leagues/NflPlayoffOddsTab'
 import NhlModelTab from '../../components/Leagues/NhlModelTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
@@ -45,6 +46,7 @@ const TAB_LABELS: Record<HubTab, string> = {
   stats: 'Stats',
   schedule: 'Schedule',
   model: 'Model',
+  'playoff-odds': 'Playoff odds',
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
@@ -162,14 +164,6 @@ export default function LeagueHubPage() {
         <div className="flex items-center gap-3">
           <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
           <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
-          {isNFL && (
-            <Link
-              href="/nfl/playoff-odds"
-              className="ml-auto whitespace-nowrap text-sm text-zinc-400 transition-colors hover:text-emerald-400"
-            >
-              Playoff odds
-            </Link>
-          )}
         </div>
         {!route.offerable && !route.coverageLoading ? (
           <LeagueUnavailable league={route.league} />
@@ -285,6 +279,7 @@ export default function LeagueHubPage() {
         )}
 
         {route.activeTab === 'model' && isNFL && <NflModelTab />}
+        {route.activeTab === 'playoff-odds' && isNFL && <NflPlayoffOddsTab showIntro={false} />}
         {route.activeTab === 'model' && route.league === 'nhl' && <NhlModelTab />}
 
         {route.activeTab === 'news' && (
