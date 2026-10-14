@@ -142,13 +142,13 @@ class PbpRetentionTests(unittest.TestCase):
         )
         con.close()
 
-    def test_retained_table_has_the_curated_fifty_four_columns(self):
+    def test_retained_table_has_the_curated_fifty_six_columns(self):
         _, con = self._run()
         columns = [
             row[1] for row in con.execute("PRAGMA table_info(nfl_pbp)").fetchall()
         ]
         con.close()
-        self.assertEqual(54, len(columns))
+        self.assertEqual(56, len(columns))
         self.assertEqual(mod._PLAY_COLS, columns)
 
     def test_retained_play_keeps_chart_fields(self):
@@ -193,7 +193,9 @@ class PbpRetentionTests(unittest.TestCase):
         self.assertNotIn("player_game_logs", tables)
 
 
-OLD_COLS = [c for c in mod._PLAY_COLS if c not in mod._ADDED_COLS]
+# xpass and pass_oe came after the four flags; an old table lacks all six, and ensure_pbp_table widens it.
+_NEWER = ["xpass", "pass_oe"]
+OLD_COLS = [c for c in mod._PLAY_COLS if c not in mod._ADDED_COLS and c not in _NEWER]
 STORED = [
     {"game_id": "2025_01_ARI_SEA", "play_id": 1.0, "season": 2025, "play_type": "pass", "epa": 0.5},
     {"game_id": "2025_01_ARI_SEA", "play_id": 2.0, "season": 2025, "play_type": "run", "epa": -0.2},
