@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import ModelSelect from './ModelSelect'
 
 interface Line {
   spread: number | null
@@ -318,16 +319,16 @@ export default function NflModelTab() {
         </nav>
         <label className="flex items-center gap-2 text-sm text-zinc-500">
           Model
-          <select value={version} onChange={event => setVersion(event.target.value)} className="max-w-[18rem] rounded-lg bg-zinc-900 px-3 py-2 text-zinc-100">
+          <ModelSelect value={version} onChange={event => setVersion(event.target.value)} className="max-w-[18rem]">
             {data.models.map(model => <option key={model.version} value={model.version}>{model.label}</option>)}
-          </select>
+          </ModelSelect>
         </label>
       </div>
 
       {view === 'projections' && <>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h2 className="text-lg font-semibold text-zinc-100">{data.season} projections · {selectedModel?.label}</h2></div>
-          <label className="flex items-center gap-2 text-sm text-zinc-500">Week <select value={week ?? data.week ?? ''} onChange={event => setWeek(event.target.value ? Number(event.target.value) : null)} className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-100">{data.weeks.map(w => <option key={w} value={w}>{w}</option>)}</select></label>
+          <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={week ?? data.week ?? ''} onChange={event => setWeek(event.target.value ? Number(event.target.value) : null)}>{data.weeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
         </div>
         {!games.length ? <p className="text-sm text-zinc-400">No projections have been locked for this week.</p> : games.map(([day, entries]) => (
           <section key={day} className="space-y-1"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{entries.map(game => <GameProjection key={game.game_id} game={game} lock={game.locks[version]} />)}</div></section>

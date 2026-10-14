@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import ModelSelect from './ModelSelect'
 
 type View = 'projections' | 'record' | 'ratings'
 type ModelName = 'B3_elo' | 'B5_xg_poisson' | 'B7_elo_xg_poisson'
@@ -189,7 +190,7 @@ export default function NhlModelTab() {
         <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NHL model views">
           {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}
         </nav>
-        <label className="flex items-center gap-2 text-sm text-zinc-500">Model <select value={model} onChange={event => setModel(event.target.value as ModelName)} className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-100">{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</select></label>
+        <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
       </div>
 
       {view === 'projections' && <>
