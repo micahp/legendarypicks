@@ -83,6 +83,13 @@ matches the realised 2022 Hard rate of 0.6369. The shift is in the combined pred
   matches in the test window.
 - The per-point gain is small. Its value depends on how it compounds in the simulator, which step 2 builds.
 
+## Per-level baseline: tested, not adopted
+
+The surface baseline and the shrinkage were also keyed by tournament level (G, M, A, F). Validation log loss
+rose from 0.65565 to 0.65584. On test, the uncalibrated log loss rose from 0.65312 to 0.65341, and the calibration gap
+widened from +0.0030 to +0.0037. The cumulative surface baseline stays. This test didn't shrink the level baseline toward
+the surface baseline, so a hierarchical version could behave differently. That's left open.
+
 ## Not in v1
 
 - Recent form and rest, the brief's small adjustments.
@@ -100,7 +107,7 @@ Results are in the session scratchpad as `point-model-atp-cal2.json`.
 
 ## Next
 
-1. A per-level baseline, to test whether it closes the remaining 0.001.
+1. (Per-level baseline tested and not adopted; see above.)
 2. Recent form and rest as small adjustments.
 3. Step 2: the game, set and match simulator, built on the point probability.
 4. Step 3: a chronological backtest against Elo.

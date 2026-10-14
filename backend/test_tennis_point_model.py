@@ -90,3 +90,20 @@ def test_wta_filter_keeps_main_tour_levels_and_only_historical_w():
     rows = tpm.load_matches(con, "wta", 0, 99999999)
     assert len(rows) == 7
     assert sum(1 for r in rows if r[0] == 20150101) == 3  # P, PM and I, not the 2015 W
+
+
+def test_by_level_keys_the_surface_field_by_tournament_level():
+    import sqlite3
+
+    con = sqlite3.connect(":memory:")
+    con.execute(
+        "CREATE TABLE tennis_atp_matches (tourney_date INTEGER, tourney_level TEXT, surface TEXT, "
+        "winner_id INTEGER, loser_id INTEGER, w_svpt INTEGER, w_1stWon INTEGER, w_2ndWon INTEGER, "
+        "l_svpt INTEGER, l_1stWon INTEGER, l_2ndWon INTEGER)"
+    )
+    con.execute("INSERT INTO tennis_atp_matches VALUES (20240101, 'G', 'Clay', 1, 2, 100, 60, 15, 100, 55, 15)")
+    con.execute("INSERT INTO tennis_atp_matches VALUES (20240101, 'A', 'Clay', 1, 2, 100, 60, 15, 100, 55, 15)")
+    plain = tpm.load_matches(con, "atp", 0, 99999999)
+    keyed = tpm.load_matches(con, "atp", 0, 99999999, by_level=True)
+    assert {r[1] for r in plain} == {"Clay"}
+    assert {r[1] for r in keyed} == {"Clay|G", "Clay|A"}

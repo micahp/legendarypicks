@@ -51,6 +51,12 @@ By surface, baseline against combined (log loss per point):
   logit shift of +0.0014. On the test years the uncalibrated model is 0.0008 over, so the shift widens the gap to
   0.0011. Log loss doesn't change. Keep the uncalibrated model for WTA until a longer validation window supports a shift.
 
+## Per-level baseline: tested, not adopted
+
+Keying the baseline and shrinkage by tournament level made WTA worse. Validation log loss rose from 0.68328 to 0.68363.
+On test, the combined log loss rose from 0.68319 to 0.68363. The calibration gap was about the same, +0.0005 against +0.0008.
+The cumulative surface baseline stays, as for ATP.
+
 ## Limits
 
 - The 11 held-out `W` events from 2010 onward are out until someone reviews them.
@@ -70,6 +76,6 @@ Results are in the session scratchpad as `point-model-wta.json`.
 ## Next
 
 1. Review the 11 held-out `W` events from 2010 onward.
-2. Test the ATP per-level baseline, and carry it to WTA if it helps.
+2. (Per-level baseline tested on both tours and not adopted; see above.)
 3. Recent form and rest as small adjustments, for both tours.
 4. Step 2, the simulator, built on these point probabilities.
