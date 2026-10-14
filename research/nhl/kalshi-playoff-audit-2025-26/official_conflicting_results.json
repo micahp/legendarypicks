@@ -1,0 +1,2571 @@
+[
+  {
+    "source_url": "https://api-web.nhle.com/v1/gamecenter/2018020808/landing",
+    "http_status": 200,
+    "retrieved_at_utc": "2026-10-14T06:10:13.556194+00:00",
+    "game_id": 2018020808,
+    "payload": {
+      "id": 2018020808,
+      "season": 20182019,
+      "gameType": 2,
+      "limitedScoring": false,
+      "gameDate": "2019-02-04",
+      "venue": {
+        "default": "American Airlines Center"
+      },
+      "venueLocation": {
+        "default": "Dallas"
+      },
+      "startTimeUTC": "2019-02-05T01:30:00Z",
+      "easternUTCOffset": "-05:00",
+      "venueUTCOffset": "-06:00",
+      "venueTimezone": "US/Central",
+      "periodDescriptor": {
+        "number": 3,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "tvBroadcasts": [
+        {
+          "id": 204,
+          "market": "A",
+          "countryCode": "US",
+          "network": "FS-A PLUS",
+          "sequenceNumber": 293
+        },
+        {
+          "id": 20,
+          "market": "H",
+          "countryCode": "US",
+          "network": "FS-SW",
+          "sequenceNumber": 318
+        }
+      ],
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "awayTeam": {
+        "id": 53,
+        "commonName": {
+          "default": "Coyotes"
+        },
+        "abbrev": "ARI",
+        "placeName": {
+          "default": "Arizona"
+        },
+        "placeNameWithPreposition": {
+          "default": "Arizona",
+          "fr": "de l'Arizona"
+        },
+        "score": 4,
+        "sog": 42,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/ARI_20142015-20202021_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/ARI_20142015-20202021_dark.svg"
+      },
+      "homeTeam": {
+        "id": 25,
+        "commonName": {
+          "default": "Stars"
+        },
+        "abbrev": "DAL",
+        "placeName": {
+          "default": "Dallas"
+        },
+        "placeNameWithPreposition": {
+          "default": "Dallas",
+          "fr": "de Dallas"
+        },
+        "score": 5,
+        "sog": 29,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/DAL_20122013-20202021_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/DAL_20122013-20202021_dark.svg"
+      },
+      "shootoutInUse": true,
+      "maxPeriods": 5,
+      "regPeriods": 3,
+      "otInUse": true,
+      "tiesInUse": false,
+      "summary": {
+        "scoring": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1441",
+                "eventId": 79,
+                "strength": "ev",
+                "playerId": 8475171,
+                "firstName": {
+                  "default": "Oliver"
+                },
+                "lastName": {
+                  "default": "Ekman-Larsson"
+                },
+                "name": {
+                  "default": "O. Ekman-Larsson"
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/ARI/8475171.png",
+                "discreteClip": 6336073468112,
+                "goalsToDate": 7,
+                "awayScore": 1,
+                "homeScore": 0,
+                "leadingTeamAbbrev": {
+                  "default": "ARI"
+                },
+                "timeInPeriod": "08:39",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8476393,
+                    "firstName": {
+                      "default": "Nick"
+                    },
+                    "lastName": {
+                      "default": "Cousins"
+                    },
+                    "name": {
+                      "default": "N. Cousins"
+                    },
+                    "assistsToDate": 12,
+                    "sweaterNumber": 25
+                  },
+                  {
+                    "playerId": 8479343,
+                    "firstName": {
+                      "default": "Clayton"
+                    },
+                    "lastName": {
+                      "default": "Keller"
+                    },
+                    "name": {
+                      "default": "C. Keller"
+                    },
+                    "assistsToDate": 25,
+                    "sweaterNumber": 9
+                  }
+                ],
+                "isHome": false
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1451",
+                "eventId": 377,
+                "strength": "pp",
+                "playerId": 8478449,
+                "firstName": {
+                  "default": "Roope"
+                },
+                "lastName": {
+                  "default": "Hintz"
+                },
+                "name": {
+                  "default": "R. Hintz"
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8478449.png",
+                "discreteClip": 6336075018112,
+                "goalsToDate": 3,
+                "awayScore": 1,
+                "homeScore": 1,
+                "timeInPeriod": "03:36",
+                "shotType": "tip-in",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8469455,
+                    "firstName": {
+                      "default": "Jason"
+                    },
+                    "lastName": {
+                      "default": "Spezza"
+                    },
+                    "name": {
+                      "default": "J. Spezza"
+                    },
+                    "assistsToDate": 16,
+                    "sweaterNumber": 90
+                  },
+                  {
+                    "playerId": 8480036,
+                    "firstName": {
+                      "default": "Miro"
+                    },
+                    "lastName": {
+                      "default": "Heiskanen"
+                    },
+                    "name": {
+                      "default": "M. Heiskanen"
+                    },
+                    "assistsToDate": 13,
+                    "sweaterNumber": 4
+                  }
+                ],
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 392,
+                "strength": "ev",
+                "playerId": 8475246,
+                "firstName": {
+                  "default": "Kevin"
+                },
+                "lastName": {
+                  "default": "Connauton"
+                },
+                "name": {
+                  "default": "K. Connauton"
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/ARI/8475246.png",
+                "discreteClip": 6336074921112,
+                "goalsToDate": 1,
+                "awayScore": 2,
+                "homeScore": 1,
+                "leadingTeamAbbrev": {
+                  "default": "ARI"
+                },
+                "timeInPeriod": "09:54",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8480950,
+                    "firstName": {
+                      "default": "Ilya",
+                      "cs": "Ilja",
+                      "fi": "Ilja",
+                      "sk": "Iľja"
+                    },
+                    "lastName": {
+                      "default": "Lyubushkin",
+                      "cs": "Ljubuškin",
+                      "fi": "Ljubushkin",
+                      "sk": "Ljubuškin"
+                    },
+                    "name": {
+                      "default": "I. Lyubushkin",
+                      "cs": "I. Ljubuškin",
+                      "fi": "I. Ljubushkin",
+                      "sk": "I. Ljubuškin"
+                    },
+                    "assistsToDate": 4,
+                    "sweaterNumber": 46
+                  },
+                  {
+                    "playerId": 8476326,
+                    "firstName": {
+                      "default": "Josh"
+                    },
+                    "lastName": {
+                      "default": "Archibald"
+                    },
+                    "name": {
+                      "default": "J. Archibald"
+                    },
+                    "assistsToDate": 6,
+                    "sweaterNumber": 45
+                  }
+                ],
+                "isHome": false
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1341",
+                "eventId": 440,
+                "strength": "pp",
+                "playerId": 8475906,
+                "firstName": {
+                  "default": "John"
+                },
+                "lastName": {
+                  "default": "Klingberg"
+                },
+                "name": {
+                  "default": "J. Klingberg"
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8475906.png",
+                "discreteClip": 6336073265112,
+                "goalsToDate": 7,
+                "awayScore": 2,
+                "homeScore": 2,
+                "timeInPeriod": "02:28",
+                "shotType": "tip-in",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8475794,
+                    "firstName": {
+                      "default": "Tyler"
+                    },
+                    "lastName": {
+                      "default": "Seguin"
+                    },
+                    "name": {
+                      "default": "T. Seguin"
+                    },
+                    "assistsToDate": 28,
+                    "sweaterNumber": 91
+                  },
+                  {
+                    "playerId": 8473994,
+                    "firstName": {
+                      "default": "Jamie"
+                    },
+                    "lastName": {
+                      "default": "Benn"
+                    },
+                    "name": {
+                      "default": "J. Benn"
+                    },
+                    "assistsToDate": 17,
+                    "sweaterNumber": 14
+                  }
+                ],
+                "isHome": true
+              },
+              {
+                "situationCode": "1451",
+                "eventId": 442,
+                "strength": "pp",
+                "playerId": 8476889,
+                "firstName": {
+                  "default": "Radek"
+                },
+                "lastName": {
+                  "default": "Faksa"
+                },
+                "name": {
+                  "default": "R. Faksa"
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8476889.png",
+                "discreteClip": 6336074919112,
+                "goalsToDate": 9,
+                "awayScore": 2,
+                "homeScore": 3,
+                "leadingTeamAbbrev": {
+                  "default": "DAL"
+                },
+                "timeInPeriod": "03:04",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8480036,
+                    "firstName": {
+                      "default": "Miro"
+                    },
+                    "lastName": {
+                      "default": "Heiskanen"
+                    },
+                    "name": {
+                      "default": "M. Heiskanen"
+                    },
+                    "assistsToDate": 14,
+                    "sweaterNumber": 4
+                  },
+                  {
+                    "playerId": 8478495,
+                    "firstName": {
+                      "default": "Denis"
+                    },
+                    "lastName": {
+                      "default": "Gurianov",
+                      "cs": "Gurjanov",
+                      "fi": "Gurjanov",
+                      "sk": "Gurjanov"
+                    },
+                    "name": {
+                      "default": "D. Gurianov",
+                      "cs": "D. Gurjanov",
+                      "fi": "D. Gurjanov",
+                      "sk": "D. Gurjanov"
+                    },
+                    "assistsToDate": 3,
+                    "sweaterNumber": 34
+                  }
+                ],
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 443,
+                "strength": "ev",
+                "playerId": 8477406,
+                "firstName": {
+                  "default": "Mattias"
+                },
+                "lastName": {
+                  "default": "Janmark"
+                },
+                "name": {
+                  "default": "M. Janmark"
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8477406.png",
+                "discreteClip": 6336073354112,
+                "goalsToDate": 5,
+                "awayScore": 2,
+                "homeScore": 4,
+                "leadingTeamAbbrev": {
+                  "default": "DAL"
+                },
+                "timeInPeriod": "03:39",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8477450,
+                    "firstName": {
+                      "default": "Jason"
+                    },
+                    "lastName": {
+                      "default": "Dickinson"
+                    },
+                    "name": {
+                      "default": "J. Dickinson"
+                    },
+                    "assistsToDate": 7,
+                    "sweaterNumber": 16
+                  },
+                  {
+                    "playerId": 8471260,
+                    "firstName": {
+                      "default": "Blake"
+                    },
+                    "lastName": {
+                      "default": "Comeau"
+                    },
+                    "name": {
+                      "default": "B. Comeau"
+                    },
+                    "assistsToDate": 4,
+                    "sweaterNumber": 15
+                  }
+                ],
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 758,
+                "strength": "ev",
+                "playerId": 8476994,
+                "firstName": {
+                  "default": "Vinnie"
+                },
+                "lastName": {
+                  "default": "Hinostroza"
+                },
+                "name": {
+                  "default": "V. Hinostroza"
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/ARI/8476994.png",
+                "discreteClip": 6336074716112,
+                "goalsToDate": 8,
+                "awayScore": 3,
+                "homeScore": 4,
+                "leadingTeamAbbrev": {
+                  "default": "DAL"
+                },
+                "timeInPeriod": "06:49",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8478474,
+                    "firstName": {
+                      "default": "Lawson"
+                    },
+                    "lastName": {
+                      "default": "Crouse"
+                    },
+                    "name": {
+                      "default": "L. Crouse"
+                    },
+                    "assistsToDate": 8,
+                    "sweaterNumber": 67
+                  },
+                  {
+                    "playerId": 8477851,
+                    "firstName": {
+                      "default": "Jordan"
+                    },
+                    "lastName": {
+                      "default": "Oesterle"
+                    },
+                    "name": {
+                      "default": "J. Oesterle"
+                    },
+                    "assistsToDate": 10,
+                    "sweaterNumber": 82
+                  }
+                ],
+                "isHome": false
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 759,
+                "strength": "ev",
+                "playerId": 8476851,
+                "firstName": {
+                  "default": "Alex"
+                },
+                "lastName": {
+                  "default": "Galchenyuk"
+                },
+                "name": {
+                  "default": "A. Galchenyuk"
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/ARI/8476851.png",
+                "discreteClip": 6336074318112,
+                "goalsToDate": 9,
+                "awayScore": 4,
+                "homeScore": 4,
+                "timeInPeriod": "07:50",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8476393,
+                    "firstName": {
+                      "default": "Nick"
+                    },
+                    "lastName": {
+                      "default": "Cousins"
+                    },
+                    "name": {
+                      "default": "N. Cousins"
+                    },
+                    "assistsToDate": 13,
+                    "sweaterNumber": 25
+                  },
+                  {
+                    "playerId": 8479343,
+                    "firstName": {
+                      "default": "Clayton"
+                    },
+                    "lastName": {
+                      "default": "Keller"
+                    },
+                    "name": {
+                      "default": "C. Keller"
+                    },
+                    "assistsToDate": 26,
+                    "sweaterNumber": 9
+                  }
+                ],
+                "isHome": false
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 774,
+                "strength": "ev",
+                "playerId": 8475794,
+                "firstName": {
+                  "default": "Tyler"
+                },
+                "lastName": {
+                  "default": "Seguin"
+                },
+                "name": {
+                  "default": "T. Seguin"
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8475794.png",
+                "discreteClip": 6336072872112,
+                "goalsToDate": 22,
+                "awayScore": 4,
+                "homeScore": 5,
+                "leadingTeamAbbrev": {
+                  "default": "DAL"
+                },
+                "timeInPeriod": "12:28",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8473994,
+                    "firstName": {
+                      "default": "Jamie"
+                    },
+                    "lastName": {
+                      "default": "Benn"
+                    },
+                    "name": {
+                      "default": "J. Benn"
+                    },
+                    "assistsToDate": 18,
+                    "sweaterNumber": 14
+                  },
+                  {
+                    "playerId": 8471228,
+                    "firstName": {
+                      "default": "Alexander",
+                      "cs": "Alexandr",
+                      "fi": "Aleksandr"
+                    },
+                    "lastName": {
+                      "default": "Radulov"
+                    },
+                    "name": {
+                      "default": "A. Radulov"
+                    },
+                    "assistsToDate": 29,
+                    "sweaterNumber": 47
+                  }
+                ],
+                "isHome": true
+              }
+            ]
+          }
+        ],
+        "threeStars": [
+          {
+            "star": 1,
+            "playerId": 8473994,
+            "teamAbbrev": "DAL",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8473994.png",
+            "name": {
+              "default": "J. Benn"
+            },
+            "sweaterNo": 14,
+            "position": "L",
+            "goals": 0,
+            "assists": 2,
+            "points": 2
+          },
+          {
+            "star": 2,
+            "playerId": 8475794,
+            "teamAbbrev": "DAL",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20182019/DAL/8475794.png",
+            "name": {
+              "default": "T. Seguin"
+            },
+            "sweaterNo": 91,
+            "position": "C",
+            "goals": 1,
+            "assists": 1,
+            "points": 2
+          },
+          {
+            "star": 3,
+            "playerId": 8476851,
+            "teamAbbrev": "ARI",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20182019/ARI/8476851.png",
+            "name": {
+              "default": "A. Galchenyuk"
+            },
+            "sweaterNo": 17,
+            "position": "C",
+            "goals": 1,
+            "assists": 0,
+            "points": 1
+          }
+        ],
+        "penalties": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "02:12",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Galchenyuk"
+                  },
+                  "sweaterNumber": 17
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Esa"
+                  },
+                  "lastName": {
+                    "default": "Lindell"
+                  },
+                  "sweaterNumber": 23
+                },
+                "descKey": "high-sticking"
+              },
+              {
+                "timeInPeriod": "07:35",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Richard"
+                  },
+                  "lastName": {
+                    "default": "Panik",
+                    "cs": "Pánik",
+                    "sk": "Pánik"
+                  },
+                  "sweaterNumber": 14
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Jamie"
+                  },
+                  "lastName": {
+                    "default": "Benn"
+                  },
+                  "sweaterNumber": 14
+                },
+                "descKey": "slashing"
+              },
+              {
+                "timeInPeriod": "07:35",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Jamie"
+                  },
+                  "lastName": {
+                    "default": "Benn"
+                  },
+                  "sweaterNumber": 14
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Richard"
+                  },
+                  "lastName": {
+                    "default": "Panik",
+                    "cs": "Pánik",
+                    "sk": "Pánik"
+                  },
+                  "sweaterNumber": 14
+                },
+                "descKey": "slashing"
+              },
+              {
+                "timeInPeriod": "10:07",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Jamie"
+                  },
+                  "lastName": {
+                    "default": "Benn"
+                  },
+                  "sweaterNumber": 14
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Mario"
+                  },
+                  "lastName": {
+                    "default": "Kempe"
+                  },
+                  "sweaterNumber": 29
+                },
+                "descKey": "high-sticking"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "02:02",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Mario"
+                  },
+                  "lastName": {
+                    "default": "Kempe"
+                  },
+                  "sweaterNumber": 29
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "descKey": "delaying-game"
+              },
+              {
+                "timeInPeriod": "17:40",
+                "type": "MAJ",
+                "duration": 5,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Brett"
+                  },
+                  "lastName": {
+                    "default": "Ritchie"
+                  },
+                  "sweaterNumber": 25
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Goligoski"
+                  },
+                  "sweaterNumber": 33
+                },
+                "descKey": "boarding",
+                "servedBy": {
+                  "default": "J. Spezza"
+                }
+              },
+              {
+                "timeInPeriod": "17:40",
+                "type": "GAM",
+                "duration": 10,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Brett"
+                  },
+                  "lastName": {
+                    "default": "Ritchie"
+                  },
+                  "sweaterNumber": 25
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Goligoski"
+                  },
+                  "sweaterNumber": 33
+                },
+                "descKey": "game-misconduct"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "00:52",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Oliver"
+                  },
+                  "lastName": {
+                    "default": "Ekman-Larsson"
+                  },
+                  "sweaterNumber": 23
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Mattias"
+                  },
+                  "lastName": {
+                    "default": "Janmark"
+                  },
+                  "sweaterNumber": 13
+                },
+                "descKey": "hooking"
+              },
+              {
+                "timeInPeriod": "01:52",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Niklas"
+                  },
+                  "lastName": {
+                    "default": "Hjalmarsson"
+                  },
+                  "sweaterNumber": 4
+                },
+                "teamAbbrev": {
+                  "default": "ARI"
+                },
+                "descKey": "delaying-game"
+              },
+              {
+                "timeInPeriod": "04:29",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Taylor"
+                  },
+                  "lastName": {
+                    "default": "Fedun"
+                  },
+                  "sweaterNumber": 42
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Mario"
+                  },
+                  "lastName": {
+                    "default": "Kempe"
+                  },
+                  "sweaterNumber": 29
+                },
+                "descKey": "hooking"
+              },
+              {
+                "timeInPeriod": "17:34",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Blake"
+                  },
+                  "lastName": {
+                    "default": "Comeau"
+                  },
+                  "sweaterNumber": 15
+                },
+                "teamAbbrev": {
+                  "default": "DAL"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Nick"
+                  },
+                  "lastName": {
+                    "default": "Cousins"
+                  },
+                  "sweaterNumber": 25
+                },
+                "descKey": "tripping"
+              }
+            ]
+          }
+        ]
+      },
+      "clock": {
+        "timeRemaining": "00:00",
+        "secondsRemaining": 0,
+        "running": false,
+        "inIntermission": false
+      }
+    }
+  },
+  {
+    "source_url": "https://api-web.nhle.com/v1/gamecenter/2024020002/landing",
+    "http_status": 200,
+    "retrieved_at_utc": "2026-10-14T06:10:14.181330+00:00",
+    "game_id": 2024020002,
+    "payload": {
+      "id": 2024020002,
+      "season": 20242025,
+      "gameType": 2,
+      "limitedScoring": false,
+      "gameDate": "2024-10-05",
+      "venue": {
+        "default": "O2 Czech Republic"
+      },
+      "venueLocation": {
+        "default": "Prague",
+        "cs": "Praha",
+        "de": "Prag",
+        "fi": "Praha",
+        "sk": "Praha",
+        "sv": "Prag"
+      },
+      "startTimeUTC": "2024-10-05T14:00:00Z",
+      "easternUTCOffset": "-04:00",
+      "venueUTCOffset": "+02:00",
+      "venueTimezone": "Europe/Prague",
+      "periodDescriptor": {
+        "number": 3,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "tvBroadcasts": [
+        {
+          "id": 324,
+          "market": "N",
+          "countryCode": "US",
+          "network": "NHLN",
+          "sequenceNumber": 35
+        },
+        {
+          "id": 282,
+          "market": "N",
+          "countryCode": "CA",
+          "network": "SN",
+          "sequenceNumber": 107
+        },
+        {
+          "id": 28,
+          "market": "A",
+          "countryCode": "US",
+          "network": "MSG-B",
+          "sequenceNumber": 392
+        },
+        {
+          "id": 409,
+          "market": "H",
+          "countryCode": "US",
+          "network": "MSGSN",
+          "sequenceNumber": 411
+        }
+      ],
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "specialEvent": {
+        "parentId": 36,
+        "name": {
+          "default": "2024 Global Series"
+        },
+        "lightLogoUrl": {
+          "default": "https://assets.nhle.com/special_event_season/20242025/svg/gs-cz-2024-extwm-en_light.svg"
+        }
+      },
+      "awayTeam": {
+        "id": 7,
+        "commonName": {
+          "default": "Sabres"
+        },
+        "abbrev": "BUF",
+        "placeName": {
+          "default": "Buffalo"
+        },
+        "placeNameWithPreposition": {
+          "default": "Buffalo",
+          "fr": "de Buffalo"
+        },
+        "score": 1,
+        "sog": 18,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/BUF_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/BUF_dark.svg"
+      },
+      "homeTeam": {
+        "id": 1,
+        "commonName": {
+          "default": "Devils"
+        },
+        "abbrev": "NJD",
+        "placeName": {
+          "default": "New Jersey"
+        },
+        "placeNameWithPreposition": {
+          "default": "New Jersey",
+          "fr": "du New Jersey"
+        },
+        "score": 3,
+        "sog": 37,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/NJD_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/NJD_dark.svg"
+      },
+      "shootoutInUse": true,
+      "maxPeriods": 5,
+      "regPeriods": 3,
+      "otInUse": true,
+      "tiesInUse": false,
+      "summary": {
+        "scoring": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": []
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1551",
+                "eventId": 258,
+                "strength": "ev",
+                "playerId": 8479420,
+                "firstName": {
+                  "default": "Tage"
+                },
+                "lastName": {
+                  "default": "Thompson"
+                },
+                "name": {
+                  "default": "T. Thompson"
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20242025/BUF/8479420.png",
+                "discreteClip": 6362881225112,
+                "goalsToDate": 1,
+                "awayScore": 1,
+                "homeScore": 0,
+                "leadingTeamAbbrev": {
+                  "default": "BUF"
+                },
+                "timeInPeriod": "08:18",
+                "shotType": "poke",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8478413,
+                    "firstName": {
+                      "default": "Jordan"
+                    },
+                    "lastName": {
+                      "default": "Greenway"
+                    },
+                    "name": {
+                      "default": "J. Greenway"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 12
+                  },
+                  {
+                    "playerId": 8477949,
+                    "firstName": {
+                      "default": "Alex"
+                    },
+                    "lastName": {
+                      "default": "Tuch"
+                    },
+                    "name": {
+                      "default": "A. Tuch"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 89
+                  }
+                ],
+                "pptReplayUrl": "https://wsr.nhle.com/sprites/20242025/2024020002/ev258.json",
+                "homeTeamDefendingSide": "right",
+                "isHome": false
+              },
+              {
+                "situationCode": "1451",
+                "eventId": 1612933,
+                "strength": "pp",
+                "playerId": 8483429,
+                "firstName": {
+                  "default": "Seamus"
+                },
+                "lastName": {
+                  "default": "Casey"
+                },
+                "name": {
+                  "default": "S. Casey"
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20242025/NJD/8483429.png",
+                "highlightClipSharingUrl": "https://nhl.com/video/buf-njd-casey-scores-shg-against-devon-levi-6362880639112",
+                "highlightClip": 6362880639112,
+                "discreteClip": 6362880438112,
+                "goalsToDate": 1,
+                "awayScore": 1,
+                "homeScore": 1,
+                "timeInPeriod": "11:59",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8475287,
+                    "firstName": {
+                      "default": "Erik"
+                    },
+                    "lastName": {
+                      "default": "Haula"
+                    },
+                    "name": {
+                      "default": "E. Haula"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 56
+                  },
+                  {
+                    "playerId": 8476474,
+                    "firstName": {
+                      "default": "Stefan"
+                    },
+                    "lastName": {
+                      "default": "Noesen"
+                    },
+                    "name": {
+                      "default": "S. Noesen"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 11
+                  }
+                ],
+                "pptReplayUrl": "https://wsr.nhle.com/sprites/20242025/2024020002/ev1612933.json",
+                "homeTeamDefendingSide": "right",
+                "isHome": true
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1551",
+                "eventId": 1613124,
+                "strength": "ev",
+                "playerId": 8481032,
+                "firstName": {
+                  "default": "Paul"
+                },
+                "lastName": {
+                  "default": "Cotter"
+                },
+                "name": {
+                  "default": "P. Cotter"
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20242025/NJD/8481032.png",
+                "highlightClipSharingUrl": "https://nhl.com/video/buf-njd-cotter-scores-shg-against-devon-levi-6362880887112",
+                "highlightClip": 6362880887112,
+                "discreteClip": 6362881381112,
+                "goalsToDate": 2,
+                "awayScore": 1,
+                "homeScore": 2,
+                "leadingTeamAbbrev": {
+                  "default": "NJD"
+                },
+                "timeInPeriod": "07:18",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8481559,
+                    "firstName": {
+                      "default": "Jack"
+                    },
+                    "lastName": {
+                      "default": "Hughes"
+                    },
+                    "name": {
+                      "default": "J. Hughes"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 86
+                  }
+                ],
+                "pptReplayUrl": "https://wsr.nhle.com/sprites/20242025/2024020002/ev1613124.json",
+                "homeTeamDefendingSide": "left",
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 1613220,
+                "strength": "ev",
+                "playerId": 8478414,
+                "firstName": {
+                  "default": "Timo"
+                },
+                "lastName": {
+                  "default": "Meier"
+                },
+                "name": {
+                  "default": "T. Meier"
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20242025/NJD/8478414.png",
+                "highlightClipSharingUrl": "https://nhl.com/video/buf-njd-meier-scores-ppg-against-devon-levi-6362881779112",
+                "highlightClip": 6362881779112,
+                "discreteClip": 6362883049112,
+                "goalsToDate": 1,
+                "awayScore": 1,
+                "homeScore": 3,
+                "leadingTeamAbbrev": {
+                  "default": "NJD"
+                },
+                "timeInPeriod": "14:14",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8479407,
+                    "firstName": {
+                      "default": "Jesper"
+                    },
+                    "lastName": {
+                      "default": "Bratt"
+                    },
+                    "name": {
+                      "default": "J. Bratt"
+                    },
+                    "assistsToDate": 1,
+                    "sweaterNumber": 63
+                  },
+                  {
+                    "playerId": 8481559,
+                    "firstName": {
+                      "default": "Jack"
+                    },
+                    "lastName": {
+                      "default": "Hughes"
+                    },
+                    "name": {
+                      "default": "J. Hughes"
+                    },
+                    "assistsToDate": 2,
+                    "sweaterNumber": 86
+                  }
+                ],
+                "pptReplayUrl": "https://wsr.nhle.com/sprites/20242025/2024020002/ev1613220.json",
+                "homeTeamDefendingSide": "left",
+                "isHome": true
+              }
+            ]
+          }
+        ],
+        "threeStars": [
+          {
+            "star": 1,
+            "playerId": 8483429,
+            "teamAbbrev": "NJD",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20242025/NJD/8483429.png",
+            "name": {
+              "default": "S. Casey"
+            },
+            "sweaterNo": 24,
+            "position": "D",
+            "goals": 1,
+            "assists": 0,
+            "points": 1
+          },
+          {
+            "star": 2,
+            "playerId": 8481559,
+            "teamAbbrev": "NJD",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20242025/NJD/8481559.png",
+            "name": {
+              "default": "J. Hughes"
+            },
+            "sweaterNo": 86,
+            "position": "C",
+            "goals": 0,
+            "assists": 2,
+            "points": 2
+          },
+          {
+            "star": 3,
+            "playerId": 8482221,
+            "teamAbbrev": "BUF",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20242025/BUF/8482221.png",
+            "name": {
+              "default": "D. Levi"
+            },
+            "sweaterNo": 27,
+            "position": "G",
+            "goalsAgainstAverage": 3.17,
+            "savePctg": 0.919
+          }
+        ],
+        "penalties": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "06:02",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Brenden"
+                  },
+                  "lastName": {
+                    "default": "Dillon"
+                  },
+                  "sweaterNumber": 5
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "JJ"
+                  },
+                  "lastName": {
+                    "default": "Peterka"
+                  },
+                  "sweaterNumber": 77
+                },
+                "descKey": "interference",
+                "servedBy": {
+                  "default": "T. Meier"
+                }
+              },
+              {
+                "timeInPeriod": "06:02",
+                "type": "MAJ",
+                "duration": 5,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Brenden"
+                  },
+                  "lastName": {
+                    "default": "Dillon"
+                  },
+                  "sweaterNumber": 5
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Tuch"
+                  },
+                  "sweaterNumber": 89
+                },
+                "descKey": "fighting"
+              },
+              {
+                "timeInPeriod": "06:02",
+                "type": "MAJ",
+                "duration": 5,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Tuch"
+                  },
+                  "sweaterNumber": 89
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Brenden"
+                  },
+                  "lastName": {
+                    "default": "Dillon"
+                  },
+                  "sweaterNumber": 5
+                },
+                "descKey": "fighting"
+              },
+              {
+                "timeInPeriod": "10:25",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Jiri",
+                    "cs": "Jiří",
+                    "sk": "Jiří"
+                  },
+                  "lastName": {
+                    "default": "Kulich"
+                  },
+                  "sweaterNumber": 20
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Timo"
+                  },
+                  "lastName": {
+                    "default": "Meier"
+                  },
+                  "sweaterNumber": 28
+                },
+                "descKey": "hooking"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "00:41",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Alex"
+                  },
+                  "lastName": {
+                    "default": "Tuch"
+                  },
+                  "sweaterNumber": 89
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Nico"
+                  },
+                  "lastName": {
+                    "default": "Hischier"
+                  },
+                  "sweaterNumber": 13
+                },
+                "descKey": "tripping"
+              },
+              {
+                "timeInPeriod": "10:39",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Tage"
+                  },
+                  "lastName": {
+                    "default": "Thompson"
+                  },
+                  "sweaterNumber": 72
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Jake"
+                  },
+                  "lastName": {
+                    "default": "Allen"
+                  },
+                  "sweaterNumber": 34
+                },
+                "descKey": "interference-goalkeeper"
+              },
+              {
+                "timeInPeriod": "13:38",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Brenden"
+                  },
+                  "lastName": {
+                    "default": "Dillon"
+                  },
+                  "sweaterNumber": 5
+                },
+                "teamAbbrev": {
+                  "default": "NJD"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Jack"
+                  },
+                  "lastName": {
+                    "default": "Quinn"
+                  },
+                  "sweaterNumber": 22
+                },
+                "descKey": "tripping"
+              },
+              {
+                "timeInPeriod": "16:07",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Sam"
+                  },
+                  "lastName": {
+                    "default": "Lafferty"
+                  },
+                  "sweaterNumber": 81
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Brenden"
+                  },
+                  "lastName": {
+                    "default": "Dillon"
+                  },
+                  "sweaterNumber": 5
+                },
+                "descKey": "tripping"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": []
+          }
+        ]
+      },
+      "clock": {
+        "timeRemaining": "00:00",
+        "secondsRemaining": 0,
+        "running": false,
+        "inIntermission": false
+      }
+    }
+  },
+  {
+    "source_url": "https://api-web.nhle.com/v1/gamecenter/2021021028/landing",
+    "http_status": 200,
+    "retrieved_at_utc": "2026-10-14T06:11:24.993013+00:00",
+    "game_id": 2021021028,
+    "payload": {
+      "id": 2021021028,
+      "season": 20212022,
+      "gameType": 2,
+      "limitedScoring": false,
+      "gameDate": "2022-03-25",
+      "venue": {
+        "default": "KeyBank Center"
+      },
+      "venueLocation": {
+        "default": "Buffalo"
+      },
+      "startTimeUTC": "2022-03-25T23:00:00Z",
+      "easternUTCOffset": "-04:00",
+      "venueUTCOffset": "-04:00",
+      "venueTimezone": "America/New_York",
+      "periodDescriptor": {
+        "number": 5,
+        "periodType": "SO",
+        "maxRegulationPeriods": 3
+      },
+      "tvBroadcasts": [
+        {
+          "id": 320,
+          "market": "A",
+          "countryCode": "US",
+          "network": "NBCSWA",
+          "sequenceNumber": 366
+        },
+        {
+          "id": 28,
+          "market": "H",
+          "countryCode": "US",
+          "network": "MSG-B",
+          "sequenceNumber": 392
+        }
+      ],
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "awayTeam": {
+        "id": 15,
+        "commonName": {
+          "default": "Capitals"
+        },
+        "abbrev": "WSH",
+        "placeName": {
+          "default": "Washington"
+        },
+        "placeNameWithPreposition": {
+          "default": "Washington",
+          "fr": "de Washington"
+        },
+        "score": 4,
+        "sog": 40,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/WSH_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/WSH_dark.svg"
+      },
+      "homeTeam": {
+        "id": 7,
+        "commonName": {
+          "default": "Sabres"
+        },
+        "abbrev": "BUF",
+        "placeName": {
+          "default": "Buffalo"
+        },
+        "placeNameWithPreposition": {
+          "default": "Buffalo",
+          "fr": "de Buffalo"
+        },
+        "score": 3,
+        "sog": 23,
+        "logo": "https://assets.nhle.com/logos/nhl/svg/BUF_light.svg",
+        "darkLogo": "https://assets.nhle.com/logos/nhl/svg/BUF_dark.svg"
+      },
+      "shootoutInUse": true,
+      "maxPeriods": 5,
+      "regPeriods": 3,
+      "otInUse": true,
+      "tiesInUse": false,
+      "summary": {
+        "scoring": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1551",
+                "eventId": 260,
+                "strength": "ev",
+                "playerId": 8477511,
+                "firstName": {
+                  "default": "Anthony"
+                },
+                "lastName": {
+                  "default": "Mantha"
+                },
+                "name": {
+                  "default": "A. Mantha"
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8477511.png",
+                "discreteClip": 6335845179112,
+                "goalsToDate": 7,
+                "awayScore": 1,
+                "homeScore": 0,
+                "leadingTeamAbbrev": {
+                  "default": "WSH"
+                },
+                "timeInPeriod": "09:15",
+                "shotType": "backhand",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8473563,
+                    "firstName": {
+                      "default": "Nicklas"
+                    },
+                    "lastName": {
+                      "default": "Backstrom",
+                      "cs": "Bäckström",
+                      "fi": "Bäckström",
+                      "sk": "Bäckström",
+                      "sv": "Bäckström"
+                    },
+                    "name": {
+                      "default": "N. Backstrom",
+                      "cs": "N. Bäckström",
+                      "fi": "N. Bäckström",
+                      "sk": "N. Bäckström",
+                      "sv": "N. Bäckström"
+                    },
+                    "assistsToDate": 19,
+                    "sweaterNumber": 19
+                  },
+                  {
+                    "playerId": 8476880,
+                    "firstName": {
+                      "default": "Tom"
+                    },
+                    "lastName": {
+                      "default": "Wilson"
+                    },
+                    "name": {
+                      "default": "T. Wilson"
+                    },
+                    "assistsToDate": 26,
+                    "sweaterNumber": 43
+                  }
+                ],
+                "homeTeamDefendingSide": "left",
+                "isHome": false
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 272,
+                "strength": "ev",
+                "playerId": 8475784,
+                "firstName": {
+                  "default": "Jeff"
+                },
+                "lastName": {
+                  "default": "Skinner"
+                },
+                "name": {
+                  "default": "J. Skinner"
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8475784.png",
+                "discreteClip": 6335844889112,
+                "goalsToDate": 25,
+                "awayScore": 1,
+                "homeScore": 1,
+                "timeInPeriod": "15:49",
+                "shotType": "backhand",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8479420,
+                    "firstName": {
+                      "default": "Tage"
+                    },
+                    "lastName": {
+                      "default": "Thompson"
+                    },
+                    "name": {
+                      "default": "T. Thompson"
+                    },
+                    "assistsToDate": 22,
+                    "sweaterNumber": 72
+                  }
+                ],
+                "homeTeamDefendingSide": "left",
+                "isHome": true
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "1551",
+                "eventId": 289,
+                "strength": "ev",
+                "playerId": 8475324,
+                "firstName": {
+                  "default": "Nick"
+                },
+                "lastName": {
+                  "default": "Jensen"
+                },
+                "name": {
+                  "default": "N. Jensen"
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8475324.png",
+                "discreteClip": 6335844404112,
+                "goalsToDate": 5,
+                "awayScore": 2,
+                "homeScore": 1,
+                "leadingTeamAbbrev": {
+                  "default": "WSH"
+                },
+                "timeInPeriod": "04:06",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8475200,
+                    "firstName": {
+                      "default": "Dmitry",
+                      "cs": "Dmitrij",
+                      "fi": "Dmitri",
+                      "sk": "Dmitrij"
+                    },
+                    "lastName": {
+                      "default": "Orlov"
+                    },
+                    "name": {
+                      "default": "D. Orlov"
+                    },
+                    "assistsToDate": 19,
+                    "sweaterNumber": 9
+                  },
+                  {
+                    "playerId": 8477839,
+                    "firstName": {
+                      "default": "Conor"
+                    },
+                    "lastName": {
+                      "default": "Sheary"
+                    },
+                    "name": {
+                      "default": "C. Sheary"
+                    },
+                    "assistsToDate": 17,
+                    "sweaterNumber": 73
+                  }
+                ],
+                "homeTeamDefendingSide": "right",
+                "isHome": false
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 300,
+                "strength": "ev",
+                "playerId": 8475784,
+                "firstName": {
+                  "default": "Jeff"
+                },
+                "lastName": {
+                  "default": "Skinner"
+                },
+                "name": {
+                  "default": "J. Skinner"
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8475784.png",
+                "discreteClip": 6335844006112,
+                "goalsToDate": 26,
+                "goalInGame": 2,
+                "awayScore": 2,
+                "homeScore": 2,
+                "timeInPeriod": "10:23",
+                "shotType": "wrist",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8480807,
+                    "firstName": {
+                      "default": "Mattias"
+                    },
+                    "lastName": {
+                      "default": "Samuelsson"
+                    },
+                    "name": {
+                      "default": "M. Samuelsson"
+                    },
+                    "assistsToDate": 5,
+                    "sweaterNumber": 23
+                  }
+                ],
+                "homeTeamDefendingSide": "right",
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 403,
+                "strength": "ev",
+                "playerId": 8478109,
+                "firstName": {
+                  "default": "Victor"
+                },
+                "lastName": {
+                  "default": "Olofsson"
+                },
+                "name": {
+                  "default": "V. Olofsson"
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8478109.png",
+                "discreteClip": 6335844005112,
+                "goalsToDate": 12,
+                "awayScore": 2,
+                "homeScore": 3,
+                "leadingTeamAbbrev": {
+                  "default": "BUF"
+                },
+                "timeInPeriod": "12:55",
+                "shotType": "snap",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8479999,
+                    "firstName": {
+                      "default": "Casey"
+                    },
+                    "lastName": {
+                      "default": "Mittelstadt"
+                    },
+                    "name": {
+                      "default": "C. Mittelstadt"
+                    },
+                    "assistsToDate": 6,
+                    "sweaterNumber": 37
+                  },
+                  {
+                    "playerId": 8479335,
+                    "firstName": {
+                      "default": "Rasmus"
+                    },
+                    "lastName": {
+                      "default": "Asplund"
+                    },
+                    "name": {
+                      "default": "R. Asplund"
+                    },
+                    "assistsToDate": 17,
+                    "sweaterNumber": 74
+                  }
+                ],
+                "homeTeamDefendingSide": "right",
+                "isHome": true
+              },
+              {
+                "situationCode": "1551",
+                "eventId": 414,
+                "strength": "ev",
+                "playerId": 8471214,
+                "firstName": {
+                  "default": "Alex",
+                  "cs": "Alexandr",
+                  "fi": "Aleksandr",
+                  "sk": "Alexander"
+                },
+                "lastName": {
+                  "default": "Ovechkin",
+                  "cs": "Ovečkin",
+                  "fi": "Ovetshkin",
+                  "sk": "Ovečkin"
+                },
+                "name": {
+                  "default": "A. Ovechkin",
+                  "cs": "A. Ovečkin",
+                  "fi": "A. Ovetshkin",
+                  "sk": "A. Ovečkin"
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8471214.png",
+                "discreteClip": 6335845368112,
+                "goalsToDate": 41,
+                "awayScore": 3,
+                "homeScore": 3,
+                "timeInPeriod": "16:47",
+                "shotType": "slap",
+                "goalModifier": "none",
+                "assists": [
+                  {
+                    "playerId": 8475744,
+                    "firstName": {
+                      "default": "Evgeny",
+                      "cs": "Jevgenij",
+                      "fi": "Jevgeni",
+                      "sk": "Jevgenij"
+                    },
+                    "lastName": {
+                      "default": "Kuznetsov",
+                      "cs": "Kuzněcov",
+                      "sk": "Kuznecov"
+                    },
+                    "name": {
+                      "default": "E. Kuznetsov",
+                      "cs": "J. Kuzněcov",
+                      "fi": "J. Kuznetsov",
+                      "sk": "J. Kuznecov"
+                    },
+                    "assistsToDate": 42,
+                    "sweaterNumber": 92
+                  }
+                ],
+                "homeTeamDefendingSide": "right",
+                "isHome": false
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "goals": []
+          },
+          {
+            "periodDescriptor": {
+              "number": 4,
+              "periodType": "OT",
+              "maxRegulationPeriods": 3
+            },
+            "goals": []
+          },
+          {
+            "periodDescriptor": {
+              "number": 5,
+              "periodType": "SO",
+              "maxRegulationPeriods": 3
+            },
+            "goals": [
+              {
+                "situationCode": "0101",
+                "eventId": 774,
+                "strength": "ev",
+                "playerId": 8471214,
+                "firstName": {
+                  "default": "Alex",
+                  "cs": "Alexandr",
+                  "fi": "Aleksandr",
+                  "sk": "Alexander"
+                },
+                "lastName": {
+                  "default": "Ovechkin",
+                  "cs": "Ovečkin",
+                  "fi": "Ovetshkin",
+                  "sk": "Ovečkin"
+                },
+                "name": {
+                  "default": "A. Ovechkin",
+                  "cs": "A. Ovečkin",
+                  "fi": "A. Ovetshkin",
+                  "sk": "A. Ovečkin"
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8471214.png",
+                "awayScore": 4,
+                "homeScore": 3,
+                "leadingTeamAbbrev": {
+                  "default": "WSH"
+                },
+                "timeInPeriod": "00:00",
+                "shotType": "backhand",
+                "goalModifier": "none",
+                "assists": [],
+                "homeTeamDefendingSide": "left",
+                "isHome": false
+              }
+            ]
+          }
+        ],
+        "shootout": {
+          "liveScore": {
+            "home": 1,
+            "away": 2
+          },
+          "events": [
+            {
+              "sequence": 1,
+              "playerId": 8479420,
+              "teamAbbrev": {
+                "default": "BUF"
+              },
+              "firstName": {
+                "default": "Tage"
+              },
+              "lastName": {
+                "default": "Thompson"
+              },
+              "shotType": "wrist",
+              "result": "goal",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8479420.png",
+              "gameWinner": false,
+              "homeScore": 1,
+              "awayScore": 0
+            },
+            {
+              "sequence": 2,
+              "playerId": 8473563,
+              "teamAbbrev": {
+                "default": "WSH"
+              },
+              "firstName": {
+                "default": "Nicklas"
+              },
+              "lastName": {
+                "default": "Backstrom",
+                "cs": "Bäckström",
+                "fi": "Bäckström",
+                "sk": "Bäckström",
+                "sv": "Bäckström"
+              },
+              "shotType": "wrist",
+              "result": "save",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8473563.png",
+              "gameWinner": false,
+              "homeScore": 1,
+              "awayScore": 0
+            },
+            {
+              "sequence": 3,
+              "playerId": 8479999,
+              "teamAbbrev": {
+                "default": "BUF"
+              },
+              "firstName": {
+                "default": "Casey"
+              },
+              "lastName": {
+                "default": "Mittelstadt"
+              },
+              "shotType": "wrist",
+              "result": "save",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8479999.png",
+              "gameWinner": false,
+              "homeScore": 1,
+              "awayScore": 0
+            },
+            {
+              "sequence": 4,
+              "playerId": 8475744,
+              "teamAbbrev": {
+                "default": "WSH"
+              },
+              "firstName": {
+                "default": "Evgeny",
+                "cs": "Jevgenij",
+                "fi": "Jevgeni",
+                "sk": "Jevgenij"
+              },
+              "lastName": {
+                "default": "Kuznetsov",
+                "cs": "Kuzněcov",
+                "sk": "Kuznecov"
+              },
+              "shotType": "wrist",
+              "result": "goal",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8475744.png",
+              "gameWinner": false,
+              "homeScore": 1,
+              "awayScore": 1
+            },
+            {
+              "sequence": 5,
+              "playerId": 8477949,
+              "teamAbbrev": {
+                "default": "BUF"
+              },
+              "firstName": {
+                "default": "Alex"
+              },
+              "lastName": {
+                "default": "Tuch"
+              },
+              "shotType": "wrist",
+              "result": "save",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8477949.png",
+              "gameWinner": false,
+              "homeScore": 1,
+              "awayScore": 1
+            },
+            {
+              "sequence": 6,
+              "playerId": 8471214,
+              "teamAbbrev": {
+                "default": "WSH"
+              },
+              "firstName": {
+                "default": "Alex",
+                "cs": "Alexandr",
+                "fi": "Aleksandr",
+                "sk": "Alexander"
+              },
+              "lastName": {
+                "default": "Ovechkin",
+                "cs": "Ovečkin",
+                "fi": "Ovetshkin",
+                "sk": "Ovečkin"
+              },
+              "shotType": "backhand",
+              "result": "goal",
+              "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8471214.png",
+              "gameWinner": true,
+              "homeScore": 1,
+              "awayScore": 2
+            }
+          ]
+        },
+        "threeStars": [
+          {
+            "star": 1,
+            "playerId": 8475784,
+            "teamAbbrev": "BUF",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8475784.png",
+            "name": {
+              "default": "J. Skinner"
+            },
+            "sweaterNo": 53,
+            "position": "L",
+            "goals": 2,
+            "assists": 0,
+            "points": 2
+          },
+          {
+            "star": 2,
+            "playerId": 8480839,
+            "teamAbbrev": "BUF",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20212022/BUF/8480839.png",
+            "name": {
+              "default": "R. Dahlin"
+            },
+            "sweaterNo": 26,
+            "position": "D",
+            "goals": 0,
+            "assists": 0,
+            "points": 0
+          },
+          {
+            "star": 3,
+            "playerId": 8471214,
+            "teamAbbrev": "WSH",
+            "headshot": "https://assets.nhle.com/mugs/nhl/20212022/WSH/8471214.png",
+            "name": {
+              "default": "A. Ovechkin",
+              "cs": "A. Ovečkin",
+              "fi": "A. Ovetshkin",
+              "sk": "A. Ovečkin"
+            },
+            "sweaterNo": 8,
+            "position": "L",
+            "goals": 1,
+            "assists": 0,
+            "points": 1
+          }
+        ],
+        "penalties": [
+          {
+            "periodDescriptor": {
+              "number": 1,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "18:16",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Michal"
+                  },
+                  "lastName": {
+                    "default": "Kempny",
+                    "cs": "Kempný",
+                    "sk": "Kempný"
+                  },
+                  "sweaterNumber": 6
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Jeff"
+                  },
+                  "lastName": {
+                    "default": "Skinner"
+                  },
+                  "sweaterNumber": 53
+                },
+                "descKey": "slashing"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 2,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "16:59",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Jeff"
+                  },
+                  "lastName": {
+                    "default": "Skinner"
+                  },
+                  "sweaterNumber": 53
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Garnet"
+                  },
+                  "lastName": {
+                    "default": "Hathaway"
+                  },
+                  "sweaterNumber": 21
+                },
+                "descKey": "holding"
+              },
+              {
+                "timeInPeriod": "16:59",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Garnet"
+                  },
+                  "lastName": {
+                    "default": "Hathaway"
+                  },
+                  "sweaterNumber": 21
+                },
+                "teamAbbrev": {
+                  "default": "WSH"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Jeff"
+                  },
+                  "lastName": {
+                    "default": "Skinner"
+                  },
+                  "sweaterNumber": 53
+                },
+                "descKey": "roughing"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 3,
+              "periodType": "REG",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": [
+              {
+                "timeInPeriod": "12:03",
+                "type": "MIN",
+                "duration": 2,
+                "committedByPlayer": {
+                  "firstName": {
+                    "default": "Mark"
+                  },
+                  "lastName": {
+                    "default": "Pysyk"
+                  },
+                  "sweaterNumber": 13
+                },
+                "teamAbbrev": {
+                  "default": "BUF"
+                },
+                "drawnBy": {
+                  "firstName": {
+                    "default": "Nicklas"
+                  },
+                  "lastName": {
+                    "default": "Backstrom",
+                    "cs": "Bäckström",
+                    "fi": "Bäckström",
+                    "sk": "Bäckström",
+                    "sv": "Bäckström"
+                  },
+                  "sweaterNumber": 19
+                },
+                "descKey": "interference"
+              }
+            ]
+          },
+          {
+            "periodDescriptor": {
+              "number": 4,
+              "periodType": "OT",
+              "maxRegulationPeriods": 3
+            },
+            "penalties": []
+          }
+        ]
+      },
+      "clock": {
+        "timeRemaining": "00:00",
+        "secondsRemaining": 0,
+        "running": false,
+        "inIntermission": false
+      }
+    }
+  }
+]

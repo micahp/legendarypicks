@@ -1,0 +1,85 @@
+{
+  "audit_generated_at_utc": "2026-10-14T05:16:17.842607+00:00",
+  "database_path_read_only": "/root/nhl_database_2025-26-playoffs.duckdb",
+  "season_label": "2025-26 NHL playoffs",
+  "db_playoff_games": 82,
+  "kalshi_archive": {
+    "endpoint": "https://external-api.kalshi.com/trade-api/v2/historical/markets",
+    "series_ticker": "KXNHLGAME",
+    "page_count": 4,
+    "page_sizes": [
+      1000,
+      1000,
+      1000,
+      76
+    ],
+    "contracts_fetched_all_series": 3076,
+    "unique_market_tickers": 3076,
+    "cursor_chain_terminated": true,
+    "playoff_event_count": 80,
+    "playoff_contract_count": 160,
+    "events_with_exactly_two_distinct_sides": 80
+  },
+  "event_game_reconciliation": {
+    "matched_games": 80,
+    "matched_events": 80,
+    "missing_kalshi_events_for_games": [
+      {
+        "date": "2026-05-03",
+        "home": "TBL",
+        "away": "MTL",
+        "game_id": 2025030127
+      },
+      {
+        "date": "2026-05-18",
+        "home": "BUF",
+        "away": "MTL",
+        "game_id": 2025030217
+      }
+    ],
+    "unmatched_kalshi_events": [],
+    "duplicate_or_ambiguous_matchups": [],
+    "malformed_events": []
+  },
+  "quote_coverage": {
+    "matched_market_contracts_expected": 160,
+    "contracts_with_usable_two_sided_quotes": 160,
+    "contracts_with_quotes_within_15m": 160,
+    "contracts_with_spread": 160,
+    "games_with_any_usable_side_quote": 80,
+    "games_with_both_side_quotes": 80,
+    "games_with_both_side_quotes_within_15m": 80,
+    "median_quote_age_seconds": 60,
+    "max_quote_age_seconds": 60,
+    "quote_age_distribution_seconds": {
+      "le_1m": 160,
+      "le_5m": 160,
+      "le_15m": 160,
+      "gt_15m": 0
+    }
+  },
+  "spread": {
+    "available_contract_quotes": 160,
+    "median_probability_spread": 0.010000000000000009,
+    "median_spread_cents": 1.0
+  },
+  "data_quality": {
+    "duplicate_archive_tickers": 0,
+    "duplicate_event_tickers_in_scope": 0,
+    "malformed_events": [],
+    "duplicate_or_ambiguous_matchups": [],
+    "unmatched_kalshi_events": [],
+    "quote_http_or_parse_failures": [],
+    "contracts_missing_usable_quote": 0,
+    "crossed_or_invalid_spreads": 0,
+    "invalid_or_post_start_candles_selected": 0,
+    "source_failures": []
+  },
+  "feature_safety": {
+    "cutoff_rule": "Select greatest candle end_period_ts strictly less than NHL startTimeUTC.",
+    "post_start_candles_selected": 0,
+    "settlement_result_used_as_feature": false,
+    "missing_markets_substituted_from_other_bookmakers": 0,
+    "fallback": "If no valid quote in T-15m..T-1s, request up to T-6h..T-1s and flag quote age."
+  }
+}
