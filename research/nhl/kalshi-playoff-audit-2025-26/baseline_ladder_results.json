@@ -1,0 +1,1712 @@
+{
+  "protocol": "backtest_preregistration_v1.md",
+  "preregistration_sha256": "5f68719e1e923c5cf2203108252b19856a39cd318a3b93c578cf0988853fc4db",
+  "canonical_sha256": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52",
+  "features_sha256": "62dcceb77085bc59fcad3ca9a0a981e0e462909cd09815cde98e45b7e9caf458",
+  "market_prices_used_in_statistical_features": false,
+  "split": {
+    "fit_seasons": "2008-2017",
+    "validation_seasons": "2018-2021",
+    "locked_test_seasons": "2022-2024",
+    "untouched_final_season": "2025-2026"
+  },
+  "selection": {
+    "elo_grid": [
+      {
+        "k": 10,
+        "home_ice_elo": 35,
+        "n": 4918,
+        "brier": 0.2390680896030996,
+        "log_loss": 0.6709328315664118,
+        "calibration_intercept": -0.02125712522955294,
+        "calibration_slope": 0.8384183696938233,
+        "ece_10_bins": 0.021307973320746073
+      },
+      {
+        "k": 10,
+        "home_ice_elo": 65,
+        "n": 4918,
+        "brier": 0.24157755654184598,
+        "log_loss": 0.6764274648809504,
+        "calibration_intercept": -0.1565367642083984,
+        "calibration_slope": 0.819860825824389,
+        "ece_10_bins": 0.053128341701760694
+      },
+      {
+        "k": 10,
+        "home_ice_elo": 100,
+        "n": 4918,
+        "brier": 0.24815962075280146,
+        "log_loss": 0.6914155976874471,
+        "calibration_intercept": -0.29792725458404934,
+        "calibration_slope": 0.7829443440384624,
+        "ece_10_bins": 0.0961700972065161
+      },
+      {
+        "k": 20,
+        "home_ice_elo": 35,
+        "n": 4918,
+        "brier": 0.24134720336285875,
+        "log_loss": 0.6761488168384885,
+        "calibration_intercept": 0.012170709023634685,
+        "calibration_slope": 0.6715251089132241,
+        "ece_10_bins": 0.03505820512222201
+      },
+      {
+        "k": 20,
+        "home_ice_elo": 65,
+        "n": 4918,
+        "brier": 0.24365383161912496,
+        "log_loss": 0.6816242994609663,
+        "calibration_intercept": -0.09769189099602868,
+        "calibration_slope": 0.6584697003729776,
+        "ece_10_bins": 0.054880613728333076
+      },
+      {
+        "k": 20,
+        "home_ice_elo": 100,
+        "n": 4918,
+        "brier": 0.2498399706090783,
+        "log_loss": 0.6966584221884937,
+        "calibration_intercept": -0.21429058808885815,
+        "calibration_slope": 0.6326481658659969,
+        "ece_10_bins": 0.09585339543330354
+      },
+      {
+        "k": 30,
+        "home_ice_elo": 35,
+        "n": 4918,
+        "brier": 0.24429971522053565,
+        "log_loss": 0.6830694123581801,
+        "calibration_intercept": 0.033166749712470876,
+        "calibration_slope": 0.5664116812972314,
+        "ece_10_bins": 0.0488025574175095
+      },
+      {
+        "k": 30,
+        "home_ice_elo": 65,
+        "n": 4918,
+        "brier": 0.246451906100181,
+        "log_loss": 0.688569518715695,
+        "calibration_intercept": -0.060368452886055954,
+        "calibration_slope": 0.5562372732704999,
+        "ece_10_bins": 0.06751877040955716
+      },
+      {
+        "k": 30,
+        "home_ice_elo": 100,
+        "n": 4918,
+        "brier": 0.25235278643678016,
+        "log_loss": 0.7037458577059208,
+        "calibration_intercept": -0.16050434944568706,
+        "calibration_slope": 0.5362375572432465,
+        "ece_10_bins": 0.09575123903461044
+      },
+      {
+        "k": 40,
+        "home_ice_elo": 35,
+        "n": 4918,
+        "brier": 0.2473948831694898,
+        "log_loss": 0.6905834207367345,
+        "calibration_intercept": 0.04877325860354141,
+        "calibration_slope": 0.48895745008189256,
+        "ece_10_bins": 0.06549692421165736
+      },
+      {
+        "k": 40,
+        "home_ice_elo": 65,
+        "n": 4918,
+        "brier": 0.24940287072962994,
+        "log_loss": 0.6960987367666931,
+        "calibration_intercept": -0.032927779769910355,
+        "calibration_slope": 0.4814510447522136,
+        "ece_10_bins": 0.07567961704306941
+      },
+      {
+        "k": 40,
+        "home_ice_elo": 100,
+        "n": 4918,
+        "brier": 0.2550447749421297,
+        "log_loss": 0.7114058219164537,
+        "calibration_intercept": -0.12067228396287531,
+        "calibration_slope": 0.46527542290204005,
+        "ece_10_bins": 0.10214897944114586
+      }
+    ],
+    "elo_selected": {
+      "k": 10,
+      "home_ice_elo": 35
+    },
+    "recent_form_grid": [
+      {
+        "C": 0.01,
+        "n": 4918,
+        "brier": 0.245035483021132,
+        "log_loss": 0.6831440223852401,
+        "calibration_intercept": -0.06434821167805735,
+        "calibration_slope": 1.1174017630891826,
+        "ece_10_bins": 0.014657653354674284
+      },
+      {
+        "C": 0.1,
+        "n": 4918,
+        "brier": 0.24501405903820359,
+        "log_loss": 0.6831027788783206,
+        "calibration_intercept": -0.05822235611298579,
+        "calibration_slope": 1.086260632154239,
+        "ece_10_bins": 0.013597503779302484
+      },
+      {
+        "C": 1.0,
+        "n": 4918,
+        "brier": 0.24501226613443872,
+        "log_loss": 0.6830994082064963,
+        "calibration_intercept": -0.05755954625157789,
+        "calibration_slope": 1.082865299039713,
+        "ece_10_bins": 0.013686865549123595
+      },
+      {
+        "C": 10.0,
+        "n": 4918,
+        "brier": 0.24501209178769753,
+        "log_loss": 0.6830990817282367,
+        "calibration_intercept": -0.05749264855659117,
+        "calibration_slope": 1.0825222889794897,
+        "ece_10_bins": 0.013679436207418912
+      },
+      {
+        "C": 100.0,
+        "n": 4918,
+        "brier": 0.2450120744043625,
+        "log_loss": 0.6830990491903042,
+        "calibration_intercept": -0.05748595248077261,
+        "calibration_slope": 1.0824879523952562,
+        "ece_10_bins": 0.013467038396023362
+      }
+    ],
+    "recent_form_selected_c": 100.0,
+    "poisson_alpha_grids": {
+      "elo": [
+        {
+          "alpha": 0.01,
+          "validation_team_goal_nll": 1.9354098721379518,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 0.1,
+          "validation_team_goal_nll": 1.9394521117634538,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 1.0,
+          "validation_team_goal_nll": 1.947266020430793,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 10.0,
+          "validation_team_goal_nll": 1.9506710470616426,
+          "n_team_observations": 9836
+        }
+      ],
+      "goals": [
+        {
+          "alpha": 0.01,
+          "validation_team_goal_nll": 1.9362882559542953,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 0.1,
+          "validation_team_goal_nll": 1.9398741439528218,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 1.0,
+          "validation_team_goal_nll": 1.9471899072675738,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 10.0,
+          "validation_team_goal_nll": 1.950660729654828,
+          "n_team_observations": 9836
+        }
+      ],
+      "xg": [
+        {
+          "alpha": 0.01,
+          "validation_team_goal_nll": 1.9331053095585689,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 0.1,
+          "validation_team_goal_nll": 1.939879428477423,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 1.0,
+          "validation_team_goal_nll": 1.947716864900406,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 10.0,
+          "validation_team_goal_nll": 1.950731316103947,
+          "n_team_observations": 9836
+        }
+      ],
+      "combined": [
+        {
+          "alpha": 0.01,
+          "validation_team_goal_nll": 1.9289237693975634,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 0.1,
+          "validation_team_goal_nll": 1.9345545153815362,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 1.0,
+          "validation_team_goal_nll": 1.9458580840410806,
+          "n_team_observations": 9836
+        },
+        {
+          "alpha": 10.0,
+          "validation_team_goal_nll": 1.9505046281707765,
+          "n_team_observations": 9836
+        }
+      ]
+    },
+    "poisson_selected_alpha": {
+      "elo": 0.01,
+      "goals": 0.01,
+      "xg": 0.01,
+      "combined": 0.01
+    },
+    "locked_leaders": {
+      "moneyline_by_validation_brier": "B3",
+      "goal_distribution_by_validation_joint_nll": "B6",
+      "kalshi_comparison_model": "B3"
+    }
+  },
+  "fit_only": {
+    "train_games": 12611,
+    "train_games_after_refit_through_2021": 17529
+  },
+  "validation_metrics": [
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599453,
+      "calibration_intercept": 0.14161112767557266,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.03534609720176729
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.248929710042737,
+      "log_loss": 0.6910073593849702,
+      "calibration_intercept": 0.13639607008347945,
+      "calibration_slope": 0.02666949486563628,
+      "ece_10_bins": 0.013381204360361276
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.24740252049362277,
+      "log_loss": 0.6879325301799536,
+      "calibration_intercept": -0.008279977728104505,
+      "calibration_slope": 0.7857626366838142,
+      "ece_10_bins": 0.01384777800121354
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.24463293365770783,
+      "log_loss": 0.682483087654163,
+      "calibration_intercept": 0.009764185712830636,
+      "calibration_slope": 0.6649357319537701,
+      "ece_10_bins": 0.03626407640589672
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.24740632960501105,
+      "log_loss": 0.6879300256875523,
+      "calibration_intercept": -0.07805276436313849,
+      "calibration_slope": 1.233411128598247,
+      "ece_10_bins": 0.012163168959027065
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.246565102716025,
+      "log_loss": 0.6862259508632792,
+      "calibration_intercept": -0.1788753468658424,
+      "calibration_slope": 1.7757548018673768,
+      "ece_10_bins": 0.014661772543784058
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1358,
+      "brier": 0.24604789730278895,
+      "log_loss": 0.6851727447848621,
+      "calibration_intercept": -0.10398615764972209,
+      "calibration_slope": 1.3668777453591696,
+      "ece_10_bins": 0.021241587230800635
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B0",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.4090660501754726,
+      "goals_rmse_per_team": 1.7473516321779354,
+      "total_goals_mae": 1.9058772240939337,
+      "joint_poisson_nll": 3.89769685791922
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B1",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.4090660501754726,
+      "goals_rmse_per_team": 1.7473516321779354,
+      "total_goals_mae": 1.9058772240939337,
+      "joint_poisson_nll": 3.89769685791922
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B3",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.3994516488964492,
+      "goals_rmse_per_team": 1.734569201674544,
+      "total_goals_mae": 1.9056326441047058,
+      "joint_poisson_nll": 3.8829748928291985
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B4",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.3954774890325692,
+      "goals_rmse_per_team": 1.730856313619562,
+      "total_goals_mae": 1.8791183526993547,
+      "joint_poisson_nll": 3.877336878783927
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B5",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.392888704970022,
+      "goals_rmse_per_team": 1.7271607975052246,
+      "total_goals_mae": 1.8848744441347993,
+      "joint_poisson_nll": 3.872937854391049
+    },
+    {
+      "season": 2018,
+      "split": "validation",
+      "model": "B6",
+      "target": "goals",
+      "n": 1358,
+      "goals_mae_per_team": 1.3906887615137742,
+      "goals_rmse_per_team": 1.7210254753815961,
+      "total_goals_mae": 1.8713251083702762,
+      "joint_poisson_nll": 3.865633367192267
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599453,
+      "calibration_intercept": 0.09908707946753761,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.024752475247524774
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.24996210726593615,
+      "log_loss": 0.6930787280611136,
+      "calibration_intercept": 0.09543816028183608,
+      "calibration_slope": 0.018661003379347965,
+      "ece_10_bins": 0.02397482631460368
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.2486582300653547,
+      "log_loss": 0.6905171675130667,
+      "calibration_intercept": 0.02159555084198679,
+      "calibration_slope": 0.5885717498767705,
+      "ece_10_bins": 0.02090150440399135
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.24560924896090003,
+      "log_loss": 0.6841408781208621,
+      "calibration_intercept": -0.01531742497281372,
+      "calibration_slope": 0.665281150390352,
+      "ece_10_bins": 0.03793920111148647
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.24856224652091782,
+      "log_loss": 0.6902580041250079,
+      "calibration_intercept": -0.10351025212678575,
+      "calibration_slope": 1.1347902072181173,
+      "ece_10_bins": 0.02093659261153974
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.24761803808645855,
+      "log_loss": 0.6883320361775538,
+      "calibration_intercept": -0.20184339374589685,
+      "calibration_slope": 1.6742030794078708,
+      "ece_10_bins": 0.026678995624133693
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1212,
+      "brier": 0.24725854505298045,
+      "log_loss": 0.6876016560836001,
+      "calibration_intercept": -0.1294507434754606,
+      "calibration_slope": 1.2731515843819088,
+      "ece_10_bins": 0.022523978515958425
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B0",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.3483187774411411,
+      "goals_rmse_per_team": 1.6818878515261269,
+      "total_goals_mae": 1.8570440364153775,
+      "joint_poisson_nll": 3.8302644873647402
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B1",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.3483187774411411,
+      "goals_rmse_per_team": 1.6818878515261269,
+      "total_goals_mae": 1.8570440364153775,
+      "joint_poisson_nll": 3.8302644873647402
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B3",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.3357778728804561,
+      "goals_rmse_per_team": 1.667740402192295,
+      "total_goals_mae": 1.849913734244275,
+      "joint_poisson_nll": 3.8141155925060963
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B4",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.337556287616131,
+      "goals_rmse_per_team": 1.6707287265334057,
+      "total_goals_mae": 1.8430564588138938,
+      "joint_poisson_nll": 3.8167738719906508
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B5",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.3340940935997074,
+      "goals_rmse_per_team": 1.6650868439330286,
+      "total_goals_mae": 1.8379417688035837,
+      "joint_poisson_nll": 3.8099414364844395
+    },
+    {
+      "season": 2019,
+      "split": "validation",
+      "model": "B6",
+      "target": "goals",
+      "n": 1212,
+      "goals_mae_per_team": 1.3330365434642046,
+      "goals_rmse_per_team": 1.662257059477117,
+      "total_goals_mae": 1.8330097153108385,
+      "joint_poisson_nll": 3.8066650877297468
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599453,
+      "calibration_intercept": 0.1388692008250731,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.034663865546218475
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.24899619665796727,
+      "log_loss": 0.6911407559973166,
+      "calibration_intercept": 0.1337551313465402,
+      "calibration_slope": 0.02615311263875714,
+      "ece_10_bins": 0.01406343601591009
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.24292219936037787,
+      "log_loss": 0.6788145255678483,
+      "calibration_intercept": -0.14529308497699975,
+      "calibration_slope": 1.4209014819079224,
+      "ece_10_bins": 0.024558017587773227
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.23519627656574407,
+      "log_loss": 0.663204865204989,
+      "calibration_intercept": -0.04165308971652234,
+      "calibration_slope": 0.9396741913921361,
+      "ece_10_bins": 0.02167387632102469
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.24423155040767536,
+      "log_loss": 0.68150399113358,
+      "calibration_intercept": -0.27004569134333,
+      "calibration_slope": 2.258637915362844,
+      "ece_10_bins": 0.015123034791884317
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.24421111905150938,
+      "log_loss": 0.6814249206459323,
+      "calibration_intercept": -0.31925766528623434,
+      "calibration_slope": 2.4784291451975218,
+      "ece_10_bins": 0.0246723889352949
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 952,
+      "brier": 0.24198894138109064,
+      "log_loss": 0.6768753695245184,
+      "calibration_intercept": -0.23344658724067088,
+      "calibration_slope": 2.0060753788393346,
+      "ece_10_bins": 0.045309532849094745
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B0",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.3762150506860424,
+      "goals_rmse_per_team": 1.7087967079166666,
+      "total_goals_mae": 1.8276132314792541,
+      "joint_poisson_nll": 3.8548924962081035
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B1",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.3762150506860424,
+      "goals_rmse_per_team": 1.7087967079166666,
+      "total_goals_mae": 1.8276132314792541,
+      "joint_poisson_nll": 3.8548924962081035
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B3",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.351660132414847,
+      "goals_rmse_per_team": 1.6826825278469268,
+      "total_goals_mae": 1.8267588774376873,
+      "joint_poisson_nll": 3.8233975697639893
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B4",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.3639726194763175,
+      "goals_rmse_per_team": 1.6974034133891798,
+      "total_goals_mae": 1.8299984811368661,
+      "joint_poisson_nll": 3.8413050943826623
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B5",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.364935685302646,
+      "goals_rmse_per_team": 1.6975630318424515,
+      "total_goals_mae": 1.8243008357690196,
+      "joint_poisson_nll": 3.8416084115030835
+    },
+    {
+      "season": 2020,
+      "split": "validation",
+      "model": "B6",
+      "target": "goals",
+      "n": 952,
+      "goals_mae_per_team": 1.3593272910446468,
+      "goals_rmse_per_team": 1.6919455521683502,
+      "total_goals_mae": 1.8273337912039904,
+      "joint_poisson_nll": 3.835051234620326
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599454,
+      "calibration_intercept": 0.16079123225904435,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.04011461318051579
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.24846499621053633,
+      "log_loss": 0.6900749724569928,
+      "calibration_intercept": 0.15486973271689625,
+      "calibration_slope": 0.030281646233076564,
+      "ece_10_bins": 0.008612688381612665
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.2409463112177833,
+      "log_loss": 0.6748785906641191,
+      "calibration_intercept": -0.1492334441773898,
+      "calibration_slope": 1.613328554522561,
+      "ece_10_bins": 0.03174032229935517
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.23061610009289207,
+      "log_loss": 0.6534998973149178,
+      "calibration_intercept": -0.0256442960584347,
+      "calibration_slope": 1.0032526057667066,
+      "ece_10_bins": 0.019883200905027997
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.2435867108099813,
+      "log_loss": 0.6802229604009955,
+      "calibration_intercept": -0.2970898479026577,
+      "calibration_slope": 2.5461122053804615,
+      "ece_10_bins": 0.00985642552079941
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.24294957908403936,
+      "log_loss": 0.6789375967029246,
+      "calibration_intercept": -0.3560866756558621,
+      "calibration_slope": 2.793827609741638,
+      "ece_10_bins": 0.0180300401365209
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1396,
+      "brier": 0.24068654891974042,
+      "log_loss": 0.6743591774994658,
+      "calibration_intercept": -0.2501308059357063,
+      "calibration_slope": 2.2238291929463196,
+      "ece_10_bins": 0.04338419563224705
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B0",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.4447498761144304,
+      "goals_rmse_per_team": 1.8189624781810696,
+      "total_goals_mae": 1.9571190067160633,
+      "joint_poisson_nll": 3.9823436350531525
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B1",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.4447498761144304,
+      "goals_rmse_per_team": 1.8189624781810696,
+      "total_goals_mae": 1.9571190067160633,
+      "joint_poisson_nll": 3.9823436350531525
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B3",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.41603430314209,
+      "goals_rmse_per_team": 1.784799564842195,
+      "total_goals_mae": 1.9548701969393234,
+      "joint_poisson_nll": 3.9405651958124186
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B4",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.4176626323399266,
+      "goals_rmse_per_team": 1.7836086288447364,
+      "total_goals_mae": 1.908802825383789,
+      "joint_poisson_nll": 3.93771878329005
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B5",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.4107165572020213,
+      "goals_rmse_per_team": 1.7731561482871476,
+      "total_goals_mae": 1.894305927826258,
+      "joint_poisson_nll": 3.9252965542872253
+    },
+    {
+      "season": 2021,
+      "split": "validation",
+      "model": "B6",
+      "target": "goals",
+      "n": 1396,
+      "goals_mae_per_team": 1.4056241695388985,
+      "goals_rmse_per_team": 1.760129220538871,
+      "total_goals_mae": 1.879815623471144,
+      "joint_poisson_nll": 3.9102558892982318
+    }
+  ],
+  "test_metrics_by_season": [
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599454,
+      "calibration_intercept": 0.08004055150349111,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.020000000000000018
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.25020433677168813,
+      "log_loss": 0.6935622438583254,
+      "calibration_intercept": 0.07756069724909016,
+      "calibration_slope": 0.013868468300334514,
+      "ece_10_bins": 0.024583262022933376
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24535777957641927,
+      "log_loss": 0.6836804209899422,
+      "calibration_intercept": -0.12207408427602649,
+      "calibration_slope": 1.1473782670357537,
+      "ece_10_bins": 0.026101350807374295
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.23679014678650837,
+      "log_loss": 0.666410573060306,
+      "calibration_intercept": -0.08018922984873689,
+      "calibration_slope": 0.8289161461736739,
+      "ece_10_bins": 0.03784191768647158
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24572353722011192,
+      "log_loss": 0.684475858567901,
+      "calibration_intercept": -0.22547401896875463,
+      "calibration_slope": 1.7799992552417352,
+      "ece_10_bins": 0.03572068162980031
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.2437719338637883,
+      "log_loss": 0.6805383591427135,
+      "calibration_intercept": -0.311712928653866,
+      "calibration_slope": 2.152513718434558,
+      "ece_10_bins": 0.03913129157112177
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24256347142220405,
+      "log_loss": 0.6780197852366874,
+      "calibration_intercept": -0.22350363315374763,
+      "calibration_slope": 1.6979853313809068,
+      "ece_10_bins": 0.04541075001068634
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B0",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4329392313146376,
+      "goals_rmse_per_team": 1.7744445938248363,
+      "total_goals_mae": 1.8956300579447936,
+      "joint_poisson_nll": 3.9431918403638617
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B1",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4329392313146376,
+      "goals_rmse_per_team": 1.7744445938248363,
+      "total_goals_mae": 1.8956300579447936,
+      "joint_poisson_nll": 3.9431918403638617
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B3",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4059523076944658,
+      "goals_rmse_per_team": 1.7376076907757936,
+      "total_goals_mae": 1.8931174853888262,
+      "joint_poisson_nll": 3.899408297511957
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B4",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4093966098669264,
+      "goals_rmse_per_team": 1.7388564997010725,
+      "total_goals_mae": 1.8451402205187153,
+      "joint_poisson_nll": 3.899843080693464
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B5",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4054913908112168,
+      "goals_rmse_per_team": 1.7239320271543468,
+      "total_goals_mae": 1.8279027512928545,
+      "joint_poisson_nll": 3.8832682885733254
+    },
+    {
+      "season": 2022,
+      "split": "holdout",
+      "model": "B6",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4021032515467982,
+      "goals_rmse_per_team": 1.716227638944051,
+      "total_goals_mae": 1.8274760118026514,
+      "joint_poisson_nll": 3.874575974910172
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599454,
+      "calibration_intercept": 0.14883493132976944,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.037142857142857144
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24867576778804473,
+      "log_loss": 0.6904969649225533,
+      "calibration_intercept": 0.14422341775045414,
+      "calibration_slope": 0.02578829185621508,
+      "ece_10_bins": 0.007440404880076246
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.2441000531530703,
+      "log_loss": 0.6811104875287414,
+      "calibration_intercept": -0.06564075341624345,
+      "calibration_slope": 1.146041772805745,
+      "ece_10_bins": 0.020174031589515706
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.23571049375724692,
+      "log_loss": 0.6638530830227481,
+      "calibration_intercept": -0.007074049638248802,
+      "calibration_slope": 0.808548439115338,
+      "ece_10_bins": 0.02476573971157967
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.2441634121989612,
+      "log_loss": 0.6812971347626856,
+      "calibration_intercept": -0.17145935913045765,
+      "calibration_slope": 1.7862279442681226,
+      "ece_10_bins": 0.020359989580173845
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24289311957022514,
+      "log_loss": 0.6787653046310336,
+      "calibration_intercept": -0.2884296197700956,
+      "calibration_slope": 2.4739453679734917,
+      "ece_10_bins": 0.023459641905739945
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1400,
+      "brier": 0.24135600114155692,
+      "log_loss": 0.6755499168938426,
+      "calibration_intercept": -0.18720521041370622,
+      "calibration_slope": 1.8637141278238636,
+      "ece_10_bins": 0.02736402833151806
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B0",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4160886041906064,
+      "goals_rmse_per_team": 1.7761635142040204,
+      "total_goals_mae": 1.8953186963643922,
+      "joint_poisson_nll": 3.93302381814854
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B1",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4160886041906064,
+      "goals_rmse_per_team": 1.7761635142040204,
+      "total_goals_mae": 1.8953186963643922,
+      "joint_poisson_nll": 3.93302381814854
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B3",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.391118600188459,
+      "goals_rmse_per_team": 1.7419991131553878,
+      "total_goals_mae": 1.8943003059527155,
+      "joint_poisson_nll": 3.8928275439135254
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B4",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.4014772876311268,
+      "goals_rmse_per_team": 1.7516335479802931,
+      "total_goals_mae": 1.862789824620632,
+      "joint_poisson_nll": 3.9027133799542937
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B5",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.3958076159066644,
+      "goals_rmse_per_team": 1.7414569874771937,
+      "total_goals_mae": 1.8591320755885077,
+      "joint_poisson_nll": 3.8913810880973467
+    },
+    {
+      "season": 2023,
+      "split": "holdout",
+      "model": "B6",
+      "target": "goals",
+      "n": 1400,
+      "goals_mae_per_team": 1.395086836559435,
+      "goals_rmse_per_team": 1.735658017924262,
+      "total_goals_mae": 1.856798512375033,
+      "joint_poisson_nll": 3.8843520169215098
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599453,
+      "calibration_intercept": 0.26131470375430804,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.06496769562096194
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.24619472365881442,
+      "log_loss": 0.6855216629313252,
+      "calibration_intercept": 0.25321717401806765,
+      "calibration_slope": 0.04527724060542649,
+      "ece_10_bins": 0.02038443359802855
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.24471780496018272,
+      "log_loss": 0.6824328945864475,
+      "calibration_intercept": 0.12654761132142145,
+      "calibration_slope": 0.7567921176916664,
+      "ece_10_bins": 0.0302401063025378
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.23886355512271018,
+      "log_loss": 0.6706289377604404,
+      "calibration_intercept": 0.13405001327364358,
+      "calibration_slope": 0.6829698247862785,
+      "ece_10_bins": 0.03842278377126485
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.24465984157894954,
+      "log_loss": 0.6823655989743174,
+      "calibration_intercept": 0.07793226579782528,
+      "calibration_slope": 1.0628188874398352,
+      "ece_10_bins": 0.0217052268167715
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.24119531810264488,
+      "log_loss": 0.6753319623261655,
+      "calibration_intercept": -0.13598732721678206,
+      "calibration_slope": 2.22504331213995,
+      "ece_10_bins": 0.02889474283082023
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1393,
+      "brier": 0.2413240378506205,
+      "log_loss": 0.6755567322107559,
+      "calibration_intercept": -0.022510565628749812,
+      "calibration_slope": 1.602268375566312,
+      "ece_10_bins": 0.020271470615344213
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B0",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.4056846910280603,
+      "goals_rmse_per_team": 1.7528192643536515,
+      "total_goals_mae": 1.8802506210915708,
+      "joint_poisson_nll": 3.909182576111391
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B1",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.4056846910280603,
+      "goals_rmse_per_team": 1.7528192643536515,
+      "total_goals_mae": 1.8802506210915708,
+      "joint_poisson_nll": 3.909182576111391
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B3",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.394649521342288,
+      "goals_rmse_per_team": 1.7353062139627464,
+      "total_goals_mae": 1.880535474415074,
+      "joint_poisson_nll": 3.888827108434727
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B4",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.4029654445145285,
+      "goals_rmse_per_team": 1.7443008825014201,
+      "total_goals_mae": 1.8705856426527099,
+      "joint_poisson_nll": 3.8990423847129057
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B5",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.3951863543336325,
+      "goals_rmse_per_team": 1.7305810189189421,
+      "total_goals_mae": 1.8578573150418467,
+      "joint_poisson_nll": 3.8829099503113973
+    },
+    {
+      "season": 2024,
+      "split": "holdout",
+      "model": "B6",
+      "target": "goals",
+      "n": 1393,
+      "goals_mae_per_team": 1.39708483913197,
+      "goals_rmse_per_team": 1.7317174870410024,
+      "total_goals_mae": 1.8644932321880714,
+      "joint_poisson_nll": 3.884203868341323
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B0",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.25,
+      "log_loss": 0.6931471805599454,
+      "calibration_intercept": 0.07751170456786081,
+      "calibration_slope": 0.0,
+      "ece_10_bins": 0.019368723098995733
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B1",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.25026062553866113,
+      "log_loss": 0.6936751211792506,
+      "calibration_intercept": 0.07511020369123485,
+      "calibration_slope": 0.013430300601422864,
+      "ece_10_bins": 0.025214538923937657
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B2",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.24930298555383928,
+      "log_loss": 0.691741986779173,
+      "calibration_intercept": -0.04673103940430604,
+      "calibration_slope": 0.6674045882830348,
+      "ece_10_bins": 0.03618128601889373
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B3",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.2517232330695188,
+      "log_loss": 0.6976487708591241,
+      "calibration_intercept": -0.00575102855258285,
+      "calibration_slope": 0.4192241017892356,
+      "ece_10_bins": 0.060627072701479816
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B4",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.2486671992952221,
+      "log_loss": 0.6904574248872197,
+      "calibration_intercept": -0.11048956903340494,
+      "calibration_slope": 1.0540426149612228,
+      "ece_10_bins": 0.026015065931081872
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B5",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.2466882462168104,
+      "log_loss": 0.6864589128058983,
+      "calibration_intercept": -0.2616022075977253,
+      "calibration_slope": 1.8586180717559524,
+      "ece_10_bins": 0.03662936570592499
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B6",
+      "target": "moneyline",
+      "n": 1394,
+      "brier": 0.24655956883262006,
+      "log_loss": 0.6861569202344517,
+      "calibration_intercept": -0.17326837035523113,
+      "calibration_slope": 1.3635901122436476,
+      "ece_10_bins": 0.03544361791476624
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B0",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.3798967531812214,
+      "goals_rmse_per_team": 1.7397611829534796,
+      "total_goals_mae": 1.8646884240937727,
+      "joint_poisson_nll": 3.8902990209340875
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B1",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.3798967531812214,
+      "goals_rmse_per_team": 1.7397611829534796,
+      "total_goals_mae": 1.8646884240937727,
+      "joint_poisson_nll": 3.8902990209340875
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B3",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.375360469057937,
+      "goals_rmse_per_team": 1.7295957174895933,
+      "total_goals_mae": 1.8642881787304713,
+      "joint_poisson_nll": 3.879323195822812
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B4",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.3706129082665501,
+      "goals_rmse_per_team": 1.7204318715874354,
+      "total_goals_mae": 1.8318500582981034,
+      "joint_poisson_nll": 3.8672933644304446
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B5",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.3627339343206497,
+      "goals_rmse_per_team": 1.7096850619137054,
+      "total_goals_mae": 1.8234985957299596,
+      "joint_poisson_nll": 3.85476559655849
+    },
+    {
+      "season": 2025,
+      "split": "holdout",
+      "model": "B6",
+      "target": "goals",
+      "n": 1394,
+      "goals_mae_per_team": 1.3633534771278266,
+      "goals_rmse_per_team": 1.7065386667031992,
+      "total_goals_mae": 1.8220360966001607,
+      "joint_poisson_nll": 3.8512563017555483
+    }
+  ],
+  "paired_differences": [
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": -0.005781330721256669,
+      "ci95_low": -0.00986515755079846,
+      "ci95_high": -0.001514734480135049,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.014677414426239132,
+      "ci95_low": -0.020091176648258817,
+      "ci95_high": -0.009363244997728387,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": 0.0015900659971097729,
+      "ci95_low": -0.004701092659139513,
+      "ci95_high": 0.00806225391731873,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.007837741932395037,
+      "ci95_low": -0.015771067292023544,
+      "ci95_high": 0.00042429755612942796,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": -0.006522541484963493,
+      "ci95_low": -0.010041553990400695,
+      "ci95_high": -0.002933084719374244,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.019496758799933744,
+      "ci95_low": -0.023851997503217256,
+      "ci95_high": -0.015325237909107224,
+      "n_games": 4193
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": -0.007878973945900508,
+      "ci95_low": -0.014243217773080989,
+      "ci95_high": -0.0014525011977452361,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.01252776787195454,
+      "ci95_low": -0.02020718403302886,
+      "ci95_high": -0.004740496433688881,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": -0.012626534737287476,
+      "ci95_low": -0.022217449937602444,
+      "ci95_high": -0.003328771581369282,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.02455759926432238,
+      "ci95_low": -0.03691818259430728,
+      "ci95_high": -0.012512681634285273,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "per_game_team_goals_mae",
+      "delta_a_minus_b": -0.007259431138723465,
+      "ci95_low": -0.01252905108448667,
+      "ci95_high": -0.0017451930776035964,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "joint_goal_nll",
+      "delta_a_minus_b": -0.016037062674896567,
+      "ci95_low": -0.022037897053454027,
+      "ci95_high": -0.009922040465241304,
+      "n_games": 1394
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": 0.005504012372385029,
+      "ci95_low": 0.0019577797815086466,
+      "ci95_high": 0.008899555399705895,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": -0.0022267435205284764,
+      "ci95_low": -0.003441834163579221,
+      "ci95_high": -0.0010455817735783672,
+      "n_games": 4193
+    },
+    {
+      "sample": "locked_test_2022_2024",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": -0.003100701691151731,
+      "ci95_low": -0.0039149592751384025,
+      "ci95_high": -0.002272293288091202,
+      "n_games": 4193
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B3",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": -0.005034986852708387,
+      "ci95_low": -0.010064326592927064,
+      "ci95_high": -0.0002100407919861876,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B5",
+      "model_b": "B4",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": -0.001978953078411675,
+      "ci95_low": -0.004057803364726515,
+      "ci95_high": 9.71950350286409e-05,
+      "n_games": 1394
+    },
+    {
+      "sample": "final_2025_26",
+      "model_a": "B6",
+      "model_b": "B4",
+      "metric": "moneyline_brier",
+      "delta_a_minus_b": -0.002107630462602029,
+      "ci95_low": -0.0034134780353613707,
+      "ci95_high": -0.0008551037521571847,
+      "n_games": 1394
+    }
+  ],
+  "kalshi_games": 80,
+  "kalshi_comparison_model": "B3",
+  "kalshi_model_metrics": {
+    "n": 80,
+    "brier": 0.23813620030446944,
+    "log_loss": 0.668703072053599,
+    "calibration_intercept": -0.40923863174496783,
+    "calibration_slope": 1.6111374612079463,
+    "ece_10_bins": 0.07962676104279474
+  },
+  "kalshi_market_metrics": {
+    "n": 80,
+    "brier": 0.23570445659808423,
+    "log_loss": 0.6632839050507227,
+    "calibration_intercept": -0.42382663337440807,
+    "calibration_slope": 1.9192585941537033,
+    "ece_10_bins": 0.0882002923240085
+  },
+  "kalshi_paired_brier_delta_model_minus_market": {
+    "delta_a_minus_b": 0.0024317437063852087,
+    "ci95_low": -0.007850898782258533,
+    "ci95_high": 0.012775343753331931,
+    "n_games": 80
+  },
+  "artifact_sha256": {
+    "baseline_predictions_validation.csv": "ebe94db0e47b024d37a24c78c7a5fb69b794dc892918d6b765fe9f7b3d6fbe16",
+    "baseline_predictions_holdout_2022_2025.csv": "3fd60fe639fae49918563448cba712e33486c7b856a02aeb088fbbb0419e9357",
+    "baseline_metrics_by_season.csv": "320ef546dbf59fd139da37338f341db8a50bf3245d67d9cefc38c63d6d2c43e3",
+    "baseline_paired_differences.csv": "67caf326243f0e664e50315cdfc99f01a269893a483a8e9c0b99ed0bcecab7e2",
+    "kalshi_playoff_model_comparison.csv": "98f6dad4a2bf287bd5bf76110214482624eef429bb1300f5db8b8276c350ad7a",
+    "kalshi_playoff_metrics.csv": "e1a8a1e8a1e7769e12889147a31956ef16416184b2d903a4466b67fc89ebad58"
+  }
+}
