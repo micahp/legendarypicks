@@ -78,7 +78,20 @@ function todayKey() {
 }
 
 function number(value: number | null, digits = 1) {
-  return value == null || !Number.isFinite(value) ? '—' : value.toFixed(digits)
+  return value == null || !Number.isFinite(value) ? 'n/a' : value.toFixed(digits)
+}
+
+function impliedProbability(price: number | null | undefined) {
+  if (price == null) return null
+  return price < 0 ? -price / (-price + 100) : 100 / (price + 100)
+}
+
+function fairPrice(probability: number) {
+  const clamped = Math.min(Math.max(probability, 0.001), 0.999)
+  const price = clamped >= 0.5
+    ? -Math.round((100 * clamped) / (1 - clamped))
+    : Math.round((100 * (1 - clamped)) / clamped)
+  return price > 0 ? `+${price}` : `${price}`
 }
 
 function MatchCard({ match }: { match: ModelMatch }) {
@@ -86,6 +99,25 @@ function MatchCard({ match }: { match: ModelMatch }) {
   const result = match.result
   const status = match.status === 'final' ? 'Final' : match.status === 'live' ? 'In progress' : null
   const price = (value: number | null | undefined) => (value == null ? 'n/a' : value > 0 ? `+${value}` : `${value}`)
+
+  // Edge compares the model's pick probability with the Vegas no-vig probability for the same side.
+  const winnerPrices = match.odds?.matchWinner ?? null
+  const pickSide = projection?.projectedWinner && projection.probability != null
+    ? (projection.projectedWinner === match.home ? 'home' : 'away')
+    : null
+  const pickPrice = pickSide && winnerPrices ? winnerPrices[pickSide] : null
+  const otherPrice = pickSide && winnerPrices ? winnerPrices[pickSide === 'home' ? 'away' : 'home'] : null
+  const pickImplied = impliedProbability(pickPrice)
+  const otherImplied = impliedProbability(otherPrice)
+  const winnerEdge = projection?.probability != null && pickImplied != null && otherImplied != null
+    ? (projection.probability - pickImplied / (pickImplied + otherImplied)) * 100
+    : null
+  const winnerEdgeLabel = winnerEdge == null ? 'n/a' : `${winnerEdge >= 0 ? '+' : ''}${winnerEdge.toFixed(1)} pts`
+
+  // Edge on the total is the model's projected games minus the Bovada line, in games.
+  const totalLine = match.odds?.totalGames ?? null
+  const totalEdge = totalLine && projection?.totalGames != null ? projection.totalGames - totalLine.line : null
+  const totalEdgeLabel = totalEdge == null ? 'n/a' : `${Math.abs(totalEdge).toFixed(1)} games ${totalEdge >= 0 ? 'over' : 'under'}`
 
   return (
     <article className="space-y-3 py-4">
@@ -100,13 +132,6 @@ function MatchCard({ match }: { match: ModelMatch }) {
         </p>
       </header>
 
-      {match.odds && (
-        <p className="text-xs tabular-nums text-zinc-400">
-          Bovada · {match.away} {price(match.odds.matchWinner.away)} · {match.home} {price(match.odds.matchWinner.home)}
-          {match.odds.totalGames && ` · Total ${match.odds.totalGames.line} over ${price(match.odds.totalGames.over)} / under ${price(match.odds.totalGames.under)}`}
-        </p>
-      )}
-
       {!projection ? (
         <p className="text-sm text-amber-400">No projection is available for this match.</p>
       ) : (
@@ -115,8 +140,11 @@ function MatchCard({ match }: { match: ModelMatch }) {
         <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Match winner</p>
-            <p className="text-zinc-200">{projection.projectedWinner ?? '—'}{projection.probability == null ? '' : ` · ${Math.round(projection.probability * 100)}%`}</p>
+            <p className="text-zinc-200">{projection.projectedWinner ?? 'n/a'}{projection.probability == null ? '' : ` · ${Math.round(projection.probability * 100)}%`}</p>
             {match.grades?.winner && <p className={match.grades.winner === 'correct' ? 'text-emerald-400' : 'text-rose-400'}>Pick {match.grades.winner}</p>}
+            <p className="text-xs tabular-nums text-zinc-500">Vegas line {price(pickPrice)}</p>
+            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.probability == null ? 'n/a' : fairPrice(projection.probability)}</p>
+            <p className="text-xs tabular-nums text-zinc-500">Edge {winnerEdgeLabel}</p>
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Aces</p>
@@ -124,12 +152,18 @@ function MatchCard({ match }: { match: ModelMatch }) {
             {match.grades && (match.grades.homeAcesError != null || match.grades.awayAcesError != null) && (
               <p className="text-xs text-zinc-500">Absolute error {number(match.grades.homeAcesError)} / {number(match.grades.awayAcesError)}</p>
             )}
+            <p className="text-xs text-zinc-500">Vegas line n/a</p>
+            <p className="text-xs tabular-nums text-zinc-500">Model line {number(projection.homeAces)} / {number(projection.awayAces)}</p>
+            <p className="text-xs text-zinc-500">Edge n/a</p>
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total games</p>
             <p className="text-zinc-200">{number(projection.totalGames)}{projection.totalGamesInterval ? ` · ${number(projection.totalGamesInterval[0], 0)}–${number(projection.totalGamesInterval[1], 0)}` : ''}</p>
             {projection.totalGamesLabel && <p className="text-xs text-amber-400">{projection.totalGamesLabel}</p>}
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
+            <p className="text-xs tabular-nums text-zinc-500">Vegas line {totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</p>
+            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.totalGames == null ? 'n/a' : number(projection.totalGames)}</p>
+            <p className="text-xs tabular-nums text-zinc-500">Edge {totalEdgeLabel}</p>
           </div>
         </div>
         </div>
