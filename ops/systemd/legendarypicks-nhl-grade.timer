@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily grading of completed NHL model locks
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nhl-grade.service
+
+[Install]
+WantedBy=timers.target

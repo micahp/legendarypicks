@@ -1,0 +1,12 @@
+[Unit]
+Description=Grade locked NHL projections from official NHL results (standalone research DB)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=NHL_MODEL_DB_PATH=/root/legendarypicks/backend/data/nhl-model.dev.sqlite3
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/grade_nhl_models.py --apply
+TimeoutStartSec=600

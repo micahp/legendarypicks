@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate frozen-model NHL forecasts for games approaching the T-90 lock window
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks
+ExecStart=/root/legendarypicks/backend/nhl-venv/bin/python /root/legendarypicks/research/nhl/prospective-2026-27/run_pipeline.py forecast --horizon-hours 1.6
+TimeoutStartSec=600
