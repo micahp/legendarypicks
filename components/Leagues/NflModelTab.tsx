@@ -147,7 +147,7 @@ function statusClass(lock: Lock) {
 // card; the record adds the final score and the pick's result.
 export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mode: 'projection' | 'record' }) {
   const record = mode === 'record'
-  const status = record ? statusLabel(lock) : lock.preview ? 'NOT LOCKED' : 'LOCKED'
+  const status = record ? statusLabel(lock) : lock.preview ? null : 'LOCKED'
   const tone = record ? statusClass(lock) : lock.preview ? 'text-amber-300' : 'text-emerald-400'
   const projected = (value: number | null) => (value == null ? '—' : one(value))
   return (
@@ -173,7 +173,7 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-400">
         <span>Our pick <b className="font-medium text-zinc-100">{pickSide(game, lock) || 'No line'}</b></span>
-        <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>
+        {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
       </div>
     </article>
   )
