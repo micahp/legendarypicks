@@ -87,8 +87,8 @@ LEAGUES = {
     # ends. That is the same trap as the Leagues Cup slug above, and the durable
     # fix is to walk the `tennis` tree and match on tournament name rather than
     # guess paths. Until that exists, these are correct and dated.
-    "atp":  ("tennis", "us-open/men-s-singles"),
-    "wta":  ("tennis", "us-open/women-s-singles"),
+    "atp":  ("tennis", "tree:atp"),
+    "wta":  ("tennis", "tree:wta"),
 }
 
 HDR = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36"}
