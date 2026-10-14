@@ -24,6 +24,10 @@ describe('NFL game card', () => {
     expect(screen.queryByText('NOT LOCKED')).toBeNull()
     expect(screen.queryByText('LOCKED')).toBeNull()
     expect(screen.getByText('22.8')).toBeTruthy()
+    expect(screen.queryByText(/Our line/)).toBeNull()
+    expect(screen.getAllByText(/Model line/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Edge/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Model pick').length).toBeGreaterThan(0)
     expect(screen.queryByText('Final')).toBeNull()
   })
 
