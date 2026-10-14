@@ -154,7 +154,7 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
     for gid, home, away, loc, gameday, gametime, hs, as_, result in sched:
         kick = cs.kickoff_utc(gameday, gametime) if gameday else None
         out["games"].append({
-            "game_id": gid, "home": home, "away": away,
+            "game_id": gid, "week": week, "home": home, "away": away,
             "neutral": (loc or "").strip().lower() == "neutral",
             "kickoff_utc": kick.strftime("%Y-%m-%dT%H:%M:%SZ") if kick else None,
             "final": ({"home": _f(hs), "away": _f(as_)}
