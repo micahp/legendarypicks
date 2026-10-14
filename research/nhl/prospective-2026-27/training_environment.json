@@ -1,0 +1,16 @@
+{
+  "baseline_code_sha256_at_fit": "9c9d0ee0b6982240fed1c68e0afbb805195831c479d53f723d168060557b7ddd",
+  "frozen_model_file_sha256": "da90a3c07aca3227c1013c5c94468cde76d980d05326dc1a98660bce04176bcb",
+  "model_internal_sha256": "78831ed30de22722863a2b337a188174e49ad23857b99c4ac5e795cd87b0b050",
+  "model_version": "nhl-prospective-2026-27-v1",
+  "note": "Runtime versions were inspected in the same interpreter before the frozen fit; this companion record was written after the model artifact and does not change its hash.",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.13",
+  "recorded_at_utc": "2026-10-14T08:10:02Z",
+  "scikit_learn_version": "1.9.0",
+  "training_inputs": {
+    "baseline_code_sha256": "9c9d0ee0b6982240fed1c68e0afbb805195831c479d53f723d168060557b7ddd",
+    "canonical_games_sha256": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52",
+    "pregame_features_sha256": "62dcceb77085bc59fcad3ca9a0a981e0e462909cd09815cde98e45b7e9caf458"
+  }
+}
