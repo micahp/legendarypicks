@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_result, lock_feed,
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
                              export_previews, preview_feed, latest_game_lines, parse_time)
-from grade_nhl_models import grade_due
+from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
 
@@ -234,6 +234,14 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual((lines["total_line"], lines["over_price"], lines["under_price"]), (6.5, -115, -105))
         self.assertEqual((lines["home_moneyline"], lines["away_moneyline"]), (-128, 107))
         self.assertEqual(TEAM_CODES["Washington Capitals"], "WSH")
+
+    def test_applied_daily_grade_run_also_refreshes_upcoming_previews(self):
+        self.con.commit()
+        path = os.path.join(self.tmp.name, "nhl-model.db")
+        code = grade_main(["--db", path, "--feed", DEFAULT_FEED, "--now", "2026-10-14T12:00:00Z", "--apply"])
+        self.assertEqual(code, 0)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_previews").fetchone()[0], 6)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 0)
 
     def test_read_api_reads_only_the_standalone_database_and_empty_state_is_explicit(self):
         missing = locks_payload(os.path.join(self.tmp.name, "not-created.sqlite3"), 2026)
