@@ -176,7 +176,7 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
-        <div className="min-w-0 text-right">
+        <div className="ml-auto min-w-0 text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
           <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
         </div>
