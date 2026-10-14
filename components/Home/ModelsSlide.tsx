@@ -33,7 +33,7 @@ export default function ModelsSlide() {
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=sports_baseball,sports_basketball,sports_football,sports_hockey,sports_mma,sports_soccer,sports_tennis"
         />
       </Head>
-      <div className="relative z-10 grid min-w-0 items-center gap-7 p-8 md:grid-cols-[1fr_1.05fr] md:px-12 md:py-4">
+      <div className="relative z-10 grid min-w-0 items-center gap-7 p-8 md:grid-cols-[1fr_1.05fr] md:px-12 md:py-12">
         <div className="min-w-0">
           <h2 className="text-balance text-[32px] font-bold leading-[1.12] tracking-tight md:text-[46px] md:leading-[1.06]">
             Prediction models across multiple sports.
