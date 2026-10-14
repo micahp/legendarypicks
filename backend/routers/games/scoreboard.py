@@ -313,3 +313,12 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
         # score with no age is a claim about now that we cannot support.
         headers["X-LP-Data-Age"] = str(snapshot_age)
     return JSONResponse(content=games, headers=headers)
+
+
+@router.get("/api/{league}/kalshi-live")
+def get_kalshi_live(league: str):
+    """Live tennis points from the trade desk's Kalshi poller (atp and wta only)."""
+    from kalshi_live_state import TOUR_BY_LEAGUE, read_live
+    if league.lower() not in TOUR_BY_LEAGUE:
+        raise HTTPException(status_code=404, detail="kalshi-live is tennis only (atp, wta)")
+    return JSONResponse(content=read_live(league))
