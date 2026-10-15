@@ -160,6 +160,29 @@ function modelPick(home: string, away: string, forecast: Forecast, line?: Bovada
   return candidates.reduce((best, candidate) => (candidate.edge > best.edge ? candidate : best))
 }
 
+function getPickResult(
+  pick: { label: string; edge: number },
+  forecast: Forecast,
+  grade: NonNullable<Forecast['grade']>,
+  line?: BovadaLine
+): { won: boolean } | null {
+  if (pick.label.endsWith('ML')) {
+    const pickHome = forecast.home_win_probability >= 0.5
+    return { won: pickHome ? grade.official_winner === 'home' : grade.official_winner === 'away' }
+  }
+  if (pick.label.startsWith('Over ') || pick.label.startsWith('Under ')) {
+    const total = line?.total_line
+    if (total == null) return null
+    const actualTotal = grade.official_home_goals + grade.official_away_goals
+    if (pick.label.startsWith('Over ')) {
+      return { won: actualTotal > total }
+    } else {
+      return { won: actualTotal < total }
+    }
+  }
+  return null
+}
+
 function totalLines(forecast: Forecast, line?: BovadaLine) {
   const vegas = line?.total_line ?? null
   return [
@@ -169,7 +192,7 @@ function totalLines(forecast: Forecast, line?: BovadaLine) {
   ]
 }
 
-function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, pick, awayRecord, homeRecord }: {
+function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, pick, isGraded, pickResult, awayRecord, homeRecord }: {
   away: string
   home: string
   startUtc: string
@@ -178,15 +201,38 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   lines: { label: string; value: string }[]
   totals: { label: string; value: string }[]
   pick: { label: string; edge: number } | null
+  isGraded: boolean
+  pickResult: { won: boolean } | null
   awayRecord?: string
   homeRecord?: string
 }) {
+  const grade = forecast.grade
+  const edgeClass = isGraded ? 'graded-edge' : ''
+
+  // Determine status badge
+  let statusBadge = status
+  let statusColorClass = 'text-emerald-400'
+  if (isGraded && grade) {
+    const won = pickResult?.won
+    const so = grade.shootout_decided ? ' · SO' : ''
+    if (won == null) {
+      statusBadge = `GRADED${so}`
+      statusColorClass = 'text-emerald-400'
+    } else if (won) {
+      statusBadge = `✓ GRADED${so}`
+      statusColorClass = 'text-emerald-400'
+    } else {
+      statusBadge = `✗ GRADED${so}`
+      statusColorClass = 'text-zinc-400'
+    }
+  }
+
   return (
-    <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+    <article className={`space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ${edgeClass}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-zinc-100">{away} @ {home}</h3>
         <span className="flex items-center gap-3">
-          {status && <span className="rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide text-emerald-400">{status}</span>}
+          {statusBadge && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${statusColorClass}`}>{statusBadge}</span>}
           <span className="text-sm tabular-nums text-zinc-400">{timeLabel(startUtc)}</span>
         </span>
       </div>
@@ -202,8 +248,24 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
         </div>
         <div className="text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
-          <span className="block text-xl font-semibold text-zinc-100">{pick ? pick.label : 'n/a'}</span>
-          {pick && <span className="block text-xs tabular-nums text-zinc-400">{signed(pick.edge * 100)}% edge</span>}
+          <span className="block text-xl font-semibold text-zinc-100">
+            {pick ? (
+              <>
+                {pick.label}
+                {isGraded && pickResult && (
+                  <span className={`ml-1 ${pickResult.won ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {pickResult.won ? '✓' : '✗'}
+                  </span>
+                )}
+              </>
+            ) : 'n/a'}
+          </span>
+          {pick && (
+            <span className="block text-xs tabular-nums text-zinc-400">
+              {signed(pick.edge * 100)}% edge
+              {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.won ? 'Won' : 'Lost'}</span>}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
@@ -215,17 +277,23 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
 
 function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
+  const pick = modelPick(game.home_team, game.away_team, forecast, line)
+  const isGraded = forecast.grade != null
+  const pickResult = isGraded && pick ? getPickResult(pick, forecast, forecast.grade!, line) : null
   return (
     <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="LOCKED" awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={pick} isGraded={isGraded} pickResult={pickResult} />
   )
 }
 
 function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
+  const pick = modelPick(game.home_team, game.away_team, forecast, line)
+  const isGraded = forecast.grade != null
+  const pickResult = isGraded && pick ? getPickResult(pick, forecast, forecast.grade!, line) : null
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={modelPick(game.home_team, game.away_team, forecast, line)} />
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="UNLOCKED" awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
+      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={pick} isGraded={isGraded} pickResult={pickResult} />
   )
 }
 
@@ -331,9 +399,10 @@ export default function NhlModelTab() {
   if (!payload) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
 
   const games = [...payload.games].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
+  const ungradedGames = games.filter(game => !game.models[model]?.grade)
   const previews = [...(payload.previews || [])].sort((a, b) => a.scheduled_start_utc.localeCompare(b.scheduled_start_utc))
   const items = [
-    ...games.map(game => ({ start: game.scheduled_start_utc, node: <ProjectionCard key={`locked-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} standings={payload.standings} /> })),
+    ...ungradedGames.map(game => ({ start: game.scheduled_start_utc, node: <ProjectionCard key={`locked-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} standings={payload.standings} /> })),
     ...previews.map(game => ({ start: game.scheduled_start_utc, node: <PreviewCard key={`preview-${game.game_id}`} game={game} model={model} line={payload.lines?.[String(game.game_id)]} standings={payload.standings} /> })),
   ].sort((a, b) => a.start.localeCompare(b.start))
   const groups = items.reduce<Record<string, typeof items>>((result, item) => {

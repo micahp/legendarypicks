@@ -399,7 +399,11 @@ def validate_game(game: dict, model_version: str) -> tuple[dt.datetime, dt.datet
 
 
 def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
-    """Insert every per-model forecast in the strict T-90 to T-89 minute window."""
+    """Lock every per-model forecast immediately (no T-90 window).
+
+    The model output is immutable from the moment it is generated, so locking
+    on projection is safe and ensures every projected game can be graded.
+    """
     now = now.astimezone(UTC)
     report = {"feed_games": len(payload["games"]), "due_games": 0, "locked_rows": 0,
               "already_locked": 0, "outside_window": 0, "missed_window": 0,
@@ -414,28 +418,8 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                 raise NHLModelError("forecast feed duplicates game %s" % gid)
             seen_games.add(gid)
             until_start = start - now
-            if until_start <= dt.timedelta(0) or until_start > LOCK_LEAD:
+            if until_start <= dt.timedelta(0):
                 report["outside_window"] += 1
-                continue
-            if dt.timedelta(0) < until_start < LOCK_LEAD - LOCK_WINDOW:
-                newly_missed = 0
-                for model_key in models:
-                    already = con.execute(
-                        "SELECT 1 FROM nhl_game_projections WHERE game_id=? AND model_key=? AND model_version=?",
-                        (gid, model_key, payload["model_version"])).fetchone()
-                    if already:
-                        continue
-                    inserted = con.execute("""INSERT OR IGNORE INTO nhl_projection_lock_events
-                        (game_id,home_team,away_team,model_key,model_version,event_type,
-                         observed_at_utc,scheduled_start_utc,feed_game_sha256)
-                         VALUES (?,?,?,?,?,'missed_t90_window',?,?,?)""",
-                        (gid, game["home_team"], game["away_team"], model_key,
-                         payload["model_version"], iso_utc(now), iso_utc(start),
-                         sha256_json(game))).rowcount
-                    report["missed_model_rows"] += max(inserted, 0)
-                    newly_missed += max(inserted, 0)
-                if newly_missed:
-                    report["missed_window"] += 1
                 continue
             report["due_games"] += 1
             if now >= start:
@@ -516,35 +500,46 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
 
 
 def preview_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
-    """Replace this model version's previews with feed games still more than the T-90 lead before puck drop.
-
-    Previews are display only: never graded, never written to the lock tables, and a game drops out
-    once it is inside its lock window, whether or not the lock job has run.
-    """
+    """Refresh unlocked previews without removing one before its lock row is committed."""
     now = now.astimezone(UTC)
     report = {"feed_games": len(payload["games"]), "preview_rows": 0,
               "already_locked": 0, "not_previewable": 0}
     con.execute("BEGIN IMMEDIATE")
     try:
-        con.execute("DELETE FROM nhl_game_previews WHERE model_version=?", (payload["model_version"],))
         for game in payload["games"]:
             start, _features_as_of, models = validate_game(game, payload["model_version"])
-            if start - now <= LOCK_LEAD:
-                report["not_previewable"] += 1
-                continue
             gid = str(game["game_id"])
+            previewable = start - now > LOCK_LEAD
+            if not previewable:
+                report["not_previewable"] += 1
             for model_key, forecast in models.items():
                 locked = con.execute(
                     "SELECT 1 FROM nhl_game_projections WHERE game_id=? AND model_key=? AND model_version=?",
                     (gid, model_key, payload["model_version"])).fetchone()
                 if locked:
+                    con.execute("DELETE FROM nhl_game_previews WHERE game_id=? AND model_key=? AND model_version=?",
+                                (gid, model_key, payload["model_version"]))
                     report["already_locked"] += 1
+                    continue
+                if not previewable:
                     continue
                 con.execute("""INSERT INTO nhl_game_previews
                     (game_id,season,game_date,scheduled_start_utc,home_team,away_team,model_key,model_version,
                      forecast_id,forecasted_at_utc,previewed_at_utc,home_expected_goals,away_expected_goals,
                      projected_total_goals,home_win_probability,p_over_5_5,p_over_6_5,forecast_output_json)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT(game_id,model_key,model_version) DO UPDATE SET
+                      season=excluded.season, game_date=excluded.game_date,
+                      scheduled_start_utc=excluded.scheduled_start_utc,
+                      home_team=excluded.home_team, away_team=excluded.away_team,
+                      forecast_id=excluded.forecast_id, forecasted_at_utc=excluded.forecasted_at_utc,
+                      previewed_at_utc=excluded.previewed_at_utc,
+                      home_expected_goals=excluded.home_expected_goals,
+                      away_expected_goals=excluded.away_expected_goals,
+                      projected_total_goals=excluded.projected_total_goals,
+                      home_win_probability=excluded.home_win_probability,
+                      p_over_5_5=excluded.p_over_5_5, p_over_6_5=excluded.p_over_6_5,
+                      forecast_output_json=excluded.forecast_output_json""",
                     (gid, int(gid[:4]), str(game.get("game_date") or "")[:10], iso_utc(start),
                      str(game["home_team"]), str(game["away_team"]), model_key, str(payload["model_version"]),
                      str(forecast["forecast_id"]), iso_utc(parse_time(game["forecasted_at_utc"])), iso_utc(now),
@@ -712,18 +707,17 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
 
 
 def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime) -> list[dict]:
-    """Preview rows for unlocked games still more than the T-90 lead before puck drop. Never graded."""
+    """Return every saved unlocked forecast until its immutable lock row exists."""
     if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_game_previews'").fetchone():
         return []
-    cutoff = iso_utc(now.astimezone(UTC) + LOCK_LEAD)
     rows = con.execute("""
       SELECT pv.* FROM nhl_game_previews pv
-      WHERE pv.season=? AND pv.scheduled_start_utc>?
+      WHERE pv.season=?
         AND NOT EXISTS (SELECT 1 FROM nhl_game_projections p
                         WHERE p.game_id=pv.game_id AND p.model_key=pv.model_key
                           AND p.model_version=pv.model_version)
       ORDER BY pv.scheduled_start_utc,pv.game_id,pv.model_key
-    """, (int(season), cutoff)).fetchall()
+    """, (int(season),)).fetchall()
     games: dict[str, dict] = {}
     for row in rows:
         game = games.setdefault(row["game_id"], {
