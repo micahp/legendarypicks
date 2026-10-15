@@ -196,6 +196,24 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
     }
 
 
+def games_by_side(distribution: dict[str, Any]) -> tuple[float, float]:
+    """Expected games won by side A and by side B, conditioned on the match resolving, as expected_games is.
+
+    Every set counts its games for the player who won it and for the player who lost it. A match tiebreak has no
+    game score, so it adds nothing, the same as total_games.
+    """
+    resolved = distribution["p_a"] + distribution["p_b"]
+    games_a = games_b = 0.0
+    for (_, winner, winner_games, loser_games), mass in distribution["set_scores"].items():
+        if winner == "A":
+            games_a += mass * winner_games
+            games_b += mass * loser_games
+        else:
+            games_b += mass * winner_games
+            games_a += mass * loser_games
+    return (games_a / resolved, games_b / resolved) if resolved else (math.nan, math.nan)
+
+
 def _play_game(rng: random.Random, server_is_a: bool, serve_a: float, serve_b: float) -> bool:
     """Point by point. True if A wins the game."""
     a = b = 0
