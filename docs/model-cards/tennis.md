@@ -14,7 +14,21 @@
 
 The screen displays both winner probabilities independently. The incumbent blends global and surface Elo in logit space. The challenger converts pre-match serve/return estimates into point probabilities and integrates tournament rules with the exact match simulator, averaging over either first server. Historical updates use matches dated before the forecast day, so same-day matches do not update one another. Both probabilities are locked and graded separately under the `winner` target, keyed by method version; `probability` remains the incumbent's selected-winner probability for compatibility.
 
-The challenger is for prospective monitoring, not a promoted replacement. In a retrospective 2023–2026 best-of-three comparison, the point-model simulator lost to Elo on both tours: log loss 0.66277 vs 0.64896 on ATP (n=11,777) and 0.64864 vs 0.62100 on WTA (n=13,066). The [frozen match backtest](../TENNIS-MATCH-BACKTEST-2026-10-14.md) reports Brier scores, calibration and limitations. These historical results are not a substitute for the separately locked prospective grades shown in the product.
+### What the winner Brier score measures
+
+For every locked match, the Brier contribution is `(p_home − y_home)²`, where `p_home` is that model's probability that the listed home player wins, and `y_home` is 1 for a home-player win and 0 for an away-player win. The model is built to forecast the match winner as a probability; the reported Brier is the average contribution across eligible completed matches. It scores confidence as well as which player won, so a correct pick alone is not a sufficient grade. Zero is perfect, lower is better, and 0.25 is the 50/50 reference on a balanced set of matches. It is not a score for aces, total games, betting profit, or merely the share of picks that were correct.
+
+Each method's locked probability is scored separately on the same eligible completed matches. The incumbent's home-oriented value is `homeWinProbability`; the challenger uses `homeWinProbabilityPointSim`. The product also reports the historical walk-forward Brier benchmark below. Those archived figures compare a point-model simulator against a standard Elo comparator; they are research evidence, not prospective grades for the live global/surface Elo blend.
+
+No prospective Brier score has yet been recorded for either current live method version. Once there are locked, completed matches, the live comparison will report each method's Brier on the same matches, alongside the 0.25 reference and the paired difference between methods.
+
+| Historical walk-forward winner benchmark, best-of-three 2023–2026 | ATP (n=11,777) | WTA (n=13,066) |
+|---|---:|---:|
+| 50/50 reference | 0.25000 | 0.25000 |
+| Standard Elo comparator | 0.22802 | 0.21596 |
+| Serve/return point-model simulator | 0.23530 | 0.22884 |
+
+The point-model simulator is for prospective monitoring, not a promoted replacement. It scores worse than standard Elo on both tours in this backtest. The [frozen match backtest](../TENNIS-MATCH-BACKTEST-2026-10-14.md) reports the log-loss comparison, calibration and limitations. Prospective scores will be accumulated from locked forecasts by tour and method version; they will not be mixed with this historical benchmark.
 
 The ATP ace and double-fault candidate uses historical event counts, service-point exposure, player shrinkage, and an NB2 distribution. It is an approximate history-exposure implementation, not the researched E2/X-bbin specification. WTA retains the P0 match-rate estimate with an NB2 predictive distribution. These methods are research candidates and have not been validated prospectively. The method version names distinguish them but do not imply a positive evaluation.
 

@@ -24,7 +24,15 @@ The prospective session started at `2026-10-14T08:06:00Z`. Forecasts include fea
 
 The cumulative reporting pipeline is designed to report monthly and cumulative winner Brier, log loss, calibration, team-goal MAE, joint goal negative log likelihood, totals and puck-line Brier, market coverage, and paired game-level bootstrap intervals. A prospective run is useful only when it has enough completed, locked forecasts; a forecast count alone is not predictive validation.
 
-At the current repository snapshot, the forecast ledger contains 39 model rows across 13 games, and 12 market-capture rows. There is not yet a cumulative result report or a collected official-results ledger. No candidate has prospective performance evidence sufficient for adoption. `B7_elo_xg_poisson` is the display default, not a validated winner.
+For the binary full-game winner target, Brier is the mean squared difference between predicted home-win probability and the observed result (1 for a home win, 0 for an away win). Zero is perfect and lower is better. A 50/50 forecast has Brier 0.25 on a balanced sample. The primary benchmark will be the contemporaneous, de-vigged market probability on the same games; 0.25 is the simple reference point.
+
+| Candidate | Prospective winner Brier | Benchmark and status |
+|---|---:|---|
+| `B3_elo` | Not yet measurable (0 graded results) | Compare with 0.2500 50/50 reference and same-game Kalshi market Brier once results are collected |
+| `B5_xg_poisson` | Not yet measurable (0 graded results) | Same benchmark |
+| `B7_elo_xg_poisson` | Not yet measurable (0 graded results) | Same benchmark; current display default, not a validated winner |
+
+At this repository snapshot, the ledger contains 39 model rows across 13 games and 12 market-capture rows. No official results are recorded, so there is no observed Brier score to report yet. No candidate has prospective performance evidence sufficient for adoption.
 
 ## Market comparison and product pick
 

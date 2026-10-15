@@ -20,13 +20,30 @@ The Elo stack combines the frozen v1 margin with an Elo difference and home-fiel
 
 The game model outputs projected home and away points, margin, total, and home-win probability. The grader records winner-probability Brier and log loss, margin and total absolute errors, and ATS result against the market line captured with the lock. Ties are handled separately from decisive win/loss outcomes. Market comparisons use the captured line, not a subsequently updated schedule value.
 
-The frozen v1 configuration was selected on 2024 and evaluated once on the 2025 holdout: 255 games, with one tie excluded from the win Brier. The 2025 v1 Brier was 0.2288; the closing market Brier was 0.2137. V1 beat constant-probability references in that holdout but did not match the market. Its mean absolute margin error was 10.67 points versus 9.97 for the spread, and total error was 10.61 versus 10.17 for the closing total. The sample is one season and roughly 255 games, so differences are uncertain.
+For a binary winner target, Brier is the mean squared difference between predicted home-win probability and the observed outcome (1 for a home win, 0 for an away win). Zero is perfect; lower is better. A 50/50 forecast scores 0.25 on a balanced outcome set. The captured, de-vigged market probability is the stronger practical benchmark.
 
-The separate Elo research report found Brier 0.2197 for v1+Elo versus 0.2229 for recalibrated v1 over 3,158 games from 2011–2023. The 2024 and 2025 point differences were also favorable to Elo in that report. This is retrospective evidence from a selected historical comparison, not prospective confirmation, and does not change the operational default by itself. The EPA challenger failed its adoption gate: on the 2025 holdout its Brier was 0.2291 versus 0.2288 for v1, with a paired interval spanning zero.
+| Model and evaluation | Brier (n) | Reference Brier | Readout |
+|---|---:|---:|---|
+| `nfl-v1`, 2025 holdout | 0.2288 (255) | 0.2500 50/50; 0.2497 constant 57% home; 0.2137 closing market | Beats naive references; worse than market |
+| `nfl-v2` EPA, 2025 second look | 0.2291 (255) | 0.2288 `nfl-v1` on the same games | No improvement; paired difference +0.0003, 95% CI [−0.0083, +0.0087] |
+| v1 + Elo research stack, 2011–2023 | 0.2197 (3,158) | 0.2229 recalibrated v1; 0.2104 closing market | Retrospective improvement over v1; still worse than market |
+
+The frozen v1 configuration was selected on 2024 and evaluated once on the 2025 holdout. Its mean absolute margin error was 10.67 points versus 9.97 for the spread, and total error was 10.61 versus 10.17 for the closing total. The sample is one season and roughly 255 games, so differences are uncertain. The Elo comparison is retrospective, not prospective confirmation, and does not change the operational default. The EPA challenger failed its adoption gate.
 
 ## Playoff odds
 
 The separate team playoff-odds job fits regular-season offense and defense ratings, then simulates remaining games and applies NFL seeding and tiebreaking rules. It reports playoff, division, bye, seed, and wins probabilities. The current default score method is `placeholder-split-40` (`nfl-playoff-odds-v1.2`). A historical-score sampling option (`nfl-playoff-odds-v1.3`) passed most distribution checks but failed the pre-registered across-team scoring-spread gate, so it is not the default. Reported playoff and division probabilities were close between methods and within simulation noise; the season-scoring spread failure remains material.
+
+The playoff-probability Brier benchmark is 0.246 for the naive 14-of-32 team playoff-rate forecast. In the 2020–2025 historical comparison (384 team forecasts), the results were:
+
+| Simulation method and seed | Playoff Brier | Division Brier |
+|---|---:|---:|
+| Placeholder A | 0.13262 | 0.12121 |
+| Placeholder B | 0.13319 | 0.12072 |
+| Historical scores A | 0.13277 | 0.12135 |
+| Historical scores B | 0.13190 | 0.12142 |
+
+The seed-level differences were within simulation noise. This result evaluates playoff odds, not weekly game-winner forecasts.
 
 ## Intended use and limits
 
