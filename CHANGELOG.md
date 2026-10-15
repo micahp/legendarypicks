@@ -1,3 +1,38 @@
+## v10.0.1
+
+Items already listed under v10.0.0 are not repeated here.
+
+### NHL model
+
+- The model pick follows a spread gate. If the underdog's spread edge shows over 1.0 on the card, the pick is that underdog +1.5 to cover. Otherwise, if Vegas has the model's favorite favored by 1.5, the pick is that favorite to win. Otherwise the pick is a total on the 5.5 or 6.5 line, chosen by the model's projected total.
+- The spread edge names the team it is on, for example "1.2 pts (UTA)".
+- Graded results grade the pick's own side.
+- Graded games leave the projections page and stay on the record.
+- The forecast pipeline runs every 30 minutes, and the lock timer every 15 minutes.
+
+### Tennis
+
+- Tennis model tab with Bovada moneyline and total beside each match.
+- Daily tennis projections are precomputed every six hours and stored per day.
+
+### NFL model
+
+- Previews default to the upcoming week.
+
+### Homepage
+
+- The Watch tab is hidden from the site navigation.
+
+### UFC
+
+- A published fight with no strike counts is unknown, not a failed plan.
+- Temporary: the settled-grading baseline for UFC props on picks.db is 73.0, down from 74.4. 559 fight-log rows for September and October 2026 events are not graded yet. Restore 74.4 once grading catches up.
+
+### Backend
+
+- pytz added to the backend image.
+- The backend image skips host data and mounts the research feed.
+
 # Changelog
 
 ## v10.0.0
