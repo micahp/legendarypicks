@@ -193,7 +193,7 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(game["models"]["B3_elo"]["grade"]["official_home_goals"], 3)
         self.assertEqual(game["models"]["B3_elo"]["grade"]["statistical_home_goals"], 2)
 
-    def test_preview_is_display_only_and_never_shows_a_locked_or_started_game(self):
+    def test_unlocked_projection_stays_visible_after_lock_cutoff_until_lock_exists(self):
         early = dt.datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
         report = preview_feed(self.con, feed(), early)
         self.assertEqual((report["preview_rows"], report["not_previewable"]), (3, 0))
@@ -203,11 +203,18 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(set(previews[0]["models"]), set(MODEL_KEYS))
         self.assertTrue(all(model["preview"] for model in previews[0]["models"].values()))
         self.assertEqual(export_locked(self.con, 2026)["games"], [])
+        during_game = dt.datetime(2026, 10, 14, 23, 45, tzinfo=UTC)
+        self.assertEqual(len(export_previews(self.con, 2026, during_game)), 1)
+
+        inside = dt.datetime(2026, 10, 14, 16, 45, tzinfo=UTC)
+        refresh = preview_feed(self.con, feed(), inside)
+        self.assertEqual(refresh["not_previewable"], 1)
+        self.assertEqual(len(export_previews(self.con, 2026, inside)), 1)
+
         lock_feed(self.con, feed(), LOCK_AT)
         self.assertEqual(export_previews(self.con, 2026, early), [])
         self.assertEqual(len(export_locked(self.con, 2026)["games"]), 1)
-        inside = dt.datetime(2026, 10, 14, 16, 45, tzinfo=UTC)
-        self.assertEqual(preview_feed(self.con, feed(), inside)["not_previewable"], 1)
+        self.assertEqual(preview_feed(self.con, feed(), inside)["already_locked"], 3)
         self.assertEqual(export_previews(self.con, 2026, inside), [])
 
     def test_latest_bovada_snapshot_wins_and_parser_reads_full_game_lines(self):
