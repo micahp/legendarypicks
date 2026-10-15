@@ -222,6 +222,12 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
             "league TEXT NOT NULL,game_date TEXT NOT NULL,game_id TEXT NOT NULL,start_time TEXT NOT NULL,"
             "locked_at TEXT NOT NULL,projection TEXT NOT NULL,model_version TEXT,PRIMARY KEY(league,game_id))"
         )
+        con.execute(
+            "CREATE TABLE IF NOT EXISTS tennis_model_grades("
+            "league TEXT NOT NULL CHECK(league IN ('atp','wta')),game_id TEXT NOT NULL,"
+            "winner TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),total_games_error REAL,"
+            "graded_at TEXT NOT NULL,PRIMARY KEY(league,game_id))"
+        )
         from tennis_bovada_odds import bovada_odds
         now_utc = dt.datetime.now(dt.timezone.utc)
         for league in tours:
@@ -230,6 +236,13 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                 "WHERE league=? AND game_date BETWEEN ? AND ? ORDER BY start_time,game_id",
                 (league, date_from, date_through),
             ).fetchall()
+            grades = {
+                str(grade["game_id"]): dict(grade)
+                for grade in con.execute(
+                    "SELECT game_id,winner,total_games_error FROM tennis_model_grades WHERE league=?",
+                    (league,),
+                ).fetchall()
+            }
             match_stats = {
                 str(stat["game_id"]): dict(stat)
                 for stat in con.execute(
@@ -368,15 +381,13 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                 match["projection"] = projection
                 match["lockedAt"] = lock["locked_at"] if lock else None
                 match["preview"] = bool(projection and not lock)
-                result = match["result"]
+                grade = grades.get(match["gameId"])
                 match["grades"] = ({
-                    "winner": ("correct" if projection.get("projectedWinner") == result.get("winner") else "incorrect")
-                    if projection and projection.get("projectedWinner") and result and result.get("winner") else None,
+                    "winner": grade["winner"],
                     "homeAcesError": None,
                     "awayAcesError": None,
-                    "totalGamesError": abs(projection["totalGames"] - result["totalGames"])
-                    if projection and projection.get("totalGames") is not None and result and result.get("totalGames") is not None else None,
-                } if projection else None)
+                    "totalGamesError": grade["total_games_error"],
+                } if grade else None)
                 # IDs are needed only while calculating; keep the public match payload tidy.
                 match.pop("homeAthleteId", None)
                 match.pop("awayAthleteId", None)
