@@ -95,7 +95,7 @@ function fairPrice(probability: number) {
   return price > 0 ? `+${price}` : `${price}`
 }
 
-function MatchCard({ match }: { match: ModelMatch }) {
+function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boolean }) {
   const projection = match.projection
   const result = match.result
   const status = match.status === 'final' ? 'Final' : match.status === 'live' ? 'In progress' : null
@@ -173,11 +173,13 @@ function MatchCard({ match }: { match: ModelMatch }) {
             <p className="text-zinc-200">{match.home} {number(projection.homeAces)}</p>
             <p className="text-zinc-200">{match.away} {number(projection.awayAces)}</p>
             </>}
-            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
-            {result?.homeAces != null && result.awayAces != null ? <>
-              <p className="text-zinc-200">{match.home} {result.homeAces}</p>
-              <p className="text-zinc-200">{match.away} {result.awayAces}</p>
-            </> : <p className="text-zinc-200">n/a</p>}
+            {showActuals && <>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
+              {result?.homeAces != null && result.awayAces != null ? <>
+                <p className="text-zinc-200">{match.home} {result.homeAces}</p>
+                <p className="text-zinc-200">{match.away} {result.awayAces}</p>
+              </> : <p className="text-zinc-200">n/a</p>}
+            </>}
             {projection && <>
               <div className="mt-1">
                 <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">n/a</b></p>
@@ -193,8 +195,10 @@ function MatchCard({ match }: { match: ModelMatch }) {
             {projection.totalGamesLabel && <p className="text-xs text-amber-400">{projection.totalGamesLabel}</p>}
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
             </>}
-            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
-            <p className="text-zinc-200">{result ? `${number(result.totalGames, 0)} games` : 'n/a'}</p>
+            {showActuals && <>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
+              <p className="text-zinc-200">{result ? `${number(result.totalGames, 0)} games` : 'n/a'}</p>
+            </>}
             {projection && <>
               <div className="mt-1">
                 <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">{totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</b></p>
@@ -280,7 +284,7 @@ export default function TennisModelTab({ tour }: {
           : matches.filter(match => match.status === 'final')
         return visible.length ? (
           <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-            {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} />)}
+            {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} showActuals={view === 'record'} />)}
           </section>
         ) : <p className="text-sm text-zinc-400">{view === 'projections' ? 'No ungraded projections are available.' : 'No completed matches for this day.'}</p>
       })()}
