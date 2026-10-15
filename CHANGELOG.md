@@ -11,6 +11,14 @@
 - The esports hub opens on Live & Upcoming, with the EWC tournament center on its own tab.
 - EWC title match results support status filters and pagination.
 
+### Tennis model
+
+- Keep actual aces and total games on Record cards; Projections shows forecasts without actual results.
+
+### Props
+
+- Use Material icons for props tabs, including the performance tab.
+
 ## v10.0.2
 
 ### Tennis model
