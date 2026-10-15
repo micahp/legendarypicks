@@ -230,6 +230,14 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                 "WHERE league=? AND game_date BETWEEN ? AND ? ORDER BY start_time,game_id",
                 (league, date_from, date_through),
             ).fetchall()
+            match_stats = {
+                str(stat["game_id"]): dict(stat)
+                for stat in con.execute(
+                    "SELECT game_id,home_aces,away_aces,source_url FROM tennis_match_stats_overrides "
+                    "WHERE league=? AND game_date BETWEEN ? AND ?",
+                    (league, date_from, date_through),
+                ).fetchall()
+            }
             slate = []
             for row in rows:
                 try:
@@ -268,6 +276,16 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                 winner = (home.get("name") if hscore is not None and ascore is not None and hscore > ascore
                           else away.get("name") if hscore is not None and ascore is not None and ascore > hscore
                           else None)
+                # Retirements can have no match-level winner score even when
+                # the persisted set score identifies the player advancing.
+                if winner is None and status == "post" and "retir" in str(game.get("status") or "").lower():
+                    try:
+                        home_games = sum(int(value) for value in home.get("sets") or [])
+                        away_games = sum(int(value) for value in away.get("sets") or [])
+                        if home_games != away_games:
+                            winner = home.get("name") if home_games > away_games else away.get("name")
+                    except (TypeError, ValueError):
+                        pass
                 set_breakdown = None
                 if status == "post" and hs and len(hs) == len(aws):
                     set_breakdown = {
@@ -285,7 +303,10 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0):
                     "homeAthleteId": home_id,
                     "awayAthleteId": away_id,
                     "projection": None,
-                    "result": {"winner": winner, "homeAces": None, "awayAces": None,
+                    "result": {"winner": winner,
+                               "homeAces": match_stats.get(str(row["game_id"]), {}).get("home_aces"),
+                               "awayAces": match_stats.get(str(row["game_id"]), {}).get("away_aces"),
+                               "acesSourceUrl": match_stats.get(str(row["game_id"]), {}).get("source_url"),
                                "totalGames": total_games,
                                "sets": set_breakdown} if status == "post" else None,
                     "identity": {"home": spine.get(home_id), "away": spine.get(away_id)},

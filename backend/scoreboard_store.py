@@ -93,6 +93,17 @@ CREATE TABLE IF NOT EXISTS tennis_model_locks(
   model_version TEXT,
   PRIMARY KEY(league, game_id)
 );
+CREATE TABLE IF NOT EXISTS tennis_match_stats_overrides(
+  league       TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_date    TEXT NOT NULL,
+  game_id      TEXT NOT NULL,
+  home_aces    INTEGER NOT NULL,
+  away_aces    INTEGER NOT NULL,
+  source       TEXT NOT NULL,
+  source_url   TEXT NOT NULL,
+  verified_at  TEXT NOT NULL,
+  PRIMARY KEY(league, game_date, game_id)
+);
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   league     TEXT NOT NULL,
   game_date  TEXT NOT NULL,
