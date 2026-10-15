@@ -19,16 +19,16 @@ type TitleOption = {
 
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
-type HubTab = 'ewc' | 'live' | 'results' | 'games' | 'picks'
+type HubTab = 'live' | 'results' | 'games' | 'picks' | 'ewc'
 
 const POLL_MS = 10_000
 
 const TABS: { key: HubTab; label: string }[] = [
-  { key: 'ewc', label: 'EWC' },
   { key: 'live', label: 'Live & Upcoming' },
   { key: 'results', label: 'Results' },
   { key: 'games', label: 'Games' },
   { key: 'picks', label: 'Picks' },
+  { key: 'ewc', label: 'EWC' },
 ]
 
 function titleSlug(label: string): string {
@@ -50,7 +50,7 @@ function scheduleDateLabel(firstDate: string | null, lastDate: string | null): s
  * day-grouped schedule, and results — plus per-title context and filtering. The live board
  * page /esports stays the dedicated live/picks surface; nothing here duplicates collectors. */
 export default function EsportsLeaguePage() {
-  const [activeTab, setActiveTab] = useState<HubTab>('ewc')
+  const [activeTab, setActiveTab] = useState<HubTab>('live')
   const [titleFilter, setTitleFilter] = useState<string | null>(null)
 
   const [eventData, setEventData] = useState<EwcEventData | null>(null)
@@ -180,7 +180,6 @@ export default function EsportsLeaguePage() {
       <div className="space-y-8">
         {/* League-style header */}
         <header className="space-y-2">
-          <Link href="/leagues" className="text-xs font-semibold text-zinc-500 transition-colors hover:text-zinc-300">Leagues</Link>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-50">Esports</h1>
@@ -194,7 +193,6 @@ export default function EsportsLeaguePage() {
               Live esports →
             </Link>
           </div>
-          <p className="max-w-2xl text-sm text-zinc-500">Tournament center, the full esports board, per-title desks, and picks — in one place.</p>
         </header>
 
         {/* In-page navigation — unmistakable, scrolls on mobile */}
@@ -243,13 +241,6 @@ export default function EsportsLeaguePage() {
                 <div className="h-6 w-56 rounded bg-zinc-800" />
                 <div className="h-32 rounded-xl bg-zinc-900/50" />
               </div>
-            ) : !ewcHasMatches ? (
-              <div className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
-                <Eyebrow>Esports World Cup 2026</Eyebrow>
-                <p className="mt-3 text-sm text-zinc-500">
-                  No active EWC 2026 matches right now. The tournament center returns automatically when the next event goes live.
-                </p>
-              </div>
             ) : (
               <EwcModule eventData={eventData} host={host} standings={standings}
                          standingsLimit={standingsLimit} onExpandStandings={() => setStandingsLimit(10)}
@@ -260,7 +251,7 @@ export default function EsportsLeaguePage() {
 
         {activeTab === 'live' && (
           <section className="space-y-5">
-            <SectionHeader live eyebrow="Live & Upcoming" title="All esports, live and coming up" meta={boardLive.length ? `${boardLive.length} live` : undefined} />
+
             {upcomingError ? (
               <div className="flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 <span>Couldn&apos;t load the esports board.</span>
