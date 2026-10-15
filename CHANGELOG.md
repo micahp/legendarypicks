@@ -1,3 +1,16 @@
+## v10.0.3
+
+### UFC props
+
+- Settlement retries continue for 96 hours after a fight, including reopening manual records still inside that window.
+- DWCS props can settle supported method markets from the cached scoreboard, and significant-strike totals from UFCalendar when available.
+- Release coverage measures settlement only for confirmed finished games and matches.
+
+### Esports
+
+- The esports hub opens on Live & Upcoming, with the EWC tournament center on its own tab.
+- EWC title match results support status filters and pagination.
+
 ## v10.0.2
 
 ### Tennis model
