@@ -104,6 +104,14 @@ CREATE TABLE IF NOT EXISTS tennis_match_stats_overrides(
   verified_at  TEXT NOT NULL,
   PRIMARY KEY(league, game_date, game_id)
 );
+CREATE TABLE IF NOT EXISTS tennis_model_grades(
+  league             TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_id            TEXT NOT NULL,
+  winner             TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),
+  total_games_error  REAL,
+  graded_at          TEXT NOT NULL,
+  PRIMARY KEY(league, game_id)
+);
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   league     TEXT NOT NULL,
   game_date  TEXT NOT NULL,

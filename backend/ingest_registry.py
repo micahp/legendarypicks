@@ -113,6 +113,21 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "tennis_model_grading",
+        "cadence_min": 30,
+        "timeout_sec": 900,
+        "host_lock": "tennis_model",
+        "steps": [["grade_tennis_model.py", "--days", "3"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_model_grading' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "tennis model grading job",
+        }],
+    },
+    {
         "id": "settlement",
         # Every 30 minutes, ALL DAY. /etc/cron.d/legendarypicks-pipeline ran settlement at
         # :23 and :53 during hours 19-23 and 0-3 only, so nothing settled between 03:53 and
