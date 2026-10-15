@@ -216,6 +216,7 @@ export function EwcModule({ eventData, host, standings, standingsLimit, onExpand
   const today = localDateKey(now)
   const todaysUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) === today)
   const laterUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) !== today)
+  const tournamentOver = live.length === 0 && upcoming.length === 0
   const rail = (
     <ClubStandingsRail standings={standings} onExpand={onExpandStandings}
                        expanded={standingsLimit >= 10} loading={standingsLoading} />
@@ -223,38 +224,11 @@ export function EwcModule({ eventData, host, standings, standingsLimit, onExpand
   return (
     <section className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
       {/* One subtle plane for the EWC focus; no border, no shadow, no nested card walls. */}
-      <SectionHeader eyebrow={eventData.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : 'Tournament center'} live={live.length > 0} />
+      <SectionHeader eyebrow={eventData.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : tournamentOver ? 'Final' : 'Tournament center'} live={live.length > 0} />
 
-      <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-8">
-          {featured ? (
-            <div className="space-y-3">
-              <LiveCard key={featured.key} m={featured.match} host={host} featured
-                        upNext={featured.upNext} watchOverride={featured.watch}
-                        startingSoon={featured.state === 'starting'}
-                        broadcastKey={featured.key} broadcastState={featured.state} />
-              {rest.length ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {rest.map((b) => (
-                    <LiveCard key={b.key} m={b.match} host={host} upNext={b.upNext}
-                              watchOverride={b.watch} startingSoon={b.state === 'starting'}
-                              broadcastKey={b.key} broadcastState={b.state} />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {upcoming.length ? (
-            <div className="space-y-3">
-              <SectionHeader eyebrow="Schedule" title={todaysUpcoming.length ? 'Today across titles' : 'Next EWC matches'} />
-              <div className="space-y-1">
-                {todaysUpcoming.length ? todaysUpcoming.map((m, i) => <EwcMatchRow key={i} m={m} />)
-                  : laterUpcoming.slice(0, 5).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-              </div>
-            </div>
-          ) : null}
-
+      {tournamentOver ? (
+        <div className="mt-5 space-y-8">
+          <div className="min-w-0">{rail}</div>
           {completed.length ? (
             <div className="space-y-3">
               <SectionHeader eyebrow="Results" title="EWC results" />
@@ -264,9 +238,50 @@ export function EwcModule({ eventData, host, standings, standingsLimit, onExpand
             </div>
           ) : null}
         </div>
+      ) : (
+        <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0 space-y-8">
+            {featured ? (
+              <div className="space-y-3">
+                <LiveCard key={featured.key} m={featured.match} host={host} featured
+                          upNext={featured.upNext} watchOverride={featured.watch}
+                          startingSoon={featured.state === 'starting'}
+                          broadcastKey={featured.key} broadcastState={featured.state} />
+                {rest.length ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {rest.map((b) => (
+                      <LiveCard key={b.key} m={b.match} host={host} upNext={b.upNext}
+                                watchOverride={b.watch} startingSoon={b.state === 'starting'}
+                                broadcastKey={b.key} broadcastState={b.state} />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
-        <aside className="min-w-0">{rail}</aside>
-      </div>
+            {upcoming.length ? (
+              <div className="space-y-3">
+                <SectionHeader eyebrow="Schedule" title={todaysUpcoming.length ? 'Today across titles' : 'Next EWC matches'} />
+                <div className="space-y-1">
+                  {todaysUpcoming.length ? todaysUpcoming.map((m, i) => <EwcMatchRow key={i} m={m} />)
+                    : laterUpcoming.slice(0, 5).map((m, i) => <EwcMatchRow key={i} m={m} />)}
+                </div>
+              </div>
+            ) : null}
+
+            {completed.length ? (
+              <div className="space-y-3">
+                <SectionHeader eyebrow="Results" title="EWC results" />
+                <div className="space-y-1">
+                  {completed.slice(0, 8).map((m, i) => <EwcMatchRow key={i} m={m} />)}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <aside className="min-w-0">{rail}</aside>
+        </div>
+      )}
     </section>
   )
 }
