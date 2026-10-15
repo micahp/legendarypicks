@@ -6,6 +6,10 @@
 - Record cards show the score, actual aces and total games alongside the model and Vegas lines.
 - The backend stores grades for locked pre-match forecasts after scoreboard results go final. A 30-minute job handles both dev and prod, and scheduled projection jobs serialize per database.
 
+### UFC props
+
+- DWCS fight-time props can settle from ESPN's completed round and clock when UFCStats has no fighter log; other missing stats remain pending.
+
 ## v10.0.1
 
 Items already listed under v10.0.0 are not repeated here.

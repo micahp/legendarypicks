@@ -663,6 +663,11 @@ def _games_from_payload(league, date, d):
                     "event_id": str(event.get("id") or ""),
                     "date": comp.get("date") or event_date,
                     "state": st.get("state"),
+                    # A postponed competition can also have state="post".
+                    # Keep ESPN's completion bit in the durable snapshot so
+                    # settlement can distinguish a completed bout from one
+                    # that never took place.
+                    "completed": st.get("completed") is True,
                     "status": st.get("description") or weight_class or "",
                     "period": status.get("period"),
                     "clock": status.get("displayClock"),
