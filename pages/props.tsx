@@ -520,7 +520,10 @@ function PerformanceTab({ query, setQuery, selectedPlayer, setSelectedPlayer }: 
       )}
 
       {!selectedPlayer ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">Search for a player to see their hit rates and advanced metrics.</div>
+        <div className="text-center py-16 text-zinc-500 text-sm space-y-2">
+          <div aria-hidden="true" className="material-symbols-outlined text-4xl leading-none">monitoring</div>
+          <p>Search for a player to see their hit rates and advanced metrics.</p>
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Advanced metrics from Statcast (MLB only for now) */}
@@ -790,7 +793,7 @@ function MatchupsTab({ query, setQuery, player, setPlayer }: {
     <div className="space-y-4">
       <PlayerSearch query={query} setQuery={setQuery} players={players} onSelect={p => { setPlayer(p); setQuery(p.name); setPlayers([]) }} />
       {!player ? (
-        <div className="text-center py-16 space-y-2"><div aria-hidden="true" className="material-symbols-outlined text-4xl leading-none">stadium</div>
+        <div className="text-center py-16 space-y-2"><div aria-hidden="true" className="material-symbols-outlined text-4xl leading-none text-zinc-500">stadium</div>
           <p className="text-zinc-500 text-sm max-w-md mx-auto">Search a player to see how they perform split by opponent this season.</p></div>
       ) : loading ? <Skeleton lines={6} /> : !data?.matchups?.length ? (
         <div className="text-center py-12 text-zinc-500 text-sm">No opponent splits yet — needs game logs with opponents.</div>
@@ -897,7 +900,7 @@ function ModelTab({ query, setQuery, player, setPlayer }: {
 
       {!player ? (
         <div className="text-center py-16 space-y-2">
-          <div aria-hidden="true" className="material-symbols-outlined text-4xl leading-none">neurology</div>
+          <div aria-hidden="true" className="material-symbols-outlined text-4xl leading-none text-zinc-500">neurology</div>
           <p className="text-zinc-500 text-sm max-w-md mx-auto">Search a player for projections built from their per-game logs — recency-weighted expected value with floor / median / ceiling, plus hit rate vs any line.</p>
         </div>
       ) : loading ? <Skeleton lines={6} /> : !data || keys.length === 0 ? (
@@ -1064,7 +1067,7 @@ export default function PropsPage() {
         <meta name="description" content="Player prop lines, hit rates, matchup analysis, and model projections" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=neurology,stadium"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=monitoring,neurology,stadium"
         />
       </Head>
 
