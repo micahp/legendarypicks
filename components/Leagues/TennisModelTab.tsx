@@ -18,6 +18,7 @@ interface ModelResult {
   winner: string | null
   homeAces: number | null
   awayAces: number | null
+  acesSourceUrl?: string | null
   totalGames: number | null
   sets: { home: number[]; away: number[] } | null
 }
@@ -128,71 +129,81 @@ function MatchCard({ match }: { match: ModelMatch }) {
           <p className="text-xs text-zinc-500">{[match.tour.toUpperCase(), match.event, match.round].filter(Boolean).join(' · ')}</p>
         </div>
         <p className="text-sm tabular-nums text-zinc-400">
-          {status ?? (match.startTime ? new Date(match.startTime).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : 'Start time unknown')}
+          {status ?? (match.startTime ? new Date(match.startTime).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Start time unknown')}
           {match.status === 'scheduled' && match.lockedAt && <span className="ml-2 text-xs text-zinc-500">Locked</span>}
         </p>
       </header>
 
-      {!projection ? (
-        <p className="text-sm text-amber-400">No projection is available for this match.</p>
-      ) : (
-        <div className="space-y-2">
-        {projection.unavailableReason && <p className="text-xs text-amber-400">{projection.unavailableReason}</p>}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Match winner</p>
+      {projection?.unavailableReason && <p className="text-xs text-amber-400">{projection.unavailableReason}</p>}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Match winner</p>
+          {projection ? <>
             <p className="text-zinc-200">{projection.projectedWinner ?? 'n/a'}{projection.probability == null ? '' : ` · ${Math.round(projection.probability * 100)}%`}</p>
-            {match.grades?.winner && <p className={match.grades.winner === 'correct' ? 'text-emerald-400' : 'text-rose-400'}>Pick {match.grades.winner}</p>}
-            <p className="text-xs tabular-nums text-zinc-500">Vegas line {price(pickPrice)}</p>
-            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.probability == null ? 'n/a' : fairPrice(projection.probability)}</p>
-            <p className="text-xs tabular-nums text-zinc-500">Edge {winnerEdgeLabel}</p>
-          </div>
-          <div>
+            {match.grades?.winner && <p className={match.grades.winner === 'correct' ? 'text-emerald-400' : 'text-rose-400'}>
+              <span aria-hidden="true">{match.grades.winner === 'correct' ? '✓' : '×'}</span> Pick {match.grades.winner}
+            </p>}
+            <div className="mt-1">
+              <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">{price(pickPrice)}</b></p>
+              <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{projection.probability == null ? 'n/a' : fairPrice(projection.probability)}</b></p>
+              <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{winnerEdgeLabel}</b></p>
+            </div>
+          </> : <p className="text-amber-400">No projection is available.</p>}
+        </div>
+        {result && <div>
+          {result.sets && result.sets.home.length > 0 && (
+            <table className="mt-1 text-xs tabular-nums text-zinc-400">
+              <thead><tr><th className="pr-5 text-left font-semibold uppercase tracking-wide text-zinc-500">Set</th>
+                {result.sets.home.map((_, index) => <th key={index} className="px-2 pb-1 text-center font-medium text-zinc-500">{index + 1}</th>)}
+              </tr></thead>
+              <tbody>
+                <tr><th className="pr-5 text-left font-medium">{match.home}</th>
+                  {result.sets.home.map((games, index) => <td key={index} className="px-2 py-0.5 text-center text-zinc-200">{games}</td>)}
+                </tr>
+                <tr><th className="pr-5 text-left font-medium">{match.away}</th>
+                  {result.sets.away.map((games, index) => <td key={index} className="px-2 py-0.5 text-center text-zinc-200">{games}</td>)}
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>}
+        <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Aces</p>
-            <p className="text-zinc-200">{match.home} {number(projection.homeAces)} · {match.away} {number(projection.awayAces)}</p>
-            {match.grades && (match.grades.homeAcesError != null || match.grades.awayAcesError != null) && (
-              <p className="text-xs text-zinc-500">Absolute error {number(match.grades.homeAcesError)} / {number(match.grades.awayAcesError)}</p>
-            )}
-            <p className="text-xs text-zinc-500">Vegas line n/a</p>
-            <p className="text-xs tabular-nums text-zinc-500">Model line {number(projection.homeAces)} / {number(projection.awayAces)}</p>
-            <p className="text-xs text-zinc-500">Edge n/a</p>
-          </div>
-          <div>
+            {projection && <>
+            <p className="text-zinc-200">{match.home} {number(projection.homeAces)}</p>
+            <p className="text-zinc-200">{match.away} {number(projection.awayAces)}</p>
+            </>}
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
+            {result?.homeAces != null && result.awayAces != null ? <>
+              <p className="text-zinc-200">{match.home} {result.homeAces}</p>
+              <p className="text-zinc-200">{match.away} {result.awayAces}</p>
+            </> : <p className="text-zinc-200">n/a</p>}
+            {projection && <>
+              <div className="mt-1">
+                <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">n/a</b></p>
+                <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{number(projection.homeAces)} / {number(projection.awayAces)}</b></p>
+                <p className="text-xs text-zinc-500">Edge <b className="font-normal text-white">n/a</b></p>
+              </div>
+            </>}
+        </div>
+        <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Total games</p>
+            {projection && <>
             <p className="text-zinc-200">{number(projection.totalGames)}{projection.totalGamesInterval ? ` · ${number(projection.totalGamesInterval[0], 0)}–${number(projection.totalGamesInterval[1], 0)}` : ''}</p>
             {projection.totalGamesLabel && <p className="text-xs text-amber-400">{projection.totalGamesLabel}</p>}
             {match.grades?.totalGamesError != null && <p className="text-xs text-zinc-500">Absolute error {number(match.grades.totalGamesError)} games</p>}
-            <p className="text-xs tabular-nums text-zinc-500">Vegas line {totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</p>
-            <p className="text-xs tabular-nums text-zinc-500">Model line {projection.totalGames == null ? 'n/a' : totalSide && totalLine ? `${totalSide === 'over' ? 'Over' : 'Under'} ${totalLine.line} · ${number(projection.totalGames)} games` : `${number(projection.totalGames)} games`}</p>
-            <p className="text-xs tabular-nums text-zinc-500">Edge {totalEdgeLabel}</p>
-          </div>
+            </>}
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Actual</p>
+            <p className="text-zinc-200">{result ? `${number(result.totalGames, 0)} games` : 'n/a'}</p>
+            {projection && <>
+              <div className="mt-1">
+                <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">{totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</b></p>
+                <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{projection.totalGames == null ? 'n/a' : totalSide && totalLine ? `${totalSide === 'over' ? 'Over' : 'Under'} ${totalLine.line} · ${number(projection.totalGames)} games` : `${number(projection.totalGames)} games`}</b></p>
+                <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{totalEdgeLabel}</b></p>
+              </div>
+            </>}
         </div>
-        </div>
-      )}
-
-      {result && <div className="space-y-2 border-t border-zinc-800 pt-3">
-        <p className="text-xs text-zinc-400">
-          Final: {result.winner ?? 'winner unavailable'} · {number(result.totalGames, 0)} games
-        </p>
-        {result.sets && result.sets.home.length > 0 && (
-          <table className="text-xs tabular-nums text-zinc-400">
-            <thead><tr><th className="pr-5 text-left font-semibold uppercase tracking-wide text-zinc-500">Set</th>
-              {result.sets.home.map((_, index) => <th key={index} className="px-2 pb-1 text-center font-medium text-zinc-500">{index + 1}</th>)}
-            </tr></thead>
-            <tbody>
-              <tr><th className="pr-5 text-left font-medium">{match.home}</th>
-                {result.sets.home.map((games, index) => <td key={index} className="px-2 py-0.5 text-center text-zinc-200">{games}</td>)}
-              </tr>
-              <tr><th className="pr-5 text-left font-medium">{match.away}</th>
-                {result.sets.away.map((games, index) => <td key={index} className="px-2 py-0.5 text-center text-zinc-200">{games}</td>)}
-              </tr>
-            </tbody>
-          </table>
-        )}
-        <p className="text-xs text-zinc-500">
-          Match aces and other player stats are not present in the current score feed.
-        </p>
-      </div>}
+      </div>
     </article>
   )
 }
@@ -212,16 +223,30 @@ export default function TennisModelTab({ tour }: {
     setLoading(true)
     setError(null)
     const utcOffsetMinutes = new Date().getTimezoneOffset()
-    fetch(`/api/tennis/model?date=${encodeURIComponent(date)}&tour=${tour}&utc_offset_minutes=${utcOffsetMinutes}`, { cache: 'no-store' })
-      .then(async response => {
-        if (!response.ok) throw new Error(`Tennis model data did not load (HTTP ${response.status}).`)
-        return response.json() as Promise<Payload>
+    const dates = view === 'projections'
+      ? [date, shiftDate(date, 1), shiftDate(date, 2)]
+      : [date]
+    Promise.all(dates.map(async modelDate => {
+      const response = await fetch(`/api/tennis/model?date=${encodeURIComponent(modelDate)}&tour=${tour}&utc_offset_minutes=${utcOffsetMinutes}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error(`Tennis model data did not load (HTTP ${response.status}).`)
+      return response.json() as Promise<Payload>
+    }))
+      .then(payloads => {
+        if (!active) return
+        const matches = payloads.flatMap(data => data.matches)
+        const uniqueMatches = Array.from(new Map(matches.map(match => [`${match.tour}-${match.gameId}`, match])).values())
+        const available = payloads.some(data => data.available)
+        setPayload({
+          available,
+          reason: available ? null : payloads.find(data => data.reason)?.reason ?? null,
+          source: payloads.find(data => data.source)?.source,
+          matches: uniqueMatches,
+        })
       })
-      .then(data => { if (active) setPayload(data) })
       .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'Tennis model data did not load.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [date, tour])
+  }, [date, tour, view])
 
   return (
     <div className="space-y-5">
@@ -237,25 +262,27 @@ export default function TennisModelTab({ tour }: {
           <h2 className="min-w-[13rem] text-center text-sm font-semibold text-zinc-200" aria-live="polite">{dateLabel(recordDate)}</h2>
           <button type="button" aria-label="Next day" disabled={recordDate >= todayKey()} onClick={() => setRecordDate(shiftDate(recordDate, 1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800 disabled:opacity-40">›</button>
-        </div> : <h2 className="text-sm font-semibold text-zinc-200">Today’s projections · {dateLabel(date)}</h2>}
+        </div> : null}
       </section>
 
       {error ? <p role="alert" className="rounded-xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</p> : null}
       {loading && !payload ? <div className="h-36 animate-pulse rounded-2xl bg-zinc-800" /> : null}
       {!loading && payload && !payload.available ? <p className="rounded-xl bg-zinc-900 px-4 py-3 text-sm text-zinc-400">{payload.reason ?? 'No tennis model projections are available for this slate yet.'}</p> : null}
       {payload?.available && payload.reason && <p className="rounded-xl bg-zinc-900 px-4 py-3 text-sm text-zinc-400">{payload.reason}</p>}
-      {payload?.available && payload.matches.length === 0 ? <p className="text-sm text-zinc-400">No matches for this tour and date.</p> : null}
+      {payload?.available && payload.matches.length === 0 ? <p className="text-sm text-zinc-400">{view === 'projections' ? 'No ungraded projections are available.' : 'No matches for this tour and date.'}</p> : null}
 
       {payload?.available && payload.matches.length > 0 && (() => {
-        const matches = payload.matches.filter(match => localDateKey(match.startTime) === date)
+        const matches = view === 'projections'
+          ? payload.matches
+          : payload.matches.filter(match => localDateKey(match.startTime) === date)
         const visible = view === 'projections'
-          ? matches.filter(match => match.status === 'scheduled' && match.startTime && Date.parse(match.startTime) > Date.now())
+          ? matches.filter(match => match.projection?.projectedWinner != null && match.grades?.winner == null)
           : matches.filter(match => match.status === 'final')
         return visible.length ? (
-        <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-          {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} />)}
-        </section>
-        ) : <p className="text-sm text-zinc-400">{view === 'projections' ? 'No upcoming matches today.' : 'No completed matches for this day.'}</p>
+          <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+            {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} />)}
+          </section>
+        ) : <p className="text-sm text-zinc-400">{view === 'projections' ? 'No ungraded projections are available.' : 'No completed matches for this day.'}</p>
       })()}
     </div>
   )
