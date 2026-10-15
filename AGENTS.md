@@ -21,7 +21,8 @@ gap remains until you have measured it.
 
 ## Repo and servers (11, 12)
 - `/root/legendarypicks` is the managed `dev` checkout serving :3096 and :8096. Work in your own
-  worktree: `git worktree add /root/lp-<task> -b feat/<task> dev`. Never `git switch`; never
+  worktree unless the change is small: `git worktree add /root/lp-<task> -b feat/<task> dev`. A small
+  change may go directly on `dev` in this checkout. Never `git switch`; never
   `git checkout -- <path>`; never `git add -A` (stage named files); never push without Micah.
 - Never run `npm`, `npx` or `yarn` from a worktree: its `node_modules` is a symlink to the main one
   and npm prunes it (took the site down 07-27). Use `/root/legendarypicks/node_modules/.bin/<tool>`.
