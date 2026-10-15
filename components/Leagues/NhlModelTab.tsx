@@ -15,6 +15,10 @@ interface Forecast {
   home_win_probability: number
   'p_over_5.5': number
   'p_over_6.5': number
+  p_home_minus_1_5: number
+  p_home_plus_1_5: number
+  p_away_minus_1_5: number
+  p_away_plus_1_5: number
   grade?: {
     official_home_goals: number
     official_away_goals: number
@@ -75,6 +79,8 @@ interface NhlStanding {
   standings_date: string
 }
 
+type PickCandidate = { label: string; edge: number | null; kind: 'ml' | 'spread' | 'total'; side: 'home' | 'away' | 'over' | 'under'; line?: number }
+
 interface BovadaLine {
   home_team: string
   away_team: string
@@ -85,6 +91,8 @@ interface BovadaLine {
   away_moneyline: number | null
   over_price: number | null
   under_price: number | null
+  home_puck_price: number | null
+  away_puck_price: number | null
 }
 
 interface NhlPreview {
@@ -123,23 +131,10 @@ function cardLines(home: string, away: string, forecast: Forecast, line?: Bovada
   const margin = forecast.projected_goal_differential_home
   const homeLine = line?.home_puck_line ?? null
   const vegas = homeLine == null ? 'n/a' : homeLine < 0 ? `${home} ${signed(homeLine)}` : `${away} ${signed(-homeLine)}`
-  if (homeLine == null) {
-    return [
-      { label: 'Vegas line', value: vegas },
-      { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-      { label: 'Edge', value: 'n/a' },
-    ]
-  }
-  // Determine which team the spread edge favors
-  const homeFavoredVegas = homeLine < 0
-  const homeFavoredModel = margin > 0
-  const edgeFavors = homeFavoredVegas === homeFavoredModel
-    ? (homeFavoredVegas ? home : away)
-    : (homeFavoredModel ? home : away)
   return [
     { label: 'Vegas line', value: vegas },
     { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-    { label: 'Edge', value: `${signed(-homeLine - margin)} pts favors ${edgeFavors}` },
+    { label: 'Edge', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} pts (${margin + homeLine > 0 ? home : away})` },
   ]
 }
 
@@ -153,73 +148,64 @@ function noVigPair(first: number, second: number) {
   return [a / (a + b), b / (a + b)]
 }
 
-function modelPick(home: string, away: string, forecast: Forecast, line?: BovadaLine): { label: string; edge: number } | null {
-  const homeLine = line?.home_puck_line ?? null
-  const total = line?.total_line
+// Rule (Micah, 2026-10-15). The spread edge S = |Vegas line - model line| sits on the edge team, the team the model's line gives more points.
+// 1. The edge team is the Vegas underdog (+1.5) and S shows over 1.0 on the card: bet it to cover +1.5. They might cover.
+// 2. Otherwise, if Vegas has the model's favorite favored by 1.5: bet it to win (moneyline). A 1.0 edge is too risky to cover.
+// 3. Otherwise: a total on the 5.5 or 6.5 line, by the model's projected total (see the fallback below).
+// Every game gets a pick. The edge is shown only when that bet's price is posted.
+function modelPick(home: string, away: string, forecast: Forecast, line?: BovadaLine): PickCandidate {
+  const puckLine = line?.home_puck_line ?? null
   const margin = forecast.projected_goal_differential_home
-
-  // Spread edge = |Vegas line - model line| in goals
-  const spreadEdge = homeLine != null ? Math.abs(-homeLine - margin) : 0
-
-  // If spread edge > 1.0 goals, pick the ML of the team the spread edge favors
-  if (homeLine != null && spreadEdge > 1.0 && line?.home_moneyline != null && line?.away_moneyline != null) {
-    const [homeMarket, awayMarket] = noVigPair(line.home_moneyline, line.away_moneyline)
-    const homeFavoredVegas = homeLine < 0
-    const homeFavoredModel = margin > 0
-    const edgeFavorsHome = homeFavoredVegas === homeFavoredModel
-      ? homeFavoredVegas
-      : homeFavoredModel
-    if (edgeFavorsHome) {
-      return { label: `${home} ML`, edge: forecast.home_win_probability - homeMarket }
+  if (puckLine != null && Math.abs(puckLine) === 1.5) {
+    const spreadEdge = Math.abs(-puckLine - margin)
+    const edgeSide = margin + puckLine > 0 ? 'home' : 'away'
+    const edgeTeam = edgeSide === 'home' ? home : away
+    const edgeLine = edgeSide === 'home' ? puckLine : -puckLine
+    if (edgeLine > 0 && Number(spreadEdge.toFixed(1)) > 1) {
+      const puckMarket = line?.home_puck_price != null && line.away_puck_price != null ? noVigPair(line.home_puck_price, line.away_puck_price) : null
+      const cover = edgeSide === 'home' ? forecast.p_home_plus_1_5 : forecast.p_away_plus_1_5
+      return { label: `${edgeTeam} ${signed(edgeLine)}`, edge: puckMarket == null ? null : cover - puckMarket[edgeSide === 'home' ? 0 : 1], kind: 'spread', side: edgeSide }
     }
-    return { label: `${away} ML`, edge: 1 - forecast.home_win_probability - awayMarket }
+    const favoriteSide = margin >= 0 ? 'home' : 'away'
+    const favoriteTeam = favoriteSide === 'home' ? home : away
+    const favoriteLine = favoriteSide === 'home' ? puckLine : -puckLine
+    if (favoriteLine < 0) {
+      const mlMarket = line?.home_moneyline != null && line.away_moneyline != null ? noVigPair(line.home_moneyline, line.away_moneyline) : null
+      const modelProbability = favoriteSide === 'home' ? forecast.home_win_probability : 1 - forecast.home_win_probability
+      return { label: `${favoriteTeam} ML`, edge: mlMarket == null ? null : modelProbability - mlMarket[favoriteSide === 'home' ? 0 : 1], kind: 'ml', side: favoriteSide }
+    }
   }
-
-  // Spread edge <= 1.0 goals: pick Over 5.5 (safety net)
-  const overModel = total === 5.5 ? forecast['p_over_5.5'] : total === 6.5 ? forecast['p_over_6.5'] : null
-  if (total != null && overModel != null && line?.over_price != null && line?.under_price != null) {
-    const [overMarket, underMarket] = noVigPair(line.over_price, line.under_price)
-    const overEdge = overModel - overMarket
-    const underEdge = 1 - overModel - underMarket
-    return overEdge > underEdge
-      ? { label: `Over ${one(total)}`, edge: overEdge }
-      : { label: `Under ${one(total)}`, edge: underEdge }
+  // Fallback total: the 5.5 or 6.5 line, by the model's projection. 2023-2025 median total was 6.0, so projections at or below 6.0 use 5.5.
+  const projection = forecast.projected_total_goals
+  const totalLine = projection <= 6 ? 5.5 : 6.5
+  const over = projection > totalLine
+  const modelOver = totalLine === 5.5 ? forecast['p_over_5.5'] : forecast['p_over_6.5']
+  const totalMarket = line?.total_line === totalLine && line.over_price != null && line.under_price != null ? noVigPair(line.over_price, line.under_price) : null
+  return {
+    label: `${over ? 'Over' : 'Under'} ${one(totalLine)}`,
+    edge: totalMarket == null ? null : over ? modelOver - totalMarket[0] : 1 - modelOver - totalMarket[1],
+    kind: 'total',
+    side: over ? 'over' : 'under',
+    line: totalLine,
   }
-
-  // Fallback: no total available, pick best moneyline
-  if (line?.home_moneyline != null && line?.away_moneyline != null) {
-    const [homeMarket, awayMarket] = noVigPair(line.home_moneyline, line.away_moneyline)
-    const homeEdge = forecast.home_win_probability - homeMarket
-    const awayEdge = 1 - forecast.home_win_probability - awayMarket
-    return homeEdge > awayEdge
-      ? { label: `${home} ML`, edge: homeEdge }
-      : { label: `${away} ML`, edge: awayEdge }
-  }
-
-  return null
 }
 
 function getPickResult(
-  pick: { label: string; edge: number },
-  forecast: Forecast,
+  pick: PickCandidate,
   grade: NonNullable<Forecast['grade']>,
   line?: BovadaLine
 ): { won: boolean } | null {
-  if (pick.label.endsWith('ML')) {
-    const pickHome = forecast.home_win_probability >= 0.5
-    return { won: pickHome ? grade.official_winner === 'home' : grade.official_winner === 'away' }
+  if (pick.kind === 'ml') return { won: grade.official_winner === pick.side }
+  if (pick.kind === 'spread') {
+    const puckLine = line?.home_puck_line
+    if (puckLine == null) return null
+    const margin = grade.official_home_goals - grade.official_away_goals
+    return { won: pick.side === 'home' ? margin + puckLine > 0 : -margin - puckLine > 0 }
   }
-  if (pick.label.startsWith('Over ') || pick.label.startsWith('Under ')) {
-    const total = line?.total_line
-    if (total == null) return null
-    const actualTotal = grade.official_home_goals + grade.official_away_goals
-    if (pick.label.startsWith('Over ')) {
-      return { won: actualTotal > total }
-    } else {
-      return { won: actualTotal < total }
-    }
-  }
-  return null
+  const total = pick.line
+  if (total == null) return null
+  const actualTotal = grade.official_home_goals + grade.official_away_goals
+  return { won: pick.side === 'over' ? actualTotal > total : actualTotal < total }
 }
 
 function totalLines(forecast: Forecast, line?: BovadaLine) {
@@ -239,7 +225,7 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   status: string | null
   lines: { label: string; value: string }[]
   totals: { label: string; value: string }[]
-  pick: { label: string; edge: number } | null
+  pick: PickCandidate | null
   isGraded: boolean
   pickResult: { won: boolean } | null
   awayRecord?: string
@@ -284,19 +270,31 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
         {lines.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
-        {totals.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
-      </div>
-      <div className="text-right text-sm text-zinc-400">
-        <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
-        <span className="block text-xl font-semibold text-zinc-100">
-          {pick ? pick.label : 'n/a'}
-        </span>
-        {pick && (
-          <span className="block text-xs tabular-nums text-zinc-400">
-            {signed(pick.edge * 100)}% edge
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 text-sm text-zinc-400">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {totals.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
+        </div>
+        <div className="text-right">
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xl font-semibold text-zinc-100">
+            {pick ? (
+              <>
+                {pick.label}
+                {isGraded && pickResult && (
+                  <span className={`ml-1 ${pickResult.won ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {pickResult.won ? '✓' : '✗'}
+                  </span>
+                )}
+              </>
+            ) : 'n/a'}
           </span>
-        )}
+          {pick && pick.edge != null && (
+            <span className="block text-xs tabular-nums text-zinc-400">
+              {signed(pick.edge * 100)}% edge
+              {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.won ? 'Won' : 'Lost'}</span>}
+            </span>
+          )}
+        </div>
       </div>
     </article>
   )
@@ -306,7 +304,7 @@ function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model
   const forecast = game.models[model]
   const pick = modelPick(game.home_team, game.away_team, forecast, line)
   const isGraded = forecast.grade != null
-  const pickResult = isGraded && pick ? getPickResult(pick, forecast, forecast.grade!, line) : null
+  const pickResult = isGraded && pick ? getPickResult(pick, forecast.grade!, line) : null
   return (
     <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
       lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={pick} isGraded={isGraded} pickResult={pickResult} />
@@ -317,7 +315,7 @@ function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model
   const forecast = game.models[model]
   const pick = modelPick(game.home_team, game.away_team, forecast, line)
   const isGraded = forecast.grade != null
-  const pickResult = isGraded && pick ? getPickResult(pick, forecast, forecast.grade!, line) : null
+  const pickResult = isGraded && pick ? getPickResult(pick, forecast.grade!, line) : null
   return (
     <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="UNLOCKED" awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
       lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} pick={pick} isGraded={isGraded} pickResult={pickResult} />
