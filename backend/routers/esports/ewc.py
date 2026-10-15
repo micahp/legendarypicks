@@ -606,7 +606,12 @@ def _merge_title_matches(snapshot_rows, slate_rows):
 
 
 @router.get("/api/esports/events/ewc-2026/titles/{slug}/matches")
-def ewc_title_matches(slug: str):
+def ewc_title_matches(
+    slug: str,
+    status: str = Query("all", pattern="^(all|live|upcoming|completed)$"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=50),
+):
     """Bounded selected-title rows from a local snapshot plus the current normalized slate."""
     from fetch_ewc_title_schedules import read_snapshot
     from .slate import esports_upcoming
@@ -633,6 +638,30 @@ def ewc_title_matches(slug: str):
                        if not row.get("live") and not row.get("finished") and not row.get("canceled")),
                       key=lambda row: row.get("startTime") or 0)
     source = (snapshot or {}).get("source") or {}
+
+    if status == "all":
+        combined = completed + upcoming + live
+        total = len(combined)
+        start = (page - 1) * limit
+        page_rows = combined[start:start + limit]
+        has_more = start + limit < total
+        # Re-bucket the paginated slice
+        page_live = [r for r in page_rows if r.get("live")]
+        page_upcoming = [r for r in page_rows
+                         if not r.get("live") and not r.get("finished") and not r.get("canceled")]
+        page_completed = [r for r in page_rows
+                          if not r.get("live") and (r.get("finished") or r.get("canceled"))]
+    else:
+        bucket_map = {"live": live, "upcoming": upcoming, "completed": completed}
+        bucket = bucket_map[status]
+        total = len(bucket)
+        start = (page - 1) * limit
+        page_rows = bucket[start:start + limit]
+        has_more = start + limit < total
+        page_live = page_rows if status == "live" else []
+        page_upcoming = page_rows if status == "upcoming" else []
+        page_completed = page_rows if status == "completed" else []
+
     return {
         "eventId": EVENT_ID,
         "title": {"slug": slug, "name": title["name"]},
@@ -640,7 +669,11 @@ def ewc_title_matches(slug: str):
         "lifecycle": (snapshot or {}).get("lifecycle"),
         "source": {"label": source.get("label"), "urls": source.get("urls"),
                    "revisions": source.get("revisions")} if snapshot else None,
-        "matches": {"live": live, "upcoming": upcoming, "completed": completed},
+        "matches": {"live": page_live, "upcoming": page_upcoming, "completed": page_completed},
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "hasMore": has_more,
     }
 
 
