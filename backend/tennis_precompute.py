@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import sys
 
 
@@ -22,23 +23,26 @@ def main(argv=None) -> int:
 
     from routers.games import misc
     from tennis_daily_projections import forget_days
+    from tennis_model_lock import projection_job_lock
 
-    today = dt.datetime.now(dt.timezone.utc).date()
-    days = [(today + dt.timedelta(days=i)).isoformat() for i in range(args.days)]
-    con = misc._db()
-    try:
+    db_path = os.environ.get("LP_DB_PATH") or misc.DB
+    with projection_job_lock(db_path):
+        today = dt.datetime.now(dt.timezone.utc).date()
+        days = [(today + dt.timedelta(days=i)).isoformat() for i in range(args.days)]
+        con = misc._db()
+        try:
+            for tour in ("atp", "wta"):
+                forget_days(con, tour, days)
+            con.commit()
+        finally:
+            con.close()
+
         for tour in ("atp", "wta"):
-            forget_days(con, tour, days)
-        con.commit()
-    finally:
-        con.close()
-
-    for tour in ("atp", "wta"):
-        for day in days:
-            result = misc.tennis_model(date=day, tour=tour, utc_offset_minutes=0)
-            matches = result.get("matches", [])
-            projected = sum(1 for match in matches if match.get("projection"))
-            print("%s %s: %d matches, %d projected" % (tour, day, len(matches), projected), flush=True)
+            for day in days:
+                result = misc.tennis_model(date=day, tour=tour, utc_offset_minutes=0)
+                matches = result.get("matches", [])
+                projected = sum(1 for match in matches if match.get("projection"))
+                print("%s %s: %d matches, %d projected" % (tour, day, len(matches), projected), flush=True)
     return 0
 
 

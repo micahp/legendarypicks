@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sys
 
 
@@ -92,24 +93,27 @@ def main(argv=None) -> int:
         parser.error("--days must be between 1 and 7")
 
     from routers.games import misc
+    from tennis_model_lock import projection_job_lock
 
-    today = dt.datetime.now(dt.timezone.utc).date()
-    refreshed = 0
-    for offset in range(args.days):
-        day = (today + dt.timedelta(days=offset)).isoformat()
-        for tour in ("atp", "wta"):
-            result = misc.tennis_model(date=day, tour=tour, utc_offset_minutes=0)
-            refreshed += sum(1 for match in result.get("matches", []) if match.get("lockedAt"))
+    db_path = os.environ.get("LP_DB_PATH") or misc.DB
+    with projection_job_lock(db_path):
+        today = dt.datetime.now(dt.timezone.utc).date()
+        refreshed = 0
+        for offset in range(args.days):
+            day = (today + dt.timedelta(days=offset)).isoformat()
+            for tour in ("atp", "wta"):
+                result = misc.tennis_model(date=day, tour=tour, utc_offset_minutes=0)
+                refreshed += sum(1 for match in result.get("matches", []) if match.get("lockedAt"))
 
-    con = misc._db()
-    try:
-        report = grade_final_matches(con, dt.datetime.now(dt.timezone.utc))
-        con.commit()
-    except Exception:
-        con.rollback()
-        raise
-    finally:
-        con.close()
+        con = misc._db()
+        try:
+            report = grade_final_matches(con, dt.datetime.now(dt.timezone.utc))
+            con.commit()
+        except Exception:
+            con.rollback()
+            raise
+        finally:
+            con.close()
     print("tennis model job: %d locks present in refreshed slates; %d final locks, %d graded, %d awaiting usable result" % (
         refreshed, report["locked_finals"], report["graded"], report["missing_result"]))
     return 0
