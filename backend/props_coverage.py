@@ -18,8 +18,9 @@ The pipeline has five stages and a prop can die at any one of them:
 
 Stages 3 and 4 are only interesting for props whose game has FINISHED. A pending game
 is not a coverage gap, and counting it as one is what made earlier numbers unreadable.
-So the settlement table is restricted to games that started more than six hours ago,
-and every ungraded row there is attributed to exactly one blocker:
+Settlement coverage includes only games confirmed finished by a final scoreboard snapshot,
+stored final scores, or an existing graded result for that game. Every ungraded row there
+is attributed to exactly one blocker:
 
   identity   the player has no espn_id
   fixture    the player has an espn_id but the game has no espn_event_id
@@ -81,9 +82,46 @@ SELECT g.league                                                        AS league
   JOIN prop_games g  ON g.id  = p.game_id
   JOIN players    pl ON pl.id = p.player_id
   LEFT JOIN prop_results r ON r.prop_id = p.id
- WHERE g.start_time < datetime('now','-6 hours')
+ WHERE {finished_predicate}
  GROUP BY g.league
 """
+
+
+def _finished_game_predicate(con: sqlite3.Connection) -> str:
+    """Build a finality predicate from evidence available in this database."""
+    game_columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
+    clauses = []
+    if {"final_home", "final_away"}.issubset(game_columns):
+        clauses.append("(g.final_home IS NOT NULL AND g.final_away IS NOT NULL)")
+
+    snapshot_columns = {
+        row[1] for row in con.execute("PRAGMA table_info(scoreboard_snapshots)")
+    } if con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scoreboard_snapshots'"
+    ).fetchone() else set()
+    if {"league", "game_id", "state", "fetched_at"}.issubset(snapshot_columns):
+        clauses.append("""EXISTS (
+            SELECT 1 FROM scoreboard_snapshots ss
+             WHERE ss.league=g.league AND ss.game_id=g.espn_event_id
+               AND ss.state='post'
+               AND ss.fetched_at=(
+                   SELECT MAX(ss2.fetched_at) FROM scoreboard_snapshots ss2
+                    WHERE ss2.league=ss.league AND ss2.game_id=ss.game_id
+               )
+        )""")
+
+    if all(con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone() for table in ("props", "prop_results")):
+        clauses.append("""EXISTS (
+            SELECT 1 FROM props p2 JOIN prop_results r2 ON r2.prop_id=p2.id
+             WHERE p2.game_id=g.id
+        )""")
+
+    finished = "(" + " OR ".join(clauses) + ")" if clauses else "0"
+    if "cancelled_at" in game_columns:
+        finished = "(g.cancelled_at IS NULL AND {})".format(finished)
+    return finished
 
 # The spine's own integrity, which nothing measured until 2026-08-24.
 #
@@ -150,7 +188,7 @@ SELECT g.league AS league, p.market AS market, COUNT(*) AS rows_
   FROM props p
   JOIN prop_games g ON g.id = p.game_id
   LEFT JOIN prop_results r ON r.prop_id = p.id
- WHERE g.start_time < datetime('now','-6 hours')
+ WHERE {finished_predicate}
  GROUP BY g.league, p.market
 HAVING SUM(r.prop_id IS NOT NULL) = 0 AND rows_ >= ?
  ORDER BY rows_ DESC
@@ -166,8 +204,12 @@ def measure(db_path: str, min_market_rows: int = 30) -> dict:
     con.row_factory = sqlite3.Row
     try:
         stages = [dict(r) for r in con.execute(STAGE_SQL) if r["league"]]
-        settled = {r["league"]: dict(r) for r in con.execute(SETTLED_SQL) if r["league"]}
-        never = [dict(r) for r in con.execute(NEVER_GRADED_SQL, (min_market_rows,))
+        finished_predicate = _finished_game_predicate(con)
+        settled = {r["league"]: dict(r) for r in con.execute(
+            SETTLED_SQL.format(finished_predicate=finished_predicate)) if r["league"]}
+        never = [dict(r) for r in con.execute(
+            NEVER_GRADED_SQL.format(finished_predicate=finished_predicate),
+            (min_market_rows,))
                  if r["league"]]
         dupes = [dict(r) for r in con.execute(_spine_dupes_sql(con)) if r["league"]]
         dupe_ids = [dict(r) for r in con.execute(DUPLICATE_ID_SQL)]
@@ -344,7 +386,7 @@ def render(result: dict, emit=print) -> None:
             r["league"], r["ingested"], r["sources"], r["games"],
             r["pct_linked"], r["pct_identified"], r["pct_fixtured"]))
     emit("")
-    emit("  settlement, games finished >6h ago -- every ungraded row attributed:")
+    emit("  settlement, finished games/matches only -- every ungraded row attributed:")
     emit("  {:<7} {:>10} {:>8} {:>7}  {:>8} {:>8} {:>8}".format(
         "league", "settleable", "graded", "pct", "identity", "fixture", "stats"))
     for r in result["leagues"]:

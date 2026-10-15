@@ -52,14 +52,13 @@ def _ufc_actual(stats: dict, market: str) -> Optional[float]:
     return ufc_actual(stats, canonical)
 
 
-def _scoreboard_fight_time(
-    con: sqlite3.Connection, game, espn_id: str
+def _scoreboard_actual(
+    con: sqlite3.Connection, game, espn_id: str, market: str
 ) -> Optional[float]:
-    """Derive official fight time from a completed ESPN bout snapshot.
+    """Derive supported UFC actuals from a completed ESPN bout snapshot.
 
-    ESPN snapshots publish the completed round and elapsed clock. Match the
-    prop to a fighter by ESPN's athlete ID; never infer identity from names.
-    UFCStats remains preferred when its fighter row exists.
+    Match the prop to a fighter by ESPN's athlete ID; never infer identity
+    from names. UFCStats remains preferred when its fighter row exists.
     """
     if not espn_id:
         return None
@@ -88,33 +87,48 @@ def _scoreboard_fight_time(
     # emits it after espn_client.ufc.ufc_outcome() sees status.type.completed.
     if payload.get("completed") is not True and not payload.get("outcome_method"):
         return None
-    if "contender series" not in str(payload.get("event") or "").lower():
-        return None
-
     fighters = [payload.get("home") or {}, payload.get("away") or {}]
     matches = [fighter for fighter in fighters
                if str(fighter.get("id") or "") == str(espn_id)]
     if len(matches) != 1:
         return None
 
-    try:
-        round_number = int(payload.get("outcome_round"))
-    except (TypeError, ValueError):
+    canonical = MARKET_ALIASES.get(normalize_market(market), normalize_market(market))
+    if canonical == "fight_time":
+        try:
+            round_number = int(payload.get("outcome_round"))
+        except (TypeError, ValueError):
+            return None
+        clock = str(payload.get("outcome_clock") or "")
+        match = re.fullmatch(r"([0-5]):([0-5][0-9])", clock)
+        if not match or not 1 <= round_number <= 5:
+            return None
+        minutes, seconds = map(int, match.groups())
+        if str(payload.get("outcome_method") or "").casefold() == "decision":
+            # ESPN records a full-round clock for decisions (for example R3 5:00).
+            elapsed_seconds = round_number * 300
+        else:
+            # ESPN's UFC result clock is elapsed time within the ending round.
+            elapsed_seconds = (round_number - 1) * 300 + minutes * 60 + seconds
+        if elapsed_seconds <= 0 or elapsed_seconds > round_number * 300:
+            return None
+        return round(elapsed_seconds / 60.0, 2)
+
+    if canonical not in _UFC_METHOD_MARKETS and canonical not in _UFC_FINISH_MARKETS:
         return None
-    clock = str(payload.get("outcome_clock") or "")
-    match = re.fullmatch(r"([0-5]):([0-5][0-9])", clock)
-    if not match or not 1 <= round_number <= 5:
+    winner_ids = [str(fighter.get("id") or "") for fighter in fighters
+                  if fighter.get("winner") is True]
+    if len(winner_ids) != 1:
         return None
-    minutes, seconds = map(int, match.groups())
-    if str(payload.get("outcome_method") or "").casefold() == "decision":
-        # ESPN records a full-round clock for decisions (for example R3 5:00).
-        elapsed_seconds = round_number * 300
-    else:
-        # ESPN's UFC result clock is elapsed time within the ending round.
-        elapsed_seconds = (round_number - 1) * 300 + minutes * 60 + seconds
-    if elapsed_seconds <= 0 or elapsed_seconds > round_number * 300:
-        return None
-    return round(elapsed_seconds / 60.0, 2)
+    matched = matches[0]
+    result = "W" if str(matched.get("id") or "") == winner_ids[0] else "L"
+    raw_method = str(payload.get("outcome_method") or "").strip().casefold()
+    method = {
+        "decision": "DEC",
+        "ko/tko": "KO/TKO",
+        "submission": "SUB",
+    }.get(raw_method)
+    return _ufc_actual({"result": result, "method": method}, canonical)
 
 
 def _ufcstats_game_is_final(
@@ -169,14 +183,17 @@ def _ufcstats_game_is_final(
 def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
     """Grade UFC props from durable per-fighter, per-fight actuals."""
     logs = con.execute(
-        "SELECT player_id, source_player_key, stats FROM player_game_logs "
+        "SELECT player_id, source_player_key, source, stats FROM player_game_logs "
         "WHERE league='ufc' AND game_id=?",
         (str(game["espn_event_id"]),)).fetchall()
     by_player_id = {}
     by_espn_id = {}
+    ufcalendar_by_player = {}
     for row in logs:
         if row["player_id"] is not None:
             by_player_id.setdefault(str(row["player_id"]), []).append(row)
+            if str(row["source"] or "").casefold() == "ufcalendar":
+                ufcalendar_by_player.setdefault(str(row["player_id"]), []).append(row)
         if row["source_player_key"]:
             by_espn_id.setdefault(str(row["source_player_key"]), []).append(row)
 
@@ -223,17 +240,38 @@ def _settle_ufc_props(con: sqlite3.Connection, game, props: list) -> dict:
         elif len(source_matches) > 1:
             pending += 1
             continue
+        elif canonical == "significant_strikes":
+            source_matches = ufcalendar_by_player.get(str(prop["player_id"]), [])
+            if len(source_matches) == 1:
+                matches = source_matches
+            elif len(source_matches) > 1:
+                pending += 1
+                continue
+            elif prop["espn_id"]:
+                matches = by_espn_id.get(str(prop["espn_id"]), [])
+            else:
+                matches = [
+                    row for row in by_player_id.get(str(prop["player_id"]), [])
+                    if str(row["source"] or "").casefold() != "ufcalendar"
+                ]
         elif prop["espn_id"]:
             matches = by_espn_id.get(str(prop["espn_id"]), [])
         else:
-            matches = by_player_id.get(str(prop["player_id"]), [])
+            matches = [
+                row for row in by_player_id.get(str(prop["player_id"]), [])
+                if str(row["source"] or "").casefold() != "ufcalendar"
+            ]
         if len(matches) != 1:
             # DWCS and other non-UFC cards may not publish UFCStats fighter
-            # logs. ESPN still publishes final round/clock data, which is
-            # sufficient for fight_time but not for strike or method stats.
-            if not matches and canonical == "fight_time":
-                actual = _scoreboard_fight_time(
-                    con, game, str(prop["espn_id"] or ""))
+            # logs. ESPN's final snapshot supports fight time and method
+            # markets, but does not publish significant-strike totals.
+            if not matches and (
+                canonical == "fight_time"
+                or canonical in _UFC_METHOD_MARKETS
+                or canonical in _UFC_FINISH_MARKETS
+            ):
+                actual = _scoreboard_actual(
+                    con, game, str(prop["espn_id"] or ""), canonical)
                 if actual is not None:
                     try:
                         if _grade_actual(con, prop, actual, now):
