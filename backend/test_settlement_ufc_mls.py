@@ -125,6 +125,35 @@ def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
     assert (final["final_home"], final["final_away"]) == (None, None)
 
 
+def test_dwcs_scoreboard_snapshot_settles_method_markets_and_fight_time(monkeypatch):
+    con = _ufc_connection()
+    con.execute("DELETE FROM player_game_logs")
+    con.execute("""CREATE TABLE scoreboard_snapshots(
+        league TEXT, game_id TEXT, payload TEXT, state TEXT, fetched_at TEXT)""")
+    snapshot = {
+        "event": "Dana White's Contender Series: Season 10, Week 3",
+        "completed": True,
+        "home": {"id": "4895691", "winner": True},
+        "away": {"id": "4997217", "winner": False},
+        "outcome_method": "KO/TKO",
+        "outcome_round": 2,
+        "outcome_clock": "1:30",
+    }
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES('ufc','401874315',?,'post','now')",
+        (json.dumps(snapshot),),
+    )
+    monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard())
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 5, "void": 0, "unmappable": 0,
+                      "pending": 2, "errors": 0}
+    rows = {row["prop_id"]: row["actual_value"]
+            for row in con.execute("SELECT * FROM prop_results")}
+    assert rows == {100: 1.0, 101: 0.0, 102: 0.0, 104: 6.5, 105: 1.0}
+
+
 def test_ufc_settlement_reads_provider_separated_ufcstats_logs(monkeypatch):
     con = _ufc_connection()
     con.execute("DELETE FROM player_game_logs")

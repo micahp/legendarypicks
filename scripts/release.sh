@@ -239,7 +239,7 @@ fi
 [ -f backend/props_coverage.py ] \
   || die "backend/props_coverage.py is missing -- the props pipeline check cannot run, and a check that did not run is not a check that passed"
 if [ -x backend/venv/bin/python ]; then
-  echo "release: props pipeline coverage, per league, both databases"
+  echo "release: props pipeline coverage, including finished-game settlement, per league, both databases"
   if ! backend/venv/bin/python backend/props_coverage.py --check 2>&1 | sed 's/^/  /'; then
     echo
     die "a league's settled grading regressed against docs/props-coverage-baseline.json -- repair it, or change the baseline deliberately and say why in the commit"

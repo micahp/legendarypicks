@@ -18,7 +18,7 @@ from settlement.ncaaf_settle import _ensure_attempt_table
 import espn_client as espn
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
-SETTLE_WINDOW_HOURS = 72
+SETTLE_WINDOW_HOURS = 96
 
 
 def _game_start(start_time, date_text):
@@ -85,6 +85,14 @@ def _manual_backlog(con):
     """).fetchall()
 
 
+def _has_ufcalendar_actuals(con, game_id):
+    return con.execute(
+        """SELECT 1 FROM player_game_logs
+             WHERE league='ufc' AND source='ufcalendar' AND game_id=? LIMIT 1""",
+        (str(game_id),),
+    ).fetchone() is not None
+
+
 def main(dry_run: bool = False, league: str = "", through: str = "",
          max_games: int = 0, window_hours: float = SETTLE_WINDOW_HOURS):
     return _main(dry_run=dry_run, league=league, through=through,
@@ -96,6 +104,15 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     _ensure_attempt_table(con)
+    if not dry_run and league in {"", "ufc"}:
+        try:
+            from ingest_ufcalendar_dwcs import ingest_ufcalendar_dwcs
+            source = ingest_ufcalendar_dwcs(con)
+            if source["fighters"] or source["skipped"]:
+                print("UFCalendar DWCS stats: stored={fighters} skipped={skipped}".format(**source))
+        except Exception as exc:
+            print("UFCalendar DWCS ingest unavailable: {}".format(exc))
+
     game_columns = {row[1] for row in con.execute("PRAGMA table_info(prop_games)")}
     start_time = "pg.start_time" if "start_time" in game_columns else "NULL"
 
@@ -109,10 +126,16 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
         LEFT JOIN prop_results pr ON pr.prop_id = p.id
         WHERE (pg.final_home IS NOT NULL OR pg.espn_event_id != '')
           AND pr.prop_id IS NULL
-          AND NOT EXISTS (
+          AND (NOT EXISTS (
               SELECT 1 FROM settlement_attempts sa
               WHERE sa.prop_id=p.id AND sa.terminal='manual'
-          )
+          ) OR EXISTS (
+              SELECT 1 FROM player_game_logs uf
+               WHERE uf.league='ufc' AND uf.source='ufcalendar'
+                 AND uf.game_id=pg.espn_event_id AND uf.player_id=p.player_id
+          ) OR datetime(COALESCE(NULLIF({start_time}, ''), pg.date || 'T00:00:00Z'))
+                > datetime('now', '-{window_hours} hours')
+          ))
           AND (? = '' OR pg.league = ?)
           AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
         GROUP BY pg.id
@@ -130,10 +153,16 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
             LEFT JOIN prop_results pr ON pr.prop_id = p.id
             WHERE pg.espn_event_id != '' AND pg.espn_event_id IS NOT NULL
               AND pr.prop_id IS NULL
-              AND NOT EXISTS (
+              AND (NOT EXISTS (
                   SELECT 1 FROM settlement_attempts sa
                   WHERE sa.prop_id=p.id AND sa.terminal='manual'
-              )
+              ) OR EXISTS (
+                  SELECT 1 FROM player_game_logs uf
+                   WHERE uf.league='ufc' AND uf.source='ufcalendar'
+                     AND uf.game_id=pg.espn_event_id AND uf.player_id=p.player_id
+              ) OR datetime(COALESCE(NULLIF({start_time}, ''), pg.date || 'T00:00:00Z'))
+                    > datetime('now', '-{window_hours} hours')
+              ))
               AND (? = '' OR pg.league = ?)
               AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
             GROUP BY pg.id
@@ -163,7 +192,8 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
         print(f"\n  Game {gid}: {g['away']} @ {g['home']} ({league}, {g['date']}) "
               f"— {unsettled_count} unsettled props")
 
-        if _window_expired(g, window_hours):
+        if (_window_expired(g, window_hours)
+                and not _has_ufcalendar_actuals(con, g["espn_event_id"])):
             if dry_run:
                 print(f"    [dry-run] would flag {unsettled_count} props manual")
                 continue
