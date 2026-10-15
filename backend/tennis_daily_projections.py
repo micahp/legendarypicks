@@ -184,7 +184,7 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
             "totalGamesInterval": None,
             "totalGamesLabel": None,
             "unavailableReason": None,
-            "modelVersion": "tennis-free-daily-v1",
+            "modelVersion": "tennis-global-surface-elo-blend-v1",
         }
         if home_id and away_id:
             p_global = _logistic((global_elo[home_id] - global_elo[away_id]) * math.log(10.0) / 400.0)
