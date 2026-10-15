@@ -254,8 +254,8 @@ Caught at review (orchestrator), should have been caught by the feature's own va
 ## 11. Operating rules
 - **`/root/legendarypicks` is the managed `dev` worktree. Do not switch it away from `dev` for
   feature development.** The `:3096` frontend and `:8096` backend read directly from this
-  directory. Create feature branches in isolated worktrees instead, for example:
-  `git worktree add /root/lp-<task> -b feat/<task> dev`. At the start of every task, verify
+  directory. Create feature branches in isolated worktrees instead, unless the change is small and
+  may go directly on `dev`. For example: `git worktree add /root/lp-<task> -b feat/<task> dev`. At the start of every task, verify
   `git -C /root/legendarypicks branch --show-current` prints `dev`. **Do not use `git switch` in
   this repository. Use `git checkout` for an authorized branch change.** `git checkout dev` is
   allowed to restore the designated branch after preserving conflicting WIP. A deliberate checkout
