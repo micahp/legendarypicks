@@ -30,7 +30,10 @@ describe('Tennis league hub', () => {
     mockRouter.push.mockReset()
     getGames.mockReset()
     getGames.mockResolvedValue([])
-    ;(global as any).fetch = jest.fn()
+    ;(global as any).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    })
   })
 
   it('defaults to all tours and offers only the measured product tabs', async () => {
@@ -54,6 +57,8 @@ describe('Tennis league hub', () => {
     expect(screen.getByRole('button', { name: 'Next day' }).className).toContain('h-10 w-10')
     expect(screen.queryByRole('button', { name: 'Jump to today' })).toBeNull()
     await waitFor(() => expect(getGames).toHaveBeenCalledTimes(2))
+    const tennisLeagueTab = await screen.findByRole('link', { name: 'Tennis' })
+    expect(tennisLeagueTab.getAttribute('aria-current')).toBe('page')
     expect(await screen.findByText('No covered ATP or WTA matches were published for this date.')).toBeTruthy()
     expect(getGames.mock.calls.map(call => call[0]).sort()).toEqual(['atp', 'wta'])
     await act(async () => { fireEvent.change(tour, { target: { value: 'atp' } }) })

@@ -1,6 +1,6 @@
 import Head from 'next/head'
-import Link from 'next/link'
 import { useEffect } from 'react'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import ScheduleTab from '../../components/Leagues/ScheduleTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
@@ -30,7 +30,6 @@ import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransac
 import {
   LEAGUE_NAMES,
   leagueLabel,
-  orderLeagues,
   localToday,
 } from '../../components/Leagues/presentation'
 import SportIcon from '../../components/SportIcon'
@@ -332,44 +331,6 @@ function LeagueHubSkeleton() {
       <div className="h-8 bg-zinc-800 rounded w-48" />
       <div className="h-10 bg-zinc-800 rounded" />
     </div>
-  )
-}
-
-function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
-  // Built from the coverage registry, not from a constant. A league appears here only
-  // once something verified a season of it against the publisher — the same mechanism
-  // as ESPN's season dropdown, which lists exactly the seasons it can fill.
-  //
-  // While coverage is loading we show nothing rather than a hardcoded fallback: an
-  // optimistic list that later shrinks is worse than a list that arrives late, and a
-  // fallback is how the gate quietly stops being the gate.
-  const { loading, offeredLeagues } = useCoverage()
-  const leagues = orderLeagues(
-    // The league being viewed stays reachable in the nav even mid-load, so the current
-    // page never lacks its own tab.
-    offeredLeagues.includes(activeLeague) || !activeLeague
-      ? offeredLeagues
-      : [...offeredLeagues, activeLeague],
-  )
-
-  if (loading || !leagues.length) return <nav aria-label="Leagues" className="h-5" />
-
-  return (
-    <nav
-      aria-label="Leagues"
-      className="-mx-4 flex items-center gap-3 overflow-x-auto overflow-y-hidden px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      {leagues.map(league => (
-        <Link
-          key={league}
-          href={`/leagues/${league}`}
-          aria-current={activeLeague === league ? 'page' : undefined}
-          className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
-        >
-          {leagueLabel(league)}
-        </Link>
-      ))}
-    </nav>
   )
 }
 
