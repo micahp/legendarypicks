@@ -1,53 +1,73 @@
 # Tennis model card
 
-**Scope:** Daily ATP and WTA match projections (`tennis-global-surface-elo-blend-v1`). The version name describes the winner forecast; aces and total-games projections use separate methods described below.
+**Scope:** Daily ATP and WTA match projections. Each forecast target carries its own method version in `modelVersions`; the legacy `modelVersion` field remains for response compatibility.
 
-**Human-readable description:** Daily tennis forecasts use a global and surface Elo blend for match winners, historical player averages shrunk toward the tour/format mean for aces, and a serve/return point model with a match simulator for total games on mapped surfaces.
+## Forecast targets and methods
 
-## What it predicts
+| Target | Current method version | Output |
+|---|---|---|
+| Winner, incumbent | `global-surface-elo-blend-v1` | Home-win probability and selected winner |
+| Winner, challenger | `serve-return-point-simulator-v1` | Independent home-win probability from serve/return rates and exact match simulation |
+| Aces | ATP `p1-history-exposure-nb-v1`; WTA `p0-match-rate-nb-v1` | Expected count and full negative-binomial predictive distribution for each player |
+| Double faults | ATP `p1-history-exposure-nb-v1`; WTA `p0-match-rate-nb-v1` | Expected count and full negative-binomial predictive distribution for each player |
+| Total games | `historical-format-surface-empirical-v1` | Expected count, central interval, and smoothed empirical distribution |
 
-### Winner
+The screen displays both winner probabilities independently. The incumbent blends global and surface Elo in logit space. The challenger converts pre-match serve/return estimates into point probabilities and integrates tournament rules with the exact match simulator, averaging over either first server. Historical updates use matches dated before the forecast day, so same-day matches do not update one another. Both probabilities are locked and graded separately under the `winner` target, keyed by method version; `probability` remains the incumbent's selected-winner probability for compatibility.
 
-The live winner forecast combines global Elo and surface-specific Elo probabilities in logit space. It uses historical results dated before the forecast day; same-day matches do not update one another. When the event surface is not mapped, the winner forecast falls back to global Elo. The stored `probability` is the probability assigned to the selected `projectedWinner`, not a home-team probability.
+### What the winner Brier score measures
 
-### Aces
+For every locked match, the Brier contribution is `(p_home − y_home)²`, where `p_home` is that model's probability that the listed home player wins, and `y_home` is 1 for a home-player win and 0 for an away-player win. The model is built to forecast the match winner as a probability; the reported Brier is the average contribution across eligible completed matches. It scores confidence as well as which player won, so a correct pick alone is not a sufficient grade. Zero is perfect, lower is better, and 0.25 is the 50/50 reference on a balanced set of matches. It is not a score for aces, total games, betting profit, or merely the share of picks that were correct.
 
-Each player's projected aces use that player's historical average, shrunk toward the tour/format mean with a 10-match prior. The available grade table does not currently score aces projections.
+Each method's locked probability is scored separately on the same eligible completed matches. The incumbent's home-oriented value is `homeWinProbability`; the challenger uses `homeWinProbabilityPointSim`. The product also reports the historical walk-forward Brier benchmark below. Those archived figures compare a point-model simulator against a standard Elo comparator; they are research evidence, not prospective grades for the live global/surface Elo blend.
 
-### Total games
+No prospective Brier score has yet been recorded for either current live method version. Once there are locked, completed matches, the live comparison will report each method's Brier on the same matches, alongside the 0.25 reference and the paired difference between methods.
 
-Where the event surface is mapped, a serve/return point model feeds an exact match-score simulator to produce expected total games and an interval. If the surface is not mapped, the live projection leaves total games unavailable. The product event surface map is explicit in `backend/tennis_daily_projections.py` and currently covers Shanghai and Wuhan as hard court.
+| Historical walk-forward winner benchmark, best-of-three 2023–2026 | ATP (n=11,777) | WTA (n=13,066) |
+|---|---:|---:|
+| 50/50 reference | 0.25000 | 0.25000 |
+| Standard Elo comparator | 0.22802 | 0.21596 |
+| Serve/return point-model simulator | 0.23530 | 0.22884 |
 
-## What Brier means for tennis
+The point-model simulator is for prospective monitoring, not a promoted replacement. It scores worse than standard Elo on both tours in this backtest. The [frozen match backtest](../TENNIS-MATCH-BACKTEST-2026-10-14.md) reports the log-loss comparison, calibration and limitations. Prospective scores will be accumulated from locked forecasts by tour and method version; they will not be mixed with this historical benchmark.
 
-For a named binary event, Brier is the mean squared probability error:
+### Broader Brier benchmark markers
 
-`mean((p - y)^2)`
+These published and research reference points provide context for winner Brier scores. They come from different datasets, periods, and methods, so they are reference markers rather than a like-for-like ranking or prospective grades for the current live models.
 
-For tennis winner forecasts, the event must be stated as **which player wins the match**; the probability and binary outcome must refer to that same player on every row. This is not a Brier score for aces, total games, or a predicted scoreline. A lower score is better; 0 is perfect, and a 50% forecast scores 0.25 on every match.
+| Reference | ATP Brier | WTA Brier |
+|---|---:|---:|
+| 50/50 probability | 0.2500 | 0.2500 |
+| Legendary Picks point simulator | 0.2353 | 0.2288 |
+| Legendary Picks global Elo | 0.2280 | 0.2160 |
+| ATP Predictor global Elo | 0.2230 | — |
+| ATP Predictor XGBoost | 0.2090 | — |
+| DEUCE surface Elo | 0.2009 | 0.2098 |
+| DEUCE XGBoost | 0.1963 | 0.2042 |
+| Vegas, Wilkens study (ATP/WTA combined) | 0.1980 | 0.1980 |
+| Vegas, Penn Grand Slam study (combined) | 0.1740 | 0.1740 |
 
-### Live product grading
+Sources: DEUCE, ATP Predictor, Wilkens (2021), and Penn et al. (2026).
 
-The live tennis grader currently records whether `projectedWinner` was correct and the absolute error in total games when both the forecast and final score are available. It does **not** calculate or store a live Brier score, does not store the live winner probability in its grade row, and does not grade aces. Therefore there is no production Brier number for `tennis-global-surface-elo-blend-v1` in this grader today. Winner hit rate alone does not measure probability calibration.
+The ATP ace and double-fault candidate uses historical event counts, service-point exposure, player shrinkage, and an NB2 distribution. It is an approximate history-exposure implementation, not the researched E2/X-bbin specification. WTA retains the P0 match-rate estimate with an NB2 predictive distribution. These methods are research candidates and have not been validated prospectively. The method version names distinguish them but do not imply a positive evaluation.
 
-### Separate research backtest (not the live product Brier)
+Total-games projections use complete historical match counts grouped by best-of and surface, with a tour-format fallback when a surface group has fewer than 100 observations. The distribution is smoothed over 0 to 120 games. It is made available only for events whose surface and format are explicitly mapped in `backend/tennis_daily_projections.py`: Shanghai, Wuhan, and the four Grand Slams. Grand Slam ATP singles use best-of-five; WTA uses best-of-three. Unknown event rules leave this target unavailable.
 
-The frozen research report [Tennis match backtest (2026-10-14)](../TENNIS-MATCH-BACKTEST-2026-10-14.md) compares a point-model-plus-simulator forecast with a chronological Elo baseline on scored best-of-three matches from 2023–2026. Its Brier target is **match winner probability**, not aces or total games:
+## Locked forecast grading
 
-| Tour | Scored matches | Point model + simulator Brier | Elo Brier |
-|---|---:|---:|---:|
-| ATP | 11,777 | 0.23530 | 0.22802 |
-| WTA | 13,066 | 0.22884 | 0.21596 |
+`backend/tennis_forecast_ledger.py` stores immutable prospective forecast locks by league, game, target, and method version. It grades winner probabilities with Brier and log loss, and count distributions with negative log score, discrete CRPS, expected-count absolute error, and total-games mean absolute error. A target is graded only when its actual outcome exists. Aces require verified match-stat overrides; double faults require verified double-fault overrides. Missing outcomes remain ungraded rather than being treated as zero.
 
-This system is research-only and failed the pre-registered predictive-value gate against Elo on both tours. It is not the live product winner model, which uses a global/surface Elo blend. Do not cite these research Brier scores as live product performance.
+The existing legacy grader continues to populate its original correctness and total-games fields. The versioned ledger is an additional prospective record and does not backfill forecasts that were made before a target version was locked.
 
-## Intended use and limits
+## Validation status and limits
 
-Treat winner probabilities and game/ace projections as uncertain estimates. Player identity must resolve through the tennis spine for a projection to be available. Surface-dependent totals can be unavailable for unmapped events. Current live grading is incomplete for probability quality because it stores winner correctness rather than the forecast probability and has no ace grade.
+The exact point-model simulator was compared walk-forward with the direct historical format-and-surface distribution on 2023 through the latest stored date, 2026-05-25. The simulator lost on both negative log score and discrete CRPS for ATP (n=13,551) and WTA (n=13,066); paired 95% intervals for simulator-minus-baseline loss were entirely positive. It also overpredicted mean total games by 2.22 on ATP and 2.42 on WTA, and undercovered nominal central intervals. The live total-games output therefore uses the historical baseline; the simulator remains a research challenger. Results and protocol are in [the total-games backtest report](../TENNIS-TOTAL-GAMES-BACKTEST-2026-10-15.md). The ace and double-fault candidates still need prospective monitoring. No unified trajectory model is promoted by this implementation.
 
-## Implementation references
+The underlying Sackmann-derived data has unresolved licensing restrictions documented in `docs/TENNIS-DATA-2026-10-13.md`. These changes support internal evaluation only until rights for the data and derived forecasts are cleared.
 
-- `backend/tennis_daily_projections.py` — live version, historical cutoff, winner probability, aces shrinkage, and total-games projection.
-- `backend/grade_tennis_model.py` — live winner-correctness and total-games-error grader.
-- `backend/tennis_match_backtest.py` — separate research comparison.
-- `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md` — research sample, Brier targets, results, and decision.
+## References
+
+- `backend/tennis_daily_projections.py` — live projection methods, version identifiers, and event rules.
+- `backend/tennis_forecast_ledger.py` — versioned locks and proper-score grading.
+- `backend/grade_tennis_model.py` — scheduled/CLI grading integration.
+- `backend/tennis_total_games_backtest.py` — walk-forward comparison against the historical count baseline.
+- `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md` — separate winner-method research; it is not live-model performance evidence.
