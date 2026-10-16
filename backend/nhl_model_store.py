@@ -297,7 +297,8 @@ def freeze_quote(con: sqlite3.Connection, game_id: str, quote: dict) -> None:
 
 def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_version: str,
                 forecast: dict, quote: dict | None, selected_at: dt.datetime,
-                provenance: str, report: dict) -> None:
+                provenance: str, report: dict,
+                protocol: str = LEGACY_PROTOCOL_VERSION) -> None:
     """Insert the immutable pick row for one model, or verify the existing one is identical.
 
     A model with no priced market produces no row at all. The projection is still locked and
@@ -311,6 +312,11 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
         report["unpriced_models"] += 1
         return
     freeze_quote(con, gid, quote or {})
+    # How old the quote was when the decision was taken. Recorded even when it is too old to
+    # price a recommendation, so the fallback is visible instead of silently accepted.
+    quote_age_seconds = None
+    if quote and quote.get("captured_at_utc"):
+        quote_age_seconds = int((selected_at - parse_time(quote["captured_at_utc"])).total_seconds())
     record = {
         "game_id": gid, "model_key": model_key, "model_version": model_version,
         "season": int(gid[:4]), "game_date": str(game.get("game_date") or "")[:10],
@@ -322,6 +328,7 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
         "line_source": pick["line_source"], "line_captured_at_utc": pick["line_captured_at_utc"],
         "settlement_basis": SETTLEMENT_BASIS, "rule_version": RULE_VERSION,
         "provenance": provenance, "selected_at_utc": iso_utc(selected_at),
+        "protocol_version": protocol, "quote_age_seconds": quote_age_seconds,
     }
     record["pick_sha256"] = pick_sha256(pick, gid, model_key, model_version)
     prior = con.execute("SELECT pick_sha256 FROM nhl_model_picks WHERE game_id=? AND model_key=? AND model_version=?",
@@ -638,6 +645,11 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     if "protocol_version" not in columns:
         con.execute("ALTER TABLE nhl_model_picks ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
                     % LEGACY_PROTOCOL_VERSION)
+    # How old the frozen quote was at the moment of the decision. Nullable: rows frozen before
+    # the age was recorded have an unknown age, and an unknown age is not a fresh one to
+    # retroactively apply a rule to.
+    if "quote_age_seconds" not in columns:
+        con.execute("ALTER TABLE nhl_model_picks ADD COLUMN quote_age_seconds INTEGER")
     projection_columns = {row[1] for row in con.execute("PRAGMA table_info(nhl_game_projections)")}
     if "protocol_version" not in projection_columns:
         con.execute("ALTER TABLE nhl_game_projections ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
@@ -910,6 +922,10 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
             # never recomputed from a later line.
             line = latest_line_at(con, gid, now)
             for model_key, forecast in models.items():
+                # Which lock protocol produced this row. A T-90 payload carries its own; a
+                # legacy feed has none and keeps the protocol those rows were actually made
+                # under. Not part of snapshot_sha256, so existing locks stay idempotent.
+                protocol = str(game.get("_protocol_version") or LEGACY_PROTOCOL_VERSION)
                 record = {
                     "game_id": gid,
                     "season": int(gid[:4]),
@@ -934,6 +950,7 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                     "feature_snapshot_json": canonical_json(game["feature_snapshot"]),
                     "market_snapshot_json": canonical_json(market_snapshot),
                     "source_metadata_json": canonical_json(source_meta),
+                    "protocol_version": protocol,
                 }
                 record["snapshot_sha256"] = sha256_json({
                     key: record[key] for key in (
@@ -961,7 +978,7 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                 # force now. A row locked before the pick record existed is backfill_picks'
                 # job: freezing it here would price it from a line posted after its lock.
                 freeze_pick(con, game, model_key, payload["model_version"], forecast, line, now,
-                            "lock", report)
+                            "lock", report, protocol)
         con.commit()
     except Exception:
         con.rollback()
@@ -1126,14 +1143,20 @@ def export_pick(row: sqlite3.Row | None, grade: dict | None, quote: dict | None 
     if row is None:
         return None
     priced = row["line_captured_at_utc"] is not None
+    age = row["quote_age_seconds"]
+    # A quote older than the T-90 freshness window may still be frozen and shown, but it
+    # cannot qualify a recommendation. An unknown age is left alone rather than treated as
+    # fresh: no rule is applied retroactively to rows frozen before the age was recorded.
+    fresh = age is None or age <= int(T90_QUOTE_MAX_AGE.total_seconds())
     pick = {"market": row["market"], "side": row["side"], "line": row["line"], "price": row["price"],
             "model_probability": row["model_probability"], "market_probability": row["market_probability"],
             "edge": row["edge"], "expected_value": row["expected_value"],
             "line_source": row["line_source"], "line_captured_at_utc": row["line_captured_at_utc"],
             "settlement_basis": row["settlement_basis"], "rule_version": row["rule_version"],
+            "protocol_version": row["protocol_version"], "quote_age_seconds": age,
             "provenance": row["provenance"], "selected_at_utc": row["selected_at_utc"],
-            "priced": priced,
-            "qualifies": priced and row["expected_value"] is not None and row["expected_value"] > 0,
+            "priced": priced, "quote_fresh": fresh,
+            "qualifies": priced and fresh and row["expected_value"] is not None and row["expected_value"] > 0,
             "quote": quote, "result": None}
     if grade:
         pick["result"] = grade_pick(pick, grade)
@@ -1285,7 +1308,7 @@ def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
               "quotes_frozen": 0, "quotes_missing": 0, "skipped": 0}
     rows = con.execute("""
       SELECT game_id,model_key,model_version,game_date,scheduled_start_utc,home_team,away_team,
-             locked_at_utc,forecast_output_json
+             locked_at_utc,forecast_output_json,protocol_version
       FROM nhl_game_projections WHERE season=?
       ORDER BY scheduled_start_utc,game_id,model_key
     """, (int(season),)).fetchall()
@@ -1324,7 +1347,7 @@ def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
                 continue
             before = report["pick_rows"]
             freeze_pick(con, game, row["model_key"], row["model_version"], forecast, quote,
-                        locked_at, "backfill", report)
+                        locked_at, "backfill", report, str(row["protocol_version"]))
             if report["pick_rows"] > before:
                 report["quotes_frozen"] += 1
         con.commit()
