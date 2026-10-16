@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import LiveDot from '../LiveDot'
 import { Eyebrow, SectionHeader } from './primitives'
-import { LiveCard, buildBroadcastViews, localDateKey, groupTime } from '../../pages/esports'
+import { LiveCard, buildBroadcastViews } from '../../pages/esports'
 import type { UpMatch } from '../../pages/esports'
 
 /* ---------------- EWC 2026 focus module ----------------
@@ -124,11 +124,14 @@ function ClubLogo({ clubName, logo }: { clubName: string; logo?: string | null }
   )
 }
 
-export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
+export function ClubStandingsRail({ standings, onExpand, expanded, loading, final = false }: {
   standings: Standings | null
   onExpand: () => void
   expanded: boolean
   loading: boolean
+  /** The tournament is over: the published table is the final record, so the age-based
+   *  freshness badge would be misleading and is suppressed. */
+  final?: boolean
 }) {
   if (loading && !standings) {
     return (
@@ -156,7 +159,7 @@ export function ClubStandingsRail({ standings, onExpand, expanded, loading }: {
       </div>
     )
   }
-  const stale = standings.status === 'stale'
+  const stale = standings.status === 'stale' && !final
   const rows = standings.standings
   const asOf = standings.asOf ? new Date(standings.asOf).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
   return (
@@ -208,36 +211,23 @@ export function EwcModule({ eventData, host, standings, standingsLimit, onExpand
 }) {
   const live = eventData.matches.live
   const upcoming = eventData.matches.upcoming
-  const completed = eventData.matches.completed
   const now = Date.now()
   const broadcasts = buildBroadcastViews([...live, ...upcoming], live, now)
   const featured = broadcasts[0]
   const rest = broadcasts.slice(1)
-  const today = localDateKey(now)
-  const todaysUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) === today)
-  const laterUpcoming = upcoming.filter((m) => localDateKey(groupTime(m)) !== today)
   const tournamentOver = live.length === 0 && upcoming.length === 0
   const rail = (
     <ClubStandingsRail standings={standings} onExpand={onExpandStandings}
-                       expanded={standingsLimit >= 10} loading={standingsLoading} />
+                       expanded={standingsLimit >= 10} loading={standingsLoading}
+                       final={tournamentOver} />
   )
   return (
     <section className="rounded-xl bg-zinc-900/50 px-4 py-5 sm:px-6 sm:py-6">
       {/* One subtle plane for the EWC focus; no border, no shadow, no nested card walls. */}
       <SectionHeader eyebrow={eventData.eventName} title="EWC 2026" meta={live.length ? `${live.length} live` : tournamentOver ? 'Final' : 'Tournament center'} live={live.length > 0} />
 
-      {tournamentOver ? (
-        <div className="mt-5 space-y-8">
-          <div className="min-w-0">{rail}</div>
-          {completed.length ? (
-            <div className="space-y-3">
-              <SectionHeader eyebrow="Results" title="EWC results" />
-              <div className="space-y-1">
-                {completed.slice(0, 8).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-              </div>
-            </div>
-          ) : null}
-        </div>
+      {tournamentOver || !featured ? (
+        <div className="mt-5 min-w-0">{rail}</div>
       ) : (
         <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0 space-y-8">
@@ -256,25 +246,6 @@ export function EwcModule({ eventData, host, standings, standingsLimit, onExpand
                     ))}
                   </div>
                 ) : null}
-              </div>
-            ) : null}
-
-            {upcoming.length ? (
-              <div className="space-y-3">
-                <SectionHeader eyebrow="Schedule" title={todaysUpcoming.length ? 'Today across titles' : 'Next EWC matches'} />
-                <div className="space-y-1">
-                  {todaysUpcoming.length ? todaysUpcoming.map((m, i) => <EwcMatchRow key={i} m={m} />)
-                    : laterUpcoming.slice(0, 5).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-                </div>
-              </div>
-            ) : null}
-
-            {completed.length ? (
-              <div className="space-y-3">
-                <SectionHeader eyebrow="Results" title="EWC results" />
-                <div className="space-y-1">
-                  {completed.slice(0, 8).map((m, i) => <EwcMatchRow key={i} m={m} />)}
-                </div>
               </div>
             ) : null}
           </div>

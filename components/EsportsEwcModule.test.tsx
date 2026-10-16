@@ -58,6 +58,14 @@ describe('EWC standings rail', () => {
     expect(screen.getByText('Stale')).toBeTruthy()
   })
 
+  it('suppresses the age-based stale badge once the tournament is final', () => {
+    // A finished tournament's published table is the final record, not stale data.
+    render(<ClubStandingsRail standings={standings('stale')} onExpand={() => {}} expanded={false} loading={false} final />)
+    expect(screen.queryByText('Stale')).toBeNull()
+    expect(screen.getByText('Team Falcons')).toBeTruthy()
+    expect(screen.getByText('2600')).toBeTruthy()
+  })
+
   it('shows the expand action only when collapsed', () => {
     const { container } = render(<ClubStandingsRail standings={standings('current')} onExpand={() => {}} expanded={false} loading={false} />)
     expect(screen.getByText('Show full top ten →')).toBeTruthy()
@@ -105,7 +113,7 @@ describe('EWC standings rail', () => {
 })
 
 describe('EWC module', () => {
-  it('renders the EWC focus header and today’s slate when active', () => {
+  it('renders the EWC focus header and live focus without repeating the games schedule/results', () => {
     const eventData = {
       eventId: 'ewc-2026',
       eventName: 'Esports World Cup 2026',
@@ -120,10 +128,12 @@ describe('EWC module', () => {
     render(<EwcModule eventData={eventData as any} host="localhost" standings={standings('current')} standingsLimit={10} onExpandStandings={() => {}} standingsLoading={false} />)
     expect(screen.getByText('EWC 2026')).toBeTruthy()
     expect(screen.getByText('Esports World Cup 2026')).toBeTruthy()
-    expect(screen.getByText('FaZe Clan')).toBeTruthy()
-    expect(screen.getByText('OpTic Gaming')).toBeTruthy()
-    // results row with score
-    expect(screen.getByText('Team Heretics')).toBeTruthy()
+    expect(screen.getByText('Club Championship')).toBeTruthy()
+    expect(screen.getByText('Team Falcons')).toBeTruthy()
+    // The games catalog owns the schedule and results; the tournament center never repeats them.
+    expect(screen.queryByText('EWC results')).toBeNull()
+    expect(screen.queryByText('FaZe Clan')).toBeNull()
+    expect(screen.queryByText('Team Heretics')).toBeNull()
   })
 })
 

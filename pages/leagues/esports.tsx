@@ -19,14 +19,13 @@ type TitleOption = {
 
 type UpcomingData = { matches: UpMatch[]; source?: string; error?: string; building?: boolean }
 
-type HubTab = 'live' | 'results' | 'games' | 'picks' | 'ewc'
+type HubTab = 'live' | 'results' | 'picks' | 'ewc'
 
 const POLL_MS = 10_000
 
 const TABS: { key: HubTab; label: string }[] = [
   { key: 'live', label: 'Live & Upcoming' },
   { key: 'results', label: 'Results' },
-  { key: 'games', label: 'Games' },
   { key: 'picks', label: 'Picks' },
   { key: 'ewc', label: 'EWC' },
 ]
@@ -45,10 +44,11 @@ function scheduleDateLabel(firstDate: string | null, lastDate: string | null): s
 }
 
 /* The Esports league destination under the Leagues system. EWC 2026 tournament center first
- * (event focus, today/results, Club Championship rail), then the broader all-esports board
- * rendered inline from the shared /api/esports/upcoming contract — live broadcasts, the
- * day-grouped schedule, and results — plus per-title context and filtering. The live board
- * page /esports stays the dedicated live/picks surface; nothing here duplicates collectors. */
+ * (event focus + Club Championship rail), then the EWC games catalog rendered from the shared
+ * /api/esports/upcoming contract — live broadcasts, the day-grouped schedule, and results —
+ * plus per-title context and filtering. Schedule and results live in the games catalog only;
+ * the tournament center never repeats them. The live board page /esports stays the dedicated
+ * live/picks surface; nothing here duplicates collectors. */
 export default function EsportsLeaguePage() {
   const [activeTab, setActiveTab] = useState<HubTab>('live')
   const [titleFilter, setTitleFilter] = useState<string | null>(null)
@@ -215,17 +215,6 @@ export default function EsportsLeaguePage() {
           ))}
         </nav>
 
-        {/* Active title filter — applies to the board sections below */}
-        {filteredLabel ? (
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
-            <span className="text-emerald-300">Showing only {filteredLabel}</span>
-            <button type="button" onClick={() => setTitleFilter(null)}
-                    className="ml-auto rounded-full border border-emerald-500/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/15">
-              Clear filter ×
-            </button>
-          </div>
-        ) : null}
-
         {activeTab === 'ewc' && (
           <>
             {eventDataError ? (
@@ -242,9 +231,14 @@ export default function EsportsLeaguePage() {
                 <div className="h-32 rounded-xl bg-zinc-900/50" />
               </div>
             ) : (
-              <EwcModule eventData={eventData} host={host} standings={standings}
-                         standingsLimit={standingsLimit} onExpandStandings={() => setStandingsLimit(10)}
-                         standingsLoading={standingsLoading} />
+              <>
+                <EwcModule eventData={eventData} host={host} standings={standings}
+                           standingsLimit={standingsLimit} onExpandStandings={() => setStandingsLimit(10)}
+                           standingsLoading={standingsLoading} />
+                <GamesSection eventData={eventData} eventDataError={eventDataError} titles={titles}
+                              activeSlug={titleFilter} onSelect={setTitleFilter}
+                              filteredLabel={filteredLabel} onClearFilter={() => setTitleFilter(null)} />
+              </>
             )}
           </>
         )}
@@ -299,11 +293,6 @@ export default function EsportsLeaguePage() {
           </section>
         )}
 
-        {activeTab === 'games' && (
-          <GamesSection eventData={eventData} eventDataError={eventDataError} titles={titles}
-                        activeSlug={titleFilter} onSelect={setTitleFilter} />
-        )}
-
         {activeTab === 'picks' && (
           <PicksSection titles={titles} titlesError={titlesError} />
         )}
@@ -346,15 +335,21 @@ function TitleLogo({ title, logo, compact = false }: {
 type SelectedTitleMatches = {
   status: 'published' | 'unavailable'
   lifecycle: 'upcoming' | 'active' | 'final' | null
+  total: number
+  page: number
+  limit: number
+  hasMore: boolean
   matches: { live: UpMatch[]; upcoming: UpMatch[]; completed: UpMatch[] }
 }
 
-function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect }: {
+function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect, filteredLabel, onClearFilter }: {
   eventData: EwcEventData | null
   eventDataError: boolean
   titles: TitleOption[] | null
   activeSlug: string | null
   onSelect: (slug: string | null) => void
+  filteredLabel: string | null
+  onClearFilter: () => void
 }) {
   const [matchView, setMatchView] = useState<MatchView>('all')
   const [selectedTitle, setSelectedTitle] = useState<SelectedTitleMatches | null>(null)
@@ -420,6 +415,8 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
   const titleUpcoming = visibleBuckets.upcoming
   const titleCompleted = visibleBuckets.completed
   const titleMatchCount = titleLive.length + titleUpcoming.length + titleCompleted.length
+  const titleHasMore = selectedTitle?.hasMore ?? false
+  const titleTotal = selectedTitle?.total ?? titleMatchCount
   const live = matchView === 'all' || matchView === 'live' ? titleLive : []
   const upcoming = matchView === 'all' || matchView === 'upcoming' ? titleUpcoming : []
   const completed = matchView === 'all' || matchView === 'finals' ? titleCompleted : []
@@ -457,23 +454,13 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
     <section className="space-y-5">
       <SectionHeader eyebrow="Games" title="EWC 2026 game titles"
                      meta={eventData ? `${options.length} titles · ${tournamentCount} tournaments` : undefined} />
-      <p className="max-w-2xl text-sm text-zinc-500">
-        The complete official EWC program. Local snapshots cover {publishedSnapshotCount} published
-        matches; the initial live slate carries {all.length} current rows across {representedTitleCount} titles.
-        Select a title to load its schedule and results.
-      </p>
-      {eventData?.programSource ? (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-zinc-500">
-          <a href={eventData.programSource.url} target="_blank" rel="noreferrer"
-             className="transition-colors hover:text-zinc-300">
-            Program: {eventData.programSource.label} ↗
-          </a>
-          {eventData.brandSource ? (
-            <a href={eventData.brandSource.url} target="_blank" rel="noreferrer"
-               className="transition-colors hover:text-zinc-300">
-              Game marks: {eventData.brandSource.label} ↗
-            </a>
-          ) : null}
+      {filteredLabel ? (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
+          <span className="text-emerald-300">Showing only {filteredLabel}</span>
+          <button type="button" onClick={onClearFilter}
+                  className="ml-auto rounded-full border border-emerald-500/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/15">
+            Clear filter ×
+          </button>
         </div>
       ) : null}
       {eventDataError ? (
@@ -548,7 +535,7 @@ function GamesSection({ eventData, eventDataError, titles, activeSlug, onSelect 
             })}
           </div>
 
-          {all.length > 0 && titleMatchCount > 0 ? (
+          {(all.length > 0 || activeOption) && titleMatchCount > 0 ? (
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                  aria-label="EWC match view">
               {matchViews.map((view) => (
