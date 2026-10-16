@@ -1,4 +1,4 @@
-# Tennis data in the dev DB (2026-10-13)
+# Tennis data in the dev DB (updated 2026-10-16)
 
 What tennis data we hold, where it came from, what it covers, and what is still missing. The
 state described here is the dev DB (`backend/data/picks.dev.db`). Nothing here is in prod.
@@ -12,6 +12,8 @@ state described here is the dev DB (`backend/data/picks.dev.db`). Nothing here i
 | `tennis_atp_rankings` | 3,420,595 | ATP rankings, 2,333 dates, 1973-08 to 2026-06 | GitHub mirror |
 | `tennis_atp_players` | 66,912 | ATP player table | GitHub mirror |
 | `tennis_atp_source` | 176 | One row per source file: URL, checksums, licence, load audit | GitHub mirror |
+| `tennis_points` | 25,314 | Archived match-status and game-sequence records; coverage in section 4 | Flashscore archive |
+| `kalshi_tennis_points` | 35,608 | Captured live point events; coverage in section 5 | Kalshi live-data endpoint |
 | `usopen_points` | 107,132 | 2026 US Open point-by-point, all rows | see section 3 |
 | `player_game_logs_usopen` | 416 | US Open player game logs, 2026 rounds 1 to 3 | usopen.org |
 
@@ -89,15 +91,46 @@ refuses to run if `usopen_points` already has rows. The capture file path is in 
 prediction-market-trading repo, and the history files are in a scratch directory, so the loader
 depends on both. Move the history files into the repo before relying on the loader again.
 
-## 4. Shanghai and Wuhan (live points)
+## 4. Archived match point histories (dev DB snapshot 2026-10-16)
+
+The `tennis_points` table contains Flashscore archived match pages and point-feed responses from
+the `records-browser-v2-postcutoff-20261014` dataset. Counts below use one match-status row per
+`(tour, source_match_id)`; ATP, WTA and ITF are counted separately.
+
+| Tour | Match-status rows | With point history | Without point history | Walkover / no points played | Game-sequence rows | History match-date range | History matches with tournament/scoreboard reference |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| ATP | 541 | 406 | 134 | 1 | 9,051 | 2026-07-18 to 2026-10-16 | 107 / 406 |
+| WTA | 697 | 691 | 6 | 0 | 15,020 | 2026-06-20 to 2026-08-23 | 132 / 691 |
+| ITF | 5 | 0 | 5 | 0 | 0 | — | — |
+| **Total** | **1,243** | **1,097** | **145** | **1** | **24,071** | **2026-06-20 to 2026-10-16** | **239 / 1,097** |
+
+The 24,071 records are game-level point-score sequences, not 24,071 individual point rows. The
+source progression is kept in `sequence_text` and `raw_json`; structured per-point winner and
+server fields are not populated for these records.
+
+All 1,097 ATP/WTA matches with point history have a match date in this snapshot. Tournament and
+scoreboard cross-references are present for 239 of them (107 ATP, 132 WTA); the other 858 still
+need a confirmed tournament reference. Those 239 rows link to ESPN scoreboard IDs and carry
+`atp_calendar+scoreboard_crosswalk` or `wta_calendar+scoreboard_crosswalk` as the tournament
+reference source. This archive currently covers ATP match dates from July 18 through October 16,
+2026, and WTA dates from June 20 through August 23, 2026. The five ITF records have no point
+history.
+
+These are archive-dataset counts, separate from `usopen_points` and `kalshi_tennis_points` below.
+Their match identifiers are source-specific, so the counts should not be added as a unique
+cross-source match total.
+
+## 5. Shanghai and Wuhan (live points)
 
 - Points come from Kalshi's live-data endpoint, polled every 4 seconds by `kalshi_live_points.py`
   in prediction-market-trading. Output is `data/orderflow/KALSHI_POINTS_YYYYMMDD.jsonl`.
 - Kalshi gives no per-point timestamp, so each point is stamped at the first poll that shows it.
   That is up to 4 seconds late, never early.
-- These rows are not yet in the dev DB.
+- `kalshi_tennis_points` in the dev DB contains 35,608 point rows across 268 source match IDs
+  (19,854 rows / 148 ATP matches and 15,754 rows / 120 WTA matches), dated October 3 to 16,
+  2026 UTC. This is the captured live-data window, not a complete historical archive.
 
-## 5. Sources checked and not used
+## 6. Sources checked and not used
 
 - **tennistemple.com:** returns 403 to this box. Not used.
 - **Grand Slam point-by-point, 2011 to 2024:** in the mirror's `slam_pointbypoint/` folder
@@ -105,14 +138,15 @@ depends on both. Move the history files into the repo before relying on the load
 - **TennisLive, Enetpulse, Goalserve:** TennisLive has point progressions, and the two commercial
   feeds sell live point data. None has been checked for licence or cost.
 
-## 6. Open items
+## 7. Open items
 
 - Link ATP and WTA player IDs to LP players. The tennis spine docs say TennisExplorer and the WTA
   API; the scoreboard uses ESPN. Neither system links to the other yet.
 - Fix the ATP data issues in the plan (keys, rankings conflicts, `R`, levels, player links).
-- Load Shanghai and Wuhan points into the dev DB, and decide how they reach the scoreboard
-  (`docs/PLAN-tennis-points-scoreboard-2026-10-13.md`).
+- Confirm tournament references for the 858 ATP/WTA archived point-history matches that remain
+  unlinked, then decide how those records should join the scoreboard.
+- Decide how Kalshi live points reach the scoreboard (`docs/PLAN-tennis-points-scoreboard-2026-10-13.md`).
 - Decide whether to fetch doubles and the other main-draw events from the US Open feed.
 - Decide whether to download the Grand Slam history from the mirror.
-- The 284 match IDs in the points data that are missing from the match index.
+- The 284 US Open match IDs in `usopen_points` that are missing from the match index.
 - The full integrity check on the live dev DB was started in the background. Record its result.
