@@ -215,6 +215,48 @@ class Failures(T90Base):
             self.con.execute("UPDATE nhl_protocol_versions SET effective_from_utc='2020-01-01T00:00:00Z'")
 
 
+class LockAtCutoff(T90Base):
+    def test_a_game_at_its_cutoff_with_no_snapshot_is_recorded_and_not_locked(self):
+        self.con.commit()
+        report = t90.lock_t90(os.path.join(self.tmp.name, "t90.db"), TARGET, apply=True, games=[game()])
+        self.assertEqual((report["window"], report["due"], report["locked"]), (1, 0, 0))
+        self.assertEqual(report["missing_snapshot"], 3)
+        # Nothing is locked from the older forecast, so a noon forecast is never called T-90.
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 0)
+        failures = self.con.execute("SELECT stage, reason, model_key FROM nhl_t90_failures").fetchall()
+        self.assertEqual(len(failures), 3)
+        self.assertEqual({r["stage"] for r in failures}, {"generation"})
+        self.assertEqual({r["reason"] for r in failures}, {"snapshot_missing"})
+
+    def test_a_game_at_its_cutoff_with_a_snapshot_locks_under_the_t90_protocol(self):
+        self.freeze()
+        report = t90.lock_t90(os.path.join(self.tmp.name, "t90.db"), TARGET, apply=True, games=[game()])
+        self.assertEqual((report["window"], report["due"], report["locked"]), (1, 1, 3))
+        rows = self.con.execute("SELECT protocol_version, features_as_of_utc FROM nhl_game_projections").fetchall()
+        self.assertEqual(len(rows), 3)
+        self.assertEqual({r["protocol_version"] for r in rows}, {T90_PROTOCOL_VERSION})
+        # The locked projection carries the snapshot's feature cutoff, not the ledger's.
+        self.assertEqual({r["features_as_of_utc"] for r in rows}, {iso_utc(GENERATED)})
+        # No quote was captured here, so the forecast locks and no recommendation is invented.
+        self.assertEqual((report["pick_rows"], report["unpriced"]), (0, 3))
+
+    def test_a_game_outside_its_window_is_left_alone(self):
+        self.freeze()
+        for when in (TARGET - dt.timedelta(minutes=1), parse_time(START), parse_time(START) + dt.timedelta(hours=2)):
+            report = t90.lock_t90(os.path.join(self.tmp.name, "t90.db"), when, apply=True, games=[game()])
+            self.assertEqual((report["window"], report["locked"]), (0, 0))
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 0)
+
+    def test_relocking_at_the_same_cutoff_is_idempotent(self):
+        self.freeze()
+        first = t90.lock_t90(os.path.join(self.tmp.name, "t90.db"), TARGET, apply=True, games=[game()])
+        second = t90.lock_t90(os.path.join(self.tmp.name, "t90.db"), TARGET + dt.timedelta(minutes=1),
+                              apply=True, games=[game()])
+        self.assertEqual(first["locked"], 3)
+        self.assertEqual(second["locked"], 0)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_game_projections").fetchone()[0], 3)
+
+
 class Immutability(T90Base):
     def test_snapshots_cannot_be_rewritten_or_deleted(self):
         self.freeze()
