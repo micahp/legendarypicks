@@ -80,6 +80,62 @@ def point_server_is_a(n: int, first_is_a: bool) -> bool:
 
 
 @functools.lru_cache(maxsize=None)
+def expected_points_per_service_game(serve_point_win: float) -> float:
+    """Expected points in a standard advantage service game, conditional on reaching it."""
+    frontier: dict[tuple[int, int], float] = {(0, 0): 1.0}
+    expected_points = 0.0
+    # The game is decided by six points unless the score reaches 3-3. After deuce,
+    # each pair of points ends the game with probability p² + (1-p)², so its
+    # remaining expected length is exactly 2 / (p² + (1-p)²).
+    for _ in range(6):
+        expected_points += sum(frontier.values())
+        nxt: dict[tuple[int, int], float] = defaultdict(float)
+        for (a, b), mass in frontier.items():
+            for (na, nb), probability in (
+                ((a + 1, b), serve_point_win),
+                ((a, b + 1), 1.0 - serve_point_win),
+            ):
+                if max(na, nb) >= 4 and abs(na - nb) >= 2:
+                    continue
+                nxt[(na, nb)] += mass * probability
+        frontier = nxt
+    deuce_mass = frontier.get((3, 3), 0.0)
+    return expected_points + deuce_mass * 2.0 / (serve_point_win**2 + (1.0 - serve_point_win)**2)
+
+
+@functools.lru_cache(maxsize=None)
+def expected_tiebreak_service_points(serve_a: float, serve_b: float, first_is_a: bool,
+                                     points: int) -> tuple[float, float]:
+    """Expected service points by player in a tiebreak, conditional on reaching it."""
+    frontier: dict[tuple[int, int], float] = {(0, 0): 1.0}
+    expected_a = expected_b = 0.0
+    for n in range(2000):
+        if not frontier:
+            break
+        server_is_a = point_server_is_a(n, first_is_a)
+        live_mass = sum(frontier.values())
+        if server_is_a:
+            expected_a += live_mass
+            p_a = serve_a
+        else:
+            expected_b += live_mass
+            p_a = 1.0 - serve_b
+        nxt: dict[tuple[int, int], float] = defaultdict(float)
+        for (a, b), mass in frontier.items():
+            for (na, nb, probability) in (
+                (a + 1, b, p_a),
+                (a, b + 1, 1.0 - p_a),
+            ):
+                if mass * probability < PRUNE:
+                    continue
+                if max(na, nb) >= points and abs(na - nb) >= 2:
+                    continue
+                nxt[(na, nb)] += mass * probability
+        frontier = nxt
+    return expected_a, expected_b
+
+
+@functools.lru_cache(maxsize=None)
 def tiebreak_win_prob_a(serve_a: float, serve_b: float, first_is_a: bool, points: int) -> float:
     """P(A wins a tiebreak to `points`, by two). A wins a point on its own serve with serve_a, and on B's serve with 1 - serve_b."""
     win_a = 0.0
@@ -110,8 +166,10 @@ def _tiebreak_games(r: dict[str, Any], decider: bool) -> int | None:
 
 
 def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | None = None,
-                       first_server: str = "A", max_games: int = MAX_GAMES) -> dict[str, Any]:
+                       first_server: str | None = "A", max_games: int = MAX_GAMES) -> dict[str, Any]:
     """Exact distribution of the match under the rules. Returns probabilities, not samples.
+
+    `first_server=None` averages the two opening-server states with equal probability.
 
     Keys: p_a, p_b (match win), unresolved (mass still in play after max_games), match_scores
     {(winner, winner_sets, loser_sets): p}, sets_played {n: p}, total_games {n: p}, expected_games (over resolved
@@ -120,12 +178,19 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
     """
     r = normalise_rules(rules)
     stw = (r["bestOf"] + 1) // 2
-    frontier: dict[tuple, float] = {(0, 0, 0, 0, first_server == "A", False): 1.0}
+    if first_server is None:
+        frontier: dict[tuple, float] = {
+            (0, 0, 0, 0, True, False): 0.5,
+            (0, 0, 0, 0, False, False): 0.5,
+        }
+    else:
+        frontier = {(0, 0, 0, 0, first_server == "A", False): 1.0}
     win = {"A": 0.0, "B": 0.0}
     match_scores: dict[tuple, float] = defaultdict(float)
     total_games: dict[int, float] = defaultdict(float)
     set_scores: dict[tuple, float] = defaultdict(float)
     flags = {"tiebreak_any": 0.0, "match_tiebreak": 0.0}
+    service_points_a = service_points_b = 0.0
 
     def end_match(winner: str, winner_sets: int, loser_sets: int, games: int, tb: bool, mass: float) -> None:
         win[winner] += mass
@@ -142,6 +207,11 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
             set_no = sa + sb + 1
             decider = sa == stw - 1 and sb == stw - 1
             if decider and r["finalSet"] == "match_tiebreak" and ga == 0 and gb == 0:
+                tb_a, tb_b = expected_tiebreak_service_points(
+                    serve_a, serve_b, srv, r["finalSetTiebreakPoints"]
+                )
+                service_points_a += pr * tb_a
+                service_points_b += pr * tb_b
                 pa = tiebreak_win_prob_a(serve_a, serve_b, srv, r["finalSetTiebreakPoints"])
                 flags["match_tiebreak"] += pr
                 end_match("A", stw, stw - 1, step, tb, pr * pa)
@@ -150,6 +220,9 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
             tb_games = _tiebreak_games(r, decider)
             if tb_games is not None and ga == tb_games and gb == tb_games:
                 points = r["finalSetTiebreakPoints"] if decider else r["tiebreakPoints"]
+                tb_a, tb_b = expected_tiebreak_service_points(serve_a, serve_b, srv, points)
+                service_points_a += pr * tb_a
+                service_points_b += pr * tb_b
                 pa = tiebreak_win_prob_a(serve_a, serve_b, srv, points)
                 for winner, w in (("A", pa), ("B", 1.0 - pa)):
                     mass = pr * w
@@ -161,6 +234,11 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
                     else:
                         nxt[(sets_a, sets_b, 0, 0, not srv, True)] += mass
                 continue
+            expected_game_points = expected_points_per_service_game(serve_a if srv else serve_b)
+            if srv:
+                service_points_a += pr * expected_game_points
+            else:
+                service_points_b += pr * expected_game_points
             pg = game_win_prob(serve_a if srv else serve_b)  # P(the server wins the game)
             pa_game = pg if srv else 1.0 - pg
             for winner, w in (("A", pa_game), ("B", 1.0 - pa_game)):
@@ -190,6 +268,8 @@ def match_distribution(serve_a: float, serve_b: float, rules: dict[str, Any] | N
         "sets_played": dict(sets_played),
         "total_games": dict(total_games),
         "expected_games": sum(g * m for g, m in total_games.items()) / resolved if resolved else math.nan,
+        "expected_service_points_a": service_points_a / resolved if resolved else math.nan,
+        "expected_service_points_b": service_points_b / resolved if resolved else math.nan,
         "p_tiebreak_any": flags["tiebreak_any"],
         "p_match_tiebreak": flags["match_tiebreak"],
         "set_scores": dict(set_scores),
@@ -214,31 +294,41 @@ def games_by_side(distribution: dict[str, Any]) -> tuple[float, float]:
     return (games_a / resolved, games_b / resolved) if resolved else (math.nan, math.nan)
 
 
-def _play_game(rng: random.Random, server_is_a: bool, serve_a: float, serve_b: float) -> bool:
-    """Point by point. True if A wins the game."""
+def _play_game(rng: random.Random, server_is_a: bool, serve_a: float, serve_b: float) -> tuple[bool, int]:
+    """Point by point. Return whether A wins and the number of service points played."""
     a = b = 0
+    points = 0
     p = serve_a if server_is_a else 1.0 - serve_b
     while True:
+        points += 1
         if rng.random() < p:
             a += 1
         else:
             b += 1
         if max(a, b) >= 4 and abs(a - b) >= 2:
-            return a > b
+            return a > b, points
 
 
-def _play_tiebreak(rng: random.Random, first_is_a: bool, serve_a: float, serve_b: float, points: int) -> bool:
-    """Point by point. True if A wins the tiebreak."""
+def _play_tiebreak(rng: random.Random, first_is_a: bool, serve_a: float, serve_b: float,
+                   points: int) -> tuple[bool, int, int]:
+    """Return whether A wins and service points played by A and B."""
     a = b = n = 0
+    service_points_a = service_points_b = 0
     while True:
-        p = serve_a if point_server_is_a(n, first_is_a) else 1.0 - serve_b
+        server_is_a = point_server_is_a(n, first_is_a)
+        if server_is_a:
+            service_points_a += 1
+            p = serve_a
+        else:
+            service_points_b += 1
+            p = 1.0 - serve_b
         if rng.random() < p:
             a += 1
         else:
             b += 1
         n += 1
         if max(a, b) >= points and abs(a - b) >= 2:
-            return a > b
+            return a > b, service_points_a, service_points_b
 
 
 def simulate_match(rng: random.Random, serve_a: float, serve_b: float, rules: dict[str, Any] | None = None,
@@ -248,12 +338,17 @@ def simulate_match(rng: random.Random, serve_a: float, serve_b: float, rules: di
     stw = (r["bestOf"] + 1) // 2
     server_is_a = first_server == "A"
     sets_a = sets_b = games = 0
+    service_points_a = service_points_b = 0
     tiebreak_any = match_tb = False
     set_log: list[tuple] = []
     while True:
         decider = sets_a == stw - 1 and sets_b == stw - 1
         if decider and r["finalSet"] == "match_tiebreak":
-            a_wins = _play_tiebreak(rng, server_is_a, serve_a, serve_b, r["finalSetTiebreakPoints"])
+            a_wins, tb_a, tb_b = _play_tiebreak(
+                rng, server_is_a, serve_a, serve_b, r["finalSetTiebreakPoints"]
+            )
+            service_points_a += tb_a
+            service_points_b += tb_b
             match_tb = True
             if a_wins:
                 sets_a += 1
@@ -265,13 +360,19 @@ def simulate_match(rng: random.Random, serve_a: float, serve_b: float, rules: di
         while True:
             if tb_games is not None and ga == tb_games and gb == tb_games:
                 points = r["finalSetTiebreakPoints"] if decider else r["tiebreakPoints"]
-                a_set = _play_tiebreak(rng, server_is_a, serve_a, serve_b, points)
+                a_set, tb_a, tb_b = _play_tiebreak(rng, server_is_a, serve_a, serve_b, points)
+                service_points_a += tb_a
+                service_points_b += tb_b
                 games += 1
                 tiebreak_any = True
                 winner_games, loser_games = tb_games + 1, tb_games
                 server_is_a = not server_is_a
                 break
-            a_game = _play_game(rng, server_is_a, serve_a, serve_b)
+            a_game, game_points = _play_game(rng, server_is_a, serve_a, serve_b)
+            if server_is_a:
+                service_points_a += game_points
+            else:
+                service_points_b += game_points
             games += 1
             if a_game:
                 ga += 1
@@ -294,6 +395,8 @@ def simulate_match(rng: random.Random, serve_a: float, serve_b: float, rules: di
         "sets_a": sets_a,
         "sets_b": sets_b,
         "games": games,
+        "service_points_a": service_points_a,
+        "service_points_b": service_points_b,
         "tiebreak_any": tiebreak_any,
         "match_tiebreak": match_tb,
         "set_log": set_log,
@@ -306,6 +409,7 @@ def monte_carlo(serve_a: float, serve_b: float, rules: dict[str, Any] | None = N
     rng = random.Random(seed)
     a_wins = tiebreak_any = match_tb = 0
     games_sum = games_sq = 0.0
+    service_points_a_sum = service_points_b_sum = 0.0
     sets_count: dict[int, int] = defaultdict(int)
     match_count: dict[tuple, int] = defaultdict(int)
     set_count: dict[tuple, float] = defaultdict(float)
@@ -316,6 +420,8 @@ def monte_carlo(serve_a: float, serve_b: float, rules: dict[str, Any] | None = N
         match_tb += m["match_tiebreak"]
         games_sum += m["games"]
         games_sq += m["games"] ** 2
+        service_points_a_sum += m["service_points_a"]
+        service_points_b_sum += m["service_points_b"]
         sets_count[m["sets_a"] + m["sets_b"]] += 1
         if m["winner"] == "A":
             match_count[("A", m["sets_a"], m["sets_b"])] += 1
@@ -328,6 +434,8 @@ def monte_carlo(serve_a: float, serve_b: float, rules: dict[str, Any] | None = N
         "n": n,
         "p_a": a_wins / n,
         "expected_games": mean_games,
+        "expected_service_points_a": service_points_a_sum / n,
+        "expected_service_points_b": service_points_b_sum / n,
         "games_se": math.sqrt(max(games_sq / n - mean_games**2, 0.0) / n),
         "p_tiebreak_any": tiebreak_any / n,
         "p_match_tiebreak": match_tb / n,
