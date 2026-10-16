@@ -99,7 +99,7 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
     table = f"tennis_{tour}_matches"
     sql = (
         f"SELECT tourney_date,surface,winner_id,loser_id,best_of,score,"
-        f"w_svpt,w_1stWon,w_2ndWon,l_svpt,l_1stWon,l_2ndWon,w_ace,l_ace "
+        f"w_svpt,w_1stWon,w_2ndWon,l_svpt,l_1stWon,l_2ndWon,w_ace,l_ace,w_df,l_df "
         f"FROM {table} WHERE {point_model.TOUR_FILTER[tour]} AND tourney_date BETWEEN ? AND ? "
         "AND winner_id IS NOT NULL AND loser_id IS NOT NULL ORDER BY tourney_date,match_num"
     )
@@ -112,6 +112,11 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
     player_count: dict[tuple[str, int], int] = defaultdict(int)
     player_aces: dict[tuple[str, int], float] = defaultdict(float)
     overall_count = overall_aces = 0.0
+    format_df_count: dict[int, int] = defaultdict(int)
+    format_double_faults: dict[int, float] = defaultdict(float)
+    player_df_count: dict[tuple[str, int], int] = defaultdict(int)
+    player_double_faults: dict[tuple[str, int], float] = defaultdict(float)
+    overall_df_count = overall_double_faults = 0.0
 
     history_rows = con.execute(sql, (HISTORY_START, cutoff - 1))
     for _, rows_for_day in groupby(history_rows, key=lambda item: item[0]):
@@ -151,6 +156,19 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
                 overall_count += 2
                 overall_aces += float(wace) + float(lace)
 
+            wdf, ldf = row[14], row[15]
+            if _complete(score):
+                for player_id, double_faults in ((winner, wdf), (loser, ldf)):
+                    if double_faults is None or float(double_faults) < 0:
+                        continue
+                    key = (player_id, best_of)
+                    format_df_count[best_of] += 1
+                    format_double_faults[best_of] += float(double_faults)
+                    player_df_count[key] += 1
+                    player_double_faults[key] += float(double_faults)
+                    overall_df_count += 1
+                    overall_double_faults += float(double_faults)
+
             wsv, w1, w2, lsv, l1, l2 = row[6:12]
             if (surface and _complete(score) and None not in (wsv, w1, w2, lsv, l1, l2)
                     and wsv > 0 and lsv > 0):
@@ -184,7 +202,9 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
             "totalGamesInterval": None,
             "totalGamesLabel": None,
             "unavailableReason": None,
-            "modelVersion": "tennis-global-surface-elo-blend-v1",
+            "homeDoubleFaults": None,
+            "awayDoubleFaults": None,
+            "modelVersion": "tennis-global-surface-elo-blend-v2",
         }
         if home_id and away_id:
             p_global = _logistic((global_elo[home_id] - global_elo[away_id]) * math.log(10.0) / 400.0)
@@ -203,6 +223,20 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
                 for side, pid, field in (("home", home_id, "homeAces"), ("away", away_id, "awayAces")):
                     n = player_count[(pid, best_of)]
                     projection[field] = (player_aces[(pid, best_of)] + P0_SHRINK_MATCHES * tour_mean) / (n + P0_SHRINK_MATCHES)
+
+            tour_df_mean = format_double_faults[best_of] / format_df_count[best_of] if format_df_count[best_of] else (
+                overall_double_faults / overall_df_count if overall_df_count else None
+            )
+            if tour_df_mean is not None:
+                for side, pid, field in (
+                    ("home", home_id, "homeDoubleFaults"),
+                    ("away", away_id, "awayDoubleFaults"),
+                ):
+                    key = (pid, best_of)
+                    n = player_df_count[key]
+                    projection[field] = (
+                        player_double_faults[key] + P0_SHRINK_MATCHES * tour_df_mean
+                    ) / (n + P0_SHRINK_MATCHES)
 
             if surface and state.baseline(surface) > 0:
                 serve_home = point_model.point_prob(
