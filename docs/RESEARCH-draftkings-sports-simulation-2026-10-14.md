@@ -5,10 +5,10 @@
 
 ## Main takeaway
 
-A match simulator can be useful even when its standalone match-winner probability loses to Elo. The tennis backtest
-rejected the point-model simulator as a winner forecaster on the evaluated sample; it did not evaluate its service-point,
-ace, double-fault, break or total-game distributions against their own baselines. Those are separate targets and need
-separate validation.
+A match simulator can be useful even when its standalone match-winner probability loses to Elo, but each distribution
+must win its own validation. The tennis backtest rejected the point-model simulator as a winner forecaster and, in a
+separate Oct. 16 evaluation, found that it loses to direct historical distributions for total games on ATP and WTA.
+Service-point exposure, aces, double faults and breaks still require their own target-specific comparisons.
 
 On the ATP 2023–2026 sample of 11,777 complete-score, best-of-three matches, winner log loss was 0.64896 for Elo and
 0.66277 for the point simulator (Brier 0.22802 versus 0.23530). These scores assess match-winner probabilities only;
@@ -48,37 +48,61 @@ Definitions, missingness and coverage still need to be audited before each field
 | Aces | Aggregate ace and service-point counts | The source does not label whether each ace came on a first or second serve. Do not invent those event labels. |
 | Double faults | Aggregate double-fault counts and serve-point / first-serve fields | Validate the second-serve exposure definition and the count distribution by tour and surface. |
 | Breaks of serve | Break-point faced/saved counts, serve/return rates and match score | Distinguish breaks converted from break points won; validate derived counts against source definitions. |
-| Games and set outcomes | Match scores and a scoring simulator | Keep distributions and evaluate total games, spreads, set scores and tiebreaks separately from match-winner accuracy. |
-| Winners and unforced errors | Not present in the current match-level counts | Requires licensed or otherwise approved shot-charting data. |
+| Games and set outcomes | Match scores and a scoring simulator | The total-games backtest favors direct historical distributions over the current simulator. Spreads, set scores and tiebreaks still need their own validation, separate from match-winner accuracy. |
+| Winners and unforced errors | Not present in the current match-level counts | Requires otherwise approved shot-charting data. |
 
 The current source can support ace and double-fault research without shot tracking. Shot-level winners, unforced errors,
 and forehand/backhand classifications are a separate future data requirement.
 
 ## Research sequence
 
-Keep the match-winner and player-projection tracks separate. The current tennis brief's gates remain the release
-criteria; this note clarifies why the simulator's player-stat outputs deserve their own experiments.
+Keep the match-winner and player-projection tracks separate. Historical walk-forward research and prospective grading
+run at the same time.
 
-1. Finish the data and licensing audit, including field definitions, tour/year/surface/format coverage and pre-forecast
-   availability.
-2. Establish direct P0/P1 ace and double-fault count baselines and validate their full distributions.
-3. Validate simulated service-point volume against the service-point exposure baseline. Validate total-game, set-score
-   and tiebreak distributions against direct historical baselines in parallel; do not infer their quality from winner
-   Brier or log loss.
-4. Extend simulation records to ace, double-fault and break events only to the level supported by historical labels.
-   Compare those simulated distributions against the strongest direct baselines using predeclared proper scores,
-   calibration and interval coverage.
-5. Measure between-match variation before adding shared match-level effects. A fixed point probability at every point
-   may make count distributions too narrow; any random effect or within-match update must be fitted from historical data
-   and tested on held-out matches.
-6. Test Elo-informed pooling for thin-history players only as an incremental feature. The goal is to improve player
-   count distributions without degrading them, not to make the simulator the winner source by default.
-7. Evaluate historical sportsbook lines only after probability calibration and data licensing are established.
+1. Finish the data audit, including field definitions, tour/year/surface/format coverage, completion rules
+   and pre-forecast availability. The local development snapshot is audited in
+   [TENNIS-PROPS-DATA-AUDIT-2026-10-14.md](TENNIS-PROPS-DATA-AUDIT-2026-10-14.md).
+2. Gate A: test expected service-point volume from the exact scoring model against a rolling player/surface exposure mean
+   and the tour/surface mean. The expected-volume screen is complete on both tours: ATP (35,099 matches), simulator MAE
+   19.227 vs 17.711 for rolling-player and 17.655 for tour/surface; WTA (38,635), 20.250 vs 18.036 and 17.957.
+   Mean overprediction is 7.292 points per ATP player and 9.226 per WTA player. The simulator loses every test year on
+   both tours. Full-distribution CRPS also favors the direct empirical baseline: ATP 12.214 vs simulator 12.842/12.814
+   across two seeds; WTA 12.422 vs 13.503/13.505. Simulated 50/80/90% intervals under-cover on both tours, and the
+   comparison is seed-stable. Reject the current simulator for service-point exposure on the evaluated completed
+   best-of-three population; format/history-depth review remains before extending that decision. Results and
+   year/surface breakdowns are in
+   [TENNIS-PROPS-BASELINES-2026-10-14.md](TENNIS-PROPS-BASELINES-2026-10-14.md).
+3. Gate B: keep the two direct-count experiment families separate. The earlier E2-based P1 negative binomial beat P0 on
+   ATP aces and double faults, while WTA P0 beat P1 on both targets. The corrected E2-integrated beta-binomial improved
+   the ATP results; on WTA it did not beat P0 for aces and was inconclusive for double faults. A different direct-
+   historical-exposure P1 Gamma-Poisson replay leads its expanded 2015–2026 development sample in all four cells, but
+   does not reverse the earlier result because model definitions and evaluation windows differ. The full summaries are
+   in `research/tennis/props/2026-10-14/` and `docs/TENNIS-PROPS-BASELINES-2026-10-14.md`.
+4. Total-games validation is complete for 11,766 ATP and 13,062 WTA BO3 matches from 2023 through the available part of
+   2026. Direct distributions beat the current simulator on CRPS, with the detailed format/surface/competitiveness
+   baseline scoring 3.359 vs 3.533 for ATP and 3.231 vs 3.557 for WTA. The direct format-only baseline has the best log
+   score. The simulator overpredicts total games by 1.89 and 2.42 on average, and its CRPS loss appears across year,
+   surface, competitiveness and serve-history-depth segments. Keep it out of the total-games incumbent role on this
+   evaluated population; these are development results, not prospective confirmation. Details:
+   [TENNIS-TOTAL-GAMES-BACKTEST-2026-10-16.md](TENNIS-TOTAL-GAMES-BACKTEST-2026-10-16.md).
+5. Finish prospective grading with frozen, timestamped per-target distributions and immutable model versions. Grade only
+   outcomes supported by reliable result data.
+6. Diagnose the cause of the simulator's total-games overprediction using the completed segment analysis. Keep the
+   current simulator in Model Lab while this work proceeds.
+7. Test event-labeled or richer simulation only after a predeclared comparison against the direct baselines. Estimate
+   between-match variation from history; do not add it because a fixed-probability simulation merely looks too narrow.
+8. Test Elo-informed pooling for thin-history players only as an incremental feature, and evaluate sportsbook lines only
+   after calibration is established.
    Preserve line, side, odds, timestamp and settlement rules; prices are an evaluation benchmark, not an initial feature.
 
-This sequence is consistent with the existing Track B gates: direct baselines first, then the service-point exposure
-gate, then event-level simulation, then joint distributions. Track A continues to use Elo as the match-winner reference
-and validates the simulator's set/game/tiebreak outputs separately.
+The 2023-2026 winner results already inspected are development evidence for that target. Player-count outcomes are
+separate targets and may be studied, but their periods are called untouched only after prior-use auditing. Track A
+continues to use Elo as the match-winner reference and validates the simulator's set/game/tiebreak outputs separately.
+
+The current local development grading stream has 12 forecast locks since Oct 14 (first lock Oct 15), 11 grades, and one
+version. It does not save input snapshots or full probability distributions, uses one lock per match, and grades winner
+correctness and total-games error without Brier/log loss or ace/DF count scores. Prospective reporting and challenger-version
+separation remain implementation gaps; these counts are not production status.
 
 ## Public implementation reference
 
@@ -86,8 +110,7 @@ and validates the simulator's set/game/tiebreak outputs separately.
 describing surface-adjusted serve/return profiles, Elo, point-to-match simulation, and projections for totals,
 handicaps, breaks, aces and double faults. It is useful to inspect as an implementation reference, not as independent
 evidence of accuracy. Its README reports that scheduled refreshes and deploys were paused as of September 2026. Review
-its data and code licenses independently before reuse; it does not change the existing commercial-licensing gate for
-our own source data.
+its data and code provenance independently before reuse.
 
 The 55.4% win rate and 9.6% ROI across 296 selections mentioned in the source thread are self-reported results, not
 independent evidence of a durable betting edge.
