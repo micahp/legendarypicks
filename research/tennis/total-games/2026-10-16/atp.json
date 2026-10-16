@@ -2462,5 +2462,246 @@
     24.5,
     26.5
   ],
-  "evidence_status": "Development backtest. The 2023-2026 winner sample has been inspected; this is a different target, but total-games outcomes must not be called untouched confirmation."
+  "evidence_status": "Development backtest. The 2023-2026 winner sample has been inspected; this is a different target, but total-games outcomes must not be called untouched confirmation.",
+  "simulator_structure": {
+    "matches": 11766,
+    "observed": {
+      "total_games_per_match": 23.41160972293048,
+      "sets_per_match": 2.361805201427843,
+      "games_per_set": 9.912591313109504,
+      "deciding_set_frequency": 0.36180520142784295,
+      "any_tiebreak_match_frequency": 0.3752337242903281,
+      "tiebreak_sets_per_match": 0.4462859085500595,
+      "tiebreak_share_of_sets": 0.18895966029723993
+    },
+    "simulator": {
+      "expected_total_games_per_match": 25.30557234471034,
+      "expected_sets_per_match": 2.4782520604855023,
+      "expected_games_per_set": 10.211056715414513,
+      "deciding_set_probability": 0.47825206048549707,
+      "any_tiebreak_match_probability": 0.45494407667390657,
+      "expected_tiebreak_sets_per_match": 0.5519628198462015,
+      "tiebreak_share_of_sets": 0.22272263126377434
+    },
+    "total_games_bias_decomposition": {
+      "observed_reference_set_count_contribution": 1.154290123533841,
+      "simulated_set_length_contribution": 0.7396724982460231,
+      "sum": 1.8939626217798642,
+      "observed_simulator_bias": 1.8939626217798597
+    },
+    "gaps_simulator_minus_observed": {
+      "total_games_bias": 1.8939626217798597,
+      "sets_per_match_gap": 0.1164468590576595,
+      "games_per_set_gap": 0.29846540230500906,
+      "deciding_set_probability_gap": 0.11644685905765412,
+      "any_tiebreak_probability_gap": 0.07971035238357853,
+      "tiebreak_set_rate_gap": 0.03376297096653441,
+      "total_variance_gap": 0.10491997797930708
+    },
+    "event_cluster_bootstrap_95_ci": {
+      "total_games_bias": {
+        "low": 1.7733192437408398,
+        "high": 2.0254666431345356
+      },
+      "sets_per_match_gap": {
+        "low": 0.10734880481226883,
+        "high": 0.1261601830037713
+      },
+      "games_per_set_gap": {
+        "low": 0.2666044980678084,
+        "high": 0.33046137333021797
+      },
+      "deciding_set_probability_gap": {
+        "low": 0.10734880481226829,
+        "high": 0.12616018300377177
+      },
+      "any_tiebreak_probability_gap": {
+        "low": 0.06936071221060226,
+        "high": 0.09039418199969508
+      },
+      "tiebreak_set_rate_gap": {
+        "low": 0.027553900349829047,
+        "high": 0.03952708630854357
+      },
+      "total_variance_gap": {
+        "low": -0.6083838758135016,
+        "high": 0.8070745261538832
+      }
+    }
+  },
+  "simulator_structure_by_year": {
+    "2023": {
+      "matches": 3448,
+      "observed": {
+        "total_games_per_match": 23.48027842227378,
+        "sets_per_match": 2.3697795823665895,
+        "games_per_set": 9.908211969159222,
+        "deciding_set_frequency": 0.3697795823665893,
+        "any_tiebreak_match_frequency": 0.3700696055684455,
+        "tiebreak_sets_per_match": 0.4443155452436195,
+        "tiebreak_share_of_sets": 0.18749235099742995
+      },
+      "simulator": {
+        "expected_total_games_per_match": 25.26755205959819,
+        "expected_sets_per_match": 2.479672581536654,
+        "expected_games_per_set": 10.18987435992049,
+        "deciding_set_probability": 0.47967258153665876,
+        "any_tiebreak_match_probability": 0.44793835128612636,
+        "expected_tiebreak_sets_per_match": 0.5407674564573846,
+        "tiebreak_share_of_sets": 0.21808018545830385
+      },
+      "total_games_bias_decomposition": {
+        "observed_reference_set_count_contribution": 1.0888431297036367,
+        "simulated_set_length_contribution": 0.6984305076207783,
+        "sum": 1.787273637324415,
+        "observed_simulator_bias": 1.787273637324411
+      },
+      "gaps_simulator_minus_observed": {
+        "total_games_bias": 1.787273637324411,
+        "sets_per_match_gap": 0.10989299917006434,
+        "games_per_set_gap": 0.28166239076126764,
+        "deciding_set_probability_gap": 0.10989299917006944,
+        "any_tiebreak_probability_gap": 0.07786874571768086,
+        "tiebreak_set_rate_gap": 0.030587834460873903,
+        "total_variance_gap": -0.4210723437620345
+      }
+    },
+    "2024": {
+      "matches": 3561,
+      "observed": {
+        "total_games_per_match": 23.33698399326032,
+        "sets_per_match": 2.3577646728447066,
+        "games_per_set": 9.897927584564078,
+        "deciding_set_frequency": 0.35776467284470653,
+        "any_tiebreak_match_frequency": 0.37714125245717495,
+        "tiebreak_sets_per_match": 0.4479078910418422,
+        "tiebreak_share_of_sets": 0.18997141495950454
+      },
+      "simulator": {
+        "expected_total_games_per_match": 25.334695403993127,
+        "expected_sets_per_match": 2.4789145191790722,
+        "expected_games_per_set": 10.220076250302926,
+        "deciding_set_probability": 0.47891451917907557,
+        "any_tiebreak_match_probability": 0.4581494303896626,
+        "expected_tiebreak_sets_per_match": 0.5566011593443124,
+        "tiebreak_share_of_sets": 0.2245342286060912
+      },
+      "total_games_bias_decomposition": {
+        "observed_reference_set_count_contribution": 1.1991324058986177,
+        "simulated_set_length_contribution": 0.7985790048341948,
+        "sum": 1.9977114107328124,
+        "observed_simulator_bias": 1.9977114107328084
+      },
+      "gaps_simulator_minus_observed": {
+        "total_games_bias": 1.9977114107328084,
+        "sets_per_match_gap": 0.12114984633436565,
+        "games_per_set_gap": 0.3221486657388475,
+        "deciding_set_probability_gap": 0.12114984633436902,
+        "any_tiebreak_probability_gap": 0.08100817793248767,
+        "tiebreak_set_rate_gap": 0.03456281364658667,
+        "total_variance_gap": 0.9535914746018079
+      }
+    },
+    "2025": {
+      "matches": 3191,
+      "observed": {
+        "total_games_per_match": 23.498589783766842,
+        "sets_per_match": 2.364462550924475,
+        "games_per_set": 9.938237243207421,
+        "deciding_set_frequency": 0.3644625509244751,
+        "any_tiebreak_match_frequency": 0.37511751801942966,
+        "tiebreak_sets_per_match": 0.4406142275148856,
+        "tiebreak_share_of_sets": 0.18634857521537443
+      },
+      "simulator": {
+        "expected_total_games_per_match": 25.341371950192098,
+        "expected_sets_per_match": 2.4775510770643514,
+        "expected_games_per_set": 10.228395363787644,
+        "deciding_set_probability": 0.4775510770643501,
+        "any_tiebreak_match_probability": 0.4604634309187423,
+        "expected_tiebreak_sets_per_match": 0.560882964486953,
+        "tiebreak_share_of_sets": 0.22638603485484657
+      },
+      "total_games_bias_decomposition": {
+        "observed_reference_set_count_contribution": 1.1239006022627558,
+        "simulated_set_length_contribution": 0.7188815641624996,
+        "sum": 1.8427821664252555,
+        "observed_simulator_bias": 1.8427821664252555
+      },
+      "gaps_simulator_minus_observed": {
+        "total_games_bias": 1.8427821664252555,
+        "sets_per_match_gap": 0.11308852613987641,
+        "games_per_set_gap": 0.29015812058022306,
+        "deciding_set_probability_gap": 0.11308852613987506,
+        "any_tiebreak_probability_gap": 0.08534591289931266,
+        "tiebreak_set_rate_gap": 0.04003745963947214,
+        "total_variance_gap": 0.5154769005237085
+      }
+    },
+    "2026": {
+      "matches": 1566,
+      "observed": {
+        "total_games_per_match": 23.25287356321839,
+        "sets_per_match": 2.348020434227331,
+        "games_per_set": 9.90318194180038,
+        "deciding_set_frequency": 0.34802043422733075,
+        "any_tiebreak_match_frequency": 0.3825031928480204,
+        "tiebreak_sets_per_match": 0.45849297573435505,
+        "tiebreak_share_of_sets": 0.19526788142507479
+      },
+      "simulator": {
+        "expected_total_games_per_match": 25.25011269456084,
+        "expected_sets_per_match": 2.475046355571492,
+        "expected_games_per_set": 10.201874658921508,
+        "deciding_set_probability": 0.47504635557149294,
+        "any_tiebreak_match_probability": 0.451833742804177,
+        "expected_tiebreak_sets_per_match": 0.5478889401930838,
+        "tiebreak_share_of_sets": 0.22136512270154038
+      },
+      "total_games_bias_decomposition": {
+        "observed_reference_set_count_contribution": 1.2579608103960536,
+        "simulated_set_length_contribution": 0.7392783209463939,
+        "sum": 1.9972391313424476,
+        "observed_simulator_bias": 1.9972391313424502
+      },
+      "gaps_simulator_minus_observed": {
+        "total_games_bias": 1.9972391313424502,
+        "sets_per_match_gap": 0.12702592134416113,
+        "games_per_set_gap": 0.29869271712112777,
+        "deciding_set_probability_gap": 0.12702592134416218,
+        "any_tiebreak_probability_gap": 0.06933054995615652,
+        "tiebreak_set_rate_gap": 0.026097241276465594,
+        "total_variance_gap": -1.4505112796823596
+      }
+    }
+  },
+  "predictive_variance_diagnostic": {
+    "observed_total_games_variance": 35.42542700253668,
+    "models": {
+      "simulator": {
+        "mean_conditional_forecast_variance": 34.868579228129846,
+        "between_match_forecast_mean_variance": 0.6617677523988925,
+        "mixture_predictive_variance": 35.53034698052874,
+        "variance_gap_vs_observed": 0.10491997799206132
+      },
+      "direct_format": {
+        "mean_conditional_forecast_variance": 35.539046468322525,
+        "between_match_forecast_mean_variance": 0.008086928537416965,
+        "mixture_predictive_variance": 35.54713339685994,
+        "variance_gap_vs_observed": 0.12170639432326169
+      },
+      "direct_surface": {
+        "mean_conditional_forecast_variance": 35.377230492264616,
+        "between_match_forecast_mean_variance": 0.06545057810093598,
+        "mixture_predictive_variance": 35.44268107036555,
+        "variance_gap_vs_observed": 0.01725406782887262
+      },
+      "direct_surface_competitive": {
+        "mean_conditional_forecast_variance": 35.215492324211326,
+        "between_match_forecast_mean_variance": 0.2353331940444215,
+        "mixture_predictive_variance": 35.45082551825575,
+        "variance_gap_vs_observed": 0.02539851571906837
+      }
+    }
+  }
 }
