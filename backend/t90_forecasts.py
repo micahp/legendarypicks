@@ -52,9 +52,11 @@ run_pipeline = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(run_pipeline)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import capture_nhl_game_lines as capture  # noqa: E402
 from nhl_model_store import (  # noqa: E402
     DEFAULT_DB, LOCK_LEAD, MODEL_KEYS, NHLModelError, T90_FEATURE_MAX_AGE, T90_GENERATE_LEAD,
-    T90_PROTOCOL_VERSION, ensure_schema, iso_utc, parse_time, sha256_json,
+    T90_PROTOCOL_VERSION, T90_QUOTE_MAX_AGE, ensure_schema, iso_utc, lock_feed, parse_time,
+    sha256_json,
 )
 
 # The score distribution is a deterministic expansion of the frozen expected goals and the
@@ -213,12 +215,20 @@ def freeze_snapshot(con: sqlite3.Connection, game: dict, rows: list[dict], *, ge
     return written
 
 
-def t90_payload(con: sqlite3.Connection, season: int, protocol: str = T90_PROTOCOL_VERSION) -> dict:
+def t90_payload(con: sqlite3.Connection, season: int, protocol: str = T90_PROTOCOL_VERSION,
+                game_ids: list[str] | None = None) -> dict:
     """The stored snapshots as a forecast feed, so the lock path needs no special case."""
     grouped: dict[str, dict] = {}
     model_versions: dict[str, str] = {}
-    for row in con.execute("SELECT * FROM nhl_t90_forecasts WHERE season=? AND protocol_version=? "
-                           "ORDER BY scheduled_start_utc,game_id,model_key", (int(season), protocol)):
+    sql = ("SELECT * FROM nhl_t90_forecasts WHERE season=? AND protocol_version=? "
+           "ORDER BY scheduled_start_utc,game_id,model_key")
+    params: list = [int(season), protocol]
+    if game_ids is not None:
+        sql = ("SELECT * FROM nhl_t90_forecasts WHERE protocol_version=? AND game_id IN (%s) "
+               "ORDER BY scheduled_start_utc,game_id,model_key"
+               % ",".join("?" for _ in game_ids))
+        params = [protocol] + [str(g) for g in game_ids]
+    for row in con.execute(sql, params):
         payload = json.loads(row["snapshot_json"])
         gid = str(row["game_id"])
         game = grouped.get(gid)
@@ -308,13 +318,88 @@ def generate(db_path: str = DEFAULT_DB, now: dt.datetime | None = None, *, horiz
         con.close()
 
 
+def lock_t90(db_path: str = DEFAULT_DB, now: dt.datetime | None = None, *, feed_path: str | None = None,
+             fetch=None, apply: bool = False, horizon_hours: float = 24, log=print,
+             games: list[dict] | None = None) -> dict:
+    """Lock each T-90 snapshot at its cutoff against a quote captured as close to it as possible.
+
+    A game inside its window with no snapshot is recorded as a generation failure and is not
+    locked from the older forecast, so a noon forecast is never presented as a T-90 one.
+    """
+    now = now or dt.datetime.now(dt.timezone.utc)
+    con = sqlite3.connect(db_path)
+    con.row_factory = sqlite3.Row
+    report = {"window": 0, "due": 0, "locked": 0, "pick_rows": 0, "unpriced": 0,
+              "missing_snapshot": 0, "quote": None}
+    try:
+        ensure_schema(con)
+        if feed_path is not None and fetch is not None:
+            # Capture at the cutoff rather than inheriting whatever the read path last fetched.
+            report["quote"] = capture.refresh_lines(db_path, feed_path, fetch, now, log=log,
+                                                    max_age=T90_QUOTE_MAX_AGE)
+        games, _meta = run_pipeline.live_schedule(now, horizon_hours) if games is None else (games, {})
+        expected_version = str(json.loads(run_pipeline.MODEL_PATH.read_text())["model_version"])
+        taken = {(str(r["game_id"]), r["model_key"]) for r in con.execute(
+            "SELECT game_id, model_key FROM nhl_t90_forecasts WHERE protocol_version=?",
+            (T90_PROTOCOL_VERSION,))}
+        due = []
+        for game in games:
+            gid = str(game["game_id"])
+            start = parse_time(game["start_time_utc"])
+            target = target_lock_utc(game["start_time_utc"])
+            if not (target <= now < start):
+                continue  # before the cutoff, or already under way
+            report["window"] += 1
+            missing = sorted(m for m in MODEL_KEYS if (gid, m) not in taken)
+            if missing:
+                for model_key in missing:
+                    if record_failure(con, gid, model_key, expected_version, "generation",
+                                      "snapshot_missing", "no T-90 snapshot at the cutoff",
+                                      now, target):
+                        report["missing_snapshot"] += 1
+                continue
+            due.append(game)
+        con.commit()
+        report["due"] = len(due)
+        if not due:
+            return report
+        if not apply:
+            return report
+        payload = t90_payload(con, 0, game_ids=[str(g["game_id"]) for g in due])
+        locked = lock_feed(con, payload, now)
+        report["locked"] = locked["locked_rows"]
+        report["pick_rows"] = locked["pick_rows"]
+        report["unpriced"] = locked["unpriced_models"]
+        return report
+    finally:
+        con.close()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=DEFAULT_DB)
     parser.add_argument("--horizon-hours", type=float, default=24)
     parser.add_argument("--apply", action="store_true", help="Write snapshots (default: dry-run)")
+    parser.add_argument("--lock", action="store_true",
+                        help="Lock the snapshots at their cutoff instead of generating them")
+    parser.add_argument("--feed", default=None, help="Feed path for the quote refresh (with --lock)")
+    parser.add_argument("--refresh", action="store_true", help="Capture fresh Bovada odds (with --lock)")
     args = parser.parse_args(argv)
     now = dt.datetime.now(dt.timezone.utc)
+    if args.lock:
+        fetch = None
+        if args.refresh:
+            fetch = capture.fetch_events
+        report = lock_t90(args.db, now, feed_path=args.feed, fetch=fetch, apply=args.apply,
+                          horizon_hours=args.horizon_hours)
+        quote = report["quote"]
+        print("%s lock at %s: %d in window, %d due, %d locked, %d picks, %d unpriced, "
+              "%d missing snapshots, quote %s" % (
+                  "applied" if args.apply else "dry-run", iso_utc(now), report["window"],
+                  report["due"], report["locked"], report["pick_rows"], report["unpriced"],
+                  report["missing_snapshot"],
+                  "not attempted" if quote is None else quote.get("reason")))
+        return 0
     report = generate(args.db, now, horizon_hours=args.horizon_hours, apply=args.apply)
     print("%s at %s: %d due, %d snapshots written, %d already present, %d failed, %d not due" % (
         "applied" if args.apply else "dry-run", iso_utc(now), report["due"], report["snapshots"],
