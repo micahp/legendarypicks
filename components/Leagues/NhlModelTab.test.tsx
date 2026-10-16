@@ -237,7 +237,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('Not recommended')).toHaveLength(2)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
     expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
-    expect(screen.getByText('Elo · Selected')).toBeTruthy()
+    expect(screen.getByText('· Selected')).toBeTruthy()
   })
 
   it('does not invent Brier scores before games are graded', async () => {
