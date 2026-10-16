@@ -375,23 +375,49 @@ function modelPerformance(games: NhlGame[], model: ModelName) {
   }
 }
 
-function ModelPerformanceSummary({ games, model }: { games: NhlGame[]; model: ModelName }) {
-  const result = modelPerformance(games, model)
+const MODEL_ORDER: ModelName[] = ['B3_elo', 'B5_xg_poisson', 'B7_elo_xg_poisson']
+
+function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; selectedModel: ModelName }) {
   const score = (value: number | null, decimals: number) => value == null ? '—' : value.toFixed(decimals)
 
   return (
-    <section aria-label="2026–27 prospective model performance" className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-      <div>
-        <h3 className="text-sm font-semibold text-zinc-100">Model performance</h3>
-        <p className="text-xs text-zinc-500">2026–27 prospective · {MODEL_LABELS[model]} · all graded forecasts</p>
+    <section aria-label="2026–27 prospective model performance" className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-zinc-100">Model accuracy</h3>
+        <p className="mt-1 text-xs text-zinc-400">2026–27 live · all graded forecasts · same metrics for every model</p>
       </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-        <Metric label="Brier score" value={score(result.brier, 4)} />
-        <Metric label="Log loss" value={score(result.logLoss, 4)} />
-        <Metric label="Goals MAE / team" value={score(result.goalMae, 3)} />
-        <Metric label="Games graded" value={String(result.count)} />
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[450px] text-sm tabular-nums">
+          <thead className="border-b border-zinc-700 text-xs text-zinc-500">
+            <tr>
+              <th className="px-2 py-2 text-left font-medium">Model</th>
+              <th className="px-2 py-2 text-right font-medium">Brier ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Log loss ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Goal MAE ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Games</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800">
+            {MODEL_ORDER.map(key => {
+              const result = modelPerformance(games, key)
+              return (
+                <tr key={key} className={key === selectedModel ? 'bg-zinc-800/70' : ''}>
+                  <th scope="row" className="px-2 py-3 text-left font-medium text-zinc-200">
+                    {MODEL_LABELS[key]}{key === selectedModel ? <span className="ml-1 text-xs text-emerald-400">· Selected</span> : null}
+                  </th>
+                  <td className="px-2 py-3 text-right font-semibold text-zinc-100">{score(result.brier, 4)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{score(result.logLoss, 4)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{score(result.goalMae, 3)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{result.count}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
-      <p className="text-xs text-zinc-500">Lower is better. Brier: 0 is perfect; 0.2500 is the constant 50% reference. Unpriced games count toward model accuracy. Historical backtests and betting results are separate.</p>
+      <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+        Lower is better. Brier 0 is perfect; 0.2500 is a constant 50% forecast. Every graded game counts, including unpriced games. Historical backtests and betting ROI are separate.
+      </p>
     </section>
   )
 }
@@ -445,6 +471,7 @@ export default function NhlModelTab() {
   const [payload, setPayload] = useState<Payload | null>(null)
   const [model, setModel] = useState<ModelName>('B7_elo_xg_poisson')
   const [view, setView] = useState<View>('projections')
+  const [showAccuracy, setShowAccuracy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -485,10 +512,25 @@ export default function NhlModelTab() {
         <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NHL model views">
           {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}
         </nav>
-        <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button type="button" aria-expanded={showAccuracy} aria-controls="nhl-model-accuracy"
+              onClick={() => setShowAccuracy(open => !open)}
+              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">
+              <span aria-hidden="true">▥</span> Model accuracy <span aria-hidden="true">{showAccuracy ? '▴' : '▾'}</span>
+            </button>
+            {showAccuracy && <>
+              <button type="button" aria-label="Close model accuracy" onClick={() => setShowAccuracy(false)}
+                className="fixed inset-0 z-40 cursor-default" />
+              <div id="nhl-model-accuracy" className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,610px)]">
+                <ModelPerformanceSummary games={games} selectedModel={model} />
+              </div>
+            </>}
+          </div>
+          <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
+        </div>
       </div>
 
-      {(view === 'projections' || view === 'record') && <ModelPerformanceSummary games={games} model={model} />}
       {view === 'projections' && <>
         <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
         {items.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="grid gap-3 sm:grid-cols-2">{entries.map(item => item.node)}</div></section>)}
