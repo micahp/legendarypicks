@@ -356,6 +356,46 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
   )
 }
 
+type GradedForecast = NonNullable<Forecast['grade']>
+
+function modelPerformance(games: NhlGame[], model: ModelName) {
+  // A model's accuracy includes every graded forecast, whether or not it generated a bet.
+  const grades = games
+    .map(game => game.models[model]?.grade)
+    .filter((grade): grade is GradedForecast => grade != null)
+  const count = grades.length
+  const average = (value: (grade: GradedForecast) => number) =>
+    count ? grades.reduce((sum, grade) => sum + value(grade), 0) / count : null
+
+  return {
+    count,
+    brier: average(grade => grade.home_win_brier),
+    logLoss: average(grade => grade.home_win_logloss),
+    goalMae: average(grade => (Math.abs(grade.home_goal_error) + Math.abs(grade.away_goal_error)) / 2),
+  }
+}
+
+function ModelPerformanceSummary({ games, model }: { games: NhlGame[]; model: ModelName }) {
+  const result = modelPerformance(games, model)
+  const score = (value: number | null, decimals: number) => value == null ? '—' : value.toFixed(decimals)
+
+  return (
+    <section aria-label="2026–27 prospective model performance" className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+      <div>
+        <h3 className="text-sm font-semibold text-zinc-100">Model performance</h3>
+        <p className="text-xs text-zinc-500">2026–27 prospective · {MODEL_LABELS[model]} · all graded forecasts</p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+        <Metric label="Brier score" value={score(result.brier, 4)} />
+        <Metric label="Log loss" value={score(result.logLoss, 4)} />
+        <Metric label="Goals MAE / team" value={score(result.goalMae, 3)} />
+        <Metric label="Games graded" value={String(result.count)} />
+      </div>
+      <p className="text-xs text-zinc-500">Lower is better. Brier: 0 is perfect; 0.2500 is the constant 50% reference. Unpriced games count toward model accuracy. Historical backtests and betting results are separate.</p>
+    </section>
+  )
+}
+
 function RecordView({ games, model, missedLocks }: { games: NhlGame[]; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
   const ordered = games.filter(game => game.models[model].grade).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
   const missed = missedLocks.filter(row => row.model_key === model)
@@ -448,6 +488,7 @@ export default function NhlModelTab() {
         <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
       </div>
 
+      {(view === 'projections' || view === 'record') && <ModelPerformanceSummary games={games} model={model} />}
       {view === 'projections' && <>
         <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
         {items.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="grid gap-3 sm:grid-cols-2">{entries.map(item => item.node)}</div></section>)}
