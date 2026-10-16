@@ -24,7 +24,7 @@ The prospective session started at `2026-10-14T08:06:00Z`. Forecasts include fea
 
 The cumulative reporting pipeline is designed to report monthly and cumulative winner Brier, log loss, calibration, team-goal MAE, joint goal negative log likelihood, totals and puck-line Brier, market coverage, and paired game-level bootstrap intervals. A prospective run is useful only when it has enough completed, locked forecasts; a forecast count alone is not predictive validation.
 
-For the binary full-game winner target, Brier is the mean squared difference between predicted home-win probability and the observed result (1 for a home win, 0 for an away win). The score ranges from 0 to 1: zero is perfect, lower is better, and a 50/50 forecast always scores 0.25. The primary benchmark will be the contemporaneous, de-vigged market probability on the same games; 0.25 is the simple reference point.
+For the binary full-game winner target, Brier is the mean squared difference between predicted home-win probability and the observed result (1 for a home win, 0 for an away win). Zero is perfect and lower is better. A 50/50 forecast has Brier 0.25 on a balanced sample. The primary benchmark will be the contemporaneous, de-vigged market probability on the same games; 0.25 is the simple reference point.
 
 | Candidate | Prospective winner Brier | Benchmark and status |
 |---|---:|---|
