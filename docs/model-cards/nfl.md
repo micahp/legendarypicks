@@ -105,6 +105,22 @@ v2 still loses to the market's 0.2463 by 0.0243, and that interval also excludes
 population, which includes the 19,088 items (57%) where the live route serves nothing, v2 scores 0.2747
 against the market's 0.2460.
 
+### How the player numbers relate to the game numbers
+
+The game-winner Brier in `Targets, grades, and validation` and these prop Briers are not the same target or
+the same population, so they are not ranked in one table. The market's own Brier differs between them (0.2137
+for the 2025 game holdout, 0.2460 for the 2026 props), so the quantity that is comparable across the two is
+the gap to market:
+
+| Model | Brier | Market | Gap to market |
+|---|---:|---:|---:|
+| `nfl-v1` game winner, 2025 holdout | 0.2288 | 0.2137 | +0.0151 |
+| Spec B player props, 2026 weeks 2 to 5 | 0.2747 | 0.2460 | +0.0287 |
+| Live Marcel-lite props, 2026 weeks 4 and 5 | 0.3082 | 0.2463 | +0.0619 |
+
+Read on that axis: the game model is 0.015 behind the market, the Spec B player engine is 0.029 behind, and the
+projection the site serves today is 0.062 behind.
+
 The two levels are not connected. `game_projections` holds one row per game and no code turns it into player
 lines; the player engine reads its own logs and team-share history instead. Player volume ignores the
 projected game script (a margin-based adjustment was tested and rejected on 2025 MAE). Availability is not an
