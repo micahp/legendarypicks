@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import NewsTab from '../../components/Leagues/NewsTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
@@ -215,6 +216,7 @@ export default function SoccerLeaguePage({
     <>
       <Head><title>Soccer — Legendary Picks</title></Head>
       <div className="space-y-6">
+        <LeagueSwitcher activeLeague={competition} />
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight">Soccer</h1>
         </header>

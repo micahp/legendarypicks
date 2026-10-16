@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
 import HorizontalScrollRail from '../../components/HorizontalScrollRail'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import NewsTab from '../../components/Leagues/NewsTab'
 import TennisModelTab from '../../components/Leagues/TennisModelTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
@@ -179,6 +180,7 @@ export default function TennisLeaguePage() {
     <>
       <Head><title>Tennis — Legendary Picks</title></Head>
       <div className="space-y-6">
+        <LeagueSwitcher activeLeague="tennis" />
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight">Tennis</h1>
         </header>
