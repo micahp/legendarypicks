@@ -32,6 +32,21 @@ For the binary full-game winner target, Brier is the mean squared difference bet
 | `B5_xg_poisson` | Not yet measurable (0 graded results) | Same benchmark |
 | `B7_elo_xg_poisson` | Not yet measurable (0 graded results) | Same benchmark; current display default, not a validated winner |
 
+### Historical and reported winner Brier markers
+
+These results come from different sources and evaluation samples. They provide context, not a like-for-like ranking or prospective grades for the current candidates above.
+
+| Model | Brier score | Evaluation sample |
+|---|---:|---|
+| Perfect prediction | 0.0000 | Mathematical ideal |
+| NHLPredictor ensemble | 0.2203 | Author-reported holdout |
+| PuckCast | 0.2340 | Reported 7,428-game evaluation |
+| NHLAnalyzer | 0.2404 | Author-reported evaluation |
+| PodiumOracle Elo | 0.2428 | 2,792 holdout games |
+| PodiumOracle recent-form baseline | 0.2479 | Same 2,792 games |
+| PodiumOracle home/away base rate | 0.2482 | Same 2,792 games |
+| Constant 50% probability | 0.2500 | Mathematical baseline |
+
 At this repository snapshot, the ledger contains 39 model rows across 13 games and 12 market-capture rows. No official results are recorded, so there is no observed Brier score to report yet. No candidate has prospective performance evidence sufficient for adoption.
 
 ## Market comparison and product pick
