@@ -218,6 +218,10 @@ and score-state checks but not match-winner test cases. Match-winner forecasts w
 2021 (623 matches) and tested on 2022–2024 (2,749 matches), with same-day matches forecast before
 that day's data updates.
 
+Calibration fits explicitly include both player orders and complementary outcomes. This prevents the Match Charting
+source's side-one win rate (53.2%, versus 50.9% in the Grand Slam archive) from becoming a side preference in the direct
+model's calibrated probability. The fitter checks that the paired data produce a zero intercept.
+
 On held-out matches, Elo's Brier score was 0.20878, the point-level simulator's was 0.22273, and a
 direct point-count logistic model that does not simulate the match scored 0.22336. The direct
 model's paired Brier difference from Elo was +0.01458 (95% tournament-cluster interval +0.00610 to
@@ -229,10 +233,13 @@ improve point-outcome Brier over a surface-only baseline (0.23411 vs 0.23533, av
 of 3,667 matches), but this did not improve match-winner forecasts. Keep Elo as the match forecast
 incumbent; keep the direct model and simulator in research.
 
-Ace and double-fault flags were not used as model features in this run. Those flags are present in
-the Grand Slam, US Open, and Kalshi sources but absent from Match Charting; the US Open and Kalshi
-captures postdate the result archive. Calibrate those outcomes separately after building their
-source-specific player and match crosswalks.
+Point-level ace and double-fault flags were not used as features in the match-winner or simulator
+evaluation. Separately, the broader main-tour match-stat archive supports walk-forward ace and
+double-fault count forecasts. Their 2022–2024 threshold Brier comparison, alongside match-winner
+and total-games Brier scores, is recorded in the [cross-target Brier report](../research/tennis/point-events/2026-10-16/prop_brier_comparison.md).
+The point-event flag captures remain useful for future score-state and event-level diagnostics;
+Match Charting lacks ace/DF labels, and the 2026 US Open/Kalshi captures do not yet have matched
+final outcomes.
 
 The simulator also produced longer matches than observed: 24.50 vs 22.14 total games on average
 (+2.36 games; 95% tournament-cluster interval +2.12 to +2.59), and a deciding-set rate of 45.8% vs
@@ -275,7 +282,9 @@ and Kalshi capture terms have not been assessed. Loaders: `backend/ingest_histor
   tournament references; review the source-tour/category mismatches before using these rows in
   canonical tour-level analyses.
 - Calibrate ace and double-fault projections from source-supported event flags; Match Charting
-  does not provide these fields, and the live US Open/Kalshi captures have no matched results yet.
+  does not provide these fields. Main-tour count-projection candidates now have historical Brier
+  comparisons; point-event flags still need source-specific player and outcome links for a separate
+  score-state model.
 - Decide how Kalshi live points reach the scoreboard (`docs/PLAN-tennis-points-scoreboard-2026-10-13.md`).
 - Decide whether to fetch doubles and the other main-draw events from the US Open feed.
 - The 284 US Open match IDs in `usopen_points` that are missing from the match index.

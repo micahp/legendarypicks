@@ -405,3 +405,17 @@ against independent point-by-point Monte Carlo for
 two serve-probability pairs and both opening-server cases; the exact expected service-point means agreed within one point
 per player over 12,000 simulated matches per case. The game deuce tail uses a closed-form expectation; tiebreak tail
 probability below `1e-15` is pruned using the simulator's existing tolerance.
+
+### Cross-market Brier comparison (2022–2024)
+
+The same 2022–2024 date-block holdout now compares match-winner, total-games, ace, and double-fault forecasts. The
+direct point-derived match-winner model remains behind Elo (Brier 0.22336 vs 0.20878 raw Elo; calibrated Elo is
+0.20691). The exact point simulator also loses to a non-simulation total-games distribution at each tested diagnostic
+threshold for both tours. For ace and double-fault count cutoffs, the direct-exposure P1 Gamma–Poisson improves Brier
+over the match-rate P0 Gamma–Poisson at most cutoffs; ATP DF ≥4 and WTA DF ≥6 are inconclusive under tournament
+clustering. These cutoffs are diagnostics, not sportsbook lines. The full model scores, sample sizes, and paired
+tournament-bootstrap intervals are in the [cross-target Brier report](../research/tennis/point-events/2026-10-16/prop_brier_comparison.md).
+
+The direct match-winner calibration uses both player orders for each validation match and the complementary outcome,
+so source-side ordering cannot create a side bias. Point-level ace/DF event flags were not used for the count-prop
+forecasts; those use the broad main-tour match-stat archive.

@@ -367,21 +367,16 @@ def fit_logistic(rows: list[dict[str, Any]], feature: str) -> tuple[float, float
 
 
 def fit_symmetric_logistic(rows: list[dict[str, Any]], feature: str) -> tuple[float, float]:
-    """Fit only a slope: swapping players must swap P(win) to 1-P(win)."""
-    b = 0.0
-    for _ in range(100):
-        gradient = information = 0.0
-        for row in rows:
-            x, y = row[feature], row["y"]
-            p = sigmoid(b * x)
-            weight = p * (1 - p)
-            gradient += (y - p) * x
-            information += weight * x * x
-        step = gradient / (information + 1e-8)
-        b += step
-        if abs(step) < 1e-8:
-            break
-    return 0.0, b
+    """Fit after adding each match in both orders, preventing source-side bias in calibration."""
+    paired: list[dict[str, Any]] = []
+    for row in rows:
+        x, y = row[feature], row["y"]
+        paired.append({feature: x, "y": y})
+        paired.append({feature: -x, "y": 1 - y})
+    intercept, slope = fit_logistic(paired, feature)
+    if abs(intercept) > 1e-7:
+        raise RuntimeError(f"paired side-order calibration produced a nonzero intercept: {intercept}")
+    return 0.0, slope
 
 
 def sigmoid(value: float) -> float:
@@ -877,7 +872,7 @@ def run(out: Path) -> None:
                   "fit_elo_calibration_alpha_beta": fit_elo,
                   "test_brier_logloss": overall, "by_year_tour": by_year_tour,
                   "clustered_brier_differences": paired,
-                  "symmetry_constraint": "All fitted calibration models have intercept fixed at zero so swapping player order swaps win probability."},
+                  "symmetry_constraint": "Each calibration match is augmented with its reversed player order and complementary outcome; a nonzero fitted intercept is rejected."},
         "point_test": {"matches_with_point_scores": len(point_rows), "point_rows_by_source": point_eval["points_by_source"],
                        "mean_match_point_brier": statistics.mean(r["brier"] for r in point_rows) if point_rows else None,
                        "mean_match_surface_baseline_brier": statistics.mean(r["baseline_brier"] for r in point_rows) if point_rows else None,
