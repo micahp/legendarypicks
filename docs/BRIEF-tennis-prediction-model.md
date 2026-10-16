@@ -87,6 +87,14 @@ cases. Its game, set and tiebreak outputs are not yet validated against historic
 Brier is the mean squared error of the predicted win probability. Lower is better. A constant 50/50 forecast scores
 0.250. Across match-outcome forecasts the practical range is 0 to 1, and everything published sits near 0.19 to 0.23.
 
+For each match, `p_i` must be the forecast probability for a consistently named player to win, and `y_i` must be 1 if
+that same player wins and 0 otherwise:
+
+`Brier = (1/N) * sum((p_i - y_i)^2)`
+
+Calculate it from the paired per-match probabilities and outcomes on the same sample. Aggregate log loss or hit rate
+cannot be converted into Brier; if the original probabilities were not retained, rerun the chronological forecasts.
+
 Published numbers are project-reported, not reproduced here. Populations, date windows and rating histories differ,
 so the absolute numbers are not a leaderboard. Differences of about 0.005 between sources are not evidence of anything.
 
@@ -147,9 +155,11 @@ Start from Elo, not from the point model.
   addresses thin surface history directly.
 - The combination is logit-additive, with a reliability weight:
 
-  logit(p_final) = logit(p_Elo) + w(n) * gamma * [logit(p_sim) - logit(p_Elo)]
+  logit(p_final) = logit(p_Elo) + w(n_A, n_B) * gamma * [logit(p_sim) - logit(p_Elo)]
 
-  w(n) rises with the player's serving history, and gamma is fitted on rolling validation data, not on the test window.
+  `n_A` and `n_B` represent effective serve/return evidence for both players. The reliability weight must fall when
+  either player's matchup estimate is thin; it must not depend only on raw match counts. Fit the weighting rule and
+  `gamma` on rolling validation data, never on the test window.
 
 - The simulator is unchanged. It turns serve-point probabilities into game, set, tiebreak and match-score
   distributions. Its match-winner probability is an input to the match model, not the headline.
