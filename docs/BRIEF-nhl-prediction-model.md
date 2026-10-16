@@ -63,7 +63,7 @@ Two teams can each record 30 shots on goal while creating very different scoring
 
 The shot-level model should account for shot distance, angle and type; rebounds, deflections and rushes; events immediately preceding a shot; players on the ice and manpower; and empty-net situations. Keep shot volume and shot quality as distinct signals rather than treating total shots as a complete measure of offense.
 
-MoneyPuck is a candidate source for shot-level xG and game-level skater and goalie data. Its current xG model is described as rebuilt for 2026–27; verify the feature definition and release before relying on that version. The model's xG definition is a source input, not ground truth.
+MoneyPuck is a candidate source for shot-level xG and game-level skater and goalie data. Its [2026–27 xG model description](https://www.moneypuck.com/about.htm) says the shot model was rebuilt to adapt to NHL tracking changes and trained on a random sample of more than 289,000 shots from 2023–24 through 2025–26. The listed factors include shot location and type, the preceding event, players' time on ice, manpower, shooter off-wing, and empty-net status. Treat MoneyPuck's xG definition as one candidate input, not ground truth, and record the exact data and model version used in each evaluation.
 
 ## Goaltending and special teams
 
@@ -108,12 +108,12 @@ A sustained shot-volume increase after a player moves to the first line is a str
 
 | Source | Candidate use |
 | --- | --- |
-| MoneyPuck | Shot-level xG, goalies, skaters, and team game-level data |
+| MoneyPuck | [Shot data and downloads](https://moneypuck.com/data.htm), [2026–27 xG model description](https://www.moneypuck.com/about.htm); goalies, skaters, and team game-level data |
 | Natural Stat Trick | 5-on-5 analytics, shot attempts, danger chances, and situational splits |
-| NHL API | Schedules, play-by-play, box scores, rosters, and player game logs |
+| NHL API | Schedules, play-by-play, box scores, rosters, and player game logs; [community-maintained endpoint reference](https://github.com/niickricci/nhl-api-reference) is unofficial |
 | Daily Faceoff | Starting-goalie information and lineup context |
 
-MoneyPuck is reported to provide historical shot data from 2007–08 through 2025–26, along with game-level player and goalie datasets. Confirm current coverage and definitions before ingest. The NHL API is a candidate source for game-level ingestion. Because MoneyPuck's downloadable data is described as non-commercial absent separate permission, resolve commercial licensing before using it in a Legendary Picks production service. Record source, coverage, field definitions, and license for every dataset.
+MoneyPuck's [data page](https://moneypuck.com/data.htm) currently lists 2,079,359 historical shots for 2007–08 through 2025–26 and says 2026–27 shot data is updated nightly. It lists 124 shot attributes, including xGoals and companion rebound, missed-shot, and goalie-freeze model scores; blocked shots are excluded. The page says the downloads are free for non-commercial use, asks other users to inquire, and requires credit when displaying results that use its data. Because Legendary Picks is commercial, resolve permission and attribution with MoneyPuck before production use. Treat the NHL API endpoint guide as unofficial and verify endpoint behavior against NHL responses. Record source, coverage, field definitions, and license for every dataset.
 
 ## Version one
 
