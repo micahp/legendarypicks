@@ -121,6 +121,15 @@ the gap to market:
 Read on that axis: the game model is 0.015 behind the market, the Spec B player engine is 0.029 behind, and the
 projection the site serves today is 0.062 behind.
 
+**External marker (self-reported):** @ManiBetz reports an NFL player-prop Brier of about 0.24
+([projexions.io](https://projexions.io/)). It is self-reported and we cannot check it: his public pages carry a
+betting record (171-132 over 303 settled plays, +35.63u, ROI +11.8%) and no Brier, so neither the number nor
+the population behind it is verifiable. Two differences rule out a like-for-like reading: his card is only the
+plays where he disagrees most with the market, while our 0.2747 covers every sportsbook line on 920
+player-games, and his own project page states the engine "isn't built to be calibrated" and that its raw
+probabilities "run more confident than reality." Recorded as the nearest outside marker for this task, not as a
+verified score.
+
 The two levels are not connected. `game_projections` holds one row per game and no code turns it into player
 lines; the player engine reads its own logs and team-share history instead. Player volume ignores the
 projected game script (a margin-based adjustment was tested and rejected on 2025 MAE). Availability is not an
