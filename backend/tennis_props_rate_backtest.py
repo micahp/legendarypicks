@@ -458,6 +458,9 @@ def summarize_csv(path: str, tour: str, start: int, end: int) -> dict[str, Any]:
         "p0_gamma_poisson_minus_p0_poisson": ("p0_gamma_poisson", "p0_poisson", 20261019),
     }
     paired_clusters: dict[str, dict[str, dict[str, list[float]]]] = defaultdict(lambda: defaultdict(dict))
+    paired_brier_clusters: dict[str, dict[str, dict[int, dict[str, list[float]]]]] = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(dict))
+    )
     min_date: int | None = None
     max_date: int | None = None
     with open(path, newline="") as handle:
@@ -475,6 +478,12 @@ def summarize_csv(path: str, tour: str, start: int, end: int) -> dict[str, Any]:
             for pair_name, (model_a, model_b, _) in pairs.items():
                 cell = paired_clusters[target][pair_name].setdefault(event_id, [])
                 cell.append(float(row[f"{model_a}_crps"]) - float(row[f"{model_b}_crps"]))
+                for threshold in TARGET_THRESHOLDS[target]:
+                    brier_cell = paired_brier_clusters[target][pair_name][threshold].setdefault(event_id, [])
+                    brier_cell.append(
+                        float(row[f"{model_a}_brier_ge_{threshold}"])
+                        - float(row[f"{model_b}_brier_ge_{threshold}"])
+                    )
 
     by_target: dict[str, Any] = {}
     for target in ("aces", "double_faults"):
@@ -489,6 +498,15 @@ def summarize_csv(path: str, tour: str, start: int, end: int) -> dict[str, Any]:
                               if t == target and typ == "history"},
             "paired_crps_difference": {
                 pair_name: _cluster_interval(paired_clusters[target].get(pair_name, {}), seed)
+                for pair_name, (_, _, seed) in pairs.items()
+            },
+            "paired_exceedance_brier_difference": {
+                pair_name: {
+                    str(threshold): _cluster_interval(
+                        paired_brier_clusters[target].get(pair_name, {}).get(threshold, {}), seed + threshold
+                    )
+                    for threshold in TARGET_THRESHOLDS[target]
+                }
                 for pair_name, (_, _, seed) in pairs.items()
             },
         }
