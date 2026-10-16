@@ -7,7 +7,7 @@
 | Model | Method | Operational status |
 |---|---|---|
 | `nfl-v1` points model | Recency-weighted team offense/defense points ratings with a prior carried from the previous season; fitted expected points and a Normal margin-to-win-probability link | Current adopted/legacy baseline |
-| `nfl-v2` EPA | Pass and rush EPA offense/defense ratings, converted to points and calibrated on a prior season | Trial only; not adopted |
+| `nfl-v2` EPA (Spec A EPA v2, play-by-play) | Pass and rush EPA offense/defense ratings, converted to points and calibrated on a prior season | Trial only; not adopted |
 | `nfl-v1+elo stack` | Frozen v1 margin plus a 538-style Elo gap in a fitted linear stack | Research challenger; the lock code labels it trial |
 
 The v1 lock version records the frozen settings: half-life 6 weeks, margin cap 14, prior strength 4 games, prior shrinkage one third, and win-probability scale `sigma=13.295`. It fits only on scored regular-season games before the target week. The preseason prior comes from the previous season and is shrunk toward the league mean. Neutral-site status affects home advantage. A lock is created from 90 minutes before kickoff up to kickoff; later runs cannot replace it. The shared ledger retains later unlocked runs for audit, while grading uses the first lock for each model version.
@@ -84,8 +84,10 @@ number is look-ahead, not accuracy. Method, exclusions and the full calibration 
 `RESULTS-nfl-prop-baseline-2026-10-16.md` on `scratch/spec-b-rebase`.
 
 A second engine exists on `scratch/spec-b-rebase`, not merged: `backend/nfl_player_projection_v2.py` with job
-`nfl_player_projections_job.py`. It projects targets, receptions, receiving yards and TDs, carries, rushing and
-QB passing, and returns a mean, p10, p90 and P(over) from 4,000 simulated draws.
+`nfl_player_projections_job.py`. It is **Spec B volume x share x efficiency** (box scores, not play-by-play):
+team volume, the player's share of it, and his per-opportunity efficiency, then a simulated distribution. It
+projects targets, receptions, receiving yards and TDs, carries, rushing and QB passing, and returns a mean, p10,
+p90 and P(over) from 4,000 simulated draws.
 
 | Target | v2 | Marcel-lite | Read |
 |---|---:|---:|---|
