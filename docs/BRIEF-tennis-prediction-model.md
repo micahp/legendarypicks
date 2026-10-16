@@ -144,6 +144,8 @@ Start from Elo, not from the point model.
 - M1 (global Elo) is the match-probability reference. Every other model must beat it on Brier, on the same matches.
 - The standalone point model lost to Elo on both tours. Its surface-specific serve and return data, on its own, does
   not carry the match-outcome information that Elo's accumulated record carries.
+- This is a no-go for standalone match-winner prediction only. It says nothing about service-point, total-game, ace,
+  double-fault or break distributions; each must be judged against its own direct baseline and proper scoring rules.
 - The point model's job is to add information Elo lacks. Its weight should depend on how much serving history a player
   has. With thin history the forecast should revert toward Elo. This is the thin-history problem. In the 2026-10-14
   backtest it is the largest loss on both tours: about +0.06 log loss per match against Elo in matches where either
@@ -271,17 +273,20 @@ A4. Simulator set, game and tiebreak outputs: validate separately against histor
   `feat/tennis-point-model`: point model, form, rest caveat, WTA event decisions.
 - `docs/TENNIS-MATCH-BACKTEST-PROTOCOL-2026-10-14.md` and `docs/TENNIS-MATCH-BACKTEST-2026-10-14.md`, on
   `feat/tennis-point-model`: the frozen backtest protocol and its results.
+- `docs/RESEARCH-draftkings-sports-simulation-2026-10-14.md`: DraftKings simulation references, data-label limits,
+  and the implications for validating tennis player-projection distributions.
 - `docs/TASK-tennis-set-scores.md`: per-set scores already flow from ESPN.
 - Existing tennis spine and name-resolution work: branches `feat/tennis-spine`, `fix/tennis-unmatched-names`,
   `fix/tennis-unresolved-queue`.
-- DraftKings Engineering, "Building a Tennis Simulation" (Medium). It describes a Monte Carlo point-to-match simulation,
-  with a simplified model, and says the production model is more advanced. A search found the article (cur.at/NeCYkyJ)
-  but did not confirm its date. The 2023-08-17 date is user-supplied. Open the page and check the date before citing it.
+- DraftKings Engineering, "Building a Tennis Simulation" (Medium, 2023-08-17), and its follow-up football simulation
+  article (2024-02-07): verified architecture references. They support trajectory simulation and correlated market
+  generation as a design pattern; they do not validate our current player-projection accuracy.
 - Tennis simulators found by search, not yet reviewed: tennisim (PyPI, points-based simulation), bear102/tennis (GitHub,
   simulates matches and tiebreaks, with aces and double faults), Match Point AI (arXiv 2408.05960).
-- DanielTomaro13/Tennis-Modelling (user-supplied, described as combining surface-adjusted serve and return profiles, Elo,
-  a point-to-match simulator and ace and double-fault projections). A search did not find it. Confirm the repository exists
-  before citing it or relying on its description.
+- DanielTomaro13/Tennis-Modelling (GitHub): repository verified as an implementation reference for surface-adjusted
+  serve/return profiles, Elo, point-to-match simulation and player markets. Its reported results are not independently
+  validated; its README says automated refreshes/deploys were paused as of September 2026. Review source-data and code
+  licenses independently before reuse.
 
 ## Deliverable
 
