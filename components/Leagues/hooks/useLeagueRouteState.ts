@@ -38,14 +38,16 @@ export function useLeagueRouteState() {
   // UFC has 1 conversation / 2 narratives / 12 granular. Only the World Cup is
   // left out: dormant hub, and its key returns nothing.
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule', 'predict', 'optimizer', 'news']
+    ? ['rankings', 'schedule', 'predict', 'optimizer', 'model', 'news']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
         ? ['camp', 'standings', 'stats', 'schedule', 'model', 'playoff-odds', 'news']
         : league === 'nhl'
           ? ['standings', 'stats', 'schedule', 'model', 'news']
-        : ['standings', 'stats', 'schedule', 'news']
+        : league === 'mlb' || league === 'nba' || league === 'ncaaf'
+          ? ['standings', 'stats', 'schedule', 'model', 'news']
+          : ['standings', 'stats', 'schedule', 'news']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())

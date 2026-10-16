@@ -6,6 +6,7 @@ import GameCard from '../../components/Scores/GameCard'
 import NewsTab from '../../components/Leagues/NewsTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
+import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import type { StandingGroup } from '../../components/Leagues/types'
@@ -13,7 +14,7 @@ import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
 type Competition = 'mls' | 'lcup'
-type Section = 'scores' | 'standings' | 'stats' | 'bracket' | 'leaders' | 'news'
+type Section = 'scores' | 'standings' | 'stats' | 'bracket' | 'leaders' | 'model' | 'news'
 
 type BracketTeam = {
   id: string
@@ -81,6 +82,7 @@ const SECTIONS: Record<Competition, { key: Section; label: string }[]> = {
     { key: 'scores', label: 'Scores' },
     { key: 'standings', label: 'Standings' },
     { key: 'stats', label: 'Stats' },
+    { key: 'model', label: 'Model' },
     { key: 'news', label: 'News' },
   ],
   lcup: [
@@ -291,6 +293,8 @@ export default function SoccerLeaguePage({
             onSelectTeamCategory={stats.selectTeamCategory}
           />
         )}
+
+        {competition === 'mls' && section === 'model' && <ComingSoonModelTab />}
         {section === 'news' && competition === 'mls' && <NewsTab league="mls" {...mlsNews} />}
         {section === 'news' && competition === 'lcup' && <NewsTab league="lcup" {...lcupNews} />}
       </div>
