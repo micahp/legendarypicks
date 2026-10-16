@@ -15,6 +15,7 @@ import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import NflModelTab from '../../components/Leagues/NflModelTab'
 import NflPlayoffOddsTab from '../../components/Leagues/NflPlayoffOddsTab'
 import NhlModelTab from '../../components/Leagues/NhlModelTab'
+import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab'
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -281,6 +282,7 @@ export default function LeagueHubPage() {
         {route.activeTab === 'model' && isNFL && <NflModelTab />}
         {route.activeTab === 'playoff-odds' && isNFL && <NflPlayoffOddsTab showIntro={false} />}
         {route.activeTab === 'model' && route.league === 'nhl' && <NhlModelTab />}
+        {route.activeTab === 'model' && ['mlb', 'nba', 'ncaaf', 'ufc'].includes(route.league) && <ComingSoonModelTab />}
 
         {route.activeTab === 'news' && (
           <NewsTab
