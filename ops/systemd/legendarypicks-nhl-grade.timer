@@ -1,8 +1,8 @@
 [Unit]
-Description=Daily grading of completed NHL model locks
+Description=Hourly grading of completed NHL model locks
 
 [Timer]
-OnCalendar=*-*-* 00:00:00 America/Chicago
+OnCalendar=*-*-* *:00:00
 Persistent=true
 Unit=legendarypicks-nhl-grade.service
 

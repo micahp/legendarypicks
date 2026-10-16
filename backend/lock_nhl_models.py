@@ -43,11 +43,12 @@ def main(argv=None) -> int:
         return 1
     mode = "applied" if args.apply else "dry-run"
     print("{mode} at {time}: {feed_games} feed games, {due_games} due, {locked_rows} model locks, "
-          "{already_locked} already locked, {outside_window} outside window, "
+          "{already_locked} already locked, {not_due} before T-90, {outside_window} already started, "
           "{missed_model_rows} model locks missed T-90 and recorded".format(
               mode=mode, time=now.isoformat(), **report))
     if report["missed_window"]:
-        print("warning: a forecast outside its one-minute T-90 lock window was not backfilled", file=sys.stderr)
+        print("warning: %d game(s) reached their start with no lock row; recorded as missed"
+              % report["missed_window"], file=sys.stderr)
     return 0
 
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=Lock NHL model forecasts immediately on projection
+Description=Lock each NHL model at T-90 in the standalone research DB
 After=network-online.target
 Wants=network-online.target
 OnFailure=legendarypicks-ops-alert@%N.service
