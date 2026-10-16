@@ -315,7 +315,7 @@ function ScoresPanel({ date, setDate, games, loading, error, competition }: {
         <button aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))} className="px-3 py-1 text-zinc-400 hover:text-white">→</button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
-        <div className="grid gap-3 md:grid-cols-2">{games.map(game => <GameCard key={game.gameId} {...game} />)}</div>
+        <div className="grid gap-x-10 gap-y-3 md:grid-cols-2">{games.map(game => <GameCard key={game.gameId} {...game} />)}</div>
       ) : <Unavailable text={`No ${label} matches were published for this date.`} />}
     </section>
   )

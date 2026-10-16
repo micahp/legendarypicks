@@ -120,7 +120,7 @@ export default function ScheduleTab({
                   {subtitle}
                 </h2>
               )}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                 {groupedGames.map(game => (
                   <GameCard key={game.gameId} {...game} showScheduledTime={isUFC} />
                 ))}
