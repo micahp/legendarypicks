@@ -471,7 +471,9 @@ export default function NhlModelTab() {
   const [payload, setPayload] = useState<Payload | null>(null)
   const [model, setModel] = useState<ModelName>('B7_elo_xg_poisson')
   const [view, setView] = useState<View>('projections')
-  const [showAccuracy, setShowAccuracy] = useState(false)
+  const [accuracyHovered, setAccuracyHovered] = useState(false)
+  const [accuracyPinned, setAccuracyPinned] = useState(false)
+  const showAccuracy = accuracyHovered || accuracyPinned
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -513,19 +515,35 @@ export default function NhlModelTab() {
           {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}
         </nav>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <button type="button" aria-expanded={showAccuracy} aria-controls="nhl-model-accuracy"
-              onClick={() => setShowAccuracy(open => !open)}
-              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">
-              <span aria-hidden="true">▥</span> Model accuracy <span aria-hidden="true">{showAccuracy ? '▴' : '▾'}</span>
+          <div className="relative"
+            onMouseEnter={() => setAccuracyHovered(true)}
+            onMouseLeave={() => setAccuracyHovered(false)}
+            onFocus={() => setAccuracyHovered(true)}
+            onBlur={event => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setAccuracyHovered(false)
+                setAccuracyPinned(false)
+              }
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Escape') {
+                setAccuracyHovered(false)
+                setAccuracyPinned(false)
+                event.currentTarget.querySelector('button')?.blur()
+              }
+            }}>
+            <button type="button" aria-label="Model accuracy" aria-describedby={showAccuracy ? 'nhl-model-accuracy-tooltip' : undefined}
+              aria-expanded={showAccuracy} onClick={() => setAccuracyPinned(open => !open)}
+              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400">
+              <span aria-hidden="true" className="text-zinc-400">ⓘ</span> Model accuracy
             </button>
-            {showAccuracy && <>
-              <button type="button" aria-label="Close model accuracy" onClick={() => setShowAccuracy(false)}
-                className="fixed inset-0 z-40 cursor-default" />
-              <div id="nhl-model-accuracy" className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,610px)]">
-                <ModelPerformanceSummary games={games} selectedModel={model} />
-              </div>
-            </>}
+            {accuracyPinned && <button type="button" tabIndex={-1} aria-label="Close model accuracy tooltip"
+              onClick={() => { setAccuracyPinned(false); setAccuracyHovered(false) }}
+              className="fixed inset-0 z-40 cursor-default" />}
+            {showAccuracy && <div id="nhl-model-accuracy-tooltip" role="tooltip"
+              className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,560px)]">
+              <ModelPerformanceSummary games={games} selectedModel={model} />
+            </div>}
           </div>
           <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
         </div>
