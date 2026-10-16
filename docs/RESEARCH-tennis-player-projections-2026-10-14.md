@@ -1,9 +1,9 @@
 # RESEARCH: Tennis player-projection engine
 
-**Date:** 2026-10-14  
-**Status:** Research plan, not a validated model  
-**Repository:** `micahp/legendarypicks`, branch `docs/tennis-prediction-brief`  
-**Related:** [Tennis match prediction brief](BRIEF-tennis-prediction-model.md)
+- **Date:** 2026-10-14
+- **Status:** Research plan, not a validated model
+- **Repository:** `micahp/legendarypicks`, branch `docs/tennis-prediction-brief`
+- **Related:** [Tennis match prediction brief](BRIEF-tennis-prediction-model.md)
 
 ## Decision
 

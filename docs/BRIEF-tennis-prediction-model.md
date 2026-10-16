@@ -288,4 +288,3 @@ Track A also reports, separately from Track B:
 - Brier and log loss for M1 to M4, against the same matches, with Brier skill scores and paired intervals;
 - the chronological backtest against Elo and blended Elo;
 - a go or no-go for the simulator's set, game and tiebreak outputs, separate from the winner decision.
-
