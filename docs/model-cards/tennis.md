@@ -30,6 +30,24 @@ No prospective Brier score has yet been recorded for either current live method 
 
 The point-model simulator is for prospective monitoring, not a promoted replacement. It scores worse than standard Elo on both tours in this backtest. The [frozen match backtest](../TENNIS-MATCH-BACKTEST-2026-10-14.md) reports the log-loss comparison, calibration and limitations. Prospective scores will be accumulated from locked forecasts by tour and method version; they will not be mixed with this historical benchmark.
 
+### Broader Brier benchmark markers
+
+These published and research reference points provide context for winner Brier scores. They come from different datasets, periods, and methods, so they are reference markers rather than a like-for-like ranking or prospective grades for the current live models.
+
+| Reference | ATP Brier | WTA Brier |
+|---|---:|---:|
+| 50/50 probability | 0.2500 | 0.2500 |
+| Legendary Picks point simulator | 0.2353 | 0.2288 |
+| Legendary Picks global Elo | 0.2280 | 0.2160 |
+| ATP Predictor global Elo | 0.2230 | — |
+| ATP Predictor XGBoost | 0.2090 | — |
+| DEUCE surface Elo | 0.2009 | 0.2098 |
+| DEUCE XGBoost | 0.1963 | 0.2042 |
+| Vegas, Wilkens study (ATP/WTA combined) | 0.1980 | 0.1980 |
+| Vegas, Penn Grand Slam study (combined) | 0.1740 | 0.1740 |
+
+Sources: DEUCE, ATP Predictor, Wilkens (2021), and Penn et al. (2026).
+
 The ATP ace and double-fault candidate uses historical event counts, service-point exposure, player shrinkage, and an NB2 distribution. It is an approximate history-exposure implementation, not the researched E2/X-bbin specification. WTA retains the P0 match-rate estimate with an NB2 predictive distribution. These methods are research candidates and have not been validated prospectively. The method version names distinguish them but do not imply a positive evaluation.
 
 Total-games projections use complete historical match counts grouped by best-of and surface, with a tour-format fallback when a surface group has fewer than 100 observations. The distribution is smoothed over 0 to 120 games. It is made available only for events whose surface and format are explicitly mapped in `backend/tennis_daily_projections.py`: Shanghai, Wuhan, and the four Grand Slams. Grand Slam ATP singles use best-of-five; WTA uses best-of-three. Unknown event rules leave this target unavailable.

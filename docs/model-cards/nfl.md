@@ -28,6 +28,20 @@ For a binary winner target, Brier is the mean squared difference between predict
 | `nfl-v2` EPA, 2025 second look | 0.2291 (255) | 0.2288 `nfl-v1` on the same games | No improvement; paired difference +0.0003, 95% CI [−0.0083, +0.0087] |
 | v1 + Elo research stack, 2011–2023 | 0.2197 (3,158) | 0.2229 recalibrated v1; 0.2104 closing market | Retrospective improvement over v1; still worse than market |
 
+### Additional historical Brier benchmark markers
+
+These results come from different seasons and evaluations, so they provide context rather than a like-for-like ranking against the locked model results above.
+
+| Forecasting system | Brier score | Context |
+|---|---:|---|
+| Coin-flip probabilities | 0.250 | Mathematical baseline |
+| Legendary Picks v1 | 0.2225 | 2024 development season |
+| Legendary Picks v1 | 0.2288 | 2025 frozen evaluation |
+| Historical NFL Elo benchmark | 0.222 | Independent 2012–2025 project |
+| Historical NFL predictive model | 0.216 | Same project's more complex model |
+| Vegas closing moneylines | 0.211 | Same project's market benchmark |
+| FiveThirtyEight | 0.208 | Actual 2020 regular season |
+
 The frozen v1 configuration was selected on 2024 and evaluated once on the 2025 holdout. Its mean absolute margin error was 10.67 points versus 9.97 for the spread, and total error was 10.61 versus 10.17 for the closing total. The sample is one season and roughly 255 games, so differences are uncertain. The Elo comparison is retrospective, not prospective confirmation, and does not change the operational default. The EPA challenger failed its adoption gate.
 
 ## Playoff odds
