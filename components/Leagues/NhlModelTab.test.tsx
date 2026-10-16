@@ -197,7 +197,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
     expect(screen.getByText('Pick ✗')).toBeTruthy()
   })
-  it('compares prospective Brier and goals accuracy across all three models in a dropdown, including unpriced games', async () => {
+  it('compares prospective Brier and goals accuracy across all three models in a tooltip, including unpriced games', async () => {
     const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
       const grade = {
         official_home_goals: 3, official_away_goals: 2, statistical_home_goals: 3, statistical_away_goals: 2,
@@ -227,7 +227,8 @@ describe('NHL model tab previews', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games, previews: [] }) }))
     render(<NhlModelTab />)
     await screen.findByRole('button', { name: /Model accuracy/ })
-    fireEvent.click(screen.getByRole('button', { name: /Model accuracy/ }))
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
     expect(screen.getByText('0.1000')).toBeTruthy()
     expect(screen.getByText('0.4000')).toBeTruthy()
     expect(screen.getByText('1.500')).toBeTruthy()
@@ -242,9 +243,39 @@ describe('NHL model tab previews', () => {
 
   it('does not invent Brier scores before games are graded', async () => {
     render(<NhlModelTab />)
-    await screen.findByText('Model performance')
+    await screen.findByRole('button', { name: /Model accuracy/ })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
     expect(screen.getAllByText('—')).toHaveLength(9)
     expect(screen.getAllByText('0').length).toBeGreaterThan(0)
+  })
+
+  it('opens on hover and keyboard focus and closes when hover ends', async () => {
+    render(<NhlModelTab />)
+    const button = await screen.findByRole('button', { name: 'Model accuracy' })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.mouseLeave(button)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.focus(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.blur(button, { relatedTarget: null })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('pins the tooltip on tap and dismisses on Escape or outside click', async () => {
+    render(<NhlModelTab />)
+    const button = await screen.findByRole('button', { name: 'Model accuracy' })
+    fireEvent.click(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Close model accuracy tooltip' }))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.click(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.keyDown(button, { key: 'Escape' })
+    expect(screen.queryByRole('tooltip')).toBeNull()
   })
 
 })
