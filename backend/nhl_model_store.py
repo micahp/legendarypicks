@@ -13,6 +13,7 @@ import json
 import math
 import os
 import sqlite3
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 UTC = dt.timezone.utc
@@ -21,6 +22,11 @@ LOCK_WINDOW = dt.timedelta(minutes=1)
 FINAL_GRACE = dt.timedelta(hours=4)
 FINAL_STATES = frozenset(("OFF", "FINAL"))
 COUNTED_PERIOD_TYPES = frozenset(("REG", "OT"))
+# Every frozen pick records the settlement basis it was graded against, so a later change
+# of basis is visible instead of silently rewriting past results.
+SETTLEMENT_BASIS = "official_final_score"
+PICK_MARKETS = frozenset(("spread", "ml", "total"))
+PICK_PROVENANCE = frozenset(("lock", "backfill"))
 DEFAULT_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "nhl-model.dev.sqlite3")
 DEFAULT_FEED = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                             "research", "nhl", "prospective-2026-27", "forecasts.jsonl")
@@ -55,6 +61,184 @@ def canonical_json(value: Any) -> str:
 
 def sha256_json(value: Any) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# The pick rule
+#
+# Rule (Micah, 2026-10-15). The spread edge S = |Vegas line - model line| sits on the
+# edge team, the team the model's line gives more points.
+#   1. The edge team is the Vegas underdog (+1.5) and S shows over 1.0: bet it to cover
+#      +1.5. They might cover.
+#   2. Otherwise, if Vegas has the model's favourite favoured by 1.5: bet it to win
+#      (moneyline). A 1.0 edge is too risky to cover.
+#   3. Otherwise: a total on the 5.5 or 6.5 line, by the model's projected total.
+# Every game gets a pick. The edge and expected value are shown only when that bet's
+# price is posted. This is the single implementation of the rule: the cards, the record
+# and the frozen pick row all come from it, so none of them can disagree.
+# ---------------------------------------------------------------------------
+
+def _round1(value: float) -> float:
+    """Mirror JavaScript Number(x.toFixed(1)): one decimal, halves away from zero."""
+    return float(Decimal(repr(float(value))).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
+def _probability(forecast: dict, key: str, context: str) -> float:
+    value = _finite_number(forecast, key, context)
+    if not 0.0 <= value <= 1.0:
+        raise NHLModelError("%s has %s=%r outside [0,1]" % (context, key, value))
+    return value
+
+
+def _price(value: Any) -> int | None:
+    """American odds as an int, or None when the market did not post a usable price."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    price = int(value)
+    return None if price in (0, -100) else price
+
+
+def american_to_decimal(price: int) -> float:
+    """American odds to decimal payout, stake included."""
+    return 1.0 + (price / 100.0 if price > 0 else 100.0 / -price)
+
+
+def implied_probability(price: int) -> float:
+    return -price / (-price + 100.0) if price < 0 else 100.0 / (price + 100.0)
+
+
+def no_vig_pair(first: int, second: int) -> tuple[float, float]:
+    a, b = implied_probability(first), implied_probability(second)
+    return a / (a + b), b / (a + b)
+
+
+def _no_vig(first: Any, second: Any, index: int) -> float | None:
+    """No-vig probability for one side of a two-way market, or None if unpriced."""
+    a, b = _price(first), _price(second)
+    return None if a is None or b is None else no_vig_pair(a, b)[index]
+
+
+def _pick_record(market: str, side: str, line: float | None, price: Any,
+                 model_probability: float, market_probability: float | None,
+                 quote: dict | None) -> dict:
+    price = _price(price)
+    quote = quote or {}
+    edge = None if market_probability is None else model_probability - market_probability
+    expected_value = None
+    if price is not None:
+        expected_value = model_probability * (american_to_decimal(price) - 1.0) - (1.0 - model_probability)
+    return {"market": market, "side": side, "line": line, "price": price,
+            "model_probability": model_probability, "market_probability": market_probability,
+            "edge": edge, "expected_value": expected_value,
+            "line_source": quote.get("source"), "line_captured_at_utc": quote.get("captured_at_utc")}
+
+
+def model_pick(home: str, away: str, forecast: dict, line: dict | None) -> dict:
+    """Freeze-ready pick for one model's forecast against the market quote in force."""
+    quote = line or {}
+    context = "%s @ %s" % (away, home)
+    puck_line = quote.get("home_puck_line")
+    margin = _finite_number(forecast, "projected_goal_differential_home", context)
+    if puck_line is not None and abs(float(puck_line)) == 1.5:
+        puck_line = float(puck_line)
+        spread_edge = abs(-puck_line - margin)
+        edge_side = "home" if margin + puck_line > 0 else "away"
+        edge_line = puck_line if edge_side == "home" else -puck_line
+        if edge_line > 0 and _round1(spread_edge) > 1:
+            cover = _probability(forecast, "p_home_plus_1_5" if edge_side == "home" else "p_away_plus_1_5", context)
+            return _pick_record("spread", edge_side, edge_line,
+                                quote.get("home_puck_price") if edge_side == "home" else quote.get("away_puck_price"),
+                                cover, _no_vig(quote.get("home_puck_price"), quote.get("away_puck_price"),
+                                               0 if edge_side == "home" else 1), quote)
+        favorite_side = "home" if margin >= 0 else "away"
+        favorite_line = puck_line if favorite_side == "home" else -puck_line
+        if favorite_line < 0:
+            home_probability = _probability(forecast, "home_win_probability", context)
+            return _pick_record("ml", favorite_side, None,
+                                quote.get("home_moneyline") if favorite_side == "home" else quote.get("away_moneyline"),
+                                home_probability if favorite_side == "home" else 1 - home_probability,
+                                _no_vig(quote.get("home_moneyline"), quote.get("away_moneyline"),
+                                        0 if favorite_side == "home" else 1), quote)
+    # Fallback total: the 5.5 or 6.5 line, by the model's projection. The 2023-2025 median
+    # total was 6.0, so projections at or below 6.0 use 5.5.
+    projection = _finite_number(forecast, "projected_total_goals", context)
+    total_line = 5.5 if projection <= 6 else 6.5
+    over = projection > total_line
+    model_over = _probability(forecast, "p_over_5.5" if total_line == 5.5 else "p_over_6.5", context)
+    priced = quote.get("total_line") is not None and float(quote["total_line"]) == total_line
+    return _pick_record("total", "over" if over else "under", total_line,
+                        (quote.get("over_price") if over else quote.get("under_price")) if priced else None,
+                        model_over if over else 1 - model_over,
+                        _no_vig(quote.get("over_price"), quote.get("under_price"), 0 if over else 1) if priced else None,
+                        quote)
+
+
+def grade_pick(pick: dict, grade: dict) -> dict:
+    """Grade a frozen pick from official results under the settlement basis it recorded."""
+    side, line = pick["side"], pick["line"]
+    if pick["market"] == "ml":
+        won = grade["official_winner"] == side
+    elif pick["market"] == "spread":
+        margin = grade["official_home_goals"] - grade["official_away_goals"]
+        won = (margin if side == "home" else -margin) + float(line) > 0
+    else:
+        total = grade["official_home_goals"] + grade["official_away_goals"]
+        won = total > float(line) if side == "over" else total < float(line)
+    return {"won": bool(won)}
+
+
+def pick_sha256(pick: dict, game_id: str, model_key: str, model_version: str) -> str:
+    """Identity of a recommendation: the facts a user was shown, not when it was stored."""
+    return sha256_json({"game_id": str(game_id), "model_key": model_key,
+                        "model_version": model_version, "market": pick["market"],
+                        "side": pick["side"], "line": pick["line"], "price": pick["price"],
+                        "model_probability": pick["model_probability"],
+                        "line_captured_at_utc": pick["line_captured_at_utc"],
+                        "settlement_basis": SETTLEMENT_BASIS})
+
+
+def latest_line_at(con: sqlite3.Connection, game_id: str, when: dt.datetime) -> dict | None:
+    """Newest Bovada snapshot for one game captured at or before `when`, or None."""
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_game_lines'").fetchone():
+        return None
+    row = con.execute("""SELECT * FROM nhl_game_lines
+                         WHERE game_id=? AND source='bovada' AND captured_at_utc <= ?
+                         ORDER BY captured_at_utc DESC LIMIT 1""",
+                      (str(game_id), iso_utc(when))).fetchone()
+    return None if row is None else {key: row[key] for key in row.keys() if key != "game_id"}
+
+
+def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_version: str,
+                forecast: dict, line: dict | None, selected_at: dt.datetime,
+                provenance: str, report: dict) -> None:
+    """Insert the immutable pick row for one model, or verify the existing one is identical."""
+    if provenance not in PICK_PROVENANCE:
+        raise NHLModelError("unknown pick provenance %r" % (provenance,))
+    gid = str(game["game_id"])
+    pick = model_pick(str(game["home_team"]), str(game["away_team"]), forecast, line)
+    record = {
+        "game_id": gid, "model_key": model_key, "model_version": model_version,
+        "season": int(gid[:4]), "game_date": str(game.get("game_date") or "")[:10],
+        "scheduled_start_utc": iso_utc(parse_time(game["scheduled_start_utc"])),
+        "home_team": str(game["home_team"]), "away_team": str(game["away_team"]),
+        "market": pick["market"], "side": pick["side"], "line": pick["line"], "price": pick["price"],
+        "model_probability": pick["model_probability"], "market_probability": pick["market_probability"],
+        "edge": pick["edge"], "expected_value": pick["expected_value"],
+        "line_source": pick["line_source"], "line_captured_at_utc": pick["line_captured_at_utc"],
+        "settlement_basis": SETTLEMENT_BASIS, "provenance": provenance,
+        "selected_at_utc": iso_utc(selected_at),
+    }
+    record["pick_sha256"] = pick_sha256(pick, gid, model_key, model_version)
+    prior = con.execute("SELECT pick_sha256 FROM nhl_model_picks WHERE game_id=? AND model_key=? AND model_version=?",
+                        (gid, model_key, model_version)).fetchone()
+    if prior:
+        if prior[0] != record["pick_sha256"]:
+            raise NHLModelError("%s/%s already has a different immutable pick" % (gid, model_key))
+        report["already_picked"] += 1
+        return
+    con.execute("INSERT INTO nhl_model_picks (%s) VALUES (%s)" % (
+        ",".join(record), ",".join("?" for _ in record)), tuple(record.values()))
+    report["pick_rows"] += 1
 
 
 def open_db(path: str = DEFAULT_DB, readonly: bool = False) -> sqlite3.Connection:
@@ -184,6 +368,36 @@ def ensure_schema(con: sqlite3.Connection) -> None:
         forecast_output_json TEXT NOT NULL,
         PRIMARY KEY (game_id, model_key, model_version)
     );
+    -- The recommendation shown to a user, frozen once at lock time from the market quote
+    -- then in force. Graded from this row, never from a recomputed pick.
+    CREATE TABLE IF NOT EXISTS nhl_model_picks (
+        game_id TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        game_date TEXT NOT NULL,
+        scheduled_start_utc TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        market TEXT NOT NULL CHECK (market IN ('spread','ml','total')),
+        side TEXT NOT NULL CHECK (side IN ('home','away','over','under')),
+        line REAL,
+        price INTEGER,
+        model_probability REAL NOT NULL,
+        market_probability REAL,
+        edge REAL,
+        expected_value REAL,
+        line_source TEXT,
+        line_captured_at_utc TEXT,
+        settlement_basis TEXT NOT NULL,
+        provenance TEXT NOT NULL CHECK (provenance IN ('lock','backfill')),
+        selected_at_utc TEXT NOT NULL,
+        pick_sha256 TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version),
+        FOREIGN KEY (game_id, model_key, model_version)
+            REFERENCES nhl_game_projections(game_id, model_key, model_version)
+    );
+    CREATE INDEX IF NOT EXISTS idx_nhl_pick_start ON nhl_model_picks(scheduled_start_utc);
     CREATE TRIGGER IF NOT EXISTS nhl_projection_immutable_update
     BEFORE UPDATE ON nhl_game_projections BEGIN
         SELECT RAISE(ABORT, 'NHL locked projections are immutable');
@@ -207,6 +421,14 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     CREATE TRIGGER IF NOT EXISTS nhl_lock_event_immutable_delete
     BEFORE DELETE ON nhl_projection_lock_events BEGIN
         SELECT RAISE(ABORT, 'NHL lock events are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_pick_immutable_update
+    BEFORE UPDATE ON nhl_model_picks BEGIN
+        SELECT RAISE(ABORT, 'NHL frozen picks are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_pick_immutable_delete
+    BEFORE DELETE ON nhl_model_picks BEGIN
+        SELECT RAISE(ABORT, 'NHL frozen picks are immutable');
     END;
     """)
     con.commit()
@@ -407,7 +629,7 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
     now = now.astimezone(UTC)
     report = {"feed_games": len(payload["games"]), "due_games": 0, "locked_rows": 0,
               "already_locked": 0, "outside_window": 0, "missed_window": 0,
-              "missed_model_rows": 0}
+              "missed_model_rows": 0, "pick_rows": 0, "already_picked": 0}
     seen_games = set()
     con.execute("BEGIN IMMEDIATE")
     try:
@@ -444,6 +666,9 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                                            ("game_id", "game_date", "scheduled_start_utc")},
                            "feature_snapshot_sha256": sha256_json(game["feature_snapshot"]),
                            "feed_game_sha256": sha256_json(game)}
+            # The market quote in force at this instant; the pick is frozen against it and
+            # never recomputed from a later line.
+            line = latest_line_at(con, gid, now)
             for model_key, forecast in models.items():
                 record = {
                     "game_id": gid,
@@ -492,6 +717,11 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                 con.execute("INSERT INTO nhl_game_projections (%s) VALUES (%s)" % (cols, marks),
                             tuple(record.values()))
                 report["locked_rows"] += 1
+                # Freeze the pick only for the row locked in this run, against the line in
+                # force now. A row locked before the pick record existed is backfill_picks'
+                # job: freezing it here would price it from a line posted after its lock.
+                freeze_pick(con, game, model_key, payload["model_version"], forecast, line, now,
+                            "lock", report)
         con.commit()
     except Exception:
         con.rollback()
@@ -645,6 +875,21 @@ def grade_result(con: sqlite3.Connection, game_id: str, result: dict, now: dt.da
     return inserted
 
 
+def export_pick(row: sqlite3.Row | None, grade: dict | None) -> dict | None:
+    """The frozen pick as the UI reads it, with its result once the game is graded."""
+    if row is None:
+        return None
+    pick = {"market": row["market"], "side": row["side"], "line": row["line"], "price": row["price"],
+            "model_probability": row["model_probability"], "market_probability": row["market_probability"],
+            "edge": row["edge"], "expected_value": row["expected_value"],
+            "line_source": row["line_source"], "line_captured_at_utc": row["line_captured_at_utc"],
+            "settlement_basis": row["settlement_basis"], "provenance": row["provenance"],
+            "selected_at_utc": row["selected_at_utc"], "result": None}
+    if grade:
+        pick["result"] = grade_pick(pick, grade)
+    return pick
+
+
 def export_locked(con: sqlite3.Connection, season: int) -> dict:
     """Build the UI projection artifact from locked DB rows, never from unlocked forecasts."""
     rows = con.execute("""
@@ -656,6 +901,10 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
         USING (game_id,model_key,model_version)
       WHERE p.season=? ORDER BY p.scheduled_start_utc,p.game_id,p.model_key,p.locked_at_utc
     """, (int(season),)).fetchall()
+    picks: dict[tuple, sqlite3.Row] = {}
+    if con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_model_picks'").fetchone():
+        picks = {(row["game_id"], row["model_key"], row["model_version"]): row
+                 for row in con.execute("SELECT * FROM nhl_model_picks WHERE season=?", (int(season),))}
     games: dict[str, dict] = {}
     versions: dict[str, str] = {}
     for row in rows:
@@ -692,6 +941,7 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
             "projected_goal_differential_home": row["projected_goal_differential_home"],
             "home_win_probability": row["home_win_probability"], "p_over_5.5": row["p_over_5_5"],
             "p_over_6.5": row["p_over_6_5"], "grade": grade,
+            "pick": export_pick(picks.get((gid, row["model_key"], row["model_version"])), grade),
         }
     missed = [dict(row) for row in con.execute("""
       SELECT e.game_id,e.home_team,e.away_team,e.model_key,e.model_version,
@@ -706,10 +956,18 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
             "missed_locks": missed}
 
 
-def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime) -> list[dict]:
-    """Return every saved unlocked forecast until its immutable lock row exists."""
+def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime,
+                    lines: dict | None = None) -> list[dict]:
+    """Return every saved unlocked forecast until its immutable lock row exists.
+
+    A preview is display-only: its pick is derived here, never stored, and carries no
+    result. `lines` is the market snapshot to price it against; omitted means read the
+    latest Bovada snapshot from this database.
+    """
     if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_game_previews'").fetchone():
         return []
+    if lines is None:
+        lines = latest_game_lines(con)
     rows = con.execute("""
       SELECT pv.* FROM nhl_game_previews pv
       WHERE pv.season=?
@@ -725,7 +983,7 @@ def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime) -> l
             "scheduled_start_utc": row["scheduled_start_utc"],
             "home_team": row["home_team"], "away_team": row["away_team"], "models": {},
         })
-        game["models"][row["model_key"]] = {
+        forecast = {
             **json.loads(row["forecast_output_json"]),
             "forecast_id": row["forecast_id"], "model_version": row["model_version"],
             "forecasted_at_utc": row["forecasted_at_utc"], "previewed_at_utc": row["previewed_at_utc"],
@@ -735,7 +993,59 @@ def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime) -> l
             "p_over_5.5": row["p_over_5_5"], "p_over_6.5": row["p_over_6_5"],
             "preview": True,
         }
+        try:
+            pick = model_pick(row["home_team"], row["away_team"], forecast, lines.get(str(row["game_id"])))
+        except NHLModelError:
+            # An incomplete forecast cannot support a pick. Show none rather than a guess.
+            pick = None
+        # Same shape as a frozen pick, minus a result: a preview has nothing to grade yet.
+        forecast["pick"] = None if pick is None else {**pick, "result": None}
+        game["models"][row["model_key"]] = forecast
     return list(games.values())
+
+
+def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
+    """Freeze picks for lock rows that predate the pick record, using the line at lock.
+
+    The quote used is the newest Bovada snapshot captured at or before that game's lock
+    timestamp, so a backfilled pick restates the decision the lock row already froze
+    rather than a pick made from a later line. Idempotent: an existing pick is verified,
+    never rewritten. A row whose stored forecast cannot support a pick is skipped and
+    counted, not guessed at.
+    """
+    report = {"games": 0, "pick_rows": 0, "already_picked": 0, "skipped": 0}
+    rows = con.execute("""
+      SELECT game_id,model_key,model_version,game_date,scheduled_start_utc,home_team,away_team,
+             locked_at_utc,forecast_output_json
+      FROM nhl_game_projections WHERE season=?
+      ORDER BY scheduled_start_utc,game_id,model_key
+    """, (int(season),)).fetchall()
+    seen: set[str] = set()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        for row in rows:
+            gid = row["game_id"]
+            if gid not in seen:
+                seen.add(gid)
+                report["games"] += 1
+            game = {"game_id": gid, "game_date": row["game_date"],
+                    "scheduled_start_utc": row["scheduled_start_utc"],
+                    "home_team": row["home_team"], "away_team": row["away_team"]}
+            locked_at = parse_time(row["locked_at_utc"])
+            forecast = json.loads(row["forecast_output_json"])
+            line = latest_line_at(con, gid, locked_at)
+            try:
+                model_pick(row["home_team"], row["away_team"], forecast, line)
+            except NHLModelError:
+                report["skipped"] += 1
+                continue
+            freeze_pick(con, game, row["model_key"], row["model_version"], forecast, line,
+                        locked_at, "backfill", report)
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return report
 
 
 def latest_game_lines(con: sqlite3.Connection) -> dict:

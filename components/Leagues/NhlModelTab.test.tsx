@@ -72,29 +72,69 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('1.1 pts (MTL)')).toBeTruthy()
     expect(screen.getByText('6.5')).toBeTruthy()
     expect(screen.getByText('-0.7 pts')).toBeTruthy()
+    // No pick in the payload: the browser never invents one, so the card reads n/a.
+    expect(screen.getByText('n/a')).toBeTruthy()
+  })
+
+  it('renders the frozen pick and its edge from the payload', async () => {
+    const frozen = {
+      market: 'spread', side: 'away', line: 1.5, price: -240, model_probability: 0.74,
+      market_probability: 0.679, edge: 0.0608, expected_value: 0.048, line_source: 'bovada',
+      line_captured_at_utc: '2026-10-14T14:54:42Z', settlement_basis: 'official_final_score',
+      provenance: 'lock', result: null,
+    }
+    const locked = {
+      game_id: 2026020107, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(0.6), grade: null, pick: frozen },
+        B5_xg_poisson: { ...forecast(0.5), grade: null, pick: frozen },
+        B7_elo_xg_poisson: { ...forecast(0.45), grade: null, pick: frozen },
+      },
+      result: null,
+      markets: { source: 'Kalshi', usable: false, comparison_usable_at_lock: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }) }))
+    render(<NhlModelTab />)
+    await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
     expect(screen.getByText('MTL +1.5')).toBeTruthy()
     expect(screen.getByText('+6.1% edge')).toBeTruthy()
   })
 
-  it('takes the underdog +1.5 cover when the model edge is over a goal and the model favors the underdog', async () => {
-    const underdogEdge = { ...preview, models: { ...preview.models, B7_elo_xg_poisson: { ...forecast(0.4), projected_goal_differential_home: -0.5 } } }
-    const puckOnly = { ...payload, previews: [underdogEdge], lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, home_puck_price: 200, away_puck_price: -240, total_line: null, over_price: null, under_price: null, home_moneyline: -128, away_moneyline: 107 } } }
-    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(puckOnly) }))
+  it('grades the frozen pick in the record instead of a moneyline guess', async () => {
+    const grade = {
+      official_home_goals: 3, official_away_goals: 2, statistical_home_goals: 2, statistical_away_goals: 2,
+      official_winner: 'home', shootout_decided: true, home_win_brier: 0.2, home_win_logloss: 0.5,
+      home_goal_error: 1, away_goal_error: 0, graded_at_utc: '2026-10-15T14:35:05Z',
+    }
+    // The rule sent this game to the total. Home won on the moneyline the old record graded,
+    // so a moneyline guess would read Pick ✓ while the frozen over 5.5 actually lost.
+    const frozen = {
+      market: 'total', side: 'over', line: 5.5, price: -115, model_probability: 0.51,
+      market_probability: 0.52, edge: -0.01, expected_value: -0.02, line_source: 'bovada',
+      line_captured_at_utc: '2026-10-14T17:00:00Z', settlement_basis: 'official_final_score',
+      provenance: 'lock', result: { won: false },
+    }
+    const graded = {
+      game_id: 2026020108, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(0.6), grade, pick: frozen },
+        B5_xg_poisson: { ...forecast(0.5), grade, pick: frozen },
+        B7_elo_xg_poisson: { ...forecast(0.45), grade, pick: frozen },
+      },
+      result: grade,
+      markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [graded], previews: [] }) }))
     render(<NhlModelTab />)
-    await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('2.0 pts (MTL)')).toBeTruthy()
-    expect(screen.getByText('MTL +1.5')).toBeTruthy()
-    expect(screen.getByText('+6.1% edge')).toBeTruthy()
-  })
-
-  it('bets the Vegas favorite to win when the model agrees and the spread edge is under a goal', async () => {
-    const favoriteAgrees = { ...preview, models: { ...preview.models, B7_elo_xg_poisson: { ...forecast(0.535), projected_goal_differential_home: 1.2 } } }
-    const puckOnly = { ...payload, previews: [favoriteAgrees], lines: { '2026020106': { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z', home_puck_line: -1.5, home_puck_price: 200, away_puck_price: -240, total_line: 6.0, over_price: -115, under_price: -105, home_moneyline: -128, away_moneyline: 107 } } }
-    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(puckOnly) }))
-    render(<NhlModelTab />)
-    await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('0.3 pts (MTL)')).toBeTruthy()
-    expect(screen.getByText('WSH ML')).toBeTruthy()
-    expect(screen.getByText('-0.2% edge')).toBeTruthy()
+    // A graded game leaves the projections view; the record is where it is read.
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+    expect(screen.getByText('Over 5.5 51%')).toBeTruthy()
+    expect(screen.getByText('Pick ✗')).toBeTruthy()
   })
 })
