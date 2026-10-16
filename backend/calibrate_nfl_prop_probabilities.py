@@ -136,7 +136,7 @@ def clustered_diff(rows, fa, fb):
     return mean, 1.96 * math.sqrt(var)
 
 
-def run(con, season):
+def run(con, season, mode="lowo"):
     graded, _skipped, _disagree = g.grade(con, season)
     for r in graded:
         r["week"] = int(r["game_id"].split("_")[1])
@@ -146,10 +146,18 @@ def run(con, season):
         r["p_platt"] = r["p_ours"]
         r["p_iso"] = r["p_ours"]
         r["p_iso_market"] = r["p_ours"]
+        r["calibrated"] = 0
+    info = []
     for held in weeks:
-        train = [r for r in graded if r["week"] != held]
+        if mode == "forward":
+            # Only the weeks strictly before the held-out week may train the map, which is all a production
+            # fit would have. Week 2 has no earlier props, so nothing is calibrated there.
+            train = [r for r in graded if r["week"] < held]
+        else:
+            train = [r for r in graded if r["week"] != held]
         test = [r for r in graded if r["week"] == held]
         if not train or not test:
+            info.append((held, 0, None, None))
             continue
         pairs = [(r["p_ours"], r["over"]) for r in train]
         a, b = fit_platt(pairs)
@@ -163,26 +171,42 @@ def run(con, season):
             r["p_iso"] = apply_isotonic(xs, ys, r["p_ours"])
             mxs, mys = per_market.get(r["market"], (xs, ys))
             r["p_iso_market"] = apply_isotonic(mxs, mys, r["p_ours"])
-    return graded, weeks, fields
+            r["calibrated"] = 1
+        info.append((held, len(train), a, b))
+    return graded, weeks, fields, info
 
 
-def report(graded, weeks, fields, label):
+def report(graded, weeks, fields, label, mode="lowo", info=None):
     print("\n%s: %d items, %d player-games, weeks %s" % (
         label, len(graded), len({(r["game_id"], r["player_id"]) for r in graded}), weeks))
+    if mode == "forward":
+        unc = [r for r in graded if not r["calibrated"]]
+        print("  forward only: %d of %d items were scored by a map fitted on earlier weeks; %d (%.0f%%) had "
+              "no earlier week to fit on" % (len(graded) - len(unc), len(graded), len(unc),
+                                             100.0 * len(unc) / len(graded)))
+        for held, n, a, b in (info or []):
+            print("    week %s: trained on %6d items%s" % (
+                held, n, "" if a is None else ", platt slope %+.3f intercept %+.3f" % (a, b)))
     names = {"p_ours": "raw v2", "p_platt": "platt", "p_iso": "isotonic",
              "p_iso_market": "isotonic/market", "p_market": "market"}
+    # In forward mode an item with no earlier week has no map, so scoring it would mix calibrated and raw
+    # items in the same row. Report the metrics on the calibrated subset and say so.
+    metric = [r for r in graded if r["calibrated"]] if mode == "forward" else graded
+    if mode == "forward":
+        print("  metrics below are on the %d items a map could score (weeks %s)" % (
+            len(metric), sorted({r["week"] for r in metric})))
     print("  %-18s %8s %8s   %s" % ("forecast", "Brier", "logloss", "vs raw (clustered 95%)"))
     for f in fields:
-        d, hw = clustered_diff(graded, f, "p_ours") if f != "p_ours" else (0.0, None)
+        d, hw = clustered_diff(metric, f, "p_ours") if f != "p_ours" else (0.0, None)
         extra = "" if f == "p_ours" else "  %+.5f%s" % (-d, "" if hw is None else " +/- %.5f" % hw)
-        print("  %-18s %8.4f %8.4f%s" % (names[f], brier(graded, f), logloss(graded, f), extra))
+        print("  %-18s %8.4f %8.4f%s" % (names[f], brier(metric, f), logloss(metric, f), extra))
     print("  (constant 0.5 scores Brier 0.2500)")
     print("  reliability, raw v2 vs isotonic/market (bin: n, predicted, observed)")
     for f in ("p_ours", "p_iso_market"):
         cells = []
         for b in range(10):
             lo, hi = b / 10.0, (b + 1) / 10.0
-            cell = [r for r in graded if lo <= r[f] < hi or (b == 9 and r[f] >= hi)]
+            cell = [r for r in metric if lo <= r[f] < hi or (b == 9 and r[f] >= hi)]
             if cell:
                 cells.append("%.1f-%.1f n%d pred %.3f obs %.3f" % (
                     lo, hi, len(cell), sum(x[f] for x in cell) / len(cell),
@@ -194,17 +218,21 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--season", type=int, required=True)
     ap.add_argument("--csv")
+    ap.add_argument("--mode", choices=("lowo", "forward"), default="lowo",
+                    help="lowo fits on every other week; forward fits only on earlier weeks, which is all a "
+                         "production fit would have")
     a = ap.parse_args(argv)
     path = os.environ.get("LP_DB_PATH")
     if not path:
         raise SystemExit("LP_DB_PATH is required")
     con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
-    graded, weeks, fields = run(con, a.season)
-    report(graded, weeks, fields, "leave-one-week-out")
+    graded, weeks, fields, info = run(con, a.season, a.mode)
+    label = "leave-one-week-out" if a.mode == "lowo" else "forward only (fit on earlier weeks)"
+    report(graded, weeks, fields, label, a.mode, info)
     for m in sorted({r["market"] for r in graded}):
         sub = [r for r in graded if r["market"] == m]
         if len(sub) > 100:
-            report(sub, weeks, fields, "  market: %s" % m)
+            report(sub, weeks, fields, "  market: %s" % m, a.mode, info)
     if a.csv:
         with open(a.csv, "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(graded[0]))

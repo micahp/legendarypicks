@@ -56,6 +56,32 @@ After calibration the model still disagrees with the market by more than 0.05 on
 42.5% of those sides. So this makes the number good without making the model better, and what remains
 between v2 and the market is an information gap of about 0.003, not a calibration gap.
 
+### Forward only: the same map, fitted only on earlier weeks
+
+Leave-one-week-out trains on weeks *after* the held-out week, which a production fit could never do. The same
+map fitted only on weeks strictly before the target week, which is all production would have:
+
+| forecast | Brier | log loss | vs raw (clustered 95%) |
+|---|---:|---:|---:|
+| raw v2 | 0.2771 | 0.7598 | |
+| platt | 0.2488 | 0.6904 | +0.02831 +/- 0.01075 |
+| isotonic | 0.2497 | 0.6949 | +0.02732 +/- 0.01109 |
+| market | 0.2462 | 0.6854 | +0.03086 +/- 0.01186 |
+
+On the 25,390 items a forward map can score, weeks 3 to 5, Platt lands on **0.2488, the same number to four
+decimals as the leave-one-week-out fit**. The gain is not an artifact of training on the future. Per market,
+forward Platt beats the market on receiving yards (0.2474 against 0.2481) and improves every market except
+passing touchdowns, 0.2434 to 0.2449 with the interval spanning zero, where raw v2 was already fine.
+
+The fitted map is stable in shape and nowhere near the identity: slope +0.232 fitted on week 2, +0.193 on
+weeks 2 to 3, +0.165 on weeks 2 to 4, with intercepts +0.071, +0.101 and +0.120. A slope near 0.2 means v2's
+log-odds need shrinking by roughly a factor of five to be honest, and the estimate moves *away* from 1 as data
+accumulates instead of converging on it. That is structural overconfidence, not sampling noise.
+
+Two operational consequences. Week 2's 8,129 items, 24% of the population, have no earlier week to fit on, so
+the map cannot be served in the first week of a season; every later week can. And the map cannot be
+pre-fitted from prior seasons, because props exist for 2026 only, so it has to accumulate in season.
+
 ## 2. Full Marcel: regression pays, extra seasons and aging do not
 
 `marcel_nfl_backtest.py` implements the full recipe: the target season's earlier weeks on weight 5 and
@@ -145,8 +171,10 @@ Read plainly:
 
 ## What this says to do
 
-1. Ship the Platt map on the served P(over). Two parameters, fitted on held-out weeks, no new data, and it
-   takes the served number from worse than a coin flip to roughly the market.
+1. Ship the Platt map on the served P(over). Two parameters, no new data, and it takes the served number from
+   worse than a coin flip to roughly the market. The forward-only check lands on the same 0.2488, so the gain is
+   not an artifact of training on the future. Two constraints: refit it each week on the weeks so far, and serve
+   the raw number in week 1, where there is nothing to fit on.
 2. Do not feed prior seasons into the point estimate. They hurt MAE monotonically. The current season plus
    regression to the position mean is the best point model measured here, and it beats what the site serves.
 3. Do use prior seasons for the probability's denominator and for early-season coverage, since that is where
@@ -163,6 +191,7 @@ export LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
 FIT="2013 2014 2015 2016 2017 2018 2019 2020 2021"
 
 python3 calibrate_nfl_prop_probabilities.py --season 2026 --csv /tmp/cal_items.csv
+python3 calibrate_nfl_prop_probabilities.py --season 2026 --mode forward --csv /tmp/cal_fwd.csv
 python3 marcel_nfl_backtest.py --season 2025 --window 3 --fit-seasons $FIT          # MAE ladder
 python3 marcel_nfl_backtest.py --season 2026 --props --window 3 --csv /tmp/m3.csv --fit-seasons $FIT
 ```
