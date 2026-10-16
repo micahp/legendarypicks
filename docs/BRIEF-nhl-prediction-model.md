@@ -15,6 +15,24 @@ The model should explain why it expects a game in the shape of 4–2 rather than
 5. **Validation.** Backtest chronologically. Every feature must have been available before puck drop. Compare with league-average and market-implied baselines on the same games; report goal error, probability calibration, log loss, and market results. Promote features only when out-of-sample results support them.
 6. **Player props later.** Once team scoring and opportunity forecasts are reliable, add player projections for shots, goals, assists, points, goalie saves, and blocked shots, tied to projected ice time, line and power-play role, and the same game simulation.
 
+## Baseline ladder and implementation status
+
+Run these as separate, increasingly complex experiments. `✓` means a baseline implementation or reference exists in this checkout; it does not mean the model passed validation. `◐` means partial implementation or incomplete benchmark data. `—` means the specified baseline is not implemented.
+
+| ID | Baseline | Features | What it tests | Status |
+| --- | --- | --- | --- | --- |
+| B0 | Constant probability | 50% | No-information reference | ✓ The 0.250 Brier reference is documented; the local retrospective prototype also defines B0. |
+| B1 | Historical home advantage | Home/away only | Basic league tendency | ✓ Defined in the local retrospective prototype as the training-set home-win rate; no result report is saved. |
+| B2 | Recent-form logistic | Last 10 win%, goal differential, rest | Traditional hockey stats | ✓ Logistic baseline code exists in the local retrospective prototype; no result report is saved. |
+| B3 | Elo | Chronological team ratings, home ice | Team-strength baseline | ✓ Implemented in the prospective runner and forecast ledger; official-result grading is still pending. |
+| B4 | Goals Poisson | Rolling goals for/against, home ice | First score-distribution model | ✓ Implemented in the local retrospective prototype; it is not a current prospective candidate. |
+| B5 | xG Poisson | xGF/60, xGA/60, 5v5 and special teams | Whether chance quality improves score projections | ◐ A 5v5 xG Poisson model exists in the prospective runner; its features do not yet include power-play or penalty-kill xG. Grading is pending. |
+| B6 | Goalie-adjusted model | B5 + historical GSAx and pregame goalie expectations | Goalie contribution | — No goalie-adjusted feature set is implemented. The local retrospective prototype's `B6` means combined goals + xG, not goalie adjustment. |
+| B7 | Full statistical model | B6 + player/line features and scheduling | Whether added complexity helps | — Not implemented as specified. The prospective `B7_elo_xg_poisson` is B5 xG plus Elo; it has no goalie, player/line, or scheduling adjustments. |
+| Market | Kalshi | Historical pregame prices | External market benchmark | ◐ Prospective quote capture exists, but the historical quote/crosswalk inputs and completed comparison report are absent. |
+
+The B0–B2 and B4 checkmarks refer to a local retrospective research prototype, not a completed, reproducible evaluation. Its expected historical Kalshi input files and generated results are not present in this checkout. The prospective runner uses CSV inputs and JSONL forecast/quote ledgers; this ladder has not been implemented in DuckDB. The current prospective ledger has forecasts for B3, B5, and the differently defined `B7_elo_xg_poisson`, but no official-result rows yet.
+
 ### Interpreting winner Brier scores
 
 For a binary outcome such as home-team win, the Brier score is the mean squared error of the predicted probability:
@@ -63,7 +81,7 @@ Two teams can each record 30 shots on goal while creating very different scoring
 
 The shot-level model should account for shot distance, angle and type; rebounds, deflections and rushes; events immediately preceding a shot; players on the ice and manpower; and empty-net situations. Keep shot volume and shot quality as distinct signals rather than treating total shots as a complete measure of offense.
 
-MoneyPuck is a candidate source for shot-level xG and game-level skater and goalie data. Its current xG model is described as rebuilt for 2026–27; verify the feature definition and release before relying on that version. The model's xG definition is a source input, not ground truth.
+MoneyPuck is a candidate source for shot-level xG and game-level skater and goalie data. Its [2026–27 xG model description](https://www.moneypuck.com/about.htm) says the shot model was rebuilt to adapt to NHL tracking changes and trained on a random sample of more than 289,000 shots from 2023–24 through 2025–26. The listed factors include shot location and type, the preceding event, players' time on ice, manpower, shooter off-wing, and empty-net status. Treat MoneyPuck's xG definition as one candidate input, not ground truth, and record the exact data and model version used in each evaluation.
 
 ## Goaltending and special teams
 
@@ -108,12 +126,12 @@ A sustained shot-volume increase after a player moves to the first line is a str
 
 | Source | Candidate use |
 | --- | --- |
-| MoneyPuck | Shot-level xG, goalies, skaters, and team game-level data |
+| MoneyPuck | [Shot data and downloads](https://moneypuck.com/data.htm), [2026–27 xG model description](https://www.moneypuck.com/about.htm); goalies, skaters, and team game-level data |
 | Natural Stat Trick | 5-on-5 analytics, shot attempts, danger chances, and situational splits |
-| NHL API | Schedules, play-by-play, box scores, rosters, and player game logs |
+| NHL API | Schedules, play-by-play, box scores, rosters, and player game logs; [community-maintained endpoint reference](https://github.com/niickricci/nhl-api-reference) is unofficial |
 | Daily Faceoff | Starting-goalie information and lineup context |
 
-MoneyPuck is reported to provide historical shot data from 2007–08 through 2025–26, along with game-level player and goalie datasets. Confirm current coverage and definitions before ingest. The NHL API is a candidate source for game-level ingestion. Because MoneyPuck's downloadable data is described as non-commercial absent separate permission, resolve commercial licensing before using it in a Legendary Picks production service. Record source, coverage, field definitions, and license for every dataset.
+MoneyPuck's [data page](https://moneypuck.com/data.htm) currently lists 2,079,359 historical shots for 2007–08 through 2025–26 and says 2026–27 shot data is updated nightly. It lists 124 shot attributes, including xGoals and companion rebound, missed-shot, and goalie-freeze model scores; blocked shots are excluded. The page says the downloads are free for non-commercial use, asks other users to inquire, and requires credit when displaying results that use its data. Because Legendary Picks is commercial, resolve permission and attribution with MoneyPuck before production use. Treat the NHL API endpoint guide as unofficial and verify endpoint behavior against NHL responses. Record source, coverage, field definitions, and license for every dataset.
 
 ## Version one
 
