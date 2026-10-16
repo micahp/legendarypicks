@@ -227,6 +227,10 @@ def pmf_scores(pmf: list[float], support: tuple[int, ...], observed: int) -> dic
         "cover_90": float(lows[0.90] <= observed <= highs[0.90]),
         "width_80": highs[0.80] - lows[0.80],
     }
+    scores["variance"] = sum(
+        probability * (value - scores["mean"]) ** 2
+        for value, probability in zip(support, probs)
+    )
     for line in OVER_LINES:
         threshold = math.floor(line) + 1
         probability_over = sum(p for value, p in zip(support, probs) if value >= threshold)
@@ -239,19 +243,41 @@ def pmf_scores(pmf: list[float], support: tuple[int, ...], observed: int) -> dic
 
 
 def simulator_distribution(serve_a: float, serve_b: float, rules: dict[str, Any],
-                           support: tuple[int, ...]) -> tuple[list[float], float]:
-    probabilities = {value: 0.0 for value in support}
-    unresolved = 0.0
-    for first_server in ("A", "B"):
-        result = sim.match_distribution(serve_a, serve_b, rules, first_server)
-        unresolved += 0.5 * result["unresolved"]
-        for games, probability in result["total_games"].items():
-            if games in probabilities:
-                probabilities[games] += 0.5 * probability
-    total = sum(probabilities.values())
-    if total <= 0 or unresolved > 1e-8:
-        raise ValueError(f"simulator unresolved/empty distribution: unresolved={unresolved}, mass={total}")
-    return [probabilities[value] / total for value in support], unresolved
+                           support: tuple[int, ...]) -> tuple[list[float], float, dict[str, float]]:
+    result = sim.match_distribution(serve_a, serve_b, rules, first_server=None)
+    resolved = result["p_a"] + result["p_b"]
+    unresolved = result["unresolved"]
+    if resolved <= 0 or unresolved > 1e-8:
+        raise ValueError(f"simulator unresolved/empty distribution: unresolved={unresolved}, mass={resolved}")
+    probabilities = [result["total_games"].get(value, 0.0) / resolved for value in support]
+    structure = {
+        "expected_sets": sum(sets * mass for sets, mass in result["sets_played"].items()) / resolved,
+        "p_deciding_set": result["sets_played"].get(3, 0.0) / resolved,
+        "p_any_tiebreak": result["p_tiebreak_any"] / resolved,
+        "expected_set_games": sum((winner_games + loser_games) * mass
+                                   for (_, _, winner_games, loser_games), mass
+                                   in result["set_scores"].items()) / resolved,
+        "expected_tiebreak_sets": sum(mass for (_, _, winner_games, loser_games), mass
+                                       in result["set_scores"].items()
+                                       if winner_games == 7 and loser_games == 6) / resolved,
+    }
+    return probabilities, unresolved, structure
+
+
+def observed_structure(score: str) -> dict[str, float]:
+    regular_score = re.sub(r"\[[^\]]*\]", " ", score)
+    sets = [(int(a), int(b)) for a, b in re.findall(
+        r"(?<!\d)(\d+)-(\d+)(?:\(\d+\))?", regular_score
+    )]
+    if not sets:
+        raise ValueError(f"unable to parse set scores: {score!r}")
+    return {
+        "sets": float(len(sets)),
+        "deciding_set": float(len(sets) == 3),
+        "any_tiebreak": float(any(max(a, b) == 7 and min(a, b) == 6 for a, b in sets)),
+        "set_games": float(sum(a + b for a, b in sets)),
+        "tiebreak_sets": float(sum(max(a, b) == 7 and min(a, b) == 6 for a, b in sets)),
+    }
 
 
 def support_for(format_key: str) -> tuple[int, ...]:
@@ -299,13 +325,15 @@ def run(db: str, tour: str, start: int = TEST_START, end: int = TEST_END) -> tup
                                              point_state.returns(b, surface, FORM_K), baseline)
                     serve_b = tpm.point_prob(point_state.serve(b, surface, FORM_K),
                                              point_state.returns(a, surface, FORM_K), baseline)
-                    sim_pmf, unresolved = simulator_distribution(serve_a, serve_b, rules,
-                                                                 support_for(format_key))
+                    sim_pmf, unresolved, sim_structure = simulator_distribution(
+                        serve_a, serve_b, rules, support_for(format_key)
+                    )
                     direct_pmfs = direct.forecasts(format_key, surface, comp, day,
                                                    support_for(format_key))
                     low_a, high_a = point_state.effective_points(a, surface)
                     low_b, high_b = point_state.effective_points(b, surface)
                     scored = {"simulator": sim_pmf, **direct_pmfs}
+                    observed = observed_structure(score)
                     row_out: dict[str, Any] = {
                         "tour": tour, "date": date, "year": date // 10000,
                         "event_id": event_id, "event_name": event_name, "surface": surface,
@@ -314,6 +342,16 @@ def run(db: str, tour: str, start: int = TEST_START, end: int = TEST_END) -> tup
                         "history_points": min(low_a, high_a, low_b, high_b),
                         "history_band": history_bucket(min(low_a, high_a, low_b, high_b)),
                         "simulator_unresolved_mass": unresolved,
+                        "actual_sets": observed["sets"],
+                        "actual_deciding_set": observed["deciding_set"],
+                        "actual_any_tiebreak": observed["any_tiebreak"],
+                        "actual_set_games": observed["set_games"],
+                        "actual_tiebreak_sets": observed["tiebreak_sets"],
+                        "simulator_expected_sets": sim_structure["expected_sets"],
+                        "simulator_p_deciding_set": sim_structure["p_deciding_set"],
+                        "simulator_p_any_tiebreak": sim_structure["p_any_tiebreak"],
+                        "simulator_expected_set_games": sim_structure["expected_set_games"],
+                        "simulator_expected_tiebreak_sets": sim_structure["expected_tiebreak_sets"],
                     }
                     for model, pmf in scored.items():
                         for metric, value in pmf_scores(pmf, support_for(format_key), actual_games).items():
@@ -378,6 +416,162 @@ def summarize_group(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def _structure_sums(rows: list[dict[str, Any]]) -> dict[str, float]:
+    sums = {key: 0.0 for key in (
+        "n", "actual_games", "actual_games_sq", "simulator_mean", "simulator_second_moment",
+        "actual_sets", "actual_deciding", "actual_any_tiebreak", "actual_set_games",
+        "actual_tiebreak_sets", "simulator_expected_sets", "simulator_p_deciding_set",
+        "simulator_p_any_tiebreak", "simulator_expected_set_games",
+        "simulator_expected_tiebreak_sets",
+    )}
+    for row in rows:
+        sums["n"] += 1
+        actual = row["actual_games"]
+        mean = row["simulator_mean"]
+        sums["actual_games"] += actual
+        sums["actual_games_sq"] += actual * actual
+        sums["simulator_mean"] += mean
+        sums["simulator_second_moment"] += row["simulator_variance"] + mean * mean
+        for key in sums:
+            if key not in {"n", "actual_games", "actual_games_sq", "simulator_mean", "simulator_second_moment"}:
+                row_key = "actual_deciding_set" if key == "actual_deciding" else key
+                sums[key] += row[row_key]
+    return sums
+
+
+def _structure_differences(sums: dict[str, float]) -> dict[str, float]:
+    n = sums["n"]
+    if n <= 0:
+        return {}
+    obs_sets = sums["actual_sets"]
+    sim_sets = sums["simulator_expected_sets"]
+    obs_set_games = sums["actual_set_games"]
+    sim_set_games = sums["simulator_expected_set_games"]
+    obs_mean = sums["actual_games"] / n
+    sim_mean = sums["simulator_mean"] / n
+    obs_games_per_set = obs_set_games / obs_sets
+    sim_games_per_set = sim_set_games / sim_sets
+    observed_variance = max(0.0, sums["actual_games_sq"] / n - obs_mean * obs_mean)
+    predictive_variance = max(
+        0.0, sums["simulator_second_moment"] / n - sim_mean * sim_mean
+    )
+    sets_per_match_gap = sim_sets / n - obs_sets / n
+    set_length_gap = sim_games_per_set - obs_games_per_set
+    return {
+        "total_games_bias": sim_mean - obs_mean,
+        "sets_per_match_gap": sets_per_match_gap,
+        "games_per_set_gap": set_length_gap,
+        "deciding_set_probability_gap": (
+            sums["simulator_p_deciding_set"] - sums["actual_deciding"]
+        ) / n,
+        "any_tiebreak_probability_gap": (
+            sums["simulator_p_any_tiebreak"] - sums["actual_any_tiebreak"]
+        ) / n,
+        "tiebreak_set_rate_gap": (
+            sums["simulator_expected_tiebreak_sets"] / sim_sets
+            - sums["actual_tiebreak_sets"] / obs_sets
+        ),
+        "total_variance_gap": predictive_variance - observed_variance,
+    }
+
+
+def _bootstrap_structure(rows: list[dict[str, Any]]) -> dict[str, dict[str, float]]:
+    by_event: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        by_event[str(row["event_id"])].append(row)
+    keys = list(by_event)
+    if not keys:
+        return {}
+    event_sums = [_structure_sums(by_event[key]) for key in keys]
+    fields = tuple(event_sums[0])
+    rng = random.Random(BOOTSTRAP_SEED)
+    samples: dict[str, list[float]] = defaultdict(list)
+    for _ in range(BOOTSTRAP_RESAMPLES):
+        combined = {field: 0.0 for field in fields}
+        for _ in keys:
+            sampled = event_sums[rng.randrange(len(keys))]
+            for field in fields:
+                combined[field] += sampled[field]
+        for metric, value in _structure_differences(combined).items():
+            samples[metric].append(value)
+    intervals = {}
+    for metric, values in samples.items():
+        values.sort()
+        intervals[metric] = {
+            "low": values[int(0.025 * len(values))],
+            "high": values[int(0.975 * len(values)) - 1],
+        }
+    return intervals
+
+
+def summarize_structure(rows: list[dict[str, Any]], bootstrap: bool = False) -> dict[str, Any]:
+    sums = _structure_sums(rows)
+    n = sums["n"]
+    if not n:
+        return {"matches": 0}
+    actual_sets = sums["actual_sets"]
+    predicted_sets = sums["simulator_expected_sets"]
+    actual_set_games = sums["actual_set_games"]
+    predicted_set_games = sums["simulator_expected_set_games"]
+    actual_mean = sums["actual_games"] / n
+    predicted_mean = sums["simulator_mean"] / n
+    # Decompose total-games error using observed set length as the reference.
+    observed_games_per_set = actual_set_games / actual_sets
+    predicted_games_per_set = predicted_set_games / predicted_sets
+    set_count_contribution = (predicted_sets - actual_sets) / n * observed_games_per_set
+    set_length_contribution = predicted_sets / n * (predicted_games_per_set - observed_games_per_set)
+    result: dict[str, Any] = {
+        "matches": int(n),
+        "observed": {
+            "total_games_per_match": actual_mean,
+            "sets_per_match": actual_sets / n,
+            "games_per_set": observed_games_per_set,
+            "deciding_set_frequency": sums["actual_deciding"] / n,
+            "any_tiebreak_match_frequency": sums["actual_any_tiebreak"] / n,
+            "tiebreak_sets_per_match": sums["actual_tiebreak_sets"] / n,
+            "tiebreak_share_of_sets": sums["actual_tiebreak_sets"] / actual_sets,
+        },
+        "simulator": {
+            "expected_total_games_per_match": predicted_mean,
+            "expected_sets_per_match": predicted_sets / n,
+            "expected_games_per_set": predicted_games_per_set,
+            "deciding_set_probability": sums["simulator_p_deciding_set"] / n,
+            "any_tiebreak_match_probability": sums["simulator_p_any_tiebreak"] / n,
+            "expected_tiebreak_sets_per_match": sums["simulator_expected_tiebreak_sets"] / n,
+            "tiebreak_share_of_sets": sums["simulator_expected_tiebreak_sets"] / predicted_sets,
+        },
+        "total_games_bias_decomposition": {
+            "observed_reference_set_count_contribution": set_count_contribution,
+            "simulated_set_length_contribution": set_length_contribution,
+            "sum": set_count_contribution + set_length_contribution,
+            "observed_simulator_bias": predicted_mean - actual_mean,
+        },
+        "gaps_simulator_minus_observed": _structure_differences(sums),
+    }
+    if bootstrap:
+        result["event_cluster_bootstrap_95_ci"] = _bootstrap_structure(rows)
+    return result
+
+
+def summarize_predictive_variance(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    actual = [row["actual_games"] for row in rows]
+    actual_mean = _mean(actual) or 0.0
+    observed_variance = _mean([(value - actual_mean) ** 2 for value in actual]) or 0.0
+    result = {"observed_total_games_variance": observed_variance, "models": {}}
+    for model in MODEL_NAMES:
+        means = [row[f"{model}_mean"] for row in rows]
+        average_mean = _mean(means) or 0.0
+        average_conditional_variance = _mean([row[f"{model}_variance"] for row in rows]) or 0.0
+        between_match_variance = _mean([(value - average_mean) ** 2 for value in means]) or 0.0
+        result["models"][model] = {
+            "mean_conditional_forecast_variance": average_conditional_variance,
+            "between_match_forecast_mean_variance": between_match_variance,
+            "mixture_predictive_variance": average_conditional_variance + between_match_variance,
+            "variance_gap_vs_observed": average_conditional_variance + between_match_variance - observed_variance,
+        }
+    return result
+
+
 def paired_cluster_bootstrap(rows: list[dict[str, Any]], challenger: str, baseline: str,
                              metric: str = "crps") -> dict[str, float]:
     grouped: dict[str, list[float]] = defaultdict(list)
@@ -430,6 +624,12 @@ def summarize(records: list[dict[str, Any]], tour: str, counts: dict[str, int],
             "match_tiebreak_10": "Bracketed deciding match tiebreak; it adds no games to the total-games target.",
         },
         "scores": summarize_group(records),
+        "simulator_structure": summarize_structure(records, bootstrap=True),
+        "simulator_structure_by_year": {
+            str(year): summarize_structure([r for r in records if r["year"] == year])
+            for year in sorted({r["year"] for r in records})
+        },
+        "predictive_variance_diagnostic": summarize_predictive_variance(records),
         "paired_event_bootstrap_crps_simulator_minus_direct_surface_competitive": paired_cluster_bootstrap(
             records, "simulator", "direct_surface_competitive", "crps"),
         "paired_event_bootstrap_log_score_simulator_minus_direct_surface_competitive": paired_cluster_bootstrap(

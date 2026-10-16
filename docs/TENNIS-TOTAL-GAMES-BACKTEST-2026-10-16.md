@@ -113,6 +113,59 @@ The simulator's positive bias and CRPS loss are not isolated to one surface or o
 appears for matches with an Elo gap of 300 or more and for players with thin serve history. These are diagnostics, not
 causal explanations. The full archived JSONs contain all scores and thresholds for each segment.
 
+## Structural diagnosis of match length
+
+The same walk-forward forecasts were decomposed into expected sets, games per set, and tiebreak outcomes. Simulated
+set scores come from the exact match distribution; observed set scores come from the archived completed-match score.
+The deciding-set and tiebreak comparisons are probability-versus-frequency comparisons on the same matches. Confidence
+intervals use 1,000 paired bootstrap samples of tournament-event clusters, so sets and matches within an event are not
+treated as independent.
+
+| Tour | Measure | Observed | Simulator | Difference (95% event-cluster CI) |
+|---|---|---:|---:|---:|
+| ATP | Sets per match | 2.362 | 2.478 | +0.116 (+0.107 to +0.126) |
+| ATP | Deciding-set frequency/probability | 36.2% | 47.8% | +11.6 pp (+10.7 to +12.6) |
+| ATP | Games per set | 9.913 | 10.211 | +0.298 (+0.267 to +0.330) |
+| ATP | Matches with a tiebreak | 37.5% | 45.5% | +8.0 pp (+6.9 to +9.0) |
+| ATP | Tiebreak share of sets | 18.9% | 22.3% | +3.4 pp (+2.8 to +4.0) |
+| WTA | Sets per match | 2.337 | 2.477 | +0.141 (+0.132 to +0.149) |
+| WTA | Deciding-set frequency/probability | 33.7% | 47.7% | +14.1 pp (+13.2 to +14.9) |
+| WTA | Games per set | 9.321 | 9.769 | +0.448 (+0.425 to +0.470) |
+| WTA | Matches with a tiebreak | 22.9% | 31.5% | +8.7 pp (+8.0 to +9.4) |
+| WTA | Tiebreak share of sets | 10.7% | 14.3% | +3.6 pp (+3.3 to +3.9) |
+
+An arithmetic decomposition of the total-games bias uses the observed average set length as a reference. For ATP, the
+extra 0.116 expected sets account for about **+1.15 games** of the +1.89 bias; the simulator's longer sets account for
+about **+0.74 games**. For WTA, excess sets account for **+1.31 games** of the +2.42 bias, and longer sets account for
+**+1.11 games**. This is a descriptive decomposition, not a causal attribution. Both mechanisms matter; excess
+deciding sets are the larger component on ATP, while the two components are closer on WTA.
+
+The direction is stable by year. The table shows simulator-minus-observed gaps; 2026 is partial, through May 17 for ATP
+and May 25 for WTA.
+
+| Tour | Year | Matches | Deciding-set gap | Games-per-set gap | Total-games bias |
+|---|---:|---:|---:|---:|---:|
+| ATP | 2023 | 3,448 | +11.0 pp | +0.282 | +1.79 |
+| ATP | 2024 | 3,561 | +12.1 pp | +0.322 | +2.00 |
+| ATP | 2025 | 3,191 | +11.3 pp | +0.290 | +1.84 |
+| ATP | 2026 partial | 1,566 | +12.7 pp | +0.299 | +2.00 |
+| WTA | 2023 | 3,781 | +14.0 pp | +0.459 | +2.45 |
+| WTA | 2024 | 3,892 | +13.9 pp | +0.470 | +2.45 |
+| WTA | 2025 | 3,631 | +14.5 pp | +0.402 | +2.35 |
+| WTA | 2026 partial | 1,758 | +13.6 pp | +0.470 | +2.43 |
+
+The aggregate distribution variance does not point to a simple lack of match-to-match spread. The observed total-games
+variance is 35.43 ATP and 33.34 WTA; the simulator's mixture predictive variance is 35.53 and 33.54. The simulator
+minus-observed variance gaps are +0.10 ATP (95% event-cluster CI -0.61 to +0.81) and +0.21 WTA (-0.47 to +0.83).
+Direct empirical distributions have similarly close marginal variances. This rules out neither conditional
+misspecification nor errors in particular score regions, but aggregate under-dispersion is not supported by this test.
+
+The main diagnosis is therefore **mis-centered match structure**: the simulator assigns too much probability to a third
+set and too many games within a set, with excess tiebreaks contributing to the latter. A useful next experiment is to
+inspect point-to-hold calibration and match/set winner probabilities on verified point sequences, then change one
+component at a time. Simply increasing simulation count or adding a generic surface correction does not address the
+measured errors.
+
 ## Decision and next work
 
 - Keep the current simulator in Model Lab as a challenger. Do not use it as the total-games incumbent on this evaluated
@@ -122,7 +175,7 @@ causal explanations. The full archived JSONs contain all scores and thresholds f
   historical distributions.
 - Complete prospective grading with frozen per-target versions, full distributions, timestamps and input snapshots.
   The existing local development grader does not yet retain full distributions or Brier/CRPS grading.
-- Use the archived segments to diagnose overprediction by surface, history depth and competitiveness. Change the
+- Use verified point sequences to diagnose the excess deciding-set, set-length and tiebreak probabilities. Change the
   simulator only after stating a hypothesis and a predeclared comparison against the direct baselines.
 - Before any promotion, audit format parsing and compare on future matches. The 2023–2026 results are development
   evidence, not untouched confirmation.
