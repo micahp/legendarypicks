@@ -270,6 +270,91 @@ this direct-historical-exposure replay, not the overall direct-model winner, a p
 commercially cleared model. The count targets in this replay are development evidence; prospective forecasts frozen
 before play are still needed for independent confirmation.
 
+### Threshold exceedance reliability
+
+The current read-only dev-database replay gives the mean predicted exceedance probability versus the observed rate at
+each fixed count threshold. Cells show **predicted% → observed%; calibration gap** in percentage points, where the gap is
+observed minus predicted; brackets give its 95% tournament-cluster bootstrap interval (10,000 resamples). P0 and P1
+refer to their Gamma-Poisson distributions. These are aggregate threshold checks, not probability-bin reliability curves.
+
+ATP has 70,198 player-match targets across 711 tournament IDs. WTA has 77,274 ace targets and 77,256 double-fault
+targets across 609 tournament IDs.
+
+| Tour | Target | Model | >=4 (aces) / >=1 (DF) | >=6 (aces) / >=2 (DF) | >=8 (aces) / >=4 (DF) | >=10 (aces) / >=6 (DF) |
+|---|---|---|---:|---:|---:|---:|
+| ATP | Aces | P0 | 70.45 → 60.06; −10.39 [−11.36, −9.44] | 42.94 → 40.24; −2.70 [−3.66, −1.74] | 22.28 → 25.82; +3.54 [+2.75, +4.36] | 10.54 → 16.00; +5.46 [+4.84, +6.08] |
+| ATP | Aces | P1 | 66.40 → 60.06; −6.34 [−7.29, −5.39] | 41.41 → 40.24; −1.17 [−2.15, −0.20] | 23.31 → 25.82; +2.51 [+1.71, +3.33] | 12.44 → 16.00; +3.56 [+2.95, +4.18] |
+| ATP | Double faults | P0 | 91.78 → 87.39; −4.40 [−4.83, −3.97] | 72.82 → 67.10; −5.72 [−6.47, −4.98] | 29.48 → 29.67; +0.19 [−0.60, +0.97] | 7.57 → 10.63; +3.07 [+2.59, +3.55] |
+| ATP | Double faults | P1 | 89.24 → 87.39; −1.85 [−2.28, −1.42] | 69.13 → 67.10; −2.03 [−2.78, −1.30] | 29.60 → 29.67; +0.08 [−0.71, +0.86] | 9.47 → 10.63; +1.16 [+0.69, +1.64] |
+| WTA | Aces | P0 | 28.67 → 28.31; −0.36 [−1.10, +0.37] | 9.42 → 13.31; +3.90 [+3.41, +4.39] | 2.71 → 6.12; +3.41 [+3.11, +3.71] | 0.72 → 2.78; +2.06 [+1.88, +2.24] |
+| WTA | Aces | P1 | 28.39 → 28.31; −0.09 [−0.83, +0.65] | 10.71 → 13.31; +2.61 [+2.10, +3.11] | 3.82 → 6.12; +2.30 [+1.99, +2.61] | 1.35 → 2.78; +1.43 [+1.24, +1.61] |
+| WTA | Double faults | P0 | 96.24 → 93.05; −3.19 [−3.45, −2.94] | 85.27 → 79.13; −6.13 [−6.64, −5.63] | 49.09 → 45.42; −3.67 [−4.38, −2.93] | 19.40 → 21.47; +2.07 [+1.48, +2.67] |
+| WTA | Double faults | P1 | 93.84 → 93.05; −0.80 [−1.04, −0.54] | 80.50 → 79.13; −1.37 [−1.88, −0.87] | 46.39 → 45.42; −0.98 [−1.68, −0.25] | 21.20 → 21.47; +0.27 [−0.32, +0.89] |
+
+P1 narrows the average threshold calibration gap relative to P0 in these cells, but several intervals still exclude zero,
+especially for ATP ace tails and WTA ace thresholds above four. This supports the earlier calibration caveat; it does
+not establish prospective or sportsbook-line calibration.
+
+#### WTA integer-threshold extension
+
+Using the same frozen chronological replay, I evaluated every integer cutoff from **aces >=1 through >=21** and
+**double faults >=1 through >=20**. The tested range ends at the last cutoff with at least 30 observed exceedances
+(39 ace targets at >=21; 36 double-fault targets at >=20). `n` is the eligible target population and `hits` is the
+number at or above that row's cutoff. Values are **predicted% → observed%; gap [95% cluster-bootstrap interval]** in
+percentage points, where gap is observed minus predicted. Each interval uses 10,000 resamples of 609 tournament IDs.
+Rows marked sparse have fewer than 100 observed hits; cutoffs above the stated ranges have fewer than 30 and are omitted.
+
+| Ace cutoff | n | Hits | P0: predicted → observed; gap [95% CI] pp | P1: predicted → observed; gap [95% CI] pp | Tail |
+|---:|---:|---:|---:|---:|---|
+| >=1 | 77,274 | 60,001 | 88.00 → 77.65; −10.35 [−10.99, −9.73] | 85.51 → 77.65; −7.87 [−8.47, −7.27] | |
+| >=2 | 77,274 | 43,985 | 67.32 → 56.92; −10.40 [−11.25, −9.54] | 64.17 → 56.92; −7.25 [−8.08, −6.42] | |
+| >=3 | 77,274 | 31,296 | 45.89 → 40.50; −5.39 [−6.25, −4.52] | 43.98 → 40.50; −3.48 [−4.33, −2.62] | |
+| >=4 | 77,274 | 21,875 | 28.67 → 28.31; −0.36 [−1.10, +0.37] | 28.39 → 28.31; −0.09 [−0.83, +0.66] | |
+| >=5 | 77,274 | 15,009 | 16.81 → 19.42; +2.62 [+2.03, +3.21] | 17.64 → 19.42; +1.78 [+1.19, +2.38] | |
+| >=6 | 77,274 | 10,288 | 9.42 → 13.31; +3.90 [+3.40, +4.38] | 10.71 → 13.31; +2.61 [+2.09, +3.11] | |
+| >=7 | 77,274 | 7,042 | 5.11 → 9.11; +4.00 [+3.61, +4.39] | 6.41 → 9.11; +2.70 [+2.29, +3.10] | |
+| >=8 | 77,274 | 4,728 | 2.71 → 6.12; +3.41 [+3.11, +3.71] | 3.82 → 6.12; +2.30 [+2.00, +2.61] | |
+| >=9 | 77,274 | 3,203 | 1.41 → 4.14; +2.74 [+2.51, +2.97] | 2.27 → 4.14; +1.88 [+1.65, +2.11] | |
+| >=10 | 77,274 | 2,144 | 0.72 → 2.77; +2.06 [+1.88, +2.24] | 1.35 → 2.77; +1.43 [+1.24, +1.61] | |
+| >=11 | 77,274 | 1,452 | 0.36 → 1.88; +1.52 [+1.38, +1.66] | 0.80 → 1.88; +1.07 [+0.94, +1.21] | |
+| >=12 | 77,274 | 983 | 0.17 → 1.27; +1.10 [+0.99, +1.21] | 0.48 → 1.27; +0.79 [+0.68, +0.90] | |
+| >=13 | 77,274 | 668 | 0.08 → 0.86; +0.78 [+0.70, +0.87] | 0.29 → 0.86; +0.58 [+0.49, +0.66] | |
+| >=14 | 77,274 | 447 | 0.04 → 0.58; +0.54 [+0.48, +0.61] | 0.18 → 0.58; +0.40 [+0.34, +0.47] | |
+| >=15 | 77,274 | 318 | 0.02 → 0.41; +0.40 [+0.34, +0.45] | 0.11 → 0.41; +0.30 [+0.25, +0.36] | |
+| >=16 | 77,274 | 211 | 0.01 → 0.27; +0.27 [+0.22, +0.31] | 0.07 → 0.27; +0.21 [+0.17, +0.25] | |
+| >=17 | 77,274 | 145 | 0.00 → 0.19; +0.18 [+0.15, +0.22] | 0.04 → 0.19; +0.15 [+0.11, +0.18] | |
+| >=18 | 77,274 | 105 | 0.00 → 0.14; +0.13 [+0.11, +0.16] | 0.03 → 0.14; +0.11 [+0.08, +0.14] | |
+| >=19 | 77,274 | 71 | 0.00 → 0.09; +0.09 [+0.07, +0.12] | 0.02 → 0.09; +0.07 [+0.05, +0.10] | Sparse |
+| >=20 | 77,274 | 57 | 0.00 → 0.07; +0.07 [+0.05, +0.10] | 0.01 → 0.07; +0.06 [+0.04, +0.08] | Sparse |
+| >=21 | 77,274 | 39 | 0.00 → 0.05; +0.05 [+0.03, +0.07] | 0.01 → 0.05; +0.04 [+0.03, +0.06] | Sparse |
+
+| Double-fault cutoff | n | Hits | P0: predicted → observed; gap [95% CI] pp | P1: predicted → observed; gap [95% CI] pp | Tail |
+|---:|---:|---:|---:|---:|---|
+| >=1 | 77,256 | 71,885 | 96.24 → 93.05; −3.19 [−3.45, −2.94] | 93.84 → 93.05; −0.80 [−1.05, −0.54] | |
+| >=2 | 77,256 | 61,136 | 85.27 → 79.13; −6.13 [−6.63, −5.63] | 80.50 → 79.13; −1.37 [−1.87, −0.87] | |
+| >=3 | 77,256 | 47,908 | 68.13 → 62.01; −6.12 [−6.79, −5.43] | 63.36 → 62.01; −1.35 [−2.02, −0.67] | |
+| >=4 | 77,256 | 35,088 | 49.09 → 45.42; −3.67 [−4.39, −2.95] | 46.39 → 45.42; −0.98 [−1.68, −0.26] | |
+| >=5 | 77,256 | 24,513 | 32.18 → 31.73; −0.45 [−1.14, +0.25] | 32.07 → 31.73; −0.34 [−1.02, +0.36] | |
+| >=6 | 77,256 | 16,588 | 19.40 → 21.47; +2.07 [+1.50, +2.67] | 21.20 → 21.47; +0.27 [−0.30, +0.87] | |
+| >=7 | 77,256 | 10,897 | 10.87 → 14.11; +3.23 [+2.78, +3.71] | 13.53 → 14.11; +0.58 [+0.11, +1.07] | |
+| >=8 | 77,256 | 7,092 | 5.71 → 9.18; +3.47 [+3.11, +3.84] | 8.40 → 9.18; +0.78 [+0.42, +1.16] | |
+| >=9 | 77,256 | 4,486 | 2.84 → 5.81; +2.97 [+2.70, +3.25] | 5.11 → 5.81; +0.70 [+0.42, +0.99] | |
+| >=10 | 77,256 | 2,798 | 1.35 → 3.62; +2.28 [+2.07, +2.49] | 3.06 → 3.62; +0.56 [+0.35, +0.79] | |
+| >=11 | 77,256 | 1,706 | 0.61 → 2.21; +1.60 [+1.44, +1.76] | 1.81 → 2.21; +0.39 [+0.23, +0.57] | |
+| >=12 | 77,256 | 1,001 | 0.27 → 1.30; +1.03 [+0.92, +1.14] | 1.07 → 1.30; +0.23 [+0.11, +0.35] | |
+| >=13 | 77,256 | 645 | 0.11 → 0.83; +0.72 [+0.64, +0.81] | 0.63 → 0.83; +0.21 [+0.12, +0.30] | |
+| >=14 | 77,256 | 392 | 0.05 → 0.51; +0.46 [+0.40, +0.53] | 0.37 → 0.51; +0.14 [+0.07, +0.21] | |
+| >=15 | 77,256 | 274 | 0.02 → 0.35; +0.34 [+0.28, +0.39] | 0.22 → 0.35; +0.13 [+0.08, +0.19] | |
+| >=16 | 77,256 | 181 | 0.01 → 0.23; +0.23 [+0.19, +0.27] | 0.13 → 0.23; +0.10 [+0.06, +0.14] | |
+| >=17 | 77,256 | 116 | 0.00 → 0.15; +0.15 [+0.12, +0.18] | 0.08 → 0.15; +0.07 [+0.03, +0.10] | |
+| >=18 | 77,256 | 75 | 0.00 → 0.10; +0.10 [+0.07, +0.12] | 0.05 → 0.10; +0.04 [+0.02, +0.07] | Sparse |
+| >=19 | 77,256 | 50 | 0.00 → 0.06; +0.06 [+0.05, +0.08] | 0.04 → 0.06; +0.03 [+0.01, +0.05] | Sparse |
+| >=20 | 77,256 | 36 | 0.00 → 0.05; +0.05 [+0.03, +0.06] | 0.03 → 0.05; +0.02 [+0.00, +0.04] | Sparse |
+
+P1 remains closer to the observed exceedance rate than P0 across these added WTA cutoffs, while ace and double-fault
+tails still diverge from observed rates. Sparse-tail intervals should be read cautiously. This is a diagnostic only and
+does not select a threshold.
+
 ### Reconciliation with the earlier E2-based result
 
 The October 14 P0/P1 report used a different P1 and is not contradicted by the table above. In that experiment, P1's
