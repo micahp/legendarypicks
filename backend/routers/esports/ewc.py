@@ -484,11 +484,20 @@ def ewc_event_data():
     plus ``active`` so the page can fall back to the generic board when the event expires, and
     per-title data coverage (published schedule snapshots + feed counts) for the Games tab.
     """
+    from fetch_ewc_title_schedules import read_snapshot
     from .slate import esports_upcoming
 
     board = esports_upcoming()
     matches = board.get("matches") or []
     ewc_matches = [m for m in matches if m.get("ewcEventId") == EVENT_ID]
+    # Merge local snapshots so completed tournament matches are present even when the
+    # normalized slate is empty. Without this the EWC tab renders no results at all.
+    for _title in EWC_TITLES:
+        _snapshot = read_snapshot(_title["slug"])
+        if not _snapshot:
+            continue
+        _snap_rows = [_snapshot_match(row, _title) for row in (_snapshot or {}).get("matches", [])]
+        ewc_matches = _merge_title_matches(_snap_rows, ewc_matches)
     coverage = _title_coverage()
     titles = _titles_payload(ewc_matches, coverage)
     if board.get("building") and not matches:
@@ -502,7 +511,11 @@ def ewc_event_data():
     for m in ewc_matches:
         if m.get("live"):
             live.append(m)
-        elif m.get("finished"):
+        # Canceled matches are resolved terminal facts (they will never be played): they
+        # belong with completed rows, never with upcoming. Same rule as ewc_title_matches —
+        # otherwise canceled snapshot rows surface as a phantom upcoming slate after the
+        # tournament has ended.
+        elif m.get("finished") or m.get("canceled"):
             completed.append(m)
         else:
             upcoming.append(m)
