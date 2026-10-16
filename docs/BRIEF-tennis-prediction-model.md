@@ -1,8 +1,8 @@
 # BRIEF: Tennis match prediction and player projections
 
-Revised 2026-10-14, twice. The first revision moved the starting point from the point model to Elo after the backtest.
-The second adds a player-projection track (service points, aces, double faults, breaks and games), read from the same
-simulator and validated on its own counts.
+Revised 2026-10-16. The 2026-10-14 revisions moved the starting point from the point model to Elo after the backtest
+and added a player-projection track (service points, aces, double faults, breaks and games), read from the same
+simulator and validated on its own counts. This revision adds a coverage audit for further inputs and outcomes.
 
 ## Question
 
@@ -32,6 +32,30 @@ Player ratings and matchup conditions (Elo, serve and return, surface, form, res
 -> joint outcomes (correlated props) and live projections (remaining-match distributions).
 
 Every event probability is trained from historical counts. None is assigned by hand.
+
+## Follow-up coverage audit (2026-10-16)
+
+The architecture above names the main inputs and outputs, but the following details must also be represented in the
+feature and outcome inventory. A statistic being present in a source or named in this brief does not mean it is already
+modeled or validated.
+
+| Area | Status in the current research | Requirement to track |
+|---|---|---|
+| Serve and return quality | Partial. The point model uses surface-level serve and return point rates. Match rows include first-serve and second-serve counts, but the current point model does not separately estimate all serve and return splits. | Preserve first-serve-in rate, first-serve points won, second-serve points won, first- and second-serve return points won, overall service/return points won, hold rate and return-game win rate. Test opponent-adjusted server-versus-returner estimates with shrinkage. |
+| Surface and conditions | Surface and surface Elo are represented. | Track indoor/outdoor, court speed, altitude, temperature, wind and humidity when reliable pre-match history exists. Treat each as a candidate feature; require coverage, timestamp and out-of-sample evidence before adoption. |
+| Form and physical workload | A two-year decay for serve/return counts was tested. Rest was measured but rejected: `tourney_date` is the event start, not the match date, so it cannot establish days since a player's previous match. | Compare recent point-performance windows (last 5/10/20 matches and 30/90/365 days) with opponent strength. Track actual match dates, minutes, sets played, consecutive playing days and tournament workload. Do not label event-start gaps as rest. Use injuries or retirement history only when reliably documented before the forecast cutoff. |
+| Match and betting outcomes | Winner probability, set/game/tiebreak outputs, total games, and a spread are in the target architecture. Several simulator outputs still require their own historical validation. | Keep full distributions for set scores and total games; explicitly evaluate game-spread cover, over/under probabilities at stated lines, hold/break outcomes, tiebreak occurrence and deciding-set occurrence. Apply the correct best-of-three/five and market settlement rules. |
+| Player-stat exposure | P0/P1 already compare per-match counts with service-point exposure for aces and double faults. | Retain service-point counts and full ace/DF count distributions. Track breaks of serve as a distinct outcome from break points won; derive prop probabilities from simulated opportunity and count distributions, not only expected averages. |
+| Tactical and pressure features | Not in the current match-level inputs. | Park handedness matchups, rally length, return depth, serve direction, unreturned serves and tiebreak serve/return rates for a later research phase. Shrink break-point, tiebreak and head-to-head rates toward broader ability estimates; adopt only if they improve a held-out baseline. |
+
+Every candidate feature must be available as of the forecast timestamp, with source, coverage and missingness recorded. Keep the current chronology and per-target scoring gates: a feature or simulator can be accepted for one output only if it improves that output's declared validation measure. Market-edge claims still require calibrated probabilities, timestamped historical prices and a cleared data licence.
+
+### Data-source gates
+
+- The available match rows contain useful first/second-serve and player-count fields, but do not by themselves establish historical coverage for court conditions, workload or injury status. Audit each field by tour, year, surface and format before modeling it.
+- Official tour statistics are a candidate source for serve/return splits; confirm historical delivery, definitions and commercial-use rights before relying on them.
+- Shot-charting fields such as serve direction, return depth and rally outcomes require a separate charted-data source. The cited Match Charting Project is CC BY-NC-SA; keep it in research unless commercial permission is obtained.
+- Historical sportsbook odds and player-prop lines remain a separate licensed-data dependency. Prices may be evaluation benchmarks, not model inputs, unless the model design explicitly changes and is validated.
 
 ## Data available
 
