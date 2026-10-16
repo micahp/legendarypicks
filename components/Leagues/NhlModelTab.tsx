@@ -94,8 +94,15 @@ interface ModelPick {
   line_source: string | null
   line_captured_at_utc: string | null
   settlement_basis: string
+  /** A quote was in force when this was frozen. False means no priced recommendation. */
+  priced: boolean
+  /** Priced and the expected value is positive: a recommendation, not just a lean. */
+  qualifies: boolean
+  rule_version?: string
+  /** The market quote this was priced against, frozen at lock time. */
+  quote?: BovadaLine | null
   selected_at_utc?: string
-  provenance?: 'lock' | 'backfill'
+  provenance?: 'lock' | 'backfill' | 'preview'
   result: { won: boolean } | null
 }
 
@@ -145,14 +152,29 @@ function recordLine(standings: Payload['standings'], team: string) {
   return row ? `${row.wins}-${row.losses}-${row.overtime_losses} · ${row.points} pts` : undefined
 }
 
-function cardLines(home: string, away: string, forecast: Forecast, line?: BovadaLine) {
+function spreadLabel(home: string, away: string, homePuckLine: number | null | undefined) {
+  if (homePuckLine == null) return 'n/a'
+  return homePuckLine < 0 ? `${home} ${signed(homePuckLine)}` : `${away} ${signed(-homePuckLine)}`
+}
+
+/** The three market rows for one quote. A locked card labels them as the locked basis so a
+ *  reader can tell the line the pick was made on from a line that has since moved. */
+function marketLines(home: string, away: string, forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
   const margin = forecast.projected_goal_differential_home
-  const homeLine = line?.home_puck_line ?? null
-  const vegas = homeLine == null ? 'n/a' : homeLine < 0 ? `${home} ${signed(homeLine)}` : `${away} ${signed(-homeLine)}`
+  const homeLine = quote?.home_puck_line ?? null
   return [
-    { label: 'Vegas line', value: vegas },
+    { label: locked ? 'Locked line' : 'Vegas line', value: spreadLabel(home, away, homeLine) },
     { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
     { label: 'Edge', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} pts (${margin + homeLine > 0 ? home : away})` },
+  ]
+}
+
+function marketTotals(forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
+  const vegas = quote?.total_line ?? null
+  return [
+    { label: locked ? 'Locked total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
+    { label: 'Model total', value: one(forecast.projected_total_goals) },
+    { label: 'Edge', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} pts` },
   ]
 }
 
@@ -165,23 +187,13 @@ function pickLabel(pick: ModelPick, home: string, away: string) {
   return `${pick.side === 'over' ? 'Over' : 'Under'} ${one(pick.line ?? 0)}`
 }
 
-function totalLines(forecast: Forecast, line?: BovadaLine) {
-  const vegas = line?.total_line ?? null
-  return [
-    { label: 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
-    { label: 'Model total', value: one(forecast.projected_total_goals) },
-    { label: 'Edge', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} pts` },
-  ]
-}
-
-function ProjectionCardView({ away, home, startUtc, forecast, status, lines, totals, awayRecord, homeRecord }: {
+function ProjectionCardView({ away, home, startUtc, forecast, status, live, awayRecord, homeRecord }: {
   away: string
   home: string
   startUtc: string
   forecast: Forecast
   status: string | null
-  lines: { label: string; value: string }[]
-  totals: { label: string; value: string }[]
+  live?: BovadaLine
   awayRecord?: string
   homeRecord?: string
 }) {
@@ -190,6 +202,16 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
   const pick = forecast.pick ?? null
   const pickResult = pick?.result ?? null
   const edgeClass = isGraded ? 'graded-edge' : ''
+  // A locked pick carries the quote it was priced against. That is the basis this card shows;
+  // the live quote appears separately and is never folded back into the edge, so the market
+  // columns and the recommendation cannot point at different lines.
+  const frozen = pick?.quote ?? null
+  const basis = frozen ?? live ?? null
+  const locked = frozen != null
+  const lines = marketLines(home, away, forecast, basis, locked)
+  const totals = marketTotals(forecast, basis, locked)
+  const moved = locked && live != null &&
+    (live.home_puck_line !== frozen.home_puck_line || live.total_line !== frozen.total_line)
 
   // Determine status badge
   let statusBadge = status
@@ -232,7 +254,9 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
           {totals.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
         </div>
         <div className="text-right">
-          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">
+            {pick ? (pick.qualifies ? 'Model pick' : 'Model lean') : 'Recommendation'}
+          </span>
           <span className="block text-xl font-semibold text-zinc-100">
             {pick ? (
               <>
@@ -245,14 +269,32 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
               </>
             ) : 'n/a'}
           </span>
+          {pick && !pick.qualifies && (
+            <span className="block text-xs text-amber-300">No qualifying bet</span>
+          )}
           {pick && pick.edge != null && (
             <span className="block text-xs tabular-nums text-zinc-400">
               {signed(pick.edge * 100)}% edge
               {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.won ? 'Won' : 'Lost'}</span>}
             </span>
           )}
+          {pick && pick.expected_value != null && (
+            <span className="block text-xs tabular-nums text-zinc-500">{signed(pick.expected_value * 100)}% EV</span>
+          )}
+          {!pick && (
+            <span className="block text-xs text-zinc-500">
+              {isGraded ? 'Not recommended' : 'No priced recommendation yet'}
+            </span>
+          )}
         </div>
       </div>
+      {moved ? (
+        <p className="border-t border-zinc-800 pt-2 text-xs text-zinc-500">
+          Market has moved since the lock: now {spreadLabel(home, away, live?.home_puck_line)}
+          {live?.total_line == null ? '' : ` · total ${one(live.total_line)}`}. The pick above is
+          graded on the locked line.
+        </p>
+      ) : null}
     </article>
   )
 }
@@ -260,16 +302,14 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, lines, tot
 function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
   )
 }
 
 function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="UNLOCKED" awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)}
-      lines={cardLines(game.home_team, game.away_team, forecast, line)} totals={totalLines(forecast, line)} />
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="UNLOCKED" live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
   )
 }
 
@@ -292,14 +332,18 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
         <span className="text-sm tabular-nums text-zinc-400">{dateLabel(game.scheduled_start_utc)}</span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
-        <Metric label="Model pick" value={pick ? `${pickLabel(pick, game.home_team, game.away_team)} ${pct(pick.model_probability)}` : 'n/a'} />
+        <Metric label={pick && !pick.qualifies ? 'Model lean' : 'Model pick'}
+                value={pick ? `${pickLabel(pick, game.home_team, game.away_team)} ${pct(pick.model_probability)}` : 'n/a'} />
         <Metric label="Projected" value={`${one(forecast.away_expected_goals)}–${one(forecast.home_expected_goals)}`} />
         <Metric label="Final" value={grade ? `${grade.official_away_goals}–${grade.official_home_goals}` : 'Pending'} />
         <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
         <div className="min-w-0">
           <div className="text-xs text-zinc-500">Result</div>
-          <div className={`mt-0.5 truncate text-sm tabular-nums ${pick == null ? 'text-zinc-500' : pickWon ? 'text-emerald-400' : 'text-red-400'}`}>
-            {pick == null ? 'n/a' : pickWon == null ? 'Pending' : pickWon ? 'Pick ✓' : 'Pick ✗'}
+          {/* A lean with a negative expected value is not a priced recommendation, so it is
+              reported as such rather than counted as a win or a loss. */}
+          <div className={`mt-0.5 truncate text-sm tabular-nums ${pick?.qualifies ? (pickWon ? 'text-emerald-400' : 'text-red-400') : 'text-zinc-500'}`}>
+            {pick == null || !pick.qualifies ? (pickWon == null ? 'Not recommended' : 'No qualifying bet')
+              : pickWon == null ? 'Pending' : pickWon ? 'Pick ✓' : 'Pick ✗'}
           </div>
         </div>
       </div>
