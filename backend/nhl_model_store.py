@@ -19,6 +19,21 @@ from typing import Any
 UTC = dt.timezone.utc
 LOCK_LEAD = dt.timedelta(minutes=90)
 LOCK_WINDOW = dt.timedelta(minutes=1)
+# How far ahead of the cutoff the T-90 snapshot is generated, so the fresh forecast is
+# ready when the lock timer fires. The actual lead is recorded on every snapshot.
+T90_GENERATE_LEAD = dt.timedelta(minutes=6)
+# A quote is fresh enough to price a T-90 lock if it was captured within this window of the
+# cutoff. A fallback quote older than this may still be shown, but never as a priced pick.
+T90_QUOTE_MAX_AGE = dt.timedelta(minutes=5)
+# The feature payload behind a snapshot must be at least this recent, or generation fails
+# explicitly rather than freezing a forecast computed from stale inputs.
+T90_FEATURE_MAX_AGE = dt.timedelta(hours=36)
+T90_PROTOCOL_VERSION = "t90-1"
+LEGACY_PROTOCOL_VERSION = "legacy-immediate"
+# The T-90 protocol's effective date is declared here rather than measured, so it is
+# reproducible: everything locked before it is attributable to the previous process.
+T90_PROTOCOL_FROM_UTC = "2026-10-16T00:00:00Z"
+LEGACY_PROTOCOL_FROM_UTC = "2026-09-01T00:00:00Z"
 FINAL_GRACE = dt.timedelta(hours=4)
 FINAL_STATES = frozenset(("OFF", "FINAL"))
 COUNTED_PERIOD_TYPES = frozenset(("REG", "OT"))
@@ -536,6 +551,79 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     BEFORE DELETE ON nhl_frozen_quotes BEGIN
         SELECT RAISE(ABORT, 'NHL frozen quotes are immutable');
     END;
+    -- The T-90 snapshot: a forecast computed shortly before the cutoff and frozen with the
+    -- quote captured at it. Kept apart from the research ledger, which stays append-only and
+    -- keeps the earlier forecast as its own record. `source_forecast_id` links back to it.
+    CREATE TABLE IF NOT EXISTS nhl_t90_forecasts (
+        game_id TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        protocol_version TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        game_date TEXT NOT NULL,
+        scheduled_start_utc TEXT NOT NULL,
+        target_lock_utc TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        source_forecast_id TEXT NOT NULL,
+        source_ledger_sha256 TEXT NOT NULL,
+        feature_cutoff_utc TEXT NOT NULL,
+        features_as_of_utc TEXT NOT NULL,
+        generated_at_utc TEXT NOT NULL,
+        lead_seconds INTEGER NOT NULL,
+        feature_source_sha256 TEXT NOT NULL,
+        model_artifact_sha256 TEXT NOT NULL,
+        snapshot_sha256 TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version, protocol_version)
+    );
+    CREATE INDEX IF NOT EXISTS idx_nhl_t90_target ON nhl_t90_forecasts(target_lock_utc);
+    -- Append-only log of what stopped a snapshot or its quote from being produced. A game that
+    -- reaches T-90 without a snapshot is recorded here and is not locked from the older
+    -- forecast, so a stale forecast is never presented as a fresh one.
+    CREATE TABLE IF NOT EXISTS nhl_t90_failures (
+        game_id TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        protocol_version TEXT NOT NULL,
+        stage TEXT NOT NULL CHECK (stage IN ('generation','quote_capture')),
+        reason TEXT NOT NULL,
+        detail TEXT,
+        observed_at_utc TEXT NOT NULL,
+        target_lock_utc TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version, protocol_version, stage)
+    );
+    -- When each protocol took effect, so any lock can be attributed to the process in force
+    -- when it was taken and historical locks stay distinguishable from T-90 locks.
+    CREATE TABLE IF NOT EXISTS nhl_protocol_versions (
+        protocol_version TEXT PRIMARY KEY,
+        effective_from_utc TEXT NOT NULL,
+        description TEXT NOT NULL
+    );
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_forecast_immutable_update
+    BEFORE UPDATE ON nhl_t90_forecasts BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 snapshots are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_forecast_immutable_delete
+    BEFORE DELETE ON nhl_t90_forecasts BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 snapshots are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_failure_immutable_update
+    BEFORE UPDATE ON nhl_t90_failures BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 failure log is append-only');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_failure_immutable_delete
+    BEFORE DELETE ON nhl_t90_failures BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 failure log is append-only');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_protocol_immutable_update
+    BEFORE UPDATE ON nhl_protocol_versions BEGIN
+        SELECT RAISE(ABORT, 'NHL protocol versions are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_protocol_immutable_delete
+    BEFORE DELETE ON nhl_protocol_versions BEGIN
+        SELECT RAISE(ABORT, 'NHL protocol versions are immutable');
+    END;
     """)
     # rule_version was added after the first picks were frozen. The default names the rule
     # those rows were actually produced under, so nothing already stored is relabelled.
@@ -543,6 +631,24 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     if "rule_version" not in columns:
         con.execute("ALTER TABLE nhl_model_picks ADD COLUMN rule_version TEXT NOT NULL DEFAULT '%s'"
                     % LEGACY_RULE_VERSION)
+    # Same reasoning for the lock protocol: rows frozen before T-90 was enforced keep the
+    # protocol that actually produced them.
+    if "protocol_version" not in columns:
+        con.execute("ALTER TABLE nhl_model_picks ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
+                    % LEGACY_PROTOCOL_VERSION)
+    projection_columns = {row[1] for row in con.execute("PRAGMA table_info(nhl_game_projections)")}
+    if "protocol_version" not in projection_columns:
+        con.execute("ALTER TABLE nhl_game_projections ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
+                    % LEGACY_PROTOCOL_VERSION)
+    con.execute("INSERT OR IGNORE INTO nhl_protocol_versions VALUES (?,?,?)",
+                (LEGACY_PROTOCOL_VERSION, LEGACY_PROTOCOL_FROM_UTC,
+                 "Lock the newest forecast whenever the lock timer ran, priced at the newest "
+                 "quote in force at that instant. No enforced cutoff."))
+    con.execute("INSERT OR IGNORE INTO nhl_protocol_versions VALUES (?,?,?)",
+                (T90_PROTOCOL_VERSION, T90_PROTOCOL_FROM_UTC,
+                 "Forecast regenerated shortly before the cutoff, frozen as an immutable "
+                 "snapshot, and locked with the quote captured at T-90. Declared effective "
+                 "date; supersedes " + LEGACY_PROTOCOL_VERSION + "."))
     con.commit()
 
 
