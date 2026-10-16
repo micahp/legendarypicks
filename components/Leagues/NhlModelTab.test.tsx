@@ -197,7 +197,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
     expect(screen.getByText('Pick ✗')).toBeTruthy()
   })
-  it('shows prospective Brier and goals accuracy for every graded game, including unpriced games', async () => {
+  it('compares prospective Brier and goals accuracy across all three models in a dropdown, including unpriced games', async () => {
     const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
       const grade = {
         official_home_goals: 3, official_away_goals: 2, statistical_home_goals: 3, statistical_away_goals: 2,
@@ -226,23 +226,25 @@ describe('NHL model tab previews', () => {
     ]
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games, previews: [] }) }))
     render(<NhlModelTab />)
-    await screen.findByText('Model performance')
+    await screen.findByRole('button', { name: /Model accuracy/ })
+    fireEvent.click(screen.getByRole('button', { name: /Model accuracy/ }))
     expect(screen.getByText('0.1000')).toBeTruthy()
     expect(screen.getByText('0.4000')).toBeTruthy()
     expect(screen.getByText('1.500')).toBeTruthy()
-    expect(screen.getByText('2', { selector: 'div' })).toBeTruthy()
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
     expect(screen.getAllByText('Not recommended')).toHaveLength(2)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
-    expect(screen.getByText('0.2000')).toBeTruthy()
+    expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
+    expect(screen.getByText('Elo · Selected')).toBeTruthy()
   })
 
-  it('does not show historical results or invent a Brier score before games are graded', async () => {
+  it('does not invent Brier scores before games are graded', async () => {
     render(<NhlModelTab />)
     await screen.findByText('Model performance')
-    expect(screen.getAllByText('—')).toHaveLength(3)
-    expect(screen.getByText('0', { selector: 'div' })).toBeTruthy()
+    expect(screen.getAllByText('—')).toHaveLength(9)
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
   })
 
 })
