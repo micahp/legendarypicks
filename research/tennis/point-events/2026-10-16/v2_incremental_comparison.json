@@ -1,0 +1,491 @@
+{
+  "direct_model_protocol": "Prior-only hierarchical empirical totals, grouped by format, surface and pre-match Elo gap; target-day results enter the history after that date is forecast.",
+  "point_feature_no_simulation": {
+    "coefficients_from_validation": [
+      0.6954341956477393,
+      0.3996709769192981
+    ],
+    "features": [
+      "pre-match Elo logit",
+      "difference of the players\u2019 raw point-model serve-win logits"
+    ]
+  },
+  "run_date": "2026-10-16",
+  "test_matches": 2749,
+  "test_point_history_sources": {
+    "grand_slam_archive": 708,
+    "match_charting_project": 2041
+  },
+  "test_years": [
+    2022,
+    2023,
+    2024
+  ],
+  "total_games": {
+    "all": {
+      "direct_format_surface_competitiveness_crps": 3.3011202700773445,
+      "direct_mean": 22.412072536400114,
+      "elo_informed_v2_crps": 3.4489210470631586,
+      "elo_informed_v2_mean": 22.97711141530401,
+      "n": 2749,
+      "observed_mean": 22.143324845398325,
+      "v2_minus_direct_crps": {
+        "ci95": [
+          0.09575834559503098,
+          0.2038174511657235
+        ],
+        "clusters": 300,
+        "mean_difference": 0.14780077698581381,
+        "resamples": 3000
+      }
+    },
+    "atp": {
+      "direct_format_surface_competitiveness_crps": 3.3933247407814684,
+      "direct_mean": 23.165653838022546,
+      "elo_informed_v2_crps": 3.566819017127258,
+      "elo_informed_v2_mean": 23.51973811418227,
+      "n": 1272,
+      "observed_mean": 22.854559748427672,
+      "v2_minus_direct_crps": {
+        "ci95": [
+          0.09416653457100392,
+          0.25286700079769336
+        ],
+        "clusters": 167,
+        "mean_difference": 0.17349427634578946,
+        "resamples": 3000
+      }
+    },
+    "wta": {
+      "direct_format_surface_competitiveness_crps": 3.221713305462825,
+      "direct_mean": 21.763084441841052,
+      "elo_informed_v2_crps": 3.347386708592248,
+      "elo_informed_v2_mean": 22.50979851010892,
+      "n": 1477,
+      "observed_mean": 21.53080568720379,
+      "v2_minus_direct_crps": {
+        "ci95": [
+          0.056308211784511605,
+          0.20284296825915962
+        ],
+        "clusters": 133,
+        "mean_difference": 0.12567340312942316,
+        "resamples": 3000
+      }
+    }
+  },
+  "total_games_threshold_brier": {
+    "all": {
+      "18.5": {
+        "direct": 0.22185309389245825,
+        "v2": 0.23447744598417933,
+        "v2_minus_direct": 0.01262435209172108
+      },
+      "20.5": {
+        "direct": 0.24814187607383265,
+        "v2": 0.2631891224981771,
+        "v2_minus_direct": 0.015047246424344463
+      },
+      "22.5": {
+        "direct": 0.2335038684336954,
+        "v2": 0.24820135612010846,
+        "v2_minus_direct": 0.014697487686413074
+      },
+      "24.5": {
+        "direct": 0.2138854825809005,
+        "v2": 0.22549305062597108,
+        "v2_minus_direct": 0.011607568045070571
+      },
+      "26.5": {
+        "direct": 0.18481605512881763,
+        "v2": 0.19325689478131416,
+        "v2_minus_direct": 0.008440839652496535
+      }
+    },
+    "atp": {
+      "18.5": {
+        "direct": 0.20431483451433102,
+        "v2": 0.2184689799836627,
+        "v2_minus_direct": 0.014154145469331664
+      },
+      "20.5": {
+        "direct": 0.24948646696867052,
+        "v2": 0.26565765439433564,
+        "v2_minus_direct": 0.016171187425665118
+      },
+      "22.5": {
+        "direct": 0.24010125367316973,
+        "v2": 0.257533339357926,
+        "v2_minus_direct": 0.017432085684756266
+      },
+      "24.5": {
+        "direct": 0.22222844532624483,
+        "v2": 0.2364210488995154,
+        "v2_minus_direct": 0.014192603573270568
+      },
+      "26.5": {
+        "direct": 0.19671511381206244,
+        "v2": 0.20594030659486942,
+        "v2_minus_direct": 0.009225192782806979
+      }
+    },
+    "wta": {
+      "18.5": {
+        "direct": 0.23695713311316088,
+        "v2": 0.24826401927643196,
+        "v2_minus_direct": 0.01130688616327108
+      },
+      "20.5": {
+        "direct": 0.24698390747651797,
+        "v2": 0.26106321012721323,
+        "v2_minus_direct": 0.014079302650695263
+      },
+      "22.5": {
+        "direct": 0.22782216631818328,
+        "v2": 0.2401646041373706,
+        "v2_minus_direct": 0.012342437819187313
+      },
+      "24.5": {
+        "direct": 0.20670048013535006,
+        "v2": 0.2160818022820656,
+        "v2_minus_direct": 0.009381322146715554
+      },
+      "26.5": {
+        "direct": 0.1745685245634233,
+        "v2": 0.1823338752641562,
+        "v2_minus_direct": 0.007765350700732893
+      }
+    }
+  },
+  "tournament_clusters": {
+    "all": 300,
+    "atp": 167,
+    "wta": 133
+  },
+  "tours": {
+    "atp": 1272,
+    "wta": 1477
+  },
+  "validation_matches": 623,
+  "validation_year": 2021,
+  "winner": {
+    "calibration_parameters": {
+      "elo": [
+        0.0,
+        0.7214679709875599
+      ],
+      "elo_plus_elo_informed_point": [
+        0.6155000002638801,
+        0.3996709769192967
+      ],
+      "elo_plus_raw_point": [
+        0.6954341956477393,
+        0.3996709769192981
+      ],
+      "raw_point_sim": [
+        0.0,
+        0.5414949002341858
+      ],
+      "v2": [
+        0.0,
+        0.4273928354003909
+      ]
+    },
+    "overall": {
+      "elo": {
+        "brier": 0.20691120760530746,
+        "logloss": 0.6012639061014147,
+        "n": 2749
+      },
+      "elo_plus_elo_informed_point": {
+        "brier": 0.20766311612745247,
+        "logloss": 0.6033571847958916,
+        "n": 2749
+      },
+      "elo_plus_raw_point": {
+        "brier": 0.20816360865878478,
+        "logloss": 0.6046128155246644,
+        "n": 2749
+      },
+      "raw_point_sim": {
+        "brier": 0.2236969370504254,
+        "logloss": 0.6378218270507292,
+        "n": 2749
+      },
+      "v2": {
+        "brier": 0.20554153783226994,
+        "logloss": 0.5977900829177575,
+        "n": 2749
+      }
+    },
+    "paired_vs_elo": {
+      "elo_plus_elo_informed_point": {
+        "ci95": [
+          -0.0008547900167298198,
+          0.0021278603823687422
+        ],
+        "clusters": 300,
+        "delta_brier": 0.0007519085221450136
+      },
+      "elo_plus_raw_point": {
+        "ci95": [
+          -0.0005770936333012863,
+          0.002799807136473345
+        ],
+        "clusters": 300,
+        "delta_brier": 0.0012524010534773053
+      },
+      "raw_point_sim": {
+        "ci95": [
+          0.01028091039620345,
+          0.022605845328502006
+        ],
+        "clusters": 300,
+        "delta_brier": 0.016785729445117897
+      },
+      "v2": {
+        "ci95": [
+          -0.003928601192417517,
+          0.0010808321541739725
+        ],
+        "clusters": 300,
+        "delta_brier": -0.0013696697730375147
+      }
+    },
+    "paired_vs_v2": {
+      "elo": {
+        "ci95": [
+          -0.0010808321541739725,
+          0.003928601192417517
+        ],
+        "clusters": 300,
+        "delta_brier": 0.0013696697730375147
+      },
+      "elo_plus_elo_informed_point": {
+        "ci95": [
+          0.00019190173116215983,
+          0.003976310011258743
+        ],
+        "clusters": 300,
+        "delta_brier": 0.002121578295182518
+      },
+      "elo_plus_raw_point": {
+        "ci95": [
+          0.0006929869298687844,
+          0.004502925653570151
+        ],
+        "clusters": 300,
+        "delta_brier": 0.0026220708265148147
+      },
+      "raw_point_sim": {
+        "ci95": [
+          0.013459010145390617,
+          0.02246956212003851
+        ],
+        "clusters": 300,
+        "delta_brier": 0.01815539921815544
+      }
+    },
+    "test_by_tour": {
+      "atp": {
+        "models": {
+          "elo": {
+            "brier": 0.21286877619909278,
+            "logloss": 0.6163492534247613,
+            "n": 1272
+          },
+          "elo_plus_elo_informed_point": {
+            "brier": 0.2122391511576859,
+            "logloss": 0.614089690600687,
+            "n": 1272
+          },
+          "elo_plus_raw_point": {
+            "brier": 0.21256823378993506,
+            "logloss": 0.6148381275247183,
+            "n": 1272
+          },
+          "raw_point_sim": {
+            "brier": 0.2205706919936529,
+            "logloss": 0.631194388218489,
+            "n": 1272
+          },
+          "v2": {
+            "brier": 0.20959948296668976,
+            "logloss": 0.6084185026742815,
+            "n": 1272
+          }
+        },
+        "n": 1272,
+        "paired_vs_elo": {
+          "elo_plus_elo_informed_point": {
+            "ci95": [
+              -0.0026490139062575135,
+              0.0011788789493441117
+            ],
+            "clusters": 167,
+            "delta_brier": -0.0006296250414068843
+          },
+          "elo_plus_raw_point": {
+            "ci95": [
+              -0.002588887081771062,
+              0.001719183797918227
+            ],
+            "clusters": 167,
+            "delta_brier": -0.000300542409157736
+          },
+          "raw_point_sim": {
+            "ci95": [
+              0.00025535704594974434,
+              0.014497621841346297
+            ],
+            "clusters": 167,
+            "delta_brier": 0.007701915794560111
+          },
+          "v2": {
+            "ci95": [
+              -0.006543960404935016,
+              -9.460799131713395e-05
+            ],
+            "clusters": 167,
+            "delta_brier": -0.003269293232403023
+          }
+        },
+        "paired_vs_v2": {
+          "elo": {
+            "ci95": [
+              2.725531869433121e-05,
+              0.006628294983533761
+            ],
+            "clusters": 167,
+            "delta_brier": 0.003269293232403023
+          },
+          "elo_plus_elo_informed_point": {
+            "ci95": [
+              5.695998848001935e-05,
+              0.005236072315994105
+            ],
+            "clusters": 167,
+            "delta_brier": 0.0026396681909961373
+          },
+          "elo_plus_raw_point": {
+            "ci95": [
+              0.00029016456443914547,
+              0.005608044458304646
+            ],
+            "clusters": 167,
+            "delta_brier": 0.0029687508232452853
+          },
+          "raw_point_sim": {
+            "ci95": [
+              0.006032720648293643,
+              0.015694129809117115
+            ],
+            "clusters": 167,
+            "delta_brier": 0.01097120902696312
+          }
+        }
+      },
+      "wta": {
+        "models": {
+          "elo": {
+            "brier": 0.2017805188772811,
+            "logloss": 0.5882723273639082,
+            "n": 1477
+          },
+          "elo_plus_elo_informed_point": {
+            "brier": 0.20372221121312822,
+            "logloss": 0.594114295571992,
+            "n": 1477
+          },
+          "elo_plus_raw_point": {
+            "brier": 0.20437032283155177,
+            "logloss": 0.595806724215207,
+            "n": 1477
+          },
+          "raw_point_sim": {
+            "brier": 0.22638927537961606,
+            "logloss": 0.6435294114749738,
+            "n": 1477
+          },
+          "v2": {
+            "brier": 0.2020468146020858,
+            "logloss": 0.5886368331342108,
+            "n": 1477
+          }
+        },
+        "n": 1477,
+        "paired_vs_elo": {
+          "elo_plus_elo_informed_point": {
+            "ci95": [
+              -0.0004375571641763091,
+              0.0038869225795452205
+            ],
+            "clusters": 133,
+            "delta_brier": 0.0019416923358471188
+          },
+          "elo_plus_raw_point": {
+            "ci95": [
+              -8.991413804299313e-05,
+              0.004774820848250475
+            ],
+            "clusters": 133,
+            "delta_brier": 0.0025898039542706507
+          },
+          "raw_point_sim": {
+            "ci95": [
+              0.015271516511319002,
+              0.03229377423434178
+            ],
+            "clusters": 133,
+            "delta_brier": 0.024608756502334916
+          },
+          "v2": {
+            "ci95": [
+              -0.003790863432284722,
+              0.0038123192440295463
+            ],
+            "clusters": 133,
+            "delta_brier": 0.0002662957248046836
+          }
+        },
+        "paired_vs_v2": {
+          "elo": {
+            "ci95": [
+              -0.0035496529517683112,
+              0.0036498185492211334
+            ],
+            "clusters": 133,
+            "delta_brier": -0.0002662957248046836
+          },
+          "elo_plus_elo_informed_point": {
+            "ci95": [
+              -0.000983328660386945,
+              0.00443359668042676
+            ],
+            "clusters": 133,
+            "delta_brier": 0.0016753966110424293
+          },
+          "elo_plus_raw_point": {
+            "ci95": [
+              -0.000441416212139065,
+              0.005145137782507621
+            ],
+            "clusters": 133,
+            "delta_brier": 0.0023235082294659586
+          },
+          "raw_point_sim": {
+            "ci95": [
+              0.017625579194762812,
+              0.029347150749241328
+            ],
+            "clusters": 133,
+            "delta_brier": 0.024342460777530245
+          }
+        }
+      }
+    },
+    "test_n": 2749,
+    "validation_n": 623
+  },
+  "winner_model_protocol": "Side-symmetric logistic calibration on 2021 validation rows; paired tournament-cluster bootstrap on the 2022-2024 test matches."
+}
