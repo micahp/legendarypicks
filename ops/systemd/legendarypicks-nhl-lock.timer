@@ -1,10 +1,9 @@
 [Unit]
-Description=Check each minute for NHL games in their one-minute T-90 lock window
+Description=Lock NHL model forecasts every 15 minutes
 
 [Timer]
-OnCalendar=*-*-* *:*:00
-AccuracySec=1s
-Persistent=false
+OnCalendar=*:0/15
+Persistent=true
 Unit=legendarypicks-nhl-lock.service
 
 [Install]

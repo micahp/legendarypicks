@@ -1,10 +1,9 @@
 [Unit]
-Description=Refresh NHL forecasts every five minutes before each game's T-90 lock
+Description=Generate NHL forecasts every 30 minutes
 
 [Timer]
-OnCalendar=*-*-* *:00/5:00
-AccuracySec=1s
-Persistent=false
+OnCalendar=*:0/30
+Persistent=true
 Unit=legendarypicks-nhl-forecast.service
 
 [Install]
