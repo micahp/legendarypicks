@@ -25,9 +25,11 @@ T90_GENERATE_LEAD = dt.timedelta(minutes=6)
 # A quote is fresh enough to price a T-90 lock if it was captured within this window of the
 # cutoff. A fallback quote older than this may still be shown, but never as a priced pick.
 T90_QUOTE_MAX_AGE = dt.timedelta(minutes=5)
-# The feature payload behind a snapshot must be at least this recent, or generation fails
-# explicitly rather than freezing a forecast computed from stale inputs.
-T90_FEATURE_MAX_AGE = dt.timedelta(hours=36)
+# The feature payload behind a snapshot must not be older than this, or generation fails
+# explicitly rather than freezing a forecast computed from dead inputs. Measured in whole
+# days, because the pipeline reports the latest source DATE, not a timestamp: comparing a
+# date at midnight against a wall clock would inflate the age by up to a day.
+T90_FEATURE_MAX_AGE = dt.timedelta(days=3)
 T90_PROTOCOL_VERSION = "t90-1"
 LEGACY_PROTOCOL_VERSION = "legacy-immediate"
 # The T-90 protocol's effective date is declared here rather than measured, so it is
