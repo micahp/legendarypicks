@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_result, lock_feed,
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
                              export_previews, preview_feed, latest_game_lines, latest_standings,
-                             write_standings, parse_time)
+                             write_standings, parse_time, model_pick, american_to_decimal,
+                             no_vig_pair, backfill_picks)
 from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
@@ -38,6 +39,10 @@ def feed():
             "home_win_probability": 0.55 + i / 100,
             "p_over_5.5": 0.51,
             "p_over_6.5": 0.35,
+            "p_home_minus_1_5": 0.26,
+            "p_home_plus_1_5": 0.8,
+            "p_away_minus_1_5": 0.2,
+            "p_away_plus_1_5": 0.74,
         }
     game = {
         "game_id": int(GAME_ID), "game_date": "2026-10-14",
@@ -80,6 +85,17 @@ class NHLModelLocks(unittest.TestCase):
     def tearDown(self):
         self.con.close()
         self.tmp.cleanup()
+
+    def _insert_line(self, captured, home_puck_line, home_puck_price=200, away_puck_price=-240,
+                     total_line=6.5, over_price=-115, under_price=-105,
+                     home_moneyline=-128, away_moneyline=107):
+        self.con.execute(
+            "INSERT INTO nhl_game_lines (game_id, source, captured_at_utc, home_team, away_team, "
+            "home_puck_line, home_puck_price, away_puck_price, total_line, over_price, under_price, "
+            "home_moneyline, away_moneyline) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (GAME_ID, "bovada", captured, "WSH", "MTL", home_puck_line, home_puck_price,
+             away_puck_price, total_line, over_price, under_price, home_moneyline, away_moneyline))
+        self.con.commit()
 
     def test_lock_stores_one_immutable_row_per_model_at_t90(self):
         report = lock_feed(self.con, feed(), LOCK_AT)
@@ -271,6 +287,109 @@ class NHLModelLocks(unittest.TestCase):
         payload = locks_payload(path, 2026)
         self.assertEqual(payload["state"], "available")
         self.assertEqual(set(payload["games"][0]["models"]), set(MODEL_KEYS))
+
+    def test_pick_rule_takes_the_three_documented_branches(self):
+        base = {"projected_total_goals": 5.8, "home_win_probability": 0.4, "p_over_5.5": 0.5,
+                "p_over_6.5": 0.3, "p_home_plus_1_5": 0.8, "p_away_plus_1_5": 0.74}
+
+        # 1. The model gives the Vegas underdog more than a goal: take the +1.5 cover.
+        spread = model_pick("WSH", "MTL", {**base, "projected_goal_differential_home": -0.5},
+                            {"home_puck_line": -1.5, "home_puck_price": 200, "away_puck_price": -240})
+        self.assertEqual((spread["market"], spread["side"], spread["line"], spread["price"]),
+                         ("spread", "away", 1.5, -240))
+        self.assertAlmostEqual(spread["model_probability"], 0.74)
+        self.assertAlmostEqual(spread["edge"], 0.74 - no_vig_pair(200, -240)[1])
+        self.assertAlmostEqual(spread["expected_value"], 0.74 * (american_to_decimal(-240) - 1) - 0.26)
+
+        # 2. The model agrees with a Vegas favourite inside a goal: moneyline, not the cover.
+        moneyline = model_pick("WSH", "MTL", {**base, "projected_goal_differential_home": 1.2,
+                                              "home_win_probability": 0.535},
+                               {"home_puck_line": -1.5, "home_moneyline": -128, "away_moneyline": 107})
+        self.assertEqual((moneyline["market"], moneyline["side"], moneyline["line"], moneyline["price"]),
+                         ("ml", "home", None, -128))
+        self.assertAlmostEqual(moneyline["edge"], 0.535 - no_vig_pair(-128, 107)[0])
+
+        # 3. Otherwise a total on the 5.5 or 6.5 line, by the model's projected total.
+        total = model_pick("WSH", "MTL", {**base, "projected_goal_differential_home": 0.4}, None)
+        self.assertEqual((total["market"], total["side"], total["line"], total["price"]),
+                         ("total", "over", 5.5, None))
+        self.assertAlmostEqual(total["model_probability"], 0.5)
+        self.assertIsNone(total["edge"])
+        self.assertIsNone(total["expected_value"])
+        priced = model_pick("WSH", "MTL", {**base, "projected_goal_differential_home": 0.4},
+                            {"total_line": 5.5, "over_price": -115, "under_price": -105})
+        self.assertEqual(priced["price"], -115)
+        self.assertAlmostEqual(priced["expected_value"], 0.5 * (american_to_decimal(-115) - 1) - 0.5)
+
+    def test_lock_freezes_a_pick_per_model_against_the_line_in_force_at_lock(self):
+        self._insert_line("2026-10-14T14:00:00Z", 1.5)
+        self._insert_line("2026-10-14T16:00:00Z", 1.5)
+        report = lock_feed(self.con, feed(), LOCK_AT)
+        self.assertEqual((report["locked_rows"], report["pick_rows"]), (3, 3))
+        picks = self.con.execute("SELECT * FROM nhl_model_picks").fetchall()
+        self.assertEqual({row["market"] for row in picks}, {"spread"})
+        self.assertEqual({row["side"] for row in picks}, {"home"})
+        self.assertEqual({row["line"] for row in picks}, {1.5})
+        self.assertEqual({row["price"] for row in picks}, {200})
+        self.assertEqual({row["line_captured_at_utc"] for row in picks}, {"2026-10-14T16:00:00Z"})
+        self.assertEqual({row["provenance"] for row in picks}, {"lock"})
+        self.assertEqual({row["settlement_basis"] for row in picks}, {"official_final_score"})
+
+        # A line posted after the lock must not move the frozen pick, and re-running the
+        # lock must not re-price an already-locked row from that later line.
+        self._insert_line("2026-10-14T17:00:00Z", -1.5)
+        repeat = lock_feed(self.con, feed(), LOCK_AT + dt.timedelta(minutes=1))
+        self.assertEqual((repeat["locked_rows"], repeat["pick_rows"], repeat["already_picked"]), (0, 0, 0))
+        self.assertEqual({row[0] for row in self.con.execute("SELECT line_captured_at_utc FROM nhl_model_picks")},
+                         {"2026-10-14T16:00:00Z"})
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.con.execute("UPDATE nhl_model_picks SET side='under'")
+
+    def test_record_grades_the_frozen_pick_not_a_moneyline_guess(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        result = normalize_official_result(GAME_ID, final_document())
+        grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "d" * 64, "fixture")
+        model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
+        pick = model["pick"]
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "over", 5.5))
+        # Home won the game, so the moneyline this record used to grade would have won; the
+        # frozen total over 5.5 loses on an official 3-2 (5 goals).
+        self.assertEqual(model["grade"]["official_winner"], "home")
+        self.assertFalse(pick["result"]["won"])
+
+    def test_read_api_carries_the_frozen_pick(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        self.con.commit()
+        payload = locks_payload(os.path.join(self.tmp.name, "nhl-model.db"), 2026)
+        pick = payload["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "over", 5.5))
+        self.assertIsNone(pick["result"])
+
+    def test_backfill_freezes_picks_from_the_line_at_lock_for_legacy_rows(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        # Simulate a database locked before the pick record existed.
+        self.con.execute("DROP TRIGGER nhl_pick_immutable_delete")
+        self.con.execute("DELETE FROM nhl_model_picks")
+        self.con.commit()
+        self._insert_line("2026-10-14T14:00:00Z", 1.5)
+        report = backfill_picks(self.con, 2026)
+        self.assertEqual((report["games"], report["pick_rows"], report["skipped"]), (1, 3, 0))
+        picks = self.con.execute("SELECT * FROM nhl_model_picks").fetchall()
+        self.assertEqual({row["provenance"] for row in picks}, {"backfill"})
+        self.assertEqual({row["line_captured_at_utc"] for row in picks}, {"2026-10-14T14:00:00Z"})
+        self.assertEqual({row["selected_at_utc"] for row in picks}, {"2026-10-14T16:30:00Z"})
+        again = backfill_picks(self.con, 2026)
+        self.assertEqual((again["pick_rows"], again["already_picked"]), (0, 3))
+
+    def test_preview_pick_is_derived_for_display_and_never_stored(self):
+        early = dt.datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
+        self._insert_line("2026-10-14T13:00:00Z", 1.5)
+        preview_feed(self.con, feed(), early)
+        previews = export_previews(self.con, 2026, early)
+        pick = previews[0]["models"]["B3_elo"]["pick"]
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("spread", "home", 1.5))
+        self.assertIsNone(pick["result"])
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 0)
 
 
 def bovada_event():

@@ -27,8 +27,9 @@ def locks_payload(db_path: str, season: int) -> dict:
         con = open_db(db_path, readonly=True)
         try:
             payload = export_locked(con, season)
-            payload["previews"] = export_previews(con, season, dt.datetime.now(dt.timezone.utc))
             payload["lines"] = latest_game_lines(con)
+            payload["previews"] = export_previews(con, season, dt.datetime.now(dt.timezone.utc),
+                                                  payload["lines"])
             payload["standings"] = latest_standings(con, season)
         finally:
             con.close()
