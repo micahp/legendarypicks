@@ -282,7 +282,7 @@ function ScoresPanel({ date, setDate, games, loading, error, tour }: {
                 <h2 id={`${item}-scores-heading`} className="text-lg font-bold text-zinc-100">
                   {item.toUpperCase()}
                 </h2>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-x-10 gap-y-3 md:grid-cols-2">
                   {tourGames.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}
                 </div>
               </section>
