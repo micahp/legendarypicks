@@ -230,6 +230,10 @@ describe('NHL model tab previews', () => {
     fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
     expect(screen.getByRole('tooltip')).toBeTruthy()
     expect(screen.getByText('0.1000')).toBeTruthy()
+    expect(screen.getByText('Game lines · Brier scores')).toBeTruthy()
+    expect(screen.getByText('Home −1.5')).toBeTruthy()
+    expect(screen.getByText('Over 5.5')).toBeTruthy()
+
     // The fixture varies only the Brier per model, so log loss and goal error are the same
     // for all three and each value appears once per model row. The assertion is that the
     // value is shown, not that it is unique.
@@ -244,13 +248,56 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('· Selected')).toBeTruthy()
   })
 
+  it('shows all-market Brier for graded unpriced games, including a frozen-line comparison', async () => {
+    const grade = {
+      official_home_goals: 4, official_away_goals: 3,
+      statistical_home_goals: 3, statistical_away_goals: 3, official_winner: 'home' as const,
+      shootout_decided: true, home_win_brier: 0.16, home_win_logloss: 0.51,
+      home_goal_error: 0, away_goal_error: 0, graded_at_utc: '2026-10-15T14:35:05Z',
+    }
+    const graded = {
+      game_id: 2026020108, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        ...Object.fromEntries((['B3_elo','B5_xg_poisson','B7_elo_xg_poisson'] as const).map(key => [
+          key, {
+            ...forecast(0.6), grade, pick: null,
+            line_grades: {
+              version: 'line-brier-v1',
+              reference: {
+                home_minus_1_5: { probability: .3, outcome: 0, brier: .09 },
+                away_minus_1_5: { probability: .2, outcome: 0, brier: .04 },
+                over_5_5: { probability: .6, outcome: 1, brier: .16 },
+                over_6_5: { probability: .4, outcome: 0, brier: .16 },
+              },
+              locked_market: { total_over: { line: 6.5, probability: .65, outcome: 1, brier: .1225, market_brier: .2 } },
+            },
+          },
+        ])),
+      },
+      result: grade, markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [graded], previews: [] }) }))
+    render(<NhlModelTab />)
+    fireEvent.mouseEnter(await screen.findByRole('button', { name: 'Model accuracy' }))
+    expect(screen.getByText('Game lines · Brier scores')).toBeTruthy()
+    expect(screen.getByText('Home −1.5')).toBeTruthy()
+    expect(screen.getByText('Over 6.5')).toBeTruthy()
+    expect(screen.getAllByText('0.0900').length).toBe(3)
+    expect(screen.getAllByText('0.1225').length).toBe(3)
+    expect(screen.getAllByText('0.2000').length).toBe(3)
+    expect(screen.getAllByText('0.16').length).toBe(0)
+  })
+
   it('does not invent Brier scores before games are graded', async () => {
     render(<NhlModelTab />)
     await screen.findByRole('button', { name: /Model accuracy/ })
     expect(screen.queryByRole('tooltip')).toBeNull()
     fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
     expect(screen.getByRole('tooltip')).toBeTruthy()
-    expect(screen.getAllByText('—')).toHaveLength(9)
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(9)
     expect(screen.getAllByText('0').length).toBeGreaterThan(0)
   })
 
