@@ -19,6 +19,23 @@ from typing import Any
 UTC = dt.timezone.utc
 LOCK_LEAD = dt.timedelta(minutes=90)
 LOCK_WINDOW = dt.timedelta(minutes=1)
+# How far ahead of the cutoff the T-90 snapshot is generated, so the fresh forecast is
+# ready when the lock timer fires. The actual lead is recorded on every snapshot.
+T90_GENERATE_LEAD = dt.timedelta(minutes=6)
+# A quote is fresh enough to price a T-90 lock if it was captured within this window of the
+# cutoff. A fallback quote older than this may still be shown, but never as a priced pick.
+T90_QUOTE_MAX_AGE = dt.timedelta(minutes=5)
+# The feature payload behind a snapshot must not be older than this, or generation fails
+# explicitly rather than freezing a forecast computed from dead inputs. Measured in whole
+# days, because the pipeline reports the latest source DATE, not a timestamp: comparing a
+# date at midnight against a wall clock would inflate the age by up to a day.
+T90_FEATURE_MAX_AGE = dt.timedelta(days=3)
+T90_PROTOCOL_VERSION = "t90-1"
+LEGACY_PROTOCOL_VERSION = "legacy-immediate"
+# The T-90 protocol's effective date is declared here rather than measured, so it is
+# reproducible: everything locked before it is attributable to the previous process.
+T90_PROTOCOL_FROM_UTC = "2026-10-16T00:00:00Z"
+LEGACY_PROTOCOL_FROM_UTC = "2026-09-01T00:00:00Z"
 FINAL_GRACE = dt.timedelta(hours=4)
 FINAL_STATES = frozenset(("OFF", "FINAL"))
 COUNTED_PERIOD_TYPES = frozenset(("REG", "OT"))
@@ -280,7 +297,8 @@ def freeze_quote(con: sqlite3.Connection, game_id: str, quote: dict) -> None:
 
 def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_version: str,
                 forecast: dict, quote: dict | None, selected_at: dt.datetime,
-                provenance: str, report: dict) -> None:
+                provenance: str, report: dict,
+                protocol: str = LEGACY_PROTOCOL_VERSION) -> None:
     """Insert the immutable pick row for one model, or verify the existing one is identical.
 
     A model with no priced market produces no row at all. The projection is still locked and
@@ -294,6 +312,11 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
         report["unpriced_models"] += 1
         return
     freeze_quote(con, gid, quote or {})
+    # How old the quote was when the decision was taken. Recorded even when it is too old to
+    # price a recommendation, so the fallback is visible instead of silently accepted.
+    quote_age_seconds = None
+    if quote and quote.get("captured_at_utc"):
+        quote_age_seconds = int((selected_at - parse_time(quote["captured_at_utc"])).total_seconds())
     record = {
         "game_id": gid, "model_key": model_key, "model_version": model_version,
         "season": int(gid[:4]), "game_date": str(game.get("game_date") or "")[:10],
@@ -305,6 +328,7 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
         "line_source": pick["line_source"], "line_captured_at_utc": pick["line_captured_at_utc"],
         "settlement_basis": SETTLEMENT_BASIS, "rule_version": RULE_VERSION,
         "provenance": provenance, "selected_at_utc": iso_utc(selected_at),
+        "protocol_version": protocol, "quote_age_seconds": quote_age_seconds,
     }
     record["pick_sha256"] = pick_sha256(pick, gid, model_key, model_version)
     prior = con.execute("SELECT pick_sha256 FROM nhl_model_picks WHERE game_id=? AND model_key=? AND model_version=?",
@@ -536,6 +560,79 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     BEFORE DELETE ON nhl_frozen_quotes BEGIN
         SELECT RAISE(ABORT, 'NHL frozen quotes are immutable');
     END;
+    -- The T-90 snapshot: a forecast computed shortly before the cutoff and frozen with the
+    -- quote captured at it. Kept apart from the research ledger, which stays append-only and
+    -- keeps the earlier forecast as its own record. `source_forecast_id` links back to it.
+    CREATE TABLE IF NOT EXISTS nhl_t90_forecasts (
+        game_id TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        protocol_version TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        game_date TEXT NOT NULL,
+        scheduled_start_utc TEXT NOT NULL,
+        target_lock_utc TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        source_forecast_id TEXT NOT NULL,
+        source_ledger_sha256 TEXT NOT NULL,
+        feature_cutoff_utc TEXT NOT NULL,
+        features_as_of_utc TEXT NOT NULL,
+        generated_at_utc TEXT NOT NULL,
+        lead_seconds INTEGER NOT NULL,
+        feature_source_sha256 TEXT NOT NULL,
+        model_artifact_sha256 TEXT NOT NULL,
+        snapshot_sha256 TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version, protocol_version)
+    );
+    CREATE INDEX IF NOT EXISTS idx_nhl_t90_target ON nhl_t90_forecasts(target_lock_utc);
+    -- Append-only log of what stopped a snapshot or its quote from being produced. A game that
+    -- reaches T-90 without a snapshot is recorded here and is not locked from the older
+    -- forecast, so a stale forecast is never presented as a fresh one.
+    CREATE TABLE IF NOT EXISTS nhl_t90_failures (
+        game_id TEXT NOT NULL,
+        model_key TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        protocol_version TEXT NOT NULL,
+        stage TEXT NOT NULL CHECK (stage IN ('generation','quote_capture')),
+        reason TEXT NOT NULL,
+        detail TEXT,
+        observed_at_utc TEXT NOT NULL,
+        target_lock_utc TEXT NOT NULL,
+        PRIMARY KEY (game_id, model_key, model_version, protocol_version, stage)
+    );
+    -- When each protocol took effect, so any lock can be attributed to the process in force
+    -- when it was taken and historical locks stay distinguishable from T-90 locks.
+    CREATE TABLE IF NOT EXISTS nhl_protocol_versions (
+        protocol_version TEXT PRIMARY KEY,
+        effective_from_utc TEXT NOT NULL,
+        description TEXT NOT NULL
+    );
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_forecast_immutable_update
+    BEFORE UPDATE ON nhl_t90_forecasts BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 snapshots are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_forecast_immutable_delete
+    BEFORE DELETE ON nhl_t90_forecasts BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 snapshots are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_failure_immutable_update
+    BEFORE UPDATE ON nhl_t90_failures BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 failure log is append-only');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_t90_failure_immutable_delete
+    BEFORE DELETE ON nhl_t90_failures BEGIN
+        SELECT RAISE(ABORT, 'NHL T-90 failure log is append-only');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_protocol_immutable_update
+    BEFORE UPDATE ON nhl_protocol_versions BEGIN
+        SELECT RAISE(ABORT, 'NHL protocol versions are immutable');
+    END;
+    CREATE TRIGGER IF NOT EXISTS nhl_protocol_immutable_delete
+    BEFORE DELETE ON nhl_protocol_versions BEGIN
+        SELECT RAISE(ABORT, 'NHL protocol versions are immutable');
+    END;
     """)
     # rule_version was added after the first picks were frozen. The default names the rule
     # those rows were actually produced under, so nothing already stored is relabelled.
@@ -543,6 +640,29 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     if "rule_version" not in columns:
         con.execute("ALTER TABLE nhl_model_picks ADD COLUMN rule_version TEXT NOT NULL DEFAULT '%s'"
                     % LEGACY_RULE_VERSION)
+    # Same reasoning for the lock protocol: rows frozen before T-90 was enforced keep the
+    # protocol that actually produced them.
+    if "protocol_version" not in columns:
+        con.execute("ALTER TABLE nhl_model_picks ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
+                    % LEGACY_PROTOCOL_VERSION)
+    # How old the frozen quote was at the moment of the decision. Nullable: rows frozen before
+    # the age was recorded have an unknown age, and an unknown age is not a fresh one to
+    # retroactively apply a rule to.
+    if "quote_age_seconds" not in columns:
+        con.execute("ALTER TABLE nhl_model_picks ADD COLUMN quote_age_seconds INTEGER")
+    projection_columns = {row[1] for row in con.execute("PRAGMA table_info(nhl_game_projections)")}
+    if "protocol_version" not in projection_columns:
+        con.execute("ALTER TABLE nhl_game_projections ADD COLUMN protocol_version TEXT NOT NULL DEFAULT '%s'"
+                    % LEGACY_PROTOCOL_VERSION)
+    con.execute("INSERT OR IGNORE INTO nhl_protocol_versions VALUES (?,?,?)",
+                (LEGACY_PROTOCOL_VERSION, LEGACY_PROTOCOL_FROM_UTC,
+                 "Lock the newest forecast whenever the lock timer ran, priced at the newest "
+                 "quote in force at that instant. No enforced cutoff."))
+    con.execute("INSERT OR IGNORE INTO nhl_protocol_versions VALUES (?,?,?)",
+                (T90_PROTOCOL_VERSION, T90_PROTOCOL_FROM_UTC,
+                 "Forecast regenerated shortly before the cutoff, frozen as an immutable "
+                 "snapshot, and locked with the quote captured at T-90. Declared effective "
+                 "date; supersedes " + LEGACY_PROTOCOL_VERSION + "."))
     con.commit()
 
 
@@ -802,6 +922,10 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
             # never recomputed from a later line.
             line = latest_line_at(con, gid, now)
             for model_key, forecast in models.items():
+                # Which lock protocol produced this row. A T-90 payload carries its own; a
+                # legacy feed has none and keeps the protocol those rows were actually made
+                # under. Not part of snapshot_sha256, so existing locks stay idempotent.
+                protocol = str(game.get("_protocol_version") or LEGACY_PROTOCOL_VERSION)
                 record = {
                     "game_id": gid,
                     "season": int(gid[:4]),
@@ -826,6 +950,7 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                     "feature_snapshot_json": canonical_json(game["feature_snapshot"]),
                     "market_snapshot_json": canonical_json(market_snapshot),
                     "source_metadata_json": canonical_json(source_meta),
+                    "protocol_version": protocol,
                 }
                 record["snapshot_sha256"] = sha256_json({
                     key: record[key] for key in (
@@ -853,7 +978,7 @@ def lock_feed(con: sqlite3.Connection, payload: dict, now: dt.datetime) -> dict:
                 # force now. A row locked before the pick record existed is backfill_picks'
                 # job: freezing it here would price it from a line posted after its lock.
                 freeze_pick(con, game, model_key, payload["model_version"], forecast, line, now,
-                            "lock", report)
+                            "lock", report, protocol)
         con.commit()
     except Exception:
         con.rollback()
@@ -1018,14 +1143,20 @@ def export_pick(row: sqlite3.Row | None, grade: dict | None, quote: dict | None 
     if row is None:
         return None
     priced = row["line_captured_at_utc"] is not None
+    age = row["quote_age_seconds"]
+    # A quote older than the T-90 freshness window may still be frozen and shown, but it
+    # cannot qualify a recommendation. An unknown age is left alone rather than treated as
+    # fresh: no rule is applied retroactively to rows frozen before the age was recorded.
+    fresh = age is None or age <= int(T90_QUOTE_MAX_AGE.total_seconds())
     pick = {"market": row["market"], "side": row["side"], "line": row["line"], "price": row["price"],
             "model_probability": row["model_probability"], "market_probability": row["market_probability"],
             "edge": row["edge"], "expected_value": row["expected_value"],
             "line_source": row["line_source"], "line_captured_at_utc": row["line_captured_at_utc"],
             "settlement_basis": row["settlement_basis"], "rule_version": row["rule_version"],
+            "protocol_version": row["protocol_version"], "quote_age_seconds": age,
             "provenance": row["provenance"], "selected_at_utc": row["selected_at_utc"],
-            "priced": priced,
-            "qualifies": priced and row["expected_value"] is not None and row["expected_value"] > 0,
+            "priced": priced, "quote_fresh": fresh,
+            "qualifies": priced and fresh and row["expected_value"] is not None and row["expected_value"] > 0,
             "quote": quote, "result": None}
     if grade:
         pick["result"] = grade_pick(pick, grade)
@@ -1177,7 +1308,7 @@ def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
               "quotes_frozen": 0, "quotes_missing": 0, "skipped": 0}
     rows = con.execute("""
       SELECT game_id,model_key,model_version,game_date,scheduled_start_utc,home_team,away_team,
-             locked_at_utc,forecast_output_json
+             locked_at_utc,forecast_output_json,protocol_version
       FROM nhl_game_projections WHERE season=?
       ORDER BY scheduled_start_utc,game_id,model_key
     """, (int(season),)).fetchall()
@@ -1216,7 +1347,7 @@ def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
                 continue
             before = report["pick_rows"]
             freeze_pick(con, game, row["model_key"], row["model_version"], forecast, quote,
-                        locked_at, "backfill", report)
+                        locked_at, "backfill", report, str(row["protocol_version"]))
             if report["pick_rows"] > before:
                 report["quotes_frozen"] += 1
         con.commit()

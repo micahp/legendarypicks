@@ -350,7 +350,9 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(model["home_expected_goals"], 3.0)
 
     def test_lock_freezes_a_pick_and_the_quote_it_was_priced_against(self):
-        self._insert_line("2026-10-14T14:00:00Z", 1.5)
+        # Captured one minute before the lock: within the T-90 freshness window, so it can
+        # price a recommendation.
+        self._insert_line("2026-10-14T16:29:00Z", 1.5)
         self._insert_line("2026-10-14T16:00:00Z", 1.5)
         report = lock_feed(self.con, feed(), LOCK_AT)
         self.assertEqual((report["locked_rows"], report["pick_rows"]), (3, 3))
@@ -359,7 +361,8 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual({row["side"] for row in picks}, {"home"})
         self.assertEqual({row["line"] for row in picks}, {1.5})
         self.assertEqual({row["price"] for row in picks}, {200})
-        self.assertEqual({row["line_captured_at_utc"] for row in picks}, {"2026-10-14T16:00:00Z"})
+        self.assertEqual({row["line_captured_at_utc"] for row in picks}, {"2026-10-14T16:29:00Z"})
+        self.assertEqual({row["quote_age_seconds"] for row in picks}, {60})
         self.assertEqual({row["provenance"] for row in picks}, {"lock"})
         self.assertEqual({row["rule_version"] for row in picks}, {RULE_VERSION})
         self.assertEqual({row["settlement_basis"] for row in picks}, {"official_final_score"})
@@ -370,7 +373,10 @@ class NHLModelLocks(unittest.TestCase):
         exported = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
         self.assertTrue(exported["priced"])
         self.assertTrue(exported["qualifies"])
-        self.assertEqual(exported["quote"]["captured_at_utc"], "2026-10-14T16:00:00Z")
+        self.assertTrue(exported["quote_fresh"])
+        self.assertEqual(exported["quote_age_seconds"], 60)
+        self.assertEqual(exported["protocol_version"], "legacy-immediate")
+        self.assertEqual(exported["quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
         self.assertEqual(exported["quote"]["home_puck_line"], 1.5)
         self.assertEqual(exported["quote"]["total_line"], 6.5)
 
@@ -380,9 +386,9 @@ class NHLModelLocks(unittest.TestCase):
         repeat = lock_feed(self.con, feed(), LOCK_AT + dt.timedelta(minutes=1))
         self.assertEqual((repeat["locked_rows"], repeat["pick_rows"], repeat["already_picked"]), (0, 0, 0))
         self.assertEqual({row[0] for row in self.con.execute("SELECT line_captured_at_utc FROM nhl_model_picks")},
-                         {"2026-10-14T16:00:00Z"})
+                         {"2026-10-14T16:29:00Z"})
         self.assertEqual({row[0] for row in self.con.execute("SELECT captured_at_utc FROM nhl_frozen_quotes")},
-                         {"2026-10-14T16:00:00Z"})
+                         {"2026-10-14T16:29:00Z"})
         with self.assertRaises(sqlite3.IntegrityError):
             self.con.execute("UPDATE nhl_model_picks SET side='under'")
         with self.assertRaises(sqlite3.IntegrityError):
@@ -404,7 +410,7 @@ class NHLModelLocks(unittest.TestCase):
         self.assertTrue(pick["result"]["won"])  # official 3-2 is 5 goals, under 6.5
 
     def test_read_api_carries_the_frozen_pick_and_its_quote(self):
-        self._insert_line("2026-10-14T16:00:00Z", -1.5)
+        self._insert_line("2026-10-14T16:29:00Z", -1.5)
         lock_feed(self.con, feed(), LOCK_AT)
         self.con.commit()
         payload = locks_payload(os.path.join(self.tmp.name, "nhl-model.db"), 2026)
@@ -413,7 +419,20 @@ class NHLModelLocks(unittest.TestCase):
         self.assertTrue(pick["priced"])
         self.assertTrue(pick["qualifies"])
         self.assertIsNone(pick["result"])
-        self.assertEqual(pick["quote"]["captured_at_utc"], "2026-10-14T16:00:00Z")
+        self.assertEqual(pick["quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
+
+    def test_a_stale_fallback_quote_locks_the_forecast_but_cannot_qualify_a_pick(self):
+        # The refresh failed, so the newest quote is an hour old. It is frozen and its real
+        # age is recorded, but it may not price a recommendation.
+        self._insert_line("2026-10-14T15:30:00Z", -1.5)
+        report = lock_feed(self.con, feed(), LOCK_AT)
+        self.assertEqual((report["locked_rows"], report["pick_rows"]), (3, 3))
+        pick = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]["pick"]
+        self.assertTrue(pick["priced"])
+        self.assertFalse(pick["quote_fresh"])
+        self.assertFalse(pick["qualifies"])
+        self.assertEqual(pick["quote_age_seconds"], 3600)
+        self.assertGreater(pick["expected_value"], 0)  # the lean is real; the price is not fresh
 
     def test_backfill_preserves_existing_picks_and_freezes_the_quote_they_used(self):
         self._insert_line("2026-10-14T14:00:00Z", 1.5)

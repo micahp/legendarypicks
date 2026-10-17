@@ -157,13 +157,25 @@ def latest_capture(db_path: str):
         con.close()
 
 
-def refresh_lines(db_path: str, feed_path: str, fetch, now: dt.datetime, log=print) -> dict:
-    """Pull the Bovada NHL coupon only when the newest snapshot is older than REFRESH_AFTER."""
+def refresh_lines(db_path: str, feed_path: str, fetch, now: dt.datetime, log=print,
+                  max_age: dt.timedelta | None = None) -> dict:
+    """Pull the Bovada NHL coupon when the newest snapshot is older than the threshold.
+
+    `max_age` defaults to REFRESH_AFTER for the read path. The T-90 lock passes a tighter
+    window so a game is priced against a quote captured near the cutoff rather than one the
+    read path happened to refresh up to fifteen minutes earlier.
+    """
+    threshold = REFRESH_AFTER if max_age is None else max_age
     latest = latest_capture(db_path)
-    if latest is not None and now - parse_time(latest) < REFRESH_AFTER:
+    if latest is not None and now - parse_time(latest) < threshold:
         return {"refreshed": False, "reason": "fresh", "latest_captured_at_utc": latest}
     now_iso = iso_utc(now)
-    rows = match_rows(fetch("hockey", "nhl"), read_feed(feed_path)["games"], now_iso, log=log)
+    try:
+        events = fetch("hockey", "nhl")
+    except Exception as exc:  # noqa: BLE001 - reported, so the caller can judge the fallback
+        return {"refreshed": False, "reason": "fetch_failed", "error": str(exc)[:200],
+                "latest_captured_at_utc": latest}
+    rows = match_rows(events, read_feed(feed_path)["games"], now_iso, log=log)
     if not rows:
         return {"refreshed": False, "reason": "no_matches", "latest_captured_at_utc": latest}
     write_rows(db_path, rows)
