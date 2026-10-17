@@ -145,16 +145,45 @@ player-game.
 | v2 raw | 0.2747 | 0.0260 | 0.0016 | 0.5241 |
 | market | 0.2460 | 0.0001 | 0.0034 | 0.5619 |
 
-Our discrimination is 0.524 against the market's 0.562, so it is barely above a coin flip. Note also that the
-calibration *lowers* AUC, from 0.5241 raw to 0.5181 refit, while raising the Brier: the repair is a shrink
-toward 0.5 and it costs ranking power to buy score.
+Our discrimination is 0.524 against the market's 0.562. Two corrections to how this was first written up, both
+raised in review and both correct.
 
-By market, ours beats the market on pass attempts (0.5216 against 0.4882) and passing touchdowns (0.6319
-against 0.6303), and loses on receiving yards, receptions, passing yards and pass completions. Two of those
-are worse than a coin flip: **passing yards at 0.4755 and pass completions at 0.4450**, which means the model
-ranks those players backwards. That is a defect to investigate, not a tuning problem. By position, ours beats
-the market on running backs (0.5591 against 0.5517) and loses on quarterbacks (0.4893 against 0.5747),
-receivers (0.5101 against 0.5589) and tight ends (0.5334 against 0.5547).
+First, the pooled table above compares different samples: ours is scored on weeks 2 to 5 (33,519 items) while
+the refit forecasts are scored on weeks 3 to 5 (25,390). Computing both on the same items and within each
+week:
+
+| forecast, 25,390 identical items | pooled | wk3 | wk4 | wk5 | weighted within week | clustered 95% on pooled |
+|---|---:|---:|---:|---:|---:|---|
+| market, raw | 0.5608 | 0.5589 | 0.5568 | 0.5679 | 0.5609 | [0.5486, 0.5710] |
+| ours, raw | 0.5262 | 0.4979 | 0.5065 | 0.5760 | 0.5253 | [0.4901, 0.5571] |
+| ours, refit | 0.5181 | 0.4979 | 0.5065 | 0.5760 | 0.5253 | [0.4810, 0.5448] |
+| stack | 0.5587 | 0.5468 | 0.5496 | 0.5927 | 0.5621 | [0.5360, 0.5788] |
+
+Refit minus raw on the same items is **-0.00813 with a clustered interval of [-0.02220, +0.00423]**, which
+spans zero, so the earlier claim that calibration costs ranking power is **not established**. Note also that
+the within-week AUCs for raw and refit are identical by construction: Platt is a monotone transform, so it
+cannot reorder items inside a week. Only the pooled figure can move, and it moves because each week is fitted
+with its own slope, which changes the scaling *between* weeks. Market minus ours is +0.03453 with
+[+0.00027, +0.07589], so the market's discrimination advantage is established, though barely.
+
+Second, the per-market AUCs need clustered intervals before any of them is called inverted, and with them the
+picture changes:
+
+| market | n | player-games | ours, clustered 95% | market, clustered 95% |
+|---|---:|---:|---|---|
+| passing yards | 6,693 | 122 | 0.4755 [0.4012, 0.5822] | 0.5679 [0.5459, 0.5892] |
+| pass completions | 701 | 122 | 0.4450 [0.3526, 0.5600] | 0.5493 [0.4987, 0.6100] |
+| pass attempts | 797 | 122 | 0.5216 [0.4419, 0.6255] | 0.4882 [0.4426, 0.5327] |
+| passing touchdowns | 735 | 122 | 0.6319 [0.5317, 0.7211] | 0.6303 [0.5354, 0.7083] |
+| receiving yards | 19,118 | 795 | 0.5207 [0.4960, 0.5569] | 0.5441 [0.5358, 0.5561] |
+| receptions | 5,475 | 783 | 0.5383 [0.5023, 0.5744] | 0.5975 [0.5718, 0.6212] |
+
+Ours spans 0.5 on passing yards, completions and attempts, so "ranks those players backwards" was overstated
+and is withdrawn: the honest statement is that **our passing-yard and completion probabilities are consistent
+with no discrimination at all, while the market's are not**. On passing touchdowns and receptions ours does
+discriminate, and it beats the market on attempts and touchdowns and loses on the other four. By position,
+ours beats the market on running backs (0.5591 against 0.5517) and loses on quarterbacks (0.4893 against
+0.5747), receivers (0.5101 against 0.5589) and tight ends (0.5334 against 0.5547).
 
 **The increment test.** A forward-only logistic stack of the market's log-odds and ours, fitted on earlier
 weeks and scored on the target week, asks whether our number carries anything the price does not. The fitted
@@ -177,10 +206,53 @@ anything about a player's next performance that the market has not already price
 probabilities also refit slightly worse than raw, 0.6859 against 0.6854, which is what a well-calibrated
 forecast does when you re-estimate it from noise.
 
-The acceptance test for the next milestone should therefore be this table, not a Brier target: a positive
-increment over the market on log loss, with the clustered interval excluding zero, on games the model did not
-see. A new player-level feature earns its place by moving the stack's coefficient on ours, not by moving the
-standalone Brier.
+The acceptance test for the next milestone is two separate gates, not one, and not a Brier target:
+
+1. **Against the incumbent.** Does the new model improve forward-only Brier or log loss over v2 plus forward
+   Platt, with a paired clustered interval excluding zero, while keeping calibration and improving
+   discrimination or resolution?
+2. **Against the price.** Separately, does adding it to the market improve on the market-only model, with the
+   clustered interval excluding zero?
+
+They are distinct accomplishments and neither implies the other. A larger coefficient on ours is not evidence
+by itself, because a larger coefficient can accompany worse predictions; the gate is the out-of-sample score
+with its interval, not the size of the coefficient.
+
+## 5. The passing audit: it is a volume problem, and the grader has a look-ahead
+
+Two things were wrong with how the passing markets were being assessed.
+
+**The grader selects the population with post-game information.** `grade_nfl_prop_probabilities.py` keeps the
+quarterback who led his team in attempts *in the finished game*, `max(team_rows, key=lambda x: (x.att, -x.pid))`,
+which reads the target week's box score. The research population is therefore partly selected on the outcome
+and cannot represent pregame forecasting.
+
+`audit_nfl_passing_projections.py` (new) rebuilds the population from pregame information only: a
+quarterback-game qualifies when he led his team in attempts over the games *before* the target week. The
+look-ahead turns out to be small and it was **not** flattering: 113 pregame quarterback-games against 124
+post-game, and the passing-market Brier is 0.2713 on the pregame population against 0.2784 on the post-game
+one. The post-game filter was selecting a harder population, so it made the model look worse rather than
+better. It still needs fixing, because the population has to be defined without the outcome.
+
+**The failure mode is volume, not efficiency.** Same population, decomposed:
+
+| component | projected | actual | MAE |
+|---|---:|---:|---:|
+| attempts | 30.959 | 33.177 | 7.141 |
+| completion rate | 0.651 | 0.641 | 0.075 |
+| yards per completion | 11.088 | 11.104 | 1.881 |
+| passing yards | 223.418 | 233.752 | 62.164 |
+
+Completion rate and yards per completion are essentially unbiased, +0.010 and -0.016. Attempts are
+under-projected by 2.218, which is 6.7%, and passing yards by 10.3. Decomposing the yards gap on those
+numbers, the attempts shortfall accounts for about 15.8 of it, the completion-rate gap about -3.4 and the
+yards-per-completion gap about 0.3, which reconciles with the 10.3 observed once the interaction is included.
+So the passing-yard under-projection is a **volume** problem, and the efficiency layer is doing its job. The
+fix belongs in projected attempts, not in the catch-rate or yards-per-completion constants.
+
+That also explains the discrimination result without appeal to a distribution defect: if attempts are the
+input that is wrong, the simulated distribution is being centred on too few opportunities, and no
+recalibration of the distribution can recover the missing volume.
 
 ## The ladder, paired on identical items
 
@@ -231,11 +303,16 @@ Read plainly:
 4. Refit the aging curve on residuals, not levels, before judging it. The version here should not ship.
 5. Re-run the paired ladder after calibration is in, because the Marcel-versus-v2 comparison has an interval
    that spans zero and more weeks of 2026 props will narrow it.
-6. Investigate the two anti-discriminative markets. Passing yards at AUC 0.4755 and pass completions at 0.4450
-   rank players backwards, which is a defect rather than a tuning problem, and neither is worth publishing
-   until it is understood.
-7. Judge the next feature by the increment table in section 4. The bar is a positive increment over the market
-   on log loss with the clustered interval excluding zero, on games the model did not see, not a lower Brier.
+6. Investigate projected attempts. The passing audit puts the failure in volume, not efficiency: attempts are
+   under-projected by 6.7% while completion rate and yards per completion are unbiased. That is the narrow,
+   falsifiable target, and the two passing markets stay out of any public claim of predictive advantage until
+   it is fixed.
+7. Fix the passing grader's population. It selects the quarterback who led his team in attempts in the finished
+   game, which is post-game information. The pregame-only rebuild is in `audit_nfl_passing_projections.py` and
+   should replace the filter in the grader.
+8. Judge the next feature by the two gates in section 4, not by a Brier target and not by the size of the
+   stack coefficient. Against the incumbent with a paired clustered interval, and separately against the
+   market-only model.
 
 ## Reproducing
 
@@ -246,6 +323,8 @@ FIT="2013 2014 2015 2016 2017 2018 2019 2020 2021"
 
 python3 calibrate_nfl_prop_probabilities.py --season 2026 --csv /tmp/cal_items.csv
 python3 calibrate_nfl_prop_probabilities.py --season 2026 --mode forward --csv /tmp/cal_fwd.csv
+python3 measure_nfl_prop_discrimination.py --season 2026 --boot 150    # AUC, decomposition, increment
+python3 audit_nfl_passing_projections.py --season 2026                 # volume vs efficiency
 python3 marcel_nfl_backtest.py --season 2025 --window 3 --fit-seasons $FIT          # MAE ladder
 python3 marcel_nfl_backtest.py --season 2026 --props --window 3 --csv /tmp/m3.csv --fit-seasons $FIT
 ```

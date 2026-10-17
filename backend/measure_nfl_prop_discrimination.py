@@ -165,17 +165,20 @@ def main(argv=None):
         rel, res, unc = murphy(rows, f)
         print("  %-14s %8.4f %10.4f %10.4f %8.4f" % (nm, brier(rows, f), rel, res, auc([(r[f], r["over"]) for r in rows])))
 
-    print("\n  AUC by market (ours vs market):")
+    print("\n  AUC by market, with clustered 95% intervals (bootstrap over player-games):")
+    bm = min(a.boot, 200)
     for m in sorted({r["market"] for r in rows}):
         sub = [r for r in rows if r["market"] == m]
         if len(sub) < 300:
             continue
-        ao = auc([(r["p_ours"], r["over"]) for r in sub])
-        am = auc([(r["p_market"], r["over"]) for r in sub])
+        ao, alo, ahi = cluster_boot(sub, lambda s: auc([(r["p_ours"], r["over"]) for r in s]), bm)
+        am, mlo, mhi = cluster_boot(sub, lambda s: auc([(r["p_market"], r["over"]) for r in s]), bm)
         ro = murphy(sub, "p_ours")[1]
         rm = murphy(sub, "p_market")[1]
-        print("    %-20s n %6d  AUC ours %.4f market %.4f | resolution ours %.5f market %.5f" % (
-            m, len(sub), ao or 0, am or 0, ro, rm))
+        print("    %-20s n %6d pg %4d  ours %.4f [%.4f, %.4f]  market %.4f [%.4f, %.4f]" % (
+            m, len(sub), len({(r["game_id"], r["player_id"]) for r in sub}),
+            ao or 0, alo or 0, ahi or 0, am or 0, mlo or 0, mhi or 0))
+        print("    %-20s %14s resolution ours %.5f market %.5f" % ("", "", ro, rm))
 
     print("\n  AUC by position group:")
     for grp in sorted({r["group"] for r in rows}):
@@ -230,6 +233,27 @@ def main(argv=None):
             continue
         print("    %-26s %+.5f  clustered 95%% [%+.5f, %+.5f]" % (nm, t[0], t[1], t[2]))
     print("    (positive means the stack is better than the market alone)")
+
+    # ---- discrimination on the common sample, which the pooled table above does not use ----
+    print("\n== discrimination on the common forward-scorable sample ==")
+    print("  the pooled table above compares ours on weeks 2-5 against refit forecasts on weeks 3-5, which are")
+    print("  different samples. Everything below is on the same %d items." % len(scorable))
+    wk = sorted({r["week"] for r in scorable})
+    n_by_wk = {w: len([r for r in scorable if r["week"] == w]) for w in wk}
+    print("  %-18s %8s %8s %8s %8s %10s   %s" % (
+        "forecast", "pooled", *["wk%d" % w for w in wk], "wtd-in-wk", "clustered 95% on pooled"))
+    for f, nm in (("p_market", "market, raw"), ("p_ours", "ours, raw"), ("s_our", "ours, refit"),
+                  ("s_stk", "stack")):
+        per = {w: (auc([(r[f], r["over"]) for r in scorable if r["week"] == w]) or 0.0) for w in wk}
+        pooled = auc([(r[f], r["over"]) for r in scorable]) or 0.0
+        wtd = sum(per[w] * n_by_wk[w] for w in wk) / len(scorable)
+        _, lo, hi = cluster_boot(scorable, lambda s, ff=f: auc([(r[ff], r["over"]) for r in s]), a.boot)
+        print("  %-18s %8.4f %8s %8.4f  [%.4f, %.4f]" % (
+            nm, pooled, " ".join("%8.4f" % per[w] for w in wk), wtd, lo or 0, hi or 0))
+    for fa, fb, nm in (("s_our", "p_ours", "refit minus raw, ours"), ("p_market", "p_ours", "market minus ours")):
+        d = cluster_boot(scorable, lambda s: (auc([(r[fa], r["over"]) for r in s]) or 0)
+                         - (auc([(r[fb], r["over"]) for r in s]) or 0), a.boot)
+        print("  AUC %-24s %+.5f  clustered 95%% [%+.5f, %+.5f]" % (nm, d[0], d[1], d[2]))
 
 
 if __name__ == "__main__":
