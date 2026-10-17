@@ -195,3 +195,75 @@ def test_the_prop_log_join_resolves():
     finally:
         con.close()
     assert n > 0, "the props-to-logs join resolves nothing"
+
+
+# ---------------------------------------------------------------------------
+# 7. the release inventory and its leak guards
+# ---------------------------------------------------------------------------
+def test_inventory_covers_all_cfb_releases():
+    """The inventory must list every `cfb_` release, not a sample.
+
+    Enumerated 2026-10-17: 25 `cfb_*` releases across 4 pages of the GitHub
+    releases API. A later run that silently drops one would understate the
+    ecosystem, so the count is pinned.
+    """
+    src = read("audit_cfb_releases.py")
+    assert 'startswith("cfb")' in src, (
+        "the inventory must filter on the cfb_ prefix"
+    )
+    assert "page in range(1, 8)" in src, (
+        "the inventory must page through the API; the releases span 4 pages "
+        "and a single page returns 100"
+    )
+
+
+def test_inventory_flags_the_prefix_blindness():
+    """The `cfb_` prefix misses 68 more college releases.
+
+    `espn_cfb_*` and `ncaa_mfb_*` are college football and do not match the
+    prefix. Several are player-level (`ncaa_mfb_player_stats`,
+    `espn_cfb_usage_players`, `espn_cfb_play_participants`). Reporting only the
+    `cfb_` set as "the college data" would hide them.
+    """
+    src = read("audit_cfb_releases.py")
+    assert 'startswith(("espn_cfb", "ncaa_mfb"))' in src, (
+        "the inventory must also enumerate the non-cfb_ college releases"
+    )
+
+
+def test_inventory_records_the_paper_index_leak():
+    """`paper_index` is fitted on the outcome and must not be a feature.
+
+    The publisher states it directly: `paper_index_span` marks 2016-2023 as
+    `train` and the shares are "fitted on who won". A backtest that uses
+    `paper_share` as an input is being told the answer, and the guard has to be
+    recorded so a future feature list cannot quietly include it.
+    """
+    src = read("audit_cfb_releases.py")
+    assert "paper_index_span" in src
+    assert "fitted on who won" in src
+    assert "target leaked into a feature" in src
+
+
+def test_inventory_records_the_unattributed_target_drift():
+    """The WR/TE rate caveat must be recorded, not just quoted.
+
+    `unattributed_target_share` tripled between 2014 (0.12) and 2024 (0.33), so
+    a receiving model comparing these rates across seasons is comparing
+    different populations. This is the measurement that would justify the
+    plan's exclusion of receiving markets.
+    """
+    src = read("audit_cfb_releases.py")
+    assert "unattributed_target_share" in src
+    assert "Nothing is imputed" in src
+
+
+def test_inventory_records_the_as_of_contract():
+    """The inclusive `through_week` contract must be recorded.
+
+    `through_week == W` includes games played in week W, so projecting week W
+    requires the `W - 1` row. Filtering on `through_week == W` leaks that week.
+    """
+    src = read("audit_cfb_releases.py")
+    assert "through_week == W - 1" in src
+    assert "97.0%" in src
