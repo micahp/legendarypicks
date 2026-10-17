@@ -179,11 +179,13 @@ picture changes:
 | receptions | 5,475 | 783 | 0.5383 [0.5023, 0.5744] | 0.5975 [0.5718, 0.6212] |
 
 Ours spans 0.5 on passing yards, completions and attempts, so "ranks those players backwards" was overstated
-and is withdrawn: the honest statement is that **our passing-yard and completion probabilities are consistent
-with no discrimination at all, while the market's are not**. On passing touchdowns and receptions ours does
-discriminate, and it beats the market on attempts and touchdowns and loses on the other four. By position,
-ours beats the market on running backs (0.5591 against 0.5517) and loses on quarterbacks (0.4893 against
-0.5747), receivers (0.5101 against 0.5589) and tight ends (0.5334 against 0.5547).
+and is withdrawn. The market's interval excludes 0.5 on passing yards, 0.5679 [0.5459, 0.5892], but includes
+it on completions, 0.5493 [0.4987, 0.6100], so the strongest supported statement is that **the market
+demonstrates positive discrimination for passing yards and the evidence on completions is inconclusive**, while
+our passing-yard and completion probabilities are consistent with no discrimination at all. On passing
+touchdowns and receptions ours does discriminate, and it beats the market on attempts and touchdowns and loses
+on the other four. By position, ours beats the market on running backs (0.5591 against 0.5517) and loses on
+quarterbacks (0.4893 against 0.5747), receivers (0.5101 against 0.5589) and tight ends (0.5334 against 0.5547).
 
 **The increment test.** A forward-only logistic stack of the market's log-odds and ours, fitted on earlier
 weeks and scored on the target week, asks whether our number carries anything the price does not. The fitted
@@ -254,6 +256,70 @@ That also explains the discrimination result without appeal to a distribution de
 input that is wrong, the simulated distribution is being centred on too few opportunities, and no
 recalibration of the distribution can recover the missing volume.
 
+## 6. Where the attempt error actually is: dispersion, not level
+
+The 6.7% shortfall explains the mean bias and cannot explain the poor AUC. A uniform correction moves every
+forecast without reordering anything, so it cannot improve discrimination. `diagnose_nfl_qb_volume.py` (new)
+locates the error, and it is not a per-quarterback effect.
+
+| | projected | actual |
+|---|---:|---:|
+| mean attempts | 30.959 | 33.177 |
+| sd across quarterback-games | **1.728** | **9.708** |
+
+The projection is very nearly the same number for every quarterback while actual attempts vary more than five
+times as widely. A predictor with that little dispersion cannot rank anyone, and an AUC near 0.5 is exactly
+what it produces.
+
+The decomposition puts the problem in the team-volume layer, since `project_qb` computes
+`att = team_volume('att') * raw_share(QB, 'att')`:
+
+| component | projected mean (sd) | actual mean (sd) |
+|---|---:|---:|
+| team attempts | 31.975 (1.116) | 34.088 (8.913) |
+| quarterback share | 0.968 (0.041) | 0.972 (0.111) |
+
+Share is fine and low-variance by nature, because the lead passer takes about 97% of team attempts either way.
+Team volume is the problem: it projects roughly 32 attempts for every team. `team_volume` regresses a team's
+own season-to-date attempts and its opponent's allowed attempts toward the league mean with `K_T` pseudo-games
+and then averages the two 50/50. `K_T` is 8.0 and there is no quarterback override, so in weeks 2 to 5, where a
+team has one to four games behind it, 67% to 89% of the projection is the league mean.
+
+**The sweep.** Rebuilding the same projections across `K_T`:
+
+| K_T | bias | MAE | sd projected | sd actual | AUC |
+|---:|---:|---:|---:|---:|---:|
+| 0.0 | -2.098 | 7.429 | 4.209 | 9.708 | 0.5701 |
+| 1.0 | -2.148 | 7.137 | 2.933 | 9.708 | 0.5717 |
+| 2.0 | -2.173 | 7.099 | 2.443 | 9.708 | 0.5699 |
+| 4.0 | -2.198 | 7.106 | 2.015 | 9.708 | 0.5624 |
+| 8.0, as fitted | -2.218 | 7.141 | 1.728 | 9.708 | 0.5500 |
+| 16.0 | -2.231 | 7.170 | 1.583 | 9.708 | 0.5312 |
+
+Three things follow, and they are separate problems.
+
+1. **Discrimination rises monotonically as shrinkage falls**, from AUC 0.5312 at `K_T` 16 to 0.5717 at `K_T` 1.
+   That is the lever for AUC, and it is not a per-quarterback correction.
+2. **The MAE cost is negligible and the fitted value is not even MAE-optimal here.** The whole MAE range is
+   7.099 to 7.170, about 1%, and the best is `K_T` 2.0 at 7.099, so the fitted 8.0 is slightly worse on its own
+   objective. `K_T` was fitted on 2024 by minimising the MAE of projected *targets* for receivers and then
+   reused for quarterback attempts.
+3. **The bias is not a `K_T` problem.** It sits between -2.1 and -2.2 across the whole sweep, so the shortfall
+   is in the level the shrinkage pulls toward, not in the amount of shrinkage. It needs a separate fix, in the
+   league mean or in the 50/50 own-versus-allowed blend.
+
+Two further cautions. Even at `K_T` 0 the projected sd is 4.209 against an actual 9.708, so shrinkage is not the
+only source of compression: averaging a team's own rate with its opponent's allowed rate halves the variance of
+two noisy estimates before any regression happens, and that is inherent to the blend. And the
+per-quarterback table is not a finding at this sample, because each quarterback has three or four games and a
+single game's attempts vary with sd 9.7, so a four-game mean error carries a standard error near 4.9 and the
+rank order is noise.
+
+**So the next modelling step is not a 6.7% level correction.** It is lowering `K_T` for attempts toward 1 or 2,
+worth about +0.04 AUC at no MAE cost, and separately correcting the level. Both are testable on the fit seasons
+before anything is published, and the passing markets stay out of any public claim of predictive advantage until
+they are.
+
 ## The ladder, paired on identical items
 
 31,843 items on 838 player-games, every forecast scored on the same games, markets, books and lines.
@@ -303,10 +369,11 @@ Read plainly:
 4. Refit the aging curve on residuals, not levels, before judging it. The version here should not ship.
 5. Re-run the paired ladder after calibration is in, because the Marcel-versus-v2 comparison has an interval
    that spans zero and more weeks of 2026 props will narrow it.
-6. Investigate projected attempts. The passing audit puts the failure in volume, not efficiency: attempts are
-   under-projected by 6.7% while completion rate and yards per completion are unbiased. That is the narrow,
-   falsifiable target, and the two passing markets stay out of any public claim of predictive advantage until
-   it is fixed.
+6. Lower `K_T` for attempts toward 1 or 2 and correct the level separately. The volume diagnostic separates the
+   two: discrimination rises monotonically as shrinkage falls, worth about +0.04 AUC at no MAE cost, while the
+   6.7% bias sits unchanged across the whole sweep and needs its own fix in the league mean or the blend.
+   Neither is a per-quarterback correction, and the two passing markets stay out of any public claim of
+   predictive advantage until both are done.
 7. Fix the passing grader's population. It selects the quarterback who led his team in attempts in the finished
    game, which is post-game information. The pregame-only rebuild is in `audit_nfl_passing_projections.py` and
    should replace the filter in the grader.
@@ -325,6 +392,7 @@ python3 calibrate_nfl_prop_probabilities.py --season 2026 --csv /tmp/cal_items.c
 python3 calibrate_nfl_prop_probabilities.py --season 2026 --mode forward --csv /tmp/cal_fwd.csv
 python3 measure_nfl_prop_discrimination.py --season 2026 --boot 150    # AUC, decomposition, increment
 python3 audit_nfl_passing_projections.py --season 2026                 # volume vs efficiency
+python3 diagnose_nfl_qb_volume.py --season 2026                        # where the volume error lives, K_T sweep
 python3 marcel_nfl_backtest.py --season 2025 --window 3 --fit-seasons $FIT          # MAE ladder
 python3 marcel_nfl_backtest.py --season 2026 --props --window 3 --csv /tmp/m3.csv --fit-seasons $FIT
 ```
