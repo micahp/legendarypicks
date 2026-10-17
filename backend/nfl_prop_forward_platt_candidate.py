@@ -153,6 +153,16 @@ def evaluate(graded, skipped=None, boots=400, min_items=MIN_TRAIN_ITEMS):
                       "logloss": metrics.logloss(stacked, "p_stack")},
             "logloss_improvement": paired_boot(stacked, "p_stack", "p_mkt_refit", metrics.logloss, boots),
             "brier_improvement": paired_boot(stacked, "p_stack", "p_mkt_refit", metrics.brier, boots)})
+        results["market_increment"]["by_market"] = {}
+        for market in sorted({r["market"] for r in stacked}):
+            mr = [r for r in stacked if r["market"] == market]
+            results["market_increment"]["by_market"][market] = {
+                "items": len(mr),
+                "player_games": len({(r["game_id"], r["player_id"]) for r in mr}),
+                "logloss_improvement": paired_boot(
+                    mr, "p_stack", "p_mkt_refit", metrics.logloss, boots),
+                "brier_improvement": paired_boot(
+                    mr, "p_stack", "p_mkt_refit", metrics.brier, boots)}
     results["candidate_state"] = "research_candidate_not_promoted"
     results["reasons_not_promoted"] = [
         "Actual pre-kickoff projection and injury input snapshots not independently verified",
