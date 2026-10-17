@@ -17,7 +17,7 @@ from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_resu
                              export_previews, preview_feed, latest_game_lines, latest_standings,
                              write_standings, parse_time, model_pick, american_to_decimal,
                              no_vig_pair, backfill_picks, market_candidates, expected_value,
-                             pick_qualifies, grade_pick, RULE_VERSION)
+                             pick_qualifies, grade_pick, grade_game_lines, RULE_VERSION)
 from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
@@ -218,6 +218,57 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(set(game["models"]), set(MODEL_KEYS))
         self.assertEqual(game["models"]["B3_elo"]["grade"]["official_home_goals"], 3)
         self.assertEqual(game["models"]["B3_elo"]["grade"]["statistical_home_goals"], 2)
+
+    def test_game_lines_are_graded_even_without_any_priced_recommendation(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        result = normalize_official_result(GAME_ID, final_document())
+        grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "d" * 64, "fixture")
+        export = export_locked(self.con, 2026)["games"][0]
+        for model_key in MODEL_KEYS:
+            forecast = export["models"][model_key]
+            self.assertIsNone(forecast["pick"])
+            lines = forecast["line_grades"]
+            self.assertEqual(lines["version"], "line-brier-v1")
+            self.assertEqual(lines["reference"]["home_minus_1_5"]["outcome"], 0)
+            self.assertEqual(lines["reference"]["away_minus_1_5"]["outcome"], 0)
+            # The shootout-deciding goal is excluded from statistical targets.
+            self.assertEqual(lines["reference"]["over_5_5"]["outcome"], 0)
+            self.assertEqual(lines["locked_market"], {})
+
+    def test_official_total_market_probability_accounts_for_shootout_goal(self):
+        # The forecast matrix has 80% on 3-3 (shootout results in 4-3)
+        # and 20% on 3-2 (final total 5).
+        matrix = [[0.0] * 5 for _ in range(5)]
+        matrix[3][3] = .8
+        matrix[3][2] = .2
+        forecast = {
+            "p_home_minus_1_5": 0.0, "p_away_minus_1_5": 0.0,
+            "p_over_5.5": .8, "p_over_6.5": 0.0,
+            "p_home_plus_1_5": 1.0, "p_away_plus_1_5": 1.0,
+            "joint_score_probability_matrix_home_rows_away_columns": matrix,
+        }
+        grade = {"official_home_goals": 4, "official_away_goals": 3,
+                 "statistical_home_goals": 3, "statistical_away_goals": 3}
+        quote = {"home_puck_line": -1.5, "home_puck_price": 110, "away_puck_price": -130,
+                 "total_line": 6.5, "over_price": -110, "under_price": -110}
+        lines = grade_game_lines(forecast, grade, GAME_ID, quote, True)
+        self.assertAlmostEqual(lines["locked_market"]["total_over"]["probability"], .8)
+        self.assertEqual(lines["locked_market"]["total_over"]["outcome"], 1)
+        self.assertEqual(lines["reference"]["over_6_5"]["outcome"], 0)
+        self.assertEqual(lines["locked_market"]["puck_home_cover"]["outcome"], 0)
+
+    def test_whole_goal_market_push_is_not_misgraded_as_a_loss(self):
+        matrix = [[0.0] * 5 for _ in range(5)]
+        matrix[3][3] = 1.0
+        forecast = {"p_home_minus_1_5": .1, "p_away_minus_1_5": .1,
+                    "p_over_5.5": .8, "p_over_6.5": .3,
+                    "joint_score_probability_matrix_home_rows_away_columns": matrix}
+        grade = {"official_home_goals": 4, "official_away_goals": 3,
+                 "statistical_home_goals": 3, "statistical_away_goals": 3}
+        quote = {"total_line": 7.0, "over_price": -110, "under_price": -110}
+        lines = grade_game_lines(forecast, grade, GAME_ID, quote, True)
+        self.assertTrue(lines["locked_market"]["total_over"]["push"])
+        self.assertNotIn("brier", lines["locked_market"]["total_over"])
 
     def test_unlocked_projection_stays_visible_after_lock_cutoff_until_lock_exists(self):
         early = dt.datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
