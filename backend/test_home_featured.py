@@ -264,6 +264,7 @@ def lock_game(con, gid, gameday, hs, as_, version=nfl_model.ADOPTED, ml=(105, -1
     if graded and hs is not None:
         con.execute("INSERT INTO projection_grades VALUES ('nfl',?,?,?,?,0.2,0.5,3.5,1.0,'win','g')",
                     (gid, version, hs, as_))
+    nl.finish_run(con, rid, "ok")
     con.commit()
 
 

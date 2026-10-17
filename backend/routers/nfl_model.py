@@ -69,7 +69,7 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
     models: Dict[str, Any] = {}
     for mv, model, n in con.execute(
             "SELECT g.model_version, MAX(r.model), COUNT(*) FROM game_projections g "
-            "LEFT JOIN model_runs r ON r.run_id = g.run_id "
+            "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
             "WHERE g.league = 'nfl' AND g.locked = 1 AND g.season = ? GROUP BY g.model_version",
             (season,)):
         locked[mv] = n
@@ -80,6 +80,7 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
             "       pg.margin_err, pg.ats_result "
             "FROM game_projections g JOIN projection_grades pg ON pg.league = g.league "
             "AND pg.game_id = g.game_id AND pg.model_version = g.model_version "
+            "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
             "WHERE g.league = 'nfl' AND g.locked = 1 AND g.season = ?", (season,)):
         d = out.setdefault(mv, {"graded": 0, "su": {"win": 0, "loss": 0, "tie": 0, "no_pick": 0},
                                 "ats": {"win": 0, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0},
@@ -121,8 +122,12 @@ def record_before(results: List[tuple], team: str, week: int) -> str:
 
 def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
     weeks = [r[0] for r in con.execute(
-        "SELECT DISTINCT week FROM game_projections WHERE league = 'nfl' AND locked IN (0, 1) "
-        "AND season = ? ORDER BY week", (season,))]
+        "SELECT DISTINCT g.week FROM game_projections g "
+        "JOIN model_runs r ON r.run_id = g.run_id "
+        "WHERE g.league = 'nfl' AND g.locked IN (0, 1) AND g.season = ? "
+        "AND ((g.locked = 1 AND r.status = 'ok') OR "
+        "     (g.locked = 0 AND r.status IN ('ok', 'preview'))) ORDER BY g.week",
+        (season,))]
     if week is None:
         week = weeks[-1] if weeks else None
     out: Dict[str, Any] = {"season": season, "week": week, "weeks": weeks, "models": [],
@@ -136,11 +141,13 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
         "       s.captured_at, pg.brier, pg.margin_err, pg.total_err, pg.ats_result, "
         "       pg.actual_home, pg.actual_away, g.locked "
         "FROM game_projections g "
-        "LEFT JOIN model_runs r ON r.run_id = g.run_id "
+        "JOIN model_runs r ON r.run_id = g.run_id "
         "LEFT JOIN nfl_line_snapshots s ON s.snapshot_id = g.line_snapshot_id "
         "LEFT JOIN projection_grades pg ON pg.league = g.league AND pg.game_id = g.game_id "
         "     AND pg.model_version = g.model_version "
-        "WHERE g.league = 'nfl' AND g.locked IN (0, 1) AND g.season = ? AND g.week = ?",
+        "WHERE g.league = 'nfl' AND g.locked IN (0, 1) AND g.season = ? AND g.week = ? "
+        "AND ((g.locked = 1 AND r.status = 'ok') OR "
+        "     (g.locked = 0 AND r.status IN ('ok', 'preview')))",
         (season, week)).fetchall()
     models: Dict[str, Dict[str, Any]] = {}
     locks: Dict[str, Dict[str, Any]] = {}

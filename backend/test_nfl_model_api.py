@@ -33,15 +33,18 @@ class Payload(unittest.TestCase):
         nl.start_run(self.con, "r1", 2026, 5, m.ADOPTED, {})
         nl.lock_week(self.con, "r1", 2026, 5, lambda h, a, n: (17.4, 28.9, 0.19), as_of="t1",
                      now=LOCK_AT)
+        nl.finish_run(self.con, "r1", "ok")
         nl.start_run(self.con, "r2", 2026, 5, m.ADOPTED, {})
         nl.lock_week(self.con, "r2", 2026, 5, lambda h, a, n: (30.0, 10.0, 0.9), as_of="t2",
                      now=LOCK_AT)                       # a refresh: locked = 0, never shown
+        nl.finish_run(self.con, "r2", "ok")
         nl.start_run(self.con, "legacy", 2026, 5, "nfl-v1 cap=21.0 sigma=13.4", {})
         self.con.execute(
             "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
             " proj_margin, proj_total, p_home_win, market_spread, market_total, market_source, "
             " locked, locked_at, model_version) VALUES ('legacy','nfl','g1',2026,5,'GB','CHI',"
             " -14.2,46.3,0.14,-1.5,45.5,'nflverse',1,'t0','nfl-v1 cap=21.0 sigma=13.4')")
+        nl.finish_run(self.con, "legacy", "ok")
         self.con.execute("UPDATE nfl_schedule SET spread_line = 3.0")   # line moved after lock
         self.con.commit()
 
@@ -135,6 +138,25 @@ class Payload(unittest.TestCase):
     def test_no_locks_is_an_empty_payload_not_an_error(self):
         p = m.locks_payload(self.con, 2025, None)
         self.assertEqual((p["week"], p["games"], p["weeks"]), (None, [], []))
+
+    def test_failed_runs_are_not_exposed_as_locks_or_records(self):
+        for run_id in ("r1", "r2", "legacy"):
+            nl.finish_run(self.con, run_id, "failed", error="planted failure")
+        payload = m.locks_payload(self.con, 2026, None)
+        self.assertEqual((payload["week"], payload["weeks"], payload["models"],
+                          payload["games"], payload["record"]), (None, [], [], [], []))
+
+    def test_preview_runs_remain_visible_but_are_not_counted_as_locked(self):
+        nl.start_run(self.con, "preview", 2026, 5, "preview-v", {}, status="preview")
+        self.con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            "proj_margin, proj_total, p_home_win, locked, locked_at, model_version) "
+            "VALUES ('preview','nfl','g1',2026,5,'GB','CHI',2,45,0.6,0,'t-preview','preview-v')")
+        payload = m.locks_payload(self.con, 2026, 5)
+        preview = payload["games"][0]["locks"]["preview-v"]
+        self.assertTrue(preview["preview"])
+        self.assertEqual(preview["previewed_at"], "t-preview")
+        self.assertEqual(next(row for row in payload["models"] if row["version"] == "preview-v")["locks"], 0)
 
     def test_epa_family(self):
         d = m.describe("nfl-epa-v2", "nfl-epa-v2 pure per-play half_life=12 lam=450 NOT-ADOPTED")

@@ -19,9 +19,10 @@ const graded = {
 }
 
 describe('NFL game card', () => {
-  it('a preview shows the projected scores with no status label, and no final', () => {
+  it('a preview shows its status with projected scores and no final', () => {
     render(<GameCard game={game as any} lock={preview as any} mode="projection" />)
     expect(screen.queryByText('NOT LOCKED')).toBeNull()
+    expect(screen.getByText('PREVIEW')).toBeTruthy()
     expect(screen.queryByText('LOCKED')).toBeNull()
     expect(screen.getByText('22.8')).toBeTruthy()
     expect(screen.queryByText(/Our line/)).toBeNull()

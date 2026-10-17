@@ -44,6 +44,7 @@ def _forecast():
 def _final_game(home_id="2375", away_id="3212", status="Final"):
     return {
         "status": status,
+        "completed": True,
         "home": {
             "athlete_id": home_id,
             "name": "Home Player",
@@ -147,6 +148,21 @@ def test_side_order_mismatch_is_not_scored(tmp_path):
 def test_nonstandard_or_void_match_results_are_not_graded(tmp_path, status):
     source_path = tmp_path / "source.sqlite3"
     _source_db(source_path, _final_game(status=status))
+    con = _ledger_db()
+    ledger._store_forecast(con, _forecast())
+    con.commit()
+
+    result = ledger.grade_finals(con, str(source_path), dt.datetime(2026, 10, 17, tzinfo=dt.timezone.utc))
+
+    assert result == {"graded": 0, "identity_mismatch": 0}
+    assert con.execute("SELECT COUNT(*) FROM tennis_v2_research_grades").fetchone()[0] == 0
+
+
+def test_post_state_without_publisher_completed_flag_is_not_graded(tmp_path):
+    source_path = tmp_path / "source.sqlite3"
+    game = _final_game()
+    game["completed"] = False
+    _source_db(source_path, game, state="post")
     con = _ledger_db()
     ledger._store_forecast(con, _forecast())
     con.commit()

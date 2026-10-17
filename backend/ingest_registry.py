@@ -462,6 +462,23 @@ JOBS: List[Dict[str, object]] = [
             },
         ],
     },
+    {
+        "id": "home_prop_refresh",
+        # The featured preview reads one game log per qualifying player. Publish it
+        # weekly after the NFL slate so the homepage handler only reads a stored row.
+        "cadence_min": 10080,
+        "timeout_sec": 180,
+        "host_lock": "home_prop",
+        "steps": [["home_prop_refresh.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "home_prop_cache",
+            "date_column": "generated_at",
+            "where": "id = 1",
+            "stale_hours": 240,
+            "label": "homepage prop preview",
+        }],
+    },
 ]
 
 # Jobs switched off by hand: put an id here and it drops out of every run. Settlement was paused

@@ -64,8 +64,9 @@ def due_by_model(con, now, lead=LEAD):
             continue
         for model, version_of in VERSIONS.items():
             locked = con.execute(
-                "SELECT 1 FROM game_projections WHERE league = 'nfl' AND game_id = ? AND locked = 1 "
-                "AND model_version = ?", (gid, version_of(int(season)))).fetchone()
+                "SELECT 1 FROM game_projections g JOIN model_runs r ON r.run_id = g.run_id "
+                "AND r.status = 'ok' WHERE g.league = 'nfl' AND g.game_id = ? AND g.locked = 1 "
+                "AND g.model_version = ?", (gid, version_of(int(season)))).fetchone()
             if not locked:
                 out[model].append((gid, int(season), int(week)))
     return out

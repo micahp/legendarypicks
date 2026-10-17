@@ -1,3 +1,23 @@
+## v10.0.4
+
+### NHL model
+
+- Grade spread and total forecasts independently from frozen odds and report per-market Brier scores.
+
+### Tennis model
+
+- Grade only publisher-confirmed completed matches, retain the result snapshot provenance, and prevent saved grades from being rewritten.
+- Refresh stored projections when a player's canonical tennis identity mapping changes.
+
+### NFL model and homepage
+
+- Harden lock and grading writes, ignore unsuccessful model runs on the homepage, and show PREVIEW or LOCKED on projection cards.
+- Publish the featured prop preview through the weekly ingest registry job and serve the stored result.
+
+### Scores
+
+- Add 72 Varsity Network direct audio feeds for NCAAF teams.
+
 ## v10.0.3
 
 ### UFC props

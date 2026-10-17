@@ -23,7 +23,8 @@ def _payload():
                     "tournamentId": "363",
                     "date": "2026-08-25T15:00Z",
                     "round": {"id": "1", "displayName": "First Round"},
-                    "status": {"type": {"state": "pre", "description": "Scheduled"}},
+                    "status": {"type": {"state": "pre", "completed": False,
+                                         "description": "Scheduled"}},
                     "competitors": [{
                         "id": "1001",
                         "homeAway": "home",
@@ -39,7 +40,8 @@ def _payload():
                     "tournamentId": "363",
                     "date": "2026-08-27T15:00Z",
                     "round": {"id": "2", "displayName": "Second Round"},
-                    "status": {"type": {"state": "pre", "description": "Scheduled"}},
+                    "status": {"type": {"state": "pre", "completed": False,
+                                         "description": "Scheduled"}},
                     "competitors": [],
                 }],
             }, {
@@ -69,6 +71,22 @@ def test_draw_parser_keeps_rounds_future_tbd_and_official_link():
     assert draw["matches"][0]["away"]["seed"] is None
     assert draw["matches"][1]["home"] is None
     assert draw["matches"][1]["away"] is None
+
+
+def test_tennis_scoreboard_preserves_published_finality_and_winner_flags():
+    payload = _payload()
+    comp = payload["events"][0]["groupings"][0]["competitions"][0]
+    comp["status"]["type"] = {
+        "state": "post", "completed": True, "description": "Retired",
+    }
+    comp["competitors"][0]["winner"] = False
+    comp["competitors"][1]["winner"] = True
+
+    match = espn_client.tennis_draws_from_payload("atp", payload)[0]["matches"][0]
+
+    assert match["completed"] is True
+    assert match["home"]["winner"] is False
+    assert match["away"]["winner"] is True
 
 
 def test_draw_parser_fails_loudly_on_incomplete_round():

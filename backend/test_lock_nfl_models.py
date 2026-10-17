@@ -38,9 +38,11 @@ class Due(unittest.TestCase):
         self._tmp.cleanup()
 
     def lock_as(self, version, model="m"):
-        nl.start_run(self.con, "r-" + version[:6], 2026, 5, version, {}, model=model)
-        nl.lock_week(self.con, "r-" + version[:6], 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
+        run_id = "r-" + version[:6]
+        nl.start_run(self.con, run_id, 2026, 5, version, {}, model=model)
+        nl.lock_week(self.con, run_id, 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
                      now=dt.datetime(2026, 10, 11, 15, 31, tzinfo=UTC), min_lead=lm.LEAD)
+        nl.finish_run(self.con, run_id, "ok")
 
     def test_a_game_is_due_for_every_model_inside_the_window_and_for_none_outside(self):
         inside = lm.due_by_model(self.con, dt.datetime(2026, 10, 11, 15, 30, tzinfo=UTC))

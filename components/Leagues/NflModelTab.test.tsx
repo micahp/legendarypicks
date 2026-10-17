@@ -68,6 +68,7 @@ describe('NFL model tab grading', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(preview) }))
     render(<NflModelTab />)
     await waitFor(() => expect(screen.getByText('CHI @ GB')).toBeTruthy())
+    expect(screen.getAllByText('PREVIEW').length).toBeGreaterThan(0)
     expect(screen.queryByText('LOCKED')).toBeNull()
     expect(screen.queryByText('WIN')).toBeNull()
   })

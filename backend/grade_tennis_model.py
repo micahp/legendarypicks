@@ -4,13 +4,29 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import sys
 
 
 def _winner(game: dict, state: str) -> str | None:
+    if state != "post" or game.get("completed") is not True:
+        return None
     home, away = game.get("home") or {}, game.get("away") or {}
+    status = str(game.get("status") or "").lower()
+    if any(token in status for token in ("cancel", "postpon", "walkover", "abandon", "default")):
+        return None
+
+    if "winner" in home or "winner" in away:
+        if home.get("winner") is True and away.get("winner") is False:
+            return home.get("name")
+        if away.get("winner") is True and home.get("winner") is False:
+            return away.get("name")
+        return None
+    if "retir" in status:
+        return None
+
     home_score, away_score = home.get("score"), away.get("score")
     try:
         if home_score is not None and away_score is not None:
@@ -21,40 +37,65 @@ def _winner(game: dict, state: str) -> str | None:
     except (TypeError, ValueError):
         pass
 
-    if state == "post" and "retir" in str(game.get("status") or "").lower():
-        try:
-            home_games = sum(int(value) for value in home.get("sets") or [])
-            away_games = sum(int(value) for value in away.get("sets") or [])
-            if home_games != away_games:
-                return home.get("name") if home_games > away_games else away.get("name")
-        except (TypeError, ValueError):
-            pass
     return None
 
 
+def _require_grade_schema(con) -> None:
+    required = {
+        "league", "game_id", "winner", "total_games_error", "graded_at",
+        "result_source", "result_game_date", "result_fetched_at",
+        "result_payload_sha256",
+    }
+    columns = {row[1] for row in con.execute("PRAGMA table_info(tennis_model_grades)")}
+    triggers = {
+        row[0] for row in con.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger' "
+            "AND name IN ('tennis_model_grades_immutable_update', "
+            "'tennis_model_grades_immutable_delete')"
+        )
+    }
+    missing = sorted(required - columns)
+    if not _table_exists(con, "tennis_model_grades") or missing or len(triggers) != 2:
+        detail = ", ".join(missing) if missing else "immutability triggers"
+        raise RuntimeError(
+            "tennis grade schema is not ready (missing %s); "
+            "run backend/migrate_all.py --apply before grading" % detail
+        )
+
+
+def _table_exists(con, table: str) -> bool:
+    return con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone() is not None
+
+
 def grade_final_matches(con, now: dt.datetime) -> dict[str, int]:
-    con.execute("""CREATE TABLE IF NOT EXISTS tennis_model_grades(
-      league TEXT NOT NULL CHECK(league IN ('atp','wta')),
-      game_id TEXT NOT NULL,
-      winner TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),
-      total_games_error REAL,
-      graded_at TEXT NOT NULL,
-      PRIMARY KEY(league, game_id)
-    )""")
+    _require_grade_schema(con)
     report = {"locked_finals": 0, "graded": 0, "missing_result": 0}
     for league in ("atp", "wta"):
         rows = con.execute("""
-          SELECT s.game_id,s.payload,s.state,l.projection
+          SELECT s.game_id,s.game_date,s.payload,s.state,s.fetched_at,s.source,l.projection
           FROM scoreboard_snapshots s
           JOIN tennis_model_locks l ON l.league=s.league AND l.game_id=s.game_id
-          WHERE s.league=? AND LOWER(s.state)='post'
+          WHERE s.league=? AND NOT EXISTS (
+            SELECT 1 FROM scoreboard_snapshots newer
+            WHERE newer.league=s.league AND newer.game_id=s.game_id
+              AND (newer.fetched_at>s.fetched_at OR
+                   (newer.fetched_at=s.fetched_at AND newer.game_date>s.game_date))
+          )
         """, (league,)).fetchall()
         for row in rows:
-            report["locked_finals"] += 1
+            if str(row["state"] or "").lower() != "post":
+                continue
             try:
                 game = json.loads(row["payload"])
                 projection = json.loads(row["projection"])
             except (TypeError, ValueError):
+                report["locked_finals"] += 1
+                report["missing_result"] += 1
+                continue
+            report["locked_finals"] += 1
+            if game.get("completed") is not True:
                 report["missing_result"] += 1
                 continue
             actual_winner = _winner(game, str(row["state"] or "").lower())
@@ -65,23 +106,29 @@ def grade_final_matches(con, now: dt.datetime) -> dict[str, int]:
             home_sets = (game.get("home") or {}).get("sets") or []
             away_sets = (game.get("away") or {}).get("sets") or []
             total_games = None
-            if home_sets and len(home_sets) == len(away_sets):
+            is_retirement = "retir" in str(game.get("status") or "").lower()
+            if not is_retirement and home_sets and len(home_sets) == len(away_sets):
                 try:
-                    total_games = sum(int(value) for value in home_sets + away_sets)
+                    set_scores = [int(value) for value in home_sets + away_sets]
+                    if all(value >= 0 for value in set_scores):
+                        total_games = sum(set_scores)
                 except (TypeError, ValueError):
                     pass
             expected = projection.get("totalGames")
             total_error = abs(float(expected) - total_games) if expected is not None and total_games is not None else None
             winner_grade = "correct" if predicted_winner == actual_winner else "incorrect"
-            con.execute("""
-              INSERT INTO tennis_model_grades(league,game_id,winner,total_games_error,graded_at)
-              VALUES(?,?,?,?,?)
-              ON CONFLICT(league,game_id) DO UPDATE SET
-                winner=excluded.winner,
-                total_games_error=excluded.total_games_error,
-                graded_at=excluded.graded_at
-            """, (league, str(row["game_id"]), winner_grade, total_error, now.isoformat()))
-            report["graded"] += 1
+            cursor = con.execute("""
+              INSERT OR IGNORE INTO tennis_model_grades(
+                league,game_id,winner,total_games_error,graded_at,result_source,
+                result_game_date,result_fetched_at,result_payload_sha256
+              ) VALUES(?,?,?,?,?,?,?,?,?)
+            """, (
+                league, str(row["game_id"]), winner_grade, total_error, now.isoformat(),
+                row["source"], row["game_date"], row["fetched_at"],
+                hashlib.sha256(str(row["payload"]).encode("utf-8")).hexdigest(),
+            ))
+            if cursor.rowcount == 1:
+                report["graded"] += 1
     return report
 
 
