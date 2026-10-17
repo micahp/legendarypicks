@@ -1,0 +1,2586 @@
+[
+ {
+  "eid": "401856634",
+  "home": "Alabama Crimson Tide",
+  "away": "East Carolina Pirates",
+  "fh": 48,
+  "fa": 10,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401856636",
+  "home": "Auburn Tigers",
+  "away": "Baylor Bears",
+  "fh": 17,
+  "fa": 16,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401856637",
+  "home": "Florida Gators",
+  "away": "Florida Atlantic Owls",
+  "fh": 66,
+  "fa": 21,
+  "st": "2026-09-05T23:45:00Z"
+ },
+ {
+  "eid": "401856658",
+  "home": "Georgia Bulldogs",
+  "away": "Tennessee State Tigers",
+  "fh": 63,
+  "fa": 3,
+  "st": "2026-09-05T19:00:00Z"
+ },
+ {
+  "eid": "401856660",
+  "home": "LSU Tigers",
+  "away": "Clemson Tigers",
+  "fh": 51,
+  "fa": 10,
+  "st": "2026-09-05T23:30:00Z"
+ },
+ {
+  "eid": "401856661",
+  "home": "Ole Miss Rebels",
+  "away": "Louisville Cardinals",
+  "fh": 41,
+  "fa": 38,
+  "st": "2026-09-06T23:30:00Z"
+ },
+ {
+  "eid": "401856663",
+  "home": "Missouri Tigers",
+  "away": "Arkansas-Pine Bluff Golden Lions",
+  "fh": 54,
+  "fa": 14,
+  "st": "2026-09-04T00:00:00Z"
+ },
+ {
+  "eid": "401856664",
+  "home": "Oklahoma Sooners",
+  "away": "UTEP Miners",
+  "fh": 51,
+  "fa": 0,
+  "st": "2026-09-05T00:00:00Z"
+ },
+ {
+  "eid": "401856665",
+  "home": "South Carolina Gamecocks",
+  "away": "Kent State Golden Flashes",
+  "fh": 57,
+  "fa": 0,
+  "st": "2026-09-05T16:45:00Z"
+ },
+ {
+  "eid": "401856667",
+  "home": "Texas Longhorns",
+  "away": "Texas State Bobcats",
+  "fh": 59,
+  "fa": 7,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401856668",
+  "home": "Texas A&M Aggies",
+  "away": "Missouri State Bears",
+  "fh": 50,
+  "fa": 0,
+  "st": "2026-09-05T23:00:00Z"
+ },
+ {
+  "eid": "401856670",
+  "home": "Utah Utes",
+  "away": "Arkansas Razorbacks",
+  "fh": 43,
+  "fa": 10,
+  "st": "2026-09-13T02:15:00Z"
+ },
+ {
+  "eid": "401856671",
+  "home": "Auburn Tigers",
+  "away": "Southern Miss Golden Eagles",
+  "fh": 43,
+  "fa": 8,
+  "st": "2026-09-12T23:45:00Z"
+ },
+ {
+  "eid": "401856673",
+  "home": "Georgia Bulldogs",
+  "away": "Western Kentucky Hilltoppers",
+  "fh": 70,
+  "fa": 20,
+  "st": "2026-09-12T16:45:00Z"
+ },
+ {
+  "eid": "401856674",
+  "home": "Kentucky Wildcats",
+  "away": "Alabama Crimson Tide",
+  "fh": 17,
+  "fa": 45,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401856676",
+  "home": "Ole Miss Rebels",
+  "away": "Charlotte 49ers",
+  "fh": 41,
+  "fa": 9,
+  "st": "2026-09-12T23:45:00Z"
+ },
+ {
+  "eid": "401856677",
+  "home": "Minnesota Golden Gophers",
+  "away": "Mississippi State Bulldogs",
+  "fh": 13,
+  "fa": 38,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401856678",
+  "home": "Kansas Jayhawks",
+  "away": "Missouri Tigers",
+  "fh": 21,
+  "fa": 38,
+  "st": "2026-09-12T00:00:00Z"
+ },
+ {
+  "eid": "401856679",
+  "home": "Michigan Wolverines",
+  "away": "Oklahoma Sooners",
+  "fh": 17,
+  "fa": 10,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401856681",
+  "home": "Georgia Tech Yellow Jackets",
+  "away": "Tennessee Volunteers",
+  "fh": 24,
+  "fa": 45,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401856682",
+  "home": "Texas Longhorns",
+  "away": "Ohio State Buckeyes",
+  "fh": 24,
+  "fa": 23,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401856683",
+  "home": "Texas A&M Aggies",
+  "away": "Arizona State Sun Devils",
+  "fh": 48,
+  "fa": 20,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401856684",
+  "home": "Vanderbilt Commodores",
+  "away": "Delaware Blue Hens",
+  "fh": 35,
+  "fa": 26,
+  "st": "2026-09-12T20:15:00Z"
+ },
+ {
+  "eid": "401856685",
+  "home": "Alabama Crimson Tide",
+  "away": "Florida State Seminoles",
+  "fh": 50,
+  "fa": 36,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401856686",
+  "home": "Arkansas Razorbacks",
+  "away": "Georgia Bulldogs",
+  "fh": 17,
+  "fa": 45,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401856687",
+  "home": "Auburn Tigers",
+  "away": "Florida Gators",
+  "fh": 39,
+  "fa": 44,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401856688",
+  "home": "Ole Miss Rebels",
+  "away": "LSU Tigers",
+  "fh": 32,
+  "fa": 24,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401856689",
+  "home": "Missouri Tigers",
+  "away": "Troy Trojans",
+  "fh": 27,
+  "fa": 17,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401856690",
+  "home": "Oklahoma Sooners",
+  "away": "New Mexico Lobos",
+  "fh": 14,
+  "fa": 6,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401856691",
+  "home": "South Carolina Gamecocks",
+  "away": "Mississippi State Bulldogs",
+  "fh": 34,
+  "fa": 41,
+  "st": "2026-09-19T20:15:00Z"
+ },
+ {
+  "eid": "401856692",
+  "home": "Tennessee Volunteers",
+  "away": "Kennesaw State Owls",
+  "fh": 42,
+  "fa": 9,
+  "st": "2026-09-19T23:45:00Z"
+ },
+ {
+  "eid": "401856693",
+  "home": "Texas Longhorns",
+  "away": "UTSA Roadrunners",
+  "fh": 30,
+  "fa": 6,
+  "st": "2026-09-20T00:00:00Z"
+ },
+ {
+  "eid": "401856694",
+  "home": "Texas A&M Aggies",
+  "away": "Kentucky Wildcats",
+  "fh": 21,
+  "fa": 31,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401856695",
+  "home": "Vanderbilt Commodores",
+  "away": "NC State Wolfpack",
+  "fh": 35,
+  "fa": 31,
+  "st": "2026-09-19T16:45:00Z"
+ },
+ {
+  "eid": "401856696",
+  "home": "Alabama Crimson Tide",
+  "away": "South Carolina Gamecocks",
+  "fh": 49,
+  "fa": 18,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401856697",
+  "home": "Arkansas Razorbacks",
+  "away": "Tulsa Golden Hurricane",
+  "fh": 34,
+  "fa": 6,
+  "st": "2026-09-27T00:00:00Z"
+ },
+ {
+  "eid": "401856698",
+  "home": "Auburn Tigers",
+  "away": "Vanderbilt Commodores",
+  "fh": 21,
+  "fa": 15,
+  "st": "2026-09-26T20:15:00Z"
+ },
+ {
+  "eid": "401856699",
+  "home": "Florida Gators",
+  "away": "Ole Miss Rebels",
+  "fh": 52,
+  "fa": 28,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401856700",
+  "home": "Georgia Bulldogs",
+  "away": "Oklahoma Sooners",
+  "fh": 41,
+  "fa": 13,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401856702",
+  "home": "LSU Tigers",
+  "away": "Texas A&M Aggies",
+  "fh": 35,
+  "fa": 6,
+  "st": "2026-09-26T23:30:00Z"
+ },
+ {
+  "eid": "401856703",
+  "home": "Mississippi State Bulldogs",
+  "away": "Missouri Tigers",
+  "fh": 31,
+  "fa": 24,
+  "st": "2026-09-26T23:45:00Z"
+ },
+ {
+  "eid": "401856704",
+  "home": "Tennessee Volunteers",
+  "away": "Texas Longhorns",
+  "fh": 17,
+  "fa": 20,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401856712",
+  "home": "Alabama Crimson Tide",
+  "away": "Georgia Bulldogs",
+  "fh": 17,
+  "fa": 20,
+  "st": "2026-10-10T23:30Z"
+ },
+ {
+  "eid": "401856713",
+  "home": "Arkansas Razorbacks",
+  "away": "Tennessee Volunteers",
+  "fh": 17,
+  "fa": 24,
+  "st": "2026-10-10T20:15Z"
+ },
+ {
+  "eid": "401856714",
+  "home": "Florida Gators",
+  "away": "South Carolina Gamecocks",
+  "fh": 19,
+  "fa": 38,
+  "st": "2026-10-10T16:45Z"
+ },
+ {
+  "eid": "401856715",
+  "home": "Kentucky Wildcats",
+  "away": "LSU Tigers",
+  "fh": 35,
+  "fa": 34,
+  "st": "2026-10-10T23:00Z"
+ },
+ {
+  "eid": "401856716",
+  "home": "Missouri Tigers",
+  "away": "Texas A&M Aggies",
+  "fh": 27,
+  "fa": 6,
+  "st": "2026-10-10T16:00Z"
+ },
+ {
+  "eid": "401856717",
+  "home": "Oklahoma Sooners",
+  "away": "Texas Longhorns",
+  "fh": 27,
+  "fa": 24,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401856718",
+  "home": "Vanderbilt Commodores",
+  "away": "Ole Miss Rebels",
+  "fh": 17,
+  "fa": 52,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401856719",
+  "home": "Georgia Bulldogs",
+  "away": "Auburn Tigers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401856720",
+  "home": "LSU Tigers",
+  "away": "Mississippi State Bulldogs",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401856721",
+  "home": "Ole Miss Rebels",
+  "away": "Missouri Tigers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401856722",
+  "home": "Oklahoma Sooners",
+  "away": "Kentucky Wildcats",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401856723",
+  "home": "Tennessee Volunteers",
+  "away": "Alabama Crimson Tide",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401856724",
+  "home": "Texas Longhorns",
+  "away": "Florida Gators",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401856726",
+  "home": "Vanderbilt Commodores",
+  "away": "Arkansas Razorbacks",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00+00:00"
+ },
+ {
+  "eid": "401856766",
+  "home": "TCU Horned Frogs",
+  "away": "North Carolina Tar Heels",
+  "fh": 10,
+  "fa": 15,
+  "st": "2026-08-29T16:00:00Z"
+ },
+ {
+  "eid": "401856768",
+  "home": "Utah Utes",
+  "away": "Idaho Vandals",
+  "fh": 66,
+  "fa": 14,
+  "st": "2026-09-04T01:00:00Z"
+ },
+ {
+  "eid": "401856772",
+  "home": "Tulsa Golden Hurricane",
+  "away": "Oklahoma State Cowboys",
+  "fh": 24,
+  "fa": 10,
+  "st": "2026-09-05T19:45:00Z"
+ },
+ {
+  "eid": "401856776",
+  "home": "Georgia Tech Yellow Jackets",
+  "away": "Colorado Buffaloes",
+  "fh": 13,
+  "fa": 14,
+  "st": "2026-09-04T00:00:00Z"
+ },
+ {
+  "eid": "401856777",
+  "home": "Cincinnati Bearcats",
+  "away": "Boston College Eagles",
+  "fh": 34,
+  "fa": 15,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401856778",
+  "home": "Houston Cougars",
+  "away": "Oregon State Beavers",
+  "fh": 33,
+  "fa": 20,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401856780",
+  "home": "West Virginia Mountaineers",
+  "away": "Coastal Carolina Chanticleers",
+  "fh": 31,
+  "fa": 24,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401856781",
+  "home": "Kansas State Wildcats",
+  "away": "Washington State Cougars",
+  "fh": 34,
+  "fa": 7,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401856782",
+  "home": "Oklahoma State Cowboys",
+  "away": "Oregon Ducks",
+  "fh": 39,
+  "fa": 31,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401856783",
+  "home": "Oregon State Beavers",
+  "away": "Texas Tech Red Raiders",
+  "fh": 24,
+  "fa": 35,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401856788",
+  "home": "Iowa Hawkeyes",
+  "away": "Iowa State Cyclones",
+  "fh": 16,
+  "fa": 13,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401856790",
+  "home": "Pittsburgh Panthers",
+  "away": "UCF Knights",
+  "fh": 12,
+  "fa": 7,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401856792",
+  "home": "Kansas State Wildcats",
+  "away": "Tulane Green Wave",
+  "fh": 31,
+  "fa": 20,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401856793",
+  "home": "Arizona Wildcats",
+  "away": "Northern Illinois Huskies",
+  "fh": 42,
+  "fa": 17,
+  "st": "2026-09-20T02:30:00Z"
+ },
+ {
+  "eid": "401856795",
+  "home": "Colorado State Rams",
+  "away": "BYU Cougars",
+  "fh": 23,
+  "fa": 41,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401856796",
+  "home": "Northwestern Wildcats",
+  "away": "Colorado Buffaloes",
+  "fh": 41,
+  "fa": 7,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401856797",
+  "home": "Cincinnati Bearcats",
+  "away": "Miami (OH) RedHawks",
+  "fh": 35,
+  "fa": 31,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401856798",
+  "home": "Iowa State Cyclones",
+  "away": "Bowling Green Falcons",
+  "fh": 55,
+  "fa": 7,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401856799",
+  "home": "TCU Horned Frogs",
+  "away": "Arkansas State Red Wolves",
+  "fh": 31,
+  "fa": 7,
+  "st": "2026-09-20T00:00:00Z"
+ },
+ {
+  "eid": "401856800",
+  "home": "UCF Knights",
+  "away": "Georgia State Panthers",
+  "fh": 44,
+  "fa": 30,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401856801",
+  "home": "Utah Utes",
+  "away": "Utah State Aggies",
+  "fh": 33,
+  "fa": 0,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401856802",
+  "home": "Virginia Cavaliers",
+  "away": "West Virginia Mountaineers",
+  "fh": 27,
+  "fa": 38,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401856803",
+  "home": "Oklahoma State Cowboys",
+  "away": "Murray State Racers",
+  "fh": 59,
+  "fa": 0,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401856804",
+  "home": "Washington State Cougars",
+  "away": "Arizona Wildcats",
+  "fh": 24,
+  "fa": 34,
+  "st": "2026-09-26T23:30:00Z"
+ },
+ {
+  "eid": "401856805",
+  "home": "Texas Tech Red Raiders",
+  "away": "Sam Houston Bearkats",
+  "fh": 49,
+  "fa": 14,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401856806",
+  "home": "Georgia Southern Eagles",
+  "away": "Houston Cougars",
+  "fh": 28,
+  "fa": 42,
+  "st": "2026-09-26T20:00:00Z"
+ },
+ {
+  "eid": "401856808",
+  "home": "Arizona State Sun Devils",
+  "away": "Hawai'i Rainbow Warriors",
+  "fh": 30,
+  "fa": 12,
+  "st": "2026-10-11T02:30Z"
+ },
+ {
+  "eid": "401856809",
+  "home": "BYU Cougars",
+  "away": "Notre Dame Fighting Irish",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401856810",
+  "home": "BYU Cougars",
+  "away": "Arizona Wildcats",
+  "fh": 28,
+  "fa": 17,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401856811",
+  "home": "Texas Tech Red Raiders",
+  "away": "Houston Cougars",
+  "fh": 28,
+  "fa": 26,
+  "st": "2026-09-19T00:00:00Z"
+ },
+ {
+  "eid": "401856812",
+  "home": "Kansas Jayhawks",
+  "away": "Arizona State Sun Devils",
+  "fh": 17,
+  "fa": 24,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401856813",
+  "home": "Baylor Bears",
+  "away": "Colorado Buffaloes",
+  "fh": 23,
+  "fa": 13,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401856814",
+  "home": "Cincinnati Bearcats",
+  "away": "Kansas State Wildcats",
+  "fh": 31,
+  "fa": 26,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401856815",
+  "home": "UCF Knights",
+  "away": "TCU Horned Frogs",
+  "fh": 21,
+  "fa": 13,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401856816",
+  "home": "Iowa State Cyclones",
+  "away": "Utah Utes",
+  "fh": 17,
+  "fa": 31,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401856823",
+  "home": "West Virginia Mountaineers",
+  "away": "Arizona Wildcats",
+  "fh": 31,
+  "fa": 52,
+  "st": "2026-10-10T16:00Z"
+ },
+ {
+  "eid": "401856824",
+  "home": "Oklahoma State Cowboys",
+  "away": "UCF Knights",
+  "fh": 42,
+  "fa": 28,
+  "st": "2026-10-10T16:00:00Z"
+ },
+ {
+  "eid": "401856825",
+  "home": "Kansas State Wildcats",
+  "away": "Houston Cougars",
+  "fh": 16,
+  "fa": 35,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401856826",
+  "home": "BYU Cougars",
+  "away": "Iowa State Cyclones",
+  "fh": 24,
+  "fa": 10,
+  "st": "2026-10-10T02:30Z"
+ },
+ {
+  "eid": "401856827",
+  "home": "Utah Utes",
+  "away": "Kansas Jayhawks",
+  "fh": 41,
+  "fa": 24,
+  "st": "2026-10-11T00:00Z"
+ },
+ {
+  "eid": "401856828",
+  "home": "Texas Tech Red Raiders",
+  "away": "Arizona State Sun Devils",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401856829",
+  "home": "West Virginia Mountaineers",
+  "away": "Cincinnati Bearcats",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401856830",
+  "home": "Kansas State Wildcats",
+  "away": "Kansas Jayhawks",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401856831",
+  "home": "Houston Cougars",
+  "away": "Oklahoma State Cowboys",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401856832",
+  "home": "Baylor Bears",
+  "away": "TCU Horned Frogs",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00+00:00"
+ },
+ {
+  "eid": "401856833",
+  "home": "Colorado Buffaloes",
+  "away": "Utah Utes",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T02:15:00+00:00"
+ },
+ {
+  "eid": "401856881",
+  "home": "West Virginia Mountaineers",
+  "away": "Oklahoma State Cowboys",
+  "fh": 24,
+  "fa": 41,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401858201",
+  "home": "Stanford Cardinal",
+  "away": "Hawai'i Rainbow Warriors",
+  "fh": 37,
+  "fa": 27,
+  "st": "2026-08-29T23:00:00Z"
+ },
+ {
+  "eid": "401858202",
+  "home": "Virginia Cavaliers",
+  "away": "NC State Wolfpack",
+  "fh": 34,
+  "fa": 8,
+  "st": "2026-08-29T19:30:00Z"
+ },
+ {
+  "eid": "401858204",
+  "home": "Wake Forest Demon Deacons",
+  "away": "Akron Zips",
+  "fh": 38,
+  "fa": 16,
+  "st": "2026-09-03T23:00:00Z"
+ },
+ {
+  "eid": "401858207",
+  "home": "Pittsburgh Panthers",
+  "away": "Miami (OH) RedHawks",
+  "fh": 59,
+  "fa": 14,
+  "st": "2026-09-05T16:30:00Z"
+ },
+ {
+  "eid": "401858209",
+  "home": "Duke Blue Devils",
+  "away": "Tulane Green Wave",
+  "fh": 17,
+  "fa": 3,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401858210",
+  "home": "California Golden Bears",
+  "away": "UCLA Bruins",
+  "fh": 24,
+  "fa": 45,
+  "st": "2026-09-06T02:30:00Z"
+ },
+ {
+  "eid": "401858212",
+  "home": "Florida State Seminoles",
+  "away": "SMU Mustangs",
+  "fh": 24,
+  "fa": 27,
+  "st": "2026-09-07T23:30:00Z"
+ },
+ {
+  "eid": "401858214",
+  "home": "Boston College Eagles",
+  "away": "Rutgers Scarlet Knights",
+  "fh": 28,
+  "fa": 21,
+  "st": "2026-09-11T23:30:00Z"
+ },
+ {
+  "eid": "401858215",
+  "home": "Louisville Cardinals",
+  "away": "Villanova Wildcats",
+  "fh": 59,
+  "fa": 13,
+  "st": "2026-09-11T23:00:00Z"
+ },
+ {
+  "eid": "401858216",
+  "home": "Syracuse Orange",
+  "away": "California Golden Bears",
+  "fh": 18,
+  "fa": 21,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401858217",
+  "home": "Illinois Fighting Illini",
+  "away": "Duke Blue Devils",
+  "fh": 27,
+  "fa": 31,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401858219",
+  "home": "Clemson Tigers",
+  "away": "Georgia Southern Eagles",
+  "fh": 22,
+  "fa": 7,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401858220",
+  "home": "Virginia Cavaliers",
+  "away": "Norfolk State Spartans",
+  "fh": 59,
+  "fa": 3,
+  "st": "2026-09-11T23:00:00Z"
+ },
+ {
+  "eid": "401858221",
+  "home": "Virginia Tech Hokies",
+  "away": "Old Dominion Monarchs",
+  "fh": 44,
+  "fa": 21,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401858222",
+  "home": "NC State Wolfpack",
+  "away": "Richmond Spiders",
+  "fh": 73,
+  "fa": 0,
+  "st": "2026-09-11T23:00:00Z"
+ },
+ {
+  "eid": "401858224",
+  "home": "Purdue Boilermakers",
+  "away": "Wake Forest Demon Deacons",
+  "fh": 36,
+  "fa": 38,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401858225",
+  "home": "Pittsburgh",
+  "away": "Syracuse",
+  "fh": 27,
+  "fa": 13,
+  "st": "2026-09-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401858229",
+  "home": "Clemson Tigers",
+  "away": "North Carolina Tar Heels",
+  "fh": 28,
+  "fa": 20,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401858230",
+  "home": "Louisville Cardinals",
+  "away": "SMU Mustangs",
+  "fh": 41,
+  "fa": 31,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401858231",
+  "home": "Duke Blue Devils",
+  "away": "Stanford Cardinal",
+  "fh": 35,
+  "fa": 7,
+  "st": "2026-09-19T20:00:00Z"
+ },
+ {
+  "eid": "401858232",
+  "home": "Maryland Terrapins",
+  "away": "Virginia Tech Hokies",
+  "fh": 26,
+  "fa": 35,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401858234",
+  "home": "California Golden Bears",
+  "away": "Clemson Tigers",
+  "fh": 10,
+  "fa": 24,
+  "st": "2026-09-26T02:30:00Z"
+ },
+ {
+  "eid": "401858239",
+  "home": "Virginia Cavaliers",
+  "away": "Delaware Blue Hens",
+  "fh": 42,
+  "fa": 3,
+  "st": "2026-09-26T22:00:00Z"
+ },
+ {
+  "eid": "401858240",
+  "home": "Stanford Cardinal",
+  "away": "Georgia Tech Yellow Jackets",
+  "fh": 34,
+  "fa": 27,
+  "st": "2026-09-27T02:30:00Z"
+ },
+ {
+  "eid": "401858241",
+  "home": "SMU Mustangs",
+  "away": "Missouri State Bears",
+  "fh": 34,
+  "fa": 24,
+  "st": "2026-09-27T01:00:00Z"
+ },
+ {
+  "eid": "401858242",
+  "home": "Boston College Eagles",
+  "away": "Virginia Tech Hokies",
+  "fh": 14,
+  "fa": 21,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401858243",
+  "home": "Louisville Cardinals",
+  "away": "Wake Forest Demon Deacons",
+  "fh": 27,
+  "fa": 30,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401858254",
+  "home": "Louisville Cardinals",
+  "away": "Florida State Seminoles",
+  "fh": 44,
+  "fa": 20,
+  "st": "2026-10-09T23:00Z"
+ },
+ {
+  "eid": "401858255",
+  "home": "Georgia Tech Yellow Jackets",
+  "away": "Duke Blue Devils",
+  "fh": 28,
+  "fa": 25,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401858256",
+  "home": "Pittsburgh Panthers",
+  "away": "North Carolina Tar Heels",
+  "fh": 17,
+  "fa": 21,
+  "st": "2026-10-10T16:00Z"
+ },
+ {
+  "eid": "401858257",
+  "home": "Notre Dame Fighting Irish",
+  "away": "Stanford Cardinal",
+  "fh": 58,
+  "fa": 7,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401858258",
+  "home": "Virginia Cavaliers",
+  "away": "Syracuse Orange",
+  "fh": 28,
+  "fa": 25,
+  "st": "2026-10-10T23:30Z"
+ },
+ {
+  "eid": "401858259",
+  "home": "California Golden Bears",
+  "away": "Virginia Tech Hokies",
+  "fh": 25,
+  "fa": 20,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401858260",
+  "home": "NC State Wolfpack",
+  "away": "Wake Forest Demon Deacons",
+  "fh": 14,
+  "fa": 38,
+  "st": "2026-10-10T16:00Z"
+ },
+ {
+  "eid": "401858263",
+  "home": "Miami Hurricanes",
+  "away": "Florida State Seminoles",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00Z"
+ },
+ {
+  "eid": "401858264",
+  "home": "Virginia Tech Hokies",
+  "away": "Georgia Tech Yellow Jackets",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00Z"
+ },
+ {
+  "eid": "401858265",
+  "home": "Syracuse Orange",
+  "away": "Louisville Cardinals",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401858266",
+  "home": "Duke Blue Devils",
+  "away": "North Carolina Tar Heels",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401858267",
+  "home": "Boston College Eagles",
+  "away": "Pittsburgh Panthers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401858268",
+  "home": "SMU Mustangs",
+  "away": "Virginia Cavaliers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401858269",
+  "home": "California Golden Bears",
+  "away": "Wake Forest Demon Deacons",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T02:30:00+00:00"
+ },
+ {
+  "eid": "401858423",
+  "home": "Rutgers Scarlet Knights",
+  "away": "Massachusetts Minutemen",
+  "fh": 21,
+  "fa": 37,
+  "st": "2026-09-03T22:00:00Z"
+ },
+ {
+  "eid": "401858424",
+  "home": "Illinois Fighting Illini",
+  "away": "UAB Blazers",
+  "fh": 42,
+  "fa": 23,
+  "st": "2026-09-04T01:00:00Z"
+ },
+ {
+  "eid": "401858425",
+  "home": "Indiana Hoosiers",
+  "away": "North Texas Mean Green",
+  "fh": 52,
+  "fa": 16,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401858426",
+  "home": "Iowa Hawkeyes",
+  "away": "Northern Illinois Huskies",
+  "fh": 40,
+  "fa": 0,
+  "st": "2026-09-05T20:15:00Z"
+ },
+ {
+  "eid": "401858428",
+  "home": "Michigan Wolverines",
+  "away": "Western Michigan Broncos",
+  "fh": 13,
+  "fa": 12,
+  "st": "2026-09-05T23:30:00Z"
+ },
+ {
+  "eid": "401858429",
+  "home": "Michigan State Spartans",
+  "away": "Toledo Rockets",
+  "fh": 30,
+  "fa": 20,
+  "st": "2026-09-05T00:00:00Z"
+ },
+ {
+  "eid": "401858430",
+  "home": "Nebraska Cornhuskers",
+  "away": "Ohio Bobcats",
+  "fh": 49,
+  "fa": 21,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401858432",
+  "home": "Ohio State Buckeyes",
+  "away": "Ball State Cardinals",
+  "fh": 56,
+  "fa": 3,
+  "st": "2026-09-05T16:30:00Z"
+ },
+ {
+  "eid": "401858433",
+  "home": "Oregon Ducks",
+  "away": "Boise State Broncos",
+  "fh": 34,
+  "fa": 27,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401858434",
+  "home": "Penn State Nittany Lions",
+  "away": "Marshall Thundering Herd",
+  "fh": 45,
+  "fa": 0,
+  "st": "2026-09-05T19:30:00Z"
+ },
+ {
+  "eid": "401858436",
+  "home": "USC Trojans",
+  "away": "Fresno State Bulldogs",
+  "fh": 39,
+  "fa": 0,
+  "st": "2026-09-05T01:00:00Z"
+ },
+ {
+  "eid": "401858437",
+  "home": "Washington Huskies",
+  "away": "Washington State Cougars",
+  "fh": 24,
+  "fa": 10,
+  "st": "2026-09-06T20:00:00Z"
+ },
+ {
+  "eid": "401858438",
+  "home": "Notre Dame Fighting Irish",
+  "away": "Wisconsin Badgers",
+  "fh": 41,
+  "fa": 13,
+  "st": "2026-09-06T23:30:00Z"
+ },
+ {
+  "eid": "401858440",
+  "home": "Michigan State Spartans",
+  "away": "Eastern Michigan Eagles",
+  "fh": 35,
+  "fa": 7,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401858441",
+  "home": "Nebraska Cornhuskers",
+  "away": "Bowling Green Falcons",
+  "fh": 56,
+  "fa": 7,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401858442",
+  "home": "Temple Owls",
+  "away": "Penn State Nittany Lions",
+  "fh": 9,
+  "fa": 27,
+  "st": "2026-09-12T16:00:00Z"
+ },
+ {
+  "eid": "401858443",
+  "home": "UCLA Bruins",
+  "away": "San Diego State Aztecs",
+  "fh": 28,
+  "fa": 10,
+  "st": "2026-09-12T23:15:00Z"
+ },
+ {
+  "eid": "401858445",
+  "home": "USC Trojans",
+  "away": "Louisiana Ragin' Cajuns",
+  "fh": 49,
+  "fa": 30,
+  "st": "2026-09-13T03:00:00Z"
+ },
+ {
+  "eid": "401858446",
+  "home": "Washington Huskies",
+  "away": "Utah State Aggies",
+  "fh": 16,
+  "fa": 14,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401858448",
+  "home": "Illinois Fighting Illini",
+  "away": "Southern Illinois Salukis",
+  "fh": 48,
+  "fa": 10,
+  "st": "2026-09-19T18:00:00Z"
+ },
+ {
+  "eid": "401858449",
+  "home": "Indiana Hoosiers",
+  "away": "Western Kentucky Hilltoppers",
+  "fh": 38,
+  "fa": 0,
+  "st": "2026-09-19T20:00:00Z"
+ },
+ {
+  "eid": "401858450",
+  "home": "Michigan Wolverines",
+  "away": "UTEP Miners",
+  "fh": 52,
+  "fa": 17,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401858451",
+  "home": "Minnesota Golden Gophers",
+  "away": "Akron Zips",
+  "fh": 41,
+  "fa": 7,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401858453",
+  "home": "Notre Dame Fighting Irish",
+  "away": "Michigan State Spartans",
+  "fh": 27,
+  "fa": 10,
+  "st": "2026-09-19T23:30:00Z"
+ },
+ {
+  "eid": "401858454",
+  "home": "Ohio State Buckeyes",
+  "away": "Kent State Golden Flashes",
+  "fh": 59,
+  "fa": 3,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401858455",
+  "home": "Oregon Ducks",
+  "away": "Portland State Vikings",
+  "fh": 84,
+  "fa": 0,
+  "st": "2026-09-19T02:30:00Z"
+ },
+ {
+  "eid": "401858456",
+  "home": "Penn State Nittany Lions",
+  "away": "Buffalo Bulls",
+  "fh": 55,
+  "fa": 13,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401858457",
+  "home": "Rutgers Scarlet Knights",
+  "away": "USC Trojans",
+  "fh": 35,
+  "fa": 42,
+  "st": "2026-09-19T19:30:00Z"
+ },
+ {
+  "eid": "401858458",
+  "home": "UCLA Bruins",
+  "away": "Purdue Boilermakers",
+  "fh": 52,
+  "fa": 38,
+  "st": "2026-09-20T03:00:00Z"
+ },
+ {
+  "eid": "401858460",
+  "home": "Wisconsin Badgers",
+  "away": "Eastern Michigan Eagles",
+  "fh": 54,
+  "fa": 10,
+  "st": "2026-09-19T16:30:00Z"
+ },
+ {
+  "eid": "401858461",
+  "home": "Indiana Hoosiers",
+  "away": "Northwestern Wildcats",
+  "fh": 29,
+  "fa": 23,
+  "st": "2026-09-26T00:00:00Z"
+ },
+ {
+  "eid": "401858462",
+  "home": "Maryland Terrapins",
+  "away": "UCLA Bruins",
+  "fh": 3,
+  "fa": 54,
+  "st": "2026-09-26T17:30:00Z"
+ },
+ {
+  "eid": "401858463",
+  "home": "Michigan Wolverines",
+  "away": "Iowa Hawkeyes",
+  "fh": 19,
+  "fa": 20,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401858464",
+  "home": "Michigan State Spartans",
+  "away": "Nebraska Cornhuskers",
+  "fh": 13,
+  "fa": 31,
+  "st": "2026-09-26T21:00:00Z"
+ },
+ {
+  "eid": "401858465",
+  "home": "Ohio State Buckeyes",
+  "away": "Illinois Fighting Illini",
+  "fh": 42,
+  "fa": 19,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401858466",
+  "home": "Penn State Nittany Lions",
+  "away": "Wisconsin Badgers",
+  "fh": 20,
+  "fa": 24,
+  "st": "2026-09-26T21:00:00Z"
+ },
+ {
+  "eid": "401858467",
+  "home": "Purdue Boilermakers",
+  "away": "Notre Dame Fighting Irish",
+  "fh": 10,
+  "fa": 49,
+  "st": "2026-09-26T18:00:00Z"
+ },
+ {
+  "eid": "401858468",
+  "home": "Rutgers Scarlet Knights",
+  "away": "Howard Bison",
+  "fh": 58,
+  "fa": 7,
+  "st": "2026-09-25T23:00:00Z"
+ },
+ {
+  "eid": "401858469",
+  "home": "USC Trojans",
+  "away": "Oregon Ducks",
+  "fh": 27,
+  "fa": 41,
+  "st": "2026-09-26T23:30:00Z"
+ },
+ {
+  "eid": "401858470",
+  "home": "Washington Huskies",
+  "away": "Minnesota Golden Gophers",
+  "fh": 24,
+  "fa": 27,
+  "st": "2026-09-27T03:00:00Z"
+ },
+ {
+  "eid": "401858471",
+  "home": "Iowa Hawkeyes",
+  "away": "Northern Iowa Panthers",
+  "fh": 55,
+  "fa": 0,
+  "st": "2026-09-19T20:00:00Z"
+ },
+ {
+  "eid": "401858480",
+  "home": "Michigan State Spartans",
+  "away": "Illinois Fighting Illini",
+  "fh": 37,
+  "fa": 38,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401858481",
+  "home": "Nebraska Cornhuskers",
+  "away": "Indiana Hoosiers",
+  "fh": 17,
+  "fa": 20,
+  "st": "2026-10-10T16:00Z"
+ },
+ {
+  "eid": "401858482",
+  "home": "Northwestern Wildcats",
+  "away": "Ball State Cardinals",
+  "fh": 45,
+  "fa": 14,
+  "st": "2026-10-10T16:30Z"
+ },
+ {
+  "eid": "401858483",
+  "home": "Ohio State Buckeyes",
+  "away": "Maryland Terrapins",
+  "fh": 45,
+  "fa": 16,
+  "st": "2026-10-10T20:15Z"
+ },
+ {
+  "eid": "401858484",
+  "home": "Oregon Ducks",
+  "away": "UCLA Bruins",
+  "fh": 15,
+  "fa": 17,
+  "st": "2026-10-10T19:30Z"
+ },
+ {
+  "eid": "401858485",
+  "home": "Penn State Nittany Lions",
+  "away": "USC Trojans",
+  "fh": 23,
+  "fa": 31,
+  "st": "2026-10-10T23:30Z"
+ },
+ {
+  "eid": "401858486",
+  "home": "Purdue Boilermakers",
+  "away": "Minnesota Golden Gophers",
+  "fh": 41,
+  "fa": 13,
+  "st": "2026-10-11T00:00Z"
+ },
+ {
+  "eid": "401858487",
+  "home": "Washington Huskies",
+  "away": "Iowa Hawkeyes",
+  "fh": 24,
+  "fa": 41,
+  "st": "2026-10-10T01:00Z"
+ },
+ {
+  "eid": "401858488",
+  "home": "Indiana Hoosiers",
+  "away": "Ohio State Buckeyes",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401858489",
+  "home": "Maryland Terrapins",
+  "away": "Rutgers Scarlet Knights",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:30:00+00:00"
+ },
+ {
+  "eid": "401858490",
+  "home": "Michigan Wolverines",
+  "away": "Penn State Nittany Lions",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401858491",
+  "home": "Michigan State Spartans",
+  "away": "Northwestern Wildcats",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401858492",
+  "home": "Oregon Ducks",
+  "away": "Nebraska Cornhuskers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T03:00:00+00:00"
+ },
+ {
+  "eid": "401858493",
+  "home": "Purdue Boilermakers",
+  "away": "Washington Huskies",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T00:00:00+00:00"
+ },
+ {
+  "eid": "401858494",
+  "home": "UCLA Bruins",
+  "away": "Wisconsin Badgers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:30:00+00:00"
+ },
+ {
+  "eid": "401859184",
+  "home": "Notre Dame Fighting Irish",
+  "away": "Rice Owls",
+  "fh": 52,
+  "fa": 0,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401860878",
+  "home": "Colorado State Rams",
+  "away": "Wyoming Cowboys",
+  "fh": 35,
+  "fa": 13,
+  "st": "2026-09-05T22:00:00Z"
+ },
+ {
+  "eid": "401860881",
+  "home": "Boise State Broncos",
+  "away": "Memphis Tigers",
+  "fh": 38,
+  "fa": 20,
+  "st": "2026-09-12T22:00:00Z"
+ },
+ {
+  "eid": "401860884",
+  "home": "Texas State Bobcats",
+  "away": "UTSA Roadrunners",
+  "fh": 26,
+  "fa": 31,
+  "st": "2026-09-12T19:30:00Z"
+ },
+ {
+  "eid": "401860887",
+  "home": "San Diego State Aztecs",
+  "away": "James Madison Dukes",
+  "fh": 13,
+  "fa": 26,
+  "st": "2026-09-20T02:00:00Z"
+ },
+ {
+  "eid": "401860888",
+  "home": "San Jos\u00e9 State Spartans",
+  "away": "Fresno State Bulldogs",
+  "fh": 10,
+  "fa": 26,
+  "st": "2026-09-20T03:00:00Z"
+ },
+ {
+  "eid": "401860889",
+  "home": "Texas State Bobcats",
+  "away": "North Texas Mean Green",
+  "fh": 49,
+  "fa": 35,
+  "st": "2026-09-19T16:00:00Z"
+ },
+ {
+  "eid": "401860891",
+  "home": "Fresno State Bulldogs",
+  "away": "Rice Owls",
+  "fh": 38,
+  "fa": 24,
+  "st": "2026-09-27T02:00:00Z"
+ },
+ {
+  "eid": "401860893",
+  "home": "Toledo Rockets",
+  "away": "San Diego State Aztecs",
+  "fh": 41,
+  "fa": 16,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401860894",
+  "home": "Utah State Aggies",
+  "away": "Troy Trojans",
+  "fh": 21,
+  "fa": 10,
+  "st": "2026-09-26T23:30:00Z"
+ },
+ {
+  "eid": "401860895",
+  "home": "UTEP Miners",
+  "away": "Oregon State Beavers",
+  "fh": 7,
+  "fa": 33,
+  "st": "2026-09-27T01:00:00Z"
+ },
+ {
+  "eid": "401860896",
+  "home": "UTSA Roadrunners",
+  "away": "Colorado State Rams",
+  "fh": 59,
+  "fa": 45,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401860897",
+  "home": "Western Michigan Broncos",
+  "away": "Boise State Broncos",
+  "fh": 7,
+  "fa": 32,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401860901",
+  "home": "Fresno State Bulldogs",
+  "away": "Boise State Broncos",
+  "fh": 31,
+  "fa": 38,
+  "st": "2026-10-11T02:30Z"
+ },
+ {
+  "eid": "401860902",
+  "home": "Oregon State Beavers",
+  "away": "San Diego State Aztecs",
+  "fh": 66,
+  "fa": 14,
+  "st": "2026-10-10T22:00:00Z"
+ },
+ {
+  "eid": "401860903",
+  "home": "Oregon State Beavers",
+  "away": "Washington State Cougars",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T22:00:00+00:00"
+ },
+ {
+  "eid": "401860904",
+  "home": "San Diego State Aztecs",
+  "away": "Fresno State Bulldogs",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T02:30:00Z"
+ },
+ {
+  "eid": "401860922",
+  "home": "Utah State Aggies",
+  "away": "Washington State Cougars",
+  "fh": 17,
+  "fa": 16,
+  "st": "2026-10-10T01:00Z"
+ },
+ {
+  "eid": "401860923",
+  "home": "Texas State Bobcats",
+  "away": "Colorado State Rams",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-16T00:00:00Z"
+ },
+ {
+  "eid": "401861964",
+  "home": "Temple Owls",
+  "away": "UConn Huskies",
+  "fh": 20,
+  "fa": 34,
+  "st": "2026-10-10T19:45:00Z"
+ },
+ {
+  "eid": "401862693",
+  "home": "UNLV Rebels",
+  "away": "Memphis Tigers",
+  "fh": 21,
+  "fa": 27,
+  "st": "2026-08-30T02:00:00Z"
+ },
+ {
+  "eid": "401862695",
+  "home": "Memphis Tigers",
+  "away": "Arkansas State Red Wolves",
+  "fh": 42,
+  "fa": 24,
+  "st": "2026-09-05T23:00:00Z"
+ },
+ {
+  "eid": "401862699",
+  "home": "South Florida Bulls",
+  "away": "Florida International Panthers",
+  "fh": 19,
+  "fa": 9,
+  "st": "2026-09-05T23:00:00Z"
+ },
+ {
+  "eid": "401862702",
+  "home": "Army",
+  "away": "South Florida",
+  "fh": 24,
+  "fa": 28,
+  "st": "2026-09-12T16:00:00+00:00"
+ },
+ {
+  "eid": "401862703",
+  "home": "Florida Atlantic Owls",
+  "away": "Navy Midshipmen",
+  "fh": 38,
+  "fa": 30,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401862705",
+  "home": "North Texas Mean Green",
+  "away": "UNLV Rebels",
+  "fh": 44,
+  "fa": 6,
+  "st": "2026-09-12T19:45:00Z"
+ },
+ {
+  "eid": "401862707",
+  "home": "Sam Houston Bearkats",
+  "away": "Tulsa Golden Hurricane",
+  "fh": 17,
+  "fa": 23,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401862710",
+  "home": "Old Dominion Monarchs",
+  "away": "East Carolina Pirates",
+  "fh": 17,
+  "fa": 20,
+  "st": "2026-09-19T22:00:00Z"
+ },
+ {
+  "eid": "401862771",
+  "home": "Florida Atlantic Owls",
+  "away": "Florida International Panthers",
+  "fh": 16,
+  "fa": 10,
+  "st": "2026-09-19T22:00:00Z"
+ },
+ {
+  "eid": "401862773",
+  "home": "Rice Owls",
+  "away": "Western Michigan Broncos",
+  "fh": 21,
+  "fa": 28,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401862774",
+  "home": "Toledo Rockets",
+  "away": "Temple Owls",
+  "fh": 49,
+  "fa": 48,
+  "st": "2026-09-19T19:00:00Z"
+ },
+ {
+  "eid": "401862776",
+  "home": "Louisiana Ragin' Cajuns",
+  "away": "UAB Blazers",
+  "fh": 21,
+  "fa": 14,
+  "st": "2026-09-20T00:00:00Z"
+ },
+ {
+  "eid": "401862778",
+  "home": "UAB Blazers",
+  "away": "Navy Midshipmen",
+  "fh": 24,
+  "fa": 20,
+  "st": "2026-09-25T23:00:00Z"
+ },
+ {
+  "eid": "401862779",
+  "home": "Temple",
+  "away": "Army",
+  "fh": 17,
+  "fa": 21,
+  "st": "2026-09-25T20:00:00+00:00"
+ },
+ {
+  "eid": "401862780",
+  "home": "Charlotte 49ers",
+  "away": "Louisiana Ragin' Cajuns",
+  "fh": 7,
+  "fa": 34,
+  "st": "2026-09-26T22:30:00Z"
+ },
+ {
+  "eid": "401862784",
+  "home": "Tulane Green Wave",
+  "away": "Southern Miss Golden Eagles",
+  "fh": 24,
+  "fa": 21,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401862785",
+  "home": "Bowling Green Falcons",
+  "away": "South Florida Bulls",
+  "fh": 6,
+  "fa": 14,
+  "st": "2026-09-26T21:00:00Z"
+ },
+ {
+  "eid": "401862794",
+  "home": "UTSA Roadrunners",
+  "away": "South Florida Bulls",
+  "fh": 31,
+  "fa": 24,
+  "st": "2026-10-08T23:30:00Z"
+ },
+ {
+  "eid": "401862795",
+  "home": "Army Black Knights",
+  "away": "Tulane Green Wave",
+  "fh": 20,
+  "fa": 17,
+  "st": "2026-10-10T16:00:00Z"
+ },
+ {
+  "eid": "401862796",
+  "home": "North Texas Mean Green",
+  "away": "Charlotte 49ers",
+  "fh": 50,
+  "fa": 10,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401862797",
+  "home": "East Carolina Pirates",
+  "away": "Rice Owls",
+  "fh": 28,
+  "fa": 12,
+  "st": "2026-10-10T17:00:00Z"
+ },
+ {
+  "eid": "401862798",
+  "home": "Memphis Tigers",
+  "away": "UAB Blazers",
+  "fh": 38,
+  "fa": 13,
+  "st": "2026-10-10T23:00:00Z"
+ },
+ {
+  "eid": "401862799",
+  "home": "Navy Midshipmen",
+  "away": "Tulsa Golden Hurricane",
+  "fh": 34,
+  "fa": 26,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401862800",
+  "home": "UAB Blazers",
+  "away": "East Carolina Pirates",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-15T23:30:00Z"
+ },
+ {
+  "eid": "401862801",
+  "home": "Tulane Green Wave",
+  "away": "Memphis Tigers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-16T23:30:00+00:00"
+ },
+ {
+  "eid": "401862802",
+  "home": "Army Black Knights",
+  "away": "Florida Atlantic Owls",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00Z"
+ },
+ {
+  "eid": "401862804",
+  "home": "UTSA Roadrunners",
+  "away": "Navy Midshipmen",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T00:00:00Z"
+ },
+ {
+  "eid": "401862805",
+  "home": "Rice Owls",
+  "away": "Tulsa Golden Hurricane",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T20:30:00Z"
+ },
+ {
+  "eid": "401862806",
+  "home": "South Florida Bulls",
+  "away": "Kent State Golden Flashes",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00Z"
+ },
+ {
+  "eid": "401864432",
+  "home": "Nevada Wolf Pack",
+  "away": "Western Kentucky Hilltoppers",
+  "fh": 49,
+  "fa": 14,
+  "st": "2026-09-06T02:30:00Z"
+ },
+ {
+  "eid": "401864443",
+  "home": "Middle Tennessee Blue Raiders",
+  "away": "Nevada Wolf Pack",
+  "fh": 27,
+  "fa": 20,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401864494",
+  "home": "USC Trojans",
+  "away": "San Jos\u00e9 State Spartans",
+  "fh": 42,
+  "fa": 26,
+  "st": "2026-08-29T19:00:00Z"
+ },
+ {
+  "eid": "401864495",
+  "home": "Eastern Michigan Eagles",
+  "away": "San Jos\u00e9 State Spartans",
+  "fh": 21,
+  "fa": 27,
+  "st": "2026-09-04T22:30:00Z"
+ },
+ {
+  "eid": "401864497",
+  "home": "Hawai'i Rainbow Warriors",
+  "away": "UNLV Rebels",
+  "fh": 6,
+  "fa": 21,
+  "st": "2026-09-06T02:00:00Z"
+ },
+ {
+  "eid": "401864498",
+  "home": "New Mexico Lobos",
+  "away": "Central Michigan Chippewas",
+  "fh": 38,
+  "fa": 7,
+  "st": "2026-09-06T02:00:00Z"
+ },
+ {
+  "eid": "401864507",
+  "home": "Sacramento State Hornets",
+  "away": "North Dakota State Bison",
+  "fh": 10,
+  "fa": 31,
+  "st": "2026-09-20T02:30:00Z"
+ },
+ {
+  "eid": "401864508",
+  "home": "Central Michigan Chippewas",
+  "away": "Wyoming Cowboys",
+  "fh": 24,
+  "fa": 10,
+  "st": "2026-09-19T17:00:00Z"
+ },
+ {
+  "eid": "401864509",
+  "home": "Nevada Wolf Pack",
+  "away": "Air Force Falcons",
+  "fh": 33,
+  "fa": 36,
+  "st": "2026-09-27T02:30:00Z"
+ },
+ {
+  "eid": "401864510",
+  "home": "Wyoming Cowboys",
+  "away": "Hawai'i Rainbow Warriors",
+  "fh": 27,
+  "fa": 10,
+  "st": "2026-09-26T19:00:00Z"
+ },
+ {
+  "eid": "401864511",
+  "home": "Georgia State Panthers",
+  "away": "Northern Illinois Huskies",
+  "fh": 35,
+  "fa": 14,
+  "st": "2026-09-26T18:00:00Z"
+ },
+ {
+  "eid": "401864512",
+  "home": "Akron Zips",
+  "away": "UNLV Rebels",
+  "fh": 10,
+  "fa": 38,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401864516",
+  "home": "Northern Illinois Huskies",
+  "away": "Air Force Falcons",
+  "fh": 7,
+  "fa": 28,
+  "st": "2026-10-10T23:30:00Z"
+ },
+ {
+  "eid": "401864517",
+  "home": "UTEP Miners",
+  "away": "Nevada Wolf Pack",
+  "fh": 13,
+  "fa": 30,
+  "st": "2026-10-10T23:00:00Z"
+ },
+ {
+  "eid": "401864518",
+  "home": "UNLV Rebels",
+  "away": "North Dakota State Bison",
+  "fh": 13,
+  "fa": 7,
+  "st": "2026-10-10T23:00:00Z"
+ },
+ {
+  "eid": "401864519",
+  "home": "San Jos\u00e9 State Spartans",
+  "away": "Wyoming Cowboys",
+  "fh": 13,
+  "fa": 16,
+  "st": "2026-10-10T01:00Z"
+ },
+ {
+  "eid": "401864520",
+  "home": "North Dakota State Bison",
+  "away": "Nevada Wolf Pack",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00Z"
+ },
+ {
+  "eid": "401864521",
+  "home": "Hawai'i Rainbow Warriors",
+  "away": "New Mexico Lobos",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-18T02:30:00+00:00"
+ },
+ {
+  "eid": "401864522",
+  "home": "Wyoming Cowboys",
+  "away": "Northern Illinois Huskies",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00Z"
+ },
+ {
+  "eid": "401864524",
+  "home": "Air Force Falcons",
+  "away": "UNLV Rebels",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00+00:00"
+ },
+ {
+  "eid": "401864570",
+  "home": "Florida State Seminoles",
+  "away": "New Mexico State Aggies",
+  "fh": 34,
+  "fa": 17,
+  "st": "2026-08-29T23:00:00Z"
+ },
+ {
+  "eid": "401864575",
+  "home": "Tulane Green Wave",
+  "away": "South Alabama Jaguars",
+  "fh": 28,
+  "fa": 24,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401864576",
+  "home": "Kentucky Wildcats",
+  "away": "South Alabama Jaguars",
+  "fh": 45,
+  "fa": 21,
+  "st": "2026-09-26T16:45:00Z"
+ },
+ {
+  "eid": "401864577",
+  "home": "North Dakota State Bison",
+  "away": "Jacksonville State Gamecocks",
+  "fh": 33,
+  "fa": 7,
+  "st": "2026-08-29T21:30:00Z"
+ },
+ {
+  "eid": "401864579",
+  "home": "New Mexico State Aggies",
+  "away": "New Mexico Lobos",
+  "fh": 18,
+  "fa": 42,
+  "st": "2026-09-26T19:30:00Z"
+ },
+ {
+  "eid": "401866408",
+  "home": "Eastern Michigan Eagles",
+  "away": "Sacramento State Hornets",
+  "fh": 28,
+  "fa": 17,
+  "st": "2026-08-29T22:30:00Z"
+ },
+ {
+  "eid": "401866414",
+  "home": "Florida International Panthers",
+  "away": "Buffalo Bulls",
+  "fh": 33,
+  "fa": 20,
+  "st": "2026-09-12T22:00:00Z"
+ },
+ {
+  "eid": "401866418",
+  "home": "Ohio Bobcats",
+  "away": "Jacksonville State Gamecocks",
+  "fh": 29,
+  "fa": 27,
+  "st": "2026-09-12T22:00:00Z"
+ },
+ {
+  "eid": "401866422",
+  "home": "Liberty Flames",
+  "away": "Ball State Cardinals",
+  "fh": 51,
+  "fa": 15,
+  "st": "2026-09-19T20:00:00Z"
+ },
+ {
+  "eid": "401866425",
+  "home": "Kent State Golden Flashes",
+  "away": "Ball State Cardinals",
+  "fh": 26,
+  "fa": 13,
+  "st": "2026-09-26T16:00:00Z"
+ },
+ {
+  "eid": "401866429",
+  "home": "Sacramento State Hornets",
+  "away": "Massachusetts Minutemen",
+  "fh": 6,
+  "fa": 35,
+  "st": "2026-09-27T01:00:00Z"
+ },
+ {
+  "eid": "401866435",
+  "home": "Akron Zips",
+  "away": "Eastern Michigan Eagles",
+  "fh": 23,
+  "fa": 25,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401866436",
+  "home": "Bowling Green Falcons",
+  "away": "Sacramento State Hornets",
+  "fh": 38,
+  "fa": 10,
+  "st": "2026-10-10T16:00:00Z"
+ },
+ {
+  "eid": "401866437",
+  "home": "Toledo Rockets",
+  "away": "Buffalo Bulls",
+  "fh": 8,
+  "fa": 23,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401866438",
+  "home": "Ohio Bobcats",
+  "away": "Central Michigan Chippewas",
+  "fh": 31,
+  "fa": 14,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401866439",
+  "home": "Western Michigan Broncos",
+  "away": "Kent State Golden Flashes",
+  "fh": 38,
+  "fa": 7,
+  "st": "2026-10-10T19:30:00Z"
+ },
+ {
+  "eid": "401866440",
+  "home": "Massachusetts Minutemen",
+  "away": "Miami (OH) RedHawks",
+  "fh": 19,
+  "fa": 20,
+  "st": "2026-10-10T18:00:00Z"
+ },
+ {
+  "eid": "401866441",
+  "home": "Bowling Green Falcons",
+  "away": "Ball State Cardinals",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00Z"
+ },
+ {
+  "eid": "401866442",
+  "home": "Buffalo Bulls",
+  "away": "Massachusetts Minutemen",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T17:00:00Z"
+ },
+ {
+  "eid": "401866443",
+  "home": "Central Michigan Chippewas",
+  "away": "Western Michigan Broncos",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T17:30:00Z"
+ },
+ {
+  "eid": "401866444",
+  "home": "Eastern Michigan Eagles",
+  "away": "Toledo Rockets",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00Z"
+ },
+ {
+  "eid": "401866478",
+  "home": "Miami (OH) RedHawks",
+  "away": "Akron Zips",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T19:30:00Z"
+ },
+ {
+  "eid": "401867796",
+  "home": "LSU Tigers",
+  "away": "Louisiana Tech Bulldogs",
+  "fh": 45,
+  "fa": 14,
+  "st": "2026-09-12T23:30:00Z"
+ },
+ {
+  "eid": "401867804",
+  "home": "Baylor Bears",
+  "away": "Louisiana Tech Bulldogs",
+  "fh": 36,
+  "fa": 19,
+  "st": "2026-09-19T20:00:00Z"
+ },
+ {
+  "eid": "401869843",
+  "home": "App State Mountaineers",
+  "away": "Old Dominion Monarchs",
+  "fh": 3,
+  "fa": 10,
+  "st": "2026-10-10T17:00:00Z"
+ },
+ {
+  "eid": "401869844",
+  "home": "Coastal Carolina Chanticleers",
+  "away": "App State Mountaineers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T00:00:00Z"
+ },
+ {
+  "eid": "401869931",
+  "home": "Arkansas State Red Wolves",
+  "away": "Kennesaw State Owls",
+  "fh": 17,
+  "fa": 14,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401869933",
+  "home": "Arkansas State Red Wolves",
+  "away": "South Alabama Jaguars",
+  "fh": 49,
+  "fa": 56,
+  "st": "2026-10-08T23:30:00Z"
+ },
+ {
+  "eid": "401869934",
+  "home": "Southern Miss Golden Eagles",
+  "away": "Arkansas State Red Wolves",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T23:00:00Z"
+ },
+ {
+  "eid": "401869940",
+  "home": "Delaware Blue Hens",
+  "away": "Coastal Carolina Chanticleers",
+  "fh": 22,
+  "fa": 14,
+  "st": "2026-09-19T15:30:00Z"
+ },
+ {
+  "eid": "401869941",
+  "home": "Coastal Carolina",
+  "away": "Liberty",
+  "fh": 17,
+  "fa": 34,
+  "st": "2026-09-24T23:30:00+00:00"
+ },
+ {
+  "eid": "401869943",
+  "home": "Marshall Thundering Herd",
+  "away": "Coastal Carolina Chanticleers",
+  "fh": 21,
+  "fa": 27,
+  "st": "2026-10-10T23:00:00Z"
+ },
+ {
+  "eid": "401869948",
+  "home": "Jacksonville State Gamecocks",
+  "away": "Georgia Southern Eagles",
+  "fh": 31,
+  "fa": 27,
+  "st": "2026-09-19T23:00:00Z"
+ },
+ {
+  "eid": "401869949",
+  "home": "Georgia Southern Eagles",
+  "away": "James Madison Dukes",
+  "fh": 24,
+  "fa": 27,
+  "st": "2026-10-10T23:30:00Z"
+ },
+ {
+  "eid": "401869950",
+  "home": "Old Dominion Monarchs",
+  "away": "Georgia Southern Eagles",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-15T23:30:00Z"
+ },
+ {
+  "eid": "401869955",
+  "home": "Kennesaw State Owls",
+  "away": "Georgia State Panthers",
+  "fh": 17,
+  "fa": 31,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401869957",
+  "home": "James Madison Dukes",
+  "away": "Georgia State Panthers",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T16:00:00+00:00"
+ },
+ {
+  "eid": "401869960",
+  "home": "James Madison Dukes",
+  "away": "Liberty Flames",
+  "fh": 20,
+  "fa": 13,
+  "st": "2026-09-05T16:00:00Z"
+ },
+ {
+  "eid": "401869961",
+  "home": "Old Dominion Monarchs",
+  "away": "James Madison Dukes",
+  "fh": 20,
+  "fa": 46,
+  "st": "2026-09-26T22:00:00Z"
+ },
+ {
+  "eid": "401869965",
+  "home": "Louisiana Tech Bulldogs",
+  "away": "Louisiana Ragin' Cajuns",
+  "fh": 32,
+  "fa": 31,
+  "st": "2026-10-10T23:30:00Z"
+ },
+ {
+  "eid": "401869966",
+  "home": "Louisiana Ragin' Cajuns",
+  "away": "Troy Trojans",
+  "fh": null,
+  "fa": null,
+  "st": "2026-10-17T21:00:00Z"
+ },
+ {
+  "eid": "401870763",
+  "home": "Troy Trojans",
+  "away": "Sam Houston Bearkats",
+  "fh": 24,
+  "fa": 21,
+  "st": "2026-09-05T23:00:00Z"
+ },
+ {
+  "eid": "401870766",
+  "home": "Liberty Flames",
+  "away": "Sam Houston Bearkats",
+  "fh": 35,
+  "fa": 3,
+  "st": "2026-10-08T23:00:00Z"
+ },
+ {
+  "eid": "401871045",
+  "home": "Marshall Thundering Herd",
+  "away": "Middle Tennessee Blue Raiders",
+  "fh": 28,
+  "fa": 26,
+  "st": "2026-09-12T23:00:00Z"
+ },
+ {
+  "eid": "401871047",
+  "home": "Missouri State Bears",
+  "away": "Marshall Thundering Herd",
+  "fh": 24,
+  "fa": 30,
+  "st": "2026-09-19T22:30:00Z"
+ },
+ {
+  "eid": "401871048",
+  "home": "Jacksonville State Gamecocks",
+  "away": "Middle Tennessee Blue Raiders",
+  "fh": 23,
+  "fa": 13,
+  "st": "2026-09-26T23:00:00Z"
+ },
+ {
+  "eid": "401871051",
+  "home": "Kennesaw State Owls",
+  "away": "Jacksonville State Gamecocks",
+  "fh": 26,
+  "fa": 27,
+  "st": "2026-10-07T23:00:00Z"
+ },
+ {
+  "eid": "401871052",
+  "home": "Western Kentucky Hilltoppers",
+  "away": "Missouri State Bears",
+  "fh": 34,
+  "fa": 13,
+  "st": "2026-10-08T23:00:00Z"
+ },
+ {
+  "eid": "401871053",
+  "home": "Jacksonville State Gamecocks",
+  "away": "Florida International Panthers",
+  "fh": 27,
+  "fa": 24,
+  "st": "2026-10-14T00:00:00Z"
+ },
+ {
+  "eid": "401871054",
+  "home": "Missouri State Bears",
+  "away": "Kennesaw State Owls",
+  "fh": 24,
+  "fa": 21,
+  "st": "2026-10-14T23:30:00Z"
+ },
+ {
+  "eid": "401871066",
+  "home": "Florida International Panthers",
+  "away": "New Mexico State Aggies",
+  "fh": 22,
+  "fa": 3,
+  "st": "2026-10-08T00:04Z"
+ },
+ {
+  "eid": "401871067",
+  "home": "Middle Tennessee Blue Raiders",
+  "away": "Delaware Blue Hens",
+  "fh": 33,
+  "fa": 30,
+  "st": "2026-10-13T23:00:00Z"
+ },
+ {
+  "eid": "401871068",
+  "home": "Sam Houston Bearkats",
+  "away": "Western Kentucky Hilltoppers",
+  "fh": 3,
+  "fa": 16,
+  "st": "2026-10-15T00:00:00Z"
+ },
+ {
+  "eid": "401871090",
+  "home": "Troy Trojans",
+  "away": "Southern Miss Golden Eagles",
+  "fh": 55,
+  "fa": 34,
+  "st": "2026-10-07T00:00:00Z"
+ }
+]

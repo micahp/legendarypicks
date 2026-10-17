@@ -1,0 +1,77 @@
+[
+ {
+  "season": 2022,
+  "source": "stats.ncaa.org pbp",
+  "rows": 296782
+ },
+ {
+  "season": 2023,
+  "source": "stats.ncaa.org pbp",
+  "rows": 285304
+ },
+ {
+  "season": 2024,
+  "source": "stats.ncaa.org pbp",
+  "rows": 305266
+ },
+ {
+  "season": 2025,
+  "source": "stats.ncaa.org pbp",
+  "rows": 309797
+ },
+ {
+  "season": 2026,
+  "source": "stats.ncaa.org pbp",
+  "rows": 149246
+ },
+ {
+  "season": 2022,
+  "source": "espn pbp",
+  "rows": 149745
+ },
+ {
+  "season": 2023,
+  "source": "espn pbp",
+  "rows": 153945
+ },
+ {
+  "season": 2024,
+  "source": "espn pbp",
+  "rows": 163567
+ },
+ {
+  "season": 2025,
+  "source": "espn pbp",
+  "rows": 166371
+ },
+ {
+  "season": 2026,
+  "source": "espn pbp",
+  "rows": 78642
+ },
+ {
+  "season": 2022,
+  "source": "espn player_box",
+  "rows": 40598
+ },
+ {
+  "season": 2023,
+  "source": "espn player_box",
+  "rows": 57239
+ },
+ {
+  "season": 2024,
+  "source": "espn player_box",
+  "rows": 78993
+ },
+ {
+  "season": 2025,
+  "source": "espn player_box",
+  "rows": 80498
+ },
+ {
+  "season": 2026,
+  "source": "espn player_box",
+  "rows": 39913
+ }
+]
