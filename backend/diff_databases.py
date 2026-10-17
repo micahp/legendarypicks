@@ -75,6 +75,8 @@ FEATURE_TABLES = {
     "team_game_results": "team-stats proof feature",
     "settlement_attempts": "NCAAF CFBD settler (repair order step 5) -- durable attempt audit on DEV and PROD",
     "history_refresh_state": "environment-local scheduler state (prod-only)",
+    "nfl_player_birth_dates": "dev-only NFL age research; no released app reader",
+    "tennis_points": "Flashscore point-sequence archive for tennis research; no released app reader",
 }
 
 # Columns on shared tables that belong to the team-stats feature and are
@@ -124,6 +126,42 @@ def _seasons(con, table):
             f'SELECT DISTINCT league, season FROM "{table}"')
         if r[0] is not None and r[1] is not None
     }
+
+
+def _scoreboard_only_coverage(con, table, league, season):
+    """Explain coverage markers that do not represent a team-stats population.
+
+    The release season gate compares product data populations. A manually
+    recorded scoreboard progress marker for a league with no teams or paired
+    stats is useful telemetry, but there is no team-stats season to promote.
+    Keep the exception narrow and data-backed; complete/reconciled coverage
+    rows remain blocking when they are missing from the other database.
+    """
+    if table != "team_stats_coverage":
+        return None
+    columns = _columns(con, table)
+    required = {
+        "league", "season", "status", "source", "expected_teams",
+        "fetched_teams", "paired_stat_games",
+    }
+    if not required.issubset(columns):
+        return None
+    rows = con.execute(
+        "SELECT status, source, expected_teams, fetched_teams, paired_stat_games "
+        "FROM team_stats_coverage WHERE LOWER(league)=LOWER(?) "
+        "AND CAST(season AS TEXT)=?",
+        (league, str(season)),
+    ).fetchall()
+    if rows and all(
+        status == "in_progress"
+        and source == "scoreboard_snapshots"
+        and expected_teams == 0
+        and fetched_teams == 0
+        and paired_stat_games == 0
+        for status, source, expected_teams, fetched_teams, paired_stat_games in rows
+    ):
+        return "scoreboard progress only; no team-stat population"
+    return None
 
 
 def main(argv=None) -> int:
@@ -189,6 +227,12 @@ def main(argv=None) -> int:
         if ps is None or ds is None:
             continue
         for league, season in sorted(ds - ps):
+            telemetry = _scoreboard_only_coverage(dev, table, league, season)
+            if telemetry:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
+                    f"PROD ({telemetry})")
+                continue
             if table in FEATURE_TABLES:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
@@ -197,6 +241,12 @@ def main(argv=None) -> int:
             findings.append(
                 f"SEASONS  {table}: ({league}, {season}) in DEV, missing from PROD")
         for league, season in sorted(ps - ds):
+            telemetry = _scoreboard_only_coverage(prod, table, league, season)
+            if telemetry:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
+                    f"DEV ({telemetry})")
+                continue
             if table in FEATURE_TABLES:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
