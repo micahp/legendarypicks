@@ -344,12 +344,20 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
         <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
         <div className="min-w-0">
           <div className="text-xs text-zinc-500">Result</div>
-          {/* A lean with a negative expected value is not a priced recommendation, so it is
-              reported as such rather than counted as a win or a loss. */}
-          <div className={`mt-0.5 truncate text-sm tabular-nums ${pick?.qualifies ? (pickWon ? 'text-emerald-400' : 'text-red-400') : 'text-zinc-500'}`}>
-            {pick == null || !pick.qualifies ? (pickWon == null ? 'Not recommended' : 'No qualifying bet')
-              : pickWon == null ? 'Pending' : pickWon ? 'Pick ✓' : 'Pick ✗'}
+          {/* Win/loss grades the frozen model selection, not its price. A model lean can
+              be right even when it did not qualify as a wager. No selection means no
+              retroactively invented win/loss. */}
+          <div className={`mt-0.5 truncate text-sm tabular-nums ${pickWon == null ? 'text-zinc-500' : pickWon ? 'text-emerald-400' : 'text-red-400'}`}>
+            {pick == null ? 'No pick recorded'
+              : pickWon == null ? (grade ? 'Result unavailable' : 'Pending')
+                : `${pick.qualifies ? 'Pick' : 'Lean'} ${pickWon ? '✓ Won' : '✗ Lost'}`}
           </div>
+          {pick && !pick.qualifies && (
+            <div className="mt-0.5 text-xs text-zinc-500">Not a qualifying wager</div>
+          )}
+          {pick == null && grade && (
+            <div className="mt-0.5 text-xs text-zinc-500">Forecast graded; no selection was stored</div>
+          )}
         </div>
       </div>
       <div className="mt-3 text-xs text-zinc-500">
