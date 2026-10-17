@@ -1,6 +1,35 @@
 # NFL model card
 
-**Scope:** NFL regular-season game forecasts, player projections and team playoff-odds simulations implemented in this repository. The game forecasts are locked as separate model versions. This card describes the code and validation evidence available on 2026-10-16; it is not a claim of betting advantage.
+**Scope:** NFL regular-season game forecasts, player projections and team playoff-odds simulations implemented in this repository. The game forecasts are locked as separate model versions. Evidence through 2026-10-17, including research branches where named. This is not a claim of betting advantage.
+
+## Where our NFL models actually stand
+
+**Naming:** The adopted `nfl-v1` game model appears on the Model page as **v1 points**. Those are the same model, not two candidates. `v1 points (10-09, before the freeze)` is an older configuration. **Game-winner Brier and player-prop Brier score different events and populations; do not rank them together.**
+
+| Model / UI label | What it predicts | Actual operational / research status |
+|---|---|---|
+| **v1 points** (`nfl-v1`) | Game winner, expected points, margin and total | **Deployed/adopted game baseline**, not market-leading or independently market-validated. It has a frozen 2025 holdout, but that does not by itself satisfy a new release gate. |
+| **v2 EPA** (`nfl-epa-v2`) | Game winner, expected points, margin and total | **Trial/challenger**, not adopted. Its 2025 evaluation did not establish an improvement over v1 points. |
+| **v1 + Elo** (`nfl-v1+elo stack`) | Game winner, expected points, margin and total | **Research challenger** with retrospective improvement in some comparisons; not prospectively confirmed as a replacement. |
+| **Marcel-lite** (live player route) | Player point estimates and empirical same-season hit rates | **Deployed player baseline**. Its unshrunk historical hit rate is not a validated calibrated prop probability; the live `P(over)` is poor on the graded cohort. |
+| **Spec B v2** (Volume × Share × Efficiency) | Player volume, share and efficiency, simulated stat distributions and prop probabilities | **Implemented and tested on the Spec B research branch**, not an untested proposal and not the live player-route default. Some point-stat MAE gates pass (including receiving and QB passing), while carries and sportsbook probability/distribution results do not justify broad adoption. |
+| **Spec B v2 + Forward Platt** (`nfl-player-props-v2-forward-platt-v1`) | Calibrated `P(over)` at offered prop lines; *not* a new stat generator | **`RESEARCH_CANDIDATE_ONLY`; frozen, do not promote.** Strict forward test improves proper scores versus raw v2 but loses to market-only, shows no established incremental market signal, and damages inferred full stat distributions. |
+
+**Why v1 points remains adopted:** Its 2025 frozen holdout winner Brier is **0.2288 on 255 games**, versus **0.2137 for closing-market moneylines**; its margin/total MAEs also trail market lines. It beat naive baselines and operates as a stable baseline. **Adopted/deployed does not mean release-qualified under a market-increment standard.** The v1 + Elo retrospective Brier is from a different evaluation population and must not be ranked directly against that 2025 result.
+
+**What has already been tested for player props:** Spec B v2 improved selected 2025 point-stat MAEs relative to Marcel-lite, but its raw 2026 prop probabilities trailed the market. The **strict** forward-Platt sample (20,926 calibrated line-items / 628 player-games in 2026 weeks 3–5) scored Brier **0.2502** versus raw v2 **0.2743** and market **0.2469**. Increment over forward market-only was **not established** (paired Brier improvement +0.00004, 95% interval [−0.00059, +0.00071]); the full-distribution test failed on every tested market. Those strict figures **must not** be compared directly with earlier cohorts that used different QB selection and quote timing. See [the stopped candidate and full verdict](https://github.com/micahp/legendarypicks/blob/feat/nfl-props-forward-platt-candidate/docs/CANDIDATE-nfl-player-props-forward-platt-v1.md) and [Spec B backtest](https://github.com/micahp/legendarypicks/blob/scratch/spec-b-rebase/docs/RESULTS-player-projection-v2-2026-10-12.md).
+
+### Release criteria: distinct from being deployed
+
+These are **proposed, forward-looking release gates for the next candidate**, not retrospective tests that v1 points is claimed to have passed.
+
+1. **Research candidate:** executable, versioned, deterministic/reproducible, with a clean chronological evaluation and a frozen comparison plan.
+2. **Release candidate:** verified as-of pre-kickoff feature, roster, availability and sportsbook snapshots; same-item/player-game comparison to the relevant incumbent; predeclared proper-score target(s) and paired clustered uncertainty; no serious coverage, calibration or integrity regression.
+3. **Player-distribution gate:** evaluate full distribution accuracy (CRPS or a properly specified discrete analogue, quantile coverage, bias/tails) on one observation per player-game-market, separately from point MAE and sportsbook-threshold Brier. One prop-line calibration map does not establish a valid predictive stat distribution.
+4. **Increment claim gate:** assert "we see information the market doesn't" only if a chronologically fitted **market + candidate** forecast beats a matched **market-only** forecast on the same eligible records, with a positive paired clustered 95% interval. A large fitted stack coefficient or an improvement against our own raw model is insufficient.
+5. **Adoption:** complete prospective, immutable pre-kickoff locks and grading of genuinely unseen games, meet the predetermined quality and operations checks, then explicitly approve deployment. **Listing in a research Model Lab does not imply adoption.**
+
+Market increment is required to **claim independent information beyond market prices**, not necessarily to publish a clearly labeled, useful standalone research forecast. Do not change an established gate after viewing its holdout.
 
 ## Game forecasts
 
