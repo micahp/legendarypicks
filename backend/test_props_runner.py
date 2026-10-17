@@ -60,6 +60,9 @@ def test_a_provider_that_ran_recently_is_skipped_by_cadence(monkeypatch, tmp_pat
     assert runner.main([]) == 0
 
     assert [row[1] for row in _rows(db_path)] == ["ok", "skipped_cadence"]
+    skipped = _rows(db_path)[1]
+    assert "last ok" in skipped[4]
+    assert "cadence 30m" in skipped[4]
 
 
 def test_a_provider_with_no_prior_ok_row_is_due(monkeypatch, tmp_path):
@@ -81,7 +84,9 @@ def test_force_overrides_cadence_but_not_the_lock(monkeypatch, tmp_path):
         fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         assert runner.main(["--force"]) == 1
 
-    assert [row[1] for row in _rows(db_path)] == ["ok", "skipped_lock"]
+    rows = _rows(db_path)
+    assert [row[1] for row in rows] == ["ok", "skipped_lock"]
+    assert rows[1][4] == "host lock shared is held"
 
 
 def test_a_failing_provider_does_not_stop_the_next_one(monkeypatch, tmp_path):

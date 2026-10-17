@@ -327,13 +327,14 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
                     age_min = max(0.0, (cycle_started - last_ok).total_seconds() / 60.0)
                     if age_min < provider["cadence_min"] - CADENCE_EARLY_TOLERANCE_MIN:
                         started_at = _iso_now()
-                        if not args.dry_run:
-                            _insert_run(
-                                con, provider_id, db_path, started_at, "skipped_cadence", started_at
-                            )
                         tail = "last ok {:.0f}m ago, cadence {}m".format(
                             age_min, provider["cadence_min"]
                         )
+                        if not args.dry_run:
+                            _insert_run(
+                                con, provider_id, db_path, started_at, "skipped_cadence",
+                                started_at, detail=tail
+                            )
                         print("Skipping {}: {}".format(provider_id, tail))
                         results[provider_id] = {
                             "status": "skipped_cadence",
@@ -346,13 +347,17 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
             if host_lock is None:
                 host_lock_conflicts += 1
                 started_at = _iso_now()
+                tail = "host lock {} is held".format(provider["host_lock"])
                 if not args.dry_run:
-                    _insert_run(con, provider_id, db_path, started_at, "skipped_lock", started_at)
-                print("Skipping {}: host lock {} is held".format(provider_id, provider["host_lock"]))
+                    _insert_run(
+                        con, provider_id, db_path, started_at, "skipped_lock", started_at,
+                        detail=tail
+                    )
+                print("Skipping {}: {}".format(provider_id, tail))
                 results[provider_id] = {
                     "status": "skipped_lock",
                     "elapsed": _elapsed(provider_started),
-                    "tail": "host lock held",
+                    "tail": tail,
                 }
                 continue
 

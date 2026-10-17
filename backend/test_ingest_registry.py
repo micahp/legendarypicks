@@ -58,6 +58,18 @@ class TheShippedRegistryIsValid(unittest.TestCase):
                 self.assertTrue(os.path.isfile(os.path.join(here, script)),
                                 "{}: {} does not exist".format(job["id"], script))
 
+    def test_tennis_v2_capture_and_grading_runs_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS
+                   if j["id"] == "tennis_v2_research_ledger")
+        self.assertEqual(job["cadence_min"], 30)
+        self.assertEqual(job["host_lock"], "tennis_model")
+        self.assertEqual(job["steps"], [["tennis_v2_research_ledger.py", "--days", "7"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "tennis_v2_research_ledger" in target.get("where", "")
+            for target in job["freshness"]
+        ))
+
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
     def test_a_job_with_no_freshness_target_is_refused(self):
@@ -174,6 +186,28 @@ class TheMonitorFailsClosed(unittest.TestCase):
         target = dict(self.target, stale_hours=6)
         self._insert("2026-09-06T09:00:00+00:00")
         self.assertEqual(self._levels([target]), ["OK"])
+
+    def test_prospective_capture_health_reports_minutes_since_success(self):
+        con = sqlite3.connect(self.db)
+        con.execute("CREATE TABLE ingest_runs(provider TEXT, status TEXT, finished_at TEXT)")
+        con.execute("INSERT INTO ingest_runs VALUES(?,?,?)", (
+            "tennis_v2_research_ledger", "ok", "2026-09-06T11:47:00+00:00"))
+        con.commit()
+        con.close()
+        target = {
+            "job": "tennis_v2_research_ledger",
+            "label": "tennis V2 prospective forecasts and grades",
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_v2_research_ledger' AND status = 'ok'",
+            "stale_hours": 2,
+            "age_label": "last successful prospective capture",
+        }
+
+        result = monitor.check("test", self.db, [target], now=self.now)
+
+        self.assertEqual(result[0][0], "OK")
+        self.assertIn("last successful prospective capture 13m ago", result[0][1])
 
     def test_a_bare_date_is_read_as_the_START_of_that_day(self):
         """Never fresher than reality: a date-only value must not round in our favour."""
