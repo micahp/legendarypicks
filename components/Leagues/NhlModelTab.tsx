@@ -356,6 +356,72 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
   )
 }
 
+type GradedForecast = NonNullable<Forecast['grade']>
+
+function modelPerformance(games: NhlGame[], model: ModelName) {
+  // A model's accuracy includes every graded forecast, whether or not it generated a bet.
+  const grades = games
+    .map(game => game.models[model]?.grade)
+    .filter((grade): grade is GradedForecast => grade != null)
+  const count = grades.length
+  const average = (value: (grade: GradedForecast) => number) =>
+    count ? grades.reduce((sum, grade) => sum + value(grade), 0) / count : null
+
+  return {
+    count,
+    brier: average(grade => grade.home_win_brier),
+    logLoss: average(grade => grade.home_win_logloss),
+    goalMae: average(grade => (Math.abs(grade.home_goal_error) + Math.abs(grade.away_goal_error)) / 2),
+  }
+}
+
+const MODEL_ORDER: ModelName[] = ['B3_elo', 'B5_xg_poisson', 'B7_elo_xg_poisson']
+
+function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; selectedModel: ModelName }) {
+  const score = (value: number | null, decimals: number) => value == null ? '—' : value.toFixed(decimals)
+
+  return (
+    <section aria-label="2026–27 prospective model performance" className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-zinc-100">Model accuracy</h3>
+        <p className="mt-1 text-xs text-zinc-400">2026–27 live · all graded forecasts · same metrics for every model</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[450px] text-sm tabular-nums">
+          <thead className="border-b border-zinc-700 text-xs text-zinc-500">
+            <tr>
+              <th className="px-2 py-2 text-left font-medium">Model</th>
+              <th className="px-2 py-2 text-right font-medium">Brier ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Log loss ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Goal MAE ↓</th>
+              <th className="px-2 py-2 text-right font-medium">Games</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800">
+            {MODEL_ORDER.map(key => {
+              const result = modelPerformance(games, key)
+              return (
+                <tr key={key} className={key === selectedModel ? 'bg-zinc-800/70' : ''}>
+                  <th scope="row" className="px-2 py-3 text-left font-medium text-zinc-200">
+                    {MODEL_LABELS[key]}{key === selectedModel ? <span className="ml-1 text-xs text-emerald-400">· Selected</span> : null}
+                  </th>
+                  <td className="px-2 py-3 text-right font-semibold text-zinc-100">{score(result.brier, 4)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{score(result.logLoss, 4)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{score(result.goalMae, 3)}</td>
+                  <td className="px-2 py-3 text-right text-zinc-300">{result.count}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+        Lower is better. Brier 0 is perfect; 0.2500 is a constant 50% forecast. Every graded game counts, including unpriced games. Historical backtests and betting ROI are separate.
+      </p>
+    </section>
+  )
+}
+
 function RecordView({ games, model, missedLocks }: { games: NhlGame[]; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
   const ordered = games.filter(game => game.models[model].grade).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
   const missed = missedLocks.filter(row => row.model_key === model)
@@ -405,6 +471,9 @@ export default function NhlModelTab() {
   const [payload, setPayload] = useState<Payload | null>(null)
   const [model, setModel] = useState<ModelName>('B7_elo_xg_poisson')
   const [view, setView] = useState<View>('projections')
+  const [accuracyHovered, setAccuracyHovered] = useState(false)
+  const [accuracyPinned, setAccuracyPinned] = useState(false)
+  const showAccuracy = accuracyHovered || accuracyPinned
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -445,7 +514,39 @@ export default function NhlModelTab() {
         <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NHL model views">
           {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}
         </nav>
-        <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
+        <div className="flex items-center gap-2">
+          <div className="relative"
+            onMouseEnter={() => setAccuracyHovered(true)}
+            onMouseLeave={() => setAccuracyHovered(false)}
+            onFocus={() => setAccuracyHovered(true)}
+            onBlur={event => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setAccuracyHovered(false)
+                setAccuracyPinned(false)
+              }
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Escape') {
+                setAccuracyHovered(false)
+                setAccuracyPinned(false)
+                event.currentTarget.querySelector('button')?.blur()
+              }
+            }}>
+            <button type="button" aria-label="Model accuracy" aria-describedby={showAccuracy ? 'nhl-model-accuracy-tooltip' : undefined}
+              aria-expanded={showAccuracy} onClick={() => setAccuracyPinned(open => !open)}
+              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400">
+              <span aria-hidden="true" className="text-zinc-400">ⓘ</span> Model accuracy
+            </button>
+            {accuracyPinned && <button type="button" tabIndex={-1} aria-label="Close model accuracy tooltip"
+              onClick={() => { setAccuracyPinned(false); setAccuracyHovered(false) }}
+              className="fixed inset-0 z-40 cursor-default" />}
+            {showAccuracy && <div id="nhl-model-accuracy-tooltip" role="tooltip"
+              className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,560px)]">
+              <ModelPerformanceSummary games={games} selectedModel={model} />
+            </div>}
+          </div>
+          <label className="flex items-center gap-2 text-sm text-zinc-500">Model <ModelSelect value={model} onChange={event => setModel(event.target.value as ModelName)}>{(Object.keys(MODEL_LABELS) as ModelName[]).map(key => <option key={key} value={key}>{MODEL_LABELS[key]}</option>)}</ModelSelect></label>
+        </div>
       </div>
 
       {view === 'projections' && <>

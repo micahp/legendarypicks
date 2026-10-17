@@ -197,4 +197,85 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
     expect(screen.getByText('Pick ✗')).toBeTruthy()
   })
+  it('compares prospective Brier and goals accuracy across all three models in a tooltip, including unpriced games', async () => {
+    const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
+      const grade = {
+        official_home_goals: 3, official_away_goals: 2, statistical_home_goals: 3, statistical_away_goals: 2,
+        official_winner: 'home' as const, shootout_decided: false,
+        home_win_brier: brier, home_win_logloss: logLoss,
+        home_goal_error: homeError, away_goal_error: awayError,
+        graded_at_utc: '2026-10-15T14:35:05Z',
+      }
+      return {
+        game_id: id, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+        forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+        home_team: 'WSH', away_team: 'MTL',
+        feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+        models: {
+          B3_elo: { ...forecast(0.6), grade: { ...grade, home_win_brier: 0.2 } },
+          B5_xg_poisson: { ...forecast(0.5), grade: { ...grade, home_win_brier: 0.25 } },
+          B7_elo_xg_poisson: { ...forecast(0.55), grade, pick: null },
+        },
+        result: grade,
+        markets: { source: 'Kalshi', usable: false, sides: [] },
+      }
+    }
+    const games = [
+      graded(2026020108, 0.04, 0.2, 1, -2),
+      graded(2026020109, 0.16, 0.6, -3, 0),
+    ]
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games, previews: [] }) }))
+    render(<NhlModelTab />)
+    await screen.findByRole('button', { name: /Model accuracy/ })
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    expect(screen.getByText('0.1000')).toBeTruthy()
+    expect(screen.getByText('0.4000')).toBeTruthy()
+    expect(screen.getByText('1.500')).toBeTruthy()
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(screen.getByText('0.1000')).toBeTruthy()
+    expect(screen.getAllByText('Not recommended')).toHaveLength(2)
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
+    expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
+    expect(screen.getByText('· Selected')).toBeTruthy()
+  })
+
+  it('does not invent Brier scores before games are graded', async () => {
+    render(<NhlModelTab />)
+    await screen.findByRole('button', { name: /Model accuracy/ })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    expect(screen.getAllByText('—')).toHaveLength(9)
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
+  })
+
+  it('opens on hover and keyboard focus and closes when hover ends', async () => {
+    render(<NhlModelTab />)
+    const button = await screen.findByRole('button', { name: 'Model accuracy' })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.mouseLeave(button)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.focus(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.blur(button, { relatedTarget: null })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('pins the tooltip on tap and dismisses on Escape or outside click', async () => {
+    render(<NhlModelTab />)
+    const button = await screen.findByRole('button', { name: 'Model accuracy' })
+    fireEvent.click(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Close model accuracy tooltip' }))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.click(button)
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    fireEvent.keyDown(button, { key: 'Escape' })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
 })
