@@ -14,6 +14,7 @@ Read-only by default:
 from __future__ import annotations
 
 import argparse
+from bisect import bisect_right
 import csv
 import json
 import math
@@ -23,6 +24,7 @@ from collections import Counter, defaultdict
 
 import calibrate_nfl_prop_probabilities as cal
 import grade_nfl_prop_probabilities as grader
+import nfl_player_projection_v2 as projection_engine
 import measure_nfl_prop_discrimination as metrics
 
 MODEL_ID = "nfl-player-props-v2-forward-platt-v1"
@@ -160,11 +162,80 @@ def evaluate(graded, skipped=None, boots=400, min_items=MIN_TRAIN_ITEMS):
     return results, rows
 
 
+def evaluate_full_distributions(con, season, graded, fits, boots):
+    """Check whether line-trained Platt helps the *entire* implied stat distribution.
+
+    Computes discrete integrated squared CDF error at every half-integer threshold
+    for nonnegative count/yard stats, ONE observation per (game,player,market).
+    This is a discrete-CRPS approximation (integer support for yardage), not
+    proper continuous CRPS for gamma-sampled receiving/passing yard forecasts.
+    In particular it exposes harmful tail extrapolation of line-fitted Platt.
+    """
+    hist = projection_engine.History.load(con, [season - 1, season])
+    proj = grader.Projector(hist)
+    unique = {}
+    for r in graded:
+        unique[(r["game_id"], r["player_id"], r["market"])] = r
+    out = []
+    for (gid, pid, market), item in unique.items():
+        week = int(gid.split("_")[1])
+        fitted = fits.get(week)
+        if fitted is None:
+            continue
+        player = next((r for r in hist.by_player.get((season, pid), ()) if r.game_id == gid), None)
+        if player is None:
+            continue
+        is_rec = market in grader.RECEIVING
+        idx = (grader.RECEIVING if is_rec else grader.PASSING)[market][0]
+        draws = proj.draws(season, player, "rec" if is_rec else "qb")
+        if not draws:
+            continue
+        sample = sorted(max(0, d[idx]) for d in draws)
+        actual = max(0, item["actual"])
+        # One extra bin beyond the maximum observed/sample value catches the endpoint.
+        top = int(math.ceil(max(actual, sample[-1]))) + 1
+        raw_score = cal_score = 0.0
+        raw_mean = cal_mean = 0.0
+        for k in range(top):
+            cutoff = k + 0.5
+            p_raw = (len(sample) - bisect_right(sample, cutoff)) / len(sample)
+            # A finite discrete distribution must retain exact 0/1 endpoints.
+            p_cal = p_raw if p_raw in (0.0, 1.0) else apply(p_raw, fitted)
+            y = 1 if actual > cutoff else 0
+            raw_score += (p_raw - y) ** 2
+            cal_score += (p_cal - y) ** 2
+            raw_mean += p_raw
+            cal_mean += p_cal
+        out.append({"game_id": gid, "player_id": pid, "market": market,
+                    "raw": raw_score, "platt": cal_score, "actual": actual,
+                    "raw_mean": raw_mean, "platt_mean": cal_mean})
+    result = {"kind": "discrete_crps_integer_threshold_approximation",
+              "items_are_unique_player_game_markets": True,
+              "full_distribution_study": "retrospective_conditioned_on_played",
+              "per_market": {}}
+    for m in sorted({x["market"] for x in out}):
+        data = [x for x in out if x["market"] == m]
+        raw = sum(x["raw"] for x in data) / len(data)
+        cal_score = sum(x["platt"] for x in data) / len(data)
+        delta = paired_boot(data, "platt", "raw",
+                            lambda rows, col: sum(r[col] for r in rows) / len(rows), boots)
+        result["per_market"][m] = {"player_games": len(data),
+                                   "raw_score": raw, "platt_score": cal_score,
+                                   "delta_raw_minus_platt": delta,
+                                   "raw_mean_bias": sum(x["raw_mean"] - x["actual"] for x in data) / len(data),
+                                   "platt_mean_bias": sum(x["platt_mean"] - x["actual"] for x in data) / len(data)}
+    result["warning"] = ("Platt maps individual tail probabilities; positive-slope monotonicity alone "
+                         "does not demonstrate a well-calibrated continuous stat distribution. "
+                         "Evaluate these per-player-game scores before promoting a distribution.")
+    return result
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--season", type=int, required=True)
     ap.add_argument("--boot", type=int, default=400)
     ap.add_argument("--json-report", help="optional JSON results output")
+    ap.add_argument("--distribution", action="store_true", help="also score inferred full stat CDF by player-game")
     ap.add_argument("--csv", help="optional scored-rows output")
     args = ap.parse_args(argv)
     if args.boot < 20:
@@ -176,11 +247,15 @@ def main(argv=None):
     try:
         graded, skipped, disagree = grader.grade(
             con, args.season, pregame_only=True, qb_selection="pregame")
+        if not graded:
+            raise SystemExit("No valid pregame quote pairs/player-games to grade; no model result issued")
+        output, rows = evaluate(graded, skipped, args.boot)
+        if args.distribution:
+            _rows, fits = candidate_rows(graded)
+            output["stat_distribution_test"] = evaluate_full_distributions(
+                con, args.season, graded, fits, args.boot)
     finally:
         con.close()
-    if not graded:
-        raise SystemExit("No valid pregame quote pairs/player-games to grade; no model result issued")
-    output, rows = evaluate(graded, skipped, args.boot)
     output["book_settlement_disagreements"] = disagree
     print(json.dumps(output, indent=2, sort_keys=True))
     if args.json_report:
