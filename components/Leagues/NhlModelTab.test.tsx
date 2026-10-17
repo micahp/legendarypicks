@@ -230,8 +230,11 @@ describe('NHL model tab previews', () => {
     fireEvent.mouseEnter(screen.getByRole('button', { name: /Model accuracy/ }))
     expect(screen.getByRole('tooltip')).toBeTruthy()
     expect(screen.getByText('0.1000')).toBeTruthy()
-    expect(screen.getByText('0.4000')).toBeTruthy()
-    expect(screen.getByText('1.500')).toBeTruthy()
+    // The fixture varies only the Brier per model, so log loss and goal error are the same
+    // for all three and each value appears once per model row. The assertion is that the
+    // value is shown, not that it is unique.
+    expect(screen.getAllByText('0.4000').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1.500').length).toBeGreaterThan(0)
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
