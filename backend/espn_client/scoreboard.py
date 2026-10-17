@@ -339,6 +339,8 @@ def _tennis_game(event, grouping, comp):
             # draw, not the ATP/WTA world ranking. Unseeded players stay null.
             "seed": seed,
         }
+        if "winner" in competitor:
+            players[competitor.get("homeAway")]["winner"] = competitor["winner"]
     for competitor in comp.get("competitors", []) or []:
         linescores = competitor.get("linescores", []) or []
         per_set = [int(value.get("value")) for value in linescores
@@ -365,6 +367,7 @@ def _tennis_game(event, grouping, comp):
         "game_id": comp.get("id"),
         "date": comp.get("date") or event.get("date"),
         "state": status_type.get("state"),
+        "completed": status_type.get("completed") is True,
         "status": status_type.get("description") or score_text or "",
         "period": status.get("period"),
         "clock": status.get("displayClock"),

@@ -70,6 +70,12 @@ class TheShippedRegistryIsValid(unittest.TestCase):
             for target in job["freshness"]
         ))
 
+    def test_home_prop_preview_has_a_weekly_publisher_job(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "home_prop_refresh")
+        self.assertEqual(job["cadence_min"], 10080)
+        self.assertEqual(job["steps"], [["home_prop_refresh.py", "--apply"]])
+        self.assertEqual(job["freshness"][0]["table"], "home_prop_cache")
+
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
     def test_a_job_with_no_freshness_target_is_refused(self):

@@ -7,7 +7,8 @@
   "nba": "Flagship from data/radio-team-sports.json (2026-08-06 list) plus four teams checked against team sites 10-07 (MEM, OKC, CHI, POR). Same call sign + frequency match. The NBA schedule feed (cdn.nba.com) answers 403 to the server, so this is not refreshed from a league feed yet. IND corrected 10-07: the list's WIBC main signal is news/talk; the Pacers are on WFNI 1070 / 107.5 The Fan (heard: WIBC was airing a political talk show during the game).",
   "missing": "No verified player: MLB BAL, KC, MIL, TOR; NBA CHA, DEN, MIL, SAC, TOR. These teams render no listen link.",
   "stream": "Each `stream` is the publisher's own direct HTTPS audio, played in the page by a plain <audio> element like the World Cup player (ListenLive WC_STREAM); nothing is relayed through LP. Taken from the same station's iHeart API streams or TuneIn Tune.ashx list, MP3 preferred, session parameters dropped, and kept only when ffprobe read an audio stream from it (2026-10-07). `href` stays as the publisher page it came from.",
-  "mls": "Seven direct MLS station streams verified with ffprobe on 2026-10-13; marked-verified feeds that timed out or resolved only as HLS playlists are omitted from this plain audio player."
+  "mls": "Seven direct MLS station streams verified with ffprobe on 2026-10-13; marked-verified feeds that timed out or resolved only as HLS playlists are omitted from this plain audio player.",
+  "ncaaf": "Varsity Network game-audio event feeds keyed by ESPN scoreboard team code. 72 FBS team entries have direct URLs verified by ffprobe and a three-second ffmpeg decode on 2026-10-13: 52 feeds scheduled Oct 16-18, 15 additional later-dated or unlinked game feeds, two further Missouri/Purdue feeds, and three retained Iowa/Iowa State/Utah State feeds from the Oct 10 snapshot. Five discovered event URLs failed and are omitted: Charlotte, Texas State, South Alabama, Liberty and North Texas. An older Purdue URL also returned 502; Purdue’s later IM8901 feed passed. Varsity direct feeds are event-driven and can change between games, so this inventory needs refresh against the published schedule."
  },
  "nhl": {
   "ANA": {
@@ -728,6 +729,584 @@
    "provider": "StreamTheWorld",
    "stream": "https://playerservices.streamtheworld.com/api/livestream-redirect/KSFOAMAAC.aac",
    "codec": "aac"
+  }
+ },
+ "ncaaf": {
+  "AFA": {
+   "label": "Air Force football radio",
+   "station": "Air Force",
+   "href": "https://goairforcefalcons.com/watch/?Live=1020",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2601-MP3",
+   "codec": "mp3"
+  },
+  "ALA": {
+   "label": "Alabama football radio",
+   "station": "University of Alabama",
+   "href": "https://rolltide.com/watch/?Live=10228",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7001-MP3",
+   "codec": "mp3"
+  },
+  "ARK": {
+   "label": "Arkansas football radio",
+   "station": "University of Arkansas",
+   "href": "https://uark.sidearmstreaming.com/watch/?Live=894",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1201-MP3",
+   "codec": "mp3"
+  },
+  "ARMY": {
+   "label": "Army football radio",
+   "station": "Army",
+   "href": "https://goarmywestpoint.com/watch/?Live=3427",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8601-MP3",
+   "codec": "aac"
+  },
+  "BGSU": {
+   "label": "Bowling Green football radio",
+   "station": "Bowling Green",
+   "href": "https://bgsufalcons.com/watch/?Live=417",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF0601-MP3",
+   "codec": "aac"
+  },
+  "BOIS": {
+   "label": "Boise State football radio",
+   "station": "Boise State University",
+   "href": "https://broncosports.com/watch/?Live=849",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF0401-MP3",
+   "codec": "aac"
+  },
+  "BUFF": {
+   "label": "Buffalo football radio",
+   "station": "University at Buffalo",
+   "href": "https://ubbulls.com/watch/?Live=414",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF0801-MP3",
+   "codec": "aac"
+  },
+  "CAL": {
+   "label": "California football radio",
+   "station": "University of California",
+   "href": "https://calbears.com/watch/?Live=516",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF1001-MP3",
+   "codec": "aac"
+  },
+  "COLO": {
+   "label": "Colorado football radio",
+   "station": "University of Colorado",
+   "href": "https://cubuffs.com/watch/?Live=3185",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7101-MP3",
+   "codec": "mp3"
+  },
+  "CONN": {
+   "label": "UConn football radio",
+   "station": "University of Connecticut",
+   "href": "https://uconnhuskies.com/watch/?Live=7363",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM3401-MP3",
+   "codec": "mp3"
+  },
+  "CSU": {
+   "label": "Colorado State football radio",
+   "station": "Colorado State University",
+   "href": "https://csurams.com/watch/?Live=6954",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF1701-MP3",
+   "codec": "aac"
+  },
+  "DUKE": {
+   "label": "Duke football radio",
+   "station": "Duke University",
+   "href": "https://goduke.com/watch/?Live=1525",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM3501-MP3",
+   "codec": "mp3"
+  },
+  "EMU": {
+   "label": "Eastern Michigan football radio",
+   "station": "Eastern Michigan",
+   "href": "https://emueagles.com/watch/?Live=1395",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM6001-MP3",
+   "codec": "mp3"
+  },
+  "FLA": {
+   "label": "Florida football radio",
+   "station": "University of Florida",
+   "href": "https://floridagators.com/watch/?Live=6037",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM3601-MP3",
+   "codec": "mp3"
+  },
+  "GASO": {
+   "label": "Georgia Southern football radio",
+   "station": "Georgia Southern University",
+   "href": "https://gseagles.com/watch/?Live=2926",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF2401-MP3",
+   "codec": "mp3"
+  },
+  "HOU": {
+   "label": "Houston football radio",
+   "station": "University of Houston",
+   "href": "https://uhcougars.com/watch/?Live=1385",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1501-MP3",
+   "codec": "mp3"
+  },
+  "ILL": {
+   "label": "Illinois football radio",
+   "station": "University of Illinois",
+   "href": "https://fightingillini.com/watch/?Live=7065",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7401-MP3",
+   "codec": "mp3"
+  },
+  "IOWA": {
+   "label": "Iowa football radio",
+   "station": "University of Iowa",
+   "href": "https://uiowa.sidearmstreaming.com/watch/?Live=1013",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7601-MP3",
+   "codec": "mp3"
+  },
+  "ISU": {
+   "label": "Iowa State football radio",
+   "station": "Iowa State",
+   "href": "https://cyclones.com/watch/?Live=5977",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7901-MP3",
+   "codec": "mp3"
+  },
+  "IU": {
+   "label": "Indiana football radio",
+   "station": "Indiana University",
+   "href": "https://iuhoosiers.com/watch/?Live=5109",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7301-MP3",
+   "codec": "mp3"
+  },
+  "JMU": {
+   "label": "James Madison football radio",
+   "station": "James Madison University",
+   "href": "https://jmusports.com/watch/?Live=627",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF7101-MP3",
+   "codec": "mp3"
+  },
+  "KSU": {
+   "label": "Kansas State football radio",
+   "station": "Kansas State University",
+   "href": "https://kstatesports.com/watch/?Live=6233",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8001-MP3",
+   "codec": "mp3"
+  },
+  "KU": {
+   "label": "Kansas football radio",
+   "station": "University of Kansas",
+   "href": "https://kuathletics.com/watch/?Live=468",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM0101-MP3",
+   "codec": "mp3"
+  },
+  "LOU": {
+   "label": "Louisville football radio",
+   "station": "University of Louisville",
+   "href": "https://gocards.com/watch/?Live=12178",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7501-MP3",
+   "codec": "mp3"
+  },
+  "LT": {
+   "label": "Louisiana Tech football radio",
+   "station": "Louisiana Tech",
+   "href": "https://latechsports.com/watch/?Live=11287",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF2701-MP3",
+   "codec": "aac"
+  },
+  "MASS": {
+   "label": "UMass football radio",
+   "station": "University of Massachusetts",
+   "href": "https://umassathletics.com/watch/?Live=5229",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF6101-MP3",
+   "codec": "aac"
+  },
+  "MEM": {
+   "label": "Memphis football radio",
+   "station": "University of Memphis",
+   "href": "https://gotigersgo.com/watch/?Live=8876",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF3101-MP3",
+   "codec": "aac"
+  },
+  "MICH": {
+   "label": "Michigan football radio",
+   "station": "University of Michigan",
+   "href": "https://mgoblue.com/watch/?Live=2828",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4001-MP3",
+   "codec": "mp3"
+  },
+  "MINN": {
+   "label": "Minnesota football radio",
+   "station": "University of Minnesota",
+   "href": "https://gophersports.com/watch/?Live=5867",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8401-MP3",
+   "codec": "mp3"
+  },
+  "MISS": {
+   "label": "Ole Miss football radio",
+   "station": "University of Mississippi",
+   "href": "https://olemisssports.com/watch/?Live=1366",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4101-MP3",
+   "codec": "mp3"
+  },
+  "MIZ": {
+   "label": "Missouri football radio",
+   "station": "University of Missouri Streaming",
+   "href": "https://mizzou.sidearmstreaming.com/watch/?Live=4980",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8801-MP3",
+   "codec": "mp3"
+  },
+  "MOST": {
+   "label": "Missouri State football radio",
+   "station": "Missouri State University",
+   "href": "https://missouristatebears.com/watch/?Live=950",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF3601-MP3",
+   "codec": "aac"
+  },
+  "MRSH": {
+   "label": "Marshall football radio",
+   "station": "Marshall University",
+   "href": "https://herdzone.com/watch/?Live=561",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1601-MP3",
+   "codec": "mp3"
+  },
+  "MSST": {
+   "label": "Mississippi State football radio",
+   "station": "Mississippi State University",
+   "href": "https://hailstate.com/watch/?Live=7980",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8301-MP3",
+   "codec": "mp3"
+  },
+  "NCSU": {
+   "label": "NC State football radio",
+   "station": "NC State University",
+   "href": "https://gopack.com/watch/?Live=11275",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM9301-MP3",
+   "codec": "mp3"
+  },
+  "NDSU": {
+   "label": "North Dakota State football radio",
+   "station": "North Dakota State University",
+   "href": "https://gobison.com/watch/?Live=4831",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF7501-MP3",
+   "codec": "aac"
+  },
+  "NEV": {
+   "label": "Nevada football radio",
+   "station": "University of Nevada",
+   "href": "https://nevadawolfpack.com/watch/?Live=4858",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF4001-MP3",
+   "codec": "aac"
+  },
+  "OHIO": {
+   "label": "Ohio football radio",
+   "station": "Ohio University",
+   "href": "https://ohiobobcats.com/watch/?Live=457",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4301-MP3",
+   "codec": "mp3"
+  },
+  "OKST": {
+   "label": "Oklahoma State football radio",
+   "station": "Oklahoma State",
+   "href": "https://okstate.com/watch/?Live=6855",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM9101-MP3",
+   "codec": "mp3"
+  },
+  "ORE": {
+   "label": "Oregon football radio",
+   "station": "University of Oregon",
+   "href": "https://goducks.com/watch/?Live=18925",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM0801-MP3",
+   "codec": "mp3"
+  },
+  "ORST": {
+   "label": "Oregon State football radio",
+   "station": "Oregon State University",
+   "href": "https://osubeavers.com/watch/?Live=11610",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM7201-MP3",
+   "codec": "mp3"
+  },
+  "OSU": {
+   "label": "Ohio State football radio",
+   "station": "Ohio State University",
+   "href": "https://ohiostatebuckeyes.com/watch/?Live=931",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM5801-MP3",
+   "codec": "mp3"
+  },
+  "OU": {
+   "label": "Oklahoma football radio",
+   "station": "University of Oklahoma",
+   "href": "https://soonersports.com/watch/?Live=2497",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM9001-MP3",
+   "codec": "mp3"
+  },
+  "PUR": {
+   "label": "Purdue football radio",
+   "station": "Purdue University Streaming",
+   "href": "https://purduestream.sidearmsports.com/watch/?Live=188",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8901-MP3",
+   "codec": "mp3"
+  },
+  "RICE": {
+   "label": "Rice football radio",
+   "station": "Rice University",
+   "href": "https://riceowls.com/watch/?Live=6782",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4501-MP3",
+   "codec": "mp3"
+  },
+  "RUTG": {
+   "label": "Rutgers football radio",
+   "station": "Rutgers University",
+   "href": "https://scarletknights.com/watch/?Live=1857",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4601-MP3",
+   "codec": "mp3"
+  },
+  "SC": {
+   "label": "South Carolina football radio",
+   "station": "University of South Carolina",
+   "href": "https://unisouthcarolinastream.sidearmstreaming.com/watch/?Live=744",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1701-MP3",
+   "codec": "mp3"
+  },
+  "SMU": {
+   "label": "SMU football radio",
+   "station": "SMU",
+   "href": "https://smumustangs.com/watch/?Live=5380",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF5401-MP3",
+   "codec": "aac"
+  },
+  "SYR": {
+   "label": "Syracuse football radio",
+   "station": "Syracuse University",
+   "href": "https://cuse.com/watch/?Live=8507",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4801-MP3",
+   "codec": "mp3"
+  },
+  "TCU": {
+   "label": "TCU football radio",
+   "station": "Texas Christian University",
+   "href": "https://gofrogs.com/watch/?Live=1240",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM4901-MP3",
+   "codec": "mp3"
+  },
+  "TENN": {
+   "label": "Tennessee football radio",
+   "station": "University of Tennessee",
+   "href": "https://utsports.com/watch/?Live=5632",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1901-MP3",
+   "codec": "mp3"
+  },
+  "TEX": {
+   "label": "Texas football radio",
+   "station": "University of Texas",
+   "href": "https://texaslonghorns.com/watch/?Live=921",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM0201-MP3",
+   "codec": "mp3"
+  },
+  "TLSA": {
+   "label": "Tulsa football radio",
+   "station": "University of Tulsa",
+   "href": "https://tulsahurricane.com/watch/?Live=6371",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF6001-MP3",
+   "codec": "aac"
+  },
+  "TOL": {
+   "label": "Toledo football radio",
+   "station": "University of Toledo",
+   "href": "https://utrockets.com/watch/?Live=1198",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF5901-MP3",
+   "codec": "aac"
+  },
+  "TROY": {
+   "label": "Troy football radio",
+   "station": "Troy University",
+   "href": "https://troytrojans.com/watch/?Live=5803",
+   "provider": "Varsity Network",
+   "stream": "https://ice6.securenetsystems.net/WTXK",
+   "codec": "aac"
+  },
+  "TTU": {
+   "label": "Texas Tech football radio",
+   "station": "Texas Tech University",
+   "href": "https://texastech.com/watch/?Live=8143",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8101-MP3",
+   "codec": "mp3"
+  },
+  "TULN": {
+   "label": "Tulane football radio",
+   "station": "Tulane University",
+   "href": "https://tulanegreenwave.com/watch/?Live=10477",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM5701-MP3",
+   "codec": "mp3"
+  },
+  "UAB": {
+   "label": "UAB football radio",
+   "station": "UAB",
+   "href": "https://uabsports.com/watch/?Live=4794",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2001-MP3",
+   "codec": "aac"
+  },
+  "UGA": {
+   "label": "Georgia football radio",
+   "station": "University of Georgia",
+   "href": "https://georgiadogs.com/watch/?Live=5093",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM5001-MP3",
+   "codec": "mp3"
+  },
+  "UL": {
+   "label": "Louisiana football radio",
+   "station": "University of Louisiana",
+   "href": "https://ragincajuns.com/watch/?Live=2778",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF2801-MP3",
+   "codec": "aac"
+  },
+  "UNC": {
+   "label": "North Carolina football radio",
+   "station": "University of North Carolina",
+   "href": "https://goheels.com/watch/?Live=5680",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM9201-MP3",
+   "codec": "mp3"
+  },
+  "UNLV": {
+   "label": "UNLV football radio",
+   "station": "UNLV",
+   "href": "https://unlvrebels.com/watch/?Live=390",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2101-MP3",
+   "codec": "aac"
+  },
+  "USC": {
+   "label": "USC football radio",
+   "station": "University of Southern California",
+   "href": "https://usctrojans.com/watch/?Live=1466",
+   "provider": "Varsity Network",
+   "stream": "https://live.amperwave.net/manifest/goodkarma-kspnuscaac-hlsc.m3u8",
+   "codec": "aac"
+  },
+  "USM": {
+   "label": "Southern Miss football radio",
+   "station": "University of Southern Mississippi",
+   "href": "https://southernmiss.com/watch/?Live=7438",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1801-MP3",
+   "codec": "mp3"
+  },
+  "USU": {
+   "label": "Utah State football radio",
+   "station": "Utah State University",
+   "href": "https://utahstateaggies.com/watch/?Live=497",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/LF6301-MP3",
+   "codec": "aac"
+  },
+  "VAN": {
+   "label": "Vanderbilt football radio",
+   "station": "Vanderbilt University",
+   "href": "https://vandy.sidearmstreaming.com/watch/?Live=934",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2301-MP3",
+   "codec": "mp3"
+  },
+  "WAKE": {
+   "label": "Wake Forest football radio",
+   "station": "Wake Forest University",
+   "href": "https://godeacs.com/watch/?Live=1527",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2401-MP3",
+   "codec": "mp3"
+  },
+  "WASH": {
+   "label": "Washington football radio",
+   "station": "University of Washington",
+   "href": "https://gohuskies.com/watch/?Live=1597",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM1001-MP3",
+   "codec": "mp3"
+  },
+  "WIS": {
+   "label": "Wisconsin football radio",
+   "station": "University of Wisconsin",
+   "href": "https://uwbadgers.com/watch/?Live=802",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8501-MP3",
+   "codec": "mp3"
+  },
+  "WKU": {
+   "label": "Western Kentucky football radio",
+   "station": "Western Kentucky University",
+   "href": "https://wkusports.com/watch/?Live=3737",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM2501-MP3",
+   "codec": "mp3"
+  },
+  "WVU": {
+   "label": "West Virginia football radio",
+   "station": "West Virginia University",
+   "href": "https://wvusports.com/watch/?Live=5950",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM0301-MP3",
+   "codec": "mp3"
+  },
+  "WYO": {
+   "label": "Wyoming football radio",
+   "station": "University of Wyoming",
+   "href": "https://gowyo.com/watch/?Live=2961",
+   "provider": "Varsity Network",
+   "stream": "https://img.leanstream.co/IM8201-MP3",
+   "codec": "mp3"
   }
  }
 }

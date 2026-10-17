@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 
 type Tour = 'all' | 'atp' | 'wta'
+type WinnerModel = 'page' | 'elo_informed_v2'
 
 interface ModelProjection {
   probability: number | null
   projectedWinner: string | null
   homeAces: number | null
   awayAces: number | null
+  homeDoubleFaults: number | null
+  awayDoubleFaults: number | null
   totalGames: number | null
   totalGamesInterval: [number, number] | null
   totalGamesLabel?: string | null
@@ -52,6 +55,8 @@ interface ModelMatch {
 interface Payload {
   available: boolean
   reason?: string | null
+  winnerModel?: WinnerModel
+  winnerModelReason?: string | null
   source?: string
   matches: ModelMatch[]
 }
@@ -186,6 +191,11 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
                 <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{number(projection.homeAces)} / {number(projection.awayAces)}</b></p>
                 <p className="text-xs text-zinc-500">Edge <b className="font-normal text-white">n/a</b></p>
               </div>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Double faults</p>
+                <p className="text-zinc-200">{match.home} {number(projection.homeDoubleFaults)}</p>
+                <p className="text-zinc-200">{match.away} {number(projection.awayDoubleFaults)}</p>
+              </div>
             </>}
         </div>
         <div>
@@ -216,6 +226,7 @@ export default function TennisModelTab({ tour }: {
   tour: Tour
 }) {
   const [view, setView] = useState<'projections' | 'record'>('projections')
+  const [winnerModel, setWinnerModel] = useState<WinnerModel>('page')
   const [recordDate, setRecordDate] = useState(todayKey())
   const date = view === 'projections' ? todayKey() : recordDate
   const [payload, setPayload] = useState<Payload | null>(null)
@@ -231,7 +242,7 @@ export default function TennisModelTab({ tour }: {
       ? [date, shiftDate(date, 1), shiftDate(date, 2)]
       : [date]
     Promise.all(dates.map(async modelDate => {
-      const response = await fetch(`/api/tennis/model?date=${encodeURIComponent(modelDate)}&tour=${tour}&utc_offset_minutes=${utcOffsetMinutes}`, { cache: 'no-store' })
+      const response = await fetch(`/api/tennis/model?date=${encodeURIComponent(modelDate)}&tour=${tour}&utc_offset_minutes=${utcOffsetMinutes}&winner_model=${winnerModel}`, { cache: 'no-store' })
       if (!response.ok) throw new Error(`Tennis model data did not load (HTTP ${response.status}).`)
       return response.json() as Promise<Payload>
     }))
@@ -240,9 +251,12 @@ export default function TennisModelTab({ tour }: {
         const matches = payloads.flatMap(data => data.matches)
         const uniqueMatches = Array.from(new Map(matches.map(match => [`${match.tour}-${match.gameId}`, match])).values())
         const available = payloads.some(data => data.available)
+        const hasWinnerProjections = uniqueMatches.some(match => match.projection?.projectedWinner != null)
         setPayload({
           available,
           reason: available ? null : payloads.find(data => data.reason)?.reason ?? null,
+          winnerModel,
+          winnerModelReason: hasWinnerProjections ? null : payloads.find(data => data.winnerModelReason)?.winnerModelReason ?? null,
           source: payloads.find(data => data.source)?.source,
           matches: uniqueMatches,
         })
@@ -250,7 +264,7 @@ export default function TennisModelTab({ tour }: {
       .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'Tennis model data did not load.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [date, tour, view])
+  }, [date, tour, view, winnerModel])
 
   return (
     <div className="space-y-5">
@@ -260,6 +274,14 @@ export default function TennisModelTab({ tour }: {
             <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
           ))}
         </nav>
+        <label className="flex items-center gap-2 text-sm text-zinc-400">
+          <span>Match winner model</span>
+          <select value={winnerModel} onChange={event => setWinnerModel(event.target.value as WinnerModel)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100">
+            <option value="page">Global + surface Elo blend</option>
+            <option value="elo_informed_v2">Elo-informed simulator V2</option>
+          </select>
+        </label>
         {view === 'record' ? <div className="flex items-center gap-3">
           <button type="button" aria-label="Previous day" onClick={() => setRecordDate(shiftDate(recordDate, -1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">‹</button>
@@ -281,12 +303,15 @@ export default function TennisModelTab({ tour }: {
           : payload.matches.filter(match => localDateKey(match.startTime) === date)
         const visible = view === 'projections'
           ? matches.filter(match => match.projection?.projectedWinner != null && match.grades?.winner == null)
-          : matches.filter(match => match.status === 'final')
+          : matches.filter(match => match.status === 'final' &&
+            (winnerModel === 'page' || match.projection?.projectedWinner != null))
         return visible.length ? (
           <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
             {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} showActuals={view === 'record'} />)}
           </section>
-        ) : <p className="text-sm text-zinc-400">{view === 'projections' ? 'No ungraded projections are available.' : 'No completed matches for this day.'}</p>
+        ) : <p className="text-sm text-zinc-400">{winnerModel === 'elo_informed_v2'
+          ? (payload.winnerModelReason ?? (view === 'projections' ? 'No ungraded V2 projections are available.' : 'No completed matches with a V2 forecast are available for this day.'))
+          : (view === 'projections' ? 'No ungraded projections are available.' : 'No completed matches for this day.')}</p>
       })()}
     </div>
   )

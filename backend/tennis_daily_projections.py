@@ -21,6 +21,7 @@ ELO_K = 32.0
 P0_SHRINK_MATCHES = 10.0
 SURFACE_BY_EVENT = {"315": "Hard", "381": "Hard"}  # Shanghai and Wuhan, reviewed event map.
 HISTORY_START = 20200101
+DOUBLE_FAULT_FIELDS = ("homeDoubleFaults", "awayDoubleFaults")
 
 
 def _ensure_store(con: sqlite3.Connection) -> None:
@@ -60,6 +61,31 @@ def forget_days(con: sqlite3.Connection, league: str, model_days: list[str]) -> 
     for model_day in model_days:
         con.execute("DELETE FROM tennis_projection_candidates WHERE league=? AND model_day=?", (league, model_day))
         con.execute("DELETE FROM tennis_projection_days WHERE league=? AND model_day=?", (league, model_day))
+
+
+def _sackmann_player_ids(match: dict[str, Any]) -> dict[str, str | None]:
+    identity = match.get("identity") or {}
+    result = {}
+    for side in ("home", "away"):
+        player_id = (identity.get(side) or {}).get("sackmann_player_id")
+        result[side] = str(player_id) if player_id else None
+    return result
+
+
+def needs_projection_refresh(stored: dict[str, Any] | None,
+                             matches: list[dict[str, Any]]) -> bool:
+    """Refresh missing fields and caches whose tennis-spine mapping has changed."""
+    if stored is None:
+        return True
+    for match in matches:
+        projection = stored.get(str(match.get("gameId")))
+        if projection is None:
+            return True
+        if any(field not in projection for field in DOUBLE_FAULT_FIELDS):
+            return True
+        if projection.get("_sackmannPlayerIds") != _sackmann_player_ids(match):
+            return True
+    return False
 
 
 def _logistic(value: float) -> float:
@@ -205,6 +231,7 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
             "homeDoubleFaults": None,
             "awayDoubleFaults": None,
             "modelVersion": "tennis-global-surface-elo-blend-v2",
+            "_sackmannPlayerIds": {"home": home_id, "away": away_id},
         }
         if home_id and away_id:
             p_global = _logistic((global_elo[home_id] - global_elo[away_id]) * math.log(10.0) / 400.0)

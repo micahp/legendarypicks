@@ -5,8 +5,8 @@
  * game gets its audio from the two teams playing it, not from a per-day list.
  * Source and verification are in data/radio-listen.json `_meta`: NHL uses
  * TuneIn's dedicated team stations; MLB uses the flagship MLB StatsAPI publishes
- * per game; NBA uses LP's flagship list. Every link was matched on the station's
- * own call sign and frequency and its page answered 200.
+ * per game; NBA uses LP's flagship list; NCAAF uses event-linked Varsity Network
+ * direct streams. The league-specific evidence is recorded in the JSON metadata.
  *
  * The card plays the publisher's own direct stream in the page, like the World
  * Cup player; nothing is relayed through LP. A team with no verified stream has
@@ -27,7 +27,7 @@ export interface GameAudio {
   display: string
 }
 
-type LeagueKey = 'nhl' | 'mlb' | 'nba' | 'mls'
+type LeagueKey = 'nhl' | 'mlb' | 'nba' | 'mls' | 'ncaaf'
 type Entry = { label: string; station: string; href?: string; provider: string; stream?: string }
 const TABLE = listen as unknown as Record<LeagueKey, Record<string, Entry>>
 

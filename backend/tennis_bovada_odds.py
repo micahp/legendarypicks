@@ -22,6 +22,7 @@ def bovada_odds(con, espn_event_id: str, tour: str, home_player_id, away_player_
              FROM props p JOIN prop_games g ON g.id = p.game_id
             WHERE g.espn_event_id = ? AND g.league = ? AND p.source = 'bovada'
               AND p.market IN ('match_winner', 'total_games')
+              AND (p.market != 'total_games' OR p.player_id IS NULL)
               AND p.odds_captured_at >= ?
             ORDER BY p.odds_captured_at DESC, p.id DESC""",
         (str(espn_event_id), tour, _iso(now - MAX_AGE)),

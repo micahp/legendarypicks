@@ -110,6 +110,10 @@ CREATE TABLE IF NOT EXISTS tennis_model_grades(
   winner             TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),
   total_games_error  REAL,
   graded_at          TEXT NOT NULL,
+  result_source      TEXT,
+  result_game_date   TEXT,
+  result_fetched_at  TEXT,
+  result_payload_sha256 TEXT,
   PRIMARY KEY(league, game_id)
 );
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(

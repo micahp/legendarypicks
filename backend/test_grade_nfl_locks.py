@@ -41,6 +41,7 @@ class GradeDB(unittest.TestCase):
         nl.ensure_schema(self.con)
         nl.start_run(self.con, "r1", 2026, 5, "v1", {})
         nl.lock_week(self.con, "r1", 2026, 5, flat(6.0, 45.0, 0.65), as_of="t0", now=LOCK_AT)
+        nl.finish_run(self.con, "r1", "ok")
 
     def tearDown(self):
         self.con.close()
@@ -105,6 +106,13 @@ class NotFinal(GradeDB):
         self.final(27, 17, result=3)
         with self.assertRaises(ValueError):
             gr.run(self.con, LATE)
+        self.assertEqual(self.grades(), [])
+
+    def test_lock_from_a_failed_run_is_not_graded(self):
+        nl.finish_run(self.con, "r1", "failed", error="planted failure")
+        self.final(27, 17)
+        out = gr.run(self.con, LATE)
+        self.assertEqual(out, {"locked": 0, "graded": 0, "already": 0, "not_final": 0})
         self.assertEqual(self.grades(), [])
 
 

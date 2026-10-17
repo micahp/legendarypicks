@@ -70,6 +70,7 @@ def run(con, now, dry_run=False):
         "       COALESCE(s.spread_line, g.market_spread), "
         "       n.home_score, n.away_score, n.result, n.gameday, n.gametime "
         "FROM game_projections g "
+        "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
         "JOIN nfl_schedule n ON n.game_id = g.game_id "
         "LEFT JOIN nfl_line_snapshots s ON s.snapshot_id = g.line_snapshot_id "
         "WHERE g.league = ? AND g.locked = 1 ORDER BY g.game_id, g.model_version",

@@ -422,7 +422,8 @@ def _final_outcome(game: dict[str, Any], state: str) -> dict[str, Any] | None:
         hs, aws = [int(x) for x in home.get("sets") or []], [int(x) for x in away.get("sets") or []]
     except (TypeError, ValueError):
         return None
-    if state != "post" or home_score == away_score or not hs or len(hs) != len(aws):
+    if (state != "post" or game.get("completed") is not True or home_score == away_score
+            or not hs or len(hs) != len(aws)):
         return None
     return {
         "winner": home.get("name") if home_score > away_score else away.get("name"),

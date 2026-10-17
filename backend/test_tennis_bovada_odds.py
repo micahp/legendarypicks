@@ -47,6 +47,18 @@ class BovadaTennisOddsTest(unittest.TestCase):
         _prop(con, "total_games", None, 21.5, "over", -115, "2026-10-14T16:30:00+00:00")
         self.assertIsNone(bovada_odds(con, "184950", "atp", 100, 200, NOW))
 
+    def test_player_specific_game_totals_are_not_treated_as_a_match_total(self):
+        con = _db()
+        fresh = "2026-10-14T16:30:00+00:00"
+        _prop(con, "match_winner", 100, 0.5, "over", -150, fresh)
+        _prop(con, "total_games", 100, 13.0, "over", -135, fresh)
+        _prop(con, "total_games", 100, 13.0, "under", 105, fresh)
+
+        out = bovada_odds(con, "184950", "atp", 100, 200, NOW)
+
+        self.assertEqual(out["matchWinner"]["home"], -150)
+        self.assertIsNone(out["totalGames"])
+
     def test_other_sources_and_other_tours_do_not_attach(self):
         con = _db()
         _prop(con, "match_winner", 100, 0.5, "over", -150, "2026-10-14T16:30:00+00:00", source="underdog")

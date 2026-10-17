@@ -113,8 +113,9 @@ def due_games(con, now, lead=LEAD):
         kickoff = cs.kickoff_utc(gameday, gametime)
         if not (now < kickoff <= now + lead):
             continue
-        if con.execute("SELECT 1 FROM game_projections WHERE league = 'nfl' AND game_id = ? AND locked = 1 "
-                       "AND model_version = ?", (gid, version_for(int(season)))).fetchone():
+        if con.execute("SELECT 1 FROM game_projections g JOIN model_runs r ON r.run_id = g.run_id "
+                       "AND r.status = 'ok' WHERE g.league = 'nfl' AND g.game_id = ? AND g.locked = 1 "
+                       "AND g.model_version = ?", (gid, version_for(int(season)))).fetchone():
             continue
         out.append((gid, int(season), int(week)))
     return out
