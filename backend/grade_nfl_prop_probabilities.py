@@ -33,12 +33,14 @@ Usage: LP_DB_PATH=... python3 grade_nfl_prop_probabilities.py --season 2026 [--c
 """
 import argparse
 import csv
+import datetime as dt
 import os
 import sqlite3
 import zlib
 
 import nfl_player_projection_v2 as eng
 import player_splits
+import check_nfl_schedule_scores as schedule_times
 
 RECEIVING = {"receiving_yards": (1, "rec_yds"), "receptions": (0, "rec"), "targets": (3, "tgt")}
 PASSING = {"passing_yards": (1, "pass_yds"), "pass_attempts": (3, "att"), "pass_completions": (0, "cmp"),
@@ -58,8 +60,38 @@ def devig(over_odds, under_odds):
     return o / (o + u)
 
 
-def collect(con, season):
-    """[(nfl game id, player id, market, book, line, p_market_over, book_hit)] and exclusion counts."""
+def _captured_utc(value):
+    """Only explicitly timezone-aware timestamps can qualify as pregame quotes."""
+    if not value:
+        return None
+    try:
+        stamp = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        return None
+    return stamp.astimezone(dt.timezone.utc)
+
+
+def pregame_lead_qb(hist, season, team, week):
+    """Prior games only; do not consult this game's pass-attempt total."""
+    attempts = {}
+    for w, rows in hist.by_team[(season, team)].items():
+        if w >= week:
+            continue
+        for row in rows:
+            if row.pos == "QB" and row.att > 0:
+                attempts[row.pid] = attempts.get(row.pid, 0) + row.att
+    return max(sorted(attempts), key=lambda pid: attempts[pid]) if attempts else None
+
+
+def collect(con, season, pregame_only=False, max_pair_skew_seconds=1800):
+    """Quotes per (game, player, market, book, line); optionally require timestamped pregame pairs.
+
+    Legacy mode preserves published retrospective studies. Prospective candidate mode
+    excludes missing/naive/post-kickoff captures and badly asynchronous two-sided prices.
+    Returned items are the same seven-tuples as before, so existing graders still work.
+    """
     markets = tuple(RECEIVING) + tuple(PASSING)
     rows = con.execute(
         "SELECT p.game_id, p.player_id, p.market, p.source, p.line, p.side, p.odds, p.captured_at, r.hit "
@@ -67,15 +99,36 @@ def collect(con, season):
         "WHERE g.league = 'nfl' AND p.market IN (%s) AND p.source IN (%s) AND p.odds IS NOT NULL"
         % (",".join("?" * len(markets)), ",".join("?" * len(BOOKS))), markets + BOOKS).fetchall()
     nfl = player_splits.prop_game_nfl_ids(con, {r[0] for r in rows})
+    kickoffs = {}
+    if pregame_only:
+        for gid, gameday, gametime in con.execute(
+                "SELECT game_id, gameday, gametime FROM nfl_schedule "
+                "WHERE season=? AND game_type='REG'", (season,)):
+            if gameday and gametime:
+                kickoffs[gid] = schedule_times.kickoff_utc(gameday, gametime)
     latest = {}
+    skipped = {"whole_line": 0, "one_side": 0, "quote_time_unknown": 0,
+               "quote_after_kickoff": 0, "schedule_time_unknown": 0, "quotes_unpaired_clock": 0}
     for pg, pid, market, book, line, side, odds, cap, hit in rows:
         gid = nfl.get(pg)
         if gid is None or not gid.startswith("%d_" % season):
             continue
+        if pregame_only:
+            kickoff = kickoffs.get(gid)
+            if kickoff is None:
+                skipped["schedule_time_unknown"] += 1
+                continue
+            stamp = _captured_utc(cap)
+            if stamp is None:
+                skipped["quote_time_unknown"] += 1
+                continue
+            if stamp >= kickoff:
+                skipped["quote_after_kickoff"] += 1
+                continue
         key = (gid, pid, market, book, float(line), side)
-        if key not in latest or cap > latest[key][0]:
+        if key not in latest or (cap or "") > (latest[key][0] or ""):
             latest[key] = (cap, odds, hit)
-    items, skipped = [], {"whole_line": 0, "one_side": 0}
+    items = []
     for (gid, pid, market, book, line, side), (cap, odds, hit) in latest.items():
         if side != "over":
             continue
@@ -86,6 +139,11 @@ def collect(con, season):
         if line == int(line):
             skipped["whole_line"] += 1
             continue
+        if pregame_only:
+            over_t, under_t = _captured_utc(cap), _captured_utc(under[0])
+            if abs((over_t - under_t).total_seconds()) > max_pair_skew_seconds:
+                skipped["quotes_unpaired_clock"] += 1
+                continue
         items.append((gid, pid, market, book, line, devig(odds, under[1]), hit))
     return items, skipped
 
@@ -115,14 +173,17 @@ class Projector(object):
         return out
 
 
-def grade(con, season, hist=None):
+def grade(con, season, hist=None, pregame_only=False, qb_selection="postgame"):
     hist = hist or eng.History.load(con, [season - 1, season])
     final_weeks = {w for (w,) in con.execute(
         "SELECT DISTINCT week FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NOT NULL",
         (season,))}
-    items, skipped = collect(con, season)
+    if qb_selection not in ("pregame", "postgame"):
+        raise ValueError("qb_selection must be pregame or postgame")
+    items, skipped = collect(con, season, pregame_only=pregame_only)
     skipped.update({"not_played": 0, "week": 0, "no_projection": 0, "not_lead_passer": 0, "position": 0})
     proj = Projector(hist)
+    pregame_qbs = {}
     graded, disagree = [], 0
     for gid, pid, market, book, line, p_mkt, book_hit in items:
         week = int(gid.split("_")[1])
@@ -143,8 +204,15 @@ def grade(con, season, hist=None):
             if row.pos != "QB":
                 skipped["position"] += 1
                 continue
-            team_rows = hist.by_team[(season, row.team)][row.week]
-            if max(team_rows, key=lambda x: (x.att, -x.pid)).pid != pid:
+            if qb_selection == "pregame":
+                key = (season, row.team, week)
+                if key not in pregame_qbs:
+                    pregame_qbs[key] = pregame_lead_qb(hist, *key)
+                chosen = pregame_qbs[key]
+            else:
+                team_rows = hist.by_team[(season, row.team)][row.week]
+                chosen = max(team_rows, key=lambda x: (x.att, -x.pid)).pid
+            if chosen != pid:
                 skipped["not_lead_passer"] += 1
                 continue
             idx, attr = PASSING[market]
