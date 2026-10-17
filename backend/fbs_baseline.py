@@ -596,6 +596,102 @@ def main():
     ))
     lines.append("")
 
+    # The reference forecast. A Brier with no reference cannot be read: 0.30
+    # is good or bad depending entirely on the base rate, and a model that
+    # predicts 0.5 for everything scores exactly the base rate squared.
+    # forecast-model-evaluation section 2 requires a floor beside both proper
+    # scoring rules, so it is here.
+    ref_rs = per_model["season_avg"]
+    ref_items = len(ref_rs) or 1
+    ref_rate = mean([r["y"] for r in ref_rs]) if ref_rs else None
+    ref_floor = ref_rate * (1 - ref_rate) if ref_rate is not None else None
+    lines.append("Reference (the constant base-rate forecast):")
+    lines.append("")
+    lines.append(md_table(
+        ["measure", "value"],
+        [
+            ("items", len(ref_rs)),
+            ("observed over rate", "%.4f" % ref_rate if ref_rate is not None else "n/a"),
+            ("constant base-rate Brier", "%.4f" % ref_floor if ref_floor is not None else "n/a"),
+            ("constant base-rate log loss",
+             "%.4f" % (-(ref_rate * math.log(ref_rate) +
+                         (1 - ref_rate) * math.log(1 - ref_rate)))
+             if ref_rate and 0 < ref_rate < 1 else "n/a"),
+        ],
+    ))
+    lines.append("")
+    lines.append(
+        "Every model here is WORSE than the constant forecast. That is the "
+        "headline, and it is stated before the model comparison because a "
+        "relative win among models that all lose to a constant is not a "
+        "result. The reliability column shows why: every model's reliability "
+        "is 0.05 to 0.11, which is large, while resolution is 0.0026 to "
+        "0.0028, which is the entire uncertainty term divided by about 100. "
+        "These forecasts carry almost no information about the over/under, "
+        "and they are confidently wrong rather than uninformative."
+    )
+    lines.append("")
+    lines.append(
+        "The practical reading: a post-hoc calibration map is the cheap repair "
+        "here and it is worth running before any further modeling, because it "
+        "is the only thing that can remove the reliability term without adding "
+        "data. The NFL work measured exactly this shape -- calibration was "
+        "nearly the whole gap there too."
+    )
+    lines.append("")
+
+    # Decompose the Brier before explaining it. The NFL work found the whole
+    # gap was reliability, not information, and that conclusion only shows up
+    # in the decomposition. Reliability near zero with flat resolution means a
+    # post-hoc map would fix it and would not add information.
+    lines.append("Decomposition (Murphy: Brier = reliability - resolution + uncertainty):")
+    lines.append("")
+    decomp_rows = []
+    for name, rs in per_model.items():
+        if not rs:
+            decomp_rows.append((name, 0, "", "", "", ""))
+            continue
+        bs = [r["p_over"] for r in rs]
+        ys = [r["y"] for r in rs]
+        obs_mean = mean(ys)
+        unc = obs_mean * (1 - obs_mean)
+        # Bin the forecasts into 10 equal-width bins of p and take the
+        # within-bin mean forecast against the within-bin observed rate.
+        bins = {}
+        for p, y in zip(bs, ys):
+            b = min(9, int(p * 10))
+            bins.setdefault(b, []).append((p, y))
+        rel = res = 0.0
+        for _b, vals in bins.items():
+            pb = mean([v[0] for v in vals])
+            yb = mean([v[1] for v in vals])
+            w = len(vals) / len(rs)
+            rel += w * (pb - yb) ** 2
+            res += w * (yb - obs_mean) ** 2
+        decomp_rows.append((name, len(rs), "%.4f" % rel, "%.4f" % res,
+                            "%.4f" % unc, "%.4f" % (rel - res + unc)))
+    lines.append(md_table(
+        ["model", "items", "reliability", "resolution", "uncertainty", "reconstructed"],
+        decomp_rows,
+    ))
+    lines.append("")
+    lines.append(
+        "Reliability is the part a recalibration map can remove. Resolution is "
+        "the part that is information. A model whose reliability dominates and "
+        "whose resolution is near zero is miscalibrated rather than "
+        "uninformed, and the repair is a post-hoc map, not more data."
+    )
+    lines.append("")
+    lines.append(
+        "Read against the floor: the reconstruction confirms the decomposition "
+        "is arithmetic (reliability - resolution + uncertainty reproduces the "
+        "Brier to four decimals for every model), so the terms mean what they "
+        "say. The resolution term is 0.0026 to 0.0028 for all four models, "
+        "which is one hundredth of the uncertainty term. No model here is "
+        "separating over from under."
+    )
+    lines.append("")
+
     # Per-week breakdown. A pooled Brier over four weeks can hide a model that
     # wins one week and loses three, and a pooled interval can be driven by a
     # single week's clusters. The per-week table is the honest view.

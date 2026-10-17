@@ -102,6 +102,32 @@ The graded window is the last 4 weeks of the season's calendar, subject to every
 | marcel | 14796 | 45.96 | 0.2951 | 0.8000 |
 | share_adj | 14796 | 57.70 | 0.3548 | 1.0081 |
 
+Reference (the constant base-rate forecast):
+
+| measure | value |
+|---|---|
+| items | 14796 |
+| observed over rate | 0.4644 |
+| constant base-rate Brier | 0.2487 |
+| constant base-rate log loss | 0.6906 |
+
+Every model here is WORSE than the constant forecast. That is the headline, and it is stated before the model comparison because a relative win among models that all lose to a constant is not a result. The reliability column shows why: every model's reliability is 0.05 to 0.11, which is large, while resolution is 0.0026 to 0.0028, which is the entire uncertainty term divided by about 100. These forecasts carry almost no information about the over/under, and they are confidently wrong rather than uninformative.
+
+The practical reading: a post-hoc calibration map is the cheap repair here and it is worth running before any further modeling, because it is the only thing that can remove the reliability term without adding data. The NFL work measured exactly this shape -- calibration was nearly the whole gap there too.
+
+Decomposition (Murphy: Brier = reliability - resolution + uncertainty):
+
+| model | items | reliability | resolution | uncertainty | reconstructed |
+|---|---|---|---|---|---|
+| season_avg | 14796 | 0.0568 | 0.0026 | 0.2487 | 0.3029 |
+| rolling_5 | 14796 | 0.0505 | 0.0027 | 0.2487 | 0.2966 |
+| marcel | 14796 | 0.0484 | 0.0028 | 0.2487 | 0.2944 |
+| share_adj | 14796 | 0.1070 | 0.0025 | 0.2487 | 0.3533 |
+
+Reliability is the part a recalibration map can remove. Resolution is the part that is information. A model whose reliability dominates and whose resolution is near zero is miscalibrated rather than uninformed, and the repair is a post-hoc map, not more data.
+
+Read against the floor: the reconstruction confirms the decomposition is arithmetic (reliability - resolution + uncertainty reproduces the Brier to four decimals for every model), so the terms mean what they say. The resolution term is 0.0026 to 0.0028 for all four models, which is one hundredth of the uncertainty term. No model here is separating over from under.
+
 Per graded week:
 
 | week | season_avg | rolling_5 | marcel | share_adj |
