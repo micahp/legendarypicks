@@ -126,7 +126,13 @@ def collect(con, season, pregame_only=False, max_pair_skew_seconds=1800):
                 skipped["quote_after_kickoff"] += 1
                 continue
         key = (gid, pid, market, book, float(line), side)
-        if key not in latest or (cap or "") > (latest[key][0] or ""):
+        # In strict mode compare actual UTC instants; ISO strings with different
+        # offsets are not necessarily lexically ordered in event-time order.
+        newer = key not in latest
+        if not newer:
+            newer = (_captured_utc(cap) > _captured_utc(latest[key][0])) if pregame_only else (
+                (cap or "") > (latest[key][0] or ""))
+        if newer:
             latest[key] = (cap, odds, hit)
     items = []
     for (gid, pid, market, book, line, side), (cap, odds, hit) in latest.items():
