@@ -1,0 +1,10 @@
+period,candidate,control,games,difference,ci_low,ci_high,replicates
+Walk-forward 2023-2025,Chronological Elo,Historical home/neutral base rate,2398,-0.029435656984543864,-0.03279188360245875,-0.025953214055499902,2000
+Walk-forward 2023-2025,Opponent-adjusted margin strength,Historical home/neutral base rate,2398,-0.027176007090677502,-0.03188368672696842,-0.0223905160179528,2000
+Walk-forward 2023-2025,Opponent-adjusted margin strength,Chronological Elo,2398,0.0022596498938663623,-0.001647504340428983,0.006458365877993296,2000
+2025 complete season,Chronological Elo,Historical home/neutral base rate,808,-0.03376606666023107,-0.040027109007013756,-0.027487787828160158,2000
+2025 complete season,Opponent-adjusted margin strength,Historical home/neutral base rate,808,-0.029540862348776408,-0.03753736933972408,-0.02175140502513054,2000
+2025 complete season,Opponent-adjusted margin strength,Chronological Elo,808,0.004225204311454662,-0.003108316966671721,0.01150180625292216,2000
+2026 current forward,Chronological Elo,Historical home/neutral base rate,350,-0.029484434789756448,-0.03892189799982536,-0.01976094786302316,2000
+2026 current forward,Opponent-adjusted margin strength,Historical home/neutral base rate,350,-0.027485449328637158,-0.04054557092611997,-0.014340223296446412,2000
+2026 current forward,Opponent-adjusted margin strength,Chronological Elo,350,0.0019989854611192903,-0.010910759242038657,0.014429110330336201,2000

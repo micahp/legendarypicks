@@ -5,7 +5,8 @@ the FBS modeling track needs, into a local cache directory.
 The FBS work needs a box-score authority that is NOT CFBD, so the two can be
 reconciled against each other. The SportsDataverse releases are the open
 alternative: they carry ESPN play-by-play, player box scores, game rosters,
-team box scores and season rosters as plain files on public URLs, no API key and
+team box scores, season rosters, the ESPN-native schedule, the all-division
+schedule, and weekly poll history as plain files on public URLs, no API key and
 no rate limit.
 
 Why not the CFBD API: its free tier is 1,000 calls a month and the shared key
@@ -65,6 +66,22 @@ RELEASES = {
     "espn_cfb_team_box": {
         "pattern": "team_box_{year}.parquet",
         "local": "team_box_{year}.parquet",
+    },
+    "cfb_schedules": {
+        "pattern": "cfb_schedules_{year}.parquet",
+        "local": "cfb_schedules_{year}.parquet",
+    },
+    "cfb_team_info": {
+        "pattern": "cfb_team_info_{year}.parquet",
+        "local": "cfb_team_info_{year}.parquet",
+    },
+    "espn_cfb_schedules": {
+        "pattern": "cfb_schedule_{year}.parquet",
+        "local": "espn_schedule_{year}.parquet",
+    },
+    "cfb_poll_analytics": {
+        "pattern": "cfb_poll_analytics_{year}.parquet",
+        "local": "cfb_poll_analytics_{year}.parquet",
     },
     "espn_cfb_rosters": {
         "pattern": "cfb_rosters_{year}.parquet",
