@@ -195,8 +195,56 @@ describe('NHL model tab previews', () => {
     // A graded game leaves the projections view; the record is where it is read.
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
-    expect(screen.getByText('Pick ✗')).toBeTruthy()
+    expect(screen.getByText('Pick ✗ Lost')).toBeTruthy()
   })
+  it('grades a non-qualifying model lean as won or lost without claiming it was a wager', async () => {
+    const grade = {
+      official_home_goals: 2, official_away_goals: 3,
+      statistical_home_goals: 2, statistical_away_goals: 3,
+      official_winner: 'away' as const, shootout_decided: false,
+      home_win_brier: 0.25, home_win_logloss: 0.69,
+      home_goal_error: 0, away_goal_error: 0,
+      graded_at_utc: '2026-10-15T14:35:05Z',
+    }
+    const lean = (side: 'home' | 'away', won: boolean) => ({
+      market: 'ml' as const, side, line: null, price: -110,
+      model_probability: side === 'home' ? 0.52 : 0.48,
+      market_probability: 0.5, edge: side === 'home' ? 0.02 : -0.02,
+      expected_value: -0.05, line_source: 'bovada',
+      line_captured_at_utc: '2026-10-14T17:20:00Z',
+      settlement_basis: 'official_final_score',
+      provenance: 'lock' as const, priced: true, qualifies: false,
+      rule_version: 'ev-max-1', result: { won },
+    })
+    const game = {
+      game_id: 2026020199, game_date: '2026-10-14',
+      scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T17:24:00Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(0.52), grade, pick: lean('home', false) },
+        B5_xg_poisson: { ...forecast(0.48), grade, pick: null },
+        B7_elo_xg_poisson: { ...forecast(0.48), grade, pick: lean('away', true) },
+      },
+      result: grade, markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [game], previews: [] }),
+    }))
+    render(<NhlModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+    expect(screen.getByText('Lean ✓ Won')).toBeTruthy()
+    expect(screen.getByText('Not a qualifying wager')).toBeTruthy()
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
+    expect(screen.getByText('Lean ✗ Lost')).toBeTruthy()
+    expect(screen.getByText('Not a qualifying wager')).toBeTruthy()
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B5_xg_poisson' } })
+    expect(screen.getByText('No pick recorded')).toBeTruthy()
+    expect(screen.getByText('Forecast graded; no selection was stored')).toBeTruthy()
+    expect(screen.queryByText('Lean ✓ Won')).toBeNull()
+  })
+
   it('compares prospective Brier and goals accuracy across all three models in a tooltip, including unpriced games', async () => {
     const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
       const grade = {
@@ -242,7 +290,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
-    expect(screen.getAllByText('Not recommended')).toHaveLength(2)
+    expect(screen.getAllByText('No pick recorded')).toHaveLength(2)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
     expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
     expect(screen.getByText('· Selected')).toBeTruthy()
