@@ -320,6 +320,111 @@ worth about +0.04 AUC at no MAE cost, and separately correcting the level. Both 
 before anything is published, and the passing markets stay out of any public claim of predictive advantage until
 they are.
 
+Section 7 does that and **corrects two of the claims above.** The AUC gain is real but smaller than it looks
+here, the fitted `K_T` does turn out to be MAE-optimal once the fit is restricted to the right weeks, and the
+6.7% shortfall is a 2026-specific level shift rather than a stable model bias.
+
+## 7. Refitting the attempt shrinkage: real but small, and it does not create an increment
+
+`refit_nfl_qb_volume.py` (new) fits `K_T` on the 2013 to 2021 seasons under two objectives and evaluates the
+result on 2026, which neither fit saw. The first thing it established is that **the week regime dominates the
+answer**, which corrects section 6.
+
+### The regime has to match the evaluation
+
+| K_T | MAE, all fit weeks | AUC, all fit weeks | MAE, fit weeks 2-5 | AUC, fit weeks 2-5 |
+|---:|---:|---:|---:|---:|
+| 0.25 | 6.658 | 0.6087 | 6.872 | 0.5732 |
+| 1.0 | 6.604 | 0.6112 | 6.677 | 0.5755 |
+| 2.0 | 6.584 | 0.6127 | 6.600 | 0.5774 |
+| **4.0** | **6.581** | **0.6131** | 6.565 | **0.5779** |
+| **8.0, as fitted** | 6.601 | 0.6106 | **6.563** | 0.5733 |
+| 16.0 | 6.637 | 0.6031 | 6.577 | 0.5616 |
+
+Over all weeks the two objectives agree and both pick 4.0. Restricted to weeks 2 to 5, the regime props exist
+in, MAE picks 8.0 and AUC picks 4.0, and they disagree. So:
+
+- **Section 6's claim that the fitted 8.0 "is not even MAE-optimal for attempts" is withdrawn.** It is not
+  MAE-optimal over all weeks, but it *is* MAE-optimal in the early-week regime, 6.563 against 6.565. The earlier
+  statement was a regime mismatch, which is the same instrument-versus-world error the rest of this document
+  keeps running into.
+- **The AUC lever is real but small.** In-regime it is 0.5733 at 8.0 against 0.5779 at 4.0, about +0.005, not
+  the +0.04 the 2026 sweep in section 6 suggested. That sweep measured against settled prop lines on one season
+  and overstated the general gain.
+- The curves are flat in both regimes, so `K_T` is not a high-leverage parameter. It is worth moving because it
+  is nearly free, not because it is decisive.
+
+### The level is not a stable bias, and the correction does not transfer
+
+| fit-seasons regime | mean projected | mean actual | ratio |
+|---|---:|---:|---:|
+| all fit weeks | 35.329 | 34.922 | 1.0117 |
+| fit weeks 2 to 5 | 35.547 | 35.438 | **1.0031** |
+
+Restricted to the same weeks as the evaluation, the model is **unbiased**: ratio 1.0031, shift +0.109 attempts.
+The 2.2 attempt shortfall seen in 2026 is therefore a 2026-specific level shift, not a stable model bias, and
+**section 6's framing of it as a volume defect to be fixed is corrected.**
+
+Fitting a level correction on the fit seasons and applying it to 2026 makes things slightly worse, because the
+fit-seasons correction is a factor of 0.9969 in the opposite direction: 2026 bias moves from -2.198 to -2.293 at
+`K_T` 4.0, and the market scores all get worse. The correction is dropped.
+
+### What the refit does on 2026, held out
+
+| variant | bias | MAE | sd projected | AUC against the fixed threshold |
+|---|---:|---:|---:|---:|
+| `K_T` 4.0 | -2.198 | 7.106 | 2.015 | 0.5836 |
+| `K_T` 4.0 + level | -2.293 | 7.119 | 2.008 | 0.5836 |
+| `K_T` 8.0, as fitted | -2.218 | 7.141 | 1.728 | 0.5765 |
+| `K_T` 8.0 + level | -2.313 | 7.155 | 1.722 | 0.5765 |
+
+The refit improves the point estimate and the discrimination on held-out data, in the same direction the fit
+seasons selected, and the level correction hurts both.
+
+### The affected market, and the paired test
+
+Pass attempts, 735 of the 1,207 posted items scorable, on 111 player-games:
+
+| variant | Brier | log loss | AUC |
+|---|---:|---:|---:|
+| `K_T` 4.0 | **0.2568** | **0.7078** | **0.5421** |
+| `K_T` 4.0 + level | 0.2587 | 0.7116 | 0.5395 |
+| `K_T` 8.0, as fitted | 0.2595 | 0.7133 | 0.5310 |
+| `K_T` 8.0 + level | 0.2607 | 0.7158 | 0.5249 |
+
+Paired on the 735 identical items, clustered by player-game:
+
+| metric | `K_T` 8.0 minus `K_T` 4.0 | clustered 95% |
+|---|---:|---|
+| Brier | +0.00267 | [-0.00187, +0.00824] |
+| log loss | +0.00549 | [-0.00378, +0.01684] |
+
+**Both intervals span zero**, so at 111 player-games the market-level improvement is **not established**. The
+direction is consistent across three metrics, two populations and the held-out season, which is why it is worth
+taking, but it is not a demonstrated gain.
+
+### The increment over the market is negative under every variant
+
+| ours | log loss, market only | log loss, market + ours | increment |
+|---|---:|---:|---:|
+| `K_T` 4.0 | 0.6978 | 0.7060 | -0.00823 |
+| `K_T` 4.0 + level | 0.6978 | 0.7045 | -0.00666 |
+| `K_T` 8.0 | 0.6978 | 0.7112 | -0.01344 |
+| `K_T` 8.0 + level | 0.6978 | 0.7116 | -0.01385 |
+
+Every increment is negative: on this market, adding our probability to the market's makes the market-only model
+**worse**. The refit roughly halves the damage, from -0.01344 to -0.00823, and does not create an increment.
+
+### Against the two gates
+
+1. **Against the incumbent: not established.** The refit is better on MAE and on discrimination in every
+   comparison, but the paired clustered interval on the market scores spans zero.
+2. **Against the price: fails.** The increment is negative under every variant, refit or not.
+
+So the honest summary of this step is that it removes some of a known harm and demonstrates no gain. `K_T` 4.0
+for attempts is worth adopting because it costs nothing measurable and is directionally consistent, the level
+correction is not, and the passing markets still cannot be presented as adding information over the price.
+
 ## The ladder, paired on identical items
 
 31,843 items on 838 player-games, every forecast scored on the same games, markets, books and lines.
@@ -369,11 +474,11 @@ Read plainly:
 4. Refit the aging curve on residuals, not levels, before judging it. The version here should not ship.
 5. Re-run the paired ladder after calibration is in, because the Marcel-versus-v2 comparison has an interval
    that spans zero and more weeks of 2026 props will narrow it.
-6. Lower `K_T` for attempts toward 1 or 2 and correct the level separately. The volume diagnostic separates the
-   two: discrimination rises monotonically as shrinkage falls, worth about +0.04 AUC at no MAE cost, while the
-   6.7% bias sits unchanged across the whole sweep and needs its own fix in the league mean or the blend.
-   Neither is a per-quarterback correction, and the two passing markets stay out of any public claim of
-   predictive advantage until both are done.
+6. Take `K_T` 4.0 for attempts and drop the level correction. Section 7 measures both: the refit is better on MAE
+   and discrimination in every comparison including held-out 2026, but the paired clustered interval on the
+   market scores spans zero, so it is a near-free directionally consistent change rather than a demonstrated
+   gain. The level correction does not transfer and is dropped. The two passing markets still cannot be
+   presented as adding information over the price, because the increment is negative either way.
 7. Fix the passing grader's population. It selects the quarterback who led his team in attempts in the finished
    game, which is post-game information. The pregame-only rebuild is in `audit_nfl_passing_projections.py` and
    should replace the filter in the grader.
@@ -393,6 +498,7 @@ python3 calibrate_nfl_prop_probabilities.py --season 2026 --mode forward --csv /
 python3 measure_nfl_prop_discrimination.py --season 2026 --boot 150    # AUC, decomposition, increment
 python3 audit_nfl_passing_projections.py --season 2026                 # volume vs efficiency
 python3 diagnose_nfl_qb_volume.py --season 2026                        # where the volume error lives, K_T sweep
+python3 refit_nfl_qb_volume.py --season 2026 --fit-seasons $FIT --fit-max-week 5   # refit K_T, level, gates
 python3 marcel_nfl_backtest.py --season 2025 --window 3 --fit-seasons $FIT          # MAE ladder
 python3 marcel_nfl_backtest.py --season 2026 --props --window 3 --csv /tmp/m3.csv --fit-seasons $FIT
 ```
