@@ -624,7 +624,7 @@ export default function NhlModelTab() {
               onClick={() => { setAccuracyPinned(false); setAccuracyHovered(false) }}
               className="fixed inset-0 z-40 cursor-default" />}
             {showAccuracy && <div id="nhl-model-accuracy-tooltip" role="tooltip"
-              className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,560px)]">
+              className="absolute right-0 top-full z-50 mt-2 max-h-[min(78vh,700px)] w-[min(92vw,560px)] overflow-y-auto overscroll-contain rounded-xl">
               <ModelPerformanceSummary games={games} selectedModel={model} />
             </div>}
           </div>
