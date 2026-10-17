@@ -272,7 +272,8 @@ describe('NHL model tab previews', () => {
                 over_5_5: { probability: .6, outcome: 1, brier: .16 },
                 over_6_5: { probability: .4, outcome: 0, brier: .16 },
               },
-              locked_market: { total_over: { line: 6.5, probability: .65, outcome: 1, brier: .1225, market_brier: .2 } },
+              locked_market: { total_over: { line: 6.5, probability: .65, outcome: 1, brier: .1225,
+                ...(key === 'B5_xg_poisson' ? {} : { market_brier: .2 }) } },
             },
           },
         ])),
@@ -286,8 +287,9 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('Home −1.5')).toBeTruthy()
     expect(screen.getByText('Over 6.5')).toBeTruthy()
     expect(screen.getAllByText('0.0900').length).toBe(3)
-    expect(screen.getAllByText('0.1225').length).toBe(3)
-    expect(screen.getAllByText('0.2000').length).toBe(3)
+    // A model score without its matched market score must not inflate the displayed sample.
+    expect(screen.getAllByText('0.1225').length).toBe(2)
+    expect(screen.getAllByText('0.2000').length).toBe(2)
     expect(screen.getAllByText('0.16').length).toBe(0)
   })
 

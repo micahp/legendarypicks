@@ -398,13 +398,10 @@ function linePerformance(games: NhlGame[], model: ModelName, key: LineMetric) {
 
 function frozenLinePerformance(games: NhlGame[], model: ModelName, key: string) {
   const values = games.map(game => game.models[model]?.line_grades?.locked_market?.[key])
-    .filter((value): value is { brier: number; market_brier?: number; graded?: boolean } =>
-      value != null && Number.isFinite(value.brier))
-  const average = (field: 'brier' | 'market_brier') => {
-    const found = values.map(value => value[field]).filter((value): value is number =>
-      value != null && Number.isFinite(value))
-    return found.length ? found.reduce((sum, value) => sum + value, 0) / found.length : null
-  }
+    .filter((value): value is { brier: number; market_brier: number } =>
+      value != null && Number.isFinite(value.brier) && Number.isFinite(value.market_brier))
+  const average = (field: 'brier' | 'market_brier') => values.length
+    ? values.reduce((sum, value) => sum + value[field], 0) / values.length : null
   return { n: values.length, modelBrier: average('brier'), marketBrier: average('market_brier') }
 }
 
