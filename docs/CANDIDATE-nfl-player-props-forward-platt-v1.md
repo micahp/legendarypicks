@@ -2,6 +2,8 @@
 
 Status: **research candidate, not deployed**. Branch: `feat/nfl-props-forward-platt-candidate` (based on `scratch/spec-b-rebase`, after commit `86db074`). Date: 2026-10-17.
 
+Verdict (2026-10-17): **RESEARCH_CANDIDATE_ONLY**; independent increment **NOT_ESTABLISHED**. See "Strict-cohort results and verdict".
+
 ## Decision
 
 Freeze **v2 raw player-stat generator + pooled, two-parameter forward-only Platt** as a named *experimental candidate*: `nfl-player-props-v2-forward-platt-v1`. Do **not** silently make it the default or claim it sees information the market does not.
@@ -62,7 +64,34 @@ python3 nfl_prop_forward_platt_candidate.py --season 2026 --boot 400 --distribut
     --json-report /tmp/nfl-forward-platt-v1.json --csv /tmp/nfl-forward-platt-v1-rows.csv
 ```
 
-If a command fails, capture the actual traceback and counts. **Do not substitute old scores for the strict cohort**. This research branch contains code and synthetic tests; results for the strict cohort remain **not run here** because the remote development DB is not accessible in this environment.
+If a command fails, capture the actual traceback and counts. **Do not substitute old scores for the strict cohort**. Run under the repo venv (`backend/venv/bin/python`), which carries pytz, numpy and scipy; the system `python3` does not. The branch also shipped with one broken synthetic test (`test_trains_only_on_prior_weeks`): it called `train()` directly with rows lacking the `"week"` key that `candidate_rows()` normally sets, so it raised `KeyError: 'week'`. The helper was fixed to carry the week and all 7 tests now pass.
+
+## Strict-cohort results and verdict (run 2026-10-17, dev DB)
+
+Both commands were run here against the shared dev DB (`/root/legendarypicks/backend/data/picks.dev.db`, read-only). Tests: 7 passed. Candidate run: exit 0, report `/tmp/nfl-forward-platt-v1.json`, scored rows `/tmp/nfl-forward-platt-v1-rows.csv`.
+
+**Population.** 28,002 input items; 7,076 uncalibrated (week 2 has no earlier week); 20,926 calibrated on 628 player-games, weeks 3 to 5. Largest exclusions: quotes captured after kickoff 12,300; weeks outside the graded window 7,969; not played 5,658; not lead passer 1,019. 35 graded items where our outcome disagrees with the book's settlement.
+
+**Forward Platt fits.** Positive slope that shrinks toward the mean as data accumulates: week 3 +0.160 (intercept +0.032), week 4 +0.066 (+0.056), week 5 +0.055 (+0.085). The same structural-overconfidence shape as the retrospective fit.
+
+**Scores, calibrated items, weeks 3 to 5.**
+
+| forecast | Brier | log loss | AUC |
+|---|---:|---:|---:|
+| Platt (`p_forward`) | 0.2502 | 0.6935 | 0.4991 |
+| market | 0.2469 | 0.6868 | 0.5527 |
+| raw v2 (`p_ours`) | 0.2743 | 0.7475 | 0.5229 |
+
+**Gate results.**
+
+1. Against the incumbent (raw v2). Platt improves both proper scores with intervals excluding zero: Brier +0.02415 [+0.01282, +0.03631], log loss +0.05409 [+0.02983, +0.08083]. Discrimination falls, AUC 0.5229 to 0.4991.
+2. Against the price. Platt does not beat the market. Brier -0.00327 [-0.00469, -0.00169], entirely below zero, so the market is established ahead.
+3. Independent increment over the market. Not established. Weeks 4 to 5, 14,214 items, 416 player-games: log loss +0.00007 [-0.00119, +0.00143], Brier +0.00004 [-0.00059, +0.00071]. No market is established; receiving yards is the closest positive (log loss +0.00037).
+4. Full predictive distribution. Fails. Platt is worse than raw on every market, all intervals below zero (receiving yards -22.05 [-23.71, -20.48], passing yards -76.35 [-83.37, -68.76]). Mean bias flips from under-projection (receiving yards -8.06) to large over-projection (+53.16): the line-fitted map extrapolates the tail badly, exactly the failure mode gate 4 warns about.
+
+**Verdict: `RESEARCH_CANDIDATE_ONLY`, increment `NOT_ESTABLISHED`.** Calibration is a real and significant improvement over raw v2 on Brier and log loss, but it does not beat the market, creates no increment over the price, and harms the full stat distribution. Stop tuning this candidate and do not promote it. The reasons recorded in the JSON stand: pre-kickoff snapshot provenance is unverified, the conditional-on-played subset is still observed-participation selection, and there is no positive paired clustered interval.
+
+Per the stopping rule, tuning stops here and the next model moves to separately versioned player-distribution facets. Nothing in this branch changes schema or a production predictor.
 
 ## Release gate and stopping rule
 

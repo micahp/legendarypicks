@@ -10,7 +10,8 @@ import nfl_prop_forward_platt_candidate as cand
 class CandidateTimingTests(unittest.TestCase):
     def row(self, week, pid, p, y):
         return {"game_id": "2026_%02d_A_B" % week, "player_id": pid, "market": "receiving_yards",
-                "book": "bovada", "line": 29.5, "p_ours": p, "p_market": .5, "over": y}
+                "book": "bovada", "line": 29.5, "p_ours": p, "p_market": .5, "over": y,
+                "week": week}
 
     def test_trains_only_on_prior_weeks(self):
         old = [self.row(2, i, .2 if i % 2 == 0 else .8,
