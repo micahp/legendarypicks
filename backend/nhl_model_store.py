@@ -234,6 +234,137 @@ def pick_qualifies(pick: dict | None) -> bool:
     return bool(pick) and pick.get("expected_value") is not None and pick["expected_value"] > 0
 
 
+# ---------------------------------------------------------------------------
+# Game-line diagnostics. These are always derived from the immutable locked
+# forecast and the official grade, regardless of whether a bet was recommended.
+# Reference totals use the original non-shootout scoring target. Quoted market
+# totals use the official final-score settlement basis instead.
+# ---------------------------------------------------------------------------
+
+GAME_LINE_GRADE_VERSION = "line-brier-v1"
+
+
+def _line_brier(probability: float, occurred: bool, market_probability: float | None = None) -> dict:
+    y = int(occurred)
+    result = {"probability": float(probability), "outcome": y,
+              "brier": (float(probability) - y) ** 2}
+    if market_probability is not None:
+        result["market_probability"] = market_probability
+        result["market_brier"] = (market_probability - y) ** 2
+    return result
+
+
+def _official_total_probabilities(forecast: dict, line: float, game_id: str) -> tuple[float, float, float] | None:
+    """Over / under / push mass at an official final-score line.
+
+    The frozen joint matrix models regulation + overtime goals, excluding the
+    shootout deciding goal. In regular-season NHL games a surviving tied score
+    goes to a shootout and the official final adds one goal to the winner. Shift
+    that pregame tie mass by one goal for the sportsbook-style official total.
+    Do not edit the frozen matrix, and do not make this assumption for playoffs.
+    """
+    matrix = forecast.get("joint_score_probability_matrix_home_rows_away_columns")
+    if not isinstance(matrix, list) or not matrix:
+        # At 5.5, adding a shootout winner to an even total never crosses the
+        # threshold, so the stored probability is already market-aligned.
+        if line == 5.5:
+            p = _probability(forecast, "p_over_5.5", "total grading")
+            return p, 1 - p, 0.0
+        return None
+
+    if len(str(game_id)) != 10 or not str(game_id).isdigit():
+        raise NHLModelError("cannot determine game type for market-line grade")
+    regular_season = str(game_id)[4:6] == "02"
+    if not regular_season:
+        # A playoff tie in an independent Poisson matrix needs a separate OT
+        # resolution model. We do not silently substitute a shootout rule.
+        return None
+
+    over = under = push = 0.0
+    for home_goals, row in enumerate(matrix):
+        if not isinstance(row, list):
+            raise NHLModelError("malformed frozen score matrix for market-line grade")
+        for away_goals, mass in enumerate(row):
+            probability = float(mass)
+            if not math.isfinite(probability) or probability < 0:
+                raise NHLModelError("invalid probability in frozen score matrix")
+            official_total = home_goals + away_goals + int(home_goals == away_goals)
+            if official_total > line:
+                over += probability
+            elif official_total < line:
+                under += probability
+            else:
+                push += probability
+    total = over + under + push
+    if total <= 0 or not math.isfinite(total):
+        raise NHLModelError("invalid frozen score-matrix probability sum")
+    return over / total, under / total, push / total
+
+
+def grade_game_lines(forecast: dict, grade: dict, game_id: str, quote: dict | None = None,
+                     quote_usable: bool = False) -> dict:
+    """Score fixed statistical markets and, when present, the frozen full-game lines.
+
+    Reference metrics grade the model's original regulation/OT, SO-excluded
+    target for every completed forecast. Market metrics grade the official final
+    and require a quote captured at the lock (never the current sportsbook line).
+    This is a post-hoc, versioned diagnostic, not a modification of frozen picks.
+    """
+    context = "game-line grade %s" % game_id
+    home_official = int(grade["official_home_goals"])
+    away_official = int(grade["official_away_goals"])
+    home_stat = int(grade["statistical_home_goals"])
+    away_stat = int(grade["statistical_away_goals"])
+    stat_total = home_stat + away_stat
+    margin = home_official - away_official
+    fixed = {
+        "home_minus_1_5": _line_brier(_probability(forecast, "p_home_minus_1_5", context), margin > 1.5),
+        "away_minus_1_5": _line_brier(_probability(forecast, "p_away_minus_1_5", context), -margin > 1.5),
+        "over_5_5": _line_brier(_probability(forecast, "p_over_5.5", context), stat_total > 5.5),
+        "over_6_5": _line_brier(_probability(forecast, "p_over_6.5", context), stat_total > 6.5),
+    }
+    result = {"version": GAME_LINE_GRADE_VERSION, "reference_target": "reg_ot_excluding_shootout",
+              "reference": fixed, "locked_market": {}, "market_settlement": "official_final_score"}
+    if not quote or not quote_usable:
+        return result
+
+    puck = quote.get("home_puck_line")
+    if puck is not None and abs(float(puck)) == 1.5:
+        home_line = float(puck)
+        home_key = "p_home_minus_1_5" if home_line < 0 else "p_home_plus_1_5"
+        price_prob = _no_vig(quote.get("home_puck_price"), quote.get("away_puck_price"), 0)
+        result["locked_market"]["puck_home_cover"] = {
+            **_line_brier(_probability(forecast, home_key, context),
+                          margin + home_line > 0, price_prob),
+            "line": home_line,
+        }
+
+    total_line = quote.get("total_line")
+    if total_line is not None:
+        line = float(total_line)
+        probabilities = _official_total_probabilities(forecast, line, game_id)
+        if probabilities is not None:
+            over, under, push = probabilities
+            final_total = home_official + away_official
+            # Whole-goal lines can push: grade conditional on a decisive
+            # over/under outcome, and omit pushes from binary Brier averages.
+            if final_total == line:
+                result["locked_market"]["total_over"] = {
+                    "line": line, "push": True, "push_probability": push,
+                    "settlement": "push", "graded": False,
+                }
+            elif over + under > 0:
+                conditional_over = over / (over + under)
+                price_prob = _no_vig(quote.get("over_price"), quote.get("under_price"), 0)
+                result["locked_market"]["total_over"] = {
+                    **_line_brier(conditional_over, final_total > line, price_prob),
+                    "line": line, "push": False, "push_probability": push,
+                    "settlement": "official_final_score", "graded": True,
+                    "probability_basis": "conditional_on_no_push",
+                }
+    return result
+
+
 def grade_pick(pick: dict, grade: dict) -> dict:
     """Grade a frozen pick from official results under the settlement basis it recorded."""
     side, line = pick["side"], pick["line"]
@@ -1210,8 +1341,16 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
                      "graded_at_utc": row["graded_at_utc"]}
             game["result"] = grade
         pick_row = picks.get((gid, row["model_key"], row["model_version"]))
+        frozen_forecast = json.loads(row["forecast_output_json"])
+        frozen_quote = (quotes.get((gid, pick_row["line_source"], pick_row["line_captured_at_utc"]))
+                        if pick_row else None)
+        quote_fresh = bool(frozen_quote and
+                           dt.timedelta(0) <= parse_time(row["locked_at_utc"]) -
+                           parse_time(frozen_quote["captured_at_utc"]) <= T90_QUOTE_MAX_AGE)
+        line_grades = (grade_game_lines(frozen_forecast, grade, gid, frozen_quote, quote_fresh)
+                       if grade else None)
         game["models"][row["model_key"]] = {
-            **json.loads(row["forecast_output_json"]),
+            **frozen_forecast,
             "forecast_id": row["forecast_id"], "model_version": row["model_version"],
             "locked_at_utc": row["locked_at_utc"], "home_expected_goals": row["home_expected_goals"],
             "away_expected_goals": row["away_expected_goals"],
@@ -1219,9 +1358,8 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
             "projected_goal_differential_home": row["projected_goal_differential_home"],
             "home_win_probability": row["home_win_probability"], "p_over_5.5": row["p_over_5_5"],
             "p_over_6.5": row["p_over_6_5"], "grade": grade,
-            "pick": export_pick(pick_row, grade,
-                                quotes.get((gid, pick_row["line_source"], pick_row["line_captured_at_utc"]))
-                                if pick_row else None),
+            "line_grades": line_grades,
+            "pick": export_pick(pick_row, grade, frozen_quote),
         }
     missed = [dict(row) for row in con.execute("""
       SELECT e.game_id,e.home_team,e.away_team,e.model_key,e.model_version,

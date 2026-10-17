@@ -32,6 +32,11 @@ interface Forecast {
     away_goal_error: number
     graded_at_utc: string
   } | null
+  line_grades?: {
+    version: string
+    reference: Record<string, { probability: number; outcome: number; brier: number }>
+    locked_market: Record<string, { brier?: number; market_brier?: number; graded?: boolean; line?: number }>
+  } | null
   /** Frozen at lock time by the backend and read straight from the payload. The browser
    *  never computes a pick, so the card and the record cannot disagree. */
   pick?: ModelPick | null
@@ -375,6 +380,34 @@ function modelPerformance(games: NhlGame[], model: ModelName) {
   }
 }
 
+type LineMetric = 'home_minus_1_5' | 'away_minus_1_5' | 'over_5_5' | 'over_6_5'
+const LINE_METRICS: { key: LineMetric; label: string }[] = [
+  { key: 'home_minus_1_5', label: 'Home −1.5' },
+  { key: 'away_minus_1_5', label: 'Away −1.5' },
+  { key: 'over_5_5', label: 'Over 5.5' },
+  { key: 'over_6_5', label: 'Over 6.5' },
+]
+
+function linePerformance(games: NhlGame[], model: ModelName, key: LineMetric) {
+  const results = games.map(game => game.models[model]?.line_grades?.reference?.[key])
+    .filter((result): result is { probability: number; outcome: number; brier: number } =>
+      result != null && Number.isFinite(result.brier))
+  return { n: results.length, brier: results.length
+    ? results.reduce((sum, result) => sum + result.brier, 0) / results.length : null }
+}
+
+function frozenLinePerformance(games: NhlGame[], model: ModelName, key: string) {
+  const values = games.map(game => game.models[model]?.line_grades?.locked_market?.[key])
+    .filter((value): value is { brier: number; market_brier?: number; graded?: boolean } =>
+      value != null && Number.isFinite(value.brier))
+  const average = (field: 'brier' | 'market_brier') => {
+    const found = values.map(value => value[field]).filter((value): value is number =>
+      value != null && Number.isFinite(value))
+    return found.length ? found.reduce((sum, value) => sum + value, 0) / found.length : null
+  }
+  return { n: values.length, modelBrier: average('brier'), marketBrier: average('market_brier') }
+}
+
 const MODEL_ORDER: ModelName[] = ['B3_elo', 'B5_xg_poisson', 'B7_elo_xg_poisson']
 
 function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; selectedModel: ModelName }) {
@@ -415,8 +448,58 @@ function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; s
           </tbody>
         </table>
       </div>
+      <div className="mt-4 border-t border-zinc-700 pt-3">
+        <h4 className="text-sm font-semibold text-zinc-100">Game lines · Brier scores</h4>
+        <p className="mt-1 text-xs text-zinc-400">Fixed reference thresholds, graded for every completed forecast, whether a bet was selected or not.</p>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[450px] text-xs tabular-nums">
+            <thead className="text-zinc-500"><tr className="border-b border-zinc-700">
+              <th className="px-2 py-2 text-left font-medium">Market</th>
+              {MODEL_ORDER.map(key => <th key={key} className="px-2 py-2 text-right font-medium">{MODEL_LABELS[key]}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-zinc-800">
+              {LINE_METRICS.map(line => <tr key={line.key}>
+                <th scope="row" className="px-2 py-2 text-left font-medium text-zinc-300">{line.label}</th>
+                {MODEL_ORDER.map(key => {
+                  const value = linePerformance(games, key, line.key)
+                  return <td key={key} className="px-2 py-2 text-right text-zinc-200">
+                    {score(value.brier, 4)} <span className="text-zinc-500">({value.n})</span>
+                  </td>
+                })}
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-xs text-zinc-500">Fixed totals use regulation and OT goals, excluding shootout-deciding goals. The ±1.5 lines grade official final margins.</p>
+        <h4 className="mt-4 text-xs font-semibold text-zinc-200">Frozen sportsbook lines</h4>
+        <p className="mt-1 text-xs text-zinc-500">Only games with a qualifying archived line; model vs no-vig market Brier on matched games. Totals with pushes are excluded.</p>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[450px] text-xs tabular-nums">
+            <thead className="text-zinc-500"><tr className="border-b border-zinc-700">
+              <th className="px-2 py-2 text-left font-medium">Model / market</th>
+              <th className="px-2 py-2 text-right font-medium">Model Brier</th>
+              <th className="px-2 py-2 text-right font-medium">Market Brier</th>
+              <th className="px-2 py-2 text-right font-medium">Games</th>
+            </tr></thead>
+            <tbody className="divide-y divide-zinc-800">
+              {MODEL_ORDER.flatMap(key => [
+                { key: 'puck_home_cover', label: 'Puck line' },
+                { key: 'total_over', label: 'Game total' },
+              ].map(market => {
+                const value = frozenLinePerformance(games, key, market.key)
+                return <tr key={key + market.key}>
+                  <th scope="row" className="px-2 py-2 text-left font-medium text-zinc-300">{MODEL_LABELS[key]} · {market.label}</th>
+                  <td className="px-2 py-2 text-right">{score(value.modelBrier, 4)}</td>
+                  <td className="px-2 py-2 text-right">{score(value.marketBrier, 4)}</td>
+                  <td className="px-2 py-2 text-right">{value.n}</td>
+                </tr>
+              }))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-        Lower is better. Brier 0 is perfect; 0.2500 is a constant 50% forecast. Every graded game counts, including unpriced games. Historical backtests and betting ROI are separate.
+        Lower Brier is better. 0 is perfect; 0.2500 is a constant 50% forecast. All eligible graded games count, including unpriced games. Betting ROI is measured separately.
       </p>
     </section>
   )
@@ -541,7 +624,7 @@ export default function NhlModelTab() {
               onClick={() => { setAccuracyPinned(false); setAccuracyHovered(false) }}
               className="fixed inset-0 z-40 cursor-default" />}
             {showAccuracy && <div id="nhl-model-accuracy-tooltip" role="tooltip"
-              className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,560px)]">
+              className="absolute right-0 top-full z-50 mt-2 max-h-[min(78vh,700px)] w-[min(92vw,560px)] overflow-y-auto overscroll-contain rounded-xl">
               <ModelPerformanceSummary games={games} selectedModel={model} />
             </div>}
           </div>
