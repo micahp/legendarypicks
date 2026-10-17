@@ -19,3 +19,22 @@ Files here are large (386 MB for 2022-2026 across three releases). The audit
 scripts read only the columns they need, so a partial download is not usable;
 `fetch_fbs_parquet.py` verifies each file's size against the release asset and
 reports a mismatch rather than silently using a truncated file.
+
+## What was measured from these files, 2026-10-17
+
+The audits that read this cache:
+
+- `AUDIT-FBS-DATA-20261017.md` -- what the releases carry, per season and per column
+- `AUDIT-FBS-RECONCILE-20261017.md` -- do the releases agree with our stored results
+
+Key numbers, so they are not lost if the cache is deleted and re-fetched:
+
+- ESPN play-by-play 2026: 455 games, 78,642 plays; 85.1% of our 323 linked
+  prop fixtures
+- ESPN player box 2026: 455 games, 39,913 rows, 11,887 athletes
+- stats.ncaa.org play-by-play (`cfbfastR`) 2026: 795 games, 149,246 plays
+- ESPN game rosters 2026: 447 games, 100,682 rows
+- ESPN team box 2026: 455 games, 910 rows
+- Every release above covers season 2026; the releases before that carry
+  2004-2025, so a multi-season backtest is possible from the releases even
+  though our props are 2026-only.
