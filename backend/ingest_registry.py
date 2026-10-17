@@ -128,6 +128,22 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "tennis_v2_research_ledger",
+        "cadence_min": 30,
+        "timeout_sec": 1800,
+        "host_lock": "tennis_model",
+        "steps": [["tennis_v2_research_ledger.py", "--days", "7"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_v2_research_ledger' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "tennis V2 prospective forecasts and grades",
+            "age_label": "last successful prospective capture",
+        }],
+    },
+    {
         "id": "settlement",
         # Every 30 minutes, ALL DAY. /etc/cron.d/legendarypicks-pipeline ran settlement at
         # :23 and :53 during hours 19-23 and 0-3 only, so nothing settled between 03:53 and

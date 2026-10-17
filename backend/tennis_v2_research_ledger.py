@@ -42,7 +42,8 @@ ELO_POINT_ELO_COEF = 0.6954341956477393
 ELO_POINT_FEATURE_COEF = 0.3996709769192981
 STANDARD_RULES = total_games.STANDARD_RULES
 SURFACE_BY_TOURNAMENT_ID = {"315": "Hard", "381": "Hard"}
-DEFAULT_LEDGER = ROOT / "backend/data/tennis_v2_research.sqlite3"
+DEFAULT_LEDGER = Path(os.environ.get("LP_TENNIS_V2_LEDGER_PATH") or
+                      ROOT / "backend/data/tennis_v2_research.sqlite3")
 
 
 def _logit(probability: float) -> float:
@@ -133,6 +134,17 @@ def _player_counts(stats: Any, tour: str, surface: str, player_id: int,
             "return_points_won": return_won, "return_points": return_n}
 
 
+def _forecast_identity(game: dict[str, Any],
+                       sackmann_ids: tuple[str | None, str | None]) -> dict[str, str]:
+    home_sackmann, away_sackmann = sackmann_ids
+    return {
+        "home_sackmann_id": str(home_sackmann or ""),
+        "away_sackmann_id": str(away_sackmann or ""),
+        "home_espn_id": str((game.get("home") or {}).get("athlete_id") or ""),
+        "away_espn_id": str((game.get("away") or {}).get("athlete_id") or ""),
+    }
+
+
 def _make_forecast(game: dict[str, Any], ids: tuple[str | None, str | None], surface: str,
                    stats: Any, elo: dict[tuple[str, int], float], direct: Any,
                    source_info: list[dict[str, str]]) -> dict[str, Any] | None:
@@ -192,9 +204,11 @@ def _make_forecast(game: dict[str, Any], ids: tuple[str | None, str | None], sur
         "surface": surface,
         "home_player": home_name,
         "away_player": away_name,
-        "identity": {"home_sackmann_id": home_text, "away_sackmann_id": away_text},
+        "identity": _forecast_identity(game, ids),
         "inputs": {
-            "history_cutoff": f"{POINT_HISTORY_CUTOFF}-12-31",
+            "history_cutoff": dt.datetime.strptime(
+                str(POINT_HISTORY_CUTOFF), "%Y%m%d"
+            ).date().isoformat(),
             "point_sources": source_info,
             "surface_baseline": baseline,
             "elo_home": home_elo,
@@ -335,9 +349,72 @@ def _ensure_ledger(con: sqlite3.Connection) -> None:
     """)
 
 
+def _store_forecast(ledger: sqlite3.Connection, payload: dict[str, Any]) -> int:
+    """Insert a forecast once; retries can never rewrite an existing lock."""
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(serialized.encode()).hexdigest()
+    result = ledger.execute(
+        "INSERT OR IGNORE INTO tennis_v2_research_forecasts "
+        "(tour,game_id,locked_at,start_time,model_version,payload,payload_sha256) "
+        "VALUES(?,?,?,?,?,?,?)",
+        (payload["tour"], payload["game_id"], payload["locked_at"],
+         payload["start_time"], payload["model_version"], serialized, digest),
+    )
+    return result.rowcount
+
+
+def _identifier(value: Any) -> str | None:
+    if value is None:
+        return None
+    result = str(value).strip()
+    return result or None
+
+
+def _espn_id_for_sackmann(source: sqlite3.Connection, tour: str,
+                          sackmann_id: Any) -> str | None:
+    key = _identifier(sackmann_id)
+    if not key:
+        return None
+    rows = source.execute(
+        "SELECT p.espn_id FROM players p "
+        "JOIN player_source_ids si ON si.player_id=p.id "
+        "WHERE p.league=? AND si.source='sackmann' AND si.league=? "
+        "AND si.source_player_key=? AND p.espn_id IS NOT NULL",
+        (tour, tour, key),
+    ).fetchall()
+    ids = {_identifier(row[0]) for row in rows} - {None}
+    return next(iter(ids)) if len(ids) == 1 else None
+
+
+def _locked_espn_ids(source: sqlite3.Connection,
+                     forecast: dict[str, Any]) -> tuple[str | None, str | None]:
+    identity = forecast.get("identity") or {}
+    tour = str(forecast.get("tour") or "")
+    home_id = _identifier(identity.get("home_espn_id"))
+    away_id = _identifier(identity.get("away_espn_id"))
+    if home_id is None:
+        home_id = _espn_id_for_sackmann(source, tour, identity.get("home_sackmann_id"))
+    if away_id is None:
+        away_id = _espn_id_for_sackmann(source, tour, identity.get("away_sackmann_id"))
+    return home_id, away_id
+
+
+def _identity_matches(source: sqlite3.Connection, forecast: dict[str, Any],
+                      game: dict[str, Any]) -> bool:
+    expected_home, expected_away = _locked_espn_ids(source, forecast)
+    actual_home = _identifier((game.get("home") or {}).get("athlete_id"))
+    actual_away = _identifier((game.get("away") or {}).get("athlete_id"))
+    return bool(
+        expected_home and expected_away and expected_home != expected_away
+        and actual_home == expected_home and actual_away == expected_away
+    )
+
+
 def _final_outcome(game: dict[str, Any], state: str) -> dict[str, Any] | None:
     status = str(game.get("status") or "").lower()
-    if any(token in status for token in ("retir", "walkover", "abandon", "default")):
+    if any(token in status for token in (
+        "cancel", "postpon", "retir", "walkover", "abandon", "default"
+    )):
         return None
     home, away = game.get("home") or {}, game.get("away") or {}
     try:
@@ -349,16 +426,19 @@ def _final_outcome(game: dict[str, Any], state: str) -> dict[str, Any] | None:
         return None
     return {
         "winner": home.get("name") if home_score > away_score else away.get("name"),
+        "home_won": int(home_score > away_score),
         "total_games": sum(hs) + sum(aws),
         "deciding_set": int(len(hs) == 3),
         "any_tiebreak": int(any((h, a) in ((7, 6), (6, 7)) for h, a in zip(hs, aws))),
     }
 
 
-def grade_finals(ledger: sqlite3.Connection, source_db: str, now: dt.datetime) -> int:
+def grade_finals(ledger: sqlite3.Connection, source_db: str,
+                 now: dt.datetime) -> dict[str, int]:
     source = sqlite3.connect(f"file:{source_db}?mode=ro", uri=True)
     source.row_factory = sqlite3.Row
     count = 0
+    identity_mismatch = 0
     try:
         for row in ledger.execute(
             "SELECT tour,game_id,payload FROM tennis_v2_research_forecasts "
@@ -380,8 +460,11 @@ def grade_finals(ledger: sqlite3.Connection, source_db: str, now: dt.datetime) -
             outcome = _final_outcome(game, str(snapshots["state"] or "").lower())
             if outcome is None:
                 continue
+            if not _identity_matches(source, forecast, game):
+                identity_mismatch += 1
+                continue
             probs = forecast["match_winner_home_probability"]
-            home_won = float(outcome["winner"] == forecast["home_player"])
+            home_won = float(outcome["home_won"])
             scores = {
                 name: {
                     "brier": (prob - home_won) ** 2,
@@ -423,7 +506,7 @@ def grade_finals(ledger: sqlite3.Connection, source_db: str, now: dt.datetime) -
         ledger.commit()
     finally:
         source.close()
-    return count
+    return {"graded": count, "identity_mismatch": identity_mismatch}
 
 
 def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
@@ -470,18 +553,11 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
                     report["unresolved_identity"] += 1
                     continue
                 payload["locked_at"] = now.isoformat()
-                serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-                digest = hashlib.sha256(serialized.encode()).hexdigest()
-                result = ledger.execute(
-                    "INSERT OR IGNORE INTO tennis_v2_research_forecasts "
-                    "(tour,game_id,locked_at,start_time,model_version,payload,payload_sha256) "
-                    "VALUES(?,?,?,?,?,?,?)",
-                    (payload["tour"], payload["game_id"], payload["locked_at"],
-                     payload["start_time"], MODEL_VERSION, serialized, digest),
-                )
-                report["locked"] += result.rowcount
+                report["locked"] += _store_forecast(ledger, payload)
             ledger.commit()
-        report["graded"] = grade_finals(ledger, db_path, now)
+        grading = grade_finals(ledger, db_path, now)
+        report["graded"] = grading["graded"]
+        report["grade_identity_mismatch"] = grading["identity_mismatch"]
     finally:
         ledger.close()
     return report
