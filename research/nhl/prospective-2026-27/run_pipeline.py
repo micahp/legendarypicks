@@ -474,6 +474,22 @@ def forecast(horizon_hours: float) -> list[dict]:
         print("No unforecast scheduled NHL games inside the requested horizon.")
         return []
 
+    context = feature_context(asof, games, schedule_meta)
+    forecast_time = utcnow()
+    if forecast_time <= session_started:
+        raise RuntimeError("Forecast timestamp must follow the frozen prospective session start")
+    append_rows = build_forecasts(games, forecast_time, model, context, schedule_meta)
+    append_forecasts(append_rows)
+    return append_rows
+
+
+def feature_context(asof: dt.datetime, games: list[dict], schedule_meta: dict) -> dict:
+    """Everything the per-game forecast loop needs, as of `asof`.
+
+    Shared by the scheduled ledger writer and the T-90 snapshot generator so the leak-safe
+    feature assembly has one definition: the Elo state is reconstructed only from games
+    already played, and each team's xG rows are read with `asof` as the cutoff.
+    """
     # Use all canonical results to reconstruct the selected Elo state, including games without xG rows.
     canonical = load_csv(CANONICAL)
     season_start = schedule_meta.get("regular_season_start_date")
@@ -487,10 +503,22 @@ def forecast(horizon_hours: float) -> list[dict]:
     for team in teams:
         rows, meta = read_team_csv(team, asof)
         team_data[team], team_meta[team] = rows, meta
+    return {"live_ratings": live_ratings, "completed_game_ids": completed_game_ids,
+            "team_data": team_data, "team_meta": team_meta, "season_evidence": season_evidence}
 
-    forecast_time = utcnow()
-    if forecast_time <= session_started:
-        raise RuntimeError("Forecast timestamp must follow the frozen prospective session start")
+
+def build_forecasts(games: list[dict], forecast_time: dt.datetime, model: dict,
+                    context: dict, schedule_meta: dict) -> list[dict]:
+    """One forecast row per game and model. Computes; writes nothing.
+
+    The only definition of the model math, so the scheduled ledger writer and the T-90
+    snapshot generator cannot drift apart.
+    """
+    live_ratings = context["live_ratings"]
+    completed_game_ids = context["completed_game_ids"]
+    team_data = context["team_data"]
+    team_meta = context["team_meta"]
+    season_evidence = context["season_evidence"]
     append_rows = []
     for game in games:
         gid, home, away = game["game_id"], team_key(game["home_team"]), team_key(game["away_team"])
@@ -554,7 +582,6 @@ def forecast(horizon_hours: float) -> list[dict]:
                                 "home_expected_goals": mus[0], "away_expected_goals": mus[1], "projected_total_goals": mus[0] + mus[1],
                                 "projected_goal_differential_home": mus[0] - mus[1], "home_win_probability": home_prob,
                                 "away_win_probability": 1.0 - home_prob, **markets})
-    append_forecasts(append_rows)
     return append_rows
 
 
