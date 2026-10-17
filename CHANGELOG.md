@@ -13,6 +13,7 @@
 
 - Harden lock and grading writes, ignore unsuccessful model runs on the homepage, and show PREVIEW or LOCKED on projection cards.
 - Publish the featured prop preview through the weekly ingest registry job and serve the stored result.
+- Add 261,850 missing NFL player-game logs for seasons 2010–2025 to production with stable-identity matching.
 
 ### Scores
 
