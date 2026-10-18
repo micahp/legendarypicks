@@ -1,5 +1,13 @@
 # NFL prop baseline: the live Marcel-lite P(over), graded
 
+> **Superseded in part, 2026-10-17.** The passing markets in this document were graded on a population
+> selected on the outcome: the quarterback who led his team in attempts **in the finished game**. The grader
+> now uses the pregame leader (see `RESULTS-nfl-decisions-2026-10-17.md`, section 1). The passing rows below
+> (passing yards / attempts / completions / TDs), the exclusion count "163 passing props on a quarterback who
+> did not lead his team in attempts", and every item total that includes passing items are **pre-fix**. The
+> receiving rows and the Marcel-lite replay conclusion are unaffected. The numbers are left as measured, not
+> rewritten.
+
 Measured 2026-10-16 on `picks.dev.db` (read-only), on `scratch/spec-b-rebase`. This is the number the v2
 engine has to beat before it can replace the live player-projection route. Until now the live route had
 never been graded.

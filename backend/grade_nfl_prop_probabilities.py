@@ -9,8 +9,10 @@ report, constants as frozen (fitted on 2024), i.e. what the job would have produ
 captured pre-kickoff number; the captured comparison starts with the weekly job.
   weeks      2026 regular season, weeks 2 to the last week with a final score.
   markets    receiving_yards, receptions, targets (receivers: RB, WR, TE); passing_yards, pass_attempts,
-             pass_completions, passing_touchdowns (quarterbacks, only in games where he led his team in attempts,
-             the population the passing gate was graded on).
+             pass_completions, passing_touchdowns (quarterbacks, only in games where he led his team in attempts
+             BEFORE the target week -- pregame information, `--population pregame`, the default. The old
+             post-game filter, the QB who led the team in attempts in the finished game, is retained only as
+             `--population postgame` to reproduce the pre-fix number and is never a forecast population).
   books      sportsbooks only: bovada and the rotowire sportsbook feeds (betmgm, betrivers, caesars, draftkings,
              fanduel, hardrock). Pick'em sources carry a fixed price and are excluded.
   item       one per (nflverse game, player, market, book, line): the latest captured over and under at that line.
@@ -33,9 +35,12 @@ Usage: LP_DB_PATH=... python3 grade_nfl_prop_probabilities.py --season 2026 [--c
 """
 import argparse
 import csv
+import json
+import math
 import os
 import sqlite3
 import zlib
+from collections import defaultdict
 
 import nfl_player_projection_v2 as eng
 import player_splits
@@ -56,6 +61,75 @@ def implied(odds):
 def devig(over_odds, under_odds):
     o, u = implied(over_odds), implied(under_odds)
     return o / (o + u)
+
+
+def pregame_leader(hist, season, team, week):
+    """The quarterback with the most attempts for this team in games BEFORE this week. Pregame information.
+
+    This is the population the passing markets are graded on. It replaces the post-game filter (the QB who
+    led the team in attempts in the finished game), which selected the population on the outcome.
+    """
+    tot = defaultdict(int)
+    for w, rows in hist.by_team[(season, team)].items():
+        if w >= week:
+            continue
+        for r in rows:
+            if r.pos == "QB" and r.att:
+                tot[r.pid] += r.att
+    if not tot:
+        return None
+    return max(sorted(tot), key=lambda p: tot[p])
+
+
+def postgame_leader(hist, season, team, week):
+    """The QB who led his team in attempts in the finished game. LOOK-AHEAD; kept only to reproduce the old
+    number for the before/after comparison. Never grade on this."""
+    rows = hist.by_team[(season, team)].get(week, [])
+    if not rows:
+        return None
+    return max(rows, key=lambda x: (x.att, -x.pid)).pid
+
+
+def quantile(sorted_vals, q):
+    k = (len(sorted_vals) - 1) * q
+    f = int(k)
+    c = min(f + 1, len(sorted_vals) - 1)
+    return sorted_vals[f] + (sorted_vals[c] - sorted_vals[f]) * (k - f)
+
+
+def tight(p):
+    return min(1.0 - 1e-9, max(1e-9, p))
+
+
+def logit(p):
+    p = tight(p)
+    return math.log(p / (1.0 - p))
+
+
+def sigmoid(z):
+    if z >= 0:
+        e = math.exp(-z)
+        return 1.0 / (1.0 + e)
+    e = math.exp(z)
+    return e / (1.0 + e)
+
+
+def logloss(p, y):
+    p = tight(p)
+    return -(y * math.log(p) + (1 - y) * math.log(1 - p))
+
+
+def clustered(diffs, clusters):
+    """Mean and 1.96 * clustered SE of per-item differences, clustered by player-game."""
+    n = len(diffs)
+    if not n:
+        return None
+    mean = sum(diffs) / n
+    g = len(clusters)
+    if g < 2:
+        return mean, 0.0, n, g
+    var = g / (g - 1.0) * sum((sum(v) - len(v) * mean) ** 2 for v in clusters.values()) / n ** 2
+    return mean, 1.96 * math.sqrt(var), n, g
 
 
 def collect(con, season):
@@ -91,8 +165,9 @@ def collect(con, season):
 
 
 class Projector(object):
-    def __init__(self, hist):
+    def __init__(self, hist, params=None):
         self.hist = hist
+        self.params = params
         self.cache = {}
 
     def draws(self, season, row, kind):
@@ -107,7 +182,8 @@ class Projector(object):
                 out = eng.simulate(v["tgt"], v["rec"] / v["tgt"], v["rec_yds"] / v["rec"] if v["rec"] > 0 else 0.0,
                                    v["rec_td"] / v["tgt"], n=N_SIMS, seed=seed)
         else:
-            v = eng.project_qb(self.hist, season, row.week, row.pid, row.team, row.opp, row.game_id)
+            v = eng.project_qb(self.hist, season, row.week, row.pid, row.team, row.opp, row.game_id,
+                               p_in=self.params)
             if v is not None and v["att"] > 0:
                 out = eng.simulate_qb(v["att"], v["cmp"] / v["att"], v["pass_yds"] / v["cmp"] if v["cmp"] > 0 else 0.0,
                                       v["pass_td"] / v["att"], n=N_SIMS, seed=seed)
@@ -115,14 +191,16 @@ class Projector(object):
         return out
 
 
-def grade(con, season, hist=None):
+def grade(con, season, hist=None, population="pregame", marcel=False, params=None):
+    """Graded items. `population` is 'pregame' (the QB who led his team in attempts before the week) or
+    'postgame' (the QB who led it in the finished game; look-ahead, for the before/after comparison only)."""
     hist = hist or eng.History.load(con, [season - 1, season])
     final_weeks = {w for (w,) in con.execute(
         "SELECT DISTINCT week FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NOT NULL",
         (season,))}
     items, skipped = collect(con, season)
     skipped.update({"not_played": 0, "week": 0, "no_projection": 0, "not_lead_passer": 0, "position": 0})
-    proj = Projector(hist)
+    proj = Projector(hist, params)
     graded, disagree = [], 0
     for gid, pid, market, book, line, p_mkt, book_hit in items:
         week = int(gid.split("_")[1])
@@ -143,8 +221,9 @@ def grade(con, season, hist=None):
             if row.pos != "QB":
                 skipped["position"] += 1
                 continue
-            team_rows = hist.by_team[(season, row.team)][row.week]
-            if max(team_rows, key=lambda x: (x.att, -x.pid)).pid != pid:
+            leader = (pregame_leader(hist, season, row.team, row.week) if population == "pregame"
+                      else postgame_leader(hist, season, row.team, row.week))
+            if leader != pid:
                 skipped["not_lead_passer"] += 1
                 continue
             idx, attr = PASSING[market]
@@ -158,10 +237,81 @@ def grade(con, season, hist=None):
         outcome = 1 if actual > line else 0
         if book_hit is not None and int(book_hit) != outcome:
             disagree += 1
-        graded.append({"game_id": gid, "player_id": pid, "market": market, "book": book, "line": line,
-                       "p_ours": p_ours, "p_market": p_mkt, "actual": actual, "over": outcome,
-                       "group": "passing" if kind == "qb" else "receiving"})
+        vals = sorted(d[idx] for d in draws)
+        entry = {"game_id": gid, "player_id": pid, "market": market, "book": book, "line": line,
+                 "p_ours": p_ours, "p_market": p_mkt, "actual": actual, "over": outcome,
+                 "group": "passing" if kind == "qb" else "receiving",
+                 "proj": None, "proj_marcel": None,
+                 "cov80": 1 if quantile(vals, 0.1) <= actual <= quantile(vals, 0.9) else 0}
+        v = eng.project_qb(hist, season, row.week, row.pid, row.team, row.opp, row.game_id, p_in=params) \
+            if kind == "qb" \
+            else eng.project(hist, season, row.week, row.pid, row.pos, row.team, row.opp, row.game_id)
+        if v is not None:
+            entry["proj"] = v.get(attr)
+        if marcel:
+            entry["proj_marcel"] = eng.marcel(hist, season, row.week, pid, attr)
+        graded.append(entry)
     return graded, skipped, disagree
+
+
+def measured(graded, label):
+    """The facet numbers for one population: accuracy, probability, uncertainty, distribution."""
+    n = len(graded)
+    if not n:
+        return None
+    pg = len({(g["game_id"], g["player_id"]) for g in graded})
+    base = sum(g["over"] for g in graded) / n
+    out = {"label": label, "n": n, "player_games": pg, "over_rate": base,
+           "brier_ours": sum((g["p_ours"] - g["over"]) ** 2 for g in graded) / n,
+           "brier_market": sum((g["p_market"] - g["over"]) ** 2 for g in graded) / n,
+           "brier_base": sum((base - g["over"]) ** 2 for g in graded) / n,
+           "ll_ours": sum(logloss(g["p_ours"], g["over"]) for g in graded) / n,
+           "ll_market": sum(logloss(g["p_market"], g["over"]) for g in graded) / n,
+           "ll_base": sum(logloss(base, g["over"]) for g in graded) / n,
+           "cov80": sum(g["cov80"] for g in graded) / n}
+    with_proj = [g for g in graded if g.get("proj") is not None]
+    out["mae_ours"] = (sum(abs(g["proj"] - g["actual"]) for g in with_proj) / len(with_proj)
+                       if with_proj else None)
+    with_marcel = [g for g in graded if g.get("proj_marcel") is not None and g.get("proj") is not None]
+    out["mae_marcel"] = (sum(abs(g["proj_marcel"] - g["actual"]) for g in with_marcel) / len(with_marcel)
+                         if with_marcel else None)
+    out["n_mae_marcel"] = len(with_marcel)
+    # paired, clustered by player-game
+    d, cl = [], defaultdict(list)
+    for g in graded:
+        x = (g["p_ours"] - g["over"]) ** 2 - (g["p_market"] - g["over"]) ** 2
+        d.append(x)
+        cl[(g["game_id"], g["player_id"])].append(x)
+    out["pair_brier_market"] = clustered(d, cl)
+    d2, cl2 = [], defaultdict(list)
+    for g in with_marcel:
+        x = abs(g["proj"] - g["actual"]) - abs(g["proj_marcel"] - g["actual"])
+        d2.append(x)
+        cl2[(g["game_id"], g["player_id"])].append(x)
+    out["pair_mae_marcel"] = clustered(d2, cl2) if d2 else None
+    return out
+
+
+def print_table(rows):
+    """One row per market, every facet cell in it."""
+    print("\n  %-20s %6s %6s %9s %9s %9s %8s %8s %9s %9s %7s" % (
+        "market", "items", "pgames", "Brier", "mktBrier", "baseBrier", "logloss", "mktLL",
+        "MAE", "marcelMAE", "cov80"))
+    for r in rows:
+        if not r:
+            continue
+        pm = r["pair_mae_marcel"]
+        print("  %-20s %6d %6d %9.4f %9.4f %9.4f %8.4f %8.4f %9s %9s %7.3f" % (
+            r["label"], r["n"], r["player_games"], r["brier_ours"], r["brier_market"],
+            r["brier_base"], r["ll_ours"], r["ll_market"],
+            ("%.3f" % r["mae_ours"]) if r["mae_ours"] is not None else "n/a",
+            ("%.3f" % r["mae_marcel"]) if r["mae_marcel"] is not None else "n/a", r["cov80"]))
+        if r["pair_brier_market"]:
+            m, ci, nn, gg = r["pair_brier_market"]
+            print("    paired Brier ours-market %+.5f +/- %.5f (n=%d, %d player-games)" % (m, ci, nn, gg))
+        if pm:
+            m, ci, nn, gg = pm
+            print("    paired MAE ours-marcel %+.4f +/- %.4f (n=%d, %d player-games)" % (m, ci, nn, gg))
 
 
 def report(graded, label):
@@ -191,17 +341,47 @@ def report(graded, label):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--season", type=int, required=True)
+    ap.add_argument("--population", choices=("pregame", "postgame"), default="pregame",
+                    help="pregame (default, corrected) or postgame (look-ahead; reproduces the old number)")
+    ap.add_argument("--marcel", action="store_true", help="also project marcel-lite on the same player-games")
+    ap.add_argument("--kt-att", type=float, help="override K_T_ATT (team-attempt shrinkage) for this run")
+    ap.add_argument("--calibration", help="JSON of {week: [a, b]} forward Platt maps; labels items v2-platt")
     ap.add_argument("--csv")
     a = ap.parse_args(argv)
     path = os.environ.get("LP_DB_PATH")
     if not path:
         raise SystemExit("LP_DB_PATH is required")
     con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
-    graded, skipped, disagree = grade(con, a.season)
-    print("excluded: %s; our outcome disagrees with the book's settlement on %d graded items" % (skipped, disagree))
+    params = {"K_T_ATT": a.kt_att} if a.kt_att is not None else None
+    graded, skipped, disagree = grade(con, a.season, population=a.population, marcel=a.marcel, params=params)
+    print("population %s%s; excluded: %s; our outcome disagrees with the book's settlement on %d graded items"
+          % (a.population, ("" if a.kt_att is None else ", K_T_ATT %.1f" % a.kt_att), skipped, disagree))
+    if a.calibration:
+        with open(a.calibration) as fh:
+            maps = {int(k): tuple(v) for k, v in json.load(fh).items()}
+        for g in graded:
+            w = int(g["game_id"].split("_")[1])
+            ab = maps.get(w)
+            g["p_raw"] = g["p_ours"]
+            g["model"] = "v2-platt" if ab else "v2"
+            g["calib"] = "map" if ab else "raw_no_map"
+            if ab:
+                g["p_ours"] = sigmoid(ab[0] * logit(g["p_ours"]) + ab[1])
+        applied = [g for g in graded if g["calib"] == "map"]
+        fallback = [g for g in graded if g["calib"] == "raw_no_map"]
+        print("calibrated model v2-platt: %d items with a forward map, %d served raw (no map for that week: %s)"
+              % (len(applied), len(fallback), sorted({g["game_id"].split("_")[1] for g in fallback}, key=int)))
+        print("\n-- v2-platt, every item it served (raw fallback where a week has no map) --")
+        report(graded, "v2-platt")
+        rows = [measured([g for g in graded if g["market"] == m], m) for m in list(RECEIVING) + list(PASSING)]
+        print_table(rows)
+        graded = applied
+        print("\n-- v2-platt, map applied only (%d items) --" % len(graded))
     report(graded, "all")
     for group in ("receiving", "passing"):
         report([g for g in graded if g["group"] == group], group)
+    rows = [measured([g for g in graded if g["market"] == m], m) for m in list(RECEIVING) + list(PASSING)]
+    print_table(rows)
     for market in list(RECEIVING) + list(PASSING):
         sub = [g for g in graded if g["market"] == market]
         if sub:
