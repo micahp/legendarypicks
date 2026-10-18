@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import functools
+import hashlib
 import json
 import os
 import sqlite3
@@ -139,6 +140,77 @@ def nfl_identity_names(season: int) -> dict[str, str]:
     if not names:
         raise IdentityFetchError("nflverse published no players")
     return names
+
+
+def refresh_nfl_artifact_from_register(register_path: str, out: str = ARTIFACT) -> int:
+    """Replace only the NFL names map from a complete downloaded nflverse register.
+
+    Other league snapshots are preserved. The source checksum and NFL-specific
+    fetch time are recorded separately from the last full multi-league build.
+    """
+    import pyarrow.parquet as parquet
+
+    table = parquet.ParquetFile(register_path).read(
+        columns=["gsis_id", "display_name", "espn_id"]
+    )
+    names: dict[str, str] = {}
+    espn_targets: dict[str, set[str]] = {}
+    for raw_id, raw_name, raw_espn in zip(
+        table.column("gsis_id").to_pylist(),
+        table.column("display_name").to_pylist(),
+        table.column("espn_id").to_pylist(),
+    ):
+        if raw_id is None or not raw_name:
+            raise IdentityFetchError("nflverse register has a row without GSIS id or display name")
+        key = str(raw_id).strip()
+        if key in names:
+            raise IdentityFetchError("nflverse register repeats gsis_id={}".format(key))
+        names[key] = str(raw_name)
+        if raw_espn is not None:
+            espn_key = str(raw_espn).strip()
+            if espn_key.endswith(".0"):
+                espn_key = espn_key[:-2]
+            if espn_key and espn_key.lower() not in ("nan", "none"):
+                espn_targets.setdefault(espn_key, set()).add(key)
+    if not names:
+        raise IdentityFetchError("nflverse published no players")
+    ambiguous_espn = sorted(
+        espn_id for espn_id, targets in espn_targets.items() if len(targets) != 1
+    )
+    espn_to_gsis = {
+        espn_id: next(iter(targets))
+        for espn_id, targets in espn_targets.items()
+        if len(targets) == 1
+    }
+
+    with open(out, encoding="utf-8") as handle:
+        artifact = json.load(handle)
+    artifact.setdefault("leagues", {})["nfl"] = {
+        "id_column": "nfl_gsis_id",
+        "names": names,
+        "crosswalks": {
+            "espn_id_to_gsis_id": espn_to_gsis,
+            "ambiguous_espn_ids": ambiguous_espn,
+        },
+    }
+    provenance = artifact.setdefault("_provenance", {})
+    provenance.setdefault("sources", {})["nfl"] = NFL_PLAYERS_URL
+    provenance.setdefault("errors", {}).pop("nfl", None)
+    provenance.setdefault("league_fetched_at", {})["nfl"] = dt.datetime.now(
+        dt.timezone.utc
+    ).isoformat()
+    digest = hashlib.sha256()
+    with open(register_path, "rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    provenance.setdefault("source_sha256", {})["nfl"] = digest.hexdigest()
+
+    temporary = out + ".tmp"
+    with open(temporary, "w", encoding="utf-8") as handle:
+        json.dump(artifact, handle, indent=2, sort_keys=True, ensure_ascii=False)
+        handle.write("\n")
+    os.replace(temporary, out)
+    return len(names)
 
 
 def nhl_identity_names(season: int) -> dict[str, str]:
@@ -291,7 +363,17 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--season", type=int, default=dt.date.today().year)
     ap.add_argument("--out", default=ARTIFACT)
+    ap.add_argument(
+        "--nfl-register",
+        help="refresh only the NFL name map from a downloaded complete players.parquet",
+    )
     args = ap.parse_args(argv)
+
+    if args.nfl_register:
+        count = refresh_nfl_artifact_from_register(args.nfl_register, args.out)
+        print("  nfl: {} published nfl_gsis_id -> name pairs".format(count))
+        print("wrote {}".format(args.out))
+        return 0
 
     artifact = build(args.season)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)

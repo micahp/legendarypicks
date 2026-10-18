@@ -165,16 +165,16 @@ class RollingHitRateUsesTheNewestGames(unittest.TestCase):
         con = sqlite3.connect(handle.name)
         con.executescript(
             """
-            CREATE TABLE props(id INTEGER PRIMARY KEY, player_id INTEGER, market TEXT,
-              line REAL, side TEXT, captured_at TEXT);
+            CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
+              market TEXT, line REAL, side TEXT, captured_at TEXT);
             CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL, hit INTEGER,
               settled_at TEXT);
             """
         )
         # 25 settled props, day 1 oldest. The 5 oldest hit; the 20 newest all miss.
         for day in range(1, 26):
-            con.execute("INSERT INTO props VALUES(?,?,?,?,?,?)",
-                        (day, 7, "points", 20.5, "over", "2026-09-%02dT12:00:00" % day))
+            con.execute("INSERT INTO props VALUES(?,?,?,?,?,?,?)",
+                        (day, 100 + day, 7, "points", 20.5, "over", "2026-09-%02dT12:00:00" % day))
             con.execute("INSERT INTO prop_results VALUES(?,?,?,?)",
                         (day, 25.0 if day <= 5 else 10.0, 1 if day <= 5 else 0, "x"))
         con.commit()

@@ -20,35 +20,31 @@ class NflShares(unittest.TestCase):
     def shares(self):
         return {(r[2], r[3], r[4]): r for r in mod.nfl_shares(self.con, 2026)}
 
-    def test_season_share_is_a_sum_ratio_not_an_average_of_weeks(self):
-        # week 1: A 9 of 10 targets; week 2: A 1 of 30. Averaging weeks says 48%.
-        self.log(1, "NO", 1, targets=9)
-        self.log(2, "NO", 1, targets=1)
-        self.log(1, "NO", 2, targets=1)
-        self.log(2, "NO", 2, targets=29)
-        row = self.shares()[("NO", 1, "targets")]
-        self.assertEqual((10, 40), (row[5], row[6]))
-        self.assertAlmostEqual(0.25, row[7])
+    def test_per_game_metrics_are_not_built_here(self):
+        self.log(1, "NO", 1, targets=9, carries=4, rec_air_yds=30)
+        s = self.shares()
+        for metric in ("targets", "air_yards", "carries"):
+            self.assertNotIn(("NO", 1, metric), s)
 
     def test_traded_player_gets_one_row_per_team(self):
-        self.log(1, "NO", 1, targets=5)
-        self.log(1, "ATL", 2, targets=3)
+        self.log(1, "NO", 1, rec_td=2)
+        self.log(1, "ATL", 2, rec_td=1)
         s = self.shares()
-        self.assertEqual(5, s[("NO", 1, "targets")][5])
-        self.assertEqual(3, s[("ATL", 1, "targets")][5])
+        self.assertEqual(2, s[("NO", 1, "rec_td")][5])
+        self.assertEqual(1, s[("ATL", 1, "rec_td")][5])
 
     def test_unresolved_players_count_in_the_team_total_only(self):
-        self.log(1, "NO", 1, targets=2)
-        self.log(None, "NO", 1, targets=2)
-        row = self.shares()[("NO", 1, "targets")]
+        self.log(1, "NO", 1, rec_td=1)
+        self.log(None, "NO", 1, rec_td=1)
+        row = self.shares()[("NO", 1, "rec_td")]
         self.assertAlmostEqual(0.5, row[7])
 
     def test_postseason_and_zero_values_are_left_out(self):
-        self.log(1, "NO", 1, targets=4, carries=0)
-        self.log(1, "NO", 19, game_type="POST", targets=10)
+        self.log(1, "NO", 1, rec_td=4, rush_td=0)
+        self.log(1, "NO", 19, game_type="POST", rec_td=10)
         s = self.shares()
-        self.assertEqual(4, s[("NO", 1, "targets")][5])
-        self.assertNotIn(("NO", 1, "carries"), s)
+        self.assertEqual(4, s[("NO", 1, "rec_td")][5])
+        self.assertNotIn(("NO", 1, "rush_td"), s)
 
     def test_scrimmage_td_adds_receiving_and_rushing(self):
         self.log(1, "NO", 1, rec_td=1, rush_td=1)

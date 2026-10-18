@@ -52,6 +52,17 @@ PY
   run_step 300 ingest_nfl_weekly_stats.py --year "$season" --all-positions
   run_step 300 ingest_nfl_snap_counts.py --year "$season"
   run_step 300 ingest_nfl_injuries.py --year "$season"
+  # Rebuild only from fully refreshed inputs: a failed ingest leaves the source
+  # tables stale, and a rebuild over them would look current.
+  # DEV only: player_game_availability does not exist on PROD and creating it there
+  # needs its own authorization (same rule as the shares build in nfl-daily.sh).
+  if [ "$env_name" != DEV ]; then
+    log "  SKIP $env_name availability build: DEV only"
+  elif [ "$STEP_FAILURES" -gt "$before" ]; then
+    log "  SKIP $env_name availability build: an input step failed"
+  else
+    run_step 300 migrate_player_game_availability.py --build
+  fi
   log "--- $env_name: $(( STEP_FAILURES - before )) step(s) failed"
 done
 

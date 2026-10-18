@@ -27,6 +27,7 @@ class RosterSyncFreshnessTests(unittest.TestCase):
                  team TEXT,
                  position TEXT,
                  espn_id TEXT,
+                 nfl_gsis_id TEXT,
                  active INTEGER DEFAULT 1,
                  updated_at TEXT
                )"""
@@ -113,6 +114,40 @@ class RosterSyncFreshnessTests(unittest.TestCase):
                 ("Existing Quarterback", "101", "ARI", "QB"),
                 ("New Receiver", "202", "ATL", "WR"),
             ],
+        )
+
+    def test_name_fallback_refuses_espn_id_that_conflicts_with_stored_gsis(self):
+        self.connection.execute(
+            "UPDATE players SET espn_id=NULL,nfl_gsis_id='00-0000001' WHERE id=1"
+        )
+        self.connection.commit()
+
+        def conflicting_roster(_league, team):
+            return {
+                "ARI": [
+                    {"player_id": "909", "name": "Existing Quarterback", "position": "QB"},
+                ],
+                "ATL": [
+                    {"player_id": "202", "name": "New Receiver", "position": "WR"},
+                ],
+            }[team]
+
+        with patch.object(roster_sync.espn, "team_strength", side_effect=lambda _league: self.teams()), \
+             patch.object(roster_sync.espn, "roster", side_effect=conflicting_roster), \
+             patch.object(roster_sync, "load_espn_to_gsis", return_value=(
+                 {"909": "00-0000002", "202": "00-0000003"}, set(),
+             )):
+            result = roster_sync.sync_league(self.connection, "nfl")
+
+        self.assertEqual(result["status"], "identity_incomplete")
+        self.assertEqual(
+            result["failures"][0]["reason"], "espn_gsis_identity_conflict"
+        )
+        self.assertEqual(
+            tuple(self.connection.execute(
+                "SELECT espn_id,nfl_gsis_id FROM players WHERE id=1"
+            ).fetchone()),
+            (None, "00-0000001"),
         )
 
     def test_missing_snapshot_schema_fails_before_source_calls(self):

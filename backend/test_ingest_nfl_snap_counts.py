@@ -299,6 +299,12 @@ class NflSnapCountIngestTests(unittest.TestCase):
             queued,
             ("MissPF00", 1, "PFR id absent from nflverse player crosswalk"),
         )
+        with sqlite3.connect(self.db_path) as connection:
+            sources = connection.execute(
+                "SELECT week,team,source_rows,resolved_rows,unresolved_rows "
+                "FROM nfl_snap_team_sources"
+            ).fetchall()
+        self.assertEqual(sources, [(1, "SEA", 1, 0, 1)])
 
     def test_invalid_week_is_counted_and_queued(self):
         frame = pd.DataFrame([{

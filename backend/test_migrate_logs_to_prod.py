@@ -147,7 +147,7 @@ class LogMigrationTests(unittest.TestCase):
                 name,
                 "DAL",
                 "nfl",
-                espn_id or str(1000 + player_id),
+                espn_id or f"fixture-espn-{player_id}",
                 f"gsis-{player_id}",
                 1,
                 "WR",
@@ -198,6 +198,24 @@ class LogMigrationTests(unittest.TestCase):
             )
         )
 
+    def test_nfl_promotion_refuses_an_explicit_espn_gsis_conflict(self):
+        self._create_database(self.source)
+        self._create_database(self.target)
+        self._register_schema(self.source, "source")
+        self._register_schema(self.target, "target")
+        with sqlite3.connect(self.source) as connection:
+            self._insert_player(connection, 7, "Mike Washington", "4686658")
+            connection.execute(
+                "UPDATE players SET nfl_gsis_id='WAS569019' WHERE id=7"
+            )
+            self._insert_log(connection, 7, "bad-identity", 1, {"targets": 1})
+
+        with self.assertRaisesRegex(
+            migrate_logs_to_prod.LogMigrationError,
+            "conflicting ESPN/GSIS identity",
+        ):
+            migrate_logs_to_prod.build_plan(self.source, self.target)
+
     def test_explicit_copy_preserves_existing_enrichment_and_props(self):
         # Fresh source puts game_type before stats; migrated legacy target puts
         # it last. An INSERT SELECT * would fail or scramble these rows.
@@ -230,7 +248,7 @@ class LogMigrationTests(unittest.TestCase):
             self._insert_player(connection, 1, "Same Player")
             self._insert_player(connection, 3, "Different Identity")
             self._insert_player(
-                connection, 20, "Missing Player", espn_id="1002"
+                connection, 20, "Missing Player", espn_id="fixture-espn-2"
             )
             self._insert_log(
                 connection,

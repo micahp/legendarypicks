@@ -4,7 +4,8 @@ One table for every league: (league, season, team, player_id, metric) -> the pla
 the team's total, and the share. A team sport's version of "who gets the ball": NFL targets,
 air yards, carries and touchdowns now; NBA usage, NHL ice time and MLB plate appearances slot
 into the same rows later. Information for whoever reads it (the trading agents' game context,
-a future LP fantasy view), never a rule.
+a future LP fantasy view), never a rule. NFL targets, air yards and carries are per-game shares
+against published team totals, built by build_player_game_shares.py; this file keeps the touchdowns.
 
 NFL source: player_game_logs rows from nflverse's weekly box score (ingest_nfl_weekly_stats.py),
 regular season only. A share here is the player's season SUM over the team's season SUM of the
@@ -25,11 +26,11 @@ import sys
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 
+# NFL metrics owned by build_player_game_shares.py (per-game, published denominators)
+PER_GAME_METRICS = ("targets", "air_yards", "carries")
+
 # metric -> how to read it from one NFL log row's stats JSON
 NFL_METRICS = {
-    "targets": lambda s: s.get("targets"),
-    "air_yards": lambda s: s.get("rec_air_yds"),
-    "carries": lambda s: s.get("carries"),
     "rec_td": lambda s: s.get("rec_td"),
     "rush_td": lambda s: s.get("rush_td"),
     # Scrimmage touchdowns: the receiving and rushing TDs the team's skill players scored.
@@ -144,9 +145,15 @@ def nfl_shares(con, season):
 
 
 def write(con, league, season, rows):
-    """Replace one league-season: a player who left the logs leaves the table."""
+    """Replace one league-season: a player who left the logs leaves the table.
+    NFL's per-game metrics are not ours to replace; they stay until their own builder runs."""
     ensure_table(con)
-    con.execute("DELETE FROM player_team_shares WHERE league=? AND season=?", (league, season))
+    if league == "nfl":
+        marks = ",".join("?" * len(PER_GAME_METRICS))
+        con.execute("DELETE FROM player_team_shares WHERE league=? AND season=? "
+                    "AND metric NOT IN (%s)" % marks, (league, season, *PER_GAME_METRICS))
+    else:
+        con.execute("DELETE FROM player_team_shares WHERE league=? AND season=?", (league, season))
     con.executemany("INSERT INTO player_team_shares VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
     con.commit()
 

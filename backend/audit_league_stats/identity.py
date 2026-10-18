@@ -58,7 +58,7 @@ def _published_identity_names(league):
     entry = artifact.get("leagues", {}).get(league)
     if not entry or not entry.get("names"):
         return None
-    return {"id_column": entry.get("id_column"), "names": entry["names"]}
+    return dict(entry)
 
 def _observed_positions(con, league, active_only=False):
     """The distinct position codes in use for a league.
