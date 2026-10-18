@@ -580,14 +580,18 @@ def summarize(draws, index, line=None):
 # paired bootstrap 95% interval reported. Completions and TDs and the p10 to p90 coverage are reported.
 PASSING = ("att", (("cmp", "K_CMP"), ("pass_yds", "K_YPA"), ("pass_td", "K_PTD")))
 # Frozen 2026-10-13 from backtest --fit-qb on 2024 (410 QB player-games); every K interior to its grid.
-QB_DEFAULTS = {"K_CMP": 160.0, "K_YPA": 160.0, "K_PTD": 320.0, "R_ATT": 14.62, "G_PASS": 1.15}
+# K_T_ATT: adopted 2026-10-17 (Micah's decision) at 4.0 for team pass attempts only. On 2026 it beats the
+# fitted 8.0 directionally on MAE and on discrimination in every comparison, but the paired clustered interval
+# on the market scores spans zero, so it is a directionally consistent change, not a demonstrated gain.
+# The level correction was tested and is dropped; it does not transfer and must not be reintroduced.
+QB_DEFAULTS = {"K_CMP": 160.0, "K_YPA": 160.0, "K_PTD": 320.0, "R_ATT": 14.62, "G_PASS": 1.15, "K_T_ATT": 4.0}
 
 
 def project_qb(hist, season, week, pid, team, opp, game_id, p_in=None):
     """{att, cmp, pass_yds, pass_td} for one QB-game given he plays as the passer, or None."""
     p = dict(DEFAULTS, **QB_DEFAULTS)
     p.update(p_in or {})
-    vol = hist.team_volume(season, team, opp, week, "att", p["K_T"])
+    vol = hist.team_volume(season, team, opp, week, "att", p["K_T_ATT"])
     if vol is None:
         return None
     if not [r for r in hist.by_player.get((season, pid), []) if r.week < week]:
