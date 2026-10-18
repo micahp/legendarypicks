@@ -464,3 +464,83 @@ The null is recorded, not explained away: family (d) is closed.
 
 Family (e) of the ladder: coaching and roster continuity / talent, tested alone against C2 with the same
 protocol. C2 remains the standing model.
+
+## 15. Increment (e) data audit and pre-registration — coaching and roster continuity / talent
+
+Audit run 2026-10-18 before any (e) feature code. CFBD `/talent`, `/coaches`, `/roster` and
+`/recruiting/players` are **not fetchable** (quota exhausted 2026-10-16; no direct CFBD call has been
+made in Phases 2–3), so this audit covers only what the archive holds.
+
+### 15.1 Coaching continuity — derivable, with one dated limitation
+
+`espn_cfb_coach_tendencies` carries one row per team-season with `pos_team_id`, `pos_team`, `coach` and
+`role`. Across 2,753 team-seasons (2004–2026) `role` is `HC` in every row and no team-season lists more
+than one coach. In 2022–2026 there are 645 team-seasons, covering **96.1%** of FBS-vs-FBS games on both
+sides.
+
+Tenure is derived by walking each team's seasons in order: the count of consecutive seasons with the
+same coach, with 1 meaning a new head coach. Coaching changes on that definition are 118 across the 645
+team-seasons (2022: 22, 2023: 18, 2024: 30, 2025: 26, 2026: 22), which is a plausible rate.
+
+**Limitation, stated rather than papered over:** one coach per team-season means the table cannot date a
+mid-season firing. If a coach was replaced in October, the season's single row is whichever coach the
+publisher recorded and the change is invisible to this feature. Coaching continuity here is therefore
+*season-start* continuity, exact unless a mid-season change occurred.
+
+`espn_cfb_coach_careers` (447 rows, 601 columns) is a career summary — `coach`, `role`, `teams`,
+`seasons`, `first_season`, `last_season` plus career EPA-type aggregates — with no per-team, per-season
+rows, so it cannot supply tenure. No coordinator field exists in either table (`role` is always `HC`).
+
+### 15.2 Roster continuity — derivable from published returning production
+
+`cfb_returning_production` (2004–2026) has `season`, `team_id`, `off_returning`, `def_returning`,
+`overall_returning`, `n_returning`, `def_basis`, `overall_basis` and `is_estimated`. For 2022–2026 it is
+1,168 team-seasons, `off_returning` spans 0.000–1.000 with **no nulls and no estimated rows**, covering
+**99.9%** of FBS games.
+
+As-of semantics: returning production is a pre-season figure computed from the prior season's
+participation; it is fixed before week 1 and does not change during the season. It is therefore safe for
+every game in that season and cannot leak a game's own result.
+
+Raw rosters exist too (`espn_cfb_rosters`, 24 seasons, `athlete_id`/`team`/`year`/`position`), but the
+`team` column is a display name rather than a team id, and the published returning-production table is
+the same idea already summarised. Recomputing turnover from raw rosters would add a name-matching step
+for no additional information, so it is not done.
+
+### 15.3 Talent — present, but secondary on provenance
+
+`cfb_team_talent` (2005–2026) has `season`, `team_id`, `talent_composite`, `talent_rank`,
+`blue_chip_ratio`, `n_recruits`; 1,566 team-seasons for 2022–2026, covering **99.2%** of FBS games,
+`talent_composite` ranging 0–1463.7. The composite is built from recruiting rankings before the season,
+so its as-of semantics are sound (it is not computed from results).
+
+What is not sound is its provenance: it is 247Sports-computed and republished without a documented
+licence or derivation, the same class of table as `cfb_matchup_line`. It is therefore **secondary** and
+cannot decide the verdict. `cfb_team_portal` (`net_transfer_talent`, `portal_share`, transfers in/out,
+2015–2026) is available for **100%** of FBS games and is pregame-known because the portal windows close
+before the season; it shares 247Sports-style talent units, so it is secondary too.
+
+### 15.4 Pre-registered specification
+
+| model | definition |
+|---|---|
+| E1 | `logit p = logit p_G2 + b0` — recalibration control |
+| **E2 (primary)** | E1 + `coach_tenure_diff`, `off_returning_diff`, `def_returning_diff` |
+| E2+ (secondary, reported only) | E2 + `talent_diff`, `net_transfer_talent_diff` |
+| C2 | the standing model, refit on the identical population |
+
+- `coach_tenure_diff` = home seasons under the current head coach − away, capped at 10.
+- `*_returning_diff` = home minus away returning production (0–1 scale).
+- All covariates are season-level facts fixed before week 1, so they are game-level covariates and not
+  as-of team ratings; the decayed-rating machinery does not apply.
+- Population identical to (b)–(d): 2,397 / 807 / 350. Missing values take the neutral difference (0)
+  with a `*_known` flag, the same convention as (c)/(d).
+- Model form, ridge 1.0, standardisation on training games, per-date-block refit, week-block bootstrap:
+  identical to (b)–(d).
+- **Primary comparison: E2 vs C2.** An increment that beats G2 but not C2 is DISCARDED. E2 vs G2 and
+  E2 vs E1 are reported for continuity.
+- Gates: the section 5 table read against C2, plus `primary_e2_beats_c2`.
+- Column guard: from `espn_cfb_coach_tendencies` only the identity columns (`season`, `pos_team_id`,
+  `coach`, `role`) are read, never its EPA/tendency aggregates; nothing from a game's own box score.
+
+**If E2 fails, family (e) is discarded and not revisited with different definitions.**
