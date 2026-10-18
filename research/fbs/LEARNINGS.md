@@ -60,13 +60,27 @@ game_spread_available, odds_source` — no two-sided moneyline and no quote time
 seasons and labelled as spread-derived. It will never give a de-vigged moneyline comparison.
 Do not keep re-checking older years hoping the schema differs.
 
-## 2026-10-18 — Prior-play form beats Elo, from pre-snap state only
+## 2026-10-18 — Prior-play form beats Elo, and closes most of the gap to Basic Elo
 **Learned:** Increment (b) — EPA, success rate, explosiveness and tempo recomputed from pre-snap
-fields, fitted only on seasons strictly earlier than the target — beat G2 on walk-forward
-2023–25 and was adopted.
-**Evidence:** commit `886ffdf4`, `PHASE3-LADDER-20261018.md` pre-registration in `d7a197c1`.
-**Consequence:** this is the first feature family that earned its place. Publisher EPA and wpa
-stay banned — an allow-list guard and a BANNED regex enforce it.
+fields, fitted only on seasons strictly earlier than the target — took walk-forward Brier from
+G2's **0.2133 to 0.2026** on 2,397 games, a paired **−0.01068 [−0.01444, −0.00650]** on 65
+UTC-week blocks. Frozen 2025 holdout: 0.2208 → **0.2080**, **−0.01279 [−0.01768, −0.00763]**
+on 807 games. 2026 development: 0.2051 → **0.1954**, −0.00971 [−0.01557, −0.00188]. Every
+individual season improves (2022 −0.0132, 2023 −0.0148, 2024 −0.0087, 2025 −0.0086,
+2026 −0.0097). Against the published Basic Elo at 0.1976 this closes **68% of the gap**, leaving
+0.0050.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md`, commit `886ffdf4`; pre-registration in
+`d7a197c1`; ten of ten gates pass.
+**Consequence:** B2 is the standing model and every later increment is judged against **B2**, not
+G2. Two design facts carry the result: the recalibration-only control B1 moves nothing
+(0.2134 vs 0.2133), so the gain is information rather than rescaling; and reliability falls
+0.0097 → 0.0003 while resolution rises 0.0373 → 0.0394, so it is separating winners better
+rather than merely being better calibrated. Success rate carries the signal (+0.4239
+standardised); EPA is nearly inert (−0.0243) once success is present.
+**Corrections made before adoption:** the first run used day blocks instead of the
+pre-registered week blocks, and the first holdout scored B2 against a walk-forward G2 that
+carries 2025 information — an honest frozen-G2 baseline made the holdout result *stronger*
+(−0.00842 → −0.01279). Both corrections are disclosed in §7 of the result.
 
 ## 2026-10-18 — Id type mismatches produce silent empty joins, and they bite twice
 **Learned:** `cfb_schedules.game_id` is int64 while `ncaa_mfb_pbp.espn_game_id` is a string, so a
