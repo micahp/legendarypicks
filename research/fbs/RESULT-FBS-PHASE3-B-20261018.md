@@ -830,3 +830,111 @@ bar; (e) and (f) failed while beating G2, which is the useful distinction the la
 Family (g), richer hierarchical models, is the last rung. Given three consecutive failures, the question
 for (g) is whether a different functional form (partial pooling, state-space or a hierarchical Elo) can
 beat C2 on the same features, rather than adding another feature block.
+
+## 19. Increment (g) data audit and pre-registration — hierarchical / partial pooling
+
+Audit run 2026-10-18 before any (g) model code. The question (g) asks is a **functional-form** question:
+C2 treats each game-row as independent, but a team's games are correlated. Does estimating the same C2
+features with partial pooling help?
+
+### 19.1 C2 as the estimator input
+
+C2 is `logit p = logit p_G2 + b0 + Σ b_k x_k` over seven standardised drive splits
+(`points_per_drive`, `turnovers_per_drive`, `start_field_position`, `rz_td_rate`, `third_down_rate`,
+`explosive_drive_rate`, `penalties_per_play`), flat ridge 1.0, refit per date block on strictly earlier
+games. Frozen 2025 coefficients: intercept +0.0737, points/drive **+0.5302**, turnovers/drive +0.0756,
+start field position −0.0365, red-zone TD rate +0.1229, third-down rate +0.0350, explosive drive rate
++0.1516, penalties/play −0.0219. (g) keeps this feature set exactly and changes only the estimator.
+
+### 19.2 The hierarchical structure the archive supports
+
+| item | measurement |
+|---|---|
+| conference field | `home_conference` / `away_conference` in `cfb_schedules`, 100% populated |
+| team-seasons 2022–2026 | 672, every one with a conference |
+| team-seasons with more than one conference | 0 |
+| conferences | 11 (Big Ten 82, ACC 79, SEC 76, Big 12 72, Sun Belt 70, American 67, MAC 62, Mountain West 58, C-USA 52, Pac-12 36, FBS Independents 18) |
+| teams per season | 131 / 133 / 134 / 136 / 138 |
+| games per team-season (2022 pool) | min 9, median 12, max 14 |
+
+So three levels are available and identifiable: game → team-season → conference. There is no
+team-within-conference duplication across seasons to worry about, and no team-season changes conference.
+
+### 19.3 How large the effects actually are (this sets the priors, on 2022 only)
+
+Measured from the C2 residuals on 2022 — a season **outside** the primary pool, the 2025 holdout and the
+2026 development season — decomposing observed dispersion into signal and sampling noise:
+
+| quantity | value |
+|---|---|
+| observed Var of team-season mean logit residual | 0.5106 |
+| mean sampling Var at 9–14 games | 0.4019 |
+| implied team-season effect SD | **0.330** |
+| observed SD of conference means | 0.226 |
+| implied conference-level effect SD (noise removed) | **0.08** |
+
+Two things follow, and they are the honest expectation for this increment:
+
+1. Conference-level residual effects are tiny (0.08 logit) because Elo and the drive splits already carry
+   conference strength. The hierarchy's top level will barely move a prediction.
+2. A team-season effect of SD 0.330 estimated from 12 games has reliability of only about 21%
+   (0.109 / 0.511), so partial pooling can recover only a fraction of it. **A near-null is the most likely
+   outcome**; the increment is worth one pre-registered test, not a search.
+
+### 19.4 The variant (one primary)
+
+**Random-intercept logistic with two nested levels, on top of the C2 linear predictor.**
+
+```
+eta_i   = logit(p_G2,i) + b0 + x_i'b + (a_home(i) - a_away(i))
+a_t     = m_conf(t) + u_t
+u_t    ~ N(0, 1/lambda_team)
+m_c    ~ N(0, 1/lambda_conf)
+```
+
+- `t` indexes team-season, `c` indexes conference. The random effect enters as a home-minus-away
+  difference, exactly like every other covariate in this ladder.
+- Effects are **residual**: the G2 offset and the drive splits are already in `eta`, so `a_t` captures only
+  what is left.
+
+| hyperparameter | frozen value | justification |
+|---|---|---|
+| `lambda_team` | **9.0** (prior SD 0.333) | 1/0.330² from the 2022 measurement in §19.3 |
+| `lambda_conf` | **156** (prior SD 0.080) | 1/0.08² from the 2022 measurement in §19.3 |
+| ridge on `b` | **1.0** | unchanged from C2, so the only difference from C2 is the hierarchy |
+| standardisation | training-fold mean and SD | unchanged from (b)–(f) |
+
+**Estimation:** penalised maximum likelihood (Gaussian priors ≡ ridge penalties) by L-BFGS-B with analytic
+gradient, implemented in numpy/scipy — reproducible in the venv, no sampler, no seed. The penalties make
+the objective strictly convex, so the optimum is unique and identification is by the prior rather than by a
+sum-to-zero constraint.
+
+**Convergence checks, asserted not assumed:** `max |gradient| < 1e-6` at every fold, and the run aborts if
+any fold fails to converge. Reported per run: number of folds, worst gradient norm, fitted SD of `u` and
+of `m`, and the share of team-seasons seen at least once in training.
+
+**Prediction:** a team-season not seen in training contributes `u = 0` and its conference mean (0 if the
+conference is unknown). No future information enters any fold — the same per-block refit and one-day
+embargo as (b)–(f).
+
+### 19.5 Models, gates and robustness
+
+| model | definition |
+|---|---|
+| G1 | hierarchy on the G2 offset only — no drive splits |
+| **G2h (primary)** | hierarchy + the seven C2 drive splits |
+| C2 | the standing flat model, refit on the identical population |
+
+- Population identical to (b)–(f): 2,397 / 807 / 350; the one no-PBP game stays out.
+- **Primary gate: G2h vs C2** (paired Brier difference < 0, interval entirely below zero).
+- **Information gate: G2h vs G1** — consistent with (b)–(f), the increment must beat its own
+  no-features control. Here the control is the same hierarchy without the drive splits, which tests that
+  the features still carry information once team-season effects are in the model.
+- Remaining gates identical: sample sizes, holdout not worse than +0.002, holdout point negative, log loss
+  same sign pooled and holdout, calibration within 0.005 pooled and holdout. Fail-closed.
+- **Per-season sign table required** even if the pooled interval excludes zero (the (f) learning).
+- **One pre-declared robustness variant, reported and not used to choose:** `lambda_team = 4.0`
+  (prior SD 0.5, weaker shrinkage). Nothing else changes.
+- No other family may be stacked: this is (c)'s features only, with (d)/(e)/(f) excluded.
+
+**If G2h fails, the ladder is exhausted and C2 stands as the game-winner model.**
