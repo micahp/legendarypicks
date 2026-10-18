@@ -726,3 +726,107 @@ offence against the away defence and vice versa.
   games; EP fitted on strictly earlier seasons; the BANNED regex on publisher columns still applies.
 
 **If F2 fails, family (f) is discarded and not revisited with a different form definition.**
+
+## 18. Increment (f) result — form and time decay
+
+Run 2026-10-18 on `feat/fbs-archive`, spec §17 above. Population identical to (b)–(e): 2,397
+walk-forward 2023–25, 807 frozen holdout, 350 in 2026. C2 refit on the same games reproduces §12 exactly
+(`C2 − G2 = -0.01677` pooled, `-0.02034` holdout). Form is available for 100% of evaluated games.
+
+### Verdict: DISCARDED
+
+F2 does not beat C2: `F2 − C2 = +0.01417 [+0.00953, +0.01850]` pooled and `+0.01551 [+0.00670, +0.02469]`
+on the frozen holdout. As with (e), the family is not a null: F2 beats G2 by `-0.00260
+[-0.00444, -0.00084]` and beats its own recalibration control by `-0.00271 [-0.00450, -0.00098]`, and the
+holdout effect is larger than the pooled one (`F2 − G2 = -0.00482 [-0.00796, -0.00193]`). Recent form
+carries information; it carries about a sixth of what the drive splits carry.
+
+### Scores
+
+| period | model | games | Brier | BSS | log loss | reliability | resolution |
+|---|---|---|---|---|---|---|---|
+| walk-forward 2023–25 | G2 | 2,397 | 0.2133 | 0.1469 | 0.6162 | 0.0097 | 0.0373 |
+| walk-forward 2023–25 | C2 G2+drive splits | 2,397 | 0.1965 | 0.2140 | 0.5758 | 0.0010 | 0.0467 |
+| walk-forward 2023–25 | F1 G2+intercept | 2,397 | 0.2134 | 0.1465 | 0.6163 | 0.0102 | 0.0384 |
+| walk-forward 2023–25 | **F2 G2+form** | 2,397 | **0.2107** | 0.1573 | 0.6098 | 0.0071 | 0.0375 |
+| 2025 frozen holdout | G2 | 807 | 0.2208 | 0.1169 | 0.6324 | 0.0048 | 0.0243 |
+| 2025 frozen holdout | C2 | 807 | 0.2004 | 0.1983 | 0.5834 | 0.0037 | 0.0426 |
+| 2025 frozen holdout | F1 | 807 | 0.2207 | 0.1173 | 0.6322 | 0.0046 | 0.0241 |
+| 2025 frozen holdout | **F2** | 807 | **0.2159** | 0.1362 | 0.6213 | 0.0048 | 0.0287 |
+| 2026 development | G2 | 350 | 0.2051 | 0.1795 | 0.5994 | 0.0107 | 0.0357 |
+| 2026 development | C2 | 350 | 0.1936 | 0.2256 | 0.5725 | 0.0065 | 0.0453 |
+| 2026 development | F2 | 350 | 0.2020 | 0.1918 | 0.5914 | 0.0053 | 0.0338 |
+
+### Paired differences, 95% UTC-week blocks
+
+| period | comparison | diff | 95% interval | games | blocks |
+|---|---|---|---|---|---|
+| walk-forward 2023–25 | **F2 − C2 (primary)** | **+0.01417** | **[+0.00953, +0.01850]** | 2,397 | 65 |
+| walk-forward 2023–25 | F2 − G2 | −0.00260 | [−0.00444, −0.00084] | 2,397 | 65 |
+| walk-forward 2023–25 | F2 − F1 | −0.00271 | [−0.00450, −0.00098] | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − G2 (control) | −0.01677 | [−0.02065, −0.01248] | 2,397 | 65 |
+| 2025 frozen holdout | **F2 − C2** | **+0.01551** | **[+0.00670, +0.02469]** | 807 | 22 |
+| 2025 frozen holdout | F2 − G2 | −0.00482 | [−0.00796, −0.00193] | 807 | 22 |
+| 2025 frozen holdout | F2 − F1 | −0.00474 | [−0.00782, −0.00183] | 807 | 22 |
+| 2026 development | F2 − C2 | +0.00844 | [+0.00135, +0.01454] | 350 | 8 |
+| 2026 development | F2 − G2 | −0.00309 | [−0.00592, +0.00052] | 350 | 8 |
+
+### Gates
+
+| gate | requirement | result |
+|---|---|---|
+| sample pooled / holdout | ≥ 1,500 / ≥ 250 | 2,397 / 807 — pass |
+| primary f2 beats c2 | interval below zero | +0.01417 [+0.00953, +0.01850] — **fail** |
+| information f2 beats f1 | interval below zero | −0.00271 [−0.00450, −0.00098] — pass |
+| holdout not worse than +0.002 | ≤ +0.002 | +0.01551 — **fail** |
+| holdout point negative | < 0 | +0.01551 — **fail** |
+| log loss pooled / holdout vs C2 | F2 ≤ C2 | 0.6098 vs 0.5758; 0.6213 vs 0.5834 — **fail** |
+| calibration pooled | within +0.005 of C2 | 0.0071 vs 0.0010 — **fail** |
+| calibration holdout | within +0.005 of C2 | 0.0048 vs 0.0037 — pass |
+
+### Stability and the pre-registered half-life sensitivity
+
+| season | games | G2 | C2 | F2 | F2 − G2 | F2 − C2 |
+|---|---|---|---|---|---|---|
+| 2022 (outside the primary pool) | 776 | 0.2309 | 0.2180 | 0.2323 | +0.0014 [−0.00419, +0.00730] | +0.0143 [+0.00187, +0.02716] |
+| 2023 | 792 | 0.2138 | 0.1905 | 0.2146 | +0.0008 [−0.00167, +0.00381] | +0.0241 [+0.01410, +0.03284] |
+| 2024 | 798 | 0.2179 | 0.2054 | 0.2124 | −0.0055 [−0.00883, −0.00183] | +0.0070 [+0.00028, +0.01303] |
+| 2025 | 807 | 0.2082 | 0.1936 | 0.2052 | −0.0031 [−0.00631, −0.00007] | +0.0115 [+0.00393, +0.01863] |
+| 2026 | 350 | 0.2051 | 0.1936 | 0.2020 | −0.0031 [−0.00592, +0.00052] | +0.0084 [+0.00135, +0.01454] |
+
+The effect switches on in 2024: F2 is worse than G2 in 2022 and 2023 and better in 2024–2026. That is a
+pattern worth recording, not a finding to build on — two of the five seasons are the wrong sign.
+
+Half-life sensitivity, pre-registered as robustness only and not used to choose:
+
+| full-history half-life | F2 − C2 pooled | F2 − G2 pooled | F2 − G2 holdout | F2 − F1 pooled |
+|---|---|---|---|---|
+| 3 | +0.01356 | −0.00321 [−0.00548, −0.00101] | −0.00524 | −0.00332 |
+| **6 (primary)** | **+0.01417** | **−0.00260 [−0.00444, −0.00084]** | **−0.00482** | **−0.00271** |
+| 10 | +0.01423 | −0.00254 [−0.00428, −0.00089] | −0.00513 | −0.00265 |
+
+The result does not depend on the decay rate: every half-life gives a small, resolvable gain over G2 and a
+consistent loss to C2.
+
+### What the model leaned on
+
+Frozen 2025 coefficients (standardised): intercept +0.0185, `off_epa_form_diff` +0.0978,
+`def_epa_form_diff` +0.0441, `off_success_form_diff` +0.1407, `def_success_form_diff` +0.0916.
+Offensive success form is the largest, at roughly a quarter of (c)'s points-per-drive coefficient. All
+four signs point the intuitive way (a team performing above its own baseline helps the home side).
+
+### Interpretation
+
+Form is real but thin. With a six-game half-life already in (b)'s ratings, the marginal information in
+"the last three games" is small, and it is concentrated in seasons where it happens to matter. Against a
+model that measures the same underlying performance more directly — drive-level scoring, takeaways and
+field position, recomputed weekly — form loses by a wide margin.
+
+Family (f) is closed by the pre-registered rule. Three families ((d), (e), (f)) have now failed the C2
+bar; (e) and (f) failed while beating G2, which is the useful distinction the ladder was built to expose.
+
+### Next
+
+Family (g), richer hierarchical models, is the last rung. Given three consecutive failures, the question
+for (g) is whether a different functional form (partial pooling, state-space or a hierarchical Elo) can
+beat C2 on the same features, rather than adding another feature block.
