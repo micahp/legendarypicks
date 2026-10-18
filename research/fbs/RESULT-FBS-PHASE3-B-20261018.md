@@ -544,3 +544,112 @@ before the season; it shares 247Sports-style talent units, so it is secondary to
   `coach`, `role`) are read, never its EPA/tendency aggregates; nothing from a game's own box score.
 
 **If E2 fails, family (e) is discarded and not revisited with different definitions.**
+
+## 16. Increment (e) result — coaching and roster continuity / talent
+
+Run 2026-10-18 on `feat/fbs-archive`, spec §15 above. Population identical to (b)–(d): 2,397 walk-forward
+2023–25 games, 807 frozen holdout, 350 in 2026. C2 refit on the same games reproduces §12 exactly
+(`C2 − G2 = -0.01677` pooled, `-0.02034` holdout).
+
+Coverage on the evaluated population is better than the archive-wide view suggested: coach tenure known
+for **91.5%** of games (both head coaches present), returning production **100%**, talent composite
+**98.6%**, net transfer talent **100%**. Missing values take the neutral difference (0) with a flag.
+
+### Verdict: DISCARDED as an increment — but (e) is the first family with real signal
+
+Per the pre-registered rule, E2 is discarded because it does not beat C2: `E2 − C2 = +0.01252
+[+0.00771, +0.01695]` pooled and `+0.01649 [+0.00859, +0.02351]` on the frozen holdout. It cannot
+displace the drive splits.
+
+What makes this different from (d) is that (e) is **not a null**. E2 beats G2 with a resolvable margin,
+`-0.00425 [-0.00691, -0.00157]` pooled, and beats its own recalibration control by the same amount,
+`-0.00436 [-0.00701, -0.00160]`. Coaching continuity and returning production therefore carry
+information Elo does not have; it is simply about a third of the information in the drive splits
+(`C2 − G2 = -0.01677`). The family is closed by the rule, not by absence of effect.
+
+### Scores
+
+| period | model | games | Brier | BSS | log loss | reliability | resolution |
+|---|---|---|---|---|---|---|---|
+| walk-forward 2023–25 | G2 | 2,397 | 0.2133 | 0.1469 | 0.6162 | 0.0097 | 0.0373 |
+| walk-forward 2023–25 | C2 G2+drive splits | 2,397 | 0.1965 | 0.2140 | 0.5758 | 0.0010 | 0.0467 |
+| walk-forward 2023–25 | E1 G2+intercept | 2,397 | 0.2134 | 0.1465 | 0.6163 | 0.0102 | 0.0384 |
+| walk-forward 2023–25 | **E2 G2+coach/returning** | 2,397 | **0.2090** | 0.1639 | 0.6055 | 0.0044 | 0.0376 |
+| walk-forward 2023–25 | E2+ +talent/portal | 2,397 | 0.2023 | 0.1907 | 0.5865 | 0.0007 | 0.0400 |
+| 2025 frozen holdout | G2 | 807 | 0.2208 | 0.1169 | 0.6324 | 0.0048 | 0.0243 |
+| 2025 frozen holdout | C2 | 807 | 0.2004 | 0.1983 | 0.5834 | 0.0037 | 0.0426 |
+| 2025 frozen holdout | E1 | 807 | 0.2207 | 0.1173 | 0.6322 | 0.0046 | 0.0241 |
+| 2025 frozen holdout | **E2** | 807 | **0.2169** | 0.1323 | 0.6231 | 0.0017 | 0.0252 |
+| 2025 frozen holdout | E2+ | 807 | 0.2175 | 0.1299 | 0.6236 | 0.0033 | 0.0257 |
+| 2026 development | G2 | 350 | 0.2051 | 0.1795 | 0.5994 | 0.0107 | 0.0357 |
+| 2026 development | C2 | 350 | 0.1936 | 0.2256 | 0.5725 | 0.0065 | 0.0453 |
+| 2026 development | E2 | 350 | 0.1994 | 0.2023 | 0.5863 | 0.0071 | 0.0401 |
+| 2026 development | E2+ | 350 | 0.1835 | 0.2662 | 0.5478 | 0.0042 | 0.0547 |
+
+### Paired differences, 95% UTC-week blocks
+
+| period | comparison | diff | 95% interval | games | blocks |
+|---|---|---|---|---|---|
+| walk-forward 2023–25 | **E2 − C2 (primary)** | **+0.01252** | **[+0.00771, +0.01695]** | 2,397 | 65 |
+| walk-forward 2023–25 | E2 − G2 | −0.00425 | [−0.00691, −0.00157] | 2,397 | 65 |
+| walk-forward 2023–25 | E2 − E1 | −0.00436 | [−0.00701, −0.00160] | 2,397 | 65 |
+| walk-forward 2023–25 | E2+ − C2 | +0.00583 | [−0.00043, +0.01205] | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − G2 (control) | −0.01677 | [−0.02065, −0.01248] | 2,397 | 65 |
+| 2025 frozen holdout | **E2 − C2** | **+0.01649** | **[+0.00859, +0.02351]** | 807 | 22 |
+| 2025 frozen holdout | E2 − G2 | −0.00384 | [−0.00788, +0.00046] | 807 | 22 |
+| 2025 frozen holdout | E2 − E1 | −0.00376 | [−0.00787, +0.00063] | 807 | 22 |
+| 2026 development | E2 − C2 | +0.00582 | [−0.00249, +0.01345] | 350 | 8 |
+| 2026 development | E2 − G2 | −0.00571 | [−0.01052, +0.00046] | 350 | 8 |
+| 2026 development | E2+ − C2 | −0.01015 | [−0.02593, +0.00448] | 350 | 8 |
+
+### Gates
+
+| gate | requirement | result |
+|---|---|---|
+| sample pooled / holdout | ≥ 1,500 / ≥ 250 | 2,397 / 807 — pass |
+| primary e2 beats c2 | interval below zero | +0.01252 [+0.00771, +0.01695] — **fail** |
+| information e2 beats e1 | interval below zero | −0.00436 [−0.00701, −0.00160] — pass |
+| holdout not worse than +0.002 | ≤ +0.002 | +0.01649 — **fail** |
+| holdout point negative | < 0 | +0.01649 — **fail** |
+| log loss pooled / holdout vs C2 | E2 ≤ C2 | 0.6055 vs 0.5758; 0.6231 vs 0.5834 — **fail** |
+| calibration pooled | within +0.005 of C2 | 0.0044 vs 0.0010 — pass |
+| calibration holdout | within +0.005 of C2 | 0.0017 vs 0.0037 — pass |
+
+### Stability
+
+| season | games | G2 | C2 | E2 | E2 − G2 | E2 − C2 |
+|---|---|---|---|---|---|---|
+| 2022 (outside the primary pool) | 776 | 0.2309 | 0.2180 | 0.2323 | +0.0015 [−0.00335, +0.00592] | +0.0144 [+0.00344, +0.02521] |
+| 2023 | 792 | 0.2138 | 0.1905 | 0.2055 | −0.0082 [−0.01309, −0.00305] | +0.0151 [+0.00505, +0.02487] |
+| 2024 | 798 | 0.2179 | 0.2054 | 0.2169 | −0.0009 [−0.00492, +0.00387] | +0.0116 [+0.00372, +0.01942] |
+| 2025 | 807 | 0.2082 | 0.1936 | 0.2046 | −0.0036 [−0.00738, +0.00061] | +0.0110 [+0.00414, +0.01731] |
+| 2026 | 350 | 0.2051 | 0.1936 | 0.1994 | −0.0057 [−0.01052, +0.00046] | +0.0058 [−0.00249, +0.01345] |
+
+E2 is ahead of G2 in four of five seasons and significantly so in 2023; nothing in (d) looked like this.
+
+### What the model leaned on
+
+Frozen 2025 coefficients (standardised): intercept +0.0220, `coach_tenure_diff` +0.1327,
+`off_returning_diff` +0.2112, `def_returning_diff` +0.1259. Returning offensive production is the
+strongest of the three, roughly half the size of (c)'s points-per-drive coefficient (0.53), and
+coaching tenure is a real but smaller effect.
+
+The secondary variant is worth recording for a future decision, not for this verdict: adding talent and
+net transfer talent moves E2+ to 0.2023 pooled (`E2+ − C2 = +0.00583 [-0.00043, +0.01205]`, interval
+touching zero) and to 0.1835 in 2026 (`E2+ − C2 = -0.01015`). Talent is 247Sports-derived and was
+pre-registered as non-gating, so this is an observation, not a result.
+
+### Interpretation
+
+Coaching change and roster turnover are the classic "cheap" FBS predictors, and here they are real but
+small: the market for them is the day-one line, and once Elo and drive-level performance are in the
+model there is little left. They also arrive as season-level facts, so they cannot track the within-season
+drift that the drive features capture weekly.
+
+Family (e) is closed by the pre-registered rule. It is not evidence that coaching and roster continuity
+are worthless — it is evidence that they are worth about a third of what drive-level performance is worth,
+which is below the bar C2 sets.
+
+### Next
+
+Family (f) of the ladder: form and time decay, tested alone against C2.
