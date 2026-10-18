@@ -275,3 +275,39 @@ the information of the next best family.
 **Evidence:** §14, §16, §18 gate tables.
 **Consequence:** family (g) should test a different functional form on C2's features rather than adding a
 fourth pregame block. If (g) also fails, the ladder is exhausted and C2 is the game-winner model.
+
+## 2026-10-18 — The first thing that beat C2 was an estimator change, not another covariate
+**Learned:** Two-level random intercepts (team-season effects nested in conference means) on C2's own
+linear predictor beat C2 by −0.00190 [−0.00255, −0.00125] pooled and −0.00283 [−0.00463, −0.00100] in 2026,
+with a negative sign in all five seasons. The hierarchy alone beat G2 by −0.00473.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §19–20, `research/fbs/phase3-g/`, commit `88573876`.
+**Consequence:** before adding a fourth pregame block to a saturated model, ask whether the estimator is
+wasting the features already present. Four families of new covariates produced nothing; one change of
+functional form did.
+
+## 2026-10-18 — A quarter of "drive performance" was persistent team identity
+**Learned:** With team-season random effects in the model, the seven drive splits contribute −0.01393
+instead of −0.01677 — pooling absorbed roughly 17% of their signal, and the hierarchy supplies about a
+quarter of C2's total edge over G2 on its own.
+**Evidence:** §20 paired table, G1 − G2 −0.00473 vs C2 − G2 −0.01677.
+**Consequence:** drive features are partly re-measuring team quality each week. If a future model wants
+finer within-season dynamics, model the team effect explicitly rather than adding more weekly aggregates.
+
+## 2026-10-18 — A frozen holdout cannot test a model whose mechanism is within-season updating
+**Learned:** G2h is resolvable pooled and in 2026 but flat on the frozen holdout (−0.00036 [−0.00154,
++0.00042]). The mechanism explains it: the holdout fits once through 2024, so every 2025 team-season effect
+is unseen and shrinks to its conference mean — the model degrades to C2 plus a conference prior.
+**Evidence:** §20 holdout diagnostics (sd u 0.086, 398 team-seasons, fit through 2024 only).
+**Consequence:** when a model's gain comes from re-estimating latent state inside the season, the frozen
+holdout is the wrong confirmation test; report that explicitly instead of calling the result unresolved
+noise. Prospective week-by-week games are the right confirmation.
+
+## 2026-10-18 — Convergence thresholds must match what the optimiser can deliver
+**Learned:** L-BFGS-B on a ~700-parameter penalised logistic stops on line-search precision at about 1e-5,
+not the 1e-6 pre-registered; one fold stalled at 1.006e-05 and the run aborted rather than silently
+accepting it.
+**Evidence:** §20 declared deviation; 360/360 folds converged at max|grad| 9.7e-06 with up to three
+restarts from the stopped point.
+**Consequence:** pre-register a convergence rule the chosen optimiser can actually reach, and report the
+achieved gradient norm rather than asserting a threshold. Aborting on failure is right; loosening silently
+is not.
