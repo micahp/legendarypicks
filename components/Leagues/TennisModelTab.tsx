@@ -343,8 +343,12 @@ export default function TennisModelTab({ tour }: {
         const matches = view === 'projections'
           ? payload.matches
           : payload.matches.filter(match => localDateKey(match.startTime) === date)
+        const now = Date.now()
         const visible = view === 'projections'
-          ? matches.filter(match => match.lockStatus === 'missed' || (match.projection != null && match.grades?.winner == null))
+          // A missing grade (or missed lock) does not mean a match is still upcoming.
+          ? matches.filter(match => match.status === 'scheduled' &&
+            match.projection != null && match.grades?.winner == null &&
+            match.startTime != null && Date.parse(match.startTime) > now)
           : matches.filter(match => match.status === 'final' &&
             (winnerModel === 'page' || match.projection?.projectedWinner != null || match.lockStatus === 'missed'))
         return visible.length ? (
