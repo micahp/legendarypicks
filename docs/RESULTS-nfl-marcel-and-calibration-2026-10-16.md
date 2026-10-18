@@ -1,6 +1,14 @@
 # NFL props: does more history help, and what full Marcel is worth
 
-Measured 2026-10-16 on `picks.dev.db` (read-only for every grade), on `scratch/spec-b-rebase`. Three
+> **Superseded in part, 2026-10-17.** Every number in sections 1 and 4 that runs through
+> `grade_nfl_prop_probabilities` was measured on a population selected on the outcome (the quarterback who
+> led his team in attempts in the finished game). The grader now uses the pregame leader; section 5 of this
+> document already measured that population and stands. Affected: "raw v2 0.2747" and the calibration ladder's
+> 0.2488/0.2492, log loss and the paired differences, the ladder's 31,843 items on 838 player-games, and the
+> per-market AUC table's 122 player-games. On the corrected population raw v2 is 0.2728 and v2-platt is
+> 0.2486 on the items it served; see `RESULTS-nfl-decisions-2026-10-17.md`. Nothing below is rewritten.
+
+Measured 2026-10-16 on `picks.dev.db` (read-only), on `scratch/spec-b-rebase`. Read
 questions, in the order they were asked: can v2's probabilities be repaired without new data, does a full
 Marcel baseline beat Marcel-lite, and does a third season of history buy more than calibration does.
 

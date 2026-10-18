@@ -268,6 +268,8 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--sims", type=int, default=1000)
     ap.add_argument("--fit-p-plays", action="store_true", help="print the fitted P(plays | designation); no writes")
+    ap.add_argument("--fit-calibration", action="store_true",
+                    help="also refit the forward Platt maps for the season and store them (model v2-platt)")
     a = ap.parse_args(argv)
     path = os.environ.get("LP_DB_PATH")
     if not path:
@@ -293,6 +295,17 @@ def main(argv=None):
     week = a.week or next_week(con, a.season)
     if week is None:
         raise SystemExit("no unplayed regular-season week in %d" % a.season)
+    if a.fit_calibration:
+        # Refit on the graded weeks so far, then store the maps the reader applies for `model=v2-platt`.
+        # A week with no earlier graded week gets no row and is served raw, which the response reports.
+        import nfl_prop_calibration as cal
+        got = cal.map_for_week(con, a.season, week)
+        if got is None:
+            print("calibration: no earlier graded week; week %d will be served raw and labelled raw_no_map" % week)
+        else:
+            cal.store(con, a.season, {week: got})
+            print("calibration: week %d map a %.5f b %+.5f fitted on %d items (%d player-games)"
+                  % (week, got[0], got[1], got[2], got[3]))
     entries, summary = project_week(con, a.season, week, n_sims=a.sims)
     print("season %d week %d: %s" % (a.season, week, summary))
     if a.dry_run:
