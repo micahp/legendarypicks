@@ -223,3 +223,29 @@ evaluation window. Weather appears in no stats release; the derived matchup tabl
 **Consequence:** audit before accepting a brief's claim of absence. Weather stayed secondary because the
 matchup table has undocumented provenance, and the null held with and without it — so the provenance
 question never had to decide the verdict.
+
+## 2026-10-18 — A family can beat G2 and still be discarded, and that is the useful result
+**Learned:** Coaching tenure plus returning production (E2) beat G2 by −0.00425 [−0.00691, −0.00157] and
+beat its own recalibration control by −0.00436 on 2,397 walk-forward games, yet trailed C2 by +0.01252
+and so failed the pre-registered gate. It is ahead of G2 in four of five seasons (2023 −0.0082
+[−0.01309, −0.00305]).
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §15–16, `research/fbs/phase3-e/`, commit `cc7eebdb`.
+**Consequence:** the C2 bar is doing real work — a family with genuine signal about a third the size of
+the drive splits does not ship. Keep reporting the G2 comparison even when the C2 gate fails, otherwise
+a real effect gets recorded as a null.
+
+## 2026-10-18 — The 247Sports talent composite moves the model, but it is not allowed to decide anything
+**Learned:** Adding talent and net transfer talent to E2 took pooled Brier from 0.2090 to 0.2023
+(E2+ − C2 +0.00583 [−0.00043, +0.01205], interval touching zero) and 2026 from 0.1994 to 0.1835.
+**Evidence:** `research/fbs/phase3-e/metrics.csv`, secondary variant in §16.
+**Consequence:** talent is the strongest non-drive input seen so far and is also the one with
+undocumented 247Sports provenance, so it stays secondary. If a licensed talent source ever exists
+(CFBD /talent when the quota resets), that is the first thing to re-test properly.
+
+## 2026-10-18 — Coverage measured on the wrong population reads as a data failure
+**Learned:** Coach-tenure coverage looked like 71.9% when measured over all ESPN-PBP games, because that
+set includes FCS opponents. On the actual FBS evaluation population it is 91.5% (both head coaches), with
+returning production 100%, talent 98.6% and transfer talent 100%.
+**Evidence:** `research/fbs/phase3-e/run.log` coverage block vs the all-games probe.
+**Consequence:** always report coverage on the evaluated population, not on the raw joined table. A rate
+over the wrong denominator looks like missing data and invites a pointless re-audit.
