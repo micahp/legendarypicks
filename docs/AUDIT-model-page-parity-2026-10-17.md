@@ -1,6 +1,6 @@
 # Model-page parity audit — 2026-10-17
 
-Baseline: `dev` at `8eced0dccaa8e95ac98dfecd54cbec36e23965da`; the component and endpoint line references below describe that snapshot. The tennis conflict repair is committed separately as `eac8ced8` and does not change these sources.
+Baseline: `dev` at `8eced0dccaa8e95ac98dfecd54cbec36e23965da`; the component and endpoint line references below describe that snapshot. The tennis conflict repair is on `dev` as `0cdad734` and does not change these sources.
 
 This audit compares the user-visible surfaces and the data they already consume. It does not assess or change forecast quality.
 

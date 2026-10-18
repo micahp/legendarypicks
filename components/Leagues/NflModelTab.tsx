@@ -14,7 +14,7 @@ interface Lock {
   proj_home: number | null
   proj_away: number | null
   margin: number
-  total: number
+  total: number | null
   p_home_win: number
   locked_at: string | null
   preview: boolean
@@ -59,6 +59,8 @@ interface RecordRow extends ModelInfo {
   awaiting: number
   su: Tally | null
   ats: Tally | null
+  mean_brier?: number | null
+  brier_n?: number
 }
 
 interface Payload {
@@ -131,6 +133,10 @@ function edge(lock: Lock) {
   return lock.line.spread == null ? null : Math.abs(lock.margin - lock.line.spread)
 }
 
+function totalEdge(lock: Lock) {
+  return lock.line.total == null || lock.total == null ? null : lock.total - lock.line.total
+}
+
 function statusLabel(lock: Lock) {
   if (lock.preview) return 'NOT LOCKED'
   if (!lock.grade) return 'AWAITING'
@@ -143,6 +149,63 @@ function statusClass(lock: Lock) {
   if (lock.grade.ats === 'win') return 'text-emerald-400'
   if (lock.grade.ats === 'loss') return 'text-rose-400'
   return 'text-zinc-300'
+}
+
+function lineCaptureLabel(lock: Lock) {
+  const kind = lock.preview ? 'Current line' : 'Frozen line'
+  const time = lock.line.captured_at
+    ? `${lock.line.source === 'snapshot' ? 'captured' : lock.preview ? 'preview time' : 'lock time'} ${lock.line.captured_at}`
+    : 'capture time unavailable'
+  return `${kind} · ${lock.line.source} · ${time}`
+}
+
+function isMissedLock(game: ModelGame, version: string, now = Date.now()) {
+  const lock = game.locks[version]
+  if ((lock && !lock.preview) || !game.kickoff_utc) return false
+  const kickoff = Date.parse(game.kickoff_utc)
+  return Number.isFinite(kickoff) && kickoff <= now
+}
+
+function MissedLockList({ games, version }: { games: ModelGame[]; version: string }) {
+  const missed = games.filter(game => isMissedLock(game, version))
+  if (!missed.length) return null
+  return (
+    <section aria-label="Missed lock window" className="space-y-2">
+      <h3 className="text-sm font-medium text-zinc-400">Missed lock window</h3>
+      <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+        {missed.map(game => <article key={game.game_id} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+          <span className="font-medium text-zinc-200">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</span>
+          <span className="text-zinc-500">No forecast locked before kickoff · {game.kickoff_utc}</span>
+        </article>)}
+      </div>
+    </section>
+  )
+}
+
+function ModelAccuracy({ models, records }: { models: ModelInfo[]; records: RecordRow[] }) {
+  const byVersion = new Map(records.map(record => [record.version, record]))
+  const score = (value: number | null | undefined) => value == null ? '—' : value.toFixed(4)
+  return (
+    <div role="tooltip" className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,420px)] rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
+      <h3 className="text-sm font-semibold text-zinc-100">Season winner accuracy</h3>
+      <p className="mt-1 text-xs text-zinc-400">Brier score on settled forecasts · lower is better · 0.2500 is a constant 50% forecast.</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[300px] text-sm tabular-nums">
+          <thead className="border-b border-zinc-700 text-xs text-zinc-500"><tr>
+            <th className="py-2 text-left font-medium">Model</th><th className="py-2 text-right font-medium">Brier ↓</th><th className="py-2 text-right font-medium">Brier n</th>
+          </tr></thead>
+          <tbody className="divide-y divide-zinc-800">{models.map(model => {
+            const record = byVersion.get(model.version)
+            return <tr key={model.version}>
+              <th scope="row" className="py-2 text-left font-medium text-zinc-200">{model.label}</th>
+              <td className="py-2 text-right text-zinc-100">{score(record?.mean_brier)}</td>
+              <td className="py-2 text-right text-zinc-300">{record?.brier_n ?? 0}</td>
+            </tr>
+          })}</tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 // One game as a card, the same panel design as the homepage's NFL example. The projection and the record use this
@@ -179,10 +242,14 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
-        <span>Market <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
+        <span>{lock.preview ? 'Current line' : 'Frozen line'} <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
         <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
         <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
+        <span>{lock.preview ? 'Current total' : 'Frozen total'} <b className="font-medium tabular-nums text-zinc-100">{lock.line.total == null ? '—' : one(lock.line.total)}</b></span>
+        <span>Model total <b className="font-medium tabular-nums text-zinc-100">{lock.total == null ? '—' : one(lock.total)}</b></span>
+        <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
       </div>
+      <p className="text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
     </article>
   )
 }
@@ -197,11 +264,14 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
       </div>
       {!lock ? <p className="mt-2 text-sm text-amber-400">No locked projection for this game.</p> : (
         <>
-          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6">
-            <Metric label="Vegas line" value={lineSide(game.home, game.away, lock.line.spread)} />
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6 xl:grid-cols-9">
+            <Metric label={lock.preview ? 'Current line' : 'Frozen line'} value={lineSide(game.home, game.away, lock.line.spread)} />
             <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
             <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
             <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
+            <Metric label={lock.preview ? 'Current total' : 'Frozen total'} value={lock.line.total == null ? '—' : one(lock.line.total)} />
+            <Metric label="Model total" value={lock.total == null ? '—' : one(lock.total)} />
+            <Metric label="Total edge" value={totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`} />
             <div className="min-w-0">
               <div className="text-xs text-zinc-500">Final</div>
               <div className="mt-0.5 truncate text-sm font-normal tabular-nums text-zinc-200">
@@ -213,6 +283,7 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
               <div className={`mt-0.5 truncate text-sm tabular-nums ${statusClass(lock)}`}>{statusLabel(lock)}</div>
             </div>
           </div>
+          <p className="mt-2 text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
           {lock.proj_home == null || lock.proj_away == null ? (
             <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
           ) : (
@@ -289,6 +360,7 @@ export default function NflModelTab() {
   const [ratings, setRatings] = useState<RatingsPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [accuracyOpen, setAccuracyOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -336,7 +408,7 @@ export default function NflModelTab() {
     if (!data) return []
     const grouped = new Map<string, ModelGame[]>()
     for (const game of data.games) {
-      if (!game.locks[version]) continue
+      if (!game.locks[version] || isMissedLock(game, version)) continue
       const day = dayLabel(game.kickoff_utc)
       grouped.set(day, [...(grouped.get(day) || []), game])
     }
@@ -346,6 +418,11 @@ export default function NflModelTab() {
   // The record's week defaults to the latest week with a graded pick, so an unplayed week's preview never opens it.
   const gradedWeeks = useMemo(() => Array.from(new Set(recordGames.filter(game => game.locks[version]?.grade).map(game => game.week))).sort((a, b) => a - b), [recordGames, version])
   const activeRecordWeek = (recordWeek != null && gradedWeeks.includes(recordWeek) ? recordWeek : null) ?? gradedWeeks[gradedWeeks.length - 1] ?? null
+  const missedWeekGames = data?.games.filter(game => isMissedLock(game, version)) || []
+  const recordWeekForMisses = activeRecordWeek ?? data?.week
+  const missedRecordGames = recordGames.filter(game => game.week === recordWeekForMisses)
+  const visibleRecordGames = recordGames.filter(game => game.week === activeRecordWeek
+    && !game.locks[version]?.preview && !isMissedLock(game, version))
 
   if (error) return <div className="rounded-2xl bg-zinc-900 px-4 py-3 text-sm text-red-400">{error}</div>
   if (loading && !data) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />
@@ -365,6 +442,14 @@ export default function NflModelTab() {
             {data.models.map(model => <option key={model.version} value={model.version}>{model.label}</option>)}
           </ModelSelect>
         </label>
+        <div className="relative">
+          <button type="button" aria-label="Model accuracy" aria-expanded={accuracyOpen}
+            onClick={() => setAccuracyOpen(open => !open)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">
+            Model accuracy
+          </button>
+          {accuracyOpen && <ModelAccuracy models={data.models} records={data.record} />}
+        </div>
       </div>
 
       {view === 'projections' && <>
@@ -372,12 +457,13 @@ export default function NflModelTab() {
           <h2 className="text-lg font-semibold text-zinc-100">{data.season} week {data.week} · {selectedModel?.label}</h2>
           <p className="text-sm text-zinc-400">One card per game. The record tab grades the locked projections.</p>
         </div>
-        {!games.length ? <p className="text-sm text-zinc-400">No projections for this week yet.</p> : games.map(([day, entries]) => (
+        {!games.length && !missedWeekGames.length ? <p className="text-sm text-zinc-400">No projections for this week yet.</p> : games.map(([day, entries]) => (
           <section key={day} className="space-y-2">
             <h3 className="text-sm font-medium text-zinc-400">{day}</h3>
             <div className="grid gap-3 sm:grid-cols-2">{entries.map(game => <GameCard key={game.game_id} game={game} lock={game.locks[version]} mode="projection" />)}</div>
           </section>
         ))}
+        <MissedLockList games={missedWeekGames} version={version} />
       </>}
 
       {view === 'record' && <section className="space-y-3">
@@ -387,7 +473,8 @@ export default function NflModelTab() {
             <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
           </div>
         </div>
-        {recordGames.length === 0 ? <p className="text-sm text-zinc-400">{data.weeks.length ? 'Loading season picks…' : 'No season picks have been locked yet.'}</p> : <RecordCards games={recordGames.filter(game => game.week === activeRecordWeek)} version={version} threshold={threshold} />}
+        {recordGames.length === 0 ? <p className="text-sm text-zinc-400">{data.weeks.length ? 'Loading season picks…' : 'No season picks have been locked yet.'}</p> : <RecordCards games={visibleRecordGames} version={version} threshold={threshold} />}
+        <MissedLockList games={missedRecordGames} version={version} />
         <p className="text-xs text-zinc-500">ATS counts include graded picks only. Pending games are not counted.</p>
       </section>}
 

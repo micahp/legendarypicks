@@ -41,6 +41,17 @@ def test_reader_returns_record_when_stored_payload_hash_matches(tmp_path, monkey
     assert records["match-1"]["payload"]["model_version"] == "v2"
 
 
+def test_reader_can_return_all_tour_records_for_accuracy_aggregation(tmp_path, monkeypatch):
+    path = tmp_path / "tennis.sqlite3"
+    payload = json.dumps({"model_version": "v2", "identity": {}}, sort_keys=True)
+    _ledger(path, payload)
+    monkeypatch.setenv("LP_TENNIS_V2_LEDGER_PATH", str(path))
+
+    records = misc._tennis_v2_ledger_records("atp", None)
+
+    assert list(records) == ["match-1"]
+
+
 def test_reader_fails_closed_when_payload_hash_does_not_match(tmp_path, monkeypatch):
     path = tmp_path / "tennis.sqlite3"
     payload = json.dumps({"model_version": "tampered"}, sort_keys=True)

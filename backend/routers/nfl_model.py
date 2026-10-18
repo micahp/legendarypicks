@@ -100,6 +100,7 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
                          awaiting=n_locked - graded,
                          su=d["su"] if d else None, ats=d["ats"] if d else None,
                          mean_brier=(d["brier_sum"] / d["brier_n"]) if d and d["brier_n"] else None,
+                         brier_n=d["brier_n"] if d else 0,
                          mean_abs_margin_err=(d["abs_err_sum"] / graded) if d else None))
     return sorted(rows, key=lambda r: r["order"])
 
