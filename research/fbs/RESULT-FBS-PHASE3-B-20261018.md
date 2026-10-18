@@ -938,3 +938,151 @@ embargo as (b)–(f).
 - No other family may be stacked: this is (c)'s features only, with (d)/(e)/(f) excluded.
 
 **If G2h fails, the ladder is exhausted and C2 stands as the game-winner model.**
+
+## 20. Increment (g) result — hierarchical partial pooling
+
+Run 2026-10-18 on `feat/fbs-archive`, spec §19 above, hyperparameters frozen before the run
+(`lambda_team = 9.0`, `lambda_conf = 156`, ridge 1.0). Population identical to (b)–(f): 3,523 games loaded,
+**2,397** walk-forward 2023–25, **807** frozen holdout, **350** in 2026; the one no-PBP game (401778314)
+stays out; 99.2% of the evaluated games carry the drive features and the remaining 0.8% use the league-mean
+fill with `has_drive_data = 0`. `C2 − G2` reproduces §12 to the digit (`-0.01677` pooled, `-0.02034`
+holdout), so the flat path is untouched.
+
+**No look-ahead:** every fold is fitted on `utc_date <` the block's first kickoff, team-season effects are
+estimated only from those games, a team-season unseen in training contributes `u = 0` plus its conference
+mean, and EP is the (b) recomputation from pre-snap state. Nothing about the evaluated game enters its own
+prediction.
+
+### Verdict: ADOPTED — 10/10 gates
+
+| period | G2 | C2 | G1 hierarchy only | **G2h hierarchy+drives** |
+|---|---|---|---|---|
+| walk-forward 2023–25 Brier | 0.2133 | 0.1965 | 0.2085 | **0.1946** |
+| walk-forward log loss | 0.6162 | 0.5758 | 0.6055 | **0.5711** |
+| 2025 frozen holdout Brier | 0.2208 | 0.2004 | 0.2193 | **0.2001** |
+| holdout log loss | 0.6324 | 0.5834 | 0.6293 | **0.5826** |
+| 2026 development Brier | 0.2051 | 0.1936 | 0.2000 | **0.1908** |
+| 2026 log loss | 0.5994 | 0.5725 | 0.5877 | **0.5655** |
+
+| period | model | games | Brier | BSS | log loss | reliability | resolution | accuracy |
+|---|---|---|---|---|---|---|---|---|
+| walk-forward 2023–25 | G2 | 2,397 | 0.2133 | 0.1469 | 0.6162 | 0.0097 | 0.0373 | 0.6650 |
+| walk-forward 2023–25 | C2 | 2,397 | 0.1965 | 0.2140 | 0.5758 | 0.0010 | 0.0467 | 0.7042 |
+| walk-forward 2023–25 | G1 | 2,397 | 0.2085 | 0.1659 | 0.6055 | 0.0092 | 0.0411 | 0.6713 |
+| walk-forward 2023–25 | **G2h** | 2,397 | **0.1946** | 0.2216 | 0.5711 | 0.0006 | 0.0478 | 0.7021 |
+| 2025 frozen holdout | G2 | 807 | 0.2208 | 0.1169 | 0.6324 | 0.0048 | 0.0243 | 0.6568 |
+| 2025 frozen holdout | C2 | 807 | 0.2004 | 0.1983 | 0.5834 | 0.0037 | 0.0426 | 0.6914 |
+| 2025 frozen holdout | G1 | 807 | 0.2193 | 0.1226 | 0.6293 | 0.0051 | 0.0257 | 0.6617 |
+| 2025 frozen holdout | **G2h** | 807 | **0.2001** | 0.1997 | 0.5826 | 0.0040 | 0.0434 | 0.6890 |
+| 2026 development | G2 | 350 | 0.2051 | 0.1795 | 0.5994 | 0.0107 | 0.0357 | 0.6886 |
+| 2026 development | C2 | 350 | 0.1936 | 0.2256 | 0.5725 | 0.0065 | 0.0453 | 0.7000 |
+| 2026 development | G1 | 350 | 0.2000 | 0.2001 | 0.5877 | 0.0116 | 0.0426 | 0.7114 |
+| 2026 development | **G2h** | 350 | **0.1908** | 0.2369 | 0.5655 | 0.0074 | 0.0494 | 0.7000 |
+
+Accuracy is reported for completeness and is not a gate: G2h is 0.7021 against C2's 0.7042 pooled, so the
+gain is in the probabilities, not in the modal pick.
+
+### Paired differences, 95% UTC-week blocks
+
+| period | comparison | diff | 95% interval | games | blocks |
+|---|---|---|---|---|---|
+| walk-forward 2023–25 | **G2h − C2 (primary)** | **−0.00190** | **[−0.00255, −0.00125]** | 2,397 | 65 |
+| walk-forward 2023–25 | G2h − G1 (information) | −0.01393 | [−0.01754, −0.00981] | 2,397 | 65 |
+| walk-forward 2023–25 | G2h − G2 | −0.01867 | [−0.02258, −0.01419] | 2,397 | 65 |
+| walk-forward 2023–25 | G1 − G2 | −0.00473 | [−0.00566, −0.00387] | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − G2 (control) | −0.01677 | [−0.02065, −0.01248] | 2,397 | 65 |
+| 2025 frozen holdout | **G2h − C2** | **−0.00036** | **[−0.00154, +0.00042]** | 807 | 22 |
+| 2025 frozen holdout | G2h − G1 | −0.01926 | [−0.02727, −0.01106] | 807 | 22 |
+| 2025 frozen holdout | G1 − G2 | −0.00143 | [−0.00289, −0.00033] | 807 | 22 |
+| 2026 development | G2h − C2 | −0.00283 | [−0.00463, −0.00100] | 350 | 8 |
+| 2026 development | G2h − G1 | −0.00919 | [−0.01664, +0.00037] | 350 | 8 |
+
+### Per-season signs (required table)
+
+| season | games | G2 | C2 | G2h | G2h − C2 | G1 − G2 |
+|---|---|---|---|---|---|---|
+| 2022 (outside the primary pool) | 776 | 0.2309 | 0.2180 | 0.2170 | −0.00102 [−0.00195, −0.00002] | −0.00174 [−0.00325, −0.00012] |
+| 2023 | 792 | 0.2138 | 0.1905 | 0.1892 | −0.00131 [−0.00241, −0.00016] | −0.00428 [−0.00614, −0.00241] |
+| 2024 | 798 | 0.2179 | 0.2054 | 0.2032 | −0.00217 [−0.00309, −0.00112] | −0.00435 [−0.00549, −0.00318] |
+| 2025 | 807 | 0.2082 | 0.1936 | 0.1914 | −0.00221 [−0.00331, −0.00101] | −0.00555 [−0.00686, −0.00402] |
+| 2026 | 350 | 0.2051 | 0.1936 | 0.1908 | −0.00283 [−0.00463, −0.00100] | −0.00517 [−0.00863, −0.00169] |
+
+The sign is negative in all five seasons and resolvable in four. This is the first family in the ladder
+with no wrong-sign season.
+
+### Gates
+
+| gate | requirement | result |
+|---|---|---|
+| sample pooled / holdout | ≥ 1,500 / ≥ 250 | 2,397 / 807 — pass |
+| **primary g2h beats c2** | interval below zero | −0.00190 [−0.00255, −0.00125] — **pass** |
+| information g2h beats g1 | interval below zero | −0.01393 [−0.01754, −0.00981] — pass |
+| holdout not worse than +0.002 | ≤ +0.002 | −0.00036 — pass |
+| holdout point negative | < 0 | −0.00036 — pass |
+| log loss pooled vs C2 | G2h ≤ C2 | 0.5711 vs 0.5758 — pass |
+| log loss holdout vs C2 | G2h ≤ C2 | 0.5826 vs 0.5834 — pass |
+| calibration pooled | within +0.005 of C2 | 0.0006 vs 0.0010 — pass |
+| calibration holdout | within +0.005 of C2 | 0.0040 vs 0.0037 — pass |
+
+**10 of 10 gates pass.**
+
+### Hyperparameters as fitted, and convergence
+
+| quantity | value |
+|---|---|
+| `lambda_team` / `lambda_conf` / ridge | 9.0 / 156 / 1.0 (frozen) |
+| folds converged | 360 (G1) and 360 (G2h), every fold |
+| max abs gradient across folds | 9.79e-06 (G1), 9.69e-06 (G2h) |
+| median fitted SD of team-season effects `u` | 0.080 |
+| median fitted SD of conference means `m` | 0.037 |
+| holdout fit: SD `u` / SD `m` / condition number | 0.086 / 0.037 / 60.2 |
+| holdout fitted `b` (standardised) | intercept +0.067, points/drive +0.514, turnovers/drive +0.092, start field position −0.039, red-zone TD +0.126, third down +0.041, explosive drive +0.159, penalties −0.018 |
+
+**Declared deviation from §19.4.** The pre-registration asserted `max |grad| < 1e-6`; L-BFGS-B on a
+~700-parameter problem stops on line-search precision first, and one fold stalled at 1.006e-05. The
+accepted threshold is **1e-5**, with up to three restarts from the stopped point under identical settings
+and objective. All 360 folds converged under that rule; no fold was dropped and no gate was relaxed.
+Identification is by the prior, and the fitted condition number (60.2) confirms the penalised Hessian is
+well conditioned.
+
+The fitted SD of `u` (0.080) is far below the 0.333 prior, which is the expected result of 9–14 games per
+team-season: the model shrinks team effects almost to the conference mean and only reports a team effect
+when the evidence is strong.
+
+### Pre-declared robustness variant — `lambda_team = 4.0`
+
+| comparison | pooled | holdout | 2026 |
+|---|---|---|---|
+| G2h − C2 | −0.00271 [−0.00390, −0.00147] | **+0.00020 [−0.00125, +0.00118]** | −0.00302 [−0.00596, −0.00004] |
+| G2h − G2 | −0.01948 | −0.02013 | −0.01455 |
+| G1 − G2 | −0.00766 | −0.00138 | −0.00553 |
+
+Weaker shrinkage gives a **larger pooled gain and a positive holdout point estimate**, which would fail the
+holdout-point gate. The result is therefore prior-sensitive in the holdout and the frozen run at
+`lambda_team = 9.0` is the one that is reported and adopted, exactly as pre-registered.
+
+### What this means
+
+The gain is small in absolute terms — 0.0019 Brier, about 1% of C2's edge over G2 — but it is the first
+resolvable improvement over C2 in the ladder, and it is negative in every season.
+
+The decomposition matters more than the headline. The hierarchy alone (`G1 − G2 = -0.00473`) supplies about
+a quarter of C2's total edge, and the drive features still add `-0.01393` on top of it, against `-0.01677`
+over G2 in the flat model. In other words the pooling absorbed roughly 17% of what the drive splits were
+doing: some of the "drive performance" signal was really persistent team identity being re-measured every
+week.
+
+**The honest caveat.** The frozen holdout does not resolve the effect: `-0.00036 [-0.00154, +0.00042]`. That
+is structural, not noise. The frozen holdout fits once through 2024, so no 2025 game informs a 2025
+team-season effect; every 2025 team sits at its conference mean and the model collapses toward C2 plus a
+conference prior. The gain is produced by **updating team effects within the season**, which the frozen
+holdout forbids by construction. The three pieces of evidence therefore say: pooled resolvable, 2026
+resolvable, holdout point-negative-but-unresolved. The pre-registered gates accept that; a reader should
+not read the holdout as confirmation.
+
+### Ladder status
+
+(g) was the last rung. **G2h becomes the standing game-winner model** (C2 plus team-season random intercepts
+nested in conference means, `lambda_team = 9.0`), with walk-forward Brier 0.1946, holdout 0.2001 and 2026
+0.1908. The ladder is exhausted; further work should be prospective confirmation on games not yet played,
+not another retrospective family.

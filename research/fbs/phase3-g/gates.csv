@@ -1,0 +1,11 @@
+gate,passed
+sample_pooled_ge_1500,True
+sample_holdout_ge_250,True
+primary_g2h_beats_c2,True
+information_g2h_beats_g1,True
+holdout_not_worse_than_+0.002,True
+holdout_point_negative,True
+logloss_pooled_vs_c2,True
+logloss_holdout_vs_c2,True
+calibration_pooled_within_0.005,True
+calibration_holdout_within_0.005,True

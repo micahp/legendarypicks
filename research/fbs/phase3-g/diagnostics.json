@@ -1,0 +1,42 @@
+{
+  "lam_team": 9.0,
+  "lam_conf": 156.0,
+  "ridge": 1.0,
+  "folds_g1": 360,
+  "folds_g2h": 360,
+  "max_grad_g1": 9.792517580375915e-06,
+  "max_grad_g2h": 9.68934632483709e-06,
+  "median_sd_u_g2h": 0.07977399448134385,
+  "median_sd_m_g2h": 0.036622783615007315,
+  "holdout_g2h": {
+    "n_train": 2366,
+    "converged": true,
+    "grad_norm": 2.0348469735864683e-06,
+    "n_iter": 40,
+    "n_team_seasons": 398,
+    "sd_u": 0.08619600433843434,
+    "sd_m": 0.03682755043123766,
+    "b0": 0.06714662750115463
+  },
+  "holdout_g1": {
+    "n_train": 2366,
+    "converged": true,
+    "grad_norm": 8.23560487361874e-07,
+    "n_iter": 31,
+    "n_team_seasons": 398,
+    "sd_u": 0.10367316971490742,
+    "sd_m": 0.045909755330908956,
+    "b0": 0.002458816036639469
+  },
+  "holdout_condition_number": 60.181371048099486,
+  "holdout_b": {
+    "intercept": 0.06714662750115463,
+    "points_per_drive_diff": 0.513978367359441,
+    "turnovers_per_drive_diff": 0.09235952274503603,
+    "start_field_position_diff": -0.038533280530742994,
+    "rz_td_rate_diff": 0.12560086657438144,
+    "third_down_rate_diff": 0.04078995765796655,
+    "explosive_drive_rate_diff": 0.15874684510935355,
+    "penalties_per_play_diff": -0.0184210428167899
+  }
+}
