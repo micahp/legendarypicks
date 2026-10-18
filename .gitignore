@@ -178,3 +178,5 @@ backend/data/radio-blackouts.log
 # FBS research cache: bulk parquet is fetched by fetch_fbs_parquet.py, never committed
 research/fbs/parquet/*.parquet
 research/fbs/parquet/**/*.parquet
+research/fbs/phase4/pmf/*.npz
+research/fbs/phase4/pmf/per_observation_scores.csv

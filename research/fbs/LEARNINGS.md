@@ -311,3 +311,28 @@ restarts from the stopped point.
 **Consequence:** pre-register a convergence rule the chosen optimiser can actually reach, and report the
 achieved gradient norm rather than asserting a threshold. Aborting on failure is right; loosening silently
 is not.
+
+## 2026-10-18 — A win probability is not a score distribution, and the gap is in the total
+**Learned:** On the identical 2,397/807/350 population, an over-dispersed NegBin score model (H0b) beats
+the winner-only control H1 by −2.3257 [−2.6051, −2.0475] CRPS on margin and −1.0672 [−1.3276, −0.8099] on
+total, and beats it on cover and over/under Brier too. Its margin PIT is clean (p = 0.968 walk-forward,
+0.633 holdout) and its interval coverage is within 0.05 at 50/80/90. It still fails CP3 because the
+**total** PIT rejects on the walk-forward pool (p = 0.0016).
+**Evidence:** `RESULT-FBS-PHASE4-SCORES-20261018.md`, `research/fbs/phase4/`, `docs/frozen-fbs-phase4-scores.json`.
+**Consequence:** G2h's ratings do support a score model, but "beats the winner model" and "is calibrated"
+are different claims. The remaining work is the shape of the total, not more team strength.
+
+## 2026-10-18 — Independent Poisson is structurally too narrow for football scores
+**Learned:** H0a and H0c cover 0.245 of their 50% intervals against 0.50 nominal, because a Poisson margin
+has an SD near 7 while observed margins spread over 14. Only the NegBin over-dispersion (R fitted 2.01–5.82)
+brought coverage to nominal (0.524/0.800/0.904).
+**Evidence:** §21 pre-registration, walk-forward coverage table.
+**Consequence:** never evaluate a Poisson score model on CRPS alone — it can look competitive on the mean
+and be half-covering. Coverage and PIT both, always.
+
+## 2026-10-18 — Home and away scores are not positively correlated after team strength
+**Learned:** The bivariate Poisson shared component λ3 = max(0, Cov(h,a)) hit zero in all 1,025 date-block
+fits, so H0c is numerically identical to H0a on every metric.
+**Evidence:** `research/fbs/phase4/block_parameters.csv`, `lambda3_all_zero: true` in the frozen JSON.
+**Consequence:** the correlated-score candidate is refuted for FBS with these ratings. Do not spend another
+candidate on score correlation without a mechanism that survives conditioning on team strength.

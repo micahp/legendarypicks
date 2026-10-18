@@ -1,0 +1,63 @@
+{
+  "blocks": 73,
+  "files": {
+    "block_parameters.csv": {
+      "bytes": 206245,
+      "sha256": "0b5ecf19468ab9c4134e2ee95711539192c1c66ed24b6654656442ffda3c4678"
+    },
+    "paired.csv": {
+      "bytes": 12294,
+      "sha256": "0ea2b72db50a151a0764d5df46d871d4f8e7312f8f72206cf4c67d2df15b0ee3"
+    },
+    "per_game_parameters.csv": {
+      "bytes": 692821,
+      "sha256": "aae2dffb15d7651b654a608727a34e012b2d0d7f7afdcf33baad5f73ad132309"
+    },
+    "pmf/margin_total_pmf.npz": {
+      "bytes": 29647269,
+      "sha256": "eabdd49537111be4624d50167ce2c0767b94895212e9dfd5f1ffe12a7819fa24"
+    },
+    "pmf/per_observation_scores.csv": {
+      "bytes": 12802570,
+      "sha256": "227f0e50a9bc9f7a91e785652d00f25e23dbe51f504ca58b8911cfb23bfe9917"
+    },
+    "summary_by_period.csv": {
+      "bytes": 11697,
+      "sha256": "498c681109ac232fd4ae697dd4d75a8928a6d81f3630c43074b50a99973e2c13"
+    }
+  },
+  "gates": {
+    "G-CAL": false,
+    "G-DIST": true,
+    "G-SAMPLE": true,
+    "G-SPREAD": true,
+    "G-TOTAL": true
+  },
+  "models": [
+    "Constant",
+    "PriorMean",
+    "H1",
+    "H0a",
+    "H0b",
+    "H0c"
+  ],
+  "population": {
+    "holdout": 807,
+    "total": 3554,
+    "walk_forward": 2397
+  },
+  "primary": "H0b",
+  "reps": 2000,
+  "seed": 20261017,
+  "support": {
+    "margin": [
+      -120,
+      120
+    ],
+    "total": [
+      0,
+      120
+    ]
+  },
+  "verdict": "NOT_ADOPTED"
+}
