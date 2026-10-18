@@ -25,6 +25,10 @@ respectively. No fitting occurred in the B0 replay. The PMF code is analytic and
 integer support is 0–160 with the frozen implementation's renormalization on that finite support.
 The population builder was separately run from each frozen v1–v4 source commit. Every version produced
 the same counts with unique `(game_id, player_id)` keys: 2,500/240 for 2025 and 489/48 for 2026.
+Sorted-key SHA-256 is `2e40dc5f2d4c3863952a40040292203a5f9a67b34a03c263759da11178533fbb` for 2025 and
+`6114bbcfea73df3cc6ed0a3cb310e9496cef7200c4800f16d906b4921b6cacbb` for 2026. The available 2026
+population contains weeks 3–6 only (156, 169, 155 and 9 observations respectively); there are no weeks
+7–18 outcomes in this snapshot. The prospective v1 weeks 7–18 test was not scored or consumed.
 
 The strict tolerance was absolute error `≤ 1e-10` for CRPS, MAE, and each central coverage statistic.
 PMFs have no random step. The new PIT and bootstrap procedures are stochastic and their exact seeds are
@@ -61,7 +65,7 @@ PMF rows:
 ```bash
 python3 research/nfl/discrete-prop-eval-2026-10-18/recover_b0_diagnostics.py \
   --db /root/lp-discrete-eval-artifacts/picks-dev-eval-recovery-20261018.sqlite3 \
-  --output-dir /root/lp-discrete-eval-artifacts/recovered-b0-complete \
+  --output-dir /root/lp-discrete-eval-artifacts/recovered-b0-observation-bundle \
   --bootstrap-reps 1000 --pit-draws 100 --seed 20261018
 ```
 
@@ -89,20 +93,21 @@ agreement is verifiable.
 ### Recovered B0 artifacts
 
 The complete per-observation ledgers are outside Git, in
-`/root/lp-discrete-eval-artifacts/recovered-b0-complete/`. Each gzip JSONL row carries the actual,
-game/player identifiers, date, week, team/opponent, position, `m` tier, full 0–160 PMF and CDF, model
-version/commit, frozen parameter-file checksum, and input snapshot checksum. The manifest records the
-exact command, season counts and date ranges, source commit and engine hash, support, deterministic
-reproduction statistics, bootstrap/PIT seeds, full aggregate and per-tier diagnostics, reliability bins,
-and paired interval-family comparisons.
+`/root/lp-discrete-eval-artifacts/recovered-b0-observation-bundle/`. Each gzip JSONL row carries the
+actual outcome, game/player identifiers, date, week, team/opponent, position, `m` tier, full 0–160 PMF and CDF,
+model version/commit, frozen parameter-file checksum, input snapshot checksum, per-row score and event
+metrics, inclusive components for central/shortest/HPD sets, and all 100 randomized-PIT values for its
+aggregate and tier group. The manifest records the exact command, season counts and date ranges, source
+commit and engine hash, support, deterministic reproduction statistics, bootstrap/PIT seeds, full
+aggregate and per-tier diagnostics, reliability bins, and paired interval-family comparisons.
 
 | Artifact | Rows | SHA-256 |
 |---|---:|---|
-| `B0-2025.jsonl.gz` | 2,500 | `2f99c2e0c0faf7be90dea8c837c6a58494f9a8783b5a18c3cb339b898c574bff` |
-| `B0-2026.jsonl.gz` | 489 | `a384e7b0ec64b91534f8606a42370194ddc3870f5d7cb74219271cf816f58228` |
-| `manifest-and-diagnostics.json` | — | `22fa89ee030d786442e310216c417ab71f33efc0040a22c8a9dd57b646a9cc08` |
+| `B0-2025.jsonl.gz` | 2,500 | `8b767f3eb734e8a7d78eaa3e360b55e99b706b58fa5ef79717cad5a63985465d` |
+| `B0-2026.jsonl.gz` | 489 | `61ee0e163a90108b3e980f10018d2779eb8ef689ae53739bf1e5109ed471c83d` |
+| `manifest-and-diagnostics.json` | — | `f6939097e45df21a68eeb83e731b7613d929c9248112fca009e716d8e717bfbf` |
 
-The manifest also fingerprints the recovery script (`7744588cbfc325c4fe57ef4c59e29dc72ba5ee30ed20a90388b63b4ecb710878`)
+The manifest also fingerprints the recovery script (`69bdc502cba650cc0ccd1ed098f285a2bfafd79ec0e3012b1f5b09116eef5909`)
 and records the runtime (Python 3.8.10, SQLite 3.31.1).
 
 Frozen parameter checksums: v1 `12fde4c8182b948df7305e5ecbf14bff81034d89cb108fc21dc654c136b5843b`; v2
@@ -198,6 +203,11 @@ cluster-bootstrap intervals for D and the full decile frequencies are in the man
 
 Reliability tables by forecast-probability decile, with counts, mean prediction and observed rate, are in
 the manifest for zero and each shown tail event.
+
+For B0, near-nominal central coverage and its large boundary-atom mass do not agree with the PIT and
+event-reliability picture: the latter show a substantial zero-probability deficit and a non-uniform PIT.
+CRPS and MAE reproduce B0's aggregate loss, but they do not isolate calibration; because no candidate
+passed recovery, there is no new paired CRPS ranking to compare with those calibration diagnostics.
 
 ### Per-tier view
 

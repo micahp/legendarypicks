@@ -31,6 +31,20 @@ justify silently substituting another sample.
 **Action:** Start recording and asserting population keys and counts independently from score reproduction
 for every model version. Continue to stop candidate scoring whenever either check fails.
 
+## The frozen 2026 retrospective population ends before the prospective v1 window
+
+**Known:** All v1–v4 builders have the same keyed 2026 population, and this snapshot contains rows only
+for weeks 3–6. No weeks 7–18 observations entered the retrospective rerun, preserving the prospective
+v1 window's independence.
+
+**Evidence:** `check_frozen_population.py` produced common 2026 key hash
+`6114bbcfea73df3cc6ed0a3cb310e9496cef7200c4800f16d906b4921b6cacbb`, with weekly counts
+156/169/155/9 for weeks 3/4/5/6 and none in weeks 7–18; see the
+[recovery report](DISCRETE-PROP-EVAL-RECOVERY-20261018.md).
+
+**Action:** Keep prospective weeks outside retrospective score commands, and verify the realized week
+range against the frozen plan before producing any forecast ledger.
+
 ## Near-nominal central coverage can be cancellation, while PIT and zero-event checks expose the miss
 
 **Known:** For recovered 2025 B0, central-50 coverage is `0.5428`, but the forecast mass inside those sets
