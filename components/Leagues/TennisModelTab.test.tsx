@@ -84,7 +84,7 @@ describe('Tennis model tab parity', () => {
 
   it('shows frozen quote provenance and explicitly marks historical locks without a quote', async () => {
     const finalMatch = (gameId: string, frozenOdds: unknown) => match({
-      gameId, status: 'final', preview: false, lockStatus: 'locked', lockedAt: '2026-10-17T11:00:00Z',
+      gameId, startTime: startToday, status: 'final', preview: false, lockStatus: 'locked', lockedAt: '2026-10-17T11:00:00Z',
       frozenOdds,
       grades: { winner: 'incorrect', winnerBrier: 0.49, homeAcesError: null, awayAcesError: null, totalGamesError: null },
       result: { winner: 'Away Player', homeAces: null, awayAces: null, totalGames: 20, sets: { home: [4, 5], away: [6, 7] } },
