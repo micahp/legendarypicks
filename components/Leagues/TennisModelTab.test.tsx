@@ -5,6 +5,7 @@ import TennisModelTab from './TennisModelTab'
 const today = new Date()
 const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 const startToday = `${localDate}T12:00:00.000Z`
+const startUpcoming = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString()
 
 const projection = {
   probability: 0.7, projectedWinner: 'Home Player', homeAces: 5, awayAces: 3,
@@ -21,7 +22,7 @@ const odds = {
 function match(overrides: Record<string, unknown> = {}) {
   return {
     gameId: 'match-1', tour: 'atp' as const, event: 'Test Open', round: 'Final',
-    startTime: startToday, status: 'scheduled' as const, home: 'Home Player', away: 'Away Player',
+    startTime: startUpcoming, status: 'scheduled' as const, home: 'Home Player', away: 'Away Player',
     projection, odds, result: null,
     grades: { winner: null, homeAcesError: null, awayAcesError: null, totalGamesError: null },
     preview: true, lockStatus: 'preview' as const,
@@ -103,15 +104,49 @@ describe('Tennis model tab parity', () => {
     expect(screen.getByText('2', { selector: 'dd' })).toBeTruthy()
   })
 
-  it('shows games that passed kickoff without a locked projection', async () => {
+  it('keeps completed, live, and overdue matches off Projections even when no grade exists', async () => {
+    const finalWithoutGrade = match({
+      gameId: 'shanghai-final', home: 'Alejandro Davidovich Fokina', away: 'Rafael Jodar',
+      startTime: new Date().toISOString(), status: 'final', preview: false,
+      lockedAt: '2026-10-17T11:00:00Z', lockStatus: 'locked', grades: null,
+      result: { winner: 'Rafael Jodar', homeAces: null, awayAces: null,
+        totalGames: 20, sets: { home: [1, 7], away: [6, 6] } },
+    })
+    const liveWithoutGrade = match({
+      gameId: 'live-1', home: 'Live Player', status: 'live', grades: null,
+    })
+    const overdueScheduled = match({
+      gameId: 'overdue-1', home: 'Overdue Player',
+      startTime: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      status: 'scheduled', lockStatus: 'missed', grades: null,
+    })
+    respond(apiPayload([finalWithoutGrade, liveWithoutGrade, overdueScheduled, match()]))
+    render(<TennisModelTab tour="atp" />)
+
+    expect(await screen.findByRole('heading', { name: 'Away Player at Home Player' })).toBeTruthy()
+    expect(screen.queryByText('Rafael Jodar at Alejandro Davidovich Fokina')).toBeNull()
+    expect(screen.queryByText('Away Player at Live Player')).toBeNull()
+    expect(screen.queryByText('Away Player at Overdue Player')).toBeNull()
+    expect(screen.queryByText('Final')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(await screen.findByText('Rafael Jodar at Alejandro Davidovich Fokina')).toBeTruthy()
+    expect(screen.getByText('Final')).toBeTruthy()
+  })
+
+  it('shows finalized missed-lock matches in Record rather than Projections', async () => {
     const missed = match({
-      gameId: 'missed-1', startTime: '2026-10-16T10:00:00Z', status: 'final',
+      gameId: 'missed-1', startTime: new Date().toISOString(), status: 'final',
       projection: null, odds: null, preview: false, lockStatus: 'missed',
       grades: null,
       result: { winner: 'Away Player', homeAces: null, awayAces: null, totalGames: 20, sets: null },
     })
     respond(apiPayload([missed]))
     render(<TennisModelTab tour="atp" />)
+    await waitFor(() => expect(screen.getByText('No ungraded projections are available.')).toBeTruthy())
+    expect(screen.queryByText('Missed lock window')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(await screen.findByText('Missed lock window')).toBeTruthy()
     expect(screen.getByText('No projection is available.')).toBeTruthy()
   })
