@@ -123,6 +123,7 @@ class Payload(unittest.TestCase):
         self.assertEqual(v1["su"], {"win": 1, "loss": 0, "tie": 0, "no_pick": 0})
         self.assertEqual(v1["ats"], {"win": 1, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0})
         self.assertAlmostEqual(v1["mean_brier"], 0.03)
+        self.assertEqual(v1["brier_n"], 1)
         self.assertAlmostEqual(v1["mean_abs_margin_err"], 4.5)
         legacy = rec["nfl-v1 cap=21.0 sigma=13.4"]             # locked, not graded: still waiting
         self.assertEqual((legacy["locked"], legacy["graded"], legacy["awaiting"]), (1, 0, 1))
@@ -134,6 +135,7 @@ class Payload(unittest.TestCase):
         v1 = {r["version"]: r for r in m.locks_payload(self.con, 2026, 5)["record"]}[m.ADOPTED]
         self.assertEqual(v1["su"], {"win": 0, "loss": 0, "tie": 1, "no_pick": 0})
         self.assertIsNone(v1["mean_brier"])                     # the grader stores no Brier for a tie
+        self.assertEqual(v1["brier_n"], 0)
 
     def test_no_locks_is_an_empty_payload_not_an_error(self):
         p = m.locks_payload(self.con, 2025, None)

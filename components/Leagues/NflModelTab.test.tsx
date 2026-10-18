@@ -27,9 +27,10 @@ const payload = {
   }],
   record: [
     { version: V1, family: 'v1', label: 'v1 points', adopted: true, locked: 13, graded: 12, awaiting: 1,
-      su: { win: 8, loss: 3, tie: 1, no_pick: 0 }, ats: { win: 5, loss: 6, push: 1, no_pick: 0, no_line: 0 } },
+      su: { win: 8, loss: 3, tie: 1, no_pick: 0 }, ats: { win: 5, loss: 6, push: 1, no_pick: 0, no_line: 0 },
+      mean_brier: 0.1425, brier_n: 11 },
     { version: V2, family: 'v2', label: 'v2 EPA', adopted: false, locked: 4, graded: 0, awaiting: 4,
-      su: null, ats: null },
+      su: null, ats: null, mean_brier: null, brier_n: 0 },
   ],
 }
 
@@ -38,6 +39,36 @@ beforeEach(() => {
 })
 
 describe('NFL model tab grading', () => {
+  it('shows Brier scores with the actual scored sample size and an absent state', async () => {
+    render(<NflModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Model accuracy' }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    expect(screen.getByText('0.1425')).toBeTruthy()
+    expect(screen.getByText('11')).toBeTruthy()
+    expect(screen.getByText('Brier n')).toBeTruthy()
+    expect(screen.getAllByText('—')).toHaveLength(1)
+    expect(screen.getByText(/0.2500 is a constant 50% forecast/)).toBeTruthy()
+  })
+
+  it('labels a preview quote as current and a past unlocked game as a missed lock', async () => {
+    const missed = { ...payload.games[0], game_id: 'g-missed', away: 'MIN', home: 'DET', kickoff_utc: '2026-10-01T17:00:00Z',
+      final: { home: 17, away: 10 }, locks: { [V1]: { ...lock(0.6, null), preview: true } } }
+    const noForecast = { ...missed, game_id: 'g-no-forecast', away: 'PIT', home: 'BAL', locks: {} }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [...payload.games, missed, noForecast] }),
+    }))
+    render(<NflModelTab />)
+    await screen.findByRole('region', { name: 'Missed lock window' })
+    expect(screen.getByText('MIN @ DET')).toBeTruthy()
+    expect(screen.getByText('PIT @ BAL')).toBeTruthy()
+    expect(screen.getByText('Frozen line')).toBeTruthy()
+    expect(screen.getByText('Frozen total')).toBeTruthy()
+    expect(screen.getByText('Model total')).toBeTruthy()
+    expect(screen.getByText('Total edge')).toBeTruthy()
+    expect(screen.getByText(/snapshot · captured t/)).toBeTruthy()
+    expect(screen.getAllByText('No forecast locked before kickoff · 2026-10-01T17:00:00Z')).toHaveLength(2)
+  })
+
   it('shows counts, the third outcome, n and what is waiting, never a win rate', async () => {
     render(<NflModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
@@ -45,6 +76,7 @@ describe('NFL model tab grading', () => {
     expect(screen.getByText('Winner 8-3 · 1 tie')).toBeTruthy()
     expect(screen.getByText('ATS 5-6 · 1 push')).toBeTruthy()
     expect(screen.getByText('12 graded · 1 awaiting')).toBeTruthy()
+    expect(await screen.findByText('WIN')).toBeTruthy()
     expect(document.body.textContent).not.toMatch(/\d%\s*(correct|right|winner)/i)
   })
 
@@ -54,6 +86,7 @@ describe('NFL model tab grading', () => {
     fireEvent.change(await screen.findByRole('combobox', { name: /Model/ }), { target: { value: V2 } })
     await waitFor(() => expect(screen.getByText('2026 record · v2 EPA')).toBeTruthy())
     expect(screen.getByText('No graded picks yet · 4 awaiting a final')).toBeTruthy()
+    expect(await screen.findByText('Frozen line · snapshot · captured t')).toBeTruthy()
     expect(document.body.textContent).not.toContain('0-0')
   })
 
@@ -64,12 +97,24 @@ describe('NFL model tab grading', () => {
   })
 
   it('a preview lock is shown as a projection without a result', async () => {
-    const preview = { ...payload, games: [{ ...payload.games[0], locks: { [V1]: { ...lock(0.6, null), preview: true }, [V2]: { ...lock(0.6, null), preview: true } } }] }
+    const preview = { ...payload, games: [{ ...payload.games[0], kickoff_utc: new Date(Date.now() + 3_600_000).toISOString(),
+      locks: { [V1]: { ...lock(0.6, null), preview: true }, [V2]: { ...lock(0.6, null), preview: true } } }] }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(preview) }))
     render(<NflModelTab />)
     await waitFor(() => expect(screen.getByText('CHI @ GB')).toBeTruthy())
     expect(screen.getAllByText('PREVIEW').length).toBeGreaterThan(0)
+    expect(screen.getByText('Current line')).toBeTruthy()
+    expect(screen.getByText('Current total')).toBeTruthy()
     expect(screen.queryByText('LOCKED')).toBeNull()
     expect(screen.queryByText('WIN')).toBeNull()
+  })
+
+  it('does not label a legacy lock timestamp as a market capture time', async () => {
+    const legacy = { ...payload, games: [{ ...payload.games[0], locks: {
+      [V1]: { ...payload.games[0].locks[V1], line: { ...line, source: 'lock row' as const } },
+    } }] }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(legacy) }))
+    render(<NflModelTab />)
+    expect(await screen.findByText('Frozen line · lock row · lock time t')).toBeTruthy()
   })
 })
