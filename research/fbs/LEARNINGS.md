@@ -122,3 +122,49 @@ exist on origin at all, while both were described as done.
 **Evidence:** `git ls-remote` vs local tips, 2026-10-18.
 **Consequence:** "done" means committed **and** pushed to a named branch. Report the branch, the
 SHA and the push state every time.
+
+## 2026-10-18 — Increment (b)'s gain is information, not recalibration, and it is stable per season
+**Learned:** Adding the four prior-play differences to the G2 logit moved Brier 0.2133 → 0.2026 on
+2,397 walk-forward games 2023–25 (paired −0.01068 [−0.01444, −0.00650], 65 UTC-week blocks). The
+recalibration-only control B1 moved +0.00011 [−0.00012, +0.00037], so the gain is new information.
+The 2025 frozen holdout against the frozen G2 (0.2208) gave −0.01279 [−0.01768, −0.00763]; 2026
+development gave −0.00971 [−0.01557, −0.00188]. Every season 2022–2026 is negative on its own, and
+half-life 3 and 10 give −0.01084 and −0.00914 pooled.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md`, commit `886ffdf4`; ladders `d7a197c1`, `c3a4a31b`.
+**Consequence:** B2 is the standing model; family (c) must beat B2, not G2. Always score a
+recalibration-only control next to a feature increment — without B1 an ADOPTED verdict cannot
+distinguish information from rescaling.
+
+## 2026-10-18 — A column named `*_score_play` was a 0/1 flag, and it silently flattened EP
+**Learned:** `cfbfastR_cfb_pbp.offense_score_play` holds only {0, 1} — a scoring flag, not points. Using
+it as points gave 9.0 points per game (vs 52.0 actual) and an EP surface spanning ±2, so every EPA was
+between −2 and +2 and `explosive = EPA >= 2` fired for 0 of 122,527 plays. `pts_scored` carries the
+signed points ({−7, −2, 0, 3, 7}) and sums to 52.0 per game, matching the schedule.
+**Evidence:** value counts on `play_by_play_2025.parquet`; EP curve and EPA distribution before/after.
+**Consequence:** validate a target's units against an independent total (here, points per game) before
+fitting anything. A feature that is identically zero is a unit bug, not a modelling result.
+
+## 2026-10-18 — I changed estimators when the bug was upstream
+**Learned:** With a flat EPA distribution I concluded the 215-cell EP surface was too noisy and replaced
+cell means with a ridge regression. The surface was not the problem — the target was in the wrong units.
+After the points fix, cell means gave EPA SD 4.04 and the ridge gave 3.78; the estimator change was
+cosmetic next to the 20× change from fixing the target.
+**Evidence:** same commit as the entry above; before/after EPA SD and per-game point totals.
+**Consequence:** when a distribution is compressed to implausibility, check units and ranges first, then
+estimator smoothness. Record which change actually moved the number.
+
+## 2026-10-18 — A frozen holdout scored against a non-frozen baseline is not a holdout
+**Learned:** The 2025 holdout was first scored with the walk-forward G2 (Brier 0.2082) as the baseline.
+That G2 carries 2025 results the increment never sees, and it understated the gain at −0.00842. Scored
+against the harness's frozen G2 (0.2208), the honest difference is −0.01279.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §7; `fbs_game_winner_holdout_2025_20261018.csv`.
+**Consequence:** in a frozen comparison every model in the row must use frozen inputs, baseline
+included. If the baseline cannot be frozen, the period is a walk-forward, not a holdout.
+
+## 2026-10-18 — Licence tracking came back after being deleted, and the manager asked for it
+**Learned:** Micah removed licence tracking from the manifest and docs, then the Phase 3 brief required
+a licence section; it was re-added and had to be removed again. The instruction that matters is the
+owner's, not a brief's checklist.
+**Evidence:** removal commit `d9df3bc3` (section 11 deleted, endpoint section renumbered).
+**Consequence:** no licence field, column, section or note anywhere. If a brief asks for one, say so and
+stop rather than re-adding it.
