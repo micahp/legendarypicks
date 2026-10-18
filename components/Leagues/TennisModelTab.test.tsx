@@ -151,6 +151,20 @@ describe('Tennis model tab parity', () => {
     expect(screen.getByText('No projection is available.')).toBeTruthy()
   })
 
+  it('applies the same upcoming-only rule to the V2 winner selection', async () => {
+    respond(apiPayload([
+      match({ gameId: 'finished-v2', home: 'Finished V2 Player', status: 'final',
+        startTime: new Date().toISOString(), grades: null }),
+      match({ gameId: 'upcoming-v2', home: 'Upcoming V2 Player' }),
+    ]))
+    render(<TennisModelTab tour="atp" />)
+    fireEvent.change(screen.getByRole('combobox', { name: 'Match winner model' }), {
+      target: { value: 'elo_informed_v2' },
+    })
+    expect(await screen.findByText('Away Player at Upcoming V2 Player')).toBeTruthy()
+    expect(screen.queryByText('Away Player at Finished V2 Player')).toBeNull()
+  })
+
   it('shows an explicit empty state when the selected slate has no matches', async () => {
     respond(apiPayload([]))
     render(<TennisModelTab tour="atp" />)
