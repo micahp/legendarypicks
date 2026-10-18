@@ -1,0 +1,47 @@
+# Discrete-prop learnings
+
+## Frozen parameter summaries must retain full precision and distribution outputs
+
+**Known:** B0 can be regenerated exactly from a frozen dispersion parameter and stable input snapshot;
+v2 Zf cannot be reproduced to the required tolerance when its recent-form probabilities are stored at
+four decimal places. The v3/v4 summaries omit required probability parameters, and v4 also stores rounded
+interpolation centers. Aggregate tables cannot recover the original per-observation PMFs.
+
+**Evidence:** B0 at source commit `a9a46bd05ee75456ee906a6f1254ab5176084f13` matched all five stored
+2025/2026 CRPS, MAE and central-coverage checks with maximum absolute difference below `5e-15` on 2,500
+and 489 observations. The saved v2 Zf parameters missed CRPS by `−4.51e-6` in 2025 and `−2.55e-6` in
+2026. See the [recovery report](DISCRETE-PROP-EVAL-RECOVERY-20261018.md) and the universal
+[discrete-prop artifact contract](../../docs/EVAL-CONTRACT-discrete-props.md).
+
+**Action:** Stop treating rounded fit summaries as sufficient frozen parameters. Preserve full-precision
+parameters and observation-level PMFs/CDFs with checksums before scoring future experiments.
+
+## v1–v4 rebuild the same keyed evaluation population
+
+**Known:** The frozen population builders in all four source commits produce the same duplicate-free
+player-game keys and game counts: 2,500 observations / 240 games for 2025 and 489 / 48 for 2026. The v2
+candidate score mismatch therefore occurs despite matching reconstructed population counts; it does not
+justify silently substituting another sample.
+
+**Evidence:** `check_frozen_population.py` ran each source commit (v1 `24d793c6`, v2 `a9a46bd0`, v3
+`d7aaeb77`, v4 `fc6dba4b`) against input snapshot
+`6fd3d9ab55751108ab279f91aa7130d71c52c1352f7c83de798aef7d47395b45`; output is summarized in the
+[recovery report](DISCRETE-PROP-EVAL-RECOVERY-20261018.md).
+
+**Action:** Start recording and asserting population keys and counts independently from score reproduction
+for every model version. Continue to stop candidate scoring whenever either check fails.
+
+## Near-nominal central coverage can be cancellation, while PIT and zero-event checks expose the miss
+
+**Known:** For recovered 2025 B0, central-50 coverage is `0.5428`, but the forecast mass inside those sets
+averages `0.6578`; a `+0.1578` set-mass excess and `−0.1150` empirical coverage residual combine to the
+observed coverage. Mean `P(0)` is `0.1726` against a zero rate of `0.3788` (game-clustered gap 95% CI
+`[−0.2205, −0.1928]`), while randomized-PIT KS D is `0.1335` (game-clustered 95% CI `[0.1198, 0.1486]`).
+
+**Evidence:** The keyed B0 PMF/CDF exports, exact decomposition table and seeded PIT/bootstrap results are
+in [the recovery report](DISCRETE-PROP-EVAL-RECOVERY-20261018.md) and its checksummed external manifest.
+
+**Action:** Stop reading near-nominal central coverage by itself as evidence of calibration. Start
+reporting event reliability and PIT beside interval coverage, and show the predicted set-mass excess and
+empirical coverage residual separately. Future experiments must preserve these inputs under the
+[discrete-prop artifact contract](../../docs/EVAL-CONTRACT-discrete-props.md).

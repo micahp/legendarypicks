@@ -2,6 +2,11 @@
 
 Branch: `research/discrete-prop-eval-2026-10-18`, based on `origin/dev` at `7dd1b62b`.
 
+**Recovery follow-up:** the initial audit's “blocked” conclusion is superseded by
+[`DISCRETE-PROP-EVAL-RECOVERY-20261018.md`](DISCRETE-PROP-EVAL-RECOVERY-20261018.md). B0 was regenerated
+and validated; v1–v4 candidate recovery remains partial for the exact artifact/precision reasons in that
+report. The reusable artifact requirements are in [`docs/EVAL-CONTRACT-discrete-props.md`](../../docs/EVAL-CONTRACT-discrete-props.md).
+
 ## Finding
 
 The central-interval coverage measure is useful as a descriptive realized-inclusion rate, but it is **unsound as a standalone acceptance criterion for zero-heavy discrete forecasts**. A central interval can contain more than its nominal probability because its endpoints include whole atoms. Its observed coverage therefore does not isolate calibration, and aggregate coverage can conceal large offsetting errors across strata.
