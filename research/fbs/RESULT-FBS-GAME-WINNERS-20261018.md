@@ -3,6 +3,7 @@
 Generated: 2026-10-18 09:15 UTC
 Model version: `fbs-game-winner-baselines-v2-20261018`
 Execution brief: `research/fbs/AUDIT-FBS-BASELINE-20261017.md` (current brief at file top)
+Baseline distinctions: [`research/fbs/BASELINE-DISTINCTIONS.md`](BASELINE-DISTINCTIONS.md)
 
 ## Result
 

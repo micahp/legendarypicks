@@ -121,7 +121,8 @@ def classify_local_day(kickoff_utc, neutral, home_id, venue_id, tz_by_team,
     return local.isoformat(), "Saturday" if local.weekday() == 5 else "Off-Saturday"
 
 
-def schedule_row_to_event(row, season, source_label):
+def schedule_row_to_event(row, season, source_label,
+                          allow_verified_score_disagreement=False):
     game_id = str(row.game_id)
     c_home_id = as_int(row.home_id_cfb)
     c_away_id = as_int(row.away_id_cfb)
@@ -144,7 +145,8 @@ def schedule_row_to_event(row, season, source_label):
     if c_home_score is not None and c_away_score is not None:
         expected = ((c_home_score, c_away_score) if same_order
                     else (c_away_score, c_home_score))
-        if expected != (e_home_score, e_away_score):
+        if (expected != (e_home_score, e_away_score)
+                and not allow_verified_score_disagreement):
             raise ValueError("schedule publishers disagree on score for game %s" % game_id)
 
     if same_order:
@@ -203,23 +205,32 @@ def schedule_row_to_event(row, season, source_label):
         "fbs_participant": truthy(row.fbs_participant),
         "cfb_completed": truthy(row.completed),
         "result_source": source_label,
+        "cfbd_score_disagreement_verified": bool(allow_verified_score_disagreement),
     }
 
 
-def load_events(data_dir, seasons):
+def load_events(data_dir, seasons, include_reporting_metadata=True,
+                verified_score_disagreement_ids=None):
     events = []
     coverage = []
     team_info_by_season = {}
     season_rows = {}
+    verified_score_disagreement_ids = {
+        str(game_id) for game_id in (verified_score_disagreement_ids or ())
+    }
+    encountered_score_disagreements = set()
     for season in seasons:
         schedule_path = season_schedule_path(data_dir, season)
         espn_path = os.path.join(data_dir, "espn_schedule_%d.parquet" % season)
         team_path = os.path.join(data_dir, "cfb_team_info_%d.parquet" % season)
-        if not all(os.path.exists(path) for path in (schedule_path, espn_path, team_path)):
+        required_paths = [schedule_path, espn_path]
+        if include_reporting_metadata:
+            required_paths.append(team_path)
+        if not all(os.path.exists(path) for path in required_paths):
             raise FileNotFoundError("missing required local source for season %d" % season)
         schedule_raw = pd.read_parquet(schedule_path)
         espn_raw = pd.read_parquet(espn_path)
-        team_info = pd.read_parquet(team_path)
+        team_info = pd.read_parquet(team_path) if include_reporting_metadata else pd.DataFrame()
         schedule_duplicate = (
             schedule_raw.game_id.notna()
             & schedule_raw.game_id.astype(str).duplicated(keep=False)
@@ -293,7 +304,28 @@ def load_events(data_dir, seasons):
                 excluded_missing_kickoff += 1
                 continue
             source_label = "ESPN schedule; CFBD schedule membership/conference"
-            event = schedule_row_to_event(row, season, source_label)
+            c_home_score = as_float(row.home_points)
+            c_away_score = as_float(row.away_points)
+            e_home_score = as_float(row.home_score)
+            e_away_score = as_float(row.away_score)
+            same_order = (c_home_id == e_home_id and c_away_id == e_away_id)
+            c_scores = ((c_home_score, c_away_score) if same_order
+                        else (c_away_score, c_home_score))
+            score_disagreement = (
+                c_scores[0] is not None and c_scores[1] is not None
+                and (c_scores[0], c_scores[1]) != (e_home_score, e_away_score)
+            )
+            game_id = str(row.game_id)
+            if score_disagreement:
+                if game_id not in verified_score_disagreement_ids:
+                    raise ValueError(
+                        "schedule publishers disagree on score for game %s" % game_id
+                    )
+                encountered_score_disagreements.add(game_id)
+            event = schedule_row_to_event(
+                row, season, source_label,
+                allow_verified_score_disagreement=score_disagreement,
+            )
             if event["home_win"] not in (0, 1):
                 raise ValueError("invalid binary target in game %s" % event["game_id"])
             events.append(event)
@@ -330,6 +362,7 @@ def load_events(data_dir, seasons):
             "excluded_unresolved_team_ids": excluded_unresolved_ids,
             "excluded_ties_without_winner": excluded_ties,
             "excluded_missing_kickoff": excluded_missing_kickoff,
+            "verified_cfbd_score_disagreements": 0,
         })
         if membership_disagreement or participant_disagreement:
             raise ValueError(
@@ -355,24 +388,38 @@ def load_events(data_dir, seasons):
         row["cross_season_duplicate_event_rows"] = int(
             duplicate_event_rows_by_season.get(row["season"], 0)
         )
-
-    for season in seasons:
-        team_info = team_info_by_season[season]
-        tz_by_team, tz_by_venue = get_timezone_map(team_info)
-        selected = frame.season.eq(season)
-        local_values = []
-        local_days = []
-        for row in frame.loc[selected].itertuples(index=False):
-            local, day_group = classify_local_day(
-                row.kickoff_utc, row.neutral_site, row.home_team_id,
-                row.venue_id, tz_by_team, tz_by_venue
+        row["verified_cfbd_score_disagreements"] = sum(
+            1 for game_id in encountered_score_disagreements
+            if game_id in set(
+                frame.loc[frame.season.eq(row["season"]), "game_id"].astype(str)
             )
-            local_values.append(local)
-            local_days.append(day_group)
-        frame.loc[selected, "kickoff_local"] = local_values
-        frame.loc[selected, "day_group"] = local_days
+        )
 
-    add_conference_groups(frame, season_rows)
+    unexpected_unseen = verified_score_disagreement_ids - encountered_score_disagreements
+    if unexpected_unseen:
+        raise ValueError(
+            "verified score disagreement IDs were not encountered as completed games: %s"
+            % ",".join(sorted(unexpected_unseen))
+        )
+
+    if include_reporting_metadata:
+        for season in seasons:
+            team_info = team_info_by_season[season]
+            tz_by_team, tz_by_venue = get_timezone_map(team_info)
+            selected = frame.season.eq(season)
+            local_values = []
+            local_days = []
+            for row in frame.loc[selected].itertuples(index=False):
+                local, day_group = classify_local_day(
+                    row.kickoff_utc, row.neutral_site, row.home_team_id,
+                    row.venue_id, tz_by_team, tz_by_venue
+                )
+                local_values.append(local)
+                local_days.append(day_group)
+            frame.loc[selected, "kickoff_local"] = local_values
+            frame.loc[selected, "day_group"] = local_days
+
+        add_conference_groups(frame, season_rows)
     return frame, pd.DataFrame(coverage), season_rows, team_info_by_season
 
 
