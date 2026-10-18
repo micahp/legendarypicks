@@ -1,0 +1,93 @@
+release,category,kind,seasons,n_seasons,files,bytes,rows,max_columns,n_columns_union
+cfb_crosswalk,1 identity/reference,reference,2013-2026,14,30,3437693,124540,15,33
+cfb_defense_vs_position,3 team performance,scored,2014-2026,13,13,597399,11026,25,25
+cfb_fpi_weekly,6 coaching/context,scored,2005-2026,22,22,3952468,44778,51,51
+cfb_groups,1 identity/reference,reference,1869-2026,157,161,1106816,75926,11,25
+cfb_league_averages,3 team performance,scored,2004-2026,23,23,550230,19876,10,10
+cfb_matchup_features,3 team performance,scored,2014-2026,13,13,4303000,21107,45,45
+cfb_matchup_line,2 games/markets,scored,2015-2026,12,12,7852665,8677,268,268
+cfb_metric_curves,5 player/roster,scored,2004-2026,23,23,1830416,157039,14,14
+cfb_model_artifacts,7 model artifacts,model_artifact,none,0,2,31072,3675,3,5
+cfb_paper_index_games,6 coaching/context,scored,2004-2026,23,23,1733131,36092,17,17
+cfb_poll_analytics,6 coaching/context,scored,2004-2026,23,23,214049,21834,13,13
+cfb_poll_week_summary,6 coaching/context,scored,2004-2026,23,23,77946,800,8,8
+cfb_ratings,6 coaching/context,scored,2004-2026,23,23,393248,2907,18,18
+cfb_ratings_weekly,6 coaching/context,scored,2004-2026,23,23,3053546,41016,19,19
+cfb_recruiting_proj,5 player/roster,scored,2016-2025,10,10,54537,2066,5,5
+cfb_recruits,5 player/roster,raw,2002-2026,25,25,1558000,84642,9,9
+cfb_returning_production,5 player/roster,scored,2004-2026,23,23,187086,4626,9,9
+cfb_rolling_windows,5 player/roster,scored,2004-2026,23,23,7214437,522504,20,20
+cfb_schedules,2 games/markets,reference,2001-2026,26,26,1587320,49115,43,43
+cfb_team_info,1 identity/reference,reference,2001-2026,26,26,3431842,12149,43,43
+cfb_team_opponent_splits,3 team performance,scored,2004-2026,23,23,683871,36170,19,19
+cfb_team_portal,1 identity/reference,reference,2015-2026,12,12,86675,2639,9,9
+cfb_team_summaries_weekly,3 team performance,scored,2004-2026,23,23,73205473,41154,789,789
+cfb_team_talent,5 player/roster,scored,2005-2026,22,22,202417,5438,7,7
+cfbfastR_cfb_pbp,4 event level,raw,2014-2026,13,13,1100135012,2459820,362,362
+espn_cfb_adv_defensive,3 team performance,scored,2004-2026,23,23,1047791,36170,22,22
+espn_cfb_adv_defensive_players,5 player/roster,scored,2004-2026,23,23,1689513,155258,14,14
+espn_cfb_adv_drive_scripting,6 coaching/context,scored,2004-2026,23,23,2387055,72340,20,20
+espn_cfb_adv_drives,4 event level,scored,2004-2026,23,23,877457,36170,12,12
+espn_cfb_adv_passing,5 player/roster,scored,2004-2026,23,23,4868710,62173,37,37
+espn_cfb_adv_player_usage,5 player/roster,scored,2004-2026,23,23,17007921,402564,46,46
+espn_cfb_adv_position_group_tackles,3 team performance,scored,2014-2026,13,13,866077,65537,13,13
+espn_cfb_adv_position_group_usage,3 team performance,scored,2014-2026,13,13,4658131,84663,44,44
+espn_cfb_adv_receiving,5 player/roster,scored,2004-2026,23,23,5422056,325903,22,22
+espn_cfb_adv_rushing,5 player/roster,scored,2004-2026,23,23,3562292,198215,16,16
+espn_cfb_adv_situational,3 team performance,scored,2004-2026,23,23,5120951,36170,74,74
+espn_cfb_adv_specialists,5 player/roster,scored,2004-2026,23,23,1493294,154788,14,14
+espn_cfb_adv_st_blocks,5 player/roster,scored,2008-2026,19,19,130997,1855,10,10
+espn_cfb_adv_st_kickers,5 player/roster,scored,2004-2026,23,23,1912412,60936,34,34
+espn_cfb_adv_st_punters,5 player/roster,scored,2004-2026,23,23,1469942,40830,25,25
+espn_cfb_adv_st_returners,5 player/roster,scored,2004-2026,23,23,1925363,76761,19,19
+espn_cfb_adv_st_team,3 team performance,scored,2004-2026,23,23,2264064,36170,41,41
+espn_cfb_adv_tackles,5 player/roster,scored,2014-2026,13,13,4319154,312528,15,15
+espn_cfb_adv_team,3 team performance,scored,2004-2026,23,23,6225489,36170,81,81
+espn_cfb_adv_team_gamelog,3 team performance,scored,2004-2026,23,23,6605557,36170,91,91
+espn_cfb_adv_team_usage,3 team performance,scored,2004-2026,23,23,3557289,36170,46,46
+espn_cfb_adv_turnover,3 team performance,scored,2004-2026,23,23,821116,36170,25,25
+espn_cfb_betting,2 games/markets,scored,2004-2026,23,23,145061,19134,9,9
+espn_cfb_coach_careers,6 coaching/context,scored,none,0,1,1529262,447,601,601
+espn_cfb_coach_tendencies,6 coaching/context,scored,2004-2026,23,23,12496332,2753,600,600
+espn_cfb_drives,4 event level,raw,2004-2026,23,23,10276230,464367,20,20
+espn_cfb_game_rosters,5 player/roster,raw,2004-2026,23,23,129473542,2990711,79,79
+espn_cfb_injuries,5 player/roster,raw,2026-2026,1,1,12154,135,27,27
+espn_cfb_linescores,2 games/markets,raw,2004-2026,23,23,310334,153862,5,5
+espn_cfb_model_pbp,4 event level,scored,2004-2025,22,59,1111203031,9495345,427,446
+espn_cfb_passing,5 player/roster,raw,2004-2026,23,23,2467594,11596,98,98
+espn_cfb_pbp,4 event level,raw,2004-2026,23,23,1084066533,3242765,506,506
+espn_cfb_percentiles,3 team performance,scored,2004-2026,23,23,594414,2277,27,27
+espn_cfb_play_participants,4 event level,raw,2014-2026,13,13,47620184,1802701,89,89
+espn_cfb_player_box,5 player/roster,raw,2004-2026,23,23,10817598,896384,61,61
+espn_cfb_power_index,6 coaching/context,scored,2005-2026,22,22,575321,37221,7,7
+espn_cfb_qa,3 team performance,scored,2004-2026,23,23,365079,19133,13,13
+espn_cfb_receiving,5 player/roster,raw,2004-2026,23,23,4230870,45153,77,77
+espn_cfb_rosters,5 player/roster,raw,2004-2026,23,24,41803062,428884,85,95
+espn_cfb_rushing,5 player/roster,raw,2004-2026,23,23,4249999,33332,78,78
+espn_cfb_schedules,2 games/markets,reference,2004-2026,23,23,633543,19134,20,20
+espn_cfb_team_box,3 team performance,raw,2004-2026,23,23,1127836,38268,21,21
+espn_cfb_team_summaries,3 team performance,scored,2004-2026,23,23,14501610,2907,788,788
+espn_cfb_team_tendencies,6 coaching/context,scored,2004-2026,23,23,15716459,4588,598,598
+espn_cfb_teams,1 identity/reference,reference,2001-2026,26,26,3220847,17939,54,54
+espn_cfb_usage_drive_scripting,3 team performance,scored,2004-2026,23,23,676297,9332,19,19
+espn_cfb_usage_players,5 player/roster,scored,2004-2026,23,23,6669030,88612,45,45
+espn_cfb_usage_position_group_tackles,3 team performance,scored,2014-2026,13,13,338148,16300,12,12
+espn_cfb_usage_position_groups,3 team performance,scored,2014-2026,13,13,1402225,13144,43,43
+espn_cfb_usage_st_blocks,3 team performance,scored,2008-2026,19,19,117654,1800,9,9
+espn_cfb_usage_st_kickers,3 team performance,scored,2004-2026,23,23,910694,15849,33,33
+espn_cfb_usage_st_punters,3 team performance,scored,2004-2026,23,23,649971,8128,24,24
+espn_cfb_usage_st_returners,3 team performance,scored,2004-2026,23,23,1021804,28483,18,18
+espn_cfb_usage_st_team,3 team performance,scored,2004-2026,23,23,829431,4666,41,41
+espn_cfb_usage_tackles,3 team performance,scored,2014-2026,13,13,2043883,90579,14,14
+espn_cfb_usage_teams,3 team performance,scored,2004-2026,23,23,1105285,4666,45,45
+ncaa_mfb_drives,4 event level,raw,2013-2026,14,14,6055753,526612,17,17
+ncaa_mfb_linescore,2 games/markets,raw,2013-2026,14,14,893066,165434,11,11
+ncaa_mfb_officials,6 coaching/context,raw,2013-2026,14,14,544085,104340,5,5
+ncaa_mfb_pbp,4 event level,raw,2013-2026,14,14,140677241,4432919,51,51
+ncaa_mfb_pbp_cfbfastr,4 event level,raw,2013-2026,14,14,289502085,3899778,105,105
+ncaa_mfb_player_stats,5 player/roster,raw,2013-2026,14,14,8149221,1118781,50,52
+ncaa_mfb_qa,3 team performance,raw,2013-2026,14,14,144453,20471,12,12
+ncaa_mfb_rosters,5 player/roster,raw,2013-2026,14,14,6153324,382941,16,16
+ncaa_mfb_schedule,2 games/markets,reference,2013-2026,14,14,756363,42974,14,14
+ncaa_mfb_team_stats,3 team performance,raw,2013-2026,14,14,13715217,8113324,10,10
+ncaa_mfb_teams,1 identity/reference,raw,2013-2026,14,14,57161,3606,5,5

@@ -1,0 +1,72 @@
+season,check,compared,agree,rate
+2004,schedules vs espn_schedules,712,712,1.0
+2005,schedules vs espn_schedules,728,728,1.0
+2006,schedules vs espn_schedules,788,788,1.0
+2007,schedules vs espn_schedules,800,800,1.0
+2008,schedules vs espn_schedules,812,812,1.0
+2009,schedules vs espn_schedules,810,810,1.0
+2010,schedules vs espn_schedules,810,810,1.0
+2011,schedules vs espn_schedules,817,817,1.0
+2012,schedules vs espn_schedules,852,852,1.0
+2013,schedules vs espn_schedules,861,861,1.0
+2014,schedules vs espn_schedules,873,873,1.0
+2015,schedules vs espn_schedules,876,876,1.0
+2016,schedules vs espn_schedules,879,877,0.9977
+2017,schedules vs espn_schedules,890,890,1.0
+2018,schedules vs espn_schedules,898,896,0.9978
+2019,schedules vs espn_schedules,892,891,0.9989
+2020,schedules vs espn_schedules,692,688,0.9942
+2021,schedules vs espn_schedules,895,894,0.9989
+2022,schedules vs espn_schedules,904,903,0.9989
+2023,schedules vs espn_schedules,911,907,0.9956
+2024,schedules vs espn_schedules,966,964,0.9979
+2025,schedules vs espn_schedules,958,958,1.0
+2026,schedules vs espn_schedules,510,510,1.0
+2004,schedules vs linescore sum,707,706,0.9986
+2005,schedules vs linescore sum,718,718,1.0
+2006,schedules vs linescore sum,788,787,0.9987
+2007,schedules vs linescore sum,798,797,0.9987
+2008,schedules vs linescore sum,809,809,1.0
+2009,schedules vs linescore sum,810,810,1.0
+2010,schedules vs linescore sum,810,810,1.0
+2011,schedules vs linescore sum,816,816,1.0
+2012,schedules vs linescore sum,850,850,1.0
+2013,schedules vs linescore sum,860,860,1.0
+2014,schedules vs linescore sum,871,871,1.0
+2015,schedules vs linescore sum,874,874,1.0
+2016,schedules vs linescore sum,876,874,0.9977
+2017,schedules vs linescore sum,877,877,1.0
+2018,schedules vs linescore sum,889,887,0.9978
+2019,schedules vs linescore sum,891,890,0.9989
+2020,schedules vs linescore sum,571,567,0.993
+2021,schedules vs linescore sum,891,890,0.9989
+2022,schedules vs linescore sum,900,899,0.9989
+2023,schedules vs linescore sum,911,907,0.9956
+2024,schedules vs linescore sum,965,963,0.9979
+2025,schedules vs linescore sum,958,958,1.0
+2026,schedules vs linescore sum,510,510,1.0
+2004,schedules vs pbp final,463,463,1.0
+2005,schedules vs pbp final,596,592,0.9933
+2006,schedules vs pbp final,683,676,0.9898
+2007,schedules vs pbp final,707,678,0.959
+2008,schedules vs pbp final,778,764,0.982
+2009,schedules vs pbp final,792,774,0.9773
+2010,schedules vs pbp final,788,776,0.9848
+2011,schedules vs pbp final,806,788,0.9777
+2012,schedules vs pbp final,828,818,0.9879
+2013,schedules vs pbp final,858,849,0.9895
+2014,schedules vs pbp final,854,851,0.9965
+2015,schedules vs pbp final,866,863,0.9965
+2016,schedules vs pbp final,858,850,0.9907
+2017,schedules vs pbp final,872,866,0.9931
+2018,schedules vs pbp final,884,876,0.991
+2019,schedules vs pbp final,890,885,0.9944
+2020,schedules vs pbp final,565,561,0.9929
+2021,schedules vs pbp final,842,816,0.9691
+2022,schedules vs pbp final,861,837,0.9721
+2023,schedules vs pbp final,903,891,0.9867
+2024,schedules vs pbp final,946,933,0.9863
+2025,schedules vs pbp final,956,945,0.9885
+2026,schedules vs pbp final,510,505,0.9902
+2025,schedules vs ncaa_schedule,1651,1651,1.0
+2026,schedules vs ncaa_schedule,701,701,1.0
