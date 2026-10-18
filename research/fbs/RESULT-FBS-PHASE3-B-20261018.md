@@ -159,3 +159,42 @@ coefficients of the increment on top of Elo, not a standalone model.
 Family (c) of the ladder: scoring, turnover and field-position splits from box scores, tested alone
 against the same G2 baseline and the same gates. It should be judged against **B2** as well as G2, since
 B2 is now the standing model.
+
+## 11. Increment (c) pre-registration — scoring, turnover and field-position splits
+
+Written before any (c) feature is built. Same population, embargo, walk-forward, holdout, metrics,
+week-block bootstrap and gate table as section 5; only the feature block changes.
+
+**Sources**, both already in the archive, both used only through observation columns:
+
+- `espn_cfb_pbp` drive-level fields and `down_end`/`yards_to_goal_end` for drive outcomes and starting
+  field position. As in (b), publisher EPA/WP/PPA columns are banned by the same guard; the guard list
+  is extended with `EPA`, `wpa`, `ppa`, `qbr`, `havoc` for any box-score column too.
+- `espn_cfb_team_box` for turnovers, penalties, third/fourth-down conversions and total yards.
+
+**Team features**, one value per team per game, aggregated to a team rating with the same half-life 6
+and K = 150 shrink as (b):
+
+| feature | definition |
+|---|---|
+| `points_per_drive` | points scored / offensive drives |
+| `turnovers_per_drive` | giveaways (interceptions + lost fumbles) / offensive drives |
+| `start_field_position` | mean starting yards-to-goal of the team's drives |
+| `rz_td_rate` | touchdowns / red-zone trips |
+| `third_down_rate` | third-down conversions / attempts |
+| `explosive_drive_rate` | share of drives gaining ≥ 30 yards |
+| `penalties_per_play` | accepted penalties / scrimmage plays |
+
+**Game features**: the same seven as home-minus-away differences in the direction that puts the home
+offence against the away defence, exactly as (b) did for its four.
+
+**Model**: identical form — `logit p = logit p_G2 + b0 + Σ b_j x_j`, ridge 1.0, standardised on training
+games, refit at each date block. A B1 control is scored alongside.
+
+**Gates**: the section 5 table, unchanged, plus one addition specific to (c): because (c) is correlated
+with (b), the primary comparison is **C2 vs B2** (the standing model), with C2 vs G2 reported for
+continuity. An increment that only beats G2 but not B2 is DISCARDED.
+
+**Leakage controls**: box scores are final-game aggregates, so nothing from a game may enter its own
+row; all ratings are computed from prior games only, with the same one-day embargo. No season-to-date
+aggregate table is read.
