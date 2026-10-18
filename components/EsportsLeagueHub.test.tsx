@@ -262,14 +262,15 @@ describe('esports league hub — header and EWC-first center', () => {
     expect(screen.getByRole('heading', { name: 'Esports' })).toBeTruthy()
     expect(screen.getByText('Live esports →').closest('a')?.getAttribute('href')).toBe('/esports')
 
-    // EWC tournament center — event focus, live, today, results.
+    // EWC tournament center — event focus and live; the games catalog owns the
+    // schedule and results, so the center must never repeat them.
     fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText('EWC 2026')).toBeTruthy())
     expect(screen.getByText('Esports World Cup 2026')).toBeTruthy()
     expect(screen.getAllByText('Team Falcons').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('Gentle Mates')).toBeTruthy()
-    expect(screen.getByText('Today across titles')).toBeTruthy()
-    expect(screen.getByText('EWC results')).toBeTruthy()
+    expect(screen.getAllByText('Gentle Mates').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Today across titles')).toBeNull()
+    expect(screen.queryByText('EWC results')).toBeNull()
     expect(screen.getByText('G2 Esports')).toBeTruthy()
 
     // Club Championship rail — rows, tabular points, source; desktop requests ten rows.

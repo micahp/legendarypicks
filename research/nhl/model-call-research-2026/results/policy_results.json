@@ -1,0 +1,422 @@
+{
+ "b3_elo|2019": {
+  "taus": [
+   0.6,
+   0.6,
+   0.6
+  ],
+  "tuning_n": 0,
+  "tuning_acc": null,
+  "eval_n": 1212,
+  "eval_acc": 0.6988448844884488,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.30115511551155116,
+   "won": 0.6988448844884488,
+   "fallback": 0.0
+  },
+  "won": 847,
+  "lost": 365,
+  "fallback": 0
+ },
+ "b3_elo|2020": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 1212,
+  "tuning_acc": 0.7112211221122112,
+  "eval_n": 952,
+  "eval_acc": 0.7090336134453782,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.29096638655462187,
+   "won": 0.7090336134453782,
+   "fallback": 0.0
+  },
+  "won": 675,
+  "lost": 277,
+  "fallback": 0
+ },
+ "b3_elo|2021": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 2164,
+  "tuning_acc": 0.7102587800369686,
+  "eval_n": 1396,
+  "eval_acc": 0.6984240687679083,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6984240687679083,
+   "lost": 0.3015759312320917,
+   "fallback": 0.0
+  },
+  "won": 975,
+  "lost": 421,
+  "fallback": 0
+ },
+ "b3_elo|2022": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 3560,
+  "tuning_acc": 0.7056179775280899,
+  "eval_n": 1400,
+  "eval_acc": 0.7064285714285714,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.2935714285714286,
+   "won": 0.7064285714285714,
+   "fallback": 0.0
+  },
+  "won": 989,
+  "lost": 411,
+  "fallback": 0
+ },
+ "b3_elo|2023": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 4960,
+  "tuning_acc": 0.7058467741935484,
+  "eval_n": 1400,
+  "eval_acc": 0.6985714285714286,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.30142857142857143,
+   "won": 0.6985714285714286,
+   "fallback": 0.0
+  },
+  "won": 978,
+  "lost": 422,
+  "fallback": 0
+ },
+ "b3_elo|2024": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 6360,
+  "tuning_acc": 0.7042452830188679,
+  "eval_n": 1393,
+  "eval_acc": 0.6604450825556353,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6604450825556353,
+   "lost": 0.33955491744436467,
+   "fallback": 0.0
+  },
+  "won": 920,
+  "lost": 473,
+  "fallback": 0
+ },
+ "b3_elo|2025": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 7753,
+  "tuning_acc": 0.6963755965432735,
+  "eval_n": 1394,
+  "eval_acc": 0.703012912482066,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.703012912482066,
+   "lost": 0.296987087517934,
+   "fallback": 0.0
+  },
+  "won": 980,
+  "lost": 414,
+  "fallback": 0
+ },
+ "b5_xg|2019": {
+  "taus": [
+   0.6,
+   0.6,
+   0.6
+  ],
+  "tuning_n": 0,
+  "tuning_acc": null,
+  "eval_n": 1212,
+  "eval_acc": 0.6897689768976898,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.3102310231023102,
+   "won": 0.6897689768976898,
+   "fallback": 0.0
+  },
+  "won": 836,
+  "lost": 376,
+  "fallback": 0
+ },
+ "b5_xg|2020": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 1212,
+  "tuning_acc": 0.6938943894389439,
+  "eval_n": 952,
+  "eval_acc": 0.6964285714285714,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.30357142857142855,
+   "won": 0.6964285714285714,
+   "fallback": 0.0
+  },
+  "won": 663,
+  "lost": 289,
+  "fallback": 0
+ },
+ "b5_xg|2021": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 2164,
+  "tuning_acc": 0.6950092421441775,
+  "eval_n": 1396,
+  "eval_acc": 0.6697707736389685,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6697707736389685,
+   "lost": 0.3302292263610315,
+   "fallback": 0.0
+  },
+  "won": 935,
+  "lost": 461,
+  "fallback": 0
+ },
+ "b5_xg|2022": {
+  "taus": [
+   0.55,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 3560,
+  "tuning_acc": 0.6879213483146067,
+  "eval_n": 1400,
+  "eval_acc": 0.7021428571428572,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.2978571428571429,
+   "won": 0.7021428571428572,
+   "fallback": 0.0
+  },
+  "won": 983,
+  "lost": 417,
+  "fallback": 0
+ },
+ "b5_xg|2023": {
+  "taus": [
+   0.55,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 4960,
+  "tuning_acc": 0.6919354838709677,
+  "eval_n": 1400,
+  "eval_acc": 0.6942857142857143,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6942857142857143,
+   "lost": 0.3057142857142857,
+   "fallback": 0.0
+  },
+  "won": 972,
+  "lost": 428,
+  "fallback": 0
+ },
+ "b5_xg|2024": {
+  "taus": [
+   0.55,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 6360,
+  "tuning_acc": 0.6924528301886792,
+  "eval_n": 1393,
+  "eval_acc": 0.6625987078248384,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6625987078248384,
+   "lost": 0.3374012921751615,
+   "fallback": 0.0
+  },
+  "won": 923,
+  "lost": 470,
+  "fallback": 0
+ },
+ "b5_xg|2025": {
+  "taus": [
+   0.55,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 7753,
+  "tuning_acc": 0.687088868824971,
+  "eval_n": 1394,
+  "eval_acc": 0.6908177905308465,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6908177905308465,
+   "lost": 0.30918220946915353,
+   "fallback": 0.0
+  },
+  "won": 963,
+  "lost": 431,
+  "fallback": 0
+ },
+ "b7_elo_xg|2019": {
+  "taus": [
+   0.6,
+   0.6,
+   0.6
+  ],
+  "tuning_n": 0,
+  "tuning_acc": null,
+  "eval_n": 1212,
+  "eval_acc": 0.7087458745874587,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.7087458745874587,
+   "lost": 0.29125412541254125,
+   "fallback": 0.0
+  },
+  "won": 859,
+  "lost": 353,
+  "fallback": 0
+ },
+ "b7_elo_xg|2020": {
+  "taus": [
+   0.6000000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 1212,
+  "tuning_acc": 0.7087458745874587,
+  "eval_n": 952,
+  "eval_acc": 0.7069327731092437,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.2930672268907563,
+   "won": 0.7069327731092437,
+   "fallback": 0.0
+  },
+  "won": 673,
+  "lost": 279,
+  "fallback": 0
+ },
+ "b7_elo_xg|2021": {
+  "taus": [
+   0.6000000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 2164,
+  "tuning_acc": 0.7079482439926063,
+  "eval_n": 1396,
+  "eval_acc": 0.6912607449856734,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6912607449856734,
+   "lost": 0.30873925501432664,
+   "fallback": 0.0
+  },
+  "won": 965,
+  "lost": 431,
+  "fallback": 0
+ },
+ "b7_elo_xg|2022": {
+  "taus": [
+   0.5750000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 3560,
+  "tuning_acc": 0.7033707865168539,
+  "eval_n": 1400,
+  "eval_acc": 0.7,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.3,
+   "won": 0.7,
+   "fallback": 0.0
+  },
+  "won": 980,
+  "lost": 420,
+  "fallback": 0
+ },
+ "b7_elo_xg|2023": {
+  "taus": [
+   0.6000000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 4960,
+  "tuning_acc": 0.7052419354838709,
+  "eval_n": 1400,
+  "eval_acc": 0.6985714285714286,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "lost": 0.30142857142857143,
+   "won": 0.6985714285714286,
+   "fallback": 0.0
+  },
+  "won": 978,
+  "lost": 422,
+  "fallback": 0
+ },
+ "b7_elo_xg|2024": {
+  "taus": [
+   0.6000000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 6360,
+  "tuning_acc": 0.7037735849056603,
+  "eval_n": 1393,
+  "eval_acc": 0.6640344580043073,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.6640344580043073,
+   "lost": 0.33596554199569273,
+   "fallback": 0.0
+  },
+  "won": 925,
+  "lost": 468,
+  "fallback": 0
+ },
+ "b7_elo_xg|2025": {
+  "taus": [
+   0.6000000000000001,
+   0.55,
+   0.55
+  ],
+  "tuning_n": 7753,
+  "tuning_acc": 0.6966335612021153,
+  "eval_n": 1394,
+  "eval_acc": 0.7109038737446198,
+  "fallback_rate": 0.0,
+  "tier_usage": {
+   "won": 0.7109038737446198,
+   "lost": 0.2890961262553802,
+   "fallback": 0.0
+  },
+  "won": 991,
+  "lost": 403,
+  "fallback": 0
+ }
+}

@@ -338,7 +338,9 @@ describe('NHL model tab previews', () => {
     // A model score without its matched market score must not inflate the displayed sample.
     expect(screen.getAllByText('0.1225').length).toBe(2)
     expect(screen.getAllByText('0.2000').length).toBe(2)
-    expect(screen.getAllByText('0.16').length).toBe(0)
+    // Brier scores render with four decimals (0.1600), so a two-decimal '0.16' can never
+    // match exactly. getAllByText throws when nothing matches; queryAllByText asserts absence.
+    expect(screen.queryAllByText('0.16')).toHaveLength(0)
   })
 
   it('does not invent Brier scores before games are graded', async () => {
