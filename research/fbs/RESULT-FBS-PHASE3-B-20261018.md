@@ -20,8 +20,7 @@ moves nothing, so the gain is information the Elo baseline did not have, not a r
 | B1 | `logit p = logit p_G2 + b0` — recalibration control, ridge on nothing but the intercept |
 | B2 | `logit p = logit p_G2 + b0 + Σ b_j x_j` over `epa_diff`, `success_diff`, `explosive_diff`, `tempo_diff` |
 
-Features are as-of team ratings from `cfbfastR_cfb_pbp` (CFBD-sourced, the only publisher in the
-archive that grants model training and commercial use — audit §11): exponentially weighted over a
+Features are as-of team ratings from `cfbfastR_cfb_pbp` (2014-2026): exponentially weighted over a
 team's prior team-games with half-life 6, shrunk toward the league mean with an effective-play prior of
 K = 150. EPA and success are recomputed from play states by a ridge EP model fitted on strictly earlier
 seasons; no publisher EPA, wp, ep_before, success or rating column is read, enforced by
@@ -130,8 +129,7 @@ coefficients of the increment on top of Elo, not a standalone model.
   interpretation of the threshold, not the fit.
 - **No prior history.** Teams with no prior plays receive the league mean and carry a `has_history`
   flag; no evaluated 2025 game had such a team, so this did not change the population.
-- **Licence.** Features come only from CFBD-sourced play-by-play, which permits model training and
-  commercial use (audit §11.3). No ESPN-derived table feeds the model.
+- **Source.** Features come only from `cfbfastR_cfb_pbp`; no ESPN-derived table feeds the model.
 
 ## 8. Limits
 

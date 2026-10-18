@@ -57,9 +57,9 @@ not revisited with different hyperparameters.
 
 ## 4. Increment (b): the exact specification
 
-**Source**: `cfbfastR_cfb_pbp` (CFBD-sourced, 2014–2026), chosen because section 11 of
-`AUDIT-FBS-ARCHIVE-20261018.md` records CFBD as the only publisher in the archive that grants model
-training and commercial use. `espn_cfb_pbp` is a research cross-check only.
+**Source**: `cfbfastR_cfb_pbp` (2014–2026), the event table with one consistent schema across the
+whole window. `espn_cfb_pbp` covers 2004-2013 that this table does not, but with a different schema, and
+is used only as a cross-check on play counts.
 
 **Play-state fields allowed** (the complete list — anything else is a leak):
 
