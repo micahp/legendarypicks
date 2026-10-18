@@ -283,3 +283,101 @@ backend/venv/bin/python backend/smoke_fbs_archive.py            # read a sample 
 - 2026 is in progress and is development evidence, not a held-out set.
 - The archive contains no market line history beyond a single spread/total snapshot per game, so
   anything that needs line movement needs a different source.
+- **Read section 11 before putting any of it in a product.** Only the CFBD-sourced tables carry a
+  commercial-use and model-training right. The ESPN and NCAA tables do not.
+
+## 11. Licence per source
+
+Verified 2026-10-18 against the publishers' own documents. No release ships a data licence of its own,
+and the repository's MIT file is a software licence: it grants rights in SportsDataverse's code, not
+in the observations their jobs collected from third parties. "It is on GitHub" is not a licence.
+
+### 11.1 Publishers and what governs each
+
+| publisher | documents | commercial use | model training | redistribution |
+|---|---|---|---|---|
+| SportsDataverse (packaging of all 92 releases) | `LICENSE` in `sportsdataverse/sportsdataverse-data`: MIT, © 2023 SportsDataverse | yes, for the software | yes, for the software | yes, for the software |
+| CollegeFootballData / Rad Sports Analytics LLC (CFBD) | [Terms of Use](https://collegefootballdata.com/terms), §4–§6, §8 | **yes** (§4) | **yes** — "historical analysis, backtesting, feature engineering, and model training" (§4) | **no** (§5) |
+| ESPN (a Disney product) | [Disney Terms of Use](https://disneytermsofuse.com/english/), last updated 2024-05-24, §2.A, §3.viii, §3.x | **no** | **no** | **no** |
+| NCAA (stats.ncaa.org) | [NCAA Terms of Service](https://www.ncaa.org/terms-of-service), §1 | **no** | **no** (not granted) | **no** without written permission |
+
+Exact language that decides it:
+
+- **CFBD §4** permits to "privately cache, store, normalize, and retain API responses", to "perform
+  historical analysis, backtesting, feature engineering, and model training", to "publish and
+  commercialize independently created analyses, models, model weights, predictions, projections,
+  rankings, visualizations, and other Derived Outputs", and to "retain API Data retrieved while your
+  access was active in a private historical corpus". **§5** forbids selling or publishing API Data "as
+  a standalone dataset or bulk download", running a "public database mirror, proxy, substitute API",
+  giving third parties "direct or programmatic access to stored raw API responses". **§6** makes
+  attribution appreciated, not required. **§8** grants no trademark, logo or likeness rights.
+- **Disney §2.A** grants a licence "for your personal, noncommercial use only … with no right to
+  reproduce, distribute, communicate to the public, make available to the public, or transform any
+  Disney Product, including in connection with any use, creation, development, modification,
+  prompting, fine-tuning, training, testing, benchmarking or validation of any artificial intelligence
+  or machine learning tool". **§3.viii** forbids using the products "for any commercial or
+  business-related use or build a business utilizing the Disney Products". **§3.x** forbids accessing
+  or extracting them "using a robot, spider, script, or other automated means … for the purposes of …
+  data mining or web scraping or otherwise compiling, building, creating or contributing to any
+  collection of data, data set or database".
+- **NCAA §1**: the NCAA "own[s] or license[s] the data … statistics, updated scores"; "No Content may
+  be reproduced, republished, uploaded, posted, transmitted, distributed, copied, publicly displayed
+  or otherwise used except as provided in these Terms without the written permission of the NCAA";
+  downloading is permitted "only for your personal, non-commercial use".
+
+### 11.2 Which releases fall under which publisher
+
+| releases | publisher of record | what we may do |
+|---|---|---|
+| `espn_cfb_*` — 56 releases with data (57 tags; `espn_cfb_model_artifacts` has no tables) | ESPN | private research and evaluation only. No commercial product, no model training, no redistribution, no republishing of raw fields. |
+| `cfbfastR_cfb_pbp`, `ncaa_mfb_pbp_cfbfastr` | CFBD (cfbfastR is SportsDataverse's CFBD client; CFBD lists cfbfastR as third-party support) | use in commercial models, train on it, keep it in a private corpus, publish derived outputs. Do not redistribute the raw file or serve it to third parties. |
+| `ncaa_mfb_*` other than the cfbfastR table — 10 releases with data | NCAA (stats.ncaa.org) | research only; no commercial or redistribution right. |
+| `cfb_*` — 24 releases of SportsDataverse-derived tables | stated per table: ESPN, CFBD, 247Sports, the Paper Index, AP/Coaches polls, FEI | where the upstream is ESPN or NCAA, the terms above apply. `cfb_team_talent` (247Sports composite), `cfb_paper_index_games` (Paper Index), `cfb_poll_*` (AP/Coaches), `cfb_ratings*` (FEI/SP+ style) have **no licence found in this phase** — treat as no rights until one is obtained. |
+
+**No redistributable licence was found for the ESPN, NCAA, 247Sports, Paper Index, AP/Coaches or FEI
+material in this archive.** That is the honest record: the files are held for private research, and
+their presence in the archive is not a grant.
+
+### 11.3 What this means for modelling
+
+- A production model may be trained on CFBD-sourced observations and on derived outputs we compute
+  ourselves. `cfbfastR_cfb_pbp` (2014–2026) and `ncaa_mfb_pbp_cfbfastr` are the CFBD event tables, so
+  they are the correct base for features that are meant to ship.
+- `espn_cfb_pbp` is the broader historical event source (2004–2026) but it is ESPN material. It stays
+  a research cross-check; using it to build production features would need an ESPN licence.
+- Anything computed from a table (EPA, success, tempo) is a Derived Output and may be commercialised
+  under CFBD §4. Anything joined from a publisher's own EPA/WP/FPI/rating column is not ours to ship,
+  and is barred by the leakage register in section 6 anyway.
+- The archive itself must not be exposed as a download, mirror or API. That applies to the whole
+  Parquet store, including the CFBD tables.
+
+## 12. Outstanding CFBD endpoints
+
+The archive was built from SportsDataverse releases; no direct CFBD API call was made in Phase 2, so
+nothing was rate-limited and nothing was lost to quota. Per the CFBD
+[data-availability page](https://api.collegefootballdata.com/data-availability) (coverage verified by
+CFBD on 2026-09-03), these are the endpoints that would add something the archive does not already
+have, in fetch order:
+
+| priority | endpoint | availability | what it adds beyond the archive | why it matters |
+|---|---|---|---|---|
+| 1 | `GET /lines` | 2013–present, provider and field coverage varies by game | **two-sided moneylines with provider and timestamp**, plus opening/current spread and total snapshots | the archive has one spread/total row per game and **no moneyline at all**; this is the only internal path to a true market benchmark and to Phase 4 line grading |
+| 2 | `GET /plays` | 2001–present | raw plays for **2001–2003**, which have no event data in the archive, and a second source for 2004–2013 | extends the play-level window from 2004 to 2001 if the fields reconcile |
+| 3 | `GET /games/weather` | 2001–present | per-game temperature, wind, condition | the only archive weather lives in `cfb_matchup_line`, which starts in 2015 |
+| 4 | `GET /drives` | 2001–present | drives for 2001–2003 | pairs with priority 2 for tempo and drive-level features |
+| 5 | `GET /metrics/wp/pregame` | 2013–present, derived from spreads | a pregame win probability benchmark | market-derived check on our own probabilities; scored data, so benchmark only |
+| 6 | `GET /stats/game/advanced`, `GET /stats/season/advanced` | 2001–present (havoc 2004+, usage 2013+) | CFBD-computed advanced splits | a CFBD-licensed cross-check on our own EPA/success, replacing ESPN-derived advanced tables where those cannot ship |
+| 7 | `GET /games/teams`, `GET /games/players` | 2004–present | box scores again, under CFBD terms | gives a shippable alternative to `espn_cfb_team_box` / `espn_cfb_player_box` |
+| 8 | `GET /play/stats` | 2012–present | play-level player attribution and success | player-level work in Phase 6 |
+| 9 | `GET /talent`, `GET /recruiting/players`, `GET /player/portal` | per CFBD calendars | recruiting/talent/portal | replaces the 247Sports-sourced `cfb_team_talent` with a licensed equivalent |
+| 10 | `GET /teams/ats` | 2013–present | against-the-spread records | Phase 4 grading support |
+| 11 | `GET /coaches`, `GET /roster` | per season | staffing and rosters | coaching-continuity family in the ladder |
+| 12 | `GET /games/media`, `GET /calendar`, `GET /draft/picks`, `GET /playoffs/*` | 2003+, 2002+, 1967+, 2014+ | broadcast, week boundaries, draft, CFP bracket | supporting context only |
+
+Endpoints deliberately **not** on the list: `/ratings/elo`, `/ratings/sp`, `/ratings/srs`,
+`/ratings/fpi`, `/metrics/ppa`, `/metrics/wp` (in-game). They are publisher-computed and barred as
+inputs by the leakage register; buying quota for them would only add columns we must not use.
+
+Before the first fetch, call `GET /info` to read the tier and remaining quota, then take priority 1
+(`/lines`) in one pass per season, because it is the only row on this list that changes what can be
+measured rather than what can be modelled.
