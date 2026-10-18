@@ -523,6 +523,30 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(model["grade"]["official_winner"], "home")
         self.assertTrue(pick["result"]["won"])  # official 3-2 is 5 goals, under 6.5
 
+    def test_end_to_end_frozen_whole_total_push_survives_api_export(self):
+        self.con.execute(
+            "INSERT INTO nhl_game_lines (game_id, source, captured_at_utc, home_team, away_team, "
+            "total_line, over_price, under_price) VALUES (?,?,?,?,?,?,?,?)",
+            (GAME_ID, "bovada", "2026-10-14T16:29:00Z", "WSH", "MTL", 6.0, -110, -110))
+        self.con.commit()
+        lock_feed(self.con, feed(), LOCK_AT)
+        before = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        self.assertEqual((before["market"], before["side"], before["line"]), ("total", "under", 6.0))
+        self.assertEqual(before["rule_version"], RULE_VERSION)
+        self.assertEqual(before["push_probability"], 0)
+        result = {"official_home_goals": 4, "official_away_goals": 2,
+                  "statistical_home_goals": 4, "statistical_away_goals": 2,
+                  "home_team": "WSH", "away_team": "MTL",
+                  "official_winner": "home", "shootout_decided": 0}
+        grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "f" * 64, "fixture")
+        export = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        self.assertIsNone(export["result"]["won"])
+        self.assertTrue(export["result"]["push"])
+        self.assertEqual(export["result"]["settlement"], "push")
+        self.assertTrue(export["quote_fresh"])
+        rows = self.con.execute("SELECT rule_version, push_probability FROM nhl_model_picks").fetchall()
+        self.assertTrue(all(row["rule_version"] == RULE_VERSION for row in rows))
+
     def test_read_api_carries_the_frozen_pick_and_its_quote(self):
         self._insert_line("2026-10-14T16:29:00Z", -1.5)
         lock_feed(self.con, feed(), LOCK_AT)
