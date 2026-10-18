@@ -1,0 +1,167 @@
+{
+ "b3_elo": {
+  "2019": {
+   "n": 1212,
+   "tau2": null,
+   "note": "insufficient history"
+  },
+  "2020": {
+   "n": 952,
+   "tau2": 0.7500000000000002,
+   "fire_rate": 0.21428571428571427,
+   "hit_rate_when_fired": 0.7745098039215687,
+   "n_fired": 204,
+   "brier_all_games_isotonic": 0.21495775210633644
+  },
+  "2021": {
+   "n": 1396,
+   "tau2": 0.7600000000000002,
+   "fire_rate": 0.24426934097421205,
+   "hit_rate_when_fired": 0.8211143695014663,
+   "n_fired": 341,
+   "brier_all_games_isotonic": 0.21355649810768879
+  },
+  "2022": {
+   "n": 1400,
+   "tau2": 0.7900000000000003,
+   "fire_rate": 0.15357142857142858,
+   "hit_rate_when_fired": 0.8232558139534883,
+   "n_fired": 215,
+   "brier_all_games_isotonic": 0.20683035245611803
+  },
+  "2023": {
+   "n": 1400,
+   "tau2": 0.7900000000000003,
+   "fire_rate": 0.19214285714285714,
+   "hit_rate_when_fired": 0.8215613382899628,
+   "n_fired": 269,
+   "brier_all_games_isotonic": 0.21230663108405987
+  },
+  "2024": {
+   "n": 1393,
+   "tau2": 0.7800000000000002,
+   "fire_rate": 0.176597272074659,
+   "hit_rate_when_fired": 0.7398373983739838,
+   "n_fired": 246,
+   "brier_all_games_isotonic": 0.23040178171208053
+  },
+  "2025": {
+   "n": 1394,
+   "tau2": 0.7900000000000003,
+   "fire_rate": 0.07747489239598278,
+   "hit_rate_when_fired": 0.7870370370370371,
+   "n_fired": 108,
+   "brier_all_games_isotonic": 0.2087795005320018
+  }
+ },
+ "b5_xg": {
+  "2019": {
+   "n": 1212,
+   "tau2": null,
+   "note": "insufficient history"
+  },
+  "2020": {
+   "n": 952,
+   "tau2": 0.7800000000000002,
+   "fire_rate": 0.14495798319327732,
+   "hit_rate_when_fired": 0.7463768115942029,
+   "n_fired": 138,
+   "brier_all_games_isotonic": 0.21359580748147036
+  },
+  "2021": {
+   "n": 1396,
+   "tau2": 0.7400000000000002,
+   "fire_rate": 0.12822349570200572,
+   "hit_rate_when_fired": 0.7541899441340782,
+   "n_fired": 179,
+   "brier_all_games_isotonic": 0.21989655265685332
+  },
+  "2022": {
+   "n": 1400,
+   "tau2": 0.7300000000000002,
+   "fire_rate": 0.18071428571428572,
+   "hit_rate_when_fired": 0.8063241106719368,
+   "n_fired": 253,
+   "brier_all_games_isotonic": 0.209530323383169
+  },
+  "2023": {
+   "n": 1400,
+   "tau2": 0.7500000000000002,
+   "fire_rate": 0.18285714285714286,
+   "hit_rate_when_fired": 0.76953125,
+   "n_fired": 256,
+   "brier_all_games_isotonic": 0.21541539688937733
+  },
+  "2024": {
+   "n": 1393,
+   "tau2": 0.7500000000000002,
+   "fire_rate": 0.19239052404881551,
+   "hit_rate_when_fired": 0.7089552238805971,
+   "n_fired": 268,
+   "brier_all_games_isotonic": 0.22776895534042704
+  },
+  "2025": {
+   "n": 1394,
+   "tau2": 0.7300000000000002,
+   "fire_rate": 0.1757532281205165,
+   "hit_rate_when_fired": 0.8040816326530612,
+   "n_fired": 245,
+   "brier_all_games_isotonic": 0.20635889393039364
+  }
+ },
+ "b7_elo_xg": {
+  "2019": {
+   "n": 1212,
+   "tau2": null,
+   "note": "insufficient history"
+  },
+  "2020": {
+   "n": 952,
+   "tau2": 0.7300000000000002,
+   "fire_rate": 0.3025210084033613,
+   "hit_rate_when_fired": 0.7673611111111112,
+   "n_fired": 288,
+   "brier_all_games_isotonic": 0.21148342483383367
+  },
+  "2021": {
+   "n": 1396,
+   "tau2": 0.7500000000000002,
+   "fire_rate": 0.3123209169054441,
+   "hit_rate_when_fired": 0.786697247706422,
+   "n_fired": 436,
+   "brier_all_games_isotonic": 0.2156618439615999
+  },
+  "2022": {
+   "n": 1400,
+   "tau2": 0.7700000000000002,
+   "fire_rate": 0.19142857142857142,
+   "hit_rate_when_fired": 0.8097014925373134,
+   "n_fired": 268,
+   "brier_all_games_isotonic": 0.20721987155841548
+  },
+  "2023": {
+   "n": 1400,
+   "tau2": 0.7900000000000003,
+   "fire_rate": 0.16642857142857143,
+   "hit_rate_when_fired": 0.8197424892703863,
+   "n_fired": 233,
+   "brier_all_games_isotonic": 0.2113787047759564
+  },
+  "2024": {
+   "n": 1393,
+   "tau2": 0.7800000000000002,
+   "fire_rate": 0.14860014357501794,
+   "hit_rate_when_fired": 0.7294685990338164,
+   "n_fired": 207,
+   "brier_all_games_isotonic": 0.22928858057140977
+  },
+  "2025": {
+   "n": 1394,
+   "tau2": 0.7600000000000002,
+   "fire_rate": 0.09469153515064563,
+   "hit_rate_when_fired": 0.8257575757575758,
+   "n_fired": 132,
+   "brier_all_games_isotonic": 0.2064596085513147
+  }
+ }
+}

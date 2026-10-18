@@ -2,37 +2,55 @@
  "note": "structural audit; no historical book puck lines exist in this checkout",
  "cases": [],
  "summary": {
-  "n": 16959,
-  "mean_model_p_cover": 0.48888808208717266,
-  "empirical_cover_rate": 0.5021522495430155,
+  "n": 14041,
+  "mean_model_p_cover": 0.4916218767648996,
+  "empirical_cover_rate": 0.4976141300477174,
   "hit_rate_when_model_p_above_50": {
-   "n": 16959,
-   "n_above": 7976,
-   "hit_rate_above": 0.6984704112337011,
-   "hit_rate_below": 0.32784147834799066
+   "n": 14041,
+   "n_above": 5844,
+   "hit_rate_above": 0.7257015742642026,
+   "hit_rate_below": 0.33500060997926073
   },
-  "brier_on_calls": 0.22514961119166646,
-  "brier_on_calls_constant_base": 0.2499953678219046,
+  "brier_on_calls": 0.2088849823870808,
+  "brier_on_calls_constant_base": 0.24999430762457078,
   "base_rate_all_games": 0.674794969928923
  },
  "calibration_on_calls": [
   {
    "bin": "0.00..0.40",
-   "n": 8982,
-   "mean_p": 0.2040243920181176,
-   "cover_rate": 0.32776664439991093
+   "n": 7202,
+   "mean_p": 0.2988115243074072,
+   "cover_rate": 0.3144959733407387
   },
   {
    "bin": "0.40..0.45",
-   "n": 1,
-   "mean_p": 0.4042910585553263,
-   "cover_rate": 1.0
+   "n": 699,
+   "mean_p": 0.42210249112492826,
+   "cover_rate": 0.46065808297567956
+  },
+  {
+   "bin": "0.45..0.50",
+   "n": 296,
+   "mean_p": 0.4700770305389872,
+   "cover_rate": 0.5371621621621622
+  },
+  {
+   "bin": "0.50..0.55",
+   "n": 93,
+   "mean_p": 0.5198782945772843,
+   "cover_rate": 0.6129032258064516
+  },
+  {
+   "bin": "0.55..0.60",
+   "n": 18,
+   "mean_p": 0.5668935273437973,
+   "cover_rate": 0.5555555555555556
   },
   {
    "bin": "0.60..1.01",
-   "n": 7976,
-   "mean_p": 0.8096917758213483,
-   "cover_rate": 0.6984704112337011
+   "n": 5733,
+   "mean_p": 0.742731025007896,
+   "cover_rate": 0.7280655852084423
   }
  ]
 }

@@ -8,136 +8,640 @@
   "tuning_n": 0,
   "tuning_acc": null,
   "eval_n": 1212,
-  "eval_acc": 0.6988448844884488,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5107260726072608,
+  "fallback_rate": 0.2607260726072607,
   "tier_usage": {
-   "lost": 0.30115511551155116,
-   "won": 0.6988448844884488,
-   "fallback": 0.0
+   "ml": 0.1707920792079208,
+   "cover": 0.5684818481848185,
+   "fallback": 0.2607260726072607
   },
-  "won": 847,
-  "lost": 365,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 207,
+   "cover": 689,
+   "fallback": 316
+  },
+  "won": 619,
+  "lost": 277,
+  "fallback": 316,
+  "baselines_prior_season": {
+   "ml": null,
+   "cover": null,
+   "total": null,
+   "source_season": 2018
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.1707920792079208,
+    "n_games": 207,
+    "n_decisions": 207,
+    "hit_rate": 0.6763285024154589,
+    "brier": 0.2184214173394314,
+    "mean_prob": 0.6301067111443003,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.5684818481848185,
+    "n_games": 689,
+    "n_decisions": 689,
+    "hit_rate": 0.6952104499274311,
+    "brier": 0.21144371172637524,
+    "mean_prob": 0.7024368482200857,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2607260726072607,
+    "n_games": 316,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2020": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 1212,
-  "tuning_acc": 0.7112211221122112,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 952,
-  "eval_acc": 0.7090336134453782,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5220588235294118,
+  "fallback_rate": 0.24789915966386555,
   "tier_usage": {
-   "lost": 0.29096638655462187,
-   "won": 0.7090336134453782,
-   "fallback": 0.0
+   "cover": 0.5273109243697479,
+   "ml": 0.22478991596638656,
+   "fallback": 0.24789915966386555
   },
-  "won": 675,
-  "lost": 277,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 502,
+   "ml": 214,
+   "fallback": 236
+  },
+  "won": 497,
+  "lost": 219,
+  "fallback": 236,
+  "baselines_prior_season": {
+   "ml": 0.5453795379537953,
+   "cover": 0.6889438943894389,
+   "total": 0.46947194719471946,
+   "source_season": 2019
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.22478991596638656,
+    "n_games": 214,
+    "n_decisions": 214,
+    "hit_rate": 0.6962616822429907,
+    "brier": 0.21422487961524386,
+    "mean_prob": 0.6374428452842482,
+    "baseline": {
+     "value": 0.5453795379537953,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.5273109243697479,
+    "n_games": 502,
+    "n_decisions": 502,
+    "hit_rate": 0.6932270916334662,
+    "brier": 0.21057477925665347,
+    "mean_prob": 0.7014463906424385,
+    "baseline": {
+     "value": 0.6889438943894389,
+     "source_season": 2019,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.46947194719471946,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.24789915966386555,
+    "n_games": 236,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2021": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 2164,
-  "tuning_acc": 0.7102587800369686,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1396,
-  "eval_acc": 0.6984240687679083,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.49140401146131807,
+  "fallback_rate": 0.2707736389684814,
   "tier_usage": {
-   "won": 0.6984240687679083,
-   "lost": 0.3015759312320917,
-   "fallback": 0.0
+   "cover": 0.4577363896848137,
+   "ml": 0.2714899713467049,
+   "fallback": 0.2707736389684814
   },
-  "won": 975,
-  "lost": 421,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 639,
+   "ml": 379,
+   "fallback": 378
+  },
+  "won": 686,
+  "lost": 332,
+  "fallback": 378,
+  "baselines_prior_season": {
+   "ml": 0.5633086876155268,
+   "cover": 0.6843807763401109,
+   "total": 0.4787430683918669,
+   "source_season": 2020
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.2714899713467049,
+    "n_games": 379,
+    "n_decisions": 379,
+    "hit_rate": 0.7097625329815304,
+    "brier": 0.20970509239864177,
+    "mean_prob": 0.6402629712586274,
+    "baseline": {
+     "value": 0.5633086876155268,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.4577363896848137,
+    "n_games": 639,
+    "n_decisions": 639,
+    "hit_rate": 0.6525821596244131,
+    "brier": 0.229005738456568,
+    "mean_prob": 0.6993018317252373,
+    "baseline": {
+     "value": 0.6843807763401109,
+     "source_season": 2020,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.4787430683918669,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2707736389684814,
+    "n_games": 378,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2022": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 3560,
-  "tuning_acc": 0.7056179775280899,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.7064285714285714,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5007142857142857,
+  "fallback_rate": 0.25857142857142856,
   "tier_usage": {
-   "lost": 0.2935714285714286,
-   "won": 0.7064285714285714,
-   "fallback": 0.0
+   "cover": 0.4328571428571429,
+   "fallback": 0.25857142857142856,
+   "ml": 0.30857142857142855
   },
-  "won": 989,
-  "lost": 411,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 606,
+   "fallback": 362,
+   "ml": 432
+  },
+  "won": 701,
+  "lost": 337,
+  "fallback": 362,
+  "baselines_prior_season": {
+   "ml": 0.5862359550561798,
+   "cover": 0.6752808988764045,
+   "total": 0.45730337078651684,
+   "source_season": 2021
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.30857142857142855,
+    "n_games": 432,
+    "n_decisions": 432,
+    "hit_rate": 0.6666666666666666,
+    "brier": 0.22017614668752353,
+    "mean_prob": 0.6467473914830635,
+    "baseline": {
+     "value": 0.5862359550561798,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.4328571428571429,
+    "n_games": 606,
+    "n_decisions": 606,
+    "hit_rate": 0.6815181518151815,
+    "brier": 0.21627474396061794,
+    "mean_prob": 0.6982283713283638,
+    "baseline": {
+     "value": 0.6752808988764045,
+     "source_season": 2021,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.45730337078651684,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.25857142857142856,
+    "n_games": 362,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2023": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 4960,
-  "tuning_acc": 0.7058467741935484,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.6985714285714286,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.49642857142857144,
+  "fallback_rate": 0.2507142857142857,
   "tier_usage": {
-   "lost": 0.30142857142857143,
-   "won": 0.6985714285714286,
-   "fallback": 0.0
+   "cover": 0.41928571428571426,
+   "ml": 0.33,
+   "fallback": 0.2507142857142857
   },
-  "won": 978,
-  "lost": 422,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 587,
+   "ml": 462,
+   "fallback": 351
+  },
+  "won": 695,
+  "lost": 354,
+  "fallback": 351,
+  "baselines_prior_season": {
+   "ml": 0.588508064516129,
+   "cover": 0.6778225806451613,
+   "total": 0.45,
+   "source_season": 2022
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.33,
+    "n_games": 462,
+    "n_decisions": 462,
+    "hit_rate": 0.6688311688311688,
+    "brier": 0.21783989509292018,
+    "mean_prob": 0.64962537380507,
+    "baseline": {
+     "value": 0.588508064516129,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.41928571428571426,
+    "n_games": 587,
+    "n_decisions": 587,
+    "hit_rate": 0.6575809199318569,
+    "brier": 0.2245953059888148,
+    "mean_prob": 0.6980649343232884,
+    "baseline": {
+     "value": 0.6778225806451613,
+     "source_season": 2022,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.45,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2507142857142857,
+    "n_games": 351,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2024": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 6360,
-  "tuning_acc": 0.7042452830188679,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1393,
-  "eval_acc": 0.6604450825556353,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.4867193108399139,
+  "fallback_rate": 0.26202440775305097,
   "tier_usage": {
-   "won": 0.6604450825556353,
-   "lost": 0.33955491744436467,
-   "fallback": 0.0
+   "cover": 0.43000717875089733,
+   "fallback": 0.26202440775305097,
+   "ml": 0.3079684134960517
   },
-  "won": 920,
-  "lost": 473,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 599,
+   "fallback": 365,
+   "ml": 429
+  },
+  "won": 678,
+  "lost": 350,
+  "fallback": 365,
+  "baselines_prior_season": {
+   "ml": 0.5886792452830188,
+   "cover": 0.6757861635220126,
+   "total": 0.45770440251572325,
+   "source_season": 2023
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.3079684134960517,
+    "n_games": 429,
+    "n_decisions": 429,
+    "hit_rate": 0.6946386946386947,
+    "brier": 0.21424643133065754,
+    "mean_prob": 0.6487340867384424,
+    "baseline": {
+     "value": 0.5886792452830188,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.43000717875089733,
+    "n_games": 599,
+    "n_decisions": 599,
+    "hit_rate": 0.6343906510851419,
+    "brier": 0.23561698852594518,
+    "mean_prob": 0.6979236554537596,
+    "baseline": {
+     "value": 0.6757861635220126,
+     "source_season": 2023,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.45770440251572325,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.26202440775305097,
+    "n_games": 365,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b3_elo|2025": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 7753,
-  "tuning_acc": 0.6963755965432735,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1394,
-  "eval_acc": 0.703012912482066,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5251076040172167,
+  "fallback_rate": 0.23385939741750358,
   "tier_usage": {
-   "won": 0.703012912482066,
-   "lost": 0.296987087517934,
-   "fallback": 0.0
+   "ml": 0.20946915351506457,
+   "cover": 0.5566714490674318,
+   "fallback": 0.23385939741750358
   },
-  "won": 980,
-  "lost": 414,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 292,
+   "cover": 776,
+   "fallback": 326
+  },
+  "won": 732,
+  "lost": 336,
+  "fallback": 326,
+  "baselines_prior_season": {
+   "ml": 0.5889333161356894,
+   "cover": 0.6698052366825745,
+   "total": 0.46936669676254356,
+   "source_season": 2024
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.20946915351506457,
+    "n_games": 292,
+    "n_decisions": 292,
+    "hit_rate": 0.6198630136986302,
+    "brier": 0.23817404907510054,
+    "mean_prob": 0.6350250280969907,
+    "baseline": {
+     "value": 0.5889333161356894,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.5566714490674318,
+    "n_games": 776,
+    "n_decisions": 776,
+    "hit_rate": 0.7100515463917526,
+    "brier": 0.2059879325949588,
+    "mean_prob": 0.6977787634094951,
+    "baseline": {
+     "value": 0.6698052366825745,
+     "source_season": 2024,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.46936669676254356,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.23385939741750358,
+    "n_games": 326,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
+ },
+ "b3_elo|AGGREGATE": {
+  "tiers": {
+   "ml": {
+    "frequency": 0.2640209904886848,
+    "n_games": 2415,
+    "n_decisions": 2415,
+    "hit_rate": 0.6766045548654245,
+    "brier": 0.21853095483177246,
+    "mean_prob": 0.6429650316515354,
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.48081338143653657,
+    "n_games": 4398,
+    "n_decisions": 4398,
+    "hit_rate": 0.6762164620281946,
+    "brier": 0.218646901936416,
+    "mean_prob": 0.6992683143460434,
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2551656280747786,
+    "n_games": 2334,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   }
+  },
+  "note": "cover tier underdog side is a structural approximation: no authentic pregame bookmaker odds exist in the historical dataset, so the model's less-favored side stands in for the book underdog. Not a validated result.",
+  "cover_approximation": true
  },
  "b5_xg|2019": {
   "taus": [
@@ -148,136 +652,640 @@
   "tuning_n": 0,
   "tuning_acc": null,
   "eval_n": 1212,
-  "eval_acc": 0.6897689768976898,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.636963696369637,
+  "fallback_rate": 0.07260726072607261,
   "tier_usage": {
-   "lost": 0.3102310231023102,
-   "won": 0.6897689768976898,
-   "fallback": 0.0
+   "cover": 0.8836633663366337,
+   "fallback": 0.07260726072607261,
+   "ml": 0.04372937293729373
   },
-  "won": 836,
-  "lost": 376,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 1071,
+   "fallback": 88,
+   "ml": 53
+  },
+  "won": 772,
+  "lost": 352,
+  "fallback": 88,
+  "baselines_prior_season": {
+   "ml": null,
+   "cover": null,
+   "total": null,
+   "source_season": 2018
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.04372937293729373,
+    "n_games": 53,
+    "n_decisions": 53,
+    "hit_rate": 0.6981132075471698,
+    "brier": 0.21736882383852532,
+    "mean_prob": 0.6152342238745768,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.8836633663366337,
+    "n_games": 1071,
+    "n_decisions": 1071,
+    "hit_rate": 0.6862745098039216,
+    "brier": 0.21455384806905728,
+    "mean_prob": 0.6990951012743033,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.07260726072607261,
+    "n_games": 88,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2020": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 1212,
-  "tuning_acc": 0.6938943894389439,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 952,
-  "eval_acc": 0.6964285714285714,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.6165966386554622,
+  "fallback_rate": 0.11449579831932773,
   "tier_usage": {
-   "lost": 0.30357142857142855,
-   "won": 0.6964285714285714,
-   "fallback": 0.0
+   "cover": 0.8203781512605042,
+   "ml": 0.06512605042016807,
+   "fallback": 0.11449579831932773
   },
-  "won": 663,
-  "lost": 289,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 781,
+   "ml": 62,
+   "fallback": 109
+  },
+  "won": 587,
+  "lost": 256,
+  "fallback": 109,
+  "baselines_prior_season": {
+   "ml": 0.5363036303630363,
+   "cover": 0.6889438943894389,
+   "total": 0.5214521452145214,
+   "source_season": 2019
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.06512605042016807,
+    "n_games": 62,
+    "n_decisions": 62,
+    "hit_rate": 0.7419354838709677,
+    "brier": 0.20524560654019056,
+    "mean_prob": 0.6193646514711797,
+    "baseline": {
+     "value": 0.5363036303630363,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.8203781512605042,
+    "n_games": 781,
+    "n_decisions": 781,
+    "hit_rate": 0.6927016645326505,
+    "brier": 0.21134034681371194,
+    "mean_prob": 0.6991954329641983,
+    "baseline": {
+     "value": 0.6889438943894389,
+     "source_season": 2019,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5214521452145214,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.11449579831932773,
+    "n_games": 109,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2021": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 2164,
-  "tuning_acc": 0.6950092421441775,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1396,
-  "eval_acc": 0.6697707736389685,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.578080229226361,
+  "fallback_rate": 0.12177650429799428,
   "tier_usage": {
-   "won": 0.6697707736389685,
-   "lost": 0.3302292263610315,
-   "fallback": 0.0
+   "cover": 0.8087392550143266,
+   "ml": 0.06948424068767908,
+   "fallback": 0.12177650429799428
   },
-  "won": 935,
-  "lost": 461,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 1129,
+   "ml": 97,
+   "fallback": 170
+  },
+  "won": 807,
+  "lost": 419,
+  "fallback": 170,
+  "baselines_prior_season": {
+   "ml": 0.5425138632162662,
+   "cover": 0.6843807763401109,
+   "total": 0.5194085027726433,
+   "source_season": 2020
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.06948424068767908,
+    "n_games": 97,
+    "n_decisions": 97,
+    "hit_rate": 0.6804123711340206,
+    "brier": 0.2225873923935453,
+    "mean_prob": 0.614940949639974,
+    "baseline": {
+     "value": 0.5425138632162662,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.8087392550143266,
+    "n_games": 1129,
+    "n_decisions": 1129,
+    "hit_rate": 0.6563330380868024,
+    "brier": 0.22438810898170441,
+    "mean_prob": 0.6937327910907579,
+    "baseline": {
+     "value": 0.6843807763401109,
+     "source_season": 2020,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5194085027726433,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.12177650429799428,
+    "n_games": 170,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2022": {
   "taus": [
-   0.55,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 3560,
-  "tuning_acc": 0.6879213483146067,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.7021428571428572,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5742857142857143,
+  "fallback_rate": 0.15642857142857142,
   "tier_usage": {
-   "lost": 0.2978571428571429,
-   "won": 0.7021428571428572,
-   "fallback": 0.0
+   "cover": 0.7257142857142858,
+   "fallback": 0.15642857142857142,
+   "ml": 0.11785714285714285
   },
-  "won": 983,
-  "lost": 417,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 1016,
+   "fallback": 219,
+   "ml": 165
+  },
+  "won": 804,
+  "lost": 377,
+  "fallback": 219,
+  "baselines_prior_season": {
+   "ml": 0.5573033707865168,
+   "cover": 0.6752808988764045,
+   "total": 0.5244382022471911,
+   "source_season": 2021
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.11785714285714285,
+    "n_games": 165,
+    "n_decisions": 165,
+    "hit_rate": 0.6787878787878788,
+    "brier": 0.22018535750868554,
+    "mean_prob": 0.6203023335064263,
+    "baseline": {
+     "value": 0.5573033707865168,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.7257142857142858,
+    "n_games": 1016,
+    "n_decisions": 1016,
+    "hit_rate": 0.6811023622047244,
+    "brier": 0.21502633239773417,
+    "mean_prob": 0.6898191465066928,
+    "baseline": {
+     "value": 0.6752808988764045,
+     "source_season": 2021,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5244382022471911,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.15642857142857142,
+    "n_games": 219,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2023": {
   "taus": [
-   0.55,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 4960,
-  "tuning_acc": 0.6919354838709677,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.6942857142857143,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5685714285714286,
+  "fallback_rate": 0.15285714285714286,
   "tier_usage": {
-   "won": 0.6942857142857143,
-   "lost": 0.3057142857142857,
-   "fallback": 0.0
+   "cover": 0.77,
+   "ml": 0.07714285714285714,
+   "fallback": 0.15285714285714286
   },
-  "won": 972,
-  "lost": 428,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 1078,
+   "ml": 108,
+   "fallback": 214
+  },
+  "won": 796,
+  "lost": 390,
+  "fallback": 214,
+  "baselines_prior_season": {
+   "ml": 0.558266129032258,
+   "cover": 0.6778225806451613,
+   "total": 0.5272177419354839,
+   "source_season": 2022
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.07714285714285714,
+    "n_games": 108,
+    "n_decisions": 108,
+    "hit_rate": 0.7222222222222222,
+    "brier": 0.20904700525118078,
+    "mean_prob": 0.6189956149690333,
+    "baseline": {
+     "value": 0.558266129032258,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.77,
+    "n_games": 1078,
+    "n_decisions": 1078,
+    "hit_rate": 0.6660482374768089,
+    "brier": 0.22141327690528737,
+    "mean_prob": 0.6919585508032831,
+    "baseline": {
+     "value": 0.6778225806451613,
+     "source_season": 2022,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5272177419354839,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.15285714285714286,
+    "n_games": 214,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2024": {
   "taus": [
-   0.55,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 6360,
-  "tuning_acc": 0.6924528301886792,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1393,
-  "eval_acc": 0.6625987078248384,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5570710696338838,
+  "fallback_rate": 0.15721464465183058,
   "tier_usage": {
-   "won": 0.6625987078248384,
-   "lost": 0.3374012921751615,
-   "fallback": 0.0
+   "cover": 0.7523330940416367,
+   "ml": 0.09045226130653267,
+   "fallback": 0.15721464465183058
   },
-  "won": 923,
-  "lost": 470,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 1048,
+   "ml": 126,
+   "fallback": 219
+  },
+  "won": 776,
+  "lost": 398,
+  "fallback": 219,
+  "baselines_prior_season": {
+   "ml": 0.5599056603773584,
+   "cover": 0.6757861635220126,
+   "total": 0.5319182389937107,
+   "source_season": 2023
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.09045226130653267,
+    "n_games": 126,
+    "n_decisions": 126,
+    "hit_rate": 0.746031746031746,
+    "brier": 0.20331067651330012,
+    "mean_prob": 0.6179421802155772,
+    "baseline": {
+     "value": 0.5599056603773584,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.7523330940416367,
+    "n_games": 1048,
+    "n_decisions": 1048,
+    "hit_rate": 0.6507633587786259,
+    "brier": 0.2280601328478683,
+    "mean_prob": 0.6923299019889899,
+    "baseline": {
+     "value": 0.6757861635220126,
+     "source_season": 2023,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5319182389937107,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.15721464465183058,
+    "n_games": 219,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b5_xg|2025": {
   "taus": [
-   0.55,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 7753,
-  "tuning_acc": 0.687088868824971,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1394,
-  "eval_acc": 0.6908177905308465,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.6061692969870875,
+  "fallback_rate": 0.13414634146341464,
   "tier_usage": {
-   "won": 0.6908177905308465,
-   "lost": 0.30918220946915353,
-   "fallback": 0.0
+   "ml": 0.08321377331420372,
+   "cover": 0.7826398852223816,
+   "fallback": 0.13414634146341464
   },
-  "won": 963,
-  "lost": 431,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 116,
+   "cover": 1091,
+   "fallback": 187
+  },
+  "won": 845,
+  "lost": 362,
+  "fallback": 187,
+  "baselines_prior_season": {
+   "ml": 0.5635237972397782,
+   "cover": 0.6698052366825745,
+   "total": 0.5325680381787695,
+   "source_season": 2024
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.08321377331420372,
+    "n_games": 116,
+    "n_decisions": 116,
+    "hit_rate": 0.6896551724137931,
+    "brier": 0.219009929736934,
+    "mean_prob": 0.616700527234887,
+    "baseline": {
+     "value": 0.5635237972397782,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.7826398852223816,
+    "n_games": 1091,
+    "n_decisions": 1091,
+    "hit_rate": 0.7011915673693859,
+    "brier": 0.20922518984579108,
+    "mean_prob": 0.6930369059875603,
+    "baseline": {
+     "value": 0.6698052366825745,
+     "source_season": 2024,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5325680381787695,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.13414634146341464,
+    "n_games": 187,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
+ },
+ "b5_xg|AGGREGATE": {
+  "tiers": {
+   "ml": {
+    "frequency": 0.07947961080135564,
+    "n_games": 727,
+    "n_decisions": 727,
+    "hit_rate": 0.7056396148555708,
+    "brier": 0.2142595735589111,
+    "mean_prob": 0.6179596721915664,
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.7886738821471521,
+    "n_games": 7214,
+    "n_decisions": 7214,
+    "hit_rate": 0.6756307180482395,
+    "brier": 0.21799280908651725,
+    "mean_prob": 0.6939949237711274,
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.13184650705149228,
+    "n_games": 1206,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   }
+  },
+  "note": "cover tier underdog side is a structural approximation: no authentic pregame bookmaker odds exist in the historical dataset, so the model's less-favored side stands in for the book underdog. Not a validated result.",
+  "cover_approximation": true
  },
  "b7_elo_xg|2019": {
   "taus": [
@@ -288,135 +1296,639 @@
   "tuning_n": 0,
   "tuning_acc": null,
   "eval_n": 1212,
-  "eval_acc": 0.7087458745874587,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.523102310231023,
+  "fallback_rate": 0.22524752475247525,
   "tier_usage": {
-   "won": 0.7087458745874587,
-   "lost": 0.29125412541254125,
-   "fallback": 0.0
+   "ml": 0.21122112211221122,
+   "cover": 0.5635313531353136,
+   "fallback": 0.22524752475247525
   },
-  "won": 859,
-  "lost": 353,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 256,
+   "cover": 683,
+   "fallback": 273
+  },
+  "won": 634,
+  "lost": 305,
+  "fallback": 273,
+  "baselines_prior_season": {
+   "ml": null,
+   "cover": null,
+   "total": null,
+   "source_season": 2018
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.21122112211221122,
+    "n_games": 256,
+    "n_decisions": 256,
+    "hit_rate": 0.640625,
+    "brier": 0.22664341241554778,
+    "mean_prob": 0.6333365361332111,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.5635313531353136,
+    "n_games": 683,
+    "n_decisions": 683,
+    "hit_rate": 0.6881405563689604,
+    "brier": 0.21385209086220408,
+    "mean_prob": 0.69731995542509,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": null,
+     "source_season": 2018,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.22524752475247525,
+    "n_games": 273,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2020": {
   "taus": [
-   0.6000000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 1212,
-  "tuning_acc": 0.7087458745874587,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 952,
-  "eval_acc": 0.7069327731092437,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.509453781512605,
+  "fallback_rate": 0.25945378151260506,
   "tier_usage": {
-   "lost": 0.2930672268907563,
-   "won": 0.7069327731092437,
-   "fallback": 0.0
+   "cover": 0.46638655462184875,
+   "ml": 0.27415966386554624,
+   "fallback": 0.25945378151260506
   },
-  "won": 673,
-  "lost": 279,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 444,
+   "ml": 261,
+   "fallback": 247
+  },
+  "won": 485,
+  "lost": 220,
+  "fallback": 247,
+  "baselines_prior_season": {
+   "ml": 0.5544554455445545,
+   "cover": 0.6889438943894389,
+   "total": 0.5181518151815182,
+   "source_season": 2019
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.27415966386554624,
+    "n_games": 261,
+    "n_decisions": 261,
+    "hit_rate": 0.6819923371647509,
+    "brier": 0.2146921168605615,
+    "mean_prob": 0.6410659886000539,
+    "baseline": {
+     "value": 0.5544554455445545,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.46638655462184875,
+    "n_games": 444,
+    "n_decisions": 444,
+    "hit_rate": 0.6914414414414415,
+    "brier": 0.21104521878733407,
+    "mean_prob": 0.698813475846372,
+    "baseline": {
+     "value": 0.6889438943894389,
+     "source_season": 2019,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5181518151815182,
+     "source_season": 2019,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.25945378151260506,
+    "n_games": 247,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2021": {
   "taus": [
-   0.6000000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 2164,
-  "tuning_acc": 0.7079482439926063,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1396,
-  "eval_acc": 0.6912607449856734,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.4799426934097421,
+  "fallback_rate": 0.27578796561604585,
   "tier_usage": {
-   "won": 0.6912607449856734,
-   "lost": 0.30873925501432664,
-   "fallback": 0.0
+   "ml": 0.32521489971346706,
+   "cover": 0.3989971346704871,
+   "fallback": 0.27578796561604585
   },
-  "won": 965,
-  "lost": 431,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 454,
+   "cover": 557,
+   "fallback": 385
+  },
+  "won": 670,
+  "lost": 341,
+  "fallback": 385,
+  "baselines_prior_season": {
+   "ml": 0.5743992606284658,
+   "cover": 0.6843807763401109,
+   "total": 0.5138632162661737,
+   "source_season": 2020
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.32521489971346706,
+    "n_games": 454,
+    "n_decisions": 454,
+    "hit_rate": 0.6938325991189427,
+    "brier": 0.2137391157802433,
+    "mean_prob": 0.646898021776836,
+    "baseline": {
+     "value": 0.5743992606284658,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.3989971346704871,
+    "n_games": 557,
+    "n_decisions": 557,
+    "hit_rate": 0.6373429084380611,
+    "brier": 0.23330177635686009,
+    "mean_prob": 0.6936862783573597,
+    "baseline": {
+     "value": 0.6843807763401109,
+     "source_season": 2020,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5138632162661737,
+     "source_season": 2020,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.27578796561604585,
+    "n_games": 385,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2022": {
   "taus": [
-   0.5750000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 3560,
-  "tuning_acc": 0.7033707865168539,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.7,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.49642857142857144,
+  "fallback_rate": 0.2507142857142857,
   "tier_usage": {
-   "lost": 0.3,
-   "won": 0.7,
-   "fallback": 0.0
+   "cover": 0.37,
+   "fallback": 0.2507142857142857,
+   "ml": 0.3792857142857143
   },
-  "won": 980,
-  "lost": 420,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 518,
+   "fallback": 351,
+   "ml": 531
+  },
+  "won": 695,
+  "lost": 354,
+  "fallback": 351,
+  "baselines_prior_season": {
+   "ml": 0.5943820224719101,
+   "cover": 0.6752808988764045,
+   "total": 0.5269662921348315,
+   "source_season": 2021
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.3792857142857143,
+    "n_games": 531,
+    "n_decisions": 531,
+    "hit_rate": 0.6534839924670434,
+    "brier": 0.22185975556161489,
+    "mean_prob": 0.6533643171092739,
+    "baseline": {
+     "value": 0.5943820224719101,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.37,
+    "n_games": 518,
+    "n_decisions": 518,
+    "hit_rate": 0.6718146718146718,
+    "brier": 0.21932224414266424,
+    "mean_prob": 0.6910825406463784,
+    "baseline": {
+     "value": 0.6752808988764045,
+     "source_season": 2021,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5269662921348315,
+     "source_season": 2021,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2507142857142857,
+    "n_games": 351,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2023": {
   "taus": [
-   0.6000000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 4960,
-  "tuning_acc": 0.7052419354838709,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1400,
-  "eval_acc": 0.6985714285714286,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.49714285714285716,
+  "fallback_rate": 0.2621428571428571,
   "tier_usage": {
-   "lost": 0.30142857142857143,
-   "won": 0.6985714285714286,
-   "fallback": 0.0
+   "cover": 0.3821428571428571,
+   "ml": 0.3557142857142857,
+   "fallback": 0.2621428571428571
   },
-  "won": 978,
-  "lost": 422,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 535,
+   "ml": 498,
+   "fallback": 367
+  },
+  "won": 696,
+  "lost": 337,
+  "fallback": 367,
+  "baselines_prior_season": {
+   "ml": 0.5969758064516129,
+   "cover": 0.6778225806451613,
+   "total": 0.5326612903225807,
+   "source_season": 2022
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.3557142857142857,
+    "n_games": 498,
+    "n_decisions": 498,
+    "hit_rate": 0.6847389558232931,
+    "brier": 0.2124843202359133,
+    "mean_prob": 0.656148158778026,
+    "baseline": {
+     "value": 0.5969758064516129,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.3821428571428571,
+    "n_games": 535,
+    "n_decisions": 535,
+    "hit_rate": 0.6635514018691588,
+    "brier": 0.22200696467543587,
+    "mean_prob": 0.6918824953872368,
+    "baseline": {
+     "value": 0.6778225806451613,
+     "source_season": 2022,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5326612903225807,
+     "source_season": 2022,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2621428571428571,
+    "n_games": 367,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2024": {
   "taus": [
-   0.6000000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 6360,
-  "tuning_acc": 0.7037735849056603,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1393,
-  "eval_acc": 0.6640344580043073,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.4809763101220388,
+  "fallback_rate": 0.26274228284278534,
   "tier_usage": {
-   "won": 0.6640344580043073,
-   "lost": 0.33596554199569273,
-   "fallback": 0.0
+   "cover": 0.40416367552045945,
+   "fallback": 0.26274228284278534,
+   "ml": 0.3330940416367552
   },
-  "won": 925,
-  "lost": 468,
-  "fallback": 0
+  "tier_counts": {
+   "cover": 563,
+   "fallback": 366,
+   "ml": 464
+  },
+  "won": 670,
+  "lost": 357,
+  "fallback": 366,
+  "baselines_prior_season": {
+   "ml": 0.5970125786163522,
+   "cover": 0.6757861635220126,
+   "total": 0.539937106918239,
+   "source_season": 2023
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.3330940416367552,
+    "n_games": 464,
+    "n_decisions": 464,
+    "hit_rate": 0.6810344827586207,
+    "brier": 0.2149594880248993,
+    "mean_prob": 0.6549265725403,
+    "baseline": {
+     "value": 0.5970125786163522,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.40416367552045945,
+    "n_games": 563,
+    "n_decisions": 563,
+    "hit_rate": 0.6287744227353463,
+    "brier": 0.23647880423572604,
+    "mean_prob": 0.692512553587489,
+    "baseline": {
+     "value": 0.6757861635220126,
+     "source_season": 2023,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.539937106918239,
+     "source_season": 2023,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.26274228284278534,
+    "n_games": 366,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
  },
  "b7_elo_xg|2025": {
   "taus": [
-   0.6000000000000001,
-   0.55,
-   0.55
+   0.6,
+   0.6,
+   0.6
   ],
-  "tuning_n": 7753,
-  "tuning_acc": 0.6966335612021153,
+  "tuning_n": 0,
+  "tuning_acc": null,
   "eval_n": 1394,
-  "eval_acc": 0.7109038737446198,
-  "fallback_rate": 0.0,
+  "eval_acc": 0.5143472022955524,
+  "fallback_rate": 0.2417503586800574,
   "tier_usage": {
-   "won": 0.7109038737446198,
-   "lost": 0.2890961262553802,
-   "fallback": 0.0
+   "ml": 0.25107604017216645,
+   "fallback": 0.2417503586800574,
+   "cover": 0.5071736011477762
   },
-  "won": 991,
-  "lost": 403,
-  "fallback": 0
+  "tier_counts": {
+   "ml": 350,
+   "fallback": 337,
+   "cover": 707
+  },
+  "won": 717,
+  "lost": 340,
+  "fallback": 337,
+  "baselines_prior_season": {
+   "ml": 0.5966722559009415,
+   "cover": 0.6698052366825745,
+   "total": 0.5368244550496581,
+   "source_season": 2024
+  },
+  "tiers": {
+   "ml": {
+    "frequency": 0.25107604017216645,
+    "n_games": 350,
+    "n_decisions": 350,
+    "hit_rate": 0.6142857142857143,
+    "brier": 0.23479563918779778,
+    "mean_prob": 0.6402277808004172,
+    "baseline": {
+     "value": 0.5966722559009415,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob ML side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.5071736011477762,
+    "n_games": 707,
+    "n_decisions": 707,
+    "hit_rate": 0.71004243281471,
+    "brier": 0.205112364924184,
+    "mean_prob": 0.693912482153581,
+    "baseline": {
+     "value": 0.6698052366825745,
+     "source_season": 2024,
+     "desc": "prior-season away +1.5 cover rate (always-away baseline)"
+    },
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": {
+     "value": 0.5368244550496581,
+     "source_season": 2024,
+     "desc": "prior-season higher-prob total side hit rate"
+    },
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.2417503586800574,
+    "n_games": 337,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "baseline": null,
+    "is_structural_approximation": false
+   }
+  },
+  "cover_approximation": true
+ },
+ "b7_elo_xg|AGGREGATE": {
+  "tiers": {
+   "ml": {
+    "frequency": 0.30764184978681536,
+    "n_games": 2814,
+    "n_decisions": 2814,
+    "hit_rate": 0.6666666666666666,
+    "brier": 0.2191319518419339,
+    "mean_prob": 0.648474757127479,
+    "is_structural_approximation": false
+   },
+   "cover": {
+    "frequency": 0.43806712583360663,
+    "n_games": 4007,
+    "n_decisions": 4007,
+    "hit_rate": 0.6715747441976541,
+    "brier": 0.21967776440843592,
+    "mean_prob": 0.6941713385364384,
+    "is_structural_approximation": true
+   },
+   "total": {
+    "frequency": 0.0,
+    "n_games": 0,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   },
+   "fallback": {
+    "frequency": 0.254291024379578,
+    "n_games": 2326,
+    "n_decisions": 0,
+    "hit_rate": null,
+    "brier": null,
+    "mean_prob": null,
+    "is_structural_approximation": false
+   }
+  },
+  "note": "cover tier underdog side is a structural approximation: no authentic pregame bookmaker odds exist in the historical dataset, so the model's less-favored side stands in for the book underdog. Not a validated result.",
+  "cover_approximation": true
  }
 }

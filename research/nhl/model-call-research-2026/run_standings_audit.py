@@ -169,9 +169,8 @@ def main() -> None:
     for model in rb.MODELS:
         rows = []
         for season in rb.EVAL_SEASONS:
-            beta = np.array(cache[str(season)][model])
             evalg = [g for g in games if g["season"] == season and g["game_id"] in standings]
-            mus = rb.predict_mus(evalg, model, elo, beta)
+            mus = rb.predict_mus(evalg, model, elo, cache[str(season)][model])
             train_so = rb.so_rate([g for g in games if g["season"] < season])
             for g in evalg:
                 mh, ma = mus[g["game_id"]]
