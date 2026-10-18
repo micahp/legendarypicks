@@ -28,6 +28,19 @@ GAME_ID = "2026020106"
 MODEL_KEYS = ("B3_elo", "B5_xg_poisson", "B7_elo_xg_poisson")
 
 
+def market_matrix(balanced=False):
+    """Synthetic frozen score probabilities for settlement-rule tests."""
+    matrix = [[0.0] * 8 for _ in range(8)]
+    if balanced:
+        matrix[2][3] = 0.5
+        matrix[3][4] = 0.5
+    else:
+        matrix[2][3] = 0.6
+        matrix[3][3] = 0.2  # tied statistical total 6 becomes official total 7
+        matrix[3][4] = 0.2
+    return matrix
+
+
 def feed():
     models = {}
     for i, key in enumerate(MODEL_KEYS):
@@ -44,6 +57,7 @@ def feed():
             "p_home_plus_1_5": 0.8,
             "p_away_minus_1_5": 0.2,
             "p_away_plus_1_5": 0.74,
+            "joint_score_probability_matrix_home_rows_away_columns": market_matrix(),
         }
     game = {
         "game_id": int(GAME_ID), "game_date": "2026-10-14",
@@ -257,6 +271,53 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(lines["reference"]["over_6_5"]["outcome"], 0)
         self.assertEqual(lines["locked_market"]["puck_home_cover"]["outcome"], 0)
 
+    def test_total_pricing_excludes_push_and_includes_shootout_decider(self):
+        matrix = [[0.0] * 8 for _ in range(8)]
+        matrix[2][2] = .3  # 4 goals: under wins
+        matrix[2][3] = .3  # 5 goals: under wins
+        matrix[3][3] = .2  # 6 statistical goals, 7 official after shootout
+        matrix[4][2] = .2  # 6 official goals: push
+        forecast = {
+            "game_id": int(GAME_ID), "home_win_probability": .5,
+            "p_home_minus_1_5": .2, "p_home_plus_1_5": .8,
+            "p_away_minus_1_5": .2, "p_away_plus_1_5": .8,
+            "p_over_5.5": .4, "p_over_6.5": 0,
+            "joint_score_probability_matrix_home_rows_away_columns": matrix,
+        }
+        quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:29:00Z",
+                 "total_line": 6.0, "over_price": -110, "under_price": -110}
+        candidates = market_candidates("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual(len(candidates), 2)
+        over = next(c for c in candidates if c["side"] == "over")
+        under = next(c for c in candidates if c["side"] == "under")
+        self.assertAlmostEqual(under["model_probability"], .6)
+        self.assertAlmostEqual(over["model_probability"], .2)
+        self.assertAlmostEqual(under["push_probability"], .2)
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "under", 6.0))
+        self.assertAlmostEqual(pick["model_probability"], .6)
+        self.assertAlmostEqual(pick["push_probability"], .2)
+        self.assertAlmostEqual(pick["expected_value"], .6 * (100 / 110) - .2)
+        self.assertAlmostEqual(pick["edge"], .6 / .8 - .5)
+
+    def test_total_market_skipped_if_shootout_adjustment_cannot_be_computed(self):
+        forecast = {"home_win_probability": .5, "p_home_minus_1_5": .2,
+                    "p_home_plus_1_5": .8, "p_away_minus_1_5": .2,
+                    "p_away_plus_1_5": .8, "p_over_5.5": .5, "p_over_6.5": .4}
+        quote = {"total_line": 6.5, "over_price": -110, "under_price": -110}
+        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, GAME_ID), [])
+        quote["total_line"] = 5.5
+        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote, GAME_ID)), 2)
+        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, "2026030106"), [])
+
+    def test_total_pick_push_is_neither_win_nor_loss(self):
+        result = {"official_home_goals": 4, "official_away_goals": 2, "official_winner": "home"}
+        for side in ("over", "under"):
+            settled = grade_pick({"market": "total", "side": side, "line": 6.0}, result)
+            self.assertEqual(settled, {"won": None, "push": True, "settlement": "push"})
+        self.assertEqual(grade_pick({"market": "total", "side": "under", "line": 6.5}, result)["settlement"], "won")
+        self.assertEqual(grade_pick({"market": "total", "side": "over", "line": 6.5}, result)["settlement"], "lost")
+
     def test_whole_goal_market_push_is_not_misgraded_as_a_loss(self):
         matrix = [[0.0] * 5 for _ in range(5)]
         matrix[3][3] = 1.0
@@ -356,13 +417,14 @@ class NHLModelLocks(unittest.TestCase):
         forecast = {"projected_goal_differential_home": 0.3, "projected_total_goals": 5.8,
                     "home_win_probability": 0.55, "p_over_5.5": 0.51, "p_over_6.5": 0.35,
                     "p_home_minus_1_5": 0.26, "p_home_plus_1_5": 0.8,
-                    "p_away_minus_1_5": 0.2, "p_away_plus_1_5": 0.74}
+                    "p_away_minus_1_5": 0.2, "p_away_plus_1_5": 0.74,
+                    "joint_score_probability_matrix_home_rows_away_columns": market_matrix()}
         quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:00:00Z",
                  "home_puck_line": 1.5, "home_puck_price": 200, "away_puck_price": -240,
                  "total_line": 6.5, "over_price": -115, "under_price": -105,
                  "home_moneyline": -128, "away_moneyline": 107}
-        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote)), 6)
-        pick = model_pick("WSH", "MTL", forecast, quote)
+        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote, GAME_ID)), 6)
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
         # Home +1.5 at +200 against a 0.80 cover probability is the best of the six markets.
         self.assertEqual((pick["market"], pick["side"], pick["line"], pick["price"]),
                          ("spread", "home", 1.5, 200))
@@ -379,14 +441,15 @@ class NHLModelLocks(unittest.TestCase):
         forecast = {"projected_goal_differential_home": 0.0, "projected_total_goals": 6.2,
                     "home_win_probability": 0.5, "p_over_5.5": 0.5, "p_over_6.5": 0.5,
                     "p_home_minus_1_5": 0.2, "p_home_plus_1_5": 0.5,
-                    "p_away_minus_1_5": 0.2, "p_away_plus_1_5": 0.5}
+                    "p_away_minus_1_5": 0.2, "p_away_plus_1_5": 0.5,
+                    "joint_score_probability_matrix_home_rows_away_columns": market_matrix(balanced=True)}
         quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:00:00Z",
                  "home_puck_line": -1.5, "home_puck_price": -110, "away_puck_price": -110,
                  "total_line": 6.5, "over_price": -110, "under_price": -110,
                  "home_moneyline": -110, "away_moneyline": -110}
-        candidates = market_candidates("WSH", "MTL", forecast, quote)
+        candidates = market_candidates("WSH", "MTL", forecast, quote, GAME_ID)
         self.assertEqual(len(candidates), 6)
-        pick = model_pick("WSH", "MTL", forecast, quote)
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
         self.assertIsNotNone(pick)
         self.assertLess(pick["expected_value"], 0)
         self.assertFalse(pick_qualifies(pick))
@@ -459,6 +522,30 @@ class NHLModelLocks(unittest.TestCase):
                          ("total", "under", 6.5, -105))
         self.assertEqual(model["grade"]["official_winner"], "home")
         self.assertTrue(pick["result"]["won"])  # official 3-2 is 5 goals, under 6.5
+
+    def test_end_to_end_frozen_whole_total_push_survives_api_export(self):
+        self.con.execute(
+            "INSERT INTO nhl_game_lines (game_id, source, captured_at_utc, home_team, away_team, "
+            "total_line, over_price, under_price) VALUES (?,?,?,?,?,?,?,?)",
+            (GAME_ID, "bovada", "2026-10-14T16:29:00Z", "WSH", "MTL", 6.0, -110, -110))
+        self.con.commit()
+        lock_feed(self.con, feed(), LOCK_AT)
+        before = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        self.assertEqual((before["market"], before["side"], before["line"]), ("total", "under", 6.0))
+        self.assertEqual(before["rule_version"], RULE_VERSION)
+        self.assertEqual(before["push_probability"], 0)
+        result = {"official_home_goals": 4, "official_away_goals": 2,
+                  "statistical_home_goals": 4, "statistical_away_goals": 2,
+                  "home_team": "WSH", "away_team": "MTL",
+                  "official_winner": "home", "shootout_decided": 0}
+        grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "f" * 64, "fixture")
+        export = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        self.assertIsNone(export["result"]["won"])
+        self.assertTrue(export["result"]["push"])
+        self.assertEqual(export["result"]["settlement"], "push")
+        self.assertTrue(export["quote_fresh"])
+        rows = self.con.execute("SELECT rule_version, push_probability FROM nhl_model_picks").fetchall()
+        self.assertTrue(all(row["rule_version"] == RULE_VERSION for row in rows))
 
     def test_read_api_carries_the_frozen_pick_and_its_quote(self):
         self._insert_line("2026-10-14T16:29:00Z", -1.5)
