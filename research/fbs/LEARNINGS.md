@@ -249,3 +249,29 @@ returning production 100%, talent 98.6% and transfer talent 100%.
 **Evidence:** `research/fbs/phase3-e/run.log` coverage block vs the all-games probe.
 **Consequence:** always report coverage on the evaluated population, not on the raw joined table. A rate
 over the wrong denominator looks like missing data and invites a pointless re-audit.
+
+## 2026-10-18 — Form is real but thinner than coaching, and both lose to drive splits
+**Learned:** Recent form (last three team-games minus the team's own full-history rating, on offence and
+defence EPA and success) beat G2 by −0.00260 [−0.00444, −0.00084] pooled and −0.00482 on the 2025 frozen
+holdout, but trailed C2 by +0.01417. Half-life 3 and 10 changed nothing material (−0.00321 and −0.00254
+vs G2).
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §17–18, `research/fbs/phase3-f/`, commit `3afb6a99`.
+**Consequence:** family (f) is closed. The ordering is now clear: drive splits (C2, −0.0168 vs G2) >
+coaching/returning production (E2, −0.0043) > form (F2, −0.0026). Adding another marginal pregame block is
+not where the remaining gap is.
+
+## 2026-10-18 — Form's sign flips by season, so report per-season signs even when pooled is significant
+**Learned:** F2 was worse than G2 in 2022 (+0.0014) and 2023 (+0.0008) and better in 2024 (−0.0055
+[−0.00883, −0.00183]), 2025 (−0.0031) and 2026 (−0.0031). A pooled interval below zero hides that two of
+five seasons are the wrong sign.
+**Evidence:** §18 stability table, `research/fbs/phase3-f/forecasts_walk_forward.csv`.
+**Consequence:** any family carried forward needs a per-season sign test, not just a pooled interval.
+Record the pattern; do not build on two-vs-three split without a mechanism.
+
+## 2026-10-18 — Three families failing the C2 bar is evidence about where the signal is
+**Learned:** (d) rest/travel/weather added nothing, (e) coaching/returning added −0.0043 vs G2, (f) form
+added −0.0026. All three fail C2, and the drive/box-score splits from (c) carry roughly four to six times
+the information of the next best family.
+**Evidence:** §14, §16, §18 gate tables.
+**Consequence:** family (g) should test a different functional form on C2's features rather than adding a
+fourth pregame block. If (g) also fails, the ladder is exhausted and C2 is the game-winner model.
