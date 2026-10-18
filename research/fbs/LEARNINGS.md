@@ -203,3 +203,23 @@ error — the feature table looked complete and was 3 seasons wide.
 **Consequence:** cast ids through `Int64` before stringifying, and assert the merged game count equals
 the input game count. This joins the int-vs-str and empty-join entries above: every id join needs a
 count assertion, not just a dtype cast.
+
+## 2026-10-18 — Rest, travel and weather carry no winner signal in FBS
+**Learned:** D2 = G2 + rest difference, away travel distance and longitude shift scored 0.2138 against
+G2's 0.2133 on 2,397 walk-forward games: D2 − G2 +0.00055 [−0.00018, +0.00135], D2 − D1 +0.00044
+[−0.00021, +0.00116]. Adding kickoff temperature and wind changed nothing (0.2138, D2w − C2 +0.01733).
+No season put D2 ahead of G2 by a resolvable margin.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §13 (audit) and §14 (result), `research/fbs/phase3-d/`,
+commit `5f6bb9d8`.
+**Consequence:** family (d) is closed and will not be revisited with other definitions. Pregame context
+in a seven-day sport is already inside Elo; stop proposing rest/travel/weather features.
+
+## 2026-10-18 — The archive had location and weather after the brief said it would not
+**Learned:** The dispatch expected travel and weather to be absent. `cfb_team_info` carries city,
+state and coordinates for 96.8% of teams (2022+), enough for great-circle travel, and
+`cfb_matchup_line` carries kickoff temperature and wind for 2015–2026 at ~98% fill inside the
+evaluation window. Weather appears in no stats release; the derived matchup table is the only source.
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §13.1–13.3.
+**Consequence:** audit before accepting a brief's claim of absence. Weather stayed secondary because the
+matchup table has undocumented provenance, and the null held with and without it — so the provenance
+question never had to decide the verdict.
