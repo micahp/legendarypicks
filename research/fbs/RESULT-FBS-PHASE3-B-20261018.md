@@ -288,3 +288,82 @@ that already contains field position should look like once both are present.
 
 Family (d) of the ladder (home/rest/weather/travel) against C2, and — separately — a pre-registered
 test of combining (b) and (c) as one feature block, which is the obvious question this result raises.
+
+## 13. Increment (d) data audit and pre-registration — home / rest / weather / travel
+
+Audit run 2026-10-18 against the archive, before any (d) feature code was written. Home field is not
+part of this test: G2 already carries a fixed 55-Elo home advantage, and (d) asks only whether rest,
+travel and weather add beyond it.
+
+### 13.1 Rest — derivable
+
+`cfb_schedules.start_date` is populated for every game (18,758 games from 2022 on, 100% present). Per
+team, ordering a team's games and differencing consecutive `start_date` values gives days of rest.
+
+| measure | value |
+|---|---|
+| team-games with a prior game | 98.0% |
+| median rest | 7.0 days |
+| 5th / 95th percentile | 6.8 / 280.2 days |
+| team-games with rest < 2 days | 10 |
+
+The 95th percentile and the 10 sub-2-day gaps are artefacts of season boundaries and a handful of
+misdated rows, so rest is defined as:
+
+- `rest_days = min(days since previous game, 21)`
+- no previous game, a gap over 30 days (season opener), or a gap under 2 days (bad date) → `rest_days = 7`
+  (the league norm) with a `rest_neutral` flag.
+
+### 13.2 Travel — derivable, with one gap
+
+`cfb_team_info` carries per-team `city` (94.9% of 710 teams), `latitude`/`longitude` (93.5%) and
+`timezone` (41.3%). Timezone is too sparse to use, so travel is measured directly from coordinates:
+
+- `away_travel_km` = great-circle distance from the away team's home coordinates to the home team's,
+  `log1p`-scaled.
+- `lon_shift` = home longitude − away longitude in degrees; positive means the away team travels east,
+  which is the direction with the larger circadian effect.
+
+Gap, stated rather than filled: `cfb_schedules` has `venue` and `venue_id` but **no venue coordinates**,
+so a neutral-site game cannot be located. Neutral games (and any game where either team lacks
+coordinates) get `away_travel_km = 0` and `lon_shift = 0` — the league-average travel effect, since a
+difference of zero is the neutral value — with a `travel_known = false` flag. Roughly 0.4% of FBS games
+are neutral-site.
+
+### 13.3 Weather — absent from the stats releases, present only in a derived table
+
+Confirmed absent: `espn_cfb_team_box`, `espn_cfb_schedules`, `espn_cfb_player_box` and
+`cfb_team_summaries_weekly` carry no weather, temperature or wind column in any season.
+
+It does exist, in exactly one place: `cfb_matchup_line`, 2015–2026, with `temperature`, `wind_speed`,
+`wind_direction` and `weather_condition`. Fill rates for the evaluation window are 99.0% (2022), 99.1%
+(2023), 97.9% (2024), 98.1% (2025) and 58.3% (2026, a season in progress).
+
+That table is the one the leakage register flags as a derived file with undocumented provenance, so
+weather is **secondary**: reported, not part of the primary gate. A result that depends on it would
+depend on a table we do not fully understand.
+
+### 13.4 Pre-registered specification
+
+| model | definition |
+|---|---|
+| D1 | `logit p = logit p_G2 + b0` — recalibration control |
+| **D2 (primary)** | D1 + `rest_diff`, `away_travel_km`, `lon_shift` — the three cleanly derivable covariates |
+| D2-weather (secondary, reported only) | D2 + `temperature_c`, `wind_kph` |
+| C2 | the standing model, refit on the identical population |
+
+- `rest_diff` = home rest − away rest, in days.
+- Game-level covariates, not decayed team ratings: no prior-game input is used, so the ratings
+  machinery does not apply. Weather and travel are known before kickoff; rest is a schedule fact.
+- Model form, ridge 1.0, standardisation on training games, per-date-block refit: identical to (b)/(c).
+- Population: identical 2,397 / 807 / 350. Missing covariates take the neutral value (0) with a flag,
+  the same convention as (c).
+- **Primary comparison: D2 vs C2.** An increment that beats G2 but not C2 is DISCARDED. D2 vs G2 and
+  D2 vs D1 are reported for continuity.
+- Gates: the section 5 table, read against C2 instead of G2, plus `primary_d2_beats_c2`.
+- Column guard: no EPA/wpa/ppa/qbr/havoc column; no final box score; `cfb_schedules` start dates and
+  `cfb_team_info` coordinates only, and `cfb_matchup_line` only for the secondary weather variant.
+
+**If D2 fails, family (d) is discarded and not revisited with different feature definitions.** Rest is
+the only covariate with a plausible mechanism strong enough to move a winner probability, and the archive
+has no other pregame context data.
