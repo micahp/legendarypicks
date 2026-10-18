@@ -367,3 +367,100 @@ depend on a table we do not fully understand.
 **If D2 fails, family (d) is discarded and not revisited with different feature definitions.** Rest is
 the only covariate with a plausible mechanism strong enough to move a winner probability, and the archive
 has no other pregame context data.
+
+## 14. Increment (d) result — rest / travel / weather
+
+Run 2026-10-18 on `feat/fbs-archive`, spec §13 above. Population identical to (b) and (c): 2,397
+walk-forward 2023–25 games, 807 frozen holdout, 350 in 2026 (3,523 games; the one game without CFBD
+play-by-play stays out). C2 refit on the same games reproduces §12 exactly (`C2 − G2 = -0.01677`
+pooled, `-0.02034` holdout). Travel is known for 92.4% of evaluated games and weather for 94.5%.
+
+### Verdict: DISCARDED — (d) carries no information
+
+D2 does not beat C2 (it trails by `+0.01732`, which is simply the size of the drive-split block it does
+not contain), and more importantly it does not beat G2 either: `D2 − G2 = +0.00055 [-0.00018, +0.00135]`
+and `D2 − D1 = +0.00044 [-0.00021, +0.00116]`. Both intervals contain zero, so rest, travel distance and
+longitude shift add nothing beyond a recalibration of Elo. Adding weather changes nothing: `D2w − C2 =
++0.01733`. Per the pre-registration, family (d) is discarded and not revisited with different feature
+definitions.
+
+### Scores
+
+| period | model | games | Brier | BSS | log loss | reliability | resolution |
+|---|---|---|---|---|---|---|---|
+| walk-forward 2023–25 | G2 | 2,397 | 0.2133 | 0.1469 | 0.6162 | 0.0097 | 0.0373 |
+| walk-forward 2023–25 | C2 G2+drive splits | 2,397 | 0.1965 | 0.2140 | 0.5758 | 0.0010 | 0.0467 |
+| walk-forward 2023–25 | D1 G2+intercept | 2,397 | 0.2134 | 0.1465 | 0.6163 | 0.0102 | 0.0384 |
+| walk-forward 2023–25 | **D2 G2+rest/travel/lon** | 2,397 | **0.2138** | 0.1447 | 0.6170 | 0.0078 | 0.0350 |
+| walk-forward 2023–25 | D2w +weather | 2,397 | 0.2138 | 0.1447 | 0.6169 | 0.0066 | 0.0333 |
+| 2025 frozen holdout | G2 | 807 | 0.2208 | 0.1169 | 0.6324 | 0.0048 | 0.0243 |
+| 2025 frozen holdout | C2 | 807 | 0.2004 | 0.1983 | 0.5834 | 0.0037 | 0.0426 |
+| 2025 frozen holdout | D1 | 807 | 0.2207 | 0.1173 | 0.6322 | 0.0046 | 0.0241 |
+| 2025 frozen holdout | **D2** | 807 | **0.2209** | 0.1166 | 0.6324 | 0.0030 | 0.0216 |
+| 2025 frozen holdout | D2w | 807 | 0.2206 | 0.1177 | 0.6317 | 0.0027 | 0.0217 |
+| 2026 development | G2 | 350 | 0.2051 | 0.1795 | 0.5994 | 0.0107 | 0.0357 |
+| 2026 development | C2 | 350 | 0.1936 | 0.2256 | 0.5725 | 0.0065 | 0.0453 |
+| 2026 development | D2 | 350 | 0.2046 | 0.1817 | 0.5979 | 0.0094 | 0.0348 |
+
+### Paired differences, 95% UTC-week blocks
+
+| period | comparison | diff | 95% interval | games | blocks |
+|---|---|---|---|---|---|
+| walk-forward 2023–25 | **D2 − C2** | **+0.01732** | **[+0.01295, +0.02121]** | 2,397 | 65 |
+| walk-forward 2023–25 | D2 − G2 | +0.00055 | [−0.00018, +0.00135] | 2,397 | 65 |
+| walk-forward 2023–25 | D2 − D1 | +0.00044 | [−0.00021, +0.00116] | 2,397 | 65 |
+| walk-forward 2023–25 | D2w − C2 | +0.01733 | [+0.01272, +0.02161] | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − G2 (control) | −0.01677 | [−0.02065, −0.01248] | 2,397 | 65 |
+| 2025 frozen holdout | **D2 − C2** | **+0.02042** | **[+0.01246, +0.02871]** | 807 | 22 |
+| 2025 frozen holdout | D2 − G2 | +0.00009 | [−0.00127, +0.00159] | 807 | 22 |
+| 2025 frozen holdout | D2 − D1 | +0.00017 | [−0.00101, +0.00164] | 807 | 22 |
+| 2026 development | D2 − C2 | +0.01097 | [+0.00079, +0.01889] | 350 | 8 |
+| 2026 development | D2 − G2 | −0.00056 | [−0.00200, +0.00087] | 350 | 8 |
+
+### Gates
+
+| gate | requirement | result |
+|---|---|---|
+| sample pooled / holdout | ≥ 1,500 / ≥ 250 | 2,397 / 807 — pass |
+| primary d2 beats c2 | interval below zero | +0.01732 [+0.01295, +0.02121] — **fail** |
+| information d2 beats d1 | interval below zero | +0.00044 [−0.00021, +0.00116] — **fail** |
+| holdout not worse than +0.002 | ≤ +0.002 | +0.02042 — **fail** |
+| holdout point negative | < 0 | +0.02042 — **fail** |
+| log loss pooled / holdout vs C2 | D2 ≤ C2 | 0.6170 vs 0.5758; 0.6324 vs 0.5834 — **fail** |
+| calibration pooled | within +0.005 of C2 | 0.0078 vs 0.0010 — **fail** |
+| calibration holdout | within +0.005 of C2 | 0.0030 vs 0.0037 — pass |
+
+### Stability
+
+| season | games | G2 | C2 | D2 | D2 − G2 | D2 − C2 |
+|---|---|---|---|---|---|---|
+| 2022 (outside the primary pool) | 776 | 0.2309 | 0.2180 | 0.2342 | +0.0034 [−0.00001, +0.00736] | +0.0162 [+0.00536, +0.02786] |
+| 2023 | 792 | 0.2138 | 0.1905 | 0.2144 | +0.0006 [−0.00069, +0.00232] | +0.0239 [+0.01403, +0.03256] |
+| 2024 | 798 | 0.2179 | 0.2054 | 0.2186 | +0.0007 [−0.00007, +0.00154] | +0.0133 [+0.00703, +0.01885] |
+| 2025 | 807 | 0.2082 | 0.1936 | 0.2085 | +0.0003 [−0.00133, +0.00200] | +0.0149 [+0.00829, +0.02102] |
+| 2026 | 350 | 0.2051 | 0.1936 | 0.2046 | −0.0006 [−0.00200, +0.00087] | +0.0110 [+0.00079, +0.01889] |
+
+No season shows D2 ahead of G2 by a resolvable margin; 2022 is the only season where the point estimate
+is worse with an interval that nearly excludes zero, and it is outside the primary pool.
+
+### What the model leaned on
+
+Frozen 2025 coefficients (standardised): intercept +0.0124, `rest_diff` −0.0065, `away_travel_km`
++0.0647, `lon_shift` −0.0193. The travel coefficient is the largest and still tiny: one standard
+deviation of travel is worth 0.065 in the logit, against 0.53 for points per drive in (c). Rest, the one
+covariate with a plausible mechanism, is indistinguishable from zero and its sign is negative.
+
+### Interpretation
+
+This is the expected shape of a null for pregame context in a sport with a seven-day week: FBS teams
+play on a weekly cadence, byes are scheduled rather than earned, and the short-week cases are rare enough
+that Elo already absorbs them. Travel is a real cost but a small and roughly symmetric one, and the
+drive-level features in (c) already contain the performance consequences that travel would show up in.
+Weather at kickoff is likewise already reflected in the drives that follow.
+
+The null is recorded, not explained away: family (d) is closed.
+
+### Next
+
+Family (e) of the ladder: coaching and roster continuity / talent, tested alone against C2 with the same
+protocol. C2 remains the standing model.
