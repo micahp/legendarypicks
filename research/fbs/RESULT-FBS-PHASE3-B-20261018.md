@@ -1086,3 +1086,131 @@ not read the holdout as confirmation.
 nested in conference means, `lambda_team = 9.0`), with walk-forward Brier 0.1946, holdout 0.2001 and 2026
 0.1908. The ladder is exhausted; further work should be prospective confirmation on games not yet played,
 not another retrospective family.
+
+## 21. Phase 4 pre-registration — final-score distributions
+
+Status: PRE-REGISTERED 2026-10-18, before any Phase 4 model code or any Phase 4 evaluation number.
+Branch `feat/fbs-archive` at `cfcdae2f`. `docs/MODEL-CHECKPOINTS.md` is copied into the repo with this
+commit.
+
+### 21.0 The five checkpoints, for the model these distributions sit on
+
+| # | checkpoint | status |
+|---|---|---|
+| **CP1** | baseline established | **passed** — G2 (Elo/margin) and the drive-split C2 scored on 2,397 walk-forward games, with population and sample size stated in §5–§12 |
+| **CP2** | candidate validated chronologically | **passed** — G2h walk-forward 0.1946 with a paired week-block interval against G2 and C2 (§20) |
+| **CP3** | distribution calibrated | **not passed** — G2h is a win probability only; there is no score distribution to calibrate. Phase 4 is the attempt at CP3 |
+| **CP4** | prospective confirmation | not passed — 2026 played games are development data; the only prospective window is future weeks |
+| **CP5** | production integration approved | not passed, and not an agent's to grant |
+
+A pass on CP3 requires proper scores **and** calibration on identical observations with the per-observation
+PMFs preserved. Phase 4 therefore writes the PMFs it scores, not just aggregates.
+
+### 21.1 The question
+
+G2h ranks winners at 0.1946 Brier. Phase 4 asks whether the same team-strength structure supports a
+**score distribution** good enough to price a spread and a total — a different question with a different
+failure mode, because the win probability is insensitive to the shape of the score distribution.
+
+### 21.2 Ratings (shared input, as-of, no leakage)
+
+A decayed points rating per team, updated only after a game has been played:
+
+- For each team, `S_for`, `S_against`, `W` start empty. After each game: `S ← S·λ + points`,
+  `W ← W·λ + 1`, with `λ = 0.5^(1/6)` (six-game half-life, the same half-life Phase 3 used).
+- The rating used for a game is the state **before** the game, snapshotted at the start of each UTC date
+  block, so no within-block or same-game information enters a forecast.
+- `off_t = log(S_for/W ÷ L)`, `def_t = log(S_against/W ÷ L)`, where `L` is the mean points per team-game
+  among prior games. A team with no prior game gets `off = def = 0` plus a `no_history` flag.
+
+### 21.3 Candidates (each produces a joint distribution over (home points, away points))
+
+| id | model | parameterisation | fitted per block on prior games |
+|---|---|---|---|
+| **H0a** | independent Poisson | `μ_h = exp(α + off_h + def_a + γ/2)`, `μ_a = exp(α + off_a + def_h − γ/2)` | `α` (scaling) and `γ` (home advantage) by Poisson MLE |
+| **H0b** | independent over-dispersed | same means; NegBin2 with `var = μ + μ²/R` | `α, γ` as H0a, then `R` by moments `R = Σμ² / Σ((y−μ)²−μ)`, floored at 0.5, on both sides pooled |
+| **H0c** | bivariate (correlated) | `X_h = Y1 + Z`, `X_a = Y2 + Z`, `Y1~Pois(μ_h−λ3)`, `Y2~Pois(μ_a−λ3)`, `Z~Pois(λ3)`; marginals stay `Pois(μ_h)`, `Pois(μ_a)` | `α, γ` as H0a; `λ3 = max(0, Cov_train(h, a))` capped at `0.8·min(μ_h, μ_a)` and reported, including whether it hit the floor |
+| **H1** | winner-only control | league-average independent Poisson `(μ_h0, μ_a0)` **tilted** by `exp(θ)` on the home-win half so that `P(home wins) = p_G2h`; `θ` solves in closed form because the tilt is a step function on the sign of the margin | `μ_h0, μ_a0` from training league means; no team information at all |
+
+Two further baselines, scored on the same games:
+
+- **Constant** — the same league-average Poisson pair untilted (`θ = 0`). No information beyond the league
+  base rates.
+- **Prior-season team means** — `μ_h` = the home team's prior-season mean points scored, `μ_a` = the away
+  team's, no opponent adjustment, no home advantage, independent Poisson. Teams with no prior season get
+  the league mean.
+
+**Primary candidate: H0b.** H0a and H0c are declared alternates. An alternate can only be adopted if it
+passes every gate *and* beats H0b on both margin and total CRPS with paired intervals excluding zero. That
+rule is fixed now so the choice cannot be made after seeing the table.
+
+**H1 is the control that matters.** Without it there is no way to tell whether a score model learned
+anything beyond the winner model it sits on.
+
+### 21.4 Population
+
+Identical to Phase 3, by construction: the games in `research/fbs/phase3-g/forecasts_walk_forward.csv`
+plus the frozen holdout ledger — 2,397 walk-forward 2023–25, 807 frozen 2025 holdout, 350 in 2026.
+Game 401778314 stays out (it has no CFBD play-by-play). Every model and baseline is scored on exactly the
+same game set; a model that cannot produce a forecast for a game is reported as a coverage failure, never
+silently dropped.
+
+### 21.5 Metrics
+
+**Point accuracy** — MAE, RMSE and bias (mean predicted − observed, with a week-block interval) for home
+points, away points, margin and total, for every model and baseline.
+
+**Distribution quality** — on **margin** and on **total** separately:
+- CRPS (discrete, exact from the PMF).
+- Log score, `−log P(observed)`.
+- Randomized PIT (`F(y−1) + U·P(y)`, `U` drawn from a seeded stream), with a KS test against `U(0,1)`.
+- Coverage of the 50/80/90 **central** intervals and of the **shortest contiguous** intervals containing
+  the same mass, with the **endpoint-atom excess** reported separately: the share of observations sitting
+  on the extreme support edge minus the mass the model assigns there. This is the trap the carries work
+  documented — a central interval pins at the support boundary whenever the mass there exceeds the tail
+  level, and then it covers more than nominal by construction.
+- `sd_pred` against `sd_obs` for both.
+
+**Market-shaped outputs** — scored, never as a bare hit rate:
+- Spread: `P(home covers)` for home giving and getting 3, 7, 10 and 14; Brier and log loss per line,
+  paired against Constant and against H1.
+- Total: `P(over)` at 45, 48, 52, 56 and 60; same treatment.
+- Reliability in five bins per line with counts, and the base rate beside it.
+
+**Comparisons** — paired by game, clustered on UTC calendar week (`season + week_start`), 2,000 bootstrap
+replicates, seed 20261017, 95% percentile intervals. Same machinery as Phase 3.
+
+### 21.6 Gates (fail-closed)
+
+| gate | requirement |
+|---|---|
+| **G-SAMPLE** | walk-forward n ≥ 1,500 and holdout n ≥ 250 |
+| **G-DIST** | primary beats H1 on CRPS for **margin and total**, paired week-block interval entirely below zero, on the 2,397 walk-forward games; and the point difference is negative on the 807-game frozen holdout for both |
+| **G-CAL** | randomized PIT does not reject `U(0,1)` at the 5% level (KS) for margin and total on walk-forward **and** holdout; and central coverage is within ±0.05 of nominal at 50/80/90 for margin and total on walk-forward |
+| **G-SPREAD** | beats **both** Constant and H1 on Brier for cover probability, pooled over the eight lines, paired interval entirely below zero on walk-forward, and negative on the holdout |
+| **G-TOTAL** | the same test for over/under at the five totals |
+
+Adoption requires all five. A model that wins CRPS and loses PIT is **not adopted** — that is the carries
+lesson, and G-CAL is the gate that enforces it here.
+
+### 21.7 What would falsify the whole idea
+
+If H0b fails to beat **H1** on CRPS, then the team-strength structure adds nothing about the score beyond
+the win probability it already produces, and the honest conclusion is that G2h's ratings support a winner
+model and not a score model. That result would be recorded as the answer, not worked around.
+
+### 21.8 Leakage controls
+
+Ratings from prior games only, snapshotted per date block; every fitted parameter (`α, γ, R, λ3, μ_h0,
+μ_a0`, prior-season means) from games strictly before the block; no publisher-derived column; no
+season-to-date aggregate that includes the game being predicted; the Phase 1 harness's one-day UTC embargo
+unchanged.
+
+### 21.9 Deliverables
+
+- `backend/fbs_phase4_scores.py` — ratings, models, PMFs, metrics, gates.
+- `research/fbs/phase4/` — per-observation PMFs for margin and total, per-game parameters, and the metric
+  tables, so every aggregate is recomputable from observation level (the discrete-prop contract).
+- This section as the pre-registration; results appended as §22.
+
+Phase 5 (play-by-play simulation) and Phase 6 (player props) are explicitly out of scope.
