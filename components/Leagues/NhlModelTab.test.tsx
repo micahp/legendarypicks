@@ -173,6 +173,38 @@ describe('NHL model tab previews', () => {
     expect(screen.queryByText('Locked total')).toBeNull()
   })
 
+  it('explains when an apparently positive EV comes from a stale frozen quote', async () => {
+    const stale = {
+      market: 'total', side: 'under', line: 6.5, price: -110,
+      model_probability: .66, push_probability: 0, market_probability: .5,
+      edge: .16, expected_value: .20,
+      line_source: 'bovada', line_captured_at_utc: '2026-10-14T16:00:00Z',
+      settlement_basis: 'official_final_score', provenance: 'lock',
+      priced: true, quote_fresh: false, quote_age_seconds: 5400,
+      qualifies: false, rule_version: 'ev-max-2-settlement', result: null,
+    }
+    const game = {
+      game_id: 2026020111, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(.6), grade: null, pick: stale },
+        B5_xg_poisson: { ...forecast(.5), grade: null, pick: stale },
+        B7_elo_xg_poisson: { ...forecast(.45), grade: null, pick: stale },
+      },
+      result: null, markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [game], previews: [] }),
+    }))
+    render(<NhlModelTab />)
+    await screen.findByText('MTL @ WSH')
+    expect(screen.getByText('Odds too old or unverified to qualify')).toBeTruthy()
+    expect(screen.getByText('+20.0% estimated EV (unverified price)')).toBeTruthy()
+    expect(screen.getByText('Model lean')).toBeTruthy()
+  })
+
   it('says there is no priced recommendation when a locked game has no pick', async () => {
     const locked = {
       game_id: 2026020110, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
