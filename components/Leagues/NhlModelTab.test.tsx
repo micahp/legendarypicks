@@ -56,7 +56,7 @@ describe('NHL model tab previews', () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('DAL @ COL')).toBeTruthy())
     expect(screen.queryByText('LOCKED')).toBeNull()
-    expect(screen.getByText('Vegas line')).toBeTruthy()
+    expect(screen.getByText('Puck line')).toBeTruthy()
     expect(screen.getByText('Vegas total')).toBeTruthy()
   })
 
@@ -69,9 +69,9 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('3-3-0 · 6 pts')).toBeTruthy()
     expect(screen.getByText('WSH -1.5')).toBeTruthy()
     expect(screen.getByText('WSH -0.4')).toBeTruthy()
-    expect(screen.getByText('1.1 pts (MTL)')).toBeTruthy()
+    expect(screen.getByText('1.1 goals (MTL)')).toBeTruthy()
     expect(screen.getByText('6.5')).toBeTruthy()
-    expect(screen.getByText('-0.7 pts')).toBeTruthy()
+    expect(screen.getByText('-0.7 goals')).toBeTruthy()
     // No pick in the payload: the browser never invents one, so the card reads n/a.
     expect(screen.getByText('n/a')).toBeTruthy()
   })
@@ -103,10 +103,10 @@ describe('NHL model tab previews', () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
     expect(screen.getByText('MTL +1.5')).toBeTruthy()
-    expect(screen.getByText('+6.1% edge')).toBeTruthy()
-    expect(screen.getByText('+4.8% EV')).toBeTruthy()
+    expect(screen.getByText('+6.1% probability edge')).toBeTruthy()
+    expect(screen.getByText('+4.8% estimated EV')).toBeTruthy()
     // The market columns are the frozen basis, not the live line.
-    expect(screen.getByText('Locked line')).toBeTruthy()
+    expect(screen.getByText('Locked puck line')).toBeTruthy()
     expect(screen.getByText('Locked total')).toBeTruthy()
   })
 
@@ -136,9 +136,41 @@ describe('NHL model tab previews', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('No qualifying bet')).toBeTruthy()
+    expect(screen.getByText('No positive estimated betting EV')).toBeTruthy()
     expect(screen.getByText('Model lean')).toBeTruthy()
-    expect(screen.getByText('-4.5% EV')).toBeTruthy()
+    expect(screen.getByText('-4.5% estimated EV')).toBeTruthy()
+  })
+
+  it('calls an unlocked forecast quote a current line, not a locked line', async () => {
+    const quote = {
+      home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z',
+      home_puck_line: -1.5, total_line: 6, home_moneyline: -128, away_moneyline: 107,
+      over_price: -110, under_price: -110, home_puck_price: 200, away_puck_price: -240,
+    }
+    const previewPick = {
+      market: 'total', side: 'under', line: 6, price: -110,
+      model_probability: .54, market_probability: .5, edge: .04, expected_value: .03,
+      line_source: 'bovada', line_captured_at_utc: quote.captured_at_utc,
+      settlement_basis: 'official_final_score', provenance: 'preview', priced: true,
+      qualifies: true, rule_version: 'ev-max-2-settlement', push_probability: .15,
+      quote, result: null,
+    }
+    const value = {
+      ...payload,
+      previews: [{ ...preview, models: {
+        B3_elo: { ...forecast(.55), pick: previewPick },
+        B5_xg_poisson: { ...forecast(.52), pick: previewPick },
+        B7_elo_xg_poisson: { ...forecast(.535), pick: previewPick },
+      } }],
+      lines: { '2026020106': quote },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(value) }))
+    render(<NhlModelTab />)
+    await screen.findByText('MTL @ WSH')
+    expect(screen.getByText('Puck line')).toBeTruthy()
+    expect(screen.getByText('Vegas total')).toBeTruthy()
+    expect(screen.queryByText('Locked puck line')).toBeNull()
+    expect(screen.queryByText('Locked total')).toBeNull()
   })
 
   it('says there is no priced recommendation when a locked game has no pick', async () => {
@@ -195,8 +227,49 @@ describe('NHL model tab previews', () => {
     // A graded game leaves the projections view; the record is where it is read.
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
-    expect(screen.getByText('Pick ✗')).toBeTruthy()
+    expect(screen.getByText('Pick ✗ Lost')).toBeTruthy()
   })
+  it('reports a frozen integer-total push as a push rather than a loss', async () => {
+    const grade = {
+      official_home_goals: 4, official_away_goals: 2,
+      statistical_home_goals: 4, statistical_away_goals: 2,
+      official_winner: 'home' as const, shootout_decided: false,
+      home_win_brier: .2, home_win_logloss: .5, home_goal_error: 0, away_goal_error: 0,
+      graded_at_utc: '2026-10-15T14:35:05Z',
+    }
+    const pushPick = {
+      market: 'total', side: 'under', line: 6, price: -110,
+      model_probability: .46, push_probability: .14,
+      market_probability: .5, edge: .02, expected_value: .09,
+      line_source: 'bovada', line_captured_at_utc: '2026-10-14T17:28:00Z',
+      settlement_basis: 'official_final_score', provenance: 'lock', priced: true,
+      qualifies: true, rule_version: 'ev-max-2-settlement',
+      result: { won: null, push: true, settlement: 'push' },
+    }
+    const game = {
+      game_id: 2026020108, game_date: '2026-10-14',
+      scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z',
+      locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(.6), grade, pick: pushPick },
+        B5_xg_poisson: { ...forecast(.5), grade, pick: pushPick },
+        B7_elo_xg_poisson: { ...forecast(.45), grade, pick: pushPick },
+      },
+      result: grade,
+      markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [game], previews: [] }),
+    }))
+    render(<NhlModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+    expect(screen.getByText('Pick ↔ Push')).toBeTruthy()
+    expect(screen.queryByText('Pick ✗ Lost')).toBeNull()
+  })
+
   it('compares prospective Brier and goals accuracy across all three models in a tooltip, including unpriced games', async () => {
     const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
       const grade = {
@@ -242,7 +315,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
-    expect(screen.getAllByText('Not recommended')).toHaveLength(2)
+    expect(screen.getAllByText('No pick recorded')).toHaveLength(2)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
     expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
     expect(screen.getByText('· Selected')).toBeTruthy()
