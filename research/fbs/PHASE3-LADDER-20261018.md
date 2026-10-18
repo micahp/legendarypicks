@@ -121,6 +121,33 @@ each date block on all prior games.
 **Fixed before the run** (not tuned afterwards): half-life 6, `K = 150`, ridge 1.0, EPA > 0 success,
 EPA >= 2.0 explosive, distance and field-position buckets as above.
 
+## 4a. Amendments made before the run (no result had been seen)
+
+Recorded here rather than edited into the sections above, so the change history is visible:
+
+1. **EP is fitted by ridge regression, not by state-cell means.** Cell means over 215 states gave a
+   noisy surface (EPA SD 4.0 per play, explosive rate 30%) because adjacent cells were estimated from
+   disjoint small samples. EP is now a ridge regression on (down dummies, distance-bucket dummies,
+   field position, field position squared, fourth-down × field), accumulated as normal equations per
+   season and solved on strictly earlier seasons only.
+2. **Points per play come from `pts_scored`.** `offense_score_play` is a 0/1 scoring flag, not points
+   (season value counts: only 0 and 1), so using it as points flattened the EP surface to a range of
+   ±2. `pts_scored` takes only {-7, -2, 0, 3, 7}; the per-game sum is 52.0 points, matching the
+   schedule.
+3. **EPA includes the points on the play**: `EPA = EP(next state) − EP(current state) + points on the
+   play`, with possession flipped only for non-scoring plays (after a score the next play is the
+   scoring team's kickoff). This makes EPA invariant to any constant shift in the EP surface, which
+   the earlier form was not.
+4. **Teams with no prior plays get the league mean and a `has_history` flag** (section 4), instead of
+   a NaN rating that silently dropped their games.
+5. **The bootstrap uses UTC calendar-week blocks** (`season` + Monday week start), matching Phase 1's
+   harness, rather than day blocks. Day blocks ignore within-week correlation.
+
+The EPA scale here is not the published scale: an EP fitted on remaining scoring margin absorbs
+team-quality differences, so EPA SD is about 3.8 rather than about 1.5. `explosive = EPA >= 2` is
+therefore roughly a top-quarter play rather than a top-decile one. The model standardises features, so
+the scale does not affect the fit; only the interpretation of the explosive threshold changes.
+
 ## 5. Gates
 
 An increment is ADOPTED only if every gate passes; otherwise it is DISCARDED and recorded.
