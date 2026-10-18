@@ -271,6 +271,53 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(lines["reference"]["over_6_5"]["outcome"], 0)
         self.assertEqual(lines["locked_market"]["puck_home_cover"]["outcome"], 0)
 
+    def test_total_pricing_excludes_push_and_includes_shootout_decider(self):
+        matrix = [[0.0] * 8 for _ in range(8)]
+        matrix[2][2] = .3  # 4 goals: under wins
+        matrix[2][3] = .3  # 5 goals: under wins
+        matrix[3][3] = .2  # 6 statistical goals, 7 official after shootout
+        matrix[4][2] = .2  # 6 official goals: push
+        forecast = {
+            "game_id": int(GAME_ID), "home_win_probability": .5,
+            "p_home_minus_1_5": .2, "p_home_plus_1_5": .8,
+            "p_away_minus_1_5": .2, "p_away_plus_1_5": .8,
+            "p_over_5.5": .4, "p_over_6.5": 0,
+            "joint_score_probability_matrix_home_rows_away_columns": matrix,
+        }
+        quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:29:00Z",
+                 "total_line": 6.0, "over_price": -110, "under_price": -110}
+        candidates = market_candidates("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual(len(candidates), 2)
+        over = next(c for c in candidates if c["side"] == "over")
+        under = next(c for c in candidates if c["side"] == "under")
+        self.assertAlmostEqual(under["model_probability"], .6)
+        self.assertAlmostEqual(over["model_probability"], .2)
+        self.assertAlmostEqual(under["push_probability"], .2)
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "under", 6.0))
+        self.assertAlmostEqual(pick["model_probability"], .6)
+        self.assertAlmostEqual(pick["push_probability"], .2)
+        self.assertAlmostEqual(pick["expected_value"], .6 * (100 / 110) - .2)
+        self.assertAlmostEqual(pick["edge"], .6 / .8 - .5)
+
+    def test_total_market_skipped_if_shootout_adjustment_cannot_be_computed(self):
+        forecast = {"home_win_probability": .5, "p_home_minus_1_5": .2,
+                    "p_home_plus_1_5": .8, "p_away_minus_1_5": .2,
+                    "p_away_plus_1_5": .8, "p_over_5.5": .5, "p_over_6.5": .4}
+        quote = {"total_line": 6.5, "over_price": -110, "under_price": -110}
+        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, GAME_ID), [])
+        quote["total_line"] = 5.5
+        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote, GAME_ID)), 2)
+        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, "2026030106"), [])
+
+    def test_total_pick_push_is_neither_win_nor_loss(self):
+        result = {"official_home_goals": 4, "official_away_goals": 2, "official_winner": "home"}
+        for side in ("over", "under"):
+            settled = grade_pick({"market": "total", "side": side, "line": 6.0}, result)
+            self.assertEqual(settled, {"won": None, "push": True, "settlement": "push"})
+        self.assertEqual(grade_pick({"market": "total", "side": "under", "line": 6.5}, result)["settlement"], "won")
+        self.assertEqual(grade_pick({"market": "total", "side": "over", "line": 6.5}, result)["settlement"], "lost")
+
     def test_whole_goal_market_push_is_not_misgraded_as_a_loss(self):
         matrix = [[0.0] * 5 for _ in range(5)]
         matrix[3][3] = 1.0
