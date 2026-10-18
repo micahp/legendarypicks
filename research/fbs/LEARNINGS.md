@@ -182,3 +182,24 @@ owner's, not a brief's checklist.
 **Evidence:** removal commit `d9df3bc3` (section 11 deleted, endpoint section renumbered).
 **Consequence:** no licence field, column, section or note anywhere. If a brief asks for one, say so and
 stop rather than re-adding it.
+
+## 2026-10-18 — Drive splits beat the prior-play model, but by less and not every season
+**Learned:** Increment (c) — seven drive/box-score differences from `espn_cfb_pbp`, as-of ratings —
+scored 0.1965 against B2's 0.2027 and G2's 0.2133 on 2,397 walk-forward games (C2 − B2 −0.00609
+[−0.00925, −0.00258], 65 week blocks). Frozen 2025: C2 0.2004 vs B2 0.2080, C2 − B2 −0.00755
+[−0.01234, −0.00262]. But the per-season edge over B2 is not universal: 2022 +0.0003, 2024 −0.0038
+[−0.0091, +0.0024], 2026 −0.0018 [−0.0056, +0.0025].
+**Evidence:** `RESULT-FBS-PHASE3-B-20261018.md` §12, `research/fbs/phase3-c/metrics.csv` and
+`paired.csv`, commit `b2b6076d`.
+**Consequence:** C2 is the standing single family, and its gain is smaller than (b)'s
+(−0.0061 vs −0.0107 against G2). Any further family now has to clear a higher bar, and the combined
+(b)+(c) block is the obvious next pre-registration rather than another single family.
+
+## 2026-10-18 — Float team ids produce a silent zero-match, a third variant of the id bug
+**Learned:** ESPN `pos_team_id` arrives as int64 in some seasons and float64 in others, so `astype(str)`
+gave "1234.0" against the side map's "1234" and the rating merge matched 853 of 2,670 games with no
+error — the feature table looked complete and was 3 seasons wide.
+**Evidence:** caught while building (c); the 3-season probe returned 2,575 games instead of 2,670.
+**Consequence:** cast ids through `Int64` before stringifying, and assert the merged game count equals
+the input game count. This joins the int-vs-str and empty-join entries above: every id join needs a
+count assertion, not just a dtype cast.
