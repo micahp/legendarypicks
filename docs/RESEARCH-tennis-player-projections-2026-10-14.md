@@ -1,16 +1,9 @@
 # RESEARCH: Tennis player-projection engine
 
-<<<<<<< HEAD
 - **Date:** 2026-10-14
 - **Status:** Research plan, not a validated model
 - **Repository:** `micahp/legendarypicks`, branch `docs/tennis-prediction-brief`
 - **Related:** [Tennis match prediction brief](BRIEF-tennis-prediction-model.md)
-=======
-**Date:** 2026-10-14  
-**Status:** Research plan, not a validated model  
-**Repository:** `micahp/legendarypicks`, branch `docs/tennis-prediction-brief`  
-**Related:** [Tennis match prediction brief](BRIEF-tennis-prediction-model.md)
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
 
 ## Decision
 
@@ -25,15 +18,11 @@ The 2023 to 2026 match-winner window has been inspected and is a development set
 | ATP | 11,777 | 0.2280 | 0.2353 | 0.6490 | 0.6628 |
 | WTA | 13,066 | 0.2160 | 0.2288 | 0.6210 | 0.6486 |
 
-<<<<<<< HEAD
 Those numbers are not prop forecasts. The simulator passed 48 arithmetic/Monte Carlo comparison cases. A separate
 2023–partial-2026 total-games backtest now finds it behind direct historical distributions on ATP and WTA BO3 matches;
 that is a failed predictive comparison, not an arithmetic defect. Tiebreak occurrence, service-volume and player-statistic
 forecasts remain separate targets and have not all passed historical predictive validation. See
 [`TENNIS-TOTAL-GAMES-BACKTEST-2026-10-16.md`](TENNIS-TOTAL-GAMES-BACKTEST-2026-10-16.md).
-=======
-Those numbers are not prop forecasts. The existing simulator passed 48 arithmetic/Monte Carlo comparison cases, but its total-games, tiebreak, service-volume, and player-statistic forecasts **have not passed historical predictive validation**. Keep the two conclusions separate.
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
 
 ## Product question
 
@@ -87,7 +76,6 @@ Each sampled point increments the server's service points and exactly one outcom
 
 This is a deliberately coarse starting model, not a physical description of every serve. First/second-serve splits, return quality, and shot-level attributes can be added when reliably labeled data exists.
 
-<<<<<<< HEAD
 ## Gate A: validate service-point exposure first
 
 **Question:** does the current simulator predict the *number of service points* each player faces well enough for a count model?
@@ -141,30 +129,12 @@ These historical results are development evidence, not untouched confirmation.
 
 P0 and P1 remain viable independently of Gate A; direct count models do not require the match simulator's exposure
 forecast to pass.
-=======
-## Phase A: validate exposure first
-
-**Question:** does the current simulator predict the *number of service points* each player faces well enough for a count model?
-
-- Generate full distributions of A service points, B service points, total games, number of sets, and tiebreaks.
-- Baseline against rolling service-points-per-match, opponent-adjusted exposure estimates, and a direct distribution model.
-- Score service-point distribution with held-out log score (when a suitable discrete probability mass is supported), CRPS, 50/80/90% interval coverage, mean bias, and MAE as secondary diagnostics.
-- Segment by ATP/WTA, format, surface, Elo difference, effective serving history, retirements/completeness, and match length.
-- Assert simulation invariants: each point belongs to exactly one server, completed scores obey tennis rules, probabilities sum to one, and event totals match trajectory totals.
-
-**Gate A:** a simulator that loses convincingly on exposure is not promoted to prop prediction just because it produces realistic-looking counts.
-
-## Phase B: validate direct ace/DF distributions
-
-Fit P0 and P1 before adding event simulation.
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
 
 - Use ace and double-fault rates per **service point**, rather than totals divided by matches, as the core exposure-normalized measures.
 - Evaluate model-specific dispersion; do not assume a Poisson fit to every player's count tails.
 - Train a global/pooled prior; player, surface, opponent return profile, recent workload and sufficient history enter as candidate adjustments, **not presumed improvements**.
 - Freeze features and thresholds on rolling validation, with leakage checks for latest matches and pre-match player identities.
 
-<<<<<<< HEAD
 **Gate B:** report separate ace and double-fault distributions with full count coverage and tested interval/exceedance
 calibration. Compare P0 and P1 on identical eligible matches; the best valid direct model becomes the incumbent for Gate C.
 
@@ -195,13 +165,6 @@ calibration. Compare P0 and P1 on identical eligible matches; the best valid dir
 
 Once the immediate work order is complete, fit P2 on the same pre-match inputs and compare it against the best *direct*
 P0/P1 baseline, not against a weak straw man.
-=======
-**Gate B:** report separate ace and double-fault distributions with full count coverage and tested interval/exceedance calibration.
-
-## Phase C: assess the value of simulation
-
-Fit P2 on the same pre-match inputs and compare it against the best *direct* P0/P1 baseline, not against a weak straw man.
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
 
 Score:
 
@@ -215,7 +178,6 @@ Only after P2 passes should P3 add match-level latent serve-day effects and oppo
 
 **Gate C:** GO only if the simulator improves a predeclared primary proper scoring rule over the strongest direct baseline without unacceptable miscalibration. If it does not, use the direct distribution model for props and keep the simulator for separately validated match markets.
 
-<<<<<<< HEAD
 ## Validation in parallel: historical replay and prospective grading
 
 Historical research is the immediate development path; prospective records are an independent, continuing check. Neither
@@ -270,12 +232,6 @@ not achieved in this snapshot; use the first actual lock date and do not backdat
 - Treat 2023 to 2026 match-winner results as explored **development** for winner-model selection. For player-stat targets,
   audit prior exposure before calling any period untouched. Use rolling-origin folds across prior seasons now; future
   prospective matches remain independent confirmation.
-=======
-## Backtest protocol
-
-- Chronological walk-forward; no future data in ratings, opponent histories, player match stats, event rules or expected lineup.
-- Treat 2023 to 2026 as explored **development** for model selection. Use older chronological folds for tuning where viable; true confirmation requires future, previously unseen matches after the 2026-10-14 freeze.
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
 - Compare only on matched samples and provide a second coverage report for all eligible matches.
 - Declare one primary proper scoring metric per stage; report Brier skill score for exceedance predictions against the *best direct prop baseline*, not match-winner Elo.
 - Bootstrap at an appropriate match or tournament cluster level and report intervals, not only the point estimate.
@@ -286,7 +242,6 @@ not achieved in this snapshot; use the first actual lock date and do not backdat
 
 Write results under `docs/`:
 
-<<<<<<< HEAD
 - `TENNIS-PROPS-DATA-AUDIT-2026-10-14.md`: column inventory, sample counts, definitions, missingness, retirements, scoring rules and current prospective-system audit. **Written 2026-10-16.**
 - `TENNIS-PROPS-BASELINES-2026-10-14.md`: Gate A expected-volume and distribution results, followed by P0/P1 rolling results, metrics, calibration and segment tables.
 - `TENNIS-PROPS-SIM-BACKTEST-2026-10-14.md`: P2/P3 only after prior gates; comparisons on identical matches, uncertainty intervals, examples of failures.
@@ -302,17 +257,7 @@ simulator's length bias. Keep it in Model Lab; defer a richer simulator until a 
 baselines is ready. A Gate A failure does not stop player-projection work.
 
 The long-term extension to footwork, shot selection, shot quality, power, forehand, backhand and winners/unforced errors requires independently sourced tracking/video/shot-chart data, and each feature must prove incremental held-out predictive value.
-=======
-- `TENNIS-PROPS-DATA-AUDIT-2026-10-14.md`: column inventory, sample counts, definitions, missingness, retirements, scoring rules, and licensing.
-- `TENNIS-PROPS-BASELINES-2026-10-14.md`: P0/P1 rolling results, metrics, calibration, and segment tables.
-- `TENNIS-PROPS-SIM-BACKTEST-2026-10-14.md`: P2/P3 only after prior gates; comparisons on identical matches, uncertainty intervals, examples of failures.
-- `TENNIS-PROPS-DECISION-2026-10-14.md`: separate GO/NO-GO calls for exposure modeling, ace and DF distributions, and simulation incremental value.
-
-These are **planned filenames**, not claims that the reports already exist. The first implementation milestone is the **data audit and P0/P1**, not adding a complex multi-event simulator.
 
 ## Licensing and product boundary
 
-Jeff Sackmann match data and the cited mirror are CC BY-NC-SA 4.0. **Research use only** pending licensing decision D1; no training or publishing a commercial Legendary Picks projection feature from this dataset without an authorized licensing path. Store source provenance and reproduce no proprietary market quotes without rights.
-
-The long-term extension to footwork, shot selection, shot quality, power, forehand, backhand and winners/unforced errors requires independently licensed tracking/video/shot-chart data, and each feature must prove incremental held-out predictive value.
->>>>>>> 24bc9fc87425138dc00f964d4df5f09b8f9cb3c3
+Jeff Sackmann match data and the cited mirror are CC BY-NC-SA 4.0. Use them for research only while licensing decision D1 is open; do not train or publish a commercial Legendary Picks projection feature from this dataset without an authorized licensing path. Record source provenance and do not reproduce proprietary market quotes without rights. Any sportsbook line source needs its own licensing review.
