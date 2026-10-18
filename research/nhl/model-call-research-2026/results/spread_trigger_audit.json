@@ -1,0 +1,38 @@
+{
+ "note": "structural audit; no historical book puck lines exist in this checkout",
+ "cases": [],
+ "summary": {
+  "n": 16959,
+  "mean_model_p_cover": 0.48888808208717266,
+  "empirical_cover_rate": 0.5021522495430155,
+  "hit_rate_when_model_p_above_50": {
+   "n": 16959,
+   "n_above": 7976,
+   "hit_rate_above": 0.6984704112337011,
+   "hit_rate_below": 0.32784147834799066
+  },
+  "brier_on_calls": 0.22514961119166646,
+  "brier_on_calls_constant_base": 0.2499953678219046,
+  "base_rate_all_games": 0.674794969928923
+ },
+ "calibration_on_calls": [
+  {
+   "bin": "0.00..0.40",
+   "n": 8982,
+   "mean_p": 0.2040243920181176,
+   "cover_rate": 0.32776664439991093
+  },
+  {
+   "bin": "0.40..0.45",
+   "n": 1,
+   "mean_p": 0.4042910585553263,
+   "cover_rate": 1.0
+  },
+  {
+   "bin": "0.60..1.01",
+   "n": 7976,
+   "mean_p": 0.8096917758213483,
+   "cover_rate": 0.6984704112337011
+  }
+ ]
+}
