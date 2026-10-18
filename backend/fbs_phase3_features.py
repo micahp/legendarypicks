@@ -222,14 +222,15 @@ def team_game_table(df):
 METRIC_COLS = ["off_epa", "off_success", "off_explosive", "def_epa", "def_success", "def_explosive"]
 
 
-def decayed_ratings(team_games, half_life=HALF_LIFE_GAMES):
+def decayed_ratings(team_games, metric_cols=None, half_life=HALF_LIFE_GAMES):
+    metric_cols = list(metric_cols or METRIC_COLS)
     """Expanding half-life weighted ratings per team, one row per team-game, using only earlier games."""
     rows = []
     decay = 0.5 ** (1.0 / half_life)
     for team, grp in team_games.groupby("pos_team", sort=False):
         grp = grp.sort_values(["season", "week", "game_id"])
-        num = {m: 0.0 for m in METRIC_COLS}
-        den = {m: 0.0 for m in METRIC_COLS}
+        num = {m: 0.0 for m in metric_cols}
+        den = {m: 0.0 for m in metric_cols}
         plays = 0.0
         games = 0.0
         for rec in grp.itertuples(index=False):
@@ -237,26 +238,30 @@ def decayed_ratings(team_games, half_life=HALF_LIFE_GAMES):
             row = {"game_id": rec.game_id, "pos_team": team, "season": rec.season, "week": rec.week}
             row["decayed_plays"] = plays
             row["decayed_games"] = games
-            for m in METRIC_COLS:
+            for m in metric_cols:
                 row[m + "_raw"] = num[m] / den[m] if den[m] > 0 else np.nan
-            row["has_history"] = bool(den["off_epa"] > 0)
+            row["has_history"] = bool(den[metric_cols[0]] > 0)
             rows.append(row)
-            for m in METRIC_COLS:
+            for m in metric_cols:
                 v = getattr(rec, m)
                 if v is None or (isinstance(v, float) and np.isnan(v)):
                     continue
-                w = float(getattr(rec, "off_plays", 0) or 0) if m.startswith("off_") else float(
-                    getattr(rec, "def_plays", 0) or 0)
+                w = float(getattr(rec, "off_plays", getattr(rec, "off_drives", 0)) or 0) \
+                    if m.startswith("off_") else float(
+                        getattr(rec, "def_plays", getattr(rec, "def_drives", 0)) or 0)
                 w = max(w, 1.0)
                 num[m] = num[m] * decay + v * w
                 den[m] = den[m] * decay + w
-            plays = plays * decay + float(getattr(rec, "off_plays", 0) or 0)
+            plays = plays * decay + float(getattr(rec, "off_plays", getattr(rec, "off_drives", 0)) or 0)
             games = games * decay + 1.0
     return pd.DataFrame(rows)
 
 
-def league_means_by_week(team_games):
+def league_means_by_week(team_games, metric_cols=None):
     """Weighted league mean of each metric using only weeks strictly earlier than the row's week."""
+    metric_cols = list(metric_cols or METRIC_COLS)
+    off_cols = [m for m in metric_cols if m.startswith("off_")]
+    def_cols = [m for m in metric_cols if m.startswith("def_")]
     tg = team_games.copy()
     pairs = tg[["season", "week"]].drop_duplicates().sort_values(["season", "week"]).reset_index(drop=True)
     per_week = []
@@ -264,37 +269,39 @@ def league_means_by_week(team_games):
         s, w = rec.season, rec.week
         subset = tg[(tg.season == s) & (tg.week == w)]
         row = {"season": s, "week": w}
-        for m in ("off_epa", "off_success", "off_explosive"):
-            plays = float(subset["off_plays"].fillna(0).sum())
-            vals = subset[m].fillna(0.0) * subset["off_plays"].fillna(0.0)
-            row[m] = vals.sum() / plays if plays else 0.0
-        for m in ("def_epa", "def_success", "def_explosive"):
-            plays = float(subset["def_plays"].fillna(0).sum())
-            vals = subset[m].fillna(0.0) * subset["def_plays"].fillna(0.0)
-            row[m] = vals.sum() / plays if plays else 0.0
+        off_plays = float(subset.get("off_plays", pd.Series(0.0, index=subset.index)).fillna(0).sum())
+        def_plays = float(subset.get("def_plays", pd.Series(0.0, index=subset.index)).fillna(0).sum())
+        for m in off_cols:
+            vals = subset[m].fillna(0.0) * subset.get("off_plays", pd.Series(0.0, index=subset.index)).fillna(0.0)
+            row[m] = vals.sum() / off_plays if off_plays else 0.0
+        for m in def_cols:
+            vals = subset[m].fillna(0.0) * subset.get("def_plays", pd.Series(0.0, index=subset.index)).fillna(0.0)
+            row[m] = vals.sum() / def_plays if def_plays else 0.0
         per_week.append(row)
     per_week = pd.DataFrame(per_week).sort_values(["season", "week"]).reset_index(drop=True)
-    for m in METRIC_COLS:
+    for m in metric_cols:
         per_week[m + "_league"] = per_week[m].shift(1).expanding().mean()
-    # The only week with no prior week at all is 2015 week 1, where no team has any history, so the
-    # shrink target has no effect (every raw rating is NaN and the games produce no features).
-    for m in METRIC_COLS:
+    for m in metric_cols:
         per_week[m + "_league"] = per_week[m + "_league"].fillna(0.0)
-    return per_week[["season", "week"] + [m + "_league" for m in METRIC_COLS]]
+    return per_week[["season", "week"] + [m + "_league" for m in metric_cols]]
 
 
-def build_team_ratings(team_games, half_life=HALF_LIFE_GAMES, shrink_k=SHRINK_K_PLAYS):
-    ratings = decayed_ratings(team_games, half_life)
-    league = league_means_by_week(team_games)
+def build_team_ratings(team_games, metric_cols=None, half_life=HALF_LIFE_GAMES,
+                       shrink_k=SHRINK_K_PLAYS):
+    metric_cols = list(metric_cols or METRIC_COLS)
+    ratings = decayed_ratings(team_games, metric_cols, half_life)
+    league = league_means_by_week(team_games, metric_cols)
     ratings = ratings.merge(league, on=["season", "week"], how="left")
     shrink = ratings["decayed_plays"].fillna(0.0) / (ratings["decayed_plays"].fillna(0.0) + shrink_k)
-    for m in METRIC_COLS:
+    for m in metric_cols:
         # a team with no prior plays gets the league mean, and is flagged (ladder section 4)
         raw = ratings[m + "_raw"].fillna(ratings[m + "_league"])
         ratings[m] = ratings[m + "_league"] + (raw - ratings[m + "_league"]) * shrink
     ratings["tempo_plays"] = (ratings["decayed_plays"] / ratings["decayed_games"].replace(0, np.nan))
-    return ratings[["game_id", "pos_team", "season", "week", "has_history"] + METRIC_COLS
-                    + ["decayed_plays", "tempo_plays"]]
+    tempo = ratings["decayed_plays"] / ratings["decayed_games"].replace(0, np.nan)
+    ratings["tempo"] = tempo
+    return ratings[["game_id", "pos_team", "season", "week", "has_history"] + metric_cols
+                    + ["decayed_plays", "tempo"]]
 
 
 def normalise_name(value):
@@ -336,7 +343,7 @@ def build_features(data_dir, seasons, half_life=HALF_LIFE_GAMES, shrink_k=SHRINK
               % (season, len(epa_df), int(mask.sum()), float(epa_df.loc[mask, "epa"].mean()),
                  float(epa_df.loc[mask, "success"].mean())))
     team_games = pd.concat(team_games, ignore_index=True)
-    ratings = build_team_ratings(team_games, half_life, shrink_k)
+    ratings = build_team_ratings(team_games, METRIC_COLS, half_life, shrink_k)
     ratings["game_id"] = ratings["game_id"].astype(str)
     ratings["name"] = ratings["pos_team"].map(normalise_name)
     sides = side_map(data_dir, seasons)
@@ -352,7 +359,8 @@ def build_features(data_dir, seasons, half_life=HALF_LIFE_GAMES, shrink_k=SHRINK
                              - away.loc[common, "off_success"] - home.loc[common, "def_success"])
     feats["explosive_diff"] = (home.loc[common, "off_explosive"] + away.loc[common, "def_explosive"]
                                - away.loc[common, "off_explosive"] - home.loc[common, "def_explosive"])
-    feats["tempo_diff"] = home.loc[common, "tempo_plays"] - away.loc[common, "tempo_plays"]
+    feats["tempo_diff"] = home.loc[common, "decayed_plays"] / home.loc[common, "decayed_games"] \
+        - away.loc[common, "decayed_plays"] / away.loc[common, "decayed_games"]
     feats["home_decayed_plays"] = home.loc[common, "decayed_plays"]
     feats["away_decayed_plays"] = away.loc[common, "decayed_plays"]
     feats["home_has_history"] = home.loc[common, "has_history"]

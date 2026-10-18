@@ -198,3 +198,93 @@ continuity. An increment that only beats G2 but not B2 is DISCARDED.
 **Leakage controls**: box scores are final-game aggregates, so nothing from a game may enter its own
 row; all ratings are computed from prior games only, with the same one-day embargo. No season-to-date
 aggregate table is read.
+
+## 12. Increment (c) result — drive and box-score splits
+
+Run 2026-10-18 on `feat/fbs-archive`, spec §11 above. Population identical to (b): 2,397 walk-forward
+2023–25 games, 807 in the 2025 frozen holdout, 350 in 2026; G2 reproduces 0.213263 exactly on the shared
+games (max |p difference| 0.0 across 3,523 games). Primary comparison is **C2 vs B2**.
+
+### Verdict: ADOPTED (all ten gates), with one caveat stated up front
+
+C2 lowers Brier against B2 by `-0.00609 [-0.00925, -0.00258]` on the pooled walk-forward and by
+`-0.00755 [-0.01234, -0.00262]` on the frozen holdout, and against G2 by `-0.01677` and `-0.02034`.
+The caveat: the edge over B2 is smaller than B2's edge over G2 (`-0.01068`), and season by season it is
+not significant in 2024 or 2026. C2 wins the pre-registered pooled gate; it does not win every season.
+
+### Scores
+
+| period | model | games | Brier | BSS | log loss | reliability | resolution |
+|---|---|---|---|---|---|---|---|
+| walk-forward 2023–25 | G2 | 2,397 | 0.2133 | 0.1471 | 0.6162 | 0.0098 | 0.0374 |
+| walk-forward 2023–25 | B2 G2+prior-play | 2,397 | 0.2027 | 0.1891 | 0.5895 | 0.0003 | 0.0397 |
+| walk-forward 2023–25 | C1 G2+intercept | 2,397 | 0.2134 | 0.1466 | 0.6163 | 0.0103 | 0.0387 |
+| walk-forward 2023–25 | **C2 G2+drive splits** | 2,397 | **0.1965** | 0.2140 | 0.5758 | 0.0010 | 0.0467 |
+| 2025 frozen holdout | G2 | 807 | 0.2208 | 0.1169 | 0.6324 | 0.0048 | 0.0243 |
+| 2025 frozen holdout | B2 | 807 | 0.2080 | 0.1681 | 0.5999 | 0.0020 | 0.0341 |
+| 2025 frozen holdout | **C2** | 807 | **0.2004** | 0.1983 | 0.5834 | 0.0037 | 0.0426 |
+| 2026 development | G2 | 350 | 0.2051 | 0.1795 | 0.5994 | 0.0107 | 0.0357 |
+| 2026 development | B2 | 350 | 0.1954 | 0.2183 | 0.5763 | 0.0056 | 0.0401 |
+| 2026 development | **C2** | 350 | **0.1936** | 0.2256 | 0.5725 | 0.0065 | 0.0453 |
+
+### Paired differences, 95% UTC-week blocks
+
+| period | comparison | diff | 95% interval | games | blocks |
+|---|---|---|---|---|---|
+| walk-forward 2023–25 | **C2 − B2** | **−0.00609** | **[−0.00925, −0.00258]** | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − G2 | −0.01677 | [−0.02065, −0.01248] | 2,397 | 65 |
+| walk-forward 2023–25 | C2 − C1 | −0.01688 | [−0.02086, −0.01248] | 2,397 | 65 |
+| walk-forward 2023–25 | B2 − G2 | −0.01068 | [−0.01444, −0.00650] | 2,397 | 65 |
+| 2025 frozen holdout | **C2 − B2** | **−0.00755** | **[−0.01234, −0.00262]** | 807 | 22 |
+| 2025 frozen holdout | C2 − G2 | −0.02034 | [−0.02821, −0.01243] | 807 | 22 |
+| 2025 frozen holdout | C2 − C1 | −0.02025 | [−0.02834, −0.01218] | 807 | 22 |
+| 2026 development | C2 − B2 | −0.00182 | [−0.00560, +0.00245] | 350 | 8 |
+| 2026 development | C2 − G2 | −0.01153 | [−0.01941, −0.00192] | 350 | 8 |
+
+### Gates
+
+| gate | requirement | result |
+|---|---|---|
+| sample pooled / holdout | ≥ 1,500 / ≥ 250 | 2,397 / 807 — pass |
+| primary | C2 − B2 < 0, interval below zero | −0.00609 [−0.00925, −0.00258] — pass |
+| information | C2 − C1 < 0, interval below zero | −0.01688 [−0.02086, −0.01248] — pass |
+| holdout | not worse than +0.002, point negative | −0.00755 — pass |
+| log loss pooled / holdout | C2 ≤ B2 | 0.5758 vs 0.5895; 0.5834 vs 0.5999 — pass |
+| calibration pooled / holdout | reliability within +0.005 of B2 | 0.0010 vs 0.0003; 0.0037 vs 0.0020 — pass |
+
+### Stability
+
+| season | games | G2 | B2 | C2 | C2 − B2 | 95% interval |
+|---|---|---|---|---|---|---|
+| 2022 (outside the primary pool) | 776 | 0.2309 | 0.2177 | 0.2180 | +0.0003 | [−0.00615, +0.00713] |
+| 2023 | 792 | 0.2138 | 0.1990 | 0.1905 | −0.0085 | [−0.01532, −0.00125] |
+| 2024 | 798 | 0.2179 | 0.2092 | 0.2054 | −0.0038 | [−0.00911, +0.00244] |
+| 2025 | 807 | 0.2082 | 0.1996 | 0.1936 | −0.0060 | [−0.00993, −0.00180] |
+| 2026 | 350 | 0.2051 | 0.1954 | 0.1936 | −0.0018 | [−0.00560, +0.00245] |
+
+### What the model leaned on
+
+Frozen 2025 coefficients (standardised): intercept +0.0737, `points_per_drive_diff` **+0.5302**,
+`turnovers_per_drive_diff` +0.0756, `start_field_position_diff` −0.0365, `rz_td_rate_diff` +0.1229,
+`third_down_rate_diff` +0.0350, `explosive_drive_rate_diff` +0.1516, `penalties_per_play_diff` −0.0219.
+Scoring per drive dominates; field position is mildly negative, which is what a scoring-rate feature
+that already contains field position should look like once both are present.
+
+### Construction notes
+
+- **Source substitution, declared before the run.** §11 named `espn_cfb_pbp` drive fields plus
+  `espn_cfb_team_box`. The drive table carries the same facts at a finer grain, so the box score was not
+  needed; everything in (c) comes from `espn_cfb_pbp` behind one column guard.
+- **Missing drive data is filled at the league mean, not dropped.** 50 of 3,524 evaluation games
+  (20 inside the primary pool, none in the holdout) have no ESPN drive table. Their seven differences
+  are set to 0.0, which is the league-average difference (a league-average offence against a
+  league-average defence cancels), and they carry `has_drive_data = false`. That keeps the population
+  identical to (b) instead of shrinking it to 2,377.
+- **This is not a stack.** C2 is G2 + the seven (c) features; it does not contain the (b) features.
+  "ADOPTED" therefore means (c) is the stronger single family and becomes the standing model. A
+  combined B2 + C2 model is a different test and has not been run.
+
+### Next
+
+Family (d) of the ladder (home/rest/weather/travel) against C2, and — separately — a pre-registered
+test of combining (b) and (c) as one feature block, which is the obvious question this result raises.
