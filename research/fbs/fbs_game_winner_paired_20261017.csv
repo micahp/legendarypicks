@@ -1,0 +1,37 @@
+period,candidate_id,candidate,control_id,control,games,delta_brier_candidate_minus_control,ci95_low,ci95_high,bootstrap_method,bootstrap_blocks,bootstrap_replicates
+all_walk_forward_2022_2026,G1,Prior home-win rate,G0,Constant 0.50,3524,-0.006975551782664992,-0.01058742085153429,-0.0032983849045052304,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+all_walk_forward_2022_2026,G2,Chronological Elo + home field,G0,Constant 0.50,3524,-0.03365261115744772,-0.03710226893192493,-0.030425229389176252,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+all_walk_forward_2022_2026,G2,Chronological Elo + home field,G1,Prior home-win rate,3524,-0.026677059374782725,-0.030228867208919107,-0.02335174226100262,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+all_walk_forward_2022_2026,G3,Margin-aware Elo,G0,Constant 0.50,3524,-0.04980056091436568,-0.054701913969647256,-0.04454388031907981,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+all_walk_forward_2022_2026,G3,Margin-aware Elo,G1,Prior home-win rate,3524,-0.04282500913170069,-0.04825736556961568,-0.03714482648266253,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+all_walk_forward_2022_2026,G3,Margin-aware Elo,G2,Chronological Elo + home field,3524,-0.01614794975691796,-0.018623917929046645,-0.01373811348172503,"paired UTC calendar-week block bootstrap, season-stratified",94,2000
+season_2022,G1,Prior home-win rate,G0,Constant 0.50,776,-0.0021471711506004386,-0.012898215398321892,0.00925196940148041,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2022,G2,Chronological Elo + home field,G0,Constant 0.50,776,-0.018840350280331222,-0.022948123737411064,-0.013751053855165202,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2022,G2,Chronological Elo + home field,G1,Prior home-win rate,776,-0.016693179129730784,-0.023944320583698084,-0.009330025606294966,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2022,G3,Margin-aware Elo,G0,Constant 0.50,776,-0.033246904819489574,-0.03798406610650088,-0.026989776994329848,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2022,G3,Margin-aware Elo,G1,Prior home-win rate,776,-0.031099733668889136,-0.04184145098707173,-0.02055190419012674,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2022,G3,Margin-aware Elo,G2,Chronological Elo + home field,776,-0.014406554539158352,-0.01865260043824353,-0.010521794853325599,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G1,Prior home-win rate,G0,Constant 0.50,792,-0.005946479551364426,-0.011832615138586142,0.00017401230094778153,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G2,Chronological Elo + home field,G0,Constant 0.50,792,-0.036277977189012635,-0.04114096873047278,-0.030013428590132184,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G2,Chronological Elo + home field,G1,Prior home-win rate,792,-0.030331497637648204,-0.03684313527784316,-0.023616245490472896,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G3,Margin-aware Elo,G0,Constant 0.50,792,-0.05657812053687707,-0.06595837893569781,-0.04426519221494579,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G3,Margin-aware Elo,G1,Prior home-win rate,792,-0.05063164098551265,-0.06276005866018486,-0.037456260865520445,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2023,G3,Margin-aware Elo,G2,Chronological Elo + home field,792,-0.02030014334786444,-0.026225899673388633,-0.013684792318982562,"paired UTC calendar-week block bootstrap, season-stratified",21,2000
+season_2024,G1,Prior home-win rate,G0,Constant 0.50,798,-0.00791502372447505,-0.012951094957200659,-0.00326908966178174,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2024,G2,Chronological Elo + home field,G0,Constant 0.50,798,-0.0320156484461338,-0.038884593999957556,-0.024262573488960593,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2024,G2,Chronological Elo + home field,G1,Prior home-win rate,798,-0.024100624721658755,-0.03010766976775751,-0.01749692382082576,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2024,G3,Margin-aware Elo,G0,Constant 0.50,798,-0.046352414320210374,-0.05608614042060532,-0.03523826043070462,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2024,G3,Margin-aware Elo,G1,Prior home-win rate,798,-0.03843739059573532,-0.048674937989861736,-0.027692725872856455,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2024,G3,Margin-aware Elo,G2,Chronological Elo + home field,798,-0.014336765874076568,-0.019278774327311413,-0.009040663930981959,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G1,Prior home-win rate,G0,Constant 0.50,808,-0.008047313526001009,-0.015439188349404942,-0.0002519681640466131,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G2,Chronological Elo + home field,G0,Constant 0.50,808,-0.0419819664422577,-0.04789990497295334,-0.035417187200474654,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G2,Chronological Elo + home field,G1,Prior home-win rate,808,-0.033934652916256684,-0.04243728335237241,-0.025698526287297855,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G3,Margin-aware Elo,G0,Constant 0.50,808,-0.05878103945667859,-0.06727569537244836,-0.04897613856440433,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G3,Margin-aware Elo,G1,Prior home-win rate,808,-0.050733725930677584,-0.06300966061874949,-0.03853028619223621,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2025,G3,Margin-aware Elo,G2,Chronological Elo + home field,808,-0.016799073014420893,-0.02168760262671393,-0.01186733942708364,"paired UTC calendar-week block bootstrap, season-stratified",22,2000
+season_2026,G1,Prior home-win rate,G0,Constant 0.50,350,-0.015393170295499886,-0.031148245890640035,-0.0023513499711524037,"paired UTC calendar-week block bootstrap, season-stratified",8,2000
+season_2026,G2,Chronological Elo + home field,G0,Constant 0.50,350,-0.04505604463500496,-0.062236453435312464,-0.030136960598559373,"paired UTC calendar-week block bootstrap, season-stratified",8,2000
+season_2026,G2,Chronological Elo + home field,G1,Prior home-win rate,350,-0.029662874339505083,-0.03658720524425152,-0.02045281432888843,"paired UTC calendar-week block bootstrap, season-stratified",8,2000
+season_2026,G3,Margin-aware Elo,G0,Constant 0.50,350,-0.05829543013877125,-0.0826798886838217,-0.03688842591691638,"paired UTC calendar-week block bootstrap, season-stratified",8,2000
+season_2026,G3,Margin-aware Elo,G1,Prior home-win rate,350,-0.04290225984327137,-0.05638356634333818,-0.026141065888671815,"paired UTC calendar-week block bootstrap, season-stratified",8,2000
+season_2026,G3,Margin-aware Elo,G2,Chronological Elo + home field,350,-0.013239385503766282,-0.020832809136228928,-0.005035662488058497,"paired UTC calendar-week block bootstrap, season-stratified",8,2000

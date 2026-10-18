@@ -11,6 +11,7 @@ Run from the repository root with:
 """
 import argparse
 import csv
+import hashlib
 import math
 import os
 from collections import defaultdict
@@ -23,7 +24,7 @@ from scipy import sparse
 from scipy.sparse.linalg import lsmr
 
 
-MODEL_VERSION = "fbs-game-winner-baselines-v1-20261017"
+MODEL_VERSION = "fbs-game-winner-baselines-v2-20261018"
 FIRST_EVALUATION_SEASON = 2023
 ELO_INITIAL = 1500.0
 ELO_HOME_ADVANTAGE = 55.0
@@ -33,11 +34,14 @@ STRENGTH_RIDGE = 15.0
 STRENGTH_SEASON_HALF_LIFE = 1.0
 BOOTSTRAP_REPLICATES = 2000
 BOOTSTRAP_SEED = 20261017
-MODEL_COLUMNS = ["home_base_prob", "elo_home_prob", "margin_home_prob"]
+MODEL_COLUMNS = [
+    "coinflip_home_prob", "home_base_prob", "elo_home_prob", "margin_home_prob"
+]
 MODEL_LABELS = {
-    "home_base_prob": "Historical home/neutral base rate",
-    "elo_home_prob": "Chronological Elo",
-    "margin_home_prob": "Opponent-adjusted margin strength",
+    "coinflip_home_prob": "G0 constant 0.50",
+    "home_base_prob": "G1 historical home/neutral base rate",
+    "elo_home_prob": "G2 chronological Elo",
+    "margin_home_prob": "G3 opponent-adjusted margin strength",
 }
 SEC_BIG12 = {"sec", "big 12"}
 
@@ -173,8 +177,12 @@ def schedule_row_to_event(row, season, source_label):
     return {
         "game_id": game_id,
         "season": int(season),
+        "week": as_int(row.week_cfb),
         "kickoff_utc": kickoff,
         "utc_date": kickoff.date(),
+        "week_start_utc": (
+            kickoff.date() - timedelta(days=kickoff.weekday())
+        ).isoformat(),
         "season_type": phase_raw,
         "game_phase": phase,
         "home_team_id": e_home_id,
@@ -209,13 +217,21 @@ def load_events(data_dir, seasons):
         team_path = os.path.join(data_dir, "cfb_team_info_%d.parquet" % season)
         if not all(os.path.exists(path) for path in (schedule_path, espn_path, team_path)):
             raise FileNotFoundError("missing required local source for season %d" % season)
-        schedule = pd.read_parquet(schedule_path)
-        espn = pd.read_parquet(espn_path)
+        schedule_raw = pd.read_parquet(schedule_path)
+        espn_raw = pd.read_parquet(espn_path)
         team_info = pd.read_parquet(team_path)
-        if schedule.game_id.astype(str).duplicated().any():
-            raise ValueError("duplicate game_id in %s" % schedule_path)
-        if espn.game_id.astype(str).duplicated().any():
-            raise ValueError("duplicate game_id in %s" % espn_path)
+        schedule_duplicate = (
+            schedule_raw.game_id.notna()
+            & schedule_raw.game_id.astype(str).duplicated(keep=False)
+        )
+        espn_duplicate = (
+            espn_raw.game_id.notna()
+            & espn_raw.game_id.astype(str).duplicated(keep=False)
+        )
+        schedule_missing_id = schedule_raw.game_id.isna()
+        espn_missing_id = espn_raw.game_id.isna()
+        schedule = schedule_raw.loc[~schedule_duplicate & ~schedule_missing_id].copy()
+        espn = espn_raw.loc[~espn_duplicate & ~espn_missing_id].copy()
         team_info_by_season[season] = team_info
         season_rows[season] = schedule
 
@@ -225,48 +241,120 @@ def load_events(data_dir, seasons):
         )
         participant = joined[joined.fbs_participant.fillna(False)]
         fbs = joined[joined.fbs_game.fillna(False)]
-        completed_espn = participant[
+        division_known = schedule.home_division.notna() & schedule.away_division.notna()
+        division_home_fbs = schedule.home_division.astype(str).str.casefold().eq("fbs")
+        division_away_fbs = schedule.away_division.astype(str).str.casefold().eq("fbs")
+        division_fbs_game = division_home_fbs & division_away_fbs
+        division_fbs_participant = division_home_fbs | division_away_fbs
+        membership_disagreement = int((
+            schedule.loc[division_known, "fbs_game"].fillna(False).astype(bool).to_numpy()
+            != division_fbs_game[division_known].to_numpy()
+        ).sum())
+        participant_disagreement = int((
+            schedule.loc[division_known, "fbs_participant"].fillna(False).astype(bool).to_numpy()
+            != division_fbs_participant[division_known].to_numpy()
+        ).sum())
+        participant_final = participant[
             participant.status_espn.eq("STATUS_FINAL")
-            & participant.home_score.notna()
-            & participant.away_score.notna()
         ]
-        primary_espn = fbs[
-            fbs.status_espn.eq("STATUS_FINAL")
-            & fbs.home_score.notna()
-            & fbs.away_score.notna()
+        fbs_present_espn = fbs[fbs._merge.eq("both")]
+        fbs_final_status = fbs_present_espn[
+            fbs_present_espn.status_espn.eq("STATUS_FINAL")
         ]
-        coverage.append({
-            "season": season,
-            "schedule_source": os.path.basename(schedule_path),
-            "all_schedule_rows": int(len(schedule)),
-            "unique_schedule_ids": int(schedule.game_id.astype(str).nunique()),
-            "fbs_game_rows": int(len(fbs)),
-            "fbs_participant_rows": int(len(participant)),
-            "completed_fbs_participant": int(len(completed_espn)),
-            "completed_fbs_vs_fbs": int(len(primary_espn)),
-            "fbs_vs_fcs_completed": int(len(completed_espn) - len(primary_espn)),
-            "espn_final_without_cfb_completed": int(
-                (primary_espn.completed.fillna(False) == False).sum()
-            ),
-            "fbs_rows_missing_espn_id": int((fbs._merge != "both").sum()),
-            "fbs_rows_canceled_or_not_final": int(
-                len(fbs) - len(primary_espn)
-            ),
-        })
+        completed_espn = participant_final[
+            participant_final.home_score.notna()
+            & participant_final.away_score.notna()
+        ]
+        primary_espn = fbs_final_status[
+            fbs_final_status.home_score.notna()
+            & fbs_final_status.away_score.notna()
+        ]
 
+        excluded_unresolved_ids = 0
+        excluded_ties = 0
+        excluded_missing_kickoff = 0
         for row in completed_espn.itertuples(index=False):
+            c_home_id = as_int(row.home_id_cfb)
+            c_away_id = as_int(row.away_id_cfb)
+            e_home_id = as_int(row.home_id_espn)
+            e_away_id = as_int(row.away_id_espn)
+            if None in (c_home_id, c_away_id, e_home_id, e_away_id):
+                excluded_unresolved_ids += 1
+                continue
+            same_order = c_home_id == e_home_id and c_away_id == e_away_id
+            reverse_order = c_home_id == e_away_id and c_away_id == e_home_id
+            if not same_order and not reverse_order:
+                excluded_unresolved_ids += 1
+                continue
+            if float(row.home_score) == float(row.away_score):
+                excluded_ties += 1
+                continue
+            if parse_utc(row.game_date) is None and parse_utc(row.start_date) is None:
+                excluded_missing_kickoff += 1
+                continue
             source_label = "ESPN schedule; CFBD schedule membership/conference"
             event = schedule_row_to_event(row, season, source_label)
             if event["home_win"] not in (0, 1):
                 raise ValueError("invalid binary target in game %s" % event["game_id"])
             events.append(event)
 
+        coverage.append({
+            "season": season,
+            "schedule_source": os.path.basename(schedule_path),
+            "espn_schedule_source": os.path.basename(espn_path),
+            "all_schedule_rows": int(len(schedule_raw)),
+            "unique_schedule_ids": int(schedule.game_id.astype(str).nunique()),
+            "duplicate_schedule_rows": int(schedule_duplicate.sum()),
+            "missing_schedule_ids": int(schedule_missing_id.sum()),
+            "duplicate_espn_rows": int(espn_duplicate.sum()),
+            "missing_espn_game_ids": int(espn_missing_id.sum()),
+            "fbs_game_rows": int(len(fbs)),
+            "fbs_participant_rows": int(len(participant)),
+            "division_membership_unknown_rows": int((~division_known).sum()),
+            "fbs_membership_disagreements": membership_disagreement,
+            "fbs_participant_disagreements": participant_disagreement,
+            "completed_fbs_participant": int(len(completed_espn)),
+            "completed_fbs_vs_fbs_candidate": int(len(primary_espn)),
+            "eligible_fbs_vs_fbs": 0,
+            "fbs_vs_fcs_completed": int(len(completed_espn) - len(primary_espn)),
+            "fbs_without_espn_event": int((fbs._merge != "both").sum()),
+            "fbs_espn_not_final": int(
+                len(fbs_present_espn) - len(fbs_final_status)
+            ),
+            "fbs_espn_final_missing_score": int(
+                len(fbs_final_status) - len(primary_espn)
+            ),
+            "espn_final_without_cfb_completed": int(
+                (primary_espn.completed.fillna(False) == False).sum()
+            ),
+            "excluded_unresolved_team_ids": excluded_unresolved_ids,
+            "excluded_ties_without_winner": excluded_ties,
+            "excluded_missing_kickoff": excluded_missing_kickoff,
+        })
+        if membership_disagreement or participant_disagreement:
+            raise ValueError(
+                "CFBD FBS membership flags disagree with season division fields "
+                "for season %d" % season
+            )
+
     frame = pd.DataFrame(events)
-    if frame.game_id.duplicated().any():
-        dupes = frame.loc[frame.game_id.duplicated(), "game_id"].tolist()[:10]
-        raise ValueError("duplicate event IDs across seasons: %s" % dupes)
+    duplicate_event_ids = set(
+        frame.loc[frame.game_id.duplicated(keep=False), "game_id"].astype(str)
+    )
+    duplicate_event_rows_by_season = (
+        frame[frame.game_id.astype(str).isin(duplicate_event_ids)]
+        .groupby("season").size().to_dict()
+    )
+    if duplicate_event_ids:
+        frame = frame[~frame.game_id.astype(str).isin(duplicate_event_ids)].copy()
     frame = frame.sort_values(["kickoff_utc", "season", "game_id"]).reset_index(drop=True)
     frame["evaluation_population"] = frame.fbs_game.astype(bool)
+    eligible_by_season = frame[frame.evaluation_population].groupby("season").size()
+    for row in coverage:
+        row["eligible_fbs_vs_fbs"] = int(eligible_by_season.get(row["season"], 0))
+        row["cross_season_duplicate_event_rows"] = int(
+            duplicate_event_rows_by_season.get(row["season"], 0)
+        )
 
     for season in seasons:
         team_info = team_info_by_season[season]
@@ -499,9 +587,22 @@ def make_predictions(events, first_evaluation_season):
             strength, fitted_home_advantage, sigma = fit_margin_model(
                 history, int(today.season.max())
             )
+            latest_history_game = max(
+                eligible_history, key=lambda item: item["kickoff_utc"]
+            )
+            latest_history_kickoff = latest_history_game["kickoff_utc"]
+            latest_history_game_id = str(latest_history_game["game_id"])
         else:
             strength, fitted_home_advantage, sigma = {}, 0.0, 21.0
+            latest_history_kickoff = None
+            latest_history_game_id = ""
         for row in today.itertuples(index=False):
+            if (latest_history_kickoff is not None
+                    and row.kickoff_utc - latest_history_kickoff
+                    < timedelta(hours=24)):
+                raise RuntimeError(
+                    "history embargo violated for forecast game %s" % row.game_id
+                )
             base_prob = base.probability(row.neutral_site)
             elo_prob = elo.probability(row.home_team_id, row.away_team_id,
                                        row.neutral_site)
@@ -516,7 +617,13 @@ def make_predictions(events, first_evaluation_season):
                 "model_version": MODEL_VERSION,
                 "pregame_data_cutoff_utc": row.kickoff_utc.isoformat(),
                 "history_embargo_days": 1,
+                "latest_history_game_kickoff_utc": (
+                    latest_history_kickoff.isoformat()
+                    if latest_history_kickoff is not None else ""
+                ),
+                "latest_history_game_id": latest_history_game_id,
                 "training_games_available": len(eligible_history),
+                "coinflip_home_prob": 0.5,
                 "home_base_prob": base_prob,
                 "elo_home_prob": elo_prob,
                 "elo_rating_margin": (
@@ -540,6 +647,71 @@ def make_predictions(events, first_evaluation_season):
     return forecasts
 
 
+def make_frozen_season_predictions(events, season):
+    """Forecast one complete season from prior seasons, without in-season updates."""
+    history = events[
+        events.fbs_participant.astype(bool) & events.season.lt(season)
+    ].copy()
+    history = history.sort_values(
+        ["utc_date", "kickoff_utc", "game_id"]
+    ).reset_index(drop=True)
+    evaluation = events[
+        events.evaluation_population & events.season.eq(season)
+    ].sort_values(["kickoff_utc", "game_id"]).reset_index(drop=True)
+    if history.empty or evaluation.empty:
+        raise RuntimeError("frozen holdout requires prior history and evaluation games")
+    if int(history.season.max()) >= int(season):
+        raise RuntimeError("frozen holdout history includes the evaluation season")
+
+    base = HomeBase()
+    base.update(history)
+    elo = Elo()
+    for _, day_games in history.groupby("utc_date", sort=True):
+        elo.update_day(day_games)
+    elo.ensure_season(season)
+    strength, fitted_home_advantage, sigma = fit_margin_model(history, season)
+    latest_history_game = max(
+        history.to_dict("records"), key=lambda item: item["kickoff_utc"]
+    )
+    latest_history_kickoff = latest_history_game["kickoff_utc"]
+    latest_history_game_id = str(latest_history_game["game_id"])
+
+    rows = []
+    for row in evaluation.itertuples(index=False):
+        if row.kickoff_utc - latest_history_kickoff < timedelta(hours=24):
+            raise RuntimeError(
+                "frozen history embargo violated for game %s" % row.game_id
+            )
+        margin = (
+            strength.get(row.home_team_id, 0.0)
+            - strength.get(row.away_team_id, 0.0)
+            + (0.0 if row.neutral_site else fitted_home_advantage)
+        )
+        pred = row._asdict()
+        pred.update({
+            "game_id": str(row.game_id),
+            "season": int(row.season),
+            "week": row.week,
+            "coinflip_home_prob": 0.5,
+            "home_base_prob": base.probability(row.neutral_site),
+            "elo_home_prob": elo.probability(
+                row.home_team_id, row.away_team_id, row.neutral_site
+            ),
+            "margin_home_prob": normal_probability(margin, sigma),
+            "predicted_score_margin": margin,
+            "frozen_training_games_available": int(len(history)),
+            "frozen_latest_history_game_kickoff_utc": latest_history_kickoff.isoformat(),
+            "frozen_latest_history_game_id": latest_history_game_id,
+            "frozen_pregame_data_cutoff_utc": row.kickoff_utc.isoformat(),
+            "model_version": MODEL_VERSION + "-frozen-" + str(season),
+        })
+        rows.append(pred)
+    result = pd.DataFrame(rows)
+    if result.game_id.duplicated().any():
+        raise RuntimeError("duplicate game IDs in frozen holdout forecasts")
+    return result
+
+
 def score_metrics(rows, probability_column, target_column="home_win"):
     if rows.empty:
         return {"games": 0}
@@ -548,7 +720,10 @@ def score_metrics(rows, probability_column, target_column="home_win"):
     p = np.clip(p, 1e-12, 1.0 - 1e-12)
     brier = float(np.mean((p - y) ** 2))
     log_loss = float(np.mean(-(y * np.log(p) + (1.0 - y) * np.log(1.0 - p))))
-    accuracy = float(np.mean((p >= 0.5) == y.astype(bool)))
+    accuracy = (
+        None if probability_column == "coinflip_home_prob"
+        else float(np.mean((p >= 0.5) == y.astype(bool)))
+    )
     prevalence = float(np.mean(y))
     reliability = 0.0
     resolution = 0.0
@@ -564,6 +739,7 @@ def score_metrics(rows, probability_column, target_column="home_win"):
     return {
         "games": int(len(rows)),
         "brier": brier,
+        "brier_skill_vs_coinflip": 1.0 - brier / 0.25,
         "log_loss": log_loss,
         "accuracy": accuracy,
         "mean_predicted_home_win": float(np.mean(p)),
@@ -583,29 +759,45 @@ def bootstrap_brier_difference(rows, model_column, baseline_column,
     p_model = rows[model_column].to_numpy(dtype=float)
     p_base = rows[baseline_column].to_numpy(dtype=float)
     difference = (p_model - y) ** 2 - (p_base - y) ** 2
-    rng = np.random.default_rng(seed + sum(ord(ch) for ch in model_column)
-                                + len(rows))
-    estimates = np.empty(replicates, dtype=float)
-    chunk_size = 100
-    offset = 0
-    while offset < replicates:
-        count = min(chunk_size, replicates - offset)
-        indices = rng.integers(0, len(difference), size=(count, len(difference)))
-        estimates[offset:offset + count] = difference[indices].mean(axis=1)
-        offset += count
+    work = rows[["season", "week_start_utc"]].copy()
+    work["delta_sum_item"] = difference
+    blocks = (
+        work.groupby(["season", "week_start_utc"], sort=True)
+        .delta_sum_item.agg(["sum", "count"])
+        .reset_index()
+    )
+    seed_text = "%s|%s|%s|%d" % (
+        model_column, baseline_column,
+        ",".join(map(str, sorted(rows.season.unique()))), len(rows),
+    )
+    stable_seed = seed + int(hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:8], 16)
+    rng = np.random.default_rng(stable_seed)
+    estimate_sums = np.zeros(replicates, dtype=float)
+    estimate_counts = np.zeros(replicates, dtype=float)
+    for _, season_blocks in blocks.groupby("season", sort=True):
+        block_sums = season_blocks["sum"].to_numpy(dtype=float)
+        block_counts = season_blocks["count"].to_numpy(dtype=float)
+        sampled = rng.integers(
+            0, len(block_sums), size=(replicates, len(block_sums))
+        )
+        estimate_sums += block_sums[sampled].sum(axis=1)
+        estimate_counts += block_counts[sampled].sum(axis=1)
+    estimates = estimate_sums / estimate_counts
     return {
         "difference": float(np.mean(difference)),
         "ci_low": float(np.quantile(estimates, 0.025)),
         "ci_high": float(np.quantile(estimates, 0.975)),
         "replicates": replicates,
+        "bootstrap_method": "paired UTC calendar-week block bootstrap, season-stratified",
+        "bootstrap_blocks": int(len(blocks)),
     }
 
 
-def build_metrics(forecasts):
+def build_metrics(forecasts, frozen_holdout):
     metric_rows = []
     period_rows = [
         ("Walk-forward 2023-2025", forecasts.season.between(2023, 2025)),
-        ("2025 complete season", forecasts.season.eq(2025)),
+        ("2025 rolling walk-forward", forecasts.season.eq(2025)),
         ("2026 current forward", forecasts.season.eq(2026)),
     ]
     for season in sorted(forecasts.season.unique()):
@@ -620,6 +812,24 @@ def build_metrics(forecasts):
                 "model_column": model_column,
                 **score_metrics(subset, model_column),
             })
+    for model_column in MODEL_COLUMNS:
+        metric_rows.append({
+            "period": "2025 frozen holdout",
+            "slice": "All FBS-vs-FBS games",
+            "model": MODEL_LABELS[model_column],
+            "model_column": model_column,
+            **score_metrics(frozen_holdout, model_column),
+        })
+
+    for (season, week), subset in forecasts.groupby(["season", "week"], dropna=False):
+        for model_column in MODEL_COLUMNS:
+            metric_rows.append({
+                "period": "Week-by-week",
+                "slice": "Season %s, week %s" % (season, week),
+                "model": MODEL_LABELS[model_column],
+                "model_column": model_column,
+                **score_metrics(subset, model_column),
+            })
 
     slice_specs = [
         ("Local kickoff day", "day_group"),
@@ -629,18 +839,20 @@ def build_metrics(forecasts):
         ("Away conference group", "away_conference_group"),
     ]
     main = forecasts[forecasts.season.between(2023, 2025)]
-    for label, column in slice_specs:
-        for value, subset in main.groupby(column, dropna=False):
-            if str(value) == "Unknown" and label == "Local kickoff day":
-                pass
-            for model_column in MODEL_COLUMNS:
-                metric_rows.append({
-                    "period": "Walk-forward 2023-2025",
-                    "slice": "%s: %s" % (label, value),
-                    "model": MODEL_LABELS[model_column],
-                    "model_column": model_column,
-                    **score_metrics(subset, model_column),
-                })
+    for period, period_frame in [
+        ("Walk-forward 2023-2025", main),
+        ("2026 current forward", forecasts[forecasts.season.eq(2026)]),
+    ]:
+        for label, column in slice_specs:
+            for value, subset in period_frame.groupby(column, dropna=False):
+                for model_column in MODEL_COLUMNS:
+                    metric_rows.append({
+                        "period": period,
+                        "slice": "%s: %s" % (label, value),
+                        "model": MODEL_LABELS[model_column],
+                        "model_column": model_column,
+                        **score_metrics(subset, model_column),
+                    })
 
     conference_names = {}
     for value in list(main.home_conference) + list(main.away_conference):
@@ -703,16 +915,20 @@ def build_metrics(forecasts):
     return pd.DataFrame(metric_rows)
 
 
-def paired_comparisons(forecasts):
+def paired_comparisons(forecasts, frozen_holdout):
     rows = []
     periods = [
         ("Walk-forward 2023-2025", forecasts.season.between(2023, 2025)),
-        ("2025 complete season", forecasts.season.eq(2025)),
+        ("2025 rolling walk-forward", forecasts.season.eq(2025)),
         ("2026 current forward", forecasts.season.eq(2026)),
     ]
-    for period, mask in periods:
-        subset = forecasts[mask]
+    period_frames = [(period, forecasts[mask]) for period, mask in periods]
+    period_frames.append(("2025 frozen holdout", frozen_holdout))
+    for period, subset in period_frames:
         for column, control_column in [
+            ("home_base_prob", "coinflip_home_prob"),
+            ("elo_home_prob", "coinflip_home_prob"),
+            ("margin_home_prob", "coinflip_home_prob"),
             ("elo_home_prob", "home_base_prob"),
             ("margin_home_prob", "home_base_prob"),
             ("margin_home_prob", "elo_home_prob"),
@@ -730,15 +946,16 @@ def paired_comparisons(forecasts):
     return pd.DataFrame(rows)
 
 
-def calibration_rows(forecasts):
+def calibration_rows(forecasts, frozen_holdout):
     rows = []
     periods = [
         ("Walk-forward 2023-2025", forecasts.season.between(2023, 2025)),
-        ("2025 complete season", forecasts.season.eq(2025)),
+        ("2025 rolling walk-forward", forecasts.season.eq(2025)),
         ("2026 current forward", forecasts.season.eq(2026)),
     ]
-    for period, mask in periods:
-        subset = forecasts[mask]
+    period_frames = [(period, forecasts[mask]) for period, mask in periods]
+    period_frames.append(("2025 frozen holdout", frozen_holdout))
+    for period, subset in period_frames:
         for model_column in MODEL_COLUMNS:
             p = subset[model_column].to_numpy(dtype=float)
             y = subset.home_win.to_numpy(dtype=float)
@@ -771,58 +988,256 @@ def markdown_table(rows, columns, headers):
     return "\n".join(lines)
 
 
-def build_report(forecasts, coverage, metrics, comparisons, calibration, report_path):
-    generated = datetime.now(pytz.UTC).strftime("%Y-%m-%d %H:%M UTC")
-    primary = forecasts
-    overall_rows = []
-    for season in sorted(primary.season.unique()):
-        for model_column in MODEL_COLUMNS:
-            m = score_metrics(primary[primary.season.eq(season)], model_column)
-            overall_rows.append({
-                "season": str(season),
-                "model": MODEL_LABELS[model_column],
-                "games": m["games"], "brier": fmt(m["brier"]),
-                "log_loss": fmt(m["log_loss"]), "accuracy": fmt(m["accuracy"]),
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as source_file:
+        for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def source_manifest(data_dir, seasons):
+    manifest = []
+    for season in seasons:
+        files = [
+            ("SportsDataverse cfb_schedules", season_schedule_path(data_dir, season)),
+            ("SportsDataverse espn_cfb_schedules", os.path.join(
+                data_dir, "espn_schedule_%d.parquet" % season)),
+            ("SportsDataverse cfb_team_info", os.path.join(
+                data_dir, "cfb_team_info_%d.parquet" % season)),
+        ]
+        betting_path = os.path.join(data_dir, "betting_%d.parquet" % season)
+        if os.path.exists(betting_path):
+            files.append(("SportsDataverse espn_cfb_betting", betting_path))
+        for source_name, path in files:
+            if not os.path.exists(path):
+                continue
+            rows = len(pd.read_parquet(path))
+            manifest.append({
+                "season": season,
+                "source": source_name,
+                "file": os.path.relpath(path, os.path.dirname(data_dir)),
+                "rows": rows,
+                "bytes": os.path.getsize(path),
+                "sha256": sha256_file(path),
             })
-    all_rows = []
-    for period, mask in [
-        ("2023-2025", primary.season.between(2023, 2025)),
-        ("2025 holdout", primary.season.eq(2025)),
-        ("2026 forward", primary.season.eq(2026)),
-    ]:
+    return pd.DataFrame(manifest)
+
+
+def audit_market_files(data_dir, forecasts):
+    rows = []
+    for season in sorted(forecasts.season.unique()):
+        path = os.path.join(data_dir, "betting_%d.parquet" % int(season))
+        games = forecasts[forecasts.season.eq(season)]
+        if not os.path.exists(path):
+            rows.append({
+                "season": int(season), "forecast_games": len(games),
+                "matched_stored_spreads": 0, "matched_moneylines": 0,
+                "timestamped_pregame_records": 0,
+                "odds_sources": "no cached file",
+                "assessment": "No cached game betting file",
+            })
+            continue
+        betting = pd.read_parquet(path)
+        betting["game_id"] = betting.game_id.astype(str)
+        game_ids = pd.DataFrame({"game_id": games.game_id.astype(str)})
+        matched = game_ids.merge(betting, on="game_id", how="left", validate="one_to_one")
+        spread_col = next((name for name in ("home_team_spread", "game_spread")
+                           if name in matched.columns), None)
+        timestamp_cols = [
+            name for name in betting.columns
+            if any(token in name.casefold()
+                   for token in ("time", "date", "snapshot", "updated", "created"))
+        ]
+        moneyline_cols = [name for name in betting.columns
+                          if "moneyline" in name.casefold() or name.casefold().endswith("_ml")]
+        has_home_ml = any("home" in name.casefold() for name in moneyline_cols)
+        has_away_ml = any("away" in name.casefold() for name in moneyline_cols)
+        matched_spreads = (
+            int(matched[spread_col].notna().sum()) if spread_col else 0
+        )
+        timestamped = (
+            int(matched[timestamp_cols].notna().any(axis=1).sum())
+            if timestamp_cols else 0
+        )
+        source_values = sorted(
+            str(value) for value in betting.odds_source.dropna().unique()
+        ) if "odds_source" in betting else []
+        rows.append({
+            "season": int(season),
+            "forecast_games": int(len(games)),
+            "matched_stored_spreads": matched_spreads,
+            "matched_moneylines": int(
+                matched[moneyline_cols].notna().all(axis=1).sum()
+                if has_home_ml and has_away_ml else 0
+            ),
+            "timestamped_pregame_records": timestamped,
+            "odds_sources": ", ".join(source_values) or "unknown",
+            "assessment": (
+                "Spread available, but no quote timestamp; excluded from as-of market scoring"
+                if matched_spreads and not timestamp_cols
+                else "No verified as-of two-sided market snapshot"
+            ),
+        })
+    return pd.DataFrame(rows)
+
+
+def plot_calibration(calibration, plot_path):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    periods = [
+        "Walk-forward 2023-2025",
+        "2025 frozen holdout",
+        "2026 current forward",
+    ]
+    colors = {
+        "Walk-forward 2023-2025": "#146c94",
+        "2025 frozen holdout": "#d97706",
+        "2026 current forward": "#6b4eff",
+    }
+    figure, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True, sharey=True)
+    for model_column, axis in zip(MODEL_COLUMNS, axes.flat):
+        label = MODEL_LABELS[model_column]
+        axis.plot([0, 1], [0, 1], color="#777777", linestyle="--", linewidth=1)
+        model_rows = calibration[calibration.model.eq(label)]
+        for period in periods:
+            subset = model_rows[model_rows.period.eq(period)].sort_values("mean_predicted")
+            if subset.empty:
+                continue
+            axis.plot(
+                subset.mean_predicted, subset.observed_home_win_rate,
+                marker="o", linewidth=1.5, color=colors[period], label=period,
+            )
+        axis.set_title(label)
+        axis.grid(alpha=0.2)
+        axis.set_xlim(0, 1)
+        axis.set_ylim(0, 1)
+    axes[1, 0].set_xlabel("Mean predicted home-win probability")
+    axes[1, 1].set_xlabel("Mean predicted home-win probability")
+    axes[0, 0].set_ylabel("Observed home-win rate")
+    axes[1, 0].set_ylabel("Observed home-win rate")
+    axes[0, 0].legend(fontsize=8, loc="upper left")
+    figure.suptitle("FBS game-winner calibration by model and evaluation period")
+    figure.tight_layout()
+    figure.savefig(plot_path, dpi=160)
+    plt.close(figure)
+
+
+def build_report(forecasts, frozen_holdout, coverage, metrics, comparisons,
+                 calibration, manifest, market_coverage, plot_name,
+                 report_path, run_date):
+    generated = datetime.now(pytz.UTC).strftime("%Y-%m-%d %H:%M UTC")
+    period_frames = [
+        ("Walk-forward 2023-2025", forecasts[forecasts.season.between(2023, 2025)]),
+        ("2025 rolling walk-forward", forecasts[forecasts.season.eq(2025)]),
+        ("2025 frozen holdout", frozen_holdout),
+        ("2026 current forward", forecasts[forecasts.season.eq(2026)]),
+    ]
+
+    overall_rows = []
+    for period, frame in period_frames:
         for model_column in MODEL_COLUMNS:
-            m = score_metrics(primary[mask], model_column)
-            all_rows.append({
-                "period": period, "model": MODEL_LABELS[model_column],
-                "games": m["games"], "brier": fmt(m["brier"]),
-                "log_loss": fmt(m["log_loss"]), "accuracy": fmt(m["accuracy"]),
-                "calibration": "%s / %s" % (
-                    fmt(m["mean_predicted_home_win"]),
-                    fmt(m["observed_home_win_rate"])),
-                "reliability": fmt(m["reliability_10bin"]),
-                "resolution": fmt(m["resolution_10bin"]),
+            result = score_metrics(frame, model_column)
+            overall_rows.append({
+                "period": period,
+                "model": MODEL_LABELS[model_column],
+                "games": result.get("games", 0),
+                "brier": fmt(result.get("brier")),
+                "coinflip BSS": fmt(result.get("brier_skill_vs_coinflip")),
+                "log loss": fmt(result.get("log_loss")),
+                "accuracy": fmt(result.get("accuracy")),
+                "predicted / observed": "%s / %s" % (
+                    fmt(result.get("mean_predicted_home_win")),
+                    fmt(result.get("observed_home_win_rate")),
+                ),
+                "reliability": fmt(result.get("reliability_10bin")),
+                "resolution": fmt(result.get("resolution_10bin")),
             })
 
+    season_rows = []
+    for season in sorted(forecasts.season.unique()):
+        subset = forecasts[forecasts.season.eq(season)]
+        for model_column in MODEL_COLUMNS:
+            result = score_metrics(subset, model_column)
+            season_rows.append({
+                "season": int(season), "model": MODEL_LABELS[model_column],
+                "games": result.get("games", 0),
+                "brier": fmt(result.get("brier")),
+                "coinflip BSS": fmt(result.get("brier_skill_vs_coinflip")),
+                "log loss": fmt(result.get("log_loss")),
+                "accuracy": fmt(result.get("accuracy")),
+            })
+
+    week_rows = []
+    for (season, week), subset in forecasts.groupby(["season", "week"], dropna=False):
+        row = {"season": int(season), "week": week, "games": int(len(subset))}
+        for model_column in MODEL_COLUMNS:
+            row[MODEL_LABELS[model_column]] = fmt(
+                score_metrics(subset, model_column).get("brier")
+            )
+        week_rows.append(row)
+
+    coverage_rows = []
+    for row in coverage.itertuples(index=False):
+        season_forecasts = forecasts[forecasts.season.eq(row.season)]
+        evaluated = int(len(season_forecasts))
+        coverage_rows.append({
+            "season": row.season,
+            "schedule rows": row.all_schedule_rows,
+            "FBS-FBS scheduled": row.fbs_game_rows,
+            "division unknown": row.division_membership_unknown_rows,
+            "FBS flag vs divisions": row.fbs_membership_disagreements,
+            "FBS participant vs divisions": row.fbs_participant_disagreements,
+            "completed candidates": row.completed_fbs_vs_fbs_candidate,
+            "eligible games": row.eligible_fbs_vs_fbs,
+            "evaluated games": evaluated,
+            "home-site games": int((~season_forecasts.neutral_site.astype(bool)).sum()),
+            "neutral-site games": int(season_forecasts.neutral_site.astype(bool).sum()),
+            "FBS-FCS completed": row.fbs_vs_fcs_completed,
+            "no ESPN event": row.fbs_without_espn_event,
+            "ESPN not final": row.fbs_espn_not_final,
+            "final missing score": row.fbs_espn_final_missing_score,
+            "ESPN final / CFB incomplete": row.espn_final_without_cfb_completed,
+            "unresolved IDs excluded": row.excluded_unresolved_team_ids,
+            "ties excluded": row.excluded_ties_without_winner,
+            "missing kickoff excluded": row.excluded_missing_kickoff,
+            "duplicate source rows": (
+                row.duplicate_schedule_rows + row.duplicate_espn_rows
+                + row.cross_season_duplicate_event_rows
+            ),
+        })
+
     slice_rows = []
-    chosen = metrics[
-        metrics.period.eq("Walk-forward 2023-2025")
-        & metrics.slice.isin([
-            "Local kickoff day: Saturday", "Local kickoff day: Off-Saturday",
-            "Local kickoff day: Unknown",
-            "Conference matchup: SEC/Big 12 vs lower non-elite",
-            "Conference matchup: Lower non-elite conferences only",
-            "Conference matchup: SEC/Big 12 involved",
-            "Game phase: Regular season", "Game phase: Conference championship",
-            "Game phase: Bowl", "Game phase: Playoff",
-        ])
+    slice_periods = ["Walk-forward 2023-2025", "2026 current forward"]
+    prefixes = ("Local kickoff day:", "Conference matchup:", "Game phase:")
+    slices = metrics[
+        metrics.period.isin(slice_periods)
+        & metrics.slice.map(lambda value: str(value).startswith(prefixes))
     ]
-    for row in chosen.itertuples(index=False):
+    for row in slices.itertuples(index=False):
         slice_rows.append({
+            "period": row.period,
             "slice": row.slice,
             "model": row.model,
             "games": row.games,
             "brier": fmt(getattr(row, "brier", None)),
-            "log_loss": fmt(getattr(row, "log_loss", None)),
+            "log loss": fmt(getattr(row, "log_loss", None)),
+            "accuracy": fmt(getattr(row, "accuracy", None)),
+        })
+
+    conference_rows = []
+    conference_metrics = metrics[
+        metrics.period.eq("Walk-forward 2023-2025")
+        & metrics.slice.str.startswith("Conference team:")
+    ]
+    for row in conference_metrics.itertuples(index=False):
+        conference_rows.append({
+            "conference": row.slice.replace("Conference team: ", ""),
+            "team-games": row.games, "model": row.model,
+            "brier": fmt(getattr(row, "brier", None)),
+            "log loss": fmt(getattr(row, "log_loss", None)),
             "accuracy": fmt(getattr(row, "accuracy", None)),
         })
 
@@ -834,189 +1249,231 @@ def build_report(forecasts, coverage, metrics, comparisons, calibration, report_
     ]
     for row in strength_metrics.itertuples(index=False):
         strength_rows.append({
-            "slice": row.slice,
-            "model": row.model,
-            "games": row.games,
+            "slice": row.slice, "model": row.model, "games": row.games,
             "brier": fmt(getattr(row, "brier", None)),
-            "log_loss": fmt(getattr(row, "log_loss", None)),
+            "log loss": fmt(getattr(row, "log_loss", None)),
             "accuracy": fmt(getattr(row, "accuracy", None)),
-        })
-
-    conference_rows = []
-    conference_metrics = metrics[
-        metrics.period.eq("Walk-forward 2023-2025")
-        & metrics.slice.str.startswith("Conference team:")
-    ]
-    for row in conference_metrics.itertuples(index=False):
-        conference_rows.append({
-            "slice": row.slice,
-            "model": row.model,
-            "games": row.games,
-            "brier": fmt(getattr(row, "brier", None)),
-            "log_loss": fmt(getattr(row, "log_loss", None)),
-            "accuracy": fmt(getattr(row, "accuracy", None)),
-        })
-
-    coverage_rows = []
-    for row in coverage.itertuples(index=False):
-        coverage_rows.append({
-            "season": row.season,
-            "schedule rows": row.all_schedule_rows,
-            "FBS games": row.fbs_game_rows,
-            "completed FBS-FBS": row.completed_fbs_vs_fbs,
-            "completed FBS-FCS": row.fbs_vs_fcs_completed,
-            "FBS final not marked complete in CFB": row.espn_final_without_cfb_completed,
-            "not final/canceled": row.fbs_rows_canceled_or_not_final,
         })
 
     comparison_rows = []
     for row in comparisons.itertuples(index=False):
         comparison_rows.append({
-            "period": row.period,
-            "candidate": row.candidate,
-            "control": row.control,
-            "games": row.games,
-            "Δ Brier": fmt(row.difference),
-            "paired 95% interval": "[%s, %s]" % (fmt(row.ci_low), fmt(row.ci_high)),
+            "period": row.period, "candidate": row.candidate,
+            "control": row.control, "games": row.games,
+            "delta": fmt(row.difference),
+            "95% paired interval": "[%s, %s]" % (fmt(row.ci_low), fmt(row.ci_high)),
         })
 
-    saturday_games = int(primary[primary.season.between(2023, 2025)].day_group.eq("Saturday").sum())
-    off_saturday_games = int(primary[primary.season.between(2023, 2025)].day_group.eq("Off-Saturday").sum())
-    unknown_day_games = int(primary[primary.season.between(2023, 2025)].day_group.eq("Unknown").sum())
-    total_2023_25 = int(primary.season.between(2023, 2025).sum())
-    lower = primary[(primary.season.between(2023, 2025))
-                    & primary.conference_matchup_group.eq("SEC/Big 12 vs lower non-elite")]
-    elo_metrics = score_metrics(
-        primary[primary.season.between(2023, 2025)], "elo_home_prob"
-    )
-    margin_metrics = score_metrics(
-        primary[primary.season.between(2023, 2025)], "margin_home_prob"
-    )
+    source_rows = []
+    for row in manifest.itertuples(index=False):
+        source_rows.append({
+            "season": row.season, "source": row.source, "file": row.file,
+            "rows": row.rows, "bytes": row.bytes, "sha256": row.sha256,
+        })
+    market_rows = []
+    for row in market_coverage.itertuples(index=False):
+        market_rows.append({
+            "season": row.season, "forecast games": row.forecast_games,
+            "stored spreads matched": row.matched_stored_spreads,
+            "moneylines matched": row.matched_moneylines,
+            "timestamped records": row.timestamped_pregame_records,
+            "odds source": row.odds_sources, "assessment": row.assessment,
+        })
+
+    rolling = forecasts[forecasts.season.between(2023, 2025)]
+    elo_score = score_metrics(rolling, "elo_home_prob")
+    margin_score = score_metrics(rolling, "margin_home_prob")
     margin_vs_elo = comparisons[
         comparisons.period.eq("Walk-forward 2023-2025")
         & comparisons.candidate.eq(MODEL_LABELS["margin_home_prob"])
         & comparisons.control.eq(MODEL_LABELS["elo_home_prob"])
     ].iloc[0]
+    if margin_vs_elo.ci_low <= 0 <= margin_vs_elo.ci_high:
+        margin_decision = "does not demonstrate an improvement over Elo"
+    elif margin_vs_elo.ci_high < 0:
+        margin_decision = "improves on Elo on this paired sample"
+    else:
+        margin_decision = "scores worse than Elo on this paired sample"
+    lower = rolling[
+        rolling.conference_matchup_group.eq("SEC/Big 12 vs lower non-elite")
+    ]
+    saturday = int(rolling.day_group.eq("Saturday").sum())
+    off_saturday = int(rolling.day_group.eq("Off-Saturday").sum())
+    unknown_day = int(rolling.day_group.eq("Unknown").sum())
     decision = (
-        "Elo is the lead result-only baseline: Brier %s versus %s for the "
-        "margin-strength probability. The paired margin-minus-Elo Brier "
-        "difference is %s (95%% interval %s to %s), so the margin model does "
-        "not establish an improvement on the primary metric. It also predicts "
-        "a %s average home-win probability against a %s observed rate, showing "
-        "material overprediction. Keep Elo and the base rate as benchmarks; "
-        "do not add team-stat features yet. The next justified experiment is "
-        "chronological probability calibration for margin strength, judged "
-        "against frozen Elo on the same games."
+        "On the 2023-2025 walk-forward sample, G2 Elo scored Brier %s and G3 "
+        "margin strength scored %s. G3 minus G2 was %s with paired 95%% "
+        "interval [%s, %s], so it %s. G3's mean predicted home-win rate was "
+        "%s against an observed %s. Keep G0-G2 as references and do not add "
+        "team-stat inputs in this Phase 1 run."
     ) % (
-        fmt(elo_metrics["brier"]), fmt(margin_metrics["brier"]),
+        fmt(elo_score.get("brier")), fmt(margin_score.get("brier")),
         fmt(margin_vs_elo.difference), fmt(margin_vs_elo.ci_low),
-        fmt(margin_vs_elo.ci_high),
-        fmt(margin_metrics["mean_predicted_home_win"]),
-        fmt(margin_metrics["observed_home_win_rate"]),
+        fmt(margin_vs_elo.ci_high), margin_decision,
+        fmt(margin_score.get("mean_predicted_home_win")),
+        fmt(margin_score.get("observed_home_win_rate")),
     )
 
-    report = """# FBS Game-Winner Baseline — Phase 1
-
-Generated: %s
-Model version: `%s`
-Research brief: `docs/BRIEF-fbs-game-prediction-research-plan.md`
-
-## Result
-
-This is the first reproducible, chronological game-winner benchmark. It forecasts the probability that the schedule's home team wins. It uses no player-prop, player, box-score, or play-by-play features. The 2022 season warms the models; evaluation begins in 2023. 2025 is evaluated across the full season with earlier 2025 results entering later forecasts only after the embargo. 2026 is a forward sample through the source snapshot dated 2026-10-17.
-
-%s
-
-Brier is the primary score; lower is better. Reliability and resolution use fixed 0.10 probability bins, with lower reliability error and higher resolution preferred. Calibration is shown as average predicted probability / actual home-win rate. The reported Brier decomposition terms are binned summaries; their sum approximates the Brier score.
-
-## Season results
-
-%s
-
-## Data coverage and reconciliation
-
-%s
-
-- The all-division SportsDataverse `cfb_schedules` release supplies historical FBS membership (`fbs_game` / `fbs_participant`), season-specific conferences, schedule phase, neutral-site and venue IDs. The ESPN-native schedule supplies event home/away orientation, kickoff timestamps, final status and scores.
-- All completed FBS-participant rows in 2022–25 joined to an ESPN schedule row. Seven 2022–24 FBS games have reversed home/away orientation between the two schedule releases; ESPN orientation and scores reconcile to the CFBD scores after swapping sides. The model uses that orientation and reorients conference and rank metadata by team ID.
-- In 2024, one canceled FBS-vs-FBS game carries a 0–0 placeholder in the all-division schedule; it is excluded because ESPN does not mark it final.
-- In the 2026 snapshot, 11 ESPN-final FBS-vs-FBS games were not yet marked completed by the all-division schedule. ESPN final rows are used for those outcomes; the source lag is visible in the coverage table.
-- The 2026 schedule table is `cfb_schedules_2026_snapshot_20261017.parquet`, fetched separately to preserve the earlier cached file.
-- Local Saturday classification uses the home team's IANA timezone for non-neutral games and a venue-ID timezone match for neutral sites. %d of %d evaluated 2023–25 games are Saturday, %d are off-Saturday, and %d have unknown local venue timezone and are excluded from those two slices.
-- Lower-conference labels are descriptive, retrospective season groupings: non-SEC/Big 12 conferences with no Top-10-ranked team in schedule rank fields and no CFP participant. These labels are not model features. 2026 postseason status is unknown, so those games are not assigned to the lower-non-elite group.
-- The cached betting releases contain spread/total fields but no timestamped moneyline prices. No market probability or market favorite label is used. Favorite/underdog error slices use each candidate model's own pregame pick.
-
-## Paired Brier comparisons
-
-Negative differences favor the candidate. Intervals are paired game-level bootstrap intervals (2,000 resamples); they do not account for dependence between games involving the same teams.
-
-%s
-
-## Saturday, conference, and phase slices (2023–25)
-
-%s
-
-The `SEC/Big 12 vs lower non-elite` slice contains %d games. Lower non-elite means the opposing conference had no Top-10-ranked team in the schedule rank fields and no CFP participant that season. This is a retrospective reporting label, never a prediction feature. Unknown-timezone neutral-site games remain separately visible.
-
-Conference team-game rows below use each team's season-aligned conference. In same-conference matchups, both teams count as observations; probabilities and outcomes are converted to each team's win perspective.
-
-%s
-
-## Favorite and strength-difference slices (2023–25)
-
-Favorite status is each model's own pregame pick. Margin bands use the opponent-adjusted model's predicted score-margin difference before kickoff.
-
-%s
-
-## Model definitions and leakage controls
-
-1. **Historical home/neutral base rate:** expanding prior FBS-vs-FBS home-win rate, separated by neutral-site status, with a Beta(1,1) smoothing prior.
-2. **Chronological Elo:** team ratings start at 1500; logistic scale 400; fixed 55-point home advantage (zero at neutral sites); K=20; 25%% offseason regression toward 1500; FBS-vs-FBS and FBS-vs-FCS outcomes update ratings.
-3. **Opponent-adjusted margin strength:** ridge least-squares team ratings from previous score margins, with a fitted home-advantage term, fixed ridge penalty 15, and season weights halved per prior season. It trains on FBS-participant games and estimates probability with a normal margin CDF; the scale is the prior in-sample FBS-vs-FBS residual standard deviation, floored at 15 points.
-
-For every UTC kickoff date, predictions are made before adding games kicked off on that date or the immediately preceding UTC date. The last eligible kickoff date is therefore at least 24 hours before the forecast date; this conservative date embargo avoids relying on unavailable final-whistle timestamps. Each CSV row records that game's actual kickoff as the prediction cutoff. Neutral games receive no standard home-field advantage. No random split or future season result enters a prediction. Predictions, cutoff, source phase, teams, actual scores, and model probabilities are in `research/fbs/fbs_game_winner_predictions.csv`.
-
-## Limitations and next experiment
-
-- The base-rate and Elo results are the cleanest first controls. Margin-strength probabilities rely on a normal approximation and an in-sample residual scale, so calibration is a known limitation; the paired results decide whether it merits further work.
-- The current 2026 sample is incomplete and is not a full-season validation.
-- Conference slices are uneven, and Saturday coverage omits neutral sites without a venue timezone in the available reference file.
-- No timestamped historical moneyline data is available in the cached betting releases, so the sportsbook comparison is unavailable.
-- **Decision:** %s
-
-## Reproduction
-
-`/root/legendarypicks/backend/venv/bin/python backend/fbs_game_winner_baseline.py`
-""" % (
-        generated, MODEL_VERSION,
-        markdown_table(all_rows,
-                       ["period", "model", "games", "brier", "log_loss", "accuracy", "calibration", "reliability", "resolution"],
-                       ["Period", "Model", "Games", "Brier", "Log loss", "Accuracy", "Predicted / actual", "Reliability", "Resolution"]),
-        markdown_table(overall_rows,
-                       ["season", "model", "games", "brier", "log_loss", "accuracy"],
-                       ["Season", "Model", "Games", "Brier", "Log loss", "Accuracy"]),
-        markdown_table(coverage_rows,
-                       ["season", "schedule rows", "FBS games", "completed FBS-FBS", "completed FBS-FCS", "FBS final not marked complete in CFB", "not final/canceled"],
-                       ["Season", "All schedule rows", "FBS-vs-FBS scheduled", "Completed FBS-vs-FBS", "Completed FBS-vs-FCS", "ESPN final / CFB incomplete", "Canceled or not final"]),
-        saturday_games, total_2023_25, off_saturday_games, unknown_day_games,
-        markdown_table(comparison_rows,
-                       ["period", "candidate", "control", "games", "Δ Brier", "paired 95% interval"],
-                       ["Period", "Candidate", "Control", "Games", "Δ Brier (candidate minus control)", "95% interval"]),
-        markdown_table(slice_rows,
-                       ["slice", "model", "games", "brier", "log_loss", "accuracy"],
-                       ["Slice", "Model", "Games", "Brier", "Log loss", "Accuracy"]),
-        len(lower),
-        markdown_table(conference_rows,
-                       ["slice", "model", "games", "brier", "log_loss", "accuracy"],
-                       ["Conference team-games", "Model", "Team-games", "Brier", "Log loss", "Accuracy"]),
-        markdown_table(strength_rows,
-                       ["slice", "model", "games", "brier", "log_loss", "accuracy"],
-                       ["Slice", "Model", "Games", "Brier", "Log loss", "Accuracy"]),
-        decision,
+    coverage_table = markdown_table(
+        coverage_rows,
+        ["season", "schedule rows", "FBS-FBS scheduled", "division unknown",
+         "FBS flag vs divisions",
+         "FBS participant vs divisions", "completed candidates",
+         "eligible games", "evaluated games", "home-site games", "neutral-site games",
+         "FBS-FCS completed", "no ESPN event",
+         "ESPN not final", "final missing score", "ESPN final / CFB incomplete",
+         "unresolved IDs excluded", "ties excluded", "missing kickoff excluded",
+         "duplicate source rows"],
+        ["Season", "All schedules", "FBS-FBS scheduled", "Division unknown",
+         "FBS flag mismatches",
+         "Participant flag mismatches", "Completed candidates", "Eligible FBS-FBS",
+         "Evaluated", "Home-site", "Neutral-site", "FBS-FCS completed", "No ESPN event",
+         "ESPN not final", "Final missing score", "ESPN final / CFB incomplete",
+         "Unresolved IDs excluded", "Ties excluded", "No kickoff excluded",
+         "Duplicate rows"],
     )
+    report = [
+        "# FBS game-winner benchmark — Phase 1",
+        "",
+        "Generated: %s" % generated,
+        "Model version: `%s`" % MODEL_VERSION,
+        "Execution brief: `research/fbs/AUDIT-FBS-BASELINE-20261017.md` (current brief at file top)",
+        "",
+        "## Result",
+        "",
+        "This reproducible benchmark forecasts P(home-designated FBS team wins). It uses only prior completed game results and score margins; no player props, player statistics, box scores, play-by-play, sportsbook prices, or same-day results enter the forecasts. The primary ledger has one row per eligible FBS-FBS game. 2022 warms the models; chronological evaluation covers 2023-2026, with 2025 also reported as a frozen season holdout trained only through 2024.",
+        "",
+        markdown_table(
+            overall_rows,
+            ["period", "model", "games", "brier", "coinflip BSS", "log loss",
+             "accuracy", "predicted / observed", "reliability", "resolution"],
+            ["Evaluation period", "Model", "Games", "Brier", "Coinflip BSS",
+             "Log loss", "Accuracy", "Mean forecast / outcome rate",
+             "Reliability (10 bins)", "Resolution (10 bins)"],
+        ),
+        "",
+        "Brier is mean `(p - outcome)^2` for one binary outcome; lower is better. G0 must score exactly 0.2500 on every non-empty sample. Coinflip BSS is `1 - Brier / 0.25`. Calibration is mean predicted / observed home-win rate. Reliability and resolution use fixed 0.10 bins; their decomposition is approximate because of binning. G0 has no directional winner pick, so accuracy is reported as unavailable.",
+        "",
+        "The 2025 frozen holdout uses only games through 2024 to set its base rate, Elo ratings and margin model; 2025 results do not update those forecasts. The separate 2025 rolling walk-forward uses prior 2025 results only after the conservative embargo. 2026 is a current-season walk-forward through the 2026-10-17 source snapshot.",
+        "",
+        "## Season results",
+        "",
+        markdown_table(
+            season_rows,
+            ["season", "model", "games", "brier", "coinflip BSS", "log loss", "accuracy"],
+            ["Season", "Model", "Games", "Brier", "Coinflip BSS", "Log loss", "Accuracy"],
+        ),
+        "",
+        "## Weekly Brier scores",
+        "",
+        markdown_table(
+            week_rows,
+            ["season", "week", "games"] + [MODEL_LABELS[column] for column in MODEL_COLUMNS],
+            ["Season", "Week", "Games"] + ["Brier: " + MODEL_LABELS[column] for column in MODEL_COLUMNS],
+        ),
+        "",
+        "## Eligibility, exclusions, and source reconciliation",
+        "",
+        coverage_table,
+        "",
+        "The all-division `cfb_schedules` release marks season-specific `fbs_game` and `fbs_participant` membership. As an independent consistency check, `fbs_game` matched `home_division == fbs` and `away_division == fbs` for every cached season. ESPN's schedule supplies the game kickoff, event home/away orientation, final status, and scores. The code joins by game ID, excludes duplicate source rows, unresolved/conflicting IDs, ties, missing kickoff, non-final games, and missing scores, and fails on a score disagreement. No prop table filters the population.",
+        "",
+        "FBS-FCS completed games are reported separately and update Elo and the margin ratings; the historical home-rate baseline uses FBS-FBS games only. The 2026 `no ESPN event` count is mostly future scheduled games absent from that ESPN snapshot, not cancellations. ESPN-final games with the CFB `completed` flag still false are retained only when the ESPN event has final scores; those rows are shown separately.",
+        "",
+        "## Input provenance",
+        "",
+        "Source files are SportsDataverse `cfb_schedules`, `espn_cfb_schedules`, `cfb_team_info`, and cached `espn_cfb_betting` where available. Exact local file snapshots are pinned below by SHA-256; Parquet assets are fetched by `backend/fetch_fbs_parquet.py` from SportsDataverse releases.",
+        "",
+        markdown_table(
+            source_rows, ["season", "source", "file", "rows", "bytes", "sha256"],
+            ["Season", "Publisher release", "Cached file", "Rows", "Bytes", "SHA-256"],
+        ),
+        "",
+        "## Calibration",
+        "",
+        "Calibration bins for the combined 2023-2025 walk-forward sample, frozen 2025 holdout, and 2026 current forward sample are in `fbs_game_winner_calibration_%s.csv`." % run_date,
+        "",
+        "![Calibration plot](%s)" % plot_name,
+        "",
+        "## Saturday, conference, postseason, and strength slices",
+        "",
+        "Kickoff day is classified in the home team's local time zone, or the venue time zone for neutral sites. For the 2023-2025 sample: %d Saturday, %d off-Saturday, and %d unknown-time-zone games, out of %d total. Unknowns remain their own slice." % (saturday, off_saturday, unknown_day, len(rolling)),
+        "",
+        markdown_table(
+            slice_rows,
+            ["period", "slice", "model", "games", "brier", "log loss", "accuracy"],
+            ["Period", "Slice", "Model", "Games", "Brier", "Log loss", "Accuracy"],
+        ),
+        "",
+        "`SEC/Big 12 vs lower non-elite` uses conferences with no Top-10-ranked team in the season rank fields and no CFP participant that season. It is a retrospective reporting group, never a feature. This slice has %d games across 2023-2025. The 2026 non-SEC/Big 12 group stays unknown because that season's postseason participants are not yet known." % len(lower),
+        "",
+        "Conference team-game metrics below count each conference member once per game and convert away-team outcomes and probabilities to that team's perspective.",
+        "",
+        markdown_table(
+            conference_rows,
+            ["conference", "team-games", "model", "brier", "log loss", "accuracy"],
+            ["Conference", "Team-games", "Model", "Brier", "Log loss", "Accuracy"],
+        ),
+        "",
+        "Favorite/underdog-like slices use each model's own pregame pick; they are not sportsbook favorites. Strength bands use G3's predicted score-margin difference.",
+        "",
+        markdown_table(
+            strength_rows,
+            ["slice", "model", "games", "brier", "log loss", "accuracy"],
+            ["Slice", "Model", "Games", "Brier", "Log loss", "Accuracy"],
+        ),
+        "",
+        "## Paired Brier comparisons",
+        "",
+        "Negative candidate-minus-control differences favor the candidate. Intervals use a paired UTC-calendar-week block bootstrap, stratified by season, with 2,000 resamples. This groups games kicked off in the same week; it does not cluster repeat appearances by team across different weeks.",
+        "",
+        markdown_table(
+            comparison_rows,
+            ["period", "candidate", "control", "games", "delta", "95% paired interval"],
+            ["Period", "Candidate", "Control", "Games", "Δ Brier", "95% interval"],
+        ),
+        "",
+        "## Market data availability",
+        "",
+        markdown_table(
+            market_rows,
+            ["season", "forecast games", "stored spreads matched", "moneylines matched",
+             "timestamped records", "odds source", "assessment"],
+            ["Season", "Forecast games", "Matched stored spreads", "Matched moneylines",
+             "Timestamped records", "Odds source", "Assessment"],
+        ),
+        "",
+        "The cached betting files carry spread fields but no quote timestamp and no two-sided moneyline fields. The stored spreads cannot be placed before the forecast cutoff, so they are not a valid as-of market benchmark and no spread-to-probability curve is fit. Market Brier skill and matched-market comparisons are unavailable on this evidence; the full-population G0-G3 comparisons remain market-blind.",
+        "",
+        "## Model definitions and decision",
+        "",
+        "- **G0:** fixed P(home win) = 0.50.",
+        "- **G1:** expanding prior FBS-FBS home-win rate with Beta(1,1) smoothing, separated for neutral and non-neutral games.",
+        "- **G2:** Elo initialized at 1500, logistic scale 400, fixed 55-point home advantage (zero at neutral), K=20, and 25% offseason regression. Completed FBS-FBS and FBS-FCS results update ratings.",
+        "- **G3:** ridge least-squares opponent-adjusted score-margin ratings, ridge penalty 15, prior-season weight half-life one season; probability is a normal margin CDF using the pregame in-sample FBS-FBS residual scale floored at 15 points.",
+        "",
+        "For each UTC kickoff date, only completed games whose UTC date is at least two calendar days earlier enter the update. The ledger stores the forecast kickoff cutoff, latest history game ID/time, and history count; code asserts at least 24 hours between the latest history kickoff and forecast kickoff. All games on one UTC date share a pregame state. Neutral games receive no normal home-field advantage. Hyperparameters are fixed and no calibration is fit.",
+        "",
+        "**Decision:** %s" % decision,
+        "",
+        "## Reproduction and artifacts",
+        "",
+        "Run `/root/legendarypicks/backend/venv/bin/python backend/fbs_game_winner_baseline.py --run-date %s` from the repository root. Outputs are date-stamped so the prior audit artifacts remain unchanged." % run_date,
+        "",
+        "- Forecast ledger: `fbs_game_winner_predictions_%s.csv` (one row per game)." % run_date,
+        "- Frozen 2025 ledger: `fbs_game_winner_holdout_2025_%s.csv`." % run_date,
+        "- Metrics: `fbs_game_winner_metrics_%s.csv`." % run_date,
+        "- Paired comparisons: `fbs_game_winner_paired_comparisons_%s.csv`." % run_date,
+        "- Calibration bins: `fbs_game_winner_calibration_%s.csv`." % run_date,
+        "- Input manifest: `fbs_game_winner_sources_%s.csv`." % run_date,
+        "- Market availability audit: `fbs_game_winner_market_coverage_%s.csv`." % run_date,
+        "- Calibration figure: `%s`." % plot_name,
+        "",
+        "**Phase 1 limitation:** the matched as-of sportsbook benchmark is not available from the cached market files because their quote times are absent. No player-prop history was used. This run does not start Phase 2 historical backfill.",
+        "",
+    ]
     with open(report_path, "w", encoding="utf-8") as output:
-        output.write(report)
-
+        output.write("\n".join(report))
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -1027,51 +1484,97 @@ def main():
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "research", "fbs"))
     parser.add_argument("--seasons", default="2022,2023,2024,2025,2026")
+    parser.add_argument("--run-date", default=None,
+                        help="output date suffix YYYYMMDD; defaults to current UTC date")
     args = parser.parse_args()
     seasons = [int(part.strip()) for part in args.seasons.split(",") if part.strip()]
+    run_date = args.run_date or datetime.now(pytz.UTC).strftime("%Y%m%d")
     os.makedirs(args.output_dir, exist_ok=True)
 
     events, coverage, _, _ = load_events(args.data_dir, seasons)
     forecasts = make_predictions(events, FIRST_EVALUATION_SEASON)
-    metrics = build_metrics(forecasts)
-    comparisons = paired_comparisons(forecasts)
-    calibration = calibration_rows(forecasts)
+    frozen_holdout = make_frozen_season_predictions(events, 2025)
+    metrics = build_metrics(forecasts, frozen_holdout)
+    comparisons = paired_comparisons(forecasts, frozen_holdout)
+    calibration = calibration_rows(forecasts, frozen_holdout)
+    manifest = source_manifest(args.data_dir, seasons)
+    market_coverage = audit_market_files(args.data_dir, forecasts)
 
-    forecasts_path = os.path.join(args.output_dir, "fbs_game_winner_predictions.csv")
-    metrics_path = os.path.join(args.output_dir, "fbs_game_winner_metrics.csv")
-    comparisons_path = os.path.join(args.output_dir, "fbs_game_winner_paired_comparisons.csv")
-    calibration_path = os.path.join(args.output_dir, "fbs_game_winner_calibration.csv")
-    report_path = os.path.join(args.output_dir, "REPORT-FBS-GAME-WINNER-BASELINE-20261017.md")
+    forecasts_path = os.path.join(
+        args.output_dir, "fbs_game_winner_predictions_%s.csv" % run_date
+    )
+    frozen_path = os.path.join(
+        args.output_dir, "fbs_game_winner_holdout_2025_%s.csv" % run_date
+    )
+    metrics_path = os.path.join(
+        args.output_dir, "fbs_game_winner_metrics_%s.csv" % run_date
+    )
+    comparisons_path = os.path.join(
+        args.output_dir, "fbs_game_winner_paired_comparisons_%s.csv" % run_date
+    )
+    calibration_path = os.path.join(
+        args.output_dir, "fbs_game_winner_calibration_%s.csv" % run_date
+    )
+    manifest_path = os.path.join(
+        args.output_dir, "fbs_game_winner_sources_%s.csv" % run_date
+    )
+    market_path = os.path.join(
+        args.output_dir, "fbs_game_winner_market_coverage_%s.csv" % run_date
+    )
+    plot_name = "fbs_game_winner_calibration_%s.png" % run_date
+    plot_path = os.path.join(args.output_dir, plot_name)
+    report_path = os.path.join(
+        args.output_dir, "RESULT-FBS-GAME-WINNERS-%s.md" % run_date
+    )
 
     export = forecasts.copy()
     export["kickoff_utc"] = export.kickoff_utc.map(lambda value: value.isoformat())
     export["utc_date"] = export.utc_date.map(str)
     columns = [
-        "game_id", "kickoff_utc", "pregame_data_cutoff_utc", "season",
+        "game_id", "kickoff_utc", "pregame_data_cutoff_utc", "season", "week",
         "season_type", "game_phase", "home_team_id", "home_team",
         "home_conference", "away_team_id", "away_team", "away_conference",
         "neutral_site", "venue", "kickoff_local", "day_group", "home_rank",
         "away_rank", "home_score", "away_score", "home_win",
         "conference_matchup_group", "home_conference_group",
-        "away_conference_group", "home_base_prob", "elo_home_prob",
+        "away_conference_group", "week_start_utc", "coinflip_home_prob",
+        "home_base_prob", "elo_home_prob",
         "elo_rating_margin", "margin_home_prob", "predicted_score_margin",
         "margin_sigma_points", "training_games_available", "history_embargo_days",
+        "latest_history_game_kickoff_utc", "latest_history_game_id",
         "feature_set", "model_version", "result_source",
     ]
     export[columns].to_csv(forecasts_path, index=False, quoting=csv.QUOTE_MINIMAL)
+    frozen_export = frozen_holdout.copy()
+    frozen_export["kickoff_utc"] = frozen_export.kickoff_utc.map(
+        lambda value: value.isoformat()
+    )
+    frozen_export["utc_date"] = frozen_export.utc_date.map(str)
+    frozen_export.to_csv(frozen_path, index=False, quoting=csv.QUOTE_MINIMAL)
     metrics.to_csv(metrics_path, index=False)
     comparisons.to_csv(comparisons_path, index=False)
     calibration.to_csv(calibration_path, index=False)
-    build_report(forecasts, coverage, metrics, comparisons, calibration, report_path)
+    manifest.to_csv(manifest_path, index=False)
+    market_coverage.to_csv(market_path, index=False)
+    plot_calibration(calibration, plot_path)
+    build_report(
+        forecasts, frozen_holdout, coverage, metrics, comparisons, calibration,
+        manifest, market_coverage, plot_name, report_path, run_date,
+    )
 
     print("wrote %d forecasts across seasons %s" % (len(forecasts), ",".join(map(str, seasons))))
     for season in sorted(forecasts.season.unique()):
         print("  %d: %d FBS-vs-FBS games" % (season, int(forecasts.season.eq(season).sum())))
+    print("frozen 2025 holdout: %d FBS-vs-FBS games" % len(frozen_holdout))
     print("report: %s" % report_path)
     print("predictions: %s" % forecasts_path)
+    print("frozen holdout: %s" % frozen_path)
     print("metrics: %s" % metrics_path)
     print("paired comparisons: %s" % comparisons_path)
     print("calibration: %s" % calibration_path)
+    print("input manifest: %s" % manifest_path)
+    print("market coverage: %s" % market_path)
+    print("calibration plot: %s" % plot_path)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,5 @@
+season,forecast_games,matched_stored_spreads,matched_moneylines,timestamped_pregame_records,odds_sources,assessment
+2023,792,0,0,0,no cached file,No cached game betting file
+2024,798,0,0,0,no cached file,No cached game betting file
+2025,808,808,0,0,"core_odds_api, default","Spread available, but no quote timestamp; excluded from as-of market scoring"
+2026,350,336,0,0,core_odds_api,"Spread available, but no quote timestamp; excluded from as-of market scoring"

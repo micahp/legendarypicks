@@ -151,12 +151,14 @@ What this costs, stated plainly: a within-season walk-forward cannot separate a 
 | 2025-11-29 | 2025-11-29, 2025-11-30 | 2 |
 | 2025-12-06 | 2025-12-06, 2025-12-07 | 2 |
 | 2025-12-13 | 2025-12-13 | 1 |
+| 2026-08-22 | 2026-08-27, 2026-08-28 | 2 |
 | 2026-08-29 | 2026-08-29, 2026-08-30, 2026-09-03, 2026-09-04 | 4 |
 | 2026-09-05 | 2026-09-05, 2026-09-06, 2026-09-07, 2026-09-11 | 4 |
 | 2026-09-12 | 2026-09-12, 2026-09-13, 2026-09-17, 2026-09-18 | 4 |
 | 2026-09-19 | 2026-09-19, 2026-09-20, 2026-09-24, 2026-09-25 | 4 |
 | 2026-09-26 | 2026-09-26, 2026-09-27, 2026-10-02 | 3 |
-| 2026-10-03 | 2026-10-03, 2026-10-04 | 2 |
+| 2026-10-03 | 2026-10-03, 2026-10-04, 2026-10-07, 2026-10-08, 2026-10-09 | 5 |
+| 2026-10-10 | 2026-10-10, 2026-10-11 | 2 |
 
 ## 2. The item set
 
@@ -164,17 +166,17 @@ An item is a (week, player, game, market) with a settled result, a non-whole-num
 
 | measure | count |
 |---|---|
-| props joined to a settled result and a stored log | 45888 |
-| distinct markets | 15 |
-| distinct players | 924 |
-| distinct games | 209 |
+| props joined to a settled result and a stored log | 61994 |
+| distinct markets | 18 |
+| distinct players | 1089 |
+| distinct games | 267 |
 
 | measure | count |
 |---|---|
-| items | 15988 |
-| dropped: not a pre-registered market | 29872 |
+| items | 21854 |
+| dropped: not a pre-registered market | 40108 |
 | dropped: whole-number line | 0 |
-| dropped: no value | 28 |
+| dropped: no value | 32 |
 
 Items by week:
 
@@ -183,15 +185,17 @@ Items by week:
 | 2026-08-29 | 1014 | 60 | 15 | 2 |
 | 2026-09-05 | 3646 | 121 | 35 | 2 |
 | 2026-09-12 | 2874 | 133 | 34 | 2 |
-| 2026-09-19 | 4000 | 172 | 46 | 2 |
+| 2026-09-19 | 4008 | 173 | 47 | 2 |
 | 2026-09-26 | 4454 | 156 | 34 | 2 |
+| 2026-10-03 | 1440 | 38 | 8 | 2 |
+| 2026-10-10 | 4418 | 123 | 29 | 2 |
 
 ## 3. Player history
 
 | measure | count |
 |---|---|
-| players with prior games | 15460 |
-| player-games | 81441 |
+| players with prior games | 15773 |
+| player-games | 93504 |
 | seasons | [2025, 2026] |
 
 ## 4. The models
@@ -204,28 +208,28 @@ Each graded week is scored with models fitted on every game strictly before that
 
 | measure | value |
 |---|---|
-| weeks in the calendar | 5 |
+| weeks in the calendar | 7 |
 | weeks graded | 4 |
-| graded weeks | 2026-09-05, 2026-09-12, 2026-09-19, 2026-09-26 |
+| graded weeks | 2026-09-19, 2026-09-26, 2026-10-03, 2026-10-10 |
 | minimum weeks of history before the first graded week | 1 |
 
 The graded window is the last 4 weeks of the season's calendar, subject to every graded week having at least 1 weeks of history behind it. This is a pre-registered floor; the first graded week with fewer weeks behind it would be measuring the absence of history rather than the model.
 
 | model | items | MAE | Brier | log loss |
 |---|---|---|---|---|
-| season_avg | 14796 | 47.46 | 0.3036 | 0.8292 |
-| rolling_5 | 14796 | 49.60 | 0.2971 | 0.8154 |
-| marcel | 14796 | 45.96 | 0.2951 | 0.8000 |
-| share_adj | 14796 | 57.70 | 0.3548 | 1.0081 |
+| season_avg | 14320 | 47.31 | 0.2907 | 0.7926 |
+| rolling_5 | 14320 | 49.46 | 0.2787 | 0.7665 |
+| marcel | 14320 | 45.95 | 0.2860 | 0.7770 |
+| share_adj | 14320 | 57.96 | 0.3480 | 0.9950 |
 
 Reference (the constant base-rate forecast):
 
 | measure | value |
 |---|---|
-| items | 14796 |
-| observed over rate | 0.4644 |
-| constant base-rate Brier | 0.2487 |
-| constant base-rate log loss | 0.6906 |
+| items | 14320 |
+| observed over rate | 0.4712 |
+| constant base-rate Brier | 0.2492 |
+| constant base-rate log loss | 0.6915 |
 
 Every model here is WORSE than the constant forecast. That is the headline, and it is stated before the model comparison because a relative win among models that all lose to a constant is not a result. The reliability column shows why: every model's reliability is 0.05 to 0.11, which is large, while resolution is 0.0026 to 0.0028, which is the entire uncertainty term divided by about 100. These forecasts carry almost no information about the over/under, and they are confidently wrong rather than uninformative.
 
@@ -235,10 +239,10 @@ Decomposition (Murphy: Brier = reliability - resolution + uncertainty):
 
 | model | items | reliability | resolution | uncertainty | reconstructed |
 |---|---|---|---|---|---|
-| season_avg | 14796 | 0.0568 | 0.0026 | 0.2487 | 0.3029 |
-| rolling_5 | 14796 | 0.0505 | 0.0027 | 0.2487 | 0.2966 |
-| marcel | 14796 | 0.0484 | 0.0028 | 0.2487 | 0.2944 |
-| share_adj | 14796 | 0.1070 | 0.0025 | 0.2487 | 0.3533 |
+| season_avg | 14320 | 0.0422 | 0.0012 | 0.2492 | 0.2902 |
+| rolling_5 | 14320 | 0.0306 | 0.0018 | 0.2492 | 0.2780 |
+| marcel | 14320 | 0.0385 | 0.0022 | 0.2492 | 0.2855 |
+| share_adj | 14320 | 0.0991 | 0.0019 | 0.2492 | 0.3464 |
 
 Reliability is the part a recalibration map can remove. Resolution is the part that is information. A model whose reliability dominates and whose resolution is near zero is miscalibrated rather than uninformed, and the repair is a post-hoc map, not more data.
 
@@ -248,10 +252,10 @@ Per graded week:
 
 | week | season_avg | rolling_5 | marcel | share_adj |
 |---|---|---|---|---|
-| 2026-09-05 | 3468 / 0.2966 | 3468 / 0.2980 | 3468 / 0.2888 | 3468 / 0.3407 |
-| 2026-09-12 | 2874 / 0.3462 | 2874 / 0.3391 | 2874 / 0.3243 | 2874 / 0.3844 |
-| 2026-09-19 | 4000 / 0.2812 | 4000 / 0.2892 | 4000 / 0.2882 | 4000 / 0.3202 |
-| 2026-09-26 | 4454 / 0.3016 | 4454 / 0.2764 | 4454 / 0.2873 | 4454 / 0.3777 |
+| 2026-09-19 | 4008 / 0.2814 | 4008 / 0.2886 | 4008 / 0.2887 | 4008 / 0.3204 |
+| 2026-09-26 | 4454 / 0.3021 | 4454 / 0.2765 | 4454 / 0.2893 | 4454 / 0.3770 |
+| 2026-10-03 | 1440 / 0.3041 | 1440 / 0.2677 | 1440 / 0.2897 | 1440 / 0.3825 |
+| 2026-10-10 | 4418 / 0.2834 | 4418 / 0.2755 | 4418 / 0.2792 | 4418 / 0.3326 |
 
 Each cell is `items / Brier`. A model whose pooled Brier is better but whose per-week Briers are not consistently better is not a model, and the per-week view is what makes that visible.
 
@@ -261,19 +265,19 @@ A model is adopted only if its Brier is lower than `season_avg`'s by a player-ga
 
 | model | shared clusters | Brier difference vs season_avg | clustered 95% interval | verdict |
 |---|---|---|---|---|
-| rolling_5 | 751 | -0.0039 | [-0.0120, 0.0050] | not kept |
-| marcel | 751 | -0.0103 | [-0.0220, 0.0023] | not kept |
-| share_adj | 751 | 0.0416 | [0.0230, 0.0598] | not kept |
+| rolling_5 | 631 | -0.0075 | [-0.0169, 0.0029] | not kept |
+| marcel | 631 | -0.0051 | [-0.0178, 0.0081] | not kept |
+| share_adj | 631 | 0.0458 | [0.0253, 0.0674] | not kept |
 
-Control: `season_avg` Brier 0.3036 on 14796 items across 751 clusters.
+Control: `season_avg` Brier 0.2907 on 14320 items across 631 clusters.
 
 ## 7. The control
 
 | measure | count |
 |---|---|
-| control items | 14796 |
-| control clusters (player-games) | 751 |
+| control items | 14320 |
+| control clusters (player-games) | 631 |
 | control distinct players | 272 |
-| control distinct games | 149 |
+| control distinct games | 118 |
 | control markets | passing_yards, rushing_yards |
-| control weeks | 2026-09-05, 2026-09-12, 2026-09-19, 2026-09-26 |
+| control weeks | 2026-09-19, 2026-09-26, 2026-10-03, 2026-10-10 |

@@ -174,3 +174,7 @@ backend/data/parlay_board.json
 # radio_blackout_check.py output (rewritten every 5 minutes)
 backend/data/radio-blackouts.json*
 backend/data/radio-blackouts.log
+
+# FBS research cache: bulk parquet is fetched by fetch_fbs_parquet.py, never committed
+research/fbs/parquet/*.parquet
+research/fbs/parquet/**/*.parquet

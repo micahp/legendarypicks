@@ -1,0 +1,16 @@
+path,file,bytes,sha256,role
+research/fbs/parquet/cfb_schedules_2022.parquet,cfb_schedules_2022.parquet,98422,9f23a4cfba3577f1689b9954aa31a9f42a954fcb676204c35c2cc85a76ed72b5,"FBS membership, season, phase, and result cross-check"
+research/fbs/parquet/espn_schedule_2022.parquet,espn_schedule_2022.parquet,30194,68ad656b3e9134afcf031d1487e6fcd6f11347e3589be5fc58b038d1255c33ca,"kickoff, home/away orientation, final status, and score"
+research/fbs/parquet/cfb_team_info_2022.parquet,cfb_team_info_2022.parquet,177176,7589ed8e266300b887a33a7fa6d3d85559c4e8337eea80223b66fa69901edccb,team metadata required by the audited source loader
+research/fbs/parquet/cfb_schedules_2023.parquet,cfb_schedules_2023.parquet,98417,58ca3ee4dae1185878feec061aa488e4298c011277cd083ab71dc233ad25f73f,"FBS membership, season, phase, and result cross-check"
+research/fbs/parquet/espn_schedule_2023.parquet,espn_schedule_2023.parquet,30120,e3ff9d5a4ad1b62275e8d3cedfcc54fe8f6aa8ede1a6e5dabef465ebde94daaf,"kickoff, home/away orientation, final status, and score"
+research/fbs/parquet/cfb_team_info_2023.parquet,cfb_team_info_2023.parquet,176753,91e5dd6d29c95d5eda7eee6296b37c06740a8913446085b8e6fda04be44dbe42,team metadata required by the audited source loader
+research/fbs/parquet/cfb_schedules_2024.parquet,cfb_schedules_2024.parquet,102997,7feb11b7ac2eccd92afd741a59efeb7f1fd26bb51d15675ab1164cd01985a153,"FBS membership, season, phase, and result cross-check"
+research/fbs/parquet/espn_schedule_2024.parquet,espn_schedule_2024.parquet,31355,b4ab08eebe72c92db94dac6ddb12d1ee2eb86116b2c8ebf10357f8f7f71ecf8c,"kickoff, home/away orientation, final status, and score"
+research/fbs/parquet/cfb_team_info_2024.parquet,cfb_team_info_2024.parquet,177449,1225957b9f9b37e689c8e413921a39e9978ac61f5eca165c799e9bca8c125f45,team metadata required by the audited source loader
+research/fbs/parquet/cfb_schedules_2025.parquet,cfb_schedules_2025.parquet,102865,0df9da5419dcac1ed8dcf848ef960b2cb3f90ad8d44203618b1840370709bb2e,"FBS membership, season, phase, and result cross-check"
+research/fbs/parquet/espn_schedule_2025.parquet,espn_schedule_2025.parquet,31007,f937e853dad06fb986c40149996bbf088d46bea62b38a746c3296b9b5c5003a3,"kickoff, home/away orientation, final status, and score"
+research/fbs/parquet/cfb_team_info_2025.parquet,cfb_team_info_2025.parquet,177877,208f2f6f13d111011c5883cf0790b04588c8697a2decd3af08acaaf436c54bf4,team metadata required by the audited source loader
+research/fbs/parquet/cfb_schedules_2026_snapshot_20261017.parquet,cfb_schedules_2026_snapshot_20261017.parquet,91935,7ea1e39b0b5c89f188f90140fa7ec950d59bbdc3d2efceb9f70360f7965d9c5f,"FBS membership, season, phase, and result cross-check"
+research/fbs/parquet/espn_schedule_2026.parquet,espn_schedule_2026.parquet,23443,f63b78bc918503fb1847fa20a3126aee0accb46c24cca325754d09f26596d2d1,"kickoff, home/away orientation, final status, and score"
+research/fbs/parquet/cfb_team_info_2026.parquet,cfb_team_info_2026.parquet,178356,e36a263b3b966c76b3b781167962e8191d76ca265456bff94ce0b3fcaae32b85,team metadata required by the audited source loader
