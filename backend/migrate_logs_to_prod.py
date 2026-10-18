@@ -28,6 +28,7 @@ from typing import Iterable, Optional, Sequence
 from urllib.parse import quote
 
 import migrate_schema
+from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 
 
 PLAYER_COLUMNS = (
@@ -281,6 +282,33 @@ def build_plan(
             source_log_player_ids - source_players.keys()
         )
         source_log_player_ids -= set(orphan_player_ids)
+        if any(source_players[player_id]["league"] == "nfl"
+               for player_id in source_log_player_ids):
+            espn_to_gsis, ambiguous_espn = load_espn_to_gsis()
+            for player_id in sorted(source_log_player_ids):
+                source_player = source_players[player_id]
+                if source_player["league"] != "nfl":
+                    continue
+                for label, candidate in (
+                    ("source", source_player),
+                    ("target", target_players.get(player_id)),
+                ):
+                    if candidate is None:
+                        continue
+                    conflict = espn_assignment_conflict(
+                        candidate["espn_id"],
+                        candidate["nfl_gsis_id"],
+                        espn_to_gsis,
+                        ambiguous_espn,
+                    )
+                    if conflict in (
+                        "espn_gsis_identity_conflict",
+                        "ambiguous_published_espn_id",
+                    ):
+                        raise LogMigrationError(
+                            f"refusing NFL log promotion: {label} player {player_id} "
+                            f"has conflicting ESPN/GSIS identity ({conflict})"
+                        )
         missing_player_ids = sorted(
             source_log_player_ids - target_players.keys()
         )

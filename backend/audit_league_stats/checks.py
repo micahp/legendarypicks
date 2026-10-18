@@ -512,20 +512,57 @@ def check_published_identity(con, league, spec, out):
         return
 
     id_column, names = published["id_column"], published["names"]
-    if id_column not in _columns(con, "players"):
+    player_columns = _columns(con, "players")
+    if id_column not in player_columns:
         out.add(UNVERIFIED, league, "G/published-identity",
                 f"players carries no {id_column} to check")
         return
 
-    checked = wrong = 0
+    checked = skipped = unkeyed = wrong = 0
+    cross_checked = cross_skipped = cross_wrong = 0
     examples = []
-    for row_id, name, ext in con.execute(
-            f"SELECT id, name, {id_column} FROM players "
-            f"WHERE league=? AND {id_column} IS NOT NULL AND {id_column} != 0", (league,)):
+    player_identity = {}
+    player_espn_identity = {}
+    crosswalks = published.get("crosswalks") or {}
+    espn_to_gsis = crosswalks.get("espn_id_to_gsis_id") or {}
+    ambiguous_espn = set(crosswalks.get("ambiguous_espn_ids") or [])
+    has_nfl_crosswalk = (
+        league != "nfl"
+        or ("espn_id_to_gsis_id" in crosswalks and isinstance(espn_to_gsis, dict))
+    )
+    select_espn = ", espn_id" if league == "nfl" and "espn_id" in player_columns else ""
+    for row in con.execute(
+            f"SELECT id, name, {id_column}{select_espn} FROM players WHERE league=?",
+            (league,)):
+        row_id, name, ext = row[0], row[1], row[2]
+        player_identity[int(row_id)] = ext
+        espn_id = row[3] if select_espn else None
+        player_espn_identity[int(row_id)] = espn_id
+        if league == "nfl" and ext not in (None, 0, "") and espn_id not in (None, 0, ""):
+            espn_key = str(espn_id)
+            if espn_key.endswith(".0") and espn_key[:-2].isdigit():
+                espn_key = espn_key[:-2]
+            if espn_key in ambiguous_espn or espn_key not in espn_to_gsis:
+                cross_skipped += 1
+            else:
+                cross_checked += 1
+                target_gsis = str(espn_to_gsis[espn_key])
+                if target_gsis != str(ext):
+                    cross_wrong += 1
+                    if len(examples) < 3:
+                        examples.append(
+                            f"id={row_id} espn_id={espn_key} publishes GSIS "
+                            f"{target_gsis}, but {id_column}={ext}"
+                        )
+        if ext in (None, 0, ""):
+            unkeyed += 1
+            continue
         truth = names.get(str(ext))
         if truth is None:
             # The publisher does not list this id for the fetched season. That is
-            # a retired or unlisted player, not evidence of a wrong pairing.
+            # not evidence of a wrong pairing by itself. Keep it in the skipped
+            # denominator, then separately ask whether current logs or shares use it.
+            skipped += 1
             continue
         checked += 1
         if _identity_name_key(truth) != _identity_name_key(name):
@@ -543,17 +580,113 @@ def check_published_identity(con, league, spec, out):
                 examples.append(f"id={row_id} '{name}' has {id_column}={ext} "
                                 f"which publishes as '{truth}'")
 
-    if not checked:
+    # A historical or inactive id absent from the snapshot is not proof of a bad
+    # pairing. The same silent skip is unsafe for a player used by the latest
+    # season's logs or shares: that is a live join key the publisher map cannot
+    # verify. Define "current" from the newest season actually present in either
+    # history table, not from the wall clock (which is wrong across January).
+    seasons = {}
+    used_player_ids = set()
+    for table in ("player_game_logs", "player_game_shares"):
+        columns = _columns(con, table)
+        if not {"league", "season", "player_id"}.issubset(columns):
+            continue
+        latest = con.execute(
+            f"SELECT MAX(season) FROM {table} WHERE league=?", (league,)
+        ).fetchone()[0]
+        if latest is not None:
+            seasons[table] = latest
+    current_season = max(seasons.values()) if seasons else None
+    for table, latest in seasons.items():
+        if latest != current_season:
+            continue
+        used_player_ids.update(
+            int(row[0]) for row in con.execute(
+                f"SELECT DISTINCT player_id FROM {table} "
+                "WHERE league=? AND season=? AND player_id IS NOT NULL",
+                (league, current_season),
+            )
+        )
+
+    current_unmapped_players = sum(
+        1 for player_id in used_player_ids
+        if player_id not in player_identity
+        or player_identity[player_id] in (None, 0, "")
+        or str(player_identity[player_id]) not in names
+    )
+    current_orphan_players = sum(
+        1 for player_id in used_player_ids if player_id not in player_identity
+    )
+    current_cross_source_unmapped = sum(
+        1 for player_id in used_player_ids
+        if player_id in player_identity
+        and player_identity[player_id] not in (None, 0, "")
+        and player_espn_identity.get(player_id) not in (None, 0, "")
+        and (
+            str(player_espn_identity[player_id]) not in espn_to_gsis
+            or str(espn_to_gsis.get(str(player_espn_identity[player_id])))
+            != str(player_identity[player_id])
+        )
+    ) if league == "nfl" else 0
+
+    # NFL weekly logs retain nflverse's native GSIS key even when the canonical
+    # player_id is unresolved. Count those source IDs too; otherwise five
+    # player_id=NULL rows could pass merely because there is no players row to
+    # inspect. Other leagues' source_player_key columns are not necessarily the
+    # publisher named by their legacy ID column.
+    current_source_checked = current_source_skipped = 0
+    log_columns = _columns(con, "player_game_logs")
+    if (league == "nfl" and current_season is not None
+            and {"league", "season", "source", "source_player_key"}.issubset(log_columns)):
+        source_keys = {
+            str(row[0]) for row in con.execute(
+                "SELECT DISTINCT source_player_key FROM player_game_logs "
+                "WHERE league='nfl' AND season=? AND source='nflverse_weekly' "
+                "AND source_player_key IS NOT NULL AND TRIM(source_player_key)!=''",
+                (current_season,),
+            )
+        }
+        current_source_checked = sum(1 for key in source_keys if key in names)
+        current_source_skipped = len(source_keys) - current_source_checked
+
+    current_missing = (
+        current_unmapped_players + current_source_skipped + current_cross_source_unmapped
+    )
+    coverage_note = (
+        f"checked={checked}, skipped={skipped}, unkeyed={unkeyed}; "
+        f"ESPN/GSIS crosswalk checked={cross_checked}, skipped={cross_skipped}, "
+        f"mismatches={cross_wrong}; "
+        f"current season={current_season if current_season is not None else 'none'}, "
+        f"used players outside map={current_unmapped_players} "
+        f"(orphan player_ids={current_orphan_players}), "
+        f"used players with unverified ESPN/GSIS pair={current_cross_source_unmapped}, "
+        f"nflverse source keys checked={current_source_checked}, "
+        f"outside map={current_source_skipped}"
+    )
+
+    if league == "nfl" and not has_nfl_crosswalk and cross_skipped:
         out.add(UNVERIFIED, league, "G/published-identity",
-                f"no row's {id_column} appears in the published map -- "
-                "the map and the spine may be different seasons")
+                f"NFL ESPN-to-GSIS crosswalk is unavailable; {coverage_note}")
+    elif cross_wrong:
+        out.add(FAIL, league, "G/published-identity",
+                f"{cross_wrong} rows pair an ESPN id with a different published GSIS id: "
+                f"{' ; '.join(examples)}; {coverage_note}")
+    elif not checked:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"no row's {id_column} appears in the published map; "
+                f"{coverage_note}")
     elif wrong:
         out.add(FAIL, league, "G/published-identity",
                 f"{wrong} of {checked} rows carry an {id_column} belonging to a "
-                f"different player: {'; '.join(examples)}")
+                f"different player: {'; '.join(examples)}; {coverage_note}")
+    elif current_missing:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"current-season identities used by logs or shares are outside "
+                f"the publisher map; {coverage_note}")
     else:
         out.add(PASS, league, "G/published-identity",
-                f"all {checked} checked {id_column}s carry the published name")
+                f"all {checked} checked {id_column}s carry the published name; "
+                f"{coverage_note}")
 
 def check_injury_population(con, league, spec, out):
     """H. The NFL pool's injury fields are populated, not just present.

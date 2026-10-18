@@ -231,3 +231,27 @@ retrievable for 2025, say so and grade against ESPN from 2026 week 6 onward.
 
 Order: B0 and B1 first (they also unblock SPEC A version 2), then B4/B5 (the props.cash feature is
 user-visible early), then B6-B8.
+
+## Air-yards residual decision (2026-10-09, user)
+
+- Keep the air-yard games: not raised, not dropped, not renormalized.
+- `air_yards_unassigned` is team air yards minus receiver-assigned air yards, signed. It is negative
+  where no-receiver passes carry negative air yards (throwaways). Measured: 2025 86 of 86 and 2026 24 of 24
+  overage team-games equal minus the no-receiver pass air yards exactly.
+- Player air-yard shares can therefore legitimately sum above 100%. Projection code must not force
+  published air-yard shares to total exactly 100%.
+- Identity classification of the 6,340 non-GSIS-format `players.nfl_gsis_id` values (read-only, dev DB,
+  fresh nflverse `players.parquet` register, 24,853 rows):
+  - 5,673 of the 6,340 non-`00-` values occur in the register's `gsis_id` column; 667 do not. Five
+    standard-looking IDs are also absent. Two additional values are valid GSIS IDs for someone other
+    than the player selected by ESPN, yielding 674 clone-plan actions.
+  - Clone rehearsal set 472 IDs from publisher-ID bridges and cleared 202 unsupported values to NULL,
+    preserving all old keys in typed `player_source_ids`. It changed no player references or protected
+    table rows. `quick_check` passed; duplicate target owners: 0.
+  - 2026 PBP mismatches fell from 218 (109 each direction) to 0. Player-game-share fingerprints are
+    identical before and after. Gate G fails on 459 explicit cross-source conflicts in the baseline
+    and passes on the repaired clone; current 2026 source keys are all covered.
+  - Roster sync and ADP now validate the publisher ESPN-to-GSIS mapping before attaching an ESPN ID to
+    a row with an existing GSIS ID. Promotion and spine merge paths reject known conflicting pairs;
+    Gate G reports cross-source mismatches. Regression tests cover these paths. No recurring repair is
+    scheduled. The historical initial writer remains unidentified, and no live database was changed.

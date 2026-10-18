@@ -426,6 +426,50 @@ def ingest(
             "unresolved_snap_ids": len(unresolved),
         }
 
+    # ── Source completeness per team-week ────────────────────────────────
+    # The availability builder may call a team-game complete only when every source
+    # row for that team-week resolved. Rows that cannot be placed on a team-week are
+    # stored with week and team NULL, which blocks every game in the season.
+    source_rows = {}
+    unattributed = 0
+    for row in df.itertuples(index=False):
+        raw_team = getattr(row, "team", None)
+        team = (
+            normalize_optional("nfl", str(raw_team))
+            if raw_team is not None and raw_team == raw_team
+            else None
+        )
+        try:
+            week = int(getattr(row, "week"))
+        except (TypeError, ValueError):
+            week = None
+        if not team or week is None:
+            unattributed += 1
+            continue
+        source_rows[(year, week, team)] = source_rows.get((year, week, team), 0) + 1
+    resolved_rows = {}
+    for snap, _ in snap_pending:
+        key = (year, snap["week"], snap["team"])
+        resolved_rows[key] = resolved_rows.get(key, 0) + 1
+    team_week_sources = [
+        (year, week, team, count, resolved_rows.get((year, week, team), 0),
+         count - resolved_rows.get((year, week, team), 0))
+        for (year, week, team), count in source_rows.items()
+    ]
+    if unattributed:
+        team_week_sources.append((year, None, None, unattributed, 0, unattributed))
+    con.execute(
+        """CREATE TABLE IF NOT EXISTS nfl_snap_team_sources(
+             season INTEGER NOT NULL, week INTEGER, team TEXT,
+             source_rows INTEGER NOT NULL, resolved_rows INTEGER NOT NULL,
+             unresolved_rows INTEGER NOT NULL
+           )"""
+    )
+    con.execute("DELETE FROM nfl_snap_team_sources WHERE season=?", (year,))
+    con.executemany(
+        "INSERT INTO nfl_snap_team_sources VALUES (?,?,?,?,?,?)", team_week_sources
+    )
+
     # ── Synchronize the published snapshot ───────────────────────────────
     # Upsert alone leaves facts that disappeared or were previously attached
     # through a bad identity crosswalk. Remove only this ingest's owned fields,

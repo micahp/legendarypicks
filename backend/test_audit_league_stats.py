@@ -367,11 +367,14 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.UNVERIFIED, states["F/identity-crosswalk"])
 
     # ── G: an external id must point at the person named on the row ──────────
-    def _publish(self, names, id_column="mlbam_id", league="mlb"):
+    def _publish(self, names, id_column="mlbam_id", league="mlb", crosswalks=None):
         """Stand in for the committed artifact fetch_identity_names.py writes."""
         audit._IDENTITY_NAMES_CACHE.clear()
+        entry = {"id_column": id_column, "names": names}
+        if crosswalks is not None:
+            entry["crosswalks"] = crosswalks
         audit._IDENTITY_NAMES_CACHE["data"] = {
-            "leagues": {league: {"id_column": id_column, "names": names}}}
+            "leagues": {league: entry}}
         self.addCleanup(audit._IDENTITY_NAMES_CACHE.clear)
 
     def named(self, pid, name, mlbam_id, league="mlb"):
@@ -425,7 +428,69 @@ class AuditTests(unittest.TestCase):
 
         state, note = self.row("mlb", "G/published-identity")
         self.assertEqual(audit.PASS, state)
-        self.assertIn("1 checked", note)
+        self.assertIn("checked=1, skipped=1", note)
+
+    def test_current_season_share_player_outside_publisher_map_is_unverified(self):
+        self._publish({"gsis-good": "Player 1"},
+                      id_column="nfl_gsis_id", league="nfl")
+        self.player(1, "WR", league="nfl", nfl_gsis_id="gsis-good")
+        self.player(2, "WR", league="nfl", nfl_gsis_id="legacy-key")
+        self.con.execute(
+            "CREATE TABLE player_game_shares(league TEXT, season INTEGER, player_id INTEGER)"
+        )
+        self.con.execute(
+            "INSERT INTO player_game_shares VALUES('nfl',2026,2)"
+        )
+        self.con.commit()
+
+        state, note = self.row("nfl", "G/published-identity")
+        self.assertEqual(audit.UNVERIFIED, state)
+        self.assertIn("checked=1, skipped=1", note)
+        self.assertIn("used players outside map=1", note)
+
+    def test_current_unresolved_nflverse_source_key_outside_map_is_unverified(self):
+        self._publish({"00-0000001": "Player 1"},
+                      id_column="nfl_gsis_id", league="nfl")
+        self.player(1, "WR", league="nfl", nfl_gsis_id="00-0000001")
+        self.con.execute(
+            "ALTER TABLE player_game_logs ADD COLUMN source TEXT"
+        )
+        self.con.execute(
+            "ALTER TABLE player_game_logs ADD COLUMN source_player_key TEXT"
+        )
+        self.con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,source,source_player_key) "
+            "VALUES(NULL,'nfl',2026,'{}','nflverse_weekly','unlisted-gsis')"
+        )
+        self.con.commit()
+
+        state, note = self.row("nfl", "G/published-identity")
+        self.assertEqual(audit.UNVERIFIED, state)
+        self.assertIn("nflverse source keys checked=0, outside map=1", note)
+
+    def test_nfl_crosswalk_catches_different_players_with_the_same_name(self):
+        self._publish(
+            {
+                "WAS569019": "Mike Washington",
+                "00-0040878": "Mike Washington Jr.",
+            },
+            id_column="nfl_gsis_id",
+            league="nfl",
+            crosswalks={
+                "espn_id_to_gsis_id": {"4686658": "00-0040878"},
+                "ambiguous_espn_ids": [],
+            },
+        )
+        self.player(
+            1, "RB", league="nfl", espn_id="4686658", nfl_gsis_id="WAS569019"
+        )
+        self.con.execute("UPDATE players SET name='Mike Washington' WHERE id=1")
+        self.con.commit()
+
+        state, note = self.row("nfl", "G/published-identity")
+        self.assertEqual(audit.FAIL, state)
+        self.assertIn("ESPN id with a different published GSIS id", note)
+        self.assertIn("espn_id=4686658 publishes GSIS 00-0040878", note)
 
     def test_no_published_map_is_unverified_not_passing(self):
         audit._IDENTITY_NAMES_CACHE.clear()

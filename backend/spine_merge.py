@@ -46,6 +46,7 @@ import sqlite3
 import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
+from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -206,6 +207,27 @@ def _keys_by_publisher(con, rows) -> Dict[str, set]:
     return keys
 
 
+def _nfl_pair_conflict(rows, crosswalk):
+    """Check the ESPN/GSIS pair that would exist after combining these rows."""
+    espn_ids = {
+        str(row["espn_id"]).strip()
+        for row in rows
+        if "espn_id" in row.keys() and str(row["espn_id"] or "").strip()
+    }
+    gsis_ids = {
+        str(row["nfl_gsis_id"]).strip()
+        for row in rows
+        if "nfl_gsis_id" in row.keys() and str(row["nfl_gsis_id"] or "").strip()
+    }
+    if len(espn_ids) > 1 or len(gsis_ids) > 1:
+        return "merge combines multiple ESPN or GSIS IDs"
+    if not espn_ids or not gsis_ids:
+        return None
+    return espn_assignment_conflict(
+        next(iter(espn_ids)), next(iter(gsis_ids)), crosswalk[0], crosswalk[1]
+    )
+
+
 def _identity_count(con, row) -> int:
     n = sum(1 for column in _ID_COLUMNS
             if column in row.keys() and row[column] is not None
@@ -227,6 +249,12 @@ def _moved(con, plan, player_id: int) -> Dict[str, int]:
 def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -> MergePlan:
     con.row_factory = sqlite3.Row
     plan = MergePlan(columns=referencing_columns(con))
+    player_columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
+    nfl_crosswalk = (
+        load_espn_to_gsis()
+        if "nfl_gsis_id" in player_columns and league in (None, "nfl")
+        else None
+    )
 
     seen: set = set()
     groups = ([("name",) + g for g in _name_groups(con, league)]
@@ -282,6 +310,14 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
                 -sum(_moved(con, plan, r["id"]).values()),
                 r["id"]))
             keep, drop = ranked[0], ranked[1]
+            if group_league == "nfl" and nfl_crosswalk:
+                conflict = _nfl_pair_conflict((keep, drop), nfl_crosswalk)
+                if conflict:
+                    plan.refused.append((
+                        group["league"], group["name"],
+                        "NFL ESPN/GSIS identity check refused merge: {}".format(conflict),
+                    ))
+                    continue
             plan.merges.append(Merge(
                 group["league"], group["name"], keep["id"], drop["id"],
                 identity[keep["id"]] or label, _moved(con, plan, drop["id"])))
@@ -311,6 +347,14 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
             continue
 
         keep, drop = with_id[0], without[0]
+        if group_league == "nfl" and nfl_crosswalk:
+            conflict = _nfl_pair_conflict((keep, drop), nfl_crosswalk)
+            if conflict:
+                plan.refused.append((
+                    group["league"], group["name"],
+                    "NFL ESPN/GSIS identity check refused merge: {}".format(conflict),
+                ))
+                continue
         plan.merges.append(Merge(group["league"], group["name"], keep["id"], drop["id"],
                                  identity[keep["id"]], _moved(con, plan, drop["id"])))
         if limit and len(plan.merges) >= limit:
@@ -338,8 +382,14 @@ def render(plan: MergePlan, emit=print, show: int = 12) -> None:
 
 def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
     """Repoint every reference, then delete the now-unreferenced row."""
+    con.row_factory = sqlite3.Row
     counts = {"merged": 0, "rows_moved": 0, "aliases": 0, "ids_carried": 0}
     present = _present_id_columns(con)
+    nfl_crosswalk = (
+        load_espn_to_gsis()
+        if "nfl_gsis_id" in present and any(m.league == "nfl" for m in plan.merges)
+        else None
+    )
     for m in plan.merges:
         # Carry identities the survivor lacks BEFORE anything is deleted. A merge that drops
         # a publisher id makes the person harder to resolve than before it ran, which is the
@@ -348,6 +398,13 @@ def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
         drop_row = con.execute("SELECT * FROM players WHERE id=?", (m.drop_id,)).fetchone()
         keep_row = con.execute("SELECT * FROM players WHERE id=?", (m.keep_id,)).fetchone()
         if drop_row is not None and keep_row is not None:
+            if m.league == "nfl" and nfl_crosswalk:
+                conflict = _nfl_pair_conflict((keep_row, drop_row), nfl_crosswalk)
+                if conflict:
+                    raise ValueError(
+                        "refusing NFL spine merge with conflicting ESPN/GSIS IDs: {}"
+                        .format(conflict)
+                    )
             for column in present:
                 value = drop_row[column]
                 if str(value or "").strip() and not str(keep_row[column] or "").strip():
