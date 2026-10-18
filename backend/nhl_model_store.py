@@ -97,7 +97,7 @@ def sha256_json(value: Any) -> str:
 # under it keep rule_version 'goal-diff-1'; new rows record RULE_VERSION.
 # ---------------------------------------------------------------------------
 
-RULE_VERSION = "ev-max-1"
+RULE_VERSION = "ev-max-2-settlement"
 LEGACY_RULE_VERSION = "goal-diff-1"
 
 def _round1(value: float) -> float:
@@ -164,7 +164,8 @@ def probability_over(forecast: dict, line: float, context: str) -> float | None:
     return None
 
 
-def market_candidates(home: str, away: str, forecast: dict, quote: dict | None) -> list[dict]:
+def market_candidates(home: str, away: str, forecast: dict, quote: dict | None,
+                      game_id: str | None = None) -> list[dict]:
     """Every market the quote prices, as a candidate with its model probability.
 
     A market is only a candidate when both sides are priced. A one-sided or absent market is
@@ -196,12 +197,20 @@ def market_candidates(home: str, away: str, forecast: dict, quote: dict | None) 
     over_price, under_price = _price(quote.get("over_price")), _price(quote.get("under_price"))
     if total_line is not None and over_price is not None and under_price is not None:
         total_line = float(total_line)
-        p_over = probability_over(forecast, total_line, context)
-        if p_over is not None:
-            out.append({"market": "total", "side": "over", "line": total_line, "price": over_price,
-                        "model_probability": p_over, "pair": (over_price, under_price)})
-            out.append({"market": "total", "side": "under", "line": total_line, "price": under_price,
-                        "model_probability": 1.0 - p_over, "pair": (over_price, under_price)})
+        # The bookmaker settles on the official score, including the extra
+        # shootout-deciding goal. A whole-goal line may push. Do not use
+        # P(T <= line) as the under's chance of winning.
+        gid = str(game_id or forecast.get("game_id") or "")
+        probabilities = _official_total_probabilities(forecast, total_line, gid)
+        if probabilities is not None:
+            p_over, p_under, p_push = probabilities
+            if p_over + p_under > 0:
+                out.append({"market": "total", "side": "over", "line": total_line,
+                            "price": over_price, "model_probability": p_over,
+                            "push_probability": p_push, "pair": (over_price, under_price)})
+                out.append({"market": "total", "side": "under", "line": total_line,
+                            "price": under_price, "model_probability": p_under,
+                            "push_probability": p_push, "pair": (over_price, under_price)})
     return out
 
 
@@ -210,22 +219,31 @@ def _candidate_record(candidate: dict, quote: dict | None) -> dict:
     model_probability = candidate["model_probability"]
     market_probability = _no_vig(candidate["pair"][0], candidate["pair"][1],
                                  0 if candidate["side"] in ("home", "over") else 1)
+    push_probability = float(candidate.get("push_probability") or 0.0)
+    decisive = 1.0 - push_probability
+    if not 0.0 <= push_probability < 1.0 or not 0.0 <= model_probability <= decisive + 1e-9:
+        raise NHLModelError("invalid win/push probability for candidate")
+    # No-vig market probability is conditional on no push. EV is net return
+    # per unit stake, with a push worth zero, rather than a win.
     return {"market": candidate["market"], "side": candidate["side"], "line": candidate["line"],
             "price": candidate["price"], "model_probability": model_probability,
+            "push_probability": push_probability,
             "market_probability": market_probability,
-            "edge": None if market_probability is None else model_probability - market_probability,
-            "expected_value": expected_value(model_probability, candidate["price"]),
+            "edge": None if market_probability is None else model_probability / decisive - market_probability,
+            "expected_value": model_probability * (american_to_decimal(candidate["price"]) - 1.0)
+                              - (decisive - model_probability),
             "line_source": quote.get("source"), "line_captured_at_utc": quote.get("captured_at_utc")}
 
 
-def model_pick(home: str, away: str, forecast: dict, quote: dict | None) -> dict | None:
+def model_pick(home: str, away: str, forecast: dict, quote: dict | None,
+               game_id: str | None = None) -> dict | None:
     """The model's candidate for one game: the highest-expected-value market the quote prices.
 
     Returns None when the quote prices no market. A projection without a price is not a
     recommendation, and this will not manufacture one.
     """
     records = [_candidate_record(candidate, quote)
-               for candidate in market_candidates(home, away, forecast, quote)]
+               for candidate in market_candidates(home, away, forecast, quote, game_id)]
     return max(records, key=lambda record: record["expected_value"]) if records else None
 
 
@@ -263,21 +281,18 @@ def _official_total_probabilities(forecast: dict, line: float, game_id: str) -> 
     that pregame tie mass by one goal for the sportsbook-style official total.
     Do not edit the frozen matrix, and do not make this assumption for playoffs.
     """
+    if len(str(game_id)) != 10 or not str(game_id).isdigit():
+        return None
+    if str(game_id)[4:6] != "02":
+        # Playoff ties require a separate overtime-resolution model.
+        return None
     matrix = forecast.get("joint_score_probability_matrix_home_rows_away_columns")
     if not isinstance(matrix, list) or not matrix:
-        # At 5.5, adding a shootout winner to an even total never crosses the
-        # threshold, so the stored probability is already market-aligned.
+        # A shootout moves even total to the next odd number. Only 5.5
+        # is unaffected by that change and can be priced without a matrix.
         if line == 5.5:
             p = _probability(forecast, "p_over_5.5", "total grading")
             return p, 1 - p, 0.0
-        return None
-
-    if len(str(game_id)) != 10 or not str(game_id).isdigit():
-        raise NHLModelError("cannot determine game type for market-line grade")
-    regular_season = str(game_id)[4:6] == "02"
-    if not regular_season:
-        # A playoff tie in an independent Poisson matrix needs a separate OT
-        # resolution model. We do not silently substitute a shootout rule.
         return None
 
     over = under = push = 0.0
@@ -375,8 +390,10 @@ def grade_pick(pick: dict, grade: dict) -> dict:
         won = (margin if side == "home" else -margin) + float(line) > 0
     else:
         total = grade["official_home_goals"] + grade["official_away_goals"]
+        if total == float(line):
+            return {"won": None, "push": True, "settlement": "push"}
         won = total > float(line) if side == "over" else total < float(line)
-    return {"won": bool(won)}
+    return {"won": bool(won), "push": False, "settlement": "won" if won else "lost"}
 
 
 def pick_sha256(pick: dict, game_id: str, model_key: str, model_version: str) -> str:
@@ -385,6 +402,7 @@ def pick_sha256(pick: dict, game_id: str, model_key: str, model_version: str) ->
                         "model_version": model_version, "rule_version": RULE_VERSION,
                         "market": pick["market"], "side": pick["side"], "line": pick["line"],
                         "price": pick["price"], "model_probability": pick["model_probability"],
+                        "push_probability": pick["push_probability"],
                         "line_captured_at_utc": pick["line_captured_at_utc"],
                         "settlement_basis": SETTLEMENT_BASIS})
 
@@ -438,7 +456,7 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
     if provenance not in PICK_PROVENANCE:
         raise NHLModelError("unknown pick provenance %r" % (provenance,))
     gid = str(game["game_id"])
-    pick = model_pick(str(game["home_team"]), str(game["away_team"]), forecast, quote)
+    pick = model_pick(str(game["home_team"]), str(game["away_team"]), forecast, quote, gid)
     if pick is None:
         report["unpriced_models"] += 1
         return
@@ -456,6 +474,7 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
         "market": pick["market"], "side": pick["side"], "line": pick["line"], "price": pick["price"],
         "model_probability": pick["model_probability"], "market_probability": pick["market_probability"],
         "edge": pick["edge"], "expected_value": pick["expected_value"],
+        "push_probability": pick["push_probability"],
         "line_source": pick["line_source"], "line_captured_at_utc": pick["line_captured_at_utc"],
         "settlement_basis": SETTLEMENT_BASIS, "rule_version": RULE_VERSION,
         "provenance": provenance, "selected_at_utc": iso_utc(selected_at),
@@ -620,6 +639,7 @@ def ensure_schema(con: sqlite3.Connection) -> None:
         market_probability REAL,
         edge REAL,
         expected_value REAL,
+        push_probability REAL NOT NULL DEFAULT 0,
         line_source TEXT,
         line_captured_at_utc TEXT,
         settlement_basis TEXT NOT NULL,
@@ -771,6 +791,10 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     if "rule_version" not in columns:
         con.execute("ALTER TABLE nhl_model_picks ADD COLUMN rule_version TEXT NOT NULL DEFAULT '%s'"
                     % LEGACY_RULE_VERSION)
+    # New picks record push probability. Old immutable picks retain the default
+    # zero, with their original recorded price and rule version untouched.
+    if "push_probability" not in columns:
+        con.execute("ALTER TABLE nhl_model_picks ADD COLUMN push_probability REAL NOT NULL DEFAULT 0")
     # Same reasoning for the lock protocol: rows frozen before T-90 was enforced keep the
     # protocol that actually produced them.
     if "protocol_version" not in columns:
@@ -1278,10 +1302,11 @@ def export_pick(row: sqlite3.Row | None, grade: dict | None, quote: dict | None 
     # A quote older than the T-90 freshness window may still be frozen and shown, but it
     # cannot qualify a recommendation. An unknown age is left alone rather than treated as
     # fresh: no rule is applied retroactively to rows frozen before the age was recorded.
-    fresh = age is None or age <= int(T90_QUOTE_MAX_AGE.total_seconds())
+    fresh = age is not None and 0 <= age <= int(T90_QUOTE_MAX_AGE.total_seconds())
     pick = {"market": row["market"], "side": row["side"], "line": row["line"], "price": row["price"],
             "model_probability": row["model_probability"], "market_probability": row["market_probability"],
             "edge": row["edge"], "expected_value": row["expected_value"],
+            "push_probability": row["push_probability"],
             "line_source": row["line_source"], "line_captured_at_utc": row["line_captured_at_utc"],
             "settlement_basis": row["settlement_basis"], "rule_version": row["rule_version"],
             "protocol_version": row["protocol_version"], "quote_age_seconds": age,
@@ -1413,7 +1438,7 @@ def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime,
         }
         quote = lines.get(str(row["game_id"]))
         try:
-            pick = model_pick(row["home_team"], row["away_team"], forecast, quote)
+            pick = model_pick(row["home_team"], row["away_team"], forecast, quote, str(row["game_id"]))
         except NHLModelError:
             # An incomplete forecast cannot support a recommendation. Show none.
             pick = None
@@ -1479,7 +1504,7 @@ def backfill_picks(con: sqlite3.Connection, season: int) -> dict:
             forecast = json.loads(row["forecast_output_json"])
             quote = latest_line_at(con, gid, locked_at)
             try:
-                model_pick(row["home_team"], row["away_team"], forecast, quote)
+                model_pick(row["home_team"], row["away_team"], forecast, quote, str(row["game_id"]))
             except NHLModelError:
                 report["skipped"] += 1
                 continue
