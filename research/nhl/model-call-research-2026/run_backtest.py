@@ -181,6 +181,11 @@ def derive(m: np.ndarray, so_home: float) -> dict:
         # (identical to the frozen ledger's p_away_plus_1_5 = 1 - p_home_minus_1_5).
         "p_home_cover": float((m * (i - j >= 2)).sum()),
         "p_away_cover": float((m * (i - j <= 1)).sum()),
+        # opposite-direction puck line: away -1.5 (margin <= -2) and home +1.5
+        # (its complement). Needed for the underdog +1.5 tier when the model
+        # favorite is the away team.
+        "p_away_cover_minus": float((m * (i - j <= -2)).sum()),
+        "p_home_cover_plus": float((m * (i - j >= -1)).sum()),
         "p_tie": tie,
         "mu_home": float((m * i).sum()),
         "mu_away": float((m * j).sum()),
@@ -270,7 +275,13 @@ def side_rows(games: list[dict], model: str, elo: dict[int, dict]):
     return np.asarray(X, float), np.asarray(y, float)
 
 
-def predict_mus(games: list[dict], model: str, elo: dict, beta: np.ndarray) -> dict[int, tuple]:
+def predict_mus(games: list[dict], model: str, elo: dict, params: dict) -> dict[int, tuple]:
+    """params = {"intercept": float, "coef": [float, ...]}, matching the frozen
+    production convention exp(intercept + coef . x) in run_pipeline.py."""
+    # explicitly reference params to ensure the intercept is never shadowed or
+    # silently dropped during prediction.
+    intercept = float(params["intercept"])
+    beta = np.asarray(params["coef"], float)
     out = {}
     for r in games:
         hx, hxga = lograte(r["home_rolling10_5v5_score_venue_xgf"]), lograte(r["home_rolling10_5v5_score_venue_xga"])
@@ -282,7 +293,8 @@ def predict_mus(games: list[dict], model: str, elo: dict, beta: np.ndarray) -> d
             xh, xa = [1.0, hx, axga], [0.0, ax, hxga]
         else:
             xh, xa = [1.0, hx, axga, d], [0.0, ax, hxga, -d]
-        out[r["game_id"]] = (math.exp(float(np.dot(xh, beta))), math.exp(float(np.dot(xa, beta))))
+        out[r["game_id"]] = (math.exp(float(params["intercept"]) + float(np.dot(xh, beta))),
+                             math.exp(float(params["intercept"]) + float(np.dot(xa, beta))))
     return out
 
 
@@ -461,14 +473,25 @@ def tier_of(p: dict, tau1: float, tau2: float, tau3: float, ref_total: float) ->
     """Return (tier, side, probability). ref_total: projected total for line choice."""
     line = 5.5 if ref_total <= 6.0 else 6.5
     p_over = p["p_over_55"] if line == 5.5 else p["p_over_65_official"]
-    p_ml = max(p["p_home_win"], p["p_away_win"])
-    ml_side = "home" if p["p_home_win"] >= p["p_away_win"] else "away"
-    p_cover = max(p["p_home_cover"], p["p_away_cover"])
-    cover_side = "home" if p["p_home_cover"] >= p["p_away_cover"] else "away"
+    p_home_win_prob = p["p_home_win"]
+    p_away_win_prob = p["p_away_win"]
+    p_ml = max(p_home_win_prob, p_away_win_prob)
+    ml_side = "home" if p_home_win_prob >= p_away_win_prob else "away"
+    # Cover tier: a confident +1.5 prediction on the UNDERDOG. The underdog is
+    # the side the model does NOT favor (structural approximation — historical
+    # bookmaker favorites are unavailable in this checkout, so the model favorite
+    # stands in for the book favorite and the approximation is labeled as such).
+    #   away underdog:  away +1.5 covers iff margin <= 1  -> p_away_cover
+    #   home underdog:  home +1.5 covers iff margin >= -1 -> p_home_cover_plus
+    if p_home_win_prob >= p_away_win_prob:
+        underdog_side, p_underdog_cover = "away", p["p_away_cover"]
+    else:
+        underdog_side, p_underdog_cover = "home", p["p_home_cover_plus"]
     if p_ml >= tau1:
         return ("ml", ml_side, p_ml, "home_win" if ml_side == "home" else "away_win")
-    if p_cover >= tau2:
-        return ("cover", cover_side, p_cover, "home_cover" if cover_side == "home" else "away_cover")
+    if p_underdog_cover >= tau2:
+        return ("cover", underdog_side, p_underdog_cover,
+                "away_cover" if underdog_side == "away" else "home_cover_plus")
     if max(p_over, 1 - p_over) >= tau3:
         side = "over" if p_over >= 0.5 else "under"
         return ("total", side, max(p_over, 1 - p_over),
@@ -482,9 +505,9 @@ def outcome_of(tier, side, g: dict, ref_line: float) -> str:
             return "won" if g["hw"] else "lost"
         return "won" if not g["hw"] else "lost"
     if tier == "cover":
-        # home -1.5 covers iff margin >= 2; away +1.5 covers iff margin <= 1
+        # home +1.5 covers iff margin >= -1; away +1.5 covers iff margin <= 1
         margin = g["hg"] - g["ag"]
-        return "won" if (margin >= 2 if side == "home" else margin <= 1) else "lost"
+        return "won" if (margin >= -1 if side == "home" else margin <= 1) else "lost"
     if tier == "total":
         total = g["ohg"] + g["oag"]
         line = ref_line
@@ -501,30 +524,38 @@ def tune_thresholds(tuning_rows: list[dict], game_lookup: dict[int, dict]) -> di
     for tau1 in np.arange(0.55, 0.801, 0.025):
         for tau2 in np.arange(0.55, 0.701, 0.025):
             for tau3 in np.arange(0.55, 0.701, 0.025):
-                res = defaultdict(int)
+                # tier selection counts (ml/cover/total/fallback) are tracked
+                # separately from won/lost so the reported tier_usage reflects
+                # how often each tier fires, not its outcomes.
+                sel = defaultdict(int)
+                outcomes = defaultdict(int)
                 for r in tuning_rows:
                     # A game without a complete model call must not be treated as having
                     # one; count it as an explicit fallback rather than manufacturing a
                     # call from partial data.
                     if not all(r.get(k) is not None for k in
                                ("p_home_win", "p_home_cover", "p_away_cover", "p_over_55", "p_over_65_official")):
-                        res["fallback"] += 1
+                        sel["fallback"] += 1
+                        outcomes["fallback"] += 1
                         continue
                     p = {"p_home_win": r["p_home_win"], "p_away_win": 1 - r["p_home_win"],
                          "p_home_cover": r["p_home_cover"], "p_away_cover": r["p_away_cover"],
+                         "p_home_cover_plus": 1 - r["p_away_cover"],
                          "p_over_55": r["p_over_55"], "p_over_65_official": r["p_over_65_official"]}
                     tier, side, _prob, _k = tier_of(p, float(tau1), float(tau2), float(tau3), ref_totals[r["game_id"]])
+                    sel[tier] += 1
                     line = 5.5 if ref_totals[r["game_id"]] <= 6.0 else 6.5
-                    res[outcome_of(tier, side, game_lookup[r["game_id"]], line)] += 1
-                n = sum(res.values())
-                acc = res["won"] / n
-                fallback = res["fallback"] / n
+                    outcomes[outcome_of(tier, side, game_lookup[r["game_id"]], line)] += 1
+                n = sum(outcomes.values())
+                acc = outcomes["won"] / n
+                fallback = outcomes["fallback"] / n
                 if fallback > 0.05:
                     continue
                 if best is None or acc > best["acc"] or (acc == best["acc"] and (tau1, tau2, tau3) < best["taus"]):
                     best = {"acc": acc, "taus": (float(tau1), float(tau2), float(tau3)),
                             "fallback": fallback, "n": n,
-                            "tier_usage": {k: v / n for k, v in res.items()}}
+                            "tier_usage": {k: v / n for k, v in sel.items()},
+                            "tier_counts": dict(sel)}
     return best
 
 
@@ -536,6 +567,13 @@ def main() -> None:
     elo = elo_replay(games)
     fit_cache_path = RESULTS / "fit_cache.json"
     cache = json.loads(fit_cache_path.read_text()) if fit_cache_path.exists() else {}
+    # version the cache: if the schema or fit convention changes, invalidate it so
+    # no artifact can be generated from a stale/broken fit (manager requirement).
+    CACHE_VERSION = "v3-intercept-plus-tier-metrics"
+    if cache.get("_cache_version") != CACHE_VERSION:
+        if cache:
+            print(f"cache version mismatch (found {cache.get('_cache_version')}), invalidating", flush=True)
+        cache = {}
 
     diag_train = [g for g in games if TRAIN_FROM <= g["season"] <= 2018]
     hg = np.array([g["hg"] for g in diag_train], float)
@@ -559,9 +597,13 @@ def main() -> None:
             if model in cache[key]:
                 continue
             X, y = side_rows(train, model, elo)
-            beta = PoissonRegressor(alpha=ALPHA, max_iter=500, tol=1e-9).fit(X, y).coef_
-            cache[key][model] = [float(b) for b in beta]
+            fitted = PoissonRegressor(alpha=ALPHA, max_iter=500, tol=1e-9).fit(X, y)
+            # store intercept AND coef, matching run_pipeline.py; a coef-only cache
+            # silently drops the intercept and understates every projected goal.
+            cache[key][model] = {"intercept": float(fitted.intercept_),
+                                 "coef": [float(b) for b in fitted.coef_]}
             print(f"  fit {model} through {season - 1} at {time.time()-t0:.0f}s", flush=True)
+    cache["_cache_version"] = CACHE_VERSION
     fit_cache_path.write_text(json.dumps(cache, indent=1))
 
     # --- score stage: analytical + candidates, all seasons ---
@@ -577,19 +619,19 @@ def main() -> None:
         tie_rate_train = float((t_tr == a_tr).mean())
         mu_h_tr = np.array([g["hg"] for g in train[-4000:]], float)
         for model in MODELS:
-            beta = np.array(cache[str(season)][model])
-            mus = predict_mus(evalg, model, elo, beta)
+            params = cache[str(season)][model]
+            mus = predict_mus(evalg, model, elo, params)
             mu_h = np.array([mus[g["game_id"]][0] for g in evalg])
             mu_a = np.array([mus[g["game_id"]][1] for g in evalg])
             ph = pmf_rows(mu_h); pa = pmf_rows(mu_a)
             # dispersion fit on training residuals for NB
             X_tr, y_tr = side_rows(train[-8000:], model, elo)
-            mu_tr = np.exp(X_tr @ beta)
+            mu_tr = np.exp(float(params["intercept"]) + X_tr @ np.asarray(params["coef"], float))
             r_nb = fit_nb_dispersion(y_tr, mu_tr)
             ph_nb = nb_rows(mu_h, r_nb); pa_nb = nb_rows(mu_a, r_nb)
             # DC rho fit on a training subsample
             sub = train[-1500:]
-            mus_sub = predict_mus(sub, model, elo, beta)
+            mus_sub = predict_mus(sub, model, elo, params)
             rho = fit_dc_rho(np.array([g["hg"] for g in sub]), np.array([g["ag"] for g in sub]),
                              np.array([mus_sub[g["game_id"]][0] for g in sub]),
                              np.array([mus_sub[g["game_id"]][1] for g in sub]))
@@ -647,8 +689,7 @@ def main() -> None:
     season_2021 = [g for g in games if g["season"] in MC_SAMPLE_SEASONS]
     mus_2021 = {}
     for season in MC_SAMPLE_SEASONS:
-        beta = np.array(cache[str(season)]["b7_elo_xg"])
-        mus_2021.update(predict_mus([g for g in games if g["season"] == season], "b7_elo_xg", elo, beta))
+        mus_2021.update(predict_mus([g for g in games if g["season"] == season], "b7_elo_xg", elo, cache[str(season)]["b7_elo_xg"]))
     so21 = so_rate([g for g in games if TRAIN_FROM <= g["season"] < min(MC_SAMPLE_SEASONS)])
     mc = mc_control(season_2021, mus_2021, so21)
     (RESULTS / "mc_control.json").write_text(json.dumps(mc, indent=1))
@@ -656,7 +697,7 @@ def main() -> None:
 
     # --- period simulator on matched subset (B7 model, state-eff calibrated) ---
     sim_ids = [g for g in season_2021 if g["game_id"] in mus_2021][:SIM_GAMES]
-    beta = np.array(cache[str(max(MC_SAMPLE_SEASONS))]["b7_elo_xg"])
+    beta = cache[str(max(MC_SAMPLE_SEASONS))]["b7_elo_xg"]
     rng = np.random.default_rng(42)
     state_eff = calibrate_state_eff([g for g in games if TRAIN_FROM <= g["season"] < min(MC_SAMPLE_SEASONS)],
                                     elo, "b7_elo_xg", beta, so21, rng,
@@ -689,40 +730,164 @@ def main() -> None:
     (RESULTS / "season_metrics.json").write_text(json.dumps(summary, indent=1))
 
     # --- policy stage with expanding-window threshold tuning ---
+    # Per-tier reporting (manager request 2026-10-18): every tier (ml, cover,
+    # total, fallback) gets its own row with frequency, hit rate, Brier, sample
+    # size, and baseline. Baselines are PRIOR-season prevalence (not evaluation
+    # season). The cover tier is flagged as a STRUCTURAL APPROXIMATION because
+    # authentic pregame bookmaker odds are unavailable in this dataset: the
+    # model favorite stands in for the book favorite, so underdog selection is
+    # an approximation of the intended hierarchy and must not be read as a
+    # validated result.
     policy = {}
     for model in MODELS:
         rows = all_rows[(model, "poisson")]
+        # aggregate per-tier stats across all evaluation seasons for this model
+        agg_tiers = defaultdict(lambda: {"sel": 0, "decisions": 0, "won": 0,
+                                         "brier_sum": 0.0, "prob_sum": 0.0})
         for season in EVAL_SEASONS:
             past = [r for r in rows if r["season"] < season]
             cur = [r for r in rows if r["season"] == season]
             # outcome fields need real game data: rebuild from games
             game_by_id = {g["game_id"]: g for g in games}
+
+            # merge outcomes into past rows so prior-season baselines can be
+            # computed from actual prevalence (no look-ahead).
+            past_lookup = {}
+            for r in past:
+                past_lookup[r["game_id"]] = {**r, "_ref_total": r["mu_home"] + r["mu_away"]}
+            for gid in past_lookup:
+                past_lookup[gid].update({k: game_by_id[gid][k] for k in ("hw", "hg", "ag", "ohg", "oag")})
+
+            # --- prior-season baselines ---
+            # ml: fraction of prior-season games where the higher-prob ML side won
+            # cover: fraction of prior-season games where away +1.5 covered
+            # total: fraction of prior-season games where the higher-prob total side hit
+            base_ml, base_cover, base_total = None, None, None
+            if past_lookup:
+                ml_hits = sum(1 for r in past_lookup.values()
+                              if (r["p_home_win"] >= 0.5) == (r["hw"] == 1))
+                base_ml = ml_hits / len(past_lookup)
+                cover_hits = sum(1 for r in past_lookup.values()
+                                 if r["hg"] - r["ag"] <= 1)
+                base_cover = cover_hits / len(past_lookup)
+                total_hits = 0
+                for r in past_lookup.values():
+                    line = 5.5 if r["mu_home"] + r["mu_away"] <= 6.0 else 6.5
+                    p_over = r["p_over_55"] if line == 5.5 else r["p_over_65_official"]
+                    side = "over" if p_over >= 0.5 else "under"
+                    total = r["ohg"] + r["oag"]
+                    if (side == "over" and total > line) or (side == "under" and total < line):
+                        total_hits += 1
+                base_total = total_hits / len(past_lookup)
+
             if len(past) < 300:
                 tuned = {"taus": (0.60, 0.60, 0.60), "acc": None, "n": 0, "tier_usage": {}}
             else:
-                lookup = {}
-                for r in past:
-                    lookup[r["game_id"]] = {**r, "_ref_total": r["mu_home"] + r["mu_away"]}
-                for gid in lookup:
-                    lookup[gid].update({k: game_by_id[gid][k] for k in ("hw", "hg", "ag", "ohg", "oag")})
-                tuned = tune_thresholds(list(lookup.values()), lookup) or {"taus": (0.60, 0.60, 0.60), "n": 0}
+                tuned = tune_thresholds(list(past_lookup.values()), past_lookup) or {"taus": (0.60, 0.60, 0.60), "n": 0}
             tau1, tau2, tau3 = tuned["taus"]
+
+            # Selection counts by tier (how often each tier fires) are tracked
+            # separately from outcomes (won/lost/fallback) so the reported
+            # tier_usage reflects selection frequency, not results.
+            sel = defaultdict(int)
             res = defaultdict(int)
+            tier_stats = defaultdict(lambda: {"sel": 0, "decisions": 0, "won": 0,
+                                              "brier_sum": 0.0, "prob_sum": 0.0})
             for r in cur:
                 p = {"p_home_win": r["p_home_win"], "p_away_win": 1 - r["p_home_win"],
                      "p_home_cover": r["p_home_cover"], "p_away_cover": r["p_away_cover"],
+                     "p_home_cover_plus": 1 - r["p_away_cover"],
                      "p_over_55": r["p_over_55"], "p_over_65_official": r["p_over_65_official"]}
-                tier, side, _prob, _k = tier_of(p, tau1, tau2, tau3, r["mu_home"] + r["mu_away"])
+                tier, side, prob, _k = tier_of(p, tau1, tau2, tau3, r["mu_home"] + r["mu_away"])
+                sel[tier] += 1
+                tier_stats[tier]["sel"] += 1
+                tier_stats[tier]["prob_sum"] += prob if prob is not None else 0.0
                 line = 5.5 if (r["mu_home"] + r["mu_away"]) <= 6.0 else 6.5
-                res[outcome_of(tier, side, game_by_id[r["game_id"]], line)] += 1
+                outcome = outcome_of(tier, side, game_by_id[r["game_id"]], line)
+                res[outcome] += 1
+                if tier != "fallback":
+                    y_val = 1.0 if outcome == "won" else 0.0
+                    tier_stats[tier]["decisions"] += 1
+                    tier_stats[tier]["brier_sum"] += (prob - y_val) ** 2
+                    if outcome == "won":
+                        tier_stats[tier]["won"] += 1
+
+            # update the cross-season aggregate
+            for t, s in tier_stats.items():
+                for k in ("sel", "decisions", "won"):
+                    agg_tiers[t][k] += s[k]
+                agg_tiers[t]["brier_sum"] += s["brier_sum"]
+                agg_tiers[t]["prob_sum"] += s["prob_sum"]
+
             n = sum(res.values())
+            # per-tier report for this season
+            season_tiers = {}
+            for t in ("ml", "cover", "total", "fallback"):
+                s = tier_stats[t]
+                entry = {
+                    "frequency": s["sel"] / n if n else 0,
+                    "n_games": s["sel"],
+                    "n_decisions": s["decisions"],
+                    "hit_rate": s["won"] / s["decisions"] if s["decisions"] else None,
+                    "brier": s["brier_sum"] / s["decisions"] if s["decisions"] else None,
+                    "mean_prob": s["prob_sum"] / s["decisions"] if s["decisions"] else None,
+                    "baseline": None,
+                    "is_structural_approximation": False,
+                }
+                if t == "ml":
+                    entry["baseline"] = {"value": base_ml, "source_season": season - 1,
+                                         "desc": "prior-season higher-prob ML side hit rate"}
+                elif t == "cover":
+                    entry["baseline"] = {"value": base_cover, "source_season": season - 1,
+                                         "desc": "prior-season away +1.5 cover rate (always-away baseline)"}
+                    # no authentic pregame bookmaker odds exist in this dataset,
+                    # so the underdog side is approximated by the model's
+                    # less-favored side. Label explicitly, per manager request.
+                    entry["is_structural_approximation"] = True
+                elif t == "total":
+                    entry["baseline"] = {"value": base_total, "source_season": season - 1,
+                                         "desc": "prior-season higher-prob total side hit rate"}
+                season_tiers[t] = entry
+
             policy[f"{model}|{season}"] = {
                 "taus": [tau1, tau2, tau3], "tuning_n": tuned.get("n"),
                 "tuning_acc": tuned.get("acc"),
                 "eval_n": n, "eval_acc": res["won"] / n,
                 "fallback_rate": res["fallback"] / n,
-                "tier_usage": {k: v / n for k, v in res.items()},
-                "won": res["won"], "lost": res["lost"], "fallback": res["fallback"]}
+                "tier_usage": {k: v / n for k, v in sel.items()},
+                "tier_counts": dict(sel),
+                "won": res["won"], "lost": res["lost"], "fallback": res["fallback"],
+                "baselines_prior_season": {
+                    "ml": base_ml, "cover": base_cover, "total": base_total,
+                    "source_season": season - 1,
+                },
+                "tiers": season_tiers,
+                "cover_approximation": True,  # model favorite stands in for book favorite
+            }
+
+        # aggregate across all evaluation seasons for this model
+        agg_n = sum(agg_tiers[t]["sel"] for t in agg_tiers)
+        agg_tiers_report = {}
+        for t in ("ml", "cover", "total", "fallback"):
+            s = agg_tiers[t]
+            agg_tiers_report[t] = {
+                "frequency": s["sel"] / agg_n if agg_n else 0,
+                "n_games": s["sel"],
+                "n_decisions": s["decisions"],
+                "hit_rate": s["won"] / s["decisions"] if s["decisions"] else None,
+                "brier": s["brier_sum"] / s["decisions"] if s["decisions"] else None,
+                "mean_prob": s["prob_sum"] / s["decisions"] if s["decisions"] else None,
+                "is_structural_approximation": (t == "cover"),
+            }
+        policy[f"{model}|AGGREGATE"] = {
+            "tiers": agg_tiers_report,
+            "note": "cover tier underdog side is a structural approximation: "
+                    "no authentic pregame bookmaker odds exist in the historical "
+                    "dataset, so the model's less-favored side stands in for the "
+                    "book underdog. Not a validated result.",
+            "cover_approximation": True,
+        }
+
     (RESULTS / "policy_results.json").write_text(json.dumps(policy, indent=1))
     print(f"policy done at {time.time()-t0:.0f}s", flush=True)
 
