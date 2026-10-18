@@ -1,0 +1,29 @@
+{
+  "fit": {
+    "R": 3.656999027807565,
+    "R_t": 5.0,
+    "p": {
+      "": 0.9130434782608695,
+      "Doubtful": 0.0,
+      "Out": 0.0,
+      "Questionable": 0.6348314606741573,
+      "__pooled__": 0.8681510587208033
+    },
+    "q": {
+      "3<=m<8": 0.9039242219215156,
+      "m<3": 0.5392469687300574,
+      "m>=8": 0.9967811158798283
+    }
+  },
+  "fit_seasons": [
+    2024,
+    2025
+  ],
+  "frozen": "2026-10-17",
+  "model": "nfl-rushing-carries-dist-v1",
+  "note": "B2 participation + role-aware hurdle. Frozen before the prospective window (2026 weeks 7-18). Not adopted into Spec B.",
+  "weeks_fit": [
+    3,
+    18
+  ]
+}
