@@ -55,7 +55,12 @@ Nothing was added to the database. The script reads `nfl_pbp` and
 |---|---|---:|---:|---:|
 | incumbent | K_T 4.00 | 0.5796 | 6.4611 | 0.5897 |
 | separated | K_OPP 8.0, K_PROP 200 | 0.5815 | 6.4822 | 0.5852 |
-| paired |sep| - |inc| | | +0.0210 | +/- 0.0625 |
+
+The paired row is a **paired MAE difference**, not an AUC difference: on the same 2026
+team-games, |sep| - |inc| is +0.0210 +/- 0.0625 (clustered by game), which spans zero.
+`paired()` in the script compares absolute errors only; it has no AUC counterpart. The
+holdout AUC difference is the point difference 0.5852 - 0.5897 = -0.0045, reported
+without a paired clustered interval because none was computed.
 
 ### By season and regime
 
@@ -86,10 +91,16 @@ Both models are evaluated on every holdout season, in the early-week regime
 The differences in point accuracy and discrimination are not established. On the
 2026 holdout, separated beats incumbent on MAE by 0.0053 but the paired clustered
 interval is +/- 0.0188, so it spans zero. On the AUC objective, separated wins
-the fit (0.5815 vs 0.5796) but loses the holdout (0.5852 vs 0.5897), with a paired
-difference of +0.0210 +/- 0.0625, also spanning zero. Across all seasons and
-regimes, the separated model is at best tied and at worst slightly worse (2011
-wk2-5: +0.0030), and every paired interval spans zero.
+the fit (0.5815 vs 0.5796) but loses the holdout (0.5852 vs 0.5897) by 0.0045, with
+no paired clustered interval for that holdout difference; the paired +0.0210 +/- 0.0625
+shown beside that fit is an MAE difference and spans zero. In the early-week regime,
+where the props live, every paired interval spans zero and the point estimates favour
+separated in six of eight seasons (2011 +0.0030 and 2023 +0.0023 favour the incumbent).
+In the all-week sensitivity run every point estimate favours separated and four of the
+eight intervals exclude zero: 2010 -0.0121 +/- 0.0109, 2012 -0.0156 +/- 0.0122,
+2022 -0.0314 +/- 0.0128 and 2025 -0.0111 +/- 0.0075. Those are small improvements in
+a regime the model is not used in. They do not overturn the early-week acceptance
+failure, and the verdict stays NOT ADOPTED.
 
 Three observations explain why:
 
