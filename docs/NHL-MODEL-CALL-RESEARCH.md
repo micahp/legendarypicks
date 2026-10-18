@@ -51,6 +51,64 @@ commit `d7ed5d8b` ("fix: align NHL market Brier sample counts"), **before** the
 Record-tab fix branch. Repaired to `expect(screen.queryAllByText('0.16')).toHaveLength(0)`.
 All 13 tests in that file now pass on `dev`.
 
+### 1.5 Urgent audit: the S > 1.0 spread-gap trigger is unreliable
+
+The legacy `goal-diff-1` rule gates the underdog +1.5 pick on `S > 1.0`, where
+`S = |−puck_line − model_margin|`. A structural replay across the 2019–2025
+backtest (16,959 fired cover calls under both book-favorite configurations;
+`results/spread_trigger_audit.json`) shows the trigger pools two fundamentally
+different regimes and never consults the model's own cover probability:
+
+| Regime | Model mean p_cover | Actual cover rate |
+| --- | --- | --- |
+| Model agrees with the book's underdog | ≈ 0.81 | 69.8% |
+| Model disagrees with the book's favorite | ≈ 0.20 | 32.8% |
+
+Brier on fired calls is 0.2251 vs 0.2500 for the base rate — the trigger only
+beats a coin flip because of the agree-with-underdog subset. **Do not treat S
+as evidence of a profitable edge.** The recommended replacement (see §2) gates
+each tier on a calibrated cover-probability threshold, not a margin gap.
+
+### 1.6 Urgent audit: standings points add no information beyond Elo
+
+A matched, leak-safe walk-forward (expanding window, 2019–2025;
+`results/standings_info_test.json`) compared logistic moneyline models on
+Elo-only, xG-only, and Elo+xG feature sets against the same sets augmented with
+pregame points-percentage differential:
+
+| Feature set | ML Brier without pts% | ML Brier with pts% |
+| --- | --- | --- |
+| Elo | 0.2387 | 0.2388 |
+| xG | 0.2489 | 0.2481 |
+| Elo+xG | 0.2387 | 0.2388 |
+
+The shift is ≤ 0.0002 everywhere — noise. Elo already absorbs standings
+information, so explicit standings features are redundant. (This also applies
+the requested controls: standings were replayed chronologically from strictly
+earlier games, and the stratification in §1.7 conditions on games-played
+parity.)
+
+### 1.7 Urgent audit: model cover-probability inflation (Poisson compression)
+
+Stratifying errors by pregame points-% differential (with a games-played ≥ 10
+parity control; `results/standings_stratification.json`) shows every model
+variant systematically overestimates +1.5 cover probability in the central
+matchup band (|Δ pts%| ≤ 0.05, n = 7,808):
+
+| Model | Mean p_away_cover | Actual cover rate | Cover Brier | Constant-base Brier |
+| --- | --- | --- | --- | --- |
+| B3 Elo | 0.846 | 0.675 | 0.2444 | 0.2194 |
+| B5 xG | 0.788 | 0.675 | 0.2298 | 0.2194 |
+| B7 Elo+xG | 0.798 | 0.675 | 0.2286 | 0.2194 |
+
+**A constant base-rate predictor (always 0.675) beats every model variant on
+cover Brier.** The cause is structural: the independent Poisson marginal is too
+concentrated, underestimating 2+ goal margins and inflating close-game cover
+mass. The error is not concentrated in extreme standings mismatches — it is a
+uniform calibration failure. Fixing it requires cover-probability
+recalibration (logistic or isotonic on prior seasons only), not standings
+features.
+
 ---
 
 ## 2. Proposed tiered model-call policy
@@ -65,6 +123,10 @@ All 13 tests in that file now pass on `dev`.
    +1.5. Puck line is *invariant* under the statistical/official total mapping
    (a statistical tie covers both +1.5 sides and neither −1.5 side), so this is
    a clean fallback for any model with a calibrated score distribution.
+   **The tiered hierarchy is preserved as a policy to test, but the legacy
+   S > 1.0 spread-gap trigger is retired** (§1.5): the gate is a calibrated
+   cover-probability/confidence criterion applied to the recalibrated
+   distribution, never a margin gap against the puck line.
 3. **Game total.** If neither ML nor puck-line passes, use the goal
    distribution. Investigate the ±1-goal-margin mapping to real posted lines
    (see §2.3) before calling totals.
@@ -289,6 +351,9 @@ superiority claim.
 | **Negative-binomial marginals** | **NO-GO** | Consistently worse than Poisson on totals and NLL |
 | **Common-shock bivariate Poisson** | **NO-GO** | Empirical correlation is negative; family is not justified |
 | **Monte Carlo as a primary probability source** | **NO-GO** | Convergence check confirms analytical is equivalent at a fraction of the cost; keep MC as an offline verification tool |
+| **S > 1.0 spread-gap trigger (legacy `goal-diff-1` rule)** | **NO-GO / RETIRE** | Pools two disparate confidence regimes and ignores the model's own cover probability (§1.5); replace with the calibrated cover-probability gate in §2 |
+| **Standings points / points-% as a model feature** | **NO-GO** | Adds no information beyond Elo (Brier shift ≤ 0.0002, §1.6); keep standings as display context only |
+| **Cover-probability recalibration (logistic/isotonic, prior seasons only)** | **CONDITIONAL GO** | The single highest-value fix: every model variant overestimates cover probability by 11–14 points and loses to a constant base rate (§1.7). Validate on the 2026-27 prospective window before production |
 | **Storing a separate immutable `model_call` per locked forecast** | **GO** (design) | Required by the tiered policy; see §8 |
 
 ---
