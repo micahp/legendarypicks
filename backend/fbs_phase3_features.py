@@ -222,10 +222,10 @@ def team_game_table(df):
 METRIC_COLS = ["off_epa", "off_success", "off_explosive", "def_epa", "def_success", "def_explosive"]
 
 
-def decayed_ratings(team_games):
+def decayed_ratings(team_games, half_life=HALF_LIFE_GAMES):
     """Expanding half-life weighted ratings per team, one row per team-game, using only earlier games."""
     rows = []
-    decay = 0.5 ** (1.0 / HALF_LIFE_GAMES)
+    decay = 0.5 ** (1.0 / half_life)
     for team, grp in team_games.groupby("pos_team", sort=False):
         grp = grp.sort_values(["season", "week", "game_id"])
         num = {m: 0.0 for m in METRIC_COLS}
@@ -283,11 +283,11 @@ def league_means_by_week(team_games):
     return per_week[["season", "week"] + [m + "_league" for m in METRIC_COLS]]
 
 
-def build_team_ratings(team_games):
-    ratings = decayed_ratings(team_games)
+def build_team_ratings(team_games, half_life=HALF_LIFE_GAMES, shrink_k=SHRINK_K_PLAYS):
+    ratings = decayed_ratings(team_games, half_life)
     league = league_means_by_week(team_games)
     ratings = ratings.merge(league, on=["season", "week"], how="left")
-    shrink = ratings["decayed_plays"].fillna(0.0) / (ratings["decayed_plays"].fillna(0.0) + SHRINK_K_PLAYS)
+    shrink = ratings["decayed_plays"].fillna(0.0) / (ratings["decayed_plays"].fillna(0.0) + shrink_k)
     for m in METRIC_COLS:
         # a team with no prior plays gets the league mean, and is flagged (ladder section 4)
         raw = ratings[m + "_raw"].fillna(ratings[m + "_league"])
@@ -317,7 +317,7 @@ def side_map(data_dir, seasons):
         ["game_id", "side"])
 
 
-def build_features(data_dir, seasons):
+def build_features(data_dir, seasons, half_life=HALF_LIFE_GAMES, shrink_k=SHRINK_K_PLAYS):
     """One row per game with the four pre-registered feature differences."""
     aggs = {}
     for season in seasons:
@@ -336,7 +336,7 @@ def build_features(data_dir, seasons):
               % (season, len(epa_df), int(mask.sum()), float(epa_df.loc[mask, "epa"].mean()),
                  float(epa_df.loc[mask, "success"].mean())))
     team_games = pd.concat(team_games, ignore_index=True)
-    ratings = build_team_ratings(team_games)
+    ratings = build_team_ratings(team_games, half_life, shrink_k)
     ratings["game_id"] = ratings["game_id"].astype(str)
     ratings["name"] = ratings["pos_team"].map(normalise_name)
     sides = side_map(data_dir, seasons)
@@ -366,10 +366,12 @@ def main(argv=None):
     ap.add_argument("--data-dir", default=os.path.join("research", "fbs", "parquet"))
     ap.add_argument("--seasons", default="2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026")
     ap.add_argument("--out", default=os.path.join("research", "fbs", "phase3", "game_features.csv"))
+    ap.add_argument("--half-life", type=float, default=HALF_LIFE_GAMES)
+    ap.add_argument("--k", type=float, default=SHRINK_K_PLAYS)
     a = ap.parse_args(argv)
     seasons = [int(s) for s in a.seasons.split(",")]
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
-    feats, team_games, ratings, _ = build_features(a.data_dir, seasons)
+    feats, team_games, ratings, _ = build_features(a.data_dir, seasons, a.half_life, a.k)
     feats.to_csv(a.out, index=False)
     print("wrote %s: %d games, columns %s" % (a.out, len(feats), list(feats.columns)))
 
