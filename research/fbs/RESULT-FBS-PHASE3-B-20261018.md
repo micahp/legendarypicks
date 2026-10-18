@@ -653,3 +653,76 @@ which is below the bar C2 sets.
 ### Next
 
 Family (f) of the ladder: form and time decay, tested alone against C2.
+
+## 17. Increment (f) data audit and pre-registration — form and time decay
+
+Audit run 2026-10-18 before any (f) feature code. The question (f) asks is whether *recent* performance
+and the *decay rate* carry signal that the full-history averages in (b) miss.
+
+### 17.1 What the archive supports
+
+| source | seasons | plays | role in (f) |
+|---|---|---|---|
+| `cfbfastR_cfb_pbp` | 2014–2026 | 2,459,820 | the event table every (b) feature is built from |
+| `espn_cfb_pbp` | 2004–2026 | 3,242,765 | cross-check only; different schema, not used |
+
+The (b) construction applies unchanged and is reused rather than rebuilt: EP by ridge regression on
+(down, distance, field position) fitted on strictly earlier seasons, `EPA = EP(next) − EP(cur) + points`,
+team-game aggregates for offence and defence, then an exponentially weighted as-of rating. Nothing about
+form needs a new data source — it needs the same team-game table read with a shorter memory.
+
+Window availability for FBS-vs-FBS games 2022–2026 (3,936 games):
+
+| condition | share of games |
+|---|---|
+| both teams have ≥ 1 prior game | 97.7% |
+| both teams have ≥ 3 prior games | 94.1% |
+| both teams have ≥ 5 prior games | 90.5% |
+| median prior games per team | 28 |
+
+So a three-game window is available for both sides in 94.1% of games. Games where a team has fewer than
+three prior games use whatever it has (one or two) and are flagged; games with no prior game at all fall
+back to the full-history rating, which is itself the league mean in that case.
+
+### 17.2 Pre-registered construction (one choice, made now)
+
+**Form is a difference, not a level**: for each metric, `form = recent-3 mean − full-history rating`. The
+level is already carried by C2 and by Elo; the difference isolates "hot or cold relative to this team's
+own baseline", which is the only version of form that is not a duplicate of (b).
+
+| feature | definition |
+|---|---|
+| `off_epa_form` | mean `off_epa` over the team's last 3 team-games − full-history decayed `off_epa` |
+| `def_epa_form` | same on `def_epa` (negative is good for the defence) |
+| `off_success_form` | mean `off_success` over the last 3 − full-history decayed `off_success` |
+| `def_success_form` | same on `def_success` |
+
+Recent window: the last three prior team-games, equal weight, only games that kicked off at least one
+full UTC day before the game being forecast (the same embargo as (b)). Full-history rating: the (b)
+rating, half-life 6 team-games, K = 150 shrink.
+
+Game features are the four home-minus-away differences, constructed the same way as (b)/(c): the home
+offence against the away defence and vice versa.
+
+### 17.3 Models and protocol
+
+| model | definition |
+|---|---|
+| F1 | `logit p = logit p_G2 + b0` — recalibration control |
+| **F2 (primary)** | F1 + the four form differences |
+| C2 | the standing model, refit on the identical population |
+
+- Population identical to (b)–(e): 2,397 / 807 / 350; the one game without CFBD PBP stays out;
+  selection is by feature availability, never by outcome.
+- Model form, ridge 1.0, standardisation on training games, per-date-block refit, one-outcome Brier,
+  week-block bootstrap with 2,000 replicates: identical to (b)–(e).
+- **Primary comparison: F2 vs C2.** An increment that beats G2 but not C2 is DISCARDED. F2 vs G2 and
+  F2 vs F1 are reported.
+- Gates: the section 5 table read against C2, plus `primary_f2_beats_c2`.
+- **Time-decay sensitivity, pre-registered as robustness and not model selection:** rerun F2 with the
+  full-history half-life at 3 and at 10 (recent window fixed at 3) and report both. The primary result
+  uses half-life 6.
+- Leakage controls unchanged: EP recomputed from pre-snap state, never joined; only prior completed
+  games; EP fitted on strictly earlier seasons; the BANNED regex on publisher columns still applies.
+
+**If F2 fails, family (f) is discarded and not revisited with a different form definition.**
