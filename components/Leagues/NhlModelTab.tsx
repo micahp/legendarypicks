@@ -96,6 +96,9 @@ interface ModelPick {
   market_probability: number | null
   edge: number | null
   expected_value: number | null
+  push_probability?: number
+  quote_fresh?: boolean
+  quote_age_seconds?: number | null
   line_source: string | null
   line_captured_at_utc: string | null
   settlement_basis: string
@@ -108,7 +111,7 @@ interface ModelPick {
   quote?: BovadaLine | null
   selected_at_utc?: string
   provenance?: 'lock' | 'backfill' | 'preview'
-  result: { won: boolean } | null
+  result: { won: boolean | null; push?: boolean; settlement?: "won" | "lost" | "push" } | null
 }
 
 interface BovadaLine {
@@ -168,9 +171,9 @@ function marketLines(home: string, away: string, forecast: Forecast, quote: Bova
   const margin = forecast.projected_goal_differential_home
   const homeLine = quote?.home_puck_line ?? null
   return [
-    { label: locked ? 'Locked line' : 'Vegas line', value: spreadLabel(home, away, homeLine) },
+    { label: locked ? 'Locked puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
     { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-    { label: 'Edge', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} pts (${margin + homeLine > 0 ? home : away})` },
+    { label: 'Line gap (not edge)', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
   ]
 }
 
@@ -179,7 +182,7 @@ function marketTotals(forecast: Forecast, quote: BovadaLine | null | undefined, 
   return [
     { label: locked ? 'Locked total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
     { label: 'Model total', value: one(forecast.projected_total_goals) },
-    { label: 'Edge', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} pts` },
+    { label: 'Total gap', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
   ]
 }
 
@@ -206,13 +209,15 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
   const isGraded = grade != null
   const pick = forecast.pick ?? null
   const pickResult = pick?.result ?? null
+  const legacyTotalPricing = pick?.market === 'total' && pick.rule_version !== 'ev-max-2-settlement'
   const edgeClass = isGraded ? 'graded-edge' : ''
   // A locked pick carries the quote it was priced against. That is the basis this card shows;
   // the live quote appears separately and is never folded back into the edge, so the market
   // columns and the recommendation cannot point at different lines.
   const frozen = pick?.quote ?? null
   const basis = frozen ?? live ?? null
-  const locked = frozen != null
+  // An unlocked preview's quote is current, never an immutable locked line.
+  const locked = status !== 'UNLOCKED' && frozen != null
   const lines = marketLines(home, away, forecast, basis, locked)
   const totals = marketTotals(forecast, basis, locked)
   const moved = locked && live != null &&
@@ -224,7 +229,10 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
   if (isGraded && grade) {
     const won = pickResult?.won
     const so = grade.shootout_decided ? ' · SO' : ''
-    if (won == null) {
+    if (pickResult?.push) {
+      statusBadge = `↔ PUSH${so}`
+      statusColorClass = 'text-zinc-300'
+    } else if (won == null) {
       statusBadge = `GRADED${so}`
       statusColorClass = 'text-emerald-400'
     } else if (won) {
@@ -267,24 +275,35 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
               <>
                 {pickLabel(pick, home, away)}
                 {isGraded && pickResult && (
-                  <span className={`ml-1 ${pickResult.won ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {pickResult.won ? '✓' : '✗'}
+                  <span className={`ml-1 ${pickResult.push ? 'text-zinc-300' : pickResult.won ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {pickResult.push ? '↔' : pickResult.won ? '✓' : '✗'}
                   </span>
                 )}
               </>
             ) : 'n/a'}
           </span>
           {pick && !pick.qualifies && (
-            <span className="block text-xs text-amber-300">No qualifying bet</span>
-          )}
-          {pick && pick.edge != null && (
-            <span className="block text-xs tabular-nums text-zinc-400">
-              {signed(pick.edge * 100)}% edge
-              {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.won ? 'Won' : 'Lost'}</span>}
+            <span className="block text-xs text-amber-300">
+              {pick.quote_fresh === false
+                ? 'Odds too old or unverified to qualify'
+                : pick.expected_value != null && pick.expected_value <= 0
+                  ? 'No positive estimated betting EV' : 'Not a qualifying wager'}
             </span>
           )}
-          {pick && pick.expected_value != null && (
-            <span className="block text-xs tabular-nums text-zinc-500">{signed(pick.expected_value * 100)}% EV</span>
+          {pick && legacyTotalPricing && (
+            <span className="block text-xs text-amber-300">Historical total: EV was not push-adjusted</span>
+          )}
+          {pick && pick.edge != null && !legacyTotalPricing && (
+            <span className="block text-xs tabular-nums text-zinc-400">
+              {signed(pick.edge * 100)}% probability edge
+              {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.push ? 'Push' : pickResult.won ? 'Won' : 'Lost'}</span>}
+            </span>
+          )}
+          {pick && pick.expected_value != null && !legacyTotalPricing && (
+            <span className="block text-xs tabular-nums text-zinc-500">
+              {signed(pick.expected_value * 100)}% estimated EV
+              {pick.quote_fresh === false ? ' (unverified price)' : ''}
+            </span>
           )}
           {!pick && (
             <span className="block text-xs text-zinc-500">
@@ -330,6 +349,8 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
   // graded whichever team had the higher moneyline probability.
   const pick = forecast.pick ?? null
   const pickWon = pick?.result?.won ?? null
+  const pickPush = pick?.result?.push === true
+  const legacyTotalPricing = pick?.market === 'total' && pick.rule_version !== 'ev-max-2-settlement'
   return (
     <article className="py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -344,11 +365,11 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
         <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
         <div className="min-w-0">
           <div className="text-xs text-zinc-500">Result</div>
-          {/* Win/loss grades the frozen model selection, not its price. A model lean can
-              be right even when it did not qualify as a wager. No selection means no
-              retroactively invented win/loss. */}
-          <div className={`mt-0.5 truncate text-sm tabular-nums ${pickWon == null ? 'text-zinc-500' : pickWon ? 'text-emerald-400' : 'text-red-400'}`}>
+          {/* Grading measures the stored model selection independently of whether
+              the price was sufficient to call it a qualifying wager. */}
+          <div className={`mt-0.5 truncate text-sm tabular-nums ${pickPush ? 'text-zinc-300' : pickWon == null ? 'text-zinc-500' : pickWon ? 'text-emerald-400' : 'text-red-400'}`}>
             {pick == null ? 'No pick recorded'
+              : pickPush ? `${pick.qualifies ? 'Pick' : 'Lean'} ↔ Push`
               : pickWon == null ? (grade ? 'Result unavailable' : 'Pending')
                 : `${pick.qualifies ? 'Pick' : 'Lean'} ${pickWon ? '✓ Won' : '✗ Lost'}`}
           </div>
@@ -357,6 +378,9 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
           )}
           {pick == null && grade && (
             <div className="mt-0.5 text-xs text-zinc-500">Forecast graded; no selection was stored</div>
+          )}
+          {legacyTotalPricing && (
+            <div className="mt-0.5 text-xs text-amber-300">Historical total EV not push-adjusted</div>
           )}
         </div>
       </div>
