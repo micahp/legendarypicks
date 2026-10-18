@@ -24,9 +24,39 @@ def _db():
     return _pkg_db()
 
 
-def _tennis_v2_ledger_records(league: str, game_ids: list[str]) -> dict[str, dict]:
-    """Read the separate V2 prospective ledger for just the visible scoreboard games."""
-    if not game_ids:
+def _winner_brier(probability, winner_grade):
+    """Brier score for the locked winner confidence, or None without a valid result."""
+    if winner_grade not in ("correct", "incorrect"):
+        return None
+    try:
+        probability = float(probability)
+    except (TypeError, ValueError):
+        return None
+    if not 0.0 <= probability <= 1.0:
+        return None
+    outcome = 1.0 if winner_grade == "correct" else 0.0
+    return (probability - outcome) ** 2
+
+
+def _tennis_lock_status(start_time, locked_at, projection, now):
+    if locked_at:
+        return "locked"
+    if projection is not None:
+        return "preview"
+    if not start_time:
+        return "unknown"
+    try:
+        starts_at = dt.datetime.fromisoformat(str(start_time).replace("Z", "+00:00"))
+        if starts_at.tzinfo is None:
+            starts_at = starts_at.replace(tzinfo=dt.timezone.utc)
+    except (TypeError, ValueError):
+        return "unknown"
+    return "missed" if starts_at.astimezone(dt.timezone.utc) <= now else "not_due"
+
+
+def _tennis_v2_ledger_records(league: str, game_ids: list[str] | None) -> dict[str, dict]:
+    """Read selected V2 forecasts, or all records when requested for model accuracy."""
+    if game_ids is not None and not game_ids:
         return {}
     path = os.environ.get("LP_TENNIS_V2_LEDGER_PATH") or os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -34,7 +64,12 @@ def _tennis_v2_ledger_records(league: str, game_ids: list[str]) -> dict[str, dic
     )
     if not os.path.isfile(path):
         return {}
-    placeholders = ",".join("?" for _ in game_ids)
+    game_filter = ""
+    params = [league]
+    if game_ids is not None:
+        placeholders = ",".join("?" for _ in game_ids)
+        game_filter = " AND f.game_id IN ({})".format(placeholders)
+        params.extend(game_ids)
     try:
         ledger = sqlite3.connect("file:{}?mode=ro".format(path), uri=True, timeout=5)
         ledger.row_factory = sqlite3.Row
@@ -56,10 +91,8 @@ def _tennis_v2_ledger_records(league: str, game_ids: list[str]) -> dict[str, dic
             rows = ledger.execute(
                 "SELECT f.game_id,f.locked_at,f.payload,f.payload_sha256,{} "
                 "FROM tennis_v2_research_forecasts f {} "
-                "WHERE f.tour=? AND f.game_id IN ({})".format(
-                    grade_fields, grade_join, placeholders
-                ),
-                (league, *game_ids),
+                "WHERE f.tour=?{}".format(grade_fields, grade_join, game_filter),
+                params,
             ).fetchall()
             records = {}
             for row in rows:
@@ -91,6 +124,49 @@ def _tennis_v2_ledger_records(league: str, game_ids: list[str]) -> dict[str, dic
             status_code=503,
             detail="Tennis V2 forecast ledger could not be read",
         ) from exc
+
+
+def _tennis_page_winner_accuracy(con, league: str) -> list[float]:
+    rows = con.execute(
+        "SELECT l.projection,g.winner FROM tennis_model_locks l "
+        "JOIN tennis_model_grades g ON g.league=l.league AND g.game_id=l.game_id "
+        "WHERE l.league=?",
+        (league,),
+    ).fetchall()
+    scores = []
+    for row in rows:
+        try:
+            probability = json.loads(row["projection"]).get("probability")
+        except (TypeError, ValueError):
+            continue
+        score = _winner_brier(probability, row["winner"])
+        if score is not None:
+            scores.append(score)
+    return scores
+
+
+def _tennis_v2_winner_accuracy(records: dict[str, dict]) -> list[float]:
+    scores = []
+    for record in records.values():
+        forecast = record.get("payload") or {}
+        actual_winner = record.get("actual_winner")
+        if not actual_winner:
+            continue
+        probability = ((forecast.get("match_winner_home_probability") or {})
+                       .get("elo_informed_v2"))
+        try:
+            probability = float(probability)
+        except (TypeError, ValueError):
+            continue
+        if not 0.0 <= probability <= 1.0:
+            continue
+        predicted_winner = (forecast.get("home_player") if probability >= 0.5
+                            else forecast.get("away_player"))
+        grade = "correct" if actual_winner == predicted_winner else "incorrect"
+        score = _winner_brier(max(probability, 1.0 - probability), grade)
+        if score is not None:
+            scores.append(score)
+    return scores
 
 
 def _apply_tennis_v2_winner(match: dict, record: dict | None) -> bool:
@@ -148,6 +224,9 @@ def _apply_tennis_v2_winner(match: dict, record: dict | None) -> bool:
     }
     match["lockedAt"] = record.get("locked_at")
     match["preview"] = False
+    # V2 uses a separate prospective ledger that does not persist lock-time odds.
+    # Never borrow the regular page model's quote for a different forecast lock.
+    match["frozenOdds"] = None
 
     grades = match.get("grades") or {}
     actual_winner = record.get("actual_winner")
@@ -359,6 +438,7 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
     date_from = utc_start.date().isoformat()
     date_through = (utc_end - dt.timedelta(microseconds=1)).date().isoformat()
     out = []
+    accuracy_scores = []
     with closing(_db()) as con:
         con.execute(
             "CREATE TABLE IF NOT EXISTS tennis_model_locks("
@@ -491,10 +571,12 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                     stored = project_day(con, league, model_day, day_matches)
                     store_candidates(con, league, model_day, stored, now.isoformat())
                 candidates.update(stored)
-            v2_records = (
-                _tennis_v2_ledger_records(league, [match["gameId"] for match in slate])
-                if winner_model == "elo_informed_v2" else {}
-            )
+            if winner_model == "elo_informed_v2":
+                v2_records = _tennis_v2_ledger_records(league, None)
+                accuracy_scores.extend(_tennis_v2_winner_accuracy(v2_records))
+            else:
+                v2_records = {}
+                accuracy_scores.extend(_tennis_page_winner_accuracy(con, league))
             for match in slate:
                 candidate = candidates.get(match["gameId"])
                 starts_at = None
@@ -509,17 +591,24 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                 # A final can only be graded from this pregame snapshot.
                 if (candidate is not None and match["status"] == "scheduled" and starts_at is not None
                         and now < starts_at.astimezone(dt.timezone.utc) <= now + dt.timedelta(hours=1)):
+                    locked_projection = dict(candidate)
+                    # Market data is provenance attached to the lock, not a model feature.
+                    # Existing lock rows remain immutable and simply have no frozen quote.
+                    locked_projection["_frozenOdds"] = match["odds"]
                     con.execute(
                         "INSERT OR IGNORE INTO tennis_model_locks(league,game_date,game_id,start_time,locked_at,projection,model_version) "
                         "VALUES(?,?,?,?,?,?,?)",
                         (league, starts_at.astimezone(dt.timezone.utc).date().isoformat(), match["gameId"], match["startTime"],
-                         now.isoformat(), json.dumps(candidate), candidate.get("modelVersion")),
+                         now.isoformat(), json.dumps(locked_projection), candidate.get("modelVersion")),
                     )
                 lock = con.execute(
                     "SELECT projection,locked_at FROM tennis_model_locks WHERE league=? AND game_id=?",
                     (league, match["gameId"]),
                 ).fetchone()
-                projection = json.loads(lock["projection"]) if lock else (
+                locked_projection = json.loads(lock["projection"]) if lock else None
+                frozen_odds = (locked_projection.pop("_frozenOdds", None)
+                               if locked_projection is not None else None)
+                projection = locked_projection if lock else (
                     candidate if match["status"] == "scheduled" and starts_at is not None and starts_at > now else None
                 )
                 if projection is not None and "_sackmannPlayerIds" in projection:
@@ -530,15 +619,25 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                 match["projection"] = projection
                 match["lockedAt"] = lock["locked_at"] if lock else None
                 match["preview"] = bool(projection and not lock)
+                match["frozenOdds"] = frozen_odds
                 grade = grades.get(match["gameId"])
                 match["grades"] = ({
                     "winner": grade["winner"],
+                    "winnerBrier": None,
                     "homeAcesError": None,
                     "awayAcesError": None,
                     "totalGamesError": grade["total_games_error"],
                 } if grade else None)
                 if winner_model == "elo_informed_v2":
                     _apply_tennis_v2_winner(match, v2_records.get(match["gameId"]))
+                if match["grades"] is not None:
+                    match["grades"]["winnerBrier"] = _winner_brier(
+                        (match.get("projection") or {}).get("probability"),
+                        match["grades"].get("winner"),
+                    )
+                match["lockStatus"] = _tennis_lock_status(
+                    match["startTime"], match["lockedAt"], match["projection"], now
+                )
                 # IDs are needed only while calculating; keep the public match payload tidy.
                 match.pop("homeAthleteId", None)
                 match.pop("awayAthleteId", None)
@@ -555,6 +654,10 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
         "reason": None if out else "No persisted tennis matches are available for this date.",
         "winnerModel": winner_model,
         "winnerModelReason": model_reason,
+        "accuracy": {
+            "winnerBrier": (sum(accuracy_scores) / len(accuracy_scores)) if accuracy_scores else None,
+            "brierN": len(accuracy_scores),
+        },
         "source": "scoreboard_snapshots + tennis spine + pre-match Sackmann history",
         "matches": out,
     }

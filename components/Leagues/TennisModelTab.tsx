@@ -33,7 +33,13 @@ interface ModelMatch {
   round: string | null
   startTime: string | null
   lockedAt?: string | null
+  frozenOdds?: {
+    matchWinner: { home: number | null; away: number | null }
+    totalGames: { line: number; over: number | null; under: number | null } | null
+    capturedAt: string | null
+  } | null
   preview?: boolean
+  lockStatus?: 'locked' | 'preview' | 'not_due' | 'missed' | 'unknown'
   status: 'scheduled' | 'live' | 'final' | 'unknown'
   home: string
   away: string
@@ -46,6 +52,7 @@ interface ModelMatch {
   result: ModelResult | null
   grades: {
     winner: 'correct' | 'incorrect' | null
+    winnerBrier?: number | null
     homeAcesError: number | null
     awayAcesError: number | null
     totalGamesError: number | null
@@ -57,6 +64,7 @@ interface Payload {
   reason?: string | null
   winnerModel?: WinnerModel
   winnerModelReason?: string | null
+  accuracy?: { winnerBrier: number | null; brierN: number }
   source?: string
   matches: ModelMatch[]
 }
@@ -105,9 +113,11 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
   const result = match.result
   const status = match.status === 'final' ? 'Final' : match.status === 'live' ? 'In progress' : null
   const price = (value: number | null | undefined) => (value == null ? 'n/a' : value > 0 ? `+${value}` : `${value}`)
+  const quote = match.lockedAt ? match.frozenOdds ?? null : match.odds ?? null
+  const quoteLabel = match.lockedAt ? 'Frozen line' : 'Current line'
 
   // Edge compares the model's pick probability with the Vegas no-vig probability for the same side.
-  const winnerPrices = match.odds?.matchWinner ?? null
+  const winnerPrices = quote?.matchWinner ?? null
   const pickSide = projection?.projectedWinner && projection.probability != null
     ? (projection.projectedWinner === match.home ? 'home' : 'away')
     : null
@@ -121,7 +131,7 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
   const winnerEdgeLabel = winnerEdge == null ? 'n/a' : `${winnerEdge >= 0 ? '+' : ''}${winnerEdge.toFixed(1)} pts`
 
   // Edge on the total is the model's projected games minus the Bovada line, in games.
-  const totalLine = match.odds?.totalGames ?? null
+  const totalLine = quote?.totalGames ?? null
   const totalEdge = totalLine && projection?.totalGames != null ? projection.totalGames - totalLine.line : null
   const totalSide = totalEdge == null ? null : totalEdge >= 0 ? 'over' : 'under'
   const totalEdgeLabel = totalEdge == null ? 'n/a' : `${Math.abs(totalEdge).toFixed(1)} games on ${totalSide}`
@@ -135,7 +145,9 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
         </div>
         <p className="text-sm tabular-nums text-zinc-400">
           {status ?? (match.startTime ? new Date(match.startTime).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Start time unknown')}
+          {match.lockStatus === 'missed' && <span className="ml-2 text-xs font-medium text-amber-400">Missed lock window</span>}
           {match.status === 'scheduled' && match.lockedAt && <span className="ml-2 text-xs text-zinc-500">Locked</span>}
+          {match.status === 'scheduled' && match.preview && <span className="ml-2 text-xs text-amber-400">Preview · not locked</span>}
         </p>
       </header>
 
@@ -149,9 +161,11 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
               <span aria-hidden="true">{match.grades.winner === 'correct' ? '✓' : '×'}</span> Pick {match.grades.winner}
             </p>}
             <div className="mt-1">
-              <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">{price(pickPrice)}</b></p>
+              <p className="text-xs tabular-nums text-zinc-500">{quoteLabel} · Bovada <b className="font-normal text-white">{price(pickPrice)}</b></p>
               <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{projection.probability == null ? 'n/a' : fairPrice(projection.probability)}</b></p>
               <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{winnerEdgeLabel}</b></p>
+              {quote?.capturedAt && <p className="text-xs text-zinc-500">Bovada captured {quote.capturedAt}</p>}
+              {match.lockedAt && !match.frozenOdds && <p className="text-xs text-amber-400">No frozen sportsbook line was recorded for this forecast.</p>}
             </div>
           </> : <p className="text-amber-400">No projection is available.</p>}
         </div>
@@ -187,7 +201,7 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
             </>}
             {projection && <>
               <div className="mt-1">
-                <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">n/a</b></p>
+                <p className="text-xs tabular-nums text-zinc-500">{quoteLabel} · Bovada <b className="font-normal text-white">n/a</b></p>
                 <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{number(projection.homeAces)} / {number(projection.awayAces)}</b></p>
                 <p className="text-xs text-zinc-500">Edge <b className="font-normal text-white">n/a</b></p>
               </div>
@@ -211,7 +225,7 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
             </>}
             {projection && <>
               <div className="mt-1">
-                <p className="text-xs tabular-nums text-zinc-500">Vegas line <b className="font-normal text-white">{totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</b></p>
+                <p className="text-xs tabular-nums text-zinc-500">{quoteLabel} · total games <b className="font-normal text-white">{totalLine ? `${totalLine.line} · over ${price(totalLine.over)} / under ${price(totalLine.under)}` : 'n/a'}</b></p>
                 <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{projection.totalGames == null ? 'n/a' : totalSide && totalLine ? `${totalSide === 'over' ? 'Over' : 'Under'} ${totalLine.line} · ${number(projection.totalGames)} games` : `${number(projection.totalGames)} games`}</b></p>
                 <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{totalEdgeLabel}</b></p>
               </div>
@@ -219,6 +233,24 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
         </div>
       </div>
     </article>
+  )
+}
+
+function ModelAccuracy({ accuracy, winnerModel }: {
+  accuracy?: Payload['accuracy']
+  winnerModel: WinnerModel
+}) {
+  const brier = accuracy?.winnerBrier ?? null
+  return (
+    <div role="tooltip" className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,360px)] rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
+      <h3 className="text-sm font-semibold text-zinc-100">Winner model accuracy</h3>
+      <p className="mt-1 text-xs text-zinc-400">{winnerModel === 'page' ? 'Global + surface Elo blend' : 'Elo-informed simulator V2'} · settled locked forecasts in the available archive.</p>
+      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums">
+        <div><dt className="text-xs text-zinc-500">Winner Brier ↓</dt><dd className="mt-0.5 text-zinc-100">{brier == null ? '—' : brier.toFixed(4)}</dd></div>
+        <div><dt className="text-xs text-zinc-500">Brier n</dt><dd className="mt-0.5 text-zinc-100">{accuracy?.brierN ?? 0}</dd></div>
+      </dl>
+      <p className="mt-3 text-xs text-zinc-500">Lower is better; 0.2500 is a constant 50% forecast. Other markets are not included.</p>
+    </div>
   )
 }
 
@@ -232,6 +264,7 @@ export default function TennisModelTab({ tour }: {
   const [payload, setPayload] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [accuracyOpen, setAccuracyOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -257,6 +290,7 @@ export default function TennisModelTab({ tour }: {
           reason: available ? null : payloads.find(data => data.reason)?.reason ?? null,
           winnerModel,
           winnerModelReason: hasWinnerProjections ? null : payloads.find(data => data.winnerModelReason)?.winnerModelReason ?? null,
+          accuracy: payloads.find(data => data.accuracy)?.accuracy,
           source: payloads.find(data => data.source)?.source,
           matches: uniqueMatches,
         })
@@ -282,6 +316,14 @@ export default function TennisModelTab({ tour }: {
             <option value="elo_informed_v2">Elo-informed simulator V2</option>
           </select>
         </label>
+        <div className="relative">
+          <button type="button" aria-label="Model accuracy" aria-expanded={accuracyOpen}
+            onClick={() => setAccuracyOpen(open => !open)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">
+            Model accuracy
+          </button>
+          {accuracyOpen && <ModelAccuracy accuracy={payload?.accuracy} winnerModel={winnerModel} />}
+        </div>
         {view === 'record' ? <div className="flex items-center gap-3">
           <button type="button" aria-label="Previous day" onClick={() => setRecordDate(shiftDate(recordDate, -1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xl text-zinc-300 hover:bg-zinc-800">‹</button>
@@ -302,9 +344,9 @@ export default function TennisModelTab({ tour }: {
           ? payload.matches
           : payload.matches.filter(match => localDateKey(match.startTime) === date)
         const visible = view === 'projections'
-          ? matches.filter(match => match.projection?.projectedWinner != null && match.grades?.winner == null)
+          ? matches.filter(match => match.lockStatus === 'missed' || (match.projection != null && match.grades?.winner == null))
           : matches.filter(match => match.status === 'final' &&
-            (winnerModel === 'page' || match.projection?.projectedWinner != null))
+            (winnerModel === 'page' || match.projection?.projectedWinner != null || match.lockStatus === 'missed'))
         return visible.length ? (
           <section className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
             {visible.map(match => <MatchCard key={`${match.tour}-${match.gameId}`} match={match} showActuals={view === 'record'} />)}
