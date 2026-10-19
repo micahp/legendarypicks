@@ -339,13 +339,14 @@ candidate on score correlation without a mechanism that survives conditioning on
 
 ## 2026-10-19 — The total PIT failure is a conditional mean error, not a shape error
 **Learned:** H0b's total distribution fails G-CAL because its predicted mean total is about twice as
-variable as the data supports: regressing observed on predicted total gives slope **0.5032 ± 0.0691**
-walk-forward, **0.5173 ± 0.1221** on the holdout, and **0.489–0.516** by season. Mean bias is +0.04
-points, so the error is conditional, not global: conditional mean PIT runs **0.648** (<40 predicted) to
-**0.404** (>70), in every season and on the holdout. The marginal PIT is nearly uniform because the two
-ends cancel. Correcting the mean alone moves every bucket to ~0.50 and removes the low-end narrowness
-(RMSE/SD 1.33 → 1.00); a residual high-μ over-dispersion remains (RMSE/SD 0.91; R × 1.10–1.20 restores
-PIT), and the >110 tail stays 7.5× too heavy even after the mean fix.
+variable as the data supports: OLS of observed on predicted total (`pred_total`, the PMF mean) gives
+slope **0.5032 ± 0.0691** walk-forward, **0.5173 ± 0.1221** on the holdout, and **0.489–0.516** by
+season. Mean bias is +0.04 points, so the error is conditional, not global: conditional mean PIT runs
+**0.648** (<40 predicted) to **0.404** (>70), in every season and on the holdout. The marginal PIT is
+nearly uniform because the two ends cancel. Correcting the mean alone moves every bucket to ~0.50 and
+removes the low-end narrowness (RMSE/SD 1.33 → 1.00); a residual high-μ over-dispersion remains
+(RMSE/SD 0.91; R × 1.10–1.20 restores PIT), and predicted mass above 110 is 0.60% vs 0.08% observed
+after the mean fix (14.4 games vs 2), still 2.5× at R × 1.5.
 **Evidence:** `DIAGNOSIS-FBS-TOTAL-CALIBRATION-20261019.md`, frozen `research/fbs/phase4/` artifacts.
 **Consequence:** the next total candidate should start with a reliability scale on the predicted mean
 fitted on prior seasons, then refit R on calibrated residuals — not another distribution family. A
