@@ -224,12 +224,41 @@ def main() -> None:
                 brier = (p - g["home_win"]) ** 2
                 ll = -(g["home_win"] * math.log(p) + (1 - g["home_win"]) * math.log(1 - p))
                 c_h = crps(pmf(mh), g["hg"]); c_a = crps(pmf(ma), g["ag"])
-                rows.append({"game_id": g["game_id"], "brier": brier, "log_loss": ll,
+                rows.append({"game_id": g["game_id"], "season": season, "game_date": g["game_date"],
+                             "brier": brier, "log_loss": ll,
                              "crps": (c_h + c_a) / 2.0,
                              "mae": (abs(mh - g["hg"]) + abs(ma - g["ag"])) / 2.0,
                              "p_home": p, "mu_h": mh, "mu_a": ma,
                              "hg": g["hg"], "ag": g["ag"], "y": g["home_win"]})
             per_season[season][m] = rows
+
+    # --- Step A: emit per-game forecasts for auditability (no refit needed) ---
+    # Columns: game_id, season, game_date, home_win, p_b5, p_st, plus the Poisson
+    # goal means for each arm (mu_h_*, mu_a_*) which CRPS needs, and the observed
+    # goal targets (home_goals, away_goals) which CRPS also needs. No feature or
+    # future-information column is included; the outcome columns are the scored
+    # ground truth, present by design.
+    fc_rows = []
+    for season in EVAL_SEASONS:
+        b5_rows = {r["game_id"]: r for r in per_season[season]["b5"]}
+        st_rows = {r["game_id"]: r for r in per_season[season]["st"]}
+        for gid in sorted(b5_rows):
+            r5, rs = b5_rows[gid], st_rows[gid]
+            fc_rows.append({
+                "game_id": gid, "season": season, "game_date": r5["game_date"],
+                "home_win": r5["y"], "p_b5": r5["p_home"], "p_st": rs["p_home"],
+                "mu_h_b5": r5["mu_h"], "mu_a_b5": r5["mu_a"],
+                "mu_h_st": rs["mu_h"], "mu_a_st": rs["mu_a"],
+                "home_goals": r5["hg"], "away_goals": r5["ag"],
+            })
+    fc_rows.sort(key=lambda r: (r["season"], r["game_date"], r["game_id"]))
+    fc_path = HERE / "forecasts_st.csv"
+    with fc_path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["game_id", "season", "game_date", "home_win",
+                                          "p_b5", "p_st", "mu_h_b5", "mu_a_b5",
+                                          "mu_h_st", "mu_a_st", "home_goals", "away_goals"])
+        w.writeheader(); w.writerows(fc_rows)
+    print(f"wrote {fc_path} ({len(fc_rows)} rows)", flush=True)
 
     # aggregate deltas over the full evaluation window, clustered by game
     def collect(m):

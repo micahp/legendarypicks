@@ -1,0 +1,8 @@
+verify game_id=2025020001 date=2025-10-07 home=FLA away=CHI
+  CSV home pp_off=0.14019161676646708 pk_def=0.125283347863993  away pp_off=0.1434301521438451 pk_def=0.14079531184596067
+  DB  home pp_off=0.140192 pk_def=0.125283  (from 10 prior games, log_code=FLA)
+  match: pp_off=True pk_def=True
+leakage/ground-truth audit: checked=92008 mismatches=0
+so_home by season: {2019: 0.4939, 2020: 0.4905, 2021: 0.4899, 2022: 0.4911, 2023: 0.4875, 2024: 0.4917, 2025: 0.4932}
+  b5: PIT KS home=0.0514 (mean 0.5105)  away=0.0705 (mean 0.5213)
+  st: PIT KS home=0.0438 (mean 0.5069)  away=0.0606 (mean 0.5179)

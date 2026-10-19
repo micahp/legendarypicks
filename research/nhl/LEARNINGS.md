@@ -44,3 +44,22 @@ committed before any fit).
 - **Next if pursued:** add penalty-opportunity volume (penalties drawn/taken per 60) as a second
   candidate; test a per-game ST variant; then CP4 with frozen prospective forecasts. Do not
   promote on the retrospective result alone.
+
+### 2026-10-19 — Step A: auditability (reproduction PASS, no refit)
+
+- **Per-game forecasts are now on the branch:** `forecasts_st.csv`, one row per graded game:
+  `game_id, season, game_date, home_win, p_b5, p_st`, plus the Poisson goal means
+  (`mu_h_b5, mu_a_b5, mu_h_st, mu_a_st`) and observed targets (`home_goals, away_goals`) that
+  CRPS needs. Sorted by `(season, game_date, game_id)`. No feature or future-information column;
+  the outcome columns are the scored ground truth, present by design.
+- **The published scores reproduce exactly from the CSV alone.** `audit_special_teams.py`
+  recomputes Brier, log loss, CRPS and the game-clustered 95% CIs from `forecasts_st.csv` with
+  no refitting. Every field matches `results_special_teams.json` to **absdiff 0.00e+00**
+  (Brier 0.243911517790283 / 0.243298726052807; log loss 0.680833396964885 / 0.679577986935514;
+  CRPS 0.960077840116014 / 0.958670640204569; all deltas and CI bounds included). Per-season
+  weighted Brier also reproduces the pooled value exactly. REPRODUCTION: PASS.
+- **Verifier stdout committed** as `verify_special_teams.out.txt`: ground-truth recompute
+  matches, leakage audit 92,008 checks / 0 mismatches, PIT/KS improves both sides
+  (b5 home 0.0514/away 0.0705 → st home 0.0438/away 0.0606).
+- The audit no longer needs a refit to check the scores. That closes the auditability gap.
+- Step B (penalty-opportunity volume) is a separate pre-registered experiment, not started here.
