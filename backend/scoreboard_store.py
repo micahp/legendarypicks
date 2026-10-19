@@ -815,6 +815,38 @@ def live_targets(now=None, con=None):
             con.close()
 
 
+RESUMABLE_STATUS = ("suspended", "delayed", "interrupted", "rain")
+
+
+def _resumable_post_games(con, league, game_date):
+    """Count games the store calls finished that the publisher has not finished.
+
+    ESPN reports a suspended match as `state='post'` with `completed=false`.
+    Counting state alone therefore ends the refresh for the whole day and freezes
+    the snapshot mid-match -- which is how a suspended Shanghai final sat on the
+    board for fourteen hours as the permanent record of that day.
+
+    Only resumable statuses count. Postponed, canceled and abandoned are terminal:
+    no later request will produce a score, so those must not hold a day open.
+    """
+    count = 0
+    for (payload,) in con.execute(
+        "SELECT payload FROM scoreboard_snapshots"
+        " WHERE league=? AND game_date=? AND state='post'",
+        (league, game_date),
+    ):
+        try:
+            game = json.loads(payload)
+        except (TypeError, ValueError):
+            continue
+        if game.get("completed") is not False:
+            continue
+        status = str(game.get("status") or game.get("status_detail") or "").lower()
+        if any(marker in status for marker in RESUMABLE_STATUS):
+            count += 1
+    return count
+
+
 def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None,
                   future_backoff=FUTURE_BACKOFF):
     """Should the schedule run spend a request on this (league, date)?
@@ -870,6 +902,10 @@ def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None,
             " WHERE league=? AND game_date=? AND (state IS NULL OR state != 'post')",
             (league, game_date),
         ).fetchone()[0]
+        # state='post' is not the same as finished: a suspended match is posted
+        # but not completed, and treating it as done ends the day's refresh and
+        # freezes the snapshot mid-match.
+        unfinished += _resumable_post_games(con, league, game_date)
         if unfinished:
             started = con.execute(
                 "SELECT COUNT(*) FROM scoreboard_snapshots"

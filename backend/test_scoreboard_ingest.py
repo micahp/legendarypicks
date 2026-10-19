@@ -718,3 +718,47 @@ class TestAFutureSlateIsNotRepolled:
         scoreboard_store.save("mlb", tomorrow, [])
         wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
         assert not wanted and "no games" in reason, reason
+
+
+class TestASuspendedGameKeepsTheDayOpen:
+    """`state='post'` is not the same as finished.
+
+    ESPN reports a suspended match as posted but not completed. Counting state
+    alone declared the day finished, retired the refresh, and served a
+    mid-match snapshot as the permanent record -- observed 2026-10-18, when the
+    Shanghai final stayed "Suspended" on the board for fourteen hours after the
+    publisher had it.
+    """
+
+    def _finished(self, gid):
+        return {"game_id": gid, "date": "2026-10-18T08:40Z", "state": "post",
+                "status": "Final", "completed": True,
+                "home": {"abbrev": "AAA"}, "away": {"abbrev": "BBB"}}
+
+    def _terminal(self, gid, status):
+        return {"game_id": gid, "date": "2026-10-18T08:40Z", "state": "post",
+                "status": status, "completed": False,
+                "home": {"abbrev": "AAA"}, "away": {"abbrev": "BBB"}}
+
+    def test_a_suspended_final_does_not_close_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("final", "Suspended")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert wanted, reason
+        assert "not final" in reason, reason
+
+    def test_a_delayed_game_does_not_close_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("g1", "Delayed")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert wanted and "not final" in reason, reason
+
+    def test_every_completed_game_still_closes_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._finished("final")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert not wanted and reason == "every game final", reason
+
+    def test_a_postponed_game_is_terminal_and_closes_the_day(self):
+        """Postponed will never produce a score, so it must not hold the day
+        open -- otherwise every postponement costs a request per cycle forever."""
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("g1", "Postponed")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert not wanted and reason == "every game final", reason
