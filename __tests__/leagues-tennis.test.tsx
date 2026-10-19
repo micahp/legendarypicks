@@ -135,6 +135,33 @@ describe('Tennis league hub', () => {
     expect(screen.getByRole('link', { name: /Official bracket/ }).getAttribute('href')).toContain('espn.com')
   })
 
+  it('renders every concurrent tournament for one tour, each with its own bracket link', async () => {
+    const bracket = (tournament_id: string, event_name: string, round: string) => ({
+      league: 'wta', tournament_id, event_name, draw_type: "Women's Singles",
+      bracket_url: `https://www.espn.com/tennis/bracket/${tournament_id}`, fetched_at: '2026-10-18T12:00:00Z',
+      matches: [{ game_id: `${tournament_id}-1`, round, status: 'Scheduled', home: { athlete_id: '1', name: 'Player A' }, away: { athlete_id: '2', name: 'Player B' } }],
+    })
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        available: true,
+        tours: [bracket('381', 'Dongfeng Voyah Wuhan Open', 'Second Round'), bracket('963', 'BNB Ningbo Open', 'First Round')],
+      }),
+    })
+    await act(async () => { render(<TennisLeaguePage />) })
+    await screen.findByText('No covered ATP or WTA matches were published for this date.')
+    clickLink('Draws')
+
+    expect(await screen.findByText('Dongfeng Voyah Wuhan Open')).toBeTruthy()
+    expect(screen.getByText('BNB Ningbo Open')).toBeTruthy()
+    const links = screen.getAllByRole('link', { name: /Official bracket/ })
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
+      'https://www.espn.com/tennis/bracket/381', 'https://www.espn.com/tennis/bracket/963',
+    ])
+    expect(screen.getByText('Second Round')).toBeTruthy()
+    expect(screen.getByText('First Round')).toBeTruthy()
+  })
+
   it('renders id-keyed world rankings separately from tournament seeds', async () => {
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
