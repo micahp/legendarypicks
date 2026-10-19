@@ -240,7 +240,10 @@ class NHLModelLocks(unittest.TestCase):
         export = export_locked(self.con, 2026)["games"][0]
         for model_key in MODEL_KEYS:
             forecast = export["models"][model_key]
-            self.assertIsNone(forecast["pick"])
+            # Every game gets a pick; with no quote it is a structural call, unpriced.
+            self.assertIsNotNone(forecast["pick"])
+            self.assertIsNone(forecast["pick"]["price"])
+            self.assertFalse(forecast["pick"]["qualifies"])
             lines = forecast["line_grades"]
             self.assertEqual(lines["version"], "line-brier-v1")
             self.assertEqual(lines["reference"]["home_minus_1_5"]["outcome"], 0)
@@ -294,11 +297,9 @@ class NHLModelLocks(unittest.TestCase):
         self.assertAlmostEqual(over["model_probability"], .2)
         self.assertAlmostEqual(under["push_probability"], .2)
         pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
-        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "under", 6.0))
-        self.assertAlmostEqual(pick["model_probability"], .6)
-        self.assertAlmostEqual(pick["push_probability"], .2)
-        self.assertAlmostEqual(pick["expected_value"], .6 * (100 / 110) - .2)
-        self.assertAlmostEqual(pick["edge"], .6 / .8 - .5)
+        # Pricing diagnostics are unchanged, but the leeway rules need a projected total
+        # to choose a line, and this forecast carries none. No pick is manufactured.
+        self.assertIsNone(pick)
 
     def test_total_market_skipped_if_shootout_adjustment_cannot_be_computed(self):
         forecast = {"home_win_probability": .5, "p_home_minus_1_5": .2,
@@ -451,16 +452,19 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(len(candidates), 6)
         pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
         self.assertIsNotNone(pick)
+        # The leeway hierarchy takes the away +1.5 cover here rather than chasing EV;
+        # a negative-EV number can still be the rule's pick, so "qualifies" now means
+        # only that the book posted a price for it.
         self.assertLess(pick["expected_value"], 0)
-        self.assertFalse(pick_qualifies(pick))
+        self.assertTrue(pick_qualifies(pick))
 
-    def test_no_quote_means_no_recommendation_at_all(self):
+    def test_no_quote_still_yields_an_unpriced_pick(self):
         report = lock_feed(self.con, feed(), LOCK_AT)
-        self.assertEqual((report["locked_rows"], report["pick_rows"], report["unpriced_models"]), (3, 0, 3))
-        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 0)
-        # The projection is still locked and still exported; only the recommendation is absent.
+        self.assertEqual((report["locked_rows"], report["pick_rows"], report["unpriced_models"]), (3, 3, 0))
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 3)
+        # The pick stands as a structural call; it simply carries no price or edge.
         model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
-        self.assertIsNone(model["pick"])
+        self.assertIsNotNone(model["pick"])
         self.assertEqual(model["home_expected_goals"], 3.0)
 
     def test_lock_freezes_a_pick_and_the_quote_it_was_priced_against(self):
@@ -515,15 +519,17 @@ class NHLModelLocks(unittest.TestCase):
         grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "d" * 64, "fixture")
         model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
         pick = model["pick"]
-        # The best of the six offered markets here is the under at -105, not the home
-        # moneyline the old record graded by win probability. Both happen to win on this
-        # fixture, so the pick's identity is what distinguishes them.
+        # Rule 1: the away +1.5 cover clears the printed edge, so it is the pick — not
+        # the under total the old max-EV selector preferred. Official 3-2 is a 1-goal
+        # home win, so away +1.5 covers.
         self.assertEqual((pick["market"], pick["side"], pick["line"], pick["price"]),
-                         ("total", "under", 6.5, -105))
+                         ("spread", "away", 1.5, -240))
         self.assertEqual(model["grade"]["official_winner"], "home")
-        self.assertTrue(pick["result"]["won"])  # official 3-2 is 5 goals, under 6.5
+        self.assertTrue(pick["result"]["won"])
 
-    def test_end_to_end_frozen_whole_total_push_survives_api_export(self):
+    def test_a_whole_total_can_never_push_the_pick(self):
+        # The leeway rules only ever name a half line (5.5 or 6.5), so a pick cannot push.
+        # A posted 6.0 total is therefore not the line the pick names.
         self.con.execute(
             "INSERT INTO nhl_game_lines (game_id, source, captured_at_utc, home_team, away_team, "
             "total_line, over_price, under_price) VALUES (?,?,?,?,?,?,?,?)",
@@ -531,19 +537,18 @@ class NHLModelLocks(unittest.TestCase):
         self.con.commit()
         lock_feed(self.con, feed(), LOCK_AT)
         before = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
-        self.assertEqual((before["market"], before["side"], before["line"]), ("total", "under", 6.0))
+        self.assertEqual((before["market"], before["side"], before["line"]), ("total", "over", 5.5))
         self.assertEqual(before["rule_version"], RULE_VERSION)
         self.assertEqual(before["push_probability"], 0)
+        # The book posted 6.0, so there is no price for the 5.5 line the model named.
+        self.assertFalse(before["priced"])
         result = {"official_home_goals": 4, "official_away_goals": 2,
                   "statistical_home_goals": 4, "statistical_away_goals": 2,
                   "home_team": "WSH", "away_team": "MTL",
                   "official_winner": "home", "shootout_decided": 0}
         grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "f" * 64, "fixture")
         export = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
-        self.assertIsNone(export["result"]["won"])
-        self.assertTrue(export["result"]["push"])
-        self.assertEqual(export["result"]["settlement"], "push")
-        self.assertTrue(export["quote_fresh"])
+        self.assertFalse(export["result"]["push"])
         rows = self.con.execute("SELECT rule_version, push_probability FROM nhl_model_picks").fetchall()
         self.assertTrue(all(row["rule_version"] == RULE_VERSION for row in rows))
 
@@ -553,7 +558,7 @@ class NHLModelLocks(unittest.TestCase):
         self.con.commit()
         payload = locks_payload(os.path.join(self.tmp.name, "nhl-model.db"), 2026)
         pick = payload["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
-        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "under", 6.5))
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("spread", "away", 1.5))
         self.assertTrue(pick["priced"])
         self.assertTrue(pick["qualifies"])
         self.assertIsNone(pick["result"])
