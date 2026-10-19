@@ -5,9 +5,9 @@ Research-only. Branch `research/nhl-starter-feed-2026-10-19`, worktree
 pick policy is untouched and remains NO-GO. No GSAx re-run, no re-parameterisation.
 
 **Verdict: DROP.** A pre-puck-drop starter feed cannot be obtained free, reliably, and with
-history; and even a perfect feed has an outcome ceiling (`|Δp| ≈ 0.0071`) below the noise
-floor of the game-level gates the goalie adjustment already failed. Closing the starter gap
-cannot plausibly turn the null into a win.
+history; and the perfect-feed ceiling is the goalie report's observed-starter recomputation
+(`|Δp| ≈ 0.0071`), which already failed the game-level outcome gates (paired, game-clustered
+CIs included zero). Closing the starter gap cannot plausibly turn the null into a win.
 
 ## 1. Correcting the premise
 
