@@ -477,3 +477,15 @@ Rules for this file:
   `docs/RESULTS-tennis-incumbent-a1-2026-10-19.md`.
 - **Stop:** Reading a good calibration slope as evidence that a model should be the incumbent.
 - **Start:** Reporting calibration beside every paired margin, as this run did, and keeping it out of selection.
+
+## L43. 2026-10-19. [null] M2 was not fitted on pooled tours, and a per-tour K does not make the WTA margin clear.
+
+- **Known:** The Elo state is per tour, and K 32, start 1500 and the 50/50 weight were fixed before any run, so the WTA
+  null is not a pooling artefact. With K tuned per tour on 2015 to 2019, WTA M2 minus M1 on 2020 to 2026 is −0.00061
+  [−0.00119, +0.00000]. Its upper bound moves between −0.000005 and +0.000029 across bootstrap labels. The registered WTA
+  interval, −0.00032 [−0.00079, +0.00016], has a positive upper bound for all five labels.
+- **Evidence:** `research/tennis/rolling/2026-10-19/wta_m2_check.json` and `wta_m2_mc_spread.json`;
+  `docs/RESULTS-tennis-wta-m2-2026-10-19.md`; protocol commit `2dd7f433`.
+- **Stop:** Reading the WTA null as a pooling artefact, and reading a sensitivity bound at 1e-6 precision.
+- **Start:** Declaring the blend weight together with K before the next WTA run, and naming the untouched window before the
+  run starts. No such window exists yet.
