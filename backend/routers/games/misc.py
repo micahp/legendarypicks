@@ -384,11 +384,15 @@ def tennis_draws(tour: str = "all"):
     if tour not in ("all", "atp", "wta"):
         raise HTTPException(400, "tour must be all, atp, or wta")
     draws = scoreboard_store.read_tennis_draws(None if tour == "all" else tour)
+    # Every tracked tournament, in display order within each tour. The shape is unchanged; a tour
+    # with two brackets live returns two entries.
+    ordered = [draw for league in ("atp", "wta")
+               for draw in espn.order_tennis_draws([d for d in draws if d["league"] == league])]
     return {
-        "available": bool(draws),
+        "available": bool(ordered),
         "source": "tennis_draw_snapshots",
-        "tours": draws,
-        "reason": None if draws else "No verified major draw has been published yet.",
+        "tours": ordered,
+        "reason": None if ordered else "No verified major draw has been published yet.",
     }
 
 
