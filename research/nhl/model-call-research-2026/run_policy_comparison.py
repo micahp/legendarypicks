@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -46,59 +47,74 @@ def apply_logistic(mdl, p: np.ndarray) -> np.ndarray:
 
 
 def evaluate_policy(rows: list[dict], tau1: float, tau2: float, tau3: float,
-                    cover_prob_key: str) -> dict:
-    """Run the tiered cascade on rows; return per-tier counts and hit rates."""
-    res = {"ml": {"won": 0, "lost": 0}, "cover": {"won": 0, "lost": 0},
-           "total": {"won": 0, "lost": 0}, "fallback": 0}
-    for r in rows:
-        p_ml = max(r["p_home_win"], 1 - r["p_home_win"])
-        ml_side = "home" if r["p_home_win"] >= 0.5 else "away"
-        p_cover = r[cover_prob_key]
-        cover_side = "away" if cover_prob_key == "p_away_cover_rec" else "home"
-        ref_total = r["mu_home"] + r["mu_away"]
-        line = 5.5 if ref_total <= 6.0 else 6.5
-        p_over = r["p_over_55"] if line == 5.5 else r["p_over_65_official"]
+                    cover_overrides: dict | None = None) -> dict:
+    """Run the corrected tiered cascade (run_backtest.tier_of) on rows.
 
-        if p_ml >= tau1:
-            tier, side = "ml", ml_side
-        elif p_cover >= tau2:
-            tier, side = "cover", cover_side
-        elif max(p_over, 1 - p_over) >= tau3:
-            tier, side = "total", ("over" if p_over >= 0.5 else "under")
-        else:
-            res["fallback"] += 1
+    tier_of picks a confident +1.5 prediction on the UNDERDOG (away +1.5 when
+    the model favours home, home +1.5 when it favours away). Reporting is by
+    SELECTION FREQUENCY per tier, with hit rate / Brier / n per tier, never by
+    won/lost counts alone.
+    """
+    sel = Counter()
+    hit = Counter()
+    tier_p = defaultdict(list)
+    tier_y = defaultdict(list)
+    for r in rows:
+        p = dict(r)
+        p["p_away_win"] = 1.0 - r["p_home_win"]
+        if cover_overrides:
+            p.update(cover_overrides(r))
+        tier, side, prob, _market = rb.tier_of(
+            p, tau1, tau2, tau3, r["mu_home"] + r["mu_away"])
+        sel[tier] += 1
+        if tier == "fallback":
             continue
         if tier == "ml":
-            won = (r["y_home_win"] == 1) if side == "home" else (r["y_home_win"] == 0)
+            y = r["y_home_win"] if side == "home" else 1 - r["y_home_win"]
         elif tier == "cover":
-            if side == "away":
-                won = r["y_away_cover"] == 1
-            else:
-                won = r["y_home_cover"] == 1
+            y = r["y_away_cover"] if side == "away" else r["y_home_cover_plus"]
         else:  # total
-            total = r["y_over55"] if line == 5.5 else r["y_over65"]
-            won = (total == 1) if side == "over" else (total == 0)
-        res[tier]["won" if won else "lost"] += 1
-    n = sum(v if isinstance(v, int) else v["won"] + v["lost"] for v in res.values())
+            line = 5.5 if (r["mu_home"] + r["mu_away"]) <= 6.0 else 6.5
+            y = r["y_over55"] if line == 5.5 else r["y_over65"]
+            if side == "under":
+                y = 1 - y
+        hit[tier] += int(y)
+        tier_p[tier].append(float(prob))
+        tier_y[tier].append(int(y))
+
+    n = sum(sel.values())
+    decided = n - sel["fallback"]
+    tiers = {}
+    for t in ("ml", "cover", "total"):
+        k = sel[t]
+        if not k:
+            continue
+        tiers[t] = {
+            "frequency": k / n if n else None,
+            "n_games": k,
+            "hit_rate": hit[t] / k,
+            "brier": brier(np.array(tier_p[t]), np.array(tier_y[t])),
+            "mean_prob": float(np.mean(tier_p[t])),
+        }
     return {
-        "n": n, "res": res,
-        "acc": (res["ml"]["won"] + res["cover"]["won"] + res["total"]["won"]) / n if n else None,
-        "fallback_rate": res["fallback"] / n if n else None,
-        "tier_accuracy": {
-            t: res[t]["won"] / (res[t]["won"] + res[t]["lost"])
-            for t in ("ml", "cover", "total")
-            if (res[t]["won"] + res[t]["lost"]) > 0},
-        "tier_n": {t: res[t]["won"] + res[t]["lost"] for t in ("ml", "cover", "total")},
+        "n": n,
+        "tier_usage": {t: (sel[t] / n if n else None)
+                       for t in ("ml", "cover", "total", "fallback")},
+        "tier_counts": {t: sel[t] for t in ("ml", "cover", "total", "fallback")},
+        "tiers": tiers,
+        "acc": (hit["ml"] + hit["cover"] + hit["total"]) / decided if decided else None,
+        "coverage": decided / n if n else None,
+        "fallback_rate": sel["fallback"] / n if n else None,
     }
 
 
-def tune_cascade(rows: list[dict], cover_prob_key: str) -> tuple[float, float, float]:
+def tune_cascade(rows: list[dict], cover_overrides: dict | None = None) -> tuple[float, float, float]:
     """Grid search for tau1/tau2/tau3 on tuning rows (maximize accuracy, <=5% fallback)."""
     best = None
     for tau1 in np.arange(0.55, 0.801, 0.025):
         for tau2 in np.arange(0.55, 0.801, 0.025):
             for tau3 in np.arange(0.55, 0.801, 0.025):
-                out = evaluate_policy(rows, float(tau1), float(tau2), float(tau3), cover_prob_key)
+                out = evaluate_policy(rows, float(tau1), float(tau2), float(tau3), cover_overrides)
                 if out["fallback_rate"] is None or out["fallback_rate"] > 0.05:
                     continue
                 if best is None or out["acc"] > best[0]:
@@ -132,11 +148,13 @@ def main() -> None:
                     "p_home_win": d["p_home_win"],
                     "p_away_cover": d["p_away_cover"],
                     "p_home_cover": d["p_home_cover"],
+                    "p_home_cover_plus": d["p_home_cover_plus"],
                     "p_over_55": d["p_over_55"],
                     "p_over_65_official": d["p_over_65_official"],
                     "y_home_win": g["hw"],
                     "y_away_cover": int(g["hg"] - g["ag"] <= 1),
                     "y_home_cover": int(g["hg"] - g["ag"] >= 2),
+                    "y_home_cover_plus": int(g["hg"] - g["ag"] >= -1),
                     "y_over55": int(g["ohg"] + g["oag"] > 5.5),
                     "y_over65": int(g["ohg"] + g["oag"] > 6.5),
                     "mu_home": mh, "mu_away": ma,
@@ -155,24 +173,22 @@ def main() -> None:
             if len(past) < 300:
                 continue
             # fit a recalibration map on prior seasons' away-cover probability
-            p_fit = np.array([r["p_away_cover"] for r in past])
-            y_fit = np.array([r["y_away_cover"] for r in past])
-            map_obj = fit_logistic_map(p_fit, y_fit)
-            # apply to current season
-            p_cur_raw = np.array([r["p_away_cover"] for r in cur])
-            p_cur_rec = apply_logistic(map_obj, p_cur_raw)
-            cur_rec = []
-            for r, p_rec in zip(cur, p_cur_rec):
-                cur_rec.append({**r, "p_away_cover_rec": float(p_rec)})
-            # tune thresholds separately for raw and recalibrated on prior seasons
-            past_rec = []
-            p_past_rec = apply_logistic(map_obj, p_fit)
-            for r, p_rec in zip(past, p_past_rec):
-                past_rec.append({**r, "p_away_cover_rec": float(p_rec)})
-            t_raw = tune_cascade(past, "p_away_cover")
-            t_rec = tune_cascade(past_rec, "p_away_cover_rec")
+            # Recalibrate BOTH underdog-cover events on prior seasons only.
+            map_away = fit_logistic_map(np.array([r["p_away_cover"] for r in past]),
+                                        np.array([r["y_away_cover"] for r in past]))
+            map_home = fit_logistic_map(np.array([r["p_home_cover_plus"] for r in past]),
+                                        np.array([r["y_home_cover_plus"] for r in past]))
+
+            def rec_rows(rs):
+                """Copy rows with both cover probabilities recalibrated."""
+                pa = apply_logistic(map_away, np.array([r["p_away_cover"] for r in rs]))
+                ph = apply_logistic(map_home, np.array([r["p_home_cover_plus"] for r in rs]))
+                return [{**r, "p_away_cover": float(a), "p_home_cover_plus": float(h)}
+                        for r, a, h in zip(rs, pa, ph)]
+
+            t_raw = tune_cascade(past)
+            t_rec = tune_cascade(rec_rows(past))
             # --- simple predictive/selection baselines (prior-season prevalence) ---
-            p_fit_raw = np.array([r["p_away_cover"] for r in past])
             y_fit = np.array([r["y_away_cover"] for r in past])
             base_pred = float(np.mean(y_fit))
             y_cur = np.array([r["y_away_cover"] for r in cur])
@@ -180,9 +196,9 @@ def main() -> None:
             p_ml = np.array([max(r["p_home_win"], 1 - r["p_home_win"]) for r in cur])
             per_season[season] = {
                 "n": len(cur),
-                "raw_cascade": evaluate_policy(cur, *t_raw, "p_away_cover"),
-                "recalibrated_cascade": evaluate_policy(cur_rec, *t_rec, "p_away_cover_rec"),
-                "always_ml": evaluate_policy(cur, 0.0, 2.0, 2.0, "p_away_cover"),
+                "raw_cascade": evaluate_policy(cur, *t_raw),
+                "recalibrated_cascade": evaluate_policy(rec_rows(cur), *t_rec),
+                "always_ml": evaluate_policy(cur, 0.0, 2.0, 2.0),
                 # requested simple rules:
                 # 1. always select away +1.5 (hit rate + constant-pred Brier)
                 "always_away_cover_hit_rate": float(y_cur.mean()),
