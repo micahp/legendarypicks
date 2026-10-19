@@ -1,0 +1,372 @@
+{
+  "base_commit": "d007e540609e7ca241b82d3416499addf6a17603",
+  "baselines": {
+    "published": {
+      "B": {
+        "2011-2023": 0.2229,
+        "2024": 0.2223,
+        "2025": 0.2292
+      },
+      "elo": {
+        "2011-2023": 0.2197,
+        "2024": 0.2145,
+        "2025": 0.2255
+      },
+      "market": {
+        "2011-2023": 0.2104,
+        "2024": 0.2001,
+        "2025": 0.2137
+      },
+      "v1": {
+        "2011-2023": 0.2231,
+        "2024": 0.221,
+        "2025": 0.2288
+      }
+    },
+    "reproduced": {
+      "2011-2023": {
+        "B": 0.222891700507448,
+        "elo": 0.21965916516374318,
+        "market": 0.21041495327040582,
+        "v1": 0.22312333786894722
+      },
+      "2024": {
+        "B": 0.22229675996686377,
+        "elo": 0.21445055205869015,
+        "market": 0.20011409697318253,
+        "v1": 0.220970890457828
+      },
+      "2025": {
+        "B": 0.22922099583495711,
+        "elo": 0.22551154753193708,
+        "market": 0.21369690011279757,
+        "v1": 0.22881094400308633
+      }
+    }
+  },
+  "commands": {
+    "baselines": "LP_DB_PATH=<dev db> venv/bin/python nfl_feature_backtest.py --feature base",
+    "feature": "LP_DB_PATH=<dev db> venv/bin/python nfl_turnover_run.py"
+  },
+  "data_facts": {
+    "offensive_fumble_recovery_rate_2010_2025": 0.45837433576067704,
+    "offensive_fumbles_2010_2025": 10162,
+    "offensive_fumbles_lost_2010_2025": 4658,
+    "plays_with_interception_and_fumble_2010_2025": 93,
+    "season_2026": {
+      "fumble_lost_null": 16212,
+      "fumble_null": 16212,
+      "interception_null": 487,
+      "plays": 16212,
+      "reason": "fumble and fumble_lost are NULL for every 2026 play; the feature is undefined",
+      "usable": false
+    }
+  },
+  "db": {
+    "mode": "ro",
+    "path": "/root/legendarypicks/backend/data/picks.dev.db"
+  },
+  "feature": {
+    "K": 200.0,
+    "column": "rate(home) - rate(away)",
+    "column_not_used": "fumble_lost (replaced by the fixed 0.5 recovery expectation)",
+    "columns_used": [
+      "interception",
+      "fumble"
+    ],
+    "definition": "turnover-worthy rate: (sum(s) + 200*league)/(sum(n)+200), last 8 team-games, same-season league mean strictly before the game; s = interceptions + 0.5 * offensive fumbles; n = qb_dropback or rush_attempt plays",
+    "name": "turnover_luck",
+    "window_games": 8
+  },
+  "files": {
+    "arm_scores.csv": "d0eb8fc6b918827477d7d447a5d1e50633555ace46a221bb7fc038ae36e1a070",
+    "exclusions.csv": "978e89fa791432705f0d03c8d0d19da62a72840ac7b1c600e0836d82335897ff",
+    "forecasts.csv": "271ba2272d1e8968c9315a49da6d4ca1ad80c2e4702afb22da573b7e6648cdf1",
+    "paired.csv": "5a1fc758b75c2e0c141364d6e59ac7681a72c68659cca217e8d749940b89d598",
+    "per_season.csv": "50cf71d27e6fdc0b479935d145d38241c88358ce2826c87d167c2b98c6fdb8e1"
+  },
+  "interval": {
+    "registered": {
+      "alpha": 0.05,
+      "helper": "nfl_metrics.bootstrap_mean_diff_ci",
+      "reps": 5000,
+      "seed": 20261009,
+      "unit": "paired games (no block key)"
+    },
+    "secondary_clustered": {
+      "block_key": "(season, Monday gameday week)",
+      "helper": "week_block_bootstrap_mean_diff (history-window runner)",
+      "note": "secondary only; not part of the registered keep rule",
+      "reps": 2000,
+      "seed": 20261019,
+      "weighting": "game-count weighted"
+    }
+  },
+  "keep_rule": "pooled 2011-2023 registered interval of Brier(F)-Brier(B) entirely below zero AND the 2024 and 2025 point differences not above zero",
+  "population": {
+    "2011-2023": {
+      "graded": 3158,
+      "no_market": 1,
+      "no_spread": 0,
+      "ties": 9,
+      "total": 3168,
+      "week_max": 18,
+      "week_min": 2
+    },
+    "2024": {
+      "graded": 256,
+      "no_market": 0,
+      "no_spread": 0,
+      "ties": 0,
+      "total": 256,
+      "week_max": 18,
+      "week_min": 2
+    },
+    "2025": {
+      "graded": 255,
+      "no_market": 0,
+      "no_spread": 0,
+      "ties": 1,
+      "total": 256,
+      "week_max": 18,
+      "week_min": 2
+    }
+  },
+  "prereg": {
+    "commit": "b6b24a9820bfb552212c3128509af0b5534ad9f4",
+    "committed_before_run": true,
+    "file": "research/nfl/PREREG-nfl-turnover-luck-2026-10-19.md",
+    "sha256": "502ee5e66ce5aaf75a19b4006af0a41ffe41488fa06a6a6bbf9ee9f0ad24ca74"
+  },
+  "results": {
+    "elo_plus_turnover": {
+      "2011-2023": {
+        "brier_B": 0.21965916516374318,
+        "brier_F": 0.21970712244677237,
+        "brier_bk": [
+          0.00924421189333694,
+          0.006331577909019028,
+          0.012308161841628786
+        ],
+        "brier_fb": [
+          4.795728302924789e-05,
+          -0.00030035728965254697,
+          0.00040015272606810633
+        ],
+        "brier_fk": [
+          0.009292169176366188,
+          0.006330967662142943,
+          0.012345941858481244
+        ],
+        "logloss_B": 0.6290045405673393,
+        "logloss_F": 0.6290613352283491,
+        "logloss_fb": [
+          5.679466101072924e-05,
+          -0.0006932554558801893,
+          0.00080700104768862
+        ],
+        "margin_fb": [
+          -0.0061908842455542954,
+          -0.01992937350779305,
+          0.007579169987802888
+        ],
+        "margin_mae_B": 10.398775315072013,
+        "margin_mae_F": 10.392584430826494,
+        "n": 3158
+      },
+      "2024": {
+        "brier_B": 0.21445055205869015,
+        "brier_F": 0.21475565860525533,
+        "brier_bk": [
+          0.014336455085507523,
+          0.0028483000816083236,
+          0.02604830614946216
+        ],
+        "brier_fb": [
+          0.0003051065465651337,
+          -0.00043030852630285174,
+          0.001042507525607005
+        ],
+        "brier_fk": [
+          0.014641561632072655,
+          0.0030534152166597685,
+          0.026335612149198016
+        ],
+        "logloss_B": 0.6178704481183596,
+        "logloss_F": 0.6186102564031297,
+        "logloss_fb": [
+          0.0007398082847697745,
+          -0.0008592606957949318,
+          0.002346895650724055
+        ],
+        "margin_fb": [
+          -0.003328576148471275,
+          -0.031115208532403692,
+          0.025131051584621474
+        ],
+        "margin_mae_B": 10.149897600500623,
+        "margin_mae_F": 10.146569024352148,
+        "n": 256
+      },
+      "2025": {
+        "brier_B": 0.22551154753193708,
+        "brier_F": 0.22581643943326526,
+        "brier_bk": [
+          0.011814647419139443,
+          0.0017201986795055196,
+          0.021830363288585987
+        ],
+        "brier_fb": [
+          0.00030489190132804096,
+          -0.0002643463283499343,
+          0.0008997726867788788
+        ],
+        "brier_fk": [
+          0.012119539320467486,
+          0.0020800055705837016,
+          0.021957728542360493
+        ],
+        "logloss_B": 0.6411848752081277,
+        "logloss_F": 0.6420464445100386,
+        "logloss_fb": [
+          0.0008615693019111167,
+          -0.00040687111674248764,
+          0.00218911273592415
+        ],
+        "margin_fb": [
+          0.002320600487641492,
+          -0.019994617063435763,
+          0.02574981121720762
+        ],
+        "margin_mae_B": 10.50143360137849,
+        "margin_mae_F": 10.503754201866139,
+        "n": 255
+      }
+    },
+    "turnover_luck": {
+      "2011-2023": {
+        "brier_B": 0.222891700507448,
+        "brier_F": 0.2227060802607537,
+        "brier_bk": [
+          0.012476747237042363,
+          0.009477020900077885,
+          0.015682242033967477
+        ],
+        "brier_fb": [
+          -0.00018562024669406963,
+          -0.0007027879472635291,
+          0.00032908705849336324
+        ],
+        "brier_fk": [
+          0.012291126990348279,
+          0.009251016310969348,
+          0.015516033356640252
+        ],
+        "logloss_B": 0.6361788369307725,
+        "logloss_F": 0.635731272525674,
+        "logloss_fb": [
+          -0.0004475644050986765,
+          -0.0015524809017502482,
+          0.0006557158138796353
+        ],
+        "margin_fb": [
+          -0.010470912384078022,
+          -0.030404909774280852,
+          0.00892511768659546
+        ],
+        "margin_mae_B": 10.510684301830414,
+        "margin_mae_F": 10.500213389446321,
+        "n": 3158
+      },
+      "2024": {
+        "brier_B": 0.22229675996686377,
+        "brier_F": 0.22281436913217628,
+        "brier_bk": [
+          0.0221826629936811,
+          0.009556851169365948,
+          0.034886800030057945
+        ],
+        "brier_fb": [
+          0.0005176091653124342,
+          -0.0010366284349001952,
+          0.0020793068101765083
+        ],
+        "brier_fk": [
+          0.022700272158993548,
+          0.009981663652316505,
+          0.03538780100397547
+        ],
+        "logloss_B": 0.6351944282671605,
+        "logloss_F": 0.6363831855920024,
+        "logloss_fb": [
+          0.001188757324841312,
+          -0.002163111433951173,
+          0.004554614218726065
+        ],
+        "margin_fb": [
+          -0.02374266583432598,
+          -0.07943692028740297,
+          0.03378597753250854
+        ],
+        "margin_mae_B": 10.37328807538762,
+        "margin_mae_F": 10.349545409553288,
+        "n": 256
+      },
+      "2025": {
+        "brier_B": 0.22922099583495711,
+        "brier_F": 0.22997389355116363,
+        "brier_bk": [
+          0.015524095722159698,
+          0.004274184510259547,
+          0.02675256330893525
+        ],
+        "brier_fb": [
+          0.0007528977162061885,
+          -0.0005290269098951009,
+          0.002113864679979622
+        ],
+        "brier_fk": [
+          0.016276993438365885,
+          0.0051861090773657765,
+          0.02736134268519029
+        ],
+        "logloss_B": 0.649316967916877,
+        "logloss_F": 0.6513578068909669,
+        "logloss_fb": [
+          0.002040838974089736,
+          -0.0007953046404913551,
+          0.00510085072086576
+        ],
+        "margin_fb": [
+          0.0249515168790238,
+          -0.02320035793702594,
+          0.07575747856032583
+        ],
+        "margin_mae_B": 10.670606730129581,
+        "margin_mae_F": 10.695558247008606,
+        "n": 255
+      }
+    }
+  },
+  "task": "NFL turnover-luck feature test, pre-registered",
+  "verdict": {
+    "elo_plus_turnover": {
+      "kept": false,
+      "p2024": 0.0003051065465651337,
+      "p2025": 0.00030489190132804096,
+      "pooled_hi": 0.00040015272606810633,
+      "pooled_lo": -0.00030035728965254697,
+      "pooled_point": 4.795728302924789e-05,
+      "reason": "pooled upper bound 0.000400 is not below zero; 2024 point +0.000305; 2025 point +0.000305"
+    },
+    "turnover_luck": {
+      "kept": false,
+      "p2024": 0.0005176091653124342,
+      "p2025": 0.0007528977162061885,
+      "pooled_hi": 0.00032908705849336324,
+      "pooled_lo": -0.0007027879472635291,
+      "pooled_point": -0.00018562024669406963,
+      "reason": "pooled upper bound 0.000329 is not below zero; 2024 point +0.000518; 2025 point +0.000753"
+    }
+  }
+}
