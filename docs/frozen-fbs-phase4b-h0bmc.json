@@ -1,0 +1,228 @@
+{
+  "bucket_reading": {
+    "detail": [
+      {
+        "bucket": "40-50",
+        "fail": false,
+        "ks_p": 0.24016608070590661,
+        "mean_pit": 0.5043441068584131,
+        "n": 597,
+        "period": "walk_forward"
+      },
+      {
+        "bucket": "50-60",
+        "fail": false,
+        "ks_p": 0.06855896649323956,
+        "mean_pit": 0.5000825458559991,
+        "n": 1546,
+        "period": "walk_forward"
+      },
+      {
+        "bucket": "60-70",
+        "fail": false,
+        "ks_p": 0.005348614491109659,
+        "mean_pit": 0.5269538087447778,
+        "n": 242,
+        "period": "walk_forward"
+      },
+      {
+        "bucket": "40-50",
+        "fail": false,
+        "ks_p": 0.13571474403781902,
+        "mean_pit": 0.48047389394752094,
+        "n": 211,
+        "period": "holdout"
+      },
+      {
+        "bucket": "50-60",
+        "fail": false,
+        "ks_p": 0.2094135683132775,
+        "mean_pit": 0.49393806564969184,
+        "n": 525,
+        "period": "holdout"
+      }
+    ],
+    "fail": false
+  },
+  "calibration": [
+    {
+      "intercept": 23.86267258814764,
+      "n": 5849,
+      "r2": 0.13003471664483418,
+      "season": 2023,
+      "seasons": [
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+      ],
+      "slope": 0.5597871375756771,
+      "slope_hi": 0.5969007939981794,
+      "slope_lo": 0.5226734811531748,
+      "slope_se": 0.018935538991072583
+    },
+    {
+      "intercept": 23.98810570463326,
+      "n": 6641,
+      "r2": 0.1274705994410569,
+      "season": 2024,
+      "seasons": [
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "slope": 0.5565908615431064,
+      "slope_hi": 0.5916197074914965,
+      "slope_lo": 0.5215620155947164,
+      "slope_se": 0.017871860177750044
+    },
+    {
+      "intercept": 24.314344985002876,
+      "n": 7439,
+      "r2": 0.12335768693227955,
+      "season": 2025,
+      "seasons": [
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "slope": 0.5513028198653055,
+      "slope_hi": 0.5847050527986503,
+      "slope_lo": 0.5179005869319607,
+      "slope_se": 0.01704195557823711
+    },
+    {
+      "intercept": 24.152510146310433,
+      "n": 8247,
+      "r2": 0.12203257214888696,
+      "season": 2026,
+      "seasons": [
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "slope": 0.5522797517855171,
+      "slope_hi": 0.5842555343302442,
+      "slope_lo": 0.52030396924079,
+      "slope_se": 0.01631417476771794
+    }
+  ],
+  "candidate": "H0b-MC",
+  "files": {
+    "bucket_pit.csv": {
+      "bytes": 663,
+      "sha256": "4687fb30cd039fe6233adae9341306cea38983850a85795de1dc7d28e8fd88d6"
+    },
+    "calibration.csv": {
+      "bytes": 804,
+      "sha256": "154ca8ece0f9dff3f48c000902230890445419d708c22d55f8c9d182fcceb787"
+    },
+    "paired.csv": {
+      "bytes": 2520,
+      "sha256": "e89d8cf4ae2ea58d3c63fb8956d950cfe87208bba78016baca7fdd222fde94ec"
+    },
+    "per_game_shift.csv": {
+      "bytes": 948950,
+      "sha256": "a514a0cd404b0e3f86c422768e95726878158b75d2362fd545e2814b6325c4d1"
+    },
+    "pmf/h0bmc_pmf.npz": {
+      "bytes": 6414041,
+      "sha256": "22ec7e65ce1e20edcbbb6cd53531c4228b73d31e0065a5d666318ce18108840a"
+    },
+    "pmf/per_observation_scores.csv": {
+      "bytes": 2117544,
+      "sha256": "7bda856bfa18063f5657da16577e36f3810cc5299dd4ea91bdfa15c6ad8740e4"
+    },
+    "summary_by_period.csv": {
+      "bytes": 2249,
+      "sha256": "c5733f2ccab09daddae4ff44b13e9e2e7855f93640b0d43b144be092a9ba18b4"
+    }
+  },
+  "gates": {
+    "G-CAL": false,
+    "G-DIST": true,
+    "G-SAMPLE": true,
+    "G-SPREAD": true,
+    "G-TOTAL": true
+  },
+  "margin_pmf_sha256": "726683cb91572f5552429e3707a24118e20fdabfcdcf1dcc22d1b77709750bee",
+  "population": {
+    "dev2026": 350,
+    "holdout": 807,
+    "walk_forward": 2397
+  },
+  "prereg_commit": "680b259a",
+  "reproduction": {
+    "gate_threshold": 1e-06,
+    "max_abs_diff": 6.963318810448982e-13,
+    "mean_abs_diff": 1.7099677454024633e-14,
+    "n": 792,
+    "passed": true,
+    "season": 2023
+  },
+  "run_date": "2026-10-19",
+  "shift": {
+    "failures": 0,
+    "max_abs_mean_error": 0.00012902557398319914,
+    "max_boundary_change": 7.014296071800589e-05,
+    "max_iterations": 0
+  },
+  "slope_recovery": {
+    "dev2026": {
+      "contains_1": true,
+      "hi": 1.13442909058029,
+      "intercept": 12.657201151110215,
+      "lo": 0.3641772328001946,
+      "n": 350,
+      "r2": 0.040111003260593164,
+      "se": 0.19649282086226927,
+      "slope": 0.7493031616902424
+    },
+    "holdout": {
+      "contains_1": true,
+      "hi": 1.1598978438769203,
+      "intercept": 2.2751642807666244,
+      "lo": 0.7169006633980185,
+      "n": 807,
+      "r2": 0.07889655553505365,
+      "se": 0.11300948481604636,
+      "slope": 0.9383992536374693
+    },
+    "walk_forward": {
+      "contains_1": true,
+      "hi": 1.0284952757621633,
+      "intercept": 4.685635937899676,
+      "lo": 0.7800263119074698,
+      "n": 2397,
+      "r2": 0.0783228599673324,
+      "se": 0.06338493975885034,
+      "slope": 0.9042607938348165
+    }
+  },
+  "verdict": "NOT_ADOPTED"
+}
