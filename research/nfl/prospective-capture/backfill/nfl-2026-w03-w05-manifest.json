@@ -1,0 +1,346 @@
+{
+  "backfill_disclaimer": "A historical harness run is reconstructed after kickoff and is never CP4 evidence.",
+  "capture_harness_sha256": "68f0ae1be4a1227cae92aec798acc6230f7e89c15b2107f4d44996d6e12876db",
+  "capture_mode": "backfill",
+  "capture_run_id": "nfl-2026-w04-backfill",
+  "cp4_evidence_eligible": false,
+  "created_at_utc": "2026-10-19T18:28:19Z",
+  "database_access": "SQLite mode=ro; PRAGMA query_only=ON; a read transaction pins one source snapshot; no DB writes",
+  "forecast_artifact": "research/nfl/prospective-capture/backfill/nfl-2026-w03-w05.jsonl.gz",
+  "forecast_artifact_sha256_compressed": "5804a50674ed0acc1252b58e9e5a34f80f8342cbb88760e34fe831d17bb60a83",
+  "forecast_artifact_sha256_uncompressed": "c22c073aaca183405bdd761941a190a8f57946f496c380c125f4ecdf84b93f4b",
+  "forecast_line_items": 13319,
+  "forecast_row_count": 26638,
+  "frozen_parameters": {
+    "forecast_distribution": {
+      "passing": {
+        "QB_DEFAULTS": {
+          "G_PASS": 1.15,
+          "K_CMP": 160.0,
+          "K_PTD": 320.0,
+          "K_T_ATT": 4.0,
+          "K_YPA": 160.0,
+          "R_ATT": 14.62
+        }
+      },
+      "receiving": {
+        "DEFAULTS": {
+          "B_car": null,
+          "B_tgt": null,
+          "H": 8.0,
+          "K_CR": 80.0,
+          "K_S": 1.0,
+          "K_T": 8.0,
+          "K_TDC": 320.0,
+          "K_TDT": 160.0,
+          "K_YPC": 160.0,
+          "K_YPT": 160.0,
+          "NMU_car": 0.519,
+          "NMU_tgt": 0.59,
+          "OTHER": 0.0424,
+          "P_LOG": null,
+          "REDIST": "v2.0"
+        },
+        "DIST": {
+          "G": 1.23,
+          "R": 3.41
+        },
+        "P_PLAYS": {
+          "Doubtful": 0.0,
+          "Out": 0.0,
+          "Questionable": 0.682
+        }
+      }
+    },
+    "model_name": "nfl-player-v2",
+    "model_version": "v2",
+    "monte_carlo": {
+      "draw_count": 4000,
+      "seed": 7,
+      "summary_function": "nfl_player_projection_v2.summarize"
+    }
+  },
+  "input_snapshot": "research/nfl/prospective-capture/backfill/nfl-2026-w03-w05-input-snapshot.jsonl.gz",
+  "input_snapshot_query_version": "nfl-prop-capture-input-v1",
+  "input_snapshot_row_count": 177371,
+  "input_snapshot_sha256_compressed": "6c9395b88823c588196e4a73ff9343e3b78878d8527811b28a3c39af7d1a3497",
+  "input_snapshot_sha256_uncompressed": "4b75d921171bee61e6e36317106734c4c2062282ce4d09d4901ba2bc80ed79f7",
+  "model_projection_summary_by_week": {
+    "3": {
+      "games": 16,
+      "player_games": 0,
+      "skipped_final": 0
+    },
+    "4": {
+      "games": 16,
+      "player_games": 258,
+      "skipped_final": 0
+    },
+    "5": {
+      "games": 15,
+      "player_games": 307,
+      "skipped_final": 0
+    }
+  },
+  "observation_rows_by_book": {
+    "bovada": 7156,
+    "rotowire:betmgm-sb": 3092,
+    "rotowire:betrivers-sb": 2362,
+    "rotowire:caesars-sb": 3720,
+    "rotowire:draftkings-sb": 4264,
+    "rotowire:fanduel-sb": 2428,
+    "rotowire:hardrock-sb": 3616
+  },
+  "observation_rows_by_market": {
+    "pass_attempts": 712,
+    "pass_completions": 608,
+    "passing_touchdowns": 626,
+    "passing_yards": 5152,
+    "receiving_yards": 15244,
+    "receptions": 4296
+  },
+  "observation_rows_by_week": {
+    "4": 14002,
+    "5": 12636
+  },
+  "outcome_state_counts": {
+    "dnp": 262,
+    "missing": 810,
+    "resolved": 24524,
+    "true_zero": 1042
+  },
+  "paired_quote_groups_without_a_model_projection": 9648,
+  "parameter_file": "research/nfl/prospective-capture/parameters/nfl-player-v2-2026-10-19.json",
+  "parameter_file_sha256": "0f979db4b1cf56ee86521dcf30820c64e8e31d49f0507d0cb56563649b8db986",
+  "projection_job_quantile_draws": 1,
+  "projection_job_quantile_draws_note": "Only analytical means are consumed from project_week; its auxiliary quantiles are discarded. The saved PMF uses the API's 4,000 draws and seed 7.",
+  "projection_player_game_count": 565,
+  "quote_population": {
+    "books": [
+      "bovada",
+      "rotowire:betmgm-sb",
+      "rotowire:betrivers-sb",
+      "rotowire:caesars-sb",
+      "rotowire:draftkings-sb",
+      "rotowire:fanduel-sb",
+      "rotowire:hardrock-sb"
+    ],
+    "integer_line_policy": "retained; push is represented explicitly",
+    "markets": [
+      "pass_attempts",
+      "pass_completions",
+      "passing_touchdowns",
+      "passing_yards",
+      "receiving_yards",
+      "receptions",
+      "targets"
+    ],
+    "no_carries_candidate": true,
+    "paired_line_observations": 22967,
+    "quotes_at_or_after_kickoff_excluded": 8576,
+    "quotes_with_missing_or_invalid_start_excluded": 0,
+    "side_policy": "latest pre-kickoff over and under quote for each event/player/market/book/line; one output row per side",
+    "source_rows_joined_to_slate": 59881,
+    "unique_side_quotes_before_pairing": 45935,
+    "unpaired_line_groups_excluded": 1
+  },
+  "schema_version": "nfl-prop-capture-manifest.v1",
+  "season": 2026,
+  "settlement_state_counts": {
+    "dnp": 262,
+    "loss": 12783,
+    "missing": 810,
+    "win": 12783
+  },
+  "source_commit": "c4bd3c9fce7bf402d6fd52c731fdafe0bdbc922c",
+  "source_database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "source_files_sha256": {
+    "backend/nfl_player_projection_v2.py": "3286521b2c20259d1e1d5953b1801809c510f055aec65832ec72ed3795bf1468",
+    "backend/nfl_player_projections_job.py": "d5f52ac7506760787ad98e0ed22f6f25585f0251f8aefa1849eec8bd896b8860",
+    "backend/nfl_prop_calibration.py": "e70d6c8d7ffa8e76fcef2b1b1d0e872316d6cbb9e59b6c9e7ccf7839daf61106",
+    "backend/routers/players/nfl_projections.py": "d2e98bee4e53201580c9075bce30140d384f6200f71cefbb21ebcf2b403e0f2d"
+  },
+  "source_patch_sha256": null,
+  "unmatched_quote_groups_by_market_book": [
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 61,
+      "market": "pass_attempts"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 83,
+      "market": "pass_attempts"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 81,
+      "market": "pass_attempts"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 80,
+      "market": "pass_attempts"
+    },
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 59,
+      "market": "pass_completions"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 71,
+      "market": "pass_completions"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 70,
+      "market": "pass_completions"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 77,
+      "market": "pass_completions"
+    },
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 43,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "rotowire:betrivers-sb",
+      "count": 45,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 49,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 49,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "rotowire:fanduel-sb",
+      "count": 47,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 48,
+      "market": "passing_touchdowns"
+    },
+    {
+      "book": "bovada",
+      "count": 815,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 174,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:betrivers-sb",
+      "count": 239,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 236,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 280,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:fanduel-sb",
+      "count": 105,
+      "market": "passing_yards"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 234,
+      "market": "passing_yards"
+    },
+    {
+      "book": "bovada",
+      "count": 1335,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 509,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:betrivers-sb",
+      "count": 602,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 711,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 867,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:fanduel-sb",
+      "count": 514,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 685,
+      "market": "receiving_yards"
+    },
+    {
+      "book": "bovada",
+      "count": 115,
+      "market": "receptions"
+    },
+    {
+      "book": "rotowire:betmgm-sb",
+      "count": 236,
+      "market": "receptions"
+    },
+    {
+      "book": "rotowire:caesars-sb",
+      "count": 287,
+      "market": "receptions"
+    },
+    {
+      "book": "rotowire:draftkings-sb",
+      "count": 296,
+      "market": "receptions"
+    },
+    {
+      "book": "rotowire:fanduel-sb",
+      "count": 263,
+      "market": "receptions"
+    },
+    {
+      "book": "rotowire:hardrock-sb",
+      "count": 282,
+      "market": "receptions"
+    }
+  ],
+  "weeks": [
+    3,
+    4,
+    5
+  ],
+  "writes": [
+    "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05.jsonl.gz",
+    "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05-input-snapshot.jsonl.gz",
+    "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05-manifest.json"
+  ]
+}

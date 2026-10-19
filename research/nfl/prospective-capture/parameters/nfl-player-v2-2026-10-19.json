@@ -1,0 +1,49 @@
+{
+  "model_name": "nfl-player-v2",
+  "model_version": "v2",
+  "forecast_distribution": {
+    "receiving": {
+      "DEFAULTS": {
+        "H": 8.0,
+        "K_S": 1.0,
+        "K_T": 8.0,
+        "OTHER": 0.0424,
+        "NMU_tgt": 0.59,
+        "NMU_car": 0.519,
+        "REDIST": "v2.0",
+        "P_LOG": null,
+        "B_tgt": null,
+        "B_car": null,
+        "K_CR": 80.0,
+        "K_YPT": 160.0,
+        "K_TDT": 160.0,
+        "K_YPC": 160.0,
+        "K_TDC": 320.0
+      },
+      "DIST": {
+        "R": 3.41,
+        "G": 1.23
+      },
+      "P_PLAYS": {
+        "Questionable": 0.682,
+        "Doubtful": 0.0,
+        "Out": 0.0
+      }
+    },
+    "passing": {
+      "QB_DEFAULTS": {
+        "K_CMP": 160.0,
+        "K_YPA": 160.0,
+        "K_PTD": 320.0,
+        "R_ATT": 14.62,
+        "G_PASS": 1.15,
+        "K_T_ATT": 4.0
+      }
+    }
+  },
+  "monte_carlo": {
+    "draw_count": 4000,
+    "seed": 7,
+    "summary_function": "nfl_player_projection_v2.summarize"
+  }
+}
