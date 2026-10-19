@@ -1,5 +1,9 @@
 # NFL model card
 
+**Authoritative current entry point:** [NFL prediction model brief](../BRIEF-nfl-prediction-model.md). Keep this model card as an implementation and historical-performance record.
+
+**Status update, 2026-10-18:** newer research reports use different samples and configurations, including the 24,558-item v2-Platt result and the success-rate/distribution test. The Oct 17 carry result updates this card's older 2025 MAE comparison from 1.182 vs 1.108 (+0.074) to 1.153 vs 1.108 (+0.044), still worse than Marcel-lite; see the corrected result. Do not substitute new figures for this card's 2025 holdout or strict forward cohort without matching populations. There is a status mismatch to resolve: this card identifies Marcel-lite as the live prop route and v2-Platt as research-only, while the checkpoint source says the prop surface is live under v2-Platt; the game-model row also calls v1 points deployed while the checkpoint table marks CP5 failed. The consolidated brief records both statements without inferring an approval or a route mapping. The “Next steps” section below is the dated research queue, not the current authoritative work order.
+
 **Scope:** NFL regular-season game forecasts, player projections and team playoff-odds simulations implemented in this repository. The game forecasts are locked as separate model versions. Evidence through 2026-10-17, including research branches where named. This is not a claim of betting advantage.
 
 ## Where our NFL models actually stand

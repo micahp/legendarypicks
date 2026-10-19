@@ -1,5 +1,9 @@
 # Plan: NFL model features against the market, 2026-10-11
 
+**Authoritative current entry point:** [NFL prediction model brief](BRIEF-nfl-prediction-model.md). This plan records the earlier v1 feature ladder and its original populations and decision rule.
+
+**Status update, 2026-10-18:** the 2010-2025 v1/market figures below are not directly comparable to the later 2023-2025 M0/M1 success-rate and distribution results. Success rate has now been tested and did not establish an incremental gain over EPA. The candidate table below is a dated proposal: later work tested EPA by unit, rating uncertainty, special teams, venue/rest/wind, market-derived priors and other listed features. Results and keep decisions are in the [research index](INDEX-nfl-model-research-2026-10-12.md). Do not treat this table as the current work queue or assume its exact opening-market feature definition matches every later market-prior experiment without checking the feature definition.
+
 ## The bar
 
 Frozen v1 vs the de-vigged moneyline, 2010-2025: Brier 0.2244 vs 0.2105, gap +0.0138 (interval

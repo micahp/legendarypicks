@@ -1,8 +1,12 @@
 # NFL model inputs: what to research next
 
+**Authoritative current entry point:** [NFL prediction model brief](BRIEF-nfl-prediction-model.md). This file preserves the 2026-10-11 hypotheses and methods.
+
+**Status update, 2026-10-18:** the opening statement that nothing had been run describes the document's creation date, not current status. Preseason-prior and feature results are recorded in the index; the later EPA-plus-success-rate experiment found no established gain, and current team score-distribution results do not support spread or total forecasts. Spec B and prop-calibration measurements now exist on separate branches. Use the brief to distinguish completed, failed and still-unverified work.
+
 Recorded 2026-10-11 from Micah's discussion after the
-[north star rewrite](STRATEGY-forecasting-north-star-2026-10-10.md). Nothing here has been run yet; it
-is the research agenda and the rules for judging it.
+[north star rewrite](STRATEGY-forecasting-north-star-2026-10-10.md). At the time it was recorded, the
+agenda below had not been run; it is preserved as the original research agenda and rules for judging it.
 
 ## Decision
 
@@ -18,27 +22,35 @@ is the research agenda and the rules for judging it.
   gap is about +/-0.003 ([market baseline](RESULTS-market-baseline-2010-2025-2026-10-11.md)), so a change
   that size is detectable over many seasons and not within one.
 
-Where we stand: our best own-data stack (QB, availability, EPA by unit) improves v1 by 0.0021 Brier pooled
+Where we stood on 2026-10-11: the QB, availability and EPA-by-unit stack improved v1 by 0.0021 Brier pooled
 2011 to 2023, about what EPA alone gave (0.0019)
 ([backfill and features](RESULTS-nfl-backfill-features-2026-10-11.md)). Weeks 1 to 4 carry about twice
-the gap of later weeks ([features plan](PLAN-nfl-features-2026-10-11.md)).
+the gap of later weeks ([features plan](PLAN-nfl-features-2026-10-11.md)). A later v1+Elo report found a
+0.0032 Brier improvement over recalibrated v1 on the same 2011-2023, 3,158-game population and baseline.
+That later result supersedes the phrase “best own-data stack”; the 0.0021 remains the measured result
+for the specifically named QB/availability/EPA stack.
 
 ## Levers not yet pulled properly
 
 1. **Offseason carryover.** v1 starts each season from the previous season's final fit. The amount of
-   regression toward average between seasons has not been tuned or compared with 538's one-third rule.
-   Early weeks are where we lose most, so this is the cheapest likely gain and the first to test.
+   regression toward average between seasons had not been tuned as of 2026-10-11. A later test of 21
+   settings found none met the keep rule on 2024 and 2025; see [carryover results](RESULTS-nfl-ladder-carryover-2026-10-12.md).
 2. **Preseason market priors.** 538 blended preseason win totals into starting ratings. This uses the
    market's season view, not the line for the game being forecast, but it is still market input: best
-   forecast scoreboard only.
+   forecast scoreboard only. A market-derived prior was later tested and kept only for that scoreboard;
+   it is not an independent forecast. See the [feature index](INDEX-nfl-model-research-2026-10-12.md).
 3. **EPA per play, by unit, with shrinkage.** Today's "EPA by unit" is v2 (`nfl_epa_model`: pass and rush,
    offense and defense, previous-season prior) entered as a stack column of its EPA-points margin. Still
-   open: per-play rates with explicit volume (pace) kept separate, success rate, and shrinkage by sample
-   size. Check v2's construction before treating any of these as tested.
-4. **Margin spread by game.** v1 uses one margin standard deviation (13.295) for every game. Letting it
-   vary with matchup and week can improve Brier without changing ratings.
+   open: per-play rates with explicit volume (pace) kept separate and shrinkage by sample size. Success
+   rate was tested on 2026-10-18 as an EPA addition and did not establish a gain; see the current brief.
+   Check v2's construction before treating any other item here as tested.
+4. **Margin spread by game.** v1 uses one margin standard deviation (13.295) for every game. A week-bucket
+   rating-uncertainty test was later run and not kept; matchup-dependent spread remains untested. See the
+   [feature results](RESULTS-nfl-features-vs-market-2026-10-11.md).
 5. **QB relative to the team baseline.** The expected starter's effect against the QB production already
-   in the team rating, not a standalone QB value.
+   in the team rating, not a standalone QB value. A retrospective QBI expected-starter feature test was
+   later run and not kept; it does not establish that the operational, pregame starter pipeline is complete.
+   See the [backfill and feature results](RESULTS-nfl-backfill-features-2026-10-11.md).
 
 ## Matchup inputs (Micah's hypothesis)
 

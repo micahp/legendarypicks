@@ -1,5 +1,9 @@
 # Handoff: NFL forecasting model, 2026-10-11 (step-by-step for Sonnet or Haiku)
 
+**Authoritative current entry point:** [NFL prediction model brief](BRIEF-nfl-prediction-model.md). This dated handoff remains the implementation history, not the current work queue.
+
+**Status update, 2026-10-18:** the week-6 deadline has expired. The nearest-neighbor score-pair sampler in task 4.2 was run and failed its pre-registered gate; later Gaussian margin/total marginals are not a joint score distribution, and their spread/total probabilities failed constant references. Spread/total prices are unavailable in the cited result. Player-prop work has been implemented and measured by market, but its distribution coverage over-covers and CP3 is not passed. See the brief for the present independent gates.
+
 You are picking up a long session. This file is written so you can work without asking the
 previous session anything. Follow it literally. Where it says STOP, stop and tell Micah.
 
@@ -202,6 +206,8 @@ Pitfalls: do not add `--skip`-style flags back; the kickoff guard decides. Do no
 ---------------------------------------------------------------------------------------------------
 ### Task 4.1: finish the season engine (season odds)
 
+**Status update, 2026-10-18:** the task 4.2 sampler now exists but failed its registered gate, so the planned validated score sampler is not available to this simulation. The model card describes the current playoff-odds default as `placeholder-split-40`; this is separate from the game-level margin and total marginals.
+
 Background: `34d3f98` rewrote seeding to nfl.com's procedure (reference copy:
 `docs/REFERENCE-nfl-tiebreaking-procedures-2026-10-11.md`). 34 tests pass. Not yet validated on
 history, and the simulation still has fake scores.
@@ -308,6 +314,8 @@ test), 6 new tests, sim uses rng and the right seed count, full suite green, com
 ---------------------------------------------------------------------------------------------------
 ### Task 4.2: score distribution (joint home and away scores)
 
+**Status update, 2026-10-18:** implemented and evaluated; the pre-registered nearest-neighbor candidate failed its gate and was stopped without tuning. See the current brief and linked result. The steps below preserve the original registration, not active instructions.
+
 Goal: for any game with expected scores (eh, ea), draw realistic final scores (integers, real
 football shapes, ties at the real rate). Win, spread, total and team-total probabilities all come
 from these draws. Used by the sim (4.1 step 3) and market probabilities (4.5).
@@ -348,6 +356,8 @@ as features (they are not; only expectations from our own model); evaluating K o
 
 ---------------------------------------------------------------------------------------------------
 ### Task 4.3: player availability, QB first
+
+**Status update, 2026-10-18:** a retrospective QBI expected-starter feature test is reported as not kept in `RESULTS-nfl-backfill-features-2026-10-11.md`. That result does not establish that the operational as-of starter and availability pipeline described below is complete; treat this section's implementation steps as historical proposed work unless separately verified.
 
 North star rule (exact words): "A starting-quarterback change is the expected starter's effect
 relative to the QB production already in the team baseline, not subtraction of his full
@@ -392,6 +402,8 @@ dropbacks is "no sample", given replacement level and labelled so, never zero.
 ---------------------------------------------------------------------------------------------------
 ### Task 4.4: player projections (Spec B)
 
+**Status update, 2026-10-18:** Spec B was implemented and evaluated on its research branch. The section below is historical task text; current per-market status and adoption gates are in the brief.
+
 1. Read `docs/SPEC-player-projections-availability-2026-10-09.md` sections 2 and 4 only.
 2. Read the open review findings for `/root/lp-player-proj` (search its `docs/` for REVIEW files:
    `ls /root/lp-player-proj/docs | grep -i review`). List them. Fix them in THAT worktree, one
@@ -405,6 +417,8 @@ dropbacks is "no sample", given replacement level and labelled so, never zero.
 
 ---------------------------------------------------------------------------------------------------
 ### Task 4.5: market probabilities
+
+**Status update, 2026-10-18:** historical walk-forward probabilities now exist for winner, spread and total. Spread/total results are worse than constant references, and two-sided prices were unavailable in the cited evaluation. The registration below is not an active instruction to publish those probabilities.
 
 1. Needs 4.2. For each locked game: p_home_win, p_tie, p_cover and p_push against the LOCKED spread
    (from `nfl_line_snapshots`), p_over against the locked total, from `nfl_score_dist.probabilities`.

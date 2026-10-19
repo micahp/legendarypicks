@@ -1,5 +1,9 @@
 # Index: NFL model research, where everything is (2026-10-12)
 
+**Authoritative current entry point:** [NFL prediction model brief](BRIEF-nfl-prediction-model.md). This index remains the dated 2026-10-12 inventory and research record. Branch locations, open tasks and status labels below are historical snapshots unless updated explicitly.
+
+**Status update, 2026-10-18:** the success-rate feature has since been tested against EPA and was a null result; the per-game distribution branch found winner Brier 0.2243 vs 0.2474 constant, while spread and total probabilities were worse than their constants and are not forecasts. Spec B and forward-Platt prop work has since been implemented and measured on branch-specific populations. See the brief for current evidence and gates; do not use this note to combine those cohorts.
+
 Read this first. It lists every lever and stat we have considered, what happened to it, where the data
 is, and where the code and results are. Update the status column when something changes.
 
@@ -30,6 +34,9 @@ Source plan: [RESEARCH-nfl-model-inputs-2026-10-11.md](RESEARCH-nfl-model-inputs
 | Participation pressure matchup (charted pressure, sacks count; 2016 to 2025) | tested, not kept | F-B 2017-2023 -0.0003 [-0.0010, +0.0005]; 2024 +0.0008; 2025 +0.0002 | `participation_keep` in `nfl_feature_backtest.py`; [RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md) |
 | Participation coverage matchup (man vs zone, same season, sacks excluded; 2018 to 2025) | tested, not kept | F-B 2019-2023 +0.0002 [-0.0002, +0.0006]; 2024 -0.0001; 2025 +0.0000 (positive at full precision) | `coverage_keep` in `nfl_feature_backtest.py` (definition and tests in `test_nfl_participation_features.py`); [RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md) |
 | Contention, has this team checked out (simulated P(playoffs) < 1%, home minus away; weeks 10+; 2010 to 2025) | tested, not kept | F-B 2011-2023 -0.0006 [-0.0017, +0.0006]; 2024 -0.0046 [-0.0089, -0.0003]; 2025 -0.0003 | `contention_keep` in `nfl_feature_backtest.py` (tests in `test_nfl_contention.py`); [RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md) |
+| Success-rate differentials added to EPA | **tested 2026-10-18, no established gain; not kept** | M0 0.2243, M1 0.2242, S 0.2275; both paired week-clustered intervals span zero | [BRIEF-nfl-prediction-model.md](BRIEF-nfl-prediction-model.md), branch result linked there |
+| Per-game score distribution and line probabilities | **tested 2026-10-18; spread and total failed their constant references** | winner 0.2243 vs 0.2474 constant; cover 0.2646 vs 0.2498 and over 0.2634 vs 0.2499; do not show cover/over as forecasts | [BRIEF-nfl-prediction-model.md](BRIEF-nfl-prediction-model.md), branch result linked there |
+| League-wide shotgun era (level and slope) | **tested 2026-10-13; worse, not kept** | 2011-2023 Brier 0.2279; +0.0050 vs recalibrated v1 [+0.0027, +0.0074] | [RESULTS-nfl-elo-and-era-2026-10-13.md](RESULTS-nfl-elo-and-era-2026-10-13.md). This is not the proposed team-level shotgun differential below. |
 
 ## 2. Stats: stability and status
 
@@ -119,7 +126,7 @@ subset. Since then penalties, turnovers and participation were stored (the Store
    ([RESULTS-nfl-participation-2026-10-12.md](RESULTS-nfl-participation-2026-10-12.md)). Coverage labels change in
    2023 (sacks labelled from then, league man share 29% in 2022, 41% and 49% in 2023-24, 31% in 2025), so the
    coverage test used shares relative to each season's league and a same-season window.
-5. **Spec B** (player projections), **start on the Spec B branch, not on this one.** Branch
+5. **Spec B** (player projections), **historical 2026-10-12 instruction: start on the Spec B branch, not on this one.** The work has since been implemented and measured; its outcomes and per-market status are in the [current brief](BRIEF-nfl-prediction-model.md). Branch
    `feat/player-projections-availability`, worktree `/root/lp-player-proj`. Its work is B1 to B3
    (11 commits not in `dev`, nothing uncommitted, 10-12). Order:
    a. Review findings (`docs/REVIEW-SPEC-player-projections-availability-2026-10-10.md`). Status
@@ -139,7 +146,7 @@ subset. Since then penalties, turnovers and participation were stored (the Store
 Decided by Micah 10-12: the market prior is not our forecast; no paying for timestamped odds; participation
 tested; step 6 (contention) tested.
 
-Open decisions for Micah:
+Open decisions recorded on 2026-10-12 for Micah (historical snapshot; do not assume each is still pending):
 - **2026 week 5 pbp:** only 1 of 15 games stored on 10-12 although nflverse had 14 (file updated 10-12
   09:05 GMT); BUF at LA plays 10-12 night. Agreed: ingest once on 10-13 morning, after nflverse updates.
 - **Weekly pbp ingest in `dev`.** Nothing schedules it. The step exists only on `feat/nfl-epa-efficiency`
@@ -155,8 +162,10 @@ Open decisions for Micah:
 
 Raised by Micah's friend, 10-13. The shotgun share of league plays went from 28.8% (2010) to 50.3% (2025),
 so a team's style in that dimension is a candidate rating input, and a regime change in how the game is played
-is the case where a fixed-weight model drifts. Nothing is run. The data is already stored (`nfl_pbp.shotgun`,
-2010 to 2026). Rules that apply before any run, from section 6: write the definition and the keep rule first.
+is the case where a fixed-weight model drifts. The team-level shotgun differential described below had not
+been run when this section was written. A later league-wide era level/slope test was run and was worse, but
+that is a different feature; see the status row above. The data is already stored (`nfl_pbp.shotgun`, 2010 to
+2026). Rules that apply before any team-level run, from section 6: write the definition and the keep rule first.
 
 Open design points, to settle before registering the test:
 - Team shotgun rate season to date, shrunk like the others, versus the league's rate that season (a level shift
@@ -168,6 +177,8 @@ Open design points, to settle before registering the test:
   0.001, so a combination needs a pooled interval entirely below zero to count.
 
 ## 5. Where the code and the branches are (inventory 2026-10-12, compared file by file with `dev`)
+
+This branch inventory is dated 2026-10-12. Later prop and score-distribution work is documented in the current brief; the worktree paths, commit counts and merge statuses below are not a current inventory.
 
 | Thing | Location | Status |
 |---|---|---|
