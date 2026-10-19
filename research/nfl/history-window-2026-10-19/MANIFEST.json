@@ -1,0 +1,119 @@
+{
+  "arms": [
+    "W1",
+    "W2",
+    "W3",
+    "ALL"
+  ],
+  "bootstrap": "week_block_bootstrap_mean_diff, (season, Monday gameday week) blocks",
+  "db": "/root/legendarypicks/backend/data/picks.dev.db",
+  "files": {
+    "arm_scores.csv": {
+      "bytes": 7440,
+      "sha256": "9ff6161c950355d8dd0d63f142cd275d9d71d957a78b684c8a23788b0305156d"
+    },
+    "benchmarks.csv": {
+      "bytes": 200,
+      "sha256": "8ea16c9b3c32a32a9a422445e3fd82a4b6494f83d969baf3651fab5581e2cb16"
+    },
+    "forecasts.csv": {
+      "bytes": 1170155,
+      "sha256": "437aea36142ec6c5149eba143be50fd1b54baac97d1ec523073b608335baf8bb"
+    },
+    "paired.csv": {
+      "bytes": 7037,
+      "sha256": "4f075bedd32208e56c14aa922a2316bc5ef282b551ee67012705292c5e145700"
+    }
+  },
+  "frozen": {
+    "cap": 14.0,
+    "cap_points": null,
+    "half_life": 6.0,
+    "prior_games": 4.0,
+    "shrink": 0.3333333333333333,
+    "sigma": 13.295
+  },
+  "holdouts": [
+    2024,
+    2025
+  ],
+  "population": {
+    "2013": 239,
+    "2014": 239,
+    "2015": 240,
+    "2016": 238,
+    "2017": 241,
+    "2018": 239,
+    "2019": 240,
+    "2020": 239,
+    "holdout_2024": 256,
+    "holdout_2025": 255,
+    "pooled_2013_2020": 1915
+  },
+  "prereg": "research/nfl/PREREG-nfl-history-window-2026-10-19.md",
+  "prereg_commit": "a91d136f",
+  "primary": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "reproduction": [
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 239,
+      "season": 2013
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 239,
+      "season": 2014
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 240,
+      "season": 2015
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 238,
+      "season": 2016
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 241,
+      "season": 2017
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 239,
+      "season": 2018
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 240,
+      "season": 2019
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 239,
+      "season": 2020
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 256,
+      "season": 2024
+    },
+    {
+      "max_abs_p_model_diff": 0.0,
+      "n": 255,
+      "season": 2025
+    }
+  ],
+  "reps": 2000,
+  "seed": 20261019
+}

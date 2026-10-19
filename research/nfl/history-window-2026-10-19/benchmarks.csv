@@ -1,0 +1,3 @@
+rung,n,brier,source
+538 Elo,1914,0.21897126138135464,nfl_elo_538.elo_prob1 on the overlapping 2013-2020 games
+closing market,1914,0.21063691264599274,de-vigged moneyline on the same overlapping games
