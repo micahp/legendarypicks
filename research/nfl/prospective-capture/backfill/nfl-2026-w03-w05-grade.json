@@ -1,0 +1,470 @@
+{
+  "book_settlement_crosscheck": {
+    "actual_value_disagreements": 0,
+    "gradeable_line_items": 12783,
+    "hit_disagreements": 0,
+    "over_side_items_with_book_actual_value": 12743,
+    "over_side_items_with_book_hit": 12743,
+    "use": "independent consistency check only; frozen NFL player-game outcome/settlement states remain the scoring target"
+  },
+  "by_week": {
+    "4": {
+      "captured_line_items": 7001,
+      "events": 16,
+      "excluded_line_items": 358,
+      "gradeable_line_items": 6643,
+      "player_games": 179,
+      "scores": {
+        "brier_market_no_vig": 0.24822369947866113,
+        "brier_v2_platt": 0.25070312806293626,
+        "brier_v2_raw": 0.2815252461801897,
+        "delta_brier_v2_platt_minus_market": 0.002479428584275117,
+        "delta_brier_v2_raw_minus_market": 0.03330154670152854,
+        "delta_log_loss_v2_platt_minus_market": 0.0050188144188815995,
+        "delta_log_loss_v2_raw_minus_market": 0.07493887788205228,
+        "log_loss_market_no_vig": 0.6895396396454962,
+        "log_loss_v2_platt": 0.6945584540643779,
+        "log_loss_v2_raw": 0.7644785175275486
+      }
+    },
+    "5": {
+      "captured_line_items": 6318,
+      "events": 15,
+      "excluded_line_items": 178,
+      "gradeable_line_items": 6140,
+      "player_games": 180,
+      "scores": {
+        "brier_market_no_vig": 0.24528026876013312,
+        "brier_v2_platt": 0.24749375724844336,
+        "brier_v2_raw": 0.25505816141083065,
+        "delta_brier_v2_platt_minus_market": 0.002213488488310247,
+        "delta_brier_v2_raw_minus_market": 0.009777892650697523,
+        "delta_log_loss_v2_platt_minus_market": 0.004522320601380186,
+        "delta_log_loss_v2_raw_minus_market": 0.021459344475172178,
+        "log_loss_market_no_vig": 0.6836021652225033,
+        "log_loss_v2_platt": 0.6881244858238835,
+        "log_loss_v2_raw": 0.7050615096976754
+      }
+    }
+  },
+  "capture_mode": "backfill",
+  "cluster_bootstrap_95_percent": {
+    "event": {
+      "clusters": 31,
+      "intervals": {
+        "brier_market_no_vig": {
+          "high": 0.2485379503060011,
+          "low": 0.24503607248934986
+        },
+        "brier_v2_platt": {
+          "high": 0.2518547277285043,
+          "low": 0.24653855535961458
+        },
+        "brier_v2_raw": {
+          "high": 0.28413007846861643,
+          "low": 0.25451217319134684
+        },
+        "delta_brier_v2_platt_minus_market": {
+          "high": 0.005705388567050689,
+          "low": -0.0009160246950774679
+        },
+        "delta_brier_v2_raw_minus_market": {
+          "high": 0.0374401773799801,
+          "low": 0.007784669917729988
+        },
+        "delta_log_loss_v2_platt_minus_market": {
+          "high": 0.011534664057054262,
+          "low": -0.001790765215455373
+        },
+        "delta_log_loss_v2_raw_minus_market": {
+          "high": 0.08310928072739565,
+          "low": 0.018685895096129827
+        },
+        "log_loss_market_no_vig": {
+          "high": 0.6902278697143758,
+          "low": 0.6830670744626668
+        },
+        "log_loss_v2_platt": {
+          "high": 0.696877588535128,
+          "low": 0.6861956147081466
+        },
+        "log_loss_v2_raw": {
+          "high": 0.7692890574327135,
+          "low": 0.7051020415558998
+        }
+      },
+      "method": "cluster resample with replacement; retain all line-items in sampled clusters; row-weighted mean; percentile order statistics",
+      "replicates": 10000,
+      "seed": 20261020
+    },
+    "player_game": {
+      "clusters": 359,
+      "intervals": {
+        "brier_market_no_vig": {
+          "high": 0.24831481829998922,
+          "low": 0.245245587163098
+        },
+        "brier_v2_platt": {
+          "high": 0.2516132396036988,
+          "low": 0.2466476765886073
+        },
+        "brier_v2_raw": {
+          "high": 0.28424712307796823,
+          "low": 0.25393819381948896
+        },
+        "delta_brier_v2_platt_minus_market": {
+          "high": 0.005165475751002955,
+          "low": -0.0005899000367837505
+        },
+        "delta_brier_v2_raw_minus_market": {
+          "high": 0.037520462045130855,
+          "low": 0.007036528126957238
+        },
+        "delta_log_loss_v2_platt_minus_market": {
+          "high": 0.010445323741938494,
+          "low": -0.0011365105979216825
+        },
+        "delta_log_loss_v2_raw_minus_market": {
+          "high": 0.08288867796053317,
+          "low": 0.0167151241040606
+        },
+        "log_loss_market_no_vig": {
+          "high": 0.6897664487219293,
+          "low": 0.6834781515048345
+        },
+        "log_loss_v2_platt": {
+          "high": 0.6963883451209132,
+          "low": 0.6864257673310968
+        },
+        "log_loss_v2_raw": {
+          "high": 0.7695100355555701,
+          "low": 0.7035882498357983
+        }
+      },
+      "method": "cluster resample with replacement; retain all line-items in sampled clusters; row-weighted mean; percentile order statistics",
+      "replicates": 10000,
+      "seed": 20261019
+    }
+  },
+  "cp4_evidence_eligible": false,
+  "grading_unit": "one paired over/under sportsbook line item; score P(over) once against the over outcome; the under row is used to validate complementary settlement and to de-vig the market",
+  "input_artifact": "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05.jsonl.gz",
+  "input_artifact_sha256_compressed": "5804a50674ed0acc1252b58e9e5a34f80f8342cbb88760e34fe831d17bb60a83",
+  "integerization_discrepancy": {
+    "all_captured_rows": {
+      "max": 0.02124999999999999,
+      "mean_raw_minus_integer_pmf_over": 0.003859711690066821,
+      "min": 0.0,
+      "n_side_rows": 26638,
+      "negative_side_rows": 0,
+      "population_sd": 0.003526812354343961,
+      "positive_side_rows": 20392,
+      "zero_within_1e-12_side_rows": 6246
+    },
+    "by_market": {
+      "pass_attempts": {
+        "max": 0.0,
+        "mean_raw_minus_integer_pmf_over": -2.806743601580452e-18,
+        "min": 0.0,
+        "n_side_rows": 712,
+        "negative_side_rows": 0,
+        "population_sd": 1.8394477081416583e-17,
+        "positive_side_rows": 0,
+        "zero_within_1e-12_side_rows": 712
+      },
+      "pass_completions": {
+        "max": 0.0,
+        "mean_raw_minus_integer_pmf_over": 3.1042420096427075e-18,
+        "min": 0.0,
+        "n_side_rows": 608,
+        "negative_side_rows": 0,
+        "population_sd": 2.0645387799229528e-17,
+        "positive_side_rows": 0,
+        "zero_within_1e-12_side_rows": 608
+      },
+      "passing_touchdowns": {
+        "max": 0.0,
+        "mean_raw_minus_integer_pmf_over": -1.9508711295330226e-18,
+        "min": 0.0,
+        "n_side_rows": 626,
+        "negative_side_rows": 0,
+        "population_sd": 3.270015467207451e-17,
+        "positive_side_rows": 0,
+        "zero_within_1e-12_side_rows": 626
+      },
+      "passing_yards": {
+        "max": 0.0050000000000000044,
+        "mean_raw_minus_integer_pmf_over": 0.0021240295031055914,
+        "min": 0.00024999999999997247,
+        "n_side_rows": 5152,
+        "negative_side_rows": 0,
+        "population_sd": 0.0007520669173669927,
+        "positive_side_rows": 5152,
+        "zero_within_1e-12_side_rows": 0
+      },
+      "receiving_yards": {
+        "max": 0.02124999999999999,
+        "mean_raw_minus_integer_pmf_over": 0.006026764628706376,
+        "min": 0.0,
+        "n_side_rows": 15244,
+        "negative_side_rows": 0,
+        "population_sd": 0.003119275970288152,
+        "positive_side_rows": 15240,
+        "zero_within_1e-12_side_rows": 4
+      },
+      "receptions": {
+        "max": 0.0,
+        "mean_raw_minus_integer_pmf_over": -4.1995167947297005e-19,
+        "min": 0.0,
+        "n_side_rows": 4296,
+        "negative_side_rows": 0,
+        "population_sd": 1.929682232639483e-17,
+        "positive_side_rows": 0,
+        "zero_within_1e-12_side_rows": 4296
+      }
+    },
+    "definition": "p_over_raw - sum(PMF[x] for integer support x > line), computed on each stored side row; over/under sides repeat the same forecast",
+    "interpretation": "Positive yardage differences arise because p_over_raw thresholds the unrounded continuous draw, while the stored PMF thresholds floor(draw); at a half-yard line, draws between the line and the next integer are counted only by the continuous value."
+  },
+  "limitations": [
+    "Historical reconstructed backfill only; never CP4 evidence or prospective model evaluation.",
+    "Bootstrap intervals quantify clustered variation in this selected 2026 week 4-5 backfill population; they do not establish adoption or prospective performance.",
+    "Per-market scores are point estimates; the reported bootstrap intervals are for the full gradeable population."
+  ],
+  "log_loss_clip_source": "grade_nfl_prop_probabilities.tight",
+  "log_loss_probability_clip": 1e-09,
+  "market_probability_method": "American-odds implied probabilities on the captured over and under prices, normalized proportionally: q_over = implied(over)/(implied(over)+implied(under)); same method as grade_nfl_prop_probabilities.devig",
+  "overall_scores": {
+    "brier_market_no_vig": 0.24680989484659027,
+    "brier_v2_platt": 0.24916158563932786,
+    "brier_v2_raw": 0.26881243224888524,
+    "delta_brier_v2_platt_minus_market": 0.0023516907927375826,
+    "delta_brier_v2_raw_minus_market": 0.022002537402294988,
+    "delta_log_loss_v2_platt_minus_market": 0.004780335811398326,
+    "delta_log_loss_v2_raw_minus_market": 0.04925129788375424,
+    "log_loss_market_no_vig": 0.6866877196770086,
+    "log_loss_v2_platt": 0.6914680554884071,
+    "log_loss_v2_raw": 0.7359390175607629
+  },
+  "per_market": {
+    "pass_attempts": {
+      "captured_line_items": 356,
+      "events": 30,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 0,
+        "missing": 0
+      },
+      "gradeable_line_items": 356,
+      "gradeable_line_items_by_week": {
+        "4": 184,
+        "5": 172
+      },
+      "player_games": 50,
+      "scores": {
+        "brier_market_no_vig": 0.24953591300066655,
+        "brier_v2_platt": 0.24987185015289798,
+        "brier_v2_raw": 0.2576618830758427,
+        "delta_brier_v2_platt_minus_market": 0.00033593715223142567,
+        "delta_brier_v2_raw_minus_market": 0.008125970075176136,
+        "delta_log_loss_v2_platt_minus_market": 0.0006862525707714696,
+        "delta_log_loss_v2_raw_minus_market": 0.015985897038861226,
+        "log_loss_market_no_vig": 0.6922072191570345,
+        "log_loss_v2_platt": 0.692893471727806,
+        "log_loss_v2_raw": 0.7081931161958958
+      }
+    },
+    "pass_completions": {
+      "captured_line_items": 304,
+      "events": 30,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 0,
+        "missing": 0
+      },
+      "gradeable_line_items": 304,
+      "gradeable_line_items_by_week": {
+        "4": 155,
+        "5": 149
+      },
+      "player_games": 50,
+      "scores": {
+        "brier_market_no_vig": 0.24931925198602442,
+        "brier_v2_platt": 0.25123480405411003,
+        "brier_v2_raw": 0.2755268347039474,
+        "delta_brier_v2_platt_minus_market": 0.0019155520680856108,
+        "delta_brier_v2_raw_minus_market": 0.026207582717922943,
+        "delta_log_loss_v2_platt_minus_market": 0.0038610102392172166,
+        "delta_log_loss_v2_raw_minus_market": 0.056447150362952316,
+        "log_loss_market_no_vig": 0.691799533797157,
+        "log_loss_v2_platt": 0.6956605440363742,
+        "log_loss_v2_raw": 0.7482466841601093
+      }
+    },
+    "passing_touchdowns": {
+      "captured_line_items": 313,
+      "events": 30,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 0,
+        "missing": 0
+      },
+      "gradeable_line_items": 313,
+      "gradeable_line_items_by_week": {
+        "4": 158,
+        "5": 155
+      },
+      "player_games": 50,
+      "scores": {
+        "brier_market_no_vig": 0.24359544276423264,
+        "brier_v2_platt": 0.24327219170729272,
+        "brier_v2_raw": 0.23080181130191696,
+        "delta_brier_v2_platt_minus_market": -0.0003232510569399388,
+        "delta_brier_v2_raw_minus_market": -0.012793631462315705,
+        "delta_log_loss_v2_platt_minus_market": -0.0004415910712629882,
+        "delta_log_loss_v2_raw_minus_market": -0.028024167922707316,
+        "log_loss_market_no_vig": 0.6800194158020532,
+        "log_loss_v2_platt": 0.6795778247307902,
+        "log_loss_v2_raw": 0.6519952478793458
+      }
+    },
+    "passing_yards": {
+      "captured_line_items": 2576,
+      "events": 30,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 0,
+        "missing": 0
+      },
+      "gradeable_line_items": 2576,
+      "gradeable_line_items_by_week": {
+        "4": 1251,
+        "5": 1325
+      },
+      "player_games": 50,
+      "scores": {
+        "brier_market_no_vig": 0.2448896558144671,
+        "brier_v2_platt": 0.2522152476094033,
+        "brier_v2_raw": 0.28037787424786487,
+        "delta_brier_v2_platt_minus_market": 0.00732559179493615,
+        "delta_brier_v2_raw_minus_market": 0.03548821843339781,
+        "delta_log_loss_v2_platt_minus_market": 0.01488972414915201,
+        "delta_log_loss_v2_raw_minus_market": 0.0764054591930763,
+        "log_loss_market_no_vig": 0.682740904937603,
+        "log_loss_v2_platt": 0.697630629086755,
+        "log_loss_v2_raw": 0.7591463641306793
+      }
+    },
+    "receiving_yards": {
+      "captured_line_items": 7622,
+      "events": 31,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 102,
+        "missing": 288
+      },
+      "gradeable_line_items": 7232,
+      "gradeable_line_items_by_week": {
+        "4": 3822,
+        "5": 3410
+      },
+      "player_games": 309,
+      "scores": {
+        "brier_market_no_vig": 0.24803563160922498,
+        "brier_v2_platt": 0.24867286818755555,
+        "brier_v2_raw": 0.26501866980088495,
+        "delta_brier_v2_platt_minus_market": 0.0006372365783305935,
+        "delta_brier_v2_raw_minus_market": 0.01698303819165999,
+        "delta_log_loss_v2_platt_minus_market": 0.0013100380363341184,
+        "delta_log_loss_v2_raw_minus_market": 0.0384837570867367,
+        "log_loss_market_no_vig": 0.689165323132649,
+        "log_loss_v2_platt": 0.6904753611689831,
+        "log_loss_v2_raw": 0.7276490802193858
+      }
+    },
+    "receptions": {
+      "captured_line_items": 2148,
+      "events": 31,
+      "excluded_line_items_by_settlement_state": {
+        "dnp": 29,
+        "missing": 117
+      },
+      "gradeable_line_items": 2002,
+      "gradeable_line_items_by_week": {
+        "4": 1073,
+        "5": 929
+      },
+      "player_games": 305,
+      "scores": {
+        "brier_market_no_vig": 0.24448962708830538,
+        "brier_v2_platt": 0.24747748929172791,
+        "brier_v2_raw": 0.27454152962662337,
+        "delta_brier_v2_platt_minus_market": 0.002987862203422543,
+        "delta_brier_v2_raw_minus_market": 0.030051902538317993,
+        "delta_log_loss_v2_platt_minus_market": 0.005992544039715044,
+        "delta_log_loss_v2_raw_minus_market": 0.0701123867227879,
+        "log_loss_market_no_vig": 0.6821009126754924,
+        "log_loss_v2_platt": 0.6880934567152074,
+        "log_loss_v2_raw": 0.7522132993982803
+      }
+    }
+  },
+  "population": {
+    "events": 31,
+    "gradeable_line_items": 12783,
+    "gradeable_line_items_by_week": {
+      "4": 6643,
+      "5": 6140
+    },
+    "gradeable_side_rows": 25566,
+    "player_games": 359,
+    "weeks": [
+      4,
+      5
+    ]
+  },
+  "schema_version": "nfl-capture-backfill-grade.v1",
+  "state_counts": {
+    "calibration_status_side_rows": {
+      "applied": 26638
+    },
+    "excluded_line_items_by_settlement_state": {
+      "dnp": 131,
+      "missing": 405
+    },
+    "forecast_label_side_rows": {
+      "v2-platt": 26638
+    },
+    "gradeable_line_items": 12783,
+    "gradeable_side_rows": 25566,
+    "outcome_state_line_items": {
+      "dnp": 131,
+      "missing": 405,
+      "resolved": 12262,
+      "true_zero": 521
+    },
+    "outcome_state_side_rows": {
+      "dnp": 262,
+      "missing": 810,
+      "resolved": 24524,
+      "true_zero": 1042
+    },
+    "over_side_settlement_line_items": {
+      "dnp": 131,
+      "loss": 6310,
+      "missing": 405,
+      "win": 6473
+    },
+    "paired_line_items": 13319,
+    "settlement_state_side_rows": {
+      "dnp": 262,
+      "loss": 12783,
+      "missing": 810,
+      "win": 12783
+    },
+    "side_rows": 26638
+  },
+  "versioned_probability_field_audit": {
+    "forecast_label_side_rows": {
+      "v2-platt": 26638
+    },
+    "note": "For CP4, select the explicit scalar field matching the frozen model_version; do not rely on the generic served alias until its label is aligned with the designated version.",
+    "p_over_served_4dp_matches_rounded_raw_rows": 26638,
+    "p_over_served_4dp_matches_rounded_v2_platt_rows": 4
+  }
+}
