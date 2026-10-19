@@ -13,20 +13,23 @@ and a small residual shape defect in the extreme upper tail.**
 
 - **Bias — yes, but not a global bias.** The walk-forward mean bias is **+0.04 points** (predicted
   53.08, observed 53.12), i.e. zero. The bias is **conditional on the predicted total**: the model's
-  predicted mean is about **twice as variable as the data supports**. Regressing observed total on
-  predicted total gives a slope of **0.4985 ± 0.0686** (walk-forward), **0.5135 ± 0.1214** (holdout),
-  **0.4081 ± 0.2103** (2026). A calibrated forecast has slope 1.0. The model over-shoots at both ends:
-  low predictions are too low, high predictions are too high.
+  predicted mean is about **twice as variable as the data supports**. OLS of `obs_total` on
+  `pred_total` (the PMF mean the PIT is computed against) gives a slope of **0.5032 ± 0.0691**
+  (walk-forward), **0.5173 ± 0.1221** (holdout), **0.4138 ± 0.2127** (2026). A calibrated forecast
+  has slope 1.0. The model over-shoots at both ends: low predictions are too low, high predictions
+  are too high.
 - **Dispersion — secondary.** After removing the conditional bias, the model is **~9% too wide**
-  (RMSE / mean predictive SD = 0.91), concentrated in the high-total buckets (0.85–0.86) and the
-  extreme upper tail. Increasing the NegBin dispersion parameter R by **10–15%** restores PIT
-  uniformity (KS p 0.053–0.077). Part of this is a downstream artefact: R is fitted by moments on
+  (RMSE / mean predictive SD = 0.91), concentrated in the high-total buckets (0.84–0.90) and the
+  extreme upper tail. Scaling the NegBin dispersion parameter R by **1.10–1.20** restores PIT
+  uniformity (KS p 0.053–0.093). Part of this is a downstream artefact: R is fitted by moments on
   uncalibrated residuals, so it absorbs some of the excess mean variance.
 - **Shape — not the primary driver.** The body of the distribution is correctly shaped when it is
   centred correctly: the 50–60 predicted-total bucket is PIT-uniform at baseline (KS p = 0.12), and
   after mean calibration every bucket passes or is marginal. The one genuine shape defect is the
-  **extreme upper tail**: the model puts 0.60% of mass above 110 points against 0.08% observed
-  (~27 games predicted vs 2 observed), and that survives R × 1.5. It affects ~1% of games.
+  **extreme upper tail**: the model puts **1.11%** of mass above 110 points uncalibrated
+  (**26.6 games**) and **0.60%** after mean calibration (**14.4 games**), against **0.08% observed
+  (2 games)**; it is still 0.42% (10 games) at R × 1.15 and 0.30% (7 games) at R × 1.30. It affects
+  ~1% of games.
 
 The marginal total PIT is nearly uniform because the low-end and high-end conditional errors
 **cancel**. The failure is visible only when the PIT is conditioned on the predicted total — which is
@@ -121,7 +124,7 @@ example bins) and were not tuned.
 | 2026 dev (n=350) | 0.606 | 0.597 | 0.492 | 0.439 | — (n=6) |
 
 The holdout's marginal pass (p = 0.367) is a **power artefact**: its regression slope is
-**0.5135 ± 0.1214**, statistically indistinguishable from the walk-forward 0.4985. The holdout is not
+**0.5173 ± 0.1221**, statistically indistinguishable from the walk-forward 0.5032. The holdout is not
 a different regime; it is the same conditional bias with a third of the sample.
 
 This is the single most important finding in the document: **a marginal PIT pass at n = 807 does not
@@ -154,14 +157,18 @@ Two effects, in order of size:
    near-nominal on both (0.78, 0.89). This is the signature of a mean error, not an independent
    dispersion error: the residuals are inflated or deflated by the location miss.
 
-The direct slope estimate makes the location error explicit:
+The direct slope estimate makes the location error explicit. The estimator is **OLS of `obs_total` on
+`pred_total`** over the H0b rows of each period — the same `pred_total` the PIT is computed against.
+(The csv column is the PMF mean; it differs from the untruncated `mu_h + mu_a` by up to 3.4 points on
+749 of 2,397 games because the NegBin vectors are truncated at 120 and renormalised, so `pred_total`
+is the correct x-variable here.)
 
 | period | slope (obs on pred) | 95% CI | intercept | r² |
 |---|---:|---|---:|---:|
-| walk-forward | **0.4985** | ±0.0686 | 26.64 | 0.078 |
-| frozen holdout | **0.5135** | ±0.1214 | 25.28 | 0.079 |
-| 2026 dev | 0.4081 | ±0.2103 | 31.03 | 0.040 |
-| by season 2023 / 2024 / 2025 | 0.4977 / 0.4850 / 0.5129 | ±0.114 / ±0.122 / ±0.086 | | 0.085 / 0.071 / 0.079 |
+| walk-forward | **0.5032** | ±0.0691 | 26.41 | 0.0784 |
+| frozen holdout | **0.5173** | ±0.1221 | 25.09 | 0.0789 |
+| 2026 dev | 0.4138 | ±0.2127 | 30.76 | 0.0401 |
+| by season 2023 / 2024 / 2025 | 0.5037 / 0.4889 / 0.5164 | ±0.115 / ±0.123 / ±0.122 | 26.38 / 27.81 / 25.08 | 0.0852 / 0.0707 / 0.0789 |
 
 The slope is **stable at ~0.50 in every season and every period**. The ratings explain **7.8%** of
 total-score variance (r² = 0.078), against **29%** of margin variance (margin slope 0.898 walk-forward,
@@ -179,16 +186,16 @@ above, applied only to decompose the error; not a proposed model):
 | total range | predicted % | predicted % (mean-calibrated) | observed % |
 |---|---:|---:|---:|
 | 0–9 | 0.04 | 0.02 | 0.08 |
-| 10–19 | 1.56 | 0.97 | 1.12 |
-| 20–29 | 8.23 | 6.68 | 5.71 |
-| 30–39 | 17.09 | 16.46 | 13.85 |
-| 40–49 | 21.13 | 22.40 | 23.24 |
-| 50–59 | 19.00 | 20.85 | 23.03 |
+| 10–19 | 1.56 | 0.97 | 1.13 |
+| 20–29 | 8.23 | 6.68 | 5.72 |
+| 30–39 | 17.10 | 16.46 | 13.85 |
+| 40–49 | 21.13 | 22.38 | 23.24 |
+| 50–59 | 19.00 | 20.84 | 23.03 |
 | 60–69 | 13.87 | 15.01 | 16.69 |
-| 70–79 | 8.79 | 9.00 | 9.30 |
-| 80–89 | 5.03 | 4.72 | 4.84 |
-| 90–109 | 4.05 | 3.23 | 2.04 |
-| **110+** | **1.21** | **0.66** | **0.08** |
+| 70–79 | 8.79 | 9.01 | 9.30 |
+| 80–89 | 5.03 | 4.73 | 4.84 |
+| 90–109 | 4.05 | 3.24 | 2.04 |
+| **>110** | **1.12** | **0.60** | **0.08** |
 
 Threshold view (walk-forward, uncalibrated): the model puts **29.0%** of mass at ≤ 40 against
 **23.1%** observed (+5.9 pp), **19.1%** at ≥ 70 against **16.3%** (+2.8 pp), **10.3%** at ≥ 80
@@ -196,9 +203,10 @@ against **7.0%** (+3.3 pp), and **7.4%** at ≥ 85 against **4.1%** (+3.3 pp). B
 over-weighted before calibration.
 
 After mean calibration the low end is close (30–39 still +2.6 pp heavy), but **the upper tail stays
-heavy**: 0.66% of mass above 110 against 0.08% observed — about 16 games predicted, 2 observed.
-At R × 1.5 it is still 0.20%, 2.5× observed. That is a genuine **shape** excess in the extreme tail,
-not a scale effect.
+heavy**: **0.60%** of mass above 110 against **0.08%** observed — **14.4 games** predicted, 2 observed.
+At R × 1.30 it is still 0.30% (7 games), and at R × 1.5, 0.20% (4.8 games), 2.5× observed. That is a
+genuine **shape** excess in the extreme tail, though it is ~1% of games and may not be the binding
+constraint once the mean and R are corrected.
 
 The very low end (0–9) is *under*-predicted (0.02% vs 0.08%) — but that is 2 observed games out of
 2,397, so it is not a material part of the failure.
@@ -211,23 +219,23 @@ The diagnostic decomposition shifts each frozen PMF so its mean equals the fitte
 (shape preserved, NegBin2 μ scaled, R held), then optionally rescales the spread. This is a
 **measurement device**, not a fit, not a candidate, and not used to claim any gate would pass.
 
-**A. Mean correction only** (shrink predicted total by the fitted slope):
+**A. Mean correction only** (shrink predicted total by the fitted slope; NegBin2 mean scaled, R held):
 
 | bucket | n | residual bias after | mean PIT after | KS p after |
 |---|---:|---:|---:|---:|
-| < 40 | 176 | −1.22 | 0.483 | 0.508 |
-| 40–50 | 712 | +0.66 | 0.520 | 0.042 |
-| 50–60 | 970 | +0.06 | 0.512 | 0.057 |
-| 60–70 | 434 | −0.95 | 0.498 | 0.177 |
-| > 70 | 105 | +0.90 | 0.533 | 0.201 |
+| < 40 | 176 | −1.16 | 0.484 | 0.518 |
+| 40–50 | 712 | +0.68 | 0.520 | 0.043 |
+| 50–60 | 971 | +0.05 | 0.511 | 0.060 |
+| 60–70 | 437 | −1.19 | 0.494 | 0.138 |
+| > 70 | 101 | +1.95 | 0.548 | 0.088 |
 
 Every bucket's conditional mean PIT moves to ~0.50 and every bucket passes or is marginal. The
 conditional bias is essentially removed by a single scale on the mean.
 
-But the pooled PIT **still rejects** (KS p = 0.0018) and the per-season picture is mixed
-(2023 p = 0.090, 2024 p = 0.008, 2025 p = 0.380). So the mean is not the whole story.
+But the pooled PIT **still rejects** (KS p = 0.0025) and the per-season picture is mixed
+(2023 p = 0.100, 2024 p = 0.009, 2025 p = 0.361). So the mean is not the whole story.
 
-**B. Dispersion after mean correction.** RMSE / mean predictive SD = 16.10 / 17.65 = **0.91**, i.e.
+**B. Dispersion after mean correction.** RMSE / mean predictive SD = 16.10 / 17.76 = **0.91**, i.e.
 ~9% too wide, concentrated at the high end:
 
 | bucket | RMSE/SD before | RMSE/SD after mean correction |
@@ -236,28 +244,29 @@ But the pooled PIT **still rejects** (KS p = 0.0018) and the per-season picture 
 | 40–50 | 1.07 | 0.96 |
 | 50–60 | 0.89 | 0.90 |
 | 60–70 | 0.84 | 0.85 |
-| > 70 | 0.82 | 0.86 |
+| > 70 | 0.82 | 0.84 |
 | all | 0.94 | 0.91 |
 
 Mean correction fixes the low-end narrowness exactly (1.33 → 1.00) and leaves the high-end
-over-dispersion intact (0.82 → 0.86). So there are **two separable components**: a location gradient
-(large, fixes the low end and most of the conditional PIT) and a high-μ over-dispersion (small,
-survives the location fix).
+over-dispersion nearly intact (0.82 → 0.84). So there are **two separable components**: a location
+gradient (large, fixes the low end and most of the conditional PIT) and a high-μ over-dispersion
+(small, survives the location fix).
 
 **C. R sensitivity after mean correction** (shape fixed, dispersion scaled):
 
 | R multiplier | pooled PIT KS p | mean PIT |
 |---|---:|---:|
-| 1.00 | 0.0018 | 0.5104 |
-| 1.10 | **0.0533** | 0.5084 |
-| 1.15 | **0.0773** | 0.5075 |
-| 1.20 | 0.0727 | 0.5067 |
-| 1.30 | 0.0519 | 0.5052 |
+| 1.00 | 0.0025 | 0.5102 |
+| 1.10 | 0.0527 | 0.5082 |
+| 1.15 | **0.0932** | 0.5074 |
+| 1.20 | 0.0784 | 0.5066 |
+| 1.30 | 0.0552 | 0.5051 |
 
-A **10–15% increase in R** (less over-dispersion) takes the pooled PIT from rejection to marginal
-acceptance. Since R is fitted per block by moments on **uncalibrated** residuals, this is coherent:
-the too-variable means inflate the residual variance, the moment fit answers with a too-small R, and
-after the mean is corrected the fitted R is too wide by roughly the same 10–15%.
+A **10–20% increase in R** (less over-dispersion) takes the pooled PIT from rejection to marginal
+acceptance, peaking at R × 1.15 (p = 0.093). Since R is fitted per block by moments on
+**uncalibrated** residuals, this is coherent: the too-variable means inflate the residual variance,
+the moment fit answers with a too-small R, and after the mean is corrected the fitted R is too small
+by roughly 10–20%.
 
 **D. Shape.** With the mean corrected and R × 1.15, the PIT passes by the 5% threshold but only just,
 and the >110 tail is still heavy. The body shape is not the problem — the 50–60 bucket is uniform at
@@ -267,21 +276,21 @@ baseline and after correction. The residual is a **tail** defect at high totals.
 
 ## 7. Verdict, with the numbers that carry it
 
-**Primary — conditional bias (location).** Predicted total is over-extreme: slope **0.4985 ± 0.0686**
-walk-forward, **0.5135 ± 0.1214** holdout, **0.485–0.513** by season. Conditional mean PIT runs
+**Primary — conditional bias (location).** Predicted total is over-extreme: slope **0.5032 ± 0.0691**
+walk-forward, **0.5173 ± 0.1221** holdout, **0.489–0.516** by season. Conditional mean PIT runs
 **0.648 (<40) → 0.404 (>70)** walk-forward, the same ordering in every season and on the holdout.
 Mean bias is **+0.04**, so this is a slope error, not a level error. Correcting the mean alone moves
 every bucket to ~0.50 and removes the low-end narrowness (RMSE/SD 1.33 → 1.00).
 
 **Secondary — over-dispersion at high totals.** After mean correction, RMSE/SD = **0.91** pooled,
-**0.85–0.86** in the 60+ buckets; R × 1.10–1.15 restores PIT uniformity. The moment-fitted R is
-entangled with the mean error, so this is partly a downstream artefact and partly a real high-μ
-dispersion miss.
+**0.84–0.85** in the 60+ buckets; R × 1.10–1.20 restores PIT uniformity (p 0.053–0.093). The
+moment-fitted R is entangled with the mean error, so this is partly a downstream artefact and partly
+a real high-μ dispersion miss.
 
-**Tertiary — heavy extreme upper tail (shape).** Predicted mass above 110 is **0.60%** against
-**0.08%** observed (26.8 games vs 2), still **0.42%** at R × 1.15 and **0.20%** at R × 1.5. This is
-a genuine NegBin2 tail excess, but it is ~1% of games and is not the binding constraint on the gate
-by itself.
+**Tertiary — heavy extreme upper tail (shape).** Predicted mass above 110 is **1.11% uncalibrated
+(26.6 games) and 0.60% after mean calibration (14.4 games)**, against **0.08% observed (2 games)**;
+still **0.42% (10 games)** at R × 1.15 and **0.20% (4.8 games)** at R × 1.5. This is a genuine
+NegBin2 tail excess, but it is ~1% of games and is not the binding constraint on the gate by itself.
 
 **Not implicated:** a global mean bias (it is zero), and a wrong body shape (the central buckets are
 uniform when centred correctly). The marginal PIT's near-uniform histogram — deciles
@@ -300,7 +309,7 @@ change the evidence points at.
    ~0.50 and stable, so one scale parameter is enough. Mechanically this is the same kind of
    correction the margin side already receives implicitly: margin's slope is 0.90–0.98, close enough
    to 1 that the miss is invisible in its PIT; the total's 0.50 is not.
-2. **Refit R after (or jointly with) the mean scale.** Expect R to rise ~10–15%. Fitting R on
+2. **Refit R after (or jointly with) the mean scale.** Expect R to rise ~10–20%. Fitting R on
    calibrated residuals instead of raw ones is the principled version of the same change.
 3. **Only if the tail still fails after 1–2:** address the upper tail explicitly. A NegBin2 variance
    function with a less aggressive μ² term (or a lighter-tailed family) is the candidate; the
@@ -344,11 +353,25 @@ walk-forward (refit per block) and holdout (frozen), and the same in all three s
 ```bash
 cd /root/lp-fbs-archive
 /root/legendarypicks/backend/venv/bin/python3 - <<'PY'
-# Every number in this document is recomputed from the frozen artifacts:
-#   research/fbs/phase4/pmf/per_observation_scores.csv
-#   research/fbs/phase4/pmf/margin_total_pmf.npz
-#   research/fbs/phase4/per_game_parameters.csv
-# No refit, no model code executed, no writes outside this branch.
+import numpy as np, pandas as pd
+from scipy import stats
+
+# The calibration slope and intercept (Sec. 4, Sec. 7)
+h = pd.read_csv('research/fbs/phase4/pmf/per_observation_scores.csv')
+wf = h[(h.model == 'H0b') & (h.period == 'walk_forward')]
+s = stats.linregress(wf.pred_total, wf.obs_total)
+print(f"OLS obs_total ~ pred_total: slope={s.slope:.4f} +/-{1.96*s.stderr:.4f} "
+      f"intercept={s.intercept:.3f} r2={s.rvalue**2:.4f} n={len(wf)}")
+
+# The >110 predicted mass (Sec. 5, Sec. 7)
+z = np.load('research/fbs/phase4/pmf/margin_total_pmf.npz', allow_pickle=True)
+ids = {str(g): i for i, g in enumerate(z['game_id'])}
+idx = [ids[str(g)] for g in wf.game_id]
+pmf = z['H0b_total'][idx].astype(np.float64)
+print(f"uncalibrated >110: {pmf[:, 111:].sum(1).mean()*100:.2f}% "
+      f"({pmf[:, 111:].sum(1).sum():.1f} games)")
+print(f"observed >110:     {np.mean(wf.obs_total > 110)*100:.2f}% "
+      f"({int((wf.obs_total > 110).sum())} games)")
 PY
 ```
 
