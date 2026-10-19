@@ -97,9 +97,9 @@ def sha256_json(value: Any) -> str:
 # under it keep rule_version 'goal-diff-1'; new rows record RULE_VERSION.
 # ---------------------------------------------------------------------------
 
-RULE_VERSION = "leeway-1"
+RULE_VERSION = "leeway-2"
 LEGACY_RULE_VERSION = "goal-diff-1"
-# The printed edge, in percentage points, a +1.5 cover must clear to be taken.
+# The printed edge, in points, a +1.5 cover must clear to be taken.
 PICK_EDGE_THRESHOLD = 1.0
 
 def _round1(value: float) -> float:
@@ -237,6 +237,22 @@ def _candidate_record(candidate: dict, quote: dict | None) -> dict:
             "line_source": quote.get("source"), "line_captured_at_utc": quote.get("captured_at_utc")}
 
 
+def _underdog_points_edge(forecast: dict, puck: float, favourite: str) -> float | None:
+    """Points by which the model makes the Vegas underdog beat its +1.5 line.
+
+    This is the S the card prints: locked NYR -1.5 against model NYR -0.2 is
+    "Edge 1.3 pts (ANA)". Positive means the underdog covers; negative means the
+    favourite does.
+    """
+    margin = forecast.get("projected_goal_differential_home")
+    if margin is None:
+        return None
+    if isinstance(margin, bool) or not isinstance(margin, (int, float)) or not math.isfinite(margin):
+        return None
+    favourite_margin = float(margin) if favourite == "home" else -float(margin)
+    return abs(float(puck)) - favourite_margin
+
+
 def model_pick(home: str, away: str, forecast: dict, quote: dict | None,
                game_id: str | None = None) -> dict | None:
     """Micah's leeway hierarchy. Every game gets a pick.
@@ -261,11 +277,18 @@ def model_pick(home: str, away: str, forecast: dict, quote: dict | None,
         favourite = "home" if float(puck) < 0 else "away"
         underdog = "away" if favourite == "home" else "home"
 
-    # 1 — a confident +1.5 on the Vegas underdog.
-    if underdog is not None and ("spread", underdog) in by_market:
-        record = _candidate_record(by_market[("spread", underdog)], quote)
-        if record["edge"] is not None and _round1(record["edge"] * 100.0) > PICK_EDGE_THRESHOLD:
-            return record
+    # 1 — a confident +1.5 on the Vegas underdog. S is the points edge the card
+    # prints ("Edge 1.3 pts (ANA)"), not a probability difference.
+    if underdog is not None and favourite is not None and puck is not None:
+        points_edge = _underdog_points_edge(forecast, puck, favourite)
+        if points_edge is not None and _round1(points_edge) > PICK_EDGE_THRESHOLD:
+            if ("spread", underdog) in by_market:
+                return _candidate_record(by_market[("spread", underdog)], quote)
+            return {"market": "spread", "side": underdog, "line": 1.5, "price": None,
+                    "model_probability": None, "push_probability": 0.0,
+                    "market_probability": None, "edge": None, "expected_value": None,
+                    "line_source": quote.get("source"),
+                    "line_captured_at_utc": quote.get("captured_at_utc")}
 
     # 2 — the Vegas favourite at -1.5, but only when the model agrees it is the favourite.
     if favourite is not None and ("ml", favourite) in by_market:

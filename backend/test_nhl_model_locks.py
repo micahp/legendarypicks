@@ -558,7 +558,7 @@ class NHLModelLocks(unittest.TestCase):
         self.con.commit()
         payload = locks_payload(os.path.join(self.tmp.name, "nhl-model.db"), 2026)
         pick = payload["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
-        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("spread", "away", 1.5))
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("ml", "home", None))
         self.assertTrue(pick["priced"])
         self.assertTrue(pick["qualifies"])
         self.assertIsNone(pick["result"])
