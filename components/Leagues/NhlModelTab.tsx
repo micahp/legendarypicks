@@ -195,7 +195,7 @@ function pickLabel(pick: ModelPick, home: string, away: string) {
   return `${pick.side === 'over' ? 'Over' : 'Under'} ${one(pick.line ?? 0)}`
 }
 
-function ProjectionCardView({ away, home, startUtc, forecast, status, live, awayRecord, homeRecord }: {
+function ProjectionCardView({ away, home, startUtc, forecast, status, live, awayRecord, homeRecord, preview = false }: {
   away: string
   home: string
   startUtc: string
@@ -204,6 +204,7 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
   live?: BovadaLine
   awayRecord?: string
   homeRecord?: string
+  preview?: boolean
 }) {
   const grade = forecast.grade
   const isGraded = grade != null
@@ -217,7 +218,7 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
   const frozen = pick?.quote ?? null
   const basis = frozen ?? live ?? null
   // An unlocked preview's quote is current, never an immutable locked line.
-  const locked = status !== 'UNLOCKED' && frozen != null
+  const locked = !preview && frozen != null
   const lines = marketLines(home, away, forecast, basis, locked)
   const totals = marketTotals(forecast, basis, locked)
   const moved = locked && live != null &&
@@ -333,7 +334,7 @@ function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model
 function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
   return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status="UNLOCKED" live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
+    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} preview live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
   )
 }
 

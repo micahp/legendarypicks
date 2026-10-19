@@ -27,10 +27,10 @@ beforeEach(() => {
 })
 
 describe('NHL model tab previews', () => {
-  it('shows unlocked projections without a LOCKED chip and keeps them out of the record', async () => {
+  it('shows unlocked projections without a status chip and keeps them out of the record', async () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('UNLOCKED')).toBeTruthy()
+    expect(screen.queryByText('UNLOCKED')).toBeNull()
     expect(screen.queryByText('LOCKED')).toBeNull()
     expect(screen.getByTitle('Models lock 90 mins before kickoff')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
