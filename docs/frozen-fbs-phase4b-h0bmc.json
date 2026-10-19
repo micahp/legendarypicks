@@ -133,6 +133,25 @@
     }
   ],
   "candidate": "H0b-MC",
+  "f3_paired_vs_H0b": {
+    "blocks": 65,
+    "hi": -0.213093,
+    "holdout": {
+      "blocks": 22,
+      "hi": -0.079834,
+      "lo": -0.461849,
+      "mean": -0.272873,
+      "n": 807,
+      "period": "holdout"
+    },
+    "lo": -0.433123,
+    "mean": -0.323993,
+    "method": "utc_week_block_bootstrap_paired_game_id",
+    "n": 2397,
+    "period": "walk_forward",
+    "reps": 2000,
+    "seed": 20261017
+  },
   "files": {
     "bucket_pit.csv": {
       "bytes": 663,

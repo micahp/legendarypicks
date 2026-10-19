@@ -203,8 +203,11 @@ a finding, not used to re-specify the candidate.
 - **F2 — bias was not the binding constraint.** F2's trigger is "slope CI contains 1.0 but G-CAL
   total still rejects at 5%, pooled or per-bucket". The total PIT **passes** (0.0869) and the
   per-bucket reading does not fail. **F2's PIT trigger is not met.**
-- **F3 — the correction hurt.** Total CRPS improved by 0.324 on walk-forward and 0.273 on the
-  holdout, both in the right direction. **Not triggered.**
+- **F3 — the correction hurt.** Paired on `game_id` against the frozen H0b per-game `crps_total`,
+  UTC week-block bootstrap (2000 reps, seed 20261017): walk-forward mean **−0.323993**
+  [**−0.433123, −0.213093**], 65 blocks, n = 2,397; holdout mean **−0.272873** [**−0.461849,
+  −0.079834**], 22 blocks, n = 807. Both intervals lie entirely below zero — the correction improved
+  total CRPS. **Not triggered.**
 - **F4 — a gate fails.** **Triggered.** G-CAL fails on the walk-forward 50% total coverage
   (0.5561 vs 0.50 ± 0.05).
 
