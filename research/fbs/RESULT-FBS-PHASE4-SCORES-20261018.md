@@ -174,3 +174,16 @@ narrows the CP3 gap to one sub-market.
   `MANIFEST.json` (SHA-256 of every artifact, population counts, gate verdict).
 - `docs/frozen-fbs-phase4-scores.json` — the frozen summary of this run.
 - `docs/MODEL-CHECKPOINTS.md` — the five-checkpoint standard, copied from the manager brief.
+
+## Reproduction check
+
+Re-executed 2026-10-18 after the interval-support patch, on the same code and data:
+
+- `summary_by_period.csv`, `paired.csv` and `block_parameters.csv` reproduce **byte-for-byte** (service:
+  `sha256sum -c` OK on all three), so the population is unchanged at 2,397 walk-forward / 807 holdout /
+  350 in 2026.
+- `docs/frozen-fbs-phase4-scores.json` rebuilds identically from the artifacts.
+- The gate table is unchanged: G-SAMPLE pass, G-DIST pass, **G-CAL fail**, G-SPREAD pass, G-TOTAL pass;
+  verdict NOT_ADOPTED.
+
+The run is deterministic given seed 20261017 and 2,000 bootstrap replicates.
