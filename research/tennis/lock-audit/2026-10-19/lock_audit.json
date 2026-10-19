@@ -1,0 +1,690 @@
+{
+ "databases": [
+  {
+   "db": "prod",
+   "records": [
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185364",
+     "league": "wta",
+     "locked_at": "2026-10-15T06:30:05.683921+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.501956960263795,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-15",
+     "game_id": "184954",
+     "league": "atp",
+     "locked_at": "2026-10-15T18:03:29+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6635997048876674,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-15",
+     "game_id": "184955",
+     "league": "atp",
+     "locked_at": "2026-10-15T18:03:29+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.7024622202986697,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185366",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:03:29+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.930724536567357,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185361",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:07:26.517879+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5907685151956866,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185362",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:07:26.517879+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.8565475138421376,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185363",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:07:26.517879+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6308272078640689,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185365",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:07:26.517879+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.7571742031599823,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185367",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:07:26.517879+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.500534012223471,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185372",
+     "league": "wta",
+     "locked_at": "2026-10-16T02:52:33.382492+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5880862636127522,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185371",
+     "league": "wta",
+     "locked_at": "2026-10-16T03:33:23.326044+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.757475667563151,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-16",
+     "game_id": "184956",
+     "league": "atp",
+     "locked_at": "2026-10-16T06:13:14.004613+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5756719036492313,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185370",
+     "league": "wta",
+     "locked_at": "2026-10-16T06:13:14.030364+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5865134336115769,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-16",
+     "game_id": "184957",
+     "league": "atp",
+     "locked_at": "2026-10-16T09:10:51.360673+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6278329196401276,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185369",
+     "league": "wta",
+     "locked_at": "2026-10-16T10:12:48.797640+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v1",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.8058835313205829,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-17",
+     "game_id": "184945",
+     "league": "atp",
+     "locked_at": "2026-10-17T08:12:59.224574+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.824314896917,
+      "blend_Grass": 0.750140383655,
+      "blend_Hard": 0.79408902237,
+      "global_only": 0.827437449969
+     },
+     "stored_probability": 0.7940890223704492,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-17",
+     "game_id": "185374",
+     "league": "wta",
+     "locked_at": "2026-10-17T08:12:59.243746+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.624887355456,
+      "blend_Grass": 0.530900423818,
+      "blend_Hard": 0.561768809492,
+      "global_only": 0.528765106887
+     },
+     "stored_probability": 0.5617688094924749,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-17",
+     "game_id": "185373",
+     "league": "wta",
+     "locked_at": "2026-10-17T09:38:05.419013+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.799344373075,
+      "blend_Grass": 0.786544591363,
+      "blend_Hard": 0.825880187814,
+      "global_only": 0.788112092706
+     },
+     "stored_probability": 0.8258801878143839,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-17",
+     "game_id": "184946",
+     "league": "atp",
+     "locked_at": "2026-10-17T10:08:37.228888+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.529623642757,
+      "blend_Grass": 0.659297454415,
+      "blend_Hard": 0.716409575747,
+      "global_only": 0.579088677049
+     },
+     "stored_probability": 0.7164095757474213,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-18",
+     "game_id": "184947",
+     "league": "atp",
+     "locked_at": "2026-10-18T07:36:06.644493+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.646876103316,
+      "blend_Grass": 0.551595261034,
+      "blend_Hard": 0.516128943396,
+      "global_only": 0.648494356142
+     },
+     "stored_probability": 0.5161289433957534,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-18",
+     "game_id": "185375",
+     "league": "wta",
+     "locked_at": "2026-10-18T10:06:50.616022+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.558349121823,
+      "blend_Grass": 0.585304383333,
+      "blend_Hard": 0.636102790124,
+      "global_only": 0.574859640737
+     },
+     "stored_probability": 0.6361027901243637,
+     "tournament_id": "381"
+    },
+    {
+     "event": "BNB Ningbo Open",
+     "game_date": "2026-10-19",
+     "game_id": "185544",
+     "league": "wta",
+     "locked_at": "2026-10-19T09:38:33.934166+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.664474503992,
+      "blend_Grass": 0.547517280334,
+      "blend_Hard": 0.621145034275,
+      "global_only": 0.636900838143
+     },
+     "stored_probability": 0.6211450342750321,
+     "tournament_id": "963"
+    },
+    {
+     "event": "BNB Ningbo Open",
+     "game_date": "2026-10-19",
+     "game_id": "185533",
+     "league": "wta",
+     "locked_at": "2026-10-19T11:12:42.566791+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.523045163263,
+      "blend_Grass": 0.582026564989,
+      "blend_Hard": 0.670425476726,
+      "global_only": 0.624950201238
+     },
+     "stored_probability": 0.6704254767258967,
+     "tournament_id": "963"
+    }
+   ],
+   "rows": 23,
+   "tally": {
+    "tennis-free-daily-v1 | unresolved": 9,
+    "tennis-global-surface-elo-blend-v1 | unresolved": 6,
+    "tennis-global-surface-elo-blend-v2 | blend_Hard": 8
+   }
+  },
+  {
+   "db": "dev",
+   "records": [
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-15",
+     "game_id": "184954",
+     "league": "atp",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6635997048876674,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-15",
+     "game_id": "184955",
+     "league": "atp",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.7024622202986697,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185361",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5907685151956866,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185362",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.8565475138421376,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185363",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6308272078640689,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185364",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.501956960263795,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185365",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.7571742031599823,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185366",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.930724536567357,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-15",
+     "game_id": "185367",
+     "league": "wta",
+     "locked_at": "2026-10-15T18:21:44.549666+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.500534012223471,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185372",
+     "league": "wta",
+     "locked_at": "2026-10-16T02:33:20.316913+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5880862636127522,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185371",
+     "league": "wta",
+     "locked_at": "2026-10-16T03:49:35.461801+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.757475667563151,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-16",
+     "game_id": "184956",
+     "league": "atp",
+     "locked_at": "2026-10-16T05:58:12.129553+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.5756719036492313,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-16",
+     "game_id": "184957",
+     "league": "atp",
+     "locked_at": "2026-10-16T09:22:02.596215+00:00",
+     "model_version": "tennis-free-daily-v1",
+     "projection_modelVersion": "tennis-free-daily-v1",
+     "rule": "unresolved",
+     "stored_probability": 0.6278329196401276,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-16",
+     "game_id": "185369",
+     "league": "wta",
+     "locked_at": "2026-10-16T10:56:06.196626+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "unresolved",
+     "stored_probability": 0.8058835313205829,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-17",
+     "game_id": "184945",
+     "league": "atp",
+     "locked_at": "2026-10-17T07:56:23.713425+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.824314896917,
+      "blend_Grass": 0.750140383655,
+      "blend_Hard": 0.79408902237,
+      "global_only": 0.827437449969
+     },
+     "stored_probability": 0.7940890223704492,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-17",
+     "game_id": "185374",
+     "league": "wta",
+     "locked_at": "2026-10-17T08:27:41.449565+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.624887355456,
+      "blend_Grass": 0.530900423818,
+      "blend_Hard": 0.561768809492,
+      "global_only": 0.528765106887
+     },
+     "stored_probability": 0.5617688094924749,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-17",
+     "game_id": "185373",
+     "league": "wta",
+     "locked_at": "2026-10-17T09:56:05.987600+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.799344373075,
+      "blend_Grass": 0.786544591363,
+      "blend_Hard": 0.825880187814,
+      "global_only": 0.788112092706
+     },
+     "stored_probability": 0.8258801878143839,
+     "tournament_id": "381"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-17",
+     "game_id": "184946",
+     "league": "atp",
+     "locked_at": "2026-10-17T10:22:02.320227+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.529623642757,
+      "blend_Grass": 0.659297454415,
+      "blend_Hard": 0.716409575747,
+      "global_only": 0.579088677049
+     },
+     "stored_probability": 0.7164095757474213,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Rolex Shanghai Masters",
+     "game_date": "2026-10-18",
+     "game_id": "184947",
+     "league": "atp",
+     "locked_at": "2026-10-18T07:56:05.196932+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.646876103316,
+      "blend_Grass": 0.551595261034,
+      "blend_Hard": 0.516128943396,
+      "global_only": 0.648494356142
+     },
+     "stored_probability": 0.5161289433957534,
+     "tournament_id": "315"
+    },
+    {
+     "event": "Dongfeng Voyah Wuhan Open",
+     "game_date": "2026-10-18",
+     "game_id": "185375",
+     "league": "wta",
+     "locked_at": "2026-10-18T09:56:05.024758+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.558349121823,
+      "blend_Grass": 0.585304383333,
+      "blend_Hard": 0.636102790124,
+      "global_only": 0.574859640737
+     },
+     "stored_probability": 0.6361027901243637,
+     "tournament_id": "381"
+    },
+    {
+     "event": "BNB Ningbo Open",
+     "game_date": "2026-10-19",
+     "game_id": "185533",
+     "league": "wta",
+     "locked_at": "2026-10-19T10:56:05.380317+00:00",
+     "matched_rules": [
+      "blend_Hard"
+     ],
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "projection_modelVersion": "tennis-global-surface-elo-blend-v2",
+     "rule": "blend_Hard",
+     "rule_values": {
+      "blend_Clay": 0.523045163263,
+      "blend_Grass": 0.582026564989,
+      "blend_Hard": 0.670425476726,
+      "global_only": 0.624950201238
+     },
+     "stored_probability": 0.6704254767258967,
+     "tournament_id": "963"
+    }
+   ],
+   "rows": 21,
+   "tally": {
+    "tennis-free-daily-v1 | unresolved": 13,
+    "tennis-global-surface-elo-blend-v2 | blend_Hard": 7,
+    "tennis-global-surface-elo-blend-v2 | unresolved": 1
+   }
+  }
+ ],
+ "tolerance": 1e-09
+}
