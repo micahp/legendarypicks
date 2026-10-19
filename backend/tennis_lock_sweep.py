@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Freeze tennis projections for matches entering their pre-match hour.
+
+Lock creation used to happen only inside the projections API handler, so a match
+was locked only if somebody loaded the page during its 60-minute window. A match
+nobody opened was never locked, and an unlocked match can never be graded,
+because grading reads the frozen pregame snapshot.
+
+This sweep moves the freeze onto the ingest timer so it does not depend on a page
+view. It reuses the same projection path the handler uses, so the frozen numbers
+are identical; only the trigger changes.
+"""
+from __future__ import annotations
+
+import datetime as dt
+import json
+import sqlite3
+
+from tennis_daily_projections import (
+    needs_projection_refresh,
+    project_day,
+    store_candidates,
+    stored_candidates,
+)
+
+LOCK_WINDOW = dt.timedelta(hours=1)
+TENNIS_LEAGUES = ("atp", "wta")
+
+
+def _sackmann(con: sqlite3.Connection, league: str, espn_id: str) -> str | None:
+    """Canonical Sackmann id for an ESPN athlete, or None when the spine does not know it."""
+    if not espn_id:
+        return None
+    row = con.execute("SELECT id FROM players WHERE league=? AND espn_id=?",
+                      (league, espn_id)).fetchone()
+    if row is None:
+        return None
+    mapped = con.execute("SELECT source_player_key FROM player_source_ids "
+                         "WHERE source='sackmann' AND league=? AND player_id=?",
+                         (league, row["id"])).fetchone()
+    return str(mapped[0]) if mapped else None
+
+
+def due_matches(con: sqlite3.Connection, now: dt.datetime,
+                window: dt.timedelta = LOCK_WINDOW) -> dict[tuple[str, str], list[dict]]:
+    """Scheduled tennis matches starting within `window`, grouped by (league, model_day)."""
+    start = now.astimezone(dt.timezone.utc).isoformat()
+    end = (now.astimezone(dt.timezone.utc) + window).isoformat()
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    rows = con.execute(
+        "SELECT league, game_id, start_time, payload FROM scoreboard_snapshots "
+        "WHERE league IN (?,?) AND state='pre' AND start_time > ? AND start_time <= ? "
+        "ORDER BY start_time, game_id",
+        (*TENNIS_LEAGUES, start, end),
+    ).fetchall()
+    for row in rows:
+        league = str(row["league"])
+        game = json.loads(row["payload"]) if row["payload"] else {}
+        home, away = game.get("home") or {}, game.get("away") or {}
+        home_id = str(home.get("athlete_id") or "")
+        away_id = str(away.get("athlete_id") or "")
+        match = {
+            "gameId": str(row["game_id"]), "tour": league,
+            "event": game.get("event"), "round": game.get("round"),
+            "tournamentId": str(game.get("tournament_id") or ""),
+            "startTime": row["start_time"], "status": "scheduled",
+            "home": home.get("name") or home.get("abbrev") or "Home",
+            "away": away.get("name") or away.get("abbrev") or "Away",
+            "homeAthleteId": home_id, "awayAthleteId": away_id,
+            "identity": {
+                "home": {"espn_id": home_id, "sackmann_player_id": _sackmann(con, league, home_id)},
+                "away": {"espn_id": away_id, "sackmann_player_id": _sackmann(con, league, away_id)},
+            },
+        }
+        model_day = str(row["start_time"])[:10]
+        grouped.setdefault((league, model_day), []).append(match)
+    return grouped
+
+
+def sweep(con: sqlite3.Connection, now: dt.datetime | None = None,
+          window: dt.timedelta = LOCK_WINDOW) -> dict:
+    """Lock every tennis match now inside its window. Safe to call every minute."""
+    now = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
+    report = {"considered": 0, "locked": 0, "already_locked": 0, "no_projection": 0}
+    for (league, model_day), matches in due_matches(con, now, window).items():
+        stored = stored_candidates(con, league, model_day)
+        if stored is None or needs_projection_refresh(stored, matches):
+            stored = project_day(con, league, model_day, matches)
+            store_candidates(con, league, model_day, stored, now.isoformat())
+        for match in matches:
+            report["considered"] += 1
+            candidate = stored.get(match["gameId"])
+            if candidate is None:
+                # The match is not projectable (missing player identity or history).
+                # Never fabricate a lock from a projection that does not exist.
+                report["no_projection"] += 1
+                continue
+            cursor = con.execute(
+                "INSERT OR IGNORE INTO tennis_model_locks"
+                "(league,game_date,game_id,start_time,locked_at,projection,model_version) "
+                "VALUES(?,?,?,?,?,?,?)",
+                (league, model_day, match["gameId"], match["startTime"], now.isoformat(),
+                 json.dumps(candidate), candidate.get("modelVersion")),
+            )
+            if cursor.rowcount:
+                report["locked"] += 1
+            else:
+                report["already_locked"] += 1
+    con.commit()
+    return report
+
+
+def main() -> None:
+    import os
+    db = os.environ.get("LP_DB_PATH") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
+    con = sqlite3.connect(db)
+    con.row_factory = sqlite3.Row
+    print(sweep(con))
+
+
+if __name__ == "__main__":
+    main()
