@@ -21,6 +21,8 @@ import sys
 import urllib.parse
 import urllib.request
 
+import check_nfl_schedule_scores as cs
+
 SEASON = 2026
 DB = os.environ.get("LP_DB_PATH")
 URL = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds"
@@ -77,8 +79,11 @@ def main(argv):
         "SELECT team_name, team FROM nfl_teams WHERE season = ?", (SEASON,))}
     events, remaining = fetch(key)
     print("odds api nfl events: %d   requests remaining this month: %s" % (len(events), remaining))
-    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    now_dt = dt.datetime.now(dt.timezone.utc)
+    now = now_dt.isoformat()
     rows = []
+    started = []
+    unguarded = []
     for ev in events:
         home, away = names.get(ev["home_team"]), names.get(ev["away_team"])
         label = "%s @ %s" % (ev["away_team"], ev["home_team"])
@@ -86,23 +91,42 @@ def main(argv):
             print("  SKIP %s: unmapped team name" % label)
             continue
         found = con.execute(
-            "SELECT game_id FROM nfl_schedule WHERE season = ? AND game_type = 'REG' "
-            "AND home_team = ? AND away_team = ? AND home_score IS NULL", (SEASON, home, away)).fetchall()
+            "SELECT game_id, gameday, gametime FROM nfl_schedule "
+            "WHERE season = ? AND game_type = 'REG' "
+            "AND home_team = ? AND away_team = ? AND home_score IS NULL",
+            (SEASON, home, away)).fetchall()
         if len(found) != 1:
             print("  SKIP %s: %d unscored schedule matches" % (label, len(found)))
+            continue
+        gid, gameday, gametime = found[0]
+        if not gameday:
+            print("  SKIP %s: no gameday, kickoff cannot be guarded" % label)
+            unguarded.append(gid)
+            continue
+        kickoff = cs.kickoff_utc(gameday, gametime)
+        if kickoff <= now_dt:
+            print("  SKIP %s: kickoff %s has passed" % (label, kickoff.isoformat()))
+            started.append(gid)
             continue
         book, lines = lines_for(ev)
         if book is None:
             print("  SKIP %s: no bookmaker with all three markets" % label)
             continue
         print("  %s -> %s [%s] spread=%s total=%s home_ml=%s away_ml=%s" % (
-            label, found[0][0], book, lines["spread_line"], lines["total_line"],
+            label, gid, book, lines["spread_line"], lines["total_line"],
             lines["home_moneyline"], lines["away_moneyline"]))
-        rows.append(("nfl", found[0][0], "theoddsapi:" + book, now, now, lines["spread_line"],
+        rows.append(("nfl", gid, "theoddsapi:" + book, now, now, lines["spread_line"],
                      lines["total_line"], lines["home_moneyline"], lines["away_moneyline"]))
     if not write:
-        print("dry run: %d rows would be written. Pass --write to insert." % len(rows))
-        return
+        print("dry run: %d rows would be inserted by --write; "
+              "in-play skipped: %d; unguarded (no gameday) skipped: %d."
+              % (len(rows), len(started), len(unguarded)))
+        return 0
+    if started or unguarded:
+        print("refusing --write: in-play skipped: %d; unguarded (no gameday) skipped: %d; "
+              "no rows written." % (len(started), len(unguarded)))
+        return 1
+    print("writing %d rows (captured_at=%s)" % (len(rows), now))
     con.executemany(
         "INSERT INTO nfl_line_snapshots (league, game_id, source, captured_at, source_ingested_at, "
         " spread_line, total_line, home_moneyline, away_moneyline) VALUES (?,?,?,?,?,?,?,?,?)", rows)
@@ -111,4 +135,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))
