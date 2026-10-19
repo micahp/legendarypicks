@@ -15,11 +15,39 @@ from typing import Any
 
 import tennis_match_sim as sim
 import tennis_point_model as point_model
+from espn_client.scoreboard import major_for_event
 
 ELO_START = 1500.0
 ELO_K = 32.0
 P0_SHRINK_MATCHES = 10.0
-SURFACE_BY_EVENT = {"315": "Hard", "381": "Hard"}  # Shanghai and Wuhan, reviewed event map.
+# Every ESPN tournament id we have actually observed, kept as a fast path. This is NOT the
+# coverage list: ids for most events are unknown until the event is first seen, so surfaces
+# are keyed on the canonical major name from espn_client.scoreboard. Coverage and surfaces
+# then come from one list and cannot drift apart.
+SURFACE_BY_EVENT = {"189": "Hard", "315": "Hard", "381": "Hard", "959": "Hard"}
+SURFACE_BY_MAJOR = {
+    "Australian Open": "Hard",
+    "French Open": "Clay",
+    "Wimbledon": "Grass",
+    "US Open": "Hard",
+    "Indian Wells": "Hard",
+    "Miami Open": "Hard",
+    "Monte-Carlo Masters": "Clay",
+    "Madrid Open": "Clay",
+    "Italian Open": "Clay",
+    "Canadian Open": "Hard",
+    "Cincinnati Open": "Hard",
+    "Shanghai Masters": "Hard",
+    "Paris Masters": "Hard",
+    "China Open": "Hard",
+    "Qatar Open": "Hard",
+    "Dubai": "Hard",
+    "Wuhan Open": "Hard",
+    "ATP Finals": "Hard",
+    "WTA Finals": "Hard",
+}
+# Men's Grand Slams are best of five; every other tracked event on both tours is best of three.
+FIVE_SET_MAJORS = {"Australian Open", "French Open", "Wimbledon", "US Open"}
 HISTORY_START = 20200101
 DOUBLE_FAULT_FIELDS = ("homeDoubleFaults", "awayDoubleFaults")
 
@@ -211,8 +239,9 @@ def project_day(con: sqlite3.Connection, tour: str, day: str, matches: list[dict
     out: dict[str, dict[str, Any]] = {}
     for match in matches:
         event_id = str(match.get("tournamentId") or "")
-        surface = SURFACE_BY_EVENT.get(event_id)
-        best_of = 3
+        major = major_for_event(tour, match.get("event"))
+        surface = SURFACE_BY_EVENT.get(event_id) or SURFACE_BY_MAJOR.get(major or "")
+        best_of = 5 if tour == "atp" and major in FIVE_SET_MAJORS else 3
         sides = {}
         for side in ("home", "away"):
             athlete_id = str(match.get(f"{side}AthleteId") or "")

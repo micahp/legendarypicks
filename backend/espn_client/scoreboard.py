@@ -67,15 +67,27 @@ _WTA_MAJORS = [
 ]
 
 
-def _is_major(league: str, event_short_name: str) -> bool:
-    """True if this ESPN event is a Grand Slam, Masters/1000, or Finals."""
+def major_for_event(league: str, event_short_name):
+    """Canonical name of the tracked major this ESPN event is, or None.
+
+    The single source of truth for what we cover. `_is_major` and the projection
+    surface map both go through here, so the coverage list and the surface list
+    cannot drift apart.
+    """
+    if league not in ("atp", "wta"):
+        return None
     maj = _ATP_MAJORS if league == "atp" else _WTA_MAJORS
     name_lower = (event_short_name or "").lower()
-    for _, aliases in maj:
+    for canonical, aliases in maj:
         for alias in aliases:
             if alias.lower() in name_lower:
-                return True
-    return False
+                return canonical
+    return None
+
+
+def _is_major(league: str, event_short_name: str) -> bool:
+    """True if this ESPN event is a Grand Slam, Masters/1000, or Finals."""
+    return major_for_event(league, event_short_name) is not None
 
 
 def _num(x):
