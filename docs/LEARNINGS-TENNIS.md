@@ -415,3 +415,65 @@ Rules for this file:
   scratch directory, showed no difference above 1e-12.
 - **Stop:** Assuming that the match-clustered interval is the conservative one. Tournament clustering is wider here.
 - **Start:** Computing the tournament interval beside every match-clustered interval, as the protocol already requires.
+
+## L37. 2026-10-19. [null] On WTA, M2 on 2000 history does not clearly beat M1. The winner incumbent is ATP only.
+
+- **Known:** On WTA, M2 on 2000 history minus M1 is −0.00032 [−0.00079, +0.00016] over 2015 to 2026 (41,862 matches),
+  negative in 9 of 12 years. For 2020 to 2026 it is −0.00014 [−0.00085, +0.00055], negative in 4 of 7 years. On ATP
+  the same margin is −0.00218 [−0.00273, −0.00164], negative in 12 of 12 years. WTA keeps M1 by rule 4. That is a
+  default, not a validation.
+- **Evidence:** `research/tennis/rolling/2026-10-19/a1_per_tour.json`, `tours.wta.paired_vs_M1` and `tours.wta.windows`
+  (commit `ad582786`); `docs/RESULTS-tennis-incumbent-a1-2026-10-19.md`.
+- **Stop:** Reading the pooled winner incumbent of 2026-10-18 as applying to both tours.
+- **Start:** Reporting the incumbent per tour for every target, with the same thresholds.
+
+## L38. 2026-10-19. The lock label `tennis-global-surface-elo-blend-v2` now covers two surface rules.
+
+- **Known:** All 15 resolved v2 lock rows (prod 8, dev 7) reproduce the 50/50 logit blend with a Hard surface, to 1e-9.
+  Through 2026-10-18 every v2 row is on Shanghai (315) or Wuhan (381). The first row on another event, Ningbo (963),
+  was locked on 2026-10-19 at 09:38:33 UTC in prod and 10:56:05 UTC in dev. It uses a surface that only `ae5cb074`
+  adds. The label did not change in `ab0080b7` or `ae5cb074`, so one label now names two forecasts.
+- **Evidence:** `research/tennis/lock-audit/2026-10-19/lock_audit.json`; `git show ab0080b7 -- backend/tennis_daily_projections.py`
+  and `ae5cb074` (no `modelVersion` line changed in either).
+- **Stop:** Treating a label as the identity of a forecast rule.
+- **Start:** Changing `modelVersion` in the same commit as any change to the winner rule, and checking a lock's rule with
+  `research/tennis/lock-audit/2026-10-19/lock_audit.py` before calling it a version.
+
+## L39. 2026-10-19. The rolling "M2 as deployed" is not the rule that wrote the locks through 2026-10-18.
+
+- **Known:** `rolling_origin.py` gives deployed M2 a surface term on every main-tour row. The live rule through
+  2026-10-18 applied one only on Shanghai and Wuhan. Sackmann rows carry no ESPN event id, so the narrow rule could not
+  be scored. Neither form passes rule 1. Deployed M2 minus M1 is +0.01385 on ATP and +0.01905 on WTA.
+- **Evidence:** `docs/RESULTS-tennis-incumbent-a1-2026-10-19.md`, "Lock table" section; `research/tennis/rolling/2026-10-19/a1_per_tour.json`.
+- **Stop:** Assuming the rolling M2 matches the live rule before `ae5cb074`, or scoring a model by its label.
+- **Start:** Writing the live rule's surface coverage into the protocol before scoring it.
+
+## L40. 2026-10-19. [open] A dev lock carries the v2 label before any committed v2 code, and its rule cannot be checked.
+
+- **Known:** Dev game 185369 (WTA, Wuhan), locked 2026-10-16 at 10:56:06 UTC, carries the v2 label. The first commit with
+  the label, `396d78d6`, is 2026-10-16 20:22 UTC, and no committed backend code has it earlier. The row stores no
+  player identity, so its rule cannot be tested. The probability matches the prod v1 row for the same match.
+- **Evidence:** `research/tennis/lock-audit/2026-10-19/lock_audit.json` (dev records);
+  `git log -S 'tennis-global-surface-elo-blend-v2' --all -- backend`.
+- **Stop:** Assuming every v2 lock came from committed code.
+- **Start:** Recording the code state (commit or working tree) with each lock, or a rule hash.
+
+## L41. 2026-10-19. [open] Adding ATP and WTA 500 coverage left the winner population unchanged, and its counts are not reconciled.
+
+- **Known:** The winner population is 37,196 ATP and 41,862 WTA matches, the same as the 2026-10-18 run. The Sackmann
+  `A` level holds both the 250 and the 500 events, so 500s were already in the history. The 500 commits (`ae5cb074`,
+  `745549da`) store draws and scoreboards, and none of their files is a match-table loader. Reconciling the ESPN 500
+  draws with the Sackmann 500 rows is not done.
+- **Evidence:** `research/tennis/rolling/2026-10-19/a1_per_tour.json`, `population`; `git show --stat ae5cb074 745549da`.
+- **Stop:** Adding draw-level 500 rows to any match table before the counts are reconciled.
+- **Start:** Reconciling the two 500 sources (ESPN draws and Sackmann `A` rows) by tournament before any 500 row is used.
+
+## L42. 2026-10-19. [null] A well-calibrated forecast can still lose on Brier, so calibration does not select the incumbent.
+
+- **Known:** Deployed M2 has a calibration slope of 1.00 on ATP for 2020 to 2026 (interval 0.95 to 1.05), which is
+  better than M1 (0.72) and M2 on 2000 history (0.81). On WTA its slope is 1.18, so it is underconfident, and its Brier
+  is the worst of the three. The protocol does not use calibration for selection, and it does not change any margin.
+- **Evidence:** `research/tennis/rolling/2026-10-19/a1_per_tour.json`, `tours.*.calibration`; table "Calibration" in
+  `docs/RESULTS-tennis-incumbent-a1-2026-10-19.md`.
+- **Stop:** Reading a good calibration slope as evidence that a model should be the incumbent.
+- **Start:** Reporting calibration beside every paired margin, as this run did, and keeping it out of selection.
