@@ -43,8 +43,11 @@ ANCHORS = {"atp": (0.22802, 11777), "wta": (0.21596, 13066)}  # M1 Brier, 2023 t
 SURVIVAL = ro.SURVIVAL_YEARS
 
 
-def winner_forecasts(db: str, tour: str) -> dict[str, Any]:
-    """Same rows, order, side draws and updates as ro.winner_records, but keeping each forecast probability."""
+def winner_forecasts(db: str, tour: str, k: float = ro.ELO_K) -> dict[str, Any]:
+    """Same rows, order, side draws and updates as ro.winner_records, but keeping each forecast probability.
+
+    `k` is the Elo K. The default is the registered value, so the A1 numbers do not depend on it.
+    """
     conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
         rows = conn.execute(
@@ -80,13 +83,13 @@ def winner_forecasts(db: str, tour: str) -> dict[str, Any]:
         full_updates, full_surface_updates, live_updates, live_surface_updates = [], [], [], []
         for _, _, surface, winner, loser, _, _ in group:
             if surface is not None:
-                full_updates.append((winner, loser, ro.ELO_K * (1.0 - ro.elo_p(full_g[winner], full_g[loser]))))
-                full_surface_updates.append((winner, loser, surface, ro.ELO_K * (
+                full_updates.append((winner, loser, k * (1.0 - ro.elo_p(full_g[winner], full_g[loser]))))
+                full_surface_updates.append((winner, loser, surface, k * (
                     1.0 - ro.elo_p(full_s[(winner, surface)], full_s[(loser, surface)]))))
             if date >= ro.LIVE_HISTORY_START:
-                live_updates.append((winner, loser, ro.ELO_K * (1.0 - ro.elo_p(live_g[winner], live_g[loser]))))
+                live_updates.append((winner, loser, k * (1.0 - ro.elo_p(live_g[winner], live_g[loser]))))
                 if surface:
-                    live_surface_updates.append((winner, loser, surface, ro.ELO_K * (
+                    live_surface_updates.append((winner, loser, surface, k * (
                         1.0 - ro.elo_p(live_s[(winner, surface)], live_s[(loser, surface)]))))
         for winner, loser, delta in full_updates:
             full_g[winner] += delta
