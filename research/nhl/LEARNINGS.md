@@ -62,4 +62,28 @@ committed before any fit).
   matches, leakage audit 92,008 checks / 0 mismatches, PIT/KS improves both sides
   (b5 home 0.0514/away 0.0705 → st home 0.0438/away 0.0606).
 - The audit no longer needs a refit to check the scores. That closes the auditability gap.
-- Step B (penalty-opportunity volume) is a separate pre-registered experiment, not started here.
+
+### 2026-10-19 — Step B: penalty-opportunity volume on ST (FAILS keep rule)
+
+Pre-registration committed before any fit at `675ca38b`
+(`research/nhl/special-teams-penalty-preregistration-2026-10-19.md`). Report:
+`research/nhl/special-teams-penalty-report-2026-10-19.md`.
+
+- **B fails the pre-registered keep rule.** Adding penalties drawn per 60 on top of ST (V1)
+  improves the win-probability scores — Brier 0.243299 → 0.243003, Δ +0.000296
+  [+0.000125, +0.000463]; log loss 0.679578 → 0.678967, Δ +0.000611 [+0.000265, +0.000952] —
+  but **does not improve the goal distribution**: CRPS 0.958671 → 0.958755, Δ −0.000084
+  [−0.000467, +0.000293], CI includes zero and the point estimate is worse; PIT/KS degrades
+  marginally (home 0.0438 → 0.0440, away 0.0606 → 0.0607). The registered keep rule required
+  Brier **and** log loss **and** CRPS, so the candidate is **not kept**. Recorded as **no**.
+- **V2 (drawn + taken) fails the same clause** and additionally has a wrongly-signed, unstable
+  taken coefficient (expected negative; fitted +0.0174 … −0.0142 across seasons). Rejected.
+- **V1's drawn coefficient is stable and correctly signed** (+0.0786 to +0.1023 across 2019–2025),
+  so the win-probability signal is real, not noise. The honest reading: penalty volume moves the
+  joint distribution enough to help Brier/log loss, but not the per-team goal marginals that CRPS
+  and PIT measure. The ST candidate's goal distribution was already its strongest axis.
+- Population identical to ST: 9,147 eval games, 0 penalty-feature drops. 2025 is **not** a clean
+  holdout (inspected in the ST run). `forecasts_penalty.csv` emitted for auditability.
+- No adoption, no gate/threshold change, no retuning, no promotion. Tiered pick policy still
+  NO-GO. CP4/CP5 not attempted. Stop on this lever; a future attempt would need a new
+  pre-registration and a different distribution-level candidate.
