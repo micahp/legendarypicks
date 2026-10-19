@@ -352,3 +352,20 @@ after the mean fix (14.4 games vs 2), still 2.5× at R × 1.5.
 fitted on prior seasons, then refit R on calibrated residuals — not another distribution family. A
 marginal PIT pass at n = 807 does not certify a total distribution when the conditional bias is this
 large; condition every PIT on the predicted value.
+
+## 2026-10-19 — The mean correction fixed the PIT and the gate moved to the 50% coverage clause
+**Learned:** H0b-MC (prior-season OLS calibration of the H0b total mean) fixed the conditional mean:
+post-correction slope **0.9043 [0.7800, 1.0285]** contains 1.0, and pooled total PIT goes
+**0.0016 → 0.0869**. It still failed G-CAL, now on the 50% central coverage: **0.5340 → 0.5561**,
+**+0.0561 > 0.05** (fails by 0.0061), while the 50% *shortest* interval sits at **0.4977**. The two
+50% definitions disagree, so "coverage at 50%" is under-specified for the next pre-registration. The
+correction also compressed the predicted-total range, leaving the pre-declared <40 and >70 buckets
+with **n=9 and n=3**: the bucket reading lost power exactly where the old bias was largest. The 60–70
+bucket still rejects (KS **p=0.0053**, mean PIT **0.527**) even though its mean is inside [0.45, 0.55].
+**Evidence:** `RESULT-FBS-PHASE4B-H0B-MC-20261019.md`, `research/fbs/phase4b/` (summary, bucket_pit,
+calibration, per_game_shift), `docs/frozen-fbs-phase4b-h0bmc.json`.
+**Consequence:** name which 50% interval the gate means (central vs shortest) before the next
+coverage-gated candidate. A mean calibration that fixes the PIT can trade the failure into the
+coverage leg; report both interval definitions side by side. Bucket readings defined on the corrected
+prediction lose power when the correction compresses the range — define buckets on the
+*pre-correction* prediction or keep fixed-count bins.
