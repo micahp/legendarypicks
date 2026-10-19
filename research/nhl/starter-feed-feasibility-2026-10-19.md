@@ -102,17 +102,27 @@ information were **perfect**:
 - Fitted goalie effect: `κ = −4.72` ⇒ GA-rate multiplier 0.968 (95th-pct goalie) to 1.020
   (5th-pct goalie), a **±2–3% GA swing**.
 
-Translated to the outcome gates: a `0.0071` average movement in probability changes Brier on
-the order of `(0.0071)² ≈ 5×10⁻⁵` — an order of magnitude smaller than the paired-CI
-half-width of the goalie null (≈ `4×10⁻⁴`). The goalie report's outcome gates already failed
-*with the expected-starter heuristic*; the perfect-feed recomputation moves the same small
-lever. The distribution gate already passes without a real feed (CRPS 1.3917 → 1.3872, PIT
-improves both sides) — so the starter feed's marginal value is confined to a movement the
-game-level scores cannot resolve.
+The decisive argument is direct, not arithmetic: **the perfect-feed recomputation already failed
+the outcome gates.** The observed-starter forecast is exactly what a perfect feed delivers, and
+it did not beat the league-average-goalie baseline on Brier or log loss — the paired,
+game-clustered CIs included zero. If the ceiling case itself fails the gate, no less-accurate
+feed can clear it. That argument alone carries the DROP.
+
+The Brier arithmetic sometimes quoted here — a `0.0071` movement changing Brier "on the order of
+`(0.0071)² ≈ 5×10⁻⁵`" — is **illustrative, not a bound**, and the comparison to the CI half-width
+is dimensionally invalid: a probability movement and a Brier interval are different units. The
+true per-game Brier delta from a probability shift `d = p₂ − p₁` is `2·d·(p₁ − y) + d²`. Its
+first-order term `2·d·(p₁ − y)` is ~`1×10⁻³` per game and does **not** average to zero when the
+starter signal is informative. So the honest statement is not "the effect is 10× below the noise
+floor"; it is "the perfect-feed case was measured and failed the gate" — a statement about the
+gate outcome, not a unit comparison. The distribution gate, by contrast, already passes without a
+real feed (CRPS 1.3917 → 1.3872, PIT improves both sides), so a feed's marginal value would be
+confined to the goal distribution, not the outcome.
 
 Plainly: the null is not caused by the starter gap alone. The goalie effect size is genuinely
 small (±2–3% GA). Closing the starter gap raises starter accuracy but does not raise the
-lever's size. The ceiling is too low to matter for the game outcome.
+lever's size. The perfect-feed bound already failed the outcome gate; that is the bound that
+matters.
 
 ## 5. Recommendation: DROP
 
@@ -122,9 +132,10 @@ Do not invest in a starter feed. Reasons, in order of weight:
    only probable-starter sources are third-party with no pre-game archive (Daily Faceoff,
    Left Wing Lock) or paid (Rotowire). Micah wants real prices before any paid swap, and the
    value below does not justify one.
-2. **The perfect-feed ceiling is below the noise floor.** `|Δp| ≈ 0.0071` average movement is
-   ~10× smaller than the outcome-gate CI half-width. Even a 100%-accurate feed cannot convert
-   the G2 null.
+2. **The perfect-feed ceiling already failed the outcome gate.** The observed-starter
+   recomputation *is* the perfect-feed bound, and that forecast did not beat the
+   league-average-goalie baseline on Brier or log loss. If the ceiling case fails the gate, no
+   less-accurate feed can clear it.
 3. **The distribution already improves without a feed.** The real, defensible finding from the
    goalie work — CRPS/PIT improvement — is obtained without any starter signal. A feed would
    only sharpen the pre-confirmation goal distribution slightly, not change outcomes.

@@ -16,11 +16,14 @@ Full write-up: `research/nhl/starter-feed-feasibility-2026-10-19.md`.
 - The only probable-starter sources are third-party: Daily Faceoff and Left Wing Lock (free
   to read, no pre-game archive, ToS-restricted scraping) and Rotowire (paid history). There is
   no free, self-hosted, archivable option.
-- **Perfect-feed ceiling is below the noise floor.** The goalie report's retrospective
-  observed-starter recomputation *is* the perfect-feed bound: win probability moves
-  `|Δp| = 0.0071` on average (max 0.0573). That changes Brier by ~`5×10⁻⁵`, about 10× smaller
-  than the outcome-gate CI half-width (~`4×10⁻⁴`). Even a 100%-accurate feed cannot convert the
-  G2 null.
+- **Perfect-feed ceiling already failed the outcome gate.** The goalie report's retrospective
+  observed-starter recomputation *is* the perfect-feed bound (win probability moves
+  `|Δp| = 0.0071` on average, max 0.0573) — and that observed-starter forecast did not beat the
+  league-average-goalie baseline on Brier or log loss (CIs included zero). If the ceiling case
+  fails the gate, no less-accurate feed can clear it. The "Brier changes by ~5×10⁻⁵" arithmetic
+  sometimes quoted is illustrative only, not a bound: a probability movement and a Brier interval
+  are different units, and the first-order Brier term `2·d·(p−y)` does not average to zero when
+  the signal is informative.
 - The G2 null is **not** caused by the starter gap alone: the fitted goalie lever is a
   ±2–3% GA swing (`κ = −4.72`, multiplier 0.968–1.020). Closing the gap raises starter accuracy,
   not the lever's size. The goal distribution already improves without a feed (CRPS 1.3917 →
