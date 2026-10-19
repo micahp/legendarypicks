@@ -97,8 +97,10 @@ def sha256_json(value: Any) -> str:
 # under it keep rule_version 'goal-diff-1'; new rows record RULE_VERSION.
 # ---------------------------------------------------------------------------
 
-RULE_VERSION = "ev-max-2-settlement"
+RULE_VERSION = "leeway-1"
 LEGACY_RULE_VERSION = "goal-diff-1"
+# The printed edge, in percentage points, a +1.5 cover must clear to be taken.
+PICK_EDGE_THRESHOLD = 1.0
 
 def _round1(value: float) -> float:
     """Mirror JavaScript Number(x.toFixed(1)): one decimal, halves away from zero."""
@@ -237,19 +239,81 @@ def _candidate_record(candidate: dict, quote: dict | None) -> dict:
 
 def model_pick(home: str, away: str, forecast: dict, quote: dict | None,
                game_id: str | None = None) -> dict | None:
-    """The model's candidate for one game: the highest-expected-value market the quote prices.
+    """Micah's leeway hierarchy. Every game gets a pick.
 
-    Returns None when the quote prices no market. A projection without a price is not a
-    recommendation, and this will not manufacture one.
+    1. The Vegas underdog (+1.5) whose printed edge exceeds 1.0 → that side +1.5.
+    2. Otherwise the Vegas favourite at -1.5, when it is also the model's favourite
+       → its moneyline. An edge near 1.0 is too thin to ask a favourite to cover.
+    3. Otherwise a total: 5.5 when the projected total is 6.0 or below, 6.5 above;
+       Over when the projection is above the line, Under when it is below.
+
+    A win is safer than a cover, so the cover is only taken with a clear edge. The
+    edge is printed only when that bet's price is posted (Over 5.5 has a price only
+    when the posted total is 5.5). S is the edge in percentage points, one decimal.
     """
-    records = [_candidate_record(candidate, quote)
-               for candidate in market_candidates(home, away, forecast, quote, game_id)]
-    return max(records, key=lambda record: record["expected_value"]) if records else None
+    quote = quote or {}
+    candidates = market_candidates(home, away, forecast, quote, game_id)
+    by_market = {(candidate["market"], candidate["side"]): candidate for candidate in candidates}
+
+    favourite = underdog = None
+    puck = quote.get("home_puck_line")
+    if puck is not None and abs(float(puck)) == 1.5:
+        favourite = "home" if float(puck) < 0 else "away"
+        underdog = "away" if favourite == "home" else "home"
+
+    # 1 — a confident +1.5 on the Vegas underdog.
+    if underdog is not None and ("spread", underdog) in by_market:
+        record = _candidate_record(by_market[("spread", underdog)], quote)
+        if record["edge"] is not None and _round1(record["edge"] * 100.0) > PICK_EDGE_THRESHOLD:
+            return record
+
+    # 2 — the Vegas favourite at -1.5, but only when the model agrees it is the favourite.
+    if favourite is not None and ("ml", favourite) in by_market:
+        p_home = _probability(forecast, "home_win_probability", "model pick")
+        if ("home" if p_home >= 0.5 else "away") == favourite:
+            return _candidate_record(by_market[("ml", favourite)], quote)
+
+    # 3 — a total for every remaining game.
+    projected = forecast.get("projected_total_goals")
+    if projected is None:
+        home_goals, away_goals = forecast.get("home_expected_goals"), forecast.get("away_expected_goals")
+        if home_goals is None or away_goals is None:
+            # An incomplete forecast cannot support rule 3. Fail closed rather than
+            # invent a total; the caller shows no pick for this model.
+            return None
+        projected = (_finite_number(forecast, "home_expected_goals", "model pick")
+                     + _finite_number(forecast, "away_expected_goals", "model pick"))
+    if isinstance(projected, bool) or not isinstance(projected, (int, float)) or not math.isfinite(projected):
+        raise NHLModelError("model pick has invalid projected_total_goals=%r" % (projected,))
+    line = 5.5 if projected <= 6.0 else 6.5
+    side = "over" if projected > line else "under"
+    posted = by_market.get(("total", side))
+    if posted is not None and float(posted["line"]) == line:
+        return _candidate_record(posted, quote)
+
+    # No price was posted for this line. The pick still stands; the edge is simply
+    # not printed, because there is no market probability to compare against.
+    gid = str(game_id or forecast.get("game_id") or "")
+    probabilities = _official_total_probabilities(forecast, line, gid)
+    if probabilities is not None:
+        p_over, p_under, push = probabilities
+    else:
+        p_over = _probability(forecast, "p_over_5.5" if line == 5.5 else "p_over_6.5", "model pick")
+        p_under, push = 1.0 - p_over, 0.0
+    return {"market": "total", "side": side, "line": line, "price": None,
+            "model_probability": p_over if side == "over" else p_under,
+            "push_probability": push, "market_probability": None,
+            "edge": None, "expected_value": None,
+            "line_source": quote.get("source"), "line_captured_at_utc": quote.get("captured_at_utc")}
 
 
 def pick_qualifies(pick: dict | None) -> bool:
-    """Whether a candidate is a recommendation rather than a lean: priced, and positive EV."""
-    return bool(pick) and pick.get("expected_value") is not None and pick["expected_value"] > 0
+    """Whether the pick can actually be taken: it must carry a posted price.
+
+    Every game gets a pick, so this no longer gates recommendation. It separates a
+    bettable number from a structural call whose line the book did not post.
+    """
+    return bool(pick) and pick.get("price") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -450,8 +514,9 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
                 protocol: str = LEGACY_PROTOCOL_VERSION) -> None:
     """Insert the immutable pick row for one model, or verify the existing one is identical.
 
-    A model with no priced market produces no row at all. The projection is still locked and
-    still exported; only the recommendation is absent.
+    Every game gets a pick under the leeway hierarchy. When the book posted no price
+    for the line the pick names, the row still records the call with a null price and
+    edge, so the recommendation is visible but not falsely framed as bettable.
     """
     if provenance not in PICK_PROVENANCE:
         raise NHLModelError("unknown pick provenance %r" % (provenance,))
@@ -460,7 +525,10 @@ def freeze_pick(con: sqlite3.Connection, game: dict, model_key: str, model_versi
     if pick is None:
         report["unpriced_models"] += 1
         return
-    freeze_quote(con, gid, quote or {})
+    # Only a priced pick has a quote to freeze. An unpriced structural call has no
+    # market probability, so there is nothing to point the record at.
+    if pick["price"] is not None:
+        freeze_quote(con, gid, quote or {})
     # How old the quote was when the decision was taken. Recorded even when it is too old to
     # price a recommendation, so the fallback is visible instead of silently accepted.
     quote_age_seconds = None
@@ -1297,7 +1365,7 @@ def export_pick(row: sqlite3.Row | None, grade: dict | None, quote: dict | None 
     """
     if row is None:
         return None
-    priced = row["line_captured_at_utc"] is not None
+    priced = row["price"] is not None
     age = row["quote_age_seconds"]
     # A quote older than the T-90 freshness window may still be frozen and shown, but it
     # cannot qualify a recommendation. An unknown age is left alone rather than treated as
@@ -1312,7 +1380,7 @@ def export_pick(row: sqlite3.Row | None, grade: dict | None, quote: dict | None 
             "protocol_version": row["protocol_version"], "quote_age_seconds": age,
             "provenance": row["provenance"], "selected_at_utc": row["selected_at_utc"],
             "priced": priced, "quote_fresh": fresh,
-            "qualifies": priced and fresh and row["expected_value"] is not None and row["expected_value"] > 0,
+            "qualifies": priced and fresh,
             "quote": quote, "result": None}
     if grade:
         pick["result"] = grade_pick(pick, grade)
@@ -1445,7 +1513,7 @@ def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime,
         # Same shape as a frozen pick, minus a result: a preview has nothing to grade yet.
         forecast["pick"] = None if pick is None else {
             **pick, "result": None, "rule_version": RULE_VERSION, "provenance": "preview",
-            "priced": True, "qualifies": pick_qualifies(pick), "quote": quote}
+            "priced": pick.get("price") is not None, "qualifies": pick_qualifies(pick), "quote": quote}
         game["models"][row["model_key"]] = forecast
     return list(games.values())
 
