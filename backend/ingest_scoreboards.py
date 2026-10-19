@@ -666,9 +666,28 @@ def main(argv=None):
             if cod_error:
                 print(f"  FAIL cod: {cod_error}")
                 status = 1
+    # Freeze tennis locks on the timer. Locking used to depend on somebody loading the
+    # projections page inside a 60-minute window; a match nobody opened was never
+    # locked and therefore never gradeable.
+    if not args.dry_run:
+        try:
+            import sqlite3 as _sqlite3
+            from tennis_lock_sweep import sweep as sweep_tennis_locks
+            con = _sqlite3.connect(scoreboard_store._db_path(), timeout=scoreboard_store.BUSY_TIMEOUT_SECONDS)
+            con.row_factory = _sqlite3.Row
+            try:
+                frozen = sweep_tennis_locks(con)
+            finally:
+                con.close()
+            if frozen["locked"] or frozen["no_projection"]:
+                print(f"  tennis locks: {frozen['locked']} frozen, "
+                      f"{frozen['already_locked']} already frozen, "
+                      f"{frozen['no_projection']} without a projection")
+        except Exception as exc:  # never let the sweep take the ingest down
+            print(f"  FAIL tennis locks: {exc}")
+            status = 1
     print(f"[scoreboards] {time.time() - started:.1f}s")
     return status
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
