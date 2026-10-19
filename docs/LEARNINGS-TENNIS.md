@@ -276,3 +276,142 @@ Rules for this file:
 - **Stop:** Starting several tour runs at once on the shared box.
 - **Start:** Running one tour at a time, and measuring peak memory (for example with `/usr/bin/time -v`) before any batch
   job that grows.
+
+## L24. 2026-10-18. The deployed M2 (Elo history from 2020-01-01) is worse than M1 on the rolling table. It is unvalidated in production.
+
+- **Known:** Pooled Brier difference against M1 is +0.01660 [+0.01565, +0.01755] over 79,058 matches, and it is better
+  than M1 in only 2 of 12 years (2025 and 2026). ATP +0.01385 [+0.01236, +0.01529]; WTA +0.01905 [+0.01770, +0.02035].
+  It fails the pre-declared rule. This confirms defect D4 in the state audit.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `winner`, `paired.both_pooled.M2_live` and
+  `years_negative`; `research/tennis/rolling/2026-10-18/ROLLING-TABLES.md`. Protocol in
+  `research/tennis/rolling/2026-10-18/PROTOCOL.md`.
+- **Stop:** Treating presence in `tennis_model_locks` as validation, which L17 already named.
+- **Start:** Pinning each lock version to its history start and to a validation record before it writes locks.
+
+## L25. 2026-10-18. The same blend formula, with Elo history from 2000-01-01, beats M1 pooled, but the gain is ATP only.
+
+- **Known:** Pooled Brier difference against M1 is −0.00120 [−0.00155, −0.00084] over 79,058 matches, better in 12 of 12
+  years. Tour split: ATP −0.00218 [−0.00272, −0.00162]; WTA −0.00032 [−0.00081, +0.00014], which is not clear. The
+  absolute gain is about 0.12 Brier points. The 50/50 weight is fixed, as specified in the live code, and nothing is
+  fitted, so no parameter was tuned on the rolling data.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `winner.paired.both_pooled.M2_2000`;
+  `research/tennis/rolling/2026-10-18/diagnostics.json`, `tour_check.winner`.
+- **Stop:** Quoting the pooled winner gain as a two-tour result.
+- **Start:** Reporting every winner claim with its tour split and interval.
+
+## L26. 2026-10-18. The whole gap between the deployed and validated M2 is the Elo history start. The update population has no effect.
+
+- **Known:** On identical rows, the start effect (2020 minus 2000) is +0.0178 [+0.0169, +0.0187] pooled and +0.00175
+  [+0.0011, +0.0024] on 2023 to 2026. The update-population effect (all rows minus rows with a surface) is exactly zero,
+  because the 2000 to 2026 main-tour window has no rows with a null surface: 0 of 104,106 ATP and 0 of 105,882 WTA rows
+  have a null surface.
+- **Evidence:** `research/tennis/rolling/2026-10-18/diagnostics.json`, `winner_effects`; the count query was run on
+  `backend/data/picks.dev.db` read-only on 2026-10-18.
+- **Stop:** Checking update populations first when a live blend underperforms its backtest.
+- **Start:** Checking the history start first. It is the cheapest explanation and, here, the complete one.
+
+## L27. 2026-10-18. [null] The deployed M2 is not clearly worse than M1 on 2023 to 2026, and its gap closes with each year of history.
+
+- **Known:** Against M1, the deployed M2's per-year difference is +0.0375 in 2015, falling to +0.0034 in 2023, +0.0014 in
+  2024, then −0.0007 in 2025 and −0.0031 in 2026. On 2023 to 2026 pooled it is +0.00081 [−0.00007, +0.00170], which is not
+  a clear loss. The version is not validated because the pooled test over 2015 to 2026 fails, not because 2023 to 2026
+  is clearly worse.
+- **Evidence:** `research/tennis/rolling/2026-10-18/ROLLING-TABLES.md`, the winner paired table; `diagnostics.json`,
+  `winner_vs_M1.M2_2020_all_rows`.
+- **Stop:** Calling the deployed M2 "validated after warm-up" on two years of data.
+- **Start:** Requiring the full pooled test before any version status is given.
+
+## L28. 2026-10-18. Total games: the competitiveness model is the CRPS incumbent on 2015 to 2026, and its log score is not the best.
+
+- **Known:** Against format-only, the format, surface and competitiveness model is −0.01123 [−0.01333, −0.00887] pooled,
+  better in 12 of 12 years. The point simulator is +0.23867 [+0.22687, +0.25142] and is worse in all 12 years. Against the
+  format and surface model, the competitiveness model's margin is −0.00936 [−0.01144, −0.00737]. Its log score is
+  3.0545, against 3.0498 for format-only, which has the best log score.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `games`; `ROLLING-TABLES.md`, the secondary
+  metrics table.
+- **Stop:** Choosing a total-games model by log score when CRPS was declared primary before the run.
+- **Start:** Showing the secondary metric next to the primary in every table, as the renderer now does.
+
+## L29. 2026-10-18. Aces and double faults: the P1 Gamma-Poisson beats P0 in every year and on both tours.
+
+- **Known:** Pooled margins over P0 Gamma-Poisson are −0.03850 [−0.03930, −0.03774] for aces and −0.01152 [−0.01217,
+  −0.01093] for double faults, each better in 12 of 12 years. By tour, aces: ATP −0.05708 [−0.05854, −0.05570], WTA
+  −0.02162 [−0.02231, −0.02092]. Double faults: ATP −0.00918 [−0.00979, −0.00856], WTA −0.01365 [−0.01461, −0.01268].
+  Selection is not calibration. L8 and L9 still hold.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `counts_aces` and `counts_double_faults`;
+  `research/tennis/rolling/2026-10-18/diagnostics.json`, `tour_check`.
+- **Stop:** Reading the incumbent selection as calibration.
+- **Start:** Doing CP3 (PIT and threshold reliability on the rolling rows) before any count distribution is promoted.
+
+## L30. 2026-10-18. The C0 reference is weak, so a clear win over it says little about exposure.
+
+- **Known:** Every model with player information beats C0 by a wide margin: P0 Gamma-Poisson by −0.31 CRPS on aces and P1
+  by −0.35. That makes the reference test easy to pass. The decisive comparisons are among the candidates: P0 against
+  P1 is −0.039 on aces and −0.012 on double faults.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `counts_aces.paired.both_pooled` and
+  `counts_double_faults.paired.both_pooled`.
+- **Stop:** Treating a clear win over C0 as evidence that exposure has value.
+- **Start:** Using P0 as the reference when the question is whether exposure adds value.
+
+## L31. 2026-10-18. The rolling pipeline reproduces the published anchors before it reports anything.
+
+- **Known:** The run reproduces M1 Brier on 2023 to 2026 (ATP 0.22802, WTA 0.21596), the simulator's total-games CRPS on
+  2023 to 2026 (ATP 3.5327, WTA 3.5572), and the eight Gamma-Poisson CRPS values on 2015 to 2026. It stops on any
+  mismatch. None mismatched.
+- **Evidence:** the `verification` field for each target in `rolling_summary.json`; the run log in the scratch directory.
+- **Stop:** Trusting a new evaluation table before its anchors pass.
+- **Start:** Keeping published anchors in every new evaluation script.
+
+## L32. 2026-10-18. [exclusion] E2 cannot be scored on the rolling table. Its count generators exist only uncommitted.
+
+- **Known:** The published E2 aggregates come from two generators that exist only uncommitted, in
+  `/root/lp-tennis-props/backend/tennis_props_count_mixtures.py` and `tennis_props_diagnostics.py`. No backend file on any
+  of the 104 local branches mentions `X_bbin`, `X_thin` or `e2_mae`. Under the E2 rule the count distributions cannot be
+  recomputed from committed code, so E2 is excluded. I did not refit it.
+- **Evidence:** `git grep -E "X_bbin|e2_mae|X_thin" <104 local branches> -- backend`, which returned no matches, run
+  2026-10-18; the two uncommitted files listed above.
+- **Stop:** Citing the E2 aggregates as reproducible.
+- **Start:** Committing a generator, with its frozen parameters, before any E2 comparison.
+
+## L33. 2026-10-18. Moving the total-games histogram start from 2022 to 2000 shifts the old window by at most 0.003 CRPS.
+
+- **Known:** On 2023 to 2026, the direct results move from the earlier document to this run: ATP format 3.363 to 3.366, ATP
+  competitiveness 3.359 to 3.360, WTA format 3.246 to 3.247, WTA competitiveness 3.231 to 3.229. The simulator is unchanged
+  at 3.5327 and 3.5572. The selection margins (0.009 and up) are larger than these shifts.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json` (records for 2023 to 2026), against
+  `research/tennis/total-games/2026-10-16/{atp,wta}.json` and `docs/TENNIS-TOTAL-GAMES-BACKTEST-2026-10-16.md`.
+- **Stop:** Changing a history start without measuring its effect on the window already reported.
+- **Start:** Stating the old-window sensitivity in the report, as the rolling report does.
+
+## L34. 2026-10-18. A verifier that has not passed on a known-good case can report false failures. Check it first.
+
+- **Known:** My first integrity check reported mixed years in every target, including the winner rows, where each cluster
+  has exactly one row. The bug was in the check: the minimum was initialised to zero, so it could never rise. With the
+  check corrected, 0 of 79,058 winner clusters, 0 of 70,216 total-games clusters, and 0 of 73,736 and 73,727 count clusters
+  mix years or tours.
+- **Evidence:** the corrected integrity check, run on the saved arrays under the scratch records directory, 2026-10-18.
+- **Stop:** Reading the output of a verifier that has not been run on a case where the answer is known.
+- **Start:** Running every new check on a case with a known answer first, such as singleton clusters, before reading it.
+
+## L35. 2026-10-18. The total-games simulator is the slow stage of the rolling build. Run it in the background.
+
+- **Known:** The process had used 5 minutes 42 seconds of CPU at the first check, about 5 minutes after launch, and 12
+  minutes 13 seconds at the second, with the total-games stage still running. The full build ran for roughly 25 to 30
+  minutes of wall time. That is approximate, because the run was not timed. The count stage is fast, because it streams
+  the replay instead of holding its rows in memory.
+- **Evidence:** `ps` CPU readings during the run on 2026-10-18; the run log.
+- **Stop:** Running the full build in the foreground.
+- **Start:** Running it in the background and polling the log, and writing per-row arrays to a scratch directory.
+
+## L36. 2026-10-18. The selected margins survive tournament clustering, and the rebuild with tournament clusters reproduced the first run exactly.
+
+- **Known:** The winner margin, the one with the narrowest interval, is −0.00120 [−0.00161, −0.00080] with 1,355
+  tournament clusters, against [−0.00155, −0.00084] with match clusters. The total-games margin is [−0.01159, −0.00723]
+  with tournament clusters, the aces margin [−0.04023, −0.03686] and the double-faults margin [−0.01235, −0.01079]. The
+  second build, which added tournament ids, reproduced every pooled, per-year and selection number of the first build,
+  and every verification anchor passed.
+- **Evidence:** `research/tennis/rolling/2026-10-18/rolling_summary.json`, `paired_tournament` and
+  `selection.margin_top_minus_runner_up.tournament_ci95`; a comparison of the first and second summaries, both in the
+  scratch directory, showed no difference above 1e-12.
+- **Stop:** Assuming that the match-clustered interval is the conservative one. Tournament clustering is wider here.
+- **Start:** Computing the tournament interval beside every match-clustered interval, as the protocol already requires.

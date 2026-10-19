@@ -4,6 +4,24 @@ Revised 2026-10-16. The 2026-10-14 revisions moved the starting point from the p
 and added a player-projection track (service points, aces, double faults, breaks and games), read from the same
 simulator and validated on its own counts. This revision adds a coverage audit for further inputs and outcomes.
 
+## Checkpoints (2026-10-18)
+
+Standard: `docs/MODEL-CHECKPOINTS.md`. Evidence for the current incumbents: `docs/TENNIS-ROLLING-VALIDATION-2026-10-18.md`
+(rolling origin, 2015 to 2026, development data). Every window here has been inspected, so none of these is a holdout.
+
+| # | Checkpoint | Status for the tennis incumbents |
+|---|---|---|
+| CP1 | Baseline established | **Passed.** Constant 0.5 and M1 Elo for the winner; format-only histogram for total games; prior-year tour and surface rate (C0) for aces and double faults. |
+| CP2 | Candidate validated chronologically | **Passed for the selected incumbents, on development data.** Winner: M2 on 2000 history (pooled Brier against M1 −0.00120, ATP only; WTA not clear). Total games: direct, format, surface and competitiveness (CRPS −0.00936 against format and surface). Aces and double faults: P1 Gamma-Poisson (CRPS −0.0385 and −0.0115 against P0). **Not passed for the deployed M2** (history from 2020-01-01: pooled Brier +0.0166 against M1, better in 2 of 12 years). |
+| CP3 | Distribution calibrated | **Not passed.** P1 Gamma-Poisson is under-dispersed on ATP aces and has a thin WTA ace upper tail (`docs/TENNIS-PROPS-CALIBRATION-2026-10-18.md`). Rolling calibration for total games has not been run. |
+| CP4 | Prospective confirmation | **Not passed.** No frozen, pre-event forecast has been scored against outcomes unknown when it was written. |
+| CP5 | Production integration approved | **Not passed.** Micah's decision. No version is pinned. |
+
+**Defect, open.** The lock table writes `tennis-global-surface-elo-blend-v2` (M2 with history from 2020-01-01). That version
+is unvalidated in production and fails the rolling table. The validated formula has history from 2000-01-01. The start
+date accounts for the whole gap (+0.0178 Brier pooled; the update-population effect is zero). Stopping or re-pinning
+the lock writer is a CP5 decision. It has not been changed.
+
 ## Question
 
 Track A, match: for a given player pair on a given surface and format, how likely is each player to win, and what are
