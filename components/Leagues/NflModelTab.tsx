@@ -138,13 +138,11 @@ function totalEdge(lock: Lock) {
 }
 
 function statusLabel(lock: Lock) {
-  if (lock.preview) return 'NOT LOCKED'
   if (!lock.grade) return 'AWAITING'
   return { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }[lock.grade.ats] || lock.grade.ats.toUpperCase()
 }
 
 function statusClass(lock: Lock) {
-  if (lock.preview) return 'text-amber-300'
   if (!lock.grade) return 'text-zinc-500'
   if (lock.grade.ats === 'win') return 'text-emerald-400'
   if (lock.grade.ats === 'loss') return 'text-rose-400'
@@ -152,11 +150,10 @@ function statusClass(lock: Lock) {
 }
 
 function lineCaptureLabel(lock: Lock) {
-  const kind = lock.preview ? 'Current line' : 'Frozen line'
   const time = lock.line.captured_at
-    ? `${lock.line.source === 'snapshot' ? 'captured' : lock.preview ? 'preview time' : 'lock time'} ${lock.line.captured_at}`
+    ? `${lock.line.source === 'snapshot' ? 'captured' : 'captured'} ${lock.line.captured_at}`
     : 'capture time unavailable'
-  return `${kind} · ${lock.line.source} · ${time}`
+  return `Line · ${lock.line.source} · ${time}`
 }
 
 function isMissedLock(game: ModelGame, version: string, now = Date.now()) {
@@ -212,8 +209,8 @@ function ModelAccuracy({ models, records }: { models: ModelInfo[]; records: Reco
 // card; the record adds the final score and the pick's result.
 export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mode: 'projection' | 'record' }) {
   const record = mode === 'record'
-  const status = record ? statusLabel(lock) : lock.preview ? 'PREVIEW' : 'LOCKED'
-  const tone = record ? statusClass(lock) : lock.preview ? 'text-amber-300' : 'text-emerald-400'
+  const status = record ? statusLabel(lock) : null
+  const tone = record ? statusClass(lock) : 'text-emerald-400'
   const projected = (value: number | null) => (value == null ? '—' : one(value))
   return (
     <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -242,10 +239,10 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
-        <span>{lock.preview ? 'Current line' : 'Frozen line'} <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
+        <span>Line <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
         <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
         <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
-        <span>{lock.preview ? 'Current total' : 'Frozen total'} <b className="font-medium tabular-nums text-zinc-100">{lock.line.total == null ? '—' : one(lock.line.total)}</b></span>
+        <span>Total <b className="font-medium tabular-nums text-zinc-100">{lock.line.total == null ? '—' : one(lock.line.total)}</b></span>
         <span>Model total <b className="font-medium tabular-nums text-zinc-100">{lock.total == null ? '—' : one(lock.total)}</b></span>
         <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
       </div>
@@ -265,11 +262,11 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
       {!lock ? <p className="mt-2 text-sm text-amber-400">No locked projection for this game.</p> : (
         <>
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6 xl:grid-cols-9">
-            <Metric label={lock.preview ? 'Current line' : 'Frozen line'} value={lineSide(game.home, game.away, lock.line.spread)} />
+            <Metric label="Line" value={lineSide(game.home, game.away, lock.line.spread)} />
             <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
             <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
             <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
-            <Metric label={lock.preview ? 'Current total' : 'Frozen total'} value={lock.line.total == null ? '—' : one(lock.line.total)} />
+            <Metric label="Total" value={lock.line.total == null ? '—' : one(lock.line.total)} />
             <Metric label="Model total" value={lock.total == null ? '—' : one(lock.total)} />
             <Metric label="Total edge" value={totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`} />
             <div className="min-w-0">
