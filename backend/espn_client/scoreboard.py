@@ -41,6 +41,24 @@ _ATP_MAJORS = [
     # ATP 500s Kalshi lists and the competition trades. ATP China Open (Beijing) is a 500, so the
     # 1000-only list dropped it while WTA's China Open (a 1000) passed: added 2026-10-04.
     ("China Open",             ["China Open"]),
+    # ATP 500 singles, 2026 (16 events). The tier comes from the ATP calendar as reported by
+    # toomanyrackets.com/atp-500-tournaments; each alias is the ESPN shortName observed on the
+    # scoreboard for that week on 2026-02-10 to 2026-10-27. Added 2026-10-18 with the multi-draw store.
+    ("Dallas Open",            ["Nexo Dallas Open"]),
+    ("Rotterdam Open",         ["ABN Amro Open"]),
+    ("Qatar ExxonMobil Open",  ["Qatar ExxonMobil Open"]),
+    ("Rio Open",               ["Rio Open"]),
+    ("Acapulco Open",          ["Abierto Mexicano Telcel"]),
+    ("Dubai",                  ["Dubai Duty Free Tennis Championships"]),
+    ("Barcelona Open",         ["Barcelona Open"]),
+    ("Munich Open",            ["BMW Open"]),
+    ("Hamburg Open",           ["Hamburg Open"]),
+    ("Halle Open",             ["Terra Wortmann Open"]),
+    ("Queen's Club",           ["HSBC Championships"]),
+    ("Washington",             ["Mubadala DC Open"]),
+    ("Tokyo Open",             ["Kinoshita Group Japan Open"]),
+    ("Vienna Open",            ["Erste Bank Open"]),
+    ("Basel",                  ["Swiss Indoors Basel"]),
     # Finals
     ("ATP Finals",             ["ATP Finals", "Nitto ATP Finals", "ATP World Tour Finals"]),
 ]
@@ -62,6 +80,26 @@ _WTA_MAJORS = [
     ("Cincinnati Open",        ["Cincinnati Open"]),
     ("China Open",             ["China Open"]),
     ("Wuhan Open",             ["Wuhan Open"]),
+    # WTA 500 singles, 2026 (17 events). The tier comes from tennis-db.com/wta/tournaments.md and the WTA's
+    # 2026 calendar announcement. Each alias is the ESPN shortName observed on the scoreboard for that week
+    # (2026-01-05 to 2026-10-27). Washington shares ESPN's event id with the ATP 500, so its alias matches both.
+    ("Brisbane International",  ["Brisbane International"]),
+    ("Adelaide International",  ["Adelaide International"]),
+    ("Abu Dhabi Open",          ["Abu Dhabi Open"]),
+    ("Mérida Open",             ["Mérida Open"]),
+    ("Charleston Open",         ["Charleston Open"]),
+    ("Linz Open",               ["Upper Austria Ladies Linz"]),
+    ("Stuttgart Open",          ["Porsche Tennis Grand Prix"]),
+    ("Strasbourg Open",         ["Internationaux de Strasbourg"]),
+    ("Queen's Club",            ["The HSBC Championships"]),
+    ("Berlin Open",             ["Berlin Tennis Open"]),
+    ("Bad Homburg Open",        ["Bad Homburg Open"]),
+    ("Washington",              ["Mubadala DC Open"]),
+    ("Monterrey Open",          ["Abierto GNP Seguros"]),
+    ("Guadalajara Open",        ["Guadalajara Open"]),
+    ("Singapore Tennis Open",   ["Singapore Tennis Open"]),
+    ("Ningbo Open",             ["Ningbo Open"]),
+    ("Pan Pacific Open",        ["Toray Pan Pacific Open"]),
     # Finals
     ("WTA Finals",             ["WTA Finals", "WTA Championships"]),
 ]
@@ -446,27 +484,39 @@ def tennis_draws_from_payload(league, payload):
     return draws
 
 
-def current_tennis_draw(draws):
-    """The one draw a tour's bracket shows when ESPN publishes several at once.
+def _match_final(match):
+    """Final only when the publisher says so. A suspended match is posted but not completed."""
+    return match.get("state") == "post" and match.get("completed") is not False
 
-    ESPN lists every tournament whose event window covers the date. On 2026-10-06
-    the ATP feed carried the China Open (event window 09-27..10-12, because the
-    WTA half runs longer; men's final that day) beside Shanghai (R1 under way).
-    The tournament in progress finishes before the next one takes the bracket:
-    among draws with a match not yet final, the one whose last match is soonest;
-    when every draw is complete, the one that finished last.
+
+def _draw_last_date(draw):
+    return max((m.get("date") or "" for m in draw["matches"]), default="")
+
+
+def order_tennis_draws(draws):
+    """Every draw in display order. Nothing is dropped.
+
+    ESPN publishes several major singles draws at once: 500s overlap Masters and each other, so one
+    tour can have two or three brackets live in the same week. The old rule kept one draw, the one
+    finishing soonest, and that rule cannot be a storage gate any more. It is now the display order:
+    draws with a match not yet final come first, soonest-finishing first, then finished draws, most
+    recently finished first. Ties break on tournament id so the order is stable across refreshes.
     """
     draws = list(draws or [])
-    if len(draws) <= 1:
-        return draws
+    open_draws = [d for d in draws if any(not _match_final(m) for m in d["matches"])]
+    open_ids = {id(d) for d in open_draws}
+    closed_draws = [d for d in draws if id(d) not in open_ids]
+    open_draws.sort(key=lambda d: (_draw_last_date(d), str(d["tournament_id"])))
+    closed_draws.sort(key=lambda d: (_draw_last_date(d), str(d["tournament_id"])), reverse=True)
+    return open_draws + closed_draws
 
-    def last(draw):
-        return max(m.get("date") or "" for m in draw["matches"])
 
-    open_draws = [d for d in draws if any(m.get("state") != "post" for m in d["matches"])]
-    if open_draws:
-        return [min(open_draws, key=lambda d: (last(d), str(d["tournament_id"])))]
-    return [max(draws, key=lambda d: (last(d), str(d["tournament_id"])))]
+def current_tennis_draw(draws):
+    """The first draw in display order, for a consumer that shows one bracket.
+
+    Storage does not use this: every complete draw is stored. See order_tennis_draws.
+    """
+    return order_tennis_draws(draws)[:1]
 
 
 def tennis_rankings_from_payload(league, payload):

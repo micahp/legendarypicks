@@ -305,8 +305,10 @@ def _refresh(league, date, verbose=True):
     # write so a malformed publisher shape cannot silently look successful.
     try:
         payload = espn.scoreboard_raw(league, date)
-        draws = espn.current_tennis_draw(espn.tennis_draws_from_payload(league, payload)) \
-            if league in ("atp", "wta") else []
+        # Every complete major draw the publisher listed for this date, not one: 500s overlap, so a tour
+        # can have several brackets in one week. The store keys them on tournament and removes only
+        # the draws the publisher has retired.
+        draws = espn.tennis_draws_from_payload(league, payload) if league in ("atp", "wta") else []
         if league in ("atp", "wta") and games and not draws:
             raise ValueError(f"{league} published games without a complete major draw")
     except Exception as exc:
@@ -315,7 +317,7 @@ def _refresh(league, date, verbose=True):
     try:
         written = scoreboard_store.save(league, date, games, source="espn")
         if draws:
-            scoreboard_store.save_tennis_draws(league, draws, source="espn")
+            scoreboard_store.save_tennis_draws(league, draws, source="espn", observed_on=date)
     except Exception as exc:
         return 0, f"{type(exc).__name__}: {exc}"
 

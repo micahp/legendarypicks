@@ -99,3 +99,87 @@ def test_mens_grand_slams_are_best_of_five_and_everything_else_three():
 def test_untracked_event_is_not_given_a_surface():
     assert major_for_event("atp", "Vienna Open") is None
     assert major_for_event("atp", "Some Challenger") is None
+
+
+# ---------------------------------------------------------------------------
+# 500 coverage (2026). The names are ESPN shortNames observed on the scoreboard for each event's week,
+# not guesses. The tiers come from the tours' 2026 calendars. See docs/TENNIS-COVERAGE.md section 2b.
+# ---------------------------------------------------------------------------
+
+ATP_500_OBSERVED = (
+    ("Nexo Dallas Open", "Dallas Open", "Hard"),
+    ("ABN Amro Open", "Rotterdam Open", "Hard"),
+    ("Qatar ExxonMobil Open", "Qatar ExxonMobil Open", "Hard"),
+    ("Rio Open presented by Claro", "Rio Open", "Clay"),
+    ("Abierto Mexicano Telcel presentado por HSBC", "Acapulco Open", "Hard"),
+    ("Dubai Duty Free Tennis Championships", "Dubai", "Hard"),
+    ("BMW Open by Bitpanda", "Munich Open", "Clay"),
+    ("Barcelona Open Banc Sabadell", "Barcelona Open", "Clay"),
+    ("Bitpanda Hamburg Open", "Hamburg Open", "Clay"),
+    ("Terra Wortmann Open", "Halle Open", "Grass"),
+    ("HSBC Championships", "Queen's Club", "Grass"),
+    ("Mubadala DC Open", "Washington", "Hard"),
+    ("Kinoshita Group Japan Open Tennis Championships", "Tokyo Open", "Hard"),
+    ("Erste Bank Open", "Vienna Open", "Hard"),
+    ("Swiss Indoors Basel", "Basel", "Hard"),
+)
+
+WTA_500_OBSERVED = (
+    ("Brisbane International presented by ANZ", "Brisbane International", "Hard"),
+    ("Adelaide International", "Adelaide International", "Hard"),
+    ("Mubadala Abu Dhabi Open presented by Abu Dhabi Sports Council", "Abu Dhabi Open", "Hard"),
+    ("Mérida Open Akron", "Mérida Open", "Hard"),
+    ("Credit One Charleston Open", "Charleston Open", "Clay"),
+    ("Upper Austria Ladies Linz", "Linz Open", "Hard"),
+    ("Porsche Tennis Grand Prix", "Stuttgart Open", "Clay"),
+    ("Internationaux de Strasbourg presented by Mammotion", "Strasbourg Open", "Clay"),
+    ("The HSBC Championships", "Queen's Club", "Grass"),
+    ("VANDA Pharmaceuticals Berlin Tennis Open", "Berlin Open", "Grass"),
+    ("Bad Homburg Open powered by Solarwatt", "Bad Homburg Open", "Grass"),
+    ("Mubadala DC Open", "Washington", "Hard"),
+    ("Abierto GNP Seguros", "Monterrey Open", "Hard"),
+    ("Guadalajara Open presentado por Santander", "Guadalajara Open", "Hard"),
+    ("Singapore Tennis Open presented by BNP Paribas", "Singapore Tennis Open", "Hard"),
+    ("BNB Ningbo Open", "Ningbo Open", "Hard"),
+    ("Toray Pan Pacific Open Tennis", "Pan Pacific Open", "Hard"),
+)
+
+# Events on the same scoreboards that are ATP 250, WTA 250 or WTA 125. None may be tracked.
+UNTRACKED_OBSERVED = {
+    "atp": ("BNP Paribas Fortis European Open", "Almaty Open", "Grand Prix Auvergne-Rhône-Alpes",
+            "IEB+ Argentina Open", "Delray Beach Open", "BCI Seguros Chile Open", "Gonet Geneva Open",
+            "Mifel Tennis Open by Telcel Oppo"),
+    "wta": ("Kinoshita Group Japan Open", "ASB Classic", "Hobart International", "Workday Canberra International",
+            "Korea Open", "Guangzhou Open", "Queretaro Open", "Lexus Eastbourne Open", "Libéma Open",
+            "Lexus Ilkley Open", "Memorial Eugenio Fontana", "Lexus Nottingham Open", "Odlum Brown VanOpen",
+            "The Memphis Classic", "Axeria Open 2026 powered by Intaro Sport", "Ennoble Care Philly Open",
+            "Abierto de Curitiba", "Turk Telekom Ankara Open", "Eupago Porto Open", "Delta Motors Tolentino Open",
+            "SP Open", "BBVA Open Internacional De Valencia", "Zavarovalnica Triglav Ljubljana",
+            "Transylvania Open powered by Kaufland", "Ostrava Open", "ATX Open", "L&T Mumbai Open",
+            "Megasaray Hotels Open 1", "Copa Colsanitas Colsubsidio", "Open Capfinances Rouen Métropole"),
+}
+
+
+def test_every_observed_500_name_resolves_to_its_canonical_event():
+    for tour, rows in (("atp", ATP_500_OBSERVED), ("wta", WTA_500_OBSERVED)):
+        for espn_name, canonical, _surface in rows:
+            assert major_for_event(tour, espn_name) == canonical, f"{tour}: {espn_name}"
+
+
+def test_every_added_500_has_its_surface_and_is_never_best_of_five():
+    for tour, rows in (("atp", ATP_500_OBSERVED), ("wta", WTA_500_OBSERVED)):
+        for espn_name, canonical, surface in rows:
+            assert proj.SURFACE_BY_MAJOR[canonical] == surface, f"{espn_name} -> {surface}"
+            assert canonical not in proj.FIVE_SET_MAJORS, f"{espn_name} must be best of three"
+
+
+def test_250s_and_125s_on_the_same_scoreboards_stay_untracked():
+    for tour, names in UNTRACKED_OBSERVED.items():
+        for name in names:
+            assert major_for_event(tour, name) is None, f"{tour}: {name} must not be tracked"
+
+
+def test_added_500_canonicals_are_distinct_from_the_250s_they_sit_beside():
+    tracked = {canonical for _n, canonical, _s in ATP_500_OBSERVED + WTA_500_OBSERVED}
+    assert "Kinoshita Group Japan Open" not in tracked
+    assert len(ATP_500_OBSERVED) == 15 and len(WTA_500_OBSERVED) == 17
