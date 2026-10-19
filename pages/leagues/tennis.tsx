@@ -28,6 +28,7 @@ type DrawMatch = {
 
 type Draw = {
   league: 'atp' | 'wta'
+  tournament_id?: string
   event_name: string
   draw_type?: string
   bracket_url?: string
@@ -300,7 +301,8 @@ function DrawsPanel({ data, error }: { data: DrawResponse | null; error: string 
   if (error) return <Unavailable text={error} />
   if (!data) return <Loading />
   if (!data.available || !data.tours.length) return <Unavailable text={data.reason || 'No verified major draw has been published yet.'} />
-  return <div className="space-y-8">{data.tours.map(draw => <DrawTournament key={`${draw.league}-${draw.event_name}`} draw={draw} />)}</div>
+  // One entry per tournament: a tour can have several brackets live at once, so the key is the tournament.
+  return <div className="space-y-8">{data.tours.map(draw => <DrawTournament key={`${draw.league}-${draw.tournament_id || draw.event_name}`} draw={draw} />)}</div>
 }
 
 function DrawTournament({ draw }: { draw: Draw }) {
