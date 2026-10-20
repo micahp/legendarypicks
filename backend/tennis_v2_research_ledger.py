@@ -30,6 +30,7 @@ import analyze_archives as archives  # noqa: E402
 import tennis_match_sim as sim  # noqa: E402
 import tennis_point_model as point_model  # noqa: E402
 import tennis_total_games_backtest as total_games  # noqa: E402
+from tennis_bovada_odds import bovada_odds  # noqa: E402
 
 MODEL_VERSION = "tennis-elo-informed-simulator-v2-research-2026-10-16"
 POINT_HISTORY_CUTOFF = 20241231
@@ -510,6 +511,20 @@ def grade_finals(ledger: sqlite3.Connection, source_db: str,
     return {"graded": count, "identity_mismatch": identity_mismatch}
 
 
+def _frozen_bovada_quote(source: sqlite3.Connection, game: dict,
+                         now: dt.datetime) -> dict | None:
+    """Read the market at the V2 forecast instant without changing its model inputs."""
+    ids = []
+    for side in ("home", "away"):
+        espn_id = str((game.get(side) or {}).get("athlete_id") or "")
+        row = source.execute(
+            "SELECT id FROM players WHERE league=? AND espn_id=?",
+            (game["_league"], espn_id),
+        ).fetchone() if espn_id else None
+        ids.append(row[0] if row else None)
+    return bovada_odds(source, game["_game_id"], game["_league"], ids[0], ids[1], now)
+
+
 def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
     now = dt.datetime.now(dt.timezone.utc)
     Path(ledger_path).parent.mkdir(parents=True, exist_ok=True)
@@ -528,6 +543,12 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
         matches = [game for game in candidates
                    if (game["_league"], game["_game_id"]) not in already_locked]
         ids = {game["_game_id"]: _sackmann_ids(source, game) for game in matches}
+        # These are provenance only, not forecast features. Capture before closing
+        # the source DB and freeze alongside the V2 prediction, never afterward.
+        book_quotes = {
+            game["_game_id"]: _frozen_bovada_quote(source, game, now)
+            for game in matches
+        }
     except Exception:
         ledger.close()
         source.close()
@@ -537,6 +558,7 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
     report = {"candidate_matches": len(candidates),
               "already_locked": len(candidates) - len(matches),
               "locked": 0, "unresolved_identity": 0, "graded": 0,
+              "quotes_frozen": 0, "quotes_unavailable": 0,
               "ledger": str(ledger_path)}
     try:
         if matches:
@@ -554,7 +576,12 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
                     report["unresolved_identity"] += 1
                     continue
                 payload["locked_at"] = now.isoformat()
-                report["locked"] += _store_forecast(ledger, payload)
+                payload["frozen_bovada_odds"] = book_quotes[game["_game_id"]]
+                inserted = _store_forecast(ledger, payload)
+                report["locked"] += inserted
+                if inserted:
+                    key = "quotes_frozen" if payload["frozen_bovada_odds"] is not None else "quotes_unavailable"
+                    report[key] += 1
             ledger.commit()
         grading = grade_finals(ledger, db_path, now)
         report["graded"] = grading["graded"]
