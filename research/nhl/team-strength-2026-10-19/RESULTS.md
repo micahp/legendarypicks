@@ -65,6 +65,34 @@ which is why its six rows summed to less than the 9,147 population it claimed. T
 quoted pooled 0.2436 and 0.2463 are not reproducible from the shipped code; the reproducible
 pooled numbers are 0.2444 and 0.2462.
 
+### Scoring: Brier, log loss and calibration
+
+`v2_sd` above is the standard deviation of the projected goal margin (home minus away expected
+goals), not of the predicted probability or the loss. v2 widens that margin by design (0.44-0.72
+vs frozen 0.25-0.32). The probabilities tell a smaller story: both models stay inside [0.2, 0.8]
+and neither puts a single game below 0.05 or above 0.95, so there is no extreme-probability mass
+to explain the margin spread. Log loss, which prices those extremes, does not single v2 out.
+
+| pooled metric | frozen | v2 | delta (frozen - v2) | season-clustered 95% CI |
+| --- | --- | --- | --- | --- |
+| Brier | 0.2462 | 0.2444 | +0.00183 | [-0.00173, +0.00477] spans zero |
+| log loss | 0.6855 | 0.6820 | +0.00354 | [-0.00396, +0.00977] spans zero |
+
+Both point estimates favour v2, both clustered intervals span zero, and the only materially
+negative season is 2025-26 (Brier -0.00729, log loss -0.01565). The overconfidence hypothesis is
+not supported: log loss reveals no hidden cost that Brier missed. A log-loss point estimate that
+favours v2 is a new question for Micah, not a promotion.
+
+| predicted-probability bin | frozen n | frozen mean / observed | v2 n | v2 mean / observed |
+| --- | --- | --- | --- | --- |
+| [0.2,0.3) | 0 | - | 56 | 0.283 / 0.321 |
+| [0.3,0.4) | 6 | 0.391 / 0.333 | 712 | 0.365 / 0.372 |
+| [0.4,0.5) | 1589 | 0.477 / 0.378 | 2298 | 0.458 / 0.420 |
+| [0.5,0.6) | 6726 | 0.547 / 0.510 | 3627 | 0.549 / 0.498 |
+| [0.6,0.7) | 826 | 0.620 / 0.671 | 2026 | 0.642 / 0.615 |
+| [0.7,0.8) | 0 | - | 428 | 0.731 / 0.666 |
+| <0.05 / >0.95 | 0 / 0 | - | 0 / 0 | - |
+
 On tonight's 46-game slate the change is visible:
 
 | game | v1 margin | v2 margin |

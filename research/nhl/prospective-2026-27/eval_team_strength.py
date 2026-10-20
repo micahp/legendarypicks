@@ -19,7 +19,11 @@ Uncertainty. `--bootstrap N` (default 4000) reports the paired per-game loss dif
 frozen_loss - v2_loss (positive means v2 is better) with a 95% percentile interval from a
 season-clustered bootstrap: whole seasons, not games, are resampled with replacement, because
 the seven seasons are the independent clusters. 2022-23 and 2025-26 are the only seasons where
-v2 loses, and the game-level interval is reported only as a non-headline reference.
+v2 loses, and the game-level interval is reported only as a non-headline reference. The table's
+`froz_sd`/`v2_sd` columns are the SD of each model's projected goal margin (home mu - away mu),
+not of its probabilities or its per-game loss. Log loss is reported alongside Brier because it
+prices extreme probabilities that Brier can hide, and a 10-bin calibration table shows where
+those extremes fall.
 
 Run from the repository root:
 
@@ -121,29 +125,40 @@ def evaluate(first_season: int, last_season: int, model: dict, games: list[dict]
             frozen_margins.append(fmus[0] - fmus[1])
             outcomes.append(int(g["hg"] > g["ag"]))
         y = np.asarray(outcomes, dtype=float)
-        frozen_losses = (np.asarray(frozen_probs) - y) ** 2
-        v2_losses = (np.asarray(v2_probs) - y) ** 2
+        fp = np.clip(np.asarray(frozen_probs, dtype=float), 1e-8, 1 - 1e-8)
+        vp = np.clip(np.asarray(v2_probs, dtype=float), 1e-8, 1 - 1e-8)
+        frozen_losses = (fp - y) ** 2
+        v2_losses = (vp - y) ** 2
+        frozen_logloss = -(y * np.log(fp) + (1 - y) * np.log(1 - fp))
+        v2_logloss = -(y * np.log(vp) + (1 - y) * np.log(1 - vp))
         rows.append({
             "season": season,
             "n_test": len(test),
             "n": len(outcomes),
             "frozen_brier": float(frozen_losses.mean()),
             "v2_brier": float(v2_losses.mean()),
+            "frozen_logloss": float(frozen_logloss.mean()),
+            "v2_logloss": float(v2_logloss.mean()),
             "frozen_margin_sd": float(np.std(frozen_margins, ddof=0)),
             "v2_margin_sd": float(np.std(v2_margins, ddof=0)),
             "deltas": (frozen_losses - v2_losses).tolist(),
+            "logloss_deltas": (frozen_logloss - v2_logloss).tolist(),
+            "frozen_probs": fp.tolist(),
+            "v2_probs": vp.tolist(),
+            "outcomes": y.tolist(),
         })
     return rows
 
 
-def bootstrap_delta(table: list[dict], iterations: int, seed: int) -> dict:
+def bootstrap_delta(table: list[dict], iterations: int, seed: int, key: str = "deltas") -> dict:
     """Paired per-game loss difference frozen - v2, clustered on season.
 
     The seven seasons are the sampling clusters, so whole seasons are resampled with replacement
     and the pooled difference is recomputed over the concatenated resampled games. Resampling
-    individual games is kept only as an explicitly anti-conservative reference.
+    individual games is kept only as an explicitly anti-conservative reference. `key` selects
+    the per-game paired difference: Brier loss or log loss.
     """
-    per_season = [np.asarray(row["deltas"], dtype=float) for row in table]
+    per_season = [np.asarray(row[key], dtype=float) for row in table]
     all_deltas = np.concatenate(per_season)
     observed = float(all_deltas.mean())
 
@@ -162,6 +177,20 @@ def bootstrap_delta(table: list[dict], iterations: int, seed: int) -> dict:
     game_ci = [float(np.percentile(per_game, 2.5)), float(np.percentile(per_game, 97.5))]
     return {"observed": observed, "n": int(all_deltas.size), "iterations": iterations, "seed": seed,
             "season_clustered_ci95": clustered_ci, "game_level_ci95": game_ci}
+
+
+def calibration_bins(probs: np.ndarray, outcomes: np.ndarray, bins: int = 10) -> list[tuple]:
+    """Equal-width bins of predicted home-win probability against the observed rate."""
+    edges = np.linspace(0.0, 1.0, bins + 1)
+    out = []
+    for i in range(bins):
+        lo, hi = float(edges[i]), float(edges[i + 1])
+        mask = (probs >= lo) & (probs < hi) if i < bins - 1 else (probs >= lo) & (probs <= hi)
+        if mask.any():
+            out.append((lo, hi, int(mask.sum()), float(probs[mask].mean()), float(outcomes[mask].mean())))
+        else:
+            out.append((lo, hi, 0, None, None))
+    return out
 
 
 def main() -> None:
@@ -185,37 +214,64 @@ def main() -> None:
     features = load_features(FEATURES)
     table = evaluate(args.first_season, args.last_season, model, games, features)
     print(f"walk-forward v2 team attack/defence vs frozen B5; canonical={CANONICAL.name}")
-    print(f"{'season':>6} {'n':>6} {'canon':>6} {'frozen':>8} {'v2':>8} {'froz_sd':>8} {'v2_sd':>8}")
+    print(f"{'season':>6} {'n':>6} {'canon':>6} {'frozen':>8} {'v2':>8} {'froz_sd':>8} {'v2_sd':>8} "
+          f"{'froz_ll':>8} {'v2_ll':>8}")
     for row in table:
         print(f"{row['season']:>6} {row['n']:>6} {row['n_test']:>6} {row['frozen_brier']:>8.4f} {row['v2_brier']:>8.4f} "
-              f"{row['frozen_margin_sd']:>8.2f} {row['v2_margin_sd']:>8.2f}")
+              f"{row['frozen_margin_sd']:>8.2f} {row['v2_margin_sd']:>8.2f} "
+              f"{row['frozen_logloss']:>8.4f} {row['v2_logloss']:>8.4f}")
     total_n = sum(r["n"] for r in table)
+    canonical_n = sum(r["n_test"] for r in table)
     pooled_frozen = float(sum(r["frozen_brier"] * r["n"] for r in table) / total_n)
     pooled_v2 = float(sum(r["v2_brier"] * r["n"] for r in table) / total_n)
-    print(f"{'pooled':>6} {total_n:>6} {pooled_frozen:>8.4f} {pooled_v2:>8.4f}")
-    print(f"population: seasons {args.first_season}-{args.last_season}, {total_n} games with complete rolling xG features")
-    print(f"headline: pooled Brier v2 {pooled_v2:.4f} vs frozen {pooled_frozen:.4f} over {total_n} games")
-    print()
-    print("per-season loss difference (frozen - v2; positive means v2 better):")
-    for row in table:
-        print(f"  {row['season']}  {row['frozen_brier'] - row['v2_brier']:+.5f}")
-    all_deltas = np.concatenate([np.asarray(r["deltas"], dtype=float) for r in table])
-    print(f"  pooled  {all_deltas.mean():+.5f}  (n={all_deltas.size})")
+    pooled_frozen_ll = float(sum(r["frozen_logloss"] * r["n"] for r in table) / total_n)
+    pooled_v2_ll = float(sum(r["v2_logloss"] * r["n"] for r in table) / total_n)
+    print(f"{'pooled':>6} {total_n:>6} {'':>6} {pooled_frozen:>8.4f} {pooled_v2:>8.4f} "
+          f"{'':>8} {'':>8} {pooled_frozen_ll:>8.4f} {pooled_v2_ll:>8.4f}")
+    print(f"population: seasons {args.first_season}-{args.last_season}, {total_n} scored / {canonical_n} canonical "
+          f"({canonical_n - total_n} excluded for incomplete rolling xG features)")
+    print(f"headline: pooled Brier v2 {pooled_v2:.4f} vs frozen {pooled_frozen:.4f}; "
+          f"log loss v2 {pooled_v2_ll:.4f} vs frozen {pooled_frozen_ll:.4f} over {total_n} games")
+    for label, dkey in (("Brier", "deltas"), ("log loss", "logloss_deltas")):
+        print()
+        print(f"per-season {label} difference (frozen - v2; positive means v2 better):")
+        for row in table:
+            metric = (row["frozen_brier"] - row["v2_brier"]) if label == "Brier" else (row["frozen_logloss"] - row["v2_logloss"])
+            print(f"  {row['season']}  {metric:+.5f}")
+        all_d = np.concatenate([np.asarray(r[dkey], dtype=float) for r in table])
+        print(f"  pooled  {all_d.mean():+.5f}  (n={all_d.size})")
+        print(f"leave-one-season-out pooled {label} difference:")
+        for row in table:
+            keep = np.concatenate([np.asarray(r[dkey], dtype=float) for r in table if r is not row])
+            print(f"  drop {row['season']}  {keep.mean():+.5f}  (n={keep.size})")
 
-    print("leave-one-season-out pooled difference:")
-    for row in table:
-        keep = np.concatenate([np.asarray(r["deltas"], dtype=float) for r in table if r is not row])
-        print(f"  drop {row['season']}  {keep.mean():+.5f}  (n={keep.size})")
+    print()
+    for model_name, pkey in (("frozen", "frozen_probs"), ("v2", "v2_probs")):
+        probs = np.concatenate([np.asarray(r[pkey], dtype=float) for r in table])
+        outcomes = np.concatenate([np.asarray(r["outcomes"], dtype=float) for r in table])
+        print(f"calibration, {model_name} home-win probability (10 equal-width bins):")
+        print(f"  {'bin':>12} {'n':>6} {'mean_pred':>10} {'obs_rate':>9}")
+        for lo, hi, n, mp, obs in calibration_bins(probs, outcomes):
+            mp_s = "      n/a" if mp is None else f"{mp:10.4f}"
+            obs_s = "      n/a" if obs is None else f"{obs:9.4f}"
+            print(f"  [{lo:.1f},{hi:.1f}) {n:>6} {mp_s} {obs_s}")
+        for bound, op in (("<0.05", lambda p: p < 0.05), (">0.95", lambda p: p > 0.95)):
+            mask = op(probs)
+            if mask.any():
+                print(f"  {bound}: n={int(mask.sum())} mean_pred={probs[mask].mean():.4f} obs_rate={outcomes[mask].mean():.4f}")
+            else:
+                print(f"  {bound}: n=0")
 
     if args.bootstrap > 0:
-        stats = bootstrap_delta(table, args.bootstrap, args.seed)
-        lo, hi = stats["season_clustered_ci95"]
-        print(f"bootstrap: {stats['iterations']} season-clustered resamples, seed {stats['seed']}")
-        print(f"  paired per-game loss diff frozen - v2: {stats['observed']:+.5f}")
-        print(f"  season-clustered 95% percentile interval: [{lo:+.5f}, {hi:+.5f}]")
-        print(f"  (spans zero: {lo <= 0 <= hi})")
-        glo, ghi = stats["game_level_ci95"]
-        print(f"  game-level 95% interval (anti-conservative, not the headline): [{glo:+.5f}, {ghi:+.5f}]")
+        print()
+        for label, key in (("Brier", "deltas"), ("log loss", "logloss_deltas")):
+            stats = bootstrap_delta(table, args.bootstrap, args.seed, key)
+            lo, hi = stats["season_clustered_ci95"]
+            print(f"bootstrap {label}: {stats['iterations']} season-clustered resamples, seed {stats['seed']}")
+            print(f"  paired per-game {label} diff frozen - v2: {stats['observed']:+.5f}")
+            print(f"  season-clustered 95% percentile interval: [{lo:+.5f}, {hi:+.5f}] (spans zero: {lo <= 0 <= hi})")
+            glo, ghi = stats["game_level_ci95"]
+            print(f"  game-level 95% interval (anti-conservative, not the headline): [{glo:+.5f}, {ghi:+.5f}]")
 
 
 if __name__ == "__main__":
