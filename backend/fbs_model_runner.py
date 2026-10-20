@@ -129,6 +129,7 @@ def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
                 "home_team": home.get("displayName") or home.get("shortDisplayName"),
                 "away_team": away.get("displayName") or away.get("shortDisplayName"),
                 "neutral_site": bool(competition.get("neutralSite", False)),
+                "week": (event.get("week") or {}).get("number"),
                 "completed": bool(status.get("completed", False)),
                 "home_score": _score(competition, "home"), "away_score": _score(competition, "away"),
             })
@@ -149,40 +150,83 @@ def _score(competition: dict, side: str) -> int | None:
     return None
 
 
-def g2_for_slate(frame: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
-    """Score upcoming games with the Phase 1 Elo by appending them to the event history.
+def _current_fbs_team_conferences(frame: pd.DataFrame, season: int) -> dict[str, str]:
+    """Verified current-season FBS membership and conference, never a prior-game template.
 
-    The Elo only updates on completed games, so a synthetic future row is scored with the
-    ratings that exist today — no result leaks in because the row carries none.
+    The Phase 1 evaluation population includes only FBS-vs-FBS games. A team
+    without a current-season FBS observation is not silently presumed eligible.
+    """
+    current = frame[(frame["season"] == season) & frame["fbs_game"].fillna(False)]
+    teams: dict[str, str] = {}
+    for side in ("home", "away"):
+        for team_id, conference in zip(
+                current[f"{side}_team_id"], current[f"{side}_conference"]):
+            if pd.isna(team_id) or pd.isna(conference) or not str(conference).strip():
+                continue
+            key, label = str(team_id), str(conference).strip()
+            if key in teams and teams[key] != label:
+                raise service.FBSModelError(
+                    f"conflicting {season} FBS conferences for team {key}: "
+                    f"{teams[key]} vs {label}"
+                )
+            teams[key] = label
+    return teams
+
+
+def g2_for_slate(frame: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
+    """Forecast confirmed FBS-FBS fixtures from their real kickoff and team identity.
+
+    Never copy conference, game phase, or venue fields from an unrelated
+    historical game: the hierarchical model uses conference as a predictor.
     """
     seasons = sorted(set(frame["season"].tolist()) | set(slate["kickoff_utc"].dt.year.tolist()))
     events, _, _, _ = base.load_events(service.DEFAULT_DATA_DIR, [s for s in seasons if s >= 2022])
-    template = events.iloc[-1].to_dict()
     extra = []
+    team_maps: dict[int, dict[str, str]] = {}
     for row in slate.itertuples(index=False):
-        event = dict(template)
+        season = int(row.kickoff_utc.year)
+        if season not in team_maps:
+            team_maps[season] = _current_fbs_team_conferences(frame, season)
+        team_conferences = team_maps[season]
+        home, away = str(row.home_team_id), str(row.away_team_id)
+        if home not in team_conferences or away not in team_conferences:
+            print("slate: skipping game %s (%s @ %s): current-season FBS membership/"
+                  "conference unverified" % (row.game_id, away, home))
+            continue
+        # The schedule's full timestamp survives the prediction and lock paths.
+        # Construct a fresh event from an explicit schema, not events.iloc[-1].
+        event = {column: None for column in events.columns}
         event.update({
-            "game_id": str(row.game_id), "season": int(row.kickoff_utc.year),
-            "week": int(row.kickoff_utc.isocalendar()[1]),
-            "kickoff_utc": row.kickoff_utc,
+            "game_id": str(row.game_id), "season": season,
+            "week": getattr(row, "week", None),
+            "kickoff_utc": row.kickoff_utc.to_pydatetime(),
             "utc_date": row.kickoff_utc.date(),
-            "week_start_utc": (row.kickoff_utc - pd.Timedelta(days=row.kickoff_utc.weekday())).date(),
-            "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
+            "week_start_utc": (row.kickoff_utc - pd.Timedelta(
+                days=row.kickoff_utc.weekday())).date().isoformat(),
+            "home_team_id": home, "away_team_id": away,
             "home_team": row.home_team, "away_team": row.away_team,
+            "home_conference": team_conferences[home],
+            "away_conference": team_conferences[away],
             "home_score": np.nan, "away_score": np.nan, "home_win": np.nan,
-            "neutral_site": bool(row.neutral_site), "fbs_game": True,
-            "fbs_participant": False, "cfb_completed": False, "evaluation_population": True,
-            "result_source": "scheduled", "home_model_favorite": np.nan,
+            "neutral_site": bool(row.neutral_site),
+            "fbs_game": True, "fbs_participant": False, "cfb_completed": False,
+            "evaluation_population": True,
+            "game_phase": "Regular season", "season_type": "regular",
+            "result_source": "upcoming ESPN scoreboard",
+            "home_model_favorite": np.nan,
         })
         extra.append(event)
+    if not extra:
+        raise service.FBSModelError(
+            "no verified FBS-vs-FBS matchups in upcoming slate; no forecasts written"
+        )
     combined = pd.concat([events, pd.DataFrame(extra)], ignore_index=True)
     forecasts = base.make_predictions(combined, 2022)
     forecasts["game_id"] = forecasts["game_id"].astype(str)
-    wanted = set(slate["game_id"].astype(str))
+    wanted = {r["game_id"] for r in extra}
     scored = forecasts[forecasts["game_id"].isin(wanted)].copy()
     scored["p_g2"] = scored["elo_home_prob"].astype(float)
     return scored
-
 
 def slate_features(ratings: pd.DataFrame, slate: pd.DataFrame, season: int) -> pd.DataFrame:
     """Drive-split features for a future matchup from each team's latest as-of metrics."""
@@ -269,7 +313,7 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     rows = []
     version = "fbs-%s-%s" % ("%s", state["train_last_date"].strftime("%Y%m%d"))
     for row in predictions.itertuples(index=False):
-        kickoff = pd.Timestamp(row.utc_date).tz_localize("UTC").isoformat()
+        kickoff = pd.Timestamp(row.kickoff_utc).tz_convert("UTC").isoformat()
         for model in MODEL_ORDER:
             rows.append({
                 "game_id": str(row.game_id), "model": model, "season": int(row.season),
