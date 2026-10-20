@@ -173,6 +173,37 @@ def test_post_state_without_publisher_completed_flag_is_not_graded(tmp_path):
     assert con.execute("SELECT COUNT(*) FROM tennis_v2_research_grades").fetchone()[0] == 0
 
 
+def test_v2_quotes_are_snapshotted_for_the_correct_espn_players(tmp_path):
+    source_path = tmp_path / "source.sqlite3"
+    _source_db(source_path)
+    con = sqlite3.connect(source_path)
+    con.executescript("""
+      CREATE TABLE prop_games (id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT);
+      CREATE TABLE props (
+        id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
+        market TEXT, line REAL, side TEXT, source TEXT,
+        odds INTEGER, odds_captured_at TEXT
+      );
+      INSERT INTO prop_games VALUES(1,'atp','match-1');
+    """)
+    at = dt.datetime(2026, 10, 17, 7, 30, tzinfo=dt.timezone.utc)
+    early = (at - dt.timedelta(minutes=10)).isoformat()
+    late = (at + dt.timedelta(minutes=10)).isoformat()
+    con.executemany(
+        "INSERT INTO props (game_id,player_id,market,line,side,source,odds,odds_captured_at) "
+        "VALUES(1,?,'match_winner',0.5,'over','bovada',?,?)",
+        [(1, -125, early), (2, 110, early), (1, -190, late)],
+    )
+    game = {
+        "_league": "atp", "_game_id": "match-1",
+        "home": {"athlete_id": "2375"}, "away": {"athlete_id": "3212"},
+    }
+    frozen = ledger._frozen_bovada_quote(con, game, at)
+    assert frozen["matchWinner"] == {"home": -125, "away": 110}
+    assert frozen["capturedAt"] == early
+    con.close()
+
+
 def test_new_lock_stores_source_identity_ids():
     game = {
         "home": {"athlete_id": "2375"},
