@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ModelSelect from './ModelSelect'
 
-type View = 'projections' | 'record'
+type View = 'projections' | 'record' | 'ratings'
 
 interface ModelForecast {
   p_home: number
@@ -98,7 +98,11 @@ export default function FbsModelTab() {
     [payload, now],
   )
   const recent = useMemo(
-    () => (payload?.games ?? []).filter((game) => new Date(game.kickoff_utc).getTime() <= now).slice(-25).reverse(),
+    () => (payload?.games ?? [])
+      .filter((game) => !game.late && game.locked_at_utc
+        && new Date(game.locked_at_utc).getTime() < new Date(game.kickoff_utc).getTime()
+        && new Date(game.kickoff_utc).getTime() <= now)
+      .slice(-25).reverse(),
     [payload, now],
   )
 
@@ -128,7 +132,7 @@ export default function FbsModelTab() {
             ))}
           </ModelSelect>
           <nav className="flex gap-1 rounded-lg bg-zinc-900 p-1 text-sm">
-            {(['projections', 'record'] as View[]).map((tab) => (
+            {(['projections', 'record', 'ratings'] as View[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -181,7 +185,7 @@ export default function FbsModelTab() {
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                  <Metric label="Fair spread hint" value={fairMarginHint(forecast)} />
+                  <Metric label="Forecast status" value={game.late ? "Late / ungraded" : game.locked_at_utc ? "Locked before kickoff" : "Not locked"} />
                 </div>
                 <div className="mt-3 text-xs text-zinc-500">
                   Locked {game.locked_at_utc ? new Date(game.locked_at_utc).toLocaleString() : 'not locked'}
@@ -191,6 +195,36 @@ export default function FbsModelTab() {
               </article>
             )
           })}
+        </section>
+      ) : null}
+
+      {view === 'ratings' ? (
+        <section className="space-y-3">
+          <p className="text-xs text-zinc-500">
+            Current saved G2h team-season ratings. Relative strength values, not projected points.
+            Rating timestamps reflect the last model run.
+          </p>
+          {payload.ratings.length === 0 ? (
+            <p className="py-6 text-sm text-zinc-500">No team ratings available.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
+              <table className="w-full min-w-[460px] text-left text-sm">
+                <thead className="bg-zinc-900 text-xs text-zinc-400">
+                  <tr><th className="px-3 py-2">Team</th><th className="px-3 py-2">Conference</th><th className="px-3 py-2 text-right">Rating</th><th className="px-3 py-2 text-right">Games</th></tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {payload.ratings.map((rating) => (
+                    <tr key={rating.team_id}>
+                      <td className="px-3 py-2 text-zinc-100">{rating.team}</td>
+                      <td className="px-3 py-2 text-zinc-400">{rating.conference || '—'}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-zinc-100">{rating.rating == null ? '—' : rating.rating.toFixed(3)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-zinc-400">{rating.games_used ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       ) : null}
 
@@ -259,13 +293,3 @@ function Metric({ label, value }: { label: string; value: string }) {
   )
 }
 
-/**
- * The margin implied by the win probability alone, shown as a hint and labelled as such.
- * Score and spread models are not adopted, so this is never presented as a projection.
- */
-function fairMarginHint(forecast: ModelForecast): string {
-  const edge = Math.abs(forecast.p_home - 0.5)
-  if (edge === 0) return 'pick’em'
-  const points = Math.round(edge * 28)
-  return `${forecast.p_home > 0.5 ? '+' : '−'}${Math.max(points, 1)} pt hint`
-}
