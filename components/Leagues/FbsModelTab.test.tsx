@@ -68,4 +68,41 @@ describe('FBS model tab', () => {
     expect(screen.getByText('0.1200')).toBeTruthy()
     expect(screen.getByText(/treat the number as an early read/)).toBeTruthy()
   })
+
+  it('never labels a late research forecast as an official win', async () => {
+    const late = {
+      ...payload.games[0],
+      game_id: 'late-game',
+      kickoff_utc: new Date(Date.now() - 86400000).toISOString(),
+      locked_at_utc: null,
+      late: true,
+      result: { home_score: 27, away_score: 17, home_win: true },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [late] }),
+    }))
+    render(<FbsModelTab />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'record' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'record' }))
+    expect(screen.getByText(/No games have started yet in the locked window/)).toBeTruthy()
+    expect(screen.queryByText('✓ Won')).toBeNull()
+  })
+
+  it('renders the saved ratings and does not invent a spread', async () => {
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({
+        ...payload,
+        ratings: [{ team_id: '1', season: 2026, team: 'Texas Longhorns',
+          conference: 'SEC', rating: 0.345, games_used: 6,
+          as_of_utc: '2026-10-20T12:00:00Z' }],
+      }),
+    }))
+    render(<FbsModelTab />)
+    await waitFor(() => expect(screen.getByText('68.0%')).toBeTruthy())
+    expect(screen.queryByText(/Fair spread hint/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'ratings' }))
+    expect(screen.getByText('SEC')).toBeTruthy()
+    expect(screen.getByText('0.345')).toBeTruthy()
+  })
+
 })
