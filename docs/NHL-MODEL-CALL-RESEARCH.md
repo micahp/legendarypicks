@@ -109,6 +109,26 @@ uniform calibration failure. Fixing it requires cover-probability
 recalibration (logistic or isotonic on prior seasons only), not standings
 features.
 
+#### 1.7.1 Recalibration results (chronological, expanding window)
+
+`run_recalibration.py` fits logistic and isotonic maps on prior seasons only
+and applies them to the evaluation season. Cover Brier on the same 9,147
+evaluation games:
+
+| Model | Raw | Logistic recalibrated | Isotonic | Constant base rate |
+| --- | --- | --- | --- | --- |
+| B3 Elo | 0.2454 | **0.2132** | 0.2144 | 0.2202 |
+| B5 xG | 0.2305 | 0.2158 | 0.2163 | 0.2202 |
+| B7 Elo+xG | 0.2291 | **0.2122** | 0.2137 | 0.2202 |
+
+Before recalibration every model variant lost to the constant base rate; after
+logistic recalibration every model variant beats it (Brier 0.2122–0.2158 vs
+0.2202). This is the single largest accuracy improvement found in this
+research pass. The calibrated cover gate that replaces the S-trigger (§2.2)
+uses these recalibrated probabilities with tau₂ tuned per season in the
+0.72–0.79 band, firing on 6–32% of games with hit rates 0.64–0.84
+(`results/recalibration_gate.json`).
+
 ---
 
 ## 2. Proposed tiered model-call policy

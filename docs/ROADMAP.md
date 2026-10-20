@@ -12,11 +12,12 @@ document: `git log -p docs/ROADMAP.md`. The 2026-08-18 version and the old `# Le
 
 Checked = shipped to **production**, not to dev.
 
-**Current priority, 2026-10-10:** build the integrated NFL forecasting system in
+**Current priority, 2026-10-16:** build the integrated NFL forecasting system in
 [the forecasting north star](STRATEGY-forecasting-north-star-2026-10-10.md). The immediate
 tracks are the full game/season forecast in Spec A and the availability-aware player
-forecast in Spec B. The older queue below remains open where unchecked, but its dated
-priority statements do not override this decision.
+forecast in Spec B. Make the QB adjustment and close the known playoff-simulation validation
+gap explicit steps in Spec A. The older queue below remains open where unchecked, but its
+dated priority statements do not override this decision.
 
 **Rewritten 2026-08-20.** The previous version dated itself 2026-08-18, had grown to 1,520
 lines, and had buried thirty unchecked items (`B1`-`B16`, `M1`-`M7`, `R1`-`R9`) underneath a
@@ -50,6 +51,18 @@ and investor framing.
       win, spread, total and team-total markets, and playoff simulations. Lock and
       publicly grade forecasts against simple and market baselines. The existing
       scores-only v1 slices are an interim benchmark, not completion of this milestone.
+- [ ] **Test the expected-starter QB adjustment as a distinct Spec A challenger.** The
+      earlier team-relative QBI variant was not kept. Backtest the expected starter's
+      regressed EPA per dropback against the team's recent dropback-weighted QB mix, scaled
+      by expected dropbacks; do not count a hindsight starter ID as prospective evidence.
+      Before prospective use, preserve the starter ID and source timestamp at lock because
+      schedule rows are overwritten. Adopt only if the season-separated walk-forward gate
+      passes. [NFL handoff, Task 4.3](HANDOFF-nfl-model-2026-10-11.md); [earlier QBI result](RESULTS-nfl-backfill-features-2026-10-11.md).
+- [ ] **Resolve the playoff simulation's score-spread failure.** The history-based sampler
+      passes its game-level win, total, validity and tie checks, but across-team scoring
+      dispersion is 3.62 PPG versus 4.57 actual (ratio 0.791; the registered lower bound
+      is 0.80). Diagnose the gap and test a pre-registered correction; keep the placeholder
+      method as default until the season-level gate passes. [Validation results](RESULTS-nfl-sim-scores-2026-10-13.md).
 - [ ] **Finish [Spec B](SPEC-player-projections-availability-2026-10-09.md).**
       Repair the reviewed B1–B3 foundation before using it: prove complete snap
       games, schedule the derived availability rebuild, include log-only candidates,
