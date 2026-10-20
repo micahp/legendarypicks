@@ -6,7 +6,7 @@ forecast, no model change.
 This revision replaces the measurement harness from `f3d53766` after review found look-ahead,
 a standings bug and incorrect settlement in it. The original numbers are kept at the bottom as a
 superseded diagnostic. **The strategy still loses, but by half as much: −2.6% over 5,126 picks,
-not −4.4%.**
+not −4.4%. Verdict: NOT_ADOPTED for trading.**
 
 ## Headline
 
@@ -86,25 +86,65 @@ games (2021-10-12 → 10-19), which have no rolling-10 window. Two SBR name vari
 ## By matchup regime — corrected
 
 Three definitions, all classified from pregame season-to-date state with cuts frozen on
-2008-09…2017-18:
+2008-09…2017-18. Standings are now built from **all 23,222 canonical games**, not just the ones
+with a complete xG window, so a team's record counts every game it played.
 
 - **points** — v1's points-percentage terciles (0.536 / 0.579), kept for comparability.
 - **goals** — composite of points percentage and goal differential per game.
 - **goals_xg** — the same composite plus rolling-10 5v5 xG differential per game.
 
-| regime | points ML | points spread | goals ML | goals spread | goals+xG ML | goals+xG spread |
-| --- | --- | --- | --- | --- | --- | --- |
-| early (<10 GP) | 342 / +2.8% | 496 / −1.5% | same | same | same | same |
-| mid-mid | 18 / −8.9% | 60 / −5.7% | 100 / −5.4% | 210 / −5.6% | 76 / −0.9% | 239 / −8.7% |
-| mixed | 1,295 / −2.4% | 1,296 / −3.4% | 1,357 / −2.0% | 1,420 / −1.4% | 1,420 / −3.6% | 1,396 / −2.4% |
-| strong-strong | 291 / −4.5% | 674 / −3.3% | 190 / −7.0% | 467 / −6.8% | **162 / +1.7%** | 452 / −3.2% |
-| weak-weak | 208 / −8.0% | 446 / −0.7% | 165 / −9.6% | 379 / −2.6% | 154 / −8.5% | 389 / −1.1% |
+`mixed` is gone: every different-strength pairing is now its own bucket.
 
-(n / ROI; full units in `results_corrected.json`.)
+**points** (n / units / ROI):
 
-Adding actual goals and xG to the classification does not produce a bettable edge. The best
-strong-strong cell is 162 picks at +2.8u, roughly one fifth of its standard error. Weak-weak — the
-regime a selectivity rule would exist to avoid — is negative under all three definitions.
+| regime | ML | spread +1.5 |
+| --- | --- | --- |
+| early (<10 GP) | 340 / +9.83 / +2.9% | 489 / −8.06 / −1.7% |
+| strong-mid | 213 / **+22.19 / +10.4%** | 341 / +2.86 / +0.8% |
+| strong-strong | 295 / −12.26 / −4.2% | 677 / −21.06 / −3.1% |
+| strong-weak | 903 / −48.50 / −5.4% | 688 / −38.15 / −5.6% |
+| mid-mid | 17 / −2.38 / −14.0% | 61 / −4.47 / −7.3% |
+| mid-weak | 180 / −5.51 / −3.1% | 269 / −9.95 / −3.7% |
+| weak-weak | 206 / −15.99 / −7.8% | 447 / −1.19 / −0.3% |
+
+**The one large positive cell does not survive inspection.** strong-mid ML is +10.4% on 213 picks,
+but it is two seasons: 2020-21 +13.0u and 2021-22 +17.4u, against 2018-19 −3.1u, 2019-20 −4.3u and
+2022-23 −0.8u. Season-clustered 90% CI: **[−7.3%, +26.5%]**. It also moves with the definition —
++10.4% under points, +1.4% under goals, **−11.3% under goals+xG** — which is what a composition
+artefact looks like, not an edge.
+
+The spread side of the same bucket is small and consistent-ish (+0.8% / +2.4% / +3.3% across the
+three definitions), but every one of those intervals spans zero as well
+([−5.2, +6.6], [−2.0, +7.1], [−2.9, +10.9]). The same goes for the goals+xG strong-strong ML cell
+that looked positive in revision 2: +1.6% on 164 picks, clustered interval [−5.1%, +5.2%].
+
+## Early-season moneyline — the other positive
+
+340 picks, +9.83u, +2.9%, clustered 90% CI **[−3.2%, +11.0%]**. By season:
+
+| season | n | W–L | units | ROI |
+| --- | --- | --- | --- | --- |
+| 2018-19 | 74 | 44–30 | −5.46 | −7.4% |
+| 2019-20 | 50 | 32–18 | +0.92 | +1.8% |
+| 2020-21 | 64 | 49–15 | +13.09 | +20.5% |
+| 2021-22 | 65 | 44–21 | +3.08 | +4.7% |
+| 2022-23 | 87 | 56–31 | −1.80 | −2.1% |
+
+One season (2020-21, the 56-game division-only year) carries the whole result. Not a signal to
+trade; a reason not to claim the bucket is empty either.
+
+## Rule version: this is leeway-2, not goal-diff-1
+
+The harness replays `leeway-2` exactly, verified against `backend/nhl_model_store.py`:
+`S = |puck| − favourite_margin` (the same value `_underdog_points_edge()` prints), gate at 1.0,
+ML only when the model's favourite matches Vegas', totals at 5.5/6.5. Two consequences:
+
+- The October ledger rows that supplied the brief's positive impression were written under an
+  earlier `rule_version` (`goal-diff-1`, and `leeway-1` before the S definition was corrected).
+  This backtest is evidence about **leeway-2**; it is not a retro-validation of those rows.
+- Production rule 2 falls through to a total when no ML price is posted. The replay returns no
+  pick in that case. In this archive that path never fires (0 of 5,126 rows lacked an ML quote),
+  so it changes nothing here, but it is a real difference for live cards.
 
 ## By season
 
@@ -132,15 +172,23 @@ because live cards can lack the spread or ML quote, which is an absence of a pri
 
 ## What this means
 
-The hierarchy is a losing strategy at posted prices: −2.6% over 5,126 picks across five seasons,
-negative in both markets, with no regime cell large enough to be distinguished from zero after
-the measurement is fixed. Correcting the harness halved the estimate of the loss but did not
-change the sign or produce a profitable subset.
+The hierarchy is a losing strategy at posted prices: −2.6% over 5,126 picks across five seasons.
+That is not just a point estimate — the season-clustered 90% interval is **[−4.1%, −0.9%]**, so
+the negative survives the same clustering objection that killed v2. Both markets are negative, and
+no regime cell is positive with an interval that excludes zero.
 
-Per the decision in `docs/CONTEXT-2026-10-20.md`, further model work should be judged on net units
-against this −2.6% baseline. The remaining unexplored hypothesis is that the edge must come from
-information the closing price does not contain at lock time (shot quality, goalie identity,
-injuries, deployment) — and the shot-coordinate data needed to test it is still not on disk.
+**Verdict: `leeway-2` is NOT_ADOPTED for trading.** It should not be used to place bets on its own,
+and future model work should be judged against the −2.6% baseline rather than against Brier.
+
+Two things stay open, neither of them a reason to keep this rule:
+
+1. The strong-mid ML cell (+10.4% on 213 picks) and early-season ML (+2.9% on 340) are the two
+   positives worth remembering. Both are season-driven and both have intervals spanning zero.
+   Chasing them by tuning the strength cuts on these same games would be fitting noise; if either
+   is tested again it needs a pre-registered definition and fresh games.
+2. The original hypothesis — standings + actual GF/GA + xG as the selector itself, choosing ML,
+   puck line, or no trade independently of this cascade — has still not been tested end to end.
+   That is the next experiment, not another pass at this one.
 
 ## Superseded: v1 numbers (`f3d53766`)
 
@@ -164,8 +212,10 @@ uv run --with scikit-learn --with numpy python backtest_matchup_strategy.py
 ```
 
 Ablations: add `--frozen` (v1 coefficients), `--legacy-settlement` (v1 settlement), or both.
-Outputs `results_corrected.json` for the corrected arm and `results_<model>_<settlement>.json`
-for the others.
+`--dump-rows` also writes `rows_<model>_<settlement>.jsonl` for cell-level analysis. Outputs
+`results_corrected.json` for the corrected arm and `results_<model>_<settlement>.json` for the
+others; each stores the reconciliation, the rule-branch counts, every table and the
+season-clustered intervals.
 
 Inputs: canonical games and pregame rolling features (audit directory, untracked),
 `research/nhl/prospective-2026-27/frozen_models_2026-27_v1.json`, and

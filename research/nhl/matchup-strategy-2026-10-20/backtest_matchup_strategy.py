@@ -36,6 +36,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import random
 import re
 import sys
 from collections import defaultdict
@@ -155,6 +156,30 @@ def load_games(canon: list[dict], features: dict[int, dict]) -> list[dict]:
         })
     games.sort(key=lambda r: (r["game_date"], r["start_time_utc"], r["game_id"]))
     return games
+
+
+def load_all_games(canon: list[dict]) -> list[dict]:
+    """Every canonical game, including ones with no forecastable xG window.
+
+    Standings must be built from these: a team's record does not depend on whether we can
+    forecast a particular matchup.
+    """
+    out = []
+    for c in canon:
+        out.append({
+            "game_id": int(c["game_id"]),
+            "season": int(c["season"]),
+            "game_date": c["game_date"],
+            "start_time_utc": c["start_time_utc"],
+            "home_team": TEAM_ID.get(c["home_team"], c["home_team"]),
+            "away_team": TEAM_ID.get(c["away_team"], c["away_team"]),
+            "home_goals": int(c["home_goals_model_target"]),
+            "away_goals": int(c["away_goals_model_target"]),
+            "official_home_winner": int(c["official_home_winner"]),
+            "last_period_type": c["last_period_type"].upper(),
+        })
+    out.sort(key=lambda r: (r["game_date"], r["start_time_utc"], r["game_id"]))
+    return out
 
 
 def standings_before(games: list[dict]) -> dict[int, dict]:
@@ -313,9 +338,11 @@ def strength(value: float, cuts: dict) -> str:
 def pair(h: str, a: str) -> str:
     if "early" in (h, a):
         return "early"
+    rank = {"weak": 1, "mid": 2, "strong": 3}
     if h == a:
         return {"strong": "strong-strong", "weak": "weak-weak", "mid": "mid-mid"}[h]
-    return "mixed"
+    hi, lo = (h, a) if rank[h] > rank[a] else (a, h)
+    return f"{hi}-{lo}"
 
 
 def regimes(game: dict, st: dict, thresholds: dict) -> dict:
@@ -406,6 +433,30 @@ def settled_legacy(pk: dict, home_goals: int, away_goals: int) -> str:
     return "win" if ((total > line) == (side == "over")) else "loss"
 
 
+def clustered_roi_ci(rs: list[dict], iters: int = 5000, seed: int = 11) -> list[float] | None:
+    """Season-block bootstrap 90% interval for ROI. Seasons, not picks, are the resampling unit."""
+    seasons = sorted({r["season"] for r in rs})
+    if len(seasons) < 2:
+        return None
+    blocks = {s: [r for r in rs if r["season"] == s] for s in seasons}
+    rng = random.Random(seed)
+    out = []
+    for _ in range(iters):
+        units = staked = 0
+        for s in [rng.choice(seasons) for _ in seasons]:
+            for r in blocks[s]:
+                if r["result"] == "win":
+                    units += american(r["price_open"])
+                    staked += 1
+                elif r["result"] == "loss":
+                    units -= 1.0
+                    staked += 1
+        if staked:
+            out.append(units / staked)
+    out.sort()
+    return [round(out[int(.05 * len(out))], 3), round(out[int(.95 * len(out)) - 1], 3)]
+
+
 # --------------------------------------------------------------------------------------------
 # Replay
 # --------------------------------------------------------------------------------------------
@@ -420,7 +471,7 @@ def main() -> None:
     features = {int(r["game_id"]): r for r in load_csv(FEATURES)}
     games = load_games(canon, features)
     elo = elo_replay(canon)
-    standings = standings_before(games)
+    standings = standings_before(load_all_games(canon))
     thresholds = build_thresholds(games, standings)
 
     folds, forecasts = {}, {}
@@ -520,6 +571,10 @@ def main() -> None:
         r = dict(season=season, game_id=gid, home_team=h, away_team=a, **pk, result=res,
                  home_goals=rec["home_goals"], away_goals=rec["away_goals"], s=game.get("s"))
         r.update({f"regime_{k}": v for k, v in regimes(rec, standings[gid], thresholds).items()})
+        r["home_pct"] = round(standings[gid]["home"]["pct"], 4)
+        r["away_pct"] = round(standings[gid]["away"]["pct"], 4)
+        r["home_gp"] = standings[gid]["home"]["gp"]
+        r["away_gp"] = standings[gid]["away"]["gp"]
         r["regime"] = r["regime_points"]
         rows.append(r)
 
@@ -542,12 +597,12 @@ def main() -> None:
 
     fits = {str(s): dict(f) for s, f in folds.items()}
 
-    def report(key_fn, title, price="price_open"):
+    def report(key_fn, title, price="price_open", where=None):
         print("\n" + title + f"  (prices: {price})")
         print(f"{'group':<28}{'n':>6}{'W':>6}{'L':>6}{'P':>4}{'units':>10}{'ROI':>8}")
         groups = defaultdict(list)
         for r in rows:
-            if r[price] is None:
+            if r[price] is None or (where is not None and not where(r)):
                 continue
             groups[key_fn(r)].append(r)
         out = {}
@@ -573,8 +628,28 @@ def main() -> None:
             lambda r, v=variant: (r["market"], r[f"regime_{v}"]), f"By market x regime — {variant}")
     tables["market_season"] = report(
         lambda r: (r["market"], f"{r['season']}-{str(r['season'] + 1)[2:]}"), "By market x season")
+    tables["early_ml_by_season"] = report(
+        lambda r: f"{r['season']}-{str(r['season'] + 1)[2:]}",
+        "Early-season moneyline by season (<10 GP for either team)",
+        where=lambda r: r["market"] == "ml" and r["regime_points"] == "early")
     tables["ml_closing"] = report(lambda r: r["market"],
                                   "Closing sensitivity (distinct quotes only)", price="price_close")
+
+    cis = {"all": clustered_roi_ci(rows)}
+    print("\nCLUSTERED 90% ROI INTERVALS (season blocks, 5,000 resamples)")
+    print(f"  {'all picks':<40}{cis['all'][0]:+.1%} .. {cis['all'][1]:+.1%}")
+    for variant in ("points", "goals", "goals_xg"):
+        for market in ("ml", "spread"):
+            for regime in ("strong-mid", "strong-strong", "strong-weak", "mid-mid", "mid-weak",
+                           "weak-weak", "early"):
+                cell = [r for r in rows if r["market"] == market and r[f"regime_{variant}"] == regime]
+                units = sum(american(r["price_open"]) if r["result"] == "win"
+                            else (-1.0 if r["result"] == "loss" else 0.0) for r in cell)
+                if len(cell) < 100 or units <= 0:
+                    continue
+                key = f"{variant}/{market}/{regime}"
+                cis[key] = clustered_roi_ci(cell)
+                print(f"  {key:<40}{cis[key][0]:+.1%} .. {cis[key][1]:+.1%}   n={len(cell)} units={units:+.2f}")
 
     cells = defaultdict(int)
     for r in rows:
@@ -583,6 +658,10 @@ def main() -> None:
     assert sum(cells.values()) == len(rows)
 
     out_path = RESULTS_JSON if label == "walkforward/book" else HERE / f"results_{model_mode}_{settle_mode}.json"
+    if "--dump-rows" in args:
+        with (HERE / f"rows_{model_mode}_{settle_mode}.jsonl").open("w") as fh:
+            for r in rows:
+                fh.write(json.dumps(r) + "\n")
     out_path.write_text(json.dumps({
         "generated_by": "backtest_matchup_strategy.py (revision 2)",
         "mode": label,
@@ -591,6 +670,7 @@ def main() -> None:
         "reconciliation": dict(recon),
         "rule_branches": dict(rule),
         "tables": tables,
+        "clustered_ci": cis,
         "rows": len(rows),
     }, indent=2) + "\n")
     print(f"\nwrote {out_path}")
