@@ -224,9 +224,14 @@ def _apply_tennis_v2_winner(match: dict, record: dict | None) -> bool:
     }
     match["lockedAt"] = record.get("locked_at")
     match["preview"] = False
-    # V2 uses a separate prospective ledger that does not persist lock-time odds.
-    # Never borrow the regular page model's quote for a different forecast lock.
-    match["frozenOdds"] = None
+    # V2 uses its own immutable bookmaker snapshot, never the page-model quote.
+    # Legacy V2 locks remain unaltered and are marked separately.
+    match["frozenOdds"] = forecast.get("frozen_bovada_odds")
+    match["frozenOddsStatus"] = (
+        "captured" if match["frozenOdds"] is not None
+        else "unavailable" if "frozen_bovada_odds" in forecast
+        else "legacy"
+    )
 
     grades = match.get("grades") or {}
     actual_winner = record.get("actual_winner")
@@ -610,6 +615,7 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                     (league, match["gameId"]),
                 ).fetchone()
                 locked_projection = json.loads(lock["projection"]) if lock else None
+                quote_attempted = locked_projection is not None and "_frozenOdds" in locked_projection
                 frozen_odds = (locked_projection.pop("_frozenOdds", None)
                                if locked_projection is not None else None)
                 projection = locked_projection if lock else (
@@ -624,6 +630,10 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                 match["lockedAt"] = lock["locked_at"] if lock else None
                 match["preview"] = bool(projection and not lock)
                 match["frozenOdds"] = frozen_odds
+                match["frozenOddsStatus"] = (
+                    "captured" if frozen_odds is not None
+                    else "unavailable" if quote_attempted else "legacy" if lock else None
+                )
                 grade = grades.get(match["gameId"])
                 match["grades"] = ({
                     "winner": grade["winner"],
