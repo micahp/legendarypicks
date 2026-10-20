@@ -1,7 +1,8 @@
 # Tennis: per-match stats on tournament websites (2026-10-20)
 
-**Status:** finding from a manual check. One ATP event site shows per-match aces and double faults.
-Coverage, terms of use and the join to ESPN game ids are not yet established.
+**Status:** finding from a manual check. One ATP event site (Shanghai) shows per-match aces and double
+faults. Two more sites (365scores and tennis24) showed per-match aces and double faults in one load each
+(see the six-site section). Coverage, terms of use and the join to ESPN game ids are not yet established.
 
 ## Why this was checked
 
@@ -69,6 +70,22 @@ unknown. This count describes that page at that load, not the event.
 - Scripts used are in the session scratch folder, not in the repo:
   `/tmp/claude-0/-root/2a3d8f0a-c311-4a83-b428-4754d7a521de/scratchpad/shanghai_ms001.py`,
   `shanghai_match_stats.py`, `shanghai_results.py`, `wta_render_check.py`, `wuhan_stats_page.py`.
+
+## Six further sites checked (2026-10-20)
+
+Each site was loaded once with Playwright (headless Chromium). Match pages were loaded once each. Results
+describe those loads only.
+
+| Site | Load | Per-match aces and double faults | What was read |
+| --- | --- | --- | --- |
+| 365scores (`365scores.com/en-us/tennis/league/wuhan-6177`) | 200 | Yes, one match read | The match page has a Stats section with Aces, Double Faults and Break Points Won. One match (Ann Li vs Swiatek, Wuhan): left side 1 ace and 2 double faults, right side 0 aces and 1 double fault. Side order and final status not verified. |
+| tennis24 (`tennis24.com/wta-singles/wuhan/...`) | 200 | Yes, behind a STATS tab | The match page's STATS tab, clicked, shows Aces and Double Faults. The captured block was labelled SET 3 and read 0 aces and 1 double fault per side. The whole-match view is not confirmed. |
+| livescore.in (`livescore.in/tennis/`) | 200 | Not found | The tennis list and match pages load. No stats tab or stat values on a match page in one load. |
+| tennisabstract.com (Ann Li player page) | 200 | No per-match counts seen | Career, surface and last-52 rows show ace percentages (rates). Match rows show scores only. |
+| tennis-x.com | 200 | No | News and historical records (for example Karlovic's ace records). No match stats. |
+| tennisstats.com (Wuhan) | 403 | Unknown | Cloudflare bot challenge on our load. Not checked further and not bypassed. |
+
+Not yet done: terms of use and coverage for 365scores and tennis24, and the ESPN id crosswalk.
 
 ## Limits
 
