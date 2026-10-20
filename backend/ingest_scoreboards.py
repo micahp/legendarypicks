@@ -679,10 +679,12 @@ def main(argv=None):
                 frozen = sweep_tennis_locks(con)
             finally:
                 con.close()
-            if frozen["locked"] or frozen["no_projection"]:
+            if frozen["considered"]:
                 print(f"  tennis locks: {frozen['locked']} frozen, "
                       f"{frozen['already_locked']} already frozen, "
-                      f"{frozen['no_projection']} without a projection")
+                      f"{frozen['no_projection']} without a projection; "
+                      f"{frozen['quotes_frozen']} Bovada quotes frozen, "
+                      f"{frozen['quotes_unavailable']} without a matching fresh quote")
         except Exception as exc:  # never let the sweep take the ingest down
             print(f"  FAIL tennis locks: {exc}")
             status = 1
