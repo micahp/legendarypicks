@@ -119,4 +119,19 @@ describe('NFL model tab grading', () => {
     render(<NflModelTab />)
     expect(await screen.findByText('Line · lock row · captured t')).toBeTruthy()
   })
+
+  it('shows no lean, not the away side, when the model agrees with the line', async () => {
+    const level = { ...payload.games[0].locks[V1], margin: -1.5, p_home_win: 0.4,
+      lean: { ml: { side: 'away' }, spread: { side: 'none', reason: 'level_with_line' },
+              total: { side: 'over' } },
+      wager: { policy: 'nfl-wager-policy-v1', status: 'no_qualifying_wager', reason: 'observe_only',
+               markets: { ml: { status: 'no_qualifying_wager' } } } }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: level } }] }),
+    }))
+    render(<NflModelTab />)
+    expect(await screen.findByText('No lean')).toBeTruthy()
+    expect(screen.getByText('CHI ML')).toBeTruthy()
+    expect(screen.getByText(/No qualifying wager/)).toBeTruthy()
+  })
 })
