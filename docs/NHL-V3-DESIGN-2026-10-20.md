@@ -5,7 +5,7 @@
 ## Version boundary
 
 - **V2 (current foundation):** team attack/defence ridge-Poisson on complete game goals. `frozen_models_2026-27_v2.json` is frozen on a 23,222-game canonical sample from 2008-09 through 2025-26; the corresponding `team_strength.py` has home advantage, team attack/defence, 400-day recency weighting and regularisation. It yields game-level goal means and probabilities, not a period, goalie or event simulator.
-- **V3 (this document):** two independently testable layers. **Layer 1** predicts period-level team shot creation/prevention and opponent-/teammate-adjusted on-ice player effects. **Layer 2** predicts shot difficulty and starter-dependent save probability, using location and shot type. Output shot/goal rates and period-level forecasts; do **not** claim to simulate an entire game.
+- **V3 (this document):** two independently testable layers. **Layer 1** predicts period-level ACTUAL goals scored/allowed, goal differential, shot creation/prevention, expected goals, and opponent-/teammate-adjusted on-ice player effects. **Layer 2** predicts shot difficulty and starter-dependent save probability, using location and shot type. Output shot/goal rates and period-level forecasts; do **not** claim to simulate an entire game.
 - **V4 (separate document):** uses V3 rates inside a stateful game simulator with real penalty/manpower transitions, shift/line rotations, power-play goals, game script, empty net, OT and shootouts.
 
 ## What v2 does and doesn't know
@@ -15,7 +15,7 @@ log(mu_home) = b0 + home_adv + attack[home] - defence[away]
 log(mu_away) = b0            + attack[away] - defence[home]
 ```
 
-This is a useful baseline, not a full probabilistic reconstruction of hockey. It has no explicit goalie, period, player shift, shot location, shot type or penalty-state variables. Team defence currently absorbs goaltending and penalty killing.
+**V2 is trained on ACTUAL goals scored and conceded**, not solely xG. It has an xG reference fit, but shipped team-strength goal means are fitted to historical goals. Actual goals are already in v2; what v3 adds is period-, opponent-, player- and situation-specific structure. This is a useful baseline, not a full probabilistic reconstruction of hockey. It has no explicit goalie, period, player shift, shot location, shot type or penalty-state variables. Team defence currently absorbs goaltending and penalty killing.
 
 The v2 historical scorecard documents winner Brier **0.2444** versus v1 reference **0.2462** on the same 9,147 feature-complete 2019-2025 games. The goal-margin forecast distribution widened materially. Those numbers are **model diagnostics only**; not trading ROI, evidence of profit, or proof of superiority to a separately sampled sportsbook market.
 
@@ -23,11 +23,12 @@ The v2 historical scorecard documents winner Brier **0.2444** versus v1 referenc
 
 The effective unit is a **team-period/strength-state exposure window**, with optional shift intersections where coverage supports them. Model:
 
-1. Team shot attempts, unblocked attempts, shots on goal, chance danger and goals per 60, split by period and score state (leading, tied, trailing).
-2. Separate attack and prevention. Retain existing score-/venue-adjusted 5v5 xG and xGA as priors, not as double-counted goals.
-3. On-ice conventional plus/minus alongside **on-ice GF/GA and xGF/xGA per 60**, adjusted/shrunk for opponents, teammates and time on ice. Conventional NHL +/- is not a direct causal player rating and typically excludes power-play goals.
-4. Reconstruct who was on ice at shot events by joining official play-by-play to **separate** NHL shift charts by game, player, period and elapsed time. Never assume complete on-ice player lists are embedded in every PBP record.
-5. For a missing/malformed shift, preserve an unknown deployment indicator rather than inserting a guessed line.
+1. **Actual scoring outcomes first:** pregame-known goals for (GF), goals against (GA), actual goal differential (GF−GA), GF/GP and GA/GP, period-by-period actual GF/GA and goal margin, plus rolling last-5/10, longer-run and home/away splits. Handle regulation, OT and shootout-deciding goals with versioned targets so the same goal is not counted twice.
+2. **Expected scoring alongside actual scoring:** xGF, xGA, xG differential, expected goals per 60, actual-minus-expected residuals (GF−xGF, GA−xGA), shot-to-goal conversion and opponents faced. Distinguish repeatable finishing skill from luck with chronological shrinkage. Test goals-only, xG-only and goals+xG challengers.
+3. **Shot creation/prevention:** shot attempts, unblocked attempts, shots on goal and chance danger per 60 by period, score state, strength state and opponent. Model attack and defense separately.
+4. On-ice conventional plus/minus alongside **on-ice GF/GA and xGF/xGA per 60**, adjusted/shrunk for opponents, teammates and time on ice. Conventional NHL +/- is not a direct causal player rating and typically excludes power-play goals.
+5. Reconstruct who was on ice at shot events by joining official play-by-play to **separate** NHL shift charts by game, player, period and elapsed time. Never assume complete on-ice player lists are embedded in every PBP record.
+6. For a missing/malformed shift, preserve an unknown deployment indicator rather than inserting a guessed line.
 
 V3 can test period markets and team shot opportunities without yet producing event-by-event simulated possessions. Power-play *observed aggregates* may be calculated here to provide V4 with priors; modelling the full penalty and PP-goal sequence is V4 work.
 
@@ -63,7 +64,7 @@ First enumerate complete coverage by season, including event counts, coordinate 
 
 ## V3 evaluation, separate from trading
 
-Compare v2 against: period/team-only, goalie-only, and their combination, **chronologically on matched games**. Score shot creation, shot danger, goalie residual calibration, period-goal error, winner/total/cover probability reliability and sensible uncertainty intervals. A stronger overall Brier score is **not** the criterion for a profitable trading strategy; it is an engineering/model quality metric. Trading hypotheses belong in `docs/NHL-STANDINGS-ONLY-TRADING-STRATEGY.md` and must be tested against executable prices.
+Compare v2 against **historical actual-goals-only, historical xG-only, and combined actual-goals+xG**, then period/team-only, goalie-only, and their combination, **chronologically on matched games**. Score actual GF/GA and goal-differential forecast error, period GF/GA error, shot creation, shot danger, goalie residual calibration, winner/total/cover reliability and uncertainty intervals. A stronger overall Brier score is **not** the criterion for a profitable trading strategy; it is an engineering/model quality metric. Trading hypotheses belong in `docs/NHL-STANDINGS-ONLY-TRADING-STRATEGY.md` and must be tested against executable prices.
 
 ## Deferred sequence
 
