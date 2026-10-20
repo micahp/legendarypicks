@@ -22,6 +22,7 @@ from tennis_daily_projections import (
     store_candidates,
     stored_candidates,
 )
+from tennis_bovada_odds import bovada_odds
 
 LOCK_WINDOW = dt.timedelta(hours=1)
 TENNIS_LEAGUES = ("atp", "wta")
@@ -77,11 +78,31 @@ def due_matches(con: sqlite3.Connection, now: dt.datetime,
     return grouped
 
 
+def _bovada_quote(con: sqlite3.Connection, match: dict, now: dt.datetime) -> dict | None:
+    """Attach the latest matching pre-lock quote, using ESPN-linked player identities.
+
+    The sweep must freeze the same quote as the API-driven lock path. Without this,
+    automated locks save only projections, leaving every settled Record without odds.
+    """
+    players = {}
+    for side in ("home", "away"):
+        espn_id = str(match.get(side + "AthleteId") or "")
+        row = con.execute(
+            "SELECT id FROM players WHERE league=? AND espn_id=?",
+            (match["tour"], espn_id),
+        ).fetchone() if espn_id else None
+        players[side] = row[0] if row else None
+    return bovada_odds(
+        con, match["gameId"], match["tour"], players["home"], players["away"], now,
+    )
+
+
 def sweep(con: sqlite3.Connection, now: dt.datetime | None = None,
           window: dt.timedelta = LOCK_WINDOW) -> dict:
     """Lock every tennis match now inside its window. Safe to call every minute."""
     now = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
-    report = {"considered": 0, "locked": 0, "already_locked": 0, "no_projection": 0}
+    report = {"considered": 0, "locked": 0, "already_locked": 0,
+              "no_projection": 0, "quotes_frozen": 0, "quotes_unavailable": 0}
     for (league, model_day), matches in due_matches(con, now, window).items():
         stored = stored_candidates(con, league, model_day)
         if stored is None or needs_projection_refresh(stored, matches):
@@ -95,15 +116,28 @@ def sweep(con: sqlite3.Connection, now: dt.datetime | None = None,
                 # Never fabricate a lock from a projection that does not exist.
                 report["no_projection"] += 1
                 continue
+            # Never change an existing lock or attach a later quote to it.
+            if con.execute(
+                "SELECT 1 FROM tennis_model_locks WHERE league=? AND game_id=?",
+                (league, match["gameId"]),
+            ).fetchone():
+                report["already_locked"] += 1
+                continue
+            locked_projection = dict(candidate)
+            frozen_odds = _bovada_quote(con, match, now)
+            # Store the attempted capture even if no matching, fresh odds exist.
+            # Legacy locks lack this key and must not be represented as attempted.
+            locked_projection["_frozenOdds"] = frozen_odds
             cursor = con.execute(
                 "INSERT OR IGNORE INTO tennis_model_locks"
                 "(league,game_date,game_id,start_time,locked_at,projection,model_version) "
                 "VALUES(?,?,?,?,?,?,?)",
                 (league, model_day, match["gameId"], match["startTime"], now.isoformat(),
-                 json.dumps(candidate), candidate.get("modelVersion")),
+                 json.dumps(locked_projection), candidate.get("modelVersion")),
             )
             if cursor.rowcount:
                 report["locked"] += 1
+                report["quotes_frozen" if frozen_odds is not None else "quotes_unavailable"] += 1
             else:
                 report["already_locked"] += 1
     con.commit()
