@@ -95,10 +95,10 @@ describe('Tennis model tab parity', () => {
     render(<TennisModelTab tour="atp" />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
 
-    await waitFor(() => expect(document.body.textContent).toContain('No frozen sportsbook line was recorded for this forecast.'))
+    await waitFor(() => expect(document.body.textContent).toContain('This older forecast was locked without a sportsbook quote snapshot.'))
     expect(document.body.textContent).toContain('Frozen line · Bovada -150')
     expect(document.body.textContent).toContain('Bovada captured 2026-10-17T11:45:00Z')
-    expect(document.body.textContent).toContain('No frozen sportsbook line was recorded for this forecast.')
+    expect(document.body.textContent).toContain('This older forecast was locked without a sportsbook quote snapshot.')
     fireEvent.click(screen.getByRole('button', { name: 'Model accuracy' }))
     expect(screen.getByText('0.4900')).toBeTruthy()
     expect(screen.getByText('2', { selector: 'dd' })).toBeTruthy()
