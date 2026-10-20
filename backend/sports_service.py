@@ -74,6 +74,7 @@ from routers import (  # noqa: E402
     watch,
     nfl_model,
     nhl_model,
+    fbs_model,
     home,
 )
 
@@ -106,6 +107,7 @@ app.include_router(nfl_offseason.router)
 app.include_router(nfl_usage.router)
 app.include_router(nfl_model.router)
 app.include_router(nhl_model.router)
+app.include_router(fbs_model.router)
 app.include_router(home.router)
 app.include_router(nfl_playoff_odds.router)
 app.include_router(nfl_draft_notes.router)
