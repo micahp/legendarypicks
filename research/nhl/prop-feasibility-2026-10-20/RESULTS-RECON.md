@@ -5,6 +5,8 @@ The boxscore outcomes are from NHL GameCenter `playerByGameStats`; the compariso
 
 ## Sampling and coverage
 
+- Official instrument: `GET https://api-web.nhle.com/v1/gamecenter/{game_id}/boxscore`, queried on 2026-10-20, one game per request, sequentially. Raw response bodies are committed as gzip JSON.
+- Archive instrument: read-only `/root/nhl_database_2025-26-playoffs.duckdb`; skaters from `skaters_gamelogs` with `situation='all'` and `I_F_shotsOnGoal`; goalies from `goalies_gamelogs` with `situation='all'`, saves calculated as `ongoal - goals`.
 - Canonical frame: 4,876 regular-season games, start seasons 2018–2022, through 2022-11-27; frame SHA256 `336d8a8d055febd742dbf31ce7a613bd2e47c2cd8fbc7a8d956fc8967ba47b1c`.
 - Sample: 300 games, 60 per season block, seed `20261020`, sorted-game-id input; sample game-id SHA256 `0cd5fd97f61d2e945395b7e2b8238746dc3cad5c818fae746f1629c40149222a`.
 - Anchor game `2018020160` was forced into the 2018–19 block by drawing 59 additional games there; other blocks draw 60 uniformly from their game-id-sorted frame.

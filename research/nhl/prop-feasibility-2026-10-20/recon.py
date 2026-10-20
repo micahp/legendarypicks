@@ -732,6 +732,8 @@ def render_results(
         "",
         "## Sampling and coverage",
         "",
+        "- Official instrument: `GET https://api-web.nhle.com/v1/gamecenter/{game_id}/boxscore`, queried on 2026-10-20, one game per request, sequentially. Raw response bodies are committed as gzip JSON.",
+        "- Archive instrument: read-only `/root/nhl_database_2025-26-playoffs.duckdb`; skaters from `skaters_gamelogs` with `situation='all'` and `I_F_shotsOnGoal`; goalies from `goalies_gamelogs` with `situation='all'`, saves calculated as `ongoal - goals`.",
         f"- Canonical frame: {EXPECTED_FRAME_TOTAL:,} regular-season games, start seasons 2018–2022, through {CUTOFF}; frame SHA256 `{EXPECTED_FRAME_SHA256}`.",
         f"- Sample: {len(sample)} games, 60 per season block, seed `{SEED}`, sorted-game-id input; sample game-id SHA256 `{sample_hash}`.",
         f"- Anchor game `{ANCHOR_GAME_ID}` was forced into the 2018–19 block by drawing 59 additional games there; other blocks draw 60 uniformly from their game-id-sorted frame.",
