@@ -47,12 +47,15 @@ Games = paired rows. Percentages are share of rows carrying that field.
 | 2016-17 | 428 | 56% | 100% | 22% | 0% |
 | 2017-18 | 124 | 61% | 100% | 29% | 0% |
 | 2018-19 | 1,358 | 100% | 100% | 100% | 100% |
-| 2019-20 | 1,212 | 100% | 100% | 100% | 100% |
+| 2019-20 | 1,082 | 100% | 100% | 100% | 100% |
 | 2020-21 | 952 | 100% | 100% | 100% | 100% |
 | 2021-22 | 1,401 | 100% | 100% | 100% | 100% |
-| 2022-23 | 342 | 100% | 100% | 100% | 100% |
+| 2022-23 | 339 | 100% | 100% | 100% | 100% |
 
-2022-23 is a partial file: 342 of ~1,312 games. 2019-20 and 2020-21 are short seasons for
+The five complete-market seasons hold 5,132 artifact rows; 1 row in 2020-21 is missing `final`, so
+5,131 are complete on every field — the count used in the benchmark table below.
+
+2022-23 is a partial file: 339 of ~1,312 games. 2019-20 and 2020-21 are short seasons for
 real-world reasons (COVID), not data gaps.
 
 ## Normalised artifact
