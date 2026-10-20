@@ -10,13 +10,20 @@ interface ModelForecast {
   fair_away: number | null
   model_version: string
   fitted_through: string | null
+  locked_at_utc?: string | null
+  previewed_at_utc?: string | null
 }
+
+// preview: display-only, replaced each run. locked: frozen inside the T-90 window.
+// missed: kickoff passed with no lock. legacy: stored before the lock protocol, not official.
+type GameStatus = 'preview' | 'locked' | 'missed' | 'legacy'
 
 interface FbsGame {
   game_id: string
   kickoff_utc: string
   home_team: string
   away_team: string
+  status: GameStatus
   locked_at_utc: string | null
   late: boolean
   result: { home_score: number; away_score: number; home_win: boolean } | null
@@ -29,6 +36,8 @@ interface ModelRecord {
   graded: number
   forecasts: number
   late: number
+  legacy: number
+  missed: number
   brier: number | null
   log_loss: number | null
   accuracy: number | null
@@ -62,6 +71,13 @@ const pct = (value: number | null | undefined) =>
 
 const price = (value: number | null | undefined) =>
   value == null ? '—' : value > 0 ? `+${value}` : `${value}`
+
+const STATUS_LABEL: Record<GameStatus, string> = {
+  preview: 'Preview, not locked',
+  locked: 'Locked before kickoff',
+  missed: 'Missed lock window',
+  legacy: 'Legacy forecast, not official',
+}
 
 function kickoffLabel(iso: string) {
   const date = new Date(iso)
@@ -97,9 +113,11 @@ export default function FbsModelTab() {
     () => (payload?.games ?? []).filter((game) => new Date(game.kickoff_utc).getTime() > now),
     [payload, now],
   )
+  // The official record is locked pregame forecasts only. Previews, legacy rows and missed
+  // games are never graded as if they were picks.
   const recent = useMemo(
     () => (payload?.games ?? [])
-      .filter((game) => !game.late && game.locked_at_utc
+      .filter((game) => game.status === 'locked' && !game.late && game.locked_at_utc
         && new Date(game.locked_at_utc).getTime() < new Date(game.kickoff_utc).getTime()
         && new Date(game.kickoff_utc).getTime() <= now)
       .slice(-25).reverse(),
@@ -148,7 +166,8 @@ export default function FbsModelTab() {
 
       <p className="text-xs text-zinc-500">
         Predictions only — no NCAAF moneyline or spread price feed is captured yet, so nothing here is
-        a qualifying wager. Win probabilities and model fair odds, locked before kickoff.
+        a qualifying wager. Win probabilities and model fair odds. Only forecasts locked before kickoff
+        count toward the record; previews do not.
       </p>
 
       {payload.state === 'awaiting_first_lock' ? (
@@ -185,12 +204,16 @@ export default function FbsModelTab() {
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                  <Metric label="Forecast status" value={game.late ? "Late / ungraded" : game.locked_at_utc ? "Locked before kickoff" : "Not locked"} />
+                  <Metric label="Forecast status" value={STATUS_LABEL[game.status]} />
                 </div>
                 <div className="mt-3 text-xs text-zinc-500">
-                  Locked {game.locked_at_utc ? new Date(game.locked_at_utc).toLocaleString() : 'not locked'}
+                  {game.status === 'locked' && game.locked_at_utc
+                    ? `Locked ${new Date(game.locked_at_utc).toLocaleString()}` : null}
+                  {game.status === 'preview'
+                    ? 'Preview from the latest run; replaced until the lock window opens' : null}
+                  {game.status === 'legacy'
+                    ? 'Stored before the lock protocol; kickoff time not provable; excluded from the record' : null}
                   {forecast.fitted_through ? ` · fitted through ${forecast.fitted_through}` : ''}
-                  {game.late ? ' · late forecast (excluded from record)' : ''}
                 </div>
               </article>
             )
@@ -240,6 +263,9 @@ export default function FbsModelTab() {
             Brier is mean (p − outcome)² on graded pregame locks; lower is better and 0.2500 is a
             coin flip. Only {record?.graded ?? 0} graded forecasts — until that is in the hundreds,
             treat the number as an early read, not a validated score.
+          </p>
+          <p className="text-xs text-zinc-500">
+            Missed lock windows: {record?.missed ?? 0} · Legacy rows excluded from the record: {record?.legacy ?? 0}
           </p>
           {recent.length === 0 ? (
             <p className="py-6 text-sm text-zinc-500">No games have started yet in the locked window.</p>
