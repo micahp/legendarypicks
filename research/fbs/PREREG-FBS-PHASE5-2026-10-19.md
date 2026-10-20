@@ -20,9 +20,11 @@ regular games 2018-2025; one 2024 game has no PBP from any source. Participation
 2018-2025 for the key skill roles, not full 11-player snap counts. The game-roster `starter` flag
 is populated only in 2025 (17,616 True of 214,432 rows) and `did_not_play` is never true, so
 playing time must be validated from participation and box scores. There is **no 2018-2025
-player-prop market**, and the market calibration gate is **UNAVAILABLE**: the dev DB has 0 NCAAF
-`prop_odds_snapshots` (3,526 total, all MLB), and the 2026 props are a live board, not a
-timestamped pre-kickoff no-vig archive.
+player-prop market**. G3 **is evaluable** on the 2026-forward two-sided props: **26,627**
+pre-kickoff groups (parsed UTC `captured_at < prop_games.start_time`; 366 games / 1,289 players;
+760 at/after excluded) carry both over and under odds as of 2026-10-19T23:46:51Z. What is
+unavailable is **line-movement/CLV history**: 0 NCAAF `prop_odds_snapshots` (3,526 total, all
+MLB), so no open->close or CLV analysis.
 
 A simulator can be built on this attribution. If the merged attribution on the 2025 holdout
 falls below the F1 thresholds, the track stops (section 7).
@@ -145,14 +147,18 @@ is why NCAA cfbfastR is the primary target source.
   **366** distinct `prop_games` carrying props (424 `prop_games` rows in the league),
   **1,289** distinct players, 2026-08-29 to 2026-10-24. There are **27,391**
   `(game, player, market, line, captured_at)` groups and **27,387** have both over and under
-  prices, so a board no-vig probability is computable from the live rows. **64,416** NCAAF
-  `prop_results` rows exist. There are **0 NCAAF rows in `prop_odds_snapshots`**; the 3,526
-  snapshot rows are all MLB, so there is **no timestamped pre-kickoff no-vig archive**; G3 is
-  declared UNAVAILABLE, not run. The DB is live-ingesting week 8; these counts drift and are
-  **not reproducible to the row**. There is no 2018-2025 player-prop market in the archive.
+  prices, so a no-vig probability is computable from the paired over/under odds at that capture.
+  Of the 27,387 two-sided groups, **26,627** are captured strictly before
+  `prop_games.start_time` (parsed UTC; 366 games / 1,289 players); **760** at/after kickoff are
+  excluded. (The raw-string count is 26,638/749; 11 groups are 9 seconds after a 00:04Z kickoff.)
+  **64,416** NCAAF `prop_results` rows exist. There are **0 NCAAF rows in `prop_odds_snapshots`**
+  (3,526 total, all MLB), so there is **no `prop_odds_snapshots` line-movement archive**;
+  pre-kickoff quotes do exist in `props`, and G3 uses the single pre-kickoff quote per group, not
+  an open->close series. The DB is live-ingesting week 8; these counts drift and are **not
+  reproducible to the row**. There is no 2018-2025 player-prop market in the archive.
 - The market is a **benchmark, not a training input**. A market-conditioned variant may be run
-  as a secondary, labelled market-derived diagnostic; it is not the primary model, it is not the
-  G3 gate (which is unavailable), and it cannot be used to claim an own-data edge.
+  as a secondary, labelled market-derived diagnostic; it is not the primary model and cannot be
+  used to claim an own-data edge.
 
 ### 1.6 Gaps as numbers
 
@@ -385,8 +391,7 @@ threshold, not a report, and **no gate is evaluated on a bare point estimate**.
 
 ### Sampling error (all statistical gates)
 
-Every point estimate in G1 and G2 (and in G3 only if a future pre-kickoff archive exists) is
-printed with a **95% percentile interval** from a
+Every point estimate in G1-G3 is printed with a **95% percentile interval** from a
 **game-clustered bootstrap**: resample whole games with replacement, **2,000 reps, seed
 `20261019`**; every PIT/graded row stays nested in its game; for player props the player-game is
 nested in the game and the bootstrap resamples **games only** (all player-game rows in a
@@ -446,31 +451,33 @@ interval. No threshold below is changed by this subsection.
   interval.
 - Sample: at least 10,000 player-games in the 2025 holdout.
 
-### G3 - Market calibration (P(over) vs no-vig) - UNAVAILABLE
+### G3 - Market calibration (P(over) vs no-vig)
 
-- **Status: UNAVAILABLE, not evaluable, not run.** The dev DB has **0** NCAAF rows in
-  `prop_odds_snapshots` against **87,286** NCAAF props, **424** `prop_games` rows and **64,416**
-  `prop_results`; the **3,526** snapshot rows are all MLB. The 2026 `props` rows (27,387 two-sided
-  groups as of 2026-10-19T23:46:51Z) are a live board, not a timestamped pre-kickoff no-vig
-  snapshot archive. A no-vig P(over) calibration **cannot be run** from them. This prereg
-  therefore makes **no market-calibration claim**; the G3 thresholds below are retained only for a
-  future, separately registered pre-kickoff snapshot archive, and are not evaluable here.
-- Population (future archive only): 2026 forward props with two-sided pre-kickoff no-vig snapshots;
-  the gate requires at least 1,000 props. Core markets: passing yards, rushing yards, receiving
-  yards, receptions, rush attempts.
-- **No-vig** (future archive only): proportional de-vig from the over/under American odds; market
+- Population: 2026-forward NCAAF props, two-sided, with non-null odds on both sides, captured
+  **strictly before** `prop_games.start_time` (both timestamps parsed as UTC; raw strings are not
+  compared). Measured **26,638 groups** under the raw `captured_at < start_time` string filter
+  (366 games / 1,289 players) as of **2026-10-19T23:46:51Z**; parsing both timestamps as UTC
+  shows **26,627** are strictly pre-kickoff and **760** are at/after, because 11 groups are one
+  2026-10-08 capture 9 seconds after a 00:04Z kickoff. The gate uses the parsed strict count:
+  **26,627 groups / 366 games / 1,289 players**; **760** at/after are excluded, not used. The
+  gate requires at least 1,000 props; the measured set exceeds that.
+- **No-vig**: proportional de-vig from the over/under American odds at that capture; market
   P(over) is the benchmark. The gate is calibration, not edge.
-- **Calibration** (future archive only): reliability slope `0.9-1.1`, intercept `+/-0.02`; Brier
-  `<= market + 0.01` for at least 4 of the 5 core markets; no market mean bias `> 0.05`. Report
-  the **paired** (sim - market) Brier difference with its interval and **log loss beside Brier**;
-  the Brier difference's point and **upper** bound must be `<= +0.01`; the slope interval inside
-  `[0.9, 1.1]`, the intercept interval inside `[-0.02, +0.02]`, the mean-bias interval inside
-  `[-0.05, +0.05]`. At least 4 of 5 core markets must pass their Brier bound.
-- **Secondary** (future archive only): the paired Brier and log-loss differences (sim - market) are
-  reported with intervals for every market; beating the market is not required for calibration,
-  but the model must not be materially worse than the market (the `+0.01` bound is the tolerance).
-- Because the gate is unavailable now, it is not a Step 2 input and no adoption decision can rest
-  on it; F3 states the consequence.
+- **Calibration**: reliability slope `0.9-1.1`, intercept `+/-0.02`; Brier `<= market + 0.01` for
+  at least 4 of the 5 core markets; no market mean bias `> 0.05`. Report the **paired** (sim -
+  market) Brier difference with its interval and **log loss beside Brier**; the Brier difference's
+  point and **upper** bound must be `<= +0.01`; the slope interval inside `[0.9, 1.1]`, the
+  intercept interval inside `[-0.02, +0.02]`, the mean-bias interval inside `[-0.05, +0.05]`.
+  At least 4 of 5 core markets must pass their Brier bound.
+- **Secondary**: the paired Brier and log-loss differences (sim - market) are reported with
+  intervals for every market; beating the market is not required for calibration, but the model
+  must not be materially worse than the market (the `+0.01` bound is the tolerance).
+- **Line movement / CLV: unavailable.** There are **0 NCAAF rows in `prop_odds_snapshots`** (3,526
+  total, all MLB), so there is no open->close line-movement or CLV analysis. G3 uses the single
+  pre-kickoff quote per `(game, player, market, line, captured_at)` group, not a closing-line
+  series.
+- If fewer than 1,000 two-sided pre-kickoff props are available by the end of the 2026 regular
+  season, the gate is **not evaluable**; the track stops under F3.
 
 ### G4 - Reproduction
 
@@ -480,16 +487,14 @@ interval. No threshold below is changed by this subsection.
   This is the deterministic G4 interval; no bootstrap is used.
 - The reproduction command and output paths are in Appendix B.
 
-**Pass rule.** G1, G2 and G4 must pass on the declared samples under the sampling rule above; G3
-is **unavailable** and is not a pass, so no adoption decision can rest on market calibration. The
-2025 holdout is never used in a fit. 2026 is forward only. If G1, G2 or G4 fails, the simulator is
-not adopted; there is no adoption decision in this prereg.
+**Pass rule.** All four gates must pass on the declared samples under the sampling rule above. The
+2025 holdout is never used in a fit. 2026 is forward only. If any gate fails, the simulator is not
+adopted; there is no adoption decision in this prereg.
 
 ## 7. What would make us stop (falsifier)
 
-F1, F2 and F4 end the Phase 5 track. F3 ends any market-calibration claim and any adoption that
-depends on it, but does not stop the team/box/joint work. None is a rescue for another. Each is
-stated before any fit.
+Any one of the following ends the Phase 5 track; the others are not a rescue. Each is stated
+before any fit.
 
 - **F1 (data).** On the 2025 holdout, merged attribution on the relevant plays falls below **98%**
   for passer, **98%** for rusher, **98%** for receiver on completions, or **95%** for targets. The
@@ -497,12 +502,12 @@ stated before any fit.
 - **F2 (model).** On the 2025 holdout, any core stat's 50% coverage is outside `[0.40, 0.60]`, or
   the team-total CRPS is worse than the baseline by more than `0.10`. The simulator does not
   reproduce the box; stop.
-- **F3 (market).** The no-vig prop calibration is **unavailable now**: **0** NCAAF
-  `prop_odds_snapshots` (3,526 total, all MLB) against **87,286** props, **424** `prop_games` and
-  **64,416** `prop_results`. The 2026 `props` rows are a live board, not a timestamped pre-kickoff
-  no-vig archive, so no market-based P(over) calibration can be run. This ends any
-  market-calibration claim and any adoption that depends on it; it does not stop the team/box/joint
-  work. A future pre-kickoff snapshot archive is a new registration.
+- **F3 (market).** Fewer than **1,000** two-sided pre-kickoff props (`captured_at <
+  prop_games.start_time`, parsed UTC) are available by the end of the 2026 regular season. The
+  market gate is not evaluable at the required sample; the track stops under F3. The measured set
+  is 26,627, so F3 is not currently triggered. **Line-movement/CLV is separately unavailable**
+  (0 NCAAF `prop_odds_snapshots`; 3,526 total, all MLB); this does not remove the P(over)
+  calibration, which uses the single pre-kickoff quote per group.
 - **F4 (joint).** The observed cross-player correlation on the 2025 box (QB passing yards vs WR
   receiving yards; RB carries vs QB pass attempts; team total vs QB passing yards) lies outside
   the simulated 95% interval, or the simulated correlation is not positive. The "joint" claim
