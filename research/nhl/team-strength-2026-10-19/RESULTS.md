@@ -46,8 +46,15 @@ reproduces this table and the pooled number:
 | 2024 | 0.2442 | 0.2418 | 0.27 | 0.72 |
 | 2025 | 0.2495 | 0.2568 | 0.26 | 0.65 |
 
-Pooled: **frozen 0.2462, v2 0.2444** over 9,147 games. v2 wins five of seven seasons and loses
-2022-23 and 2025-26.
+Pooled: **frozen 0.2462, v2 0.2444** over 9,147 games. The paired per-game loss difference
+(frozen − v2, positive means v2 better) is **+0.00183**, but its 95% percentile interval from a
+season-clustered bootstrap (4,000 resamples of the seven seasons, seed 20261020) is
+**[-0.00173, +0.00477]** — it **spans zero**. The pooled gain is **inside the noise band**, so v2
+is an unproven candidate against frozen v1, not a demonstrated improvement. The game-level
+interval ([+0.00009, +0.00364]) is anti-conservative and is not the headline. v2 loses 2022-23
+(delta −0.00024) and 2025-26 (delta −0.00729); dropping 2025-26 leaves +0.00347 and dropping
+2023-24 leaves +0.00102. `eval_team_strength.py --bootstrap 4000` prints the interval and the
+per-season deltas.
 
 **Population.** The pooled number covers seasons 2019 through 2025 and only the 9,147 games whose
 rolling 5v5 xG features are complete, because the frozen B5 reference cannot be scored without
