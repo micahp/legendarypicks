@@ -477,3 +477,13 @@ Rules for this file:
   `docs/RESULTS-tennis-incumbent-a1-2026-10-19.md`.
 - **Stop:** Reading a good calibration slope as evidence that a model should be the incumbent.
 - **Start:** Reporting calibration beside every paired margin, as this run did, and keeping it out of selection.
+
+## L44. 2026-10-19. [open] On this branch, shadow M2 and M1 agree on every upcoming match, because the surface map covers two events.
+
+- **Known:** All seven upcoming tennis matches in the store are BNB Ningbo Open (event 963), which the surface map does not
+  cover. For them, the m2-2000 and m1-elo forecasts agree to about 1e-16, so the shadow comparison is uninformative until
+  the map covers the tour's events. The dev branch's broader map (`ab0080b7`, `ae5cb074`) is not on this branch.
+- **Evidence:** `docs/TENNIS-SHADOW-2026-10-19.md`, row table; `research/tennis/shadow/2026-10-19/acceptance_write.json`.
+- **Stop:** Reading the shadow m2-2000 row as independent evidence on unmapped events.
+- **Start:** Settling the surface coverage for the shadow before the first graded comparison, and counting only mapped
+  matches as evidence for m2-2000.
