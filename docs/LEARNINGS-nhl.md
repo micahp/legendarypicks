@@ -13,10 +13,30 @@ official goals are tracked independently.
 | Goaltender adjustment on xG | G1 0.26657/0.72935 vs G2 0.26673/0.72961, intervals contain zero | **NO-GO** — no measurable gain |
 | Starting-goalie feed | 49.7% heuristic; future payload has no probable/starter fields | **DROP** |
 | Special teams xG over 5v5-only | Brier 0.243912 → 0.243299, log loss 0.680833 → 0.679578, CRPS 0.960078 → 0.958671 | **PASS on the keep rule, not adopted** — CRPS interval spans zero |
+| Historical market benchmark | SBR archive via Wayback, 5,131 complete games 2018-19 → 2022-23 | **AVAILABLE** — no-vig close Brier 0.23554 |
 | Tiered leeway cascade vs always-away +1.5 | cover tier 72.5% of games, 69.3% hit, Brier 0.2114 vs 0.2099 | **NO-GO** |
 | Leeway pick hierarchy (`leeway-2`) | implemented and unit-tested; not yet observed on a real slate | live, unproven |
 
 ## Entries
+
+### 2026-10-19 — The NHL market benchmark now exists, and it sets the bar at 0.23554
+**Learned:** SBR's historical odds archive survives in the Wayback Machine (the live URLs 404).
+16 season files, 2007-08 → 2022-23. Only 2018-19 onward carries a complete two-sided market:
+moneyline open and close, puck line, and total open and close. Normalised to **5,131 complete
+games**, no-vig closing moneyline Brier **0.23554** pooled (0.24150 / 0.24323 / 0.23169 / 0.22562 /
+0.23897 by season).
+**Evidence:** `docs/NHL-MARKET-BENCHMARK-SBR.md`, `research/nhl/sbr-odds-archive-2026-10-19/`.
+**Consequence:** every NHL model claim is now measured against a market number instead of against
+another model. Pre-2018-19 seasons cannot produce a no-vig benchmark — one row in two carries a
+total string instead of a price, so the pair is not priced on both sides. Do not quote them as one.
+
+### 2026-10-19 — Closing prices are a benchmark, never a bettable price
+**Learned:** the archive has open and close columns and **no intraday timestamp** — no T−90, no
+book, no capture time. A closing price cannot be treated as what the model could have bet earlier
+in the day.
+**Evidence:** field inventory of every season file.
+**Consequence:** backtests may use the open or the close, and must say which. Strategy results
+quoted at "historical prices" without that distinction are unfalsifiable.
 
 ### 2026-10-17 — Market settlement and the lock must agree, or the record lies
 **Learned:** pricing settlement disagreed with the recorded grade, so the same game could be
