@@ -50,7 +50,7 @@ beforeEach(() => {
 describe('FBS model tab', () => {
   it('defaults to the hierarchical model and shows both sides with fair odds', async () => {
     render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText(/Texas Longhorns/)).toBeTruthy())
+    await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
     expect((screen.getByLabelText('Model') as HTMLSelectElement).value).toBe('g2h')
     expect(screen.getByText('68.0%')).toBeTruthy()
     expect(screen.getByText('32.0%')).toBeTruthy()
@@ -63,7 +63,7 @@ describe('FBS model tab', () => {
 
   it('shows graded count with the sample-size caveat on the record tab', async () => {
     render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText(/Texas Longhorns/)).toBeTruthy())
+    await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('button', { name: 'record' }))
     expect(screen.getByText('0.1200')).toBeTruthy()
     expect(screen.getByText(/treat the number as an early read/)).toBeTruthy()
