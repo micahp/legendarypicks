@@ -8,15 +8,19 @@ trading profit with some additional selectivity.
 
 ## What defines the strategy
 
-**Standings and points are the primary signal and the first decision layer,
-not a minor additional covariate or a filter on a separate model's picks.**
+**Standings, points, and ACTUAL goals scored/allowed are the primary observed-performance signals and the first decision layer, not minor covariates or filters on separate model picks.** Expected goals (xGF/xGA) remain a parallel measure of chance quality, but **actual GF, GA and goal differential must not be replaced by xG**.
 
 For *both teams*, use standings position/percentile, points, points
 percentage (points divided by 2 × games played), games played, wins,
-regulation losses, overtime losses, and season stage, all **as of before the
-forecast/trade**. Examine each team's absolute strength **and** the relative
+regulation losses, overtime losses, **actual goals for and against, actual
+goal differential, goals per game, goals allowed per game, rolling scoring
+form, and (where supported) period-level GF/GA**, and season stage, all **as
+of before the forecast/trade**. Record **xGF/xGA, xG differential and
+actual-minus-expected residuals** as companion measures so observed
+scoring and chance quality remain distinct. Examine each team's absolute strength **and** the relative
 strength gap. Matchups with 14 vs 13 points and 4 vs 3 points are not
-equivalent. Raw points without games played can mislead; do not replace
+equivalent; **nor are teams with equal points but dramatically different
+actual goal differentials and scoring/conceding rates**. Raw points without games played can mislead; do not replace
 points with just the points difference either.
 
 Matchups, retaining stronger side and home/away orientation:
@@ -30,27 +34,33 @@ Matchups, retaining stronger side and home/away orientation:
 - **Middle or mixed**: separate controls to avoid artificially forcing
   all teams into strong/weak extremes.
 
-**The matchup regime is established before using any model-generated call
-or quote.** This is not primarily a price-mispricing detector or a
+**The matchup regime is established from standings, points and actual
+goal performance before using any model-generated call or quote.** This is not primarily a price-mispricing detector or a
 standings-based fair-price model. Prices are needed to compute profits;
 they do not define whether the game is SW, SS or WW.
 
 ## Layer 1 — standings strength and matchup classification
 
-1. Reconstruct pregame standings for both teams at the exact decision
-   timestamp. Never use end-of-season standings, the game's own outcome,
-   or the later of the two teams' games as a feature.
+1. Reconstruct pregame standings **and completed-game actual GF/GA** for
+   both teams at the exact decision timestamp. Keep regulation, OT and
+   shootout target provenance clear. Use only pregame-known xG when
+   available. Never use the evaluated game's own goals or outcome,
+   end-of-season standings, or later games as inputs.
 2. Define strong and weak using robust **absolute** points-percentage
-   bands and/or league standing percentiles; record raw points and
-   games-played levels, as well as pairwise differences. Pick candidate
+   bands and/or league standings **alongside actual GF, GA and goal
+   differential** as explicit matchup characteristics. Compare
+   points-only classification with standings+actual-goals variants
+   without retrospectively relabeling the test data. Pick candidate
    definitions using historical **training** seasons only, not
    hindsight-picked profitable thresholds.
 3. Test early- vs late-season thresholds separately. A 6–0 team and a
    24–8 team shouldn't receive identical certainty; impose GP floors or
    shrink early-season standings, while preserving the observed points.
-4. Save the full two-dimensional matchup state: (home points%,
-   away points%, home points, away points, GP, ranks, strength bands,
-   gap, favorite orientation), not merely a single difference number.
+4. Save both teams' pregame points%, raw points, GP, ranks, strength
+   bands, **actual GF, GA, goal differential, rolling actual scoring and
+   period splits**, plus xGF/xGA and actual-minus-expected where available,
+   gap and favorite orientation, not merely a single difference number.
+   Missing xG must not prevent a complete standings+actual-goals baseline.
 5. Publish each season's SW/SS/WW/Middle counts before evaluating picks.
    Document missed or ambiguous standings snapshots; do not silently
    assign missing teams to the weak category.
@@ -117,7 +127,8 @@ classification actually adds.
 
 Pre-specify only a small number of selective dimensions using
 training seasons. Examples:
-- more extreme or moderate standings-strength separation within SW;
+- more extreme or moderate standings-strength separation within SW,
+  **including the actual-GF/GA and goal-differential gap**;
 - high-high vs modest-high teams in SS and low-low vs middling-low in WW;
 - direction of call relative to higher-ranked team and to bookmaker
   favorite;
