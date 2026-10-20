@@ -1,18 +1,21 @@
-"""FBS model runner: parity gate, pregame locks, grading.
+"""FBS model runner: parity certificate, previews, T-90 locks, grading.
 
 Usage
   python fbs_model_runner.py --parity          # reproduce the research walk-forward numbers
-  python fbs_model_runner.py --run --days 10   # forecast the upcoming slate, lock, grade
+  python fbs_model_runner.py --run --days 10   # preview the slate; lock inside T-90 if certified
   python fbs_model_runner.py --grade-only
+  python fbs_model_runner.py --audit           # read-only provenance check of the stored rows
 
-Parity is the gate. If the copied research modules no longer reproduce
-research/fbs/phase3-g/metrics.csv on the same 2,397 games, the production forecast is not the
-adopted model and the runner must not write locks.
+Parity is the gate for locks. --parity writes a certificate bound to the frozen ledger and to
+the code that produced it. --run writes previews regardless, and writes locks only when a
+passing certificate matches the current code and ledger. A certificate for other code is not
+a certificate. Nothing locks after kickoff.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import sys
@@ -40,6 +43,13 @@ PARITY_LEDGER = os.environ.get("FBS_PARITY_LEDGER", "/root/fbs-data/parity/wf_re
 ESPN_SCOREBOARD = ("https://site.api.espn.com/apis/site/v2/sports/football/"
                    "college-football/scoreboard?groups=80&limit=400&dates=%s")
 MODEL_ORDER = ("g2", "c2", "g2h")
+CERTIFICATE_NAME = "fbs-parity-certificate.json"
+# Every module whose code changes the forecast. A certificate is bound to these bytes.
+FINGERPRINT_MODULES = (
+    "fbs_model_runner.py", "fbs_model_service.py", "fbs_game_winner_baseline.py",
+    "fbs_phase3_features_c.py", "fbs_phase3_hierarchical.py", "fbs_phase3_increment.py",
+    "fbs_phase3_increment_g.py",
+)
 
 
 def brier(rows: pd.DataFrame, column: str) -> float:
@@ -99,6 +109,62 @@ def check_parity(frame: pd.DataFrame, ledger_path: str = PARITY_LEDGER) -> dict:
     return result
 
 
+def file_sha256(path: str) -> str:
+    with open(path, "rb") as handle:
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def code_fingerprint() -> str:
+    digest = hashlib.sha256()
+    here = os.path.dirname(os.path.abspath(__file__))
+    for name in FINGERPRINT_MODULES:
+        digest.update(name.encode())
+        digest.update(file_sha256(os.path.join(here, name)).encode())
+    return digest.hexdigest()
+
+
+def certificate_path(db_path: str) -> str:
+    return os.path.join(os.path.dirname(os.path.abspath(db_path)), CERTIFICATE_NAME)
+
+
+def write_certificate(result: dict, db_path: str, now: dt.datetime) -> str:
+    """Record a parity result. Written atomically so a crash never leaves half a certificate."""
+    cert = {
+        "ok": bool(result.get("ok")),
+        "games": result.get("games"),
+        "ledger_games": result.get("ledger_games"),
+        "ledger_path": PARITY_LEDGER,
+        "ledger_sha256": file_sha256(PARITY_LEDGER) if os.path.exists(PARITY_LEDGER) else None,
+        "code_fingerprint": code_fingerprint(),
+        "models": result.get("models"),
+        "reason": result.get("reason"),
+        "checked_at_utc": now.isoformat(),
+    }
+    path = certificate_path(db_path)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as handle:
+        json.dump(cert, handle, indent=2, sort_keys=True)
+    os.replace(tmp, path)
+    return path
+
+
+def parity_certified(db_path: str) -> tuple[bool, str]:
+    """True only for a passing certificate that matches the current code and frozen ledger."""
+    path = certificate_path(db_path)
+    if not os.path.exists(path):
+        return False, "no parity certificate at %s; run --parity" % path
+    with open(path) as handle:
+        cert = json.load(handle)
+    if not cert.get("ok"):
+        return False, "parity certificate at %s records a failure" % path
+    if cert.get("code_fingerprint") != code_fingerprint():
+        return False, "parity certificate was made for different code; re-run --parity"
+    if not os.path.exists(PARITY_LEDGER) or cert.get("ledger_sha256") != file_sha256(PARITY_LEDGER):
+        return False, "parity ledger changed since the certificate; re-run --parity"
+    return True, "certified %s" % cert.get("checked_at_utc")
+
+
 # --------------------------------------------------------------------------------------- slate
 
 def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
@@ -107,13 +173,17 @@ def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
 
     now = now or dt.datetime.now(dt.timezone.utc)
     rows = []
+    unreachable = []
     for offset in range(0, days + 1):
         date = (now + dt.timedelta(days=offset)).strftime("%Y%m%d")
         try:
             with urllib.request.urlopen(ESPN_SCOREBOARD % date, timeout=20) as response:
                 payload = json.load(response)
-        except Exception as exc:  # network failure is reported, never guessed around
+        except Exception as exc:
+            # An unreachable date is not an empty date. A partial slate cannot show which games
+            # exist, so the caller must stop rather than forecast a schedule with holes in it.
             print("slate: %s unreachable (%s)" % (date, exc))
+            unreachable.append(date)
             continue
         for event in payload.get("events", []):
             competition = (event.get("competitions") or [{}])[0]
@@ -133,6 +203,10 @@ def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
                 "completed": bool(status.get("completed", False)),
                 "home_score": _score(competition, "home"), "away_score": _score(competition, "away"),
             })
+    if unreachable:
+        raise service.FBSModelError(
+            "ESPN scoreboard unreachable for %s; slate incomplete, nothing written"
+            % ", ".join(unreachable))
     slate = pd.DataFrame(rows).drop_duplicates("game_id")
     if slate.empty:
         return slate
@@ -228,6 +302,7 @@ def g2_for_slate(frame: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
     scored["p_g2"] = scored["elo_home_prob"].astype(float)
     return scored
 
+
 def slate_features(ratings: pd.DataFrame, slate: pd.DataFrame, season: int) -> pd.DataFrame:
     """Drive-split features for a future matchup from each team's latest as-of metrics."""
     current = ratings[ratings["season"] == season].copy()
@@ -262,11 +337,16 @@ def slate_features(ratings: pd.DataFrame, slate: pd.DataFrame, season: int) -> p
 def team_ratings(state: dict, frame: pd.DataFrame, season: int) -> list[dict]:
     """Team-season strength from the fitted hierarchy: conference mean plus the team effect."""
     hier = state["g2h"]
-    names = (frame[["home_team_id", "home_team", "home_conference"]]
-             .rename(columns={"home_team_id": "team_id", "home_team": "team",
-                              "home_conference": "conference"})
-             .drop_duplicates("team_id").set_index("team_id"))
-    games_played = (frame[frame["season"] == season]
+    sides = []
+    for side in ("home", "away"):
+        sides.append(frame[["utc_date", side + "_team_id", side + "_team", side + "_conference"]]
+                     .set_axis(["utc_date", "team_id", "team", "conference"], axis=1))
+    # Name and conference come from each team's most recent appearance, not its first row ever.
+    names = (pd.concat(sides).sort_values("utc_date")
+             .drop_duplicates("team_id", keep="last").set_index("team_id"))
+    # Games used counts completed games up to the rating cutoff, never scheduled future rows.
+    completed = frame[(frame["season"] == season) & frame["y"].notna()]
+    games_played = (completed
                     .melt(id_vars=["game_id"], value_vars=["home_team_id", "away_team_id"],
                           value_name="team_id")
                     .groupby("team_id").size())
@@ -294,14 +374,24 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     slate = fetch_slate(days=days, now=now)
     print("slate: %d games from ESPN" % len(slate))
     if slate.empty:
-        return {"locked": 0, "graded": 0, "reason": "empty_slate"}
+        return {"previewed": 0, "locked": {}, "missed": 0, "graded": 0,
+                "locks_blocked": None, "reason": "empty_slate"}
 
     scored = g2_for_slate(frame, slate)
     feats = slate_features(ratings, slate, season)
     scored = scored.merge(feats, on="game_id", how="left")
+    uncovered = scored[scored["points_per_drive_diff"].isna()]
+    if not uncovered.empty:
+        print("slate: %d game(s) without drive-feature coverage, not forecast: %s"
+              % (len(uncovered), ", ".join(uncovered["game_id"].astype(str))))
     scored = scored[scored["points_per_drive_diff"].notna()].copy()
     if scored.empty:
-        return {"locked": 0, "graded": 0, "reason": "no_feature_coverage"}
+        return {"previewed": 0, "locked": {}, "missed": 0, "graded": 0,
+                "locks_blocked": None, "reason": "no_feature_coverage"}
+    imputed = scored[FEATURES_C].isna().any(axis=1)
+    if imputed.any():
+        print("slate: %d game(s) with a missing drive feature filled with 0.0, as in training"
+              % int(imputed.sum()))
     for column in FEATURES_C:
         scored[column] = scored[column].fillna(0.0)
 
@@ -329,18 +419,57 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
         results[str(row.game_id)] = {"home_score": int(row.home_score),
                                      "away_score": int(row.away_score)}
 
+    certified, reason = parity_certified(db_path)
+    if not certified:
+        print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
     con = store.open_db(db_path)
     try:
-        locked = store.lock_forecasts(con, rows, now=now)
+        previewed = store.upsert_previews(con, rows, now=now)
+        locked = store.lock_forecasts(con, rows, now=now) if certified else {"blocked": reason}
+        missed = store.record_missed_windows(con, now=now)
         graded = store.grade_forecasts(con, results, now=now)
-        stored_ratings = store.store_ratings(con, rating_rows, now.isoformat())
+        store.store_ratings(con, rating_rows, now.isoformat())
         store.set_meta(con, last_run_utc=now.isoformat(), model_version=version % "g2h",
                        train_last_date=str(state["train_last_date"].date()),
-                       train_games=state["train_games"])
+                       train_games=state["train_games"], parity_certified=certified,
+                       parity_note=reason)
     finally:
         con.close()
-    print("locked: %s; graded: %d" % (locked, graded))
-    return {"locked": locked, "graded": graded}
+    print("previewed: %d; locked: %s; missed: %d; graded: %d"
+          % (previewed, locked, missed, graded))
+    return {"previewed": previewed, "locked": locked, "missed": missed, "graded": graded,
+            "locks_blocked": None if certified else reason}
+
+
+def audit(db_path: str = store.DEFAULT_DB) -> dict:
+    """Read-only provenance counts for stored rows. Changes nothing, labels nothing."""
+    con = store.open_db(db_path, readonly=True)
+    try:
+        columns = {row[1] for row in con.execute("PRAGMA table_info(fbs_forecasts)")}
+        protocol = "COALESCE(lock_protocol, 'legacy')" if "lock_protocol" in columns else "'legacy'"
+        count = lambda sql: con.execute(sql).fetchone()[0]  # noqa: E731
+        report = {
+            "forecast_rows": count("SELECT COUNT(*) FROM fbs_forecasts"),
+            "games": count("SELECT COUNT(DISTINCT game_id) FROM fbs_forecasts"),
+            "midnight_utc_kickoff_rows": count(
+                "SELECT COUNT(*) FROM fbs_forecasts WHERE kickoff_utc LIKE '%T00:00:00%'"),
+            "rows_by_protocol": {row[0]: row[1] for row in con.execute(
+                "SELECT %s, COUNT(*) FROM fbs_forecasts GROUP BY 1" % protocol)},
+            "late_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE late = 1"),
+            "graded_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE result IS NOT NULL"),
+        }
+        if "lock_protocol" in columns:
+            locked = con.execute("SELECT kickoff_utc, locked_at_utc FROM fbs_forecasts "
+                                 "WHERE lock_protocol = ?", (store.LOCK_PROTOCOL,)).fetchall()
+            report["t90_rows_locked_at_or_after_kickoff"] = sum(
+                1 for row in locked
+                if store.parse_time(row["locked_at_utc"]) >= store.parse_time(row["kickoff_utc"]))
+        if store._table_exists(con, "fbs_previews"):
+            report["preview_rows"] = count("SELECT COUNT(*) FROM fbs_previews")
+            report["missed_lock_events"] = count("SELECT COUNT(*) FROM fbs_lock_events")
+        return report
+    finally:
+        con.close()
 
 
 def grade_only(db_path: str = store.DEFAULT_DB) -> int:
@@ -359,6 +488,7 @@ def main(argv=None) -> int:
     parser.add_argument("--parity", action="store_true")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--grade-only", action="store_true")
+    parser.add_argument("--audit", action="store_true")
     parser.add_argument("--days", type=int, default=10)
     parser.add_argument("--db", default=store.DEFAULT_DB)
     args = parser.parse_args(argv)
@@ -366,13 +496,19 @@ def main(argv=None) -> int:
     if args.parity:
         frame = service.build_frame(verbose=True)
         result = check_parity(frame)
+        path = write_certificate(result, args.db, dt.datetime.now(dt.timezone.utc))
         print(json.dumps(result, indent=2))
+        print("certificate: %s (ok=%s)" % (path, result["ok"]))
         return 0 if result["ok"] else 1
     if args.grade_only:
         print("graded", grade_only(args.db))
         return 0
     if args.run:
-        print(json.dumps(run(days=args.days, db_path=args.db), indent=2))
+        result = run(days=args.days, db_path=args.db)
+        print(json.dumps(result, indent=2, default=str))
+        return 3 if result["locks_blocked"] else 0
+    if args.audit:
+        print(json.dumps(audit(args.db), indent=2, default=str))
         return 0
     parser.print_help()
     return 2
