@@ -38,6 +38,7 @@ interface ModelMatch {
     totalGames: { line: number; over: number | null; under: number | null } | null
     capturedAt: string | null
   } | null
+  frozenOddsStatus?: 'captured' | 'unavailable' | 'legacy' | null
   preview?: boolean
   lockStatus?: 'locked' | 'preview' | 'not_due' | 'missed' | 'unknown'
   status: 'scheduled' | 'live' | 'final' | 'unknown'
@@ -165,7 +166,11 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
               <p className="text-xs tabular-nums text-zinc-500">Model line <b className="font-normal text-white">{projection.probability == null ? 'n/a' : fairPrice(projection.probability)}</b></p>
               <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{winnerEdgeLabel}</b></p>
               {quote?.capturedAt && <p className="text-xs text-zinc-500">Bovada captured {quote.capturedAt}</p>}
-              {match.lockedAt && !match.frozenOdds && <p className="text-xs text-amber-400">No frozen sportsbook line was recorded for this forecast.</p>}
+              {match.lockedAt && !match.frozenOdds && <p className="text-xs text-amber-400">
+                {match.frozenOddsStatus === 'legacy'
+                  ? 'This older forecast was locked without a sportsbook quote snapshot.'
+                  : 'No matching pre-match Bovada quote was available at lock time.'}
+              </p>}
             </div>
           </> : <p className="text-amber-400">No projection is available.</p>}
         </div>
