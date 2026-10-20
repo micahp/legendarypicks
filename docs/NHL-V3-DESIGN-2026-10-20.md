@@ -1,10 +1,10 @@
 # NHL v3: team and period strength + shot-based goalie model
 
-**Status:** Deferred design, not implemented. V2 artifact and runner wiring exist on `dev`; this note makes no changes to models, frozen forecasts or services. V4's full-game simulator is explicitly separate: see `docs/NHL-V4-FULL-GAME-SIM-DESIGN.md`.
+**Status:** Deferred design, not implemented. As verified against the repository on 2026-10-20, the V2 artifact, `team_strength.py`, evaluation script and V2 runner wiring exist on branch `research/nhl-team-strength-2026-10-19`, **not on `dev`**. The live 2026-27 archive inspected on `dev` remains V1. This note makes no changes to models, frozen forecasts or services. V4's full-game simulator is explicitly separate: see `docs/NHL-V4-FULL-GAME-SIM-DESIGN.md`.
 
 ## Version boundary
 
-- **V2 (current foundation):** team attack/defence ridge-Poisson on complete game goals. `frozen_models_2026-27_v2.json` is frozen on a 23,222-game canonical sample from 2008-09 through 2025-26; the corresponding `team_strength.py` has home advantage, team attack/defence, 400-day recency weighting and regularisation. It yields game-level goal means and probabilities, not a period, goalie or event simulator.
+- **V2 (research branch, not deployed by this note):** team attack/defence ridge-Poisson on complete game goals. `frozen_models_2026-27_v2.json` is frozen on a 23,222-game canonical sample from 2008-09 through 2025-26; the corresponding `team_strength.py` has home advantage, team attack/defence, 400-day recency weighting and regularisation. It yields game-level goal means and probabilities, not a period, goalie or event simulator.
 - **V3 (this document):** two independently testable layers. **Layer 1** predicts period-level ACTUAL goals scored/allowed, goal differential, shot creation/prevention, expected goals, and opponent-/teammate-adjusted on-ice player effects. **Layer 2** predicts shot difficulty and starter-dependent save probability, using location and shot type. Output shot/goal rates and period-level forecasts; do **not** claim to simulate an entire game.
 - **V4 (separate document):** uses V3 rates inside a stateful game simulator with real penalty/manpower transitions, shift/line rotations, power-play goals, game script, empty net, OT and shootouts.
 
@@ -17,7 +17,7 @@ log(mu_away) = b0            + attack[away] - defence[home]
 
 **V2 is trained on ACTUAL goals scored and conceded**, not solely xG. It has an xG reference fit, but shipped team-strength goal means are fitted to historical goals. Actual goals are already in v2; what v3 adds is period-, opponent-, player- and situation-specific structure. This is a useful baseline, not a full probabilistic reconstruction of hockey. It has no explicit goalie, period, player shift, shot location, shot type or penalty-state variables. Team defence currently absorbs goaltending and penalty killing.
 
-The v2 historical scorecard documents winner Brier **0.2444** versus v1 reference **0.2462** on the same 9,147 feature-complete 2019-2025 games. The goal-margin forecast distribution widened materially. Those numbers are **model diagnostics only**; not trading ROI, evidence of profit, or proof of superiority to a separately sampled sportsbook market.
+The v2 historical scorecard documents winner Brier **0.2444** versus the **frozen B5 reference** **0.2462**, on the same 9,147 feature-complete 2019-2025 games. This is not a B7-v1-to-v2 matched evaluation, and the season-clustered 95% interval of the Brier gain, **[-0.00173, +0.00477]**, crosses zero. The goal-margin forecast distribution widened materially. Those numbers are **model diagnostics only**; not trading ROI, evidence of profit, or proof of superiority to a separately sampled sportsbook market.
 
 ## Layer 1: team performance at period and on-ice granularity
 
