@@ -23,9 +23,9 @@ def bovada_odds(con, espn_event_id: str, tour: str, home_player_id, away_player_
             WHERE g.espn_event_id = ? AND g.league = ? AND p.source = 'bovada'
               AND p.market IN ('match_winner', 'total_games')
               AND (p.market != 'total_games' OR p.player_id IS NULL)
-              AND p.odds_captured_at >= ?
+              AND p.odds_captured_at >= ? AND p.odds_captured_at <= ?
             ORDER BY p.odds_captured_at DESC, p.id DESC""",
-        (str(espn_event_id), tour, _iso(now - MAX_AGE)),
+        (str(espn_event_id), tour, _iso(now - MAX_AGE), _iso(now)),
     ).fetchall()
     if not rows:
         return None
