@@ -1,0 +1,12 @@
+market,stat,repro_tested,repro_pmf_exact,repro_p_over_exact,n_2026,cov50_2026,cov80_2026,cov90_2026,var_ratio_2026,log_2026,crps_2026,n_2025,cov50_2025,cov80_2025,cov90_2025,var_ratio_2025,log_2025,crps_2025,baseline_trailing5_log_2025,baseline_league_log_2025,model_log_2025,verdict,reason
+carries,car,0,0,0,,,,,,,,,,,,,,,,,,NOT_ADOPTED,no predictive distribution in the committed v2 engine (point means only); the reported rushing-carries candidates are not reproducible on this branch
+pass_attempts,att,50,50,50,50,58.0,84.0,88.0,0.931,3.7028,5.5515,403,62.0,86.4,92.8,0.738,3.8323,4.9058,7.4471,3.6640,3.8323,INCONCLUSIVE,clustered interval spans zero; no established edge or deficit
+pass_completions,cmp,50,50,50,50,62.0,86.0,90.0,0.931,3.3711,3.8895,403,60.8,88.1,93.5,0.718,3.3830,3.4225,7.1497,3.3083,3.3830,INCONCLUSIVE,clustered interval spans zero; no established edge or deficit
+passing_touchdowns,pass_td,50,50,50,50,84.0,98.0,100.0,0.582,1.4155,0.5226,403,71.5,94.8,98.3,0.887,1.5826,0.6567,4.2920,1.5510,1.5826,NOT_ADOPTED,80% coverage 98.0% (nominal 80); 90% coverage 100.0% (nominal 90); variance ratio 0.58 (underdispersed)
+passing_yards,pass_yds,50,50,50,50,52.0,86.0,90.0,0.870,5.9989,48.9533,403,57.6,87.1,93.8,0.714,6.3515,42.9404,8.9581,6.1044,6.3515,INCONCLUSIVE,clustered interval spans zero; no established edge or deficit
+receiving_touchdowns,rec_td,0,0,0,,,,,,,,3936,88.7,95.6,98.0,1.213,0.4231,0.1294,1.4057,0.4642,0.4231,NOT_ADOPTED,80% coverage 95.6% (nominal 80)
+receiving_yards,rec_yds,338,338,338,309,51.1,80.3,87.4,1.404,4.9512,17.9238,3936,64.0,87.1,92.8,1.408,3.9648,11.3413,6.8594,4.1544,3.9648,INCONCLUSIVE,clustered interval spans zero; no established edge or deficit
+receptions,rec,332,332,332,305,63.3,86.9,92.1,1.314,2.2178,1.2997,3936,75.2,91.9,96.2,1.381,1.7097,0.8560,4.2024,2.0928,1.7097,INCONCLUSIVE,clustered interval spans zero; no established edge or deficit
+rushing_touchdowns,rush_td,0,0,0,,,,,,,,,,,,,,,,,,NOT_ADOPTED,no predictive distribution in the committed v2 engine (point means only); the reported rushing-carries candidates are not reproducible on this branch
+rushing_yards,rush_yds,0,0,0,,,,,,,,,,,,,,,,,,NOT_ADOPTED,no predictive distribution in the committed v2 engine (point means only); the reported rushing-carries candidates are not reproducible on this branch
+targets,tgt,0,0,0,,,,,,,,3936,71.6,91.3,95.6,1.509,1.9838,1.1302,4.6898,2.2503,1.9838,NO_PRICE_ARCHIVE,no sportsbook lines in the capture artifact

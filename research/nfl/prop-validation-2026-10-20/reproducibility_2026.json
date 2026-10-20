@@ -1,0 +1,72 @@
+{
+  "per_stat": {
+    "rec_yds": {
+      "tested": 338,
+      "pmf_exact": 338,
+      "p_over_exact": 338
+    },
+    "rec": {
+      "tested": 332,
+      "pmf_exact": 332,
+      "p_over_exact": 332
+    },
+    "att": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "cmp": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "pass_td": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "pass_yds": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    }
+  },
+  "per_market": {
+    "receiving_yards": {
+      "tested": 338,
+      "pmf_exact": 338,
+      "p_over_exact": 338
+    },
+    "receptions": {
+      "tested": 332,
+      "pmf_exact": 332,
+      "p_over_exact": 332
+    },
+    "pass_attempts": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "pass_completions": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "passing_touchdowns": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    },
+    "passing_yards": {
+      "tested": 50,
+      "pmf_exact": 50,
+      "p_over_exact": 50
+    }
+  },
+  "n_mismatches": 0,
+  "mismatches": [],
+  "player_games": 389,
+  "source_hashes_match_manifest": true,
+  "artifact_sha256": "5804a50674ed0acc1252b58e9e5a34f80f8342cbb88760e34fe831d17bb60a83",
+  "input_snapshot_sha256": "6c9395b88823c588196e4a73ff9343e3b78878d8527811b28a3c39af7d1a3497"
+}

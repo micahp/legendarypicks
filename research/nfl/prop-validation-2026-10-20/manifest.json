@@ -1,0 +1,15 @@
+{
+  "generated_by": "run_validation.py",
+  "source_commit": "8c72ceff1cbd3bc8b2ba1228b86590f33375248b",
+  "engine_hashes": {
+    "backend/nfl_player_projection_v2.py": "3286521b2c20259d1e1d5953b1801809c510f055aec65832ec72ed3795bf1468",
+    "backend/nfl_player_projections_job.py": "d5f52ac7506760787ad98e0ed22f6f25585f0251f8aefa1849eec8bd896b8860",
+    "backend/nfl_prop_calibration.py": "e70d6c8d7ffa8e76fcef2b1b1d0e872316d6cbb9e59b6c9e7ccf7839daf61106",
+    "backend/routers/players/nfl_projections.py": "d2e98bee4e53201580c9075bce30140d384f6200f71cefbb21ebcf2b403e0f2d"
+  },
+  "engine_hashes_match_manifest": true,
+  "capture_artifact": "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05.jsonl.gz",
+  "capture_artifact_sha256": "5804a50674ed0acc1252b58e9e5a34f80f8342cbb88760e34fe831d17bb60a83",
+  "input_snapshot": "/root/lp-nfl-capture/research/nfl/prospective-capture/backfill/nfl-2026-w03-w05-input-snapshot.jsonl.gz",
+  "input_snapshot_sha256": "6c9395b88823c588196e4a73ff9343e3b78878d8527811b28a3c39af7d1a3497"
+}
