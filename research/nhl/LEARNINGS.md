@@ -87,3 +87,22 @@ Pre-registration committed before any fit at `675ca38b`
 - No adoption, no gate/threshold change, no retuning, no promotion. Tiered pick policy still
   NO-GO. CP4/CP5 not attempted. Stop on this lever; a future attempt would need a new
   pre-registration and a different distribution-level candidate.
+
+### 2026-10-19 — Reproducibility: the result is now recomputable without refitting
+
+- **`forecasts_all_arms.csv`** — 36,588 rows = 9,147 games × 4 arms (`b5, st, v1, v2`), with
+  `game_id, season, game_date, home_team, away_team, model_variant, p_home, mu_h, mu_a,
+  home_win, home_goals, away_goals`. Emitted by `emit_forecasts.py` from the stored artifacts
+  only; **no refit**.
+- **`verify_from_csv.py` reads only that CSV** — no model fit, no DuckDB. It recomputes Brier,
+  log loss, CRPS, MAE, PIT and KS from `p_home`/`mu_h`/`mu_a` and the actual results, plus the
+  game-clustered bootstrap CIs. Output: `verify_from_csv.out.txt`.
+- **Every reported score reproduces.** All non-PIT statistics match to **0.00e+00**; PIT/KS match
+  to within the 4-decimal rounding in the docs (max absdiff 4.45e-05). REPRODUCTION: PASS.
+- **Leakage audit passed:** `verify_leakage_all_arms.py`, independent recompute from the raw
+  DuckDB vs `features_all_arms.csv`, **73,176 checks, 0 mismatches, 0 source-date violations**.
+  Every source game's date is strictly before its target game's date. Output:
+  `verify_leakage_all_arms.out.txt`.
+- **Verdict unchanged.** Penalty volume still fails the conjunctive keep rule (CRPS clause); the
+  reproduced numbers equal the reported numbers exactly. `reproduction-table-2026-10-19.md` has
+  the full table. No adoption, no gate change, no production writes.

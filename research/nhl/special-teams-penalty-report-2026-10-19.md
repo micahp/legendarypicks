@@ -12,6 +12,11 @@ excluding zero — but it does **not** improve the goal distribution: CRPS is ve
 keep rule is conjunctive (Brier **and** log loss **and** CRPS), so the candidate is **not kept**.
 The answer is **no**, recorded as no. Nothing is adopted; the decision is Micah's.
 
+**Reproduction:** every score below is recomputable from the committed per-game CSV
+`forecasts_all_arms.csv` with no model fit; all non-PIT statistics match to 0.00e+00 and PIT/KS
+to within 4-decimal rounding. See `reproduction-table-2026-10-19.md` and
+`verify_from_csv.out.txt`. The reproduced numbers do not change this verdict.
+
 ## Population
 
 Identical to the ST experiment and to its Step A artifact. `merged = 23,002`,
