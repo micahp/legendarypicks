@@ -1,19 +1,19 @@
-"""Team attack/defence Poisson fitted on the canonical game file, blended across goals and 5v5 xG.
+"""Team attack/defence Poisson fitted on the canonical game file, scored goals-only.
 
 Replaces the log-xG/log-Elo linear predictor, whose fitted spread is far too narrow: its
 projected margin has a standard deviation of about 0.25 goals against an observed 2.6, so it
 cannot tell a strong team from a weak one.
 
-Two target definitions are fitted on the same design (team attack, team defence, home
-advantage, neutral-site suppression) with recency weighting:
+The design is two rows per game (team attack, team defence, home advantage, neutral-site
+suppression) with a 400-day recency half-life and ridge 20, fitted on the observed regulation+OT
+goal target. A 5v5 xG target and its linear calibration are also fitted and kept for reference,
+but they are not blended into the shipped means; `mus()` returns the goals-fitted ratings.
 
-  goals   the observed regulation+OT goal target
-  5v5 xG  the shot-quality target, which is less noisy over a short season
-
-The xG mean is mapped to goals with a linear calibration fitted on the same rows, and the two
-means are combined geometrically. Walk-forward Brier on the canonical history is better than
-either arm alone (0.2461 blended vs 0.2473 goals-only and 0.2478 xG-only), and better than the
-frozen linear predictor with a far wider spread.
+Walk-forward, pooled over the 9,147 feature-complete canonical games of 2019-2025: goals-only
+Brier 0.2444 against 0.2462 for the frozen B5 reference, with a projected-margin sd of 0.65-0.72
+against the frozen 0.25-0.32. `eval_team_strength.py` reproduces the per-season table and the
+pooled number. The earlier blended-arm figures quoted here (0.2461/0.2473/0.2478) were not
+reproducible from the shipped code and are superseded.
 
 Deterministic: the only input is the hash-checked canonical CSV.
 """
@@ -39,7 +39,7 @@ def load_games(path: str) -> list[dict]:
             except ValueError:
                 hxg = axg = 0.0
             games.append(dict(
-                date=r["game_date"], home=r["home_team"], away=r["away_team"],
+                date=r["game_date"], season=int(r["season"]), home=r["home_team"], away=r["away_team"],
                 hg=int(r["home_goals_model_target"]), ag=int(r["away_goals_model_target"]),
                 hxg=hxg, axg=axg,
                 neutral=str(r["neutral_site"]).lower() in ("true", "1"),
@@ -113,17 +113,20 @@ class TeamStrength:
     def _mu(self, theta: np.ndarray, team: str, opp: str, is_home: float, neutral: bool) -> float:
         n = len(self.teams)
         eta = theta[0] + theta[1] * is_home + (0.0 if neutral else theta[2] * is_home)
-        if self.idx[team] < n - 1:
-            eta += theta[3 + self.idx[team]]
-        if self.idx[opp] < n - 1:
-            eta -= theta[3 + n - 1 + self.idx[opp]]
+        # An unseen team (a franchise that joined after the training window) is the reference
+        # level, same as the dropped last index; only the walk-forward evaluation meets one.
+        ti = self.idx.get(team, n - 1)
+        oi = self.idx.get(opp, n - 1)
+        if ti < n - 1:
+            eta += theta[3 + ti]
+        if oi < n - 1:
+            eta -= theta[3 + n - 1 + oi]
         return float(np.exp(np.clip(eta, -6, 3)))
 
     def mus(self, home: str, away: str, neutral: bool = False) -> tuple[float, float]:
-        # Goals are the target that carries the spread. Blending the xG arm in improves the
-        # pooled Brier slightly (0.2461 vs 0.2473) but compresses the margin (slate sd 0.35 vs
-        # 0.58), which is the opposite of what a puck-line decision needs, so v2 scores off the
-        # goal-fitted ratings and keeps the xG fit for reference only.
+        # Goals are the target that carries the spread. The xG arm is fitted and kept for
+        # reference only; blending it in compressed the projected margin without improving the
+        # pooled walk-forward Brier, so v2 scores off the goal-fitted ratings.
         mh_g = self._mu(self.theta_goals, home, away, 1.0, neutral)
         ma_g = self._mu(self.theta_goals, away, home, 0.0, neutral)
         return mh_g, ma_g
