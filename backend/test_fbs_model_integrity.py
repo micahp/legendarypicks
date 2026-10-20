@@ -299,3 +299,27 @@ def test_games_used_counts_completed_games_only():
     assert by_id["1"]["games_used"] == 1
     assert by_id["1"]["team"] == "Texas"
     assert by_id["1"]["conference"] == "SEC"
+
+
+def test_c2_forecast_path_reproduces_research_walk_forward_block():
+    # The forecasting estimator must be the adopted research C2 estimator, block for block.
+    from fbs_phase3_increment import walk_forward
+    rng = np.random.default_rng(20261020)
+    n = 480
+    frame = pd.DataFrame({
+        "game_id": [str(i) for i in range(n)], "season": 2026,
+        "utc_date": pd.Timestamp("2026-01-01") + pd.to_timedelta(np.arange(n) // 8, unit="D"),
+    })
+    for col in service.FEATURES_C:
+        frame[col] = rng.normal(size=n)
+    frame["p_g2"] = rng.uniform(0.3, 0.7, n)
+    signal = 0.8 * frame["points_per_drive_diff"] + rng.normal(size=n)
+    frame["y"] = (rng.uniform(size=n) < 1 / (1 + np.exp(-signal))).astype(float)
+    wf = walk_forward(frame.copy(), service.FEATURES_C).set_index("game_id")
+    fitted = wf[wf["n_train"] >= service.MIN_TRAIN_GAMES]
+    block = fitted["block"].iloc[0]
+    cutoff = wf.loc[wf["block"] == block, "utc_date"].min()
+    train = frame[frame["utc_date"] < cutoff].dropna(subset=["p_g2", "y"] + service.FEATURES_C)
+    rows = frame[frame["game_id"].isin(wf.index[wf["block"] == block])]
+    p = service.predict_c2(service.fit_c2(train), rows)
+    np.testing.assert_allclose(p, wf.loc[rows["game_id"], "p_b2"].to_numpy(), rtol=0, atol=1e-9)
