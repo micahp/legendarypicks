@@ -57,6 +57,15 @@ The artifact SHA-256 is `5804a506…` and the input snapshot `6c9395b8…`, both
 This is the first market family in the NFL track where the frozen distribution, not just a point
 mean, has been reproduced exactly.
 
+### Provenance of the 2026 window
+
+Every Window A forecast was created on 2026-10-19, after the games of 2026-10-04 and 10-11. The
+numbers are usable because the engine is late, not leaked: every accessor filters to games before
+the target week (`History.load` → `team_game`, `_league_mean`, `team_volume`, `raw_share`,
+`candidates`, `recent_form`, `observed_without`, `pos_rates`/`eff`), `History.margins` is empty so
+`script_factor` returns 1.0, and `nfl_prop_calibration.map_for_week` fits week *w* only on graded
+items with `week < w`. Reconstructed after kickoff is still CP4-ineligible.
+
 ## 2. Verdict table
 
 Verdict order: reproducibility, then distribution integrity, then the market comparison.
@@ -244,6 +253,9 @@ touched by this task.
 - **The 2025 baselines lean on the live dev database** (read-only) because the frozen input snapshot
   carries only 2025–2026 logs; the engine hashes match the manifest, so the 2025 pass is
   reproducible with `run_validation.py` against that database.
+- **`manifest.json`'s `source_commit` is a generation-time field.** Re-running the documented
+  command rewrites only that one line (it reads HEAD at generation time); every other output is
+  byte-identical.
 
 ## 8. Bottom line per the independent gates
 
