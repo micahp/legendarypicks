@@ -216,7 +216,7 @@ export default function SoccerLeaguePage({
     <>
       <Head><title>Soccer — Legendary Picks</title></Head>
       <div className="space-y-6">
-        <LeagueSwitcher activeLeague={competition} />
+        <LeagueSwitcher activeLeague="soccer" />
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight">Soccer</h1>
         </header>

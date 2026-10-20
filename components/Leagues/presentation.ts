@@ -16,15 +16,8 @@ export const LEAGUE_NAMES: Record<string, string> = {
   ufc: 'UFC',
 }
 
-// Presentation order. Which of these are actually OFFERED is decided by the coverage
-// registry at runtime (`useLeagueSwitcher`), not by this list — see
-// docs/DATA-COVERAGE-CONTRACT.md §4. This array only says how to sort and what to call
-// them; a league missing from it still renders, under its uppercased slug.
-// `wc` is deliberately absent. The World Cup keeps its API, its ingest, and its place
-// on /scores — it just stops being a league hub. Removing it from the ORDER is not what
-// hides it (an unlisted league still renders, under its uppercased slug); the
-// `offerable` check in useLeagueRouteState is. This only stops it being sorted first.
-export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'mls', 'ncaaf', 'tennis', 'ufc'] as const
+// The navigation endpoint decides which hubs are offered; this list only sorts them.
+export const LEAGUE_ORDER = ['mlb', 'nba', 'nhl', 'nfl', 'soccer', 'ncaaf', 'ufc', 'esports', 'tennis'] as const
 
 export function leagueLabel(league: string): string {
   return LEAGUE_NAMES[league] || league.toUpperCase()

@@ -1,18 +1,26 @@
 import Link from 'next/link'
-import { useCoverage } from './hooks/useCoverage'
-import { leagueLabel, orderLeagues } from './presentation'
+import { leagueNavigationLabel, useSportNavigation } from '../Navigation/sports'
+import { orderLeagues } from './presentation'
 
 export default function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
-  // Use the verified coverage list. Keep the current league reachable while it loads
-  // or when its coverage entry is not part of the list yet.
-  const { loading, offeredLeagues } = useCoverage()
+  // The directory registry decides which league hubs are offered. Team-stat season
+  // certification is a separate contract and omits rollup hubs like tennis.
+  const { groups, loading, error } = useSportNavigation('leagues')
+  const offeredLeagues = groups.flatMap(group => group.competitions.map(item => item.league))
   const leagues = orderLeagues(
     offeredLeagues.includes(activeLeague) || !activeLeague
       ? offeredLeagues
       : [...offeredLeagues, activeLeague],
   )
 
-  if (loading || !leagues.length) return <nav aria-label="Leagues" className="h-5" />
+  if (loading) return <nav aria-label="Leagues" className="h-5" />
+  if (error || !offeredLeagues.length) {
+    return (
+      <nav aria-label="Leagues" className="h-5">
+        <span role="status" className="text-xs text-zinc-500">League navigation is unavailable right now.</span>
+      </nav>
+    )
+  }
 
   return (
     <nav
@@ -26,7 +34,7 @@ export default function LeagueSwitcher({ activeLeague }: { activeLeague: string 
           aria-current={activeLeague === league ? 'page' : undefined}
           className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
         >
-          {leagueLabel(league)}
+          {leagueNavigationLabel(league)}
         </Link>
       ))}
     </nav>
