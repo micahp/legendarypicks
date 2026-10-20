@@ -1,7 +1,7 @@
 # NHL goalie keep-rule pre-registration
 
 **Date:** 2026-10-20
-**Status:** Proposed; awaiting Micah's sign-off. This is a protocol, not an experiment or a result.
+**Status:** Approved by Micah for research on 2026-10-20. This is a protocol, not an experiment or a result.
 
 This document preregisters the population, feature inputs, market comparison, walk-forward evaluation, and keep/discard rule for the Phase 1 strict-lag goalie features. No model fitting, prediction scoring, ROI calculation, AUC calculation, or threshold evaluation is performed or reported here. The coverage figures below are copied from the committed Phase 1 artifact. The complete-case game-drop count is a row count of the committed `goalie_features.csv`, using the rule stated below.
 
@@ -92,4 +92,4 @@ No fitting, scoring, ROI, AUC, rule selection, or frozen-artifact change may run
 
 ## Sign-off
 
-APPROVED BY MICAH: <date/initials>
+APPROVED BY MICAH: 2026-10-20
