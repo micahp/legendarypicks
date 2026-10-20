@@ -487,3 +487,14 @@ Rules for this file:
 - **Stop:** Reading the shadow m2-2000 row as independent evidence on unmapped events.
 - **Start:** Settling the surface coverage for the shadow before the first graded comparison, and counting only mapped
   matches as evidence for m2-2000.
+
+## L45. 2026-10-19. [resolved] The shadow M2 now resolves a surface for the tracked set, so it no longer equals M1 on upcoming matches.
+
+- **Known:** This corrects the open item in L44. The shadow uses dev's tracked-set surface map, copied verbatim, so the two
+  Ningbo matches locked on 2026-10-20 at 04:30 UTC now differ between m2-2000 and m1-elo (0.650527 against 0.713813, and
+  0.606164 against 0.590864). The served projection still maps two events, so served and shadow differ on surface as well as on
+  history start.
+- **Evidence:** `research/tennis/shadow/2026-10-19/acceptance_endpoint.json`; commits `4b67e0de` and `f706679b`;
+  `docs/TENNIS-SHADOW-2026-10-19.md`.
+- **Stop:** Comparing served with shadow as if only the model differed.
+- **Start:** Keeping the copied surface map in step with dev until the branch is rebased, and reporting the input differences beside any served comparison.
