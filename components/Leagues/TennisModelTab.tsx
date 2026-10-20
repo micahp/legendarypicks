@@ -167,7 +167,7 @@ function MatchCard({ match, showActuals }: { match: ModelMatch; showActuals: boo
               <p className="text-xs tabular-nums text-zinc-500">Edge <b className="font-normal text-white">{winnerEdgeLabel}</b></p>
               {quote?.capturedAt && <p className="text-xs text-zinc-500">Bovada captured {quote.capturedAt}</p>}
               {match.lockedAt && !match.frozenOdds && <p className="text-xs text-amber-400">
-                {match.frozenOddsStatus === 'legacy'
+                {match.frozenOddsStatus !== 'unavailable'
                   ? 'This older forecast was locked without a sportsbook quote snapshot.'
                   : 'No matching pre-match Bovada quote was available at lock time.'}
               </p>}
