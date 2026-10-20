@@ -103,6 +103,7 @@ def load_cache(out_dir):
     tg["log_points"] = np.log(tg.points_for.clip(0) + 1.0)
     pg = pg.fillna({c: 0 for c in STATS}).copy()
     pg["position"] = pg.position.fillna("UNK").astype(str)
+    pg = pg.merge(tg[["game_id", "start_date"]].drop_duplicates("game_id"), on="game_id", how="left")
     return tg, pg, props
 
 
@@ -269,15 +270,13 @@ def build_shares(pg):
     long["metric"] = long.metric.str.replace("_share", "", regex=False)
     season_means = long.groupby(["season", "team_id", "athlete_id", "metric"], as_index=False).agg(
         share=("share", "mean"), n=("share", "count"))
-    pos_means = long.merge(long[["season", "team_id", "athlete_id", "position"]].drop_duplicates(),
-                           on=["season", "team_id", "athlete_id"], how="left")
-    pos_means = pos_means.groupby(["season", "position", "metric"], as_index=False).agg(
+    pos_means = long.groupby(["season", "position", "metric"], as_index=False).agg(
         share=("share", "mean"))
     smap = {(int(r.season), int(r.team_id), int(r.athlete_id), r.metric): (float(r.share), int(r.n))
             for _, r in season_means.iterrows()}
     pmap = {(int(r.season), r.position, r.metric): float(r.share) for _, r in pos_means.iterrows()}
     gmap = defaultdict(list)
-    for _, r in long.iterrows():
+    for r in long[["season", "team_id", "athlete_id", "metric", "start_date", "share"]].itertuples(index=False):
         gmap[(int(r.season), int(r.team_id), int(r.athlete_id), r.metric)].append(
             (str(r.start_date), float(r.share)))
     return {"season": smap, "pos": pmap, "game": gmap}
@@ -325,7 +324,8 @@ def player_weights(game, team_id, players, shares, target_season):
         idx = np.where(mask)[0]
         if len(idx) == 0:
             return v
-        w = s0[metric][idx]
+        w = np.nan_to_num(s0[metric][idx], nan=0.0, posinf=0.0, neginf=0.0)
+        w = np.maximum(w, 0.0)
         if w.sum() <= 0:
             w = np.full(len(idx), default)
         v[idx] = w / w.sum()
@@ -606,7 +606,9 @@ def eval_g1(tg, model, M, max_games=None, quick=False):
     rows = []
     for season in range(2018, 2026):
         d = tg[tg.season == season]
-        games = d[["game_id", "home_id", "away_id", "home_team", "away_team", "week", "start_date"]].drop_duplicates()
+        cols = ["game_id", "home_id", "away_id", "home_team", "away_team", "week",
+                "start_date", "home", "neutral", "rest_c", "is_fcs"]
+        games = d[d.team_id == d.home_id][cols].drop_duplicates("game_id")
         if max_games:
             games = games.head(max_games)
         for _, g in games.iterrows():
@@ -631,22 +633,24 @@ def eval_g1(tg, model, M, max_games=None, quick=False):
     team["cd"] = team.crps_sim - team.crps_base
     team["in50"] = team.pit.between(0.25, 0.75).astype(float)
     team["in90"] = team.pit.between(0.05, 0.95).astype(float)
+    team["n"] = 1.0
     def mean_diff(s):
-        return s["diff"].sum() / max(len(s), 1)
+        return s["diff"].sum() / max(s["n"].sum(), 1)
     def mean_cd(s):
-        return s["cd"].sum() / max(len(s), 1)
+        return s["cd"].sum() / max(s["n"].sum(), 1)
     def mean_50(s):
-        return s["in50"].sum() / max(len(s), 1)
+        return s["in50"].sum() / max(s["n"].sum(), 1)
     def mean_90(s):
-        return s["in90"].sum() / max(len(s), 1)
-    bd, _ = game_cluster_bootstrap(team, ["diff"], fn=mean_diff)
-    bc, _ = game_cluster_bootstrap(team, ["cd"], fn=mean_cd)
-    b50, _ = game_cluster_bootstrap(team, ["in50"], fn=mean_50)
-    b90, _ = game_cluster_bootstrap(team, ["in90"], fn=mean_90)
+        return s["in90"].sum() / max(s["n"].sum(), 1)
+    bd, _ = game_cluster_bootstrap(team, ["diff", "n"], fn=mean_diff)
+    bc, _ = game_cluster_bootstrap(team, ["cd", "n"], fn=mean_cd)
+    b50, _ = game_cluster_bootstrap(team, ["in50", "n"], fn=mean_50)
+    b90, _ = game_cluster_bootstrap(team, ["in90", "n"], fn=mean_90)
     totals = team.groupby("game_id", as_index=False).agg(
         season=("season", "first"), actual=("actual", "sum"), sim_mean=("sim_mean", "sum"))
     totals["diff"] = totals.sim_mean - totals.actual
-    btot, _ = game_cluster_bootstrap(totals, ["diff"], fn=mean_diff)
+    totals["n"] = 1.0
+    btot, _ = game_cluster_bootstrap(totals, ["diff", "n"], fn=mean_diff)
     out = {
         "team": {
             "n": int(len(team)), "delta": float(team["diff"].mean()), "delta_ci": bd,
@@ -691,10 +695,13 @@ def eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=None):
         games = games.head(max_games)
     g2rows = []
     player_ledger = []
+    dropped = []
     for _, gg in games.iterrows():
         gid = int(gg.game_id)
         trow = tg[(tg.game_id == gid) & (tg.team_id == int(gg.team_id))]
         if not len(trow):
+            dropped.append({"game_id": gid, "team_id": int(gg.team_id),
+                            "reason": "no_team_game_row"})
             continue
         game = trow.iloc[0]
         # the schedule row for both teams
@@ -703,6 +710,8 @@ def eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=None):
         # pool: players in this game/team for G2
         allp = pg[(pg.game_id == gid) & (pg.team_id == int(gg.team_id))].copy()
         if not len(allp):
+            dropped.append({"game_id": gid, "team_id": int(gg.team_id),
+                            "reason": "no_player_rows"})
             continue
         any_stat = allp[STATS].sum(axis=1) > 0
         skill = allp.position.isin(POS_SKILL)
@@ -713,24 +722,33 @@ def eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=None):
         pools = {}
         for tid in (home_id, away_id):
             p = pg[(pg.game_id == gid) & (pg.team_id == tid)].copy()
-            if not len(p):
-                p = pg[(pg.game_id == gid) & (pg.team_id == tid)]
             anyp = p[STATS].sum(axis=1) > 0
             pools[tid] = p[anyp | p.position.isin(POS_SKILL)].copy()
+        if not len(pools.get(home_id, [])) or not len(pools.get(away_id, [])):
+            dropped.append({"game_id": gid, "team_id": int(gg.team_id),
+                            "reason": "empty_team_pool",
+                            "home_pool": int(len(pools.get(home_id, []))),
+                            "away_pool": int(len(pools.get(away_id, [])))})
+            continue
         sim = simulate_game(rng, game, home_id, away_id, model, rates, lg, shares, pools, M, 2025, prates)
         arr = sim["player"][int(gg.team_id)]
         rows = score_game_players(arr, pool, actual, prior, M)
         n_nonpool = max(0, len(allp) - len(pool))
-        # aggregate per stat for this game; non-pool rows are the declared zero rows
+        # aggregate per stat for this game.  Non-pool rows are the declared zero rows:
+        # a degenerate point mass at 0 with actual 0 has a Uniform(0,1) randomized PIT,
+        # so it contributes 0.5 to the 50% band and 0.9 to the 90% band.
         for s in STATS:
             sub = [r for r in rows if r[0] == s]
             if not sub:
                 continue
+            pool_in50 = sum(1 for r in sub if 0.25 <= r[1] <= 0.75)
+            pool_in90 = sum(1 for r in sub if 0.05 <= r[1] <= 0.95)
             g2rows.append({
                 "game_id": gid, "stat": s, "n": len(sub) + n_nonpool,
+                "pool_n": len(sub), "pool_in50": pool_in50, "pool_in90": pool_in90,
                 "crps_sim": sum(r[2] for r in sub), "crps_base": sum(r[3] for r in sub),
-                "in50": sum(1 for r in sub if 0.25 <= r[1] <= 0.75) + n_nonpool,
-                "in90": sum(1 for r in sub if 0.05 <= r[1] <= 0.95) + n_nonpool,
+                "in50": pool_in50 + 0.5 * n_nonpool,
+                "in90": pool_in90 + 0.9 * n_nonpool,
                 "pit_sum": sum(r[1] for r in sub) + 0.5 * n_nonpool,
             })
         # player ledger (mean/actual) for the pool
@@ -751,11 +769,14 @@ def eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=None):
         fn_diff = lambda x: (x["crps_sim"].sum() - x["crps_base"].sum()) / max(x["n"].sum(), 1)
         fn_c50 = lambda x: x["in50"].sum() / max(x["n"].sum(), 1)
         fn_c90 = lambda x: x["in90"].sum() / max(x["n"].sum(), 1)
-        bd, vd = game_cluster_bootstrap(sub, ["crps_sim", "crps_base"], fn=fn_diff)
-        b50, _ = game_cluster_bootstrap(sub, ["in50"], fn=fn_c50)
-        b90, _ = game_cluster_bootstrap(sub, ["in90"], fn=fn_c90)
+        bd, vd = game_cluster_bootstrap(sub, ["crps_sim", "crps_base", "n"], fn=fn_diff)
+        b50, _ = game_cluster_bootstrap(sub, ["in50", "n"], fn=fn_c50)
+        b90, _ = game_cluster_bootstrap(sub, ["in90", "n"], fn=fn_c90)
         stat_summary[s] = {
             "n": int(sub.n.sum()),
+            "pool_n": int(sub.pool_n.sum()),
+            "pool_cov50": float(sub.pool_in50.sum() / max(sub.pool_n.sum(), 1)),
+            "pool_cov90": float(sub.pool_in90.sum() / max(sub.pool_n.sum(), 1)),
             "crps_delta": float((sub.crps_sim.sum() - sub.crps_base.sum()) / max(sub.n.sum(), 1)),
             "crps_delta_ci": bd,
             "cov50": float(sub.in50.sum() / max(sub.n.sum(), 1)), "cov50_ci": b50,
@@ -780,6 +801,20 @@ def eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=None):
     out["substitution"] = {"status": "approximate_top5_share", "pass": True}
     out["pass"] = bool(out["coverage_pass"] and out["crps_pass"] and out["opportunities_pass"]
                         and out["sample_pass"])
+    out["population"] = {
+        "n_player_games": int(g2.n.sum()),
+        "pool_player_games": int(g2.pool_n.sum()),
+        "nonpool_player_games": int(g2.n.sum() - g2.pool_n.sum()),
+        "dropped_team_games": int(len(dropped)),
+        "dropped_game_ids": sorted({int(x["game_id"]) for x in dropped}),
+        "team_games_scored": int(len(g2.game_id.unique())),
+    }
+    out["coverage_gate_reading"] = "full_declared_population_with_degenerate_randomized_pit"
+    out["dropped_games"] = dropped
+    out["pool_only_diagnostic"] = {
+        s: {"pool_n": v["pool_n"], "pool_cov50": v["pool_cov50"], "pool_cov90": v["pool_cov90"]}
+        for s, v in stat_summary.items()
+    }
     out["_ledger"] = pd.DataFrame(player_ledger)
     return out
 
@@ -891,7 +926,6 @@ def eval_g3(props, tg, pg, model, rates, lg, shares, prates, M, max_games=None):
                          (s.ll_sim.sum() - s.ll_mkt.sum()) / max(n, 1),
                          (s.sp.sum() - s.sy.sum()) / max(n, 1),
                          slope, inter])
-    boot, vals = game_cluster_bootstrap(g, ["n"], fn=met)
     # per-market Brier difference and CI
     prices = {}
     for mkt in sorted(d.market.unique()):
@@ -899,29 +933,32 @@ def eval_g3(props, tg, pg, model, rates, lg, shares, prates, M, max_games=None):
         gm = sub.groupby("game_id", as_index=False).agg(
             n=("y", "size"), brier_sim=("brier_sim", "sum"), brier_mkt=("brier_mkt", "sum"))
         fn = lambda x: (x.brier_sim.sum() - x.brier_mkt.sum()) / max(x.n.sum(), 1)
-        b, _ = game_cluster_bootstrap(gm, ["brier_sim", "brier_mkt"], fn=fn)
+        b, _ = game_cluster_bootstrap(gm, ["brier_sim", "brier_mkt", "n"], fn=fn)
         prices[mkt] = {"n": int(sub.y.size), "delta": float(fn(gm)), "delta_ci": b,
                        "brier_sim": float(sub.brier_sim.mean()), "brier_mkt": float(sub.brier_mkt.mean()),
                        "ll_sim": float(sub.ll_sim.mean()), "ll_mkt": float(sub.ll_mkt.mean())}
     core_ok = sum(1 for m in CORE_MARKETS
                   if m in prices and prices[m]["delta"] <= 0.01 and prices[m]["delta_ci"][1] <= 0.01)
+    point = met(g)
+    def one(cols, fn):
+        b, _ = game_cluster_bootstrap(g, cols, fn=fn)
+        return b
     out = {
         "n": int(len(d)), "n_games": int(d.game_id.nunique()),
-        "brier_delta": float(met(g)[0]), "brier_delta_ci": [float(boot[0]), float(boot[1])],
-        "ll_delta": float(met(g)[1]), "ll_delta_ci": [float(boot[1]), float(boot[2])] if False else None,
-        "mean_bias": float(met(g)[2]), "mean_bias_ci": [float(boot[2]), float(boot[3])],
-        "slope": float(met(g)[3]), "slope_ci": [float(boot[3]), float(boot[4])],
-        "intercept": float(met(g)[4]), "intercept_ci": [float(boot[4]), float(boot[5])],
+        "brier_delta": float(point[0]),
+        "brier_delta_ci": one(["n", "brier_sim", "brier_mkt"],
+                              lambda s: (s.brier_sim.sum() - s.brier_mkt.sum()) / max(s.n.sum(), 1)),
+        "ll_delta": float(point[1]),
+        "ll_delta_ci": one(["n", "ll_sim", "ll_mkt"],
+                           lambda s: (s.ll_sim.sum() - s.ll_mkt.sum()) / max(s.n.sum(), 1)),
+        "mean_bias": float(point[2]),
+        "mean_bias_ci": one(["n", "sp", "sy"],
+                            lambda s: (s.sp.sum() - s.sy.sum()) / max(s.n.sum(), 1)),
+        "slope": float(point[3]),
+        "intercept": float(point[4]),
         "core_markets_pass": int(core_ok),
         "markets": prices,
     }
-    # recompute proper CIs for each metric (the generic boot above is for the 5-vector together)
-    def one(col, fn):
-        b, _ = game_cluster_bootstrap(g, [col], fn=fn)
-        return b
-    out["brier_delta_ci"] = one("brier_sim", lambda s: (s.brier_sim.sum() - s.brier_mkt.sum()) / max(s.n.sum(), 1))
-    out["ll_delta_ci"] = one("ll_sim", lambda s: (s.ll_sim.sum() - s.ll_mkt.sum()) / max(s.n.sum(), 1))
-    out["mean_bias_ci"] = one("sp", lambda s: (s.sp.sum() - s.sy.sum()) / max(s.n.sum(), 1))
     def slope_fn(s):
         n = s.n.sum()
         return ((n * s.sxy.sum() - s.sx.sum() * s.sy.sum()) /
@@ -930,8 +967,8 @@ def eval_g3(props, tg, pg, model, rates, lg, shares, prates, M, max_games=None):
         n = s.n.sum()
         sl = slope_fn(s)
         return (s.sy.sum() - sl * s.sx.sum()) / max(n, 1)
-    out["slope_ci"] = one("sx", slope_fn)
-    out["intercept_ci"] = one("sy", inter_fn)
+    out["slope_ci"] = one(["n", "sx", "sx2", "sxy", "sy"], slope_fn)
+    out["intercept_ci"] = one(["n", "sx", "sx2", "sxy", "sy"], inter_fn)
     out["pass"] = bool(
         out["n"] >= 1000 and
         0.9 <= out["slope_ci"][0] and out["slope_ci"][1] <= 1.1 and
@@ -945,17 +982,19 @@ def eval_g3(props, tg, pg, model, rates, lg, shares, prates, M, max_games=None):
 
 def run(args):
     tg, pg, props = load_cache(args.out)
+    pgp = pg[pg.season >= 2024].copy()
     model = fit_team_model(tg)
     rates, lg = build_team_rates(tg)
-    shares = build_shares(pg)
-    prates = build_player_rates(pg)
+    shares = build_shares(pgp)
+    prates = build_player_rates(pgp)
     M = max(50, int(args.sims))
-    print(f"data: team_games={len(tg)} player_games={len(pg)} props={len(props)} M={M}", flush=True)
+    print(f"data: team_games={len(tg)} player_games={len(pg)} player_layer={len(pgp)} "
+          f"props={len(props)} M={M}", flush=True)
     g1 = eval_g1(tg, model, M, max_games=args.max_games)
     print("G1 done", g1["team"]["delta"], g1["team"]["crps_delta"], flush=True)
-    g2 = eval_g2(pg, tg, model, rates, lg, shares, prates, M, max_games=args.max_games)
+    g2 = eval_g2(pgp, tg, model, rates, lg, shares, prates, M, max_games=args.max_games)
     print("G2 done", g2.get("stats_in_50_band"), g2.get("crps_ok"), flush=True)
-    g3 = eval_g3(props, tg, pg, model, rates, lg, shares, prates, M,
+    g3 = eval_g3(props, tg, pgp, model, rates, lg, shares, prates, M,
                  max_games=args.max_games if args.max_games else None)
     print("G3 done", g3.get("n"), g3.get("pass"), flush=True)
     g4 = {"status": "pending", "pass": False}
@@ -963,7 +1002,8 @@ def run(args):
         "config": {"seed": args.seed, "sims": M, "bootstrap_reps": REPS, "season": 2025,
                    "fit": "2018-2024", "holdout": "2025", "forward": "2026",
                    "team_games": int(len(tg)), "player_games": int(len(pg)),
-                   "props": int(len(props)), "sims_requested": args.sims},
+                   "player_layer": int(len(pgp)), "props": int(len(props)),
+                   "sims_requested": args.sims},
         "g1": g1, "g2": g2, "g3": g3, "g4": g4,
         "deviations": [
             "Stage B is an aggregate play-mix and outcome model (team pace/pass rate, pass/rush counts, yards, TDs), not a down-by-down state chain; down/distance and clock states are not simulated.",
@@ -973,6 +1013,15 @@ def run(args):
             "G2 substitution is approximated by the top-5 usage-share change under the expected margin; no snap counts or starter flag exist for 2018-2024.",
             "2026 forward team effects use the 2024 season (last fit season); player rates use 2025 as a strictly prior-season input, not a fit.",
             "G2 baseline uses a normal approximation with the prior-season per-game mean/SD for all stats.",
+            f"G2 population: {g2['population']['n_player_games']} player-games; "
+            f"{g2['population']['pool_player_games']} in the predicted pool and "
+            f"{g2['population']['nonpool_player_games']} non-pool zero rows. Degenerate rows get a "
+            "randomized/mid PIT and contribute 0.5 to 50% coverage and 0.9 to 90% coverage; the G2 "
+            "gate reads this full declared population. Pool-only coverage is reported separately as "
+            "a labelled diagnostic.",
+            f"G2 dropped {g2['population']['dropped_team_games']} team-games for an empty/missing "
+            f"team pool; game_ids: {g2['population']['dropped_game_ids']}. The G2 n above is after "
+            "this drop and is reported, not silently absorbed.",
             "NCAA target names map to 95.2-95.5% of pass attempts in 2024-2025; unmatched targets are not imputed.",
         ],
     }
