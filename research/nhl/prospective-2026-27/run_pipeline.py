@@ -13,6 +13,7 @@ import math
 import os
 import re
 import statistics
+import sys
 import time
 import urllib.parse
 import urllib.error
@@ -28,7 +29,24 @@ AUDIT = HERE.parent / "kalshi-playoff-audit-2025-26"
 CANONICAL = AUDIT / "canonical_games_v1_7cd2fc9a6e84470c.csv"
 FEATURES = AUDIT / "pregame_rolling_features_v1_62dcceb77085bc59.csv"
 BASELINE_PATH = AUDIT / "run_baseline_ladder.py"
-MODEL_PATH = HERE / "frozen_models_2026-27_v1.json"
+MODEL_PATH = HERE / "frozen_models_2026-27_v2.json"
+
+_TEAM_STRENGTH = None
+
+
+def _team_strength_model():
+    """v2 score model: team attack/defence fitted on the hash-checked canonical file.
+
+    Fitted once per process, deterministic from the canonical CSV.
+    """
+    global _TEAM_STRENGTH
+    if _TEAM_STRENGTH is None:
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        import team_strength
+
+        _TEAM_STRENGTH = team_strength.TeamStrength(team_strength.load_games(str(CANONICAL)))
+    return _TEAM_STRENGTH
 LEDGER = HERE / "forecasts.jsonl"
 MARKETS_LEDGER = HERE / "market_quotes.jsonl"
 RESULTS_LEDGER = HERE / "official_results.jsonl"
@@ -569,7 +587,13 @@ def build_forecasts(games: list[dict], forecast_time: dt.datetime, model: dict,
                 matrix = [[1.0, per_model[name][1], per_model[name][2], per_model[name][3]],
                           [0.0, per_model[name][5], per_model[name][6], per_model[name][7]]]
             params = model["poisson_models"][{"B3_elo": "elo", "B5_xg_poisson": "xg", "B7_elo_xg_poisson": "elo_xg"}[name]]
-            mus = [math.exp(float(params["intercept"]) + float(np.dot(params["coef"], row))) for row in matrix]
+            if name == "B7_elo_xg_poisson":
+                # v2 score model. The v1 log-xG/log-Elo predictor projects a margin spread of ~0.25
+                # goals against ~2.6 observed, so it cannot separate teams; team attack/defence
+                # replaces it for this arm. B3 and B5 stay frozen for comparison.
+                mus = list(_team_strength_model().mus(home, away, bool(game.get("neutral_site"))))
+            else:
+                mus = [math.exp(float(params["intercept"]) + float(np.dot(params["coef"], row))) for row in matrix]
             if not all(math.isfinite(mu) and 0.01 <= mu <= 15.0 for mu in mus):
                 raise RuntimeError(f"Implausible/non-finite goal mean for {gid} {name}: {mus}")
             markets = score_markets(mus[0], mus[1], model["historical_home_shootout_win_rate"])
