@@ -12,12 +12,13 @@ abandonments are excluded from scoring and from state, as in both replays. The r
 
   python3 -I research/tennis/counts-2026-10-20/run_counts_eval.py --db <path to picks.dev.db> [--tour atp]
 
-Writes summary.json, TABLES.md and predictions/*.csv next to this file. Opens the database read-only.
+Writes summary.json, TABLES.md and predictions/*.csv.gz next to this file. Opens the database read-only.
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import json
 import math
 import sys
@@ -165,23 +166,25 @@ def run_counts(db: str, tour: str) -> dict[str, Any]:
             surface = row["surface"]
             n_rows += 1
             key_surface, key_tour = (year - 1, target, surface), (year - 1, target)
-            if prior_n.get(key_surface):
-                mean = prior_sum[key_surface] / prior_n[key_surface]
-            else:
-                mean = prior_sum[key_tour] / prior_n[key_tour]
-            mean = max(mean, 0.05)
-            pmfs = {"C0": rb.poisson_pmf(mean, actual)}
+            pmfs = {}
+            if year >= 2015:  # C0 needs a prior calendar year; the rolling pipeline starts it in 2015
+                if prior_n.get(key_surface):
+                    mean = prior_sum[key_surface] / prior_n[key_surface]
+                else:
+                    mean = prior_sum[key_tour] / prior_n[key_tour]
+                mean = max(mean, 0.05)
+                pmfs["C0"] = rb.poisson_pmf(mean, actual)
             pmfs.update({model: block[model] for model in rb.MODEL_NAMES})
-            for name, pmf in pmfs.items():
-                arr = np.asarray(pmf, dtype=float)
-                pmf_mean = float(np.dot(arr, np.arange(arr.size)))
-                pmf_sd = math.sqrt(max(0.0, float(np.dot(arr, (np.arange(arr.size) - pmf_mean) ** 2))))
-                if actual > pmf_mean + 12.0 * pmf_sd + 30.0:
-                    leak_flags[name] += 1
             if year < 2023:
                 fit_sum[target] += actual
                 fit_n[target] += 1
             else:
+                for name, pmf in pmfs.items():  # leakage check on scored rows only
+                    arr = np.asarray(pmf, dtype=float)
+                    pmf_mean = float(np.dot(arr, np.arange(arr.size)))
+                    pmf_sd = math.sqrt(max(0.0, float(np.dot(arr, (np.arange(arr.size) - pmf_mean) ** 2))))
+                    if actual > pmf_mean + 12.0 * pmf_sd + 30.0:
+                        leak_flags[name] += 1
                 uniform = float(uniform_rng.uniform())
                 if target in pending:
                     match_id, first_date, first_event = pending.pop(target)
@@ -199,10 +202,10 @@ def run_counts(db: str, tour: str) -> dict[str, Any]:
                     "observed": actual, "support_start": 0, "uniform": uniform,
                     "pmfs": {name: np.asarray(pmf, dtype=float) for name, pmf in pmfs.items()},
                 })
-            prior_sum[key_surface] += actual
-            prior_n[key_surface] += 1
-            prior_sum[key_tour] += actual
-            prior_n[key_tour] += 1
+            prior_sum[(year, target, surface)] += actual
+            prior_n[(year, target, surface)] += 1
+            prior_sum[(year, target)] += actual
+            prior_n[(year, target)] += 1
     finally:
         rb.score_pmf, rb.forecast_target = orig_score, orig_forecast
     if blocks or pending:
@@ -425,7 +428,7 @@ def write_predictions(rows: list[dict[str, Any]], model: str, path: Path, kind: 
     path.parent.mkdir(parents=True, exist_ok=True)
     header = ["tour", "target", "model", "date", "year", "event_id", "player_id", "surface", "format",
               "history_band", "observed", "support_start", "mean", "pmf"]
-    with path.open("w", newline="") as handle:
+    with gzip.open(path, "wt", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(header)
         for row in rows:
@@ -578,9 +581,9 @@ def main() -> int:
         for target, cell in cells.items():
             rows = counts["rows"][target] if target in COUNT_TARGETS else games["rows"]
             model = cell["prediction_model"]
-            write_predictions(rows, model, predictions_dir / f"{tour}_{target}_{model}.csv",
+            write_predictions(rows, model, predictions_dir / f"{tour}_{target}_{model}.csv.gz",
                               "games" if target == "games" else "counts")
-            cell["prediction_file"] = f"predictions/{tour}_{target}_{model}.csv"
+            cell["prediction_file"] = f"predictions/{tour}_{target}_{model}.csv.gz"
         summary["tours"][tour] = {
             "cells": cells,
             "count_replay": {"rows_seen": counts["replay_rows_seen"], "cap_driven_rows": counts["cap_driven_rows"]},
