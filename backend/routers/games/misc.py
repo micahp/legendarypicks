@@ -446,6 +446,9 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
             "locked_at TEXT NOT NULL,projection TEXT NOT NULL,model_version TEXT,PRIMARY KEY(league,game_id))"
         )
         from tennis_bovada_odds import bovada_odds
+        from tennis_shadow import ensure_table as ensure_shadow_table, write_shadow_locks
+        ensure_shadow_table(con)
+        shadow_replays: dict = {}
         now_utc = dt.datetime.now(dt.timezone.utc)
         for league in tours:
             rows = con.execute(
@@ -601,6 +604,10 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                         (league, starts_at.astimezone(dt.timezone.utc).date().isoformat(), match["gameId"], match["startTime"],
                          now.isoformat(), json.dumps(locked_projection), candidate.get("modelVersion")),
                     )
+                # Shadow forecasts are written beside the served lock, in the same window, and never replace it.
+                if (match["status"] == "scheduled" and starts_at is not None
+                        and now < starts_at.astimezone(dt.timezone.utc) <= now + dt.timedelta(hours=1)):
+                    write_shadow_locks(con, league, match, starts_at.astimezone(dt.timezone.utc), now, shadow_replays)
                 lock = con.execute(
                     "SELECT projection,locked_at FROM tennis_model_locks WHERE league=? AND game_id=?",
                     (league, match["gameId"]),

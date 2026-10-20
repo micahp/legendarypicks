@@ -1,0 +1,116 @@
+{
+ "date": "2026-10-20",
+ "matches": [
+  {
+   "away": "Diana Shnaider",
+   "event": "BNB Ningbo Open",
+   "game_id": "185525",
+   "home": "Yulia Putintseva",
+   "served": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "probability": 0.634893382675165
+    }
+   ],
+   "shadow": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "probability": 0.7138128120176697,
+     "status": "locked",
+     "surface": "Hard",
+     "surface_source": "major_name"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "probability": 0.6505268652805003,
+     "status": "locked",
+     "surface": "Hard",
+     "surface_source": "major_name"
+    }
+   ]
+  },
+  {
+   "away": "Alycia Parks",
+   "event": "BNB Ningbo Open",
+   "game_id": "185543",
+   "home": "Sara Bejlek",
+   "served": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-global-surface-elo-blend-v2",
+     "probability": 0.6055304221929133
+    }
+   ],
+   "shadow": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "probability": 0.5908644291524046,
+     "status": "locked",
+     "surface": "Hard",
+     "surface_source": "major_name"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "probability": 0.6061636922340345,
+     "status": "locked",
+     "surface": "Hard",
+     "surface_source": "major_name"
+    }
+   ]
+  },
+  {
+   "away": "Polina Kudermetova",
+   "event": "BNB Ningbo Open",
+   "game_id": "185523",
+   "home": "Cristina Bucsa",
+   "served": [],
+   "shadow": []
+  },
+  {
+   "away": "Anhelina Kalinina",
+   "event": "BNB Ningbo Open",
+   "game_id": "185532",
+   "home": "Jasmine Paolini",
+   "served": [],
+   "shadow": []
+  },
+  {
+   "away": "Belinda Bencic",
+   "event": "BNB Ningbo Open",
+   "game_id": "185530",
+   "home": "Jelena Ostapenko",
+   "served": [],
+   "shadow": []
+  },
+  {
+   "away": "Daria Snigur",
+   "event": "BNB Ningbo Open",
+   "game_id": "185524",
+   "home": "Katarzyna Kawa",
+   "served": [],
+   "shadow": []
+  },
+  {
+   "away": "Ekaterina Alexandrova",
+   "event": "BNB Ningbo Open",
+   "game_id": "185528",
+   "home": "Guo Hanyu",
+   "served": [],
+   "shadow": []
+  }
+ ],
+ "now": "2026-10-20T04:30:00+00:00",
+ "pre_existing_served_rows_unchanged": true,
+ "second_call_added_rows": 0,
+ "served_rows_after_first": 23,
+ "served_rows_after_second": 23,
+ "served_rows_before": 21,
+ "shadow_rows_after_first": 4,
+ "shadow_rows_after_second": 4,
+ "tour": "wta"
+}
