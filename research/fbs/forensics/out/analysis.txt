@@ -1,0 +1,21 @@
+research    inputs  p_c2   vs committed: 2022-26 max=4.44e-16 | 2023-25 max=4.44e-16, rows>1e-6=0 of 2397
+research    inputs  p_g2h  vs committed: 2022-26 max=1.68e-08 | 2023-25 max=1.68e-08, rows>1e-6=0 of 2397
+production  inputs  p_c2   vs committed: 2022-26 max=0.474 | 2023-25 max=0.196, rows>1e-6=2397 of 2397
+production  inputs  p_g2h  vs committed: 2022-26 max=0.442 | 2023-25 max=0.188, rows>1e-6=2397 of 2397
+blocks=376; training membership identical in all blocks: True; n_train identical: True
+non-empty training blocks=375; with differing training feature values=375
+first fitted block (n_train>=200): 2022-2022-09-25 cutoff=2022-09-25 n_train=201
+first block with differing training feature values: 2022-2022-08-28 (n_train=4)
+p_c2 first divergent block 2022-2022-09-25 (cutoff 2022-09-25): 9 test games; first game 401403997 research=0.257713 production=0.332728 diff=0.0750; block max diff=0.1670; divergent rows 3322 of 3523
+p_g2h first divergent block 2022-2022-09-25 (cutoff 2022-09-25): 9 test games; first game 401403997 research=0.249132 production=0.322911 diff=0.0738; block max diff=0.1651; divergent rows 3322 of 3523
+regenerated features (full seasons) vs committed game_features_c.csv: rows=10804, max|diff|=0
+regenerated features (prod seasons) vs committed game_features_c.csv: rows=4176, max|diff|=45.3
+production build_frame features vs committed game_features_c.csv: rows=3474, rows with any |diff|>1e-9=3474
+replay asis   forecasts_walk_forward.csv  rows=3523: p_g2 max=0, p_c2 max=4.4e-16, p_g1 max=8.9e-09, p_g2h max=1.7e-08
+replay asis   forecasts_holdout_2025.csv  rows=807: p_g2 max=0, p_g2h max=1.1e-13, p_c2 max=4.4e-16, p_g1 max=3.7e-09
+replay asis   metrics.csv                 shape=(12, 9), max numeric |diff|=3.8e-10
+replay asis   paired.csv                  shape=(15, 7), max numeric |diff|=2.9e-10
+replay pinned forecasts_walk_forward.csv  rows=3523: p_g2 max=0, p_c2 max=4.4e-16, p_g1 max=8.9e-09, p_g2h max=1.7e-08
+replay pinned forecasts_holdout_2025.csv  rows=807: p_g2 max=0, p_g2h max=1.1e-13, p_c2 max=4.4e-16, p_g1 max=3.7e-09
+replay pinned metrics.csv                 shape=(12, 9), max numeric |diff|=3.8e-10
+replay pinned paired.csv                  shape=(15, 7), max numeric |diff|=2.9e-10

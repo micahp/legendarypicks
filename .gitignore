@@ -174,3 +174,6 @@ backend/data/parlay_board.json
 # radio_blackout_check.py output (rewritten every 5 minutes)
 backend/data/radio-blackouts.json*
 backend/data/radio-blackouts.log
+
+# parity forensics scratch (regenerable)
+research/fbs/forensics/work/

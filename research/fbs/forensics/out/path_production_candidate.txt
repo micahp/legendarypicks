@@ -1,0 +1,3 @@
+C2 as written                          inputs=production backend=candidate: 2023-25 max|dp|=3.33e-16, rows>1e-6=0 of 2397
+C2 research-standardized candidate     inputs=production backend=candidate: 2023-25 max|dp|=3.33e-16, rows>1e-6=0 of 2397
+G2h as written                         inputs=production backend=candidate: 2023-25 max|dp|=1.51e-08, rows>1e-6=0 of 2397

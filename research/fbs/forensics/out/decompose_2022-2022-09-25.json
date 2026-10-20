@@ -1,0 +1,187 @@
+{
+ "block": "2022-2022-09-25",
+ "cutoff": "2022-09-25",
+ "test_games": 9,
+ "C2 research estimator, research features (reference)": {
+  "n_train": 201,
+  "beta": [
+   0.413201,
+   0.571142,
+   0.078721,
+   -0.148308,
+   0.053008,
+   0.220983,
+   0.232878,
+   0.078414
+  ],
+  "nll": 112.9412856603123,
+  "penalty": 0.4664200701423205,
+  "objective": 113.40770573045462,
+  "mu": {
+   "points_per_drive_diff": 0.203329,
+   "turnovers_per_drive_diff": -0.002811,
+   "start_field_position_diff": -0.356118,
+   "rz_td_rate_diff": 0.021339,
+   "third_down_rate_diff": 0.003666,
+   "explosive_drive_rate_diff": 0.019715,
+   "penalties_per_play_diff": -0.000456
+  },
+  "sd": {
+   "points_per_drive_diff": 0.888367,
+   "turnovers_per_drive_diff": 0.032925,
+   "start_field_position_diff": 9.600597,
+   "rz_td_rate_diff": 0.121048,
+   "third_down_rate_diff": 0.029518,
+   "explosive_drive_rate_diff": 0.110595,
+   "penalties_per_play_diff": 0.014401
+  },
+  "max_diff_vs_research_reference": 0.0,
+  "max_diff_vs_committed": 5.551115123125783e-17
+ },
+ "C2 research estimator, production features": {
+  "n_train": 201,
+  "beta": [
+   0.390925,
+   0.623236,
+   -0.043264,
+   -0.091162,
+   0.035753,
+   0.296018,
+   -0.065191,
+   0.334544
+  ],
+  "nll": 116.04400992293537,
+  "penalty": 0.603679584990246,
+  "objective": 116.64768950792562,
+  "mu": {
+   "points_per_drive_diff": 0.058361,
+   "turnovers_per_drive_diff": 0.002122,
+   "start_field_position_diff": 0.851077,
+   "rz_td_rate_diff": 0.016261,
+   "third_down_rate_diff": 0.001891,
+   "explosive_drive_rate_diff": 0.012181,
+   "penalties_per_play_diff": 9.7e-05
+  },
+  "sd": {
+   "points_per_drive_diff": 0.747412,
+   "turnovers_per_drive_diff": 0.046165,
+   "start_field_position_diff": 13.915725,
+   "rz_td_rate_diff": 0.161161,
+   "third_down_rate_diff": 0.033922,
+   "explosive_drive_rate_diff": 0.100984,
+   "penalties_per_play_diff": 0.017567
+  },
+  "max_diff_vs_research_reference": 0.16699626372358667,
+  "max_diff_vs_committed": 0.16699626372358667
+ },
+ "C2 research objective, raw features, research features": {
+  "n_train": 201,
+  "beta": [
+   0.194939,
+   0.928352,
+   0.062074,
+   -0.015474,
+   0.124611,
+   0.095869,
+   0.180652,
+   0.019664
+  ],
+  "nll": 113.98560323201798,
+  "penalty": 0.9236713365705758,
+  "objective": 114.90927456858856,
+  "max_diff_vs_research_reference": 0.08529877006532216,
+  "max_diff_vs_committed": 0.08529877006532222
+ },
+ "C2 production estimator as written, production features": {
+  "n_train": 201,
+  "beta": [
+   0.309115,
+   0.940059,
+   0.063449,
+   -0.002815,
+   0.236895,
+   0.303359,
+   -0.187074,
+   0.222565
+  ],
+  "nll": 119.52346707958903,
+  "penalty": 0.5602114807838608,
+  "objective": 120.08367856037289,
+  "max_diff_vs_research_reference": 0.16187041294944365,
+  "max_diff_vs_committed": 0.1618704129494437
+ },
+ "C2 production estimator as written, research features": {
+  "n_train": 201,
+  "beta": [
+   0.194218,
+   0.959037,
+   0.138072,
+   -0.015248,
+   0.156914,
+   0.173631,
+   0.253911,
+   0.041319
+  ],
+  "nll": 113.88826963471757,
+  "penalty": 0.5299980296128874,
+  "objective": 114.41826766433046,
+  "max_diff_vs_research_reference": 0.07660254762144442,
+  "max_diff_vs_committed": 0.07660254762144447
+ },
+ "G2h": {
+  "n_train": 201,
+  "converged": [
+   true,
+   true
+  ],
+  "grad_norm": [
+   4.753122786471664e-07,
+   3.937775575751923e-07
+  ],
+  "n_iter": [
+   45,
+   43
+  ],
+  "max_abs_u_diff": 0.06725526525389187,
+  "max_abs_m_diff": 0.0026635733327721725,
+  "mu_research": {
+   "points_per_drive_diff": 0.203329,
+   "turnovers_per_drive_diff": -0.002811,
+   "start_field_position_diff": -0.356118,
+   "rz_td_rate_diff": 0.021339,
+   "third_down_rate_diff": 0.003666,
+   "explosive_drive_rate_diff": 0.019715,
+   "penalties_per_play_diff": -0.000456
+  },
+  "mu_production": {
+   "points_per_drive_diff": 0.058361,
+   "turnovers_per_drive_diff": 0.002122,
+   "start_field_position_diff": 0.851077,
+   "rz_td_rate_diff": 0.016261,
+   "third_down_rate_diff": 0.001891,
+   "explosive_drive_rate_diff": 0.012181,
+   "penalties_per_play_diff": 9.7e-05
+  },
+  "sd_research": {
+   "points_per_drive_diff": 0.888367,
+   "turnovers_per_drive_diff": 0.032925,
+   "start_field_position_diff": 9.600597,
+   "rz_td_rate_diff": 0.121048,
+   "third_down_rate_diff": 0.029518,
+   "explosive_drive_rate_diff": 0.110595,
+   "penalties_per_play_diff": 0.014401
+  },
+  "sd_production": {
+   "points_per_drive_diff": 0.747412,
+   "turnovers_per_drive_diff": 0.046165,
+   "start_field_position_diff": 13.915725,
+   "rz_td_rate_diff": 0.161161,
+   "third_down_rate_diff": 0.033922,
+   "explosive_drive_rate_diff": 0.100984,
+   "penalties_per_play_diff": 0.017567
+  },
+  "max_diff_research_fit_vs_committed": 4.232635519851868e-09,
+  "max_diff_research_vs_production_features": 0.16506431353046291,
+  "max_diff_production_fit_vs_block_file": 1.1102230246251565e-16
+ }
+}

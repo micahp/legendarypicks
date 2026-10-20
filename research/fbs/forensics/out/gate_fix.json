@@ -1,0 +1,32 @@
+{
+ "models": {
+  "g2": {
+   "brier": 0.213263,
+   "expected": 0.213263,
+   "delta": 0.0,
+   "max_abs_row_diff": 0.0,
+   "rows_over_1e-6": 0,
+   "ok": true
+  },
+  "c2": {
+   "brier": 0.195924,
+   "expected": 0.196494,
+   "delta": -0.00057,
+   "max_abs_row_diff": 0.195629946,
+   "rows_over_1e-6": 2397,
+   "ok": false
+  },
+  "g2h": {
+   "brier": 0.194153,
+   "expected": 0.194596,
+   "delta": -0.000442,
+   "max_abs_row_diff": 0.188405574,
+   "rows_over_1e-6": 2397,
+   "ok": false
+  }
+ },
+ "max_grad": 9.230303516783583e-06,
+ "games": 2397,
+ "ledger_games": 2397,
+ "ok": false
+}
