@@ -1,94 +1,171 @@
-# NHL matchup strategy — historical profitability (Phase 1-3)
+# NHL matchup strategy — historical profitability (Phase 1-3, revision 2)
 
-Branch `research/nhl-matchup-strategy-v1`, based on `origin/dev` at `e35ac195`.
-Read-only research: no deployment, no production forecast, no model change.
+Branch `research/nhl-matchup-strategy-v1`. Read-only research: no deployment, no production
+forecast, no model change.
 
-## What was tested
+This revision replaces the measurement harness from `f3d53766` after review found look-ahead,
+a standings bug and incorrect settlement in it. The original numbers are kept at the bottom as a
+superseded diagnostic. **The strategy still loses, but by half as much: −2.6% over 5,126 picks,
+not −4.4%.**
 
-The actual `model_pick()` hierarchy (leeway-2 semantics) replayed on the frozen **B7 v1
-(Elo + rolling xG)** forecast, against SBR opening prices, 2018-19 → 2022-23, with matchup
-regimes layered on top:
+## Headline
 
-1. Vegas underdog (+1.5) with S = |puck| − favourite_margin > 1.0 → that side +1.5
-2. else the Vegas favourite ML when the model's favourite is the same team
-3. else a total (never reached in this replay — see below)
-
-Chronology: Elo is replayed game by game and the xG inputs are the pregame rolling columns, so
-no pick uses information from after its own start. Regimes use each team's points percentage as
-of before the game, cut at the league terciles (0.536 / 0.579). Fixed constants, not fitted to
-results.
-
-## Population
-
-- SBR rows: 5,132. Matched to canonical: **5,124**. Unmatched: 3 (team-code or date gaps).
-- Picks generated: **5,124** — 2,266 moneyline, 2,858 spread, **0 totals**.
-- Totals never fire in replay because rule 2 matches the Vegas favourite almost always; live
-  cards show totals only when the quote is missing for the ML/spread candidate. The historical
-  archive has fuller price coverage than the live feed, so this replay is not the live mix.
-
-## Result at opening prices
-
-| market | n | W | L | units | ROI |
-| --- | --- | --- | --- | --- | --- |
-| moneyline | 2,266 | 1,397 | 869 | **−146.84** | **−6.5%** |
-| spread +1.5 | 2,858 | 1,892 | 966 | **−79.78** | **−2.8%** |
-| all | 5,124 | 3,289 | 1,835 | **−226.62** | **−4.4%** |
-
-Closing prices change nothing material: ML −6.3%, spread −2.8%.
-
-## By matchup regime
-
-| regime | market | n | units | ROI |
+| | picks | W–L | units | ROI |
 | --- | --- | --- | --- | --- |
-| strong-strong | ML | 206 | +0.36 | +0.2% |
-| strong-strong | spread | 268 | −20.49 | −7.6% |
-| mid-mid | ML | 277 | −8.08 | −2.9% |
-| mid-mid | spread | 346 | −6.93 | −2.0% |
-| mixed | ML | 1,579 | −125.04 | −7.9% |
-| mixed | spread | 1,966 | −18.71 | −1.0% |
-| weak-weak | ML | 203 | −14.56 | −7.2% |
-| weak-weak | spread | 274 | −32.56 | −11.9% |
+| moneyline | 2,154 | 1,389–765 | **−52.61** | **−2.4%** |
+| spread +1.5 | 2,972 | 1,964–1,008 | **−80.03** | **−2.7%** |
+| **all** | **5,126** | **3,353–1,773** | **−132.64** | **−2.6%** |
 
-One cell is non-negative and it is 206 picks at +0.2% — indistinguishable from zero. Everything
-else loses, including every weak-weak bucket.
+Opening prices; walk-forward model; book-correct settlement. Closing ML is −2.3% — the loss is not
+a stale-price artefact. No regime rescues it (see below). The one positive cell that survives the
+corrections is +1.7% on 162 ML picks, about a fifth of one standard error.
+
+## What the v1 harness got wrong
+
+| # | Defect | Effect |
+| --- | --- | --- |
+| 1 | Moneyline settled from `*_goals_model_target`, which excludes the shootout-deciding goal | 2,141 shootout games could grade a winning ML as a loss. Worth **+101.7u** on its own. |
+| 2 | 2026-fitted B7 v1 coefficients applied to 2018-19 games | Leakage; worth **−2.5u** once fixed, i.e. it was not flattering the strategy. |
+| 3 | Standings accumulated across seasons; shootout games scored off a tied target | Regime labels were meaningless; gives the away team the win on every shootout. |
+| 4 | One `puck_price` copied into open and close | The "closing spread" sensitivity compared a price to itself. |
+| 5 | Home side's over/under quote used for both sides | 1,737 of 5,132 rows carry different prices per side. |
+| 6 | Unmatched and unforecastable rows skipped without a counter | 8 rows lost, no reconciliation. |
+
+Settlement is now split the way books settle: **moneyline includes overtime and the shootout**
+(`official_home_winner`); **puck line and totals end at overtime** (`*_goals_model_target`). The
+data confirms the split: every one of the 21,081 non-shootout games has target = official score,
+and every one of the 2,141 shootout games has a tied target with the extra goal in the official
+score.
+
+## Ablation: which correction moved the number
+
+5,126 graded picks in every arm. `legacy` = v1's settlement, `book` = corrected settlement.
+
+| model | settlement | ML units | spread units | all units | ROI |
+| --- | --- | --- | --- | --- | --- |
+| frozen through 2025-26 | legacy | −147.27 | −79.78 | −227.05 | −4.4% |
+| frozen through 2025-26 | book | −45.53 | −79.78 | −125.31 | −2.4% |
+| walk-forward | legacy | −149.56 | −80.03 | −229.59 | −4.5% |
+| **walk-forward** | **book** | **−52.61** | **−80.03** | **−132.64** | **−2.6%** |
+
+The first row reproduces the published v1 result (−226.6u / −4.4%); the small difference is the
+two rows recovered by fixing name matching. **The shootout settlement bug, not the leakage, is
+what made the strategy look 2 points worse than it is.** Removing the leakage makes the result
+marginally worse, so the look-ahead was not hiding a profitable edge.
+
+Model folds (each refit only on prior seasons, same architecture as the frozen arm):
+
+| eval season | train | games | intercept | coef (home, xGF, xGA, Elo) | tie-home |
+| --- | --- | --- | --- | --- | --- |
+| 2018-19 | 2008–2017 | 12,611 | 0.7304 | 0.1008 / 0.1951 / 0.1816 / 0.2913 | 0.4922 |
+| 2019-20 | 2008–2018 | 13,969 | 0.7167 | 0.1008 / 0.2034 / 0.2044 / 0.2868 | 0.4937 |
+| 2020-21 | 2008–2019 | 15,181 | 0.7154 | 0.0978 / 0.2117 / 0.2062 / 0.2849 | 0.4902 |
+| 2021-22 | 2008–2020 | 16,133 | 0.7234 | 0.0979 / 0.2054 / 0.2017 / 0.2956 | 0.4897 |
+| 2022-23 | 2008–2021 | 17,529 | 0.7033 | 0.0970 / 0.2325 / 0.2168 / 0.3045 | 0.4909 |
+
+## Population reconciliation
+
+Every SBR row is accounted for exactly once.
+
+| bucket | rows |
+| --- | --- |
+| SBR rows | 5,132 |
+| team name unmapped | 0 |
+| no canonical match | 0 |
+| home/away orientation mismatch | 1 |
+| no pregame features (incomplete window) | 5 |
+| no walk-forward forecast | 0 |
+| no pick: odds missing | 0 |
+| **graded** | **5,126** |
+
+The orientation row is 2020-01-17 DET/PIT: the canonical file lists Detroit at home, SBR and the
+official record have Pittsburgh at home. The five feature gaps are Seattle's first five franchise
+games (2021-10-12 → 10-19), which have no rolling-10 window. Two SBR name variants ("Seattle",
+"Arizonas") were previously dropped as unmapped and are now matched.
+
+## By matchup regime — corrected
+
+Three definitions, all classified from pregame season-to-date state with cuts frozen on
+2008-09…2017-18:
+
+- **points** — v1's points-percentage terciles (0.536 / 0.579), kept for comparability.
+- **goals** — composite of points percentage and goal differential per game.
+- **goals_xg** — the same composite plus rolling-10 5v5 xG differential per game.
+
+| regime | points ML | points spread | goals ML | goals spread | goals+xG ML | goals+xG spread |
+| --- | --- | --- | --- | --- | --- | --- |
+| early (<10 GP) | 342 / +2.8% | 496 / −1.5% | same | same | same | same |
+| mid-mid | 18 / −8.9% | 60 / −5.7% | 100 / −5.4% | 210 / −5.6% | 76 / −0.9% | 239 / −8.7% |
+| mixed | 1,295 / −2.4% | 1,296 / −3.4% | 1,357 / −2.0% | 1,420 / −1.4% | 1,420 / −3.6% | 1,396 / −2.4% |
+| strong-strong | 291 / −4.5% | 674 / −3.3% | 190 / −7.0% | 467 / −6.8% | **162 / +1.7%** | 452 / −3.2% |
+| weak-weak | 208 / −8.0% | 446 / −0.7% | 165 / −9.6% | 379 / −2.6% | 154 / −8.5% | 389 / −1.1% |
+
+(n / ROI; full units in `results_corrected.json`.)
+
+Adding actual goals and xG to the classification does not produce a bettable edge. The best
+strong-strong cell is 162 picks at +2.8u, roughly one fifth of its standard error. Weak-weak — the
+regime a selectivity rule would exist to avoid — is negative under all three definitions.
 
 ## By season
 
 | season | ML units (ROI) | spread units (ROI) |
 | --- | --- | --- |
-| 2018-19 | −56.21 (−10.3%) | −21.89 (−2.7%) |
-| 2019-20 | −37.34 (−9.1%) | **+10.23 (+1.5%)** |
-| 2020-21 | −16.07 (−3.7%) | −15.68 (−3.1%) |
-| 2021-22 | −24.51 (−3.5%) | −47.75 (−6.9%) |
-| 2022-23 | −12.71 (−7.5%) | −4.70 (−2.8%) |
+| 2018-19 | −37.94 (−7.4%) | −28.73 (−3.4%) |
+| 2019-20 | −13.57 (−3.4%) | **+14.00 (+2.1%)** |
+| 2020-21 | −0.28 (−0.1%) | −4.19 (−0.8%) |
+| 2021-22 | +9.56 (+1.4%) | −53.26 (−7.3%) |
+| 2022-23 | −10.38 (−6.2%) | −7.85 (−4.6%) |
 
-One positive season out of ten market-seasons.
+Two positive market-seasons out of ten, neither larger than noise.
+
+## Why totals never fire — structurally, not for lack of quotes
+
+The cascade only considers a total when the spread branch fails (`S = 1.5 − favourite_margin
+≤ 1.0`) **and** the model's favourite differs from Vegas'. For |puck| = 1.5 those conditions
+contradict: `S ≤ 1.0` implies `favourite_margin ≥ 0.5`, which puts the model's favourite on the
+same side as Vegas, so rule 2 fires instead.
+
+Counted over the replay: spread branch 2,972, ML branch 2,154, total branch **0** — with zero
+missing total quotes. It is not a historical-coverage artefact; the branch is unreachable in the
+current rule for any game with a 1.5 puck line. The production cascade's live totals only appear
+because live cards can lack the spread or ML quote, which is an absence of a price, not a signal.
 
 ## What this means
 
-The hierarchy, as specified, is a losing strategy over five seasons and 5,124 picks. Matchup
-classification does not rescue it: the only non-negative cell is inside the noise band, and the
-weak-weak spread bucket — the one a selectivity rule would be designed to avoid — is the worst
-cell on the board.
+The hierarchy is a losing strategy at posted prices: −2.6% over 5,126 picks across five seasons,
+negative in both markets, with no regime cell large enough to be distinguished from zero after
+the measurement is fixed. Correcting the harness halved the estimate of the loss but did not
+change the sign or produce a profitable subset.
 
-The structure of the loss is what you would expect from betting favourites and underdogs at
-posted prices with no demonstrated edge over the closing line: the model's moneyline Brier is
-0.2388 against a market 0.2363 on the same games. A rule can only be profitable if it selects
-the subset where that gap inverts; no regime does.
+Per the decision in `docs/CONTEXT-2026-10-20.md`, further model work should be judged on net units
+against this −2.6% baseline. The remaining unexplored hypothesis is that the edge must come from
+information the closing price does not contain at lock time (shot quality, goalie identity,
+injuries, deployment) — and the shot-coordinate data needed to test it is still not on disk.
 
-## What was not tested
+## Superseded: v1 numbers (`f3d53766`)
 
-- Totals as a live-equivalent arm (no historical quotes missing, so rule 3 never triggered).
-- Any selectivity policy fitted on early seasons and evaluated later — with every regime cell
-  negative, there is nothing to select toward yet.
-- Puck-line prices at the exact captured time (the archive has one line per game, no intraday
-  timestamp).
+Kept for the record. These came from a harness with the six defects above.
+
+| market | n | W | L | units | ROI |
+| --- | --- | --- | --- | --- | --- |
+| moneyline | 2,266 | 1,397 | 869 | −146.84 | −6.5% |
+| spread +1.5 | 2,858 | 1,892 | 966 | −79.78 | −2.8% |
+| all | 5,124 | 3,289 | 1,835 | −226.62 | −4.4% |
+
+The v1 regime table (strong-strong ML +0.2% on 206 picks) is likewise superseded: its labels came
+from standings that never reset and its settlement misgraded every shootout.
 
 ## Reproduce
 
 ```
-python3 research/nhl/matchup-strategy-2026-10-20/backtest_matchup_strategy.py
+cd research/nhl/matchup-strategy-2026-10-20
+uv run --with scikit-learn --with numpy python test_settlement.py
+uv run --with scikit-learn --with numpy python backtest_matchup_strategy.py
 ```
+
+Ablations: add `--frozen` (v1 coefficients), `--legacy-settlement` (v1 settlement), or both.
+Outputs `results_corrected.json` for the corrected arm and `results_<model>_<settlement>.json`
+for the others.
 
 Inputs: canonical games and pregame rolling features (audit directory, untracked),
 `research/nhl/prospective-2026-27/frozen_models_2026-27_v1.json`, and

@@ -1,0 +1,429 @@
+{
+  "generated_by": "backtest_matchup_strategy.py (revision 2)",
+  "mode": "frozen/book",
+  "folds": {
+    "all": {
+      "intercept": 0.687150268033442,
+      "coef": [
+        0.08897401632046502,
+        0.24344687368282716,
+        0.2520066456975916,
+        0.2975227438944925
+      ],
+      "tie_home": 0.49178017848755284,
+      "n_games": 23116,
+      "n_team_rows": 46232,
+      "train_seasons": [
+        2008,
+        2025
+      ]
+    }
+  },
+  "thresholds": {
+    "points": {
+      "lo": 0.536,
+      "hi": 0.579
+    },
+    "goals": {
+      "lo": -0.39134980167990263,
+      "hi": 0.4239711068151395
+    },
+    "goals_xg": {
+      "lo": -0.33653350912454566,
+      "hi": 0.3845378281670934
+    },
+    "moments": {
+      "pct": [
+        0.5653926397453803,
+        0.10230594585055175
+      ],
+      "gd": [
+        0.03208404643044829,
+        0.5420414892323512
+      ],
+      "xgd": [
+        0.00777826200052024,
+        0.3388966574627581
+      ]
+    },
+    "frozen_on": "seasons <= 2017"
+  },
+  "reconciliation": {
+    "sbr_rows": 5132,
+    "orientation_mismatch": 1,
+    "no_features": 5,
+    "graded": 5126,
+    "team_unmapped": 0,
+    "no_canonical_match": 0,
+    "no_walkforward_forecast": 0,
+    "no_pick:no_puck_line": 0,
+    "no_pick:puck_line_not_1.5": 0,
+    "no_pick:no_puck_price": 0,
+    "no_pick:no_ml_price": 0,
+    "no_pick:no_total_price": 0
+  },
+  "rule_branches": {
+    "ml_branch": 2268,
+    "spread_branch": 2858,
+    "total_branch": 0
+  },
+  "tables": {
+    "market": {
+      "ml": {
+        "n": 2268,
+        "w": 1465,
+        "l": 803,
+        "push": 0,
+        "units": -45.53,
+        "roi": -0.0201
+      },
+      "spread": {
+        "n": 2858,
+        "w": 1892,
+        "l": 966,
+        "push": 0,
+        "units": -79.78,
+        "roi": -0.0279
+      }
+    },
+    "points:market_regime": {
+      "ml / early": {
+        "n": 358,
+        "w": 237,
+        "l": 121,
+        "push": 0,
+        "units": 11.58,
+        "roi": 0.0324
+      },
+      "ml / mid-mid": {
+        "n": 17,
+        "w": 9,
+        "l": 8,
+        "push": 0,
+        "units": -2.44,
+        "roi": -0.1436
+      },
+      "ml / mixed": {
+        "n": 1389,
+        "w": 922,
+        "l": 467,
+        "push": 0,
+        "units": -24.42,
+        "roi": -0.0176
+      },
+      "ml / strong-strong": {
+        "n": 292,
+        "w": 175,
+        "l": 117,
+        "push": 0,
+        "units": -11.26,
+        "roi": -0.0386
+      },
+      "ml / weak-weak": {
+        "n": 212,
+        "w": 122,
+        "l": 90,
+        "push": 0,
+        "units": -19.0,
+        "roi": -0.0896
+      },
+      "spread / early": {
+        "n": 480,
+        "w": 323,
+        "l": 157,
+        "push": 0,
+        "units": -8.82,
+        "roi": -0.0184
+      },
+      "spread / mid-mid": {
+        "n": 61,
+        "w": 40,
+        "l": 21,
+        "push": 0,
+        "units": -3.01,
+        "roi": -0.0493
+      },
+      "spread / mixed": {
+        "n": 1202,
+        "w": 784,
+        "l": 418,
+        "push": 0,
+        "units": -44.65,
+        "roi": -0.0371
+      },
+      "spread / strong-strong": {
+        "n": 673,
+        "w": 447,
+        "l": 226,
+        "push": 0,
+        "units": -17.42,
+        "roi": -0.0259
+      },
+      "spread / weak-weak": {
+        "n": 442,
+        "w": 298,
+        "l": 144,
+        "push": 0,
+        "units": -5.89,
+        "roi": -0.0133
+      }
+    },
+    "goals:market_regime": {
+      "ml / early": {
+        "n": 358,
+        "w": 237,
+        "l": 121,
+        "push": 0,
+        "units": 11.58,
+        "roi": 0.0324
+      },
+      "ml / mid-mid": {
+        "n": 99,
+        "w": 58,
+        "l": 41,
+        "push": 0,
+        "units": -6.28,
+        "roi": -0.0634
+      },
+      "ml / mixed": {
+        "n": 1452,
+        "w": 967,
+        "l": 485,
+        "push": 0,
+        "units": -19.47,
+        "roi": -0.0134
+      },
+      "ml / strong-strong": {
+        "n": 192,
+        "w": 110,
+        "l": 82,
+        "push": 0,
+        "units": -13.63,
+        "roi": -0.071
+      },
+      "ml / weak-weak": {
+        "n": 167,
+        "w": 93,
+        "l": 74,
+        "push": 0,
+        "units": -17.74,
+        "roi": -0.1062
+      },
+      "spread / early": {
+        "n": 480,
+        "w": 323,
+        "l": 157,
+        "push": 0,
+        "units": -8.82,
+        "roi": -0.0184
+      },
+      "spread / mid-mid": {
+        "n": 211,
+        "w": 139,
+        "l": 72,
+        "push": 0,
+        "units": -9.85,
+        "roi": -0.0467
+      },
+      "spread / mixed": {
+        "n": 1325,
+        "w": 882,
+        "l": 443,
+        "push": 0,
+        "units": -17.59,
+        "roi": -0.0133
+      },
+      "spread / strong-strong": {
+        "n": 465,
+        "w": 297,
+        "l": 168,
+        "push": 0,
+        "units": -32.13,
+        "roi": -0.0691
+      },
+      "spread / weak-weak": {
+        "n": 377,
+        "w": 251,
+        "l": 126,
+        "push": 0,
+        "units": -11.4,
+        "roi": -0.0302
+      }
+    },
+    "goals_xg:market_regime": {
+      "ml / early": {
+        "n": 358,
+        "w": 237,
+        "l": 121,
+        "push": 0,
+        "units": 11.58,
+        "roi": 0.0324
+      },
+      "ml / mid-mid": {
+        "n": 73,
+        "w": 45,
+        "l": 28,
+        "push": 0,
+        "units": -1.35,
+        "roi": -0.0186
+      },
+      "ml / mixed": {
+        "n": 1532,
+        "w": 1001,
+        "l": 531,
+        "push": 0,
+        "units": -45.35,
+        "roi": -0.0296
+      },
+      "ml / strong-strong": {
+        "n": 151,
+        "w": 95,
+        "l": 56,
+        "push": 0,
+        "units": 4.04,
+        "roi": 0.0267
+      },
+      "ml / weak-weak": {
+        "n": 154,
+        "w": 87,
+        "l": 67,
+        "push": 0,
+        "units": -14.45,
+        "roi": -0.0938
+      },
+      "spread / early": {
+        "n": 480,
+        "w": 323,
+        "l": 157,
+        "push": 0,
+        "units": -8.82,
+        "roi": -0.0184
+      },
+      "spread / mid-mid": {
+        "n": 242,
+        "w": 153,
+        "l": 89,
+        "push": 0,
+        "units": -20.88,
+        "roi": -0.0863
+      },
+      "spread / mixed": {
+        "n": 1284,
+        "w": 846,
+        "l": 438,
+        "push": 0,
+        "units": -31.94,
+        "roi": -0.0249
+      },
+      "spread / strong-strong": {
+        "n": 463,
+        "w": 306,
+        "l": 157,
+        "push": 0,
+        "units": -13.57,
+        "roi": -0.0293
+      },
+      "spread / weak-weak": {
+        "n": 389,
+        "w": 264,
+        "l": 125,
+        "push": 0,
+        "units": -4.57,
+        "roi": -0.0118
+      }
+    },
+    "market_season": {
+      "ml / 2018-19": {
+        "n": 544,
+        "w": 335,
+        "l": 209,
+        "push": 0,
+        "units": -31.05,
+        "roi": -0.0571
+      },
+      "ml / 2019-20": {
+        "n": 413,
+        "w": 257,
+        "l": 156,
+        "push": 0,
+        "units": -14.82,
+        "roi": -0.0359
+      },
+      "ml / 2020-21": {
+        "n": 439,
+        "w": 290,
+        "l": 149,
+        "push": 0,
+        "units": 0.62,
+        "roi": 0.0014
+      },
+      "ml / 2021-22": {
+        "n": 702,
+        "w": 475,
+        "l": 227,
+        "push": 0,
+        "units": 6.56,
+        "roi": 0.0093
+      },
+      "ml / 2022-23": {
+        "n": 170,
+        "w": 108,
+        "l": 62,
+        "push": 0,
+        "units": -6.85,
+        "roi": -0.0403
+      },
+      "spread / 2018-19": {
+        "n": 814,
+        "w": 551,
+        "l": 263,
+        "push": 0,
+        "units": -21.89,
+        "roi": -0.0269
+      },
+      "spread / 2019-20": {
+        "n": 668,
+        "w": 460,
+        "l": 208,
+        "push": 0,
+        "units": 10.23,
+        "roi": 0.0153
+      },
+      "spread / 2020-21": {
+        "n": 513,
+        "w": 337,
+        "l": 176,
+        "push": 0,
+        "units": -15.68,
+        "roi": -0.0306
+      },
+      "spread / 2021-22": {
+        "n": 694,
+        "w": 433,
+        "l": 261,
+        "push": 0,
+        "units": -47.75,
+        "roi": -0.0688
+      },
+      "spread / 2022-23": {
+        "n": 169,
+        "w": 111,
+        "l": 58,
+        "push": 0,
+        "units": -4.7,
+        "roi": -0.0278
+      }
+    },
+    "ml_closing": {
+      "ml": {
+        "n": 2268,
+        "w": 1465,
+        "l": 803,
+        "push": 0,
+        "units": -40.39,
+        "roi": -0.0178
+      }
+    }
+  },
+  "rows": 5126
+}
