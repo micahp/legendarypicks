@@ -42,6 +42,17 @@ class BovadaTennisOddsTest(unittest.TestCase):
         _prop(con, "match_winner", 100, 0.5, "over", -150, "2026-10-13T08:00:00+00:00")
         self.assertIsNone(bovada_odds(con, "184950", "atp", 100, 200, NOW))
 
+    def test_quotes_captured_after_forecast_lock_are_not_frozen(self):
+        con = _db()
+        future = "2026-10-14T17:05:00+00:00"
+        earlier = "2026-10-14T16:30:00+00:00"
+        _prop(con, "match_winner", 100, 0.5, "over", -150, earlier)
+        _prop(con, "match_winner", 200, 0.5, "over", 120, earlier)
+        _prop(con, "match_winner", 100, 0.5, "over", -180, future)
+        out = bovada_odds(con, "184950", "atp", 100, 200, NOW)
+        self.assertEqual(out["matchWinner"], {"home": -150, "away": 120})
+        self.assertEqual(out["capturedAt"], earlier)
+
     def test_a_total_with_one_side_is_not_shown(self):
         con = _db()
         _prop(con, "total_games", None, 21.5, "over", -115, "2026-10-14T16:30:00+00:00")
