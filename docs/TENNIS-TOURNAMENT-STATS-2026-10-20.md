@@ -2,7 +2,7 @@
 
 **Status:** finding from a manual check. One ATP event site (Shanghai) shows per-match aces and double
 faults. Two more sites (365scores and tennis24) showed per-match aces and double faults in one load each
-(see the six-site section). Coverage, terms of use and the join to ESPN game ids are not yet established.
+(see the six-site section). Coverage and the join to ESPN game ids are not yet established.
 
 ## Why this was checked
 
@@ -85,7 +85,7 @@ describe those loads only.
 | tennis-x.com | 200 | No | News and historical records (for example Karlovic's ace records). No match stats. |
 | tennisstats.com (Wuhan) | 403 | Unknown | Cloudflare bot challenge on our load. Not checked further and not bypassed. |
 
-Not yet done: terms of use and coverage for 365scores and tennis24, and the ESPN id crosswalk.
+Not yet done: coverage for 365scores and tennis24, and the ESPN id crosswalk.
 
 ## Limits
 
@@ -93,16 +93,50 @@ Not yet done: terms of use and coverage for 365scores and tennis24, and the ESPN
    are unchecked.
 2. **Coverage unknown.** Only the two finals had a stats link on the day-14 view. The rest of the
    draw is unchecked.
-3. **Terms of use unknown.** These are the stats of an ATP tournament. We have not read the site's
-   terms, so automated collection is not yet cleared.
-4. **Parsing and scale.** Stats are HTML text. Each event site may need its own parser unless the
+3. **Parsing and scale.** Stats are HTML text. Each event site may need its own parser unless the
    event sites share one template. A second ATP event site would test that.
-5. **No join to our locks.** Our locks are keyed on ESPN game ids. Matching a stats page to an ESPN
+4. **No join to our locks.** Our locks are keyed on ESPN game ids. Matching a stats page to an ESPN
    game needs an id-based crosswalk. Names must not be the join key (AGENTS.md).
+
+## Coverage and crosswalk (2026-10-20)
+
+**Denominators** come from our ESPN snapshots in the copy database, counting `status = Final`. ESPN
+leaves `completed` null on most final rows, so `completed` is not a usable filter.
+
+| Event (tour, ESPN tournament id) | Finals in snapshots | Dates |
+| --- | --- | --- |
+| Dongfeng Voyah Wuhan Open (WTA, 381) | 74 | 2026-10-10 to 2026-10-18 |
+| Rolex Shanghai Masters (ATP, 315) | 119 | 2026-10-05 to 2026-10-18 |
+| China Open (WTA, 959) | 128 | 2026-09-28 to 2026-10-11 |
+
+Some events also appear under a second tournament id of `None` (US Open, Cincinnati, National Bank Open),
+so per-event counts are approximate until those ids are reconciled.
+
+**Enumeration on provider list pages** (one load each, 2026-10-20):
+
+- 365scores, Wuhan league page: 0 match links on the first load. After clicking Results and scrolling
+  six times, 39 match links. The full list is not yet reached, and the scrolls needed are unknown.
+- tennis24, Wuhan: the draw page showed 14 match links. The RESULTS tab was not found by its label.
+  Enumeration is not solved.
+
+**Crosswalk test** (three matches, exact player names and date, database lookup only):
+
+| Provider match | ESPN game | Date | ESPN athlete ids (home, away) |
+| --- | --- | --- | --- |
+| 365scores, Ann Li vs Iga Swiatek (Wuhan) | 185369 | 2026-10-16 | 3380, 3730 |
+| tennis24, Maja Chwalinska vs Sonay Kartal (Wuhan final) | 185375 | 2026-10-18 | 3417, 7209 |
+| Shanghai, Davidovich Fokina vs Jodar (singles final) | 184947 | 2026-10-18 | 3212, 12657 |
+
+Each match resolved to exactly one ESPN game. The provider side has names only. The numbers in the
+365scores match URL (49562, 55853) and the tennis24 slugs (for example OIxOD54s) have not been
+confirmed as player ids. A reviewed table from provider player id to ESPN athlete id is still needed.
+Names may propose links, but the join key must be the ids.
+
+Not yet done: enumerate every match on each provider, measure coverage per event, and build the reviewed
+provider id to ESPN athlete id table.
 
 ## Next steps (not started)
 
-- Read the site's terms of use and robots rules.
 - Check one more ATP event site for the same template and stats layout.
-- Measure coverage: how many matches per event have a stats page.
-- Design the ESPN crosswalk on ids before any collection.
+- Enumerate the full match list on each provider, then measure coverage per event.
+- Build the reviewed provider id to ESPN athlete id table before any collection.
