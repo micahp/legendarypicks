@@ -99,7 +99,7 @@ def test_write_gives_two_distinct_frozen_rows_and_is_idempotent(con):
     assert {row["status"] for row in rows} == {"locked"}
     assert {row["locked_at"] for row in rows} == {LOCKED_AT.isoformat()}
     projection = json.loads(rows[0]["projection"])
-    assert projection["surfaceSource"] == "event_map"
+    assert projection["surfaceSource"] == "event_id"
     assert projection["cutoffDate"] == "2026-10-20"
 
 
@@ -128,6 +128,16 @@ def test_unmapped_event_is_recorded_as_unmapped(con):
         "SELECT projection FROM tennis_shadow_locks WHERE model_version=?", (shadow.M2_VERSION,)).fetchone()[0])
     assert projection["surfaceSource"] == "unmapped"
     assert projection["surface"] is None
+
+
+def test_surface_resolves_by_major_name_when_the_event_id_is_unknown(con):
+    _history(con, [(20000101, "Hard", 1, 2)])
+    match = dict(_match(tournament="1"), event="Roland Garros")
+    shadow.write_shadow_locks(con, "atp", match, START, LOCKED_AT, {})
+    projection = json.loads(con.execute(
+        "SELECT projection FROM tennis_shadow_locks WHERE model_version=?", (shadow.M2_VERSION,)).fetchone()[0])
+    assert projection["surface"] == "Clay"
+    assert projection["surfaceSource"] == "major_name"
 
 
 def test_served_lock_table_is_not_touched(con):

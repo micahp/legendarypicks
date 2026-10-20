@@ -7,9 +7,10 @@ to `tennis_shadow_locks` under their own version labels, so grading can tell ser
   research/tennis/rolling/2026-10-18/rolling_origin.py evaluated (A1, ATP incumbent).
 - tennis-shadow-m1-elo-v1: global Elo over the same ratings. This is the reference A1 kept on WTA.
 
-Inputs are the served pipeline's: the Sackmann identities from the match identity (the function the served projection
-uses) and the event surface from SURFACE_BY_EVENT. An event with no mapped surface falls back to global Elo for the blend,
-as the served projection does. Each row records `surfaceSource`, so grading can split those matches out.
+Inputs: the Sackmann identities come from the match identity, through the same function the served projection uses. The
+surface comes from the whole tracked set (tennis_shadow_surfaces, copied from dev), not from the served two-event map, so
+shadow and served can differ on surface. The served projection is unchanged. An event with no surface falls back to
+global Elo for the blend. Each row records `surfaceSource` (event_id, major_name, or unmapped), so grading can split them.
 
 Rows are frozen when written. The lock window is the caller's, and a row that already exists is never replaced.
 """
@@ -23,7 +24,8 @@ from operator import itemgetter
 from typing import Any
 
 import tennis_point_model as tpm
-from tennis_daily_projections import SURFACE_BY_EVENT, _logistic, _logit, _sackmann_player_ids
+from tennis_daily_projections import _logistic, _logit, _sackmann_player_ids
+from tennis_shadow_surfaces import surface_for
 
 HISTORY_START = 20000101  # rolling_origin.WINNER_HISTORY_START
 ELO_START = 1500.0  # rolling_origin.ELO_START
@@ -98,7 +100,7 @@ def forecasts(global_r: dict, surface_r: dict, home: str, away: str, surface: st
 
 
 def _projection(p_home: float, home: dict[str, Any], away: dict[str, Any], version: str,
-                surface: str | None, game_date: str) -> dict[str, Any]:
+                surface: str | None, surface_source: str, game_date: str) -> dict[str, Any]:
     favourite = max(p_home, 1.0 - p_home)
     return {
         "probability": favourite,
@@ -107,7 +109,7 @@ def _projection(p_home: float, home: dict[str, Any], away: dict[str, Any], versi
         "homeSackmannId": home["sackmannId"],
         "awaySackmannId": away["sackmannId"],
         "surface": surface,
-        "surfaceSource": "event_map" if surface else "unmapped",
+        "surfaceSource": surface_source,
         "cutoffDate": game_date,
         "historyStart": HISTORY_START,
         "k": ELO_K,
@@ -142,7 +144,7 @@ def write_shadow_locks(con, league: str, match: dict[str, Any], starts_at_utc, l
                  json.dumps({"reason": "identity_unresolved", "modelVersion": version})),
             )
         return len(pending)
-    surface = SURFACE_BY_EVENT.get(str(match.get("tournamentId") or ""))
+    surface, surface_source = surface_for(league, match.get("tournamentId"), match.get("event"))
     cutoff = int(game_date.replace("-", ""))
     if (league, cutoff) not in replays:
         replays[(league, cutoff)] = ratings_before(con, league, cutoff)
@@ -150,7 +152,7 @@ def write_shadow_locks(con, league: str, match: dict[str, Any], starts_at_utc, l
     probabilities = forecasts(global_r, surface_r, ids["home"], ids["away"], surface)
     written = 0
     for version in pending:
-        projection = _projection(probabilities[version], home, away, version, surface, game_date)
+        projection = _projection(probabilities[version], home, away, version, surface, surface_source, game_date)
         cursor = con.execute(
             "INSERT OR IGNORE INTO tennis_shadow_locks(league,game_id,model_version,game_date,start_time,locked_at,status,projection) "
             "VALUES(?,?,?,?,?,?,?,?)",
