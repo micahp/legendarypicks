@@ -33,6 +33,7 @@ import fbs_phase3_features_c as feat_c  # noqa: E402
 from fbs_phase3_hierarchical import HierarchicalLogistic  # noqa: E402
 from fbs_phase3_increment import (  # noqa: E402
     FEATURES as FEATURES_B,
+    fit_offset_logistic,
     logit,
     sigmoid,
 )
@@ -43,6 +44,12 @@ LAM_TEAM = 9.0
 LAM_CONF = 156.0
 RIDGE = 1.0
 MIN_TRAIN_GAMES = 200
+# The adopted drive features (research/fbs/phase3/game_features_c.csv) are as-of team ratings over
+# every season from 2014. Loading only the scored seasons changes every feature value.
+FEATURE_FIRST_SEASON = 2014
+# Writer population: a game with a null adopted epa_diff is outside the evaluation population.
+# Pinned by id. Measured in docs/RESULT-ncaaf-parity-forensics.md on research/ncaaf-parity-forensics-2026-10-20.
+EXCLUDED_GAME_IDS = frozenset({"401778314"})
 
 MODEL_IDS = ("g2", "c2", "g2h")
 MODEL_LABELS = {
@@ -95,8 +102,15 @@ def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
     frame["p_g2"] = frame["elo_home_prob"]
     frame["utc_date"] = pd.to_datetime(frame["utc_date"])
     frame = frame.sort_values(["utc_date", "game_id"]).reset_index(drop=True)
+    # Excluded after the Elo forecast, as the writer does: the game still feeds the Elo history.
+    frame = frame[~frame["game_id"].isin(EXCLUDED_GAME_IDS)].reset_index(drop=True)
 
-    features_c, team_games, ratings = feat_c.build_features_c(data_dir, seasons)
+    feature_seasons = list(range(FEATURE_FIRST_SEASON, max(seasons) + 1))
+    pbp_missing = [s for s in feature_seasons if not os.path.exists(
+        os.path.join(data_dir, "espn_cfb_pbp", "play_by_play_%d.parquet" % s))]
+    if pbp_missing:
+        raise FBSModelError("drive features need play-by-play for %s under %s" % (pbp_missing, data_dir))
+    features_c, team_games, ratings = feat_c.build_features_c(data_dir, feature_seasons)
     features_c["game_id"] = features_c["game_id"].astype(str)
     frame = frame.merge(features_c[["game_id"] + FEATURES_C], on="game_id", how="left")
     frame["has_drive_data"] = frame[FEATURES_C].notna().all(axis=1)
@@ -126,12 +140,8 @@ def fit(frame: pd.DataFrame, as_of: dt.date | dt.datetime | str) -> dict:
         cutoff = cutoff.tz_convert("UTC").tz_localize(None)
     train = _training(frame, cutoff)
 
-    y = train["y"].to_numpy(dtype=float)
-    offset = logit(train["p_g2"].to_numpy(dtype=float))
-
-    # C2 — flat ridge logistic on the seven drive splits, G2 as fixed offset.
-    x = np.column_stack([np.ones(len(train))] + [train[c].to_numpy(dtype=float) for c in FEATURES_C])
-    coef = _fit_offset_logistic(x, y, offset, ridge=RIDGE)
+    # C2 — the research estimator, verbatim (fbs_phase3_increment.walk_forward).
+    c2 = fit_c2(train)
 
     # G2h — hierarchy on team-season within conference, same offset and features.
     hier = HierarchicalLogistic(lam_team=LAM_TEAM, lam_conf=LAM_CONF, ridge=RIDGE)
@@ -139,42 +149,34 @@ def fit(frame: pd.DataFrame, as_of: dt.date | dt.datetime | str) -> dict:
     if not hier.converged:
         raise FBSModelError("hierarchical fit failed to converge (grad %.3e)" % hier.grad_norm)
 
-    return {"as_of": cutoff, "train_games": len(train), "c2_coef": coef, "g2h": hier,
+    return {"as_of": cutoff, "train_games": len(train), "c2": c2, "g2h": hier,
             "train_last_date": train["utc_date"].max()}
 
 
-def _fit_offset_logistic(x: np.ndarray, y: np.ndarray, offset: np.ndarray,
-                         ridge: float = 1.0) -> np.ndarray:
-    """Penalised logistic with a fixed offset; intercept column is x[:, 0]."""
-    from scipy.optimize import minimize
+def _c2_design(rows: pd.DataFrame, mu: pd.Series, sd: pd.Series) -> np.ndarray:
+    return np.column_stack([np.ones(len(rows))] + [((rows[c] - mu[c]) / sd[c]).to_numpy(dtype=float)
+                                                    for c in FEATURES_C])
 
-    def objective(beta):
-        eta = offset + x @ beta
-        p = sigmoid(eta)
-        eps = 1e-12
-        nll = -np.sum(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps))
-        return nll + 0.5 * ridge * np.sum(beta[1:] ** 2)
 
-    def gradient(beta):
-        p = sigmoid(offset + x @ beta)
-        grad = x.T @ (p - y)
-        pen = ridge * beta.copy()
-        pen[0] = 0.0
-        return grad + pen
+def fit_c2(train: pd.DataFrame) -> dict:
+    """C2 as the research harness fits it: standardize on the training games, ridge logistic,
+    G2 logit as a fixed offset. Standardization and penalty must match the adopted C2 exactly."""
+    mu = train[FEATURES_C].mean()
+    sd = train[FEATURES_C].std().replace(0, 1.0)
+    coef = fit_offset_logistic(_c2_design(train, mu, sd), train["y"].to_numpy(dtype=float),
+                               logit(train["p_g2"].to_numpy(dtype=float)))
+    return {"mu": mu, "sd": sd, "coef": coef}
 
-    result = minimize(objective, np.zeros(x.shape[1]), jac=gradient, method="L-BFGS-B",
-                      options={"maxiter": 500, "gtol": 1e-6})
-    if not result.success:
-        raise FBSModelError("C2 fit failed: %s" % result.message)
-    return result.x
+
+def predict_c2(c2: dict, rows: pd.DataFrame) -> np.ndarray:
+    offset = logit(rows["p_g2"].to_numpy(dtype=float))
+    return sigmoid(offset + _c2_design(rows, c2["mu"], c2["sd"]) @ c2["coef"])
 
 
 def predict(frame: pd.DataFrame, state: dict, rows: pd.DataFrame) -> pd.DataFrame:
     """Score the given rows under the fitted state. G2 needs no fit."""
     out = rows.copy()
-    offset = logit(out["p_g2"].to_numpy(dtype=float))
-    x = np.column_stack([np.ones(len(out))] + [out[c].to_numpy(dtype=float) for c in FEATURES_C])
-    out["p_c2"] = sigmoid(offset + x @ state["c2_coef"])
+    out["p_c2"] = predict_c2(state["c2"], out)
     out["p_g2h"] = state["g2h"].predict(out)
     out["p_g2"] = out["p_g2"].astype(float)
     return out
