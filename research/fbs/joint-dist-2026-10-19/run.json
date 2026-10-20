@@ -1,0 +1,163 @@
+{
+  "status": "NOT_ADOPTED",
+  "preregistration_commit": "5be5e30ef04e424589e7fadeca97a6bea1924603",
+  "candidate_training_counts": {
+    "2023": {
+      "seasons": [
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+      ],
+      "n": 3626
+    },
+    "2024": {
+      "seasons": [
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "n": 4418
+    },
+    "2025_holdout_and_2026_forward": {
+      "seasons": [
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "n": 5216
+    }
+  },
+  "source_audit": [
+    {
+      "season": 2018,
+      "release_bytes": 63055,
+      "release_rows": 1570,
+      "sha256": "cf26150d2c9140a9eef90d274865bcacd6de2ce265e8254024ba5d76445e54fc",
+      "fbs_games": 772,
+      "completed_fbs_games": 772,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2019,
+      "release_bytes": 63459,
+      "release_rows": 1627,
+      "sha256": "64c23f8e70600c161136450f20e2e29965e947dd98aa252753e7b93fb0fd55a7",
+      "fbs_games": 774,
+      "completed_fbs_games": 774,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2020,
+      "release_bytes": 59827,
+      "release_rows": 1247,
+      "sha256": "58380661b434daf183b07aebf9afeeadf13450d5bc819dd0ce44ba689e96ee58",
+      "fbs_games": 534,
+      "completed_fbs_games": 534,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2021,
+      "release_bytes": 71223,
+      "release_rows": 2462,
+      "sha256": "a5577f826724bdcfe96ba829bf3055055c6e2e935cff59a7ab4a441d13925cb8",
+      "fbs_games": 770,
+      "completed_fbs_games": 770,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2022,
+      "release_bytes": 98422,
+      "release_rows": 3713,
+      "sha256": "9f23a4cfba3577f1689b9954aa31a9f42a954fcb676204c35c2cc85a76ed72b5",
+      "fbs_games": 776,
+      "completed_fbs_games": 776,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2023,
+      "release_bytes": 98417,
+      "release_rows": 3734,
+      "sha256": "58ca3ee4dae1185878feec061aa488e4298c011277cd083ab71dc233ad25f73f",
+      "fbs_games": 792,
+      "completed_fbs_games": 792,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2024,
+      "release_bytes": 102997,
+      "release_rows": 3801,
+      "sha256": "7feb11b7ac2eccd92afd741a59efeb7f1fd26bb51d15675ab1164cd01985a153",
+      "fbs_games": 799,
+      "completed_fbs_games": 798,
+      "excluded_incomplete_fbs_games": 1
+    },
+    {
+      "season": 2025,
+      "release_bytes": 102865,
+      "release_rows": 3831,
+      "sha256": "0df9da5419dcac1ed8dcf848ef960b2cb3f90ad8d44203618b1840370709bb2e",
+      "fbs_games": 808,
+      "completed_fbs_games": 808,
+      "excluded_incomplete_fbs_games": 0
+    },
+    {
+      "season": 2026,
+      "release_bytes": 92728,
+      "release_rows": 3679,
+      "sha256": "9b970cff51bda692cc9d00eab06c73d63ae8e6bceac29301ff33c309f9e462bc",
+      "fbs_games": 761,
+      "completed_fbs_games": 388,
+      "excluded_incomplete_fbs_games": 373
+    }
+  ],
+  "target_audit": {
+    "registered_target_rows": 2747,
+    "scored_rows": 2747,
+    "counts_by_partition": {
+      "walk_forward": 1590,
+      "holdout": 807,
+      "forward2026": 350
+    },
+    "reversed_forecast_orientation_ids": [
+      "401520167",
+      "401520445",
+      "401551755",
+      "401551767",
+      "401677085",
+      "401677093"
+    ]
+  },
+  "coherence": {
+    "draws_per_game": 10000,
+    "games": 2747,
+    "draws_checked": 27470000,
+    "exact_equalities_passed": true,
+    "gate": true
+  },
+  "bootstrap": {
+    "replicates": 2000,
+    "seed": 20261017
+  },
+  "pit_seed": 20261019,
+  "gates": {
+    "G-SAMPLE": true,
+    "G-DIST": true,
+    "G-CAL": false,
+    "G-SPREAD": true,
+    "G-TOTAL": true,
+    "G-JOINT": true,
+    "G-COHERENCE": true
+  },
+  "verdict": "NOT_ADOPTED",
+  "phase4b_status": "NOT_ADOPTED; gate unchanged",
+  "production_change": false
+}
