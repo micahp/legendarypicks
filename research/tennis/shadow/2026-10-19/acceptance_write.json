@@ -1,0 +1,355 @@
+{
+ "league": "wta",
+ "locked_at": "2026-10-20T04:30:00+00:00",
+ "matches": [
+  {
+   "away": "Alycia Parks",
+   "event": "BNB Ningbo Open",
+   "game_id": "185543",
+   "home": "Sara Bejlek",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "219917",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.5908644291524046,
+      "homeSackmannId": "239383",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.5908644291524046,
+      "projectedWinner": "Sara Bejlek",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "219917",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.5908644291524046,
+      "homeSackmannId": "239383",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.5908644291524046,
+      "projectedWinner": "Sara Bejlek",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Diana Shnaider",
+   "event": "BNB Ningbo Open",
+   "game_id": "185525",
+   "home": "Yulia Putintseva",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "223670",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.28618718798233034,
+      "homeSackmannId": "201709",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.7138128120176697,
+      "projectedWinner": "Diana Shnaider",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "223670",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.28618718798233034,
+      "homeSackmannId": "201709",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.7138128120176697,
+      "projectedWinner": "Diana Shnaider",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Anhelina Kalinina",
+   "event": "BNB Ningbo Open",
+   "game_id": "185532",
+   "home": "Jasmine Paolini",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "211843",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.6364661240093917,
+      "homeSackmannId": "211148",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.6364661240093917,
+      "projectedWinner": "Jasmine Paolini",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "211843",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.6364661240093917,
+      "homeSackmannId": "211148",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.6364661240093917,
+      "projectedWinner": "Jasmine Paolini",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Polina Kudermetova",
+   "event": "BNB Ningbo Open",
+   "game_id": "185523",
+   "home": "Cristina Bucsa",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "221236",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.6168763103751818,
+      "homeSackmannId": "213710",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.6168763103751818,
+      "projectedWinner": "Cristina Bucsa",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "221236",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.6168763103751819,
+      "homeSackmannId": "213710",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.6168763103751819,
+      "projectedWinner": "Cristina Bucsa",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Belinda Bencic",
+   "event": "BNB Ningbo Open",
+   "game_id": "185530",
+   "home": "Jelena Ostapenko",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "202505",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.2885573581497888,
+      "homeSackmannId": "211533",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.7114426418502112,
+      "projectedWinner": "Belinda Bencic",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "202505",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.2885573581497888,
+      "homeSackmannId": "211533",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.7114426418502112,
+      "projectedWinner": "Belinda Bencic",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Daria Snigur",
+   "event": "BNB Ningbo Open",
+   "game_id": "185524",
+   "home": "Katarzyna Kawa",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "220750",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.24081898871589394,
+      "homeSackmannId": "203514",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.7591810112841061,
+      "projectedWinner": "Daria Snigur",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "220750",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.2408189887158939,
+      "homeSackmannId": "203514",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.7591810112841061,
+      "projectedWinner": "Daria Snigur",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  },
+  {
+   "away": "Ekaterina Alexandrova",
+   "event": "BNB Ningbo Open",
+   "game_id": "185528",
+   "home": "Guo Hanyu",
+   "rows": [
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m1-elo-v1",
+     "projection": {
+      "awaySackmannId": "206420",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.24241649243939423,
+      "homeSackmannId": "215250",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m1-elo-v1",
+      "probability": 0.7575835075606058,
+      "projectedWinner": "Ekaterina Alexandrova",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    },
+    {
+     "locked_at": "2026-10-20T04:30:00+00:00",
+     "model_version": "tennis-shadow-m2-2000-v1",
+     "projection": {
+      "awaySackmannId": "206420",
+      "cutoffDate": "2026-10-20",
+      "eloStart": 1500.0,
+      "historyStart": 20000101,
+      "homeProbability": 0.2424164924393942,
+      "homeSackmannId": "215250",
+      "k": 32.0,
+      "modelVersion": "tennis-shadow-m2-2000-v1",
+      "probability": 0.7575835075606058,
+      "projectedWinner": "Ekaterina Alexandrova",
+      "surface": null,
+      "surfaceSource": "unmapped"
+     },
+     "status": "locked"
+    }
+   ],
+   "rows_written_first_run": 2,
+   "rows_written_second_run": 0,
+   "tournament_id": "963"
+  }
+ ],
+ "served_table_hash_unchanged": true,
+ "served_table_rows_before_after": [
+  21,
+  21
+ ],
+ "shadow_rows_total": 14
+}

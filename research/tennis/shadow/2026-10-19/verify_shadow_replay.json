@@ -1,0 +1,35 @@
+{
+ "sample_dates_per_tour": 60,
+ "seed": 20261019,
+ "tolerance": 1e-12,
+ "tours": {
+  "atp": {
+   "max_abs_difference": {
+    "M1": 0.0,
+    "M2_2000": 0.0
+   },
+   "rows_by_surface": {
+    "Clay": 1900,
+    "Grass": 496,
+    "Hard": 2761
+   },
+   "rows_compared": 5157,
+   "sample_dates": 60,
+   "scored_dates": 417
+  },
+  "wta": {
+   "max_abs_difference": {
+    "M1": 0.0,
+    "M2_2000": 0.0
+   },
+   "rows_by_surface": {
+    "Clay": 1155,
+    "Grass": 1248,
+    "Hard": 4022
+   },
+   "rows_compared": 6425,
+   "sample_dates": 60,
+   "scored_dates": 403
+  }
+ }
+}
