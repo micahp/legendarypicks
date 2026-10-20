@@ -15,6 +15,7 @@ import json
 import math
 import sys
 from collections import Counter, defaultdict
+from datetime import date as calendar_date
 from pathlib import Path
 
 import numpy as np
@@ -54,6 +55,24 @@ def sha256(path: Path) -> str:
 
 def mmdd(date: str) -> int:
     return int(date[5:7]) * 100 + int(date[8:10])
+
+
+def sbr_iso_date(season: int, source_date: object) -> str:
+    value = int(source_date)
+    month, day = divmod(value, 100)
+    year = season if month >= 10 else season + 1
+    return calendar_date(year, month, day).isoformat()
+
+
+def print_season_coverage(label: str, dates_by_season: dict[int, list[str]],
+                          seasons: list[int] | tuple[int, ...]) -> None:
+    print(f"\nSEASON COVERAGE ({label})")
+    print("season n first_date last_date")
+    for season in seasons:
+        dates = sorted(dates_by_season.get(season, []))
+        if not dates:
+            raise RuntimeError(f"season coverage is empty for {season}")
+        print(f"{season}-{str(season + 1)[2:]} {len(dates)} {dates[0]} {dates[-1]}")
 
 
 def price_is_valid(price: object) -> bool:
@@ -244,9 +263,12 @@ def build_rows() -> tuple[list[dict], Counter, Counter]:
     matched = []
     seen_game_ids = set()
     season_counts = Counter()
+    season_dates = defaultdict(list)
     for item in sbr_rows:
         season = int(str(item["season"])[:4])
         season_counts[season] += 1
+        sbr_date = sbr_iso_date(season, item["date"])
+        season_dates[season].append(sbr_date)
         sbr_home, sbr_away = bt.tri(item["home"].get("team")), bt.tri(item["away"].get("team"))
         if not sbr_home or not sbr_away:
             recon["team_unmapped"] += 1
@@ -281,6 +303,7 @@ def build_rows() -> tuple[list[dict], Counter, Counter]:
             recon["sbr_final_winners_checked"] += 1
         row = make_game_row(c, features[gid], fc, elo[gid], item,
                             sbr_home, sbr_away, orientation)
+        row["sbr_game_date"] = sbr_date
         matched.append(row)
         recon["matched_with_forecast"] += 1
 
@@ -295,6 +318,7 @@ def build_rows() -> tuple[list[dict], Counter, Counter]:
         raise RuntimeError(f"SBR reconciliation failed: accounted={accounted}, source={len(sbr_rows)}")
     if recon["team_unmapped"] or recon["no_canonical_match"] or recon["no_walkforward_forecast"]:
         raise RuntimeError(f"unresolved SBR join/forecast gaps: {dict(recon)}")
+    print_season_coverage("SBR archive rows", season_dates, sorted(season_counts))
     return matched, recon, season_counts
 
 
@@ -845,6 +869,14 @@ def main() -> None:
             ], sort_keys=True))
         predictions[quote] = forecast_probabilities(quote_rows[quote], quote)
         predictor_report(quote_rows[quote], predictions[quote], quote)
+
+    open_policy_dates = defaultdict(list)
+    for row in quote_rows["open"]:
+        if row["season"] in POLICY_SEASONS:
+            open_policy_dates[row["season"]].append(row["sbr_game_date"])
+    print_season_coverage(
+        "opening-price policy score rows from SBR", open_policy_dates, POLICY_SEASONS
+    )
 
     primary = report_policy(quote_rows["open"], predictions["open"], "open")
     open_screened = [row for row in quote_rows["open"] if row["market_overround"] >= -1e-10]

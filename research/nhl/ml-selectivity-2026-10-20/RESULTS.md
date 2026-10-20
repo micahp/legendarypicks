@@ -29,6 +29,8 @@ The archive contains 5,132 rows from 2018–19 through 2022–23. The pregame so
 | 2022–23 | 339 | 339 | 339 | 339 |
 | **Total** | **5,132** | **5,127** | **5,126** | **5,127** |
 
+**2022–23 is partial in this archive:** its 339 games span Oct 11 to Nov 27, 2022. The frozen final-season score therefore covers a 7-week window in which the opening-price policy made 3 bets. The verdict does not depend on this partial slice: the two full scored seasons are 2020–21 (−6.24% ROI) and 2021–22 (+0.61% ROI).
+
 The opening archive contains three pairs with negative overround. They were retained in the raw opening-price result and reported separately because they cause the market’s own no-vig control to show positive EV. The row-level policy audit found the candidate selected all three, for a combined **+2.800 units**; the market control selected the opposite side on all three, for **+1.20 units**. These three rows are not evidence that either policy has an edge.
 
 | 2021–22 game | Archived open prices (home/away) | Overround | Candidate result / units | Market control result / units |
@@ -160,3 +162,5 @@ Closing policy ROI 90% interval: **[−6.8%, −4.8%]**. Paired delta versus the
 ## What would change our mind
 
 New pregame information would need to improve prediction quality against the no-vig market on the same games and produce positive out-of-sample return at quoted prices. A future candidate would need a positive season-clustered ROI interval and a positive paired interval against the market control across multiple complete, previously untouched seasons, using prices with a verifiable pregame timestamp. This experiment does not support another threshold search on the same seasons.
+
+Before any future candidate is credible, it must pass a full-season holdout with verifiable pregame timestamps.
