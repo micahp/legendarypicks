@@ -215,6 +215,34 @@ def slate_features(ratings: pd.DataFrame, slate: pd.DataFrame, season: int) -> p
     return pd.DataFrame(rows)
 
 
+def team_ratings(state: dict, frame: pd.DataFrame, season: int) -> list[dict]:
+    """Team-season strength from the fitted hierarchy: conference mean plus the team effect."""
+    hier = state["g2h"]
+    names = (frame[["home_team_id", "home_team", "home_conference"]]
+             .rename(columns={"home_team_id": "team_id", "home_team": "team",
+                              "home_conference": "conference"})
+             .drop_duplicates("team_id").set_index("team_id"))
+    games_played = (frame[frame["season"] == season]
+                    .melt(id_vars=["game_id"], value_vars=["home_team_id", "away_team_id"],
+                          value_name="team_id")
+                    .groupby("team_id").size())
+    rows = []
+    conf_index = getattr(hier, "conf_index", {})
+    for (team_season, team_id), index in getattr(hier, "ts_index", {}).items():
+        if int(team_season) != season:
+            continue
+        conference = names.at[team_id, "conference"] if team_id in names.index else None
+        baseline = float(hier.m[conf_index[conference]]) if conference in conf_index else 0.0
+        rows.append({
+            "season": int(team_season), "team_id": team_id,
+            "team": names.at[team_id, "team"] if team_id in names.index else team_id,
+            "conference": conference,
+            "rating": float(hier.u[index] + baseline),
+            "games_used": int(games_played.get(team_id, 0)),
+        })
+    return sorted(rows, key=lambda row: -row["rating"])
+
+
 def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None = None) -> dict:
     now = now or dt.datetime.now(dt.timezone.utc)
     frame, ratings = service.build_frame(verbose=True, return_ratings=True)
@@ -236,6 +264,7 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     state = service.fit(frame, now)
     print("fitted on %d games through %s" % (state["train_games"], state["train_last_date"].date()))
     predictions = service.predict(frame, state, scored)
+    rating_rows = team_ratings(state, frame, season)
 
     rows = []
     version = "fbs-%s-%s" % ("%s", state["train_last_date"].strftime("%Y%m%d"))
@@ -260,6 +289,7 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     try:
         locked = store.lock_forecasts(con, rows, now=now)
         graded = store.grade_forecasts(con, results, now=now)
+        stored_ratings = store.store_ratings(con, rating_rows, now.isoformat())
         store.set_meta(con, last_run_utc=now.isoformat(), model_version=version % "g2h",
                        train_last_date=str(state["train_last_date"].date()),
                        train_games=state["train_games"])

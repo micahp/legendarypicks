@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ModelSelect from './ModelSelect'
 
-type View = 'projections' | 'record' | 'ratings'
+type View = 'projections' | 'record'
 
 interface ModelForecast {
   p_home: number
@@ -128,7 +128,7 @@ export default function FbsModelTab() {
             ))}
           </ModelSelect>
           <nav className="flex gap-1 rounded-lg bg-zinc-900 p-1 text-sm">
-            {(['projections', 'record', 'ratings'] as View[]).map((tab) => (
+            {(['projections', 'record'] as View[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -232,37 +232,6 @@ export default function FbsModelTab() {
         </section>
       ) : null}
 
-      {view === 'ratings' ? (
-        <section className="space-y-3">
-          <p className="text-xs text-zinc-500">
-            Team-season strength from the same fit that produced the forecasts ({payload.ratings.length}
-            {' '}teams). Positive is above the conference baseline. Ratings are a snapshot, not a
-            ranking of resume.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800 text-left text-xs text-zinc-500">
-                  <th className="py-2 pr-4 font-normal">Team</th>
-                  <th className="py-2 pr-4 font-normal">Conference</th>
-                  <th className="py-2 pr-4 text-right font-normal">Rating</th>
-                  <th className="py-2 text-right font-normal">Games</th>
-                </tr>
-              </thead>
-              <tbody className="tabular-nums">
-                {payload.ratings.map((row) => (
-                  <tr key={row.team_id} className="border-b border-zinc-900">
-                    <td className="py-2 pr-4 text-zinc-200">{row.team}</td>
-                    <td className="py-2 pr-4 text-zinc-500">{row.conference ?? '—'}</td>
-                    <td className="py-2 pr-4 text-right text-zinc-200">{row.rating == null ? '—' : row.rating.toFixed(3)}</td>
-                    <td className="py-2 text-right text-zinc-500">{row.games_used ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
     </div>
   )
 }
