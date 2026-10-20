@@ -1,0 +1,5 @@
+market,label,positions,seasons,player_games,player_games_gt0,distinct_players,distinct_games,mean,median,sd,props_2026,props_2026_settled
+pass_attempts,passing attempts,QB,2018-2025,74765,18799,4256,6567,5.391,0.0,11.642,475,414
+passing_yards,passing yards,QB,2018-2025,74765,17729,4256,6567,39.511,0.0,89.672,3792,2768
+rush_attempts,rushing carries,RB|QB,2018-2025,178748,58302,10392,6567,2.545,0.0,5.067,709,611
+rushing_yards,rushing yards,RB|QB,2018-2025,178748,51191,10392,6567,11.26,0.0,28.566,5161,3763
