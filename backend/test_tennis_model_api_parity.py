@@ -144,6 +144,89 @@ def test_past_match_without_lock_is_explicitly_missed(tmp_path, monkeypatch):
     assert payload["accuracy"] == {"winnerBrier": None, "brierN": 0}
 
 
+def test_scheduled_sweep_freezes_bovada_odds_without_rewriting_later(tmp_path, monkeypatch):
+    from tennis_lock_sweep import sweep
+    import tennis_lock_sweep as scheduled
+
+    db_path = str(tmp_path / "tennis.sqlite3")
+    con = _database(db_path)
+    con.executescript("""
+      CREATE TABLE players (id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT);
+      CREATE TABLE prop_games (id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT);
+      CREATE TABLE props (
+        id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
+        market TEXT, line REAL, side TEXT, source TEXT,
+        odds INTEGER, odds_captured_at TEXT
+      );
+      INSERT INTO players VALUES(100, 'atp', '501'), (200, 'atp', '502');
+      INSERT INTO prop_games VALUES(1, 'atp', 'match-1');
+    """)
+    quote_time = (NOW - dt.timedelta(minutes=10)).isoformat()
+    con.executemany(
+        "INSERT INTO props(game_id,player_id,market,line,side,source,odds,odds_captured_at) "
+        "VALUES (1,?,'match_winner',0.5,'over','bovada',?,?)",
+        [(100, -150, quote_time), (200, 130, quote_time)],
+    )
+    match = {
+        "gameId": "match-1", "tour": "atp", "startTime": START,
+        "homeAthleteId": "501", "awayAthleteId": "502",
+    }
+    candidate = {"probability": 0.7, "projectedWinner": "Home Player", "modelVersion": "page-v1"}
+    monkeypatch.setattr(scheduled, "due_matches", lambda *args: {("atp", "2026-10-17"): [match]})
+    monkeypatch.setattr(scheduled, "stored_candidates", lambda *args: {"match-1": candidate})
+    monkeypatch.setattr(scheduled, "needs_projection_refresh", lambda *args: False)
+
+    first = sweep(con, NOW)
+    assert first["locked"] == 1
+    assert first["quotes_frozen"] == 1
+    saved = con.execute("SELECT projection FROM tennis_model_locks WHERE game_id='match-1'").fetchone()[0]
+    frozen = json.loads(saved)
+    assert frozen["_frozenOdds"]["matchWinner"] == {"home": -150, "away": 130}
+    assert frozen["_frozenOdds"]["capturedAt"] == quote_time
+    assert candidate.get("_frozenOdds") is None
+
+    # A later market refresh must never rewrite an already-locked forecast.
+    con.execute("UPDATE props SET odds=-110, odds_captured_at=? WHERE player_id=100",
+                ((NOW + dt.timedelta(minutes=5)).isoformat(),))
+    second = sweep(con, NOW + dt.timedelta(minutes=10))
+    assert second["already_locked"] == 1
+    assert con.execute("SELECT projection FROM tennis_model_locks WHERE game_id='match-1'").fetchone()[0] == saved
+    con.close()
+
+
+def test_scheduled_sweep_marks_unavailable_quote_without_fabricating_prices(tmp_path, monkeypatch):
+    from tennis_lock_sweep import sweep
+    import tennis_lock_sweep as scheduled
+
+    db_path = str(tmp_path / "tennis.sqlite3")
+    con = _database(db_path)
+    con.executescript("""
+      CREATE TABLE players (id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT);
+      CREATE TABLE prop_games (id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT);
+      CREATE TABLE props (
+        id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER,
+        market TEXT, line REAL, side TEXT, source TEXT,
+        odds INTEGER, odds_captured_at TEXT
+      );
+    """)
+    match = {
+        "gameId": "match-2", "tour": "atp", "startTime": START,
+        "homeAthleteId": "501", "awayAthleteId": "502",
+    }
+    candidate = {"probability": 0.65, "projectedWinner": "Home Player", "modelVersion": "page-v1"}
+    monkeypatch.setattr(scheduled, "due_matches", lambda *args: {("atp", "2026-10-17"): [match]})
+    monkeypatch.setattr(scheduled, "stored_candidates", lambda *args: {"match-2": candidate})
+    monkeypatch.setattr(scheduled, "needs_projection_refresh", lambda *args: False)
+    report = sweep(con, NOW)
+    stored = json.loads(con.execute(
+        "SELECT projection FROM tennis_model_locks WHERE game_id='match-2'"
+    ).fetchone()[0])
+    assert report["locked"] == 1
+    assert report["quotes_unavailable"] == 1
+    assert "_frozenOdds" in stored and stored["_frozenOdds"] is None
+    con.close()
+
+
 def test_winner_brier_rejects_missing_or_invalid_outcomes():
     assert misc._winner_brier(0.7, "correct") == pytest.approx(0.09)
     assert misc._winner_brier(0.7, "incorrect") == pytest.approx(0.49)
