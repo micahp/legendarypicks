@@ -1,0 +1,5 @@
+market,crps_before,crps_after,cov50_before,cov50_after,cov80_before,cov80_after,cov90_before,cov90_after,sd_ratio_before,sd_ratio_after
+pass_attempts,2.8332,2.8262,0.759,0.7505,0.8425,0.8322,0.8722,0.8602,0.5458,0.4861
+passing_yards,20.8795,20.8795,0.7791,0.7791,0.8892,0.8892,0.9321,0.9321,0.7607,0.7607
+rush_attempts,1.3785,1.3792,0.7399,0.7446,0.8617,0.8659,0.9072,0.9111,0.6069,0.6263
+rushing_yards,7.6625,7.6625,0.7702,0.7702,0.8772,0.8772,0.9065,0.9065,0.7488,0.7488

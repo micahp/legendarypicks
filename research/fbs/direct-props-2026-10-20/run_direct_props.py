@@ -67,6 +67,10 @@ VALID_SEASON = 2024                       # grid selection only
 TRAIN_SEASONS = list(range(2018, 2025))   # 2018..2024: refit dispersion before scoring
 SCORE_SEASON = 2025
 SEED = 20261020
+SPREAD_R_GRID = [0.15, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0]
+SPREAD_ESD_MULT = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 4.0]
+BOOT_N = 10000
+BLOCKS = [("w1_6", 1, 6), ("w7_12", 7, 12), ("w13p", 13, 99)]
 
 TEAM_STATS = ["pass_attempts", "rush_plays", "pass_yards", "rush_yards"]
 
@@ -234,6 +238,61 @@ def fit_dispersion(y, mu):
     return float(np.clip(float(np.mean(mu ** 2)) / over, 0.2, 5000.0))
 
 
+def refit_spread(pg, L, params):
+    """Defect 3: widen predictive spread by CRPS minimisation on 2018-2024 only.
+
+    Count markets: re-fit the NB dispersion r. Yards markets: re-fit the eff_sd
+    multiplier. Fold discipline is preserved -- 2025 is never used, directly or
+    indirectly, in the fit. The pre-refit values are kept as r_mom / eff_sd_mom
+    so the before/after table can be reported.
+    """
+    base_all = pg[pg.season.isin(TRAIN_SEASONS)]
+    for mk, cfg in MARKETS.items():
+        pos, col, ccol = cfg["positions"], cfg["col"], count_col(mk)
+        p = params[mk]
+        d = base_all[base_all.position_abbreviation.isin(pos) & (base_all[f"{ccol}_tcnt"] >= 1)]
+        y = d[col].values.astype(float)
+        mu = means_for(mk, d, L, p["k"], p["alpha"], p["beta"])
+        if cfg["kind"] == "count":
+            p["r_mom"] = p["r"]
+            best = None
+            for r in SPREAD_R_GRID:
+                S = nb_samples(mu, r, 300, np.random.default_rng(SEED))
+                c = float(np.mean(crps_from_samples(S, y)))
+                if best is None or c < best[0]:
+                    best = (c, r)
+            p["r"] = best[1]
+            p["spread_crps_1824"] = best[0]
+        else:
+            e = eff_for(mk, d, L, p["k2"])
+            esd0 = L[mk]["eff_sd"]
+            best = None
+            for mult in SPREAD_ESD_MULT:
+                L[mk]["eff_sd"] = esd0 * mult
+                S = sample_predictive(mk, cfg, mu, e, L, 300, np.random.default_rng(SEED), p["r"])
+                c = float(np.mean(crps_from_samples(S, y)))
+                if best is None or c < best[0]:
+                    best = (c, mult)
+            L[mk]["eff_sd_mom"] = esd0
+            L[mk]["eff_sd"] = esd0 * best[1]
+            p["eff_sd_mult"] = best[1]
+            p["spread_crps_1824"] = best[0]
+    return params
+
+
+def cluster_ci(delta, groups, n=BOOT_N, seed=SEED):
+    """Bootstrap the mean of `delta` by resampling clusters (`groups`).
+    Returns (point, lo90, hi90). Vectorised over clusters."""
+    delta = np.asarray(delta, float)
+    _, inv = np.unique(groups, return_inverse=True)
+    s = np.bincount(inv, weights=delta)
+    cnt = np.bincount(inv).astype(float)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(s), size=(n, len(s)))
+    means = s[idx].sum(axis=1) / cnt[idx].sum(axis=1)
+    return float(delta.mean()), float(np.quantile(means, 0.05)), float(np.quantile(means, 0.95))
+
+
 # =============================================================================
 # sampling / scoring
 # =============================================================================
@@ -356,8 +415,14 @@ def main():
         print("reused params from params.json")
     else:
         params = tune(pg, L_tune, L)
-        json.dump(params, open(pjson, "w"), indent=2)
     print("params", json.dumps(params, indent=2, default=str))
+
+    # Before the spread fix: score 2025 with the pre-refit dispersion (aggregates only).
+    scores_before, decomps_before, _ = score_2025(pg, L, params)
+    # Defect 3: re-fit spread by CRPS minimisation on 2018-2024 only (mutates params + L).
+    params = refit_spread(pg, L, params)
+    json.dump(params, open(pjson, "w"), indent=2)
+    print("params after spread refit", json.dumps(params, indent=2, default=str))
 
     scores, decomps, predictions = score_2025(pg, L, params)
     scores.to_csv(os.path.join(args.out, "scoring_2025.csv"), index=False)
@@ -365,11 +430,18 @@ def main():
     for mk, df in predictions.items():
         df.to_csv(os.path.join(args.out, f"predictions_{mk}.csv"), index=False)
 
-    props = score_props_2026(pr, pg, L, params)
+    spread_ba = build_spread_before_after(scores_before, decomps_before, scores, decomps)
+    spread_ba.to_csv(os.path.join(args.out, "spread_before_after.csv"), index=False)
+
+    clustered = build_clustered_verdicts(predictions)
+    clustered.to_csv(os.path.join(args.out, "verdict_2025_clustered.csv"), index=False)
+
+    props, population = score_props_2026(pr, pg, L, params)
     if len(props):
         props.to_csv(os.path.join(args.out, "scoring_2026_props.csv"), index=False)
+    population.to_csv(os.path.join(args.out, "population_2026.csv"), index=False)
 
-    write_results(args.out, coverage, scores, decomps, props, params)
+    write_results(args.out, coverage, scores, decomps, props, params, spread_ba, clustered, population)
     print("done; predictions:", {m: len(d) for m, d in predictions.items()})
 
 
@@ -435,13 +507,19 @@ def score_2025(pg, L, params):
                       ev[cfg["denom"]].values if cfg["kind"] == "yards" else y)
         d.update(market=mk)
         dcs.append(d)
+        qq = lambda p: np.quantile(S_model, p, axis=1)
         preds[mk] = pd.DataFrame({
             "game_id": ev.game_id.values, "athlete_id": ev.athlete_id.values,
             "athlete_name": ev.athlete_name.values, "team_id": ev.team_id.values,
             "season": ev.season.values, "week": ev.week.values, "position": ev.position_abbreviation.values,
             "observed": y, "pred_mean": S_model.mean(axis=1), "pred_sd": S_model.std(axis=1),
-            "q10": np.quantile(S_model, 0.10, axis=1), "q50": np.quantile(S_model, 0.50, axis=1),
-            "q90": np.quantile(S_model, 0.90, axis=1),
+            "q05": qq(0.05), "q10": qq(0.10), "q25": qq(0.25), "q50": qq(0.50),
+            "q75": qq(0.75), "q90": qq(0.90), "q95": qq(0.95), "q99": qq(0.99),
+            "crps_model": crps_from_samples(S_model, y),
+            "crps_baseA": crps_from_samples(S_A, y),
+            "crps_baseB": crps_from_samples(S_B, y),
+            "pred_mean_baseA": S_A.mean(axis=1), "pred_sd_baseA": S_A.std(axis=1),
+            "pred_mean_baseB": S_B.mean(axis=1), "pred_sd_baseB": S_B.std(axis=1),
             f"p_over_{cfg['real_line']}": (S_model > cfg["real_line"]).mean(axis=1),
         })
     return pd.DataFrame(rows), pd.DataFrame(dcs), preds
@@ -465,22 +543,33 @@ def score_props_2026(pr, pg, L, params):
     nsarr = pg2["ns"].values
     aid_idx = {aid: (g["ns"].values, g.index.values) for aid, g in pg2.groupby("athlete_id", sort=False)}
 
-    rows, n_violation, max_src, min_kick, n_used = [], 0, -1, None, 0
+    rows, pop_rows = [], []
+    n_violation, max_src, min_kick, n_used = 0, -1, None, 0
     for mk, cfg in MARKETS.items():
         col, pos, ccol = cfg["col"], cfg["positions"], count_col(mk)
         p = params[mk]
-        s = pr[(pr.market == mk) & pr.y.notna() & pr.espn_id.notna()].copy()
+        raw = pr[pr.market == mk]
+        n_total = int(len(raw))
+        n_unsettled = int(raw.y.isna().sum())
+        n_no_id = int((raw.y.notna() & raw.espn_id.isna()).sum())
+        s = raw[raw.y.notna() & raw.espn_id.notna()].copy()
+        n_unmatched = n_noasof = 0
         if not len(s):
+            pop_rows.append(dict(market=mk, props_total=n_total, dropped_unsettled=n_unsettled,
+                                 dropped_no_espn_id=n_no_id, dropped_unmatched_athlete=0,
+                                 dropped_no_asof=0, dropped_leak_guard=0, scored=0))
             continue
         s["koff"] = pd.to_datetime(s.start_time, utc=True).values.astype("datetime64[ns]").astype("int64")
         gi, keep = [], []
         for r in s.itertuples():
             aid = int(r.espn_id)
             if aid not in aid_idx:
+                n_unmatched += 1
                 continue
             dates, idxs = aid_idx[aid]
             posn = np.searchsorted(dates, r.koff, side="left")
             if posn == 0:
+                n_noasof += 1
                 continue
             g = idxs[posn - 1]
             if nsarr[g] >= r.koff:          # assertion: source strictly before kickoff
@@ -491,6 +580,9 @@ def score_props_2026(pr, pg, L, params):
             max_src = max(max_src, int(nsarr[g]))
             min_kick = r.koff if min_kick is None else min(min_kick, r.koff)
         if not gi:
+            pop_rows.append(dict(market=mk, props_total=n_total, dropped_unsettled=n_unsettled,
+                                 dropped_no_espn_id=n_no_id, dropped_unmatched_athlete=n_unmatched,
+                                 dropped_no_asof=n_noasof, dropped_leak_guard=n_violation, scored=0))
             continue
         gi = np.array(gi)
         n_used += len(gi)
@@ -525,11 +617,15 @@ def score_props_2026(pr, pg, L, params):
                 brier_actual_line=float(np.mean(((S > line[:, None]).mean(axis=1) - y) ** 2)),
                 brier_realistic_line=float(np.mean(((S > cfg["real_line"]).mean(axis=1) - (obs > cfg["real_line"]).astype(float)) ** 2)),
                 mean_line=float(np.mean(line))))
+        pop_rows.append(dict(
+            market=mk, props_total=n_total, dropped_unsettled=n_unsettled,
+            dropped_no_espn_id=n_no_id, dropped_unmatched_athlete=n_unmatched,
+            dropped_no_asof=n_noasof, dropped_leak_guard=n_violation, scored=len(gi)))
     print(f"2026 props as-of check: used={n_used}, violations={n_violation}, "
           f"max_source_ns={max_src}, min_kickoff_ns={min_kick}")
     if max_src >= 0 and min_kick is not None:
         assert max_src < min_kick, "leakage: a source game is at/after a scored kickoff"
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows), pd.DataFrame(pop_rows)
 
 
 def build_coverage(pg, pr):
@@ -562,7 +658,68 @@ def verdict(scores, mk):
     return "INCONCLUSIVE"
 
 
-def write_results(out, coverage, scores, decomps, props, params):
+def build_spread_before_after(scores_before, decomps_before, scores, decomps):
+    """Defect 3 before/after: CRPS, coverage and sd_ratio for the model, pre/post spread fix."""
+    rows = []
+    for mk in MARKETS:
+        sb = scores_before[(scores_before.market == mk) & (scores_before.method == "model")].iloc[0]
+        db = decomps_before[decomps_before.market == mk].iloc[0]
+        sa = scores[(scores.market == mk) & (scores.method == "model")].iloc[0]
+        da = decomps[decomps.market == mk].iloc[0]
+        rows.append(dict(
+            market=mk,
+            crps_before=round(float(sb["crps"]), 4), crps_after=round(float(sa["crps"]), 4),
+            cov50_before=round(float(sb["cov50"]), 4), cov50_after=round(float(sa["cov50"]), 4),
+            cov80_before=round(float(sb["cov80"]), 4), cov80_after=round(float(sa["cov80"]), 4),
+            cov90_before=round(float(sb["cov90"]), 4), cov90_after=round(float(sa["cov90"]), 4),
+            sd_ratio_before=round(float(db["sd_ratio"]), 4), sd_ratio_after=round(float(da["sd_ratio"]), 4)))
+    return pd.DataFrame(rows)
+
+
+def build_clustered_verdicts(predictions):
+    """Defect 1: paired delta CRPS (model - baseline) with a game_id-clustered bootstrap CI."""
+    rows = []
+    for mk, df in predictions.items():
+        g = df.game_id.values
+        week = df.week.values
+        d_model = df.crps_model.values
+        for base, col in (("baseline_A_trailing5_fixed", "crps_baseA"),
+                          ("baseline_B_position_league", "crps_baseB")):
+            delta = d_model - df[col].values
+            point, lo, hi = cluster_ci(delta, g)
+            blk = {}
+            for name, w1, w2 in BLOCKS:
+                m = (week >= w1) & (week <= w2)
+                blk[name] = round(float(delta[m].mean()), 4) if m.any() else float("nan")
+            rows.append(dict(market=mk, baseline=base, n_clusters=int(pd.unique(g).size),
+                             delta_crps=round(point, 4), ci90_lo=round(lo, 4), ci90_hi=round(hi, 4),
+                             block_w1_6=blk["w1_6"], block_w7_12=blk["w7_12"], block_w13p=blk["w13p"]))
+    return pd.DataFrame(rows)
+
+
+def clustered_verdict(clustered, mk):
+    """Signed rule stated in RESULTS.md: ADOPT iff the 90% CI upper bound of
+    delta = CRPS_model - CRPS_baseline is < 0 for BOTH baselines AND every block delta < 0."""
+    if clustered is None or not len(clustered):
+        return "INSUFFICIENT_DATA"
+    d = clustered[clustered.market == mk]
+    if not len(d):
+        return "INSUFFICIENT_DATA"
+    adopt = True
+    for r in d.itertuples():
+        if not (r.ci90_hi < 0):
+            adopt = False
+        for b in (r.block_w1_6, r.block_w7_12, r.block_w13p):
+            if np.isfinite(b) and b >= 0:
+                adopt = False
+    if adopt:
+        return "ADOPT_CANDIDATE"
+    if all(r.delta_crps < 0 for r in d.itertuples()):
+        return "PROVISIONAL"
+    return "REJECT"
+
+
+def write_results(out, coverage, scores, decomps, props, params, spread_ba=None, clustered=None, population=None):
     def md(df):
         try:
             return df.to_markdown(index=False)
@@ -585,10 +742,24 @@ def write_results(out, coverage, scores, decomps, props, params):
              "before 2025 is scored. 2026 props use per-fixture as-of features (source game "
              "strictly before kickoff, asserted).\n",
              "## Coverage (data honesty)\n", md(coverage), ""]
-    lines += ["## Verdicts\n", "| market | verdict | model CRPS | trailing-5 CRPS | position CRPS |", "|---|---|---|---|---|"]
+    if spread_ba is not None and len(spread_ba):
+        lines += ["## Spread fix (Defect 3): before -> after\n",
+                  "Spread re-fit by CRPS minimisation on 2018-2024 only; 2025 is never used in the "
+                  "fit. `cov50` uses [q25,q75], `cov80` uses [q10,q90], `cov90` uses [q05,q95]; "
+                  "`sd_ratio` = mean predictive SD / residual SD.\n", md(spread_ba), ""]
+    lines += ["## Verdicts (Defect 1): clustered CRPS deltas\n",
+              "Rule stated up front: `delta = CRPS_model - CRPS_baseline` (negative = model better). "
+              "`ADOPT_CANDIDATE` requires the 90% clustered bootstrap CI upper bound < 0 against BOTH "
+              "baselines AND every week-block delta < 0. `PROVISIONAL` if every point delta is negative "
+              "but a CI includes 0 or a block flips. `REJECT` otherwise. The bootstrap clusters on "
+              "`game_id` (10,000 resamples, fixed seed). A verdict is about distributional ranking "
+              "only -- no market/ROI/edge claim is made anywhere in this document.\n"]
+    if clustered is not None and len(clustered):
+        lines += [md(clustered), ""]
+    lines += ["| market | verdict | model CRPS | trailing-5 CRPS | position CRPS |", "|---|---|---|---|---|"]
     for mk in MARKETS:
         c = {r.method: r.crps for r in scores[scores.market == mk].itertuples()}
-        lines.append(f"| {mk} | {verdict(scores, mk)} | {c.get('model', float('nan')):.4f} | "
+        lines.append(f"| {mk} | {clustered_verdict(clustered, mk)} | {c.get('model', float('nan')):.4f} | "
                      f"{c.get('baseline_A_trailing5_fixed', float('nan')):.4f} | "
                      f"{c.get('baseline_B_position_league', float('nan')):.4f} |")
     lines += ["", "## Tuned parameters (fit 2018-2023; selected on 2024; dispersion refit 2018-2024)\n"]
@@ -611,8 +782,23 @@ def write_results(out, coverage, scores, decomps, props, params):
               "`share_opp` is 0.57-0.82 while efficiency contributes 0.40-0.43 and the interaction "
               "share is small or negative. So the next lever is widening the count dispersion "
               "(and the efficiency spread), not re-fitting the mean.\n"]
+    if population is not None and len(population):
+        lines += ["## 2026 board population (Defect 4): what each filter removes\n",
+                  "Every 2026 prop in the four markets is accounted for. `dropped_unsettled` = no "
+                  "graded `y`; `dropped_no_espn_id` = athlete could not be name-resolved; "
+                  "`dropped_unmatched_athlete` = resolved id has no game history in the cache; "
+                  "`dropped_no_asof` = athlete has no game strictly before that fixture's kickoff; "
+                  "`dropped_leak_guard` = a source game was at/after kickoff (0 expected). "
+                  "`scored` = props that appear in the board.\n", md(population), ""]
     if props is not None and len(props):
         lines += ["## 2026 prop board (real lines; as-of features, no leakage)\n", md(props), ""]
+    lines += ["## Reproducibility (Defect 2)\n",
+              "Every headline number regenerates from the committed CSVs; see `REPRODUCE.md`. "
+              "`predictions_<market>.csv` stores continuous predictive quantiles "
+              "`q05,q10,q25,q50,q75,q90,q95,q99` and per-row CRPS for the model and both baselines "
+              "(`crps_model,crps_baseA,crps_baseB`). Coverage maps as cov50=[q25,q75], "
+              "cov80=[q10,q90], cov90=[q05,q95]; model CRPS = mean(`crps_model`); a baseline's CRPS "
+              "= mean(`crps_baseA`/`crps_baseB`).\n"]
     with open(os.path.join(out, "RESULTS.md"), "w") as f:
         f.write("\n".join(lines))
 
