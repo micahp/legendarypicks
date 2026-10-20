@@ -104,9 +104,10 @@ def observed_games(con: sqlite3.Connection, league: str, game_id: str) -> Option
     if row is None or not row[0]:
         return None
     game = json.loads(row[0])
-    if game.get("completed") is not True:
-        return None
     status = str(game.get("status") or "").lower()
+    # ESPN leaves `completed` null on most final rows, so a final status is also a completed match.
+    if game.get("completed") is not True and status != "final":
+        return None
     if any(token in status for token in TERMINAL_STATUS):
         return None
     home = (game.get("home") or {}).get("sets") or []

@@ -126,7 +126,9 @@ class ProspectiveGradeTest(unittest.TestCase):
                      "home": {"sets": [6, 6]}, "away": {"sets": [4, 3]}})
         insert("2", {"completed": True, "status": "Retired", "home": {"sets": [6, 2]}, "away": {"sets": [4, 0]}})
         insert("3", {"completed": True, "status": "Final", "home": {"sets": [6, 6]}, "away": {"sets": [4]}})
+        insert("4", {"completed": None, "status": "Final", "home": {"sets": [6, 6]}, "away": {"sets": [4, 3]}})
         self.assertEqual(grader.observed_games(self.con, "atp", "1"), 19)
+        self.assertEqual(grader.observed_games(self.con, "atp", "4"), 19)
         self.assertIsNone(grader.observed_games(self.con, "atp", "2"))
         self.assertIsNone(grader.observed_games(self.con, "atp", "3"))
 
