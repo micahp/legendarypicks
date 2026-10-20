@@ -123,6 +123,7 @@ def test_settled_locked_match_returns_winner_brier_from_frozen_probability(tmp_p
 
     assert match["grades"]["winnerBrier"] == pytest.approx(0.09)
     assert match["frozenOdds"] == frozen_odds
+    assert match["frozenOddsStatus"] == "captured"
     assert match["lockStatus"] == "locked"
     assert payload["accuracy"] == {"winnerBrier": pytest.approx(0.09), "brierN": 1}
 
@@ -140,6 +141,7 @@ def test_past_match_without_lock_is_explicitly_missed(tmp_path, monkeypatch):
 
     assert match["projection"] is None
     assert match["lockStatus"] == "missed"
+    assert match["frozenOddsStatus"] is None
     assert match["grades"] is None
     assert payload["accuracy"] == {"winnerBrier": None, "brierN": 0}
 
@@ -259,6 +261,16 @@ def test_v2_ledger_lock_does_not_borrow_regular_model_market_quote():
     assert misc._apply_tennis_v2_winner(match, record)
     assert match["lockedAt"] == "v2-lock"
     assert match["frozenOdds"] is None
+    assert match["frozenOddsStatus"] == "legacy"
+
+    independent_quote = {
+        "matchWinner": {"home": -135, "away": 115},
+        "totalGames": None, "capturedAt": "2026-10-17T09:00:00+00:00",
+    }
+    record["payload"]["frozen_bovada_odds"] = independent_quote
+    assert misc._apply_tennis_v2_winner(match, record)
+    assert match["frozenOdds"] == independent_quote
+    assert match["frozenOddsStatus"] == "captured"
 
 
 def test_v2_accuracy_scores_the_locked_winner_confidence_against_final_winner():
