@@ -43,8 +43,10 @@ formalises one candidate, one dependence structure, and the gates, before any fi
   decider excluded), `official_home_score` / `official_away_score` (official final, shootout
   decider included), `official_home_winner`, `last_period_type`, `neutral_site`.
 - **Pregame features:** `pregame_rolling_features_v1_62dcceb77085bc59.csv` (23,222 rows;
-  rolling 10-game 5v5 score-venue xGF/xGA, shot attempts, all-situation goals, `days_rest`,
-  `days_since_previous_game`, feature-source dates and game ids, `required_features_complete`).
+  rolling 10-game 5v5 score-venue xGF/xGA, shot attempts, all-situation goals,
+  `home_days_rest` / `away_days_rest`, `home_days_since_previous_game` /
+  `away_days_since_previous_game`, feature-source dates and game ids,
+  `required_features_complete`).
 - **Located shots:** `shots`, 2,079,359 rows, 2007–2025, with coordinates, angle, distance,
   shot type, `xGoal`, `goalieIdForShot` (MoneyPuck-derived, in
   `/root/nhl_database_2025-26-playoffs.duckdb`).
@@ -65,8 +67,7 @@ counts, with the rule stated:
 | **primary model population** | **23,116** | complete 5v5 features |
 | additionally missing complete ST features (secondary ST-input arm only) | 114 | ST arm only; never dropped from the primary |
 | primary ST-input population | 23,002 | complete 5v5 **and** ST features |
-| empty `days_rest` | 19 | only matters for the rest/B2B arm; reported, not silently imputed |
-| neutral-site games | 0 | none in this data |
+| neutral-site games (`neutral_site = True`) | 209 primary / 213 all | registered rule (a): `neutral_site` is an input that forces the home-ice intercept to zero on these games. Split: primary 209 = 79 regular season + 130 playoff; all 213 = 83 regular + 130 playoff (the 130 are season-2019 playoff games, the 2020 bubble). By season (primary): 2008:1 2009:5 2010:8 2011:5 2013:6 2014:2 2015:3 2016:4 2017:5 2018:5 2019:136 2020:2 2021:3 2022:6 2023:8 2024:6 2025:4 |
 | playoff games (`game_type=3`) | 1,614 | reported separately; the market sub-population is regular season |
 
 - **P_model** (CRPS, coverage, model-vs-incumbent): all complete-feature games, regular season and
@@ -129,7 +130,9 @@ E[A_g] = μ_ag = exp(0    + x_ag · β)
 ```
 
 matching the frozen convention used across the NHL work (shared intercept, leading home flag,
-`PoissonRegressor(alpha=0.01)`), so `λ1 = max(μ_h − λ3, ε)`, `λ2 = max(μ_a − λ3, ε)`. When
+`PoissonRegressor(alpha=0.01)`), so `λ1 = max(μ_h − λ3, ε)`, `λ2 = max(μ_a − λ3, ε)`. The
+leading home-flag term is forced to zero when `neutral_site = True` (209 primary games), so no
+home-ice advantage is priced into a neutral-site game. When
 `μ_h < λ3` or `μ_a < λ3` the constraint binds; the count of binding games is reported, and if it
 is material the shared-Gamma alternative in §7 is used instead.
 
@@ -178,8 +181,9 @@ term is out of scope.
 | 5v5 score-venue-adjusted xGF/xGA, rolling 10 | `pregame_rolling_features` | team attack/defence, shot-quality adjusted |
 | shot attempts for/against, rolling 10 | same | pace/volume |
 | all-situation goals for/against, rolling 10 | same | finishing context |
-| days rest / back-to-back | `days_since_previous_game` ≤ 1 | schedule/fatigue |
+| days rest / back-to-back | `home_days_since_previous_game` / `away_days_since_previous_game` ≤ 1 | schedule/fatigue |
 | home ice | home-row intercept | venue |
+| neutral site | `neutral_site` | forces the home-ice intercept to zero on the 209 neutral-site primary games |
 | pregame Elo | chronological replay, k=10, HFA=35 | team-strength reference (variant arm) |
 
 **Used (registered secondary arm only):** special-teams PP/PK xG/60. Included because it is a
