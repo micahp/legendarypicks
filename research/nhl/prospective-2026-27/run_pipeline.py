@@ -13,6 +13,7 @@ import math
 import os
 import re
 import statistics
+import sys
 import time
 import urllib.parse
 import urllib.error
@@ -28,12 +29,30 @@ AUDIT = HERE.parent / "kalshi-playoff-audit-2025-26"
 CANONICAL = AUDIT / "canonical_games_v1_7cd2fc9a6e84470c.csv"
 FEATURES = AUDIT / "pregame_rolling_features_v1_62dcceb77085bc59.csv"
 BASELINE_PATH = AUDIT / "run_baseline_ladder.py"
-MODEL_PATH = HERE / "frozen_models_2026-27_v1.json"
+MODEL_PATH = HERE / "frozen_models_2026-27_v2.json"
+
+_TEAM_STRENGTH = None
+
+
+def _team_strength_model():
+    """v2 score model: team attack/defence fitted on the hash-checked canonical file.
+
+    Fitted once per process, deterministic from the canonical CSV.
+    """
+    global _TEAM_STRENGTH
+    if _TEAM_STRENGTH is None:
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        import team_strength
+
+        _TEAM_STRENGTH = team_strength.TeamStrength(team_strength.load_games(str(CANONICAL)))
+    return _TEAM_STRENGTH
 LEDGER = HERE / "forecasts.jsonl"
 MARKETS_LEDGER = HERE / "market_quotes.jsonl"
 RESULTS_LEDGER = HERE / "official_results.jsonl"
 SCORE_DISTRIBUTIONS = HERE / "score_distributions.jsonl"
-MANIFEST = HERE / "prospective_session.json"
+V1_MANIFEST = HERE / "prospective_session.json"
+MANIFEST = HERE / "prospective_session_v2.json"
 CACHE = Path(os.environ.get("NHL_PROSPECTIVE_CACHE", str(HERE / ".cache")))
 KALSHI = "https://external-api.kalshi.com/trade-api/v2"
 NHL = "https://api-web.nhle.com/v1"
@@ -218,7 +237,7 @@ def fit_frozen() -> dict:
     tie_home = sum(int(r["official_home_winner"]) for r in ties) / len(ties)
     elo_probs = all_elo
     model = {
-        "model_version": "nhl-prospective-2026-27-v1",
+        "model_version": "nhl-prospective-2026-27-v2",
         "frozen_at_utc": iso(),
         "specification": {
             "B3_elo": {"role": "moneyline incumbent and Elo-only score distribution", "elo_k": 10, "home_ice_elo": 35,
@@ -255,6 +274,9 @@ def init_session() -> dict:
     model = json.loads(MODEL_PATH.read_text())
     if MANIFEST.exists():
         raise RuntimeError(f"Session already initialized at {MANIFEST}; it is write-once")
+    if V1_MANIFEST.exists():
+        print(f"note: v2 session pin at {MANIFEST.name} supersedes the v1 pin at {V1_MANIFEST.name}; "
+              f"{V1_MANIFEST.name} and its v1 ledger rows are left byte-identical")
     manifest = {"session_version": "nhl-prospective-session-v1", "started_at_utc": iso(),
                 "model_version": model["model_version"], "model_sha256": sha_file(MODEL_PATH),
                 "canonical_games_sha256": model["input_hashes"]["canonical_games_sha256"],
@@ -453,7 +475,7 @@ def score_markets(home_mu: float, away_mu: float, tie_home: float) -> dict:
 
 def forecast(horizon_hours: float) -> list[dict]:
     model = json.loads(MODEL_PATH.read_text())
-    if model.get("model_version") != "nhl-prospective-2026-27-v1" or model.get("model_sha256") != sha_bytes(json_bytes({k: v for k, v in model.items() if k != "model_sha256"})):
+    if model.get("model_version") != "nhl-prospective-2026-27-v2" or model.get("model_sha256") != sha_bytes(json_bytes({k: v for k, v in model.items() if k != "model_sha256"})):
         raise RuntimeError("Frozen model integrity check failed")
     session = get_session()
     if session["model_version"] != model["model_version"] or session["model_sha256"] != sha_file(MODEL_PATH):
@@ -569,7 +591,13 @@ def build_forecasts(games: list[dict], forecast_time: dt.datetime, model: dict,
                 matrix = [[1.0, per_model[name][1], per_model[name][2], per_model[name][3]],
                           [0.0, per_model[name][5], per_model[name][6], per_model[name][7]]]
             params = model["poisson_models"][{"B3_elo": "elo", "B5_xg_poisson": "xg", "B7_elo_xg_poisson": "elo_xg"}[name]]
-            mus = [math.exp(float(params["intercept"]) + float(np.dot(params["coef"], row))) for row in matrix]
+            if name == "B7_elo_xg_poisson":
+                # v2 score model. The v1 log-xG/log-Elo predictor projects a margin spread of ~0.25
+                # goals against ~2.6 observed, so it cannot separate teams; team attack/defence
+                # replaces it for this arm. B3 and B5 stay frozen for comparison.
+                mus = list(_team_strength_model().mus(home, away, bool(game.get("neutral_site"))))
+            else:
+                mus = [math.exp(float(params["intercept"]) + float(np.dot(params["coef"], row))) for row in matrix]
             if not all(math.isfinite(mu) and 0.01 <= mu <= 15.0 for mu in mus):
                 raise RuntimeError(f"Implausible/non-finite goal mean for {gid} {name}: {mus}")
             markets = score_markets(mus[0], mus[1], model["historical_home_shootout_win_rate"])
