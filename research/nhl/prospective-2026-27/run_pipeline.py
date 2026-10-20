@@ -51,7 +51,8 @@ LEDGER = HERE / "forecasts.jsonl"
 MARKETS_LEDGER = HERE / "market_quotes.jsonl"
 RESULTS_LEDGER = HERE / "official_results.jsonl"
 SCORE_DISTRIBUTIONS = HERE / "score_distributions.jsonl"
-MANIFEST = HERE / "prospective_session.json"
+V1_MANIFEST = HERE / "prospective_session.json"
+MANIFEST = HERE / "prospective_session_v2.json"
 CACHE = Path(os.environ.get("NHL_PROSPECTIVE_CACHE", str(HERE / ".cache")))
 KALSHI = "https://external-api.kalshi.com/trade-api/v2"
 NHL = "https://api-web.nhle.com/v1"
@@ -236,7 +237,7 @@ def fit_frozen() -> dict:
     tie_home = sum(int(r["official_home_winner"]) for r in ties) / len(ties)
     elo_probs = all_elo
     model = {
-        "model_version": "nhl-prospective-2026-27-v1",
+        "model_version": "nhl-prospective-2026-27-v2",
         "frozen_at_utc": iso(),
         "specification": {
             "B3_elo": {"role": "moneyline incumbent and Elo-only score distribution", "elo_k": 10, "home_ice_elo": 35,
@@ -273,6 +274,9 @@ def init_session() -> dict:
     model = json.loads(MODEL_PATH.read_text())
     if MANIFEST.exists():
         raise RuntimeError(f"Session already initialized at {MANIFEST}; it is write-once")
+    if V1_MANIFEST.exists():
+        print(f"note: v2 session pin at {MANIFEST.name} supersedes the v1 pin at {V1_MANIFEST.name}; "
+              f"{V1_MANIFEST.name} and its v1 ledger rows are left byte-identical")
     manifest = {"session_version": "nhl-prospective-session-v1", "started_at_utc": iso(),
                 "model_version": model["model_version"], "model_sha256": sha_file(MODEL_PATH),
                 "canonical_games_sha256": model["input_hashes"]["canonical_games_sha256"],
@@ -471,7 +475,7 @@ def score_markets(home_mu: float, away_mu: float, tie_home: float) -> dict:
 
 def forecast(horizon_hours: float) -> list[dict]:
     model = json.loads(MODEL_PATH.read_text())
-    if model.get("model_version") != "nhl-prospective-2026-27-v1" or model.get("model_sha256") != sha_bytes(json_bytes({k: v for k, v in model.items() if k != "model_sha256"})):
+    if model.get("model_version") != "nhl-prospective-2026-27-v2" or model.get("model_sha256") != sha_bytes(json_bytes({k: v for k, v in model.items() if k != "model_sha256"})):
         raise RuntimeError("Frozen model integrity check failed")
     session = get_session()
     if session["model_version"] != model["model_version"] or session["model_sha256"] != sha_file(MODEL_PATH):
