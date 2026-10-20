@@ -173,7 +173,7 @@ function marketLines(home: string, away: string, forecast: Forecast, quote: Bova
   return [
     { label: locked ? 'Locked puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
     { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-    { label: 'Line gap (not edge)', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
+    { label: 'Δ', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
   ]
 }
 
@@ -182,7 +182,7 @@ function marketTotals(forecast: Forecast, quote: BovadaLine | null | undefined, 
   return [
     { label: locked ? 'Locked total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
     { label: 'Model total', value: one(forecast.projected_total_goals) },
-    { label: 'Total gap', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
+    { label: 'Δ', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
   ]
 }
 
@@ -260,14 +260,15 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
         <span className="text-zinc-200">{home}{homeRecord && <span className="block text-xs text-zinc-500">{homeRecord}</span>}</span>
         <span className="text-right text-2xl font-semibold text-zinc-100">{one(forecast.home_expected_goals)}</span>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
-        {lines.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
-      </div>
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 text-sm text-zinc-400">
+      <div className="flex flex-wrap items-end gap-x-12 gap-y-2 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {lines.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
+        </div>
         <div className="flex flex-wrap gap-x-6 gap-y-1">
           {totals.map(line => <span key={line.label}>{line.label} <b className="font-medium tabular-nums text-zinc-100">{line.value}</b></span>)}
         </div>
-        <div className="text-right">
+      </div>
+      <div className="text-right">
           <span className="block text-xs uppercase tracking-wider text-zinc-500">
             {pick ? (pick.qualifies ? 'Model pick' : 'Model lean') : 'Recommendation'}
           </span>
@@ -311,7 +312,6 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
               {isGraded ? 'Not recommended' : 'No priced recommendation yet'}
             </span>
           )}
-        </div>
       </div>
       {moved ? (
         <p className="border-t border-zinc-800 pt-2 text-xs text-zinc-500">
