@@ -12,7 +12,7 @@ official goals are tracked independently.
 | --- | --- | --- |
 | Goaltender adjustment on xG | G1 0.26657/0.72935 vs G2 0.26673/0.72961, intervals contain zero | **NO-GO** — no measurable gain |
 | Starting-goalie feed | 49.7% heuristic; future payload has no probable/starter fields | **DROP** |
-| Special teams xG over 5v5-only | Brier 0.243912 → 0.243299, log loss 0.680833 → 0.679578, CRPS 0.960078 → 0.958671 | **PASS, pending reproducible artifact** |
+| Special teams xG over 5v5-only | Brier 0.243912 → 0.243299, log loss 0.680833 → 0.679578, CRPS 0.960078 → 0.958671 | **PASS on the keep rule, not adopted** — CRPS interval spans zero |
 | Tiered leeway cascade vs always-away +1.5 | cover tier 72.5% of games, 69.3% hit, Brier 0.2114 vs 0.2099 | **NO-GO** |
 | Leeway pick hierarchy (`leeway-2`) | implemented and unit-tested; not yet observed on a real slate | live, unproven |
 
@@ -76,6 +76,24 @@ Known caveat: 2025 is negative and 2024 is CRPS-negative.
 regenerated 2026-10-19 13:07; baseline identical under both prior-season constructions.
 **Consequence:** the tiered selector is not promotable. A selection rule must beat the constant
 baseline on proper score, not on hit rate.
+
+### 2026-10-19 — The special-teams result is now reproducible, and still not adoptable
+**Learned:** the auditor gap closed. `forecasts_all_arms.csv` carries 36,588 rows (9,147 games ×
+4 arms) and `verify_from_csv.py` recomputes every score from it without calling `fit_arm`.
+REPRODUCTION PASS: 0 non-PIT mismatches above 1e-9, max absdiff 4.4e-05 on 4-dp PIT rounding.
+Leakage audit: 73,176 checks, 0 mismatches, 0 source-date violations.
+**Evidence:** `research/nhl-special-teams-2026-10-19` `d3105e3d` (CSV normalised to LF in
+`dc1c7d57`); the verifier still passes after the reformat.
+**Consequence:** reproducibility was the blocker and it is gone. The verdict is still not-adopted
+because CRPS's interval [−0.000467, +0.000293] spans zero — the conjunctive keep rule fails, and a
+recomputable result is not a keepable one. Do not re-litigate this as an audit problem.
+
+### 2026-10-19 — Do not let a CSV's line endings masquerade as a finding
+**Learned:** both special-teams CSVs were CRLF, so `git diff --check` flagged every one of 45,737
+lines. A reformat-only commit is safe when the verifier runs before and after.
+**Evidence:** `dc1c7d57`, reproduction PASS on both sides.
+**Consequence:** normalise generated deliverables to LF at write time; a dirty `diff --check`
+should never be mistaken for a content change.
 
 ### 2026-10-19 — The printed edge is points, not probability
 **Learned:** the card's "Edge 1.3 pts (ANA)" is `|locked puck line| − favourite margin`, the gap

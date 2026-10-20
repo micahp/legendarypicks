@@ -14,9 +14,43 @@ G2h corrected hyperparameters.
 | G3 margin-aware rating | 0.2155 vs G2 0.2133, Δ +0.0023 [−0.0023, +0.0065] | **NO-GO** |
 | Phase 4 score-based adoption | G-CAL failed, total-PIT p=0.0016 | **NOT_ADOPTED** |
 | Phase 4b conditional-mean (H0b) | G-CAL failed on 50% coverage 0.5561 vs ±0.05 | **NOT_ADOPTED** |
-| Phase 5 play-by-play simulator | not started | awaiting owner decision |
+| Phase 5 play-by-play simulator | prereg accepted at `274d47f4`; step 2 paused | **STARTED** — gated on a coherent joint distribution |
+| Coherent joint (home, away) distribution | total-only correction is inconsistent with the untouched margin PMF | **NEW EXPERIMENT** — pre-registered, Phase 4b gate not reopened |
 
 ## Entries
+
+### 2026-10-19 — "50% coverage" was underspecified, and the interval choice decides the verdict
+**Learned:** on Phase 4b the **central** 50% interval covers 0.5561 while the **shortest** 50%
+interval covers 0.4977. One is outside the ±0.05 tolerance and one is inside it. The gate result is
+therefore an artefact of an unstated convention, even though the failed gate remains binding.
+**Evidence:** `5397c0dc` and the Phase 4b frozen JSON.
+**Consequence:** every future coverage gate must name the interval construction as the primary
+statistic and report the other as a diagnostic. Do not read a single coverage number as proof the
+total distribution is badly calibrated.
+
+### 2026-10-19 — A corrected total on an uncorrected margin is not a joint model
+**Learned:** Phase 4b applied an OLS conditional-mean correction to the total PMF and left the
+margin PMF untouched. Total and margin then imply different home/away scores, so the combined
+object is internally inconsistent as a joint score model. That is a blocker for any simulator that
+must produce coherent home and away outcomes.
+**Evidence:** the Phase 4b report states the inconsistency explicitly; `feat/fbs-archive`
+`5397c0dc`.
+**Consequence:** the next step is a separately pre-registered joint (home, away) distribution,
+coherent by construction, with a hard gate that `total = home + away` and `margin = home − away`
+hold for every simulated game, and a proper score over joint score cells. The Phase 4b gate is not
+loosened to rescue the old result.
+
+### 2026-10-19 — Phase 5 starts with data, not with a simulator
+**Learned:** the Phase 5 prereg was accepted at `274d47f4` after three corrections: prop counts
+stamped as-of, game-clustered bootstrap with paired sim-vs-market differences, and "strictly games
+before g" instead of "season to date". Measured population: 26,627 two-sided pre-kickoff prop
+groups (stricter parsed timestamps; the older 26,638 was a string comparison that mis-read one
+capture 9 seconds late), clearing the 1,000-prop floor ~26×.
+**Evidence:** `research/fbs/PREREG-FBS-PHASE5-2026-10-19.md`; the agent found and disclosed its own
+string-vs-parsed boundary error.
+**Consequence:** Step 2 is paused at data and architecture scaffolding until the joint distribution
+exists. Building a play-by-play simulator on margin and total PMFs that disagree would bake the
+inconsistency into every downstream prop distribution.
 
 ### 2026-10-18 — Elo warm-up depth is not what separates us from published Basic Elo
 **Learned:** holding G2 fixed and varying only the warm-up start (2022 → 2004) moves Brier

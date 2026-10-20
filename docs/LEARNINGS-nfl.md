@@ -16,6 +16,8 @@ game set, with a paired block bootstrap. Beating a previous arm is not a result.
 | Turnover luck (`tl`) | pooled −0.000186 [−0.000703, +0.000329] | **NO-GO** |
 | Elo + turnover | pooled +0.000048 [−0.000300, +0.000400] | **NO-GO** |
 | v2-platt as the prop model | 0.24916 vs market 0.24681, CI [−0.00066, +0.00527] | indistinguishable from market — not skill |
+| Marcel-lite vs v2 on identical rows | marcel 0.26989, v2 raw 0.26881, platt 0.24916, market 0.24681 | **v2-platt replaces Marcel-lite** — 0.0207 better, no edge on the market |
+| Closing the platt→market gap | per-market Platt 0.25333, isotonic 0.24946, PMF mean shift 0.26961 | **NO-GO** — calibration is exhausted; the gap is passing-yards modelling |
 | Pre-kickoff line capture | 18 games / 49 rows, 19.4% coverage, 3 in-play prices written | plumbing fixed; scale still missing |
 
 ## Entries
@@ -65,6 +67,29 @@ and 2025 +0.000753 — worse when it matters most. Elo+turnover was +0.000048
 registered group 2011–2023 n=3,158, B 0.222892, tl 0.222706, market 0.210415.
 **Consequence:** regression-to-the-mean features are not automatically predictive. Margin MAE
 improved 10.511 → 10.500, which is not the registered verdict and must not be sold as one.
+
+### 2026-10-19 — Marcel-lite is reproducible, and v2 beats it on the same rows
+**Learned:** `eng.marcel()` in `nfl_player_projection_v2.py` is the live Marcel-lite route, so it
+can be regenerated. Scored on the identical 25,566 graded line-items (2026 weeks 3–5):
+Marcel-lite **0.26989**, v2 raw **0.26881**, v2-platt **0.24916**, market **0.24681**. Point
+accuracy agrees: MAE 30.93 vs 29.38, bias −1.30 vs −7.72.
+**Caveat that must travel with the number:** Marcel-lite only produces a mean. It has no
+probability of its own; the score above gives it v2's dispersion so the comparison is possible.
+**Evidence:** head-to-head on `nfl-2026-w03-w05.jsonl.gz` with `nfl_player_projection_v2.marcel`.
+**Consequence:** replacing Marcel-lite with v2-platt is a real improvement, not a lateral move —
+and still not an edge over the books. Also settled: the served probability field is **raw v2**, not
+Marcel-lite — it matches raw on 26,638 of 26,638 rows and platt on 4.
+
+### 2026-10-19 — The remaining gap to market is passing yards, and calibration cannot close it
+**Learned:** platt sits 0.0024 behind market overall, but the gap is one market: passing_yards
++0.0087 (week 4) and +0.0060 (week 5), consistent. Every other market changes sign between weeks.
+Three calibration levers were tested on weeks 3–4 and scored on week 5: per-market Platt
+**0.25333** (worse — overfits), isotonic **0.24946** (no gain vs 0.24749), and a passing-yards PMF
+mean shift, which moves 0.27128 → 0.26961 and stays far behind platt at 0.25147.
+**Evidence:** `nfl-2026-w03-w05` rows, per-market and per-week decomposition.
+**Consequence:** stop tuning the probability map. Passing yards needs a better model — opponent
+pass defense, game script, or its dispersion — and that is a new pre-registered experiment, not a
+knob. Everything else is at market parity or better.
 
 ### 2026-10-19 — The line capture was recording in-play prices
 **Learned:** only 18 games / 49 rows exist in `nfl_line_snapshots`, weeks 5–6, 19.4% coverage.

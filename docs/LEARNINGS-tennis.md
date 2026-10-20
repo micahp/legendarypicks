@@ -13,9 +13,27 @@ exception. 500s are tracked but their history is short.
 | M2 incumbent vs M1 on ATP (2000 history) | −0.0021818 Brier, CI [−0.002731, −0.001639], 12/12 years | **M2 wins on ATP only** |
 | M2 vs M1 on WTA | −0.0003203, CI [−0.000788, +0.000165], 9/12 years | **null — M2 is not validated** |
 | 500-level expansion | draws stored per tournament; first event live | added to tracking |
+| Version-correct shadow forecasts | ATP `m2-2000` and WTA `m1-elo`, alongside served | **AUTHORISED (CP4 only)** — not CP5 |
 | Locks created on page view | 4 of 5 finished Ningbo matches ungradeable | **design flaw, fixed** |
 
 ## Entries
+
+### 2026-10-19 — The validated model is not the deployed model
+**Learned:** A1's ATP incumbent is **M2 trained from 2000**. The live lock implementation uses
+**M2 trained from 2020**. Those are different models, so the ATP result does not transfer to what is
+actually serving picks without re-verification.
+**Evidence:** A1 per-tour table; live lock path.
+**Consequence:** any shadow or prospective comparison must pin the training-history start
+explicitly in the model version string. "M2" alone is ambiguous and has already been read as if it
+were the deployed model.
+
+### 2026-10-19 — Shadow forecasts authorised, CP4 only
+**Learned:** the owner authorised version-correct prospective shadow forecasts alongside the served
+model: ATP `m2-2000` and WTA `m1-elo` (WTA M2 is not established). The historical lock table is
+preserved and shadow rows carry distinct model versions.
+**Evidence:** `BRIEF-TENNIS-SHADOW-2026-10-19.md`.
+**Consequence:** this is a research step, not approval to serve. No promotion, no UI change, no
+replacement of the served pick until the shadow record has been graded out of sample.
 
 ### 2026-10-18 — The deployed ATP model is unvalidated, and on WTA it is worse
 **Learned:** on 2000-rated history, M2 beats M1 on ATP by −0.0021818 Brier
