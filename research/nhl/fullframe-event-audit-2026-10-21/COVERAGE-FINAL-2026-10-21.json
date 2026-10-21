@@ -1,0 +1,71 @@
+{
+  "complete": true,
+  "games_in_frame": 4876,
+  "games_missing_any": 0,
+  "games_with_both_sources": 4876,
+  "in_sample": 300,
+  "kinds": {
+    "pbp": {
+      "coverage_pct": 100.0,
+      "duplicates": [],
+      "failures": [],
+      "games_covered": 4876,
+      "http_statuses": {
+        "200": 4876
+      },
+      "ids_not_in_frame": 0,
+      "kind": "pbp",
+      "manifest_rows": 4876,
+      "missing_games": 0,
+      "missing_sample": [],
+      "per_season_games": {
+        "2018": 1271,
+        "2019": 1082,
+        "2020": 868,
+        "2021": 1312,
+        "2022": 343
+      },
+      "per_season_units": {
+        "2018": 402616,
+        "2019": 335749,
+        "2020": 258119,
+        "2021": 404656,
+        "2022": 108964
+      },
+      "units": 1510104,
+      "units_total": 1510104
+    },
+    "shifts": {
+      "coverage_pct": 100.0,
+      "duplicates": [],
+      "failures": [],
+      "games_covered": 4876,
+      "http_statuses": {
+        "200": 4876
+      },
+      "ids_not_in_frame": 0,
+      "kind": "shifts",
+      "manifest_rows": 4876,
+      "missing_games": 0,
+      "missing_sample": [],
+      "per_season_games": {
+        "2018": 1271,
+        "2019": 1082,
+        "2020": 868,
+        "2021": 1312,
+        "2022": 343
+      },
+      "per_season_units": {
+        "2018": 984966,
+        "2019": 833284,
+        "2020": 672986,
+        "2021": 1019521,
+        "2022": 265089
+      },
+      "units": 3775846,
+      "units_total": 3775846
+    }
+  },
+  "missing_any_sample": [],
+  "verify": true
+}
