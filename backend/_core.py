@@ -836,16 +836,25 @@ _NFL_MARKET_STAT = {
     "receptions":      ("receptions",      "nflverse"),
 }
 
-# NBA: espn source, real JSON keys confirmed: PTS,REB,AST,STL,BLK,TO,3PM.
-# MIN/FGM/FGA/FTM/FTA/PRA also present but are not bovada prop markets.
+# NBA: ESPN publishes all requested player prop keys in its boxscore lines.
 _NBA_MARKET_STAT = {
     "points":    ("PTS", "espn"),
     "rebounds":  ("REB", "espn"),
     "assists":   ("AST", "espn"),
     "threes":    ("3PM", "espn"),
+    "total_made_3_points_shots": ("3PM", "espn"),
+    "total_made_3_point_shots": ("3PM", "espn"),
     "blocks":    ("BLK", "espn"),
     "steals":    ("STL", "espn"),
     "turnovers": ("TO",  "espn"),
+    "pra": ("PRA", "espn"),
+    "points_rebounds_assists": ("PRA", "espn"),
+    "field_goals_made": ("FGM", "espn"),
+    "total_field_goals_made": ("FGM", "espn"),
+    "fgm": ("FGM", "espn"),
+    "free_throws_made": ("FTM", "espn"),
+    "total_free_throws_made": ("FTM", "espn"),
+    "ftm": ("FTM", "espn"),
 }
 
 # NHL: the current season is published by the gamecenter boxscore; every season
@@ -888,12 +897,15 @@ def _query_game_log_values(player_id: int, market: str, line: float, league: str
     # endpoints mid-history still has one continuous series behind it.
     sources = (source,) if isinstance(source, str) else tuple(source)
     placeholders = ",".join("?" for _ in sources)
+    played_only = (" AND COALESCE(json_extract(stats, '$.MIN'), 1) != 0"
+                   if league == "nba" else "")
     with closing(_db()) as con:
         rows = con.execute(
             f"""SELECT json_extract(stats, ?) AS val
                FROM player_game_logs
                WHERE player_id = ? AND league = ? AND source IN ({placeholders})
                  AND json_extract(stats, ?) IS NOT NULL
+                 {played_only}
                ORDER BY game_date DESC
                LIMIT ?""",
             (f"$.{stat_key}", player_id, league, *sources, f"$.{stat_key}",

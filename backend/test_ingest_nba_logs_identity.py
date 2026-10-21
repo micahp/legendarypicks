@@ -4,6 +4,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+import datetime as dt
 from unittest import mock
 
 import ingest_nba_logs
@@ -173,6 +174,80 @@ class NbaLogIdentityTests(unittest.TestCase):
             con.execute("SELECT COUNT(*) FROM player_game_logs").fetchone()[0], 0
         )
         con.close()
+
+    def test_explicit_dnp_is_recorded_as_zero_minutes_and_empty_data_is_unknown(self):
+        dnp = ingest_nba_logs._parse_line(
+            ["PTS", "REB", "AST"], [], did_not_play=True
+        )
+        self.assertEqual(dnp["MIN"], 0)
+        self.assertEqual((dnp["PTS"], dnp["FGM"], dnp["FTM"], dnp["PRA"]),
+                         (0, 0, 0, 0))
+        self.assertEqual(ingest_nba_logs._parse_line(["PTS"], []), {})
+
+    def test_ingest_persists_only_publisher_marked_dnp_as_zero_minutes(self):
+        boxscore = {"players": [{
+            "team": {"abbreviation": "BOS"},
+            "statistics": [{"names": ["PTS", "REB", "AST"], "athletes": [{
+                "athlete": {"id": "100", "displayName": "Known Guard"},
+                "didNotPlay": True,
+                "stats": [],
+            }]}],
+        }]}
+        with mock.patch.object(ingest_nba_logs, "DB", self.path), \
+             mock.patch.object(ingest_nba_logs.espn, "games", side_effect=self.games), \
+             mock.patch.object(ingest_nba_logs.espn, "boxscore", return_value=boxscore), \
+             mock.patch.object(ingest_nba_logs.time, "sleep"):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", season=2026), 1
+            )
+
+        con = sqlite3.connect(self.path)
+        row = con.execute(
+            "SELECT json_extract(stats,'$.MIN'),json_extract(stats,'$.PTS') "
+            "FROM player_game_logs"
+        ).fetchone()
+        con.close()
+        self.assertEqual(row, (0, 0))
+
+    def test_shooting_made_and_minutes_are_parsed_for_history(self):
+        stats = ingest_nba_logs._parse_line(
+            ["PTS", "REB", "AST", "MIN", "3PT", "FG", "FT"],
+            ["24", "6", "8", "35:30", "3-7", "9-18", "3-4"],
+        )
+        self.assertEqual(stats["MIN"], 35.5)
+        self.assertEqual((stats["FGM"], stats["FTM"], stats["PRA"]), (9, 3, 38))
+
+    def test_source_failure_is_not_hidden_or_written_as_an_empty_day(self):
+        with mock.patch.object(
+            ingest_nba_logs.espn, "games", side_effect=RuntimeError("ESPN unavailable")
+        ):
+            with self.assertRaisesRegex(RuntimeError, "ESPN unavailable"):
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", season=2026)
+
+        con = sqlite3.connect(self.path)
+        self.assertIsNone(con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='player_game_logs'"
+        ).fetchone())
+        con.close()
+
+    def test_dry_run_does_not_open_the_database(self):
+        boxscore = {"players": [{"statistics": [{
+            "names": ["PTS", "REB", "AST"],
+            "athletes": [{"athlete": {"id": "100"}, "stats": ["1", "2", "3"]}],
+        }]}]}
+        with mock.patch.object(ingest_nba_logs, "DB", self.path + ".unused"), \
+             mock.patch.object(ingest_nba_logs, "_fetch_range",
+                               return_value=[({}, boxscore, dt.date(2026, 1, 1))]):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", dry_run=True), 1
+            )
+        self.assertFalse(os.path.exists(self.path + ".unused"))
+
+    def test_nba_season_key_uses_espn_start_year(self):
+        self.assertEqual(ingest_nba_logs.nba_start_year(
+            dt.date(2026, 10, 20)), 2026)
+        self.assertEqual(ingest_nba_logs.nba_start_year(
+            dt.date(2026, 4, 20)), 2025)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ import argparse
 import datetime as dt
 import fcntl
 import os
+import re
 import sqlite3
 import subprocess
 import sys
@@ -99,9 +100,15 @@ def _lock_path(prefix: str, name: str) -> str:
     return os.path.join(LOCK_DIR, "{}{}.lock".format(prefix, name))
 
 
-def _run_lock_path(db_path: str) -> str:
+def _run_lock_path(db_path: str, label: str = "props ingest") -> str:
+    # One run lock per REGISTRY and database. It stops a registry overlapping itself; the
+    # host locks are what keep two registries off one publisher. Shared across registries,
+    # the ingest-jobs DEV half (12-16 min from :22 and :52) held it at every :04 and :34
+    # props start, so DEV props skipped every run from 2026-10-20 23:34 on.
     stem = os.path.splitext(os.path.basename(db_path))[0]
-    return _lock_path("legendarypicks-props-", stem)
+    if label == "props ingest":
+        return _lock_path("legendarypicks-props-", stem)
+    return _lock_path("legendarypicks-{}-".format(re.sub(r"[^a-z0-9]+", "-", label.lower())), stem)
 
 
 def _host_lock_path(host_lock: str) -> str:
@@ -223,6 +230,29 @@ def _provider_ids(registry=None) -> List[str]:
     return [provider["id"] for provider in (PROVIDERS if registry is None else registry)]
 
 
+def _database_scope(db_path: str) -> Optional[str]:
+    """Recognize the two durable LP database filenames; unknown paths fail closed."""
+    name = os.path.basename(os.path.abspath(db_path)).lower()
+    if name == "picks.dev.db":
+        return "dev"
+    if name == "picks.db":
+        return "prod"
+    return None
+
+
+def _select_jobs_for_database(registry, db_path: str):
+    """Return (selected, excluded) jobs for one configured database path."""
+    scope = _database_scope(db_path)
+    selected, excluded = [], []
+    for job in registry:
+        databases = job.get("databases")
+        if databases is None or scope in databases:
+            selected.append(job)
+        else:
+            excluded.append(job)
+    return selected, excluded
+
+
 def _parser(registry=None) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--only", choices=_provider_ids(registry), metavar="PROVIDER")
@@ -265,7 +295,16 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
     """
     args = _parser(registry).parse_args(argv)
     if args.list:
-        _print_registry(registry)
+        configured_db = os.environ.get("LP_DB_PATH")
+        if registry is not None and configured_db:
+            jobs, excluded = _select_jobs_for_database(registry, configured_db)
+            _print_registry(jobs)
+            if excluded:
+                scope = _database_scope(configured_db) or "unknown"
+                print("scope: skipped_scope={} (database={})".format(
+                    len(excluded), scope))
+        else:
+            _print_registry(registry)
         return 0
 
     configured_db = os.environ.get("LP_DB_PATH")
@@ -279,7 +318,19 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
         return 2
 
     jobs = PROVIDERS if registry is None else registry
+    scoped_jobs, excluded_jobs = _select_jobs_for_database(jobs, db_path)
     results = _initial_results(args.only, registry)
+    for provider in excluded_jobs:
+        provider_id = provider["id"]
+        if args.only and args.only != provider_id:
+            continue
+        scope = _database_scope(db_path) or "unknown"
+        allowed = ",".join(provider["databases"])
+        detail = "database={} allowed={}".format(scope, allowed)
+        print("Skipping {}: skipped_scope ({})".format(provider_id, detail))
+        results[provider_id] = {
+            "status": "skipped_scope", "elapsed": 0.0, "tail": detail
+        }
     try:
         con = sqlite3.connect(db_path, timeout=30)
         con.executescript(INGEST_RUNS_DDL)
@@ -288,10 +339,10 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
         print("ERROR: cannot open LP_DB_PATH {}: {}".format(db_path, exc), file=sys.stderr)
         return 2
 
-    run_lock = _try_lock(_run_lock_path(db_path))
+    run_lock = _try_lock(_run_lock_path(db_path, label))
     if run_lock is None:
         print("{} already running for {}; skipping".format(label, db_path))
-        for provider in jobs:
+        for provider in scoped_jobs:
             if not args.only or args.only == provider["id"]:
                 results[provider["id"]] = {
                     "status": "skipped_lock", "elapsed": 0.0, "tail": "run lock held"
@@ -306,7 +357,7 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
     cycle_started = _utc_now()
     cycle_started_at = cycle_started.isoformat()
     try:
-        for provider in jobs:
+        for provider in scoped_jobs:
             provider_id = provider["id"]
             if args.only and args.only != provider_id:
                 continue
