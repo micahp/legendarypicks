@@ -1,3 +1,38 @@
+## v10.0.5
+
+### NFL model
+
+- Lock and grade one Winner, Spread and Total pick per game on the model page, with the pick shown below the line at the bottom of each card.
+- Split the prediction, the lean and the qualifying wager on the model page, and drop the PREVIEW and unlocked labels from picks.
+
+### NFL projections and props
+
+- Add the NFL projections page with a projection record panel, plus player projection, slate and record endpoints.
+- Add the Without control to the prop chart: filter a player's history by teammates out, with chips and a shareable URL.
+- Grade passing prop markets on the pregame lead passer, and add forward Platt calibration as its own props model.
+
+### NFL data
+
+- Repair NFL player identities: 679 GSIS IDs corrected or cleared, two duplicate players merged, and the ESPN/GSIS identity audit back to 0 failures.
+
+### NCAAF model
+
+- Add the FBS model page with the G2h model by default, and separate previews from locks taken 90 minutes before kickoff.
+- Remove fabricated spread hints and preserve full kickoff times.
+
+### NHL model
+
+- Pick by the leeway hierarchy instead of maximum EV, show graded lean results separately from wager qualification, and fix settlement records.
+
+### Tennis model
+
+- Store every complete 500 and 1000 draw per tournament, give every tracked event a surface, and show only upcoming matches in projections.
+- Reject sportsbook quotes captured after a forecast lock, and label legacy and missing quotes by their provenance.
+
+### Leagues and scores
+
+- Offer soccer and esports hubs in the league switcher, and keep a scoreboard day open when a game is suspended.
+
 ## v10.0.4
 
 ### NHL model
