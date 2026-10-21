@@ -276,8 +276,10 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
 
 
 def pending_grades(con: sqlite3.Connection, now: dt.datetime) -> list[tuple[str, str]]:
-    """Games with a forecast, no result yet, and a kickoff that has passed."""
-    rows = con.execute("SELECT DISTINCT game_id, kickoff_utc FROM fbs_forecasts WHERE result IS NULL").fetchall()
+    """Locked games with no result yet and a kickoff that has passed. Legacy rows are never graded:
+    they stay out of official performance and their stored values are left as they are."""
+    rows = con.execute("SELECT DISTINCT game_id, kickoff_utc FROM fbs_forecasts "
+                       "WHERE result IS NULL AND lock_protocol = ?", (LOCK_PROTOCOL,)).fetchall()
     return [(row[0], row[1]) for row in rows if parse_time(row[1]) < now]
 
 
