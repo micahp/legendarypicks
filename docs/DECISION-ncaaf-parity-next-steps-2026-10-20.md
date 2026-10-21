@@ -93,3 +93,38 @@ The following measurements are **worker-generated reproducible outputs reviewed 
 **Research parity reproducible; candidate appears equivalent to the adopted model; production adoption remains conditional.** Once the game-coverage manifest, true forecasting-path certificate and operational QA all pass, open a code-review PR into \`dev\` for human approval. Do not issue live locks or schedule T-90 automatically under this decision.
 
 **T-90 scheduler remains separately gated.**
+
+
+## Coverage stage review: 20cc4334 (2026-10-20)
+
+Remote candidate verified at \`20cc433468a360d9a4ecd8878806bfd9bcb67d06\`. New files include \`backend/fbs_cfbfastr_coverage.py\`, the hashed coverage CSV+manifest in \`backend/fbs_coverage/\`, and revised production service, parity runner and tests. This source review is **not** an independently executed 2,397-row reproduction. Worker reports 33 FBS tests, C2 exact and G2h max 1.5e-8 in the true service fit/predict parity gate, and 62/62 upcoming games in a scratch, preview-only slate. Previous hardcoded game-ID exclusion has been removed. Locks and real-environment certificate remain blocked.
+
+### Decision 1: missing source dates for 42 games
+
+**Accept as a specifically marked, lower-assurance source identity tier for historical training, conditionally.** A missing PBP start-date is not evidence of a wrong game. The source matches the exact game ID in the proper season, and the normalized set of both participants matches the scheduled fixture. The manifest explicitly labels \`teams_only_source_date_missing\` instead of pretending it passed a date cross-check.
+
+Before certification, export all 42 distinct \`season, game_id, scheduled kickoff, home, away, identity_check, source sha, play count\` rows. Cross-check those 42 independently to an ESPN/publisher schedule on game ID, season, participants, and start day when such reference is available; report exceptions rather than hiding them. Assert IDs are unique within season and that no known source start-date contradicts the schedule. Include the 42-row count and its game IDs in the certification evidence; fail loudly on a future increase or mismatch until reviewed. This tier is **not** sufficient evidence of final status for grading.
+
+Do not rewrite original source dates, fabricate dates, drop the 42 rows to improve metrics, or convert \`teams_only_source_date_missing\` to \`teams_and_date\`.
+
+### Decision 2: 11 stale 2026 schedule completion flags
+
+**Accept play-by-play evidence over the older 2026-10-17 snapshot for the narrow fact \`has_plays\` only.** This permits reproduction of the frozen *historical research eligibility* without the snapshot's stale completed indicator incorrectly removing games. The output must show the source snapshot date and all 11 discrepant IDs.
+
+**Do not equate \`has_plays\` with \`source-confirmed final\`.** A game can have play rows during live play, after postponement, or without a complete/certified final. Grading and completed-game training eligibility require a separate final-status/score reconciliation against authoritative ESPN (or an equivalent independent published final-status source), correct season/home-away identity, and verified outcome. Until implemented, **do not grade official NCAAF predictions**, and do not treat an archive row with a score and PBP as automatically final. Refresh or reconcile the schedule status snapshot in an offline ingest; keep the original frozen research snapshot pinned for parity so the research ledger is never silently rewritten. Report research-population parity separately from current operating completeness.
+
+### Decision 3: parity certificate vs operational lock authorization
+
+**Approve generating and examining a parity certificate in an isolated scratch environment only**, using an explicitly specified disposable \`--db\` directory, with no scheduled runner, no live data writes and no copied certificate to a shared model/production DB directory. Preserve the evidence (code/module fingerprints, ledger hash, manifest hash, exact scored population, per-game max deltas) and assert a mutated manifest/estimator invalidates that certificate.
+
+**Do not issue or place a passing certificate beside the actual dev/production model DB yet.** In the current runner, \`--parity\` creates a certificate next to the selected DB, and \`--run\` uses a matching certificate to enable \`store.lock_forecasts\`. A real-environment certificate is therefore an *operational gate*, not a harmless research note. Grading's current \`has_plays\` check does not yet verify ESPN's final-status flag. Existing live QA, browser QA, full coverage audits, synthetic neutral-site fixture, grading safety and explicit T-90 scheduling authorization remain mandatory.
+
+### Next worker instructions and acceptance
+
+1. Export the 42 missing-source-date identities and cross-check them to an independent published game schedule; report exact exceptions and make source-identity tier visible in the audit.
+2. Export/reconcile the 11 stale \`schedule_completed\` flags; distinguish \`has_plays\`, \`authoritative_final\`, \`historical_model_eligible\`, and \`official_grade_eligible\` rather than conflating them. Build a strictly read-only test against authoritative published final status and scores; unit tests must show in-progress PBP never triggers a grade.
+3. Generate a **scratch-only** parity certificate, verifying the true service fit/predict path and all relevant hashes. Prove it revokes when the CSV/manifest/inputs/code change. Do not copy that certificate to dev/prod. Test \`--run\` remains lock-blocked absent a real certificate.
+4. Add a proper synthetic neutral-site game that reaches fit/predict and validates every relevant field, plus a late/missing/partial game outcome and status fixture.
+5. Prepare a code-review diff/PR for owner inspection when all code integrity and operator QA gates are met. Do not merge to dev, restart \`:3096\`, deploy, or schedule live T-90 work on this authority.
+
+**Final ruling:** historical model parity is sufficiently promising to continue staged review; **official locking, grading, production readiness and default Forecasts landing are still NOT APPROVED**.
