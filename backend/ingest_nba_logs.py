@@ -84,12 +84,22 @@ def nba_start_year(day):
 
 
 def _fetch_range(start, end):
-    """Fetch all final boxscores first; any source error aborts before DB access."""
+    """Fetch all final boxscores first; any source error aborts before DB access.
+
+    This is a batch fan-out (a scoreboard per day, a boxscore per final game), so it
+    declares itself to the shared ESPN fetcher with batch_pacing(): requests are spaced,
+    and a full per-host window pauses the job. The fetcher's default is refuse, which is
+    the serving path's answer and is what raised BudgetExhausted on the 10-21 run.
+    """
     d0 = dt.datetime.strptime(start, "%Y-%m-%d").date()
     d1 = dt.datetime.strptime(end, "%Y-%m-%d").date()
     if d1 < d0:
         raise ValueError("end date precedes start date")
+    with espn.batch_pacing():
+        return _fetch_days(d0, d1)
 
+
+def _fetch_days(d0, d1):
     fetched = []
     day = d0
     while day <= d1:
