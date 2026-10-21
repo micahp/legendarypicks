@@ -56,10 +56,13 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 SOURCE = "nflverse_weekly"
 CACHE_MAX_AGE_S = 6 * 3600
-# nflverse's player crosswalk (gsis_id, espn_id, ...). players.nfl_gsis_id mixes id schemes:
-# rookies carry an ESPN-style key ('BRA531428'), so a gsis-only join left 186 2026 players
-# (498 rows: Zachariah Branch, Jeremiyah Love, Kenyon Sadiq) with no player_id on 10-05.
-# gsis -> espn_id -> players.espn_id bridges them by ID, as ingest_nfl_depth_charts does.
+# nflverse's player crosswalk (gsis_id, espn_id, ...). On 10-05 players.nfl_gsis_id held
+# ESB ids (Elias, register column esb_id, e.g. Zachariah Branch's 'BRA531428') for rookies,
+# so a gsis-only join left 186 2026 players (498 rows: Branch, Jeremiyah Love, Kenyon Sadiq)
+# with no player_id. Repaired 2026-10-20 (backend/scripts/nfl_identity_repair.py; the ESB ids now
+# live in player_source_ids as source 'esb'). 3-letter+6-digit values that remain are real
+# GSIS ids of historic players. gsis -> espn_id -> players.espn_id still bridges by ID, as
+# ingest_nfl_depth_charts does, for any player whose GSIS the column lacks.
 PLAYERS_URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
                "players/players.parquet")
 URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
