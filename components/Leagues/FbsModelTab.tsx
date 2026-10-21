@@ -79,11 +79,22 @@ const pct = (value: number | null | undefined) =>
 const price = (value: number | null | undefined) =>
   value == null ? '—' : value > 0 ? `+${value}` : `${value}`
 
-function kickoffLabel(iso: string) {
-  const date = new Date(iso)
-  return date.toLocaleString(undefined, {
-    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  })
+const timeLabel = (iso: string) =>
+  new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+
+// One group per local day, in the order given.
+function byDay<T>(items: T[], iso: (item: T) => string) {
+  return items.reduce<{ label: string; rows: T[] }[]>((days, item) => {
+    const label = new Date(iso(item)).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+    const last = days[days.length - 1]
+    if (last && last.label === label) last.rows.push(item)
+    else days.push({ label, rows: [item] })
+    return days
+  }, [])
+}
+
+function DayHeading({ label, first }: { label: string; first: boolean }) {
+  return <h3 className={`mb-1 text-sm font-semibold text-zinc-200 ${first ? 'pt-3' : 'border-t border-zinc-800 pt-6'}`}>{label}</h3>
 }
 
 export default function FbsModelTab() {
@@ -126,6 +137,8 @@ export default function FbsModelTab() {
   const record = payload.records[model]
   const selected = payload.models.find((entry) => entry.id === model)
   const recent = [...(record?.history ?? [])].reverse().slice(0, 25)
+  const recentDays = byDay(recent, (row) => row.kickoff_utc)
+  const upcomingDays = byDay(upcoming, (game) => game.kickoff_utc)
 
   return (
     <div className="space-y-5">
@@ -154,40 +167,47 @@ export default function FbsModelTab() {
       ) : null}
 
       {view === 'projections' ? (
-        <section className="divide-y divide-zinc-800 border-t border-zinc-800">
+        <section className="space-y-5">
           {upcoming.length === 0 ? (
             <p className="py-8 text-sm text-zinc-500">No upcoming games with a projection.</p>
-          ) : upcoming.map((game) => {
+          ) : upcomingDays.map((day, index) => (
+            <div key={day.label}>
+              <DayHeading label={day.label} first={index === 0} />
+              <div className="divide-y divide-zinc-800">
+                {day.rows.map((game) => {
             const forecast = game.models[model]
-            const homeFavoured = forecast.p_home >= forecast.p_away
-            return (
-              <article key={game.game_id} className="py-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <h3 className="font-semibold text-zinc-100">
-                    {game.away_team} <span className="text-zinc-500">@</span> {game.home_team}
-                  </h3>
-                  <span className="text-sm tabular-nums text-zinc-400">{kickoffLabel(game.kickoff_utc)}</span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-                  <Side
-                    team={game.away_team}
-                    record={game.away_record}
-                    probability={forecast.p_away}
-                    fair={forecast.fair_away}
-                    favoured={!homeFavoured}
-                  />
-                  <Side
-                    team={game.home_team}
-                    record={game.home_record}
-                    probability={forecast.p_home}
-                    fair={forecast.fair_home}
-                    favoured={homeFavoured}
-                  />
-                  <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                </div>
-              </article>
-            )
-          })}
+                const homeFavoured = forecast.p_home >= forecast.p_away
+                return (
+                  <article key={game.game_id} className="py-4">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <h3 className="font-semibold text-zinc-100">
+                        {game.away_team} <span className="text-zinc-500">@</span> {game.home_team}
+                      </h3>
+                      <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+                      <Side
+                        team={game.away_team}
+                        record={game.away_record}
+                        probability={forecast.p_away}
+                        fair={forecast.fair_away}
+                        favoured={!homeFavoured}
+                      />
+                      <Side
+                        team={game.home_team}
+                        record={game.home_record}
+                        probability={forecast.p_home}
+                        fair={forecast.fair_home}
+                        favoured={homeFavoured}
+                      />
+                      <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
+                    </div>
+                  </article>
+                )
+              })}
+              </div>
+            </div>
+          ))}
         </section>
       ) : null}
 
@@ -237,21 +257,27 @@ export default function FbsModelTab() {
           {recent.length === 0 ? (
             <p className="py-6 text-sm text-zinc-500">No graded projections yet.</p>
           ) : (
-            <div className="divide-y divide-zinc-800 border-t border-zinc-800">
-              {recent.map((row) => {
-                const pickedHome = row.p_home >= 0.5
-                const picked = pickedHome ? 'home' : 'away'
-                const won = pickedHome ? row.home_win : !row.home_win
-                const lean = pickedHome ? row.p_home : 1 - row.p_home
-                return (
-                  <article key={row.game_id} className="grid grid-cols-2 gap-x-6 gap-y-2 py-3 sm:grid-cols-4">
-                    <Metric label="Kickoff" value={kickoffLabel(row.kickoff_utc)} />
-                    <Metric label="Lean" value={`${pct(lean)} ${picked}`} />
-                    <Metric label="Final" value={`${row.away_score}–${row.home_score}`} />
-                    <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} tone={won ? 'text-emerald-400' : 'text-rose-400'} />
-                  </article>
-                )
-              })}
+            <div className="space-y-5">
+              {recentDays.map((day, index) => (
+                <div key={day.label}>
+                  <DayHeading label={day.label} first={index === 0} />
+                  <div className="divide-y divide-zinc-800">
+                    {day.rows.map((row) => {
+                      const pickedHome = row.p_home >= 0.5
+                      const picked = pickedHome ? 'home' : 'away'
+                      const won = pickedHome ? row.home_win : !row.home_win
+                      const lean = pickedHome ? row.p_home : 1 - row.p_home
+                      return (
+                        <article key={row.game_id} className="grid grid-cols-3 gap-x-6 gap-y-2 py-3">
+                          <Metric label="Lean" value={`${pct(lean)} ${picked}`} />
+                          <Metric label="Final" value={`${row.away_score}–${row.home_score}`} />
+                          <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} tone={won ? 'text-emerald-400' : 'text-rose-400'} />
+                        </article>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </section>
