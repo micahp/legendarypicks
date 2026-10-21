@@ -66,6 +66,24 @@ DDL = (
        ON player_game_logs_sportsdataverse(league, game_id)""",
 )
 
+# sqlite_master stores CREATE statements without the idempotency clause. The
+# migration contract uses that canonical form so it can verify tables already
+# created by ensure_schema() as well as create the same empty tables elsewhere.
+MIGRATION_OBJECTS = (
+    ("table", RELEASES_TABLE,
+     DDL[0].replace("CREATE TABLE IF NOT EXISTS ", "CREATE TABLE ", 1)),
+    ("table", GAMES_TABLE,
+     DDL[1].replace("CREATE TABLE IF NOT EXISTS ", "CREATE TABLE ", 1)),
+    ("index", "idx_nba_sdv_games_event",
+     DDL[2].replace("CREATE INDEX IF NOT EXISTS ", "CREATE INDEX ", 1)),
+    ("table", LOGS_TABLE,
+     DDL[3].replace("CREATE TABLE IF NOT EXISTS ", "CREATE TABLE ", 1)),
+    ("index", "idx_pglsdv_player_date",
+     DDL[4].replace("CREATE INDEX IF NOT EXISTS ", "CREATE INDEX ", 1)),
+    ("index", "idx_pglsdv_league_game",
+     DDL[5].replace("CREATE INDEX IF NOT EXISTS ", "CREATE INDEX ", 1)),
+)
+
 
 NBA_STAT_FIELDS = {
     "PTS": "PTS",

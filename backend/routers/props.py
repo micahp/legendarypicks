@@ -466,12 +466,11 @@ def prop_history(player_id: int = Query(...),
     # 2026-08-25: a bench player charted five games, four of them DNPs, as
     # 0/0/0/0/0 shots.
     #
-    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Each provider owns
-    # its own TABLE -- `player_game_logs` is ESPN's and stays one row per
-    # appearance, `player_game_logs_fotmob` is FotMob's -- and the view joins
-    # them on (player_id, game_date), putting each provider's line in its own
-    # COLUMN. A value's provenance is the column it was read from: nothing to
-    # stamp, nothing to drift.
+    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Providers keep
+    # separate tables and the view joins shared appearances on (player_id,
+    # game_date), keeping each stat line in its provider column. NBA Stats rows
+    # are limited to the active published release; their explicit appearance
+    # status travels with the row for DNP and incomplete-data handling.
     #
     # This replaces a ROW_NUMBER() PARTITION BY game_date that existed to hide
     # a duplication. Both providers had been kept as separate ROWS in one
@@ -545,17 +544,6 @@ def prop_history(player_id: int = Query(...),
             "SELECT 1 FROM sqlite_master WHERE type='table' "
             "AND name='player_game_logs_usopen'"
         ).fetchone() is not None
-        has_nba_sportsdataverse = (
-            is_nba
-            and con.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' "
-                "AND name='player_game_logs_sportsdataverse'"
-            ).fetchone() is not None
-            and con.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' "
-                "AND name='nba_sportsdataverse_releases'"
-            ).fetchone() is not None
-        )
         if summary_market:
             rows = _nhl_summary_history(con, player, canonical_market)
         elif league in ("atp", "wta") and has_usopen:
@@ -590,75 +578,32 @@ def prop_history(player_id: int = Query(...),
             # Undated rows (prod's 2024 and 2025 NFL logs) sort after dated ones; season and
             # game number then keep them newest first instead of in storage order.
             if is_nba:
-                if has_nba_sportsdataverse:
-                    if isinstance(stat_key, list):
-                        val_expr = "(" + " + ".join(_nba_provider_val(key) for key in stat_key) + ")"
-                    else:
-                        val_expr = _nba_provider_val(stat_key)
-                if has_nba_sportsdataverse:
-                    minute_expr = ("COALESCE(json_extract(sportsdataverse_stats,'$.MIN'),"
-                                   "json_extract(espn_stats,'$.MIN'),"
-                                   "json_extract(fotmob_stats,'$.MIN'),"
-                                   "json_extract(espn_stats,'$.minutes'),"
-                                   "json_extract(fotmob_stats,'$.minutes'))")
+                if isinstance(stat_key, list):
+                    val_expr = "(" + " + ".join(
+                        _nba_provider_val(key) for key in stat_key
+                    ) + ")"
                 else:
-                    minute_expr = ("COALESCE(json_extract(espn_stats,'$.MIN'),"
-                                   "json_extract(fotmob_stats,'$.MIN'),"
-                                   "json_extract(espn_stats,'$.minutes'),"
-                                   "json_extract(fotmob_stats,'$.minutes'))")
+                    val_expr = _nba_provider_val(stat_key)
+                minute_expr = ("COALESCE(json_extract(sportsdataverse_stats,'$.MIN'),"
+                               "json_extract(espn_stats,'$.MIN'),"
+                               "json_extract(fotmob_stats,'$.MIN'),"
+                               "json_extract(espn_stats,'$.minutes'),"
+                               "json_extract(fotmob_stats,'$.minutes'))")
                 season_expr = ("CASE WHEN CAST(strftime('%m', game_date) AS INTEGER) < 7 "
                                "THEN CAST(strftime('%Y', game_date) AS INTEGER)-1 "
                                "ELSE CAST(strftime('%Y', game_date) AS INTEGER) END")
-                if has_nba_sportsdataverse:
-                    rows = con.execute(
-                        f"""WITH source_rows AS (
-                              SELECT s.player_id,s.league,s.season,s.game_no,s.game_id,
-                                     s.game_date,s.opponent,s.home_away,s.game_type,
-                                     NULL AS espn_stats,NULL AS fotmob_stats,
-                                     s.stats AS sportsdataverse_stats,
-                                     s.appearance_status AS appearance_status
-                                FROM player_game_logs_sportsdataverse s
-                                JOIN nba_sportsdataverse_releases sr
-                                  ON sr.season=s.season AND sr.release_hash=s.release_hash
-                               WHERE s.player_id=? AND s.league='nba'
-                              UNION ALL
-                              SELECT e.player_id,e.league,e.season,e.game_no,e.game_id,
-                                     e.game_date,e.opponent,e.home_away,e.game_type,
-                                     e.stats AS espn_stats,NULL AS fotmob_stats,
-                                     NULL AS sportsdataverse_stats,
-                                     NULL AS appearance_status
-                                FROM player_game_logs e
-                               WHERE e.player_id=? AND e.league='nba'
-                                 AND NOT EXISTS (
-                                     SELECT 1 FROM player_game_logs_sportsdataverse s
-                                     JOIN nba_sportsdataverse_releases sr
-                                       ON sr.season=s.season AND sr.release_hash=s.release_hash
-                                     WHERE s.player_id=e.player_id AND s.league='nba'
-                                       AND s.game_date=e.game_date
-                                 )
-                            )
-                            SELECT game_id,game_date,opponent,home_away,{val_expr} AS val,
-                                   {minute_expr} AS minutes,{season_expr} AS season,
-                                   game_type,appearance_status
-                              FROM source_rows
-                             WHERE UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
-                             ORDER BY game_date DESC,season DESC,
-                                      CAST(game_no AS INTEGER) DESC LIMIT 100""",
-                        (player_id, player_id),
-                    ).fetchall()
-                else:
-                    rows = con.execute(
-                        f"""SELECT game_id, game_date, opponent, home_away,
-                                    {val_expr} AS val, {minute_expr} AS minutes,
-                                    {season_expr} AS season, game_type,
-                                    NULL AS appearance_status
-                               FROM player_game_logs_all
-                              WHERE player_id=? AND league='nba'
-                                AND UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
-                              ORDER BY game_date DESC, season DESC,
-                                       CAST(game_no AS INTEGER) DESC LIMIT 100""",
-                        (player_id,),
-                    ).fetchall()
+                rows = con.execute(
+                    f"""SELECT game_id, game_date, opponent, home_away,
+                                {val_expr} AS val, {minute_expr} AS minutes,
+                                {season_expr} AS season, game_type,
+                                appearance_status
+                           FROM player_game_logs_all
+                          WHERE player_id=? AND league='nba'
+                            AND UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
+                          ORDER BY game_date DESC, season DESC,
+                                   CAST(game_no AS INTEGER) DESC LIMIT 100""",
+                    (player_id,),
+                ).fetchall()
             else:
                 rows = con.execute(
                     f"""SELECT game_id, game_date, opponent, home_away, {val_expr} AS val
