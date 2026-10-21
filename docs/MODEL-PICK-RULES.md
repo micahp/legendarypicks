@@ -70,7 +70,22 @@ are not the Model Pick record.
 | League | Cover threshold (S above) | Total lines | Status |
 |---|---|---|---|
 | NHL | 1.0 goal (the puck line is always 1.5) | 5.5 and 6.5, split at a projected 6.0 (the 2023 to 2025 median total) | Live (`leeway-2`) |
-| NFL | 3.0 points (a field goal) | **Open:** NFL totals vary (about 37 to 54), so fixed lines do not carry over. Needs the pair of lines around the posted total. | Decided in part, not built |
+| NFL | Own order, see below | **Open:** NFL totals vary (about 37 to 54), so fixed lines do not carry over. Needs the pair of lines around the posted total. | Decided except totals, not built |
+
+### NFL order (Micah, 2026-10-21)
+
+NFL uses its own order built around the touchdown. V is the points Vegas favours its favourite by.
+M is our model's projected margin for that same team (negative when the model has the underdog
+winning). Still one pick per game: take the first rule that applies.
+
+1. **Favourite to cover.** M >= 7 and M >= V: the favourite at -V. (Vegas KC -7, model KC by 9: KC -7.)
+2. **Favourite to win.** V >= 7 or M >= 7: the favourite moneyline. (Vegas KC -7, model KC by 4: KC ML.)
+3. **Underdog to cover.** V - M >= 3: the underdog at +V. (Vegas KC -4, model opponent by 1: opponent +4.
+   Vegas KC -6, model KC by 2: opponent +6.)
+4. **Favourite to win.** M > 0 (our model agrees on the favourite): the favourite moneyline.
+   (Vegas KC -3, model KC by 1.5: KC ML.)
+5. **Total.** Everything else: the model has the underdog winning by an edge under 3.
+   (Vegas KC -1, model opponent by 1: total.) Lines still open.
 
 Results so far: the NHL replay of `leeway-2` lost 2.6% at posted prices (`docs/LEARNINGS-nhl.md`).
 That is why a Model Pick is not a wager.
