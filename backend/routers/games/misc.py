@@ -596,20 +596,8 @@ def tennis_model(date: str, tour: str = "all", utc_offset_minutes: int = 0,
                             starts_at = starts_at.replace(tzinfo=dt.timezone.utc)
                 except (TypeError, ValueError):
                     pass
-                # Freeze a forecast during the hour before the published start.
-                # A final can only be graded from this pregame snapshot.
-                if (candidate is not None and match["status"] == "scheduled" and starts_at is not None
-                        and now < starts_at.astimezone(dt.timezone.utc) <= now + dt.timedelta(hours=1)):
-                    locked_projection = dict(candidate)
-                    # Market data is provenance attached to the lock, not a model feature.
-                    # Existing lock rows remain immutable and simply have no frozen quote.
-                    locked_projection["_frozenOdds"] = match["odds"]
-                    con.execute(
-                        "INSERT OR IGNORE INTO tennis_model_locks(league,game_date,game_id,start_time,locked_at,projection,model_version) "
-                        "VALUES(?,?,?,?,?,?,?)",
-                        (league, starts_at.astimezone(dt.timezone.utc).date().isoformat(), match["gameId"], match["startTime"],
-                         now.isoformat(), json.dumps(locked_projection), candidate.get("modelVersion")),
-                    )
+                # Locks are made only by the ingest timer (tennis_lock_sweep). It also freezes the research
+                # distributions, which a page view cannot do cheaply inside a request, so a page view reads locks only.
                 lock = con.execute(
                     "SELECT projection,locked_at FROM tennis_model_locks WHERE league=? AND game_id=?",
                     (league, match["gameId"]),
