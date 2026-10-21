@@ -154,19 +154,12 @@ function resultClass(result: string | null) {
 // One Model Pick per game: the backend's label, and its grade once the final is recorded.
 function ModelPickBlock({ lock }: { lock: Lock }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 text-right">
       <div className="text-xs uppercase tracking-wider text-zinc-500">Model Pick</div>
-      <div className="text-sm font-semibold text-zinc-100">{lock.pick.label}</div>
+      <div className="text-2xl font-semibold tabular-nums text-zinc-100">{lock.pick.label}</div>
       {lock.grade && <div className={`mt-0.5 text-xs font-semibold ${resultClass(lock.grade.pick)}`}>{resultLabel(lock.grade.pick)}</div>}
     </div>
   )
-}
-
-function lineCaptureLabel(lock: Lock) {
-  const time = lock.line.captured_at
-    ? `${lock.line.source === 'snapshot' ? 'captured' : 'captured'} ${lock.line.captured_at}`
-    : 'capture time unavailable'
-  return `Line · ${lock.line.source} · ${time}`
 }
 
 function isMissedLock(game: ModelGame, version: string, now = Date.now()) {
@@ -240,15 +233,18 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
-        <span>Line <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
-        <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
-        <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
-        <span>Total <b className="font-medium tabular-nums text-zinc-100">{lock.line.total == null ? '—' : one(lock.line.total)}</b></span>
-        <span>Model total <b className="font-medium tabular-nums text-zinc-100">{lock.total == null ? '—' : one(lock.total)}</b></span>
-        <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
+      <div className="space-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          <span>Line <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
+          <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
+          <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          <span>Total <b className="font-medium tabular-nums text-zinc-100">{lock.line.total == null ? '—' : one(lock.line.total)}</b></span>
+          <span>Model total <b className="font-medium tabular-nums text-zinc-100">{lock.total == null ? '—' : one(lock.total)}</b></span>
+          <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
+        </div>
       </div>
-      <p className="text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
       <div className="border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
     </article>
   )
@@ -279,7 +275,6 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
             </div>
           </div>
           <div className="mt-3 border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
-          <p className="mt-2 text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
           {lock.proj_home == null || lock.proj_away == null ? (
             <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
           ) : (

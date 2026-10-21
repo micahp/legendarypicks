@@ -73,7 +73,7 @@ describe('NFL model tab', () => {
     expect(screen.getByText('Total')).toBeTruthy()
     expect(screen.getByText('Model total')).toBeTruthy()
     expect(screen.getByText('Total edge')).toBeTruthy()
-    expect(screen.getByText(/snapshot · captured t/)).toBeTruthy()
+    expect(screen.queryByText(/captured/)).toBeNull()
     expect(screen.getAllByText('No forecast locked before kickoff · 2026-10-01T17:00:00Z')).toHaveLength(2)
   })
 
@@ -99,7 +99,7 @@ describe('NFL model tab', () => {
     fireEvent.change(await screen.findByRole('combobox', { name: /Model/ }), { target: { value: V2 } })
     await waitFor(() => expect(screen.getByText('2026 record · v2 EPA')).toBeTruthy())
     expect(screen.getByText('No graded picks yet · 4 awaiting a final')).toBeTruthy()
-    expect(await screen.findByText('Line · snapshot · captured t')).toBeTruthy()
+    expect(screen.queryByText(/captured/)).toBeNull()
     expect(document.body.textContent).not.toContain('0-0')
   })
 
@@ -118,13 +118,14 @@ describe('NFL model tab', () => {
     expect(screen.queryByText('WIN')).toBeNull()
   })
 
-  it('does not label a legacy lock timestamp as a market capture time', async () => {
+  it('shows no line capture text, for a snapshot or a legacy lock row', async () => {
     const legacy = withGames([{ ...payload.games[0], locks: {
       [V1]: { ...payload.games[0].locks[V1], line: { ...line, source: 'lock row' as const } },
     } }])
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(legacy) }))
     render(<NflModelTab />)
-    expect(await screen.findByText('Line · lock row · captured t')).toBeTruthy()
+    expect(await screen.findByText('Model line')).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/captured|lock row/)
   })
 
   it('shows exactly one Model Pick per game: the backend label and its grade, with no winner, spread or total grid', async () => {
