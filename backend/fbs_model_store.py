@@ -232,7 +232,9 @@ def schema_state(con: sqlite3.Connection) -> str:
         return "empty"
     version = con.execute("PRAGMA user_version").fetchone()[0]
     triggers = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger'")}
-    if version == SCHEMA_VERSION and set(REQUIRED_TABLES) <= tables and set(REQUIRED_TRIGGERS) <= triggers:
+    columns_ok = all(column in table_columns(con, table) for table, column in REQUIRED_COLUMNS)
+    if version == SCHEMA_VERSION and set(REQUIRED_TABLES) <= tables and set(REQUIRED_TRIGGERS) <= triggers \
+            and columns_ok:
         return "current"
     return "legacy"
 
@@ -468,14 +470,31 @@ def upsert_previews(con: sqlite3.Connection, rows: list[dict],
     return written
 
 
+def persisted_hold(con: sqlite3.Connection, game_id: str, model: str | None = None) -> str | None:
+    """The durable research hold on a fixture or one of its model previews, or None. Read from the database,
+    never from the caller's row."""
+    status = game_status(con, game_id) or {}
+    if status.get("hold_reason"):
+        return status["hold_reason"]
+    if model is not None:
+        preview = con.execute("SELECT hold_reason FROM fbs_previews WHERE game_id = ? AND model = ?",
+                              (game_id, model)).fetchone()
+        if preview is not None and preview[0]:
+            return preview[0]
+    return None
+
+
 def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
                    now: dt.datetime | None = None, commit: bool = True) -> dict:
     """Insert each forecast once, only inside its T-90 window, and only for a scheduled game whose
     kickoff is the current fixture revision. Returns counts. A started or unverified game never locks."""
     now = now or dt.datetime.now(dt.timezone.utc)
     report = {"inserted": 0, "existing": 0, "not_due": 0, "after_kickoff": 0,
-              "blocked_status": 0, "blocked_revision": 0}
+              "blocked_status": 0, "blocked_revision": 0, "blocked_hold": 0}
     for row in rows:
+        if persisted_hold(con, row["game_id"], row["model"]):
+            report["blocked_hold"] += 1          # postseason research holds are never official locks
+            continue
         kickoff = parse_time(row["kickoff_utc"])
         if now < kickoff - LOCK_LEAD:
             report["not_due"] += 1
@@ -882,10 +901,14 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
     for row in previews:
         if row["game_id"] in locked_games:
             continue
+        hold = row["hold_reason"] or (statuses.get(row["game_id"]) or {}).get("hold_reason")
         game = games.setdefault(row["game_id"], _game_shell(
             row["game_id"], row["kickoff_utc"], row["home_team"], row["away_team"]))
-        game["status"] = "missed" if row["game_id"] in missed_games else "preview"
-        if game["status"] == "preview":
+        if hold:
+            game["status"] = "research_hold"     # visible, research-only, before and after kickoff
+        else:
+            game["status"] = "missed" if row["game_id"] in missed_games else "preview"
+        if game["status"] in ("preview", "research_hold"):
             game["models"][row["model"]] = {
                 "p_home": round(row["p_home"], 4),
                 "p_away": round(1.0 - row["p_home"], 4),
@@ -893,6 +916,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
                 "model_version": row["model_version"],
                 "fitted_through": row["fitted_through"],
                 "previewed_at_utc": row["previewed_at_utc"],
+                "official": False, "research_only": bool(hold), "hold_reason": hold,
             }
     for game_id, game in games.items():
         status = statuses.get(game_id, {})
@@ -901,6 +925,12 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
         game["status_reason"] = status.get("reason")
         game["pregame_lifecycle"] = status.get("pregame_lifecycle")
         game["kickoff_revision"] = status.get("revision")
+        game["hold_reason"] = status.get("hold_reason")
+        game["research_only"] = bool(game["hold_reason"])
+        game["official"] = game["status"] == "locked"
+        if game["research_only"] and game["official"]:
+            raise RuntimeError("fixture %s carries postseason_research_hold and an official lock; refusing to export"
+                               % game_id)
     ratings = [dict(r) for r in con.execute(
         "SELECT * FROM fbs_ratings WHERE season=? ORDER BY rating DESC", (season,)).fetchall()]
     meta = {r["key"]: json.loads(r["value"]) for r in con.execute(
@@ -908,6 +938,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
     meta["unresolved"] = unresolved
     meta["runs"] = last_runs(con) if _table_exists(con, "fbs_run_reports") else {}
     ordered = sorted(games.values(), key=lambda g: g["kickoff_utc"])
+    visible = [g for g in ordered if g["status"] != "research_hold"]
     return {
         "league": "ncaaf",
         "default_model": DEFAULT_MODEL,
@@ -917,7 +948,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
         "games": ordered,
         "ratings": ratings,
         "meta": meta,
-        "state": "available" if ordered else "awaiting_first_lock",
+        "state": "available" if visible else "awaiting_first_lock",
         "source": "standalone FBS model database",
     }
 

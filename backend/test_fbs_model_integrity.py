@@ -696,3 +696,122 @@ def test_a_backup_is_never_overwritten(tmp_path, monkeypatch):
     with pytest.raises(FileExistsError):
         store.migrate(str(second), backups)
     assert _bytes(kept) == kept_bytes
+
+
+# ------------------------------------- postseason holds: the store refuses official locks on its own
+
+HOLD = store.POSTSEASON_HOLD
+
+
+def test_a_direct_lock_call_refuses_a_persisted_postseason_hold(con):
+    inside = KICKOFF - dt.timedelta(minutes=45)
+    _scheduled(con)
+    store.set_postseason_hold(con, "401871055")
+    report = store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
+    assert report["inserted"] == 0 and report["blocked_hold"] == 3
+    assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
+
+
+def test_the_same_direct_lock_call_succeeds_when_no_hold_is_persisted(con):
+    inside = KICKOFF - dt.timedelta(minutes=45)
+    _scheduled(con)
+    report = store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
+    assert report["inserted"] == 3 and report["blocked_hold"] == 0
+
+
+def test_a_hold_persisted_only_on_one_model_preview_refuses_that_models_lock(con):
+    inside = KICKOFF - dt.timedelta(minutes=45)
+    _scheduled(con)
+    store.upsert_previews(con, [dict(_row(model="g2h"), hold_reason=HOLD)], now=inside - dt.timedelta(hours=1))
+    report = store.lock_forecasts(con, [_row(model="g2h"), _row(model="g2")], now=inside)
+    assert report["blocked_hold"] == 1 and report["inserted"] == 1
+    models = [r[0] for r in con.execute("SELECT model FROM fbs_forecasts")]
+    assert models == ["g2"]
+
+
+# ----------------------------------------- export: the research hold is visible before and after kickoff
+
+def test_a_held_bowl_is_research_only_in_the_export_before_and_after_kickoff(con):
+    before = KICKOFF - dt.timedelta(hours=10)
+    _scheduled(con, observed=before)
+    store.set_postseason_hold(con, "401871055")
+    store.upsert_previews(con, [dict(_row(model=m), hold_reason=HOLD) for m in store.MODEL_IDS], now=before)
+
+    pre = json.loads(json.dumps(store.export_payload(con, 2026)))
+    game = pre["games"][0]
+    assert game["status"] == "research_hold" and game["research_only"] is True
+    assert game["hold_reason"] == HOLD and game["official"] is False and game["locked_at_utc"] is None
+    assert set(game["models"]) == set(store.MODEL_IDS)
+    for model in game["models"].values():
+        assert model["official"] is False and model["research_only"] is True and model["hold_reason"] == HOLD
+    assert pre["records"]["g2h"]["forecasts"] == 0
+    assert pre["state"] == "awaiting_first_lock"             # a research hold alone is not an available forecast
+
+    counts = store.record_missed_windows(con, now=KICKOFF + dt.timedelta(hours=1))
+    assert counts == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 3}
+    post = json.loads(json.dumps(store.export_payload(con, 2026)))
+    game = post["games"][0]
+    assert game["status"] == "research_hold" and game["hold_reason"] == HOLD and game["official"] is False
+    assert post["records"]["g2h"]["forecasts"] == 0 and post["records"]["g2h"]["missed"] == 0
+    assert post["records"]["g2h"]["windows"] == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0,
+                                                 "window_not_eligible": 1, "locked": 0}
+    assert post["state"] == "awaiting_first_lock"
+
+
+def test_export_refuses_a_held_fixture_that_somehow_carries_an_official_lock(con):
+    _scheduled(con)
+    store.set_postseason_hold(con, "401871055")
+    con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,model_version,"
+                "p_home,created_at_utc,locked_at_utc,late,lock_protocol,kickoff_revision) "
+                "VALUES('401871055','g2h',2026,?,'A','B','v',0.6,?,?,0,'t90',1)",
+                (KICKOFF.isoformat(), KICKOFF.isoformat(), KICKOFF.isoformat()))
+    con.commit()
+    with pytest.raises(RuntimeError, match="postseason_research_hold"):
+        store.export_payload(con, 2026)
+
+
+# --------------------------------- schema: every required column is part of the version-2 contract
+
+def _partial_v2(path):
+    """A file at SCHEMA_VERSION with every table and trigger, but without the hold columns."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    partial = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
+    raw = sqlite3.connect(path)
+    raw.executescript(partial + store.TRIGGERS)
+    raw.execute("PRAGMA user_version = %d" % store.SCHEMA_VERSION)
+    raw.execute("INSERT INTO fbs_game_status(game_id,season,revision,lifecycle,observed_utc,source,grading_state)"
+                " VALUES('1',2026,1,'scheduled','2026-10-20T00:00:00+00:00','test','pending')")
+    raw.commit()
+    raw.close()
+
+
+def test_a_version_two_file_missing_a_required_column_is_migration_required_and_unchanged(tmp_path):
+    db = str(tmp_path / "partial" / "fbs-model.dev.sqlite3")
+    _partial_v2(db)
+    before = _bytes(db)
+    probe = sqlite3.connect("file:%s?mode=ro" % db, uri=True)
+    assert store.schema_state(probe) == "legacy"
+    probe.close()
+    with pytest.raises(store.SchemaError, match="migration_required"):
+        store.open_db(db)
+    assert _bytes(db) == before
+    report = runner.audit(db)
+    assert report["schema_status"] == "migration_required" and report["schema_version"] == store.SCHEMA_VERSION
+    assert {(u.get("table"), u.get("column")) for u in report["unavailable"]} == {
+        ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason")}
+    assert _bytes(db) == before
+
+
+def test_explicit_migration_recovers_an_incomplete_version_two_copy_without_touching_its_rows(tmp_path):
+    db = str(tmp_path / "partial-copy" / "fbs-model.dev.sqlite3")
+    _partial_v2(db)
+    evidence = store.migrate(db, str(tmp_path / "backups"))
+    assert evidence["action"] == "migrated"
+    con = store.open_db(db)
+    assert "hold_reason" in store.table_columns(con, "fbs_game_status")
+    assert "hold_reason" in store.table_columns(con, "fbs_previews")
+    assert tuple(con.execute("SELECT game_id, season, revision, lifecycle, grading_state FROM fbs_game_status").fetchone()) \
+        == ("1", 2026, 1, "scheduled", "pending")
+    con.close()
+    assert store.migrate(db, str(tmp_path / "backups"))["action"] == "none"
+    assert runner.audit(db)["schema_status"] == "current"
