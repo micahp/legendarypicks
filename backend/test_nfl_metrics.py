@@ -112,6 +112,34 @@ class AtsRules(unittest.TestCase):
         self.assertEqual(m.pick_side(3.0, None), "no_line")
 
 
+class ThreeMarketPicks(unittest.TestCase):
+    def test_winner_pick_and_grade(self):
+        self.assertEqual(m.pick_winner(0.55), "home")
+        self.assertEqual(m.pick_winner(0.45), "away")
+        self.assertEqual(m.pick_winner(0.5), "no_pick")
+        self.assertEqual(m.grade_winner(0.55, 27, 24), "win")
+        self.assertEqual(m.grade_winner(0.55, 24, 27), "loss")
+        self.assertEqual(m.grade_winner(0.55, 24, 24), "tie")
+        self.assertEqual(m.grade_winner(0.5, 27, 24), "no_pick")
+        self.assertIsNone(m.grade_winner(0.55, None, None))
+
+    def test_total_pick_and_grade(self):
+        self.assertEqual(m.pick_total(47, 44.5), "over")
+        self.assertEqual(m.pick_total(42, 44.5), "under")
+        self.assertEqual(m.pick_total(44.5, 44.5), "no_pick")
+        self.assertEqual(m.pick_total(47, None), "no_line")
+        self.assertEqual(m.grade_total(47, 44.5, 24, 27), "win")
+        self.assertEqual(m.grade_total(42, 44.5, 24, 27), "loss")
+        self.assertEqual(m.grade_total(47, 44.5, 20, 24.5), "push")
+        self.assertEqual(m.grade_total(44.5, 44.5, 20, 27), "no_pick")
+        self.assertEqual(m.grade_total(47, None, 20, 27), "no_line")
+        self.assertIsNone(m.grade_total(47, 44.5, None, None))
+
+    def test_total_tolerance(self):
+        self.assertEqual(m.pick_total(44.5000000005, 44.5), "no_pick")
+        self.assertEqual(m.grade_total(45.0, 44.5, 24, 20.5000000005), "push")
+
+
 class Bootstrap(unittest.TestCase):
     def test_identical_losses_have_zero_interval_around_zero(self):
         point, lo, hi = m.bootstrap_mean_diff_ci([0.2, 0.3, 0.1], [0.2, 0.3, 0.1], reps=500)

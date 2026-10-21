@@ -164,8 +164,8 @@ class Provenance(T90Base):
         self.assertEqual(set(payload["games"][0]["models"]), {"B3_elo", "B5_xg_poisson", "B7_elo_xg_poisson"})
         report = lock_feed(self.con, payload, TARGET)
         self.assertEqual((report["due_games"], report["locked_rows"]), (1, 3))
-        # No quote was captured, so the forecast locks and no recommendation is manufactured.
-        self.assertEqual((report["pick_rows"], report["unpriced_models"]), (0, 3))
+        # The frozen forecast still produces a model selection without a sportsbook quote.
+        self.assertEqual((report["pick_rows"], report["missing_picks"]), (3, 0))
         row = self.con.execute("SELECT protocol_version, features_as_of_utc FROM nhl_game_projections LIMIT 1").fetchone()
         self.assertEqual(row["features_as_of_utc"], iso_utc(GENERATED))
 
@@ -237,8 +237,8 @@ class LockAtCutoff(T90Base):
         self.assertEqual({r["protocol_version"] for r in rows}, {T90_PROTOCOL_VERSION})
         # The locked projection carries the snapshot's feature cutoff, not the ledger's.
         self.assertEqual({r["features_as_of_utc"] for r in rows}, {iso_utc(GENERATED)})
-        # No quote was captured here, so the forecast locks and no recommendation is invented.
-        self.assertEqual((report["pick_rows"], report["unpriced"]), (0, 3))
+        # Quote absence does not suppress any of the three model picks.
+        self.assertEqual((report["pick_rows"], report["missing_picks"]), (3, 0))
 
     def test_a_game_outside_its_window_is_left_alone(self):
         self.freeze()

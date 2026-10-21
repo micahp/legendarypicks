@@ -329,7 +329,7 @@ def lock_t90(db_path: str = DEFAULT_DB, now: dt.datetime | None = None, *, feed_
     now = now or dt.datetime.now(dt.timezone.utc)
     con = sqlite3.connect(db_path)
     con.row_factory = sqlite3.Row
-    report = {"window": 0, "due": 0, "locked": 0, "pick_rows": 0, "unpriced": 0,
+    report = {"window": 0, "due": 0, "locked": 0, "pick_rows": 0, "missing_picks": 0,
               "missing_snapshot": 0, "quote": None}
     try:
         ensure_schema(con)
@@ -369,7 +369,7 @@ def lock_t90(db_path: str = DEFAULT_DB, now: dt.datetime | None = None, *, feed_
         locked = lock_feed(con, payload, now)
         report["locked"] = locked["locked_rows"]
         report["pick_rows"] = locked["pick_rows"]
-        report["unpriced"] = locked["unpriced_models"]
+        report["missing_picks"] = locked["missing_picks"]
         return report
     finally:
         con.close()
@@ -393,10 +393,10 @@ def main(argv=None) -> int:
         report = lock_t90(args.db, now, feed_path=args.feed, fetch=fetch, apply=args.apply,
                           horizon_hours=args.horizon_hours)
         quote = report["quote"]
-        print("%s lock at %s: %d in window, %d due, %d locked, %d picks, %d unpriced, "
+        print("%s lock at %s: %d in window, %d due, %d locked, %d picks, %d missing picks, "
               "%d missing snapshots, quote %s" % (
                   "applied" if args.apply else "dry-run", iso_utc(now), report["window"],
-                  report["due"], report["locked"], report["pick_rows"], report["unpriced"],
+                  report["due"], report["locked"], report["pick_rows"], report["missing_picks"],
                   report["missing_snapshot"],
                   "not attempted" if quote is None else quote.get("reason")))
         return 0
