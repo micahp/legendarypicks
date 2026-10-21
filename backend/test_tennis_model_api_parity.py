@@ -76,7 +76,7 @@ def _patch_route(monkeypatch, path, *, candidates=None):
     monkeypatch.setattr(projections, "store_candidates", lambda *args: None)
 
 
-def test_lock_freezes_quote_as_provenance_and_reports_locked_status(tmp_path, monkeypatch):
+def test_page_view_previews_a_due_match_and_leaves_locking_to_the_timer(tmp_path, monkeypatch):
     path = str(tmp_path / "tennis.sqlite3")
     con = _database(path)
     _snapshot(con)
@@ -88,16 +88,12 @@ def test_lock_freezes_quote_as_provenance_and_reports_locked_status(tmp_path, mo
     payload = misc.tennis_model("2026-10-17", tour="atp")
 
     match, = payload["matches"]
-    assert match["lockStatus"] == "locked"
-    assert match["lockedAt"] == NOW.isoformat()
-    assert match["frozenOdds"]["matchWinner"]["home"] == -150
+    assert match["lockStatus"] == "preview"
+    assert match["lockedAt"] is None
     assert match["projection"] == candidate
     con = _database(path)
-    stored = json.loads(con.execute(
-        "SELECT projection FROM tennis_model_locks WHERE game_id='match-1'"
-    ).fetchone()[0])
+    assert con.execute("SELECT COUNT(*) FROM tennis_model_locks").fetchone()[0] == 0
     con.close()
-    assert stored["_frozenOdds"]["capturedAt"] == "2026-10-17T11:45:00Z"
 
 
 def test_settled_locked_match_returns_winner_brier_from_frozen_probability(tmp_path, monkeypatch):

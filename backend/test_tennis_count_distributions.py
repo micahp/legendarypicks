@@ -3,6 +3,8 @@
 The parity tests run the replays' own run() functions on a synthetic database and check that the
 distribution rebuilt at each match's day gives the same CRPS and log score the replay recorded.
 """
+import datetime as dt
+import json
 import os
 import random
 import sqlite3
@@ -11,10 +13,13 @@ import unittest
 from unittest import mock
 
 import scoreboard_store
+import tennis_bovada_odds
 import tennis_count_distributions as tcd
+import tennis_daily_projections
 import tennis_lock_sweep
 import tennis_props_rate_backtest as rb
 import tennis_total_games_backtest as tgb
+from routers.games import misc
 
 SURFACES = ("Hard", "Clay", "Grass")
 SCORES = ("6-4 6-3", "6-2 6-7(4) 6-4", "7-5 4-6 6-3", "6-3 6-4", "7-6(3) 6-4", "6-1 6-0")
@@ -220,17 +225,23 @@ class SweepFixture(unittest.TestCase):
         self.con = sqlite3.connect(self.db)
         self.con.row_factory = sqlite3.Row
         scoreboard_store.init(self.con)
-        self.con.execute("CREATE TABLE IF NOT EXISTS players(id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS players(id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT, name TEXT)")
         self.con.execute("CREATE TABLE IF NOT EXISTS player_source_ids(source TEXT, league TEXT, "
                          "player_id INTEGER, source_player_key TEXT)")
+        # Read by the tennis model page (routers/games/misc.py), which the page-view tests call.
+        self.con.execute("CREATE TABLE IF NOT EXISTS tennis_model_grades(league TEXT, game_id TEXT, winner TEXT, "
+                         "total_games_error REAL, PRIMARY KEY(league, game_id))")
+        self.con.execute("CREATE TABLE IF NOT EXISTS tennis_match_stats_overrides(league TEXT, game_date TEXT, "
+                         "game_id TEXT, home_aces INTEGER, away_aces INTEGER, source_url TEXT)")
         # The sweep also reads the Bovada quote (dev's _bovada_quote), so the fixture needs the props tables it reads.
         self.con.executescript("""
             CREATE TABLE IF NOT EXISTS prop_games (id INTEGER PRIMARY KEY, league TEXT, espn_event_id TEXT);
             CREATE TABLE IF NOT EXISTS props (id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER, market TEXT,
                                               line REAL, side TEXT, source TEXT, odds INTEGER, odds_captured_at TEXT);
         """)
-        for espn_id, sackmann_id, player_id in (("1", "101", 1), ("2", "102", 2)):
-            self.con.execute("INSERT INTO players(id,league,espn_id) VALUES(?,?,?)", (player_id, "atp", espn_id))
+        for espn_id, sackmann_id, player_id, name in (("1", "101", 1, "Player One"), ("2", "102", 2, "Player Two")):
+            self.con.execute("INSERT INTO players(id,league,espn_id,name) VALUES(?,?,?,?)",
+                             (player_id, "atp", espn_id, name))
             self.con.execute("INSERT INTO player_source_ids VALUES('sackmann','atp',?,?)", (player_id, sackmann_id))
         self._pre_snapshot("401900001", home="1", away="2")
         self.con.commit()
@@ -319,6 +330,94 @@ class NonDevSweepTest(SweepFixture):
         self.assertIsNone(self.con.execute(
             "SELECT name FROM sqlite_master WHERE name LIKE 'tennis_model_lock_distribution%'").fetchone())
         self.assertEqual(self._lock_count(), 1)
+
+
+def _page_view(path, now):
+    """Load the ATP model page for the fixture day, with the clock at `now` and the projections given."""
+    real_datetime = dt.datetime
+
+    class FrozenDateTime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now if tz else now.replace(tzinfo=None)
+
+    def connect():
+        con = sqlite3.connect(path)
+        con.row_factory = sqlite3.Row
+        return con
+
+    candidate = {"probability": 0.6, "projectedWinner": "Player One", "modelVersion": "page-v1"}
+    with mock.patch.object(misc, "_db", connect), \
+            mock.patch.object(misc.dt, "datetime", FrozenDateTime), \
+            mock.patch.object(tennis_daily_projections, "stored_candidates",
+                              lambda *args: {"401900001": candidate}), \
+            mock.patch.object(tennis_daily_projections, "needs_projection_refresh", lambda *args: False), \
+            mock.patch.object(tennis_daily_projections, "project_day",
+                              side_effect=AssertionError("unexpected recompute")), \
+            mock.patch.object(tennis_daily_projections, "store_candidates", lambda *args: None), \
+            mock.patch.object(tennis_bovada_odds, "bovada_odds", lambda *args: None):
+        return misc.tennis_model("2026-10-20", tour="atp")
+
+
+def _count(path, table):
+    con = sqlite3.connect(path)
+    try:
+        return con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    finally:
+        con.close()
+
+
+class PageViewLockTest(SweepFixture):
+    """A page view previews a due match and makes no lock. The timer then locks it and freezes its distributions."""
+
+    def test_a_page_view_makes_no_lock_and_the_timer_then_locks_and_freezes_the_match(self):
+        self.con.close()
+        payload = _page_view(self.db, _utc(self.NOW))
+        match, = payload["matches"]
+        self.assertEqual(match["lockStatus"], "preview")
+        self.assertEqual(_count(self.db, "tennis_model_locks"), 0)
+        con = sqlite3.connect(self.db)
+        con.row_factory = sqlite3.Row
+        try:
+            report = tennis_lock_sweep.sweep(con, now=_utc(self.NOW))
+        finally:
+            con.close()
+        self.assertEqual(report["locked"], 1)
+        self.assertEqual(report["distribution_frozen"], 1)
+        self.assertEqual(_count(self.db, "tennis_model_locks"), 1)
+        self.assertEqual(_count(self.db, "tennis_model_lock_distributions"), 5)
+
+    def test_a_match_the_timer_already_locked_is_not_frozen_again(self):
+        tennis_lock_sweep.sweep(self.con, now=_utc(self.NOW))
+        self.con.close()
+        payload = _page_view(self.db, _utc(self.NOW))
+        match, = payload["matches"]
+        self.assertEqual(match["lockStatus"], "locked")
+        self.assertEqual(_count(self.db, "tennis_model_locks"), 1)
+        self.assertEqual(_count(self.db, "tennis_model_lock_distributions"), 5)
+
+
+class PageViewNonDevTest(SweepFixture):
+    """On a prod-named database a page view makes no lock, and the timer's lock writes no distribution table or row."""
+    DB_NAME = "picks.db"
+
+    def test_a_page_view_then_the_timer_on_prod_locks_with_no_distribution_table_or_rows(self):
+        self.con.close()
+        payload = _page_view(self.db, _utc(self.NOW))
+        match, = payload["matches"]
+        self.assertEqual(match["lockStatus"], "preview")
+        self.assertEqual(_count(self.db, "tennis_model_locks"), 0)
+        con = sqlite3.connect(self.db)
+        con.row_factory = sqlite3.Row
+        try:
+            report = tennis_lock_sweep.sweep(con, now=_utc(self.NOW))
+            table = con.execute(
+                "SELECT name FROM sqlite_master WHERE name LIKE 'tennis_model_lock_distribution%'").fetchone()
+        finally:
+            con.close()
+        self.assertEqual(report["locked"], 1)
+        self.assertEqual(report["distribution_gated"], 1)
+        self.assertIsNone(table)
 
 
 def _utc(text):
