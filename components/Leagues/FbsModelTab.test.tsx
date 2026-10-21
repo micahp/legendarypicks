@@ -99,6 +99,19 @@ describe('FBS model tab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('17–27')).toBeTruthy()
     expect(screen.getByText('✓ Won').className).toContain('text-emerald-400')
+    expect(screen.queryByText('Kickoff')).toBeNull()
+  })
+
+  it('groups the record under one label per day of games', async () => {
+    const base = payload.records.g2h.history[0]
+    const day = (iso: string, id: string) => ({ ...base, game_id: id, kickoff_utc: iso })
+    const history = [day('2026-10-17T16:00:00Z', 'a'), day('2026-10-17T19:30:00Z', 'b'), day('2026-10-10T16:00:00Z', 'c')]
+    serve({ ...payload, records: { ...payload.records, g2h: { ...payload.records.g2h, graded: 3, history } } })
+    render(<FbsModelTab />)
+    await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(screen.getAllByRole('heading', { level: 3 }).length).toBe(2)
+    expect(screen.getAllByText('✓ Won').length).toBe(3)
   })
 
   it('keeps ungraded projections out of the record history', async () => {
