@@ -97,9 +97,17 @@ def lock_row(game_id, kickoff, model="g2h", p=0.62, home=HOME, away=AWAY):
             "p_home": p, "fitted_through": "2026-10-17"}
 
 
+def freeze_rows(con, rows, now):
+    """A run's view of the cutoff: each row is stored as the pregame projection (before its cutoff), then every
+    projection is frozen at `now`. Returns the freeze counts."""
+    for row in rows:
+        kickoff = store.parse_time(row["kickoff_utc"])
+        store.upsert_projections(con, [row], now=kickoff - store.LOCK_LEAD - dt.timedelta(hours=1))
+    return store.freeze_projections(con, now=now)
+
+
 def lock(con, game_id, kickoff, now, models=("g2h",), p=0.62):
-    rows = [lock_row(game_id, kickoff, model=m, p=p) for m in models]
-    return store.lock_forecasts(con, rows, now=now)
+    return freeze_rows(con, [lock_row(game_id, kickoff, model=m, p=p) for m in models], now)
 
 
 # --------------------------------------------------------------------------- pure lifecycle rules
@@ -174,11 +182,11 @@ def test_grading_plan_decides_each_lifecycle_and_never_grades_an_absent_game():
 # ------------------------------------------------------------------------------- store lifecycle
 
 def test_locks_are_refused_for_postponed_cancelled_and_unknown_games(con):
-    for status in ("postponed", "cancelled", "unknown"):
+    for index, status in enumerate(("postponed", "cancelled", "unknown"), 1):
         gid = "x-" + status
         observe(con, gid, KICK, NOW_EARLY, lifecycle=status)
-        report = store.lock_forecasts(con, [lock_row(gid, KICK)], now=NOW_WINDOW)
-        assert report["inserted"] == 0 and report["blocked_status"] == 1, status
+        report = freeze_rows(con, [lock_row(gid, KICK)], now=NOW_WINDOW)
+        assert report["frozen"] == 0 and report["blocked_status"] == index, status    # every stored projection counts
     assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
 
 
@@ -186,8 +194,8 @@ def test_a_lock_is_refused_when_its_kickoff_is_not_the_current_revision(con):
     observe(con, GAME, KICK, NOW_EARLY)
     moved = KICK + dt.timedelta(hours=2)
     observe(con, GAME, moved, NOW_EARLY + dt.timedelta(hours=1))           # schedule revision 2
-    report = store.lock_forecasts(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)
-    assert report["blocked_revision"] == 1 and report["inserted"] == 0
+    report = freeze_rows(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)
+    assert report["blocked_revision"] == 1 and report["frozen"] == 0
 
 
 def test_a_rescheduled_game_locks_at_its_new_revision_when_nothing_was_locked(con):
@@ -195,8 +203,8 @@ def test_a_rescheduled_game_locks_at_its_new_revision_when_nothing_was_locked(co
     moved = KICK + dt.timedelta(hours=2)
     observe(con, GAME, moved, NOW_EARLY + dt.timedelta(hours=1))
     now = moved - dt.timedelta(minutes=60)
-    report = store.lock_forecasts(con, [lock_row(GAME, moved)], now=now)
-    assert report["inserted"] == 1
+    report = freeze_rows(con, [lock_row(GAME, moved)], now=now)
+    assert report["frozen"] == 1
     row = con.execute("SELECT kickoff_utc, kickoff_revision FROM fbs_forecasts").fetchone()
     assert parse(row[0]) == moved and row[1] == 2
 
@@ -211,8 +219,8 @@ def test_an_existing_lock_survives_a_reschedule_unchanged(con):
     before = con.execute("SELECT kickoff_utc, p_home, locked_at_utc, kickoff_revision FROM fbs_forecasts").fetchone()
     moved = KICK + dt.timedelta(hours=3)
     observe(con, GAME, moved, NOW_WINDOW + dt.timedelta(minutes=5))
-    report = store.lock_forecasts(con, [lock_row(GAME, moved, p=0.41)], now=moved - dt.timedelta(minutes=30))
-    assert report["existing"] == 1 and report["inserted"] == 0          # no second official lock
+    report = freeze_rows(con, [lock_row(GAME, moved, p=0.41)], now=moved - dt.timedelta(minutes=30))
+    assert report["already_frozen"] == 1 and report["frozen"] == 0          # no second official lock
     after = con.execute("SELECT kickoff_utc, p_home, locked_at_utc, kickoff_revision FROM fbs_forecasts").fetchone()
     assert tuple(after) == tuple(before)
     with pytest.raises(sqlite3.Error):
@@ -227,27 +235,28 @@ def test_a_lock_that_becomes_cancelled_is_void_and_outside_win_loss_and_brier(co
     observe(con, GAME, KICK, KICK - dt.timedelta(minutes=5), lifecycle="cancelled", status_name="STATUS_CANCELED")
     payload = store.export_payload(con, 2026)
     g2h = payload["records"]["g2h"]
-    assert g2h["graded"] == 0 and g2h["brier"] is None and g2h["forecasts"] == 0 and g2h["void"] == 1
+    assert g2h["graded"] == 0 and g2h["brier"] is None and g2h["frozen"] == 1
     assert con.execute("SELECT p_home FROM fbs_forecasts").fetchone()[0] == 0.62
-    assert payload["games"][0]["grading_state"] == "void"
+    assert payload["games"] == []                                       # a voided game is not a projection card
+    assert payload["diagnostics"]["games"][GAME]["grading_state"] == "void"
 
 
 def test_a_missed_window_is_classified_three_ways_and_uses_the_current_kickoff(con):
     # 1. verified scheduled before kickoff, no lock: a genuine missed window
     observe(con, GAME, KICK, NOW_EARLY)
-    store.upsert_previews(con, [lock_row(GAME, KICK)], now=NOW_EARLY)
+    store.upsert_projections(con, [lock_row(GAME, KICK)], now=NOW_EARLY)
     counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
     assert counts["missed_t90_window"] == 1 and counts["blocked_unverified_at_cutoff"] == 0
     # 2. a postponement before kickoff is not eligible, even when a later lock could not happen
     other = "9100"
     observe(con, other, KICK, NOW_EARLY)
-    store.upsert_previews(con, [lock_row(other, KICK)], now=NOW_EARLY)
+    store.upsert_projections(con, [lock_row(other, KICK)], now=NOW_EARLY)
     observe(con, other, KICK, NOW_EARLY + dt.timedelta(hours=1), lifecycle="postponed", status_name="STATUS_POSTPONED")
     counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
     assert counts["window_not_eligible"] == 1 and counts["missed_t90_window"] == 0
     # 3. a previewed game with no verified pregame status was never eligible to lock
     unverified = "9101"
-    store.upsert_previews(con, [lock_row(unverified, KICK)], now=NOW_EARLY)
+    store.upsert_projections(con, [lock_row(unverified, KICK)], now=NOW_EARLY)
     counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
     assert counts["blocked_unverified_at_cutoff"] == 1 and counts["missed_t90_window"] == 0
     # outcomes are recorded once; a moved game is not missed at the old kickoff
@@ -255,7 +264,7 @@ def test_a_missed_window_is_classified_three_ways_and_uses_the_current_kickoff(c
         "missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 0}
     moved = KICK + dt.timedelta(days=1)
     observe(con, "9102", KICK, NOW_EARLY)
-    store.upsert_previews(con, [lock_row("9102", KICK)], now=NOW_EARLY)
+    store.upsert_projections(con, [lock_row("9102", KICK)], now=NOW_EARLY)
     observe(con, "9102", moved, KICK + dt.timedelta(hours=2))
     assert store.record_missed_windows(con, now=KICK + dt.timedelta(hours=3))["missed_t90_window"] == 0
     # re-verified as scheduled at its new kickoff, with no lock written in that window: a genuine miss
@@ -269,8 +278,8 @@ def test_an_absent_or_changed_opponent_is_never_the_same_fixture(con):
                                           home_team="x", away_team="y", home_team_id=HOME[0],
                                           away_team_id=other[0], neutral_site=False), NOW_WINDOW, "test")
     assert obs["identity_changed"] is True and obs["revision"] == 1
-    report = store.lock_forecasts(con, [lock_row(GAME, KICK, away=other)], now=NOW_WINDOW)
-    assert report["inserted"] == 0 and report["blocked_status"] == 1
+    report = freeze_rows(con, [lock_row(GAME, KICK, away=other)], now=NOW_WINDOW)
+    assert report["frozen"] == 0 and report["blocked_status"] == 1
 
 
 # ----------------------------------------------------------------------------- grading and outages
@@ -418,7 +427,11 @@ def window_board(boards, now, events):
 
 def test_a_historical_grade_outage_does_not_block_a_verified_t90_lock(tmp_path, forecast_env, boards, monkeypatch):
     db = str(tmp_path / "independent.sqlite3")
+    open_scratch(db).close()
     now = KICK - dt.timedelta(minutes=60)
+    window_board(boards, KICK - dt.timedelta(hours=3), [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
+    runner.run(days=10, db_path=db, now=KICK - dt.timedelta(hours=3))     # projects the game before its cutoff
+    boards.clear()
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
     past = KICK - dt.timedelta(days=2)
     con = open_scratch(db)
@@ -428,7 +441,7 @@ def test_a_historical_grade_outage_does_not_block_a_verified_t90_lock(tmp_path, 
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
     assert report["grade"]["status"] == "grade_source_unavailable"
-    assert report["locked"]["inserted"] == len(runner.MODEL_ORDER)
+    assert report["frozen"]["frozen"] == len(runner.MODEL_ORDER)
     con = store.open_db(db, readonly=True)
     locked = con.execute("SELECT COUNT(*) FROM fbs_forecasts WHERE game_id=? AND lock_protocol='t90'", (GAME,)).fetchone()[0]
     con.close()
@@ -442,15 +455,16 @@ def test_a_current_slate_outage_blocks_new_previews_and_locks_but_grades_indepen
     con = open_scratch(db)
     observe(con, "past", past, past - dt.timedelta(days=5))
     lock(con, "past", past, past - dt.timedelta(minutes=60))
+    projections_before = con.execute("SELECT COUNT(*) FROM fbs_projections").fetchone()[0]
     con.close()
     put_board(boards, past, [board_event("past", past.isoformat(), "STATUS_FINAL", True, 24, 20)])
     # the current window is not stubbed, so the live slate cannot be read
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "slate_unavailable"
-    assert report["previewed"] == 0 and report["locked"].get("blocked") == "slate_unavailable"
+    assert report["projected"] == 0 and report["frozen"].get("blocked") == "slate_unavailable"
     assert report["grade"]["status"] == "ok" and report["grade"]["graded"] == 1
     con = store.open_db(db, readonly=True)
-    assert con.execute("SELECT COUNT(*) FROM fbs_previews").fetchone()[0] == 0
+    assert con.execute("SELECT COUNT(*) FROM fbs_projections").fetchone()[0] == projections_before
     assert con.execute("SELECT COUNT(*) FROM fbs_forecasts WHERE game_id=?", (GAME,)).fetchone()[0] == 0
     con.close()
 
@@ -462,7 +476,7 @@ def test_a_delayed_game_inside_the_window_takes_no_new_lock(tmp_path, forecast_e
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_DELAYED", False)])
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
-    assert report["locked"]["inserted"] == 0
+    assert report["frozen"]["frozen"] == 0
     con = store.open_db(db, readonly=True)
     assert con.execute("SELECT reason FROM fbs_game_status WHERE game_id=?", (GAME,)).fetchone()[0] \
         == "schedule_unresolved_delayed"
@@ -545,10 +559,10 @@ def test_an_inconsistent_board_is_unverified_so_the_slate_is_unavailable(boards)
 def test_a_suspended_game_that_resumes_before_kickoff_can_lock_again(con):
     observe(con, GAME, KICK, NOW_EARLY)
     observe(con, GAME, KICK, NOW_WINDOW - dt.timedelta(minutes=20), lifecycle="suspended", status_name="STATUS_SUSPENDED")
-    assert store.lock_forecasts(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)["blocked_status"] == 1
+    assert freeze_rows(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)["blocked_status"] == 1
     observe(con, GAME, KICK, NOW_WINDOW - dt.timedelta(minutes=5), lifecycle="scheduled")
-    report = store.lock_forecasts(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)
-    assert report["inserted"] == 1
+    report = freeze_rows(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)
+    assert report["frozen"] == 1
 
 
 # ------------------------------------------------------------- atomic forecast writes and lock risk
@@ -568,19 +582,23 @@ def durable_state(db):
 def test_a_failure_partway_through_a_forecast_write_leaves_every_table_as_it_was(tmp_path, forecast_env, boards,
                                                                                   monkeypatch):
     db = str(tmp_path / "rollback.sqlite3")
+    open_scratch(db).close()
     now = KICK - dt.timedelta(minutes=60)
+    window_board(boards, KICK - dt.timedelta(hours=3), [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
+    runner.run(days=10, db_path=db, now=KICK - dt.timedelta(hours=3))     # projects the game before its cutoff
+    boards.clear()
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
     con = open_scratch(db)
     observe(con, GAME, KICK + dt.timedelta(hours=3), NOW_EARLY)     # the board moves the kickoff: a new revision
     con.close()
     before = durable_state(db)
 
-    real_lock = runner.store.lock_forecasts
+    real_lock = runner.store.freeze_projections
 
-    def lock_then_fail(con_arg, rows, now=None, commit=True):
-        real_lock(con_arg, rows, now=now, commit=commit)            # locks and previews are already written
-        raise RuntimeError("injected failure after the lock write")
-    monkeypatch.setattr(runner.store, "lock_forecasts", lock_then_fail)
+    def freeze_then_fail(con_arg, now=None, commit=True):
+        real_lock(con_arg, now=now, commit=commit)                  # freezes and projections are already written
+        raise RuntimeError("injected failure after the freeze write")
+    monkeypatch.setattr(runner.store, "freeze_projections", freeze_then_fail)
 
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "rolled_back"
@@ -591,13 +609,13 @@ def test_a_failure_partway_through_a_forecast_write_leaves_every_table_as_it_was
     assert con.execute("SELECT status FROM fbs_run_reports WHERE subsystem = 'forecast' ORDER BY id DESC LIMIT 1").fetchone()[0] == "rolled_back"
     con.close()
 
-    monkeypatch.setattr(runner.store, "lock_forecasts", real_lock)
+    monkeypatch.setattr(runner.store, "freeze_projections", real_lock)
     recovered = runner.run(days=10, db_path=db, now=now)
     assert recovered["forecast"]["status"] == "ok"
-    assert recovered["locked"]["inserted"] == len(runner.MODEL_ORDER)
+    assert recovered["frozen"]["frozen"] == len(runner.MODEL_ORDER)
     con = store.open_db(db, readonly=True)
     assert con.execute("SELECT revision FROM fbs_fixture_revisions WHERE game_id=? ORDER BY revision DESC LIMIT 1",
-                       (GAME,)).fetchone()[0] == 2
+                       (GAME,)).fetchone()[0] == 3
     con.close()
 
 
@@ -608,7 +626,7 @@ def test_an_unmapped_pregame_status_is_a_lock_risk_at_once_and_is_queued(tmp_pat
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_UNRECOGNISED", False)])
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
-    assert report["locked"]["inserted"] == 0
+    assert report["frozen"]["frozen"] == 0
     assert GAME in report["forecast"]["lock_risk"]
     con = store.open_db(db, readonly=True)
     queued = [dict(r) for r in store.unresolved_queue(con) if r["game_id"] == GAME]
@@ -794,10 +812,10 @@ def test_a_started_game_is_observed_but_never_previewed_or_locked(tmp_path, fore
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_IN_PROGRESS", False)])
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
-    assert report["previewed"] == 0 and report["locked"].get("inserted", 0) == 0
+    assert report["projected"] == 0 and report["frozen"].get("frozen", 0) == 0
     con = store.open_db(db, readonly=True)
     assert con.execute("SELECT lifecycle FROM fbs_game_status WHERE game_id=?", (GAME,)).fetchone()[0] == "in_progress"
-    assert con.execute("SELECT COUNT(*) FROM fbs_previews").fetchone()[0] == 0
+    assert con.execute("SELECT COUNT(*) FROM fbs_projections").fetchone()[0] == 0
     con.close()
 
 
@@ -808,7 +826,7 @@ def test_a_season_that_contradicts_its_kickoff_is_unverified_and_queued(tmp_path
     window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season=2025)])
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
-    assert report["previewed"] == 0 and report["locked"].get("inserted", 0) == 0
+    assert report["projected"] == 0 and report["frozen"].get("frozen", 0) == 0
     assert GAME in report["forecast"]["lock_risk"]
     assert GAME in report["forecast"]["excluded"]["season_contradicted"]
     con = store.open_db(db, readonly=True)
@@ -1010,11 +1028,14 @@ def test_a_10pm_eastern_game_is_locked_by_a_full_run_when_its_t90_window_opens_a
     open_scratch(db).close()
     kickoff = dt.datetime(2026, 10, 25, 2, 0, tzinfo=UTC)                 # 22:00 EDT, Oct 24
     now = dt.datetime(2026, 10, 25, 0, 30, tzinfo=UTC)                    # exactly T-90
+    window_board(boards, now - dt.timedelta(hours=1), [board_event(GAME, kickoff.isoformat(), "STATUS_SCHEDULED", False)])
+    projected = runner.run(days=10, db_path=db, now=now - dt.timedelta(hours=1))   # projects before the cutoff
+    assert GAME in projected["forecast"]["projected_games"]
+    boards.clear()
     window_board(boards, now, [board_event(GAME, kickoff.isoformat(), "STATUS_SCHEDULED", False)])
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
-    assert GAME in report["forecast"]["forecast_games"]
-    assert report["locked"]["inserted"] == len(runner.MODEL_ORDER)
+    assert report["frozen"]["frozen"] == len(runner.MODEL_ORDER)
 
 
 def test_the_fit_never_uses_an_outcome_at_or_after_its_cutoff():
@@ -1027,99 +1048,32 @@ def test_the_fit_never_uses_an_outcome_at_or_after_its_cutoff():
     assert state["train_last_date"] < cutoff
 
 
-def test_a_postseason_game_is_previewed_but_never_locked_until_bowl_ordering_is_decided(tmp_path, forecast_env, boards):
+# ------------------------------------- postseason games: the same projection, freeze and grade workflow
+
+def test_a_postseason_game_is_projected_frozen_and_graded_like_any_other(tmp_path, forecast_env, boards):
     db = str(tmp_path / "bowl.sqlite3")
     open_scratch(db).close()
-    now = KICK - dt.timedelta(minutes=60)
-    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season_type=3)])
-    report = runner.run(days=10, db_path=db, now=now)
-    assert report["forecast"]["status"] == "ok"
-    assert report["previewed"] == len(runner.MODEL_ORDER)
-    assert report["forecast"]["postseason_research_hold"] == [GAME]
-    assert report["locked"].get("inserted", 0) == 0
+    before = KICK - dt.timedelta(hours=3)
+    window_board(boards, before, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season_type=3)])
+    projected = runner.run(days=10, db_path=db, now=before)
+    assert projected["projected"] == len(runner.MODEL_ORDER) and projected["frozen"].get("frozen", 0) == 0
 
-
-# ------------------------------------- postseason research holds: durable, classified after kickoff, never missed
-
-def _postseason_preview(con, game_id, now, kickoff, hold=True):
-    """A pregame observation of a postseason game and its previews, the way a run writes them."""
-    rec = dict(game_id=game_id, season=2026, kickoff_utc=kickoff.isoformat(), home_team="H", away_team="A",
-               home_team_id="1", away_team_id="2", neutral_site=True, season_type=3)
-    obs = store.observe_fixture(con, rec, now, "test")
-    store.set_game_status(con, game_id, 2026, obs["revision"], "scheduled", "STATUS_SCHEDULED", now.isoformat(),
-                          "test", "pending", None)
-    if hold:
-        store.set_postseason_hold(con, game_id)
-    store.upsert_previews(con, [dict(game_id=game_id, model=m, season=2026, kickoff_utc=kickoff.isoformat(),
-                                     home_team="H", away_team="A", home_team_id="1", away_team_id="2",
-                                     model_version="v", p_home=0.55, fitted_through="2026-10-20",
-                                     hold_reason=store.POSTSEASON_HOLD if hold else None)
-                           for m in ("g2", "c2", "g2h")], now=now)
-
-
-def test_a_held_postseason_preview_is_window_not_eligible_after_kickoff_and_never_missed(tmp_path):
-    con = open_scratch(str(tmp_path / "held.sqlite3"))
-    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
-    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff)
-    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=1))
-    assert counts == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 3}
-    rows = con.execute("SELECT outcome, reason FROM fbs_window_outcomes").fetchall()
-    assert {tuple(r) for r in rows} == {("window_not_eligible", store.POSTSEASON_HOLD)}
-
-
-def test_without_the_hold_the_same_unlocked_bowl_would_be_a_missed_window(tmp_path):
-    con = open_scratch(str(tmp_path / "unheld.sqlite3"))
-    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
-    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff, hold=False)
-    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=1))
-    assert counts["missed_t90_window"] == 3
-
-
-@pytest.mark.parametrize("later", [
-    ("STATUS_IN_PROGRESS", "in_progress", False),
-    ("STATUS_FINAL", "completed", True),
-    ("STATUS_POSTPONED", "postponed", False),
-    ("STATUS_CANCELED", "cancelled", False),
-    ("STATUS_UNRECOGNISED", "unknown", False),
-])
-def test_the_postseason_hold_survives_every_later_status_change(tmp_path, later):
-    con = open_scratch(str(tmp_path / "later.sqlite3"))
-    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
-    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff)
-    name, lifecycle, completed = later
-    rec = dict(game_id="bowl", season=2026, kickoff_utc=kickoff.isoformat(), home_team="H", away_team="A",
-               home_team_id="1", away_team_id="2", neutral_site=True, season_type=3)
-    obs = store.observe_fixture(con, rec, kickoff + dt.timedelta(hours=3), "test")
-    store.set_game_status(con, "bowl", 2026, obs["revision"], lifecycle, name, (kickoff + dt.timedelta(hours=3)).isoformat(),
-                          "test", "graded" if completed else "pending", None)
-    store.upsert_previews(con, [], now=kickoff - dt.timedelta(days=1))           # a later run writes no new rows
-    assert store.game_status(con, "bowl")["hold_reason"] == store.POSTSEASON_HOLD
-    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=4))
-    assert counts["missed_t90_window"] == 0 and counts["window_not_eligible"] == 3
-
-
-def test_a_postseason_preview_is_held_through_kickoff_and_final_results_in_a_real_run(tmp_path, forecast_env, boards):
-    db = str(tmp_path / "bowl-run.sqlite3")
-    open_scratch(db).close()
-    now = KICK - dt.timedelta(minutes=60)
-    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season_type=3)])
-    before = runner.run(days=10, db_path=db, now=now)
-    assert before["previewed"] == len(runner.MODEL_ORDER) and before["locked"].get("inserted", 0) == 0
     boards.clear()
-    window_board(boards, KICK + dt.timedelta(hours=1),
-                 [board_event(GAME, KICK.isoformat(), "STATUS_IN_PROGRESS", False, 7, 3, season_type=3)])
-    after = runner.run(days=10, db_path=db, now=KICK + dt.timedelta(hours=1))
+    window_board(boards, KICK - dt.timedelta(minutes=60),
+                 [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season_type=3)])
+    frozen = runner.run(days=10, db_path=db, now=KICK - dt.timedelta(minutes=60))
+    assert frozen["frozen"]["frozen"] == len(runner.MODEL_ORDER)
+
     boards.clear()
     window_board(boards, KICK + dt.timedelta(hours=3),
                  [board_event(GAME, KICK.isoformat(), "STATUS_FINAL", True, 24, 20, season_type=3)])
     final = runner.run(days=10, db_path=db, now=KICK + dt.timedelta(hours=3))
-    assert final["missed"]["missed_t90_window"] == 0
-    assert after["previewed"] == 0                             # started games receive no new preview
+    assert final["grade"]["graded"] == len(runner.MODEL_ORDER)
     con = store.open_db(db, readonly=True)
-    rows = con.execute("SELECT outcome, reason FROM fbs_window_outcomes").fetchall()
+    rows = con.execute("SELECT model, lock_protocol, result FROM fbs_forecasts ORDER BY model").fetchall()
     con.close()
-    assert len(rows) == 3 and {tuple(r) for r in rows} == {("window_not_eligible", store.POSTSEASON_HOLD)}
-    assert after["forecast"]["status"] == final["forecast"]["status"] == "ok"
+    assert [tuple(r) for r in rows] == [("g2", "t90", 1), ("c2", "t90", 1), ("g2h", "t90", 1)] or \
+        sorted(tuple(r) for r in rows) == sorted([("g2", "t90", 1), ("c2", "t90", 1), ("g2h", "t90", 1)])
 
 
 def test_a_postseason_event_keeps_its_espn_season_type_and_phase_and_g2_does_not_depend_on_it(monkeypatch):
@@ -1224,7 +1178,7 @@ def test_audit_on_a_legacy_copy_reports_migration_required_with_its_legacy_count
     assert report["schema_status"] == "migration_required"
     assert report["forecast_rows"] == 1 and report["rows_by_protocol"] == {"legacy": 1}
     assert report["late_rows"] == 0 and report["graded_rows"] is None
-    assert {u["table"] for u in report["unavailable"]} >= {"fbs_previews", "fbs_game_status", "fbs_model_meta"}
+    assert {u["table"] for u in report["unavailable"]} >= {"fbs_projections", "fbs_game_status", "fbs_model_meta"}
     assert runner.main(["--audit", "--db", db]) == 5
     assert open(db, "rb").read() == before
 
@@ -1235,7 +1189,7 @@ def test_audit_on_a_current_copy_is_full_and_changes_nothing(tmp_path):
     before = open(db, "rb").read()
     report = runner.audit(db)
     assert report["schema_status"] == "current" and report["unavailable"] == []
-    assert report["forecast_rows"] == 0 and "postseason_research_hold_previews" in report
+    assert report["forecast_rows"] == 0 and report["projection_rows"] == 0
     assert runner.main(["--audit", "--db", db]) == 0
     assert open(db, "rb").read() == before
 
@@ -1247,39 +1201,25 @@ def test_audit_of_a_missing_file_creates_nothing(tmp_path):
     assert not os.path.exists(db)
 
 
-def test_a_version_one_scratch_database_gains_the_hold_columns_on_migration(tmp_path):
-    db = str(tmp_path / "v1" / "scratch.sqlite3")
-    os.makedirs(os.path.dirname(db))
-    v1 = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
-    raw = sqlite3.connect(db)
-    raw.executescript(v1 + store.TRIGGERS)
-    raw.execute("PRAGMA user_version = 1")
-    raw.execute("INSERT INTO fbs_game_status(game_id,season,revision,lifecycle,observed_utc,source,grading_state)"
-                " VALUES('1',2026,1,'scheduled','2026-10-20T00:00:00+00:00','test','pending')")
-    raw.commit()
-    raw.close()
-    assert "hold_reason" not in store.table_columns(sqlite3.connect(db), "fbs_game_status")
-    evidence = store.migrate(db, str(tmp_path / "backups"))
-    assert evidence["action"] == "migrated"
-    con = store.open_db(db)
-    assert "hold_reason" in store.table_columns(con, "fbs_previews")
-    assert con.execute("SELECT game_id, lifecycle FROM fbs_game_status").fetchall()[0][0] == "1"
+def test_nothing_is_projected_after_the_cutoff_so_a_late_first_sighting_is_a_missed_cutoff(tmp_path, forecast_env,
+                                                                                           boards, monkeypatch):
+    db = str(tmp_path / "late-sighting.sqlite3")
+    open_scratch(db).close()
+    calls = []
+    real_g2 = runner.g2_for_slate
+    monkeypatch.setattr(runner, "g2_for_slate", lambda frame, slate: calls.append(len(slate)) or real_g2(frame, slate))
+    now = KICK - dt.timedelta(minutes=60)                       # inside the window: the cutoff has passed
+    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
+    report = runner.run(days=10, db_path=db, now=now)
+    assert report["forecast"]["projected"] == 0 and calls == []   # no model is asked for a new projection
+    assert report["frozen"]["frozen"] == 0 and report["frozen"]["not_due"] == 0
+    con = store.open_db(db, readonly=True)
+    assert con.execute("SELECT COUNT(*) FROM fbs_projections").fetchone()[0] == 0
     con.close()
-
-
-def test_audit_of_a_version_one_copy_names_the_missing_hold_columns(tmp_path):
-    db = str(tmp_path / "v1-audit" / "scratch.sqlite3")
-    os.makedirs(os.path.dirname(db))
-    v1 = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
-    raw = sqlite3.connect(db)
-    raw.executescript(v1 + store.TRIGGERS)
-    raw.execute("PRAGMA user_version = 1")
-    raw.commit()
-    raw.close()
-    before = open(db, "rb").read()
-    report = runner.audit(db)
-    assert report["schema_status"] == "migration_required"
-    assert {(u.get("table"), u.get("column")) for u in report["unavailable"]} == {
-        ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason")}
-    assert open(db, "rb").read() == before
-
+    boards.clear()
+    window_board(boards, KICK + dt.timedelta(hours=1), [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
+    later = runner.run(days=10, db_path=db, now=KICK + dt.timedelta(hours=1))
+    assert later["forecast"]["missed"]["missed_t90_window"] == 1          # the cutoff passed with nothing to freeze
+    con = store.open_db(db, readonly=True)
+    assert con.execute("SELECT model, reason FROM fbs_window_outcomes").fetchall()[0][:] == ("*", "no_projection_before_cutoff")
+    con.close()

@@ -11,7 +11,7 @@ import sqlite3
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
-from fbs_model_store import DEFAULT_DB, export_payload, open_db
+from fbs_model_store import DEFAULT_DB, DEFAULT_MODEL, MODEL_IDS, MODEL_LABELS, MODEL_NOTES, export_payload, open_db
 
 router = APIRouter()
 MODEL_DB = os.environ.get("FBS_MODEL_DB_PATH", DEFAULT_DB)
@@ -22,9 +22,11 @@ SOURCE = "standalone FBS model database"
 def ncaaf_model_locks(response: Response, season: int = Query(2026, ge=2020, le=2100)):
     if not os.path.exists(MODEL_DB):
         payload = {
-            "league": "ncaaf", "default_model": "g2h", "models": [], "records": {},
-            "season": season, "games": [], "ratings": [], "meta": {},
-            "state": "awaiting_first_lock", "source": SOURCE,
+            "league": "ncaaf", "default_model": DEFAULT_MODEL,
+            "models": [{"id": m, "label": MODEL_LABELS[m], "note": MODEL_NOTES[m]} for m in MODEL_IDS],
+            "records": {}, "season": season, "games": [], "ratings": [], "meta": {},
+            "state": "awaiting_first_projection", "source": SOURCE,
+            "diagnostics": {"schema_status": "not_initialized"},
         }
     else:
         try:

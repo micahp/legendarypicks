@@ -141,83 +141,130 @@ def _scheduled(con, game_id="401871055", kickoff=None, observed=None, lifecycle=
     return obs
 
 
-def test_forecast_is_not_locked_before_the_t90_window(con):
-    report = store.lock_forecasts(con, [_row()], now=KICKOFF - dt.timedelta(hours=10))
-    assert report["not_due"] == 1
+def project(con, now, models=None, kickoff=None, p_home=0.6, game_id="401871055"):
+    """Store the latest pregame projection for each model, as a run does before the cutoff."""
+    rows = [_row(game_id=game_id, model=m, kickoff=kickoff or KICKOFF, p_home=p_home)
+            for m in (models or store.MODEL_IDS)]
+    return store.upsert_projections(con, rows, now=now)
+
+
+def test_a_projection_is_stored_before_its_cutoff_and_each_run_replaces_it(con):
+    before = KICKOFF - dt.timedelta(hours=10)
+    assert project(con, before, p_home=0.55) == 3
+    assert project(con, before + dt.timedelta(hours=1), p_home=0.61) == 3
+    row = con.execute("SELECT p_home, projected_at_utc FROM fbs_projections WHERE model = 'g2h'").fetchone()
+    assert row[0] == 0.61 and row[1] == (before + dt.timedelta(hours=1)).isoformat()
+    cutoff = KICKOFF - store.LOCK_LEAD
+    assert project(con, cutoff, p_home=0.9) == 0                       # at the cutoff: nothing new is stored
+    assert project(con, KICKOFF - dt.timedelta(minutes=30), p_home=0.9) == 0
+    assert con.execute("SELECT p_home FROM fbs_projections WHERE model = 'g2h'").fetchone()[0] == 0.61
+
+
+def test_nothing_is_frozen_before_the_cutoff(con):
+    _scheduled(con, observed=KICKOFF - dt.timedelta(hours=10))
+    project(con, KICKOFF - dt.timedelta(hours=10))
+    report = store.freeze_projections(con, now=KICKOFF - dt.timedelta(hours=2))
+    assert report["not_due"] == 3 and report["frozen"] == 0
     assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
 
 
-def test_lock_inside_window_is_labelled_and_immutable(con):
-    inside = KICKOFF - dt.timedelta(minutes=45)
-    _scheduled(con)
-    store.lock_forecasts(con, [_row()], now=inside)
-    row = con.execute("SELECT * FROM fbs_forecasts").fetchone()
-    assert row["lock_protocol"] == store.LOCK_PROTOCOL
-    assert row["locked_at_utc"] == inside.isoformat()
-    assert row["late"] == 0
-    with pytest.raises(sqlite3.Error):
-        con.execute("UPDATE fbs_forecasts SET p_home = 0.9")
-    with pytest.raises(sqlite3.Error):
-        con.execute("DELETE FROM fbs_forecasts")
+def test_a_projection_freezes_exactly_at_the_cutoff_and_not_a_second_before(con):
+    _scheduled(con, observed=KICKOFF - dt.timedelta(hours=10))
+    project(con, KICKOFF - dt.timedelta(hours=10))
+    cutoff = KICKOFF - store.LOCK_LEAD
+    assert store.freeze_projections(con, now=cutoff - dt.timedelta(seconds=1))["not_due"] == 3
+    assert store.freeze_projections(con, now=cutoff)["frozen"] == 3
 
 
-def test_nothing_locks_after_kickoff_and_the_missed_window_is_recorded_once(con):
-    _scheduled(con)                       # a verified pregame schedule, so the window existed
-    store.upsert_previews(con, [_row()], now=KICKOFF - dt.timedelta(hours=10))
+def test_a_frozen_projection_is_the_stored_one_with_its_timestamps_and_never_changes(con):
+    before = KICKOFF - dt.timedelta(hours=10)
+    _scheduled(con, observed=before)
+    project(con, before, p_home=0.61)
+    cutoff = KICKOFF - store.LOCK_LEAD
+    frozen_at = cutoff + dt.timedelta(minutes=1)
+    assert store.freeze_projections(con, now=frozen_at)["frozen"] == 3
+    row = con.execute("SELECT * FROM fbs_forecasts WHERE model = 'g2h'").fetchone()
+    assert row["p_home"] == 0.61                                       # copied from the stored projection
+    assert row["projected_at_utc"] == before.isoformat()
+    assert row["cutoff_utc"] == cutoff.isoformat()
+    assert row["locked_at_utc"] == frozen_at.isoformat()
+    assert row["lock_protocol"] == store.LOCK_PROTOCOL and row["late"] == 0
+    assert store.freeze_projections(con, now=frozen_at + dt.timedelta(minutes=1))["already_frozen"] == 3
+    for statement in ("UPDATE fbs_forecasts SET p_home = 0.9", "UPDATE fbs_forecasts SET cutoff_utc = 'x'",
+                      "DELETE FROM fbs_forecasts"):
+        with pytest.raises(sqlite3.Error):
+            con.execute(statement)
+
+
+def test_a_later_run_after_the_freeze_cannot_change_a_frozen_projection(con):
+    before = KICKOFF - dt.timedelta(hours=10)
+    _scheduled(con, observed=before)
+    project(con, before, p_home=0.61)
+    store.freeze_projections(con, now=KICKOFF - store.LOCK_LEAD)
+    assert project(con, KICKOFF - dt.timedelta(minutes=60), p_home=0.9) == 0
+    assert con.execute("SELECT p_home FROM fbs_forecasts WHERE model = 'g2h'").fetchone()[0] == 0.61
+
+
+def test_nothing_freezes_after_kickoff_and_the_missed_cutoff_is_recorded_once(con):
+    _scheduled(con, observed=KICKOFF - dt.timedelta(hours=10))
+    project(con, KICKOFF - dt.timedelta(hours=10))
     after = KICKOFF + dt.timedelta(minutes=5)
-    report = store.lock_forecasts(con, [_row()], now=after)
-    assert report["after_kickoff"] == 1
+    assert store.freeze_projections(con, now=after)["after_kickoff"] == 3
     assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
-    assert store.record_missed_windows(con, now=after)["missed_t90_window"] == 1
+    assert store.record_missed_windows(con, now=after)["missed_t90_window"] == 3
     assert store.record_missed_windows(con, now=after + dt.timedelta(minutes=1))["missed_t90_window"] == 0
 
 
-def test_previews_are_replaced_and_never_lock(con):
-    store.upsert_previews(con, [_row(p_home=0.55)], now=KICKOFF - dt.timedelta(hours=10))
-    store.upsert_previews(con, [_row(p_home=0.61)], now=KICKOFF - dt.timedelta(hours=9))
-    assert con.execute("SELECT p_home FROM fbs_previews").fetchone()[0] == 0.61
-    assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
-    # Inside the lock window a preview is still written, so an untaken lock stays visible.
-    assert store.upsert_previews(con, [_row()], now=KICKOFF - dt.timedelta(hours=1)) == 1
-    assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
-    # After kickoff nothing is written.
-    assert store.upsert_previews(con, [_row()], now=KICKOFF) == 0
+def test_a_game_whose_pregame_status_is_unverified_at_the_cutoff_is_not_frozen(con):
+    before = KICKOFF - dt.timedelta(hours=10)
+    _scheduled(con, observed=before, lifecycle="unknown")
+    project(con, before)
+    report = store.freeze_projections(con, now=KICKOFF - store.LOCK_LEAD + dt.timedelta(minutes=1))
+    assert report["blocked_status"] == 3 and report["frozen"] == 0
+    assert store.record_missed_windows(con, now=KICKOFF + dt.timedelta(minutes=1))["blocked_unverified_at_cutoff"] == 3
 
 
-def test_export_reports_preview_status_and_no_official_record(con):
-    store.upsert_previews(con, [_row(model=m) for m in store.MODEL_IDS],
-                          now=KICKOFF - dt.timedelta(hours=10))
+def test_a_projection_card_carries_no_status_label_and_no_frozen_record(con):
+    project(con, KICKOFF - dt.timedelta(hours=10))
     payload = store.export_payload(con, 2026)
     game = payload["games"][0]
-    assert game["status"] == "preview"
-    assert game["models"]["g2h"]["previewed_at_utc"]
-    assert payload["records"]["g2h"]["forecasts"] == 0
+    assert "status" not in game and "locked_at_utc" not in game
+    assert game["models"]["g2h"]["p_home"] == 0.6 and game["models"]["g2h"]["frozen_at_utc"] is None
+    assert game["result"] is None
+    assert payload["records"]["g2h"]["frozen"] == 0 and payload["records"]["g2h"]["graded"] == 0
+    assert payload["state"] == "available" and payload["diagnostics"]["frozen_rows"] == 0
 
 
-def test_export_reports_a_taken_lock_as_locked_with_its_freeze_time(con):
-    inside = KICKOFF - dt.timedelta(minutes=45)
-    _scheduled(con)
-    store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
+def test_a_frozen_projection_keeps_its_freeze_time_and_is_graded_once_from_a_verified_final(con):
+    _scheduled(con, observed=KICKOFF - dt.timedelta(hours=10))
+    project(con, KICKOFF - dt.timedelta(hours=10), p_home=0.7)
+    cutoff = KICKOFF - store.LOCK_LEAD
+    store.freeze_projections(con, now=cutoff)
+    with pytest.raises(ValueError, match="unverified"):
+        store.grade_forecasts(con, {"401871055": {"home_score": 24, "away_score": 20}}, now=KICKOFF + dt.timedelta(hours=3))
+    store.grade_forecasts(con, {"401871055": {"home_score": 24, "away_score": 20, "verified": True}},
+                          now=KICKOFF + dt.timedelta(hours=3))
+    with pytest.raises(sqlite3.Error):
+        con.execute("UPDATE fbs_forecasts SET result = 0")              # a result is written once
     payload = store.export_payload(con, 2026)
     game = payload["games"][0]
-    assert game["status"] == "locked"
-    assert game["locked_at_utc"] == inside.isoformat()
-    assert game["models"]["g2h"]["locked_at_utc"] == inside.isoformat()
-    assert payload["records"]["g2h"]["forecasts"] == 1  # one official g2h forecast, not yet graded
-    assert payload["records"]["g2h"]["graded"] == 0
+    assert game["result"] == {"home_score": 24, "away_score": 20, "home_win": True}
+    assert game["models"]["g2h"]["frozen_at_utc"] == cutoff.isoformat()
+    record = payload["records"]["g2h"]
+    assert record["frozen"] == 1 and record["graded"] == 1 and record["accuracy"] == 1.0
+    assert record["history"][0]["graded"] == 1 and record["history"][0]["home_win"] is True
 
 
-def test_legacy_rows_are_labelled_and_kept_out_of_the_record(con):
+def test_legacy_rows_are_kept_out_of_the_cards_and_the_record(con):
     # Shape of a row written before the protocol: midnight kickoff, labelled legacy.
     con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
                 "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
                 "VALUES('1','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','fbs-g2h-x',0.7,"
                 "'2026-10-20T21:26:35+00:00',NULL,1,'legacy')")
     payload = store.export_payload(con, 2026)
-    assert payload["games"][0]["status"] == "legacy"
-    assert payload["records"]["g2h"]["forecasts"] == 0
-    assert payload["records"]["g2h"]["legacy"] == 1
-    assert payload["records"]["g2h"]["late"] == 1
+    assert payload["games"] == []
+    assert payload["records"]["g2h"]["frozen"] == 0 and payload["records"]["g2h"]["graded"] == 0
+    assert payload["diagnostics"]["legacy_rows_excluded"] == 1
 
 
 def test_old_database_is_migrated_and_its_rows_are_labelled_legacy(tmp_path):
@@ -551,10 +598,12 @@ def test_archive_and_espn_score_disagreement_halts():
 
 def test_pending_grades_are_unpaid_games_whose_kickoff_has_passed(con):
     _scheduled(con, game_id="g1")
-    store.lock_forecasts(con, [_row(game_id="g1"), _row(game_id="g1", model="g2")], now=KICKOFF - dt.timedelta(hours=1))
+    project(con, KICKOFF - dt.timedelta(hours=10), models=("g2h", "g2"), game_id="g1")
+    store.freeze_projections(con, now=KICKOFF - store.LOCK_LEAD)
     assert store.pending_grades(con, KICKOFF - dt.timedelta(minutes=5)) == []
     assert [g for g, _ in store.pending_grades(con, KICKOFF + dt.timedelta(minutes=5))] == ["g1"]
-    store.grade_forecasts(con, {"g1": {"home_score": 24, "away_score": 20}}, now=KICKOFF + dt.timedelta(hours=3))
+    store.grade_forecasts(con, {"g1": {"home_score": 24, "away_score": 20, "verified": True}},
+                          now=KICKOFF + dt.timedelta(hours=3))
     assert store.pending_grades(con, KICKOFF + dt.timedelta(hours=4)) == []
 
 
@@ -645,7 +694,7 @@ def test_migrating_a_legacy_copy_keeps_every_existing_row_and_then_opens(tmp_pat
     assert evidence["action"] == "migrated"
     assert evidence["tables"]["fbs_forecasts"]["rows"] == 2
     assert evidence["lock_protocols"] == {"legacy": 2}
-    assert {"fbs_game_status", "fbs_previews", "fbs_unresolved", "fbs_window_outcomes"} <= set(evidence["tables_added"])
+    assert {"fbs_game_status", "fbs_projections", "fbs_unresolved", "fbs_window_outcomes"} <= set(evidence["tables_added"])
     assert _rows(evidence["backup"]) == before                    # the backup is the original, byte-for-byte rows
     assert _rows(db) == before                                    # the original columns are unchanged
     store.open_db(db).close()                                     # now opens: it is at SCHEMA_VERSION
@@ -700,84 +749,15 @@ def test_a_backup_is_never_overwritten(tmp_path, monkeypatch):
 
 # ------------------------------------- postseason holds: the store refuses official locks on its own
 
-HOLD = store.POSTSEASON_HOLD
-
-
-def test_a_direct_lock_call_refuses_a_persisted_postseason_hold(con):
-    inside = KICKOFF - dt.timedelta(minutes=45)
-    _scheduled(con)
-    store.set_postseason_hold(con, "401871055")
-    report = store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
-    assert report["inserted"] == 0 and report["blocked_hold"] == 3
-    assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
-
-
-def test_the_same_direct_lock_call_succeeds_when_no_hold_is_persisted(con):
-    inside = KICKOFF - dt.timedelta(minutes=45)
-    _scheduled(con)
-    report = store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
-    assert report["inserted"] == 3 and report["blocked_hold"] == 0
-
-
-def test_a_hold_persisted_only_on_one_model_preview_refuses_that_models_lock(con):
-    inside = KICKOFF - dt.timedelta(minutes=45)
-    _scheduled(con)
-    store.upsert_previews(con, [dict(_row(model="g2h"), hold_reason=HOLD)], now=inside - dt.timedelta(hours=1))
-    report = store.lock_forecasts(con, [_row(model="g2h"), _row(model="g2")], now=inside)
-    assert report["blocked_hold"] == 1 and report["inserted"] == 1
-    models = [r[0] for r in con.execute("SELECT model FROM fbs_forecasts")]
-    assert models == ["g2"]
-
-
-# ----------------------------------------- export: the research hold is visible before and after kickoff
-
-def test_a_held_bowl_is_research_only_in_the_export_before_and_after_kickoff(con):
-    before = KICKOFF - dt.timedelta(hours=10)
-    _scheduled(con, observed=before)
-    store.set_postseason_hold(con, "401871055")
-    store.upsert_previews(con, [dict(_row(model=m), hold_reason=HOLD) for m in store.MODEL_IDS], now=before)
-
-    pre = json.loads(json.dumps(store.export_payload(con, 2026)))
-    game = pre["games"][0]
-    assert game["status"] == "research_hold" and game["research_only"] is True
-    assert game["hold_reason"] == HOLD and game["official"] is False and game["locked_at_utc"] is None
-    assert set(game["models"]) == set(store.MODEL_IDS)
-    for model in game["models"].values():
-        assert model["official"] is False and model["research_only"] is True and model["hold_reason"] == HOLD
-    assert pre["records"]["g2h"]["forecasts"] == 0
-    assert pre["state"] == "awaiting_first_lock"             # a research hold alone is not an available forecast
-
-    counts = store.record_missed_windows(con, now=KICKOFF + dt.timedelta(hours=1))
-    assert counts == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 3}
-    post = json.loads(json.dumps(store.export_payload(con, 2026)))
-    game = post["games"][0]
-    assert game["status"] == "research_hold" and game["hold_reason"] == HOLD and game["official"] is False
-    assert post["records"]["g2h"]["forecasts"] == 0 and post["records"]["g2h"]["missed"] == 0
-    assert post["records"]["g2h"]["windows"] == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0,
-                                                 "window_not_eligible": 1, "locked": 0}
-    assert post["state"] == "awaiting_first_lock"
-
-
-def test_export_refuses_a_held_fixture_that_somehow_carries_an_official_lock(con):
-    _scheduled(con)
-    store.set_postseason_hold(con, "401871055")
-    con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,model_version,"
-                "p_home,created_at_utc,locked_at_utc,late,lock_protocol,kickoff_revision) "
-                "VALUES('401871055','g2h',2026,?,'A','B','v',0.6,?,?,0,'t90',1)",
-                (KICKOFF.isoformat(), KICKOFF.isoformat(), KICKOFF.isoformat()))
-    con.commit()
-    with pytest.raises(RuntimeError, match="postseason_research_hold"):
-        store.export_payload(con, 2026)
-
-
-# --------------------------------- schema: every required column is part of the version-2 contract
-
 def _partial_v2(path):
-    """A file at SCHEMA_VERSION with every table and trigger, but without the hold columns."""
+    """A file at SCHEMA_VERSION with every table and trigger, but without fbs_forecasts.cutoff_utc: neither the
+    column nor the trigger clause that names it."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    partial = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
+    partial_schema = store.SCHEMA.replace("    cutoff_utc TEXT,\n", "")
+    partial_triggers = store.TRIGGERS.replace(" projected_at_utc, cutoff_utc,", " projected_at_utc,")
+    assert partial_schema != store.SCHEMA and partial_triggers != store.TRIGGERS
     raw = sqlite3.connect(path)
-    raw.executescript(partial + store.TRIGGERS)
+    raw.executescript(partial_schema + partial_triggers)
     raw.execute("PRAGMA user_version = %d" % store.SCHEMA_VERSION)
     raw.execute("INSERT INTO fbs_game_status(game_id,season,revision,lifecycle,observed_utc,source,grading_state)"
                 " VALUES('1',2026,1,'scheduled','2026-10-20T00:00:00+00:00','test','pending')")
@@ -797,21 +777,21 @@ def test_a_version_two_file_missing_a_required_column_is_migration_required_and_
     assert _bytes(db) == before
     report = runner.audit(db)
     assert report["schema_status"] == "migration_required" and report["schema_version"] == store.SCHEMA_VERSION
-    assert {(u.get("table"), u.get("column")) for u in report["unavailable"]} == {
-        ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason")}
+    assert {(u.get("table"), u.get("column")) for u in report["unavailable"]} == {("fbs_forecasts", "cutoff_utc")}
     assert _bytes(db) == before
 
 
-def test_explicit_migration_recovers_an_incomplete_version_two_copy_without_touching_its_rows(tmp_path):
+def test_explicit_migration_recovers_an_incomplete_version_two_copy_and_refreshes_its_triggers(tmp_path):
     db = str(tmp_path / "partial-copy" / "fbs-model.dev.sqlite3")
     _partial_v2(db)
     evidence = store.migrate(db, str(tmp_path / "backups"))
     assert evidence["action"] == "migrated"
     con = store.open_db(db)
-    assert "hold_reason" in store.table_columns(con, "fbs_game_status")
-    assert "hold_reason" in store.table_columns(con, "fbs_previews")
+    assert "cutoff_utc" in store.table_columns(con, "fbs_forecasts")
     assert tuple(con.execute("SELECT game_id, season, revision, lifecycle, grading_state FROM fbs_game_status").fetchone()) \
         == ("1", 2026, 1, "scheduled", "pending")
+    trigger_sql = con.execute("SELECT sql FROM sqlite_master WHERE name = 'fbs_forecast_lock_immutable'").fetchone()[0]
+    assert "cutoff_utc" in trigger_sql
     con.close()
     assert store.migrate(db, str(tmp_path / "backups"))["action"] == "none"
     assert runner.audit(db)["schema_status"] == "current"

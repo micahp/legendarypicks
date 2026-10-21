@@ -1,15 +1,15 @@
-"""FBS model runner: parity certificate, previews, T-90 locks, grading.
+"""FBS model runner: parity certificate, projections, T-90 freezes, grading.
 
-Usage
-  python fbs_model_runner.py --parity          # reproduce the research walk-forward numbers
-  python fbs_model_runner.py --run --days 10   # preview the slate; lock inside T-90 if certified
-  python fbs_model_runner.py --grade-only
-  python fbs_model_runner.py --audit           # read-only provenance check of the stored rows
+One projection per game and model. Projections are computed before each game's lock cutoff (kickoff - 90 minutes).
+At the cutoff each model's latest projection is frozen. The frozen row is immutable, and it is graded once against
+a verified final. Postseason games follow the same workflow.
 
-Parity is the gate for locks. --parity writes a certificate bound to the frozen ledger and to
-the code that produced it. --run writes previews regardless, and writes locks only when a
-passing certificate matches the current code and ledger. A certificate for other code is not
-a certificate. Nothing locks after kickoff.
+  python fbs_model_runner.py --run --days 10   # project the slate; freeze at the cutoff if certified
+  python fbs_model_runner.py --grade-only      # grade frozen projections against verified finals
+  python fbs_model_runner.py --parity          # the 1e-6 parity gate that issues the certificate
+
+Freezing needs a parity certificate beside the database, and a certificate is never issued for an operational
+database by this code. Projections are written regardless of the certificate.
 """
 from __future__ import annotations
 
@@ -716,7 +716,8 @@ def grade_step(db_path: str, now: dt.datetime, frame: pd.DataFrame | None = None
             revision = (status or {}).get("revision", 1)
             observed = now.isoformat()
             if item["action"] == "grade":
-                results[game_id] = {"home_score": item["home_score"], "away_score": item["away_score"]}
+                results[game_id] = {"home_score": item["home_score"], "away_score": item["away_score"],
+                                    "verified": True}
                 store.resolve_unresolved(con, game_id, now, commit=False)
             elif item["action"] == "void":
                 store.set_game_status(con, game_id, season, revision, item["lifecycle"], item["status_name"],
@@ -781,21 +782,21 @@ def _slate_unavailable(con, now: dt.datetime, error: str) -> dict:
     except Exception:
         con.rollback()
         raise
-    return {"status": "slate_unavailable", "error": error, "previewed": 0,
-            "locked": {"blocked": "slate_unavailable"}, "missed": missed, "lock_risk": at_risk}
+    return {"status": "slate_unavailable", "error": error, "projected": 0,
+            "frozen": {"blocked": "slate_unavailable"}, "missed": missed, "lock_risk": at_risk}
 
 
 def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now: dt.datetime, days: int,
                     certified: bool, reason: str | None, rating_rows: list[dict], version: str, state,
                     extra: dict) -> dict:
-    """Every write of one forecast run. The caller owns the transaction and commits once.
+    """Every write of one forecast run, in the caller's transaction. Nothing here commits.
 
-    `predictions` holds only games that passed forecast_candidates(), or is None when none did. Statuses are written
-    for every game on the board, started or not, so lifecycle stays current for grading. A postseason fixture gets
-    its durable research hold on observation, before kickoff. Its previews carry the same reason, and it is never
-    locked."""
+    Statuses are written for every game on the board, so lifecycle stays current for grading. `predictions` holds the
+    games still before their lock cutoff, or is None. The freeze then copies stored projections for every game whose
+    cutoff has passed and whose pregame status verifies. Postseason games follow the same path as any other game.
+    """
     horizon_end = forecast_horizon_end(now, days)
-    seen, postseason = {}, set()
+    seen = {}
     for rec in slate.to_dict("records"):
         game_id = rec["game_id"]
         season = int(rec["season"])
@@ -813,9 +814,6 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
             status_reason = "schedule_unresolved_" + lifecycle
         store.set_game_status(con, game_id, season, obs["revision"], lifecycle, rec["status_name"],
                               now.isoformat(), "espn_scoreboard", grading, status_reason, commit=False)
-        if rec.get("season_type") == 3:
-            postseason.add(str(game_id))
-            store.set_postseason_hold(con, game_id, commit=False)
         seen[game_id] = (lifecycle, obs)
         if lifecycle == "unknown" and now < store.parse_time(obs["kickoff_utc"]):
             # A pregame verification failure: visible at once, because the lock may still be taken.
@@ -840,32 +838,25 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
         store.record_unresolved(con, game_id, row["season"], fixture["kickoff_utc"], "absent_from_board", now,
                                 commit=False, lock_risk=now < kickoff)
 
-    rows, lock_rows, held = [], [], set()
+    rows = []
     for row in (predictions.itertuples(index=False) if predictions is not None else []):
         lifecycle, obs = seen.get(str(row.game_id), ("unknown", None))
         if obs is None or obs["identity_changed"] or lifecycle != "scheduled":
             continue
-        if now >= store.parse_time(obs["kickoff_utc"]):
-            continue                      # started games never receive a new forecast
-        hold = store.POSTSEASON_HOLD if str(row.game_id) in postseason else None
+        if now >= store.cutoff_for(store.parse_time(obs["kickoff_utc"])):
+            continue                      # projections are never computed after the cutoff
         for model in MODEL_ORDER:
-            item = {
+            rows.append({
                 "game_id": str(row.game_id), "model": model, "season": int(row.season),
                 "kickoff_utc": obs["kickoff_utc"], "home_team": row.home_team, "away_team": row.away_team,
                 "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
                 "model_version": version % model,
                 "p_home": float(getattr(row, "p_" + model)),
                 "fitted_through": str(state["train_last_date"].date()),
-                "hold_reason": hold,
-            }
-            rows.append(item)
-            if hold:
-                held.add(str(row.game_id))
-            else:
-                lock_rows.append(item)
+            })
 
-    previewed = store.upsert_previews(con, rows, now=now, commit=False)
-    locked = store.lock_forecasts(con, lock_rows, now=now, commit=False) if certified else {"blocked": reason}
+    projected = store.upsert_projections(con, rows, now=now, commit=False)
+    frozen = store.freeze_projections(con, now=now, commit=False) if certified else {"blocked": reason}
     missed = store.record_missed_windows(con, now=now, commit=False)
     if rating_rows:
         store.store_ratings(con, rating_rows, now.isoformat(), commit=False)
@@ -878,10 +869,9 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
     for row in con.execute("SELECT lifecycle, grading_state, COUNT(*) AS n FROM fbs_game_status "
                            "WHERE game_id IN (%s) GROUP BY 1, 2" % ",".join("?" * len(seen)), list(seen)).fetchall():
         statuses["%s/%s" % (row["lifecycle"], row["grading_state"])] = row["n"]
-    report = {"previewed": previewed, "locked": locked, "missed": missed, "lock_risk": lock_risk,
+    report = {"projected": projected, "frozen": frozen, "missed": missed, "lock_risk": lock_risk,
               "games": len(seen), "statuses": statuses,
-              "forecast_games": sorted({r["game_id"] for r in rows}),
-              "postseason_research_hold": sorted(held), **extra}
+              "projected_games": sorted({r["game_id"] for r in rows}), **extra}
     store.record_run(con, "forecast", "ok", report, now, commit=False)
     return {**report, "locks_blocked": None if certified else reason}
 
@@ -902,20 +892,28 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
                      "horizon_end_utc": forecast_horizon_end(now, days).astimezone(dt.timezone.utc).isoformat()}
         if slate.empty:
             store.record_run(con, "forecast", "empty_slate", inventory, now)
-            return {"status": "empty_slate", "previewed": 0, "locked": {}, "missed": {}, **inventory}
+            return {"status": "empty_slate", "projected": 0, "frozen": {}, "missed": {}, **inventory}
 
         candidates, excluded = forecast_candidates(slate, now, days)
-        inventory.update(excluded=excluded, candidates=sorted(candidates["game_id"].astype(str)))
-        print("slate: %d games on %d scoreboard dates; %d eligible for a new forecast"
-              % (len(slate), len(board), len(candidates)))
+        if candidates.empty:
+            projectable = candidates
+        else:
+            before_cutoff = candidates["kickoff_utc"].map(lambda kickoff: now < store.cutoff_for(kickoff))
+            projectable = candidates[before_cutoff].copy()
+        inventory.update(excluded=excluded, candidates=sorted(candidates["game_id"].astype(str)),
+                         projectable=sorted(projectable["game_id"].astype(str)),
+                         past_cutoff=sorted(set(candidates["game_id"].astype(str))
+                                            - set(projectable["game_id"].astype(str))))
+        print("slate: %d games on %d scoreboard dates; %d eligible; %d still before their cutoff"
+              % (len(slate), len(board), len(candidates), len(projectable)))
         certified, reason = parity_certified(db_path)
         if not certified:
             print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
 
         predictions, state, rating_rows = None, None, []
-        if not candidates.empty:
-            scored = g2_for_slate(frame, candidates)
-            feats = slate_features(team_games, frame, candidates, now)
+        if not projectable.empty:
+            scored = g2_for_slate(frame, projectable)
+            feats = slate_features(team_games, frame, projectable, now)
             scored = scored.merge(feats, on="game_id", how="left")
             covered = scored["points_per_drive_diff"].notna()
             inventory["uncovered"] = sorted(scored.loc[~covered, "game_id"].astype(str))
@@ -954,7 +952,7 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
             con.rollback()
             print("forecast rolled back, nothing written: %r" % exc, file=sys.stderr)
             store.record_run(con, "forecast", "rolled_back", {"error": repr(exc)}, now)
-            return {"status": "rolled_back", "error": repr(exc), "previewed": 0, "locked": {}, "missed": {}}
+            return {"status": "rolled_back", "error": repr(exc), "projected": 0, "frozen": {}, "missed": {}}
         return {"status": "ok", **report}
     finally:
         con.close()
@@ -967,24 +965,24 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     try:
         frame, team_games = service.build_frame(verbose=True, return_team_games=True)
     except service.FBSModelError as exc:
-        forecast = {"status": "model_unavailable", "error": str(exc), "previewed": 0, "locked": {}, "missed": {}}
+        forecast = {"status": "model_unavailable", "error": str(exc), "projected": 0, "frozen": {}, "missed": {}}
         frame = None
     else:
         try:
             forecast = forecast_step(db_path, days, now, frame, team_games)
         except service.FBSModelError as exc:
-            forecast = {"status": "model_error", "error": str(exc), "previewed": 0, "locked": {}, "missed": {}}
+            forecast = {"status": "model_error", "error": str(exc), "projected": 0, "frozen": {}, "missed": {}}
     grade = grade_step(db_path, now, frame)
     return {"forecast": forecast, "grade": grade,
-            "previewed": forecast.get("previewed", 0), "locked": forecast.get("locked", {}),
+            "projected": forecast.get("projected", 0), "frozen": forecast.get("frozen", {}),
             "missed": forecast.get("missed", {}), "lock_risk": forecast.get("lock_risk", []),
             "graded": grade.get("graded", 0), "locks_blocked": forecast.get("locks_blocked"),
             "reason": forecast.get("status")}
 
 
 FEATURE_OF_TABLE = {
-    "fbs_previews": "previews and postseason research holds",
-    "fbs_game_status": "fixture lifecycle, grading state and holds",
+    "fbs_projections": "pregame projections",
+    "fbs_game_status": "fixture lifecycle and grading state",
     "fbs_fixture_revisions": "fixture revision history",
     "fbs_window_outcomes": "T-90 window classification",
     "fbs_unresolved": "unresolved and lock-risk queue",
@@ -1043,12 +1041,8 @@ def audit(db_path: str = store.DEFAULT_DB) -> dict:
             report["t90_rows_locked_at_or_after_kickoff"] = sum(
                 1 for row in locked
                 if store.parse_time(row["locked_at_utc"]) >= store.parse_time(row["kickoff_utc"]))
-        if "fbs_previews" in tables:
-            preview_columns = store.table_columns(con, "fbs_previews")
-            report["preview_rows"] = count("SELECT COUNT(*) FROM fbs_previews")
-            report["postseason_research_hold_previews"] = count(
-                "SELECT COUNT(*) FROM fbs_previews WHERE hold_reason = '%s'" % store.POSTSEASON_HOLD) \
-                if "hold_reason" in preview_columns else None
+        if "fbs_projections" in tables:
+            report["projection_rows"] = count("SELECT COUNT(*) FROM fbs_projections")
         if "fbs_lock_events" in tables:
             report["missed_lock_events"] = count("SELECT COUNT(*) FROM fbs_lock_events")
         if "fbs_window_outcomes" in tables:
