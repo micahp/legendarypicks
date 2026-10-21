@@ -1,0 +1,11 @@
+[Unit]
+Description=Prune Legendary Picks database backups to the retention policy (docs/BACKUP-POLICY.md)
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/prune_backups.py --apply
+TimeoutStartSec=600
+Nice=10
+IOSchedulingClass=idle
