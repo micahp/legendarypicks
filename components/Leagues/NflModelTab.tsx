@@ -10,6 +10,16 @@ interface Line {
   source: 'snapshot' | 'lock row'
 }
 
+// The Model Pick, built by the backend (nfl_metrics.model_pick). The label is shown as sent.
+interface ModelPick {
+  market: 'spread' | 'ml' | 'total' | null
+  side: 'home' | 'away' | 'over' | 'under' | null
+  line: number | null
+  rule: number | null
+  status: 'pick' | 'no_line' | 'no_pick'
+  label: string
+}
+
 interface Lock {
   proj_home: number | null
   proj_away: number | null
@@ -20,9 +30,8 @@ interface Lock {
   preview: boolean
   previewed_at: string | null
   line: Line
-  pick: string // backwards-compatible spread alias
-  picks: { winner: string; spread: string; total: string }
-  grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null; total: string } | null
+  pick: ModelPick
+  grade: { brier: number | null; margin_err: number; total_err: number; su: string | null; pick: string | null } | null
 }
 
 interface ModelInfo {
@@ -60,8 +69,7 @@ interface RecordRow extends ModelInfo {
   graded: number
   awaiting: number
   su: Tally | null
-  ats: Tally | null
-  total: Tally | null
+  pick: Tally | null
   mean_brier?: number | null
   brier_n?: number
 }
@@ -99,6 +107,7 @@ type EdgeFilter = 'all' | '3' | '6'
 
 const one = (value: number) => value.toFixed(1)
 const signed = (value: number) => `${value > 0 ? '+' : ''}${one(value)}`
+const brierText = (value: number | null | undefined) => value == null ? 'n/a' : value.toFixed(4)
 
 function dayLabel(iso: string | null) {
   if (!iso) return 'Date unknown'
@@ -122,31 +131,6 @@ function modelSide(home: string, away: string, homeMargin: number) {
   return homeMargin > 0 ? `${home} -${one(homeMargin)}` : `${away} -${one(Math.abs(homeMargin))}`
 }
 
-function winnerPick(game: ModelGame, lock: Lock) {
-  const side = lock.picks.winner
-  if (side === 'no_pick') return 'No pick'
-  return `${side === 'home' ? game.home : game.away} ML`
-}
-
-function spreadPick(game: ModelGame, lock: Lock) {
-  // This is the frozen pick returned by the API; never recompute the side in the browser.
-  const side = lock.picks.spread
-  const marketMargin = lock.line.spread
-  if (side === 'no_line' || marketMargin == null) return 'No line'
-  if (side === 'no_pick') return 'No pick'
-  const spread = Math.abs(marketMargin)
-  if (marketMargin === 0) return `${side === 'home' ? game.home : game.away} Pick`
-  if (side === 'home') return `${game.home} ${marketMargin > 0 ? `-${one(spread)}` : `+${one(spread)}`}`
-  return `${game.away} ${marketMargin < 0 ? `-${one(spread)}` : `+${one(spread)}`}`
-}
-
-function totalPick(lock: Lock) {
-  const side = lock.picks.total
-  if (side === 'no_line' || lock.line.total == null) return 'No line'
-  if (side === 'no_pick') return 'No pick'
-  return `${side === 'over' ? 'Over' : 'Under'} ${one(lock.line.total)}`
-}
-
 function edge(lock: Lock) {
   return lock.line.spread == null ? null : Math.abs(lock.margin - lock.line.spread)
 }
@@ -155,35 +139,25 @@ function totalEdge(lock: Lock) {
   return lock.line.total == null || lock.total == null ? null : lock.total - lock.line.total
 }
 
-type GradeMarket = 'su' | 'ats' | 'total'
-
-function statusLabel(lock: Lock, market: GradeMarket) {
-  if (!lock.grade) return 'AWAITING'
-  const result = lock.grade[market]
-  const labels: Record<string, string> = { win: 'WIN', loss: 'LOSS', push: 'PUSH', tie: 'TIE', no_pick: 'NO PICK', no_line: 'NO LINE' }
-  return labels[result || ''] || '—'
+// The grade is the backend's grade.pick, shown as sent. The browser never works out a result.
+function resultLabel(result: string | null) {
+  const labels: Record<string, string> = { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }
+  return labels[result || ''] || 'n/a'
 }
 
-function statusClass(lock: Lock, market: GradeMarket) {
-  if (!lock.grade) return 'text-zinc-500'
-  if (lock.grade[market] === 'win') return 'text-emerald-400'
-  if (lock.grade[market] === 'loss') return 'text-rose-400'
+function resultClass(result: string | null) {
+  if (result === 'win') return 'text-emerald-400'
+  if (result === 'loss') return 'text-rose-400'
   return 'text-zinc-300'
 }
 
-function ModelPicks({ game, lock }: { game: ModelGame; lock: Lock }) {
-  const markets: { name: string; choice: string; grade: GradeMarket }[] = [
-    { name: 'Winner', choice: winnerPick(game, lock), grade: 'su' },
-    { name: 'Spread', choice: spreadPick(game, lock), grade: 'ats' },
-    { name: 'Total', choice: totalPick(lock), grade: 'total' },
-  ]
+// One Model Pick per game: the backend's label, and its grade once the final is recorded.
+function ModelPickBlock({ lock }: { lock: Lock }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3" aria-label="Model picks">
-      {markets.map(market => <div key={market.name} className="min-w-0">
-        <div className="text-xs uppercase tracking-wider text-zinc-500">{market.name} pick</div>
-        <div className="text-sm font-semibold text-zinc-100">{market.choice}</div>
-        {lock.grade && <div className={`mt-0.5 text-xs font-semibold ${statusClass(lock, market.grade)}`}>{statusLabel(lock, market.grade)}</div>}
-      </div>)}
+    <div className="min-w-0">
+      <div className="text-xs uppercase tracking-wider text-zinc-500">Model Pick</div>
+      <div className="text-sm font-semibold text-zinc-100">{lock.pick.label}</div>
+      {lock.grade && <div className={`mt-0.5 text-xs font-semibold ${resultClass(lock.grade.pick)}`}>{resultLabel(lock.grade.pick)}</div>}
     </div>
   )
 }
@@ -275,7 +249,7 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
       </div>
       <p className="text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
-      <div className="border-t border-zinc-800 pt-3"><ModelPicks game={game} lock={lock} /></div>
+      <div className="border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
     </article>
   )
 }
@@ -304,7 +278,7 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
               </div>
             </div>
           </div>
-          <div className="mt-3 border-t border-zinc-800 pt-3"><ModelPicks game={game} lock={lock} /></div>
+          <div className="mt-3 border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
           <p className="mt-2 text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
           {lock.proj_home == null || lock.proj_away == null ? (
             <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
@@ -369,6 +343,25 @@ function TallyLabel({ title, tally }: { title: string; tally: Tally | null }) {
   if (!tally) return <span>{title} —</span>
   const extras = (tally.push ?? tally.tie ?? 0) > 0 ? ` · ${tally.push ?? tally.tie} ${tally.push ? 'push' : 'tie'}` : ''
   return <span>{title} {tally.win}-{tally.loss}{extras}</span>
+}
+
+// The record header: the Model Pick tally (W-L-P, no_pick and no_line apart), then the model metrics.
+function RecordSummary({ record }: { record: RecordRow }) {
+  const pick = record.pick
+  const sep = <span className="text-zinc-600">·</span>
+  return (
+    <>
+      <span className="font-semibold text-zinc-100">{`Model Pick ${pick?.win ?? 0}-${pick?.loss ?? 0}-${pick?.push ?? 0}`}</span>
+      {(pick?.no_pick ?? 0) > 0 && <>{sep}<span>{`${pick?.no_pick} no pick`}</span></>}
+      {(pick?.no_line ?? 0) > 0 && <>{sep}<span>{`${pick?.no_line} no line`}</span></>}
+      {sep}
+      <TallyLabel title="Straight-up" tally={record.su} />
+      {sep}
+      <span>{`Brier ${brierText(record.mean_brier)} · n ${record.brier_n ?? 0}`}</span>
+      {sep}
+      <span>{`${record.graded} graded${record.awaiting ? ` · ${record.awaiting} awaiting` : ''}`}</span>
+    </>
+  )
 }
 
 export default function NflModelTab() {
@@ -489,7 +482,7 @@ export default function NflModelTab() {
       </>}
 
       {view === 'record' && <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="Winner" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Spread" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Total" tally={selectedRecord.total} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="flex flex-wrap items-center gap-x-2 text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? <span>{`No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final`}</span> : <RecordSummary record={selectedRecord} />}</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={activeRecordWeek ?? ''} onChange={event => setRecordWeek(event.target.value ? Number(event.target.value) : null)}>{gradedWeeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
             <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
@@ -497,7 +490,7 @@ export default function NflModelTab() {
         </div>
         {recordGames.length === 0 ? <p className="text-sm text-zinc-400">{data.weeks.length ? 'Loading season picks…' : 'No season picks have been locked yet.'}</p> : <RecordCards games={visibleRecordGames} version={version} threshold={threshold} />}
         <MissedLockList games={missedRecordGames} version={version} />
-        <p className="text-xs text-zinc-500">The pick record counts only finalized, graded, locked picks. no_pick, no_line and pending games are never counted as wins or losses.</p>
+        <p className="text-xs text-zinc-500">The Model Pick record counts only finalized, graded, locked picks. no_pick, no_line and pending games are never counted as wins or losses. Straight-up and Brier are model metrics, not the Model Pick record.</p>
       </section>}
 
       {view === 'ratings' && (ratings ? <TeamRatings payload={ratings} /> : <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />)}

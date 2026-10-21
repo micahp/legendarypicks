@@ -14,7 +14,7 @@ export const prop: FeaturedProp = {
 export const game: FeaturedGame = {
   game_id: 'g', week: 5, home: 'ATL', away: 'BAL', home_name: 'Atlanta Falcons', away_name: 'Baltimore Ravens',
   kickoff_utc: '2026-10-12T00:20:00Z', proj_home: 24.1, proj_away: 24.6, our_margin: -0.5, our_total: 48.7,
-  p_home_win: 0.48, market_spread: 3, pick: { team: 'BAL', line: 3, gap: 3.5 }, final: { home: 23, away: 30 },
+  p_home_win: 0.48, market_spread: 3, pick: { market: 'spread', side: 'away', line: 3, rule: 3, status: 'pick', label: 'BAL +3' }, final: { home: 23, away: 30 },
   pick_result: 'win', model_label: 'v1 points', source: { as_of: '2026-10-11T16:00:00+00:00', line: 'lock row' },
 }
 
