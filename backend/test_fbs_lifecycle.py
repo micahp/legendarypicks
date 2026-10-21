@@ -704,24 +704,49 @@ def test_midnight_in_each_timezone_belongs_to_the_right_eastern_date():
 
 
 def test_only_games_kicking_off_strictly_after_now_inside_the_horizon_get_a_new_forecast():
-    now = dt.datetime(2026, 10, 24, 15, 0, tzinfo=UTC)
-    end = now + dt.timedelta(days=10)
+    now = dt.datetime(2026, 10, 24, 15, 0, tzinfo=UTC)                  # 11:00 EDT, Oct 24
+    end = runner.forecast_horizon_end(now, 10)
+    assert end == dt.datetime(2026, 11, 4, 5, 0, tzinfo=UTC)            # midnight EST, Nov 4: after the Nov 3 date
     slate = pd.DataFrame([
         _slate_row("at-now", now),
         _slate_row("one-second-after", now + dt.timedelta(seconds=1)),
-        _slate_row("at-horizon", end),
-        _slate_row("past-horizon", end + dt.timedelta(minutes=1)),
+        _slate_row("one-second-before-end", end - dt.timedelta(seconds=1)),
+        _slate_row("at-end", end),
         _slate_row("postponed", now + dt.timedelta(days=1), lifecycle="postponed"),
         _slate_row("wrong-season", now + dt.timedelta(hours=2), season=2025),
         _slate_row("no-type", now + dt.timedelta(hours=3), season_type=None),
     ])
     candidates, reasons = runner.forecast_candidates(slate, now, 10)
-    assert sorted(candidates["game_id"]) == ["at-horizon", "one-second-after"]
-    assert reasons == {"started": ["at-now"], "beyond_horizon": ["past-horizon"],
+    assert sorted(candidates["game_id"]) == ["one-second-after", "one-second-before-end"]
+    assert reasons == {"started": ["at-now"], "beyond_horizon": ["at-end"],
                        "not_scheduled:postponed": ["postponed"], "season_contradicted": ["wrong-season"],
                        "season_type_missing": ["no-type"]}
 
 
+def test_the_horizon_is_the_whole_eastern_day_including_saturday_october_31():
+    now = dt.datetime(2026, 10, 21, 5, 15, 38, tzinfo=UTC)              # 01:15 EDT, Oct 21: the reported dry run
+    end = runner.forecast_horizon_end(now, 10)
+    assert end == dt.datetime(2026, 11, 1, 4, 0, tzinfo=UTC)            # Nov 1 00:00 EDT
+    slate = pd.DataFrame([
+        _slate_row("sat-1600z", dt.datetime(2026, 10, 31, 16, 0, tzinfo=UTC)),
+        _slate_row("sat-late", dt.datetime(2026, 11, 1, 3, 59, tzinfo=UTC)),       # 23:59 EDT, Oct 31
+        _slate_row("sun-midnight", dt.datetime(2026, 11, 1, 4, 0, tzinfo=UTC)),    # 00:00 EDT, Nov 1
+    ])
+    candidates, reasons = runner.forecast_candidates(slate, now, 10)
+    assert sorted(candidates["game_id"]) == ["sat-1600z", "sat-late"]
+    assert reasons == {"beyond_horizon": ["sun-midnight"]}
+    assert runner.scoreboard_dates(now, 10)[-1] == "20261031"
+
+
+def test_the_horizon_ends_on_an_eastern_midnight_on_both_sides_of_the_daylight_saving_change():
+    before = runner.forecast_horizon_end(dt.datetime(2026, 10, 28, 16, 0, tzinfo=UTC), 10)
+    after = runner.forecast_horizon_end(dt.datetime(2026, 10, 25, 0, 30, tzinfo=UTC), 10)
+    assert before == dt.datetime(2026, 11, 8, 5, 0, tzinfo=UTC)         # Nov 7 is EST: midnight is 05:00 UTC
+    assert after == dt.datetime(2026, 11, 4, 5, 0, tzinfo=UTC)
+    slate = pd.DataFrame([_slate_row("dst-side-in", before - dt.timedelta(seconds=1)),
+                          _slate_row("dst-side-out", before)])
+    candidates, _ = runner.forecast_candidates(slate, dt.datetime(2026, 10, 28, 16, 0, tzinfo=UTC), 10)
+    assert candidates["game_id"].tolist() == ["dst-side-in"]
 def test_a_game_copied_onto_two_boards_is_kept_once_and_reported(monkeypatch):
     now = dt.datetime(2026, 10, 24, 12, 0, tzinfo=UTC)
     event = board_event("dup", "2026-10-24T16:00Z", "STATUS_SCHEDULED", False)
@@ -1010,5 +1035,251 @@ def test_a_postseason_game_is_previewed_but_never_locked_until_bowl_ordering_is_
     report = runner.run(days=10, db_path=db, now=now)
     assert report["forecast"]["status"] == "ok"
     assert report["previewed"] == len(runner.MODEL_ORDER)
-    assert report["forecast"]["locks_withheld_postseason"] == [GAME]
+    assert report["forecast"]["postseason_research_hold"] == [GAME]
     assert report["locked"].get("inserted", 0) == 0
+
+
+# ------------------------------------- postseason research holds: durable, classified after kickoff, never missed
+
+def _postseason_preview(con, game_id, now, kickoff, hold=True):
+    """A pregame observation of a postseason game and its previews, the way a run writes them."""
+    rec = dict(game_id=game_id, season=2026, kickoff_utc=kickoff.isoformat(), home_team="H", away_team="A",
+               home_team_id="1", away_team_id="2", neutral_site=True, season_type=3)
+    obs = store.observe_fixture(con, rec, now, "test")
+    store.set_game_status(con, game_id, 2026, obs["revision"], "scheduled", "STATUS_SCHEDULED", now.isoformat(),
+                          "test", "pending", None)
+    if hold:
+        store.set_postseason_hold(con, game_id)
+    store.upsert_previews(con, [dict(game_id=game_id, model=m, season=2026, kickoff_utc=kickoff.isoformat(),
+                                     home_team="H", away_team="A", home_team_id="1", away_team_id="2",
+                                     model_version="v", p_home=0.55, fitted_through="2026-10-20",
+                                     hold_reason=store.POSTSEASON_HOLD if hold else None)
+                           for m in ("g2", "c2", "g2h")], now=now)
+
+
+def test_a_held_postseason_preview_is_window_not_eligible_after_kickoff_and_never_missed(tmp_path):
+    con = open_scratch(str(tmp_path / "held.sqlite3"))
+    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
+    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff)
+    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=1))
+    assert counts == {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 3}
+    rows = con.execute("SELECT outcome, reason FROM fbs_window_outcomes").fetchall()
+    assert {tuple(r) for r in rows} == {("window_not_eligible", store.POSTSEASON_HOLD)}
+
+
+def test_without_the_hold_the_same_unlocked_bowl_would_be_a_missed_window(tmp_path):
+    con = open_scratch(str(tmp_path / "unheld.sqlite3"))
+    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
+    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff, hold=False)
+    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=1))
+    assert counts["missed_t90_window"] == 3
+
+
+@pytest.mark.parametrize("later", [
+    ("STATUS_IN_PROGRESS", "in_progress", False),
+    ("STATUS_FINAL", "completed", True),
+    ("STATUS_POSTPONED", "postponed", False),
+    ("STATUS_CANCELED", "cancelled", False),
+    ("STATUS_UNRECOGNISED", "unknown", False),
+])
+def test_the_postseason_hold_survives_every_later_status_change(tmp_path, later):
+    con = open_scratch(str(tmp_path / "later.sqlite3"))
+    kickoff = dt.datetime(2027, 1, 2, 20, 0, tzinfo=UTC)
+    _postseason_preview(con, "bowl", kickoff - dt.timedelta(days=2), kickoff)
+    name, lifecycle, completed = later
+    rec = dict(game_id="bowl", season=2026, kickoff_utc=kickoff.isoformat(), home_team="H", away_team="A",
+               home_team_id="1", away_team_id="2", neutral_site=True, season_type=3)
+    obs = store.observe_fixture(con, rec, kickoff + dt.timedelta(hours=3), "test")
+    store.set_game_status(con, "bowl", 2026, obs["revision"], lifecycle, name, (kickoff + dt.timedelta(hours=3)).isoformat(),
+                          "test", "graded" if completed else "pending", None)
+    store.upsert_previews(con, [], now=kickoff - dt.timedelta(days=1))           # a later run writes no new rows
+    assert store.game_status(con, "bowl")["hold_reason"] == store.POSTSEASON_HOLD
+    counts = store.record_missed_windows(con, now=kickoff + dt.timedelta(hours=4))
+    assert counts["missed_t90_window"] == 0 and counts["window_not_eligible"] == 3
+
+
+def test_a_postseason_preview_is_held_through_kickoff_and_final_results_in_a_real_run(tmp_path, forecast_env, boards):
+    db = str(tmp_path / "bowl-run.sqlite3")
+    open_scratch(db).close()
+    now = KICK - dt.timedelta(minutes=60)
+    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False, season_type=3)])
+    before = runner.run(days=10, db_path=db, now=now)
+    assert before["previewed"] == len(runner.MODEL_ORDER) and before["locked"].get("inserted", 0) == 0
+    boards.clear()
+    window_board(boards, KICK + dt.timedelta(hours=1),
+                 [board_event(GAME, KICK.isoformat(), "STATUS_IN_PROGRESS", False, 7, 3, season_type=3)])
+    after = runner.run(days=10, db_path=db, now=KICK + dt.timedelta(hours=1))
+    boards.clear()
+    window_board(boards, KICK + dt.timedelta(hours=3),
+                 [board_event(GAME, KICK.isoformat(), "STATUS_FINAL", True, 24, 20, season_type=3)])
+    final = runner.run(days=10, db_path=db, now=KICK + dt.timedelta(hours=3))
+    assert final["missed"]["missed_t90_window"] == 0
+    assert after["previewed"] == 0                             # started games receive no new preview
+    con = store.open_db(db, readonly=True)
+    rows = con.execute("SELECT outcome, reason FROM fbs_window_outcomes").fetchall()
+    con.close()
+    assert len(rows) == 3 and {tuple(r) for r in rows} == {("window_not_eligible", store.POSTSEASON_HOLD)}
+    assert after["forecast"]["status"] == final["forecast"]["status"] == "ok"
+
+
+def test_a_postseason_event_keeps_its_espn_season_type_and_phase_and_g2_does_not_depend_on_it(monkeypatch):
+    history = elo_history()
+    captured = {}
+    real_predictions = runner.base.make_predictions
+
+    def spy(combined, first_season):
+        captured["combined"] = combined.copy()
+        return real_predictions(combined, first_season)
+
+    monkeypatch.setattr(runner.base, "load_events", lambda data_dir, seasons: (history.copy(), None, None, None))
+    monkeypatch.setattr(runner.base, "make_predictions", spy)
+    frame = synthetic_frame(season=2026)
+    kick = pd.Timestamp("2027-01-02T20:00Z")
+    teams = dict(home_team_id="100", away_team_id="101", home_team="Team 0", away_team="Team 1", week=1,
+                 neutral_site=True, kickoff_utc=kick, season=2026)
+    slate = pd.DataFrame([dict(game_id="BOWL", season_type=3, **teams), dict(game_id="REG", season_type=2, **teams)])
+    scored = runner.g2_for_slate(frame, slate).set_index("game_id")
+    events = captured["combined"].set_index("game_id")
+    assert events.loc["BOWL", "season_type"] == "postseason" and events.loc["BOWL", "game_phase"] == "Postseason"
+    assert events.loc["REG", "season_type"] == "regular" and events.loc["REG", "game_phase"] == "Regular season"
+    assert float(scored.loc["BOWL", "p_g2"]) == float(scored.loc["REG", "p_g2"])     # the Elo baseline ignores phase
+
+
+# ----------------------------------------- duplicate copies: every forecast-driving field must agree
+
+def _two_copies(monkeypatch, first, second):
+    now = dt.datetime(2026, 10, 24, 12, 0, tzinfo=UTC)
+    boards = {"20261023": [first], "20261024": [second]}
+    monkeypatch.setattr(runner, "read_scoreboard", lambda date: {"events": boards.get(date, [])})
+    monkeypatch.setattr(runner, "BOARD_PACE_SECONDS", 0)
+    return runner.fetch_slate(days=1, now=now)
+
+
+@pytest.mark.parametrize("change, value", [
+    ("neutral", True), ("season_type", 3), ("week", 9), ("home_team", "Other Team"),
+    ("kickoff", "2026-10-24T17:00Z"), ("status", "STATUS_IN_PROGRESS"), ("season", 2025),
+])
+def test_copies_of_one_event_that_disagree_on_any_forecast_field_fail_closed(monkeypatch, change, value):
+    first = board_event("clash", "2026-10-24T16:00Z", "STATUS_SCHEDULED", False)
+    second = board_event("clash", "2026-10-24T16:00Z", "STATUS_SCHEDULED", False)
+    if change == "neutral":
+        second["competitions"][0]["neutralSite"] = value
+    elif change == "season_type":
+        second["season"]["type"] = value
+    elif change == "week":
+        second["week"] = {"number": value}
+    elif change == "home_team":
+        second["competitions"][0]["competitors"][0]["team"]["displayName"] = value
+    elif change == "kickoff":
+        second["date"] = value
+    elif change == "status":
+        second["competitions"][0]["status"]["type"]["name"] = value
+    else:
+        second["season"] = {"year": value, "type": 2}
+    with pytest.raises(runner.SlateUnavailable, match="differs between scoreboard copies"):
+        _two_copies(monkeypatch, first, second)
+
+
+def test_identical_copies_are_kept_once_and_a_live_score_difference_is_the_source_exception(monkeypatch):
+    first = board_event("live", "2026-10-24T16:00Z", "STATUS_IN_PROGRESS", False, 7, 3)
+    second = board_event("live", "2026-10-24T16:00Z", "STATUS_IN_PROGRESS", False, 10, 3)
+    slate = _two_copies(monkeypatch, first, second)
+    assert slate["game_id"].tolist() == ["live"] and slate.attrs["duplicates"] == ["live"]
+
+
+def test_final_scores_that_disagree_between_copies_fail_closed(monkeypatch):
+    first = board_event("final", "2026-10-24T16:00Z", "STATUS_FINAL", True, 24, 20)
+    second = board_event("final", "2026-10-24T16:00Z", "STATUS_FINAL", True, 24, 21)
+    with pytest.raises(runner.SlateUnavailable, match="home_score|away_score"):
+        _two_copies(monkeypatch, first, second)
+
+
+def test_a_completion_flag_that_disagrees_between_copies_fails_closed(monkeypatch):
+    first = board_event("done", "2026-10-24T16:00Z", "STATUS_IN_PROGRESS", False, 24, 20)
+    second = board_event("done", "2026-10-24T16:00Z", "STATUS_FINAL", True, 24, 20)
+    with pytest.raises(runner.SlateUnavailable, match="completed|status_name|lifecycle"):
+        _two_copies(monkeypatch, first, second)
+
+
+# ------------------------------------------------------------------ audit: schema-aware, read-only, byte-stable
+
+def _legacy_only(path):
+    raw = sqlite3.connect(path)
+    raw.executescript("CREATE TABLE fbs_forecasts (game_id TEXT NOT NULL, model TEXT NOT NULL, season INTEGER NOT NULL,"
+                      " kickoff_utc TEXT NOT NULL, home_team TEXT, away_team TEXT, home_team_id TEXT, away_team_id TEXT,"
+                      " model_version TEXT, p_home REAL NOT NULL, fitted_through TEXT, created_at_utc TEXT,"
+                      " locked_at_utc TEXT, late INTEGER DEFAULT 0, PRIMARY KEY (game_id, model));"
+                      "INSERT INTO fbs_forecasts VALUES ('1','g2h',2025,'2025-09-06T00:00:00+00:00','A','B','10','11',"
+                      " 'v',0.6,'2025-09-05','2025-09-05T10:00:00+00:00',NULL,0);")
+    raw.commit()
+    raw.close()
+
+
+def test_audit_on_a_legacy_copy_reports_migration_required_with_its_legacy_counts_and_changes_nothing(tmp_path, capsys):
+    db = str(tmp_path / "legacy-audit" / "fbs-model.dev.sqlite3")
+    os.makedirs(os.path.dirname(db))
+    _legacy_only(db)
+    before = open(db, "rb").read()
+    report = runner.audit(db)
+    assert report["schema_status"] == "migration_required"
+    assert report["forecast_rows"] == 1 and report["rows_by_protocol"] == {"legacy": 1}
+    assert report["late_rows"] == 0 and report["graded_rows"] is None
+    assert {u["table"] for u in report["unavailable"]} >= {"fbs_previews", "fbs_game_status", "fbs_model_meta"}
+    assert runner.main(["--audit", "--db", db]) == 5
+    assert open(db, "rb").read() == before
+
+
+def test_audit_on_a_current_copy_is_full_and_changes_nothing(tmp_path):
+    db = str(tmp_path / "current-audit" / "fbs-model.dev.sqlite3")
+    open_scratch(db).close()
+    before = open(db, "rb").read()
+    report = runner.audit(db)
+    assert report["schema_status"] == "current" and report["unavailable"] == []
+    assert report["forecast_rows"] == 0 and "postseason_research_hold_previews" in report
+    assert runner.main(["--audit", "--db", db]) == 0
+    assert open(db, "rb").read() == before
+
+
+def test_audit_of_a_missing_file_creates_nothing(tmp_path):
+    db = str(tmp_path / "absent" / "fbs-model.dev.sqlite3")
+    report = runner.audit(db)
+    assert report["schema_status"] == "not_initialized"
+    assert not os.path.exists(db)
+
+
+def test_a_version_one_scratch_database_gains_the_hold_columns_on_migration(tmp_path):
+    db = str(tmp_path / "v1" / "scratch.sqlite3")
+    os.makedirs(os.path.dirname(db))
+    v1 = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
+    raw = sqlite3.connect(db)
+    raw.executescript(v1 + store.TRIGGERS)
+    raw.execute("PRAGMA user_version = 1")
+    raw.execute("INSERT INTO fbs_game_status(game_id,season,revision,lifecycle,observed_utc,source,grading_state)"
+                " VALUES('1',2026,1,'scheduled','2026-10-20T00:00:00+00:00','test','pending')")
+    raw.commit()
+    raw.close()
+    assert "hold_reason" not in store.table_columns(sqlite3.connect(db), "fbs_game_status")
+    evidence = store.migrate(db, str(tmp_path / "backups"))
+    assert evidence["action"] == "migrated"
+    con = store.open_db(db)
+    assert "hold_reason" in store.table_columns(con, "fbs_previews")
+    assert con.execute("SELECT game_id, lifecycle FROM fbs_game_status").fetchall()[0][0] == "1"
+    con.close()
+
+
+def test_audit_of_a_version_one_copy_names_the_missing_hold_columns(tmp_path):
+    db = str(tmp_path / "v1-audit" / "scratch.sqlite3")
+    os.makedirs(os.path.dirname(db))
+    v1 = store.SCHEMA.replace("    hold_reason TEXT,\n", "").replace(",\n    hold_reason TEXT\n);", "\n);")
+    raw = sqlite3.connect(db)
+    raw.executescript(v1 + store.TRIGGERS)
+    raw.execute("PRAGMA user_version = 1")
+    raw.commit()
+    raw.close()
+    before = open(db, "rb").read()
+    report = runner.audit(db)
+    assert report["schema_status"] == "migration_required"
+    assert {(u.get("table"), u.get("column")) for u in report["unavailable"]} == {
+        ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason")}
+    assert open(db, "rb").read() == before
+
