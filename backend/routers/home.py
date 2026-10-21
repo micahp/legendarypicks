@@ -48,6 +48,7 @@ from fastapi.responses import JSONResponse
 
 from _core import _db
 import check_nfl_schedule_scores as cs
+import nfl_metrics as mt
 from routers import nfl_model
 from routers import props as props_router
 from routers.models import nfl as nfl_models
@@ -170,9 +171,11 @@ def _no_vig(home_ml, away_ml) -> Optional[float]:
 
 
 def _pick(home: str, away: str, margin: float, spread: Optional[float]) -> Optional[Dict[str, Any]]:
-    if spread is None or margin == spread:
+    # Same frozen-spread selection rule and tolerance as the NFL Model page and lock grader.
+    side = mt.pick_side(margin, spread)
+    if side not in ("home", "away"):
         return None
-    if margin < spread:                  # we rate home lower than the market does: take the away side
+    if side == "away":
         return {"team": away, "line": spread, "gap": spread - margin}
     return {"team": home, "line": -spread, "gap": margin - spread}
 
@@ -212,7 +215,8 @@ def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
     names = {x[0]: x[1] for x in con.execute(
         "SELECT team, team_name FROM nfl_teams WHERE season = ?", (r["season"],))}
     snap = r["snapshot_id"] is not None
-    spread = _f(r["spread_line"] if snap else r["market_spread"])
+    spread = _f(r["spread_line"] if snap and r["spread_line"] is not None
+                else r["market_spread"])
     margin = _f(r["proj_margin"])
     final = (r["home_score"] is not None and r["away_score"] is not None and r["result"] is not None)
     has_scores = r["proj_home"] is not None and r["proj_away"] is not None

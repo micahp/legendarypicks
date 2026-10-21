@@ -10,10 +10,21 @@ const forecast = (pHome: number) => ({
   p_home_minus_1_5: 0.26, p_home_plus_1_5: 0.8, p_away_minus_1_5: 0.2, p_away_plus_1_5: 0.74,
 })
 
+const previewPick = {
+  market: 'total' as const, side: 'over' as const, line: 5.5, price: null,
+  model_probability: .5, market_probability: null, edge: null, expected_value: null,
+  line_source: null, line_captured_at_utc: null, settlement_basis: 'official_final_score',
+  rule_version: 'leeway-2', provenance: 'preview' as const, result: null,
+}
+
 const preview = {
   game_id: 2026020106, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T23:30:00Z',
   home_team: 'WSH', away_team: 'MTL',
-  models: { B3_elo: forecast(0.55), B5_xg_poisson: forecast(0.52), B7_elo_xg_poisson: forecast(0.535) },
+  models: {
+    B3_elo: { ...forecast(0.55), pick: previewPick, pick_status: 'selected' as const },
+    B5_xg_poisson: { ...forecast(0.52), pick: previewPick, pick_status: 'selected' as const },
+    B7_elo_xg_poisson: { ...forecast(0.535), pick: previewPick, pick_status: 'selected' as const },
+  },
 }
 
 const payload = {
@@ -27,17 +38,17 @@ beforeEach(() => {
 })
 
 describe('NHL model tab previews', () => {
-  it('shows unlocked projections without a status chip and keeps them out of the record', async () => {
+  it('labels previews as unlocked and keeps them out of the record', async () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.queryByText('UNLOCKED')).toBeNull()
-    expect(screen.queryByText('LOCKED')).toBeNull()
+    expect(screen.getByText('PREVIEW · NOT LOCKED')).toBeTruthy()
+    expect(screen.getByText('Model Pick')).toBeTruthy()
     expect(screen.getByTitle('Models lock 90 mins before kickoff')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    expect(screen.getByText('No graded NHL projections yet.')).toBeTruthy()
+    expect(screen.getByText('No locked NHL model picks yet.')).toBeTruthy()
   })
 
-  it('shows a locked projection without a status chip and with the Vegas and Model line labels', async () => {
+  it('keeps archived lines visible after the live market moves', async () => {
     const lockedAt = '2026-10-14T17:30:00Z'
     const locked = {
       game_id: 2026020107, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
@@ -45,19 +56,30 @@ describe('NHL model tab previews', () => {
       home_team: 'COL', away_team: 'DAL',
       feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
       models: {
-        B3_elo: { ...forecast(0.6), locked_at_utc: lockedAt, grade: null },
+        B3_elo: { ...forecast(0.6), locked_at_utc: lockedAt, grade: null, pick: null,
+          pick_status: 'missing', locked_quote: { home_team: 'COL', away_team: 'DAL', captured_at_utc: lockedAt,
+            home_puck_line: -1.5, total_line: 6.5, home_moneyline: -120, away_moneyline: 100,
+            over_price: -110, under_price: -110, home_puck_price: -110, away_puck_price: -110 } },
         B5_xg_poisson: { ...forecast(0.5), locked_at_utc: lockedAt, grade: null },
-        B7_elo_xg_poisson: { ...forecast(0.45), locked_at_utc: lockedAt, grade: null },
+        B7_elo_xg_poisson: { ...forecast(0.45), locked_at_utc: lockedAt, grade: null,
+          locked_quote: { home_team: 'COL', away_team: 'DAL', captured_at_utc: lockedAt,
+            home_puck_line: -1.5, total_line: 6.5, home_moneyline: -120, away_moneyline: 100,
+            over_price: -110, under_price: -110, home_puck_price: -110, away_puck_price: -110 } },
       },
       result: null,
       markets: { source: 'Kalshi', usable: false, comparison_usable_at_lock: false, sides: [] },
     }
-    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }) }))
+    const live = { home_team: 'COL', away_team: 'DAL', captured_at_utc: '2026-10-14T18:00:00Z',
+      home_puck_line: 1.5, total_line: 7, home_moneyline: 110, away_moneyline: -130,
+      over_price: -110, under_price: -110, home_puck_price: -110, away_puck_price: -110 }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [], lines: { '2026020107': live } }) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('DAL @ COL')).toBeTruthy())
-    expect(screen.queryByText('LOCKED')).toBeNull()
-    expect(screen.getByText('Puck line')).toBeTruthy()
-    expect(screen.getByText('Vegas total')).toBeTruthy()
+    expect(screen.getByText('Locked puck line')).toBeTruthy()
+    expect(screen.getByText('Locked total')).toBeTruthy()
+    expect(screen.getByText('COL -1.5')).toBeTruthy()
+    expect(screen.getByText('6.5')).toBeTruthy()
+    expect(screen.getByText(/Market has moved since the lock/)).toBeTruthy()
   })
 
   it('shows the Bovada puck line and total in the Vegas columns', async () => {
@@ -72,16 +94,15 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('1.1 goals (MTL)')).toBeTruthy()
     expect(screen.getByText('6.5')).toBeTruthy()
     expect(screen.getByText('-0.7 goals')).toBeTruthy()
-    // No pick in the payload: the browser never invents one, so the card reads n/a.
-    expect(screen.getByText('n/a')).toBeTruthy()
+    expect(screen.getByText('Over 5.5')).toBeTruthy()
   })
 
-  it('renders the frozen pick and its edge from the payload', async () => {
+  it('renders the frozen pick and probability without betting diagnostics', async () => {
     const frozen = {
       market: 'spread', side: 'away', line: 1.5, price: -240, model_probability: 0.74,
       market_probability: 0.679, edge: 0.0608, expected_value: 0.048, line_source: 'bovada',
       line_captured_at_utc: '2026-10-14T14:54:42Z', settlement_basis: 'official_final_score',
-      provenance: 'lock', priced: true, qualifies: true, rule_version: 'ev-max-1', result: null,
+      provenance: 'lock', rule_version: 'goal-diff-1', result: null,
       quote: { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z',
                home_puck_line: -1.5, total_line: 6.5, home_moneyline: -128, away_moneyline: 107,
                over_price: -115, under_price: -105, home_puck_price: 200, away_puck_price: -240 },
@@ -103,19 +124,20 @@ describe('NHL model tab previews', () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
     expect(screen.getByText('MTL +1.5')).toBeTruthy()
-    expect(screen.getByText('+6.1% probability edge')).toBeTruthy()
-    expect(screen.getByText('+4.8% estimated EV')).toBeTruthy()
+    expect(screen.getByText('74% model probability')).toBeTruthy()
+    expect(screen.getAllByText('Model Pick').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/probability edge|estimated EV/i)).toBeNull()
     // The market columns are the frozen basis, not the live line.
     expect(screen.getByText('Locked puck line')).toBeTruthy()
     expect(screen.getByText('Locked total')).toBeTruthy()
   })
 
-  it('reports a negative-expected-value candidate as a lean with no qualifying bet', async () => {
-    const lean = {
+  it('renders a negative-EV selection as a Model Pick', async () => {
+    const pick = {
       market: 'ml', side: 'home', line: null, price: -110, model_probability: 0.5,
       market_probability: 0.52, edge: -0.02, expected_value: -0.045, line_source: 'bovada',
       line_captured_at_utc: '2026-10-14T14:54:42Z', settlement_basis: 'official_final_score',
-      provenance: 'lock', priced: true, qualifies: false, rule_version: 'ev-max-1', result: null,
+      provenance: 'lock', rule_version: 'leeway-2', result: null,
       quote: { home_team: 'WSH', away_team: 'MTL', captured_at_utc: '2026-10-14T14:54:42Z',
                home_puck_line: -1.5, total_line: 6.5, home_moneyline: -110, away_moneyline: -110,
                over_price: -110, under_price: -110, home_puck_price: -110, away_puck_price: -110 },
@@ -126,9 +148,9 @@ describe('NHL model tab previews', () => {
       home_team: 'WSH', away_team: 'MTL',
       feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
       models: {
-        B3_elo: { ...forecast(0.6), grade: null, pick: lean },
-        B5_xg_poisson: { ...forecast(0.5), grade: null, pick: lean },
-        B7_elo_xg_poisson: { ...forecast(0.45), grade: null, pick: lean },
+        B3_elo: { ...forecast(0.6), grade: null, pick },
+        B5_xg_poisson: { ...forecast(0.5), grade: null, pick },
+        B7_elo_xg_poisson: { ...forecast(0.45), grade: null, pick },
       },
       result: null,
       markets: { source: 'Kalshi', usable: false, sides: [] },
@@ -136,9 +158,10 @@ describe('NHL model tab previews', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('No positive estimated betting EV')).toBeTruthy()
-    expect(screen.getByText('Model lean')).toBeTruthy()
-    expect(screen.getByText('-4.5% estimated EV')).toBeTruthy()
+    expect(screen.getByText('WSH ML')).toBeTruthy()
+    expect(screen.getByText('50% model probability')).toBeTruthy()
+    expect(screen.getAllByText('Model Pick').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/lean|qualifying wager|estimated EV/i)).toBeNull()
   })
 
   it('calls an unlocked forecast quote a current line, not a locked line', async () => {
@@ -151,8 +174,8 @@ describe('NHL model tab previews', () => {
       market: 'total', side: 'under', line: 6, price: -110,
       model_probability: .54, market_probability: .5, edge: .04, expected_value: .03,
       line_source: 'bovada', line_captured_at_utc: quote.captured_at_utc,
-      settlement_basis: 'official_final_score', provenance: 'preview', priced: true,
-      qualifies: true, rule_version: 'ev-max-2-settlement', push_probability: .15,
+      settlement_basis: 'official_final_score', provenance: 'preview',
+      rule_version: 'goal-diff-1', push_probability: .15,
       quote, result: null,
     }
     const value = {
@@ -173,15 +196,15 @@ describe('NHL model tab previews', () => {
     expect(screen.queryByText('Locked total')).toBeNull()
   })
 
-  it('explains when an apparently positive EV comes from a stale frozen quote', async () => {
+  it('keeps a stale-quote selection visible without wager qualification messaging', async () => {
     const stale = {
       market: 'total', side: 'under', line: 6.5, price: -110,
       model_probability: .66, push_probability: 0, market_probability: .5,
       edge: .16, expected_value: .20,
       line_source: 'bovada', line_captured_at_utc: '2026-10-14T16:00:00Z',
       settlement_basis: 'official_final_score', provenance: 'lock',
-      priced: true, quote_fresh: false, quote_age_seconds: 5400,
-      qualifies: false, rule_version: 'ev-max-2-settlement', result: null,
+      quote_fresh: false, quote_age_seconds: 5400,
+      rule_version: 'goal-diff-1', result: null,
     }
     const game = {
       game_id: 2026020111, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
@@ -200,21 +223,88 @@ describe('NHL model tab previews', () => {
     }))
     render(<NhlModelTab />)
     await screen.findByText('MTL @ WSH')
-    expect(screen.getByText('Odds too old or unverified to qualify')).toBeTruthy()
-    expect(screen.getByText('+20.0% estimated EV (unverified price)')).toBeTruthy()
-    expect(screen.getByText('Model lean')).toBeTruthy()
+    expect(screen.getByText('Model Pick')).toBeTruthy()
+    expect(screen.getByText('Under 6.5')).toBeTruthy()
+    expect(screen.getByText('66% model probability')).toBeTruthy()
+    expect(screen.queryByText(/stale|qualif|estimated EV|lean/i)).toBeNull()
   })
 
-  it('says there is no priced recommendation when a locked game has no pick', async () => {
+  it('shows a selection with no posted price and no invented probability', async () => {
+    const pick = {
+      market: 'spread' as const, side: 'away' as const, line: 1.5, price: null,
+      model_probability: null, market_probability: null, edge: null, expected_value: null,
+      line_source: 'bovada', line_captured_at_utc: '2026-10-14T16:29:00Z',
+      settlement_basis: 'official_final_score', provenance: 'lock' as const,
+      rule_version: 'leeway-2', quote_fresh: false, result: null,
+    }
+    const locked = {
+      game_id: 2026020112, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(.6), grade: null, pick },
+        B5_xg_poisson: { ...forecast(.5), grade: null, pick },
+        B7_elo_xg_poisson: { ...forecast(.45), grade: null, pick },
+      },
+      result: null, markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }),
+    }))
+    render(<NhlModelTab />)
+    await screen.findByText('MTL @ WSH')
+    expect(screen.getByText('Model Pick')).toBeTruthy()
+    expect(screen.getByText('MTL +1.5')).toBeTruthy()
+    expect(screen.queryByText(/0%|model probability|qualif|lean/i)).toBeNull()
+  })
+
+  it('shows the same frozen pick and pending grade in Projections and Record', async () => {
+    const pick = {
+      market: 'spread' as const, side: 'away' as const, line: 1.5,
+      model_probability: .74, line_captured_at_utc: '2026-10-14T16:29:00Z',
+      settlement_basis: 'official_final_score', rule_version: 'goal-diff-1',
+      provenance: 'lock' as const, result: null,
+    }
+    const locked = {
+      game_id: 2026020113, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(.6), grade: null, pick },
+        B5_xg_poisson: { ...forecast(.5), grade: null, pick },
+        B7_elo_xg_poisson: { ...forecast(.45), grade: null, pick },
+      },
+      result: null, markets: { source: 'Kalshi', usable: false, sides: [] },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }),
+    }))
+    render(<NhlModelTab />)
+    await screen.findByText('MTL @ WSH')
+    expect(screen.getByText('MTL +1.5')).toBeTruthy()
+    expect(screen.getByText('74% model probability')).toBeTruthy()
+    expect(screen.getByText('Pending')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(screen.getByText('MTL +1.5 74%')).toBeTruthy()
+    expect(screen.getAllByText('Pending')).toHaveLength(2)
+  })
+
+  it('shows an explicit missing pick when the frozen forecast supports none', async () => {
     const locked = {
       game_id: 2026020110, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T19:00:00Z',
       forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
       home_team: 'WSH', away_team: 'MTL',
       feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
       models: {
-        B3_elo: { ...forecast(0.6), grade: null, pick: null },
-        B5_xg_poisson: { ...forecast(0.5), grade: null, pick: null },
-        B7_elo_xg_poisson: { ...forecast(0.45), grade: null, pick: null },
+        B3_elo: { ...forecast(0.6), projected_total_goals: null, home_expected_goals: null,
+          away_expected_goals: null, grade: null, pick: null, pick_status: 'missing' },
+        B5_xg_poisson: { ...forecast(0.5), projected_total_goals: null, home_expected_goals: null,
+          away_expected_goals: null, grade: null, pick: null, pick_status: 'missing' },
+        B7_elo_xg_poisson: { ...forecast(0.45), projected_total_goals: null, home_expected_goals: null,
+          away_expected_goals: null, grade: null, pick: null, pick_status: 'missing' },
       },
       result: null,
       markets: { source: 'Kalshi', usable: false, sides: [] },
@@ -222,8 +312,9 @@ describe('NHL model tab previews', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [] }) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('No priced recommendation yet')).toBeTruthy()
-    expect(screen.queryByText('Model pick')).toBeNull()
+    expect(screen.getByText('Model Pick')).toBeTruthy()
+    expect(screen.getByText('Missing')).toBeTruthy()
+    expect(screen.queryByText(/qualif|recommendation|lean/i)).toBeNull()
   })
 
   it('grades the frozen pick in the record instead of a moneyline guess', async () => {
@@ -238,7 +329,7 @@ describe('NHL model tab previews', () => {
       market: 'total', side: 'over', line: 5.5, price: -115, model_probability: 0.53,
       market_probability: 0.52, edge: 0.01, expected_value: 0.02, line_source: 'bovada',
       line_captured_at_utc: '2026-10-14T17:00:00Z', settlement_basis: 'official_final_score',
-      provenance: 'lock', priced: true, qualifies: true, rule_version: 'ev-max-1',
+      provenance: 'lock', rule_version: 'goal-diff-1',
       result: { won: false },
     }
     const graded = {
@@ -256,10 +347,10 @@ describe('NHL model tab previews', () => {
     }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [graded], previews: [] }) }))
     render(<NhlModelTab />)
-    // A graded game leaves the projections view; the record is where it is read.
+    // The Record shows the frozen total and server-computed settlement.
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
-    expect(screen.getByText('Pick ✗ Lost')).toBeTruthy()
+    expect(screen.getByText('Loss')).toBeTruthy()
   })
   it('reports a frozen integer-total push as a push rather than a loss', async () => {
     const grade = {
@@ -274,8 +365,7 @@ describe('NHL model tab previews', () => {
       model_probability: .46, push_probability: .14,
       market_probability: .5, edge: .02, expected_value: .09,
       line_source: 'bovada', line_captured_at_utc: '2026-10-14T17:28:00Z',
-      settlement_basis: 'official_final_score', provenance: 'lock', priced: true,
-      qualifies: true, rule_version: 'ev-max-2-settlement',
+      settlement_basis: 'official_final_score', provenance: 'lock', rule_version: 'goal-diff-1',
       result: { won: null, push: true, settlement: 'push' },
     }
     const game = {
@@ -298,11 +388,11 @@ describe('NHL model tab previews', () => {
     }))
     render(<NhlModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    expect(screen.getByText('Pick ↔ Push')).toBeTruthy()
-    expect(screen.queryByText('Pick ✗ Lost')).toBeNull()
+    expect(screen.getByText('Push')).toBeTruthy()
+    expect(screen.queryByText('Loss')).toBeNull()
   })
 
-  it('grades a non-qualifying model lean as won or lost without claiming it was a wager', async () => {
+  it('grades all frozen model picks and marks a missing frozen pick explicitly', async () => {
     const grade = {
       official_home_goals: 2, official_away_goals: 3,
       statistical_home_goals: 2, statistical_away_goals: 3,
@@ -311,15 +401,14 @@ describe('NHL model tab previews', () => {
       home_goal_error: 0, away_goal_error: 0,
       graded_at_utc: '2026-10-15T14:35:05Z',
     }
-    const lean = (side: 'home' | 'away', won: boolean) => ({
+    const pick = (side: 'home' | 'away', won: boolean) => ({
       market: 'ml' as const, side, line: null, price: -110,
       model_probability: side === 'home' ? 0.52 : 0.48,
       market_probability: 0.5, edge: side === 'home' ? 0.02 : -0.02,
       expected_value: -0.05, line_source: 'bovada',
       line_captured_at_utc: '2026-10-14T17:20:00Z',
       settlement_basis: 'official_final_score',
-      provenance: 'lock' as const, priced: true, qualifies: false,
-      rule_version: 'ev-max-1', result: { won },
+      provenance: 'lock' as const, rule_version: 'goal-diff-1', result: { won },
     })
     const game = {
       game_id: 2026020199, game_date: '2026-10-14',
@@ -328,9 +417,9 @@ describe('NHL model tab previews', () => {
       home_team: 'WSH', away_team: 'MTL',
       feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
       models: {
-        B3_elo: { ...forecast(0.52), grade, pick: lean('home', false) },
+        B3_elo: { ...forecast(0.52), grade, pick: pick('home', false) },
         B5_xg_poisson: { ...forecast(0.48), grade, pick: null },
-        B7_elo_xg_poisson: { ...forecast(0.48), grade, pick: lean('away', true) },
+        B7_elo_xg_poisson: { ...forecast(0.48), grade, pick: pick('away', true) },
       },
       result: grade, markets: { source: 'Kalshi', usable: false, sides: [] },
     }
@@ -339,18 +428,15 @@ describe('NHL model tab previews', () => {
     }))
     render(<NhlModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    expect(screen.getByText('Lean ✓ Won')).toBeTruthy()
-    expect(screen.getByText('Not a qualifying wager')).toBeTruthy()
+    expect(screen.getByText('Win')).toBeTruthy()
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
-    expect(screen.getByText('Lean ✗ Lost')).toBeTruthy()
-    expect(screen.getByText('Not a qualifying wager')).toBeTruthy()
+    expect(screen.getByText('Loss')).toBeTruthy()
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B5_xg_poisson' } })
-    expect(screen.getByText('No pick recorded')).toBeTruthy()
-    expect(screen.getByText('Forecast graded; no selection was stored')).toBeTruthy()
-    expect(screen.queryByText('Lean ✓ Won')).toBeNull()
+    expect(screen.getAllByText('Missing')).toHaveLength(2)
+    expect(screen.queryByText(/lean|qualifying wager|no pick recorded/i)).toBeNull()
   })
 
-  it('compares prospective Brier and goals accuracy across all three models in a tooltip, including unpriced games', async () => {
+  it('compares forecast accuracy across all three models in a tooltip, including missing picks', async () => {
     const graded = (id: number, brier: number, logLoss: number, homeError: number, awayError: number) => {
       const grade = {
         official_home_goals: 3, official_away_goals: 2, statistical_home_goals: 3, statistical_away_goals: 2,
@@ -395,13 +481,13 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
-    expect(screen.getAllByText('No pick recorded')).toHaveLength(2)
+    expect(screen.getAllByText('Missing')).toHaveLength(4)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
     expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
     expect(screen.getByText('· Selected')).toBeTruthy()
   })
 
-  it('shows all-market Brier for graded unpriced games, including a frozen-line comparison', async () => {
+  it('shows all-market Brier for graded games without model picks', async () => {
     const grade = {
       official_home_goals: 4, official_away_goals: 3,
       statistical_home_goals: 3, statistical_away_goals: 3, official_winner: 'home' as const,

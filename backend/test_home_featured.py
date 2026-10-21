@@ -330,6 +330,7 @@ class GameRule(Base):
 
     def test_no_pick_when_our_line_equals_the_market(self):
         self.assertIsNone(home._pick("H", "A", 3.0, 3.0))
+        self.assertIsNone(home._pick("H", "A", 3.0000000005, 3.0))
         self.assertIsNone(home._pick("H", "A", 3.0, None))
         self.assertEqual(home._pick("H", "A", 5.0, 3.0), {"team": "H", "line": -3.0, "gap": 2.0})
 
