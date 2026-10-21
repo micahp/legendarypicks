@@ -1,0 +1,12 @@
+season,game_id,start_date_utc,home_team,away_team,home_score,away_score,y,coverage_status,identity_check,play_count,home_team_id,away_team_id,et_date
+2026,401856720,2026-10-17T16:00:00Z,LSU,Mississippi State,31,0,1.0,has_plays,teams_and_date,168,99,344,20261017
+2026,401856724,2026-10-17T16:00:00Z,Texas,Florida,24,27,0.0,has_plays,teams_and_date,173,251,57,20261017
+2026,401856829,2026-10-17T16:00:00Z,West Virginia,Cincinnati,45,42,1.0,has_plays,teams_and_date,197,277,2132,20261017
+2026,401856830,2026-10-17T16:00:00Z,Kansas State,Kansas,35,24,1.0,has_plays,teams_and_date,179,2306,2305,20261017
+2026,401858267,2026-10-17T16:00:00Z,Boston College,Pittsburgh,27,21,1.0,has_plays,teams_and_date,171,103,221,20261017
+2026,401858268,2026-10-17T16:00:00Z,SMU,Virginia,23,13,1.0,has_plays,teams_and_date,175,2567,258,20261017
+2026,401858488,2026-10-17T16:00:00Z,Indiana,Ohio State,15,19,0.0,has_plays,teams_and_date,187,84,194,20261017
+2026,401858491,2026-10-17T16:00:00Z,Michigan State,Northwestern,21,24,0.0,has_plays,teams_and_date,171,127,77,20261017
+2026,401862802,2026-10-17T16:00:00Z,Army,Florida Atlantic,56,24,1.0,has_plays,teams_and_date,177,349,2226,20261017
+2026,401866441,2026-10-17T16:00:00Z,Bowling Green,Ball State,31,32,0.0,has_plays,teams_and_date,159,189,2050,20261017
+2026,401869957,2026-10-17T16:00:00Z,James Madison,Georgia State,49,22,1.0,has_plays,teams_and_date,179,256,2247,20261017
