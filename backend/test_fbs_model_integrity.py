@@ -153,13 +153,14 @@ def test_lock_inside_window_is_labelled_and_immutable(con):
 
 
 def test_nothing_locks_after_kickoff_and_the_missed_window_is_recorded_once(con):
+    _scheduled(con)                       # a verified pregame schedule, so the window existed
     store.upsert_previews(con, [_row()], now=KICKOFF - dt.timedelta(hours=10))
     after = KICKOFF + dt.timedelta(minutes=5)
     report = store.lock_forecasts(con, [_row()], now=after)
     assert report["after_kickoff"] == 1
     assert con.execute("SELECT COUNT(*) FROM fbs_forecasts").fetchone()[0] == 0
-    assert store.record_missed_windows(con, now=after) == 1
-    assert store.record_missed_windows(con, now=after + dt.timedelta(minutes=1)) == 0
+    assert store.record_missed_windows(con, now=after)["missed_t90_window"] == 1
+    assert store.record_missed_windows(con, now=after + dt.timedelta(minutes=1))["missed_t90_window"] == 0
 
 
 def test_previews_are_replaced_and_never_lock(con):
@@ -552,3 +553,81 @@ def test_legacy_rows_are_never_pending_for_grading(con):
                 "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
                 "VALUES('legacy','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','v',0.7,'x',NULL,1,'legacy')")
     assert store.pending_grades(con, KICKOFF + dt.timedelta(days=1)) == []
+
+
+# ---------------------------------------------------------------------------------- migration of a legacy copy
+
+LEGACY_FORECASTS = """
+CREATE TABLE fbs_forecasts (
+    game_id TEXT NOT NULL, model TEXT NOT NULL, season INTEGER NOT NULL, kickoff_utc TEXT NOT NULL,
+    home_team TEXT NOT NULL, away_team TEXT NOT NULL, home_team_id TEXT, away_team_id TEXT,
+    model_version TEXT NOT NULL, p_home REAL NOT NULL, fair_home INTEGER, fair_away INTEGER,
+    fitted_through TEXT, created_at_utc TEXT NOT NULL, locked_at_utc TEXT, late INTEGER NOT NULL DEFAULT 0,
+    result INTEGER, home_score INTEGER, away_score INTEGER, graded_at_utc TEXT,
+    PRIMARY KEY (game_id, model));
+INSERT INTO fbs_forecasts VALUES ('1', 'g2h', 2025, '2025-09-06T16:00:00+00:00', 'A', 'B', '10', '11',
+    'fbs-g2h-old', 0.61, 60, -150, '2025-09-05', '2025-09-05T10:00:00+00:00', '2025-09-05T10:00:00+00:00',
+    0, 1, 31, 24, '2025-09-07T05:00:00+00:00');
+INSERT INTO fbs_forecasts VALUES ('2', 'g2', 2025, '2025-09-06T20:00:00+00:00', 'C', 'D', '12', '13',
+    'fbs-g2-old', 0.44, NULL, NULL, '2025-09-05', '2025-09-05T10:00:00+00:00', NULL, 0, NULL, NULL, NULL, NULL);
+"""
+
+
+def _legacy_db(path):
+    con = sqlite3.connect(path)
+    con.executescript(LEGACY_FORECASTS)
+    con.commit()
+    con.close()
+
+
+def _forecast_rows(path, columns):
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    try:
+        return con.execute("SELECT %s FROM fbs_forecasts ORDER BY game_id, model" % ", ".join(columns)).fetchall()
+    finally:
+        con.close()
+
+
+LEGACY_COLUMNS = ["game_id", "model", "season", "kickoff_utc", "home_team", "away_team", "home_team_id",
+                  "away_team_id", "model_version", "p_home", "fair_home", "fair_away", "fitted_through",
+                  "created_at_utc", "locked_at_utc", "late", "result", "home_score", "away_score", "graded_at_utc"]
+
+
+def test_migrating_a_legacy_copy_keeps_every_existing_forecast_row_and_writes_a_backup(tmp_path):
+    db = str(tmp_path / "legacy" / "fbs-model.dev.sqlite3")
+    (tmp_path / "legacy").mkdir()
+    _legacy_db(db)
+    before = _forecast_rows(db, LEGACY_COLUMNS)
+
+    evidence = store.migrate(db, str(tmp_path / "backups"))
+
+    assert evidence["forecast_rows_before"] == evidence["forecast_rows_after"] == 2
+    assert evidence["lock_protocols"] == {"legacy": 2}
+    assert evidence["integrity"] == "ok"
+    assert {"fbs_game_status", "fbs_previews", "fbs_unresolved", "fbs_window_outcomes"} <= set(evidence["tables_added"])
+    assert _forecast_rows(db, LEGACY_COLUMNS) == before
+    assert _forecast_rows(evidence["backup"], LEGACY_COLUMNS) == before          # the backup is the original
+    assert store.migrate(db, str(tmp_path / "backups"))["tables_added"] == []    # idempotent, new backup each time
+
+
+def test_a_migration_that_changes_an_existing_row_fails_and_keeps_the_backup(tmp_path, monkeypatch):
+    db = str(tmp_path / "legacy-2" / "fbs-model.dev.sqlite3")
+    (tmp_path / "legacy-2").mkdir()
+    _legacy_db(db)
+    real_open = store.open_db
+
+    def open_and_damage(path, readonly=False):
+        con = real_open(path, readonly=readonly)
+        if not readonly:
+            for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'fbs_forecasts'").fetchall():
+                con.execute('DROP TRIGGER "%s"' % name)              # simulate a write the immutability guard would stop
+            con.execute("UPDATE fbs_forecasts SET p_home = 0.99 WHERE game_id = '1'")
+            con.commit()
+        return con
+    monkeypatch.setattr(store, "open_db", open_and_damage)
+
+    with pytest.raises(RuntimeError, match="changed existing fbs_forecasts rows"):
+        store.migrate(db, str(tmp_path / "backups-2"))
+    backups = list((tmp_path / "backups-2").iterdir())
+    assert len(backups) == 1
+    assert _forecast_rows(str(backups[0]), ["p_home"]) == [(0.61,), (0.44,)]

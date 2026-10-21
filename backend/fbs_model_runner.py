@@ -574,23 +574,125 @@ def eastern_date(kickoff_utc: str) -> str:
     return life.eastern_dates(pd.Timestamp(kickoff_utc).to_pydatetime())[0]
 
 
+FORECAST_OK = ("ok", "empty_slate", "no_feature_coverage")
+
+
+def _board_dates(now: dt.datetime, days: int) -> set[str]:
+    """The scoreboard dates one slate fetch requests. A game filed on another date is not expected here."""
+    return {(now + dt.timedelta(days=offset)).strftime("%Y%m%d") for offset in range(days + 1)}
+
+
+def _slate_unavailable(con, now: dt.datetime, error: str) -> dict:
+    """The current slate could not be verified, so nothing is previewed or locked. Expired windows are still
+    classified, and every known-scheduled game due within 24 hours becomes an immediate lock risk."""
+    store.begin(con)
+    try:
+        missed = store.record_missed_windows(con, now=now, commit=False)
+        horizon = now + dt.timedelta(hours=24)
+        at_risk = []
+        for row in con.execute("SELECT game_id, season FROM fbs_game_status WHERE lifecycle = 'scheduled'").fetchall():
+            kickoff = store.current_fixture(con, row["game_id"])["kickoff_utc"]
+            if now < store.parse_time(kickoff) <= horizon:
+                store.record_unresolved(con, row["game_id"], row["season"], kickoff, "slate_unavailable_pregame",
+                                        now, commit=False, lock_risk=True)
+                at_risk.append(row["game_id"])
+        store.record_run(con, "forecast", "slate_unavailable",
+                         {"error": error, "missed": missed, "lock_risk": at_risk}, now, commit=False)
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return {"status": "slate_unavailable", "error": error, "previewed": 0,
+            "locked": {"blocked": "slate_unavailable"}, "missed": missed, "lock_risk": at_risk}
+
+
+def _write_forecast(con, slate: pd.DataFrame, predictions: pd.DataFrame, now: dt.datetime, days: int,
+                    certified: bool, reason: str | None, rating_rows: list[dict], version: str, state: dict) -> dict:
+    """Every write of one forecast run. The caller owns the transaction and commits once."""
+    board = _board_dates(now, days)
+    seen = {}
+    for rec in slate.to_dict("records"):
+        game_id, season = rec["game_id"], int(rec["season"])
+        obs = store.observe_fixture(con, rec, now, "espn_scoreboard")
+        lifecycle = rec["lifecycle"]
+        grading = "void" if lifecycle in life.VOID_LIFECYCLES else "pending"
+        status_reason = None
+        if obs["identity_changed"]:
+            lifecycle, grading, status_reason = "unknown", "unresolved", "identity_changed"
+        elif lifecycle == "unknown":
+            grading, status_reason = "unresolved", "status_unknown"
+        elif lifecycle in life.HOLD_LIFECYCLES:
+            status_reason = "schedule_unresolved_" + lifecycle
+        store.set_game_status(con, game_id, season, obs["revision"], lifecycle, rec["status_name"],
+                              now.isoformat(), "espn_scoreboard", grading, status_reason, commit=False)
+        seen[game_id] = (lifecycle, obs)
+        if lifecycle == "unknown" and now < store.parse_time(obs["kickoff_utc"]):
+            # A pregame verification failure: visible at once, because the lock may still be taken.
+            store.record_unresolved(con, game_id, season, obs["kickoff_utc"], status_reason, now,
+                                    commit=False, lock_risk=True)
+        elif lifecycle == "unknown" or lifecycle in life.HOLD_LIFECYCLES:
+            store.record_unresolved(con, game_id, season, obs["kickoff_utc"], status_reason, now, commit=False)
+        else:
+            store.resolve_unresolved(con, game_id, now, commit=False)
+
+    for row in con.execute("SELECT game_id, season FROM fbs_game_status WHERE lifecycle = 'scheduled'").fetchall():
+        game_id, season = row["game_id"], row["season"]
+        fixture = store.current_fixture(con, game_id)
+        if game_id in seen or eastern_date(fixture["kickoff_utc"]) not in board:
+            continue
+        revision = store.game_status(con, game_id)["revision"]
+        store.set_game_status(con, game_id, season, revision, "unknown", None, now.isoformat(),
+                              "espn_scoreboard", "unresolved", "absent_from_board", commit=False)
+        future = now < store.parse_time(fixture["kickoff_utc"])
+        store.record_unresolved(con, game_id, season, fixture["kickoff_utc"], "absent_from_board", now,
+                                commit=False, lock_risk=future)
+
+    rows, lock_rows = [], []
+    for row in predictions.itertuples(index=False):
+        lifecycle, obs = seen.get(str(row.game_id), ("unknown", None))
+        if obs is None or obs["identity_changed"] or lifecycle in life.VOID_LIFECYCLES:
+            continue
+        for model in MODEL_ORDER:
+            item = {
+                "game_id": str(row.game_id), "model": model, "season": int(row.season),
+                "kickoff_utc": obs["kickoff_utc"], "home_team": row.home_team, "away_team": row.away_team,
+                "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
+                "model_version": version % model,
+                "p_home": float(getattr(row, "p_" + model)),
+                "fitted_through": str(state["train_last_date"].date()),
+            }
+            rows.append(item)
+            if lifecycle == "scheduled":
+                lock_rows.append(item)
+
+    previewed = store.upsert_previews(con, rows, now=now, commit=False)
+    locked = store.lock_forecasts(con, lock_rows, now=now, commit=False) if certified else {"blocked": reason}
+    missed = store.record_missed_windows(con, now=now, commit=False)
+    store.store_ratings(con, rating_rows, now.isoformat(), commit=False)
+    store.set_meta(con, commit=False, last_run_utc=now.isoformat(), model_version=version % "g2h",
+                   train_last_date=str(state["train_last_date"].date()),
+                   train_games=state["train_games"], parity_certified=certified, parity_note=reason)
+    lock_risk = [u["game_id"] for u in store.unresolved_queue(con) if u["alert_state"] == "lock_risk"]
+    report = {"previewed": previewed, "locked": locked, "missed": missed, "lock_risk": lock_risk,
+              "games": len(seen)}
+    store.record_run(con, "forecast", "ok", report, now, commit=False)
+    return {**report, "locks_blocked": None if certified else reason}
+
+
 def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame,
                   ratings: pd.DataFrame) -> dict:
-    """Current-slate subsystem. Preflight reads the live board and the model; any failure stops it
-    before a new preview or lock is written. Only then does it write."""
+    """Current-slate subsystem. Preflight reads the live board and the model before anything is written.
+    Every write then happens in one transaction, so a failure anywhere leaves the database as it was."""
     season = int(frame["season"].max())
     con = store.open_db(db_path)
     try:
         try:
             slate = fetch_slate(days=days, now=now)
         except SlateUnavailable as exc:
-            missed = store.record_missed_windows(con, now=now)
-            store.record_run(con, "forecast", "slate_unavailable", {"error": str(exc), "missed": missed}, now)
-            return {"status": "slate_unavailable", "error": str(exc), "previewed": 0,
-                    "locked": {"blocked": "slate_unavailable"}, "missed": missed}
+            return _slate_unavailable(con, now, str(exc))
         if slate.empty:
             store.record_run(con, "forecast", "empty_slate", {}, now)
-            return {"status": "empty_slate", "previewed": 0, "locked": {}, "missed": 0}
+            return {"status": "empty_slate", "previewed": 0, "locked": {}, "missed": {}}
         print("slate: %d games from ESPN" % len(slate))
         scored = g2_for_slate(frame, slate)
         feats = slate_features(ratings, slate, season)
@@ -602,7 +704,7 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
         scored = scored[scored["points_per_drive_diff"].notna()].copy()
         if scored.empty:
             store.record_run(con, "forecast", "no_feature_coverage", {}, now)
-            return {"status": "no_feature_coverage", "previewed": 0, "locked": {}, "missed": 0}
+            return {"status": "no_feature_coverage", "previewed": 0, "locked": {}, "missed": {}}
         imputed = scored[FEATURES_C].isna().any(axis=1)
         if imputed.any():
             print("slate: %d game(s) with a missing drive feature filled with 0.0, as in training"
@@ -617,63 +719,18 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
         certified, reason = parity_certified(db_path)
         if not certified:
             print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
-
-        # Fixture revisions and live lifecycle come from this board only.
-        lifecycle_of = {}
-        for rec in slate.to_dict("records"):
-            obs = store.observe_fixture(con, rec, now, "espn_scoreboard")
-            lifecycle = rec["lifecycle"]
-            grading = "void" if lifecycle in life.VOID_LIFECYCLES else "pending"
-            reason_text = None
-            if obs["identity_changed"]:
-                lifecycle, grading, reason_text = "unknown", "unresolved", "identity_changed"
-            elif lifecycle == "unknown":
-                grading, reason_text = "unresolved", "status_unknown"
-            elif lifecycle in life.HOLD_LIFECYCLES:
-                reason_text = "schedule_unresolved_" + lifecycle
-            store.set_game_status(con, rec["game_id"], season, obs["revision"], lifecycle,
-                                  rec["status_name"], now.isoformat(), "espn_scoreboard", grading,
-                                  reason_text)
-            lifecycle_of[rec["game_id"]] = (lifecycle, obs)
-        for row in con.execute("SELECT game_id FROM fbs_game_status WHERE season=? AND lifecycle='scheduled'",
-                               (season,)).fetchall():
-            if str(row[0]) not in lifecycle_of:
-                store.set_game_status(con, row[0], season, store.game_status(con, row[0])["revision"],
-                                      "unknown", None, now.isoformat(), "espn_scoreboard", "unresolved",
-                                      "absent_from_board")
-
-        rows, lock_rows = [], []
         version = "fbs-%s-%s" % ("%s", state["train_last_date"].strftime("%Y%m%d"))
-        for row in predictions.itertuples(index=False):
-            lifecycle, obs = lifecycle_of.get(str(row.game_id), ("unknown", None))
-            if obs is None or obs["identity_changed"] or lifecycle in life.VOID_LIFECYCLES:
-                continue
-            kickoff = obs["kickoff_utc"]
-            for model in MODEL_ORDER:
-                item = {
-                    "game_id": str(row.game_id), "model": model, "season": int(row.season),
-                    "kickoff_utc": kickoff, "home_team": row.home_team, "away_team": row.away_team,
-                    "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
-                    "model_version": version % model,
-                    "p_home": float(getattr(row, "p_" + model)),
-                    "fitted_through": str(state["train_last_date"].date()),
-                }
-                rows.append(item)
-                if lifecycle == "scheduled":
-                    lock_rows.append(item)
 
-        previewed = store.upsert_previews(con, rows, now=now)
-        locked = store.lock_forecasts(con, lock_rows, now=now) if certified else {"blocked": reason}
-        missed = store.record_missed_windows(con, now=now)
-        store.store_ratings(con, rating_rows, now.isoformat())
-        store.set_meta(con, last_run_utc=now.isoformat(), model_version=version % "g2h",
-                       train_last_date=str(state["train_last_date"].date()),
-                       train_games=state["train_games"], parity_certified=certified,
-                       parity_note=reason)
-        report = {"previewed": previewed, "locked": locked, "missed": missed,
-                  "locks_blocked": None if certified else reason}
-        store.record_run(con, "forecast", "ok", {"games": len(lifecycle_of), **{k: v for k, v in report.items()
-                                                                              if k != "locks_blocked"}}, now)
+        store.begin(con)
+        try:
+            report = _write_forecast(con, slate, predictions, now, days, certified, reason,
+                                     rating_rows, version, state)
+            con.commit()
+        except Exception as exc:
+            con.rollback()
+            print("forecast rolled back, nothing written: %r" % exc, file=sys.stderr)
+            store.record_run(con, "forecast", "rolled_back", {"error": repr(exc)}, now)
+            return {"status": "rolled_back", "error": repr(exc), "previewed": 0, "locked": {}, "missed": {}}
         return {"status": "ok", **report}
     finally:
         con.close()
@@ -686,19 +743,19 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
     try:
         frame, ratings = service.build_frame(verbose=True, return_ratings=True)
     except service.FBSModelError as exc:
-        forecast = {"status": "model_unavailable", "error": str(exc), "previewed": 0, "locked": {}, "missed": 0}
+        forecast = {"status": "model_unavailable", "error": str(exc), "previewed": 0, "locked": {}, "missed": {}}
         frame = None
     else:
         try:
             forecast = forecast_step(db_path, days, now, frame, ratings)
         except service.FBSModelError as exc:
-            forecast = {"status": "model_error", "error": str(exc), "previewed": 0, "locked": {}, "missed": 0}
+            forecast = {"status": "model_error", "error": str(exc), "previewed": 0, "locked": {}, "missed": {}}
     grade = grade_step(db_path, now, frame)
-    locks_blocked = forecast.get("locks_blocked")
     return {"forecast": forecast, "grade": grade,
             "previewed": forecast.get("previewed", 0), "locked": forecast.get("locked", {}),
-            "missed": forecast.get("missed", 0), "graded": grade.get("graded", 0),
-            "locks_blocked": locks_blocked, "reason": forecast.get("status")}
+            "missed": forecast.get("missed", {}), "lock_risk": forecast.get("lock_risk", []),
+            "graded": grade.get("graded", 0), "locks_blocked": forecast.get("locks_blocked"),
+            "reason": forecast.get("status")}
 
 
 def audit(db_path: str = store.DEFAULT_DB) -> dict:
@@ -760,6 +817,8 @@ def main(argv=None) -> int:
     if args.run:
         result = run(days=args.days, db_path=args.db)
         print(json.dumps(result, indent=2, default=str))
+        if result["reason"] not in FORECAST_OK:
+            return 4
         return 3 if result["locks_blocked"] else 0
     if args.audit:
         print(json.dumps(audit(args.db), indent=2, default=str))

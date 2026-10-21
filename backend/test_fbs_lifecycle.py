@@ -6,6 +6,7 @@ service on a synthetic frame. Locks are allowed only where a test stubs the pari
 no real certificate is used here.
 """
 import datetime as dt
+import math
 import sqlite3
 
 import numpy as np
@@ -223,15 +224,34 @@ def test_a_lock_that_becomes_cancelled_is_void_and_outside_win_loss_and_brier(co
     assert payload["games"][0]["grading_state"] == "void"
 
 
-def test_a_missed_window_ignores_postponed_games_and_uses_the_current_kickoff(con):
+def test_a_missed_window_is_classified_three_ways_and_uses_the_current_kickoff(con):
+    # 1. verified scheduled before kickoff, no lock: a genuine missed window
     observe(con, GAME, KICK, NOW_EARLY)
     store.upsert_previews(con, [lock_row(GAME, KICK)], now=NOW_EARLY)
-    observe(con, GAME, KICK, NOW_EARLY, lifecycle="postponed", status_name="STATUS_POSTPONED")
-    assert store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1)) == 0
+    counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
+    assert counts["missed_t90_window"] == 1 and counts["blocked_unverified_at_cutoff"] == 0
+    # 2. a postponement before kickoff is not eligible, even when a later lock could not happen
+    other = "9100"
+    observe(con, other, KICK, NOW_EARLY)
+    store.upsert_previews(con, [lock_row(other, KICK)], now=NOW_EARLY)
+    observe(con, other, KICK, NOW_EARLY + dt.timedelta(hours=1), lifecycle="postponed", status_name="STATUS_POSTPONED")
+    counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
+    assert counts["window_not_eligible"] == 1 and counts["missed_t90_window"] == 0
+    # 3. a previewed game with no verified pregame status was never eligible to lock
+    unverified = "9101"
+    store.upsert_previews(con, [lock_row(unverified, KICK)], now=NOW_EARLY)
+    counts = store.record_missed_windows(con, now=KICK + dt.timedelta(hours=1))
+    assert counts["blocked_unverified_at_cutoff"] == 1 and counts["missed_t90_window"] == 0
+    # outcomes are recorded once; a moved game is not missed at the old kickoff
+    assert store.record_missed_windows(con, now=KICK + dt.timedelta(hours=2)) == {
+        "missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 0}
     moved = KICK + dt.timedelta(days=1)
-    observe(con, GAME, moved, KICK + dt.timedelta(hours=2))                # revision 2, scheduled again
-    assert store.record_missed_windows(con, now=KICK + dt.timedelta(hours=3)) == 0   # old kickoff passed
-    assert store.record_missed_windows(con, now=moved + dt.timedelta(minutes=1)) == 1
+    observe(con, "9102", KICK, NOW_EARLY)
+    store.upsert_previews(con, [lock_row("9102", KICK)], now=NOW_EARLY)
+    observe(con, "9102", moved, KICK + dt.timedelta(hours=2))
+    assert store.record_missed_windows(con, now=KICK + dt.timedelta(hours=3))["missed_t90_window"] == 0
+    # re-verified as scheduled at its new kickoff, with no lock written in that window: a genuine miss
+    assert store.record_missed_windows(con, now=moved + dt.timedelta(minutes=1))["missed_t90_window"] == 1
 
 
 def test_an_absent_or_changed_opponent_is_never_the_same_fixture(con):
@@ -439,37 +459,65 @@ def test_a_delayed_game_inside_the_window_takes_no_new_lock(tmp_path, forecast_e
 
 # ------------------------------------------------------------------------------- neutral site
 
-def test_a_neutral_site_matchup_reaches_the_model_with_its_flag_and_conferences(monkeypatch):
+def elo_history(season=2025, n=240, seed=11):
+    """Completed FBS games in the schema load_events supplies, so the real baseline reads a real history."""
+    rng = np.random.default_rng(seed)
+    teams = [(str(100 + i), "Team %d" % i, "SEC" if i % 2 else "Big 12") for i in range(12)]
+    rows = []
+    for i in range(n):
+        h, a = teams[i % 12], teams[(i * 5 + 3) % 12]
+        if h == a:
+            a = teams[(i + 1) % 12]
+        kick = dt.datetime(season, 9, 1, 16, tzinfo=dt.timezone.utc) + dt.timedelta(days=i // 4)
+        home_score, away_score = int(rng.integers(14, 45)), int(rng.integers(14, 45))
+        rows.append({
+            "game_id": "h%d" % i, "season": season, "week": None, "kickoff_utc": kick, "utc_date": kick.date(),
+            "week_start_utc": (kick - dt.timedelta(days=kick.weekday())).date().isoformat(),
+            "home_team_id": h[0], "away_team_id": a[0], "home_team": h[1], "away_team": a[1],
+            "home_conference": h[2], "away_conference": a[2], "home_score": home_score, "away_score": away_score,
+            "home_win": float(home_score > away_score), "neutral_site": False, "fbs_game": True,
+            "fbs_participant": True, "cfb_completed": True, "evaluation_population": True,
+            "game_phase": "Regular season", "season_type": "regular", "result_source": "test history",
+            "home_model_favorite": np.nan,
+        })
+    return pd.DataFrame(rows)
+
+
+def test_a_neutral_site_game_is_priced_by_the_real_elo_baseline(monkeypatch):
+    """Only the data load is stubbed. The Elo baseline is the real base.make_predictions: a neutral flag must
+    remove exactly the baseline's home advantage from the probability, and conferences must reach the model."""
     frame = synthetic_frame(season=2026)
     state = service.fit(frame, dt.datetime(2026, 10, 20, tzinfo=dt.timezone.utc))
+    history = elo_history()
     captured = {}
+    real_predictions = runner.base.make_predictions
 
-    def events_stub(data_dir, seasons):
-        return frame.copy(), None, None, None
-
-    def predictions_stub(combined, first_season):
+    def spy(combined, first_season):
         captured["combined"] = combined.copy()
-        out = combined.copy()
-        out["elo_home_prob"] = np.where(out["neutral_site"].astype(bool), 0.5, 0.58)
-        return out
+        return real_predictions(combined, first_season)
 
-    monkeypatch.setattr(runner.base, "load_events", events_stub)
-    monkeypatch.setattr(runner.base, "make_predictions", predictions_stub)
-    slate = pd.DataFrame([dict(game_id="N1", kickoff_utc=pd.Timestamp("2026-10-24T16:00Z"),
-                               home_team_id="100", away_team_id="101", home_team="Team 0", away_team="Team 1",
-                               neutral_site=True, week=8)])
-    scored = runner.g2_for_slate(frame, slate)
-    event = captured["combined"].loc[captured["combined"].game_id == "N1"].iloc[0]
+    monkeypatch.setattr(runner.base, "load_events", lambda data_dir, seasons: (history.copy(), None, None, None))
+    monkeypatch.setattr(runner.base, "make_predictions", spy)
+    kick = pd.Timestamp("2026-10-24T16:00Z")
+    teams = dict(home_team_id="100", away_team_id="101", home_team="Team 0", away_team="Team 1", week=8)
+    slate = pd.DataFrame([dict(game_id="N1", kickoff_utc=kick, neutral_site=True, **teams),
+                          dict(game_id="H1", kickoff_utc=kick, neutral_site=False, **teams)])
+    scored = runner.g2_for_slate(frame, slate).set_index("game_id")
+
+    combined = captured["combined"]
+    event = combined.loc[combined.game_id == "N1"].iloc[0]
     assert bool(event["neutral_site"]) is True
     assert event["home_conference"] == frame.loc[frame.home_team_id == "100", "home_conference"].iloc[0]
     assert event["away_conference"] == frame.loc[frame.away_team_id == "101", "away_conference"].iloc[0]
-    assert float(scored.iloc[0]["p_g2"]) == 0.5                  # the neutral flag removed home advantage
-    feats = {c: 0.0 for c in FEATS}
-    rows = scored.assign(**feats)
-    base = service.predict(frame, state, rows).iloc[0]["p_g2h"]
+
+    logit = lambda p: math.log(p / (1.0 - p))
+    gap = logit(float(scored.loc["H1", "p_g2"])) - logit(float(scored.loc["N1", "p_g2"]))
+    assert gap == pytest.approx(runner.base.ELO_HOME_ADVANTAGE / 400.0 * math.log(10), abs=1e-9)
+
+    rows = scored.loc[["N1"]].reset_index().assign(**{c: 0.0 for c in FEATS})
+    base_p = service.predict(frame, state, rows).iloc[0]["p_g2h"]
     flipped = rows.assign(away_conference="Big 12" if rows.iloc[0]["away_conference"] != "Big 12" else "SEC")
-    changed = service.predict(frame, state, flipped).iloc[0]["p_g2h"]
-    assert base != changed                                       # G2h uses the conference inputs
+    assert service.predict(frame, state, flipped).iloc[0]["p_g2h"] != base_p   # G2h uses the conference inputs
 
 
 def test_an_inconsistent_board_is_unverified_so_the_slate_is_unavailable(boards):
@@ -488,3 +536,106 @@ def test_a_suspended_game_that_resumes_before_kickoff_can_lock_again(con):
     observe(con, GAME, KICK, NOW_WINDOW - dt.timedelta(minutes=5), lifecycle="scheduled")
     report = store.lock_forecasts(con, [lock_row(GAME, KICK)], now=NOW_WINDOW)
     assert report["inserted"] == 1
+
+
+# ------------------------------------------------------------- atomic forecast writes and lock risk
+
+def durable_state(db):
+    """Every fbs_ table's rows, except the run log, which records the failure itself by design."""
+    con = store.open_db(db, readonly=True)
+    try:
+        names = [r[0] for r in con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'fbs_%' AND name <> 'fbs_run_reports'")]
+        return {name: sorted(repr(tuple(r)) for r in con.execute("SELECT * FROM %s" % name).fetchall())
+                for name in names}
+    finally:
+        con.close()
+
+
+def test_a_failure_partway_through_a_forecast_write_leaves_every_table_as_it_was(tmp_path, forecast_env, boards,
+                                                                                  monkeypatch):
+    db = str(tmp_path / "rollback.sqlite3")
+    now = KICK - dt.timedelta(minutes=60)
+    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_SCHEDULED", False)])
+    con = store.open_db(db)
+    observe(con, GAME, KICK + dt.timedelta(hours=3), NOW_EARLY)     # the board moves the kickoff: a new revision
+    con.close()
+    before = durable_state(db)
+
+    real_lock = runner.store.lock_forecasts
+
+    def lock_then_fail(con_arg, rows, now=None, commit=True):
+        real_lock(con_arg, rows, now=now, commit=commit)            # locks and previews are already written
+        raise RuntimeError("injected failure after the lock write")
+    monkeypatch.setattr(runner.store, "lock_forecasts", lock_then_fail)
+
+    report = runner.run(days=10, db_path=db, now=now)
+    assert report["forecast"]["status"] == "rolled_back"
+    assert "injected failure" in report["forecast"]["error"]
+    assert durable_state(db) == before
+
+    con = store.open_db(db, readonly=True)
+    assert con.execute("SELECT status FROM fbs_run_reports WHERE subsystem = 'forecast' ORDER BY id DESC LIMIT 1").fetchone()[0] == "rolled_back"
+    con.close()
+
+    monkeypatch.setattr(runner.store, "lock_forecasts", real_lock)
+    recovered = runner.run(days=10, db_path=db, now=now)
+    assert recovered["forecast"]["status"] == "ok"
+    assert recovered["locked"]["inserted"] == len(runner.MODEL_ORDER)
+    con = store.open_db(db, readonly=True)
+    assert con.execute("SELECT revision FROM fbs_fixture_revisions WHERE game_id=? ORDER BY revision DESC LIMIT 1",
+                       (GAME,)).fetchone()[0] == 2
+    con.close()
+
+
+def test_an_unmapped_pregame_status_is_a_lock_risk_at_once_and_is_queued(tmp_path, forecast_env, boards):
+    db = str(tmp_path / "unmapped.sqlite3")
+    now = KICK - dt.timedelta(minutes=60)
+    window_board(boards, now, [board_event(GAME, KICK.isoformat(), "STATUS_UNRECOGNISED", False)])
+    report = runner.run(days=10, db_path=db, now=now)
+    assert report["forecast"]["status"] == "ok"
+    assert report["locked"]["inserted"] == 0
+    assert GAME in report["forecast"]["lock_risk"]
+    con = store.open_db(db, readonly=True)
+    queued = [dict(r) for r in store.unresolved_queue(con) if r["game_id"] == GAME]
+    con.close()
+    assert len(queued) == 1 and queued[0]["alert_state"] == "lock_risk"
+
+
+def test_a_scheduled_game_that_leaves_the_board_is_unverified_but_one_beyond_it_is_untouched(tmp_path, forecast_env,
+                                                                                            boards):
+    db = str(tmp_path / "absent.sqlite3")
+    now = KICK - dt.timedelta(minutes=60)
+    far = KICK + dt.timedelta(days=20)                                 # beyond the board this run fetches
+    con = store.open_db(db)
+    observe(con, GAME, KICK, NOW_EARLY)
+    observe(con, "far", far, NOW_EARLY)
+    con.close()
+    window_board(boards, now, [board_event("other", KICK.isoformat(), "STATUS_SCHEDULED", False,
+                                           home=("2001", "Other U"), away=("2002", "Other State"))])
+    report = runner.run(days=10, db_path=db, now=now)
+    assert report["forecast"]["status"] == "ok"
+    con = store.open_db(db, readonly=True)
+    status = {r["game_id"]: dict(r) for r in con.execute("SELECT * FROM fbs_game_status")}
+    queued = {r["game_id"]: r["alert_state"] for r in store.unresolved_queue(con)}
+    con.close()
+    assert status[GAME]["lifecycle"] == "unknown" and status[GAME]["reason"] == "absent_from_board"
+    assert queued[GAME] == "lock_risk"
+    assert status["far"]["lifecycle"] == "scheduled" and "far" not in queued
+
+
+def test_a_slate_outage_raises_a_lock_risk_for_each_scheduled_game_due_within_a_day(tmp_path, forecast_env, boards):
+    db = str(tmp_path / "outage-risk.sqlite3")
+    now = KICK - dt.timedelta(minutes=60)
+    con = store.open_db(db)
+    observe(con, GAME, KICK, NOW_EARLY)
+    observe(con, "later", KICK + dt.timedelta(days=3), NOW_EARLY)
+    con.close()
+    report = runner.run(days=10, db_path=db, now=now)                  # the current board is not stubbed
+    assert report["forecast"]["status"] == "slate_unavailable"
+    assert GAME in report["forecast"]["lock_risk"] and "later" not in report["forecast"]["lock_risk"]
+    con = store.open_db(db, readonly=True)
+    queued = {r["game_id"]: r["alert_state"] for r in store.unresolved_queue(con)}
+    con.close()
+    assert queued[GAME] == "lock_risk" and "later" not in queued
+
