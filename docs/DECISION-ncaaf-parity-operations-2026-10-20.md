@@ -84,3 +84,38 @@ The current `forecast_step()` upserts `fbs_game_status` for unknown fixtures but
 6. **Certificate.** Passing scratch certificate authorizes no operational lock. After code changes, code and coverage fingerprints must invalidate the earlier certificate. Keep the live DB certificate absent and locks disabled, no scheduler or dev merge until separate owner approval.
 
 **Promotion verdict:** continue candidate fixes and isolated testing. No operational certificate, deployment, T-90 schedule, or `dev` merge authorized by this note.
+
+
+## Follow-up: timezone capture, explicit migration and season attribution (5c0f37ab)
+
+Decision date: 2026-10-20. Remote candidate \`candidate/ncaaf-parity-repair-2026-10-20\` verified at \`5c0f37ab1e3e6b830130b9fb1098fbffc1f59ebb\`. Reported worker verification: 78 passing tests, 2,397/2,397 research parity rows (G2/C2 0; G2h max 1.5e-8), an isolated 109-game live ESPN preview run with 327 previews and zero locks, and repeatable migration rehearsal on a copy of the 336-row legacy database. These are worker test reports, not an independent execution here.
+
+### Decision 1: capture across UTC midnight — APPROVED for candidate only
+
+**Fix before dev review.** The code currently requests \`(now + offset days).strftime("%Y%m%d")\` in UTC. An Eastern-local evening game can enter its T-90 window after 00:00 UTC while still belonging to the previous ESPN Eastern scoreboard day, making it disappear from the fetch.
+
+Use \`America/New_York\` and derive **all required Eastern scoreboard dates** to cover the requested future kickoff interval \`(now, now + horizon]\`. Include a neighbouring date only where needed for boundary/provider-placement robustness, with no unbounded additional daily requests. Require daylight-saving aware time conversion. Dedupe the same ESPN event ID across fetched dates **only if team identity, start timestamp, lifecycle/status and season agree**; otherwise mark slate unverified and fail closed, rather than arbitrarily keeping first.
+
+**Yes, filter new previews and lock candidates to kickoff strictly after \`now\`**, current verified pregame status and correct game season. This is not a grading filter. Already-started games stay eligible for postgame lifecycle and grading where independently confirmed final. Don't allow a past game to be reintroduced as a new pregame forecast. Preserve the separate unverified/blocked queue for previously observed prospective fixtures that drop off the current board, and test Eastern-date out-of-window avoidance.
+
+Explicit temporal regressions should cover 00:30 UTC / 22:00 Eastern kickoff at 02:00 UTC on the DST side of midnight; standard-time winter equivalent; DST transition days; midnight in both timezones; exact kickoff boundary; the **end-of-horizon** inclusion/exclusion; and duplicate/conflicting rows on neighbouring boards. The board request set used for absent-from-board classification must match the exact dates actually queried.
+
+Re-run the actual production-path parity check and a new **preview-only live ESPN dry run with a scratch, uncertified DB**; compare game/preview counts, event IDs, kickoff and status against source. A change in number of games caused by excluding already-started events is expected and should be explicitly explained, not hidden to maintain 109.
+
+### Decision 2: implicit migrations — REJECT
+
+The current \`fbs_model_store.open_db(readonly=False)\` still performs \`executescript(SCHEMA)\`, \`_migrate()\`, \`executescript(TRIGGERS)\`, and a commit on each open. This mutates an existing DB, can change its triggers and columns, and bypasses the approved backup/integrity/row-digest process.
+
+**Require explicit schema migration for any existing DB:** a runtime writable open must validate schema version and required triggers and fail closed with \`migration_required\` without altering its file if version differs. An explicitly separate \`migrate()\` command, with collision-safe backup, SQLite integrity check, unchanged original-row digest, trigger verification and reproducible evidence, is the only authorized path to schema change. A truly new scratch DB may be explicitly initialized with a separate \`initialize_new_db()\` operation. Do not accidentally conflate an empty new DB with a legacy unmigrated file. Validate a second migration is idempotent and no backup gets overwritten. **Do not migrate or open the operational DB writable on this authority.**
+
+### Decision 3: football season versus calendar year — REQUIRED fix
+
+The current \`g2_for_slate()\` still uses \`int(row.kickoff_utc.year)\` for team-conference lookup and the inserted Elo event, ignoring the ESPN \`row.season\` field that \`event_facts()\` already provides. January bowls for the **prior football season** can be attributed to the next calendar year. In \`forecast_step()\`, \`season=int(frame["season"].max())\` is also passed to \`slate_features()\` and \`team_ratings()\`; this could select the wrong feature/rating season, especially at season boundaries.
+
+Use **authoritative event football season** per game through Elo, FBS membership, feature lookup, fixture revisions and stored predictions. Validate/match season with independently loaded season source; missing/contradictory season blocks official locks rather than falling back to calendar year. Make \`slate_features()\` compute as-of team ratings **per target game**, strictly before its kickoff. If current football season has no earlier games, make prior-season fallback explicit, source-provenanced and test it; never silently use a future week or an unrelated season. Separate model fit cutoff from season attribution: \`service.fit(..., now)\` currently time-filters by \`utc_date < as_of\`; preserve this property, while ensuring its training frame cannot contain source outcomes or feature histories captured post-cutoff. \`team_ratings()\` should not silently attribute all output to the training frame's maximum season. Tests for early season, season rollover, 2026-season January 2027 game, conference realignment and missing current-season PBP are mandatory.
+
+Maintain frozen 2023–2025 reference parity and its **actual existing per-game \`1e-6\` check**; the runner's unused stale \`PARITY_TOLERANCE=5e-4\` constant does not control \`check_parity()\` and should be deleted or aligned, without loosening the gate.
+
+### Promotion and authorization
+
+These changes are authorized as candidate research/operational-hardening code and tests **only**. After the three fixes: inspect schema guard on unmigrated copies, re-run 2,397-game parity and all tests, perform live ESPN preview-only scratch check, and present a reviewable diff/PR candidate. **Browser QA on an owner-authorized isolated server remains open.** No merge to dev, production/development server restart, operational certificate, live database migration, T-90 scheduler, locked forecast or production deployment is authorized by this note.
