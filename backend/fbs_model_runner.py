@@ -45,6 +45,7 @@ ESPN_SCOREBOARD = ("https://site.api.espn.com/apis/site/v2/sports/football/"
                    "college-football/scoreboard?groups=80&limit=400&dates=%s")
 MODEL_ORDER = ("g2", "c2", "g2h")
 CERTIFICATE_NAME = "fbs-parity-certificate.json"
+LIVE_DB = os.environ.get("FBS_LIVE_DB", os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db"))
 # Every module whose code changes the forecast. A certificate is bound to these bytes.
 FINGERPRINT_MODULES = (
     "fbs_model_runner.py", "fbs_model_service.py", "fbs_model_store.py", "fbs_lifecycle.py",
@@ -691,7 +692,7 @@ def plan_grades(pending: list[tuple[str, str]], facts: dict[str, dict | None],
     return plan
 
 
-def grade_step(db_path: str, now: dt.datetime, frame: pd.DataFrame | None = None) -> dict:
+def grade_step(db_path: str, now: dt.datetime, frame: pd.DataFrame | None = None, facts_for=None) -> dict:
     """Historical grading. Independent of forecasting: it never writes a preview or a lock.
 
     The boards are read first. If any is unreadable nothing is written. Otherwise every decision is
@@ -704,7 +705,7 @@ def grade_step(db_path: str, now: dt.datetime, frame: pd.DataFrame | None = None
             store.record_run(con, "grade", "nothing_due", {}, now)
             return {"status": "nothing_due", "graded": 0}
         try:
-            facts = board_for_pending(pending)
+            facts = (facts_for or board_for_pending)(pending)
         except GradeSourceUnavailable as exc:
             store.record_run(con, "grade", "grade_source_unavailable", {"error": str(exc)}, now)
             return {"status": "grade_source_unavailable", "graded": 0, "error": str(exc)}
@@ -1054,6 +1055,55 @@ def audit(db_path: str = store.DEFAULT_DB) -> dict:
         con.close()
 
 
+# The scoreboard snapshots store ESPN's status description, not its status type name. Only these descriptions are
+# recognised; anything else classifies as unknown and is never graded.
+SNAPSHOT_STATUS_NAMES = {
+    "scheduled": "STATUS_SCHEDULED", "in progress": "STATUS_IN_PROGRESS", "halftime": "STATUS_HALFTIME",
+    "delayed": "STATUS_DELAYED", "suspended": "STATUS_SUSPENDED", "postponed": "STATUS_POSTPONED",
+    "final": "STATUS_FINAL", "canceled": "STATUS_CANCELED", "cancelled": "STATUS_CANCELED",
+    "abandoned": "STATUS_ABANDONED", "forfeit": "STATUS_FORFEIT", "no contest": "STATUS_NO_CONTEST",
+}
+
+
+def snapshot_facts(pending: list[tuple[str, str]], live_db: str) -> dict[str, dict | None]:
+    """Facts for each pending game from the dev scoreboard snapshots (the same table the site's scores read), so
+    grading does not depend on ESPN being reachable when it runs. Same fact shape and same lifecycle rules as the
+    ESPN boards: only a snapshot ESPN marked Final and completed, with both scores, can grade. A game with no
+    snapshot is None (absent), exactly as a game missing from a board is. Read-only on the live database."""
+    ids = [game_id for game_id, _ in pending]
+    found: dict[str, dict | None] = {game_id: None for game_id in ids}
+    if not ids:
+        return found
+    try:
+        con = sqlite3.connect("file:%s?mode=ro" % live_db, uri=True)
+        try:
+            rows = con.execute("SELECT game_id, payload FROM scoreboard_snapshots WHERE league='ncaaf' AND game_id IN (%s) "
+                               "ORDER BY fetched_at" % ",".join("?" * len(ids)), ids).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as exc:
+        raise GradeSourceUnavailable("scoreboard snapshots unreadable: %s" % exc)
+    for game_id, raw in rows:
+        data = json.loads(raw)
+        name = SNAPSHOT_STATUS_NAMES.get(str(data.get("status") or "").strip().lower())
+        completed = data.get("completed")
+        scores = [(data.get(side) or {}).get("score") for side in ("home", "away")]
+        found[str(game_id)] = {
+            "game_id": str(game_id), "season": None, "season_type": data.get("season_type"),
+            "kickoff_utc": data.get("date"), "status_name": name,
+            "completed": bool(completed) if completed is not None else None,
+            "lifecycle": life.classify_status(name, completed),
+            "home_score": None if scores[0] is None else int(scores[0]),
+            "away_score": None if scores[1] is None else int(scores[1]),
+        }
+    return found
+
+
+def grade_from_snapshots(db_path: str = store.DEFAULT_DB, live_db: str = LIVE_DB) -> dict:
+    return grade_step(db_path, dt.datetime.now(dt.timezone.utc), None,
+                      facts_for=lambda pending: snapshot_facts(pending, live_db))
+
+
 def grade_only(db_path: str = store.DEFAULT_DB) -> int:
     """Grade due games from ESPN's boards alone. The archive is cross-checked in run()."""
     return grade_step(db_path, dt.datetime.now(dt.timezone.utc), None)["graded"]
@@ -1077,7 +1127,11 @@ def _main(argv=None) -> int:
         print(json.dumps(result, indent=2))
         print("certificate: %s (ok=%s)" % (path, result["ok"]))
         return 0 if result["ok"] else 1
-    if args.grade_scoreboard or args.grade_only:  # --grade-scoreboard is the grade timer's flag; same verified path
+    if args.grade_scoreboard:
+        result = grade_from_snapshots(args.db)
+        print("graded", result["graded"], json.dumps({k: v for k, v in result.items() if k != "graded"}, default=str))
+        return 0 if result["status"] in ("ok", "nothing_due") else 4
+    if args.grade_only:
         print("graded", grade_only(args.db))
         return 0
     if args.run:

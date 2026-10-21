@@ -607,7 +607,8 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
     """Write the verified final result of each game onto its frozen projections. Never touches a probability.
 
     A result must carry verified=True, which only a confirmed final produces. Voided and quarantined games are
-    never graded, and a result is written once (trigger)."""
+    never graded, and a result is written once (trigger). Legacy rows (stored before the lock protocol) are
+    graded and counted the same way as frozen ones."""
     now = now or dt.datetime.now(dt.timezone.utc)
     graded = 0
     for game_id, result in results.items():
@@ -622,8 +623,8 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
         outcome = 1 if home_score > away_score else 0
         cursor = con.execute(
             "UPDATE fbs_forecasts SET result=?, home_score=?, away_score=?, graded_at_utc=? "
-            "WHERE game_id=? AND result IS NULL AND lock_protocol=? AND kickoff_utc < ?",
-            (outcome, home_score, away_score, now.isoformat(), game_id, LOCK_PROTOCOL,
+            "WHERE game_id=? AND result IS NULL AND lock_protocol IN (?, ?) AND kickoff_utc < ?",
+            (outcome, home_score, away_score, now.isoformat(), game_id, LOCK_PROTOCOL, LEGACY_PROTOCOL,
              now.isoformat()),
         )
         if cursor.rowcount:
@@ -636,21 +637,23 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
 
 
 def pending_grades(con: sqlite3.Connection, now: dt.datetime) -> list[tuple[str, str]]:
-    """Locked, ungraded games whose kickoff has passed, and which are due for a grading attempt.
+    """Locked or legacy, ungraded games whose kickoff has passed, and which are due for a grading attempt.
 
-    Legacy rows are never graded. Voided and quarantined games are excluded. An unresolved game is
-    retried only when its backoff has elapsed.
+    A legacy row's kickoff is a date-only midnight stamp, so it is due a day after that stamp, when the
+    game can have finished; the real kickoff is somewhere inside that day. Voided and quarantined games
+    are excluded. An unresolved game is retried only when its backoff has elapsed.
     """
     rows = con.execute(
-        "SELECT DISTINCT f.game_id, f.kickoff_utc FROM fbs_forecasts f "
-        "WHERE f.result IS NULL AND f.lock_protocol = ? "
+        "SELECT DISTINCT f.game_id, f.kickoff_utc, f.lock_protocol FROM fbs_forecasts f "
+        "WHERE f.result IS NULL AND f.lock_protocol IN (?, ?) "
         "AND NOT EXISTS (SELECT 1 FROM fbs_game_status s WHERE s.game_id = f.game_id "
         "                AND s.grading_state IN ('void', 'quarantined', 'graded'))",
-        (LOCK_PROTOCOL,)).fetchall()
+        (LOCK_PROTOCOL, LEGACY_PROTOCOL)).fetchall()
     due_at = {row[0]: parse_time(row[1]) for row in con.execute(
         "SELECT game_id, next_attempt_utc FROM fbs_unresolved WHERE resolved_utc IS NULL")}
+    wait = {LOCK_PROTOCOL: dt.timedelta(0), LEGACY_PROTOCOL: dt.timedelta(days=1)}
     return [(row[0], row[1]) for row in rows
-            if parse_time(row[1]) < now and due_at.get(row[0], now) <= now]
+            if parse_time(row[1]) + wait[row[2]] < now and due_at.get(row[0], now) <= now]
 
 
 def store_ratings(con: sqlite3.Connection, rows: list[dict], as_of: str, commit: bool = True) -> int:
@@ -868,7 +871,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
     """The public payload for one season, on one projection workflow.
 
     Projection cards get projections, game facts and, once verified, the final result. Records and history come only
-    from frozen, graded projections. Operational state is under diagnostics, which no projection card reads.
+    from graded projections, frozen or legacy. Operational state is under diagnostics, which no projection card reads.
     """
     base = {"league": "ncaaf", "default_model": DEFAULT_MODEL,
             "models": [{"id": m, "label": MODEL_LABELS[m], "note": MODEL_NOTES[m]} for m in MODEL_IDS],
@@ -886,8 +889,9 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
     frozen_rows = con.execute("SELECT * FROM fbs_forecasts WHERE season = ? AND lock_protocol = ? "
                               "ORDER BY kickoff_utc, model", (season, LOCK_PROTOCOL)).fetchall()
     frozen = {(r["game_id"], r["model"]): r for r in frozen_rows}
-    legacy_rows = con.execute("SELECT COUNT(*) FROM fbs_forecasts WHERE season = ? AND lock_protocol = ?",
-                              (season, LEGACY_PROTOCOL)).fetchone()[0]
+    stored_rows = con.execute("SELECT * FROM fbs_forecasts WHERE season = ? ORDER BY kickoff_utc, model",
+                              (season,)).fetchall()
+    legacy_rows = sum(1 for r in stored_rows if r["lock_protocol"] == LEGACY_PROTOCOL)
     statuses = {r["game_id"]: dict(r) for r in con.execute(
         "SELECT * FROM fbs_game_status WHERE season = ?", (season,)).fetchall()}
 
@@ -922,7 +926,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
 
     records = {}
     for model in MODEL_IDS:
-        rows = [r for r in frozen_rows if r["model"] == model]
+        rows = [r for r in stored_rows if r["model"] == model]
         graded = sorted((r for r in rows if r["result"] is not None), key=lambda r: r["kickoff_utc"])
         records[model] = {**_score(rows), "frozen": len(rows), "history": _history(graded)}
 
@@ -935,7 +939,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
         "cutoffs": {"%s|%s" % (row[0], row[1] or ""): row[2] for row in outcomes},
         "unresolved": [u for u in unresolved_queue(con) if u["season"] == season],
         "frozen_rows": len(frozen_rows),
-        "legacy_rows_excluded": legacy_rows,
+        "legacy_rows": legacy_rows,
         "runs": last_runs(con),
     }
     ratings = [dict(r) for r in con.execute(

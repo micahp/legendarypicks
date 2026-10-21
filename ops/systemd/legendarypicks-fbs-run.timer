@@ -1,0 +1,11 @@
+[Unit]
+Description=Every 30 minutes: Refresh NCAAF model projections, freeze at T-90, record missed windows
+
+[Timer]
+OnCalendar=*-*-* *:05,35:00
+AccuracySec=10s
+Persistent=false
+Unit=legendarypicks-fbs-run.service
+
+[Install]
+WantedBy=timers.target

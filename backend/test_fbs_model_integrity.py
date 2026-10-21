@@ -255,16 +255,19 @@ def test_a_frozen_projection_keeps_its_freeze_time_and_is_graded_once_from_a_ver
     assert record["history"][0]["graded"] == 1 and record["history"][0]["home_win"] is True
 
 
-def test_legacy_rows_are_kept_out_of_the_cards_and_the_record(con):
+def test_legacy_rows_are_graded_and_counted_in_the_record_but_not_shown_as_cards(con):
     # Shape of a row written before the protocol: midnight kickoff, labelled legacy.
     con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
                 "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
                 "VALUES('1','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','fbs-g2h-x',0.7,"
                 "'2026-10-20T21:26:35+00:00',NULL,1,'legacy')")
+    assert store.export_payload(con, 2026)["games"] == []
+    assert store.grade_forecasts(con, {"1": {"home_score": 20, "away_score": 10, "verified": True}}, now=NOW) == 1
     payload = store.export_payload(con, 2026)
-    assert payload["games"] == []
-    assert payload["records"]["g2h"]["frozen"] == 0 and payload["records"]["g2h"]["graded"] == 0
-    assert payload["diagnostics"]["legacy_rows_excluded"] == 1
+    record = payload["records"]["g2h"]
+    assert record["frozen"] == 1 and record["graded"] == 1 and record["accuracy"] == 1.0
+    assert [h["game_id"] for h in record["history"]] == ["1"]
+    assert payload["diagnostics"]["legacy_rows"] == 1
 
 
 def test_old_database_is_migrated_and_its_rows_are_labelled_legacy(tmp_path):
@@ -607,11 +610,58 @@ def test_pending_grades_are_unpaid_games_whose_kickoff_has_passed(con):
     assert store.pending_grades(con, KICKOFF + dt.timedelta(hours=4)) == []
 
 
-def test_legacy_rows_are_never_pending_for_grading(con):
+def test_legacy_rows_are_pending_a_day_after_their_date_only_stamp(con):
     con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
                 "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
                 "VALUES('legacy','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','v',0.7,'x',NULL,1,'legacy')")
-    assert store.pending_grades(con, KICKOFF + dt.timedelta(days=1)) == []
+    stamp = dt.datetime(2026, 10, 20, tzinfo=dt.timezone.utc)
+    assert store.pending_grades(con, stamp + dt.timedelta(hours=23)) == []      # the game may not have been played
+    assert store.pending_grades(con, stamp + dt.timedelta(days=1, minutes=1)) == [
+        ("legacy", "2026-10-20T00:00:00+00:00")]
+
+
+def _snapshot_db(path, rows):
+    raw = sqlite3.connect(path)
+    raw.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT)")
+    for game_id, payload in rows:
+        raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf',?,?,?,'t')",
+                    (game_id, payload.get("state", "post"), json.dumps(payload)))
+    raw.commit(); raw.close()
+
+
+def test_scoreboard_snapshots_grade_legacy_and_frozen_rows_without_espn(con, tmp_path):
+    live = str(tmp_path / "live.db")
+    final = {"status": "Final", "completed": True, "state": "post", "date": "2026-10-20T23:00Z",
+             "home": {"score": 23.0}, "away": {"score": 26.0}}
+    _snapshot_db(live, [("legacy", final)])
+    con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
+                "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
+                "VALUES('legacy','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','v',0.79,'x',NULL,1,'legacy')")
+    con.commit()
+    db = con.execute("PRAGMA database_list").fetchone()[2]
+    with patch.object(runner, "board_for_pending", side_effect=AssertionError("ESPN must not be called")):
+        result = runner.grade_step(db, dt.datetime(2026, 10, 22, tzinfo=dt.timezone.utc), None,
+                                   facts_for=lambda pending: runner.snapshot_facts(pending, live))
+    assert result["status"] == "ok" and result["graded"] == 1
+    row = con.execute("SELECT result, home_score, away_score FROM fbs_forecasts WHERE game_id='legacy'").fetchone()
+    assert tuple(row) == (0, 23, 26)
+
+
+def test_snapshot_grading_refuses_anything_that_is_not_a_completed_final(tmp_path):
+    live = str(tmp_path / "live.db")
+    base = {"state": "post", "date": "2026-10-20T23:00Z", "home": {"score": 3.0}, "away": {"score": 0.0}}
+    _snapshot_db(live, [
+        ("scheduled", {**base, "status": "Scheduled", "completed": False, "state": "pre"}),
+        ("live", {**base, "status": "In Progress", "completed": False}),
+        ("odd", {**base, "status": "Final", "completed": False}),            # name and flag disagree
+        ("postponed", {**base, "status": "Postponed", "completed": False}),
+        ("final", {**base, "status": "Final", "completed": True}),
+    ])
+    pending = [(g, "2026-10-20T00:00:00+00:00") for g in ("scheduled", "live", "odd", "postponed", "final", "missing")]
+    facts = runner.snapshot_facts(pending, live)
+    plan = {p["game_id"]: p["action"] for p in runner.plan_grades(pending, facts, {})}
+    assert plan == {"scheduled": "unresolved", "live": "unresolved", "odd": "unresolved",
+                    "postponed": "hold", "final": "grade", "missing": "unresolved"}
 
 
 # ---------------------------------------------------------------------- explicit schema: open, init, migrate
