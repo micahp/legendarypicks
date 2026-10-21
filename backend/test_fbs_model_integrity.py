@@ -312,3 +312,20 @@ def test_games_used_counts_completed_games_only():
     assert by_id["1"]["games_used"] == 1
     assert by_id["1"]["team"] == "Texas"
     assert by_id["1"]["conference"] == "SEC"
+
+
+def test_midnight_kickoffs_show_the_scoreboard_time_and_leave_unknown_games_alone(tmp_path):
+    live = str(tmp_path / "live.db")
+    raw = sqlite3.connect(live)
+    raw.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT)")
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','1','post',?,'t')",
+                (json.dumps({"date": "2026-10-20T23:00Z"}),))
+    raw.commit(); raw.close()
+    games = [{"game_id": "1", "kickoff_utc": "2026-10-20T00:00:00+00:00"},
+             {"game_id": "2", "kickoff_utc": "2026-10-22T00:00:00+00:00"},
+             {"game_id": "3", "kickoff_utc": "2026-10-21T18:30:00+00:00"}]
+    out = store.apply_true_kickoffs({"games": games}, live)["games"]
+    by_id = {g["game_id"]: g["kickoff_utc"] for g in out}
+    assert by_id["1"] == "2026-10-20T23:00:00+00:00"
+    assert by_id["2"] == "2026-10-22T00:00:00+00:00"
+    assert by_id["3"] == "2026-10-21T18:30:00+00:00"
