@@ -1,0 +1,11 @@
+[Unit]
+Description=Grade verified final results for locked NBA research forecasts
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.dev.db
+Environment=NBA_MODEL_DB_PATH=/root/legendarypicks/backend/data/nba-model.dev.sqlite3
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/grade_nba_model_forecasts.py
+Nice=10
