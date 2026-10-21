@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest player props from the RotoWire picks relay: NFL, MLB, MLS and Leagues Cup.
+"""Ingest player props from the RotoWire picks relay.
 
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl --dry-run
@@ -284,9 +284,23 @@ NHL_GAME_MARKETS = {
     # reported as unmapped rather than entering a market we cannot settle.
 }
 NBA_GAME_MARKETS = {
-    # Preseason boards carry Points (and Points + Rebounds + Assists); the regular season
-    # adds the rest. Only what the relay has actually shipped is mapped.
+    # Core 7 + PRA. The relay currently has no verified FGM/FTM Game market
+    # ids; those stay supported in the canonical market vocabulary for Bovada
+    # and for future RotoWire names, without guessing an id here.
+    34: ("Assists", "assists"),
+    35: ("Blocks", "blocks"),
+    36: ("Steals", "steals"),
+    37: ("Turnovers", "turnovers"),
+    41: ("3PT Made", "threes"),
     47: ("Points", "points"),
+    50: ("Rebounds", "rebounds"),
+    52: ("PTS+REB+AST", "points_rebounds_assists"),
+}
+NBA_NAME_FALLBACKS = {
+    "field goals made": ("Field Goals Made", "field_goals_made"),
+    "fgm": ("FGM", "field_goals_made"),
+    "free throws made": ("Free Throws Made", "free_throws_made"),
+    "ftm": ("FTM", "free_throws_made"),
 }
 MARKETS = {
     "nfl": NFL_GAME_MARKETS,
@@ -371,6 +385,13 @@ def parse(payload: Dict, league: str) -> Tuple[List[Dict], Dict]:
         counts["game_props"] += 1
 
         known = markets.get(market["marketID"])
+        if not known and league == "nba":
+            # These two scoped markets have not appeared in the archive under a
+            # stable relay id. Accept only exact known names while refusing to
+            # infer an id or loosen any already-mapped id/name pair.
+            known = NBA_NAME_FALLBACKS.get(
+                str(market.get("marketName") or "").strip().lower()
+            )
         if not known:
             unmapped_markets[(market["marketID"], market.get("marketName"))] += 1
             continue

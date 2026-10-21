@@ -8,6 +8,7 @@ from settlement.boxscore_extract import _find_player_stat
 import league_membership
 import json
 import logging
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +418,7 @@ def prop_history(player_id: int = Query(...),
                  line: float = Query(...),
                  side: str = Query("over"),
                  league: str = Query(...),
+                 season: Optional[int] = None,
                  without: Optional[str] = Query(None),
                  with_: Optional[str] = Query(None, alias="with")):
     """Per-game stat history for a prop's player+market, with the line.
@@ -440,6 +442,11 @@ def prop_history(player_id: int = Query(...),
             "games": [],
         }
     canonical_market = _base_market(market)
+    is_nba = league == "nba"
+    target_season = season
+    if is_nba and target_season is None:
+        today = dt.date.today()
+        target_season = today.year if today.month >= 7 else today.year - 1
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(canonical_market)
     summary_market = league == "nhl" and canonical_market in _NHL_SUMMARY_MARKETS
     if not stat_key and not summary_market:
@@ -459,12 +466,11 @@ def prop_history(player_id: int = Query(...),
     # 2026-08-25: a bench player charted five games, four of them DNPs, as
     # 0/0/0/0/0 shots.
     #
-    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Each provider owns
-    # its own TABLE -- `player_game_logs` is ESPN's and stays one row per
-    # appearance, `player_game_logs_fotmob` is FotMob's -- and the view joins
-    # them on (player_id, game_date), putting each provider's line in its own
-    # COLUMN. A value's provenance is the column it was read from: nothing to
-    # stamp, nothing to drift.
+    # ONE ROW PER APPEARANCE, from `player_game_logs_all`. Providers keep
+    # separate tables and the view joins shared appearances on (player_id,
+    # game_date), keeping each stat line in its provider column. NBA Stats rows
+    # are limited to the active published release; their explicit appearance
+    # status travels with the row for DNP and incomplete-data handling.
     #
     # This replaces a ROW_NUMBER() PARTITION BY game_date that existed to hide
     # a duplication. Both providers had been kept as separate ROWS in one
@@ -490,6 +496,11 @@ def prop_history(player_id: int = Query(...),
         return (f"(json_extract(espn_stats, '$.{key}') IS NOT NULL"
                 f" OR json_extract(fotmob_stats, '$.{key}') IS NOT NULL)")
 
+    def _nba_provider_val(key):
+        return (f"COALESCE(json_extract(sportsdataverse_stats, '$.{key}'),"
+                f"json_extract(espn_stats, '$.{key}'),"
+                f"json_extract(fotmob_stats, '$.{key}'))")
+
     # A match the player never entered is not a 0. The summary ingest writes
     # `appearances`, the lazy core read-through writes `minutes`; either at 0
     # means absent, and a row carrying neither is left alone rather than
@@ -501,10 +512,16 @@ def prop_history(player_id: int = Query(...),
     # stat_key is either a string (single JSON field) or a list (compound: sum fields)
     if isinstance(stat_key, list):
         keys = stat_key
-        # SUM with COALESCE so missing fields don't null the whole row
-        val_expr = "(" + " + ".join(f"COALESCE({_val(k)}, 0)" for k in keys) + ")"
-        # WHERE: at least one key must be non-null (found_any semantics)
-        where_clause = "(" + " OR ".join(_present(k) for k in keys) + ")"
+        # NBA PRA is valid only if every published component exists. Other
+        # compound markets retain their established COALESCE behavior.
+        if is_nba:
+            val_expr = "(" + " + ".join(_val(k) for k in keys) + ")"
+        else:
+            val_expr = "(" + " + ".join(f"COALESCE({_val(k)}, 0)" for k in keys) + ")"
+        # NBA PRA is complete only when all three published components exist;
+        # other compound markets keep their established found-any semantics.
+        joiner = " AND " if is_nba else " OR "
+        where_clause = "(" + joiner.join(_present(k) for k in keys) + ")"
     else:
         keys = None
         val_expr = _val(stat_key)
@@ -560,14 +577,42 @@ def prop_history(player_id: int = Query(...),
             # appearance comes from the view, so there is nothing to dedupe here.
             # Undated rows (prod's 2024 and 2025 NFL logs) sort after dated ones; season and
             # game number then keep them newest first instead of in storage order.
-            rows = con.execute(
-                f"""SELECT game_id, game_date, opponent, home_away, {val_expr} AS val
-                      FROM player_game_logs_all
-                     WHERE player_id=? AND league IN ({league_placeholders})
-                       AND {where_clause}{_PLAYED}
-                     ORDER BY game_date DESC, season DESC, CAST(game_no AS INTEGER) DESC{'' if filtering else ' LIMIT 100'}""",
-                (player_id, *log_leagues)
-            ).fetchall()
+            if is_nba:
+                if isinstance(stat_key, list):
+                    val_expr = "(" + " + ".join(
+                        _nba_provider_val(key) for key in stat_key
+                    ) + ")"
+                else:
+                    val_expr = _nba_provider_val(stat_key)
+                minute_expr = ("COALESCE(json_extract(sportsdataverse_stats,'$.MIN'),"
+                               "json_extract(espn_stats,'$.MIN'),"
+                               "json_extract(fotmob_stats,'$.MIN'),"
+                               "json_extract(espn_stats,'$.minutes'),"
+                               "json_extract(fotmob_stats,'$.minutes'))")
+                season_expr = ("CASE WHEN CAST(strftime('%m', game_date) AS INTEGER) < 7 "
+                               "THEN CAST(strftime('%Y', game_date) AS INTEGER)-1 "
+                               "ELSE CAST(strftime('%Y', game_date) AS INTEGER) END")
+                rows = con.execute(
+                    f"""SELECT game_id, game_date, opponent, home_away,
+                                {val_expr} AS val, {minute_expr} AS minutes,
+                                {season_expr} AS season, game_type,
+                                appearance_status
+                           FROM player_game_logs_all
+                          WHERE player_id=? AND league='nba'
+                            AND UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
+                          ORDER BY game_date DESC, season DESC,
+                                   CAST(game_no AS INTEGER) DESC LIMIT 100""",
+                    (player_id,),
+                ).fetchall()
+            else:
+                rows = con.execute(
+                    f"""SELECT game_id, game_date, opponent, home_away, {val_expr} AS val
+                          FROM player_game_logs_all
+                         WHERE player_id=? AND league IN ({league_placeholders})
+                           AND {where_clause}{_PLAYED}
+                         ORDER BY game_date DESC, season DESC, CAST(game_no AS INTEGER) DESC{'' if filtering else ' LIMIT 100'}""",
+                    (player_id, *log_leagues)
+                ).fetchall()
         if filtering:
             import player_splits
             status = player_splits.game_status(con, player_id, without_ids, with_ids)
@@ -591,40 +636,80 @@ def prop_history(player_id: int = Query(...),
             "line": line,
             "side": side,
             "projection": None,
-            "hit_rate": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
+            "hit_rate": ({"l5": None, "l10": None, "l20": None, "season": None}
+                         if is_nba else {"l5": 0, "l10": 0, "l20": 0, "season": 0}),
             "hit_rate_n": {"l5": 0, "l10": 0, "l20": 0, "season": 0},
             "games": [],
+            **({"season": target_season} if is_nba else {}),
             **_filter_fields(filtering, without_ids, with_ids, 0, filter_counts if filtering else None),
         }
 
     games = []
     for r in rows:
         val = _history_value(r["val"], league, canonical_market)
-        if val is None:
+        source_status = (r["appearance_status"]
+                         if is_nba and "appearance_status" in r.keys() else None)
+        if is_nba and source_status == "unknown":
+            val = None
+        if val is None and not is_nba:
             logger.warning(
                 "prop history skipped nonnumeric value player_id=%s league=%s market=%s date=%s",
                 player_id, league, canonical_market, r["game_date"],
             )
             continue
-        hit = val >= line if side == "over" else val <= line
-        games.append({
+        if val is None:
+            hit = None
+        elif is_nba and source_status in ("dnp", "unknown"):
+            hit = None
+        elif is_nba:
+            if side == "over":
+                hit = True if val > line else False if val < line else None
+            else:
+                hit = True if val < line else False if val > line else None
+        else:
+            hit = val >= line if side == "over" else val <= line
+        game = {
             "date": r["game_date"] or "",
             "value": val,
             "opponent": r["opponent"] or "",
             "home": (r["home_away"] == "home") if r["home_away"] else None,
             "hit": hit,
             **({"game_id": r["game_id"]} if filtering else {}),
-        })
+        }
+        if is_nba:
+            minutes = r["minutes"]
+            dnp = source_status == "dnp" or (
+                source_status is None and minutes is not None and float(minutes) == 0
+            )
+            source_played = source_status == "played"
+            game.update({
+                "status": "dnp" if dnp else ("played" if val is not None else "missing"),
+                "appearance_status": ("dnp" if dnp else
+                                      "played" if source_played
+                                      else "played" if minutes is not None and float(minutes) > 0
+                                      else "played" if val is not None else "unknown"),
+                "season": r["season"],
+                "game_type": r["game_type"],
+            })
+        games.append(game)
 
     def _rate(games_subset, ln):
-        if not games_subset: return 0.0
-        hits = sum(1 for g in games_subset if g["hit"])
-        return round(hits / len(games_subset), 3)
+        sample = ([g for g in games_subset if g["hit"] is not None]
+                  if is_nba else games_subset)
+        if not sample: return None if is_nba else 0.0
+        hits = sum(1 for g in sample if g["hit"] is True)
+        return round(hits / len(sample), 3)
 
     # Projection: recency-weighted EV from the shared projections module (games is recent-first).
     # A conditional sample is not the player's projection: with a filter, none is published.
-    proj = None if filtering else proj_mod.project_stat([g["value"] for g in games])
+    played_games = [g for g in games if g["value"] is not None
+                    and (not is_nba or g["status"] == "played")]
+    proj = None if filtering else proj_mod.project_stat([g["value"] for g in played_games])
     projection = proj["projection"] if proj else None
+    nba_recent = [g for g in games if g["status"] == "played"] if is_nba else games
+    nba_season = ([g for g in games if g["status"] == "played"
+                   and g["season"] == target_season] if is_nba else games)
+    rate_games = nba_recent if is_nba else games
 
     return {
         "player_id": player_id,
@@ -635,6 +720,7 @@ def prop_history(player_id: int = Query(...),
         "line": line,
         "side": side,
         "projection": projection,
+        **({"season": target_season} if is_nba else {}),
         # The SAMPLE behind each window, because a window's NAME is not its
         # size. `games[:20]` on a player with three matches is three matches,
         # so L5, L10 and L20 all report the same number and it reads as a
@@ -642,16 +728,17 @@ def prop_history(player_id: int = Query(...),
         # players have three games where an MLS player has forty; the
         # arithmetic was always this.
         "hit_rate_n": {
-            "l5": len(games[:5]),
-            "l10": len(games[:10]),
-            "l20": len(games[:20]),
-            "season": len(games),
+            "l5": len(rate_games[:5]),
+            "l10": len(rate_games[:10]),
+            "l20": len(rate_games[:20]),
+            "season": len(nba_season) if is_nba else len(games),
         },
         "hit_rate": {
-            "l5": _rate(games[:5], line),
-            "l10": _rate(games[:10], line),
-            "l20": _rate(games[:20], line),
-            "season": _rate(games, line),
+            "l5": _rate(rate_games[:5], line) if rate_games else (None if is_nba else 0),
+            "l10": _rate(rate_games[:10], line) if rate_games else (None if is_nba else 0),
+            "l20": _rate(rate_games[:20], line) if rate_games else (None if is_nba else 0),
+            "season": _rate(nba_season if is_nba else games, line)
+                       if (nba_season if is_nba else games) else (None if is_nba else 0),
         },
         "games": games,
         **_filter_fields(filtering, without_ids, with_ids, len(games), filter_counts if filtering else None),
