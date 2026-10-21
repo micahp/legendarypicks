@@ -20,6 +20,8 @@ module composes them for production instead of re-implementing the statistics.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import json
 import os
 import sys
 
@@ -47,9 +49,10 @@ MIN_TRAIN_GAMES = 200
 # The adopted drive features (research/fbs/phase3/game_features_c.csv) are as-of team ratings over
 # every season from 2014. Loading only the scored seasons changes every feature value.
 FEATURE_FIRST_SEASON = 2014
-# Writer population: a game with a null adopted epa_diff is outside the evaluation population.
-# Pinned by id. Measured in docs/RESULT-ncaaf-parity-forensics.md on research/ncaaf-parity-forensics-2026-10-20.
-EXCLUDED_GAME_IDS = frozenset({"401778314"})
+# Historical eligibility comes from the pinned cfbfastR coverage manifest, built offline by
+# backend/fbs_cfbfastr_coverage.py. It is never an ID list in code.
+COVERAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fbs_coverage")
+COVERAGE_MANIFEST = "cfbfastr_pbp_coverage.manifest.json"
 
 MODEL_IDS = ("g2", "c2", "g2h")
 MODEL_LABELS = {
@@ -84,6 +87,60 @@ def seasons_available(data_dir: str) -> list[int]:
     return complete
 
 
+def _sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def load_coverage(directory: str | None = None) -> dict:
+    """Load the pinned cfbfastR coverage table and verify it against the hash its manifest records.
+
+    The directory is resolved at call time, so a redirected COVERAGE_DIR is honoured.
+    """
+    directory = directory or COVERAGE_DIR
+    manifest_path = os.path.join(directory, COVERAGE_MANIFEST)
+    if not os.path.exists(manifest_path):
+        raise FBSModelError("no cfbfastR coverage manifest at %s" % manifest_path)
+    with open(manifest_path) as handle:
+        manifest = json.load(handle)
+    csv_path = os.path.join(directory, manifest["csv"])
+    if not os.path.exists(csv_path) or _sha256(csv_path) != manifest["csv_sha256"]:
+        raise FBSModelError("coverage table %s does not match its manifest" % csv_path)
+    table = pd.read_csv(csv_path, dtype={"game_id": str})
+    if table.duplicated(["season", "game_id"]).any():
+        raise FBSModelError("coverage table %s has duplicate (season, game_id) rows" % csv_path)
+    return {"manifest": manifest, "table": table}
+
+
+def apply_pbp_eligibility(frame: pd.DataFrame, table: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Drop completed games whose verified source has no plays. Halt on anything unverified.
+
+    Only games with a known outcome are checked. An upcoming game has no plays yet and is kept.
+    A completed game with no coverage row, or with an unknown status, raises: a missing record is
+    never read as zero coverage. Returns (kept frame with coverage_status, excluded games). Results are
+    graded only from rows whose coverage_status is has_plays: the archive, not the schedule, confirms the
+    final result.
+    """
+    merged = frame[["season", "game_id", "y"]].merge(
+        table[["season", "game_id", "coverage_status"]], on=["season", "game_id"], how="left")
+    completed = merged["y"].notna().to_numpy()
+    status = merged["coverage_status"]
+    unresolved = completed & (status.isna() | status.astype(str).str.startswith("unknown")).to_numpy()
+    if unresolved.any():
+        ids = merged.loc[unresolved, "game_id"].tolist()
+        raise FBSModelError("%d completed games lack verified cfbfastR coverage: %s" % (len(ids), ids[:10]))
+    if (completed & (status == "not_completed").to_numpy()).any():
+        raise FBSModelError("completed games carry a not_completed coverage status; the manifest is inconsistent")
+    drop = completed & (status == "no_plays_in_complete_snapshot").to_numpy()
+    excluded = frame.loc[drop, ["season", "game_id", "home_team", "away_team"]].reset_index(drop=True)
+    kept = frame.loc[~drop].reset_index(drop=True)
+    kept["coverage_status"] = status.to_numpy()[~drop]
+    return kept, excluded
+
+
 def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
                 verbose: bool = False, return_ratings: bool = False):
     """One row per game: Phase 1 Elo forecast, drive features, outcome and kickoff.
@@ -102,8 +159,12 @@ def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
     frame["p_g2"] = frame["elo_home_prob"]
     frame["utc_date"] = pd.to_datetime(frame["utc_date"])
     frame = frame.sort_values(["utc_date", "game_id"]).reset_index(drop=True)
-    # Excluded after the Elo forecast, as the writer does: the game still feeds the Elo history.
-    frame = frame[~frame["game_id"].isin(EXCLUDED_GAME_IDS)].reset_index(drop=True)
+    # Applied after the Elo forecast, as the writer does: an excluded game still feeds the Elo history.
+    coverage = load_coverage()
+    frame, excluded = apply_pbp_eligibility(frame, coverage["table"])
+    if verbose and len(excluded):
+        print("eligibility: excluded %d completed game(s) with no source plays: %s"
+              % (len(excluded), excluded["game_id"].tolist()))
 
     feature_seasons = list(range(FEATURE_FIRST_SEASON, max(seasons) + 1))
     pbp_missing = [s for s in feature_seasons if not os.path.exists(
