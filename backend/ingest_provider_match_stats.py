@@ -32,7 +32,15 @@ EVENTS = {
         "espn_tournament_id": "381",
         "espn_final_count": 74,
     },
+    "shanghai-atp-2026": {
+        "365scores": None,  # no Shanghai league page reachable from 365scores navigation (2026-10-20)
+        "tennis24": "https://www.tennis24.com/atp-singles/shanghai/results/",
+        "espn_tournament_id": "315",
+        "espn_final_count": 119,
+    },
 }
+MEMORY_FLOOR_MB = 1500
+KEYS = ("home_aces", "away_aces", "home_double_faults", "away_double_faults")
 PACE_SECONDS = 5.0
 MAX_CONSECUTIVE_FAILURES = 3
 BLOCK_PATTERN = re.compile(r"attention required|access denied|are you a robot|verify you are human|"
@@ -135,6 +143,42 @@ def enumerate_matches(browser, provider: str, list_url: str) -> List[Dict[str, s
         page.close()
 
 
+def available_mb() -> int:
+    with open("/proc/meminfo") as handle:
+        for line in handle:
+            if line.startswith("MemAvailable"):
+                return int(line.split()[1]) // 1024
+    raise RuntimeError("MemAvailable not found")
+
+
+def wait_for_memory(report: Dict[str, Any], max_wait_s: int = 3600) -> None:
+    """Hold until available memory is back above the floor; stop if it does not recover."""
+    waited = 0
+    while available_mb() < MEMORY_FLOOR_MB:
+        if waited >= max_wait_s:
+            raise StopRun(f"available memory below {MEMORY_FLOOR_MB} MB for {max_wait_s} s")
+        time.sleep(30)
+        waited += 30
+        report["memory_waits_s"] = report.get("memory_waits_s", 0) + 30
+
+
+def _click_tab(page, label: str) -> Optional[bool]:
+    """Click a stats tab (MATCH, SET 1..3) by its exact label. Returns None if no tab has that label.
+
+    Otherwise returns whether the tab was already selected before the click. On tennis24 the stats tabs
+    carry classes like 'wcl-tab_...' and the selected one 'wcl-tabSelected_...'.
+    """
+    return page.evaluate(
+        """(label) => {
+            const tabs = [...document.querySelectorAll('[class*="wcl-tab_"]')]
+                .filter(e => e.innerText && e.innerText.trim() === label);
+            if (!tabs.length) return null;
+            const wasSelected = /wcl-tabSelected/.test(tabs[0].className || '');
+            if (!wasSelected) tabs[0].click();
+            return wasSelected;
+        }""", label)
+
+
 def _check_block(text: str) -> None:
     if BLOCK_PATTERN.search(text):
         raise StopRun("bot-check or block page returned")
@@ -152,27 +196,65 @@ def collect_match(browser, provider: str, url: str) -> Dict[str, Any]:
         except Exception:
             pass
         page.wait_for_timeout(3000)
-        view = "page"
         if provider == "tennis24":
-            page.locator("text=STATS").first.click(timeout=8000)
+            stats_tab = page.locator("text=STATS")
+            try:
+                if stats_tab.count() == 0:
+                    raise LookupError("no STATS tab")
+                stats_tab.first.click(timeout=8000)
+            except Exception:
+                # Walkovers and suspended matches have no stats tab. That is a finding, not a failure.
+                return {"parse_status": "no_stats_tab", "stats_view": "no STATS tab on page",
+                        "home_aces": None, "away_aces": None, "home_double_faults": None,
+                        "away_double_faults": None}
             page.wait_for_timeout(3000)
-            view = "stats-tab default (MATCH view not confirmed)"
+            match_tab = _click_tab(page, "MATCH")
+            confirmed = match_tab is not None
+            page.wait_for_timeout(1500)
+            text = page.inner_text("body")
+            _check_block(text)
+            parsed = parse_stats_text(text)
+            set_parses = []
+            for label in ("SET 1", "SET 2", "SET 3"):
+                if _click_tab(page, label) is not None:
+                    page.wait_for_timeout(1500)
+                    set_parses.append(parse_stats_text(page.inner_text("body")))
+            if not confirmed:
+                parsed["stats_view"] = "MATCH tab not found; default block read"
+                return parsed
+            if match_tab is False:
+                parsed["stats_view"] = "MATCH tab selected by click; default was a set"
+            if parsed["parse_status"] != "ok" or not set_parses:
+                parsed["stats_view"] = "MATCH tab confirmed; set tabs not checked"
+                return parsed
+            if any(s["parse_status"] != "ok" for s in set_parses):
+                parsed["stats_view"] = "MATCH tab confirmed; a set tab did not parse"
+                return parsed
+            sums_ok = all(parsed[k] == sum(s[k] for s in set_parses) for k in KEYS)
+            if sums_ok:
+                parsed["stats_view"] = "MATCH tab confirmed; set tabs sum to match"
+            else:
+                parsed["stats_view"] = "MATCH tab confirmed; set tabs DO NOT sum to match"
+                parsed["parse_status"] = "set_mismatch"
+            return parsed
         text = page.inner_text("body")
         _check_block(text)
         parsed = parse_stats_text(text)
-        parsed["stats_view"] = view
+        parsed["stats_view"] = "page (Stats section)"
         return parsed
     finally:
         page.close()
 
 
-def run(db_path: str, event: str, provider: str, dry_run: bool) -> Dict[str, Any]:
+def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0) -> Dict[str, Any]:
     if db_path.endswith("picks.dev.db"):
         raise SystemExit("refusing to write to picks.dev.db; use a copy")
     from playwright.sync_api import sync_playwright
 
     config = EVENTS[event]
-    list_url = config[provider]
+    list_url = config.get(provider)
+    if list_url is None:
+        raise SystemExit(f"no list URL configured for {provider} in {event}")
     report: Dict[str, Any] = {"event": event, "provider": provider, "list_url": list_url,
                               "espn_final_count": config["espn_final_count"], "enumerated": 0,
                               "parsed": {}, "failures": 0, "stopped": None}
@@ -183,6 +265,7 @@ def run(db_path: str, event: str, provider: str, dry_run: bool) -> Dict[str, Any
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
+            wait_for_memory(report)
             matches = enumerate_matches(browser, provider, list_url)
             report["enumerated"] = len(matches)
             report["sample_urls"] = [m["url"] for m in matches[:3]]
@@ -196,6 +279,7 @@ def run(db_path: str, event: str, provider: str, dry_run: bool) -> Dict[str, Any
                     "SELECT provider_match_id FROM provider_match_stats WHERE provider=? AND event=? "
                     "AND parse_status='ok'", (provider, event))}
             report["skipped_already_ok"] = 0
+            taken = 0
             for match in matches:
                 url = match["url"]
                 ids = re.search(ID_PATTERN[provider], url)
@@ -203,6 +287,10 @@ def run(db_path: str, event: str, provider: str, dry_run: bool) -> Dict[str, Any
                 if provider_id in done:
                     report["skipped_already_ok"] += 1
                     continue
+                if sample and taken >= sample:
+                    break
+                taken += 1
+                wait_for_memory(report)
                 try:
                     row = collect_match(browser, provider, url)
                     consecutive = 0
@@ -219,7 +307,9 @@ def run(db_path: str, event: str, provider: str, dry_run: bool) -> Dict[str, Any
                         report["stopped"] = f"{consecutive} failures in a row"
                         break
                 report["parsed"][row["parse_status"]] = report["parsed"].get(row["parse_status"], 0) + 1
-                if con is not None:
+                if sample:
+                    report.setdefault("sample_rows", []).append({"provider_match_id": provider_id, "url": url, **row})
+                if con is not None and not sample:
                     con.execute(
                         "INSERT OR REPLACE INTO provider_match_stats(provider,provider_match_id,event,source_url,"
                         "anchor_text,home_aces,away_aces,home_double_faults,away_double_faults,stats_view,"
@@ -242,8 +332,9 @@ def main() -> int:
     parser.add_argument("--event", required=True, choices=sorted(EVENTS))
     parser.add_argument("--provider", required=True, choices=sorted(COUNT_PATTERN))
     parser.add_argument("--dry-run", action="store_true", help="enumerate only; write nothing")
+    parser.add_argument("--sample", type=int, default=0, help="collect the first N matches and print them; write nothing")
     args = parser.parse_args()
-    report = run(args.db, args.event, args.provider, args.dry_run)
+    report = run(args.db, args.event, args.provider, args.dry_run, args.sample)
     import json
     print(json.dumps(report, indent=1, sort_keys=True))
     return 0
