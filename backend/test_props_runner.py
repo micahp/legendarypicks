@@ -134,6 +134,20 @@ def test_the_second_concurrent_run_exits_zero_without_ingesting(monkeypatch, tmp
     assert _rows(db_path) == []
 
 
+def test_another_registry_holding_its_run_lock_does_not_block_this_one(monkeypatch, tmp_path):
+    # 2026-10-20: the ingest-jobs DEV half held the shared lock at every props start.
+    db_path = _db(tmp_path / "registries.db")
+    _configure(monkeypatch, tmp_path, [_provider("one")], db_path)
+    jobs_lock = runner._run_lock_path(os.path.abspath(db_path), "ingest jobs")
+    assert jobs_lock != runner._run_lock_path(os.path.abspath(db_path))
+
+    with open(jobs_lock, "a+") as held:
+        fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        assert runner.main([]) == 0
+
+    assert [row[1] for row in _rows(db_path)] == ["ok"]
+
+
 def test_two_environments_cannot_run_one_provider_at_once(monkeypatch, tmp_path):
     first_db = _db(tmp_path / "first.db")
     second_db = _db(tmp_path / "second.db")
