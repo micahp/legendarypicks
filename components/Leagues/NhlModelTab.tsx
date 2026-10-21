@@ -156,14 +156,13 @@ function spreadLabel(home: string, away: string, homePuckLine: number | null | u
   return homePuckLine < 0 ? `${home} ${signed(homePuckLine)}` : `${away} ${signed(-homePuckLine)}`
 }
 
-/** The three market rows for one quote. A locked card labels them as the locked basis so a
- *  reader can tell the line the pick was made on from a line that has since moved. */
+/** The three market rows for one quote. Pick-time labels distinguish frozen lines from live ones. */
 function marketLines(home: string, away: string, forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
   const margin = forecast.projected_goal_differential_home
   const homeLine = quote?.home_puck_line ?? null
   const modelLine = margin == null ? 'n/a' : margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}`
   return [
-    { label: locked ? 'Locked puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
+    { label: locked ? 'Pick-time puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
     { label: 'Model line', value: modelLine },
     { label: 'Δ', value: homeLine == null || margin == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
   ]
@@ -172,7 +171,7 @@ function marketLines(home: string, away: string, forecast: Forecast, quote: Bova
 function marketTotals(forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
   const vegas = quote?.total_line ?? null
   return [
-    { label: locked ? 'Locked total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
+    { label: locked ? 'Pick-time total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
     { label: 'Model total', value: one(forecast.projected_total_goals) },
     { label: 'Δ', value: vegas == null || forecast.projected_total_goals == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
   ]
@@ -209,7 +208,6 @@ function ProjectionCardView({ away, home, startUtc, forecast, live, awayRecord, 
   const grade = forecast.grade
   const isGraded = grade != null
   const pick = forecast.pick ?? null
-  const resultLabel = pickResultLabel(pick, isGraded)
   const edgeClass = isGraded ? 'graded-edge' : ''
   // A locked card never falls back to today's line if the archived lock quote is absent.
   const frozen = forecast.locked_quote ?? pick?.quote ?? null
@@ -220,16 +218,11 @@ function ProjectionCardView({ away, home, startUtc, forecast, live, awayRecord, 
   const moved = locked && frozen != null && live != null &&
     (live.home_puck_line !== frozen.home_puck_line || live.total_line !== frozen.total_line)
 
-  const statusBadge = preview ? 'PREVIEW · NOT LOCKED' : resultLabel
-  const statusColorClass = resultLabel === 'Win' ? 'text-emerald-400'
-    : resultLabel === 'Loss' ? 'text-red-400' : 'text-zinc-400'
-
   return (
     <article className={`space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ${edgeClass}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-zinc-100">{away} @ {home}</h3>
         <span className="flex items-center gap-3">
-          {statusBadge && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${statusColorClass}`}>{statusBadge}</span>}
           <span className="text-sm tabular-nums text-zinc-400">{timeLabel(startUtc)}</span>
         </span>
       </div>
@@ -254,9 +247,9 @@ function ProjectionCardView({ away, home, startUtc, forecast, live, awayRecord, 
       </div>
       {moved ? (
         <p className="border-t border-zinc-800 pt-2 text-xs text-zinc-500">
-          Market has moved since the lock: now {spreadLabel(home, away, live?.home_puck_line)}
-          {live?.total_line == null ? '' : ` · total ${one(live.total_line)}`}. The pick above is
-          graded on the locked line.
+          Market has moved since this pick was frozen: now {spreadLabel(home, away, live?.home_puck_line)}
+          {live?.total_line == null ? '' : ` · total ${one(live.total_line)}`}. The pick above uses
+          the pick-time line.
         </p>
       ) : null}
     </article>

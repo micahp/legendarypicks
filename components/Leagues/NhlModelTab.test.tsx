@@ -38,10 +38,10 @@ beforeEach(() => {
 })
 
 describe('NHL model tab previews', () => {
-  it('labels previews as unlocked and keeps them out of the record', async () => {
+  it('shows previews without a status label and keeps them out of the record', async () => {
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('MTL @ WSH')).toBeTruthy())
-    expect(screen.getByText('PREVIEW · NOT LOCKED')).toBeTruthy()
+    expect(screen.queryByText(/preview|not locked|pending/i)).toBeNull()
     expect(screen.getByText('Model Pick')).toBeTruthy()
     expect(screen.getByTitle('Models lock 90 mins before kickoff')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
@@ -75,11 +75,12 @@ describe('NHL model tab previews', () => {
     ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...payload, games: [locked], previews: [], lines: { '2026020107': live } }) }))
     render(<NhlModelTab />)
     await waitFor(() => expect(screen.getByText('DAL @ COL')).toBeTruthy())
-    expect(screen.getByText('Locked puck line')).toBeTruthy()
-    expect(screen.getByText('Locked total')).toBeTruthy()
+    expect(screen.getByText('Pick-time puck line')).toBeTruthy()
+    expect(screen.getByText('Pick-time total')).toBeTruthy()
     expect(screen.getByText('COL -1.5')).toBeTruthy()
     expect(screen.getByText('6.5')).toBeTruthy()
-    expect(screen.getByText(/Market has moved since the lock/)).toBeTruthy()
+    expect(screen.getByText(/Market has moved since this pick was frozen/)).toBeTruthy()
+    expect(screen.getByText(/uses the pick-time line/)).toBeTruthy()
   })
 
   it('shows the Bovada puck line and total in the Vegas columns', async () => {
@@ -128,8 +129,8 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('Model Pick').length).toBeGreaterThan(0)
     expect(screen.queryByText(/probability edge|estimated EV/i)).toBeNull()
     // The market columns are the frozen basis, not the live line.
-    expect(screen.getByText('Locked puck line')).toBeTruthy()
-    expect(screen.getByText('Locked total')).toBeTruthy()
+    expect(screen.getByText('Pick-time puck line')).toBeTruthy()
+    expect(screen.getByText('Pick-time total')).toBeTruthy()
   })
 
   it('renders a negative-EV selection as a Model Pick', async () => {
@@ -192,8 +193,8 @@ describe('NHL model tab previews', () => {
     await screen.findByText('MTL @ WSH')
     expect(screen.getByText('Puck line')).toBeTruthy()
     expect(screen.getByText('Vegas total')).toBeTruthy()
-    expect(screen.queryByText('Locked puck line')).toBeNull()
-    expect(screen.queryByText('Locked total')).toBeNull()
+    expect(screen.queryByText('Pick-time puck line')).toBeNull()
+    expect(screen.queryByText('Pick-time total')).toBeNull()
   })
 
   it('keeps a stale-quote selection visible without wager qualification messaging', async () => {
@@ -285,7 +286,7 @@ describe('NHL model tab previews', () => {
     await screen.findByText('MTL @ WSH')
     expect(screen.getByText('MTL +1.5')).toBeTruthy()
     expect(screen.getByText('74% model probability')).toBeTruthy()
-    expect(screen.getByText('Pending')).toBeTruthy()
+    expect(screen.queryByText('Pending')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('MTL +1.5 74%')).toBeTruthy()
