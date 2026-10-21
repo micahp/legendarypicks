@@ -95,7 +95,18 @@ winning). Still one pick per game: take the first rule that applies.
      (Strong vs strong, posted 47, model 44: Over 44. Weak vs weak, posted 42, model 45:
      Under 45.)
 
+   - Anything else (mid vs mid, strong vs mid, mid vs weak, or a team with no games yet): the
+     Vegas favourite moneyline.
+
    (Vegas KC -1, model opponent by 1: KC strong and the opponent weak gives KC ML.)
+
+   Early season uses every game before kickoff, preseason included, so week 1 tiers come from
+   preseason points for and against. Fitting last season's numbers to the returning roster is a
+   job for the forecasting model, not for this pick rule.
+
+   On the 82 locked 2026 picks (weeks 5 and 6), rules 1 to 4 decided 80 and rule 5 decided 2
+   (both the Vegas favourite default). That default was chosen after seeing those two results, so
+   weeks 5 and 6 are not out-of-sample evidence for it.
 
 Results so far: the NHL replay of `leeway-2` lost 2.6% at posted prices (`docs/LEARNINGS-nhl.md`).
 That is why a Model Pick is not a wager.
