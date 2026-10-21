@@ -20,8 +20,9 @@ interface Lock {
   preview: boolean
   previewed_at: string | null
   line: Line
-  pick: string
-  grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null } | null
+  pick: string // backwards-compatible spread alias
+  picks: { winner: string; spread: string; total: string }
+  grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null; total: string } | null
 }
 
 interface ModelInfo {
@@ -60,6 +61,7 @@ interface RecordRow extends ModelInfo {
   awaiting: number
   su: Tally | null
   ats: Tally | null
+  total: Tally | null
   mean_brier?: number | null
   brier_n?: number
 }
@@ -120,10 +122,15 @@ function modelSide(home: string, away: string, homeMargin: number) {
   return homeMargin > 0 ? `${home} -${one(homeMargin)}` : `${away} -${one(Math.abs(homeMargin))}`
 }
 
-function pickSide(game: ModelGame, lock: Lock) {
-  // The side comes from the backend (nfl_metrics.pick_side), not recomputed here, so the page
-  // can never disagree with the grader. 'no_pick' is the model sitting exactly on the line.
-  const side = lock.pick
+function winnerPick(game: ModelGame, lock: Lock) {
+  const side = lock.picks.winner
+  if (side === 'no_pick') return 'No pick'
+  return `${side === 'home' ? game.home : game.away} ML`
+}
+
+function spreadPick(game: ModelGame, lock: Lock) {
+  // This is the frozen pick returned by the API; never recompute the side in the browser.
+  const side = lock.picks.spread
   const marketMargin = lock.line.spread
   if (side === 'no_line' || marketMargin == null) return 'No line'
   if (side === 'no_pick') return 'No pick'
@@ -131,6 +138,13 @@ function pickSide(game: ModelGame, lock: Lock) {
   if (marketMargin === 0) return `${side === 'home' ? game.home : game.away} Pick`
   if (side === 'home') return `${game.home} ${marketMargin > 0 ? `-${one(spread)}` : `+${one(spread)}`}`
   return `${game.away} ${marketMargin < 0 ? `-${one(spread)}` : `+${one(spread)}`}`
+}
+
+function totalPick(lock: Lock) {
+  const side = lock.picks.total
+  if (side === 'no_line' || lock.line.total == null) return 'No line'
+  if (side === 'no_pick') return 'No pick'
+  return `${side === 'over' ? 'Over' : 'Under'} ${one(lock.line.total)}`
 }
 
 function edge(lock: Lock) {
@@ -141,16 +155,36 @@ function totalEdge(lock: Lock) {
   return lock.line.total == null || lock.total == null ? null : lock.total - lock.line.total
 }
 
-function statusLabel(lock: Lock) {
+type GradeMarket = 'su' | 'ats' | 'total'
+
+function statusLabel(lock: Lock, market: GradeMarket) {
   if (!lock.grade) return 'AWAITING'
-  return { win: 'WIN', loss: 'LOSS', push: 'PUSH', no_pick: 'NO PICK', no_line: 'NO LINE' }[lock.grade.ats] || lock.grade.ats.toUpperCase()
+  const result = lock.grade[market]
+  return { win: 'WIN', loss: 'LOSS', push: 'PUSH', tie: 'TIE', no_pick: 'NO PICK', no_line: 'NO LINE' }[result || ''] || '—'
 }
 
-function statusClass(lock: Lock) {
+function statusClass(lock: Lock, market: GradeMarket) {
   if (!lock.grade) return 'text-zinc-500'
-  if (lock.grade.ats === 'win') return 'text-emerald-400'
-  if (lock.grade.ats === 'loss') return 'text-rose-400'
+  if (lock.grade[market] === 'win') return 'text-emerald-400'
+  if (lock.grade[market] === 'loss') return 'text-rose-400'
   return 'text-zinc-300'
+}
+
+function ModelPicks({ game, lock }: { game: ModelGame; lock: Lock }) {
+  const markets: { name: string; choice: string; grade: GradeMarket }[] = [
+    { name: 'Winner', choice: winnerPick(game, lock), grade: 'su' },
+    { name: 'Spread', choice: spreadPick(game, lock), grade: 'ats' },
+    { name: 'Total', choice: totalPick(lock), grade: 'total' },
+  ]
+  return (
+    <div className="grid gap-3 sm:grid-cols-3" aria-label="Model picks">
+      {markets.map(market => <div key={market.name} className="min-w-0">
+        <div className="text-xs uppercase tracking-wider text-zinc-500">{market.name} pick</div>
+        <div className="text-sm font-semibold text-zinc-100">{market.choice}</div>
+        {lock.grade && <div className={`mt-0.5 text-xs font-semibold ${statusClass(lock, market.grade)}`}>{statusLabel(lock, market.grade)}</div>}
+      </div>)}
+    </div>
+  )
 }
 
 function lineCaptureLabel(lock: Lock) {
@@ -213,17 +247,12 @@ function ModelAccuracy({ models, records }: { models: ModelInfo[]; records: Reco
 // card; the record adds the final score and the pick's result.
 export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mode: 'projection' | 'record' }) {
   const record = mode === 'record'
-  const status = record ? statusLabel(lock) : null
-  const tone = record ? statusClass(lock) : 'text-emerald-400'
   const projected = (value: number | null) => (value == null ? '—' : one(value))
   return (
     <article className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-zinc-100">{game.away} {game.neutral ? 'vs' : '@'} {game.home}</h3>
-        <span className="flex items-center gap-3">
-          {status && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${tone}`}>{status}</span>}
-          <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
-        </span>
+        <span className="text-sm tabular-nums text-zinc-400">{timeLabel(game.kickoff_utc)}</span>
       </div>
       <div className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-6 gap-y-1 text-sm tabular-nums">
         <span />
@@ -245,12 +274,7 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
       </div>
       <p className="text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
-      <div className="flex justify-end">
-        <div className="text-right">
-          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
-          <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
-        </div>
-      </div>
+      <div className="border-t border-zinc-800 pt-3"><ModelPicks game={game} lock={lock} /></div>
     </article>
   )
 }
@@ -268,7 +292,6 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6 xl:grid-cols-9">
             <Metric label="Line" value={lineSide(game.home, game.away, lock.line.spread)} />
             <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
-            <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
             <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
             <Metric label="Total" value={lock.line.total == null ? '—' : one(lock.line.total)} />
             <Metric label="Model total" value={lock.total == null ? '—' : one(lock.total)} />
@@ -279,11 +302,8 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
                 {game.final ? `${game.away} ${one(game.final.away)} · ${game.home} ${one(game.final.home)}` : 'Pending'}
               </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-xs text-zinc-500">Result</div>
-              <div className={`mt-0.5 truncate text-sm tabular-nums ${statusClass(lock)}`}>{statusLabel(lock)}</div>
-            </div>
           </div>
+          <div className="mt-3 border-t border-zinc-800 pt-3"><ModelPicks game={game} lock={lock} /></div>
           <p className="mt-2 text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
           {lock.proj_home == null || lock.proj_away == null ? (
             <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
@@ -468,7 +488,7 @@ export default function NflModelTab() {
       </>}
 
       {view === 'record' && <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="Pick" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Straight-up" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="Winner" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Spread" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Total" tally={selectedRecord.total} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={activeRecordWeek ?? ''} onChange={event => setRecordWeek(event.target.value ? Number(event.target.value) : null)}>{gradedWeeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
             <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
