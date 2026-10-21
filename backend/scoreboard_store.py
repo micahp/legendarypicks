@@ -116,6 +116,32 @@ CREATE TABLE IF NOT EXISTS tennis_model_grades(
   result_payload_sha256 TEXT,
   PRIMARY KEY(league, game_id)
 );
+-- Research (CP4): pre-match count and total-games distributions frozen when a lock is created.
+-- Written only by tennis_count_distributions.store_distributions, once per new lock. Old locks
+-- have no rows here and are never backfilled. Rows are immutable once written.
+CREATE TABLE IF NOT EXISTS tennis_model_lock_distributions(
+  league        TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_id       TEXT NOT NULL,
+  cell          TEXT NOT NULL CHECK(cell IN ('aces','double_faults','total_games')),
+  side          TEXT NOT NULL CHECK(side IN ('home','away','match')),
+  model_version TEXT NOT NULL,
+  locked_at     TEXT NOT NULL,
+  parameters    TEXT NOT NULL,
+  support_start INTEGER NOT NULL,
+  pmf           TEXT NOT NULL,
+  trimmed_mass  REAL NOT NULL,
+  PRIMARY KEY(league, game_id, cell, side)
+);
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_update
+BEFORE UPDATE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_delete
+BEFORE DELETE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   league     TEXT NOT NULL,
   game_date  TEXT NOT NULL,
