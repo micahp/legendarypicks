@@ -139,8 +139,8 @@ describe('NFL model tab grading', () => {
     render(<NflModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     await waitFor(() => expect(screen.getByText('2026 record · v1 points')).toBeTruthy())
-    expect(screen.getAllByText('WIN').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getAllByText('LOSS').length).toBeGreaterThanOrEqual(1)
+    await waitFor(() => expect(screen.getAllByText('WIN').length).toBeGreaterThanOrEqual(2))
+    await waitFor(() => expect(screen.getAllByText('LOSS').length).toBeGreaterThanOrEqual(1))
   })
 
   it('shows No pick, not an away selection, when the model sits on the line', async () => {
