@@ -45,6 +45,24 @@ class SeasonMetricAggregationTests(unittest.TestCase):
         self.assertEqual(audit.aggregate_season_metric("event_rows", [10, 20, 30]), 60)
 
 
+class TimelineSequenceTests(unittest.TestCase):
+    def test_period_regression_is_separate_from_monotonic_publisher_order(self):
+        quality = audit.timeline_sequence_quality([
+            {"sortOrder": 8, "periodDescriptor": {"number": 1, "periodType": "REG"}},
+            {"sortOrder": 9, "periodDescriptor": {"number": 2, "periodType": "REG"}},
+            {"sortOrder": 10, "periodDescriptor": {"number": 1, "periodType": "REG"}},
+        ])
+        self.assertEqual(quality, {"sort_order_issue_count": 0, "period_number_regressions": 1})
+
+    def test_duplicate_and_decreasing_publisher_order_are_flagged(self):
+        quality = audit.timeline_sequence_quality([
+            {"sortOrder": 8, "periodDescriptor": {"number": 1, "periodType": "REG"}},
+            {"sortOrder": 8, "periodDescriptor": {"number": 1, "periodType": "REG"}},
+            {"sortOrder": 7, "periodDescriptor": {"number": 1, "periodType": "REG"}},
+        ])
+        self.assertEqual(quality["sort_order_issue_count"], 2)
+
+
 def pbp_body(game_id: str = GAME1) -> bytes:
     return json.dumps({
         "id": game_id, "gameType": 2,

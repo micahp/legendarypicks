@@ -111,6 +111,27 @@ def period_parts(play: dict) -> tuple[int | None, str | None]:
     return number, period_type
 
 
+def timeline_sequence_quality(plays: list[dict]) -> dict[str, int]:
+    previous_sort_order = None
+    previous_period = None
+    sort_order_issue_count = 0
+    period_number_regressions = 0
+    for play in plays:
+        sort_order = play.get("sortOrder")
+        if (isinstance(sort_order, bool) or not isinstance(sort_order, int) or sort_order < 0
+                or (previous_sort_order is not None and sort_order <= previous_sort_order)):
+            sort_order_issue_count += 1
+        if isinstance(sort_order, int) and not isinstance(sort_order, bool) and sort_order >= 0:
+            previous_sort_order = sort_order
+        period, _period_type = period_parts(play)
+        if period is not None:
+            if previous_period is not None and period < previous_period:
+                period_number_regressions += 1
+            previous_period = period
+    return {"sort_order_issue_count": sort_order_issue_count,
+            "period_number_regressions": period_number_regressions}
+
+
 def apply_shootout_score_convention(period_goals: dict, official_score: dict,
                                     shootout: bool) -> dict[str, int]:
     adjusted = {side: int(period_goals.get(side, 0)) for side in ("home", "away")}
@@ -876,6 +897,21 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
     owner_side = {team_id: side for team_id, side in ((home_id, "home"), (away_id, "away"))
                   if team_id is not None}
     plays = pbp.get("plays") or []
+    timeline_quality = timeline_sequence_quality(plays)
+    period_join_trusted = (timeline_quality["sort_order_issue_count"] == 0
+                           and timeline_quality["period_number_regressions"] == 0)
+    metric["sort_order_issue_count"] = timeline_quality["sort_order_issue_count"]
+    metric["period_number_sequence_regressions"] = timeline_quality["period_number_regressions"]
+    if timeline_quality["sort_order_issue_count"]:
+        make_issue(issue_writer, reason_counts, issue_games, season, gid, "timeline",
+                   "PBP_SORT_ORDER_SEQUENCE_INVALID", "game", gid,
+                   f"invalid_or_nonincreasing_sort_order_events={timeline_quality['sort_order_issue_count']}; event order quarantined",
+                   "QUARANTINE")
+    if timeline_quality["period_number_regressions"]:
+        make_issue(issue_writer, reason_counts, issue_games, season, gid, "timeline",
+                   "PBP_PERIOD_NUMBER_SEQUENCE_REGRESSION", "game", gid,
+                   f"regressions={timeline_quality['period_number_regressions']}; preserve sortOrder, quarantine period-number joins",
+                   "QUARANTINE")
     event_ids = collections.Counter(str(play.get("eventId")) for play in plays if play.get("eventId") is not None)
     counts = collections.Counter()
     period_goal_counts = collections.Counter()
@@ -911,6 +947,10 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
         source_event_id = str(play.get("eventId") if play.get("eventId") is not None else f"missing-{index}")
         reasons = []
         core_reasons = []
+        if timeline_quality["sort_order_issue_count"]:
+            reasons.append("PBP_SORT_ORDER_SEQUENCE_INVALID")
+        if timeline_quality["period_number_regressions"]:
+            reasons.append("PBP_PERIOD_NUMBER_SEQUENCE_REGRESSION")
         if period is None or clock is None:
             reasons.append("EVENT_TIMELINE_INVALID")
             core_reasons.append("EVENT_TIMELINE_INVALID")
@@ -1021,7 +1061,14 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
             goalie_shift_status = "NOT_APPLICABLE_SHOOTOUT"
             situation_shift_status = "NOT_APPLICABLE_SHOOTOUT"
         elif kind in SHOT_TYPES and period is not None and clock is not None:
-            if credited_shooter is not None:
+            if not period_join_trusted:
+                if credited_shooter is not None:
+                    shooter_shift_status = "PBP_PERIOD_NUMBER_UNTRUSTED"
+                    shooter_shift_alignment[shooter_shift_status] += 1
+                if goalie_id is not None:
+                    goalie_shift_status = "PBP_PERIOD_NUMBER_UNTRUSTED"
+                    goalie_shift_alignment[goalie_shift_status] += 1
+            elif credited_shooter is not None:
                 shooter_shift_status = player_shift_at_event(
                     parsed_shifts, credited_shooter, period, clock, bool(shift_payload))
                 shooter_shift_alignment[shooter_shift_status] += 1
@@ -1029,7 +1076,7 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
                     reasons.append("SHOOTER_REPORTED_OFF_ACCEPTED_SHIFT")
                 elif shooter_shift_status == "ON_UNTRUSTED_SHIFT":
                     reasons.append("SHOOTER_EVENT_SHIFT_DEPLOYMENT_UNTRUSTED")
-            if goalie_id is not None:
+            if period_join_trusted and goalie_id is not None:
                 goalie_shift_status = goalie_shift_at_event(
                     parsed_shifts, goalie_id, period, clock, owner_side.get(owner),
                     frame_home, frame_away, official_goalies, bool(shift_payload))
@@ -1039,7 +1086,9 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
                 elif goalie_shift_status == "DIRECT_ID_ON_UNTRUSTED_SHIFT":
                     reasons.append("DIRECT_GOALIE_SHIFT_DEPLOYMENT_UNTRUSTED")
         if period is not None and clock is not None and ordinary_period:
-            if (base.strength_class(situation) is not None
+            if not period_join_trusted:
+                situation_shift_status = "PBP_PERIOD_NUMBER_UNTRUSTED"
+            elif (base.strength_class(situation) is not None
                     and home_id is not None and away_id is not None):
                 situation_shift_status = situation_shift_at_event(
                     parsed_shifts, period, clock, situation, home_id, away_id,
@@ -1244,7 +1293,19 @@ def analyze_game(frame_row: dict, pbp_record: dict, shift_record: dict,
             goalie_status = goalie_identity
         penalty_timing_status = ("ACCEPT" if period is not None and clock is not None else "QUARANTINE") if kind == "penalty" else "NOT_APPLICABLE"
         penalty_duration_status = ("ACCEPT" if duration_minutes is not None else "QUARANTINE") if kind == "penalty" else "NOT_APPLICABLE"
-        event_writer.row({"game_id": gid, "season": season, "source_event_id": source_event_id,
+        event_writer.row({"game_id": gid, "season": season, "source_play_index": index,
+                          "publisher_sort_order": play.get("sortOrder", ""),
+                          "source_order_disposition": (
+                              "ACCEPT" if timeline_quality["sort_order_issue_count"] == 0 else "QUARANTINE"),
+                          "period_number_disposition": (
+                              "ACCEPT" if period_join_trusted and period is not None else "QUARANTINE"),
+                          "period_number_reason_code": (
+                              "PBP_SORT_ORDER_SEQUENCE_INVALID"
+                              if timeline_quality["sort_order_issue_count"] else
+                              "PBP_PERIOD_NUMBER_SEQUENCE_REGRESSION"
+                              if timeline_quality["period_number_regressions"] else
+                              "EVENT_TIMELINE_INVALID" if period is None else ""),
+                          "source_event_id": source_event_id,
                           "event_type": kind, "period_number": period or "", "period_type": period_type or "",
                           "time_in_period": play.get("timeInPeriod", ""), "event_owner_team_id": owner or "",
                           "event_owner_side": owner_team, "credited_shooter_id": credited_shooter or "",
@@ -1618,7 +1679,9 @@ def run(args) -> dict:
                 "audit_version": "nhl-fullframe-event-audit-2026-10-21-v1",
             })
     event_writer = CsvGzipWriter(args.derived_out / "event_dispositions.csv.gz", [
-        "game_id", "season", "source_event_id", "event_type", "period_number", "period_type",
+        "game_id", "season", "source_play_index", "publisher_sort_order", "source_order_disposition",
+        "period_number_disposition", "period_number_reason_code", "source_event_id", "event_type",
+        "period_number", "period_type",
         "time_in_period", "event_owner_team_id", "event_owner_side", "credited_shooter_id",
         "shooter_id_source", "shooter_identity_status", "goalie_in_net_id", "goalie_identity_status",
         "shooter_shift_status", "shooter_on_ice_disposition", "goalie_shift_status",
@@ -1867,7 +1930,8 @@ def run(args) -> dict:
                 status: sum(json.loads(row.get("shooter_event_shift_alignment_json") or "{}").get(status, 0)
                             for row in game_metrics)
                 for status in ("ON_ACCEPTED_SHIFT", "OFF_SHIFT", "BOUNDARY_AMBIGUOUS",
-                               "ON_UNTRUSTED_SHIFT", "NO_VERIFIED_SHIFT_CHART")
+                               "ON_UNTRUSTED_SHIFT", "NO_VERIFIED_SHIFT_CHART",
+                               "PBP_PERIOD_NUMBER_UNTRUSTED")
             },
         },
         "direct_goalie_event_vs_shift_alignment": {
@@ -1880,7 +1944,7 @@ def run(args) -> dict:
                             for row in game_metrics)
                 for status in ("DIRECT_ID_MATCHES_ACCEPTED_SHIFT", "DIRECT_ID_DIFFERS_FROM_ACCEPTED_GOALIE_SHIFT",
                                "DIRECT_ID_ON_UNTRUSTED_SHIFT", "NO_GOALIE_SHIFT_AT_EVENT", "BOUNDARY_AMBIGUOUS",
-                               "NO_VERIFIED_SHIFT_CHART")
+                               "NO_VERIFIED_SHIFT_CHART", "PBP_PERIOD_NUMBER_UNTRUSTED")
             },
         },
         "situation_code_vs_shift_alignment": {
@@ -1890,7 +1954,8 @@ def run(args) -> dict:
                 status: sum(json.loads(row.get("situation_event_shift_alignment_json") or "{}").get(status, 0)
                             for row in game_metrics)
                 for status in ("MATCH", "MISMATCH", "BOUNDARY_AMBIGUOUS", "DEPLOYMENT_UNTRUSTED",
-                               "NO_SHIFT_COVERAGE", "NO_VERIFIED_SHIFT_CHART", "NO_VALID_SITUATION_CODE")
+                               "NO_SHIFT_COVERAGE", "NO_VERIFIED_SHIFT_CHART", "NO_VALID_SITUATION_CODE",
+                               "PBP_PERIOD_NUMBER_UNTRUSTED")
             },
         },
     }
@@ -1927,6 +1992,23 @@ def run(args) -> dict:
                                   "label_status_counts": label_statuses},
         "audited_games": len(game_metrics), "games_with_verified_pbp_analyzed": sum(r["pbp_verified"] for r in game_metrics),
         "event_metrics": {"tracked_shot_events": total_shots,
+                          "timeline_sequence": {
+                              "event_rows": sum(row.get("event_rows", 0) for row in game_metrics),
+                              "sort_order_anomaly_games": sum(row.get("sort_order_issue_count", 0) > 0
+                                                               for row in game_metrics),
+                              "sort_order_anomaly_values": sum(row.get("sort_order_issue_count", 0)
+                                                                for row in game_metrics),
+                              "period_number_regression_games": sum(
+                                  row.get("period_number_sequence_regressions", 0) > 0
+                                  for row in game_metrics),
+                              "period_number_regressions": sum(
+                                  row.get("period_number_sequence_regressions", 0)
+                                  for row in game_metrics),
+                              "period_number_join_quarantined_games": sum(
+                                  row.get("period_number_sequence_regressions", 0) > 0
+                                  or row.get("sort_order_issue_count", 0) > 0
+                                  for row in game_metrics),
+                          },
                           "event_counts": {
                               key: sum(row.get(key, 0) for row in game_metrics)
                               for key in ("ordinary_shot_events", "goals_total_including_shootout",

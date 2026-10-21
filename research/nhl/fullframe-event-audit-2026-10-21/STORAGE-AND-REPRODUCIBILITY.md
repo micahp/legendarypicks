@@ -11,7 +11,8 @@ Store them under `/root/lp-data/nhl-fullframe-event-audit-2026-10-21/`.
   `manifests/hardened-v1/`.
 - Its derived event dispositions, player shift dispositions, target
   reconciliations, issue ledger, game metrics, and audit JSON:
-  `derived/hardened-v1/`.
+  `derived/hardened-final/`. The independent full-audit replay is in
+  `derived/hardened-final-replay/`.
 - Earlier/interim fetch manifests and logs remain in the parent `manifests/`
   and `logs/` directories and are not replaced by the hardened outputs.
 
@@ -129,8 +130,8 @@ the hardened importer itself needs to make.
   --prior-pbp-manifest /root/lp-data/nhl-fullframe-event-audit-2026-10-21/manifests/pbp_evidence_manifest.csv \
   --prior-shift-manifest /root/lp-data/nhl-fullframe-event-audit-2026-10-21/manifests/shifts_evidence_manifest.csv \
   --label-csv /root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv \
-  --derived-out /root/lp-data/nhl-fullframe-event-audit-2026-10-21/derived/hardened-v1 \
-  --report-out /root/lp-data/nhl-fullframe-event-audit-2026-10-21/derived/hardened-v1/fullframe_audit.json
+  --derived-out /root/lp-data/nhl-fullframe-event-audit-2026-10-21/derived/hardened-final \
+  --report-out /root/lp-data/nhl-fullframe-event-audit-2026-10-21/derived/hardened-final/fullframe_audit.json
 ```
 
 The default run fails closed on missing or inconsistent source evidence and
