@@ -5,7 +5,7 @@ Scope: G2/C2/G2h game-winner pipeline and NCAAF Model/Forecasts surface.
 
 ## Evidence received from the parity worker
 
-**Remote verification update:** Candidate repair **54800dad87154b5f9cf1981dd80259f3c00676ac** is pushed to [candidate/ncaaf-parity-repair-2026-10-20](https://github.com/micahp/legendarypicks/tree/candidate/ncaaf-parity-repair-2026-10-20). Its changed service and integrity test files are retrievable. **The forensics commit ccade77f remains unverified remotely**: [research/ncaaf-parity-forensics-2026-10-20](https://github.com/micahp/legendarypicks/tree/research/ncaaf-parity-forensics-2026-10-20) still points to **d819a21e**, and a direct fetch of ccade77f did not resolve. The numerical measurements below remain a **worker report, not independently rerun here**. Preserve/push the original forensics report, manifests and scripts to the research branch separately; do not merge or alter dev. Keep the original worktree and raw evidence.
+**Remote verification update:** Candidate repair **54800dad87154b5f9cf1981dd80259f3c00676ac** is pushed to [candidate/ncaaf-parity-repair-2026-10-20](https://github.com/micahp/legendarypicks/tree/candidate/ncaaf-parity-repair-2026-10-20). Its changed service and integrity test files are retrievable. **Forensics remote status subsequently verified**: [research/ncaaf-parity-forensics-2026-10-20](https://github.com/micahp/legendarypicks/tree/research/ncaaf-parity-forensics-2026-10-20) is now at **5a1ced4a**, which includes prior **ccade77f**. The research source report, source-coverage script, frozen-holdout comparison, and ESPN live-preview scratch results are accessible. The numerical measurements below remain a **worker report, not independently rerun here**. Preserve/push the original forensics report, manifests and scripts to the research branch separately; do not merge or alter dev. Keep the original worktree and raw evidence.
 
 The report:
 - The original frozen writer, backend/fbs_phase3_increment_g.py, successfully reproduces G2h with max abs difference **1.7e-8**, and C2 **4.4e-16**; G2 exact.
@@ -55,4 +55,41 @@ Three old records were created before their actual ESPN kickoff times, which is 
 - backend/fbs_model_runner.py, backend/fbs_model_service.py (production gate and fit path)
 - docs/DECISION-forecast-first-leagues-market-first-props-2026-10-20.md (product IA; certify before using as landing view)
 
-**One-sentence handoff:** Candidate repair 54800dad is available remotely; resolve missing remote forensics ccade77f, then review and replay the candidate's 2014-onward inputs, EPA cohort and unified estimators; certify the actual production fit/predict path before any official C2/G2h lock or default landing promotion.
+**One-sentence handoff (updated below):** Preserve the adopted model and 2014+ feature history; replace the hardcoded EPA exception with a pinned, validated cfbfastR game-coverage manifest and certify service fit/predict, operational results, and UI before any C2/G2h lock or default landing promotion.
+
+
+## Decision update: cfbfastR coverage contract (2026-10-20 local; worker addendum dated 2026-10-21 UTC)
+
+**Decision:** Authorize a **narrow, offline, source-pinned cfbfastR game-coverage manifest and ingest** as a prerequisite to considering the C2/G2h parity repair production-ready. Do **not** authorize a full second PBP ingestion system, changing the adopted sample, a dev merge, deployment, a T-90 scheduler, or public model locks.
+
+Remote source verification: forensic branch \`research/ncaaf-parity-forensics-2026-10-20\` @ \`5a1ced4a\`, candidate \`candidate/ncaaf-parity-repair-2026-10-20\` @ \`54800dad\`.
+The following measurements are **worker-generated reproducible outputs reviewed from GitHub**, not independently rerun by the documentation author:
+
+- Archived \`cfbfastR_cfb_pbp\` contains plays for **3,523 of 3,524** historical candidate games and matches research \`epa_diff\` eligibility with **zero disagreements**. One absent game, \`401778314\`, is not an identity failure; it lacks plays in that source.
+- Production ESPN drive-source coverage marks **3,474 of 3,524**, mismatching the research eligibility on **49** games. The production \`ncaa_mfb_pbp_cfbfastr\` game IDs intersect **zero** of this game's canonical ID population and are **not** an acceptable zero-effort replacement.
+- The candidate \`service.fit\`/\`predict\` matches the committed frozen 2025 holdout on **807** rows: C2 max \`3.33e-16\`; G2h max \`1.09e-13\`.
+- A **scratch-only, uncertified** ESPN snapshot dry run had 65 fixtures, with 3 already started; 62 upcoming fixtures / 186 preview rows across three models had source-matching kickoffs and **no locks**. No neutral-site fixture was exercised. No parity certificate exists.
+
+### Minimal data implementation contract
+
+1. Generate offline from the **same pinned archival \`cfbfastR_cfb_pbp\` PBP file set** used by research, ideally from original game IDs that already match the Phase 3 schedule population. Derive \`play_count\` and \`has_source_plays = play_count > 0\` at the canonical game ID. Export only coverage metadata unless deeper PBP data is independently needed and approved.
+2. Persist a versioned, immutable game-coverage table or file (e.g., \`game_id\`, \`season\`, \`source_dataset\`, \`source_file_sha256\`, \`snapshot_id\`, \`play_count\`, \`coverage_status\`, \`ingested_at_utc\`). Pin a reproducible snapshot and manifest hash. Attach the manifest fingerprint to model/data certification so a changed archive cannot silently change historical eligibility.
+3. **Three-valued coverage:** \`has_plays\`, \`no_plays_in_complete_snapshot\`, \`unknown_source_or_identity\`. An absent game in a **validated complete pinned source snapshot** can be excluded from historical research training; a missing source-season file, corrupt archive, incomplete ingest or ambiguous/unresolved ID is **unknown** and must halt parity/official model certification, not be treated as zero.
+4. Join **only by verified game ID**, with game-date/team/season cross-checks against the published fixture spine. Never join this source to production \`ncaa_mfb_pbp_cfbfastr\` by assuming the IDs match; if future crosswalk work is needed, build and audit an explicit one-to-one mapping with ambiguous matches quarantined.
+5. Eligibility applies **only to completed historical training rows** under the versioned adopted Phase 3 research protocol, **never to upcoming fixtures**, which naturally have no play-by-play yet. Ensure future games can be previewed with properly as-of drive ratings even when no coverage record for the future kickoff exists. Coverage is a property of an archive, not a statement that a player did or did not play.
+6. The candidate's hardcoded \`401778314\` exclusion may remain in **frozen parity fixtures** only. No exception-by-ID is permitted in the production fitted population. The resulting training set must reproduce the exact 3,523/3,524 historical eligibility and the original 2,397 2023–25 evaluated games under the pinned input version.
+7. Keep the separate adopted feature-history dependency on **2014 onward** intact. Do not shorten it to 2022; the root cause of the original parity failure was too little history. Build features offline; serving reads only persisted snapshots, never full archive files or ESPN on an HTTP request. Review usage rights before distributing any underlying PBP records.
+
+### New blocking tests
+
+- **Corpus reconciliation:** for every one of the 3,524 games, compare coverage state to the original adopted research availability; assert zero disagreement, source-season presence, identity uniqueness and source SHA stability. Explicitly confirm \`401778314\` excluded by data, not source-code literal.
+- **Fail closed:** delete one required archive season, mutate coverage for the excluded game, or substitute a mismatched ID namespace; parity and lock certification must fail. Test no false historical exclusion on source-outage.
+- **True production path:** parity runner must call the same \`service.fit\`/\`predict\` path used by the live \`--run\` forecaster for every research date block (plus a separate frozen 2025 holdout), retaining the **1e-6 max per-row delta** rule and matching training identity. Check scaler application and archive fingerprints.
+- **Live fixture separation:** 65-fixture recorded slate, three started and 62 still upcoming. Test that an upcoming game with no source PBP is **included**, not excluded. Add a neutral-site fixture and assert official kickoff, team/conference and data-cutoff values.
+- **Operations:** independently source-confirm final results before grading; audit incomplete datasets, status/legacy rows and frontend visual states on an expressly authorized server. No retroactive promotion of the three historically early-created legacy predictions.
+
+### Promotion decision
+
+**Research parity reproducible; candidate appears equivalent to the adopted model; production adoption remains conditional.** Once the game-coverage manifest, true forecasting-path certificate and operational QA all pass, open a code-review PR into \`dev\` for human approval. Do not issue live locks or schedule T-90 automatically under this decision.
+
+**T-90 scheduler remains separately gated.**
