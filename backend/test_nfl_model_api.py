@@ -67,6 +67,8 @@ class Payload(unittest.TestCase):
         # 3.0 in setUp, but the pick reads the frozen snapshot, so it must still be 'away'.
         g, = m.locks_payload(self.con, 2026, 5)["games"]
         self.assertEqual(g["locks"][m.ADOPTED]["pick"], "away")
+        self.assertEqual(g["locks"][m.ADOPTED]["picks"],
+                         {"winner": "away", "spread": "away", "total": "over"})
 
     def test_pick_no_pick_and_no_line_are_distinct(self):
         nl.start_run(self.con, "eq", 2026, 5, "eq-v", {})
@@ -147,6 +149,7 @@ class Payload(unittest.TestCase):
         self.assertEqual((v1["locked"], v1["graded"], v1["awaiting"]), (1, 1, 0))
         self.assertEqual(v1["su"], {"win": 1, "loss": 0, "tie": 0, "no_pick": 0})
         self.assertEqual(v1["ats"], {"win": 1, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0})
+        self.assertEqual(v1["total"], {"win": 1, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0})
         self.assertAlmostEqual(v1["mean_brier"], 0.03)
         self.assertEqual(v1["brier_n"], 1)
         self.assertAlmostEqual(v1["mean_abs_margin_err"], 4.5)
@@ -184,6 +187,41 @@ class Payload(unittest.TestCase):
         self.assertTrue(preview["preview"])
         self.assertEqual(preview["previewed_at"], "t-preview")
         self.assertEqual(next(row for row in payload["models"] if row["version"] == "preview-v")["locks"], 0)
+
+    def test_three_market_grades_use_original_lock_and_recorded_final(self):
+        self._final(20, 27)
+        self.con.execute("UPDATE nfl_schedule SET spread_line=20.0, total_line=59.0")
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        lock = g["locks"][m.ADOPTED]
+        self.assertEqual(lock["picks"], {"winner": "away", "spread": "away", "total": "over"})
+        self.assertEqual((lock["grade"]["su"], lock["grade"]["ats"], lock["grade"]["total"]),
+                         ("win", "win", "win"))
+        row = next(x for x in m.locks_payload(self.con, 2026, 5)["record"]
+                   if x["version"] == m.ADOPTED)
+        self.assertEqual(row["total"]["win"], 1)
+
+    def test_null_snapshot_fields_fall_back_to_original_lock_row(self):
+        # The spread grader uses COALESCE(snapshot, lock row); the API must too.
+        self.con.execute("UPDATE nfl_line_snapshots SET spread_line=NULL, total_line=NULL")
+        self.con.execute("UPDATE nfl_schedule SET spread_line=99.0, total_line=99.0")
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        lock = g["locks"][m.ADOPTED]
+        self.assertEqual((lock["line"]["spread"], lock["line"]["total"]), (-1.5, 45.5))
+        self.assertEqual(lock["picks"], {"winner": "away", "spread": "away", "total": "over"})
+        self._final(20, 27)
+        graded, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(graded["locks"][m.ADOPTED]["grade"]["total"], "win")
+
+    def test_total_no_line_and_equal_total(self):
+        legacy_version = "nfl-v1 cap=21.0 sigma=13.4"
+        self.con.execute("UPDATE game_projections SET market_total=NULL "
+                         "WHERE model_version=?", (legacy_version,))
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(g["locks"][legacy_version]["picks"]["total"], "no_line")
+        self.con.execute("UPDATE game_projections SET market_total=proj_total "
+                         "WHERE model_version=?", (legacy_version,))
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(g["locks"][legacy_version]["picks"]["total"], "no_pick")
 
     def test_epa_family(self):
         d = m.describe("nfl-epa-v2", "nfl-epa-v2 pure per-play half_life=12 lam=450 NOT-ADOPTED")
