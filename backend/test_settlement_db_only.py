@@ -4,6 +4,7 @@ import sqlite3
 
 import espn_client
 import ingest_game_summaries
+import settle_props
 import settlement
 from settlement import stored_summary
 
@@ -319,6 +320,103 @@ def test_nba_settlement_reads_regular_season_markets_from_published_names():
     assert settlement.resolve_market("nba", "FGM") == ("statistics", "FG:made")
     assert settlement.resolve_market("nba", "FTM") == ("statistics", "FT:made")
     assert settlement.resolve_market("nba", "pra") == (None, "points_rebounds_assists")
+
+
+def test_scheduled_nba_grading_covers_multiple_dates_and_fgm_ftm(tmp_path, monkeypatch):
+    con = _settlement_database()
+    now = dt.datetime.now(dt.timezone.utc)
+    today = now.date()
+    yesterday = today - dt.timedelta(days=1)
+    first_start = (now - dt.timedelta(hours=2)).isoformat()
+    second_start = (now - dt.timedelta(hours=26)).isoformat()
+    con.execute(
+        "UPDATE prop_games SET league='nba',home='BOS',away='NYK',date=?,start_time=? WHERE id=1",
+        (today.isoformat(), first_start),
+    )
+    first_snapshot = json.loads(con.execute(
+        "SELECT payload FROM scoreboard_snapshots WHERE game_id='event-1'"
+    ).fetchone()[0])
+    first_snapshot["away"]["abbrev"] = "NYK"
+    con.execute(
+        "UPDATE scoreboard_snapshots SET league='nba',payload=? WHERE game_id='event-1'",
+        (json.dumps(first_snapshot),),
+    )
+
+    first_summary = stored_summary.load(con, "nhl", "event-1")
+    first_summary["header"]["competitions"][0]["date"] = first_start
+    first_summary["boxscore"] = {"players": [{
+        "team": {"abbreviation": "BOS"},
+        "statistics": [{
+            "names": ["FG", "FT"],
+            "athletes": [{
+                "athlete": {"id": "123", "displayName": "Published Player"},
+                "stats": ["9-18", "3-4"],
+            }],
+        }],
+    }]}
+    con.execute(
+        "UPDATE game_summaries SET league='nba',payload=? WHERE espn_event_id='event-1'",
+        (json.dumps(first_summary),),
+    )
+
+    con.execute(
+        "INSERT INTO prop_games VALUES(2,'nba','BOS','NYK',?,?,NULL,NULL,?,NULL,NULL,NULL)",
+        (yesterday.isoformat(), "event-2", second_start),
+    )
+    second_snapshot = json.loads(json.dumps({
+        "state": "post", "completed": True, "status": "Final",
+        "status_detail": "Final", "home": {"abbrev": "BOS", "score": 4},
+        "away": {"abbrev": "NYK", "score": 2},
+    }))
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES(?,?,?,?,?)",
+        ("nba", "event-2", "post", json.dumps(second_snapshot), now.isoformat()),
+    )
+    second_summary = json.loads(json.dumps(first_summary))
+    second_summary["header"]["competitions"][0]["date"] = second_start
+    second_summary["boxscore"]["players"][0]["statistics"][0]["athletes"][0]["stats"] = [
+        "8-17", "4-5",
+    ]
+    con.execute(
+        "INSERT INTO game_summaries VALUES(?,?,?,?,?,?,?)",
+        ("nba", "event-2", json.dumps(second_summary), "post", 1,
+         now.isoformat(), "espn_summary"),
+    )
+    con.execute("DELETE FROM props")
+    con.execute(
+        "CREATE TABLE player_game_logs(league TEXT,source TEXT,game_id TEXT,player_id INTEGER)"
+    )
+    con.executemany(
+        "INSERT INTO props VALUES(?,?,?,?,?,?)",
+        [
+            (1, 1, "field_goals_made", 8.5, "over", 1),
+            (2, 1, "free_throws_made", 3.5, "under", 1),
+            (3, 2, "field_goals_made", 8.5, "under", 1),
+            (4, 2, "free_throws_made", 3.5, "over", 1),
+        ],
+    )
+    con.commit()
+    path = tmp_path / "nba-multi-date-settlement.db"
+    target = sqlite3.connect(path)
+    con.backup(target)
+    target.close()
+    con.close()
+
+    monkeypatch.setattr(settle_props, "DB", str(path))
+    settle_props._main(league="nba", through=today.isoformat(), window_hours=0)
+
+    result = sqlite3.connect(path)
+    rows = result.execute(
+        "SELECT p.id,p.game_id,p.market,r.actual_value,r.hit "
+        "FROM props p JOIN prop_results r ON r.prop_id=p.id ORDER BY p.id"
+    ).fetchall()
+    result.close()
+    assert rows == [
+        (1, 1, "field_goals_made", 9.0, 1),
+        (2, 1, "free_throws_made", 3.0, 1),
+        (3, 2, "field_goals_made", 8.0, 1),
+        (4, 2, "free_throws_made", 4.0, 1),
+    ]
 
 
 def test_explicit_nba_dnp_is_voided_instead_of_graded_as_zero():
