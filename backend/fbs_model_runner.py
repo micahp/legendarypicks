@@ -30,8 +30,6 @@ import fbs_model_service as service  # noqa: E402
 import fbs_model_store as store  # noqa: E402
 import fbs_phase3_features_c as feat_c  # noqa: E402
 from fbs_phase3_features_c import FEATURE_NAMES_C as FEATURES_C  # noqa: E402
-from fbs_phase3_increment import walk_forward  # noqa: E402
-from fbs_phase3_increment_g import hierarchical_walk_forward  # noqa: E402
 
 RESEARCH = {
     ("walk-forward 2023-2025", "g2"): 0.21326326867759376,
@@ -58,28 +56,54 @@ def brier(rows: pd.DataFrame, column: str) -> float:
     return float(np.mean((p - y) ** 2))
 
 
-def check_parity(frame: pd.DataFrame, ledger_path: str = PARITY_LEDGER) -> dict:
-    """Re-derive the research walk-forward, then compare per game against the frozen ledger.
+def production_forecasts(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Score every date block of the frame with the production forecaster.
 
-    The aggregate Brier alone cannot tell an implementation drift from a population drift: the
-    research population additionally required a non-null EPA feature that neither C2 nor G2h
-    uses. So the gate is per-game agreement on the ledger's own games, which is strict, plus the
-    aggregate Brier on the identical population.
+    Each block is scored by a model that service.fit fitted on games strictly before the block's
+    first date, then service.predict scores the block's rows: the same functions the live forecaster
+    calls. Blocks without enough training games fall back to G2, as the research walk-forward does,
+    and are counted rather than hidden.
     """
     work = frame[frame["season"].between(2022, 2026)].copy()
-    wf = walk_forward(work.copy(), FEATURES_C)
-    wf = wf.rename(columns={"p_b2": "p_c2", "p_b1": "p_c2_ctl"})
-    hwf, diags = hierarchical_walk_forward(work.copy(), FEATURES_C, service.LAM_TEAM, service.LAM_CONF)
-    merged = (frame[["game_id", "season", "y", "p_g2"]]
-              .merge(wf[["game_id", "p_c2"]], on="game_id", how="inner")
-              .merge(hwf[["game_id", "p_h"]], on="game_id", how="inner"))
-    merged = merged.rename(columns={"p_h": "p_g2h"})
-    merged["game_id"] = merged["game_id"].astype(str)
+    work["block"] = work["season"].astype(str) + "-" + work["utc_date"].astype(str)
+    pieces, grads, fitted = [], [], 0
+    for _, idx in work.groupby("block", sort=True).groups.items():
+        rows = work.loc[np.asarray(idx)]
+        cutoff = rows["utc_date"].min()
+        train = work[(work["utc_date"] < cutoff) & work["y"].notna()].dropna(subset=["p_g2"] + FEATURES_C)
+        if len(train) < service.MIN_TRAIN_GAMES:
+            pieces.append(pd.DataFrame({"game_id": rows["game_id"].to_numpy(),
+                                        "p_c2": rows["p_g2"].to_numpy(), "p_g2h": rows["p_g2"].to_numpy()}))
+            continue
+        state = service.fit(work, cutoff)
+        scored = service.predict(work, state, rows)
+        pieces.append(pd.DataFrame({"game_id": scored["game_id"].to_numpy(),
+                                    "p_c2": scored["p_c2"].to_numpy(), "p_g2h": scored["p_g2h"].to_numpy()}))
+        grads.append(float(state["g2h"].grad_norm))
+        fitted += 1
+    audit = {"blocks": len(pieces), "fitted_blocks": fitted, "max_grad": max(grads) if grads else 0.0}
+    return pd.concat(pieces, ignore_index=True), audit
 
-    result = {"models": {}, "max_grad": max(d["grad_norm"] for d in diags)}
+
+def check_parity(frame: pd.DataFrame, ledger_path: str = PARITY_LEDGER) -> dict:
+    """Replay the production forecast path, then compare per game with the frozen ledger.
+
+    The forecasts come from service.fit and service.predict at every date block, not from the
+    research walk-forward, so the gate tests the code that forecasts. The comparison is per game on
+    the ledger's own 2023-2025 games at the 1e-6 threshold, plus the aggregate Brier on the same games.
+    """
+    result = {"models": {}, "estimator": "service.fit/predict per date block"}
     if not os.path.exists(ledger_path):
         result.update({"ok": False, "reason": "missing parity ledger %s" % ledger_path})
         return result
+    try:
+        preds, audit = production_forecasts(frame)
+    except service.FBSModelError as exc:
+        result.update({"ok": False, "reason": "production path failed: %s" % exc})
+        return result
+    result.update(audit)
+    merged = frame[["game_id", "season", "y", "p_g2"]].merge(preds, on="game_id", how="inner")
+    merged["game_id"] = merged["game_id"].astype(str)
 
     ledger = pd.read_csv(ledger_path, dtype={"game_id": str})
     ledger["game_id"] = ledger["game_id"].astype(str)
@@ -123,6 +147,11 @@ def code_fingerprint() -> str:
     return digest.hexdigest()
 
 
+def coverage_manifest_sha256() -> str | None:
+    path = os.path.join(service.COVERAGE_DIR, service.COVERAGE_MANIFEST)
+    return file_sha256(path) if os.path.exists(path) else None
+
+
 def certificate_path(db_path: str) -> str:
     return os.path.join(os.path.dirname(os.path.abspath(db_path)), CERTIFICATE_NAME)
 
@@ -136,6 +165,7 @@ def write_certificate(result: dict, db_path: str, now: dt.datetime) -> str:
         "ledger_path": PARITY_LEDGER,
         "ledger_sha256": file_sha256(PARITY_LEDGER) if os.path.exists(PARITY_LEDGER) else None,
         "code_fingerprint": code_fingerprint(),
+        "coverage_manifest_sha256": coverage_manifest_sha256(),
         "models": result.get("models"),
         "reason": result.get("reason"),
         "checked_at_utc": now.isoformat(),
@@ -162,6 +192,9 @@ def parity_certified(db_path: str) -> tuple[bool, str]:
         return False, "parity certificate was made for different code; re-run --parity"
     if not os.path.exists(PARITY_LEDGER) or cert.get("ledger_sha256") != file_sha256(PARITY_LEDGER):
         return False, "parity ledger changed since the certificate; re-run --parity"
+    current = coverage_manifest_sha256()
+    if current is None or cert.get("coverage_manifest_sha256") != current:
+        return False, "cfbfastR coverage manifest changed or is missing; re-run --parity"
     return True, "certified %s" % cert.get("checked_at_utc")
 
 
@@ -415,7 +448,7 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
             })
 
     results = {}
-    for row in frame[frame["y"].notna()].itertuples(index=False):
+    for row in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False):
         results[str(row.game_id)] = {"home_score": int(row.home_score),
                                      "away_score": int(row.away_score)}
 
@@ -475,7 +508,7 @@ def audit(db_path: str = store.DEFAULT_DB) -> dict:
 def grade_only(db_path: str = store.DEFAULT_DB) -> int:
     frame = service.build_frame()
     results = {str(r.game_id): {"home_score": int(r.home_score), "away_score": int(r.away_score)}
-               for r in frame[frame["y"].notna()].itertuples(index=False)}
+               for r in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False)}
     con = store.open_db(db_path)
     try:
         return store.grade_forecasts(con, results)

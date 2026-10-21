@@ -1,0 +1,147 @@
+{
+  "counts_by_season": {
+    "2022": {
+      "has_plays": 1437,
+      "no_plays_in_complete_snapshot": 2250,
+      "not_completed": 4,
+      "unknown_source_or_identity": 22
+    },
+    "2023": {
+      "has_plays": 1473,
+      "no_plays_in_complete_snapshot": 2230,
+      "not_completed": 10,
+      "unknown_source_or_identity": 21
+    },
+    "2024": {
+      "has_plays": 1582,
+      "no_plays_in_complete_snapshot": 2190,
+      "not_completed": 2,
+      "unknown_source_or_identity": 27
+    },
+    "2025": {
+      "has_plays": 1625,
+      "no_plays_in_complete_snapshot": 2174,
+      "not_completed": 0,
+      "unknown_source_or_identity": 32
+    },
+    "2026": {
+      "has_plays": 924,
+      "no_plays_in_complete_snapshot": 1123,
+      "not_completed": 1632,
+      "unknown_source_or_identity": 0
+    }
+  },
+  "csv": "cfbfastr_pbp_coverage.csv",
+  "csv_rows": 18758,
+  "csv_sha256": "abb009b362b9eb4714d6157b398385540d20c81a1f7597b87c579d0cad28c64b",
+  "definitions": {
+    "has_plays": "play_count > 0 and identity_check is teams_and_date, or teams_only_source_date_missing",
+    "identity_check": "teams: exact match of the normalised play-by-play team set with the two scheduled names; date: schedule UTC date must equal a source date when the source has one, otherwise the row records teams_only_source_date_missing",
+    "no_plays_in_complete_snapshot": "scheduled result, no play rows, season source set present and hashed",
+    "not_completed": "no source rows and no scheduled result; excluded from historical eligibility by definition",
+    "play_count": "rows whose pos_team is not null, for the game",
+    "unknown_source_or_identity": "source rows exist and the identity check fails (failed_teams or failed_date), or a play-by-play game ID is absent from the schedule"
+  },
+  "generated_at_utc": "2026-10-21T00:37:53.341711+00:00",
+  "generator": "backend/fbs_cfbfastr_coverage.py",
+  "generator_sha256": "d8f0246067ba1bd81a4104b5a3e41dd1885dd8b58b7e66ea80cb5e4fe323bac6",
+  "manifest_version": 1,
+  "orphan_play_by_play_games_by_season": {
+    "2022": 0,
+    "2023": 0,
+    "2024": 0,
+    "2025": 0,
+    "2026": 0
+  },
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "snapshot_id": "cfbfastR-88a5c74814fa",
+  "source_dataset": "cfbfastR_cfb_pbp",
+  "sources": [
+    {
+      "bytes": 108827884,
+      "file": "cfbfastR_cfb_pbp/play_by_play_2022.parquet",
+      "role": "pbp",
+      "rows": 252307,
+      "season": 2022,
+      "sha256": "c1b3041e55fb3896d4ef9de7a68522415c326c7efcbf7a2c6b704461f3a7bb87"
+    },
+    {
+      "bytes": 98422,
+      "file": "cfb_schedules_2022.parquet",
+      "role": "schedule",
+      "rows": 3713,
+      "season": 2022,
+      "sha256": "9f23a4cfba3577f1689b9954aa31a9f42a954fcb676204c35c2cc85a76ed72b5"
+    },
+    {
+      "bytes": 110666583,
+      "file": "cfbfastR_cfb_pbp/play_by_play_2023.parquet",
+      "role": "pbp",
+      "rows": 254090,
+      "season": 2023,
+      "sha256": "167889e635679d2a745a0f73690bf51afcb28236d3bbaed32aeabb154b726be9"
+    },
+    {
+      "bytes": 98417,
+      "file": "cfb_schedules_2023.parquet",
+      "role": "schedule",
+      "rows": 3734,
+      "season": 2023,
+      "sha256": "58ca3ee4dae1185878feec061aa488e4298c011277cd083ab71dc233ad25f73f"
+    },
+    {
+      "bytes": 120791523,
+      "file": "cfbfastR_cfb_pbp/play_by_play_2024.parquet",
+      "role": "pbp",
+      "rows": 277048,
+      "season": 2024,
+      "sha256": "60489da0c61c56b86698ee14be65cb521010f707e9a2f4ded8d561e9ef592bd4"
+    },
+    {
+      "bytes": 102997,
+      "file": "cfb_schedules_2024.parquet",
+      "role": "schedule",
+      "rows": 3801,
+      "season": 2024,
+      "sha256": "7feb11b7ac2eccd92afd741a59efeb7f1fd26bb51d15675ab1164cd01985a153"
+    },
+    {
+      "bytes": 131185522,
+      "file": "cfbfastR_cfb_pbp/play_by_play_2025.parquet",
+      "role": "pbp",
+      "rows": 293200,
+      "season": 2025,
+      "sha256": "2290311f156083730b6b9d9e6662d121dc86953d71e11aafc9da4c0753819369"
+    },
+    {
+      "bytes": 102865,
+      "file": "cfb_schedules_2025.parquet",
+      "role": "schedule",
+      "rows": 3831,
+      "season": 2025,
+      "sha256": "0df9da5419dcac1ed8dcf848ef960b2cb3f90ad8d44203618b1840370709bb2e"
+    },
+    {
+      "bytes": 70640403,
+      "file": "cfbfastR_cfb_pbp/play_by_play_2026.parquet",
+      "role": "pbp",
+      "rows": 163655,
+      "season": 2026,
+      "sha256": "d0151a8331893f1dee25f12bbcc19fd14f541551c5c9c7570eecd742ed4a70b0"
+    },
+    {
+      "bytes": 91935,
+      "file": "cfb_schedules_2026_snapshot_20261017.parquet",
+      "role": "schedule",
+      "rows": 3679,
+      "season": 2026,
+      "sha256": "7ea1e39b0b5c89f188f90140fa7ec950d59bbdc3d2efceb9f70360f7965d9c5f"
+    }
+  ]
+}

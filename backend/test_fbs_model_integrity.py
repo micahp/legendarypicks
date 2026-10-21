@@ -323,3 +323,166 @@ def test_c2_forecast_path_reproduces_research_walk_forward_block():
     rows = frame[frame["game_id"].isin(wf.index[wf["block"] == block])]
     p = service.predict_c2(service.fit_c2(train), rows)
     np.testing.assert_allclose(p, wf.loc[rows["game_id"], "p_b2"].to_numpy(), rtol=0, atol=1e-9)
+
+
+# ------------------------------------------------------- cfbfastR coverage: identity and eligibility
+
+def _sched(rows):
+    frame = pd.DataFrame(rows)
+    frame["start_date_utc"] = pd.to_datetime(frame["start_date"], utc=True)
+    frame["completed"] = frame["completed"].astype(bool)
+    frame["game_id"] = frame["game_id"].astype(str)
+    return frame
+
+
+def _pbp(rows):
+    frame = pd.DataFrame(rows)
+    frame["start_date_utc"] = pd.to_datetime(frame["start_date"], utc=True)
+    frame["game_id"] = frame["game_id"].astype(str)
+    return frame
+
+
+def test_coverage_statuses_follow_source_rows_and_identity():
+    import fbs_cfbfastr_coverage as cov
+    schedule = _sched([
+        dict(game_id="1", start_date="2025-09-06T16:00:00Z", home_team="Texas", away_team="Baylor", completed=True),
+        dict(game_id="2", start_date="2025-09-06T16:00:00Z", home_team="Ohio", away_team="Akron", completed=True),
+        dict(game_id="3", start_date="2025-09-06T16:00:00Z", home_team="Iowa", away_team="Kansas", completed=True),
+        dict(game_id="4", start_date="2025-09-06T16:00:00Z", home_team="Duke", away_team="Vermont", completed=True),
+        dict(game_id="5", start_date="2025-09-13T16:00:00Z", home_team="Utah", away_team="Oregon", completed=False),
+        dict(game_id="6", start_date="2025-09-13T16:00:00Z", home_team="Ohio State", away_team="Penn State", completed=True),
+    ])
+    pbp = _pbp([
+        dict(game_id="1", start_date="2025-09-06T16:00:00Z", pos_team="Texas", home_team="Texas", away_team="Baylor"),
+        dict(game_id="1", start_date="2025-09-06T16:00:00Z", pos_team="Baylor", home_team="Texas", away_team="Baylor"),
+        dict(game_id="2", start_date=None, pos_team="Ohio", home_team="Ohio", away_team="Akron"),
+        dict(game_id="2", start_date=None, pos_team="Akron", home_team="Ohio", away_team="Akron"),
+        dict(game_id="3", start_date="2025-09-06T16:00:00Z", pos_team="Iowa", home_team="Iowa", away_team="Iowa State"),
+        # Game 6 has play rows although the schedule snapshot predates its result: source rows win.
+        dict(game_id="6", start_date="2025-09-13T16:00:00Z", pos_team="Ohio State", home_team="Ohio State", away_team="Penn State"),
+        dict(game_id="6", start_date="2025-09-13T16:00:00Z", pos_team="Penn State", home_team="Ohio State", away_team="Penn State"),
+        dict(game_id="99", start_date="2025-09-06T16:00:00Z", pos_team="Nobody", home_team="A", away_team="B"),
+    ])
+    rows = {r["game_id"]: r for r in cov.coverage_rows(2025, schedule, pbp, "abc")}
+    assert rows["1"]["coverage_status"] == "has_plays" and rows["1"]["identity_check"] == "teams_and_date"
+    assert rows["2"]["coverage_status"] == "has_plays" and rows["2"]["identity_check"] == "teams_only_source_date_missing"
+    assert rows["3"]["coverage_status"] == "unknown_source_or_identity" and rows["3"]["identity_check"] == "failed_teams"
+    assert rows["4"]["coverage_status"] == "no_plays_in_complete_snapshot"
+    assert rows["5"]["coverage_status"] == "not_completed"
+    assert rows["6"]["coverage_status"] == "has_plays"
+    assert rows["99"]["coverage_status"] == "unknown_source_or_identity"
+    assert rows["99"]["identity_check"] == "orphan_play_by_play_id"
+
+
+def _coverage(rows):
+    return pd.DataFrame(rows, columns=["season", "game_id", "coverage_status"])
+
+
+def test_completed_games_without_plays_are_the_only_exclusions():
+    frame = pd.DataFrame({"season": [2025, 2025, 2025, 2026], "game_id": ["a", "b", "c", "d"],
+                          "y": [1.0, 0.0, 1.0, np.nan], "home_team": ["H"] * 4, "away_team": ["A"] * 4})
+    table = _coverage([(2025, "a", "has_plays"), (2025, "b", "no_plays_in_complete_snapshot"),
+                       (2025, "c", "has_plays"), (2026, "d", "not_completed")])
+    kept, excluded = service.apply_pbp_eligibility(frame, table)
+    assert kept["game_id"].tolist() == ["a", "c", "d"]
+    assert excluded["game_id"].tolist() == ["b"]
+
+
+def test_upcoming_game_without_any_coverage_row_is_kept():
+    frame = pd.DataFrame({"season": [2026], "game_id": ["upcoming"], "y": [np.nan],
+                          "home_team": ["H"], "away_team": ["A"]})
+    kept, excluded = service.apply_pbp_eligibility(frame, _coverage([]))
+    assert kept["game_id"].tolist() == ["upcoming"] and len(excluded) == 0
+
+
+@pytest.mark.parametrize("status", ["unknown_source_or_identity", None])
+def test_completed_game_without_verified_coverage_halts(status):
+    frame = pd.DataFrame({"season": [2025], "game_id": ["x"], "y": [1.0], "home_team": ["H"], "away_team": ["A"]})
+    table = _coverage([] if status is None else [(2025, "x", status)])
+    with pytest.raises(service.FBSModelError, match="lack verified cfbfastR coverage"):
+        service.apply_pbp_eligibility(frame, table)
+
+
+def test_coverage_loader_rejects_a_table_that_does_not_match_its_manifest(tmp_path):
+    import json
+    (tmp_path / "table.csv").write_text("season,game_id,coverage_status\n2025,a,has_plays\n")
+    (tmp_path / service.COVERAGE_MANIFEST).write_text(json.dumps({"csv": "table.csv", "csv_sha256": "0" * 64}))
+    with pytest.raises(service.FBSModelError, match="does not match its manifest"):
+        service.load_coverage(str(tmp_path))
+
+
+def test_certificate_is_bound_to_the_coverage_manifest(tmp_path, monkeypatch):
+    coverage_dir = tmp_path / "cov"
+    coverage_dir.mkdir()
+    (coverage_dir / service.COVERAGE_MANIFEST).write_text('{"csv": "t.csv", "csv_sha256": "x"}')
+    monkeypatch.setattr(service, "COVERAGE_DIR", str(coverage_dir))
+    ledger = tmp_path / "ledger.csv"
+    ledger.write_text("game_id,season\n1,2023\n")
+    monkeypatch.setattr(runner, "PARITY_LEDGER", str(ledger))
+    db = str(tmp_path / "fbs.sqlite3")
+    runner.write_certificate({"ok": True, "models": {}}, db, NOW)
+    assert runner.parity_certified(db)[0] is True
+    (coverage_dir / service.COVERAGE_MANIFEST).write_text('{"csv": "t.csv", "csv_sha256": "y"}')
+    certified, reason = runner.parity_certified(db)
+    assert not certified and "coverage manifest changed" in reason
+
+
+def test_check_parity_scores_through_service_fit_and_predict(tmp_path, monkeypatch):
+    rng = np.random.default_rng(3)
+    n = 300
+    frame = pd.DataFrame({
+        "game_id": [str(i) for i in range(n)],
+        "season": [2022] * 150 + [2023] * 150,
+        "utc_date": pd.Timestamp("2022-08-01") + pd.to_timedelta(np.arange(n) // 2, unit="D"),
+        "y": rng.integers(0, 2, n).astype(float),
+        "p_g2": rng.uniform(0.3, 0.7, n),
+    })
+    for col in service.FEATURES_C:
+        frame[col] = 0.0
+    ledger = frame[frame["season"] == 2023][["game_id", "season", "y", "p_g2"]].copy()
+    ledger["p_g1"] = ledger["p_g2"]
+    ledger["p_c2"] = ledger["p_g2"]
+    ledger["p_g2h"] = ledger["p_g2"]
+    ledger_path = tmp_path / "ledger.csv"
+    ledger.to_csv(ledger_path, index=False)
+
+    calls = {"fit": 0, "predict": 0}
+
+    class _Hier:
+        grad_norm = 1e-6
+
+    def fake_fit(frame_arg, as_of):
+        calls["fit"] += 1
+        return {"g2h": _Hier()}
+
+    def fake_predict(frame_arg, state, rows):
+        calls["predict"] += 1
+        out = rows.copy()
+        out["p_c2"] = out["p_g2"]
+        out["p_g2h"] = out["p_g2"]
+        return out
+
+    monkeypatch.setattr(service, "fit", fake_fit)
+    monkeypatch.setattr(service, "predict", fake_predict)
+    result = runner.check_parity(frame, str(ledger_path))
+    assert calls["fit"] > 0 and calls["predict"] == calls["fit"]
+    assert result["estimator"].startswith("service.fit/predict")
+    assert result["games"] == 150 and result["ok"] is True
+
+
+def test_coverage_directory_is_resolved_at_call_time(tmp_path, monkeypatch):
+    import json
+    (tmp_path / "t.csv").write_text("season,game_id,coverage_status\n2025,a,has_plays\n")
+    import hashlib
+    digest = hashlib.sha256((tmp_path / "t.csv").read_bytes()).hexdigest()
+    (tmp_path / service.COVERAGE_MANIFEST).write_text(json.dumps({"csv": "t.csv", "csv_sha256": digest}))
+    monkeypatch.setattr(service, "COVERAGE_DIR", str(tmp_path))
+    assert service.load_coverage()["table"]["game_id"].tolist() == ["a"]
+
+
+def test_results_are_graded_only_from_verified_coverage():
+    frame = pd.DataFrame({"season": [2025, 2025], "game_id": ["a", "b"], "y": [1.0, 0.0],
+                          "home_team": ["H", "H"], "away_team": ["A", "A"]})
+    table = _coverage([(2025, "a", "has_plays"), (2025, "b", "has_plays")])
+    kept, _ = service.apply_pbp_eligibility(frame, table)
+    assert kept["coverage_status"].tolist() == ["has_plays", "has_plays"]
