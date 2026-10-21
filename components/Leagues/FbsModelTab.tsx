@@ -23,6 +23,8 @@ interface FbsGame {
   kickoff_utc: string
   home_team: string
   away_team: string
+  home_record?: string | null
+  away_record?: string | null
   status: GameStatus
   locked_at_utc: string | null
   late: boolean
@@ -155,11 +157,6 @@ export default function FbsModelTab() {
         </div>
       </header>
 
-      <p className="text-xs text-zinc-500">
-        Predictions only — no NCAAF moneyline or spread price feed is captured yet, so nothing here is
-        a qualifying wager. Win probabilities and model fair odds.
-      </p>
-
       {payload.state === 'awaiting_first_lock' ? (
         <p className="py-10 text-sm text-zinc-500">No forecasts locked for {payload.season} yet.</p>
       ) : null}
@@ -183,20 +180,19 @@ export default function FbsModelTab() {
                 <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                   <Side
                     team={game.away_team}
+                    record={game.away_record}
                     probability={forecast.p_away}
                     fair={forecast.fair_away}
                     favoured={!homeFavoured}
                   />
                   <Side
                     team={game.home_team}
+                    record={game.home_record}
                     probability={forecast.p_home}
                     fair={forecast.fair_home}
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                </div>
-                <div className="mt-3 text-xs text-zinc-500">
-                  {forecast.fitted_through ? ` · fitted through ${forecast.fitted_through}` : ''}
                 </div>
               </article>
             )
@@ -259,7 +255,7 @@ export default function FbsModelTab() {
                 const won = game.result ? (picked === 'home' ? game.result.home_win : !game.result.home_win) : null
                 return (
                   <article key={game.game_id} className="grid grid-cols-2 gap-x-6 gap-y-2 py-3 sm:grid-cols-5">
-                    <Metric label="Game" value={`${game.away_team} @ ${game.home_team}`} />
+                    <Metric label="Game" value={`${game.away_team}${game.away_record ? ` (${game.away_record})` : ''} @ ${game.home_team}${game.home_record ? ` (${game.home_record})` : ''}`} />
                     <Metric label="Lean" value={`${pct(Math.max(forecast.p_home, forecast.p_away))} ${picked === 'home' ? game.home_team : game.away_team}`} />
                     <Metric label="Final" value={game.result ? `${game.result.away_score}–${game.result.home_score}` : 'Pending'} />
                     <Metric label="Result" value={won == null ? 'Pending' : won ? '✓ Won' : '✗ Lost'} />
@@ -276,12 +272,12 @@ export default function FbsModelTab() {
   )
 }
 
-function Side({ team, probability, fair, favoured }: {
-  team: string; probability: number; fair: number | null; favoured: boolean
+function Side({ team, record, probability, fair, favoured }: {
+  team: string; record?: string | null; probability: number; fair: number | null; favoured: boolean
 }) {
   return (
     <div className="min-w-0">
-      <div className="truncate text-sm text-zinc-200">{team}</div>
+      <div className="truncate text-sm text-zinc-200">{team}{record && <span className="ml-1.5 text-xs text-zinc-500">{record}</span>}</div>
       <div className="mt-0.5 tabular-nums text-zinc-100">
         <span className={favoured ? 'font-semibold' : 'text-zinc-400'}>{pct(probability)}</span>
         <span className="ml-2 text-xs text-zinc-500">{price(fair)}</span>
