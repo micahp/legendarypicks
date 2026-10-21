@@ -44,7 +44,7 @@ MODEL_ORDER = ("g2", "c2", "g2h")
 CERTIFICATE_NAME = "fbs-parity-certificate.json"
 # Every module whose code changes the forecast. A certificate is bound to these bytes.
 FINGERPRINT_MODULES = (
-    "fbs_model_runner.py", "fbs_model_service.py", "fbs_game_winner_baseline.py",
+    "fbs_model_runner.py", "fbs_model_service.py", "fbs_model_store.py", "fbs_game_winner_baseline.py",
     "fbs_phase3_features_c.py", "fbs_phase3_hierarchical.py", "fbs_phase3_increment.py",
     "fbs_phase3_increment_g.py",
 )
@@ -400,6 +400,60 @@ def team_ratings(state: dict, frame: pd.DataFrame, season: int) -> list[dict]:
     return sorted(rows, key=lambda row: -row["rating"])
 
 
+def espn_final_scores(pending: list[tuple[str, str]]) -> dict[str, dict]:
+    """Final scores that ESPN itself reports, for pending games.
+
+    ESPN decides finality. A game is graded only when its scoreboard event reports completed and
+    carries both scores. Games are looked up on their Eastern date, the date ESPN files them under.
+    An unreadable board is an error, never an empty day, so nothing is graded from a partial read.
+    """
+    import urllib.request
+    by_date: dict[str, list[str]] = {}
+    for game_id, kickoff in pending:
+        by_date.setdefault(eastern_date(kickoff), []).append(game_id)
+    finals, failed, absent = {}, [], []
+    for date, game_ids in sorted(by_date.items()):
+        try:
+            with urllib.request.urlopen(ESPN_SCOREBOARD % date, timeout=20) as response:
+                payload = json.load(response)
+        except Exception as exc:
+            failed.append("%s (%s)" % (date, exc))
+            continue
+        events = {str(event.get("id")): event for event in payload.get("events", [])}
+        for game_id in game_ids:
+            event = events.get(game_id)
+            if event is None:
+                absent.append(game_id)
+                continue
+            competition = (event.get("competitions") or [{}])[0]
+            status = (competition.get("status") or event.get("status") or {}).get("type", {})
+            if not status.get("completed"):
+                continue
+            home, away = _score(competition, "home"), _score(competition, "away")
+            if home is None or away is None:
+                raise service.FBSModelError("ESPN reports %s completed without both scores" % game_id)
+            finals[game_id] = {"home_score": home, "away_score": away}
+    if failed:
+        raise service.FBSModelError("ESPN scoreboard unreadable for %s; no grades written" % "; ".join(failed))
+    if absent:
+        print("grading: %d pending game(s) not on their ESPN board; left ungraded: %s" % (len(absent), absent))
+    return finals
+
+
+def reconcile_final_scores(finals: dict[str, dict], archive: dict[str, tuple[int, int]]) -> None:
+    """Halt when the archive's score for a game disagrees with ESPN's final score."""
+    for game_id, final in finals.items():
+        if game_id in archive and archive[game_id] != (final["home_score"], final["away_score"]):
+            raise service.FBSModelError(
+                "archive and ESPN final scores disagree for %s: %s vs %s"
+                % (game_id, archive[game_id], (final["home_score"], final["away_score"])))
+
+
+def eastern_date(kickoff_utc: str) -> str:
+    import pytz
+    return pd.Timestamp(kickoff_utc).tz_convert(pytz.timezone("America/New_York")).strftime("%Y%m%d")
+
+
 def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None = None) -> dict:
     now = now or dt.datetime.now(dt.timezone.utc)
     frame, ratings = service.build_frame(verbose=True, return_ratings=True)
@@ -447,20 +501,19 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
                 "fitted_through": str(state["train_last_date"].date()),
             })
 
-    results = {}
-    for row in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False):
-        results[str(row.game_id)] = {"home_score": int(row.home_score),
-                                     "away_score": int(row.away_score)}
-
     certified, reason = parity_certified(db_path)
     if not certified:
         print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
     con = store.open_db(db_path)
     try:
+        # Grading is decided before anything is written: a halt here leaves no partial run behind.
+        finals = espn_final_scores(store.pending_grades(con, now))
+        reconcile_final_scores(finals, {str(r.game_id): (int(r.home_score), int(r.away_score))
+                                        for r in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False)})
         previewed = store.upsert_previews(con, rows, now=now)
         locked = store.lock_forecasts(con, rows, now=now) if certified else {"blocked": reason}
         missed = store.record_missed_windows(con, now=now)
-        graded = store.grade_forecasts(con, results, now=now)
+        graded = store.grade_forecasts(con, finals, now=now)
         store.store_ratings(con, rating_rows, now.isoformat())
         store.set_meta(con, last_run_utc=now.isoformat(), model_version=version % "g2h",
                        train_last_date=str(state["train_last_date"].date()),
@@ -506,12 +559,11 @@ def audit(db_path: str = store.DEFAULT_DB) -> dict:
 
 
 def grade_only(db_path: str = store.DEFAULT_DB) -> int:
-    frame = service.build_frame()
-    results = {str(r.game_id): {"home_score": int(r.home_score), "away_score": int(r.away_score)}
-               for r in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False)}
+    """Grade pending forecasts from ESPN's final scores only. The archive is cross-checked in run()."""
     con = store.open_db(db_path)
     try:
-        return store.grade_forecasts(con, results)
+        now = dt.datetime.now(dt.timezone.utc)
+        return store.grade_forecasts(con, espn_final_scores(store.pending_grades(con, now)), now=now)
     finally:
         con.close()
 

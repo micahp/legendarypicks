@@ -486,3 +486,72 @@ def test_results_are_graded_only_from_verified_coverage():
     table = _coverage([(2025, "a", "has_plays"), (2025, "b", "has_plays")])
     kept, _ = service.apply_pbp_eligibility(frame, table)
     assert kept["coverage_status"].tolist() == ["has_plays", "has_plays"]
+
+
+# -------------------------------------------------------------------------- authoritative grading
+
+class _Board:
+    def __init__(self, body):
+        self._body = json.dumps(body).encode()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return self._body
+
+
+def _board_event(event_id, completed, home, away):
+    return {"id": event_id, "date": "2022-12-17T05:30Z", "season": {"year": 2022},
+            "competitions": [{"status": {"type": {"completed": completed}},
+                              "competitors": [{"homeAway": "home", "score": str(home)},
+                                              {"homeAway": "away", "score": str(away)}]}]}
+
+
+def test_espn_final_scores_grades_only_what_espn_reports_completed(monkeypatch):
+    requested = []
+
+    def board(url, timeout):
+        requested.append(url)
+        return _Board({"events": [_board_event("10", True, 24, 20), _board_event("11", False, 0, 0)]})
+
+    monkeypatch.setattr("urllib.request.urlopen", board)
+    pending = [("10", "2022-12-17T05:30:00+00:00"), ("11", "2022-12-17T05:30:00+00:00"),
+               ("12", "2022-12-17T05:30:00+00:00")]
+    finals = runner.espn_final_scores(pending)
+    assert finals == {"10": {"home_score": 24, "away_score": 20}}
+    assert len(requested) == 1 and "dates=20221217" in requested[0]
+
+
+def test_espn_final_scores_uses_the_eastern_date(monkeypatch):
+    requested = []
+    monkeypatch.setattr("urllib.request.urlopen",
+                        lambda url, timeout: (requested.append(url), _Board({"events": []}))[1])
+    runner.espn_final_scores([("10", "2022-12-18T00:30:00+00:00")])
+    assert "dates=20221217" in requested[0]
+
+
+def test_unreadable_espn_board_halts_grading(monkeypatch):
+    def refuse(url, timeout):
+        raise OSError("connection reset")
+
+    monkeypatch.setattr("urllib.request.urlopen", refuse)
+    with pytest.raises(service.FBSModelError, match="unreadable"):
+        runner.espn_final_scores([("10", "2022-12-17T05:30:00+00:00")])
+
+
+def test_archive_and_espn_score_disagreement_halts():
+    with pytest.raises(service.FBSModelError, match="disagree"):
+        runner.reconcile_final_scores({"10": {"home_score": 24, "away_score": 20}}, {"10": (24, 21)})
+    runner.reconcile_final_scores({"10": {"home_score": 24, "away_score": 20}}, {"10": (24, 20)})
+
+
+def test_pending_grades_are_unpaid_games_whose_kickoff_has_passed(con):
+    store.lock_forecasts(con, [_row(game_id="g1"), _row(game_id="g1", model="g2")], now=KICKOFF - dt.timedelta(hours=1))
+    assert store.pending_grades(con, KICKOFF - dt.timedelta(minutes=5)) == []
+    assert [g for g, _ in store.pending_grades(con, KICKOFF + dt.timedelta(minutes=5))] == ["g1"]
+    store.grade_forecasts(con, {"g1": {"home_score": 24, "away_score": 20}}, now=KICKOFF + dt.timedelta(hours=3))
+    assert store.pending_grades(con, KICKOFF + dt.timedelta(hours=4)) == []

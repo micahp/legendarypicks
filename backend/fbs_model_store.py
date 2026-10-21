@@ -275,6 +275,12 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
     return graded
 
 
+def pending_grades(con: sqlite3.Connection, now: dt.datetime) -> list[tuple[str, str]]:
+    """Games with a forecast, no result yet, and a kickoff that has passed."""
+    rows = con.execute("SELECT DISTINCT game_id, kickoff_utc FROM fbs_forecasts WHERE result IS NULL").fetchall()
+    return [(row[0], row[1]) for row in rows if parse_time(row[1]) < now]
+
+
 def store_ratings(con: sqlite3.Connection, rows: list[dict], as_of: str) -> int:
     for row in rows:
         con.execute(
