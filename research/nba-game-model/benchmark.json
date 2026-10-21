@@ -1,0 +1,837 @@
+{
+  "coverage": [
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1229
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1229,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1229,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 1,
+      "season": 2017
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1229
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1229,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1229,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 1,
+      "season": 2018
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1230
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1230,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2019
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "-1": 4,
+        "0": 1055
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1059,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1059,
+      "regular_schedule_games": 1059,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2020
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1080
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1080,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1080,
+      "regular_schedule_games": 1080,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2021
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1230
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1230,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2022
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1230
+      },
+      "nba_cup_finals_excluded": 0,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1230,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2023
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1231
+      },
+      "nba_cup_finals_excluded": 1,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1230,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2024
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1231
+      },
+      "nba_cup_finals_excluded": 1,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 0,
+      "regular_games_with_complete_efficiency_inputs": 1230,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2025
+    },
+    {
+      "boxscore_to_schedule_date_offsets": {
+        "0": 1231
+      },
+      "nba_cup_finals_excluded": 1,
+      "regular_boxscore_games_crosswalked": 1230,
+      "regular_games_missing_efficiency_inputs": 1,
+      "regular_games_with_complete_efficiency_inputs": 1229,
+      "regular_schedule_games": 1230,
+      "regular_schedule_games_without_boxscore": 0,
+      "season": 2026
+    }
+  ],
+  "eligible_games": {
+    "refit_through_2025_26": 11976,
+    "test": 2460,
+    "train": 5827,
+    "validation": 2460
+  },
+  "metrics": {
+    "test": {
+      "B0 Home-rate baseline": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744637145,
+              "n": 2460,
+              "observed_home_win_rate": 0.5434959349593496
+            }
+          ],
+          "ece_10_bin": 0.027638439504364953
+        },
+        "games": 2460,
+        "winner_accuracy": 0.5434959349593496,
+        "winner_brier": 0.24887198698024798,
+        "winner_log_loss": 0.6909104474183361
+      },
+      "B1 Training league-points baseline": {
+        "away_points_mae": 10.92306846039104,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744637145,
+              "n": 2460,
+              "observed_home_win_rate": 0.5434959349593496
+            }
+          ],
+          "ece_10_bin": 0.027638439504364953
+        },
+        "games": 2460,
+        "home_points_mae": 10.752372610820558,
+        "spread_mae": 12.527013161327769,
+        "team_points_mae": 10.837720535605799,
+        "total_mae": 17.577893489935544,
+        "winner_accuracy": 0.5434959349593496,
+        "winner_brier": 0.24887198698024798,
+        "winner_log_loss": 0.6909104474183361
+      },
+      "G1": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.09292865414447399,
+              "n": 3,
+              "observed_home_win_rate": 0.0
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.15930646446142,
+              "n": 43,
+              "observed_home_win_rate": 0.13953488372093023
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.25641026147516416,
+              "n": 154,
+              "observed_home_win_rate": 0.2012987012987013
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.3521510010761354,
+              "n": 254,
+              "observed_home_win_rate": 0.3425196850393701
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.45524447492172687,
+              "n": 342,
+              "observed_home_win_rate": 0.4298245614035088
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5515181530211529,
+              "n": 459,
+              "observed_home_win_rate": 0.5054466230936819
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.646700875975831,
+              "n": 500,
+              "observed_home_win_rate": 0.574
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7496701738032708,
+              "n": 412,
+              "observed_home_win_rate": 0.7184466019417476
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8417047698767247,
+              "n": 247,
+              "observed_home_win_rate": 0.8461538461538461
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9207168505466187,
+              "n": 46,
+              "observed_home_win_rate": 0.9130434782608695
+            }
+          ],
+          "ece_10_bin": 0.037629832396416464
+        },
+        "games": 2460,
+        "winner_accuracy": 0.6467479674796748,
+        "winner_brier": 0.21464702316891696,
+        "winner_log_loss": 0.6167379481689512
+      },
+      "G2": {
+        "away_points_mae": 9.744540579974318,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.0733556539546117,
+              "n": 37,
+              "observed_home_win_rate": 0.05405405405405406
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.16001260041036924,
+              "n": 157,
+              "observed_home_win_rate": 0.21019108280254778
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2517579563221817,
+              "n": 217,
+              "observed_home_win_rate": 0.2903225806451613
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.3484116197373175,
+              "n": 291,
+              "observed_home_win_rate": 0.39862542955326463
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4504103308368116,
+              "n": 300,
+              "observed_home_win_rate": 0.51
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5508622469411261,
+              "n": 352,
+              "observed_home_win_rate": 0.5340909090909091
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6481439604162392,
+              "n": 356,
+              "observed_home_win_rate": 0.5926966292134831
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7503437338951263,
+              "n": 363,
+              "observed_home_win_rate": 0.7079889807162535
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.846770752845301,
+              "n": 279,
+              "observed_home_win_rate": 0.7849462365591398
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9323046305206338,
+              "n": 108,
+              "observed_home_win_rate": 0.8796296296296297
+            }
+          ],
+          "ece_10_bin": 0.04609971552472855
+        },
+        "games": 2460,
+        "home_points_mae": 9.735940654035812,
+        "spread_mae": 11.19120876004517,
+        "team_points_mae": 9.740240617005064,
+        "total_mae": 15.796886983449983,
+        "winner_accuracy": 0.6524390243902439,
+        "winner_brier": 0.2147421707156937,
+        "winner_log_loss": 0.6185689363321675
+      },
+      "G3": {
+        "away_points_mae": 9.748891641260162,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.07414106889204546,
+              "n": 22,
+              "observed_home_win_rate": 0.0
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.1601291232638889,
+              "n": 99,
+              "observed_home_win_rate": 0.23232323232323232
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2478470203488372,
+              "n": 215,
+              "observed_home_win_rate": 0.23255813953488372
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.3515948016826923,
+              "n": 325,
+              "observed_home_win_rate": 0.37538461538461537
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.45217043854469474,
+              "n": 344,
+              "observed_home_win_rate": 0.4941860465116279
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5501116410042476,
+              "n": 412,
+              "observed_home_win_rate": 0.5461165048543689
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6491997545199502,
+              "n": 401,
+              "observed_home_win_rate": 0.6234413965087282
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7487339564732143,
+              "n": 350,
+              "observed_home_win_rate": 0.7142857142857143
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8430852716619318,
+              "n": 220,
+              "observed_home_win_rate": 0.8363636363636363
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9317728678385416,
+              "n": 72,
+              "observed_home_win_rate": 0.875
+            }
+          ],
+          "ece_10_bin": 0.025954828029725617
+        },
+        "distribution": {
+          "joint_score_gaussian_nll": 7.78438917809592,
+          "margin_80pct_coverage": 0.8073170731707318,
+          "margin_80pct_width": 35.5706504065042,
+          "margin_crps": 7.996031260199663,
+          "simulation_count_per_game": 2048,
+          "total_80pct_coverage": 0.7804878048780488,
+          "total_80pct_width": 48.68451219512215,
+          "total_crps": 11.14179855856469
+        },
+        "games": 2460,
+        "home_points_mae": 9.741278622014736,
+        "spread_mae": 11.19431549320376,
+        "team_points_mae": 9.745085131637449,
+        "total_mae": 15.805276414824695,
+        "winner_accuracy": 0.6552845528455284,
+        "winner_brier": 0.21338606285370462,
+        "winner_log_loss": 0.6145176837631624
+      }
+    },
+    "validation": {
+      "B0 Home-rate baseline": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744637145,
+              "n": 2460,
+              "observed_home_win_rate": 0.5621951219512196
+            }
+          ],
+          "ece_10_bin": 0.008939252512494944
+        },
+        "games": 2460,
+        "winner_accuracy": 0.5621951219512196,
+        "winner_brier": 0.24621167704095565,
+        "winner_log_loss": 0.68555348803993
+      },
+      "B1 Training league-points baseline": {
+        "away_points_mae": 10.17904205402088,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744637145,
+              "n": 2460,
+              "observed_home_win_rate": 0.5621951219512196
+            }
+          ],
+          "ece_10_bin": 0.008939252512494944
+        },
+        "games": 2460,
+        "home_points_mae": 10.254785613927705,
+        "spread_mae": 11.557280308516141,
+        "team_points_mae": 10.216913833974292,
+        "total_mae": 16.77260593731729,
+        "winner_accuracy": 0.5621951219512196,
+        "winner_brier": 0.24621167704095565,
+        "winner_log_loss": 0.68555348803993
+      },
+      "G1": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.16955937474004104,
+              "n": 17,
+              "observed_home_win_rate": 0.29411764705882354
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2600896090642981,
+              "n": 97,
+              "observed_home_win_rate": 0.25773195876288657
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.35484757630495284,
+              "n": 252,
+              "observed_home_win_rate": 0.3492063492063492
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4533737879682812,
+              "n": 376,
+              "observed_home_win_rate": 0.4175531914893617
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5497332588006022,
+              "n": 509,
+              "observed_home_win_rate": 0.5481335952848723
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6482835414766084,
+              "n": 563,
+              "observed_home_win_rate": 0.6376554174067496
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.744446240002112,
+              "n": 421,
+              "observed_home_win_rate": 0.7007125890736342
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8381694283638474,
+              "n": 220,
+              "observed_home_win_rate": 0.7727272727272727
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9229161075394048,
+              "n": 5,
+              "observed_home_win_rate": 1.0
+            }
+          ],
+          "ece_10_bin": 0.023263715259208815
+        },
+        "games": 2460,
+        "winner_accuracy": 0.6402439024390244,
+        "winner_brier": 0.22567299949700292,
+        "winner_log_loss": 0.6435093892470394
+      },
+      "G2": {
+        "away_points_mae": 9.450533571554486,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.07951402204522515,
+              "n": 11,
+              "observed_home_win_rate": 0.18181818181818182
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.1617448461704876,
+              "n": 82,
+              "observed_home_win_rate": 0.2926829268292683
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2538310125411506,
+              "n": 200,
+              "observed_home_win_rate": 0.295
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.34977395478925927,
+              "n": 274,
+              "observed_home_win_rate": 0.4708029197080292
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4514428488143281,
+              "n": 358,
+              "observed_home_win_rate": 0.45251396648044695
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5500182758732418,
+              "n": 429,
+              "observed_home_win_rate": 0.5734265734265734
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6474813197727225,
+              "n": 457,
+              "observed_home_win_rate": 0.6301969365426696
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7473284950541503,
+              "n": 367,
+              "observed_home_win_rate": 0.7029972752043597
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8451281174857967,
+              "n": 237,
+              "observed_home_win_rate": 0.7552742616033755
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9222154529053802,
+              "n": 45,
+              "observed_home_win_rate": 0.8
+            }
+          ],
+          "ece_10_bin": 0.04660455368771075
+        },
+        "games": 2460,
+        "home_points_mae": 9.544810384091763,
+        "spread_mae": 10.83286438583146,
+        "team_points_mae": 9.497671977823124,
+        "total_mae": 15.512517834520066,
+        "winner_accuracy": 0.6325203252032521,
+        "winner_brier": 0.22909913372086418,
+        "winner_log_loss": 0.6527707304105126
+      },
+      "G3": {
+        "away_points_mae": 9.44171112804878,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.081103515625,
+              "n": 5,
+              "observed_home_win_rate": 0.4
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.16040558510638298,
+              "n": 47,
+              "observed_home_win_rate": 0.2127659574468085
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2560269508136095,
+              "n": 169,
+              "observed_home_win_rate": 0.2958579881656805
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.352354929503367,
+              "n": 297,
+              "observed_home_win_rate": 0.4444444444444444
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4525263033919598,
+              "n": 398,
+              "observed_home_win_rate": 0.4371859296482412
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5500129117202048,
+              "n": 537,
+              "observed_home_win_rate": 0.5791433891992551
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6483958793529107,
+              "n": 481,
+              "observed_home_win_rate": 0.6486486486486487
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7440981020082582,
+              "n": 333,
+              "observed_home_win_rate": 0.7207207207207207
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8408314732142858,
+              "n": 175,
+              "observed_home_win_rate": 0.7828571428571428
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9268120659722222,
+              "n": 18,
+              "observed_home_win_rate": 0.8333333333333334
+            }
+          ],
+          "ece_10_bin": 0.032366000539888216
+        },
+        "distribution": {
+          "joint_score_gaussian_nll": 7.740926704685541,
+          "margin_80pct_coverage": 0.8308943089430895,
+          "margin_80pct_width": 35.93081300813022,
+          "margin_crps": 7.715862386401107,
+          "simulation_count_per_game": 2048,
+          "total_80pct_coverage": 0.8040650406504065,
+          "total_80pct_width": 48.71634146341484,
+          "total_crps": 10.97422984925712
+        },
+        "games": 2460,
+        "home_points_mae": 9.53737852515244,
+        "spread_mae": 10.824988487677846,
+        "team_points_mae": 9.48954482660061,
+        "total_mae": 15.49994720210874,
+        "winner_accuracy": 0.6353658536585366,
+        "winner_brier": 0.22703024161055804,
+        "winner_log_loss": 0.6470235916501861
+      }
+    }
+  },
+  "model_info": [
+    {
+      "id": "G1",
+      "label": "G1 Elo",
+      "note": "Chronological team Elo with home-court adjustment and 25% offseason regression.",
+      "projects_scores": false,
+      "version": "nba-g1-elo-v1-k20-hca65-reg75"
+    },
+    {
+      "id": "G2",
+      "label": "G2 Efficiency",
+      "note": "Rolling pace plus opponent-adjusted offensive and defensive efficiency.",
+      "projects_scores": true,
+      "version": "nba-g2-efficiency-v1-ewma08-reg50-hca2"
+    },
+    {
+      "id": "G3",
+      "label": "G3 Joint scores",
+      "note": "G2 score means with a pregame bivariate residual distribution.",
+      "projects_scores": true,
+      "version": "nba-g3-joint-score-v1-ewma08-2048"
+    }
+  ],
+  "protocol": {
+    "baselines": {
+      "B0": "fixed home-win rate from training seasons",
+      "B1": "fixed home/away league points-per-game means from training seasons"
+    },
+    "g1": {
+      "home_advantage_elo_points": 65.0,
+      "k": 20.0,
+      "offseason_carry": 0.75
+    },
+    "g2": {
+      "ewma_alpha": 0.08,
+      "home_court_points": 2.0,
+      "offseason_carry": 0.5,
+      "possessions": "FGA + 0.44*FTA - OREB + TOV",
+      "winner_probability": "logistic margin scale set from prequential train residual SD"
+    },
+    "g3": {
+      "distribution": "bivariate normal score residuals; rounded integer scores",
+      "residual_window": 2000,
+      "simulations_per_game": 2048
+    },
+    "holdout_seasons_end_year": [
+      2024,
+      2025
+    ],
+    "no_pregame_market_odds_comparison": true,
+    "parameters_fixed_before_evaluation": true,
+    "prospective_refit_through_end_year": 2026,
+    "same_date_games_share_pregame_state": true,
+    "train_seasons_end_year": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021
+    ],
+    "validation_seasons_end_year": [
+      2022,
+      2023
+    ]
+  },
+  "source_asset_hashes": {
+    "nba_schedule_2017.parquet": "9d0e3e31133e8cbc7672234172d26950e44c6ac455c076732f09f185f2f51527",
+    "nba_schedule_2018.parquet": "0b8bd8690aede3b58b71a32b067ea476bc64a1b0afe27aaed65b8593623ab673",
+    "nba_schedule_2019.parquet": "3990c1f0b284b6ef3ed009d3a9b42e4ed4e5a2e3fcf6f0951301bf701fcc0afa",
+    "nba_schedule_2020.parquet": "6fb45790190b0ce2d3f97cd920c5c8a33ba5f8b1df041cc12ba00ca800fc3156",
+    "nba_schedule_2021.parquet": "a2f694a8ea19e4f1418350d45bd6684c3ac15b0ddb589ca693c84383ad09cc73",
+    "nba_schedule_2022.parquet": "e7a968c6f56a9ef0cb2c89d8a315154b6982beb68b42a7fe3e0a4c1464b77bb7",
+    "nba_schedule_2023.parquet": "44e826e8b432b863ddec3976a1c72eb2e5ce345af32e8d0c8b84a6137f6d2164",
+    "nba_schedule_2024.parquet": "2d2cd6e93a462a61981e59db5e12132bf4b21bb946fc4f83b75f58bd650f9aa4",
+    "nba_schedule_2025.parquet": "959fdff85cf5892f83166d90cc84964075e13440ada5cff2a6bbe0bd9d4052fa",
+    "nba_schedule_2026.parquet": "1604c62a6d0a03dace9f1b8238c1374ecf87efeb6455175514a2d3d064fe520e",
+    "team_box_2017.parquet": "c296120a0c98238ee23cc83d7ffe849e2ce87fcdd85a82721a24d3ca469783ea",
+    "team_box_2018.parquet": "9e58866f324bb49c880db4b57e323d0bb5c3d94f9006f55e63d5337cbbcdd4ca",
+    "team_box_2019.parquet": "3f3f15ccfd1f676e0aaf5bfbdb8fd5cd69f9a21a4961cd4f6337d857593c788a",
+    "team_box_2020.parquet": "e96bec73056f08ce21bce63ca6d329fc1cf62d7229608d949bfce102df01b56a",
+    "team_box_2021.parquet": "56e59fe9062942933c708ae4ba2172ec4dda055de9c6a3409f0816ac363fdd58",
+    "team_box_2022.parquet": "f8185936836a81240d6f170ec7afeab47e3e736a718fe2c9f72999e681434b7f",
+    "team_box_2023.parquet": "b86bb087fe57eeeacead4e27965a20d1e67fdb39a3ee2ca36294a0b7d014e9b6",
+    "team_box_2024.parquet": "5e4d1b7a2ccc287f212f65888dcd674e370adec8a0e32d7ae0825eecacaaa8a9",
+    "team_box_2025.parquet": "f735bf3b743618e50987f3e3e296734e1dba43c450a21af848d7c34f23bf2aee",
+    "team_box_2026.parquet": "db846dfb39b0f75eee50ad91b1b5b7a7a62dd31d3ec0bb066a0a3bb08e366f7e"
+  },
+  "sources": {
+    "downloaded_bytes": 1599047,
+    "game_crosswalk": "canonical date/home/away tuple within one day, exact score pair, unique match required",
+    "game_phases": "SportsDataverse nba_stats_schedules; season_type identifies regular season and NBA Cup final",
+    "team_boxes": "SportsDataverse espn_nba_team_boxscores; one ESPN-ID team row per side"
+  },
+  "training_baselines": {
+    "away_points_mean": 108.13746353183457,
+    "g2_training_margin_residual_sd": 13.362808093532248,
+    "home_points_mean": 110.38270121846577,
+    "home_win_rate": 0.5711343744637034
+  }
+}

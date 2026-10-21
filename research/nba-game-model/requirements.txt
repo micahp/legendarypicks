@@ -1,0 +1,2 @@
+# Only the reproducible SportsDataverse Parquet loader/backtest needs this.
+pyarrow==17.0.0

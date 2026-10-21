@@ -1,0 +1,9 @@
+[Unit]
+Description=Check the NBA research lock window every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Unit=legendarypicks-nba-model-lock.service
+
+[Install]
+WantedBy=timers.target
