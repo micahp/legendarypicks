@@ -5,7 +5,7 @@ Scope: G2/C2/G2h game-winner pipeline and NCAAF Model/Forecasts surface.
 
 ## Evidence received from the parity worker
 
-The worker reports two **local-only, NOT pushed** commits: research forensics **ccade77f** on research/ncaaf-parity-forensics-2026-10-20 and a repair **54800dad** on candidate/ncaaf-parity-repair-2026-10-20. At documentation time these commits were not available at their remote refs, so the measurements below are a **worker report, not independently rerun here**. Ask the worker to push **both** branches separately, without merging them or touching dev. Keep the original worktree and raw forensics evidence.
+**Remote verification update:** Candidate repair **54800dad87154b5f9cf1981dd80259f3c00676ac** is pushed to [candidate/ncaaf-parity-repair-2026-10-20](https://github.com/micahp/legendarypicks/tree/candidate/ncaaf-parity-repair-2026-10-20). Its changed service and integrity test files are retrievable. **The forensics commit ccade77f remains unverified remotely**: [research/ncaaf-parity-forensics-2026-10-20](https://github.com/micahp/legendarypicks/tree/research/ncaaf-parity-forensics-2026-10-20) still points to **d819a21e**, and a direct fetch of ccade77f did not resolve. The numerical measurements below remain a **worker report, not independently rerun here**. Preserve/push the original forensics report, manifests and scripts to the research branch separately; do not merge or alter dev. Keep the original worktree and raw evidence.
 
 The report:
 - The original frozen writer, backend/fbs_phase3_increment_g.py, successfully reproduces G2h with max abs difference **1.7e-8**, and C2 **4.4e-16**; G2 exact.
@@ -24,7 +24,7 @@ Keep the **1e-6 row-parity threshold**. Do not choose a model by retrospectively
 
 ## Work to complete before any model-code merge
 
-1. **Preserve and push forensics**: push research ccade77f and candidate 54800dad to their named branches. Review docs/RESULT-ncaaf-parity-forensics.md and scripts/manifest, require reproducible commands, exact hashes, game-id comparison, and independent rerun against frozen source.
+1. **Preserve and push forensics**: candidate 54800dad is confirmed remote; push/verify research ccade77f on its forensics branch. Review docs/RESULT-ncaaf-parity-forensics.md and scripts/manifest, require reproducible commands, exact hashes, game-id comparison, and independent rerun against frozen source.
 2. **Eliminate the hard-coded exclusion as the permanent production policy.** The candidate's pinned 401778314 exception is acceptable *only in a frozen parity replay fixture*. General production must implement the same reproducible historical **EPA-availability eligibility rule** that research used (or train a newly preregistered model on a deliberately different population). Explicitly document its consequence for recent-season player/schedule coverage. Never silently exclude an upcoming fixture based on a scoring-only feature.
 3. **Make drive-feature history an explicit dependency**: retain/ingest 2014–2026 lookback for the adopted model, hash source versions, assert minimum history and fail loudly when required seasons or team identities are missing. Do not substitute 2022-only ratings and still call the result G2h.
 4. **Unify the estimators**: research and production C2 must share the same normalization, penalty and numerical settings; G2h uses its published HierarchicalLogistic as pinned. Avoid diverging copied solvers. Persist fitted scaling stats for future predictions so no future-game information enters a scaler.
@@ -55,4 +55,4 @@ Three old records were created before their actual ESPN kickoff times, which is 
 - backend/fbs_model_runner.py, backend/fbs_model_service.py (production gate and fit path)
 - docs/DECISION-forecast-first-leagues-market-first-props-2026-10-20.md (product IA; certify before using as landing view)
 
-**One-sentence handoff:** Push the two local commits; review and replay the candidate's 2014-onward inputs, EPA cohort and unified estimators; certify the actual production fit/predict path before any official C2/G2h lock or default landing promotion.
+**One-sentence handoff:** Candidate repair 54800dad is available remotely; resolve missing remote forensics ccade77f, then review and replay the candidate's 2014-onward inputs, EPA cohort and unified estimators; certify the actual production fit/predict path before any official C2/G2h lock or default landing promotion.
