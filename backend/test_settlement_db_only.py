@@ -288,10 +288,10 @@ def test_nba_settlement_reads_regular_season_markets_from_published_names():
     payload["boxscore"] = {"players": [{
         "team": {"abbreviation": "BOS"},
         "statistics": [{
-            "names": ["MIN", "PTS", "REB", "AST", "3PM", "BLK", "STL", "TO", "FG", "FT"],
+            "names": ["MIN", "PTS", "REB", "AST", "3PT", "BLK", "STL", "TO", "FG", "FT"],
             "athletes": [{
                 "athlete": {"id": "123", "displayName": "Published Player"},
-                "stats": ["32", "22", "9", "6", "3", "2", "1", "4", "9-18", "3-4"],
+                "stats": ["32", "22", "9", "6", "3-4", "2", "1", "4", "9-18", "3-4"],
             }],
         }],
     }]}
@@ -315,7 +315,7 @@ def test_nba_settlement_reads_regular_season_markets_from_published_names():
 
     assert settlement.resolve_market("nba", "fantasy_points") is None
     assert settlement.resolve_market("nba", "total_made_3_points_shots") == (
-        "statistics", "3PM")
+        "statistics", "3PT")
     assert settlement.resolve_market("nba", "FGM") == ("statistics", "FG:made")
     assert settlement.resolve_market("nba", "FTM") == ("statistics", "FT:made")
     assert settlement.resolve_market("nba", "pra") == (None, "points_rebounds_assists")
