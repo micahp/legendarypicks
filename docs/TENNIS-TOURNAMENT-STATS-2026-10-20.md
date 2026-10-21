@@ -188,3 +188,59 @@ surnames (spelling or pairing differences); they are listed by match id in the t
 - Compare side-level values on the 59 shared matches, once the home and away orientation is confirmed.
 - Move name proposals to a reviewed provider player id to ESPN athlete id table.
 - Run the next event (Shanghai ATP, 119 finals in the snapshots) under the same parameters, with approval.
+
+## Update: name collisions resolved with ESPN data (Wuhan WTA 2026)
+
+The earlier Wuhan numbers in this doc (tennis24 75 linked, 4 to review) are superseded by the resolution
+below. Current figures: tennis24 78 of 79 completed ESPN matches linked (75 proposed, 3 stats_match),
+365scores 62 linked, 78 of 79 covered by at least one provider. 62 of 62 shared matches agree on totals
+and on per-player values in the same orientation.
+
+- **"Monfils" is a label error on tennis24, not a player.** Three tennis24 matches (vs Guo Hanyu, Kartal,
+  and Samsonova) carry the code `jyngIesG` and the slug "monfils-elina". Our players table has an ATP
+  Gael Monfils and no WTA Monfils, so the name collides. The code maps to ESPN athlete 1797, which the
+  players table lists as Elina Svitolina. Each match's four stats equal the 365scores row for the ESPN
+  game it resolves to (185366, 185371 and 185349). These links are stored as `stats_match`: provisional,
+  backed by cross-provider stats equality, and needing a reviewer's confirmation.
+- **McNally vs "Starodubtsewa" stays in review.** The ESPN game is 185318 (McNally vs Starodubtseva,
+  athlete 13478, a spelling variant). Neither provider has a second row for that game, and the tennis24
+  code `GlqMuuhi` appears in one match only, so it cannot be mapped. It is not inserted.
+
+**Side orientation is not resolved.** Left and right columns agree across providers in all 62 shared
+matches, so the providers agree on which column is which. Which column is the ESPN home player is a
+different question. The first-listed player in the URL matches ESPN's home player in 19 of 32 mapped
+matches on 365scores and in 23 of 41 on tennis24, so the URL order is not a consistent orientation. The
+official Rolex Shanghai match pages show player names above their columns, so they could settle this on
+a sample. That check is not yet run.
+
+## Shanghai ATP 2026 (tennis24 only)
+
+365scores has no Shanghai league page reachable from its navigation, so Shanghai has one provider.
+
+| Measure | Result |
+| --- | --- |
+| Matches enumerated (tennis24 results page) | 131 |
+| ESPN completed games in snapshots (tournament 315) | 125: 119 Final and 6 Retired |
+| ESPN not completed | 6: 5 Suspended, 1 Walkover (reported separately) |
+| tennis24 matches parsed ok | 130 |
+| tennis24 matches with no STATS tab (walkover) | 1 |
+| Parse failures | 0 after the walkover was reclassified |
+| Set-tab check: MATCH confirmed and set tabs sum to it | 129 |
+| Set-tab check not usable (retired match, one set tab did not parse) | 1 (C25ODU5T, Mejía vs Tseng; match total stored) |
+| Completed ESPN games linked uniquely to a tennis24 match | 125 of 125 |
+| Shared-provider matches | 0 (no second provider) |
+| Identity codes mapped to ESPN athletes (proposed, multi-match) | 70; 59 codes appear in one match only |
+
+Run parameters were the approved ones, with two changes. A match with no STATS tab (a walkover) is now
+recorded as `no_stats_tab` instead of an error, because the one timeout in the run came from exactly
+that case. The memory floor was respected: the run waited 60 seconds in total. No ESPN request was made:
+the crosswalk, resolver and identity map all read the copy database.
+
+## Next steps (updated)
+
+- Run the official Rolex Shanghai match pages on a sample, to settle side orientation for both events.
+- Get a reviewer's confirmation for the three `stats_match` links, and for the McNally review case.
+- Move from name proposals to a reviewed provider-player to ESPN-athlete table. The identity codes look
+  consistent across providers, but the check so far used ESPN data, so it is not independent evidence.
+- Decide whether automated prospective capture should be scheduled. Any schedule would run against the
+  provider sites and needs your approval first.
