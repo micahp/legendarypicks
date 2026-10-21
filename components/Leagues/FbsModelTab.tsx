@@ -97,11 +97,38 @@ function DayHeading({ label, first }: { label: string; first: boolean }) {
   return <h3 className={`mb-1 text-sm font-semibold text-zinc-200 ${first ? 'pt-3' : 'border-t border-zinc-800 pt-6'}`}>{label}</h3>
 }
 
+function ModelAccuracy({ models, records }: { models: ModelInfo[]; records: Record<string, ModelRecord> }) {
+  const score = (value: number | null | undefined) => value == null ? '—' : value.toFixed(4)
+  return (
+    <div role="tooltip" className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,420px)] rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
+      <h3 className="text-sm font-semibold text-zinc-100">Season winner accuracy</h3>
+      <p className="mt-1 text-xs text-zinc-400">Brier score on settled forecasts · lower is better · 0.2500 is a constant 50% forecast.</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[300px] text-sm tabular-nums">
+          <thead className="border-b border-zinc-700 text-xs text-zinc-500"><tr>
+            <th className="py-2 text-left font-medium">Model</th><th className="py-2 text-right font-medium">Brier ↓</th><th className="py-2 text-right font-medium">Winner</th><th className="py-2 text-right font-medium">n</th>
+          </tr></thead>
+          <tbody className="divide-y divide-zinc-800">{models.map((entry) => {
+            const record = records[entry.id]
+            return <tr key={entry.id}>
+              <th scope="row" className="py-2 text-left font-medium text-zinc-200">{entry.label}</th>
+              <td className="py-2 text-right text-zinc-100">{score(record?.brier)}</td>
+              <td className="py-2 text-right text-zinc-300">{pct(record?.accuracy)}</td>
+              <td className="py-2 text-right text-zinc-300">{record?.graded ?? 0}</td>
+            </tr>
+          })}</tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 export default function FbsModelTab() {
   const [payload, setPayload] = useState<Payload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>('projections')
   const [model, setModel] = useState<string>('g2h')
+  const [accuracyOpen, setAccuracyOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -142,11 +169,21 @@ export default function FbsModelTab() {
 
   return (
     <div className="space-y-5">
-      <nav className="flex w-fit gap-1 rounded-full bg-zinc-900 p-1" aria-label="NCAAF model views">
-        {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => (
-          <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
-        ))}
-      </nav>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NCAAF model views">
+          {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
+          ))}
+        </nav>
+        <div className="relative">
+          <button type="button" aria-label="Model accuracy" aria-expanded={accuracyOpen}
+            onClick={() => setAccuracyOpen(open => !open)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800">
+            Model accuracy
+          </button>
+          {accuracyOpen && <ModelAccuracy models={payload.models} records={payload.records} />}
+        </div>
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-zinc-100">FBS model</h2>
