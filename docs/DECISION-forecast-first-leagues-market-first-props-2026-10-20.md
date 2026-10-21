@@ -55,7 +55,7 @@ All public surfaces should read **the same** keyed, persisted forecast: league, 
 ### Readiness
 
 - NCAAF game winners: original G2h research benchmark accepted, but production parity remains **blocked** until the separate parity decision's gates are met.
-- NCAAF player distributions: direct-props research/fbs-direct-props-2026-10-20 @ 6fe15ca9 reports four **ADOPT_CANDIDATE** markets (pass attempts, passing yards, rush attempts, rushing yards). This is a research verdict, **not** clearance to show prospective, graded or marketed player probabilities. Verify opponent ID, active-player population, calibration and frozen prospective evidence first.
+- NCAAF player distributions: **NOT_ADOPTED for user-facing Props forecasts**. The 2025 active-player cohort audit at research/fbs-direct-props-2026-10-20 @ ad535b9b overturns the four former all-rows ADOPT_CANDIDATE verdicts: the direct model loses to trailing-5 on every positive-usage cohort. Do not display it as a validated projection. Run a new pregame-participation x conditional-volume hurdle-model experiment, grade full-line outcomes under provider settlement rules and only then reconsider integration. See [DECISION-fbs-props-active-cohort-hurdle-2026-10-20.md](DECISION-fbs-props-active-cohort-hurdle-2026-10-20.md).
 - NHL/NFL/other leagues require independent readiness gates. Don't copy game-winner Brier scales into player-prop CRPS.
 
 ## Delivery plan (future implementation; this branch is docs only)
