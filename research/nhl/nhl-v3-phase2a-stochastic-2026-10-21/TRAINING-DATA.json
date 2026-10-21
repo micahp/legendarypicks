@@ -1,0 +1,137 @@
+{
+  "development_fit_counts": {
+    "accepted_shot_events": 362514,
+    "accepted_spatial_shot_events": 362508,
+    "accepted_team_goals_used_for_state": 19056,
+    "evaluation_2021_accepted_shot_events": 148665,
+    "evaluation_games": 1312,
+    "event_outcome_blocked": 88300,
+    "event_outcome_goal": 19028,
+    "event_outcome_missed": 74578,
+    "event_outcome_saved": 180608,
+    "fit_games": 3221,
+    "fit_penalty_calls": 20584,
+    "fit_score_team_targets": 6442,
+    "fit_shootout_attempts": 1708,
+    "fit_shootout_goals": 533,
+    "official_score_targets_from_all_fit_games": 6442,
+    "official_sog_eligible_fit_games": 3181,
+    "official_team_score_game_targets": 6442,
+    "official_team_score_games": 3221,
+    "rate_timeline_clock_regression_seconds": 591409,
+    "rate_timeline_clock_regressions": 14961,
+    "rate_timeline_excluded_games": 5,
+    "rate_timeline_games": 3216,
+    "rate_training_attempts": 362508,
+    "rate_training_exposure_minutes": 390446.6667,
+    "v2_neutral_site_fit_games": 13,
+    "v2_shootout_decision_games": 238,
+    "v2_team_strength_fit_games": 3221
+  },
+  "development_seasons": [
+    2021
+  ],
+  "development_v2_fit": {
+    "fit_games": 3221,
+    "training_shootout_home_win_rate": 0.47478991596638653
+  },
+  "environment": {
+    "numpy_version": "1.24.4",
+    "python_version": "3.8.10"
+  },
+  "feature_history_window_games": 10,
+  "final_fit_counts": {
+    "accepted_shot_events": 511179,
+    "accepted_spatial_shot_events": 511173,
+    "accepted_team_goals_used_for_state": 27206,
+    "evaluation_2022_accepted_shot_events": 39949,
+    "evaluation_games": 343,
+    "event_outcome_blocked": 123675,
+    "event_outcome_goal": 27178,
+    "event_outcome_missed": 104864,
+    "event_outcome_saved": 255462,
+    "fit_games": 4533,
+    "fit_penalty_calls": 29197,
+    "fit_score_team_targets": 9066,
+    "fit_shootout_attempts": 2455,
+    "fit_shootout_goals": 757,
+    "official_score_targets_from_all_fit_games": 9066,
+    "official_sog_eligible_fit_games": 4473,
+    "official_team_score_game_targets": 9066,
+    "official_team_score_games": 4533,
+    "rate_timeline_clock_regression_seconds": 591409,
+    "rate_timeline_clock_regressions": 14961,
+    "rate_timeline_excluded_games": 5,
+    "rate_timeline_games": 4528,
+    "rate_training_attempts": 511173,
+    "rate_training_exposure_minutes": 549725.0,
+    "v2_neutral_site_fit_games": 16,
+    "v2_shootout_decision_games": 340,
+    "v2_team_strength_fit_games": 4533
+  },
+  "final_holdout_seasons": [
+    2022
+  ],
+  "final_v2_fit": {
+    "fit_games": 4533,
+    "training_shootout_home_win_rate": 0.4852941176470588
+  },
+  "fit_seasons_development": [
+    2018,
+    2019,
+    2020
+  ],
+  "fit_seasons_final": [
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "official_score_targets_in_development_fit": 6442,
+  "same_date_feature_updates": "excluded; exact game start timestamps are absent from the pinned frame",
+  "shift_rows_read_by_fitter": 0,
+  "source_pins": {
+    "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+    "approved_label_artifact": {
+      "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+      "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+      "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+      "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+    },
+    "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+    "artifacts": {
+      "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+      "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+      "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+      "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+      "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+      "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+    },
+    "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+    "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+    "expected_population": {
+      "games": 4876,
+      "pbp_events": 1510104,
+      "seasons": {
+        "2018": 1271,
+        "2019": 1082,
+        "2020": 868,
+        "2021": 1312,
+        "2022": 343
+      }
+    },
+    "official_artifacts": {
+      "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+      "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+    }
+  },
+  "v2_reference_source": {
+    "canonical_games_sha256": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52",
+    "frozen_model_file_sha256": "032f8383e946260eee11128a83b2753e2aefd0207b8905cb2483d488d6ea9e59",
+    "frozen_model_fit_games": 23222,
+    "frozen_model_internal_sha256": "f9cb43fc2073425bbca6e26c8f473f975e065df6981495f535c9f5cf680542fb",
+    "frozen_model_version": "nhl-prospective-2026-27-v2",
+    "reference_code_commit": "3935814dfba0bd2e33fb282e450d41b89a58486f",
+    "reference_code_sha256": "021a7364bb026240dfc2dd5aacba2f3981743484596e9c809bd3a2ebade57955"
+  }
+}
