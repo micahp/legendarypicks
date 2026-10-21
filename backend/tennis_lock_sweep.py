@@ -15,8 +15,10 @@ from __future__ import annotations
 import datetime as dt
 import json
 import logging
+import os
 import sqlite3
 
+import scoreboard_store
 from tennis_count_distributions import build_history, match_distributions, store_distributions
 from tennis_daily_projections import (
     needs_projection_refresh,
@@ -30,6 +32,7 @@ log = logging.getLogger(__name__)
 
 LOCK_WINDOW = dt.timedelta(hours=1)
 TENNIS_LEAGUES = ("atp", "wta")
+DEV_DB_NAME = "picks.dev.db"
 
 
 def _sackmann(con: sqlite3.Connection, league: str, espn_id: str) -> str | None:
@@ -123,15 +126,41 @@ def _freeze_distributions(con: sqlite3.Connection, report: dict, histories: dict
         log.error("tennis distributions not frozen for %s %s: %r", league, match.get("gameId"), exc)
 
 
+def new_report() -> dict:
+    return {"considered": 0, "locked": 0, "already_locked": 0, "no_projection": 0,
+            "quotes_frozen": 0, "quotes_unavailable": 0,
+            "distribution_frozen": 0, "distribution_skipped": 0, "distribution_failed": 0,
+            "distribution_gated": 0, "distribution_skip_reasons": {}}
+
+
+def prepare_distributions(con: sqlite3.Connection) -> bool:
+    """True when this connection may write research distributions. Creates their table when it may.
+
+    Dev only. The scoreboards timer runs this same code against picks.dev.db and then picks.db,
+    so prod gets no distribution table and no rows until Micah approves a prod write.
+    """
+    main_file = con.execute("PRAGMA database_list").fetchone()[2]
+    if os.path.basename(main_file or "") != DEV_DB_NAME:
+        return False
+    scoreboard_store.ensure_distribution_schema(con)
+    return True
+
+
+def freeze_new_lock(con, report, histories, enabled, league, model_day, match, locked_at) -> None:
+    """Freeze distributions for a lock that was just created. Outside dev, count it as gated instead."""
+    if not enabled:
+        report["distribution_gated"] += 1
+        return
+    _freeze_distributions(con, report, histories, league, model_day, match, locked_at)
+
+
 def sweep(con: sqlite3.Connection, now: dt.datetime | None = None,
           window: dt.timedelta = LOCK_WINDOW) -> dict:
     """Lock every tennis match now inside its window. Safe to call every minute."""
     now = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc)
-    report = {"considered": 0, "locked": 0, "already_locked": 0,
-              "no_projection": 0, "quotes_frozen": 0, "quotes_unavailable": 0,
-              "distribution_frozen": 0, "distribution_skipped": 0, "distribution_failed": 0,
-              "distribution_skip_reasons": {}}
+    report = new_report()
     histories: dict = {}
+    distributions = prepare_distributions(con)
     for (league, model_day), matches in due_matches(con, now, window).items():
         stored = stored_candidates(con, league, model_day)
         if stored is None or needs_projection_refresh(stored, matches):
@@ -167,7 +196,7 @@ def sweep(con: sqlite3.Connection, now: dt.datetime | None = None,
             if cursor.rowcount:
                 report["locked"] += 1
                 report["quotes_frozen" if frozen_odds is not None else "quotes_unavailable"] += 1
-                _freeze_distributions(con, report, histories, league, model_day, match, now.isoformat())
+                freeze_new_lock(con, report, histories, distributions, league, model_day, match, now.isoformat())
             else:
                 report["already_locked"] += 1
     con.commit()
