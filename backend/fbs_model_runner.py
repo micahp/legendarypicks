@@ -18,6 +18,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import sqlite3
 import sys
 
 import numpy as np
@@ -1063,6 +1064,7 @@ def _main(argv=None) -> int:
     parser.add_argument("--parity", action="store_true")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--grade-only", action="store_true")
+    parser.add_argument("--grade-scoreboard", action="store_true")
     parser.add_argument("--audit", action="store_true")
     parser.add_argument("--days", type=int, default=10)
     parser.add_argument("--db", default=store.DEFAULT_DB)
@@ -1075,7 +1077,7 @@ def _main(argv=None) -> int:
         print(json.dumps(result, indent=2))
         print("certificate: %s (ok=%s)" % (path, result["ok"]))
         return 0 if result["ok"] else 1
-    if args.grade_only:
+    if args.grade_scoreboard or args.grade_only:  # --grade-scoreboard is the grade timer's flag; same verified path
         print("graded", grade_only(args.db))
         return 0
     if args.run:

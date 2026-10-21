@@ -795,3 +795,40 @@ def test_explicit_migration_recovers_an_incomplete_version_two_copy_and_refreshe
     con.close()
     assert store.migrate(db, str(tmp_path / "backups"))["action"] == "none"
     assert runner.audit(db)["schema_status"] == "current"
+
+
+def test_midnight_kickoffs_show_the_scoreboard_time_and_leave_unknown_games_alone(tmp_path):
+    live = str(tmp_path / "live.db")
+    raw = sqlite3.connect(live)
+    raw.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT)")
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','1','post',?,'t')",
+                (json.dumps({"date": "2026-10-20T23:00Z"}),))
+    raw.commit(); raw.close()
+    games = [{"game_id": "1", "kickoff_utc": "2026-10-20T00:00:00+00:00"},
+             {"game_id": "2", "kickoff_utc": "2026-10-22T00:00:00+00:00"},
+             {"game_id": "3", "kickoff_utc": "2026-10-21T18:30:00+00:00"}]
+    out = store.apply_scoreboard_details({"games": games}, live)["games"]
+    by_id = {g["game_id"]: g["kickoff_utc"] for g in out}
+    assert by_id["1"] == "2026-10-20T23:00:00+00:00"
+    assert by_id["2"] == "2026-10-22T00:00:00+00:00"
+    assert by_id["3"] == "2026-10-21T18:30:00+00:00"
+
+
+def test_records_go_into_the_game_not_after_it(tmp_path):
+    live = str(tmp_path / "live2.db")
+    raw = sqlite3.connect(live)
+    raw.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT)")
+    final = {"date": "2026-10-20T23:00Z", "completed": True,
+             "home": {"score": 20.0, "record": "4-3"}, "away": {"score": 13.0, "record": "4-3"}}
+    ahead = {"date": "2026-10-22T23:00Z", "completed": False,
+             "home": {"score": None, "record": "5-2"}, "away": {"score": None, "record": "3-3"}}
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','1','post',?,'t')", (json.dumps(final),))
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','2','pre',?,'t')", (json.dumps(ahead),))
+    raw.commit(); raw.close()
+    games = [{"game_id": "1", "kickoff_utc": "2026-10-20T00:00:00+00:00"},
+             {"game_id": "2", "kickoff_utc": "2026-10-22T00:00:00+00:00"},
+             {"game_id": "3", "kickoff_utc": "2026-10-23T00:00:00+00:00"}]
+    out = {g["game_id"]: g for g in store.apply_scoreboard_details({"games": games}, live)["games"]}
+    assert (out["1"]["home_record"], out["1"]["away_record"]) == ("3-3", "4-2")  # home won, away lost
+    assert (out["2"]["home_record"], out["2"]["away_record"]) == ("5-2", "3-3")
+    assert (out["3"]["home_record"], out["3"]["away_record"]) == (None, None)

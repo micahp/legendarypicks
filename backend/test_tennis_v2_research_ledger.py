@@ -1,3 +1,4 @@
+import unittest
 """Prospective V2 locks and grading must be safe to retry and fail closed."""
 import datetime as dt
 import hashlib
@@ -216,3 +217,19 @@ def test_new_lock_stores_source_identity_ids():
         "home_espn_id": "2375",
         "away_espn_id": "3212",
     }
+
+
+class SurfaceMappingTests(unittest.TestCase):
+    def test_ningbo_is_mapped_and_an_unknown_tournament_is_not(self):
+        import tennis_v2_research_ledger as ledger
+        self.assertEqual(ledger._surface({"tournament_id": "963", "event": "BNB Ningbo Open"}), "Hard")
+        self.assertIsNone(ledger._surface({"tournament_id": "999", "event": "Some New Open"}))
+
+    def test_main_exits_nonzero_when_a_tournament_has_no_surface(self):
+        import tennis_v2_research_ledger as ledger
+        from unittest import mock
+        report = {"unmapped_surface": 2, "unmapped_events": ["Some New Open (999)"]}
+        with mock.patch.object(ledger, "run", return_value=report):
+            self.assertEqual(ledger.main(["--db", "x", "--ledger", "y"]), 2)
+        with mock.patch.object(ledger, "run", return_value={"unmapped_surface": 0, "unmapped_events": []}):
+            self.assertEqual(ledger.main(["--db", "x", "--ledger", "y"]), 0)

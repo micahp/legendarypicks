@@ -95,6 +95,8 @@ def main(argv=None) -> int:
     parser.add_argument("--db", required=True)
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
+    # Batch job: a roster per team, so pause at ESPN's per-host window rather than raise.
+    espn.set_on_exhausted("sleep")
 
     vocab = _vocabulary()
     if not vocab[0]:

@@ -8,13 +8,13 @@ interface Forecast {
   forecast_id: string
   model_version?: string
   locked_at_utc?: string
-  home_expected_goals: number
-  away_expected_goals: number
-  projected_total_goals: number
-  projected_goal_differential_home: number
-  home_win_probability: number
-  'p_over_5.5': number
-  'p_over_6.5': number
+  home_expected_goals: number | null
+  away_expected_goals: number | null
+  projected_total_goals: number | null
+  projected_goal_differential_home: number | null
+  home_win_probability: number | null
+  'p_over_5.5': number | null
+  'p_over_6.5': number | null
   p_home_minus_1_5: number
   p_home_plus_1_5: number
   p_away_minus_1_5: number
@@ -40,6 +40,8 @@ interface Forecast {
   /** Frozen at lock time by the backend and read straight from the payload. The browser
    *  never computes a pick, so the card and the record cannot disagree. */
   pick?: ModelPick | null
+  pick_status?: 'selected' | 'missing'
+  locked_quote?: BovadaLine | null
 }
 
 interface NhlGame {
@@ -91,23 +93,12 @@ interface ModelPick {
   market: 'ml' | 'spread' | 'total'
   side: 'home' | 'away' | 'over' | 'under'
   line: number | null
-  price: number | null
-  model_probability: number
-  market_probability: number | null
-  edge: number | null
-  expected_value: number | null
+  model_probability: number | null
   push_probability?: number
-  quote_fresh?: boolean
-  quote_age_seconds?: number | null
-  line_source: string | null
   line_captured_at_utc: string | null
   settlement_basis: string
-  /** A quote was in force when this was frozen. False means no priced recommendation. */
-  priced: boolean
-  /** Priced and the expected value is positive: a recommendation, not just a lean. */
-  qualifies: boolean
   rule_version?: string
-  /** The market quote this was priced against, frozen at lock time. */
+  /** The market quote captured at lock time. */
   quote?: BovadaLine | null
   selected_at_utc?: string
   provenance?: 'lock' | 'backfill' | 'preview'
@@ -143,9 +134,9 @@ const MODEL_LABELS: Record<ModelName, string> = {
   B7_elo_xg_poisson: 'Elo + xG',
 }
 
-const one = (value: number) => value.toFixed(1)
-const pct = (value: number) => `${Math.round(value * 100)}%`
-const signed = (value: number) => `${value > 0 ? '+' : ''}${one(value)}`
+const one = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? 'n/a' : value.toFixed(1)
+const pct = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? 'n/a' : `${Math.round(value * 100)}%`
+const signed = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? 'n/a' : `${value > 0 ? '+' : ''}${one(value)}`
 
 function dateLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
@@ -165,24 +156,24 @@ function spreadLabel(home: string, away: string, homePuckLine: number | null | u
   return homePuckLine < 0 ? `${home} ${signed(homePuckLine)}` : `${away} ${signed(-homePuckLine)}`
 }
 
-/** The three market rows for one quote. A locked card labels them as the locked basis so a
- *  reader can tell the line the pick was made on from a line that has since moved. */
+/** The three market rows for one quote. Pick-time labels distinguish frozen lines from live ones. */
 function marketLines(home: string, away: string, forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
   const margin = forecast.projected_goal_differential_home
   const homeLine = quote?.home_puck_line ?? null
+  const modelLine = margin == null ? 'n/a' : margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}`
   return [
-    { label: locked ? 'Locked puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
-    { label: 'Model line', value: margin > 0 ? `${home} ${signed(-margin)}` : `${away} ${signed(margin)}` },
-    { label: 'Δ', value: homeLine == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
+    { label: locked ? 'Pick-time puck line' : 'Puck line', value: spreadLabel(home, away, homeLine) },
+    { label: 'Model line', value: modelLine },
+    { label: 'Δ', value: homeLine == null || margin == null ? 'n/a' : `${one(Math.abs(-homeLine - margin))} goals (${margin + homeLine > 0 ? home : away})` },
   ]
 }
 
 function marketTotals(forecast: Forecast, quote: BovadaLine | null | undefined, locked: boolean) {
   const vegas = quote?.total_line ?? null
   return [
-    { label: locked ? 'Locked total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
+    { label: locked ? 'Pick-time total' : 'Vegas total', value: vegas == null ? 'n/a' : one(vegas) },
     { label: 'Model total', value: one(forecast.projected_total_goals) },
-    { label: 'Δ', value: vegas == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
+    { label: 'Δ', value: vegas == null || forecast.projected_total_goals == null ? 'n/a' : `${signed(forecast.projected_total_goals - vegas)} goals` },
   ]
 }
 
@@ -195,12 +186,20 @@ function pickLabel(pick: ModelPick, home: string, away: string) {
   return `${pick.side === 'over' ? 'Over' : 'Under'} ${one(pick.line ?? 0)}`
 }
 
-function ProjectionCardView({ away, home, startUtc, forecast, status, live, awayRecord, homeRecord, preview = false }: {
+function pickResultLabel(pick: ModelPick | null, graded: boolean) {
+  if (!pick) return 'Missing'
+  if (!graded) return 'Pending'
+  if (pick.result?.push) return 'Push'
+  if (pick.result?.won === true) return 'Win'
+  if (pick.result?.won === false) return 'Loss'
+  return 'Missing'
+}
+
+function ProjectionCardView({ away, home, startUtc, forecast, live, awayRecord, homeRecord, preview = false }: {
   away: string
   home: string
   startUtc: string
   forecast: Forecast
-  status: string | null
   live?: BovadaLine
   awayRecord?: string
   homeRecord?: string
@@ -209,48 +208,21 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
   const grade = forecast.grade
   const isGraded = grade != null
   const pick = forecast.pick ?? null
-  const pickResult = pick?.result ?? null
-  const legacyTotalPricing = pick?.market === 'total' && pick.rule_version !== 'ev-max-2-settlement'
   const edgeClass = isGraded ? 'graded-edge' : ''
-  // A locked pick carries the quote it was priced against. That is the basis this card shows;
-  // the live quote appears separately and is never folded back into the edge, so the market
-  // columns and the recommendation cannot point at different lines.
-  const frozen = pick?.quote ?? null
-  const basis = frozen ?? live ?? null
-  // An unlocked preview's quote is current, never an immutable locked line.
-  const locked = !preview && frozen != null
+  // A locked card never falls back to today's line if the archived lock quote is absent.
+  const frozen = forecast.locked_quote ?? pick?.quote ?? null
+  const basis = preview ? live ?? null : frozen
+  const locked = !preview
   const lines = marketLines(home, away, forecast, basis, locked)
   const totals = marketTotals(forecast, basis, locked)
-  const moved = locked && live != null &&
+  const moved = locked && frozen != null && live != null &&
     (live.home_puck_line !== frozen.home_puck_line || live.total_line !== frozen.total_line)
-
-  // Determine status badge
-  let statusBadge = status
-  let statusColorClass = 'text-emerald-400'
-  if (isGraded && grade) {
-    const won = pickResult?.won
-    const so = grade.shootout_decided ? ' · SO' : ''
-    if (pickResult?.push) {
-      statusBadge = `↔ PUSH${so}`
-      statusColorClass = 'text-zinc-300'
-    } else if (won == null) {
-      statusBadge = `GRADED${so}`
-      statusColorClass = 'text-emerald-400'
-    } else if (won) {
-      statusBadge = `✓ GRADED${so}`
-      statusColorClass = 'text-emerald-400'
-    } else {
-      statusBadge = `✗ GRADED${so}`
-      statusColorClass = 'text-zinc-400'
-    }
-  }
 
   return (
     <article className={`space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ${edgeClass}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-semibold text-zinc-100">{away} @ {home}</h3>
         <span className="flex items-center gap-3">
-          {statusBadge && <span className={`rounded-full border border-current px-2.5 py-0.5 text-xs font-semibold tracking-wide ${statusColorClass}`}>{statusBadge}</span>}
           <span className="text-sm tabular-nums text-zinc-400">{timeLabel(startUtc)}</span>
         </span>
       </div>
@@ -269,55 +241,15 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
         </div>
       </div>
       <div className="text-right">
-          <span className="block text-xs uppercase tracking-wider text-zinc-500">
-            {pick ? (pick.qualifies ? 'Model pick' : 'Model lean') : 'Recommendation'}
-          </span>
-          <span className="block text-xl font-semibold text-zinc-100">
-            {pick ? (
-              <>
-                {pickLabel(pick, home, away)}
-                {isGraded && pickResult && (
-                  <span className={`ml-1 ${pickResult.push ? 'text-zinc-300' : pickResult.won ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {pickResult.push ? '↔' : pickResult.won ? '✓' : '✗'}
-                  </span>
-                )}
-              </>
-            ) : 'n/a'}
-          </span>
-          {pick && !pick.qualifies && (
-            <span className="block text-xs text-amber-300">
-              {pick.quote_fresh === false
-                ? 'Odds too old or unverified to qualify'
-                : pick.expected_value != null && pick.expected_value <= 0
-                  ? 'No positive estimated betting EV' : 'Not a qualifying wager'}
-            </span>
-          )}
-          {pick && legacyTotalPricing && (
-            <span className="block text-xs text-amber-300">Historical total: EV was not push-adjusted</span>
-          )}
-          {pick && pick.edge != null && !legacyTotalPricing && (
-            <span className="block text-xs tabular-nums text-zinc-400">
-              {signed(pick.edge * 100)}% probability edge
-              {isGraded && pickResult && <span className="text-zinc-500"> · {pickResult.push ? 'Push' : pickResult.won ? 'Won' : 'Lost'}</span>}
-            </span>
-          )}
-          {pick && pick.expected_value != null && !legacyTotalPricing && (
-            <span className="block text-xs tabular-nums text-zinc-500">
-              {signed(pick.expected_value * 100)}% estimated EV
-              {pick.quote_fresh === false ? ' (unverified price)' : ''}
-            </span>
-          )}
-          {!pick && (
-            <span className="block text-xs text-zinc-500">
-              {isGraded ? 'Not recommended' : 'No priced recommendation yet'}
-            </span>
-          )}
+        <span className="block text-xs uppercase tracking-wider text-zinc-500">Model Pick</span>
+        <span className="block text-xl font-semibold text-zinc-100">{pick ? pickLabel(pick, home, away) : 'Missing'}</span>
+        {pick?.model_probability != null && <span className="block text-xs tabular-nums text-zinc-400">{pct(pick.model_probability)} model probability</span>}
       </div>
       {moved ? (
         <p className="border-t border-zinc-800 pt-2 text-xs text-zinc-500">
-          Market has moved since the lock: now {spreadLabel(home, away, live?.home_puck_line)}
-          {live?.total_line == null ? '' : ` · total ${one(live.total_line)}`}. The pick above is
-          graded on the locked line.
+          Market has moved since this pick was frozen: now {spreadLabel(home, away, live?.home_puck_line)}
+          {live?.total_line == null ? '' : ` · total ${one(live.total_line)}`}. The pick above uses
+          the pick-time line.
         </p>
       ) : null}
     </article>
@@ -326,16 +258,12 @@ function ProjectionCardView({ away, home, startUtc, forecast, status, live, away
 
 function ProjectionCard({ game, model, line, standings }: { game: NhlGame; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
-  return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
-  )
+  return <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
 }
 
 function PreviewCard({ game, model, line, standings }: { game: NhlPreview; model: ModelName; line?: BovadaLine; standings?: Payload['standings'] }) {
   const forecast = game.models[model]
-  return (
-    <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} status={null} preview live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
-  )
+  return <ProjectionCardView away={game.away_team} home={game.home_team} startUtc={game.scheduled_start_utc} forecast={forecast} preview live={line} awayRecord={recordLine(standings, game.away_team)} homeRecord={recordLine(standings, game.home_team)} />
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -345,13 +273,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) {
   const forecast = game.models[model]
   const grade = forecast.grade
-  // The record grades the pick that was frozen at lock, not a moneyline guessed from win
-  // probability. Before this, a card could show a puck line or total while the record
-  // graded whichever team had the higher moneyline probability.
   const pick = forecast.pick ?? null
-  const pickWon = pick?.result?.won ?? null
-  const pickPush = pick?.result?.push === true
-  const legacyTotalPricing = pick?.market === 'total' && pick.rule_version !== 'ev-max-2-settlement'
+  const result = pickResultLabel(pick, grade != null)
+  const resultClass = result === 'Win' ? 'text-emerald-400'
+    : result === 'Loss' ? 'text-red-400' : 'text-zinc-400'
   return (
     <article className="py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -359,36 +284,18 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
         <span className="text-sm tabular-nums text-zinc-400">{dateLabel(game.scheduled_start_utc)}</span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
-        <Metric label={pick && !pick.qualifies ? 'Model lean' : 'Model pick'}
-                value={pick ? `${pickLabel(pick, game.home_team, game.away_team)} ${pct(pick.model_probability)}` : 'n/a'} />
+        <Metric label="Model Pick" value={pick ? `${pickLabel(pick, game.home_team, game.away_team)}${pick.model_probability == null ? '' : ` ${pct(pick.model_probability)}`}` : 'Missing'} />
         <Metric label="Projected" value={`${one(forecast.away_expected_goals)}–${one(forecast.home_expected_goals)}`} />
         <Metric label="Final" value={grade ? `${grade.official_away_goals}–${grade.official_home_goals}` : 'Pending'} />
         <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
         <div className="min-w-0">
           <div className="text-xs text-zinc-500">Result</div>
-          {/* Grading measures the stored model selection independently of whether
-              the price was sufficient to call it a qualifying wager. */}
-          <div className={`mt-0.5 truncate text-sm tabular-nums ${pickPush ? 'text-zinc-300' : pickWon == null ? 'text-zinc-500' : pickWon ? 'text-emerald-400' : 'text-red-400'}`}>
-            {pick == null ? 'No pick recorded'
-              : pickPush ? `${pick.qualifies ? 'Pick' : 'Lean'} ↔ Push`
-              : pickWon == null ? (grade ? 'Result unavailable' : 'Pending')
-                : `${pick.qualifies ? 'Pick' : 'Lean'} ${pickWon ? '✓ Won' : '✗ Lost'}`}
-          </div>
-          {pick && !pick.qualifies && (
-            <div className="mt-0.5 text-xs text-zinc-500">Not a qualifying wager</div>
-          )}
-          {pick == null && grade && (
-            <div className="mt-0.5 text-xs text-zinc-500">Forecast graded; no selection was stored</div>
-          )}
-          {legacyTotalPricing && (
-            <div className="mt-0.5 text-xs text-amber-300">Historical total EV not push-adjusted</div>
-          )}
+          <div className={`mt-0.5 truncate text-sm tabular-nums ${resultClass}`}>{result}</div>
         </div>
       </div>
       <div className="mt-3 text-xs text-zinc-500">
         Locked {new Date(forecast.locked_at_utc || game.locked_at_utc).toLocaleString()}
-        {pick?.line_captured_at_utc ? ` · line ${new Date(pick.line_captured_at_utc).toLocaleString()}` : ''}
-        {pick?.price != null ? ` · ${pick.price > 0 ? '+' : ''}${pick.price}` : ''}
+        {pick?.line_captured_at_utc ? ` · line captured ${new Date(pick.line_captured_at_utc).toLocaleString()}` : ''}
       </div>
     </article>
   )
@@ -397,7 +304,7 @@ function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) 
 type GradedForecast = NonNullable<Forecast['grade']>
 
 function modelPerformance(games: NhlGame[], model: ModelName) {
-  // A model's accuracy includes every graded forecast, whether or not it generated a bet.
+  // Include every graded forecast, even when its frozen selection is missing.
   const grades = games
     .map(game => game.models[model]?.grade)
     .filter((grade): grade is GradedForecast => grade != null)
@@ -480,7 +387,7 @@ function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; s
       </div>
       <div className="mt-4 border-t border-zinc-700 pt-3">
         <h4 className="text-sm font-semibold text-zinc-100">Game lines · Brier scores</h4>
-        <p className="mt-1 text-xs text-zinc-400">Fixed reference thresholds, graded for every completed forecast, whether a bet was selected or not.</p>
+        <p className="mt-1 text-xs text-zinc-400">Fixed reference thresholds, graded for every completed forecast.</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[450px] text-xs tabular-nums">
             <thead className="text-zinc-500"><tr className="border-b border-zinc-700">
@@ -501,8 +408,8 @@ function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; s
           </table>
         </div>
         <p className="mt-2 text-xs text-zinc-500">Fixed totals use regulation and OT goals, excluding shootout-deciding goals. The ±1.5 lines grade official final margins.</p>
-        <h4 className="mt-4 text-xs font-semibold text-zinc-200">Frozen sportsbook lines</h4>
-        <p className="mt-1 text-xs text-zinc-500">Only games with a qualifying archived line; model vs no-vig market Brier on matched games. Totals with pushes are excluded.</p>
+        <h4 className="mt-4 text-xs font-semibold text-zinc-200">Archived market comparison</h4>
+        <p className="mt-1 text-xs text-zinc-500">Model vs no-vig market Brier on games with a complete archived quote. Totals with pushes are excluded.</p>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[450px] text-xs tabular-nums">
             <thead className="text-zinc-500"><tr className="border-b border-zinc-700">
@@ -529,19 +436,19 @@ function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; s
         </div>
       </div>
       <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-        Lower Brier is better. 0 is perfect; 0.2500 is a constant 50% forecast. All eligible graded games count, including unpriced games. Betting ROI is measured separately.
+        Lower Brier is better. 0 is perfect; 0.2500 is a constant 50% forecast. All eligible graded games count.
       </p>
     </section>
   )
 }
 
 function RecordView({ games, model, missedLocks }: { games: NhlGame[]; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
-  const ordered = games.filter(game => game.models[model].grade).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
+  const ordered = games.filter(game => game.models[model] != null).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
   const missed = missedLocks.filter(row => row.model_key === model)
-  if (!ordered.length && !missed.length) return <p className="text-sm text-zinc-400">No graded NHL projections yet.</p>
+  if (!ordered.length && !missed.length) return <p className="text-sm text-zinc-400">No locked NHL model picks yet.</p>
   return (
     <section className="space-y-3">
-      <div><h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {MODEL_LABELS[model]}</h2><p className="text-sm text-zinc-400">Per-model forecasts lock 90 minutes before puck drop and grade from official NHL results.</p></div>
+      <div><h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {MODEL_LABELS[model]}</h2><p className="text-sm text-zinc-400">Frozen picks grade from official NHL results. Unfinished games remain pending.</p></div>
       {ordered.length > 0 && <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
         {ordered.map(game => <RecordProjection key={game.game_id} game={game} model={model} />)}
       </div>}

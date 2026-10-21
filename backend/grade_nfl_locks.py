@@ -13,10 +13,13 @@ Per row:
 - brier, logloss of p_home_win against home win. A tie has no outcome: both stay NULL.
 - margin_err = actual margin - projected margin; total_err = actual total - projected total
   (signed, so bias is visible; MAE is their absolute mean).
-- ats_result: the model's side against the line it locked against, read from the line snapshot
-  (or the row's own market_spread for locks written before snapshots existed). The model takes
-  the home side when its projected margin is above the spread, away when below. 'win', 'loss',
-  'push', 'no_pick' (projection equals the line) or 'no_line'.
+- ats_result: the old spread-only side against the line it locked against, read from the line
+  snapshot (or the row's own market_spread for locks written before snapshots existed). Kept as
+  written, for history only. It is NOT the NFL Model Pick grade. The Model Pick (one per game,
+  docs/MODEL-PICK-RULES.md, "NFL order") is derived at read time in routers/nfl_model.py from the
+  frozen lock inputs plus the final score stored here (actual_home, actual_away), via
+  nfl_metrics.model_pick and grade_pick. Nothing else is stored, so a later line or projection
+  cannot change a locked pick or its grade, and grading twice gives the same rows.
 
 Usage:
   cd backend && LP_DB_PATH=/abs/path/picks.dev.db venv/bin/python grade_nfl_locks.py [--dry-run]
@@ -41,14 +44,13 @@ EPS = 1e-12
 
 
 def ats(actual_margin, proj_margin, spread):
-    if spread is None:
-        return "no_line"
-    if abs(proj_margin - spread) < 1e-9:
-        return "no_pick"
+    side = mt.pick_side(proj_margin, spread)
+    if side in ("no_pick", "no_line"):
+        return side
     home = mt.ats_result(actual_margin, spread)       # cover / miss / push for the home side
     if home == "push":
         return "push"
-    took_home = proj_margin > spread
+    took_home = side == "home"
     return "win" if (home == "cover") == took_home else "loss"
 
 

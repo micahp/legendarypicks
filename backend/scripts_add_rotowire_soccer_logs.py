@@ -6,6 +6,8 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 
+from player_game_logs_view import ROTOWIRE_DDL_VIEW
+
 
 TABLE = "player_game_logs_rotowire"
 VIEW = "player_game_logs_all"
@@ -37,51 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_pglr_league_date
     ON {TABLE}(league, game_date);
 """
 
-# One appearance remains one row. Provider provenance is the stats column read,
-# never a merged JSON blob or a source stamp that can drift from individual keys.
-DDL_VIEW = f"""
-DROP VIEW IF EXISTS {VIEW};
-CREATE VIEW {VIEW} AS
-    SELECT e.player_id, e.league, e.season, e.game_no, e.game_id, e.game_date,
-           e.team, e.opponent, e.home_away, e.game_type,
-           e.stats AS espn_stats, f.stats AS fotmob_stats,
-           r.stats AS rotowire_stats
-      FROM player_game_logs e
-      LEFT JOIN player_game_logs_fotmob f
-        ON f.player_id = e.player_id AND f.game_date = e.game_date
-      LEFT JOIN {TABLE} r
-        ON r.player_id = e.player_id AND r.game_date = e.game_date
-       AND r.league = e.league
-    UNION ALL
-    SELECT f.player_id, f.league, f.season, f.game_no, f.game_id, f.game_date,
-           f.team, f.opponent, f.home_away, f.game_type,
-           NULL AS espn_stats, f.stats AS fotmob_stats,
-           r.stats AS rotowire_stats
-      FROM player_game_logs_fotmob f
-      LEFT JOIN {TABLE} r
-        ON r.player_id = f.player_id AND r.game_date = f.game_date
-       AND r.league = f.league
-     WHERE f.player_id IS NOT NULL
-       AND NOT EXISTS (
-           SELECT 1 FROM player_game_logs e
-            WHERE e.player_id = f.player_id AND e.game_date = f.game_date
-       )
-    UNION ALL
-    SELECT r.player_id, r.league, r.season, r.game_no, r.game_id, r.game_date,
-           r.team, r.opponent, r.home_away, r.game_type,
-           NULL AS espn_stats, NULL AS fotmob_stats,
-           r.stats AS rotowire_stats
-      FROM {TABLE} r
-     WHERE r.player_id IS NOT NULL
-       AND NOT EXISTS (
-           SELECT 1 FROM player_game_logs e
-            WHERE e.player_id = r.player_id AND e.game_date = r.game_date
-       )
-       AND NOT EXISTS (
-           SELECT 1 FROM player_game_logs_fotmob f
-            WHERE f.player_id = r.player_id AND f.game_date = r.game_date
-       );
-"""
+DDL_VIEW = f"DROP VIEW IF EXISTS {VIEW};\n{ROTOWIRE_DDL_VIEW};"
 
 
 def _table_exists(con, name):
@@ -99,9 +57,14 @@ def status(con):
 
 
 def apply_schema(con):
-    for required in ("player_game_logs", "player_game_logs_fotmob"):
+    for required in (
+        "player_game_logs", "player_game_logs_fotmob",
+        "player_game_logs_sportsdataverse", "nba_sportsdataverse_releases",
+    ):
         if not _table_exists(con, required):
-            raise RuntimeError(f"required table {required!r} is missing")
+            raise RuntimeError(
+                f"required table {required!r} is missing; apply migrate_schema.py first"
+            )
     con.executescript("BEGIN IMMEDIATE;\n" + DDL_TABLE + DDL_VIEW + "\nCOMMIT;")
 
 

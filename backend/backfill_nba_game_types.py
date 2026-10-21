@@ -72,6 +72,8 @@ def main() -> int:
     args = sys.argv[1:]
     season = int(args[args.index("--season") + 1]) if "--season" in args else 2026
     apply = "--apply" in args
+    # Batch job: one scoreboard per date, so pause at ESPN's per-host window rather than raise.
+    espn.set_on_exhausted("sleep")
 
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row

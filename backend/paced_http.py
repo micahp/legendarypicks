@@ -125,6 +125,10 @@ def _pace_rate(url, on_exhausted="sleep"):
                 f"{RATE_WINDOW:.0f}s; refusing rather than pausing {wait:.1f}s, "
                 f"because this caller has someone waiting.")
         if wait > 0:
+            # SAY SO, as _charge does: a pause nobody can attribute reads as a hang.
+            print(f"paced_http: {host} has taken {len(seen)} requests in the last "
+                  f"{RATE_WINDOW:.0f}s; pausing {wait:.1f}s. This is the per-host rate, "
+                  f"not an error.", file=sys.stderr, flush=True)
             time.sleep(wait)
             waited = wait
         now = time.time()

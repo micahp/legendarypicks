@@ -128,6 +128,17 @@ MARKET_MAP = {
     "total earned runs": "earned_runs",
     "total walks": "walks",
     # Player props with lines (points/rebounds etc for NBA/NFL)
+    # Compound phrases must precede "total points" so PRA never collapses to
+    # points based on a substring match.
+    "total points, rebounds and assists": "points_rebounds_assists",
+    "total points, rebounds, and assists": "points_rebounds_assists",
+    "total points rebounds and assists": "points_rebounds_assists",
+    "points + rebounds + assists": "points_rebounds_assists",
+    "pts + rebs + asts": "points_rebounds_assists",
+    "total made 3 points shots": "threes",
+    "total made 3-point shots": "threes",
+    "total field goals made": "field_goals_made",
+    "total free throws made": "free_throws_made",
     "total points": "points",
     "total rebounds": "rebounds",
     "total assists": "assists",

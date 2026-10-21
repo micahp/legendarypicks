@@ -5,10 +5,14 @@ import WithoutControl, { TeammateOut, WithoutSample } from './WithoutControl'
 // ── types ────────────────────────────────────────────────
 export interface GameLog {
   date: string
-  value: number
+  value: number | null
   opponent: string
   home: boolean | null
-  hit: boolean
+  hit: boolean | null
+  status?: 'played' | 'dnp' | 'missing'
+  appearance_status?: 'played' | 'dnp' | 'unknown'
+  season?: number | null
+  game_type?: string | null
 }
 
 export interface PropHistory {
@@ -20,12 +24,13 @@ export interface PropHistory {
   line: number
   side: 'over' | 'under'
   projection: number | null
-  hit_rate: { l5: number; l10: number; l20: number; season: number }
+  hit_rate: { l5: number | null; l10: number | null; l20: number | null; season: number | null }
   // How many games are actually behind each window. A window's NAME is not
   // its size: `games[:20]` on a player with three matches is three matches,
   // and L5/L10/L20 then all print the same number, which reads as a
   // twenty-game record. Optional so an older payload still renders.
   hit_rate_n?: { l5: number; l10: number; l20: number; season: number }
+  season?: number
   games: GameLog[]
   // Present only on a response filtered by teammate availability (?without=).
   n_games?: number
@@ -42,6 +47,16 @@ const WINDOWS: { key: Window; label: string }[] = [
   { key: 'l20', label: 'L20' },
   { key: 'season', label: 'S' },
 ]
+
+export function nbaSeasonStartYear(date: string): number | null {
+  const match = /^(\d{4})-(\d{2})/.exec(date || '')
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  return Number.isFinite(year) && Number.isFinite(month)
+    ? (month >= 7 ? year : year - 1)
+    : null
+}
 
 // ── helpers ───────────────────────────────────────────────
 // M/D, the form the reference uses under each bar. Noon-anchored so a UTC date
@@ -137,6 +152,7 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
       player_id: String(base.player_id), market: base.market, line: String(base.line),
       side: base.side, league: base.league, without: String(without),
     })
+    if (base.season !== undefined) params.set('season', String(base.season))
     fetch(`/api/props/history?${params}`)
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(d => {
@@ -168,6 +184,9 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
 
   const displayGames = useMemo(() => {
     let filtered = data.games
+    if (data.league === 'nba' && win === 'season' && data.season !== undefined) {
+      filtered = filtered.filter(g => g.season === data.season)
+    }
     if (venue === 'home') filtered = filtered.filter(g => g.home === true)
     else if (venue === 'away') filtered = filtered.filter(g => g.home === false)
     if (vsOpp && opponents.length > 0) {
@@ -175,8 +194,18 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
       filtered = filtered.filter(g => g.opponent === target)
     }
     const maxGames = win === 'l5' ? 5 : win === 'l10' ? 10 : win === 'l20' ? 20 : filtered.length
+    if (data.league === 'nba' && win !== 'season') {
+      const selected: GameLog[] = []
+      let played = 0
+      for (const game of filtered) {
+        selected.push(game)
+        if (game.status === 'played' || (!game.status && game.value !== null)) played += 1
+        if (played >= maxGames) break
+      }
+      return selected.reverse()
+    }
     return filtered.slice(0, maxGames).reverse()
-  }, [data.games, win, venue, vsOpp, opponents])
+  }, [data.games, data.league, data.season, win, venue, vsOpp, opponents])
 
   // A window's NAME is a claim about its SAMPLE. `games.slice(0, 20)` on a
   // player with three matches is three matches, so L5, L10 and L20 all
@@ -190,18 +219,25 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
   const hitRate = useMemo(() => {
     if (!displayGames.length) return null
     const required = win === 'l5' ? 5 : win === 'l10' ? 10 : win === 'l20' ? 20 : 0
-    if (displayGames.length < required) return null
-    const hits = displayGames.filter(g => g.hit).length
-    return hits / displayGames.length
-  }, [displayGames, win])
+    const windowGames = data.league === 'nba'
+      ? displayGames.filter(g => g.status === 'played' || (!g.status && g.value !== null)).length
+      : displayGames.length
+    const measured = displayGames.filter(g => g.value !== null && g.hit !== null
+      && (data.league !== 'nba' || g.status === 'played' || !g.status))
+    if (windowGames < required || !measured.length) return null
+    const hits = measured.filter(g => g.hit === true).length
+    return hits / measured.length
+  }, [displayGames, win, data.league])
 
   // "2.8 avg last 5" in the reference: the mean of what is actually drawn, so
   // it moves with the window and the venue filters rather than describing a
   // different set of games than the bars above it.
   const average = useMemo(() => {
-    if (!displayGames.length) return null
-    return displayGames.reduce((sum, g) => sum + g.value, 0) / displayGames.length
-  }, [displayGames])
+    const measured = displayGames.filter(g => g.value !== null
+      && (data.league !== 'nba' || g.status === 'played' || !g.status))
+    if (!measured.length) return null
+    return measured.reduce((sum, g) => sum + (g.value as number), 0) / measured.length
+  }, [displayGames, data.league])
 
   const isDefaultFilters = win === initialWindow && venue === 'all' && !vsOpp && without === null
   const resetFilters = () => { setWin(initialWindow); setVenue('all'); setVsOpp(false); selectWithout(null) }
@@ -213,8 +249,11 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
     : null
 
   const hasGames = displayGames.length > 0
-  const maxVal = hasGames ? Math.max(data.line, ...displayGames.map(g => g.value)) : data.line
-  const minVal = hasGames ? Math.min(0, ...displayGames.map(g => g.value)) : 0
+  const measuredValues = displayGames.filter(g => g.value !== null
+    && (data.league !== 'nba' || g.status === 'played' || !g.status))
+    .map(g => g.value as number)
+  const maxVal = measuredValues.length ? Math.max(data.line, ...measuredValues) : data.line
+  const minVal = measuredValues.length ? Math.min(0, ...measuredValues) : 0
   const range = maxVal - minVal || 1
   // Wide enough for an away abbreviation (`@BOS`) at the label size below the
   // bar. It was 28, which clipped four characters.
@@ -250,6 +289,13 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
           <span className="text-zinc-600"> ({win === 'season' ? 'season' : win.toUpperCase()})</span>
         </span>
       </div>
+
+      {data.league === 'nba' && (
+        <div className="flex flex-wrap gap-3 text-[10px] text-zinc-500" aria-label="Game status legend">
+          <span><span className="mr-1 text-zinc-500">●</span>DNP</span>
+          <span><span className="mr-1 text-amber-500">●</span>Stat data missing</span>
+        </div>
+      )}
 
       <div className="flex gap-1.5 flex-wrap items-center">
         {WINDOWS.map(w => (
@@ -309,9 +355,21 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
                       textAnchor="start">{data.line}</text>
                 {displayGames.map((g, i) => {
                   const x = i * (barW + gap)
-                  const barH = Math.max(3, chartH * (g.value - minVal) / range)
+                  const isDnp = g.status === 'dnp'
+                  const hasValue = g.value !== null && !isDnp
+                  if (!hasValue) {
+                    const markerY = padTop + chartH
+                    return (
+                      <g key={i}>
+                        <circle cx={x + barW / 2} cy={markerY - 2} r={4}
+                          fill={isDnp ? '#71717a' : '#f59e0b'} />
+                        <title>{isDnp ? 'DNP' : 'Stat data missing'} · {g.date}</title>
+                      </g>
+                    )
+                  }
+                  const barH = Math.max(3, chartH * ((g.value as number) - minVal) / range)
                   const barY = padTop + chartH - barH
-                  const hit = isHit(g.value)
+                  const hit = isHit(g.value as number)
                   return (
                     <rect key={i} x={x} y={barY} width={barW} height={barH}
                           rx={6} ry={6} fill={hit ? '#34d399' : '#f87171'} />
@@ -330,7 +388,12 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
                     {/* One colour for all three lines. A three-tone ramp implied
                         a hierarchy between value, opponent and date that nobody
                         reading a game log wants. */}
-                    <div className="text-[11px] font-semibold text-zinc-400 tabular-nums">{g.value}</div>
+                    <div className="text-[11px] font-semibold text-zinc-400 tabular-nums"
+                         title={g.status === 'dnp' ? 'Did not play' : g.status === 'missing'
+                           ? (g.appearance_status === 'played' ? 'Played; stat data missing' : 'Stat data missing')
+                           : 'Played'}>
+                      {g.status === 'dnp' ? 'DNP' : g.value === null ? '—' : g.value}
+                    </div>
                     {/* Team sports publish compact abbreviations. UFC publishes
                         full names, which collided across five 34px columns on
                         desktop; show a wider surname label while retaining the
@@ -351,7 +414,8 @@ export default function PropChart({ data: base, window: initialWindow = 'l10' }:
           {average !== null && (
             <p className="text-center text-[11px] text-zinc-400">
               <span className="font-semibold text-zinc-200 tabular-nums">{average.toFixed(1)}</span>
-              {' '}avg last {displayGames.length}
+              {' '}avg last {displayGames.filter(g => g.value !== null
+                && (data.league !== 'nba' || g.status === 'played' || !g.status)).length} played
             </p>
           )}
         </>

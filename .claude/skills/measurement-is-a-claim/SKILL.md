@@ -41,6 +41,17 @@ it is not yet a finding. A claim without its instrument is the thing that ossifi
 writing a zero down, ask it a second way. `sot` returned 0 through one map and 21,177
 through a direct key check. If two ways disagree, *that disagreement is the finding.*
 
+**Classify a disagreement before calling it an error.** Two instruments measuring the
+same quantity can differ because they count different things: a shootout attempt is an
+event in the play-by-play feed and a single bonus goal in the published score; a blocked
+shot is a shot event but not a shot on goal. A **definitional** difference reconciles
+100% of cases under a stated rule and becomes a requirement the downstream model must
+implement; a **true defect** reconciles nothing and needs a detector — every value
+uniformly ~2x published is a duplicated payload, not a tolerance to widen. Writing
+either one down as "the source is noisy" buries the rule the next person needs, and
+reporting a definitional difference as a defect overstates the failure rate by an order
+of magnitude.
+
 **One sample is not a series.** Daily soccer volume in the RotoWire relay ran 183, 23,
 112, 229, 246, 113, 32, 41 across eight days. Any single day supports a confident,
 wrong sentence. `backend/data/rotowire-archive` exists precisely so this question is
@@ -50,6 +61,17 @@ answered from a series — and it was already on disk every time.
 it ever queries logs, so a coverage number computed in SQL cannot describe what the page
 shows. Replay the endpoint's own requests. If the user is looking at a page, the page is
 the instrument.
+
+**An aggregate score is a fact about the row mix, not the model.** A proper-score
+average over every item is dominated by whichever subpopulation supplies the most rows.
+A prop model "beat" its baseline on CRPS across all 9,059 scored rows while *losing* on
+every row where the athlete actually recorded the stat -- 72% of the rows were zero-usage,
+where predicting near-zero is an easy win that swamped the active rows' loss. Before you
+quote a metric as a verdict, recompute it inside the cohort the user cares about
+(`observed > 0`, regular participants, top-volume players) and report which cohort
+contributes the sign of the total. If the cohort-of-interest delta is positive while the
+aggregate is negative, the number describes the row mix and the verdict is false for the
+people who will read it.
 
 **Write the reason, not just the fix.** `first_goal_scorer` was mapped to `None` with
 "it is an ORDER market and no per-game stat answers it." The mapping was defensible; the
@@ -67,6 +89,8 @@ problem that was already fixed.
 - Did I ask a second way, and did the two agree?
 - Is this one sample, when a series is on disk?
 - Is this the path that actually runs, or a path that resembles it?
+- Where two instruments disagree, have I proven whether it is definitional (a stated
+  rule reconciles all cases) or a defect (nothing reconciles it)?
 - If this turns out to be wrong later, what will have made it *look* settled?
 - Did the measuring PROCESS load the code I just changed? A long-lived kernel/REPL caches imported modules — a measurement after an edit runs the OLD code and looks like the edit did nothing. `importlib.reload` or a fresh process before trusting a delta.
 

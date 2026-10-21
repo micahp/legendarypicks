@@ -42,7 +42,7 @@ V2_CALIBRATION_SLOPE = 0.4273928354003909
 ELO_POINT_ELO_COEF = 0.6954341956477393
 ELO_POINT_FEATURE_COEF = 0.3996709769192981
 STANDARD_RULES = total_games.STANDARD_RULES
-SURFACE_BY_TOURNAMENT_ID = {"315": "Hard", "381": "Hard"}
+SURFACE_BY_TOURNAMENT_ID = {"315": "Hard", "381": "Hard", "963": "Hard"}  # 963: BNB Ningbo Open
 DEFAULT_LEDGER = Path(os.environ.get("LP_TENNIS_V2_LEDGER_PATH") or
                       ROOT / "backend/data/tennis_v2_research.sqlite3")
 
@@ -557,7 +557,8 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
 
     report = {"candidate_matches": len(candidates),
               "already_locked": len(candidates) - len(matches),
-              "locked": 0, "unresolved_identity": 0, "graded": 0,
+              "locked": 0, "unresolved_identity": 0, "unmapped_surface": 0,
+              "unmapped_events": [], "graded": 0,
               "quotes_frozen": 0, "quotes_unavailable": 0,
               "ledger": str(ledger_path)}
     try:
@@ -567,7 +568,10 @@ def run(db_path: str, ledger_path: str, days: int) -> dict[str, Any]:
             for game in matches:
                 surface = _surface(game)
                 if not surface:
-                    report["unresolved_identity"] += 1
+                    report["unmapped_surface"] += 1
+                    event = "%s (%s)" % (game.get("event"), game.get("tournament_id"))
+                    if event not in report["unmapped_events"]:
+                        report["unmapped_events"].append(event)
                     continue
                 point_stats, elo, direct = contexts[game["_start_date"]]
                 payload = _make_forecast(game, ids[game["_game_id"]], surface,
@@ -599,7 +603,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.days < 1 or args.days > 14:
         parser.error("--days must be between 1 and 14")
-    print(json.dumps(run(args.db, args.ledger, args.days), indent=2))
+    report = run(args.db, args.ledger, args.days)
+    print(json.dumps(report, indent=2))
+    # A tournament with no surface cannot be forecast, so its matches are never frozen. Exit
+    # nonzero so the ingest job fails and its freshness alert fires, instead of reporting ok.
+    if report["unmapped_surface"]:
+        print("UNMAPPED SURFACE, matches not locked: %s" % ", ".join(report["unmapped_events"]), file=sys.stderr)
+        return 2
     return 0
 
 
