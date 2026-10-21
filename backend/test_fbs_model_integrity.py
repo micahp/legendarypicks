@@ -182,17 +182,30 @@ def test_export_reports_a_taken_lock_as_locked_with_its_freeze_time(con):
     assert payload["records"]["g2h"]["graded"] == 0
 
 
-def test_legacy_rows_are_labelled_and_kept_out_of_the_record(con):
-    # Shape of a row written before the protocol: midnight kickoff, labelled legacy.
+def test_legacy_rows_are_counted_in_the_record_once_graded(con):
+    # Shape of a row written before the protocol: midnight kickoff, no lock time.
     con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
                 "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
                 "VALUES('1','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','fbs-g2h-x',0.7,"
                 "'2026-10-20T21:26:35+00:00',NULL,1,'legacy')")
+    assert store.grade_forecasts(con, {"1": {"home_score": 20, "away_score": 10}}) == 1
     payload = store.export_payload(con, 2026)
-    assert payload["games"][0]["status"] == "legacy"
-    assert payload["records"]["g2h"]["forecasts"] == 0
-    assert payload["records"]["g2h"]["legacy"] == 1
-    assert payload["records"]["g2h"]["late"] == 1
+    assert payload["records"]["g2h"]["forecasts"] == 1
+    assert payload["records"]["g2h"]["graded"] == 1
+    assert payload["records"]["g2h"]["accuracy"] == 1.0
+
+
+def test_scoreboard_finals_grade_stored_forecasts(con, tmp_path):
+    live = str(tmp_path / "live.db")
+    raw = sqlite3.connect(live)
+    raw.execute("CREATE TABLE scoreboard_snapshots(league TEXT, game_id TEXT, state TEXT, payload TEXT)")
+    done = {"completed": True, "home": {"score": 20.0}, "away": {"score": 10.0}}
+    live_game = {"completed": False, "home": {"score": 3.0}, "away": {"score": 0.0}}
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','1','post',?)", (json.dumps(done),))
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('ncaaf','2','post',?)", (json.dumps(live_game),))
+    raw.execute("INSERT INTO scoreboard_snapshots VALUES('nfl','3','post',?)", (json.dumps(done),))
+    raw.commit(); raw.close()
+    assert runner.scoreboard_results(live) == {"1": {"home_score": 20, "away_score": 10}}
 
 
 def test_old_database_is_migrated_and_its_rows_are_labelled_legacy(tmp_path):

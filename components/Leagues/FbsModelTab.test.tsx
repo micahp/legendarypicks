@@ -70,7 +70,7 @@ describe('FBS model tab', () => {
     expect(screen.getByText(/treat the number as an early read/)).toBeTruthy()
   })
 
-  it('never labels a legacy research forecast as an official win', async () => {
+  it('shows a graded stored forecast in the record like any other, with no status label', async () => {
     const legacy = {
       ...payload.games[0],
       game_id: 'legacy-game',
@@ -86,11 +86,12 @@ describe('FBS model tab', () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'record' })).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: 'record' }))
-    expect(screen.getByText(/No games have started yet in the locked window/)).toBeTruthy()
-    expect(screen.queryByText('✓ Won')).toBeNull()
+    expect(screen.queryByText(/No games have started yet/)).toBeNull()
+    expect(screen.getByText('✓ Won')).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/Legacy|not official|excluded/i)
   })
 
-  it('shows a preview as not locked and keeps it out of the record', async () => {
+  it('shows a preview with no status label and keeps it out of the record', async () => {
     const preview = {
       ...payload.games[0],
       game_id: 'preview-game',
@@ -102,13 +103,13 @@ describe('FBS model tab', () => {
       ok: true, json: () => Promise.resolve({ ...payload, games: [preview] }),
     }))
     render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText('Preview, not locked')).toBeTruthy())
-    expect(screen.queryByText('Locked before kickoff')).toBeNull()
+    await waitFor(() => expect(screen.getByText('68.0%')).toBeTruthy())
+    expect(document.body.textContent).not.toMatch(/Preview, not locked|Locked before kickoff|Forecast status/)
     fireEvent.click(screen.getByRole('button', { name: 'record' }))
     expect(screen.getByText(/No games have started yet in the locked window/)).toBeTruthy()
   })
 
-  it('counts a missed lock window on the record tab without showing a forecast', async () => {
+  it('shows no missed-window text on the record tab and no forecast for it', async () => {
     const missed = {
       ...payload.games[0],
       game_id: 'missed-game',
@@ -129,7 +130,7 @@ describe('FBS model tab', () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'record' })).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: 'record' }))
-    expect(screen.getByText(/Missed lock windows: 1/)).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/Missed lock windows|Legacy rows/)
     expect(screen.queryByText('✓ Won')).toBeNull()
     expect(screen.queryByText('✗ Lost')).toBeNull()
   })
