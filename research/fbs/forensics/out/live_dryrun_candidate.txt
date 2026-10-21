@@ -1,0 +1,6 @@
+Candidate run() on the 65-game ESPN slate snapshot out/live_slate_2026-10-20.csv (fetched 2026-10-20 ~22:40Z),
+previews only, scratch database. Run at 2026-10-21 00:15Z, after the 23:00Z and 23:30Z kickoffs, so those three
+games were not previewed. Locks blocked: no parity certificate beside the database.
+previewed=186 (62 games x 3 models); locked=blocked (no parity certificate); missed=0; graded=0
+games=62 kickoffs matching the slate=62 models_all_three=62 parity_certified=False
+Change vs the fix-branch previews of the same slate (home probability): C2 max 0.0361 mean 0.0110; G2h max 0.0175 mean 0.0064

@@ -124,3 +124,25 @@ The candidate changes production C2 and G2h forecasts. It is not merged, enabled
 - Locks blocked. The gate was run only in scratch (`out/gate_fix.json`, `out/gate_candidate.json`), with no certificate written.
 - Nothing started or restarted, no scheduler, no merge to `dev`, nothing touched in production.
 - Branches: the research branch was committed locally and not pushed. The candidate branch was committed locally and not pushed.
+
+## 9. Addendum (2026-10-21): decision-document checks
+
+Checks requested in `docs/DECISION-ncaaf-parity-next-steps-2026-10-20.md` on `docs/forecast-first-product-architecture-2026-10-20`. Scripts are `research/fbs/forensics/10_eligibility_rule.py`, `11_holdout_candidate.py` and `12_live_dryrun_candidate.py`. Outputs are in `out/`.
+
+**Forensics commit.** `ccade77f` is on the remote research branch, as a fast-forward from `d819a21e`.
+
+**EPA eligibility rule.** The exclusion is reproducible from play-by-play coverage, with no hardcoded ID needed. A frame game is EPA-eligible exactly when the archive `cfbfastR_cfb_pbp` source has rows for that game: 3,523 of 3,524, with 0 disagreements. The excluded game has no plays in that source. Its two teams do appear elsewhere, so this is not a team-name join failure, which was my first hypothesis. The has-history flags reproduce it poorly (49 disagreements).
+
+Production cannot apply this rule yet:
+- `espn_cfb_pbp`, the drive-feature source, has rows for 3,474 games and disagrees on 49.
+- `ncaa_mfb_pbp_cfbfastr` matches 0 of 3,524 games, so it is keyed differently and cannot be joined to these IDs.
+
+Production would need keyed cfbfastR ingest, or a re-validated population with the consequence for recent-season coverage documented. Until then the candidate's pinned exclusion stays a replay fixture, and it should not be promoted as production policy.
+
+**Candidate on the frozen 2025 holdout.** The candidate's `service.fit`/`predict` path, trained on seasons before 2025 and scored with the holdout's frozen G2 offsets, reproduces the committed holdout: C2 max 3.3e-16 and G2h max 1.1e-13 over 807 rows.
+
+**Live-slate dry run.** The candidate's `run()` on the 65-game ESPN slate, previews only and in a scratch database, previewed 62 games with all three models each. The three games that had already kicked off were not previewed. All 62 kickoffs match the ESPN slate, and locks stayed blocked because no certificate exists. Against the fix-branch previews of the same slate, the candidate changes home probability by at most 0.036 for C2 (mean 0.011) and 0.018 for G2h (mean 0.006). The slate has no neutral-site games, so neutral handling was not exercised.
+
+**Falsification.** Reintroducing the raw-feature C2 defect in a scratch copy makes the new block-level test fail. I did not run mutants for the short feature history or the missing EPA exclusion. The population effect is already measured: adding the excluded game changes 28 scored predictions by up to 2.75e-4, which is above the 1e-6 threshold.
+
+**Still not done, per the decision document.** Production-health gates (source-confirmed grading, coverage audit, browser QA on an authorized server), the T-90 scheduler (not approved), and a code-review PR targeting `dev`. Legacy records are unchanged.

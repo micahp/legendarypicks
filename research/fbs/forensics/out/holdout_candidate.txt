@@ -1,0 +1,3 @@
+holdout rows committed=807 matched=807 train_games=2366 cutoff=2025-08-23
+p_c2: max|dp|=3.33e-16 rows>1e-6=0 of 807
+p_g2h: max|dp|=1.09e-13 rows>1e-6=0 of 807

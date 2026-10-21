@@ -1,0 +1,3 @@
+archive cfbfastR_cfb_pbp (the EP pipeline's source): games with rows=3523 of 3524; disagreements with epa_diff availability=0
+production espn_cfb_pbp (drive-feature source): games with rows=3474 of 3524; disagreements with epa_diff availability=49
+production ncaa_mfb_pbp_cfbfastr: games with rows=0 of 3524; disagreements with epa_diff availability=3523
