@@ -14,6 +14,8 @@ import re
 import sqlite3
 import sys
 from collections import defaultdict
+
+import research_evidence as rpe
 from typing import Dict, List, Set
 
 DDL = """
@@ -61,6 +63,13 @@ def build(con: sqlite3.Connection, event: str) -> Dict[str, int]:
             status, athlete = "proposed", next(iter(inter))
         else:
             status, athlete = "conflict", None
+        accepted = con.execute("SELECT espn_athlete_id FROM provider_player_map WHERE provider=? AND provider_player_code=? "
+                               "AND event=?", (provider, code, event)).fetchone()
+        if accepted is not None and accepted[0] and athlete and accepted[0] != athlete:
+            rpe.record_conflict(con, "identity", f"{provider}|{code}|{event}", {"espn_athlete_id": accepted[0]},
+                                {"espn_athlete_id": athlete})
+            counts["conflict"] = counts.get("conflict", 0) + 1
+            continue
         con.execute("INSERT OR REPLACE INTO provider_player_map(provider,provider_player_code,event,espn_athlete_id,"
                     "status,matches_seen) VALUES(?,?,?,?,?,?)", (provider, code, event, athlete, status, len(sets)))
         counts[f"{provider}:{status}"] += 1

@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import json
 import re
+
+import research_evidence as rpe
 import sqlite3
 import sys
 import unicodedata
@@ -103,11 +105,8 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str) -> Dict[str, 
         if kept and kept[0] == "stats_match":
             continue  # promoted by provider_review_resolver; a rerun must not reset it to review
         result = link_provider_match(f"{source_url} {anchor_text or ''}", finals)
-        con.execute(
-            "INSERT OR REPLACE INTO provider_espn_links(provider,provider_match_id,event,espn_game_id,status,method,"
-            "candidates) VALUES(?,?,?,?,?,?,?)",
-            (provider, provider_match_id, event, result["espn_game_id"], result["status"], result["method"],
-             json.dumps(result["candidates"])))
+        rpe.upsert_link(con, provider, provider_match_id, event, result["espn_game_id"], result["status"],
+                        result["method"], json.dumps(result["candidates"]))
         summary[result["status"]] += 1
         if result["espn_game_id"]:
             linked.setdefault(provider, set()).add(result["espn_game_id"])

@@ -22,6 +22,8 @@ import re
 import sqlite3
 import sys
 import unicodedata
+
+import research_evidence as rpe
 from typing import Any, Dict, List
 
 DDL = """
@@ -117,9 +119,8 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str) -> Dict[str, 
         "SELECT provider, provider_match_id, candidate_espn_game_id FROM provider_review_resolution "
         "WHERE event=? AND status='stats_match' GROUP BY provider, provider_match_id HAVING COUNT(*)=1", (event,)).fetchall()
     for provider, match_id, gid in promoted:
-        con.execute("UPDATE provider_espn_links SET status='stats_match', espn_game_id=?, method=? "
-                    "WHERE provider=? AND provider_match_id=?",
-                    (gid, "stats equal to the other provider's row for this ESPN game", provider, match_id))
+        rpe.upsert_link(con, provider, match_id, event, gid, "stats_match",
+                        "stats equal to the other provider's row for this ESPN game", "[]")
     counts["promoted_to_stats_match"] = len(promoted)
     con.commit()
     return counts
