@@ -246,7 +246,7 @@ def collect_match(browser, provider: str, url: str) -> Dict[str, Any]:
         page.close()
 
 
-def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0) -> Dict[str, Any]:
+def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0, limit: int = 0) -> Dict[str, Any]:
     if db_path.endswith("picks.dev.db"):
         raise SystemExit("refusing to write to picks.dev.db; use a copy")
     from playwright.sync_api import sync_playwright
@@ -277,7 +277,7 @@ def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0)
             if con is not None:
                 done = {r[0] for r in con.execute(
                     "SELECT provider_match_id FROM provider_match_stats WHERE provider=? AND event=? "
-                    "AND parse_status='ok'", (provider, event))}
+                    "AND parse_status IN ('ok','no_stats_tab')", (provider, event))}
             report["skipped_already_ok"] = 0
             taken = 0
             for match in matches:
@@ -288,6 +288,9 @@ def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0)
                     report["skipped_already_ok"] += 1
                     continue
                 if sample and taken >= sample:
+                    break
+                if limit and taken >= limit:
+                    report["limit_reached"] = limit
                     break
                 taken += 1
                 wait_for_memory(report)
