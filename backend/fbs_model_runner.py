@@ -18,6 +18,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import sqlite3
 import sys
 
 import numpy as np
@@ -39,6 +40,7 @@ RESEARCH = {
     ("walk-forward 2023-2025", "g2h"): 0.19459583502356598,
 }
 PARITY_TOLERANCE = 5e-4
+LIVE_DB = os.environ.get("FBS_LIVE_DB", os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db"))
 PARITY_LEDGER = os.environ.get("FBS_PARITY_LEDGER", "/root/fbs-data/parity/wf_research.csv")
 ESPN_SCOREBOARD = ("https://site.api.espn.com/apis/site/v2/sports/football/"
                    "college-football/scoreboard?groups=80&limit=400&dates=%s")
@@ -483,11 +485,43 @@ def grade_only(db_path: str = store.DEFAULT_DB) -> int:
         con.close()
 
 
+def scoreboard_results(live_db: str) -> dict:
+    """Final scores from the dev scoreboard snapshots (state post, completed), keyed by event id.
+
+    The schedule parquet is rebuilt by hand and lags finished games; the scoreboard is
+    refreshed all day, so grading reads it. Read-only on the live database.
+    """
+    con = sqlite3.connect("file:%s?mode=ro" % live_db, uri=True)
+    try:
+        rows = con.execute("SELECT game_id, payload FROM scoreboard_snapshots "
+                           "WHERE league='ncaaf' AND state='post'").fetchall()
+    finally:
+        con.close()
+    results = {}
+    for game_id, payload in rows:
+        data = json.loads(payload)
+        home, away = (data.get("home") or {}).get("score"), (data.get("away") or {}).get("score")
+        if not data.get("completed") or home is None or away is None:
+            continue
+        results[str(game_id)] = {"home_score": int(home), "away_score": int(away)}
+    return results
+
+
+def grade_scoreboard(db_path: str = store.DEFAULT_DB, live_db: str = LIVE_DB) -> int:
+    results = scoreboard_results(live_db)
+    con = store.open_db(db_path)
+    try:
+        return store.grade_forecasts(con, results)
+    finally:
+        con.close()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parity", action="store_true")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--grade-only", action="store_true")
+    parser.add_argument("--grade-scoreboard", action="store_true")
     parser.add_argument("--audit", action="store_true")
     parser.add_argument("--days", type=int, default=10)
     parser.add_argument("--db", default=store.DEFAULT_DB)
@@ -500,6 +534,9 @@ def main(argv=None) -> int:
         print(json.dumps(result, indent=2))
         print("certificate: %s (ok=%s)" % (path, result["ok"]))
         return 0 if result["ok"] else 1
+    if args.grade_scoreboard:
+        print("graded", grade_scoreboard(args.db))
+        return 0
     if args.grade_only:
         print("graded", grade_only(args.db))
         return 0

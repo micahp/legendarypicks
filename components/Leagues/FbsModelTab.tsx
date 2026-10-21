@@ -72,13 +72,6 @@ const pct = (value: number | null | undefined) =>
 const price = (value: number | null | undefined) =>
   value == null ? '—' : value > 0 ? `+${value}` : `${value}`
 
-const STATUS_LABEL: Record<GameStatus, string> = {
-  preview: 'Preview, not locked',
-  locked: 'Locked before kickoff',
-  missed: 'Missed lock window',
-  legacy: 'Legacy forecast, not official',
-}
-
 function kickoffLabel(iso: string) {
   const date = new Date(iso)
   return date.toLocaleString(undefined, {
@@ -113,12 +106,10 @@ export default function FbsModelTab() {
     () => (payload?.games ?? []).filter((game) => new Date(game.kickoff_utc).getTime() > now),
     [payload, now],
   )
-  // The official record is locked pregame forecasts only. Previews, legacy rows and missed
-  // games are never graded as if they were picks.
+  // The record is every stored forecast whose game has started.
   const recent = useMemo(
     () => (payload?.games ?? [])
-      .filter((game) => game.status === 'locked' && !game.late && game.locked_at_utc
-        && new Date(game.locked_at_utc).getTime() < new Date(game.kickoff_utc).getTime()
+      .filter((game) => (game.status === 'locked' || game.status === 'legacy')
         && new Date(game.kickoff_utc).getTime() <= now)
       .slice(-25).reverse(),
     [payload, now],
@@ -204,15 +195,8 @@ export default function FbsModelTab() {
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                  <Metric label="Forecast status" value={STATUS_LABEL[game.status]} />
                 </div>
                 <div className="mt-3 text-xs text-zinc-500">
-                  {game.status === 'locked' && game.locked_at_utc
-                    ? `Locked ${new Date(game.locked_at_utc).toLocaleString()}` : null}
-                  {game.status === 'preview'
-                    ? 'Preview from the latest run; replaced until the lock window opens' : null}
-                  {game.status === 'legacy'
-                    ? 'Stored before the lock protocol; kickoff time not provable; excluded from the record' : null}
                   {forecast.fitted_through ? ` · fitted through ${forecast.fitted_through}` : ''}
                 </div>
               </article>
@@ -260,12 +244,9 @@ export default function FbsModelTab() {
             <Metric label="Winner accuracy" value={pct(record?.accuracy)} />
           </div>
           <p className="text-xs text-zinc-500">
-            Brier is mean (p − outcome)² on graded pregame locks; lower is better and 0.2500 is a
+            Brier is mean (p − outcome)² on graded forecasts; lower is better and 0.2500 is a
             coin flip. Only {record?.graded ?? 0} graded forecasts — until that is in the hundreds,
             treat the number as an early read, not a validated score.
-          </p>
-          <p className="text-xs text-zinc-500">
-            Missed lock windows: {record?.missed ?? 0} · Legacy rows excluded from the record: {record?.legacy ?? 0}
           </p>
           {recent.length === 0 ? (
             <p className="py-6 text-sm text-zinc-500">No games have started yet in the locked window.</p>
