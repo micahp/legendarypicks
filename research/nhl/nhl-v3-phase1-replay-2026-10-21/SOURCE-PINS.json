@@ -1,0 +1,29 @@
+{
+  "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+  "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+  "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+  "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+  "artifacts": {
+    "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+    "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+    "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+    "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+    "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb",
+    "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17"
+  },
+  "official_artifacts": {
+    "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+    "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+  },
+  "approved_label_artifact": {
+    "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+    "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c",
+    "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+    "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0"
+  },
+  "expected_population": {
+    "games": 4876,
+    "pbp_events": 1510104,
+    "seasons": {"2018": 1271, "2019": 1082, "2020": 868, "2021": 1312, "2022": 343}
+  }
+}

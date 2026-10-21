@@ -1,0 +1,13 @@
+{
+  "source_base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+  "games": [
+    {"game_id": "2018020003", "covers": ["ordinary_regulation", "team_and_player_shots"]},
+    {"game_id": "2018020001", "covers": ["overtime_scoring", "power_play_manpower"]},
+    {"game_id": "2018020019", "covers": ["shootout_exclusion", "goalie_change"]},
+    {"game_id": "2018020002", "covers": ["goalie_substitution"]},
+    {"game_id": "2019020372", "covers": ["original_sample_sog_mismatch"]},
+    {"game_id": "2020020056", "covers": ["duplicated_shift_chart", "score_independent_of_shifts"]},
+    {"game_id": "2018020164", "covers": ["period_number_regression", "publisher_order_retained"]},
+    {"game_id": "2018020751", "covers": ["two_sided_sog_mismatch"]}
+  ]
+}
