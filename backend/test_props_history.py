@@ -181,11 +181,12 @@ class PropHistoryVenueTests(unittest.TestCase):
             season=2026,
         )
 
-        self.assertEqual([g["status"] for g in result["games"][:2]], ["missing", "dnp"])
-        self.assertEqual([g["appearance_status"] for g in result["games"][:2]],
-                         ["played", "dnp"])
+        # The DNP (07-23, MIN 0) is out of the chart as well as the rates.
+        self.assertEqual(result["games"][0]["status"], "missing")
+        self.assertEqual(result["games"][0]["appearance_status"], "played")
         self.assertIsNone(result["games"][0]["value"])
-        self.assertEqual(result["games"][1]["value"], 0)
+        self.assertNotIn("2026-07-23", [g["date"] for g in result["games"]])
+        self.assertNotIn("dnp", [g["status"] for g in result["games"]])
         self.assertEqual(result["hit_rate_n"]["l5"], 3)
         self.assertEqual(result["hit_rate"]["season"], round(2 / 3, 3))
 
@@ -193,7 +194,7 @@ class PropHistoryVenueTests(unittest.TestCase):
             player_id=1, market="points", line=21, side="over", league="nba",
             season=2026,
         )
-        self.assertIsNone(pushed["games"][2]["hit"])
+        self.assertIsNone(pushed["games"][1]["hit"])
         self.assertEqual(pushed["hit_rate_n"]["season"], 3)
         self.assertEqual(pushed["hit_rate"]["season"], 0.5)
 
@@ -228,12 +229,11 @@ class PropHistoryVenueTests(unittest.TestCase):
         result = props.prop_history(
             player_id=1, market="points", line=25, side="over", league="nba", season=2026
         )
-        self.assertEqual([g["status"] for g in result["games"][:3]],
-                         ["missing", "played", "dnp"])
-        self.assertEqual([g["appearance_status"] for g in result["games"][:3]],
-                         ["unknown", "played", "dnp"])
-        self.assertEqual([g["value"] for g in result["games"][:3]], [None, 30, 0])
-        self.assertIsNone(result["games"][2]["hit"])
+        self.assertEqual([g["status"] for g in result["games"][:2]], ["missing", "played"])
+        self.assertEqual([g["appearance_status"] for g in result["games"][:2]],
+                         ["unknown", "played"])
+        self.assertEqual([g["value"] for g in result["games"][:2]], [None, 30])
+        self.assertNotIn("2026-07-23", [g["date"] for g in result["games"]])
         self.assertEqual(result["hit_rate_n"]["season"], 4)
         self.assertEqual(result["hit_rate"]["season"], 0.25)
 
