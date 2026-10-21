@@ -77,6 +77,9 @@ FEATURE_TABLES = {
     "history_refresh_state": "environment-local scheduler state (prod-only)",
     "nfl_player_birth_dates": "dev-only NFL age research; no released app reader",
     "tennis_points": "Flashscore point-sequence archive for tennis research; no released app reader",
+    "nba_sportsdataverse_games": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "nba_sportsdataverse_releases": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "player_game_logs_sportsdataverse": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
 }
 
 # Columns on shared tables that belong to the team-stats feature and are
