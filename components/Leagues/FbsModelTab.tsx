@@ -3,44 +3,49 @@ import ModelSelect from './ModelSelect'
 
 type View = 'projections' | 'record' | 'ratings'
 
-interface ModelForecast {
+// One projection per model and game. The backend fixes it at the T-90 cutoff. The card does not show when.
+interface ModelProjection {
   p_home: number
   p_away: number
   fair_home: number | null
   fair_away: number | null
   model_version: string
   fitted_through: string | null
-  locked_at_utc?: string | null
-  previewed_at_utc?: string | null
+  projected_at_utc: string | null
+  frozen_at_utc: string | null
 }
-
-// preview: display-only, replaced each run. locked: frozen inside the T-90 window.
-// missed: kickoff passed with no lock. legacy: stored before the lock protocol, not official.
-type GameStatus = 'preview' | 'locked' | 'missed' | 'legacy'
 
 interface FbsGame {
   game_id: string
   kickoff_utc: string
   home_team: string
   away_team: string
-  status: GameStatus
-  locked_at_utc: string | null
-  late: boolean
+  neutral_site: boolean
   result: { home_score: number; away_score: number; home_win: boolean } | null
-  models: Record<string, ModelForecast>
+  models: Record<string, ModelProjection>
 }
 
 interface ModelInfo { id: string; label: string; note: string }
 
-interface ModelRecord {
+interface HistoryRow {
+  game_id: string
+  kickoff_utc: string
+  p_home: number
+  home_win: boolean
+  home_score: number
+  away_score: number
   graded: number
-  forecasts: number
-  late: number
-  legacy: number
-  missed: number
+  accuracy: number
+  brier: number
+}
+
+interface ModelRecord {
+  frozen: number
+  graded: number
+  accuracy: number | null
   brier: number | null
   log_loss: number | null
-  accuracy: number | null
+  history: HistoryRow[]
 }
 
 interface Rating {
@@ -62,7 +67,7 @@ interface Payload {
   games: FbsGame[]
   ratings: Rating[]
   meta: Record<string, unknown>
-  state: 'available' | 'awaiting_first_lock'
+  state: 'available' | 'awaiting_first_projection' | 'migration_required'
   source: string
 }
 
@@ -71,13 +76,6 @@ const pct = (value: number | null | undefined) =>
 
 const price = (value: number | null | undefined) =>
   value == null ? '—' : value > 0 ? `+${value}` : `${value}`
-
-const STATUS_LABEL: Record<GameStatus, string> = {
-  preview: 'Preview, not locked',
-  locked: 'Locked before kickoff',
-  missed: 'Missed lock window',
-  legacy: 'Legacy forecast, not official',
-}
 
 function kickoffLabel(iso: string) {
   const date = new Date(iso)
@@ -110,18 +108,10 @@ export default function FbsModelTab() {
 
   const now = Date.now()
   const upcoming = useMemo(
-    () => (payload?.games ?? []).filter((game) => new Date(game.kickoff_utc).getTime() > now),
-    [payload, now],
-  )
-  // The official record is locked pregame forecasts only. Previews, legacy rows and missed
-  // games are never graded as if they were picks.
-  const recent = useMemo(
     () => (payload?.games ?? [])
-      .filter((game) => game.status === 'locked' && !game.late && game.locked_at_utc
-        && new Date(game.locked_at_utc).getTime() < new Date(game.kickoff_utc).getTime()
-        && new Date(game.kickoff_utc).getTime() <= now)
-      .slice(-25).reverse(),
-    [payload, now],
+      .filter((game) => new Date(game.kickoff_utc).getTime() > now && game.models[model])
+      .sort((a, b) => a.kickoff_utc.localeCompare(b.kickoff_utc)),
+    [payload, model, now],
   )
 
   if (error) {
@@ -133,6 +123,7 @@ export default function FbsModelTab() {
 
   const record = payload.records[model]
   const selected = payload.models.find((entry) => entry.id === model)
+  const recent = [...(record?.history ?? [])].reverse().slice(0, 25)
 
   return (
     <div className="space-y-6">
@@ -165,22 +156,21 @@ export default function FbsModelTab() {
       </header>
 
       <p className="text-xs text-zinc-500">
-        Predictions only — no NCAAF moneyline or spread price feed is captured yet, so nothing here is
-        a qualifying wager. Win probabilities and model fair odds. Only forecasts locked before kickoff
-        count toward the record; previews do not.
+        Predictions only. No NCAAF moneyline or spread price feed is captured yet, so nothing here is a
+        qualifying wager. Win probabilities and model fair odds. The record counts only graded
+        projections.
       </p>
 
-      {payload.state === 'awaiting_first_lock' ? (
-        <p className="py-10 text-sm text-zinc-500">No forecasts locked for {payload.season} yet.</p>
+      {payload.state !== 'available' ? (
+        <p className="py-10 text-sm text-zinc-500">No projections for {payload.season} yet.</p>
       ) : null}
 
       {view === 'projections' ? (
         <section className="divide-y divide-zinc-800 border-t border-zinc-800">
           {upcoming.length === 0 ? (
-            <p className="py-8 text-sm text-zinc-500">No upcoming games in the locked window.</p>
+            <p className="py-8 text-sm text-zinc-500">No upcoming games with a projection.</p>
           ) : upcoming.map((game) => {
             const forecast = game.models[model]
-            if (!forecast) return null
             const homeFavoured = forecast.p_home >= forecast.p_away
             return (
               <article key={game.game_id} className="py-4">
@@ -204,17 +194,11 @@ export default function FbsModelTab() {
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                  <Metric label="Forecast status" value={STATUS_LABEL[game.status]} />
+                  <Metric label="Venue" value={game.neutral_site ? 'Neutral site' : `${game.home_team} home`} />
                 </div>
-                <div className="mt-3 text-xs text-zinc-500">
-                  {game.status === 'locked' && game.locked_at_utc
-                    ? `Locked ${new Date(game.locked_at_utc).toLocaleString()}` : null}
-                  {game.status === 'preview'
-                    ? 'Preview from the latest run; replaced until the lock window opens' : null}
-                  {game.status === 'legacy'
-                    ? 'Stored before the lock protocol; kickoff time not provable; excluded from the record' : null}
-                  {forecast.fitted_through ? ` · fitted through ${forecast.fitted_through}` : ''}
-                </div>
+                {forecast.fitted_through ? (
+                  <div className="mt-3 text-xs text-zinc-500">fitted through {forecast.fitted_through}</div>
+                ) : null}
               </article>
             )
           })}
@@ -254,36 +238,31 @@ export default function FbsModelTab() {
       {view === 'record' ? (
         <section className="space-y-6">
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-zinc-800 pt-4 sm:grid-cols-4">
-            <Metric label="Forecasts" value={record ? `${record.forecasts}` : '—'} />
+            <Metric label="Projections" value={record ? `${record.frozen}` : '—'} />
             <Metric label="Graded" value={record ? `${record.graded}` : '—'} />
             <Metric label="Brier" value={record?.brier != null ? record.brier.toFixed(4) : '—'} />
             <Metric label="Winner accuracy" value={pct(record?.accuracy)} />
           </div>
           <p className="text-xs text-zinc-500">
-            Brier is mean (p − outcome)² on graded pregame locks; lower is better and 0.2500 is a
-            coin flip. Only {record?.graded ?? 0} graded forecasts — until that is in the hundreds,
-            treat the number as an early read, not a validated score.
-          </p>
-          <p className="text-xs text-zinc-500">
-            Missed lock windows: {record?.missed ?? 0} · Legacy rows excluded from the record: {record?.legacy ?? 0}
+            Brier is mean (p − outcome)² over graded projections; lower is better and 0.2500 is a coin flip.
+            Only {record?.graded ?? 0} graded projections so far. Until that is in the hundreds, treat the
+            number as an early read, not a validated score.
           </p>
           {recent.length === 0 ? (
-            <p className="py-6 text-sm text-zinc-500">No games have started yet in the locked window.</p>
+            <p className="py-6 text-sm text-zinc-500">No graded projections yet.</p>
           ) : (
             <div className="divide-y divide-zinc-800 border-t border-zinc-800">
-              {recent.map((game) => {
-                const forecast = game.models[model]
-                if (!forecast) return null
-                const pickedHome = forecast.p_home >= forecast.p_away
+              {recent.map((row) => {
+                const pickedHome = row.p_home >= 0.5
                 const picked = pickedHome ? 'home' : 'away'
-                const won = game.result ? (picked === 'home' ? game.result.home_win : !game.result.home_win) : null
+                const won = pickedHome ? row.home_win : !row.home_win
+                const lean = pickedHome ? row.p_home : 1 - row.p_home
                 return (
-                  <article key={game.game_id} className="grid grid-cols-2 gap-x-6 gap-y-2 py-3 sm:grid-cols-5">
-                    <Metric label="Game" value={`${game.away_team} @ ${game.home_team}`} />
-                    <Metric label="Lean" value={`${pct(Math.max(forecast.p_home, forecast.p_away))} ${picked === 'home' ? game.home_team : game.away_team}`} />
-                    <Metric label="Final" value={game.result ? `${game.result.away_score}–${game.result.home_score}` : 'Pending'} />
-                    <Metric label="Result" value={won == null ? 'Pending' : won ? '✓ Won' : '✗ Lost'} />
-                    <Metric label="Kickoff" value={kickoffLabel(game.kickoff_utc)} />
+                  <article key={row.game_id} className="grid grid-cols-2 gap-x-6 gap-y-2 py-3 sm:grid-cols-4">
+                    <Metric label="Kickoff" value={kickoffLabel(row.kickoff_utc)} />
+                    <Metric label="Lean" value={`${pct(lean)} ${picked}`} />
+                    <Metric label="Final" value={`${row.away_score}–${row.home_score}`} />
+                    <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} />
                   </article>
                 )
               })}
@@ -318,4 +297,3 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-

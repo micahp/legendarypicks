@@ -1,20 +1,15 @@
-"""Storage for FBS model previews, locks, grades and ratings.
+"""Storage for the NCAAF projection system: one projection per game and model, on one workflow.
 
-Deliberately separate from the picks databases, exactly like the NHL model store: this is a
-read-only model surface, and nothing here can move a pick, a price or a locked forecast.
+  1. Projections are computed before kickoff and stored in fbs_projections. Each run replaces the latest one.
+  2. Each model's projection is frozen at the lock cutoff, kickoff - LOCK_LEAD (T-90). The frozen row is copied
+     from the stored projection, which was computed before the cutoff. Nothing is computed after the cutoff.
+  3. Frozen rows are immutable (triggers). A frozen row's result is written once, from a verified final.
+  4. Accuracy and history come from frozen, graded rows only.
 
-Invariants
-  * A lock is written once, inside its T-90 window [kickoff - LOCK_LEAD, kickoff), with
-    lock_protocol = 't90'. Its probability, kickoff and lock time are immutable (triggers).
-  * A preview is display-only. It is replaced on every run, is never graded, and is never
-    copied into fbs_forecasts.
-  * Nothing locks after kickoff. A previewed game that reaches kickoff with no lock is
-    recorded once in fbs_lock_events as missed_t90_window.
-  * Rows written before this protocol have lock_protocol = 'legacy'. Their kickoffs were
-    stored as midnight UTC, so their lock times and late flags are not provable. They stay
-    visible, labelled, and are excluded from the official record. They are not converted.
-  * Grading only fills result, home_score, away_score, graded_at_utc; it never touches a
-    probability.
+Operational state (lifecycle, source failures, missed cutoffs, unresolved games) lives in its own tables and is
+reported in diagnostics, never as a label on a projection. Rows written before the lock protocol are kept as data.
+They are not projections, and they are excluded from the record. The module is deliberately separate from the
+picks databases: nothing here can move a pick, a price or a frozen projection.
 """
 from __future__ import annotations
 
@@ -69,6 +64,8 @@ CREATE TABLE IF NOT EXISTS fbs_forecasts (
     late INTEGER NOT NULL DEFAULT 0,
     lock_protocol TEXT,
     kickoff_revision INTEGER NOT NULL DEFAULT 1,
+    projected_at_utc TEXT,
+    cutoff_utc TEXT,
     result INTEGER,
     home_score INTEGER,
     away_score INTEGER,
@@ -76,7 +73,7 @@ CREATE TABLE IF NOT EXISTS fbs_forecasts (
     PRIMARY KEY (game_id, model)
 );
 CREATE INDEX IF NOT EXISTS fbs_forecasts_season ON fbs_forecasts(season, kickoff_utc);
-CREATE TABLE IF NOT EXISTS fbs_previews (
+CREATE TABLE IF NOT EXISTS fbs_projections (
     game_id TEXT NOT NULL,
     model TEXT NOT NULL,
     season INTEGER NOT NULL,
@@ -90,8 +87,7 @@ CREATE TABLE IF NOT EXISTS fbs_previews (
     fair_home INTEGER,
     fair_away INTEGER,
     fitted_through TEXT,
-    previewed_at_utc TEXT NOT NULL,
-    hold_reason TEXT,
+    projected_at_utc TEXT NOT NULL,
     PRIMARY KEY (game_id, model)
 );
 CREATE TABLE IF NOT EXISTS fbs_lock_events (
@@ -142,8 +138,7 @@ CREATE TABLE IF NOT EXISTS fbs_game_status (
     grading_state TEXT NOT NULL,
     reason TEXT,
     pregame_lifecycle TEXT,
-    pregame_observed_utc TEXT,
-    hold_reason TEXT
+    pregame_observed_utc TEXT
 );
 CREATE TABLE IF NOT EXISTS fbs_window_outcomes (
     game_id TEXT NOT NULL,
@@ -181,27 +176,30 @@ CREATE TABLE IF NOT EXISTS fbs_run_reports (
 # Created by initialize_new_db() and migrate() only. Normal opens never create or alter them.
 TRIGGERS = """
 CREATE TRIGGER IF NOT EXISTS fbs_forecast_lock_immutable
-BEFORE UPDATE OF p_home, fair_home, fair_away, kickoff_utc, locked_at_utc, late,
-    lock_protocol, model_version, kickoff_revision ON fbs_forecasts
-BEGIN SELECT RAISE(ABORT, 'FBS locked forecasts are immutable'); END;
+BEFORE UPDATE OF season, home_team, away_team, home_team_id, away_team_id, p_home, fair_home, fair_away,
+    kickoff_utc, locked_at_utc, projected_at_utc, cutoff_utc, late, lock_protocol, model_version,
+    kickoff_revision ON fbs_forecasts
+BEGIN SELECT RAISE(ABORT, 'FBS frozen projections are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS fbs_forecast_result_once
+BEFORE UPDATE OF result ON fbs_forecasts
+WHEN OLD.result IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'FBS results are written once'); END;
 CREATE TRIGGER IF NOT EXISTS fbs_forecast_no_delete
 BEFORE DELETE ON fbs_forecasts
-BEGIN SELECT RAISE(ABORT, 'FBS forecasts are immutable'); END;
+BEGIN SELECT RAISE(ABORT, 'FBS frozen projections are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS fbs_lock_event_immutable
 BEFORE UPDATE ON fbs_lock_events
 BEGIN SELECT RAISE(ABORT, 'FBS lock events are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS fbs_window_outcome_immutable
 BEFORE UPDATE ON fbs_window_outcomes
 BEGIN SELECT RAISE(ABORT, 'FBS window outcomes are immutable'); END;
-"""
-
+""" 
 
 SCHEMA_VERSION = 2
-POSTSEASON_HOLD = "postseason_research_hold"
 REQUIRED_TABLES = tuple(re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", SCHEMA))
 REQUIRED_COLUMNS = (
     ("fbs_forecasts", "lock_protocol"), ("fbs_forecasts", "kickoff_revision"),
-    ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason"),
+    ("fbs_forecasts", "projected_at_utc"), ("fbs_forecasts", "cutoff_utc"), ("fbs_projections", "projected_at_utc"),
 )
 REQUIRED_TRIGGERS = tuple(re.findall(r"CREATE TRIGGER IF NOT EXISTS (\w+)", TRIGGERS))
 
@@ -344,11 +342,8 @@ def _exclusive_backup(path: str, backup_dir: str) -> str:
 
 
 def _upgrade_statements(con: sqlite3.Connection) -> None:
-    """Bring an existing schema forward inside the caller's transaction. Order matters: the legacy backfill
-    must run before the immutability triggers exist, or the backfill itself would be refused."""
-    for table in ("fbs_previews", "fbs_game_status"):
-        if table in user_tables(con) and "hold_reason" not in table_columns(con, table):
-            con.execute("ALTER TABLE %s ADD COLUMN hold_reason TEXT" % table)
+    """Bring an existing database forward inside the caller's transaction. Order matters: the legacy backfill and the
+    new columns must exist before the immutability triggers do, or the backfill itself would be refused."""
     if "fbs_forecasts" in user_tables(con):
         columns = table_columns(con, "fbs_forecasts")
         if "lock_protocol" not in columns:
@@ -356,6 +351,12 @@ def _upgrade_statements(con: sqlite3.Connection) -> None:
             con.execute("UPDATE fbs_forecasts SET lock_protocol = ? WHERE lock_protocol IS NULL", (LEGACY_PROTOCOL,))
         if "kickoff_revision" not in columns:
             con.execute("ALTER TABLE fbs_forecasts ADD COLUMN kickoff_revision INTEGER NOT NULL DEFAULT 1")
+        for column in ("projected_at_utc", "cutoff_utc"):
+            if column not in columns:
+                con.execute("ALTER TABLE fbs_forecasts ADD COLUMN %s TEXT" % column)
+    # Triggers are recreated, not kept: an IF NOT EXISTS keeps an older definition that may not cover new columns.
+    for name in REQUIRED_TRIGGERS:
+        con.execute("DROP TRIGGER IF EXISTS %s" % name)
     for statement in list(_statements(SCHEMA)) + list(_statements(TRIGGERS)):
         con.execute(statement)
 
@@ -434,35 +435,40 @@ def _protocol(row: sqlite3.Row) -> str:
     return LEGACY_PROTOCOL
 
 
-def upsert_previews(con: sqlite3.Connection, rows: list[dict],
-                    now: dt.datetime | None = None, commit: bool = True) -> int:
-    """Display-only forecasts until kickoff. A preview never locks; the lock path decides that.
+def cutoff_for(kickoff: dt.datetime) -> dt.datetime:
+    """The lock cutoff for a kickoff: T-90 by default. Projections are stored only before it, and freezing starts at it."""
+    return kickoff - LOCK_LEAD
 
-    Inside the lock window a preview is still written, so a game whose lock is not taken
-    stays visible as a preview and can be recorded as missed at kickoff.
+
+def upsert_projections(con: sqlite3.Connection, rows: list[dict],
+                       now: dt.datetime | None = None, commit: bool = True) -> int:
+    """Store the latest pregame projection for each game and model.
+
+    A projection is written only before the game's lock cutoff, so every projection a freeze can copy was computed
+    before the cutoff. Each run replaces the previous projection. Frozen rows are never touched here.
     """
     now = now or dt.datetime.now(dt.timezone.utc)
     written = 0
     for row in rows:
-        if now >= parse_time(row["kickoff_utc"]):
+        kickoff = parse_time(row["kickoff_utc"])
+        if now >= cutoff_for(kickoff):
             continue
         con.execute(
-            "INSERT INTO fbs_previews(game_id,model,season,kickoff_utc,home_team,away_team,"
+            "INSERT INTO fbs_projections(game_id,model,season,kickoff_utc,home_team,away_team,"
             " home_team_id,away_team_id,model_version,p_home,fair_home,fair_away,fitted_through,"
-            " previewed_at_utc,hold_reason) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " projected_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             " ON CONFLICT(game_id,model) DO UPDATE SET kickoff_utc=excluded.kickoff_utc,"
             " home_team=excluded.home_team, away_team=excluded.away_team,"
             " home_team_id=excluded.home_team_id, away_team_id=excluded.away_team_id,"
             " model_version=excluded.model_version, p_home=excluded.p_home,"
             " fair_home=excluded.fair_home, fair_away=excluded.fair_away,"
-            " fitted_through=excluded.fitted_through, previewed_at_utc=excluded.previewed_at_utc,"
-            " hold_reason=COALESCE(excluded.hold_reason, fbs_previews.hold_reason)",
+            " fitted_through=excluded.fitted_through, projected_at_utc=excluded.projected_at_utc",
             (row["game_id"], row["model"], row["season"], row["kickoff_utc"],
              row["home_team"], row["away_team"], row.get("home_team_id"), row.get("away_team_id"),
              row["model_version"], row["p_home"],
              american_from_probability(row["p_home"]),
              american_from_probability(1.0 - row["p_home"]),
-             row.get("fitted_through"), now.isoformat(), row.get("hold_reason")),
+             row.get("fitted_through"), now.isoformat()),
         )
         written += 1
     if commit:
@@ -470,80 +476,72 @@ def upsert_previews(con: sqlite3.Connection, rows: list[dict],
     return written
 
 
-def persisted_hold(con: sqlite3.Connection, game_id: str, model: str | None = None) -> str | None:
-    """The durable research hold on a fixture or one of its model previews, or None. Read from the database,
-    never from the caller's row."""
-    status = game_status(con, game_id) or {}
-    if status.get("hold_reason"):
-        return status["hold_reason"]
-    if model is not None:
-        preview = con.execute("SELECT hold_reason FROM fbs_previews WHERE game_id = ? AND model = ?",
-                              (game_id, model)).fetchone()
-        if preview is not None and preview[0]:
-            return preview[0]
-    return None
+def freeze_projections(con: sqlite3.Connection, now: dt.datetime | None = None, commit: bool = True) -> dict:
+    """Freeze each model's latest projection at the lock cutoff.
 
-
-def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
-                   now: dt.datetime | None = None, commit: bool = True) -> dict:
-    """Insert each forecast once, only inside its T-90 window, and only for a scheduled game whose
-    kickoff is the current fixture revision. Returns counts. A started or unverified game never locks."""
+    A freeze copies the stored projection. It never computes a new one, so the frozen probability was computed before
+    the cutoff. A projection is frozen once, and the frozen row is immutable. Each refusal is counted, so no skipped
+    game is silent. Nothing is frozen before the cutoff, after kickoff, or for a game whose pregame status or
+    fixture revision cannot be verified at this run.
+    """
     now = now or dt.datetime.now(dt.timezone.utc)
-    report = {"inserted": 0, "existing": 0, "not_due": 0, "after_kickoff": 0,
-              "blocked_status": 0, "blocked_revision": 0, "blocked_hold": 0}
-    for row in rows:
-        if persisted_hold(con, row["game_id"], row["model"]):
-            report["blocked_hold"] += 1          # postseason research holds are never official locks
+    report = {"frozen": 0, "already_frozen": 0, "not_due": 0, "after_kickoff": 0,
+              "blocked_status": 0, "blocked_revision": 0, "blocked_projection_time": 0}
+    for row in con.execute("SELECT * FROM fbs_projections").fetchall():
+        already = con.execute("SELECT 1 FROM fbs_forecasts WHERE game_id=? AND model=? AND lock_protocol=?",
+                              (row["game_id"], row["model"], LOCK_PROTOCOL)).fetchone()
+        if already:
+            report["already_frozen"] += 1
             continue
-        kickoff = parse_time(row["kickoff_utc"])
-        if now < kickoff - LOCK_LEAD:
-            report["not_due"] += 1
+        fixture = current_fixture(con, row["game_id"])
+        if fixture is None:
+            report["blocked_revision"] += 1
+            continue
+        kickoff = parse_time(fixture["kickoff_utc"])
+        cutoff = cutoff_for(kickoff)
+        if parse_time(row["kickoff_utc"]) != kickoff:
+            report["blocked_revision"] += 1          # the projection was computed for another kickoff
+            continue
+        if (fixture["home_team_id"], fixture["away_team_id"]) != (row["home_team_id"], row["away_team_id"]):
+            report["blocked_status"] += 1            # the opponent changed: never the same fixture
             continue
         if now >= kickoff:
             report["after_kickoff"] += 1
             continue
+        if now < cutoff:
+            report["not_due"] += 1
+            continue
         status = game_status(con, row["game_id"])
         if status is None or not is_lockable(status["lifecycle"], kickoff, now):
-            report["blocked_status"] += 1
+            report["blocked_status"] += 1            # not a verified, unstarted, scheduled game
             continue
-        fixture = current_fixture(con, row["game_id"])
-        if fixture is None or parse_time(fixture["kickoff_utc"]) != kickoff:
-            report["blocked_revision"] += 1
-            continue
-        if (fixture["home_team_id"], fixture["away_team_id"]) != (str(row.get("home_team_id")), str(row.get("away_team_id"))):
-            report["blocked_status"] += 1      # the opponent changed: never the same fixture
+        if parse_time(row["projected_at_utc"]) >= cutoff:
+            report["blocked_projection_time"] += 1   # defensive: a projection must predate its cutoff
             continue
         cursor = con.execute(
             "INSERT OR IGNORE INTO fbs_forecasts"
             "(game_id,model,season,kickoff_utc,home_team,away_team,home_team_id,away_team_id,"
             " model_version,p_home,fair_home,fair_away,fitted_through,created_at_utc,"
-            " locked_at_utc,late,lock_protocol,kickoff_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
-            (row["game_id"], row["model"], row["season"], row["kickoff_utc"],
-             row["home_team"], row["away_team"], row.get("home_team_id"), row.get("away_team_id"),
-             row["model_version"], row["p_home"],
-             american_from_probability(row["p_home"]),
-             american_from_probability(1.0 - row["p_home"]),
-             row.get("fitted_through"), now.isoformat(), now.isoformat(), LOCK_PROTOCOL,
-             fixture["revision"]),
-        )
-        report["inserted" if cursor.rowcount else "existing"] += 1
+            " locked_at_utc,late,lock_protocol,kickoff_revision,projected_at_utc,cutoff_utc)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)",
+            (row["game_id"], row["model"], row["season"], fixture["kickoff_utc"],
+             row["home_team"], row["away_team"], row["home_team_id"], row["away_team_id"],
+             row["model_version"], row["p_home"], row["fair_home"], row["fair_away"],
+             row["fitted_through"], now.isoformat(), now.isoformat(), LOCK_PROTOCOL,
+             fixture["revision"], row["projected_at_utc"], cutoff.isoformat()))
+        report["frozen" if cursor.rowcount else "already_frozen"] += 1
     if commit:
         con.commit()
     return report
 
 
-def window_outcome(status: dict | None, hold: str | None = None) -> tuple[str, str | None, str]:
-    """Classify a window that closed without a lock. Exactly one outcome per game and model.
+def window_outcome(status: dict | None) -> tuple[str, str | None, str]:
+    """Classify a projected game whose cutoff passed without a frozen projection. Internal to diagnostics.
 
-    missed_t90_window: the game was verified scheduled before its kickoff, so the window existed, and no
-    lock was written. blocked_unverified_at_cutoff: no verified pregame status existed, so the game was
-    never eligible to lock. window_not_eligible: postponed, delayed, suspended, cancelled or another
-    non-window status before kickoff.
+    missed_t90_window: the game was verified scheduled before its kickoff, but no projection was frozen.
+    blocked_unverified_at_cutoff: no verified pregame status existed, so there was nothing to freeze.
+    window_not_eligible: postponed, delayed, suspended, cancelled or another non-window status before kickoff.
     """
-    hold = hold or (status or {}).get("hold_reason")
-    if hold:
-        # A research-only hold is not an eligible window, whatever ESPN later reports for the game.
-        return "window_not_eligible", (status or {}).get("pregame_lifecycle"), hold
     if status is None:
         return "blocked_unverified_at_cutoff", None, "no_status_observed"
     if status.get("reason") == "identity_changed":
@@ -554,32 +552,50 @@ def window_outcome(status: dict | None, hold: str | None = None) -> tuple[str, s
     if pregame in NO_WINDOW_LIFECYCLES:
         return "window_not_eligible", pregame, pregame
     if pregame == "scheduled":
-        return "missed_t90_window", pregame, "scheduled_and_unlocked"
+        return "missed_t90_window", pregame, "scheduled_and_unfrozen"
     return "blocked_unverified_at_cutoff", pregame, "pregame_status_not_scheduled"
 
 
 def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = None,
                           commit: bool = True) -> dict:
-    """Classify every previewed game whose current kickoff has passed without a lock. Recorded once."""
+    """Classify every projected game whose kickoff has passed without a frozen projection. Recorded once."""
     now = now or dt.datetime.now(dt.timezone.utc)
-    locked = {(row[0], row[1]) for row in con.execute(
+    frozen = {(row[0], row[1]) for row in con.execute(
         "SELECT game_id, model FROM fbs_forecasts WHERE lock_protocol = ?", (LOCK_PROTOCOL,))}
     recorded = {(row[0], row[1]) for row in con.execute("SELECT game_id, model FROM fbs_window_outcomes")}
     counts = {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 0}
-    for row in con.execute("SELECT game_id, model, season, kickoff_utc, hold_reason FROM fbs_previews").fetchall():
+    for row in con.execute("SELECT game_id, model, season, kickoff_utc FROM fbs_projections").fetchall():
         key = (row["game_id"], row["model"])
-        if key in locked or key in recorded:
+        if key in frozen or key in recorded:
             continue
         fixture = current_fixture(con, row["game_id"])
         kickoff_text = fixture["kickoff_utc"] if fixture else row["kickoff_utc"]
         if now < parse_time(kickoff_text):
             continue
-        outcome, lifecycle, reason = window_outcome(game_status(con, row["game_id"]), row["hold_reason"])
+        outcome, lifecycle, reason = window_outcome(game_status(con, row["game_id"]))
         con.execute(
             "INSERT INTO fbs_window_outcomes(game_id,model,season,kickoff_utc,outcome,lifecycle_at_cutoff,"
             " reason,recorded_at_utc) VALUES(?,?,?,?,?,?,?,?)",
             (row["game_id"], row["model"], row["season"], kickoff_text, outcome, lifecycle, reason,
              now.isoformat()))
+        counts[outcome] += 1
+    # A game that reached its cutoff with a verified pregame status but was never projected (first seen inside
+    # the window, or no run before the cutoff) is a missed cutoff for the whole game. Recorded under model "*".
+    projected = {row[0] for row in con.execute("SELECT DISTINCT game_id FROM fbs_projections")}
+    for status in con.execute("SELECT * FROM fbs_game_status WHERE pregame_lifecycle IS NOT NULL").fetchall():
+        game_id = status["game_id"]
+        if game_id in projected or (game_id, "*") in recorded:
+            continue
+        fixture = current_fixture(con, game_id)
+        if fixture is None or now < parse_time(fixture["kickoff_utc"]):
+            continue
+        outcome, lifecycle, reason = window_outcome(dict(status))
+        if outcome == "missed_t90_window":
+            reason = "no_projection_before_cutoff"
+        con.execute(
+            "INSERT INTO fbs_window_outcomes(game_id,model,season,kickoff_utc,outcome,lifecycle_at_cutoff,"
+            " reason,recorded_at_utc) VALUES(?,?,?,?,?,?,?,?)",
+            (game_id, "*", status["season"], fixture["kickoff_utc"], outcome, lifecycle, reason, now.isoformat()))
         counts[outcome] += 1
     if commit:
         con.commit()
@@ -588,11 +604,15 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
 
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
                     now: dt.datetime | None = None, commit: bool = True) -> int:
-    """Fill outcomes for games whose final result is confirmed. Never touches a probability.
-    Voided and quarantined games are never graded."""
+    """Write the verified final result of each game onto its frozen projections. Never touches a probability.
+
+    A result must carry verified=True, which only a confirmed final produces. Voided and quarantined games are
+    never graded, and a result is written once (trigger)."""
     now = now or dt.datetime.now(dt.timezone.utc)
     graded = 0
     for game_id, result in results.items():
+        if result.get("verified") is not True:
+            raise ValueError("refusing to grade %s from an unverified result" % game_id)
         home_score, away_score = result.get("home_score"), result.get("away_score")
         if home_score is None or away_score is None:
             continue
@@ -602,8 +622,8 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
         outcome = 1 if home_score > away_score else 0
         cursor = con.execute(
             "UPDATE fbs_forecasts SET result=?, home_score=?, away_score=?, graded_at_utc=? "
-            "WHERE game_id=? AND result IS NULL AND kickoff_utc < ?",
-            (outcome, home_score, away_score, now.isoformat(), game_id,
+            "WHERE game_id=? AND result IS NULL AND lock_protocol=? AND kickoff_utc < ?",
+            (outcome, home_score, away_score, now.isoformat(), game_id, LOCK_PROTOCOL,
              now.isoformat()),
         )
         if cursor.rowcount:
@@ -749,14 +769,6 @@ def set_game_status(con: sqlite3.Connection, game_id: str, season: int, revision
         con.commit()
 
 
-def set_postseason_hold(con: sqlite3.Connection, game_id: str, commit: bool = True) -> None:
-    """Durable research-only hold on a postseason fixture. Set once; no later status write clears it."""
-    con.execute("UPDATE fbs_game_status SET hold_reason = COALESCE(hold_reason, ?) WHERE game_id = ?",
-                (POSTSEASON_HOLD, game_id))
-    if commit:
-        con.commit()
-
-
 def set_grading_state(con: sqlite3.Connection, game_id: str, grading_state: str, reason: str,
                       observed_utc: str, source: str, commit: bool = True) -> None:
     """Void or quarantine a game. The stored forecast and any lock are not changed."""
@@ -832,125 +844,105 @@ def last_runs(con: sqlite3.Connection) -> dict:
     return out
 
 
-def export_payload(con: sqlite3.Connection, season: int) -> dict:
-    rows = con.execute("SELECT * FROM fbs_forecasts WHERE season=? ORDER BY kickoff_utc",
-                       (season,)).fetchall()
-    previews = []
-    missed = set()
-    if _table_exists(con, "fbs_previews"):
-        previews = con.execute("SELECT * FROM fbs_previews WHERE season=? ORDER BY kickoff_utc",
-                               (season,)).fetchall()
-        missed = {(r[0], r[1]) for r in con.execute(
-            "SELECT game_id, model FROM fbs_lock_events WHERE season=? AND event_type=?",
-            (season, MISSED_EVENT))}
-    outcomes = {}
-    if _table_exists(con, "fbs_window_outcomes"):
-        outcomes = {(r[0], r[1]): r[2] for r in con.execute(
-            "SELECT game_id, model, outcome FROM fbs_window_outcomes WHERE season=?", (season,))}
-    missed_games = {game_id for game_id, _ in missed}
-    for (game_id, model), outcome in outcomes.items():
-        if outcome == "missed_t90_window":
-            missed.add((game_id, model))
+def _projection_view(row: sqlite3.Row, frozen_at: str | None, projected_at: str) -> dict:
+    return {"p_home": round(row["p_home"], 4), "p_away": round(1.0 - row["p_home"], 4),
+            "fair_home": row["fair_home"], "fair_away": row["fair_away"],
+            "model_version": row["model_version"], "fitted_through": row["fitted_through"],
+            "projected_at_utc": projected_at, "frozen_at_utc": frozen_at}
 
-    statuses = {}
-    if _table_exists(con, "fbs_game_status"):
-        statuses = {r["game_id"]: dict(r) for r in con.execute(
-            "SELECT * FROM fbs_game_status WHERE season=?", (season,)).fetchall()}
-    void_games = {g for g, st in statuses.items() if st["grading_state"] == "void"}
-    quarantined = {g for g, st in statuses.items() if st["grading_state"] == "quarantined"}
-    unresolved = unresolved_queue(con) if _table_exists(con, "fbs_unresolved") else []
+
+def _history(graded: list[sqlite3.Row]) -> list[dict]:
+    """Running accuracy and Brier after each graded, frozen projection, in kickoff order."""
+    out, correct, brier = [], 0, 0.0
+    for count, row in enumerate(graded, 1):
+        correct += (row["p_home"] >= 0.5) == (row["result"] == 1)
+        brier += (row["p_home"] - row["result"]) ** 2
+        out.append({"game_id": row["game_id"], "kickoff_utc": row["kickoff_utc"], "p_home": round(row["p_home"], 4),
+                    "home_win": bool(row["result"]), "home_score": row["home_score"],
+                    "away_score": row["away_score"], "graded": count,
+                    "accuracy": round(correct / count, 4), "brier": round(brier / count, 4)})
+    return out
+
+
+def export_payload(con: sqlite3.Connection, season: int) -> dict:
+    """The public payload for one season, on one projection workflow.
+
+    Projection cards get projections, game facts and, once verified, the final result. Records and history come only
+    from frozen, graded projections. Operational state is under diagnostics, which no projection card reads.
+    """
+    base = {"league": "ncaaf", "default_model": DEFAULT_MODEL,
+            "models": [{"id": m, "label": MODEL_LABELS[m], "note": MODEL_NOTES[m]} for m in MODEL_IDS],
+            "season": season, "source": "standalone FBS model database"}
+    if not set(REQUIRED_TABLES) <= user_tables(con):
+        return {**base, "state": "migration_required", "games": [], "records": {}, "ratings": [], "meta": {},
+                "diagnostics": {"schema_status": "migration_required"}}
+
+    fixtures = {r["game_id"]: dict(r) for r in con.execute(
+        "SELECT f.* FROM fbs_fixture_revisions f JOIN (SELECT game_id, MAX(revision) AS revision "
+        "FROM fbs_fixture_revisions GROUP BY game_id) m ON m.game_id = f.game_id AND m.revision = f.revision "
+        "WHERE f.season = ?", (season,)).fetchall()}
+    projections = {(r["game_id"], r["model"]): r for r in con.execute(
+        "SELECT * FROM fbs_projections WHERE season = ?", (season,)).fetchall()}
+    frozen_rows = con.execute("SELECT * FROM fbs_forecasts WHERE season = ? AND lock_protocol = ? "
+                              "ORDER BY kickoff_utc, model", (season, LOCK_PROTOCOL)).fetchall()
+    frozen = {(r["game_id"], r["model"]): r for r in frozen_rows}
+    legacy_rows = con.execute("SELECT COUNT(*) FROM fbs_forecasts WHERE season = ? AND lock_protocol = ?",
+                              (season, LEGACY_PROTOCOL)).fetchone()[0]
+    statuses = {r["game_id"]: dict(r) for r in con.execute(
+        "SELECT * FROM fbs_game_status WHERE season = ?", (season,)).fetchall()}
+
+    games = []
+    for game_id in sorted({g for g, _ in projections} | {g for g, _ in frozen}):
+        if statuses.get(game_id, {}).get("grading_state") == "void":
+            continue                                   # a voided game is not a projection
+        models, result = {}, None
+        for model in MODEL_IDS:
+            row = frozen.get((game_id, model))
+            if row is not None:
+                models[model] = _projection_view(row, row["locked_at_utc"], row["projected_at_utc"])
+                if row["result"] is not None and result is None:
+                    result = {"home_score": row["home_score"], "away_score": row["away_score"],
+                              "home_win": bool(row["result"])}
+                continue
+            row = projections.get((game_id, model))
+            if row is not None:
+                models[model] = _projection_view(row, None, row["projected_at_utc"])
+        if not models:
+            continue
+        anchor = next(r for r in (frozen.get((game_id, m)) or projections.get((game_id, m)) for m in MODEL_IDS)
+                      if r is not None)
+        fixture = fixtures.get(game_id) or dict(anchor)
+        games.append({
+            "game_id": game_id, "season": season, "kickoff_utc": fixture["kickoff_utc"],
+            "home_team": fixture["home_team"], "away_team": fixture["away_team"],
+            "home_team_id": fixture["home_team_id"], "away_team_id": fixture["away_team_id"],
+            "neutral_site": bool(fixture.get("neutral_site")), "result": result, "models": models,
+        })
+    games.sort(key=lambda g: g["kickoff_utc"])
 
     records = {}
     for model in MODEL_IDS:
-        model_rows = [r for r in rows if r["model"] == model]
-        official = [r for r in model_rows if _protocol(r) == LOCK_PROTOCOL and not r["late"]
-                    and r["game_id"] not in void_games and r["game_id"] not in quarantined]
-        windows = {name: sum(1 for (g, m), o in outcomes.items() if m == model and o == name)
-                   for name in ("missed_t90_window", "blocked_unverified_at_cutoff", "window_not_eligible")}
-        windows["locked"] = len(official)
-        records[model] = {**_score(official), "forecasts": len(official),
-                          "legacy": sum(1 for r in model_rows if _protocol(r) == LEGACY_PROTOCOL),
-                          "late": sum(1 for r in model_rows if r["late"]),
-                          "missed": sum(1 for _, m in missed if m == model),
-                          "void": sum(1 for r in model_rows if r["game_id"] in void_games and _protocol(r) == LOCK_PROTOCOL),
-                          "quarantined": sum(1 for r in model_rows if r["game_id"] in quarantined),
-                          "unresolved": sum(1 for u in unresolved if u["season"] == season and u["game_id"] in {r["game_id"] for r in model_rows}),
-                          "windows": windows}
+        rows = [r for r in frozen_rows if r["model"] == model]
+        graded = sorted((r for r in rows if r["result"] is not None), key=lambda r: r["kickoff_utc"])
+        records[model] = {**_score(rows), "frozen": len(rows), "history": _history(graded)}
 
-    games: dict[str, dict] = {}
-    for row in rows:
-        game = games.setdefault(row["game_id"], _game_shell(
-            row["game_id"], row["kickoff_utc"], row["home_team"], row["away_team"]))
-        game["status"] = "locked" if _protocol(row) == LOCK_PROTOCOL else "legacy"
-        game["locked_at_utc"] = game["locked_at_utc"] or row["locked_at_utc"]
-        game["late"] = game["late"] or bool(row["late"])
-        if row["result"] is not None and game["result"] is None:
-            game["result"] = {"home_score": row["home_score"], "away_score": row["away_score"],
-                              "home_win": bool(row["result"])}
-        game["models"][row["model"]] = {
-            "p_home": round(row["p_home"], 4),
-            "p_away": round(1.0 - row["p_home"], 4),
-            "fair_home": row["fair_home"], "fair_away": row["fair_away"],
-            "model_version": row["model_version"],
-            "fitted_through": row["fitted_through"],
-            "locked_at_utc": row["locked_at_utc"],
-            "kickoff_revision": row["kickoff_revision"],
-        }
-
-    locked_games = set(games)
-    for row in previews:
-        if row["game_id"] in locked_games:
-            continue
-        hold = row["hold_reason"] or (statuses.get(row["game_id"]) or {}).get("hold_reason")
-        game = games.setdefault(row["game_id"], _game_shell(
-            row["game_id"], row["kickoff_utc"], row["home_team"], row["away_team"]))
-        if hold:
-            game["status"] = "research_hold"     # visible, research-only, before and after kickoff
-        else:
-            game["status"] = "missed" if row["game_id"] in missed_games else "preview"
-        if game["status"] in ("preview", "research_hold"):
-            game["models"][row["model"]] = {
-                "p_home": round(row["p_home"], 4),
-                "p_away": round(1.0 - row["p_home"], 4),
-                "fair_home": row["fair_home"], "fair_away": row["fair_away"],
-                "model_version": row["model_version"],
-                "fitted_through": row["fitted_through"],
-                "previewed_at_utc": row["previewed_at_utc"],
-                "official": False, "research_only": bool(hold), "hold_reason": hold,
-            }
-    for game_id, game in games.items():
-        status = statuses.get(game_id, {})
-        game["lifecycle"] = status.get("lifecycle")
-        game["grading_state"] = status.get("grading_state")
-        game["status_reason"] = status.get("reason")
-        game["pregame_lifecycle"] = status.get("pregame_lifecycle")
-        game["kickoff_revision"] = status.get("revision")
-        game["hold_reason"] = status.get("hold_reason")
-        game["research_only"] = bool(game["hold_reason"])
-        game["official"] = game["status"] == "locked"
-        if game["research_only"] and game["official"]:
-            raise RuntimeError("fixture %s carries postseason_research_hold and an official lock; refusing to export"
-                               % game_id)
-    ratings = [dict(r) for r in con.execute(
-        "SELECT * FROM fbs_ratings WHERE season=? ORDER BY rating DESC", (season,)).fetchall()]
-    meta = {r["key"]: json.loads(r["value"]) for r in con.execute(
-        "SELECT key,value FROM fbs_model_meta").fetchall()}
-    meta["unresolved"] = unresolved
-    meta["runs"] = last_runs(con) if _table_exists(con, "fbs_run_reports") else {}
-    ordered = sorted(games.values(), key=lambda g: g["kickoff_utc"])
-    visible = [g for g in ordered if g["status"] != "research_hold"]
-    return {
-        "league": "ncaaf",
-        "default_model": DEFAULT_MODEL,
-        "models": [{"id": m, "label": MODEL_LABELS[m], "note": MODEL_NOTES[m]} for m in MODEL_IDS],
-        "records": records,
-        "season": season,
-        "games": ordered,
-        "ratings": ratings,
-        "meta": meta,
-        "state": "available" if visible else "awaiting_first_lock",
-        "source": "standalone FBS model database",
+    outcomes = con.execute("SELECT outcome, reason, COUNT(*) FROM fbs_window_outcomes WHERE season = ? "
+                           "GROUP BY 1, 2", (season,)).fetchall()
+    diagnostics = {
+        "games": {g: {"lifecycle": st.get("lifecycle"), "grading_state": st.get("grading_state"),
+                      "status_reason": st.get("reason"), "pregame_lifecycle": st.get("pregame_lifecycle"),
+                      "revision": st.get("revision")} for g, st in statuses.items()},
+        "cutoffs": {"%s|%s" % (row[0], row[1] or ""): row[2] for row in outcomes},
+        "unresolved": [u for u in unresolved_queue(con) if u["season"] == season],
+        "frozen_rows": len(frozen_rows),
+        "legacy_rows_excluded": legacy_rows,
+        "runs": last_runs(con),
     }
+    ratings = [dict(r) for r in con.execute(
+        "SELECT * FROM fbs_ratings WHERE season = ? ORDER BY rating DESC", (season,)).fetchall()]
+    meta = {r["key"]: json.loads(r["value"]) for r in con.execute("SELECT key, value FROM fbs_model_meta").fetchall()}
+    return {**base, "records": records, "games": games, "ratings": ratings, "meta": meta,
+            "state": "available" if games else "awaiting_first_projection", "diagnostics": diagnostics}
 
 
 def main(argv=None) -> int:
