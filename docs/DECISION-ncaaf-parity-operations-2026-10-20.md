@@ -47,3 +47,40 @@ Distinguish **current-fixture integrity** from **past-game outcome grading**.
 ## Promotion
 
 This is permission to **implement and test** the above on a candidate branch, not permission to ship. A reviewed PR to dev is the next step only after documented test evidence and visual QA. Operational parity certification and scheduled T-90 locking are separate, later authorization decisions.
+
+
+## Review of lifecycle candidate 4f4385ef (2026-10-20)
+
+Remote candidate `candidate/ncaaf-parity-repair-2026-10-20` verified at `4f4385efeb443a162b015a7a61f2101b3320024e`. The worker reports 72 tests, the unchanged 2,397-game true-path parity (C2 0, G2h 1.5e-8), 53/53 cached ESPN grade checks, and an isolated scratch certificate. These are worker reports reviewed against committed code; this documentation update did not execute the remote data-dependent tests.
+
+### Owner policy ruling: unknown statuses and operational metrics
+
+**Reject counting every unknown-status unverified game as an ordinary `missed_t90_window`.** An unverified fixture was not eligible for a lock under the approved safety rule. Use disjoint reasons and counters:
+
+- `locked_eligible`: independently verified, valid scheduled status and kickoff, certified, locked inside its official window.
+- `missed_t90_window`: an eligible, verified scheduled fixture reached kickoff without its required lock (including runner not scheduled, certificate absent, or process failure); annotate reason.
+- `blocked_unverified_at_cutoff`: fixture existed in previews but latest required source/status/identity could not be verified at its cutoff. Not part of *eligible* lock opportunities; still an operational loss requiring alert and root-cause record. Retain last verified fixture and changed-status evidence for diagnostics.
+- `no_eligible_window`: postponed, delayed with unconfirmed kickoff, suspended, cancelled, abandoned, no-contest, explicit identity mismatch; never silently classify as a successful or missed eligible lock.
+
+On source outages, retain separate `source_unavailable` / `blocked_unverified` incidents. Do not infer a valid final kickoff, status, or settlement from stale previews or from the absence of an ESPN event. If status later becomes authoritative, append a source-based resolution; do not retroactively claim a frozen lock.
+
+The current `record_missed_windows()` in `backend/fbs_model_store.py` excludes `NO_WINDOW_LIFECYCLES` and identity changes but **does not exclude `unknown`**. Fix before promotion; add explicit verification-gap tests.
+
+### Owner policy ruling: retries and alerts
+
+**Approve** historical unresolved-result exponential retry beginning at 15 minutes and capped at **six hours**, and an unresolved-grade alert after **24 hours after kickoff**. These are operational limits, not a licence to infer an outcome or trigger a new lock.
+
+**Not sufficient for pregame failures.** If a candidate enters an unverified state during a prospective T-90 lock window, create an **immediate lock-risk alert** and visible `blocked_unverified` incident. Do not wait 24 hours after kickoff. Schedule-level polling or automatic retries in a live system remain unapproved. The queue/status implementation must not rely on a previously issued lock to discover unknown pregame fixtures.
+
+The current `forecast_step()` upserts `fbs_game_status` for unknown fixtures but does not add an `fbs_unresolved` entry for every such game. The `record_unresolved()` flow is primarily in historical grading and currently requires a locked, due-to-grade game. The agent must add a first-class pregame incident lifecycle and observable queue for games that never locked.
+
+### Code-review blockers separate from model parity
+
+1. **Forecast transaction boundary.** `forecast_step()` claims a preflight-and-write transaction, but helpers including `observe_fixture()`, `set_game_status()`, `upsert_previews()`, `lock_forecasts()`, and `record_missed_windows()` commit independently, as do reporting helpers. Refactor helpers to allow `commit=False`, and use one explicit transaction for the verified forecast/write batch; if it fails, rollback all fixture/status/preview/lock/missed-event/rating/meta changes in that batch. Record failure information separately if useful. Tests must inject a failure *after* writing fixtures and previews but *before* lock insertion and assert no partial state. Keep historical grade transaction independent.
+2. **Migration preflight.** `open_db(readonly=False)` executes schema and `_migrate()`. Before any operational-use approval, create backup + integrity-check + schema-diff + rollback/rehearsal evidence on a separately copied DB. Verify historical immutable triggers, legacy exclusion, new tables/columns and no row mutation beyond documented migration. Do not open the operational DB writable during this phase.
+3. **Fresh public-source dry run.** Execute a preview-only dry run against *live* ESPN in a scratch DB, without a valid operational parity certificate, and reconcile event IDs, status names, kickoff timestamps, duplicates, missing/contradictory status, FBS team eligibility, and model rows. No locks.
+4. **True neutral-site integration.** Current test stubs the Elo base; add a deterministic fixture that exercises the real baseline from actual event loading through final `service.fit/predict` and checks the neutral-home adjustment. Current model-side conference wiring is useful but is not full end-to-end coverage.
+5. **Browser QA.** Requires explicitly authorized isolated server; no restart of existing managed `:3096` or prod. Inspect visible previews, locks, unverified state, postponed/cancelled, grade/void, source outage, coverage/records and legacy exclusions.
+6. **Certificate.** Passing scratch certificate authorizes no operational lock. After code changes, code and coverage fingerprints must invalidate the earlier certificate. Keep the live DB certificate absent and locks disabled, no scheduler or dev merge until separate owner approval.
+
+**Promotion verdict:** continue candidate fixes and isolated testing. No operational certificate, deployment, T-90 schedule, or `dev` merge authorized by this note.
