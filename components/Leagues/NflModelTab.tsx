@@ -10,26 +10,6 @@ interface Line {
   source: 'snapshot' | 'lock row'
 }
 
-interface LeanMarket {
-  side: 'home' | 'away' | 'over' | 'under' | 'none'
-  reason?: string
-  edge_pts?: number | null
-  edge_pp?: number | null
-}
-
-interface WagerMarket {
-  status: string
-  reason?: string
-}
-
-interface Wager {
-  policy: string
-  status: string
-  reason: string | null
-  policy_note?: string
-  markets?: Record<string, WagerMarket>
-}
-
 interface Lock {
   proj_home: number | null
   proj_away: number | null
@@ -40,10 +20,8 @@ interface Lock {
   preview: boolean
   previewed_at: string | null
   line: Line
+  pick: string
   grade: { brier: number | null; margin_err: number; total_err: number; ats: string; su: string | null } | null
-  prediction?: { proj_home: number | null; proj_away: number | null; margin: number; total: number | null; p_home_win: number }
-  lean?: { ml: LeanMarket; spread: LeanMarket; total: LeanMarket }
-  wager?: Wager
 }
 
 interface ModelInfo {
@@ -82,8 +60,6 @@ interface RecordRow extends ModelInfo {
   awaiting: number
   su: Tally | null
   ats: Tally | null
-  total_lean?: Tally | null
-  wager?: { policy: string; issued: number; priced: number; status: string; reason?: string; policy_note?: string } | null
   mean_brier?: number | null
   brier_n?: number
 }
@@ -145,34 +121,16 @@ function modelSide(home: string, away: string, homeMargin: number) {
 }
 
 function pickSide(game: ModelGame, lock: Lock) {
+  // The side comes from the backend (nfl_metrics.pick_side), not recomputed here, so the page
+  // can never disagree with the grader. 'no_pick' is the model sitting exactly on the line.
+  const side = lock.pick
   const marketMargin = lock.line.spread
-  if (marketMargin == null) return null
+  if (side === 'no_line' || marketMargin == null) return 'No line'
+  if (side === 'no_pick') return 'No pick'
   const spread = Math.abs(marketMargin)
-  if (lock.margin === marketMargin) return 'No lean' // model agrees with the line exactly: no side
-  const homePick = lock.margin > marketMargin
-  if (marketMargin === 0) return `${homePick ? game.home : game.away} Pick`
-  if (homePick) return `${game.home} ${marketMargin > 0 ? `-${one(spread)}` : `+${one(spread)}`}`
+  if (marketMargin === 0) return `${side === 'home' ? game.home : game.away} Pick`
+  if (side === 'home') return `${game.home} ${marketMargin > 0 ? `-${one(spread)}` : `+${one(spread)}`}`
   return `${game.away} ${marketMargin < 0 ? `-${one(spread)}` : `+${one(spread)}`}`
-}
-
-function mlLean(game: ModelGame, lock: Lock) {
-  const side = lock.lean?.ml?.side
-  if (!side || side === 'none') return 'No lean'
-  return side === 'home' ? `${game.home} ML` : `${game.away} ML`
-}
-
-function totalLean(lock: Lock) {
-  const side = lock.lean?.total?.side
-  if (!side || side === 'none') return 'No lean'
-  const line = lock.line.total
-  return side === 'over' ? `Over${line == null ? '' : ` ${one(line)}`}` : `Under${line == null ? '' : ` ${one(line)}`}`
-}
-
-function wagerLabel(lock: Lock) {
-  const status = lock.wager?.status
-  if (status === 'qualifying_wager') return 'Qualifying wager'
-  if (status === 'insufficient_price_data') return 'No price data'
-  return 'No qualifying wager'
 }
 
 function edge(lock: Lock) {
@@ -278,16 +236,13 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
+      <div className="flex justify-end">
+        <div className="text-right">
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
-        <span>ML lean <b className="font-medium text-zinc-100">{mlLean(game, lock)}</b></span>
-        <span>ATS lean <b className="font-medium text-zinc-100">{pickSide(game, lock) || 'No line'}</b></span>
-        <span>Total lean <b className="font-medium text-zinc-100">{totalLean(lock)}</b></span>
-      </div>
-      <div className="text-xs text-zinc-500">
-        Wager · <b className="font-medium text-zinc-200">{wagerLabel(lock)}</b>
-        {lock.wager && <span className="text-zinc-600"> · {lock.wager.policy}</span>}
-      </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
         <span>Line <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
         <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
         <span>Edge <b className="font-medium tabular-nums text-zinc-100">{edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`}</b></span>
@@ -313,10 +268,7 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-6 xl:grid-cols-9">
             <Metric label="Line" value={lineSide(game.home, game.away, lock.line.spread)} />
             <Metric label="Model line" value={modelSide(game.home, game.away, lock.margin)} />
-            <Metric label="ML lean" value={mlLean(game, lock)} />
-            <Metric label="ATS lean" value={pickSide(game, lock) || 'No line'} />
-            <Metric label="Total lean" value={totalLean(lock)} />
-            <Metric label="Wager" value={wagerLabel(lock)} />
+            <Metric label="Model pick" value={pickSide(game, lock) || 'No line'} />
             <Metric label="Edge" value={edge(lock) == null ? '—' : `${one(edge(lock)!)} pts`} emphasis />
             <Metric label="Total" value={lock.line.total == null ? '—' : one(lock.line.total)} />
             <Metric label="Model total" value={lock.total == null ? '—' : one(lock.total)} />
@@ -516,7 +468,7 @@ export default function NflModelTab() {
       </>}
 
       {view === 'record' && <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><span className="text-zinc-500">Leans · </span><TallyLabel title="Winner" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="ATS" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Total" tally={selectedRecord.total_lean ?? null} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p><p className="mt-0.5 text-xs text-zinc-500">Wagers · {selectedRecord?.wager?.issued ?? 0} issued{selectedRecord?.wager?.priced ? ` · ${selectedRecord.wager.priced} priced pregame` : ''}{selectedRecord?.wager?.policy_note ? ` · ${selectedRecord.wager.policy_note}` : ''}</p></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100">{data.season} record · {selectedModel?.label}</h2><p className="text-sm text-zinc-400">{!selectedRecord || selectedRecord.graded === 0 ? `No graded picks yet · ${selectedRecord?.awaiting ?? 0} awaiting a final` : <><TallyLabel title="Pick" tally={selectedRecord.ats} /> <span className="mx-2 text-zinc-600">·</span><TallyLabel title="Straight-up" tally={selectedRecord.su} /> <span className="mx-2 text-zinc-600">·</span>{selectedRecord.graded} graded{selectedRecord.awaiting ? ` · ${selectedRecord.awaiting} awaiting` : ''}</>}</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm text-zinc-500">Week <ModelSelect value={activeRecordWeek ?? ''} onChange={event => setRecordWeek(event.target.value ? Number(event.target.value) : null)}>{gradedWeeks.map(w => <option key={w} value={w}>{w}</option>)}</ModelSelect></label>
             <div className="flex gap-1" aria-label="Filter by edge">{([['all', 'All'], ['3', 'Edge 3+'], ['6', 'Edge 6+']] as [EdgeFilter, string][]).map(([key, label]) => <button key={key} type="button" onClick={() => setThreshold(key)} aria-pressed={threshold === key} className={`rounded-full px-3 py-1.5 text-sm ${threshold === key ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-100'}`}>{label}</button>)}</div>
@@ -524,7 +476,7 @@ export default function NflModelTab() {
         </div>
         {recordGames.length === 0 ? <p className="text-sm text-zinc-400">{data.weeks.length ? 'Loading season picks…' : 'No season picks have been locked yet.'}</p> : <RecordCards games={visibleRecordGames} version={version} threshold={threshold} />}
         <MissedLockList games={missedRecordGames} version={version} />
-        <p className="text-xs text-zinc-500">Leans are graded predictions, never wagers. Wagers are issued only by a validated policy (v1 is observe-only).</p>
+        <p className="text-xs text-zinc-500">The pick record counts only finalized, graded, locked picks. no_pick, no_line and pending games are never counted as wins or losses.</p>
       </section>}
 
       {view === 'ratings' && (ratings ? <TeamRatings payload={ratings} /> : <div className="h-40 animate-pulse rounded-2xl bg-zinc-800" />)}

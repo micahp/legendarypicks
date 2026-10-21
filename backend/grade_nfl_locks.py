@@ -41,14 +41,13 @@ EPS = 1e-12
 
 
 def ats(actual_margin, proj_margin, spread):
-    if spread is None:
-        return "no_line"
-    if abs(proj_margin - spread) < 1e-9:
-        return "no_pick"
+    side = mt.pick_side(proj_margin, spread)
+    if side in ("no_pick", "no_line"):
+        return side
     home = mt.ats_result(actual_margin, spread)       # cover / miss / push for the home side
     if home == "push":
         return "push"
-    took_home = proj_margin > spread
+    took_home = side == "home"
     return "win" if (home == "cover") == took_home else "loss"
 
 

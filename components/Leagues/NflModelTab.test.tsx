@@ -9,6 +9,7 @@ const line = { spread: -1.5, total: 45.5, home_moneyline: null, away_moneyline: 
   captured_at: 't', source: 'snapshot' as const }
 const lock = (pHome: number, grade: unknown) => ({
   proj_home: 21, proj_away: 24, margin: -3, total: 45, p_home_win: pHome, locked_at: 't', line, grade,
+  pick: 'away',
 })
 
 const payload = {
@@ -73,8 +74,8 @@ describe('NFL model tab grading', () => {
     render(<NflModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     await waitFor(() => expect(screen.getByText('2026 record · v1 points')).toBeTruthy())
-    expect(screen.getByText('Winner 8-3 · 1 tie')).toBeTruthy()
-    expect(screen.getByText('ATS 5-6 · 1 push')).toBeTruthy()
+    expect(screen.getByText('Straight-up 8-3 · 1 tie')).toBeTruthy()
+    expect(screen.getByText('Pick 5-6 · 1 push')).toBeTruthy()
     expect(screen.getByText('12 graded · 1 awaiting')).toBeTruthy()
     expect(await screen.findByText('WIN')).toBeTruthy()
     expect(document.body.textContent).not.toMatch(/\d%\s*(correct|right|winner)/i)
@@ -120,18 +121,30 @@ describe('NFL model tab grading', () => {
     expect(await screen.findByText('Line · lock row · captured t')).toBeTruthy()
   })
 
-  it('shows no lean, not the away side, when the model agrees with the line', async () => {
-    const level = { ...payload.games[0].locks[V1], margin: -1.5, p_home_win: 0.4,
-      lean: { ml: { side: 'away' }, spread: { side: 'none', reason: 'level_with_line' },
-              total: { side: 'over' } },
-      wager: { policy: 'nfl-wager-policy-v1', status: 'no_qualifying_wager', reason: 'observe_only',
-               markets: { ml: { status: 'no_qualifying_wager' } } } }
+  it('shows No pick, not an away selection, when the model sits on the line', async () => {
+    const level = { ...payload.games[0].locks[V1], pick: 'no_pick', margin: -1.5 }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
       ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: level } }] }),
     }))
     render(<NflModelTab />)
-    expect(await screen.findByText('No lean')).toBeTruthy()
-    expect(screen.getByText('CHI ML')).toBeTruthy()
-    expect(screen.getByText(/No qualifying wager/)).toBeTruthy()
+    expect(await screen.findByText('No pick')).toBeTruthy()
+  })
+
+  it('shows No line when there is no usable spread', async () => {
+    const noLine = { ...payload.games[0].locks[V1], pick: 'no_line', line: { ...line, spread: null } }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: noLine } }] }),
+    }))
+    render(<NflModelTab />)
+    expect((await screen.findAllByText('No line')).length).toBeGreaterThan(0)
+  })
+
+  it('renders exactly the pick side the backend returned', async () => {
+    const homePick = { ...payload.games[0].locks[V1], pick: 'home' } // home side vs line -1.5
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: homePick } }] }),
+    }))
+    render(<NflModelTab />)
+    expect(await screen.findByText('GB +1.5')).toBeTruthy()
   })
 })
