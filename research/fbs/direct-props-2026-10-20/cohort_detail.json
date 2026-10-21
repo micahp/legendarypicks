@@ -1,0 +1,50 @@
+{
+  "pass_attempts": {
+    "label": "passing attempts",
+    "q75_volume": 141.75,
+    "active_rate_median": 0.07692307692307693,
+    "rows_total": 9059,
+    "rows_in_game": 2534,
+    "frac_in_game": 0.27972182360083897,
+    "delta_A_total": -0.3244221322426161,
+    "delta_A_contrib_in_game": 0.2776118399627258,
+    "delta_A_contrib_zero": -0.602033972205342,
+    "delta_A_contrib_in_game_pct": -85.57117791061071
+  },
+  "passing_yards": {
+    "label": "passing yards",
+    "q75_volume": 1187.75,
+    "active_rate_median": 0.0,
+    "rows_total": 9059,
+    "rows_in_game": 2389,
+    "frac_in_game": 0.26371564190307983,
+    "delta_A_total": -2.881069168043076,
+    "delta_A_contrib_in_game": 2.8028949026472314,
+    "delta_A_contrib_zero": -5.683964070690308,
+    "delta_A_contrib_in_game_pct": -97.28662309593409
+  },
+  "rush_attempts": {
+    "label": "rushing carries",
+    "q75_volume": 54.0,
+    "active_rate_median": 0.18181818181818182,
+    "rows_total": 21800,
+    "rows_in_game": 7921,
+    "frac_in_game": 0.363348623853211,
+    "delta_A_total": -0.1583069481513907,
+    "delta_A_contrib_in_game": 0.11165842842957543,
+    "delta_A_contrib_zero": -0.26996537658096614,
+    "delta_A_contrib_in_game_pct": -70.53286651878048
+  },
+  "rushing_yards": {
+    "label": "rushing yards",
+    "q75_volume": 245.0,
+    "active_rate_median": 0.09090909090909091,
+    "rows_total": 21800,
+    "rows_in_game": 7036,
+    "frac_in_game": 0.32275229357798163,
+    "delta_A_total": -1.582262359074451,
+    "delta_A_contrib_in_game": 0.410301812915802,
+    "delta_A_contrib_zero": -1.992564171990253,
+    "delta_A_contrib_in_game_pct": -25.931338792373804
+  }
+}
