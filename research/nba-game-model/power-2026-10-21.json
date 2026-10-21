@@ -1,0 +1,336 @@
+{
+  "analysis_date": "2026-10-21",
+  "bootstrap_protocol": {
+    "confidence_interval": "two-sided 95% percentile interval (2.5th, 97.5th percentiles)",
+    "method": "Paired nonparametric cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+    "random_number_generator": "Python random.Random (MT19937)",
+    "replicates": 2000,
+    "resampling_changed": false,
+    "seed": 20261021
+  },
+  "date_variance_method": {
+    "plain_date_delta": "For each date, the arithmetic mean of that date\u2019s game-level paired Brier-loss differences; its sample SD and SD/sqrt(number of dates) are reported for transparency.",
+    "pooled_sd": "Within-split sample variances pooled across test and confirmation with degrees-of-freedom weights; split means are not pooled.",
+    "power_planning_date_influence": "For date d with block sum S_d, game count m_d, game-weighted overall mean delta mu, and average games/date mbar, q_d = mu + (S_d - mu*m_d)/mbar. The sample SD of q_d is the date-cluster influence SD; SD/sqrt(n_dates) estimates uncertainty for the same game-weighted ratio estimator used by the existing paired bootstrap."
+  },
+  "delta_convention": "candidate minus comparator; lower is better, so positive G1-G3 favors G3 and positive G1-G2 favors G2",
+  "frozen_replay": {
+    "benchmark_delta_comparison": {
+      "all_six_match_within_floating_point_roundoff": true,
+      "max_absolute_point_delta_difference": 2.894819800536297e-17
+    },
+    "candidate_set_changed": false,
+    "gate_changed": false,
+    "purpose": "extract per-date paired losses from the unchanged, pinned chronological replay",
+    "raw_date_series_written_to_repo": false,
+    "refit": false,
+    "source_asset_hashes": {
+      "nba_schedule_2017.parquet": "9d0e3e31133e8cbc7672234172d26950e44c6ac455c076732f09f185f2f51527",
+      "nba_schedule_2018.parquet": "0b8bd8690aede3b58b71a32b067ea476bc64a1b0afe27aaed65b8593623ab673",
+      "nba_schedule_2019.parquet": "3990c1f0b284b6ef3ed009d3a9b42e4ed4e5a2e3fcf6f0951301bf701fcc0afa",
+      "nba_schedule_2020.parquet": "6fb45790190b0ce2d3f97cd920c5c8a33ba5f8b1df041cc12ba00ca800fc3156",
+      "nba_schedule_2021.parquet": "a2f694a8ea19e4f1418350d45bd6684c3ac15b0ddb589ca693c84383ad09cc73",
+      "nba_schedule_2022.parquet": "e7a968c6f56a9ef0cb2c89d8a315154b6982beb68b42a7fe3e0a4c1464b77bb7",
+      "nba_schedule_2023.parquet": "44e826e8b432b863ddec3976a1c72eb2e5ce345af32e8d0c8b84a6137f6d2164",
+      "nba_schedule_2024.parquet": "2d2cd6e93a462a61981e59db5e12132bf4b21bb946fc4f83b75f58bd650f9aa4",
+      "nba_schedule_2025.parquet": "959fdff85cf5892f83166d90cc84964075e13440ada5cff2a6bbe0bd9d4052fa",
+      "nba_schedule_2026.parquet": "1604c62a6d0a03dace9f1b8238c1374ecf87efeb6455175514a2d3d064fe520e",
+      "team_box_2017.parquet": "c296120a0c98238ee23cc83d7ffe849e2ce87fcdd85a82721a24d3ca469783ea",
+      "team_box_2018.parquet": "9e58866f324bb49c880db4b57e323d0bb5c3d94f9006f55e63d5337cbbcdd4ca",
+      "team_box_2019.parquet": "3f3f15ccfd1f676e0aaf5bfbdb8fd5cd69f9a21a4961cd4f6337d857593c788a",
+      "team_box_2020.parquet": "e96bec73056f08ce21bce63ca6d329fc1cf62d7229608d949bfce102df01b56a",
+      "team_box_2021.parquet": "56e59fe9062942933c708ae4ba2172ec4dda055de9c6a3409f0816ac363fdd58",
+      "team_box_2022.parquet": "f8185936836a81240d6f170ec7afeab47e3e736a718fe2c9f72999e681434b7f",
+      "team_box_2023.parquet": "b86bb087fe57eeeacead4e27965a20d1e67fdb39a3ee2ca36294a0b7d014e9b6",
+      "team_box_2024.parquet": "5e4d1b7a2ccc287f212f65888dcd674e370adec8a0e32d7ae0825eecacaaa8a9",
+      "team_box_2025.parquet": "f735bf3b743618e50987f3e3e296734e1dba43c450a21af848d7c34f23bf2aee",
+      "team_box_2026.parquet": "db846dfb39b0f75eee50ad91b1b5b7a7a62dd31d3ec0bb066a0a3bb08e366f7e"
+    },
+    "splits_changed": false
+  },
+  "metric": "winner_brier",
+  "pooled_test_plus_confirm_influence_sd_per_date": {
+    "G1-G2": 0.03941883247006562,
+    "G1-G3": 0.03577802168234827,
+    "G2-G3": 0.008965054456792671
+  },
+  "power_analysis": {
+    "assumptions": {
+      "alpha_two_sided": 0.05,
+      "dates_per_season": 164,
+      "eligible_games_per_season_reference": 1229,
+      "future_evidence_unit": "independent NBA local game-date clusters",
+      "interpretation": "Additional independent seasons only, assuming the selected observed effect and planning SD remain stable. These are normal-approximation planning estimates, not an adoption gate or a refit.",
+      "power_formula": "Phi(-z_(1-alpha/2)-lambda) + 1 - Phi(z_(1-alpha/2)-lambda), lambda = abs(effect_delta)*sqrt(n)/sigma_date",
+      "required_dates_formula": "n = ((z_(1-alpha/2) + z_power) * sigma_date / abs(effect_delta))^2",
+      "target_power": 0.8,
+      "variance_scenarios": [
+        "confirmation date-cluster influence SD",
+        "pooled test plus confirmation date-cluster influence SD"
+      ],
+      "z_critical": 1.959963984540054,
+      "z_target_power": 0.8416212335729143
+    },
+    "comparisons": {
+      "G1-G2": {
+        "observed_confirm_2025_26_delta": {
+          "effect_delta_candidate_minus_comparator": 0.0032665061841034293,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 9,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.009357373421668334,
+                "3": 0.005402482063908062,
+                "5": 0.00418474461234004
+              },
+              "planning_sd_per_date": 0.042773230075329766,
+              "power_by_additional_seasons": {
+                "1": 0.16470769117485817,
+                "3": 0.39523345758871953,
+                "5": 0.589759431522522
+              },
+              "required_additional_dates_ceiling": 1346,
+              "required_additional_dates_continuous": 1345.8132530046234,
+              "required_additional_season_equivalents": 8.206178371979412
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 7,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.008623541748401497,
+                "3": 0.00497880414980758,
+                "5": 0.0038565651112466275
+              },
+              "planning_sd_per_date": 0.03941883247006562,
+              "power_by_additional_seasons": {
+                "1": 0.18565104449970282,
+                "3": 0.4515648032011943,
+                "5": 0.6601950580501568
+              },
+              "required_additional_dates_ceiling": 1144,
+              "required_additional_dates_continuous": 1143.005233814173,
+              "required_additional_season_equivalents": 6.969544108623006
+            }
+          }
+        },
+        "observed_test_2024_25_delta": {
+          "effect_delta_candidate_minus_comparator": -9.514754677669712e-05,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 9672,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.009357373421668334,
+                "3": 0.005402482063908062,
+                "5": 0.00418474461234004
+              },
+              "planning_sd_per_date": 0.042773230075329766,
+              "power_by_additional_seasons": {
+                "1": 0.05009296417536735,
+                "3": 0.05027892422944691,
+                "5": 0.05046492649580259
+              },
+              "required_additional_dates_ceiling": 1586196,
+              "required_additional_dates_continuous": 1586195.0118162134,
+              "required_additional_season_equivalents": 9671.920803757399
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 8215,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.008623541748401497,
+                "3": 0.00497880414980758,
+                "5": 0.0038565651112466275
+              },
+              "planning_sd_per_date": 0.03941883247006562,
+              "power_by_additional_seasons": {
+                "1": 0.05010946028763463,
+                "3": 0.0503284248061765,
+                "5": 0.05054744781969722
+              },
+              "required_additional_dates_ceiling": 1347163,
+              "required_additional_dates_continuous": 1347162.5400538666,
+              "required_additional_season_equivalents": 8214.405732035772
+            }
+          }
+        }
+      },
+      "G1-G3": {
+        "observed_confirm_2025_26_delta": {
+          "effect_delta_candidate_minus_comparator": 0.00367594131990176,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 6,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.008420750697406514,
+                "3": 0.004861722681926379,
+                "5": 0.003765874196195945
+              },
+              "planning_sd_per_date": 0.03849185992226279,
+              "power_by_additional_seasons": {
+                "1": 0.2312968777483524,
+                "3": 0.5629166020358207,
+                "5": 0.780747751035179
+              },
+              "required_additional_dates_ceiling": 861,
+              "required_additional_dates_continuous": 860.613843921616,
+              "required_additional_season_equivalents": 5.247645389765951
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 5,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.007827052307732408,
+                "3": 0.004518950756830587,
+                "5": 0.003500364204707253
+              },
+              "planning_sd_per_date": 0.03577802168234827,
+              "power_by_additional_seasons": {
+                "1": 0.2602460918614523,
+                "3": 0.6251426746417119,
+                "5": 0.8369869605065969
+              },
+              "required_additional_dates_ceiling": 744,
+              "required_additional_dates_continuous": 743.5380197143696,
+              "required_additional_season_equivalents": 4.533768412892497
+            }
+          }
+        },
+        "observed_test_2024_25_delta": {
+          "effect_delta_candidate_minus_comparator": 0.0012609603152123616,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 45,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.008420750697406514,
+                "3": 0.004861722681926379,
+                "5": 0.003765874196195945
+              },
+              "planning_sd_per_date": 0.03849185992226279,
+              "power_by_additional_seasons": {
+                "1": 0.07039470025513306,
+                "3": 0.11233533771412041,
+                "5": 0.15529518274849696
+              },
+              "required_additional_dates_ceiling": 7314,
+              "required_additional_dates_continuous": 7313.792427204936,
+              "required_additional_season_equivalents": 44.59629528783498
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 39,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.007827052307732408,
+                "3": 0.004518950756830587,
+                "5": 0.003500364204707253
+              },
+              "planning_sd_per_date": 0.03577802168234827,
+              "power_by_additional_seasons": {
+                "1": 0.0736455996590768,
+                "3": 0.1224115481829785,
+                "5": 0.1723637084281049
+              },
+              "required_additional_dates_ceiling": 6319,
+              "required_additional_dates_continuous": 6318.841808476887,
+              "required_additional_season_equivalents": 38.529523222420046
+            }
+          }
+        }
+      }
+    }
+  },
+  "source_benchmark_sha256": "267c5afa88ae2ba7c23d66f587ccf734f7527e82de1df77d2d668cbbfa31b365",
+  "splits": {
+    "confirm_2026": {
+      "date_clusters": 164,
+      "eligible_games": 1229,
+      "winner_brier_pairs": {
+        "G1-G2": {
+          "candidate": "G1",
+          "cluster_bootstrap_ci95": [
+            -0.003299279805623923,
+            0.009833685739093784
+          ],
+          "cluster_bootstrap_ci95_width": 0.013132965544717708,
+          "cluster_influence_sd_of_mean": 0.003340028124495557,
+          "cluster_influence_sd_per_date": 0.042773230075329766,
+          "comparator": "G2",
+          "observed_mean_delta_game_weighted": 0.0032665061841034293,
+          "per_date_daily_mean_delta_sd": 0.04635543666874449,
+          "sd_of_per_date_mean_at_n_dates": 0.00361975146427343
+        },
+        "G1-G3": {
+          "candidate": "G1",
+          "cluster_bootstrap_ci95": [
+            -0.0021035456528717077,
+            0.009602364409222743
+          ],
+          "cluster_bootstrap_ci95_width": 0.011705910062094451,
+          "cluster_influence_sd_of_mean": 0.003005709283074524,
+          "cluster_influence_sd_per_date": 0.03849185992226279,
+          "comparator": "G3",
+          "observed_mean_delta_game_weighted": 0.00367594131990176,
+          "per_date_daily_mean_delta_sd": 0.041355182599513825,
+          "sd_of_per_date_mean_at_n_dates": 0.0032292972200781483
+        },
+        "G2-G3": {
+          "candidate": "G2",
+          "cluster_bootstrap_ci95": [
+            -0.0011354266859428131,
+            0.0018564639148760153
+          ],
+          "cluster_bootstrap_ci95_width": 0.0029918906008188284,
+          "cluster_influence_sd_of_mean": 0.0007704331259244938,
+          "cluster_influence_sd_per_date": 0.00986635804385656,
+          "comparator": "G3",
+          "observed_mean_delta_game_weighted": 0.0004094351357983306,
+          "per_date_daily_mean_delta_sd": 0.010532519368406419,
+          "sd_of_per_date_mean_at_n_dates": 0.0008224515859643178
+        }
+      }
+    },
+    "test": {
+      "date_clusters": 323,
+      "eligible_games": 2460,
+      "winner_brier_pairs": {
+        "G1-G2": {
+          "candidate": "G1",
+          "cluster_bootstrap_ci95": [
+            -0.003993523261688815,
+            0.004056719975280735
+          ],
+          "cluster_bootstrap_ci95_width": 0.00805024323696955,
+          "cluster_influence_sd_of_mean": 0.002092504293031941,
+          "cluster_influence_sd_per_date": 0.037606907236348804,
+          "comparator": "G2",
+          "observed_mean_delta_game_weighted": -9.514754677669712e-05,
+          "per_date_daily_mean_delta_sd": 0.042460888515937836,
+          "sd_of_per_date_mean_at_n_dates": 0.0023625870361302496
+        },
+        "G1-G3": {
+          "candidate": "G1",
+          "cluster_bootstrap_ci95": [
+            -0.0022764975915890097,
+            0.004952673014203008
+          ],
+          "cluster_bootstrap_ci95_width": 0.007229170605792017,
+          "cluster_influence_sd_of_mean": 0.0019097571772223971,
+          "cluster_influence_sd_per_date": 0.034322539383510715,
+          "comparator": "G3",
+          "observed_mean_delta_game_weighted": 0.0012609603152123616,
+          "per_date_daily_mean_delta_sd": 0.03874803171585478,
+          "sd_of_per_date_mean_at_n_dates": 0.002155998157529848
+        },
+        "G2-G3": {
+          "candidate": "G2",
+          "cluster_bootstrap_ci95": [
+            0.0004603895964952928,
+            0.0022550156723580078
+          ],
+          "cluster_bootstrap_ci95_width": 0.001794626075862715,
+          "cluster_influence_sd_of_mean": 0.0004714130341616283,
+          "cluster_influence_sd_per_date": 0.008472329688764692,
+          "comparator": "G3",
+          "observed_mean_delta_game_weighted": 0.0013561078619890587,
+          "per_date_daily_mean_delta_sd": 0.010241626355172609,
+          "sd_of_per_date_mean_at_n_dates": 0.0005698593341149322
+        }
+      }
+    }
+  }
+}
