@@ -132,4 +132,6 @@ The generator still omits player identity and shooter skill, verified goalie res
 
 ## Reproduction and validation
 
-Run `python3 -m unittest discover -s research/nhl/nhl-v3-phase2b-scoring-2026-10-21 -p 'test_*.py' -v` and the exact command recorded in `RESULTS.json`. Simulation seeds, input hashes, candidate feature provenance, all paired scores, and full simulation validation counts are retained.
+Run `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s research/nhl/nhl-v3-phase2b-scoring-2026-10-21 -p 'test_*.py' -v` and the exact command recorded in `RESULTS.json`. Simulation seeds, input hashes, candidate feature provenance, all paired scores, and full simulation validation counts are retained.
+
+Test counts: Phase 2A `test_invariants.py` — 9 tests; Phase 2B `test_*.py` unittest discovery — 6 tests OK; Phase 1 `test_replay_engine.py` — 12 tests OK.

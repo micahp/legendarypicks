@@ -1,0 +1,807 @@
+{
+  "analysis_runtime_seconds": 40.65106727698003,
+  "analysis_script_sha256": "221705ccd499cba8cfbb7f32e37888f65f2fe6a3e44f0c69671bb7433b46e1fc",
+  "base_commit": "dd36b4ae45d7e7050316f730a5e84629b93ce9a7",
+  "bootstrap": {
+    "method": "percentile cluster bootstrap resampling game IDs with both teams kept together",
+    "replicates": 2000,
+    "seed": 20261022
+  },
+  "cache": {
+    "base_commit": "dd36b4ae45d7e7050316f730a5e84629b93ce9a7",
+    "cache_files": {
+      "candidate_c": {
+        "basename": "c-v2-goal-prior-7d5a1e6d4487a74a.pickle",
+        "sha256": "914cf33839cd1560a6407602d09f5175f6ad0d90e9d58904a5dbadcfd6b93326"
+      },
+      "phase2a": {
+        "basename": "phase-2a-matched-reference-7d5a1e6d4487a74a.pickle",
+        "sha256": "835685c2b6c2b588bef8111622fcdbf3062682876296869751772a31fdcc7dbc"
+      }
+    },
+    "cache_fingerprint": "7d5a1e6d4487a74a317b9c1697db659a0e66e12f5755c937f91fb32e618e76f9",
+    "cached_simulations_reused": 41984,
+    "event_scan_seconds": 87.3502036120044,
+    "games": 1312,
+    "monte_carlo_rerun": false,
+    "phase2a_hashes": {
+      "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+      "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+      "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+    },
+    "seed": 20261021,
+    "simulations_per_game": 16,
+    "snapshot_build_seconds": 89.59466274801525,
+    "source_event_rows_verified": 1510104,
+    "source_pins": {
+      "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+      "approved_label_artifact": {
+        "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+        "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+        "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+        "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+      },
+      "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+      "artifacts": {
+        "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+        "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+        "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+        "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+        "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+        "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+      },
+      "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+      "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+      "expected_population": {
+        "games": 4876,
+        "pbp_events": 1510104,
+        "seasons": {
+          "2018": 1271,
+          "2019": 1082,
+          "2020": 868,
+          "2021": 1312,
+          "2022": 343
+        }
+      },
+      "official_artifacts": {
+        "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+        "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+      }
+    }
+  },
+  "commands": {
+    "build_snapshot": "/root/legendarypicks/backend/venv/bin/python research/nhl/nhl-v3-phase2b-scoring-2026-10-21/underdispersion.py --build-snapshot --rescan-source --cache-dir /tmp/nhl-v3-phase2b-cache-7d5a1e6d4487a74a",
+    "recompute_diagnostics_from_committed_snapshot": "/root/legendarypicks/backend/venv/bin/python research/nhl/nhl-v3-phase2b-scoring-2026-10-21/underdispersion.py --analyze --bootstrap-replicates 2000"
+  },
+  "decision": {
+    "2022_used_for_tuning": false,
+    "candidate_selected": false,
+    "diagnostic_only": true,
+    "frozen_phase2a_modified": false,
+    "gate_changed": false
+  },
+  "development_games": 1312,
+  "final_score_margin": {
+    "cluster_bootstrap_95_ci": {
+      "observed_mean": [
+        0.10057164634146343,
+        0.3948170731707317
+      ],
+      "observed_variance": [
+        6.619102152155524,
+        7.523447274339122
+      ],
+      "predicted_marginal_variance": [
+        6.446335868846796,
+        6.694530775715807
+      ],
+      "predicted_mean": [
+        0.12498451791158537,
+        0.20255573551829267
+      ]
+    },
+    "games": 1312,
+    "mean_absolute_margin_error": 2.2455221036585367,
+    "observed_mean": 0.24695121951219512,
+    "observed_sd": 2.658681678184349,
+    "observed_variance": 7.068588265913147,
+    "predicted_between_game_forecast_mean_variance": 0.5024300778926235,
+    "predicted_marginal_sd": 2.563759284894046,
+    "predicted_marginal_variance": 6.572861670880428,
+    "predicted_mean": 0.16310975609756098,
+    "predicted_mean_within_game_variance": 6.070431592987805
+  },
+  "frozen_phase2a_hashes": {
+    "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+    "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+    "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+  },
+  "goal_variance_only_sensitivity": {
+    "alpha_estimation": "max(0, sum((observed - frozen Phase 2A mean)^2 - frozen Phase 2A mean) / sum(frozen Phase 2A mean^2)); preserves every stored per-team-game mean and can absorb mean error into dispersion",
+    "bootstrap_note": "Games resampled as clusters; the full-sample mean-preserving NB2 alpha is fixed, so the interval omits alpha-estimation uncertainty.",
+    "change_in_c_gain_after_recalibration": -0.006773111015918563,
+    "common_nb2_alpha_fitted_from_phase2a_2021_outcomes_at_fixed_forecast_means": 0.0,
+    "label": "descriptive-after-selection; not a candidate and not a tuning result",
+    "nb2_recalibrated_c_gain_cluster_bootstrap_95_ci_alpha_fixed": [
+      0.030294357479412403,
+      0.062155030231950986
+    ],
+    "nb2_recalibrated_c_gain_vs_phase2a": 0.046086311621276556,
+    "nb2_recalibrated_candidate_c_goal_crps": 0.9773442344867366,
+    "nb2_recalibrated_phase2a_goal_crps": 1.023430546108013,
+    "raw_c_gain_cluster_bootstrap_95_ci": [
+      0.03545305205554497,
+      0.0694640741115663
+    ],
+    "raw_c_gain_vs_phase2a": 0.05285942263719512,
+    "raw_candidate_c_goal_crps": 1.001563095464939,
+    "raw_phase2a_goal_crps": 1.054422518102134
+  },
+  "input_snapshot": {
+    "bytes": 257443,
+    "path": "research/nhl/nhl-v3-phase2b-scoring-2026-10-21/underdispersion-traces.json.gz",
+    "sha256": "7a86fba3f66f7a90bfbf1b653c0871d67a43a99dd073f6fe2d86e9c71527d0e7"
+  },
+  "paired_home_away_count_covariance": {
+    "attempts": {
+      "cluster_bootstrap_95_ci": {
+        "correlation": {
+          "generated": [
+            -0.13361562248270908,
+            -0.10441321264082587
+          ],
+          "observed": [
+            -0.42810470952892793,
+            -0.3328248365152555
+          ]
+        },
+        "covariance": {
+          "generated": [
+            -9.915666864543782,
+            -7.722163614355908
+          ],
+          "observed": [
+            -51.677038073156794,
+            -37.50538422302573
+          ]
+        }
+      },
+      "generated_mixture_correlation": -0.11907209667185199,
+      "generated_mixture_covariance": -8.819710567549246,
+      "n_games": 1312,
+      "observed_correlation": -0.38197879207670793,
+      "observed_covariance": -44.71005330718322
+    },
+    "goals": {
+      "cluster_bootstrap_95_ci": {
+        "correlation": {
+          "generated": [
+            0.0020302329766043446,
+            0.028805654369907764
+          ],
+          "observed": [
+            -0.16228384700552195,
+            -0.0634307224518408
+          ]
+        },
+        "covariance": {
+          "generated": [
+            0.006681290217484348,
+            0.09527140713248654
+          ],
+          "observed": [
+            -0.508432349954454,
+            -0.1978886991792461
+          ]
+        }
+      },
+      "generated_mixture_correlation": 0.015739974954655938,
+      "generated_mixture_covariance": 0.05206485818639382,
+      "n_games": 1312,
+      "observed_correlation": -0.11383715016632688,
+      "observed_covariance": -0.35668407941701386
+    },
+    "sog": {
+      "cluster_bootstrap_95_ci": {
+        "correlation": {
+          "generated": [
+            -0.033480097678039965,
+            -0.005157580404341462
+          ],
+          "observed": [
+            -0.29114639847192364,
+            -0.18886475795541385
+          ]
+        },
+        "covariance": {
+          "generated": [
+            -1.1508168254186448,
+            -0.17777412393416853
+          ],
+          "observed": [
+            -14.044786295037815,
+            -8.759330339598774
+          ]
+        }
+      },
+      "generated_mixture_correlation": -0.01907163271633885,
+      "generated_mixture_covariance": -0.6552404046034646,
+      "n_games": 1292,
+      "observed_correlation": -0.2418951304163136,
+      "observed_covariance": -11.45985296513913
+    }
+  },
+  "penalty_projection": {
+    "attempts": {
+      "cluster_bootstrap_95_ci": {
+        "beta": [
+          -0.11295580772705077,
+          0.10454786808458487
+        ],
+        "partial_r_squared": [
+          3.8131197934295744e-07,
+          0.0016394978424531211
+        ],
+        "projected_mean_count_change": [
+          -0.2824406359330116,
+          0.26364791195442305
+        ],
+        "projected_variance_increment": [
+          2.4715458476492034e-05,
+          0.1137800429414223
+        ]
+      },
+      "fraction_of_within_team_variance_gap_projected": 5.134160828658755e-06,
+      "generated_penalty_rate_per_game": 4.890482088414634,
+      "generated_penalty_within_team_variance": 3.5268632751501148,
+      "interpretation": "Associational linear projection after team fixed effects; not a causal estimate of penalty mechanics.",
+      "observed_minus_predicted_within_team_count_variance": 27.76078977023188,
+      "observed_penalty_rate_per_game": 7.390243902439025,
+      "observed_penalty_within_team_variance": 11.158945568114218,
+      "penalty_mean_gap": 2.4997618140243905,
+      "projected_attempt_or_sog_change_per_team_game_from_mean_gap": -0.010802586446550452,
+      "projected_variance_increment_from_penalty_spread_gap": 0.0001425283594109552,
+      "team_fixed_effect_linear_projection_beta_per_extra_accepted_penalty": -0.004321446301781554,
+      "within_team_partial_r_squared": 2.0656834940835475e-06
+    },
+    "sog": {
+      "cluster_bootstrap_95_ci": {
+        "beta": [
+          -0.03258135889013134,
+          0.10639034948882542
+        ],
+        "partial_r_squared": [
+          1.1178026531328934e-06,
+          0.0031934726606138476
+        ],
+        "projected_mean_count_change": [
+          -0.08131438943236266,
+          0.2694859137228327
+        ],
+        "projected_variance_increment": [
+          3.038713804883354e-05,
+          0.08931485873371989
+        ]
+      },
+      "fraction_of_within_team_variance_gap_projected": 0.0017105132832069005,
+      "generated_penalty_rate_per_game": 4.890334752321982,
+      "generated_penalty_within_team_variance": 3.519770051962408,
+      "interpretation": "Associational linear projection after team fixed effects; not a causal estimate of penalty mechanics.",
+      "observed_minus_predicted_within_team_count_variance": 6.697730874425908,
+      "observed_penalty_rate_per_game": 7.396284829721362,
+      "observed_penalty_within_team_variance": 11.163922502384946,
+      "penalty_mean_gap": 2.5059500773993806,
+      "projected_attempt_or_sog_change_per_team_game_from_mean_gap": 0.09701409060085323,
+      "projected_variance_increment_from_penalty_spread_gap": 0.011456557628050484,
+      "team_fixed_effect_linear_projection_beta_per_extra_accepted_penalty": 0.03871349691911353,
+      "within_team_partial_r_squared": 0.0004117587363017424
+    }
+  },
+  "phase2b_results_sha256": "69dc5b45f9598909d9fdd5656bc06f4163c58aeba9a4a88aca5745d047a3618a",
+  "reproduction_crosschecks": {
+    "attempts": {
+      "mean_within_game_variance_matches_results": true,
+      "observed_mean_matches_results": true,
+      "predicted_mean_matches_results": true
+    },
+    "goals": {
+      "mean_within_game_variance_matches_results": true,
+      "observed_mean_matches_results": true,
+      "predicted_mean_matches_results": true
+    },
+    "sog": {
+      "mean_within_game_variance_matches_results": true,
+      "observed_mean_matches_results": true,
+      "predicted_mean_matches_results": true
+    }
+  },
+  "scoring_and_game_state_diagnostics": {
+    "game_state_rates": {
+      "overtime_game_probability": {
+        "difference_cluster_bootstrap_95_ci": [
+          0.03691763528963415,
+          0.08079387385670732
+        ],
+        "generated": 0.16163300304878048,
+        "observed": 0.21951219512195122,
+        "observed_minus_generated": 0.05787919207317073
+      },
+      "penalties_per_game": {
+        "difference_cluster_bootstrap_95_ci": [
+          2.3195919874237805,
+          2.689510289634146
+        ],
+        "generated": 4.890482088414634,
+        "observed": 7.390243902439025,
+        "observed_minus_generated": 2.4997618140243905
+      },
+      "shootout_game_probability": {
+        "difference_cluster_bootstrap_95_ci": [
+          0.0042861566310975615,
+          0.033061404344512185
+        ],
+        "generated": 0.059260670731707314,
+        "observed": 0.07774390243902439,
+        "observed_minus_generated": 0.018483231707317072
+      }
+    },
+    "shooting_percentage": {
+      "cluster_bootstrap_95_ci": {
+        "generated": [
+          0.10991355480475051,
+          0.11098436779302912
+        ],
+        "observed": [
+          0.09615761267434107,
+          0.10012029213040002
+        ]
+      },
+      "generated_goals_per_generated_sog": 0.11045405689481744,
+      "generated_sog_events_across_draws": 1305321,
+      "model_expected_goal_probability_at_observed_locations": 0.0926801783751096,
+      "observed_goal_probability_at_observed_locations": 0.0981880391306443,
+      "observed_location_probability_is_event_weighted_and_has_no_cluster_interval_in_phase2b_artifact": true,
+      "observed_pbp_goals_per_pbp_sog": 0.0981880391306443,
+      "observed_pbp_sog_events": 83004
+    },
+    "shot_stage_probabilities": {
+      "cluster_bootstrap_95_ci": {
+        "generated": [
+          0.5499161904907222,
+          0.5511734199211621
+        ],
+        "observed": [
+          0.5554738340153551,
+          0.5611972412599513
+        ]
+      },
+      "generated_attempts_across_draws": 2370837,
+      "generated_sog_per_attempt": 0.5505739112389422,
+      "observed_pbp_attempts": 148665,
+      "observed_pbp_sog_per_attempt": 0.558329129250328
+    }
+  },
+  "seed": 20261021,
+  "simulations_per_game": 16,
+  "sog_eligible_games": 1292,
+  "source_pins": {
+    "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+    "approved_label_artifact": {
+      "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+      "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+      "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+      "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+    },
+    "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+    "artifacts": {
+      "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+      "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+      "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+      "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+      "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+      "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+    },
+    "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+    "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+    "expected_population": {
+      "games": 4876,
+      "pbp_events": 1510104,
+      "seasons": {
+        "2018": 1271,
+        "2019": 1082,
+        "2020": 868,
+        "2021": 1312,
+        "2022": 343
+      }
+    },
+    "official_artifacts": {
+      "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+      "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+    }
+  },
+  "stored_candidate_comparison": {
+    "candidate_c": {
+      "final_score_energy_score": 1.5943779846619606,
+      "reg_ot_team_goal_crps": 1.001563095464939,
+      "team_sog_crps": 3.951289788119195,
+      "winner_brier": 0.2374684403582317
+    },
+    "label": "historical Phase 2B results on the 2021 selection fold; included for context only",
+    "paired_c_minus_phase2a_baseline_minus_candidate": {
+      "final_score_energy": {
+        "mean_delta": 0.07990094505008424,
+        "n": 1312,
+        "paired_game_bootstrap_ci95": [
+          0.05300294038963089,
+          0.10557998486800835
+        ]
+      },
+      "goal_crps": {
+        "mean_delta": 0.05285942263719512,
+        "n": 1312,
+        "paired_game_bootstrap_ci95": [
+          0.035681747808689025,
+          0.06969917111280488
+        ]
+      },
+      "team_sog_crps": {
+        "mean_delta": -0.03871480746904025,
+        "n": 1292,
+        "paired_game_bootstrap_ci95": [
+          -0.0618499661377709,
+          -0.0163234084752322
+        ]
+      },
+      "winner_brier": {
+        "mean_delta": 0.016673018292682928,
+        "n": 1312,
+        "paired_game_bootstrap_ci95": [
+          0.007592177972560976,
+          0.025866996951219513
+        ]
+      }
+    },
+    "phase2a": {
+      "final_score_energy_score": 1.6742789297120448,
+      "reg_ot_team_goal_crps": 1.054422518102134,
+      "team_sog_crps": 3.9125749806501546,
+      "winner_brier": 0.25414145865091464
+    }
+  },
+  "strength_composition": {
+    "ADVANTAGE": {
+      "attempt_gap_generated_minus_observed": -4.807164634146341,
+      "generated_attempts_per_game": 12.979420731707316,
+      "generated_goals_per_game": 1.1456269054878048,
+      "goal_gap_generated_minus_observed": -0.16687309451219523,
+      "observed_attempts_per_game": 17.786585365853657,
+      "observed_goals_per_game": 1.3125
+    },
+    "DISADVANTAGE": {
+      "attempt_gap_generated_minus_observed": -0.19969512195121952,
+      "generated_attempts_per_game": 2.245426829268293,
+      "generated_goals_per_game": 0.15734565548780488,
+      "goal_gap_generated_minus_observed": 0.008717606707317083,
+      "observed_attempts_per_game": 2.4451219512195124,
+      "observed_goals_per_game": 0.1486280487804878
+    },
+    "EMPTY_NET": {
+      "attempt_gap_generated_minus_observed": -0.6951219512195121,
+      "generated_attempts_per_game": 0.0,
+      "generated_goals_per_game": 0.0,
+      "goal_gap_generated_minus_observed": -0.3628048780487805,
+      "observed_attempts_per_game": 0.6951219512195121,
+      "observed_goals_per_game": 0.3628048780487805
+    },
+    "EVEN": {
+      "attempt_gap_generated_minus_observed": 5.3302686737804805,
+      "generated_attempts_per_game": 97.71517721036585,
+      "generated_goals_per_game": 5.565262957317073,
+      "goal_gap_generated_minus_observed": 1.1773056402439028,
+      "observed_attempts_per_game": 92.38490853658537,
+      "observed_goals_per_game": 4.3879573170731705
+    }
+  },
+  "structural_conditional_rates": {
+    "generated_ot_goals_per_ot_game": 0.6333628057765989,
+    "generated_shootouts_per_ot_game": 0.36663719422340113,
+    "observed_ot_goals_per_ot_game": 0.6458333333333334,
+    "observed_shootouts_per_ot_game": 0.3541666666666667
+  },
+  "variance_decomposition": {
+    "attempts": {
+      "cluster_bootstrap_95_ci": {
+        "between_team_gap": [
+          14.395437164335394,
+          21.635641633570472
+        ],
+        "observed_between": [
+          16.473232196734763,
+          23.847860346218933
+        ],
+        "observed_variance": [
+          112.49803006037723,
+          127.19976435564304
+        ],
+        "observed_within": [
+          93.76467507028697,
+          105.46600633602192
+        ],
+        "predicted_between": [
+          1.7447616502470278,
+          2.471069479059962
+        ],
+        "predicted_variance": [
+          73.91756923805738,
+          76.19942280548375
+        ],
+        "predicted_within_game": [
+          62.03920265756002,
+          63.862427241627756
+        ],
+        "predicted_within_mean": [
+          9.4620060743316,
+          10.530334887010905
+        ],
+        "total_variance_gap": [
+          37.26755909644587,
+          52.06636599138477
+        ],
+        "within_gap": [
+          20.780589916044658,
+          32.651873134466854
+        ]
+      },
+      "n_team_games": 2624,
+      "negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "extra_nb2_alpha": [
+            0.013336322796847115,
+            0.017679694477680797
+          ],
+          "observed_nb2_alpha": [
+            0.015374546686224863,
+            0.019629338645671842
+          ],
+          "simulator_nb2_alpha": [
+            0.001754523143439972,
+            0.002305191195432101
+          ]
+        },
+        "definition": "NB2 variance = c*mu + alpha*(c*mu)^2; c globally matches observed mean to frozen Phase 2A forecast mean",
+        "extra_nb2_alpha_over_simulator": 0.015446041154519924,
+        "observed_nb2_alpha": 0.017476799510019615,
+        "simulator_implied_nb2_alpha_signed": 0.002037442074139126
+      },
+      "observed": {
+        "between_team_variance": 18.843552334687313,
+        "mean": 56.655868902439025,
+        "sd": 10.941959014745686,
+        "variance": 119.7264670803744,
+        "within_team_game_variance": 100.8829147456871
+      },
+      "predicted": {
+        "between_team_mean_variance": 1.9664384199706373,
+        "mean": 56.470012385670735,
+        "observed_within_minus_predicted_within_total": 27.760789770231888,
+        "sd": 8.665365739276437,
+        "variance": 75.08856339542587,
+        "within_game_predictive_sd": 7.936736173968435,
+        "within_game_predictive_variance": 62.991781095179114,
+        "within_team_forecast_mean_variance": 10.130343880276108
+      },
+      "within_team_negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "effective_nb2_alpha": [
+            0.00851048614668102,
+            0.01221891294893869
+          ],
+          "extra_nb2_alpha": [
+            0.00650160263781103,
+            0.010195775935883658
+          ]
+        },
+        "definition": "NB2 Var=mu+alpha*mu^2. Effective alpha=(observed within-team variance - forecast-mean within-team variance - mean(mu))/mean(mu^2). Extra alpha over generator=(observed within-team variance - forecast-mean within-team variance - mean(simulator variance))/mean(mu^2). No level rescaling.",
+        "effective_observed_nb2_alpha_signed": 0.010710089573388619,
+        "extra_nb2_alpha_over_simulator_signed": 0.008672647499249493,
+        "simulator_implied_nb2_alpha_signed": 0.002037442074139126
+      }
+    },
+    "goals": {
+      "cluster_bootstrap_95_ci": {
+        "between_team_gap": [
+          0.14181806509503442,
+          0.26069769300372814
+        ],
+        "observed_between": [
+          0.15701086002390857,
+          0.27453846555295586
+        ],
+        "observed_variance": [
+          2.994513386051829,
+          3.3262044658127605
+        ],
+        "observed_within": [
+          2.7905721343413883,
+          3.10191004825439
+        ],
+        "predicted_between": [
+          0.010333820835465237,
+          0.019246235457458044
+        ],
+        "predicted_variance": [
+          3.2687242652744426,
+          3.3602892786743097
+        ],
+        "predicted_within_game": [
+          3.024421543028297,
+          3.111025852110328
+        ],
+        "predicted_within_mean": [
+          0.2202255912868715,
+          0.2455582082913601
+        ],
+        "total_variance_gap": [
+          -0.3241023203647258,
+          0.011639790305206425
+        ],
+        "within_gap": [
+          -0.5110733055483618,
+          -0.19496138506314908
+        ]
+      },
+      "n_team_games": 2624,
+      "negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "extra_nb2_alpha": [
+            0.03234300414329655,
+            0.06604553920394707
+          ],
+          "observed_nb2_alpha": [
+            0.0,
+            0.032272431261623255
+          ],
+          "simulator_nb2_alpha": [
+            -0.03386126027809095,
+            -0.02708949742219545
+          ]
+        },
+        "definition": "NB2 variance = c*mu + alpha*(c*mu)^2; c globally matches observed mean to frozen Phase 2A forecast mean",
+        "extra_nb2_alpha_over_simulator": 0.04914578520371916,
+        "observed_nb2_alpha": 0.015544976930752505,
+        "simulator_implied_nb2_alpha_signed": -0.030389833392021334
+      },
+      "observed": {
+        "between_team_variance": 0.17896190418649613,
+        "mean": 3.1059451219512195,
+        "sd": 1.775998866159029,
+        "variance": 3.154171972598156,
+        "within_team_game_variance": 2.9752100684116596
+      },
+      "predicted": {
+        "between_team_mean_variance": 0.011541669529013388,
+        "mean": 3.4341177591463414,
+        "observed_within_minus_predicted_within_total": -0.3285533716677205,
+        "sd": 1.820797932118881,
+        "variance": 3.3153051096083934,
+        "within_game_predictive_sd": 1.7516325138038042,
+        "within_game_predictive_variance": 3.0682164634146343,
+        "within_team_forecast_mean_variance": 0.23554697666474572
+      },
+      "within_team_negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "effective_nb2_alpha": [
+            -0.07288823581521074,
+            -0.04698944667982505
+          ],
+          "extra_nb2_alpha": [
+            -0.04232250930802271,
+            -0.016251890945845334
+          ]
+        },
+        "definition": "NB2 Var=mu+alpha*mu^2. Effective alpha=(observed within-team variance - forecast-mean within-team variance - mean(mu))/mean(mu^2). Extra alpha over generator=(observed within-team variance - forecast-mean within-team variance - mean(simulator variance))/mean(mu^2). No level rescaling.",
+        "effective_observed_nb2_alpha_signed": -0.05767774502786871,
+        "extra_nb2_alpha_over_simulator_signed": -0.027287911635847373,
+        "simulator_implied_nb2_alpha_signed": -0.030389833392021334
+      }
+    },
+    "sog": {
+      "cluster_bootstrap_95_ci": {
+        "between_team_gap": [
+          5.547584080888672,
+          8.33615862232188
+        ],
+        "observed_between": [
+          6.284552671069524,
+          9.049549155332729
+        ],
+        "observed_variance": [
+          44.998495987602915,
+          50.425141214930655
+        ],
+        "observed_within": [
+          37.93188414601067,
+          42.27835348099116
+        ],
+        "predicted_between": [
+          0.6158255578712587,
+          0.8805419055155927
+        ],
+        "predicted_variance": [
+          34.11988068934485,
+          35.14828175174152
+        ],
+        "predicted_within_game": [
+          29.46588954866486,
+          30.313164206112134
+        ],
+        "predicted_within_mean": [
+          3.780392807109469,
+          4.216844135676936
+        ],
+        "total_variance_gap": [
+          10.333686905456421,
+          15.785072302600964
+        ],
+        "within_gap": [
+          3.868587899553362,
+          8.423696709423332
+        ]
+      },
+      "n_team_games": 2584,
+      "negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "extra_nb2_alpha": [
+            0.012274294016585212,
+            0.01729871149288908
+          ],
+          "observed_nb2_alpha": [
+            0.011063388762400853,
+            0.016043226376056215
+          ],
+          "simulator_nb2_alpha": [
+            -0.0016641708224005576,
+            -0.0008024023137967134
+          ]
+        },
+        "definition": "NB2 variance = c*mu + alpha*(c*mu)^2; c globally matches observed mean to frozen Phase 2A forecast mean",
+        "extra_nb2_alpha_over_simulator": 0.014861906335026945,
+        "observed_nb2_alpha": 0.01364079673713597,
+        "simulator_implied_nb2_alpha_signed": -0.0012410239595241083
+      },
+      "observed": {
+        "between_team_variance": 7.157330911818416,
+        "mean": 31.602167182662537,
+        "sd": 6.913189816989996,
+        "variance": 47.79219344573417,
+        "within_team_game_variance": 40.63486253391576
+      },
+      "predicted": {
+        "between_team_mean_variance": 0.6939739294665715,
+        "mean": 31.095056114551085,
+        "observed_within_minus_predicted_within_total": 6.697730874425911,
+        "sd": 5.88481992833735,
+        "variance": 34.631105588956416,
+        "within_game_predictive_sd": 5.467103633206793,
+        "within_game_predictive_variance": 29.88922213622291,
+        "within_team_forecast_mean_variance": 4.047909523266938
+      },
+      "within_team_negative_binomial": {
+        "cluster_bootstrap_95_ci": {
+          "effective_nb2_alpha": [
+            0.0028588960292386415,
+            0.0074668133062577675
+          ],
+          "extra_nb2_alpha": [
+            0.003979834184007116,
+            0.008678093124693802
+          ]
+        },
+        "definition": "NB2 Var=mu+alpha*mu^2. Effective alpha=(observed within-team variance - forecast-mean within-team variance - mean(mu))/mean(mu^2). Extra alpha over generator=(observed within-team variance - forecast-mean within-team variance - mean(simulator variance))/mean(mu^2). No level rescaling.",
+        "effective_observed_nb2_alpha_signed": 0.00565216750712467,
+        "extra_nb2_alpha_over_simulator_signed": 0.0068931914666487785,
+        "simulator_implied_nb2_alpha_signed": -0.0012410239595241083
+      }
+    }
+  }
+}
