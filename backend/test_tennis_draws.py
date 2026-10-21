@@ -105,6 +105,23 @@ def test_draw_parser_does_not_relabel_a_mens_bracket_as_wta():
     assert draws[0]["bracket_url"] is None
 
 
+def test_a_250_bracket_is_kept_and_an_untracked_event_is_not():
+    # Almaty Open is an ATP 250 on the 2026 calendar, so its complete bracket is kept.
+    almaty = _payload()
+    almaty["events"] = almaty["events"][:1]
+    almaty["events"][0]["shortName"] = "Almaty Open"
+    assert [d["event_name"] for d in espn_client.tennis_draws_from_payload("atp", almaty)] == ["Almaty Open"]
+
+    # Jiangxi Open is not a 250 on either calendar, so the same shape of bracket is ignored.
+    jiangxi = _payload()
+    jiangxi["events"] = jiangxi["events"][:1]
+    jiangxi["events"][0]["shortName"] = "Jiangxi Open"
+    jiangxi["events"][0]["groupings"][0]["grouping"].update({
+        "id": "2", "slug": "womens-singles", "displayName": "Women's Singles",
+    })
+    assert espn_client.tennis_draws_from_payload("wta", jiangxi) == []
+
+
 def test_draw_store_round_trip_and_invalid_snapshot_preserves_last_good(tmp_path, monkeypatch):
     db = tmp_path / "draws.db"
     monkeypatch.setenv("LP_DB_PATH", str(db))
