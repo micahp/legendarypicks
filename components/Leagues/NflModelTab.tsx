@@ -236,12 +236,6 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span className="text-right text-2xl font-semibold text-zinc-100">{projected(lock.proj_home)}</span>
         <span className="text-right text-xl font-semibold text-zinc-300">{record && game.final ? one(game.final.home) : ''}</span>
       </div>
-      <div className="flex justify-end">
-        <div className="text-right">
-          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
-          <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
-        </div>
-      </div>
       <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-zinc-800 pt-2 text-sm text-zinc-400">
         <span>Line <b className="font-medium tabular-nums text-zinc-100">{lineSide(game.home, game.away, lock.line.spread)}</b></span>
         <span>Model line <b className="font-medium tabular-nums text-zinc-100">{modelSide(game.home, game.away, lock.margin)}</b></span>
@@ -251,6 +245,12 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
         <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
       </div>
       <p className="text-xs text-zinc-500">{lineCaptureLabel(lock)}</p>
+      <div className="flex justify-end">
+        <div className="text-right">
+          <span className="block text-xs uppercase tracking-wider text-zinc-500">Model pick</span>
+          <span className="block text-xl font-semibold text-zinc-100">{pickSide(game, lock) || 'No line'}</span>
+        </div>
+      </div>
     </article>
   )
 }
