@@ -279,19 +279,24 @@ class GameRule(Base):
         self.assertEqual(g["model_label"], "v1 points")
         self.assertEqual(g["final"], {"home": 23.0, "away": 30.0})
         self.assertEqual(g["pick_result"], "win")
-        self.assertEqual(g["pick"]["team"], "T00")
-        self.assertAlmostEqual(g["pick"]["gap"], 3.5)
-        self.assertEqual(g["pick"]["line"], 3.0)
+        # Spread 3 (T01 home favoured by 3), model margin -0.5: V - M = 3.5 >= 3, so rule 3,
+        # the underdog T00 +3. Final 23-30 (away by 7): T00 covers.
+        self.assertEqual((g["pick"]["market"], g["pick"]["side"], g["pick"]["line"], g["pick"]["rule"]),
+                         ("spread", "away", 3.0, 3))
+        self.assertEqual(g["pick"]["label"], "T00 +3")
         self.assertEqual(g["home_name"], "Team 01")
 
-    def test_record_counts_the_adopted_model_against_the_line(self):
+    def test_record_counts_the_adopted_model_pick(self):
+        # Every game has the Model Pick away +3 (see the game test). r1: 20-17, margin 3 = the
+        # line, a push. r2: 23-30, margin -7, a win. The stored ats_result column is not read:
+        # it says 'loss' for r1 here, and the record ignores it.
         lock_game(self.con, "r1", "2026-10-04", 20, 17)
         lock_game(self.con, "r2", "2026-10-11", 23, 30)
         lock_game(self.con, "r3", "2026-10-12", 10, 3, version="nfl-v1 cap=21.0 sigma=13.4")
         self.con.execute("UPDATE projection_grades SET ats_result='loss' WHERE game_id='r1'")
         self.con.commit()
         rec = self.payload()["record"]
-        self.assertEqual((rec["win"], rec["loss"], rec["push"], rec["games"]), (1, 1, 0, 2))
+        self.assertEqual((rec["win"], rec["loss"], rec["push"], rec["games"]), (1, 0, 1, 2))
 
     def test_record_is_null_with_no_grades(self):
         lock_game(self.con, "r1", "2026-10-25", None, None)
@@ -328,11 +333,15 @@ class GameRule(Base):
         self.assertIn("chain.market", out["absent"])
         self.assertIsNotNone(out["game"])
 
-    def test_no_pick_when_our_line_equals_the_market(self):
-        self.assertIsNone(home._pick("H", "A", 3.0, 3.0))
-        self.assertIsNone(home._pick("H", "A", 3.0000000005, 3.0))
-        self.assertIsNone(home._pick("H", "A", 3.0, None))
-        self.assertEqual(home._pick("H", "A", 5.0, 3.0), {"team": "H", "line": -3.0, "gap": 2.0})
+    def test_featured_pick_is_the_model_page_pick(self):
+        # The homepage and the Model page cannot disagree: same function, same frozen inputs.
+        lock_game(self.con, "p1", "2026-10-11", 23, 30)
+        game = self.payload()["game"]
+        page = nfl_model.locks_payload(self.con, 2026, 5)
+        lock = next(x for x in page["games"] if x["game_id"] == "p1")["locks"][nfl_model.ADOPTED]
+        self.assertEqual(game["pick"], lock["pick"])
+        self.assertEqual(game["pick_result"], lock["grade"]["pick"])
+        self.assertEqual(game["pick_result"], "win")
 
 
 class PlayoffRule(Base):
