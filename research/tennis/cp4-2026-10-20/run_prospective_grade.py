@@ -49,8 +49,8 @@ LINES = {
 CELLS = ("aces", "double_faults", "total_games")
 TERMINAL_STATUS = ("cancel", "postpon", "walkover", "abandon", "default", "retir")
 OUTCOME_SOURCE = {
-    "aces": "tennis_match_stats_overrides.home_aces / away_aces (verified overrides only)",
-    "double_faults": None,
+    "aces": "research_player_match_outcomes (verified tiers; eligible_cp4 = 1 only)",
+    "double_faults": "research_player_match_outcomes (verified tiers; eligible_cp4 = 1 only)",
     "total_games": "scoreboard_snapshots state=post, set games summed (as grade_tennis_model reads them)",
 }
 
@@ -121,10 +121,17 @@ def observed_games(con: sqlite3.Connection, league: str, game_id: str) -> Option
     return sum(values) if all(value >= 0 for value in values) else None
 
 
-def observed_aces(con: sqlite3.Connection, league: str, game_id: str) -> Optional[Dict[str, int]]:
-    row = con.execute("SELECT home_aces, away_aces FROM tennis_match_stats_overrides "
-                      "WHERE league=? AND game_id=?", (league, game_id)).fetchone()
-    return None if row is None else {"home": int(row[0]), "away": int(row[1])}
+def observed_player_values(con: sqlite3.Connection, league: str, game_id: str, cell: str) -> Optional[Dict[str, int]]:
+    """Verified aces or double faults per side, from the verified outcome table only.
+
+    Returns None unless both sides are present and eligible (Final, verified tier).
+    """
+    column = "aces" if cell == "aces" else "double_faults"
+    rows = con.execute(
+        f"SELECT side, {column} FROM research_player_match_outcomes "
+        "WHERE tour=? AND espn_game_id=? AND eligible_cp4=1", (league, game_id)).fetchall()
+    values = {side: value for side, value in rows if value is not None}
+    return values if set(values) == {"home", "away"} else None
 
 
 def build_targets(con: sqlite3.Connection, frozen: Dict[str, Any], league: str, cell: str) -> Dict[str, Any]:
@@ -144,7 +151,7 @@ def build_targets(con: sqlite3.Connection, frozen: Dict[str, Any], league: str, 
             observed_by_side = {"match": observed_games(con, league, game_id)}
         else:
             pairs = [("home", sides.get("home")), ("away", sides.get("away"))]
-            observed_by_side = (observed_aces(con, league, game_id) or {}) if cell == "aces" else {}
+            observed_by_side = (observed_player_values(con, league, game_id, cell) or {}) if cell in ("aces", "double_faults") else {}
         if any(frozen_side is None for _, frozen_side in pairs):
             skipped["no_distribution"] += 1
             continue
