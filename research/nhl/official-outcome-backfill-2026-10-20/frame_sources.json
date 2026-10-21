@@ -1,0 +1,77 @@
+{
+  "canonical_cutoff": "2022-11-27",
+  "canonical_frame_games": 4876,
+  "canonical_frame_season_counts": {
+    "2018": 1271,
+    "2019": 1082,
+    "2020": 868,
+    "2021": 1312,
+    "2022": 343
+  },
+  "canonical_frame_season_date_ranges": {
+    "2018": [
+      "2018-10-03",
+      "2019-04-06"
+    ],
+    "2019": [
+      "2019-10-02",
+      "2020-03-11"
+    ],
+    "2020": [
+      "2021-01-13",
+      "2021-05-19"
+    ],
+    "2021": [
+      "2021-10-12",
+      "2022-05-01"
+    ],
+    "2022": [
+      "2022-10-07",
+      "2022-11-27"
+    ]
+  },
+  "canonical_frame_sha256": "336d8a8d055febd742dbf31ce7a613bd2e47c2cd8fbc7a8d956fc8967ba47b1c",
+  "canonical_only_game_ids": [
+    2022020001,
+    2022020002,
+    2022020175,
+    2022020185
+  ],
+  "canonical_source_sha256": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52",
+  "join_contract": "date + unordered canonical team pair; official outcomes use canonical numeric game_id",
+  "sbr_crosswalk_rows": 5132,
+  "sbr_regular_market_games": 4872,
+  "sbr_regular_market_season_date_ranges": {
+    "2018": [
+      "2018-10-03",
+      "2019-04-06"
+    ],
+    "2019": [
+      "2019-10-02",
+      "2020-03-11"
+    ],
+    "2020": [
+      "2021-01-13",
+      "2021-05-19"
+    ],
+    "2021": [
+      "2021-10-12",
+      "2022-05-01"
+    ],
+    "2022": [
+      "2022-10-11",
+      "2022-11-27"
+    ]
+  },
+  "sbr_regular_season_counts": {
+    "2018": 1271,
+    "2019": 1082,
+    "2020": 868,
+    "2021": 1312,
+    "2022": 339
+  },
+  "sbr_source_sha256": "a435454f4ec71b1ba3f612fde03b120438a7721a9a04e36f5aa2230e89ea273b",
+  "sbr_venue_order_mismatch_game_ids": [
+    2019020740
+  ]
+}

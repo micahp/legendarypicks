@@ -1,0 +1,23 @@
+game_id,record_key,side,team,player_id,issue_type,field,value,detail
+2018020160,,home,DET,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=22; team=23,official team total validation MISMATCH
+2018020755,,away,CAR,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=33; team=34,official team total validation MISMATCH
+2019020076,,away,VGK,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=35; team=36,official team total validation MISMATCH
+2019020106,,home,LAK,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=46; team=47,official team total validation MISMATCH
+2019020623,,home,EDM,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=30; team=31,official team total validation MISMATCH
+2019020684,,away,NSH,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=29; team=30,official team total validation MISMATCH
+2019020951,,away,CAR,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=46; team=47,official team total validation MISMATCH
+2020020266,,away,NYR,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=32; team=33,official team total validation MISMATCH
+2020020373,,home,BOS,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=24; team=25,official team total validation MISMATCH
+2020020468,,home,BUF,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=23; team=24,official team total validation MISMATCH
+2020020491,,home,EDM,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=36; team=37,official team total validation MISMATCH
+2020020613,,home,NYR,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=24; team=25,official team total validation MISMATCH
+2020020791,,home,MTL,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=34; team=35,official team total validation MISMATCH
+2021020065,,home,VGK,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=38; team=39,official team total validation MISMATCH
+2021020405,,home,CBJ,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=33; team=34,official team total validation MISMATCH
+2021020555,,away,NSH,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=33; team=34,official team total validation MISMATCH
+2021020677,,away,COL,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=31; team=32,official team total validation MISMATCH
+2021020769,,away,COL,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=26; team=27,official team total validation MISMATCH
+2021021278,,away,EDM,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=41; team=42,official team total validation MISMATCH
+2022020158,2022020158:away:goalies:1,away,ANA,8476932,GOALIE_TOTAL_IDENTITY_MISMATCH,saves+goals_against=shots_against,40+5!=44,published goalie totals fail arithmetic identity
+2022020222,,home,WSH,,PLAYER_SOG_SUM_VS_TEAM_TOTAL,sog,players=23; team=24,official team total validation MISMATCH
+2022020276,2022020276:away:goalies:0,away,BUF,8480045,GOALIE_TOTAL_IDENTITY_MISMATCH,saves+goals_against=shots_against,19+5!=23,published goalie totals fail arithmetic identity
