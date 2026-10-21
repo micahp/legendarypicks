@@ -1,0 +1,20 @@
+{
+  "canonical_score_conflict_ids": [],
+  "canonical_score_conflict_team_sides": 0,
+  "compressed_bytes_total": 11348632,
+  "frame_games": 4876,
+  "goalie_rows_verified_including_zero_toi": 19506,
+  "manifest_entries": 4876,
+  "manifest_sha256": "0ba44bcebefecb0a8eefbea995e8f5370583600eec77d0be12be574f308d71a2",
+  "official_team_sog_rows_verified": 9752,
+  "quality_issue_rows_verified": 22,
+  "raw_bytes_total": 65185327,
+  "raw_responses_verified": 4876,
+  "response_source_counts": {
+    "official_gamecenter": 4576,
+    "prior_official_audit_cache": 300
+  },
+  "result": "PASS",
+  "skater_rows_verified": 175490,
+  "verified_at_utc": "2026-10-21T00:36:53+00:00"
+}
