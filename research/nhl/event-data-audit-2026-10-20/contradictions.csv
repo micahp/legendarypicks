@@ -1,0 +1,44 @@
+game_id,season,issue,detail
+2018020450,2018,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2018021141,2018,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2018021163,2018,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2019020098,2019,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2019020272,2019,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2019020349,2019,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2019020372,2019,SOG_FEED_VS_OFFICIAL,home: feed(reg) 24 vs official 23
+2019020447,2019,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2019020457,2019,GOALIE_SHIFT_TOI,1 goalie(s) differ by >60s (max 2400s)
+2019021043,2019,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2019021060,2019,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2020020066,2020,TOI_SHIFT_VS_OFFICIAL,2 skater(s) differ by >60s
+2020020107,2020,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2020020114,2020,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2020020114,2020,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2020020128,2020,TOI_SHIFT_VS_OFFICIAL,4 skater(s) differ by >60s
+2020020209,2020,GOALIE_SHIFT_TOI,1 goalie(s) differ by >60s (max 2876s)
+2020020282,2020,TOI_SHIFT_VS_OFFICIAL,5 skater(s) differ by >60s
+2020020586,2020,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2020020707,2020,TOI_SHIFT_VS_OFFICIAL,2 skater(s) differ by >60s
+2021020185,2021,GOALIE_SHIFT_TOI,1 goalie(s) differ by >60s (max 206s)
+2021020227,2021,TOI_SHIFT_VS_OFFICIAL,36 skater(s) differ by >60s
+2021020227,2021,DUPLICATE_SHIFT_CHART,median shift/official TOI ratio 2.00x
+2021020227,2021,GOALIE_SHIFT_TOI,2 goalie(s) differ by >60s (max 3585s)
+2021020345,2021,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2021020345,2021,SOG_FEED_VS_OFFICIAL,away: feed(reg) 37 vs official 36
+2021020452,2021,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2021020483,2021,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2021020541,2021,TOI_SHIFT_VS_OFFICIAL,36 skater(s) differ by >60s
+2021020541,2021,DUPLICATE_SHIFT_CHART,median shift/official TOI ratio 2.00x
+2021020541,2021,GOALIE_SHIFT_TOI,2 goalie(s) differ by >60s (max 3600s)
+2021020546,2021,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2021020561,2021,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2021020561,2021,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2021020605,2021,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2021020883,2021,TOI_SHIFT_VS_OFFICIAL,3 skater(s) differ by >60s
+2021021265,2021,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2021021308,2021,TOI_SHIFT_VS_OFFICIAL,1 skater(s) differ by >60s
+2022020140,2022,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2022020182,2022,TOI_SHIFT_VS_OFFICIAL,2 skater(s) differ by >60s
+2022020203,2022,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner away +1 for the shootout
+2022020269,2022,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
+2022020297,2022,SHOOTOUT_GOAL_BONUS_APPLIED,official credits winner home +1 for the shootout
