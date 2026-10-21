@@ -28,6 +28,8 @@ import sys
 import unicodedata
 from typing import Any, Dict, List, Optional
 
+import research_evidence as rpe
+
 DDL = """
 CREATE TABLE IF NOT EXISTS research_player_match_outcomes(
   tour TEXT NOT NULL,
@@ -121,9 +123,8 @@ def official_by_game(official: List[Dict[str, Any]], games: Dict[str, Dict[str, 
 
 
 def build_identity(con: sqlite3.Connection, event: str) -> Dict[str, int]:
-    """Reviewed identity table, from the consistency map. Single-match codes stay unverified."""
+    """Identity rows gain evidence only (research_evidence.upsert_identity). Single-match codes stay unverified."""
     con.executescript(DDL)
-    con.execute("DELETE FROM provider_player_identity WHERE event=? AND reviewed_by IS NULL", (event,))
     counts: Dict[str, int] = {}
     for provider, code, athlete, status, seen in con.execute(
             "SELECT provider, provider_player_code, espn_athlete_id, status, matches_seen FROM provider_player_map WHERE event=?",
@@ -134,19 +135,22 @@ def build_identity(con: sqlite3.Connection, event: str) -> Dict[str, int]:
         else:
             verification, athlete = "unverified_single_match", None
             evidence = "appears in one linked match; no identity evidence beyond that match"
-        con.execute("INSERT OR REPLACE INTO provider_player_identity(provider,provider_player_code,event,espn_athlete_id,"
-                    "evidence,verification_status,matches_seen) VALUES(?,?,?,?,?,?,?)",
-                    (provider, code, event, athlete, evidence, verification, seen))
-        counts[verification] = counts.get(verification, 0) + 1
+        action = rpe.upsert_identity(con, provider, code, event, athlete, verification, evidence, seen)
+        counts[action] = counts.get(action, 0) + 1
     con.commit()
     return counts
 
 
 def build(con: sqlite3.Connection, event: str, tournament_id: str, official: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Assemble verified outcomes for one event. Never deletes; every write goes through research_evidence."""
     con.row_factory = sqlite3.Row
     con.executescript(DDL)
+    rpe.ensure(con)
+    if official:
+        rpe.store_official_pages(con, event, official)
+    official_pages = rpe.load_official_pages(con, event)
     games = game_index(con, tournament_id)
-    official_map = official_by_game(official or [], games)
+    official_map = official_by_game(official_pages, games)
     pmap = {(r[0], r[1]): r[2] for r in con.execute(
         "SELECT provider, provider_player_code, espn_athlete_id FROM provider_player_map WHERE event=? AND status='proposed'", (event,))}
     provider_rows = {}
@@ -158,9 +162,7 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str, official: Opt
         provider_rows.setdefault(str(r["gid"]), {})[r["provider"]] = r
     from provider_player_map import codes_for
     now = dt.datetime.now(dt.timezone.utc).isoformat()
-    counts: Dict[str, int] = {"written": 0, "review": 0}
-    con.execute("DELETE FROM research_player_match_outcomes WHERE event=?", (event,))
-    con.execute("DELETE FROM identity_review_queue WHERE event=?", (event,))
+    counts: Dict[str, int] = {}
     for gid, g in games.items():
         league = g["league"]
         home = str(g["home"].get("athlete_id") or "")
@@ -170,12 +172,12 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str, official: Opt
         if t24 is None:
             con.execute("INSERT OR REPLACE INTO identity_review_queue VALUES(?,?,?,?,?)",
                         (event, gid, "none", "", "no provider row linked to this completed game"))
-            counts["review"] += 1
+            counts["review"] = counts.get("review", 0) + 1
             continue
         if t24["parse_status"] != "ok":
             con.execute("INSERT OR REPLACE INTO identity_review_queue VALUES(?,?,?,?,?)",
                         (event, gid, "tennis24", t24["provider_match_id"], f"parse status {t24['parse_status']}"))
-            counts["review"] += 1
+            counts["review"] = counts.get("review", 0) + 1
             continue
         left = (t24["home_aces"], t24["home_double_faults"])
         right = (t24["away_aces"], t24["away_double_faults"])
@@ -204,7 +206,7 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str, official: Opt
             reason = reason or "no verification tier (codes not id-consistent, no official or cross-provider row)"
             con.execute("INSERT OR REPLACE INTO identity_review_queue VALUES(?,?,?,?,?)",
                         (event, gid, "tennis24", t24["provider_match_id"], reason))
-            counts["review"] += 1
+            counts["review"] = counts.get("review", 0) + 1
             continue
         confirmed = "sum to match" in (t24["stats_view"] or "")
         eligible = 1 if (g["status"] == "Final" and (tier in ("official_labelled", "cross_provider") or confirmed)) else 0
@@ -213,10 +215,12 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str, official: Opt
         for side, athlete, opponent, aces, dfs in (
                 ("home", home, away, left[0], left[1]),
                 ("away", away, home, right[0], right[1])):
-            con.execute("INSERT OR REPLACE INTO research_player_match_outcomes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        (league, event, gid, athlete, side, opponent, g["status"], aces, dfs, tier, "tennis24",
-                         t24["provider_match_id"], official_url, raw, eligible, now))
-        counts["written"] += 1
+            action = rpe.upsert_outcome(con, {
+                "tour": league, "event": event, "espn_game_id": gid, "espn_athlete_id": athlete, "side": side,
+                "opponent_athlete_id": opponent, "espn_status": g["status"], "aces": aces, "double_faults": dfs,
+                "verification_tier": tier, "provider": "tennis24", "provider_match_id": t24["provider_match_id"],
+                "official_url": official_url, "raw_values": raw, "eligible_cp4": eligible, "built_at": now})
+            counts[action] = counts.get(action, 0) + 1
     con.commit()
     return counts
 
