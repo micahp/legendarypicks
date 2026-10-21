@@ -24,7 +24,9 @@ import hashlib
 import json
 import math
 import os
+import re
 import sqlite3
+import uuid
 
 from fbs_lifecycle import NO_WINDOW_LIFECYCLES, is_lockable
 
@@ -66,6 +68,7 @@ CREATE TABLE IF NOT EXISTS fbs_forecasts (
     locked_at_utc TEXT,
     late INTEGER NOT NULL DEFAULT 0,
     lock_protocol TEXT,
+    kickoff_revision INTEGER NOT NULL DEFAULT 1,
     result INTEGER,
     home_score INTEGER,
     away_score INTEGER,
@@ -173,12 +176,8 @@ CREATE TABLE IF NOT EXISTS fbs_run_reports (
 );
 """
 
-# Created after migration: they name lock_protocol, which an older database lacks until then.
+# Created by initialize_new_db() and migrate() only. Normal opens never create or alter them.
 TRIGGERS = """
-DROP TRIGGER IF EXISTS fbs_forecast_lock_immutable;
-DROP TRIGGER IF EXISTS fbs_forecast_no_delete;
-DROP TRIGGER IF EXISTS fbs_lock_event_immutable;
-DROP TRIGGER IF EXISTS fbs_window_outcome_immutable;
 CREATE TRIGGER IF NOT EXISTS fbs_forecast_lock_immutable
 BEFORE UPDATE OF p_home, fair_home, fair_away, kickoff_utc, locked_at_utc, late,
     lock_protocol, model_version, kickoff_revision ON fbs_forecasts
@@ -195,33 +194,95 @@ BEGIN SELECT RAISE(ABORT, 'FBS window outcomes are immutable'); END;
 """
 
 
+SCHEMA_VERSION = 1
+REQUIRED_TABLES = tuple(re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", SCHEMA))
+REQUIRED_TRIGGERS = tuple(re.findall(r"CREATE TRIGGER IF NOT EXISTS (\w+)", TRIGGERS))
+
+
+class SchemaError(RuntimeError):
+    """The database is not at SCHEMA_VERSION. `code` is migration_required or not_initialized, and the
+    file has not been changed."""
+
+    def __init__(self, code: str, message: str):
+        super().__init__("%s: %s" % (code, message))
+        self.code = code
+
+
+def _user_tables(con: sqlite3.Connection) -> set[str]:
+    return {r[0] for r in con.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")}
+
+
+def _schema_state(con: sqlite3.Connection) -> str:
+    """current | empty | legacy. Reads only."""
+    tables = _user_tables(con)
+    if not tables:
+        return "empty"
+    version = con.execute("PRAGMA user_version").fetchone()[0]
+    triggers = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger'")}
+    if version == SCHEMA_VERSION and set(REQUIRED_TABLES) <= tables and set(REQUIRED_TRIGGERS) <= triggers:
+        return "current"
+    return "legacy"
+
+
+def _statements(script: str):
+    """Each complete statement of a schema script, so it can run inside one explicit transaction."""
+    buf = ""
+    for line in script.splitlines(keepends=True):
+        buf += line
+        if sqlite3.complete_statement(buf):
+            if buf.strip():
+                yield buf.strip()
+            buf = ""
+    if buf.strip():
+        raise ValueError("incomplete statement in schema script: %r" % buf[:80])
+
+
 def open_db(path: str = DEFAULT_DB, readonly: bool = False) -> sqlite3.Connection:
+    """Open an existing database. A writable open verifies the schema and never changes it: a database that
+    is not at SCHEMA_VERSION raises SchemaError(migration_required) and its file is left as it was."""
     if readonly:
         con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     else:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if not os.path.exists(path):
+            raise SchemaError("not_initialized", "%s does not exist; create a scratch database with initialize_new_db()" % path)
         con = sqlite3.connect(path)
-        con.executescript(SCHEMA)
-        _migrate(con)
-        con.executescript(TRIGGERS)
-        con.commit()
+        state = _schema_state(con)
+        if state != "current":
+            con.close()
+            if state == "empty":
+                raise SchemaError("not_initialized", "%s has no tables; create it with initialize_new_db()" % path)
+            raise SchemaError("migration_required", "%s is not at schema version %d; run the explicit migrate() "
+                              "command with a backup first" % (path, SCHEMA_VERSION))
     con.row_factory = sqlite3.Row
     return con
 
 
-def _migrate(con: sqlite3.Connection) -> None:
-    """Add lock_protocol to databases created before it. Existing rows are labelled legacy."""
-    columns = {row[1] for row in con.execute("PRAGMA table_info(fbs_forecasts)")}
-    if "lock_protocol" not in columns:
-        con.execute("ALTER TABLE fbs_forecasts ADD COLUMN lock_protocol TEXT")
-        con.execute("UPDATE fbs_forecasts SET lock_protocol = ? WHERE lock_protocol IS NULL",
-                    (LEGACY_PROTOCOL,))
-    if "kickoff_revision" not in columns:
-        con.execute("ALTER TABLE fbs_forecasts ADD COLUMN kickoff_revision INTEGER NOT NULL DEFAULT 1")
-    status_columns = {row[1] for row in con.execute("PRAGMA table_info(fbs_game_status)")}
-    for column in ("pregame_lifecycle", "pregame_observed_utc"):
-        if column not in status_columns:
-            con.execute("ALTER TABLE fbs_game_status ADD COLUMN %s TEXT" % column)
+def initialize_new_db(path: str) -> sqlite3.Connection:
+    """Create a new database at SCHEMA_VERSION. Refuses any file that already has tables, so an existing
+    database is never mistaken for an empty one."""
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        probe = sqlite3.connect(path)
+        try:
+            if _user_tables(probe):
+                raise SchemaError("migration_required", "%s already has tables; use migrate() or open_db()" % path)
+        finally:
+            probe.close()
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    con = sqlite3.connect(path, isolation_level=None)
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        for statement in list(_statements(SCHEMA)) + list(_statements(TRIGGERS)):
+            con.execute(statement)
+        con.execute("PRAGMA user_version = %d" % SCHEMA_VERSION)
+        con.execute("COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        con.close()
+        raise
+    con.row_factory = sqlite3.Row
+    return con
 
 
 def begin(con: sqlite3.Connection) -> None:
@@ -230,67 +291,109 @@ def begin(con: sqlite3.Connection) -> None:
         con.execute("BEGIN IMMEDIATE")
 
 
-def _readonly(path: str) -> sqlite3.Connection:
-    return sqlite3.connect("file:%s?mode=ro" % path, uri=True)
-
-
-def _table_digest(path: str, table: str, columns: list[str]) -> tuple[int, str]:
-    """Row count and a digest over the named columns, in key order. Used to prove existing rows are unchanged."""
-    con = _readonly(path)
+def _digest(path_or_con, table: str, columns: list[str]) -> tuple[int, str]:
+    """Row count and digest over the named columns, every row, in a fixed order."""
+    own = isinstance(path_or_con, str)
+    con = sqlite3.connect("file:%s?mode=ro" % path_or_con, uri=True) if own else path_or_con
     try:
+        order = ", ".join(str(i + 1) for i in range(len(columns)))
         digest, count = hashlib.sha256(), 0
-        for row in con.execute("SELECT %s FROM %s ORDER BY game_id, model" % (", ".join(columns), table)):
+        for row in con.execute("SELECT %s FROM %s ORDER BY %s" % (", ".join('"%s"' % c for c in columns), table, order)):
             digest.update(repr(tuple(row)).encode())
             count += 1
         return count, digest.hexdigest()
     finally:
-        con.close()
+        if own:
+            con.close()
 
 
-def migrate(path: str, backup_dir: str) -> dict:
-    """Bring one database to the current schema, with evidence. A backup is written first. Every column that
-    fbs_forecasts had before is then compared row by row: any change raises, and the backup is left in place.
-    Run it on a copy first; the operational file is migrated only with explicit authorization."""
-    con = _readonly(path)
-    try:
-        before_tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-        before_columns = [r[1] for r in con.execute("PRAGMA table_info(fbs_forecasts)")]
-    finally:
-        con.close()
-    count_before, digest_before = _table_digest(path, "fbs_forecasts", before_columns)
-
+def _exclusive_backup(path: str, backup_dir: str) -> str:
+    """A new backup file, created exclusively: an existing backup is never overwritten."""
     os.makedirs(backup_dir, exist_ok=True)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    backup = os.path.join(backup_dir, "%s.pre-migrate-%s" % (os.path.basename(path), stamp))
-    if os.path.exists(backup):
-        raise RuntimeError("backup already exists, refusing to overwrite it: %s" % backup)
-    source, target = _readonly(path), sqlite3.connect(backup)
+    backup = os.path.join(backup_dir, "%s.pre-migrate-%s-%s" % (os.path.basename(path), stamp, uuid.uuid4().hex[:8]))
+    os.close(os.open(backup, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644))
+    source = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    target = sqlite3.connect(backup)
     try:
         source.backup(target)
     finally:
         target.close()
         source.close()
-
-    open_db(path).close()                 # SCHEMA, then _migrate, then TRIGGERS: the migration itself
-
-    count_after, digest_after = _table_digest(path, "fbs_forecasts", before_columns)
-    if (count_after, digest_after) != (count_before, digest_before):
-        raise RuntimeError("migration changed existing fbs_forecasts rows (%d -> %d); restore from %s"
-                           % (count_before, count_after, backup))
-    con = _readonly(path)
+    check = sqlite3.connect("file:%s?mode=ro" % backup, uri=True)
     try:
-        after_tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-        integrity = con.execute("PRAGMA integrity_check").fetchone()[0]
-        protocols = dict(con.execute("SELECT lock_protocol, COUNT(*) FROM fbs_forecasts GROUP BY 1").fetchall())
+        if check.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            raise RuntimeError("backup failed integrity_check: %s" % backup)
+    finally:
+        check.close()
+    return backup
+
+
+def _upgrade_statements(con: sqlite3.Connection) -> None:
+    """Bring an existing schema forward inside the caller's transaction. Order matters: the legacy backfill
+    must run before the immutability triggers exist, or the backfill itself would be refused."""
+    if "fbs_forecasts" in _user_tables(con):
+        columns = {r[1] for r in con.execute("PRAGMA table_info(fbs_forecasts)")}
+        if "lock_protocol" not in columns:
+            con.execute("ALTER TABLE fbs_forecasts ADD COLUMN lock_protocol TEXT")
+            con.execute("UPDATE fbs_forecasts SET lock_protocol = ? WHERE lock_protocol IS NULL", (LEGACY_PROTOCOL,))
+        if "kickoff_revision" not in columns:
+            con.execute("ALTER TABLE fbs_forecasts ADD COLUMN kickoff_revision INTEGER NOT NULL DEFAULT 1")
+    for statement in list(_statements(SCHEMA)) + list(_statements(TRIGGERS)):
+        con.execute(statement)
+
+
+def migrate(path: str, backup_dir: str) -> dict:
+    """The only path that changes an existing database's schema. A backup is written first, to a new file.
+    The schema change runs in one transaction, and it commits only if every table that existed before still has
+    identical rows over its original columns. A database already at SCHEMA_VERSION is left untouched."""
+    if not os.path.exists(path):
+        raise SchemaError("not_initialized", "%s does not exist" % path)
+    probe = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    try:
+        state = _schema_state(probe)
+    finally:
+        probe.close()
+    if state == "current":
+        return {"action": "none", "path": path, "schema_version": SCHEMA_VERSION}
+    if state == "empty":
+        raise SchemaError("not_initialized", "%s has no tables; use initialize_new_db()" % path)
+
+    backup = _exclusive_backup(path, backup_dir)
+    con = sqlite3.connect(path, isolation_level=None)
+    try:
+        before = {}
+        for table in sorted(_user_tables(con)):
+            columns = [r[1] for r in con.execute("PRAGMA table_info(%s)" % table)]
+            before[table] = (columns, _digest(con, table, columns))
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            _upgrade_statements(con)
+            after = {}
+            for table, (columns, _) in before.items():
+                after[table] = _digest(con, table, columns)
+            changed = [t for t in before if after[t] != before[t][1]]
+            if changed:
+                raise RuntimeError("migration would change existing rows in %s; nothing committed. backup: %s"
+                                   % (changed, backup))
+            if con.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                raise RuntimeError("integrity_check failed after migration; nothing committed. backup: %s" % backup)
+            if set(REQUIRED_TRIGGERS) - {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger'")}:
+                raise RuntimeError("required immutability triggers missing after migration; nothing committed")
+            con.execute("PRAGMA user_version = %d" % SCHEMA_VERSION)
+            con.execute("COMMIT")
+        except Exception:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        lock_protocols = dict(con.execute("SELECT lock_protocol, COUNT(*) FROM fbs_forecasts GROUP BY 1").fetchall()) \
+            if "fbs_forecasts" in before else {}
     finally:
         con.close()
-    if before_tables - after_tables:
-        raise RuntimeError("migration dropped tables: %s" % sorted(before_tables - after_tables))
-    if integrity != "ok":
-        raise RuntimeError("integrity_check after migration: %s" % integrity)
-    return {"backup": backup, "forecast_rows_before": count_before, "forecast_rows_after": count_after,
-            "existing_columns_digest": digest_after, "tables_added": sorted(after_tables - before_tables),
-            "lock_protocols": protocols, "integrity": integrity}
+    return {"action": "migrated", "path": path, "backup": backup, "schema_version": SCHEMA_VERSION,
+            "tables": {t: {"rows": before[t][1][0], "digest": before[t][1][1]} for t in before},
+            "tables_added": sorted(set(REQUIRED_TABLES) - set(before)),
+            "lock_protocols": lock_protocols}
 
 
 def parse_time(value: str) -> dt.datetime:
@@ -792,12 +895,29 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Migrate an FBS model database, with a backup and evidence.")
-    parser.add_argument("--migrate", metavar="DB", required=True)
-    parser.add_argument("--backup-dir", required=True)
+    parser = argparse.ArgumentParser(description="Create or migrate an FBS model database. Opens never migrate.")
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument("--init", metavar="DB", help="create a NEW scratch database at the current schema")
+    action.add_argument("--migrate", metavar="DB", help="upgrade an existing database, with a backup")
+    action.add_argument("--check", metavar="DB", help="report the schema state without changing anything")
+    parser.add_argument("--backup-dir")
     args = parser.parse_args(argv)
-    print(json.dumps(migrate(args.migrate, args.backup_dir), indent=2, sort_keys=True))
-    return 0
+    if args.init:
+        initialize_new_db(args.init).close()
+        print(json.dumps({"action": "initialized", "path": args.init, "schema_version": SCHEMA_VERSION}))
+        return 0
+    if args.migrate:
+        if not args.backup_dir:
+            parser.error("--migrate needs --backup-dir")
+        print(json.dumps(migrate(args.migrate, args.backup_dir), indent=2, sort_keys=True, default=str))
+        return 0
+    probe = sqlite3.connect("file:%s?mode=ro" % args.check, uri=True)
+    try:
+        state = _schema_state(probe)
+    finally:
+        probe.close()
+    print(json.dumps({"path": args.check, "state": state, "schema_version": SCHEMA_VERSION}))
+    return 0 if state == "current" else 5
 
 
 if __name__ == "__main__":

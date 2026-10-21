@@ -1,6 +1,7 @@
 """Focused tests for FBS matchup identity, true kickoffs, T-90 locks and the parity gate."""
 import datetime as dt
 import json
+import os
 import sqlite3
 from unittest.mock import patch
 
@@ -12,11 +13,19 @@ import fbs_model_runner as runner
 import fbs_model_service as service
 import fbs_model_store as store
 
+
+def open_scratch(path):
+    """A scratch database at the current schema: created new if absent, otherwise opened. Never migrated."""
+    if not os.path.exists(path):
+        store.initialize_new_db(path).close()
+    return store.open_db(path)
+
 NOW = dt.datetime(2026, 10, 20, 17, 0, tzinfo=dt.timezone.utc)
 # Real ESPN kickoff for event 401871055 (scoreboard, 2026-10-20). Not midnight.
 KICKOFF = dt.datetime(2026, 10, 20, 23, 0, tzinfo=dt.timezone.utc)
 REAL_EVENT = {
     "id": "401871055", "date": "2026-10-20T23:00Z", "week": {"number": 8},
+    "season": {"year": 2026, "type": 2},
     "competitions": [{
         "neutralSite": False, "status": {"type": {"completed": False}},
         "competitors": [
@@ -62,7 +71,7 @@ def test_slate_identity_and_precise_kickoff_preserved():
     slate = pd.DataFrame([{
         "game_id": "new-game", "home_team_id": "1", "away_team_id": "2",
         "home_team": "Texas", "away_team": "Baylor",
-        "neutral_site": True, "kickoff_utc": kickoff, "week": 9,
+        "neutral_site": True, "kickoff_utc": kickoff, "week": 9, "season": 2026, "season_type": 2,
     }])
     events = pd.DataFrame([{
         "game_id": "old", "fbs_participant": True, "evaluation_population": True,
@@ -93,7 +102,7 @@ def test_non_fbs_or_unverified_team_excluded():
     slate = pd.DataFrame([{
         "game_id": "fcs", "home_team_id": "1", "away_team_id": "999",
         "home_team": "Texas", "away_team": "Unknown",
-        "neutral_site": False,
+        "neutral_site": False, "season": 2026, "season_type": 2,
         "kickoff_utc": pd.Timestamp("2026-10-24T19:30:00Z"),
     }])
     with patch.object(runner.base, "load_events",
@@ -114,7 +123,7 @@ def _row(game_id="401871055", model="g2h", p_home=0.6, kickoff=KICKOFF):
 
 @pytest.fixture
 def con(tmp_path):
-    connection = store.open_db(str(tmp_path / "fbs-model.sqlite3"))
+    connection = open_scratch(str(tmp_path / "fbs-model.sqlite3"))
     yield connection
     connection.close()
 
@@ -228,6 +237,7 @@ def test_old_database_is_migrated_and_its_rows_are_labelled_legacy(tmp_path):
                 "VALUES('1','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','v',0.7,'x','x',0)")
     raw.commit()
     raw.close()
+    store.migrate(path, str(tmp_path / "backups"))
     con = store.open_db(path)
     try:
         assert con.execute("SELECT lock_protocol FROM fbs_forecasts").fetchone()[0] == store.LEGACY_PROTOCOL
@@ -555,7 +565,7 @@ def test_legacy_rows_are_never_pending_for_grading(con):
     assert store.pending_grades(con, KICKOFF + dt.timedelta(days=1)) == []
 
 
-# ---------------------------------------------------------------------------------- migration of a legacy copy
+# ---------------------------------------------------------------------- explicit schema: open, init, migrate
 
 LEGACY_FORECASTS = """
 CREATE TABLE fbs_forecasts (
@@ -565,22 +575,28 @@ CREATE TABLE fbs_forecasts (
     fitted_through TEXT, created_at_utc TEXT NOT NULL, locked_at_utc TEXT, late INTEGER NOT NULL DEFAULT 0,
     result INTEGER, home_score INTEGER, away_score INTEGER, graded_at_utc TEXT,
     PRIMARY KEY (game_id, model));
+CREATE TABLE fbs_model_meta (key TEXT PRIMARY KEY, value TEXT);
+INSERT INTO fbs_model_meta VALUES ('train_games', '2901');
 INSERT INTO fbs_forecasts VALUES ('1', 'g2h', 2025, '2025-09-06T16:00:00+00:00', 'A', 'B', '10', '11',
     'fbs-g2h-old', 0.61, 60, -150, '2025-09-05', '2025-09-05T10:00:00+00:00', '2025-09-05T10:00:00+00:00',
     0, 1, 31, 24, '2025-09-07T05:00:00+00:00');
 INSERT INTO fbs_forecasts VALUES ('2', 'g2', 2025, '2025-09-06T20:00:00+00:00', 'C', 'D', '12', '13',
     'fbs-g2-old', 0.44, NULL, NULL, '2025-09-05', '2025-09-05T10:00:00+00:00', NULL, 0, NULL, NULL, NULL, NULL);
 """
+LEGACY_COLUMNS = ["game_id", "model", "season", "kickoff_utc", "home_team", "away_team", "home_team_id",
+                  "away_team_id", "model_version", "p_home", "fair_home", "fair_away", "fitted_through",
+                  "created_at_utc", "locked_at_utc", "late", "result", "home_score", "away_score", "graded_at_utc"]
 
 
 def _legacy_db(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     con = sqlite3.connect(path)
     con.executescript(LEGACY_FORECASTS)
     con.commit()
     con.close()
 
 
-def _forecast_rows(path, columns):
+def _rows(path, columns=LEGACY_COLUMNS):
     con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     try:
         return con.execute("SELECT %s FROM fbs_forecasts ORDER BY game_id, model" % ", ".join(columns)).fetchall()
@@ -588,46 +604,95 @@ def _forecast_rows(path, columns):
         con.close()
 
 
-LEGACY_COLUMNS = ["game_id", "model", "season", "kickoff_utc", "home_team", "away_team", "home_team_id",
-                  "away_team_id", "model_version", "p_home", "fair_home", "fair_away", "fitted_through",
-                  "created_at_utc", "locked_at_utc", "late", "result", "home_score", "away_score", "graded_at_utc"]
+def _bytes(path):
+    with open(path, "rb") as handle:
+        return handle.read()
 
 
-def test_migrating_a_legacy_copy_keeps_every_existing_forecast_row_and_writes_a_backup(tmp_path):
+def test_a_writable_open_of_a_legacy_database_fails_closed_and_changes_no_byte(tmp_path):
     db = str(tmp_path / "legacy" / "fbs-model.dev.sqlite3")
-    (tmp_path / "legacy").mkdir()
     _legacy_db(db)
-    before = _forecast_rows(db, LEGACY_COLUMNS)
+    before = _bytes(db)
+    with pytest.raises(store.SchemaError, match="migration_required") as caught:
+        store.open_db(db)
+    assert caught.value.code == "migration_required"
+    assert _bytes(db) == before
 
+
+def test_an_empty_or_missing_file_is_not_initialized_and_is_not_created_by_open(tmp_path):
+    missing = str(tmp_path / "nothing" / "fbs-model.dev.sqlite3")
+    with pytest.raises(store.SchemaError, match="not_initialized"):
+        store.open_db(missing)
+    assert not os.path.exists(missing)
+
+
+def test_initialize_creates_a_current_database_and_refuses_an_existing_one(tmp_path):
+    db = str(tmp_path / "new" / "scratch.sqlite3")
+    store.initialize_new_db(db).close()
+    con = store.open_db(db)
+    assert con.execute("PRAGMA user_version").fetchone()[0] == store.SCHEMA_VERSION
+    con.close()
+    with pytest.raises(store.SchemaError, match="migration_required"):
+        store.initialize_new_db(db)
+
+
+def test_migrating_a_legacy_copy_keeps_every_existing_row_and_then_opens(tmp_path):
+    db = str(tmp_path / "legacy" / "fbs-model.dev.sqlite3")
+    _legacy_db(db)
+    before = _rows(db)
     evidence = store.migrate(db, str(tmp_path / "backups"))
 
-    assert evidence["forecast_rows_before"] == evidence["forecast_rows_after"] == 2
+    assert evidence["action"] == "migrated"
+    assert evidence["tables"]["fbs_forecasts"]["rows"] == 2
     assert evidence["lock_protocols"] == {"legacy": 2}
-    assert evidence["integrity"] == "ok"
     assert {"fbs_game_status", "fbs_previews", "fbs_unresolved", "fbs_window_outcomes"} <= set(evidence["tables_added"])
-    assert _forecast_rows(db, LEGACY_COLUMNS) == before
-    assert _forecast_rows(evidence["backup"], LEGACY_COLUMNS) == before          # the backup is the original
-    assert store.migrate(db, str(tmp_path / "backups"))["tables_added"] == []    # idempotent, new backup each time
+    assert _rows(evidence["backup"]) == before                    # the backup is the original, byte-for-byte rows
+    assert _rows(db) == before                                    # the original columns are unchanged
+    store.open_db(db).close()                                     # now opens: it is at SCHEMA_VERSION
 
 
-def test_a_migration_that_changes_an_existing_row_fails_and_keeps_the_backup(tmp_path, monkeypatch):
-    db = str(tmp_path / "legacy-2" / "fbs-model.dev.sqlite3")
-    (tmp_path / "legacy-2").mkdir()
+def test_a_second_migration_is_a_no_op_and_writes_no_backup(tmp_path):
+    db = str(tmp_path / "legacy" / "fbs-model.dev.sqlite3")
     _legacy_db(db)
-    real_open = store.open_db
+    store.migrate(db, str(tmp_path / "backups"))
+    again = store.migrate(db, str(tmp_path / "backups"))
+    assert again == {"action": "none", "path": db, "schema_version": store.SCHEMA_VERSION}
+    assert len(list((tmp_path / "backups").iterdir())) == 1
 
-    def open_and_damage(path, readonly=False):
-        con = real_open(path, readonly=readonly)
-        if not readonly:
-            for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'fbs_forecasts'").fetchall():
-                con.execute('DROP TRIGGER "%s"' % name)              # simulate a write the immutability guard would stop
-            con.execute("UPDATE fbs_forecasts SET p_home = 0.99 WHERE game_id = '1'")
-            con.commit()
-        return con
-    monkeypatch.setattr(store, "open_db", open_and_damage)
 
-    with pytest.raises(RuntimeError, match="changed existing fbs_forecasts rows"):
+def test_a_migration_that_would_change_an_existing_row_commits_nothing(tmp_path, monkeypatch):
+    db = str(tmp_path / "legacy-2" / "fbs-model.dev.sqlite3")
+    _legacy_db(db)
+    before = _bytes(db)
+    real_upgrade = store._upgrade_statements
+
+    def upgrade_then_damage(con):
+        real_upgrade(con)
+        for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'fbs_forecasts'").fetchall():
+            con.execute('DROP TRIGGER "%s"' % name)                 # the write the immutability guard would stop
+        con.execute("UPDATE fbs_forecasts SET p_home = 0.99 WHERE game_id = '1'")
+    monkeypatch.setattr(store, "_upgrade_statements", upgrade_then_damage)
+
+    with pytest.raises(RuntimeError, match="would change existing rows"):
         store.migrate(db, str(tmp_path / "backups-2"))
+    assert _bytes(db) == before                                   # rolled back: the file is still the legacy one
     backups = list((tmp_path / "backups-2").iterdir())
-    assert len(backups) == 1
-    assert _forecast_rows(str(backups[0]), ["p_home"]) == [(0.61,), (0.44,)]
+    assert len(backups) == 1 and _rows(str(backups[0])) == _rows(db)
+
+
+def test_a_backup_is_never_overwritten(tmp_path, monkeypatch):
+    import types
+    frozen = type("Frozen", (dt.datetime,), {"now": classmethod(
+        lambda cls, tz=None: cls(2026, 10, 21, 12, 0, 0, tzinfo=dt.timezone.utc))})
+    monkeypatch.setattr(store, "dt", types.SimpleNamespace(datetime=frozen, timezone=dt.timezone,
+                                                           timedelta=dt.timedelta))
+    monkeypatch.setattr(store.uuid, "uuid4", lambda: types.SimpleNamespace(hex="00000000deadbeef"))
+    first, second = tmp_path / "a" / "fbs-model.dev.sqlite3", tmp_path / "b" / "fbs-model.dev.sqlite3"
+    _legacy_db(str(first))
+    _legacy_db(str(second))
+    backups = str(tmp_path / "backups")
+    kept = store.migrate(str(first), backups)["backup"]
+    kept_bytes = _bytes(kept)
+    with pytest.raises(FileExistsError):
+        store.migrate(str(second), backups)
+    assert _bytes(kept) == kept_bytes
