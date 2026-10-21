@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import datetime as dt
+import contextlib
+import io
 import json
 import sqlite3
 from pathlib import Path
@@ -11,6 +13,7 @@ from fastapi import HTTPException, Response
 from nba_game_model import (MODEL_INFO, _bootstrap_loss,
                             _date_clustered_coverage_bootstrap,
                             _date_clustered_paired_bootstrap, backtest)
+from backtest_nba_game_model import print_report
 from nba_model_data import TeamGame
 from nba_model_runtime import build_preview_rows, refresh_completed_games, require_dev_picks_db
 from nba_model_store import (MODEL_VERSION, NBAModelStoreError,
@@ -21,6 +24,22 @@ from fastapi import HTTPException
 from routers import nba_model as nba_model_router
 
 UTC = dt.timezone.utc
+
+
+def test_benchmark_stdout_reports_confirmation_population_metrics_and_pairs():
+    benchmark_path = Path(__file__).resolve().parents[1] / "research" / "nba-game-model" / "benchmark.json"
+    report = json.loads(benchmark_path.read_text(encoding="utf-8"))
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        print_report(report, benchmark_path)
+    stdout = output.getvalue()
+
+    assert "eligible confirmation regular-season games: 1229" in stdout
+    assert "confirm_2026 metrics:" in stdout
+    assert "G3: n=1229" in stdout
+    assert "confirm_2026 paired comparisons: 164 NBA local game dates" in stdout
+    confirm_output = stdout.split("confirm_2026 paired comparisons:", 1)[1].split("report:", 1)[0]
+    assert sum("CI95=" in line for line in confirm_output.splitlines()) == 32
 
 
 def _game(season: int, date: str, ident: str, home: str = "BOS", away: str = "NYK",

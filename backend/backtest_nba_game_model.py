@@ -33,18 +33,12 @@ def run(data_dir: str | Path, output_path: str | Path, download: bool = False) -
     return report
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-dir", default=str(DEFAULT_DATA),
-                        help="cache directory for pinned Parquet assets")
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT),
-                        help="benchmark JSON output path")
-    parser.add_argument("--download", action="store_true",
-                        help="download missing pinned releases serially")
-    args = parser.parse_args()
-    report = run(args.data_dir, args.output, download=args.download)
+def print_report(report: dict, output_path: str | Path) -> None:
+    """Print the benchmark summary without changing or enriching its JSON schema."""
     print("NBA game-model benchmark: source_sha256_verified=true")
     print("eligible regular-season games:", report["eligible_games"])
+    print("eligible confirmation regular-season games:",
+          report["metrics"]["confirm_2026"]["G3"]["games"])
     print("coverage by SportsDataverse ending-year season:")
     for row in report["coverage"]:
         print("  {season}: schedule={regular_schedule_games} boxscore="
@@ -53,7 +47,7 @@ def main() -> int:
               "{regular_schedule_games_without_boxscore} missing_efficiency="
               "{regular_games_missing_efficiency_inputs} cup_final_excluded="
               "{nba_cup_finals_excluded}".format(**row))
-    for period in ("validation", "test"):
+    for period in ("validation", "test", "confirm_2026"):
         print(f"{period} metrics:")
         for model, metrics in report["metrics"][period].items():
             print("  {model}: n={games} Brier={winner_brier:.5f} logloss={winner_log_loss:.5f} "
@@ -82,7 +76,7 @@ def main() -> int:
     uncertainty = report["uncertainty"]
     print("paired date-cluster bootstrap: {replicates} replicates, seed {seed}; "
           "95% percentile intervals".format(**uncertainty))
-    for period in ("validation", "test"):
+    for period in ("validation", "test", "confirm_2026"):
         period_result = uncertainty[period]
         print(f"{period} paired comparisons: {period_result['date_clusters']} NBA local game dates")
         for comparison in period_result["comparisons"]:
@@ -96,7 +90,20 @@ def main() -> int:
                       low=low, high=high,
                       p_better=comparison["p_candidate_better"],
                   ))
-    print("report:", Path(args.output).resolve())
+    print("report:", Path(output_path).resolve())
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-dir", default=str(DEFAULT_DATA),
+                        help="cache directory for pinned Parquet assets")
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT),
+                        help="benchmark JSON output path")
+    parser.add_argument("--download", action="store_true",
+                        help="download missing pinned releases serially")
+    args = parser.parse_args()
+    report = run(args.data_dir, args.output, download=args.download)
+    print_report(report, args.output)
     return 0
 
 

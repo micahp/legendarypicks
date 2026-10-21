@@ -168,6 +168,33 @@ G3's 80% margin interval covered 80.31% of games (date-clustered 95% CI 78.28–
 
 The research advancement criterion remains defined on the 2024–25 test split only. No candidate qualifies under that criterion; this confirmation result does not change the gate or promote a model.
 
+### Evidence needed to resolve the candidate ordering
+
+A frozen replay extracted each game's paired winner-Brier loss and grouped those deltas by NBA local game date. It reproduced the existing game-weighted deltas within 2.9e-17 absolute floating-point roundoff; `benchmark.json` was not modified. In the table, the date SD and SD of the date mean use the unweighted daily average of each date's paired game deltas. CI widths are from the existing 2,000-replicate date-cluster bootstrap (seed 20261021).
+
+| Pair (candidate − comparator) | Test Δ | Test date SD / SD(mean), n=323 | Test 95% CI width | Confirm Δ | Confirm date SD / SD(mean), n=164 | Confirm 95% CI width |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| G1 − G2 | -0.0000951 | 0.04246 / 0.00236 | 0.008050 | +0.0032665 | 0.04636 / 0.00362 | 0.013133 |
+| G1 − G3 | +0.0012610 | 0.03875 / 0.00216 | 0.007229 | +0.0036759 | 0.04136 / 0.00323 | 0.011706 |
+| G2 − G3 | +0.0013561 | 0.01024 / 0.00057 | 0.001795 | +0.0004094 | 0.01053 / 0.00082 | 0.002992 |
+
+Power planning uses the game-weighted paired-Brier effect and the SD of date-cluster influence values, adjusted for the bootstrap's ratio estimator because dates contain different numbers of games. It reports both the confirmation-season SD and the pooled within-split test-plus-confirmation SD. For two-sided α=0.05 and 80% power, required additional dates are estimated as `((1.96 + 0.842) × σ_date / |effect|)²`, then converted at 164 dates per season. These are approximate future-sample requirements if the selected effect and variance persist; they are not a change to the research gate.
+
+| Comparison and assumed effect (candidate − comparator) | Planning SD | Additional seasons for 80% power | Power after 1 / 3 / 5 additional seasons |
+| --- | --- | ---: | ---: |
+| G1 − G3, confirmation effect +0.003676 | Confirmation SD | 6 | 23.1% / 56.3% / 78.1% |
+| G1 − G3, confirmation effect +0.003676 | Pooled test + confirmation SD | 5 | 26.0% / 62.5% / 83.7% |
+| G1 − G3, test effect +0.001261 | Confirmation SD | 45 | 7.0% / 11.2% / 15.5% |
+| G1 − G3, test effect +0.001261 | Pooled test + confirmation SD | 39 | 7.4% / 12.2% / 17.2% |
+| G1 − G2, confirmation effect +0.003267 | Confirmation SD | 9 | 16.5% / 39.5% / 59.0% |
+| G1 − G2, confirmation effect +0.003267 | Pooled test + confirmation SD | 7 | 18.6% / 45.2% / 66.0% |
+| G1 − G2, test effect −0.000095 | Confirmation SD | 9,672 | 5.0% / 5.0% / 5.0% |
+| G1 − G2, test effect −0.000095 | Pooled test + confirmation SD | 8,215 | 5.0% / 5.0% / 5.1% |
+
+At the observed confirmation effect, G3 versus G1 is just short of 80% power after five more seasons using the confirmation variance (78.1%), and reaches it with the pooled variance (83.7%); the planning estimate is five to six seasons. At the smaller test effect, the estimate is 39–45 seasons. G1 versus G2 does not reach 80% power within five seasons even at its larger confirmation effect (59.0–66.0%); the estimate is seven to nine seasons. At the near-zero test effect, one, three, or five seasons remain at roughly the 5% false-positive rate. The results quantify evidence only; they make no adoption recommendation and do not alter the gate.
+
+The full per-pair, per-split measurements, variance definitions, power assumptions, and formulas are in [`research/nba-game-model/power-2026-10-21.json`](../research/nba-game-model/power-2026-10-21.json).
+
 ## Prospective forecasts and grading
 
 - The standalone file `nba-model.dev.sqlite3` keeps model history, replaceable previews, immutable lock rows, immutable grade rows, and missed-window events separate from the picks DB.
@@ -179,10 +206,10 @@ The research advancement criterion remains defined on the 2024–25 test split o
 
 ## Verification output
 
-- `pytest backend/test_nba_game_model_phase1.py -q`: **12 passed**, including the confirmation chronology guard, period wiring, deterministic date-cluster coverage resampling, paired deltas, and G2 point-mass CRPS.
+- `pytest backend/test_nba_game_model_phase1.py -q`: **13 passed**, including a regression test that checks stdout reports confirmation eligibility, model metrics, date clusters, and paired comparisons, as well as the confirmation chronology guard, period wiring, deterministic date-cluster coverage resampling, paired deltas, and G2 point-mass CRPS.
 - `jest components/Leagues/NbaModelTab.test.tsx --runInBand`: **3 passed**. A focused TypeScript `--noEmit` check for `NbaModelTab.tsx` passed.
 - `python3 -m py_compile backend/nba_game_model.py backend/backtest_nba_game_model.py backend/test_nba_game_model_phase1.py` passed.
-- Two full benchmark runs both printed `source_sha256_verified=true` and reported 5,827 train / 2,460 validation / 2,460 test / 1,229 confirmation games. The evaluation periods covered 329 validation, 323 test, and 164 confirmation local dates. Both output files are byte-identical, SHA-256 `267c5afa88ae2ba7c23d66f587ccf734f7527e82de1df77d2d668cbbfa31b365`. Recursive comparison confirms every pre-existing benchmark key and value is byte-identical; the only additions are `protocol.confirm_seasons_end_year`, `metrics.confirm_2026`, and `uncertainty.confirm_2026`. The validation/test metrics and paired-uncertainty blocks are unchanged.
+- The two full benchmark runs were byte-identical at SHA-256 `267c5afa88ae2ba7c23d66f587ccf734f7527e82de1df77d2d668cbbfa31b365`; the original runs did not print the confirmation population or metrics. After the stdout fix, `print_report` was exercised against that existing JSON (without regenerating it) and printed `eligible confirmation regular-season games: 1229`, `G3: n=1229`, and `confirm_2026 paired comparisons: 164 NBA local game dates`, followed by all 32 comparison rows. The tracked JSON remains byte-identical; this task adds no benchmark keys or values.
 - The temporary dev-schedule runtime smoke printed: `sha256_assets_verified=20 history_rows_added=11976 historical_games=11976 schedule_rows_read_only=1273 preview_games=25 preview_rows_generated=75 preview_rows_persisted=75 locks_created=0`.
 
 To initialize the dev-only history after the branch is deployed, use the serial, hash-verified importer with explicit dev paths:
