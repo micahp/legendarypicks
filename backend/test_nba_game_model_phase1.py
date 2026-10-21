@@ -8,7 +8,8 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException, Response
 
-from nba_game_model import MODEL_INFO, backtest
+from nba_game_model import (MODEL_INFO, _bootstrap_loss,
+                            _date_clustered_paired_bootstrap, backtest)
 from nba_model_data import TeamGame
 from nba_model_runtime import build_preview_rows, refresh_completed_games, require_dev_picks_db
 from nba_model_store import (MODEL_VERSION, NBAModelStoreError,
@@ -57,6 +58,58 @@ def test_backtest_uses_one_chronological_eligible_set_for_all_models():
     assert all(value["games"] == 2 for value in result["metrics"]["test"].values())
     assert result["metrics"]["test"]["G1"].get("home_points_mae") is None
     assert result["metrics"]["test"]["G3"]["distribution"]
+
+
+def test_uncertainty_bootstrap_pairs_models_and_resamples_whole_dates():
+    def row(game_date: str, ident: str, g1_p: float, g2_p: float) -> dict:
+        distribution = {"margin_crps": 8.0, "total_crps": 12.0}
+        return {
+            "game_id": ident, "season": 2025, "game_date": game_date,
+            "home_score": 110, "away_score": 100, "outcome": 1,
+            "models": {
+                "G1": {"p_home": g1_p, "home_points": None, "away_points": None},
+                "G2": {"p_home": g2_p, "home_points": 105.0, "away_points": 102.0},
+                "G3": {"p_home": 0.6, "home_points": 106.0, "away_points": 101.0,
+                       "distribution_metrics": distribution},
+                "B0 Home-rate baseline": {"p_home": 0.54,
+                                          "home_points": None, "away_points": None},
+                "B1 Training league-points baseline": {
+                    "p_home": 0.54, "home_points": 100.0, "away_points": 95.0,
+                },
+            },
+        }
+
+    rows = [
+        row("2025-01-01", "a1", 0.9, 0.1),
+        row("2025-01-01", "a2", 0.9, 0.1),
+        row("2025-01-02", "b1", 0.1, 0.9),
+        row("2025-01-02", "b2", 0.1, 0.9),
+    ]
+    result = _date_clustered_paired_bootstrap(rows, replicates=2000, seed=13)
+    assert result == _date_clustered_paired_bootstrap(rows, replicates=2000, seed=13)
+    assert result["games"] == 4
+    assert result["date_clusters"] == 2
+    assert len(result["comparisons"]) == 32
+    comparison = next(item for item in result["comparisons"]
+                      if item["metric"] == "winner_brier"
+                      and item["candidate"] == "G1" and item["comparator"] == "G2")
+    assert comparison["delta_candidate_minus_comparator"] == pytest.approx(0.0)
+    # With two whole-date clusters, each bootstrap delta can only be -0.8, 0, or +0.8.
+    assert comparison["ci95_percentile"] == pytest.approx([-0.8, 0.8])
+    assert 0.15 < comparison["p_candidate_better"] < 0.35
+
+
+def test_g2_crps_is_the_absolute_error_of_its_deterministic_point_mass():
+    row = {
+        "home_score": 110, "away_score": 100,
+        "models": {
+            "G2": {"home_points": 105.0, "away_points": 102.0},
+            "G3": {"distribution_metrics": {"margin_crps": 6.0, "total_crps": 4.0}},
+        },
+    }
+    assert _bootstrap_loss(row, "G2", "margin_crps") == pytest.approx(7.0)
+    assert _bootstrap_loss(row, "G2", "total_crps") == pytest.approx(3.0)
+    assert _bootstrap_loss(row, "G3", "margin_crps") == pytest.approx(6.0)
 
 
 def test_history_import_is_season_pinned_and_additive(tmp_path: Path):

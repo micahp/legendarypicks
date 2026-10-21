@@ -833,5 +833,859 @@
     "g2_training_margin_residual_sd": 13.362808093532248,
     "home_points_mean": 110.38270121846577,
     "home_win_rate": 0.5711343744637034
+  },
+  "uncertainty": {
+    "delta_definition": "candidate metric minus comparator metric; lower is better",
+    "g2_crps_definition": "G2 is treated as a deterministic point-mass distribution; its CRPS equals absolute error for margin and total.",
+    "interval": "two-sided 95% percentile interval (2.5th, 97.5th percentiles)",
+    "method": "Paired nonparametric cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+    "p_better_definition": "share of replicates with candidate-minus-comparator delta < 0",
+    "random_number_generator": "Python random.Random (MT19937)",
+    "replicates": 2000,
+    "seed": 20261021,
+    "test": {
+      "comparisons": [
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.21464702316891698,
+          "ci95_percentile": [
+            -0.003993523261688815,
+            0.004056719975280735
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.21474217071569368,
+          "delta_candidate_minus_comparator": -9.514754677669712e-05,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.5155
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.21464702316891698,
+          "ci95_percentile": [
+            -0.0022764975915890097,
+            0.004952673014203008
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.21338606285370462,
+          "delta_candidate_minus_comparator": 0.0012609603152123616,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.236
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.21464702316891698,
+          "ci95_percentile": [
+            -0.040410318852940816,
+            -0.028253767935544228
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.03422496381133086,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.21464702316891698,
+          "ci95_percentile": [
+            -0.040410318852940816,
+            -0.028253767935544228
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.03422496381133086,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.21474217071569368,
+          "ci95_percentile": [
+            0.0004603895964952928,
+            0.0022550156723580078
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.21338606285370462,
+          "delta_candidate_minus_comparator": 0.0013561078619890587,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.002
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.21474217071569368,
+          "ci95_percentile": [
+            -0.041834347252998824,
+            -0.026368548823524907
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.034129816264554164,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.21474217071569368,
+          "ci95_percentile": [
+            -0.041834347252998824,
+            -0.026368548823524907
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.034129816264554164,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.21338606285370462,
+          "ci95_percentile": [
+            -0.04251121864338641,
+            -0.028457644774433726
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.03548592412654322,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.21338606285370462,
+          "ci95_percentile": [
+            -0.04251121864338641,
+            -0.028457644774433726
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24887198698024784,
+          "delta_candidate_minus_comparator": -0.03548592412654322,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6167379481689521,
+          "ci95_percentile": [
+            -0.011030243510166158,
+            0.008050705495483469
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.6185689363321676,
+          "delta_candidate_minus_comparator": -0.0018309881632154745,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.636
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6167379481689521,
+          "ci95_percentile": [
+            -0.005856480022128268,
+            0.010820353026515711
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.614517683763162,
+          "delta_candidate_minus_comparator": 0.002220264405790151,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.285
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6167379481689521,
+          "ci95_percentile": [
+            -0.08805764396980868,
+            -0.060547694939760574
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07417249924936553,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6167379481689521,
+          "ci95_percentile": [
+            -0.08805764396980868,
+            -0.060547694939760574
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07417249924936553,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6185689363321676,
+          "ci95_percentile": [
+            0.0015004242916086498,
+            0.006634732785966178
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.614517683763162,
+          "delta_candidate_minus_comparator": 0.004051252569005626,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.0015
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6185689363321676,
+          "ci95_percentile": [
+            -0.09040297301507975,
+            -0.053793995536717425
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07234151108615006,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6185689363321676,
+          "ci95_percentile": [
+            -0.09040297301507975,
+            -0.053793995536717425
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07234151108615006,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.614517683763162,
+          "ci95_percentile": [
+            -0.09269781677018069,
+            -0.060366254882415815
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07639276365515568,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.614517683763162,
+          "ci95_percentile": [
+            -0.09269781677018069,
+            -0.060366254882415815
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6909104474183176,
+          "delta_candidate_minus_comparator": -0.07639276365515568,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.735940654035844,
+          "ci95_percentile": [
+            -0.01501916434775814,
+            0.004834639095602867
+          ],
+          "comparator": "G3",
+          "comparator_mean": 9.741278622014736,
+          "delta_candidate_minus_comparator": -0.005337967978892522,
+          "metric": "home_points_mae",
+          "p_candidate_better": 0.8615
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.735940654035844,
+          "ci95_percentile": [
+            -1.3292059095959277,
+            -0.7133584008374322
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.752372610820666,
+          "delta_candidate_minus_comparator": -1.0164319567848228,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 9.741278622014736,
+          "ci95_percentile": [
+            -1.3294119012924028,
+            -0.7099842690319085
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.752372610820666,
+          "delta_candidate_minus_comparator": -1.0110939888059303,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.744540579974323,
+          "ci95_percentile": [
+            -0.014111439656562494,
+            0.006235001460503333
+          ],
+          "comparator": "G3",
+          "comparator_mean": 9.748891641260162,
+          "delta_candidate_minus_comparator": -0.004351061285838398,
+          "metric": "away_points_mae",
+          "p_candidate_better": 0.787
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.744540579974323,
+          "ci95_percentile": [
+            -1.5244481219280102,
+            -0.8157786376667229
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.923068460391141,
+          "delta_candidate_minus_comparator": -1.1785278804168176,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 9.748891641260162,
+          "ci95_percentile": [
+            -1.5173556642385815,
+            -0.8139734847071439
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.923068460391141,
+          "delta_candidate_minus_comparator": -1.1741768191309792,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.191208760045173,
+          "ci95_percentile": [
+            -0.015135274709297986,
+            0.009630345396583502
+          ],
+          "comparator": "G3",
+          "comparator_mean": 11.19431549320376,
+          "delta_candidate_minus_comparator": -0.003106733158587005,
+          "metric": "spread_mae",
+          "p_candidate_better": 0.702
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.191208760045173,
+          "ci95_percentile": [
+            -1.6376659426504352,
+            -1.0457022108154892
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 12.527013161327769,
+          "delta_candidate_minus_comparator": -1.335804401282596,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 11.19431549320376,
+          "ci95_percentile": [
+            -1.633453723890363,
+            -1.0426275345213751
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 12.527013161327769,
+          "delta_candidate_minus_comparator": -1.332697668124009,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.796886983450005,
+          "ci95_percentile": [
+            -0.023033122291525498,
+            0.006812049345893234
+          ],
+          "comparator": "G3",
+          "comparator_mean": 15.805276414824695,
+          "delta_candidate_minus_comparator": -0.008389431374689948,
+          "metric": "total_mae",
+          "p_candidate_better": 0.87
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.796886983450005,
+          "ci95_percentile": [
+            -2.389825469632051,
+            -1.1737516209911554
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 17.577893489935402,
+          "delta_candidate_minus_comparator": -1.7810065064853973,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 15.805276414824695,
+          "ci95_percentile": [
+            -2.375749290735785,
+            -1.164364321450191
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 17.577893489935402,
+          "delta_candidate_minus_comparator": -1.7726170751107073,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.191208760045173,
+          "ci95_percentile": [
+            3.0632704091347556,
+            3.331433227615254
+          ],
+          "comparator": "G3",
+          "comparator_mean": 7.996031260199663,
+          "delta_candidate_minus_comparator": 3.19517749984551,
+          "metric": "margin_crps",
+          "p_candidate_better": 0.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.796886983450005,
+          "ci95_percentile": [
+            4.473436558238238,
+            4.841719120452352
+          ],
+          "comparator": "G3",
+          "comparator_mean": 11.14179855856469,
+          "delta_candidate_minus_comparator": 4.6550884248853155,
+          "metric": "total_crps",
+          "p_candidate_better": 0.0
+        }
+      ],
+      "date_clusters": 323,
+      "games": 2460
+    },
+    "validation": {
+      "comparisons": [
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.22567299949700312,
+          "ci95_percentile": [
+            -0.00757206896801502,
+            0.0006187619141439228
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.22909913372086446,
+          "delta_candidate_minus_comparator": -0.0034261342238613435,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.952
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.22567299949700312,
+          "ci95_percentile": [
+            -0.005188211706150763,
+            0.00231271586037151
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.22703024161055804,
+          "delta_candidate_minus_comparator": -0.001357242113554924,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.7445
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.22567299949700312,
+          "ci95_percentile": [
+            -0.02638637340657098,
+            -0.014500130163211439
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.02053867754395175,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.22567299949700312,
+          "ci95_percentile": [
+            -0.02638637340657098,
+            -0.014500130163211439
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.02053867754395175,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.22909913372086446,
+          "ci95_percentile": [
+            0.001099105983162882,
+            0.003021066812899219
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.22703024161055804,
+          "delta_candidate_minus_comparator": 0.0020688921103064195,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.22909913372086446,
+          "ci95_percentile": [
+            -0.024587614609140086,
+            -0.009737667496448145
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.017112543320090406,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.9995
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.22909913372086446,
+          "ci95_percentile": [
+            -0.024587614609140086,
+            -0.009737667496448145
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.017112543320090406,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.9995
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.22703024161055804,
+          "ci95_percentile": [
+            -0.025823042303952812,
+            -0.01259344806710939
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.019181435430396826,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.22703024161055804,
+          "ci95_percentile": [
+            -0.025823042303952812,
+            -0.01259344806710939
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24621167704095487,
+          "delta_candidate_minus_comparator": -0.019181435430396826,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6435093892470397,
+          "ci95_percentile": [
+            -0.01893505656507431,
+            9.879302504580656e-05
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.6527707304105128,
+          "delta_candidate_minus_comparator": -0.009261341163473102,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.9735
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6435093892470397,
+          "ci95_percentile": [
+            -0.012137081567745555,
+            0.004761365719042041
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.6470235916501851,
+          "delta_candidate_minus_comparator": -0.0035142024031453722,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.7825
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6435093892470397,
+          "ci95_percentile": [
+            -0.05527324105890095,
+            -0.028871559817899444
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.0420440987928703,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6435093892470397,
+          "ci95_percentile": [
+            -0.05527324105890095,
+            -0.028871559817899444
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.0420440987928703,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6527707304105128,
+          "ci95_percentile": [
+            0.003175875250995936,
+            0.00824390365247891
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.6470235916501851,
+          "delta_candidate_minus_comparator": 0.00574713876032773,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6527707304105128,
+          "ci95_percentile": [
+            -0.05034715786841272,
+            -0.015213931229386303
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.0327827576293972,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.9995
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6527707304105128,
+          "ci95_percentile": [
+            -0.05034715786841272,
+            -0.015213931229386303
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.0327827576293972,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.9995
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.6470235916501851,
+          "ci95_percentile": [
+            -0.05361363618422722,
+            -0.02316294591099028
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.03852989638972493,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.6470235916501851,
+          "ci95_percentile": [
+            -0.05361363618422722,
+            -0.02316294591099028
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.68555348803991,
+          "delta_candidate_minus_comparator": -0.03852989638972493,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.544810384091772,
+          "ci95_percentile": [
+            -0.003509905159204441,
+            0.018667957487509292
+          ],
+          "comparator": "G3",
+          "comparator_mean": 9.53737852515244,
+          "delta_candidate_minus_comparator": 0.007431858939332514,
+          "metric": "home_points_mae",
+          "p_candidate_better": 0.091
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.544810384091772,
+          "ci95_percentile": [
+            -0.9769574564572107,
+            -0.43945139440080433
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.254785613927872,
+          "delta_candidate_minus_comparator": -0.7099752298361004,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 9.53737852515244,
+          "ci95_percentile": [
+            -0.9821195454356904,
+            -0.4458268749113045
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.254785613927872,
+          "delta_candidate_minus_comparator": -0.7174070887754329,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.450533571554484,
+          "ci95_percentile": [
+            -0.00163797776988802,
+            0.019329260612747354
+          ],
+          "comparator": "G3",
+          "comparator_mean": 9.44171112804878,
+          "delta_candidate_minus_comparator": 0.008822443505703603,
+          "metric": "away_points_mae",
+          "p_candidate_better": 0.051
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.450533571554484,
+          "ci95_percentile": [
+            -1.0133047707731322,
+            -0.4565177065706229
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.17904205402102,
+          "delta_candidate_minus_comparator": -0.7285084824665358,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 9.44171112804878,
+          "ci95_percentile": [
+            -1.0183423083651828,
+            -0.46187582587924203
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 10.17904205402102,
+          "delta_candidate_minus_comparator": -0.7373309259722394,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 10.83286438583148,
+          "ci95_percentile": [
+            -0.004923317639327729,
+            0.02057690797608767
+          ],
+          "comparator": "G3",
+          "comparator_mean": 10.824988487677846,
+          "delta_candidate_minus_comparator": 0.007875898153633543,
+          "metric": "spread_mae",
+          "p_candidate_better": 0.125
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 10.83286438583148,
+          "ci95_percentile": [
+            -0.9841334310399831,
+            -0.47024288232082356
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.557280308516145,
+          "delta_candidate_minus_comparator": -0.7244159226846651,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 10.824988487677846,
+          "ci95_percentile": [
+            -0.9926872699434255,
+            -0.4765746941297661
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.557280308516145,
+          "delta_candidate_minus_comparator": -0.7322918208382987,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.512517834520054,
+          "ci95_percentile": [
+            -0.005083929169427295,
+            0.030645323385309172
+          ],
+          "comparator": "G3",
+          "comparator_mean": 15.49994720210874,
+          "delta_candidate_minus_comparator": 0.01257063241131462,
+          "metric": "total_mae",
+          "p_candidate_better": 0.07
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.512517834520054,
+          "ci95_percentile": [
+            -1.7292623553235142,
+            -0.7837231013365252
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 16.772605937317305,
+          "delta_candidate_minus_comparator": -1.2600881027972513,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 15.49994720210874,
+          "ci95_percentile": [
+            -1.744456679934873,
+            -0.7991235709579749
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 16.772605937317305,
+          "delta_candidate_minus_comparator": -1.2726587352085659,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 10.83286438583148,
+          "ci95_percentile": [
+            2.9972535417850628,
+            3.2383912967277513
+          ],
+          "comparator": "G3",
+          "comparator_mean": 7.715862386401107,
+          "delta_candidate_minus_comparator": 3.1170019994303724,
+          "metric": "margin_crps",
+          "p_candidate_better": 0.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 15.512517834520054,
+          "ci95_percentile": [
+            4.362150439738205,
+            4.714745575714016
+          ],
+          "comparator": "G3",
+          "comparator_mean": 10.97422984925712,
+          "delta_candidate_minus_comparator": 4.538287985262933,
+          "metric": "total_crps",
+          "p_candidate_better": 0.0
+        }
+      ],
+      "date_clusters": 329,
+      "games": 2460
+    }
   }
 }
