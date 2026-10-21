@@ -5,9 +5,11 @@ Only locks that were created before their match started and carry a distribution
 tennis-counts/2026-10-20 are graded. A cell is reported as n alone until it has MIN_MATCHES graded
 matches; below that no metric is printed and the verdict is INSUFFICIENT_PROSPECTIVE_DATA.
 
-Metrics, gates and thresholds are the ones fixed in RESULTS.md. Two things are not computed here:
-the reference-beating leg (no reference distribution is frozen), and the clustered bootstrap.
-Run from the repository root against a copy of the database:
+Metrics, gates and thresholds are the ones fixed in RESULTS.md. The verdict is the five calibration
+gates only. Not computed here: the reference-beating and runner-up legs (no reference or runner-up
+distribution is frozen, so they cannot be graded prospectively) and the clustered bootstrap.
+
+The grader only reads. Run it on a copy of the database or on the live dev database opened read-only:
 
   python3 research/tennis/cp4-2026-10-20/run_prospective_grade.py --db /root/picks.tennis-cp4.db
 """
@@ -53,14 +55,59 @@ OUTCOME_SOURCE = {
     "double_faults": "research_player_match_outcomes (verified tiers; eligible_cp4 = 1 only)",
     "total_games": "scoreboard_snapshots state=post, set games summed (as grade_tennis_model reads them)",
 }
+SCOPE = ("calibration gates only; reference and runner-up legs and the clustered bootstrap are not computed, "
+         "because no reference or runner-up distribution is frozen")
+
+
+class LookAheadError(RuntimeError):
+    """A frozen forecast was built from history that reaches its match date or later."""
+
+
+def table_exists(con: sqlite3.Connection, name: str) -> bool:
+    return con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone() is not None
+
+
+def match_date_utc(start_time: str) -> str:
+    """The match date on the UTC clock the lock sweep uses for model_day (the first ten characters of start_time)."""
+    start = dt.datetime.fromisoformat(start_time)
+    if start.tzinfo is None:
+        raise ValueError(f"start_time {start_time!r} has no timezone; the match date cannot be fixed")
+    return start.astimezone(dt.timezone.utc).date().isoformat()
+
+
+def check_no_look_ahead(model_day: Any, match_date: str, where: str) -> None:
+    """Frozen history is built from rows dated strictly before model_day, so it is pre-match only when
+    model_day is not after the match date. Fails loudly on a missing cutoff, which means the guard
+    cannot be applied, and on a cutoff after the match, which lets rows on or after the match in.
+    """
+    if not model_day:
+        raise LookAheadError(f"{where}: frozen parameters carry no model_day; look-ahead cannot be ruled out")
+    if dt.date.fromisoformat(str(model_day)) > dt.date.fromisoformat(match_date):
+        raise LookAheadError(f"{where}: history cutoff {model_day} is after the match date {match_date}; "
+                             "source rows on or after the match could have shaped the forecast")
 
 
 def load_frozen(con: sqlite3.Connection) -> Dict[str, Any]:
-    """Frozen distributions keyed by (league, game_id), for locks made before their match started."""
+    """Frozen distributions keyed by (league, game_id), for locks made before their match started.
+
+    A missing table is a count of zero, not an error: the distribution table is created by the lock
+    sweep, so before the first distribution is frozen every lock is reported as having none.
+    """
     accounting = {"locks_total": 0, "locks_with_frozen_distribution": 0,
                   "locks_no_distribution_frozen": 0, "excluded_not_prospective": 0,
-                  "excluded_frozen_at_mismatch": 0}
+                  "excluded_frozen_at_mismatch": 0, "distribution_rows_without_lock": 0,
+                  "distribution_table_present": False}
+    if not table_exists(con, "tennis_model_locks"):
+        return {"locks": {}, "accounting": accounting}
     accounting["locks_total"] = con.execute("SELECT COUNT(*) FROM tennis_model_locks").fetchone()[0]
+    if not table_exists(con, "tennis_model_lock_distributions"):
+        accounting["locks_no_distribution_frozen"] = accounting["locks_total"]
+        return {"locks": {}, "accounting": accounting}
+    accounting["distribution_table_present"] = True
+    accounting["distribution_rows_without_lock"] = con.execute(
+        "SELECT COUNT(*) FROM tennis_model_lock_distributions d WHERE d.model_version=? AND NOT EXISTS "
+        "(SELECT 1 FROM tennis_model_locks l WHERE l.league=d.league AND l.game_id=d.game_id)",
+        (tcd.MODEL_VERSION,)).fetchone()[0]
     rows = con.execute(
         "SELECT d.league, d.game_id, d.cell, d.side, d.parameters, d.support_start, d.pmf, d.locked_at AS frozen_at, "
         "l.locked_at, l.start_time FROM tennis_model_lock_distributions d "
@@ -82,12 +129,15 @@ def load_frozen(con: sqlite3.Connection) -> Dict[str, Any]:
                 accounting["excluded_frozen_at_mismatch"] += 1
                 locks[key] = None
                 continue
-            locks[key] = {"sides": {}}
+            locks[key] = {"sides": {}, "match_date": match_date_utc(row["start_time"])}
             accounting["locks_with_frozen_distribution"] += 1
         if locks[key] is None:
             continue
+        parameters = json.loads(row["parameters"])
+        check_no_look_ahead(parameters.get("model_day"), locks[key]["match_date"],
+                            f"{key[0]} {key[1]} {row['cell']}/{row['side']}")
         locks[key]["sides"].setdefault(row["cell"], {})[row["side"]] = {
-            "parameters": json.loads(row["parameters"]),
+            "parameters": parameters,
             "support_start": int(row["support_start"]),
             "pmf": json.loads(row["pmf"]),
         }
@@ -98,6 +148,8 @@ def load_frozen(con: sqlite3.Connection) -> Dict[str, Any]:
 
 def observed_games(con: sqlite3.Connection, league: str, game_id: str) -> Optional[int]:
     """Total games from a completed final scoreboard, or None. Same reading as grade_tennis_model."""
+    if not table_exists(con, "scoreboard_snapshots"):
+        return None
     row = con.execute(
         "SELECT payload FROM scoreboard_snapshots WHERE league=? AND game_id=? AND state='post' "
         "ORDER BY fetched_at DESC LIMIT 1", (league, game_id)).fetchone()
@@ -124,8 +176,11 @@ def observed_games(con: sqlite3.Connection, league: str, game_id: str) -> Option
 def observed_player_values(con: sqlite3.Connection, league: str, game_id: str, cell: str) -> Optional[Dict[str, int]]:
     """Verified aces or double faults per side, from the verified outcome table only.
 
-    Returns None unless both sides are present and eligible (Final, verified tier).
+    Returns None unless both sides are present and eligible (Final, verified tier). A missing table
+    yields None for every match, so the cell reports zero graded matches.
     """
+    if not table_exists(con, "research_player_match_outcomes"):
+        return None
     column = "aces" if cell == "aces" else "double_faults"
     rows = con.execute(
         f"SELECT side, {column} FROM research_player_match_outcomes "
@@ -151,7 +206,7 @@ def build_targets(con: sqlite3.Connection, frozen: Dict[str, Any], league: str, 
             observed_by_side = {"match": observed_games(con, league, game_id)}
         else:
             pairs = [("home", sides.get("home")), ("away", sides.get("away"))]
-            observed_by_side = (observed_player_values(con, league, game_id, cell) or {}) if cell in ("aces", "double_faults") else {}
+            observed_by_side = observed_player_values(con, league, game_id, cell) or {}
         if any(frozen_side is None for _, frozen_side in pairs):
             skipped["no_distribution"] += 1
             continue
@@ -247,8 +302,13 @@ def metrics_for(targets: List[Dict[str, Any]], league: str, cell: str) -> Dict[s
 
 def grade(con: sqlite3.Connection) -> Dict[str, Any]:
     frozen = load_frozen(con)
-    report: Dict[str, Any] = {"model_version": tcd.MODEL_VERSION, "min_matches": MIN_MATCHES,
-                              "accounting": frozen["accounting"], "cells": {}}
+    report: Dict[str, Any] = {
+        "model_version": tcd.MODEL_VERSION, "min_matches": MIN_MATCHES, "scope": SCOPE,
+        "source_tables": {name: table_exists(con, name) for name in
+                          ("tennis_model_locks", "tennis_model_lock_distributions",
+                           "research_player_match_outcomes", "scoreboard_snapshots")},
+        "accounting": frozen["accounting"], "cells": {},
+    }
     for league in ("atp", "wta"):
         for cell in CELLS:
             built = build_targets(con, frozen, league, cell)
@@ -257,10 +317,7 @@ def grade(con: sqlite3.Connection) -> Dict[str, Any]:
                 "matches_graded": matches, "targets": len(built["targets"]),
                 "skipped": built["skipped"], "outcome_source": OUTCOME_SOURCE[cell],
             }
-            if OUTCOME_SOURCE[cell] is None:
-                entry["verdict"] = "INSUFFICIENT_PROSPECTIVE_DATA"
-                entry["note"] = "no settled source for this outcome exists in the pipeline; n is 0 by construction"
-            elif matches < MIN_MATCHES:
+            if matches < MIN_MATCHES:
                 entry["verdict"] = "INSUFFICIENT_PROSPECTIVE_DATA"
                 entry["note"] = f"{matches} graded matches; {MIN_MATCHES} required; no metrics reported"
             else:
@@ -271,7 +328,8 @@ def grade(con: sqlite3.Connection) -> Dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
-    parser.add_argument("--db", required=True, help="a copy of the database; the grader only reads it")
+    parser.add_argument("--db", required=True,
+                        help="a copy of the database, or the live dev database; opened read-only, never written")
     parser.add_argument("--out", help="also write the JSON report here")
     args = parser.parse_args()
     con = sqlite3.connect(f"file:{args.db}?mode=ro", uri=True)
