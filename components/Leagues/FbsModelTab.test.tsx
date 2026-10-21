@@ -57,9 +57,13 @@ describe('FBS model tab', () => {
     expect(screen.getByText('32.0%')).toBeTruthy()
   })
 
-  it('states that nothing is a qualifying wager without a price feed', async () => {
+  it('shows each team record and no price-feed or fitted-through notes', async () => {
+    const withRecords = { ...payload, games: [{ ...payload.games[0], home_record: '5-2', away_record: '3-3' }] }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(withRecords) }))
     render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText(/no NCAAF moneyline or spread price feed/)).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('5-2')).toBeTruthy())
+    expect(screen.getByText('3-3')).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/price feed|qualifying wager|fitted through/)
   })
 
   it('shows graded count with the sample-size caveat on the record tab', async () => {
