@@ -7,12 +7,16 @@ contradict the official-label foundation?**
 Research only. Read-only against the label foundation and the event cache. No model
 is fitted, no market is evaluated, nothing is written to the production database.
 
+For exact field completeness, player-level approved-label reconciliation, event-time shift
+alignment, and the full-import recommendation, see the measured `REPORT-DETAIL.md` and
+`PROPOSED-SCHEMA.md`; those outputs supersede rounded summaries in this initial report.
+
 ## Frame and sample
 
 Event evidence is fetched for a deterministic stratified sample of the pinned
 official-outcome frame rather than the whole frame: field availability is a property
 of the source and is settled by a sample, while a full-frame fetch is a
-~100-minute network job. Every rate below is reported with its per-season n and is a
+~179-minute minimum request-spacing job before network time or retries. Every rate below is reported with its per-season n and is a
 statement about **the sampled games**, not about the frame.
 
 | season | games sampled | PBP bodies | shift bodies |
@@ -34,11 +38,12 @@ SHA256 sidecars; the sample and every fetch are pinned in `sample_games.csv` and
 
 | dimension | measured | reading |
 |---|---|---|
-| shots and locations | 100.0% of 34,508 shot events carry x/y | **complete** — every shot is placeable |
-| shot types | 26,037 of 26,039 unblocked shot events carry `shotType`; 0 of 8,469 blocked shots do | usable — blocked shots are the only real gap |
+| shooter identity | 32,675/34,508 events have direct `shootingPlayerId`; credited scorer is available on 1,833 goal events | see exact field and SOG-label reconciliation in `REPORT-DETAIL.md` |
+| shots and locations | 34,506/34,508 shot events carry finite x/y (99.994%) | **incomplete** — 2 events lack a coordinate pair |
+| shot types | 26,037 of 26,039 unblocked shot events carry `shotType`; 0 of 8,469 blocked shots do | partial — blocked shots lack types and two unblocked shots lack types |
 | period scoring | 300/300 games reconcile goal-for-goal with the official score **once the shootout rule below is applied** | **complete** |
-| strength states | 100.0% of 92,975 situation codes parse | **complete**, incl. empty net |
-| penalties | 99.6% of 2,219 penalty events carry duration | **complete** |
+| strength states | 100.000% of 92,975 situation codes parse | **complete**, incl. empty net |
+| penalties | 99.639% of 2,219 penalty events carry duration | **complete** |
 | deployment / shifts | skaters: 98.8% of 10,797 within 30s of official TOI; 2 games carry a duplicated chart | **usable**, with two feed defects to guard |
 
 Strength states observed across the sample: `EN_away_pulled`, `EN_home_pulled`, `EV_3v3`, `EV_4v4`, `EV_5v5`, `PP_away_4v3`, `PP_away_5v3`, `PP_away_5v4`, `PP_home_4v3`, `PP_home_5v3`, `PP_home_5v4`, `both_pulled`.
@@ -55,11 +60,11 @@ Shot-type vocabulary observed: `backhand`, `bat`, `between-legs`, `deflected`, `
 
 | season | games | SO games | shot events | x/y | shot type (unblocked) | situation parsable | goals = official | SOG = official | skater TOI within 30s | contradictions |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 2018 | 60 | 3 | 7,066 | 100.0% | 100.0% | 100.0% | 60/60 | 60/60 | 100.0% | 3 |
-| 2019 | 60 | 5 | 6,784 | 100.0% | 100.0% | 100.0% | 60/60 | 59/60 | 99.9% | 8 |
-| 2020 | 60 | 3 | 6,738 | 100.0% | 100.0% | 100.0% | 60/60 | 60/60 | 98.8% | 9 |
-| 2021 | 60 | 5 | 6,826 | 100.0% | 100.0% | 100.0% | 60/60 | 59/60 | 95.4% | 18 |
-| 2022 | 60 | 4 | 7,094 | 100.0% | 100.0% | 100.0% | 60/60 | 60/60 | 99.8% | 5 |
+| 2018 | 60 | 3 | 7,066 | 99.986% | 99.981% | 100.000% | 60/60 | 60/60 | 100.000% | 3 |
+| 2019 | 60 | 5 | 6,784 | 99.985% | 99.981% | 100.000% | 60/60 | 59/60 | 99.907% | 8 |
+| 2020 | 60 | 3 | 6,738 | 100.000% | 100.000% | 100.000% | 60/60 | 60/60 | 98.842% | 9 |
+| 2021 | 60 | 5 | 6,826 | 100.000% | 100.000% | 100.000% | 60/60 | 59/60 | 95.415% | 18 |
+| 2022 | 60 | 4 | 7,094 | 100.000% | 100.000% | 100.000% | 60/60 | 60/60 | 99.815% | 5 |
 
 ## Full-frame ID reconciliation (all 4,876 games, not sampled)
 
@@ -89,17 +94,18 @@ Reconciliation issues raised at frame level: **0**.
 
 ## What this establishes, and what it does not
 
-Establishes: the official feeds carry the event structure a simulator needs —
-located shots, shot types, strength states, period scoring, penalties, shift
-boundaries, and rosters that join to the label foundation on NHL player ID. Period
+Establishes: the official feeds carry much of the event structure a simulator needs —
+mostly located shots, partial shot types, strength states, period scoring, penalties, shift
+boundaries, and rosters that join to the label foundation on NHL player ID. See `REPORT-DETAIL.md`
+for exact field completeness, player-level SOG and goalie-label matches, and event-time shift checks. Period
 scoring reconciles exactly against the official score on the sampled games once the
 shootout rule is applied, and that reconciliation is the strongest anchor because it
 is an independent path to the same number. Full-frame player IDs reconcile with zero
 one-sided IDs across all 4,876 games.
 
-Also establishes two defects that would otherwise reach a simulator silently: the
-shootout convention above, and game-level duplicated shift charts. Both are now
-detected by assertions rather than remembered by whoever wrote the simulator.
+Also establishes defects that could reach a simulator silently: the shootout
+convention above, game-level duplicated shift charts, missing shot fields, and event-time
+lineup discrepancies. The audit preserves them as explicit issue and exception rows.
 
 Does not establish: any rate on the full 4,876-game frame, any model, any prop
 market result, or that the two sources agree everywhere outside the sample. The
