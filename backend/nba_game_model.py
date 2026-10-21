@@ -445,6 +445,91 @@ def _date_clustered_paired_bootstrap(
     }
 
 
+def _date_clustered_coverage_bootstrap(
+    rows: list[dict[str, Any]], replicates: int = BOOTSTRAP_REPLICATES,
+    seed: int = BOOTSTRAP_SEED,
+) -> dict[str, Any]:
+    """Bootstrap G3 interval coverage and width by complete local game-date blocks."""
+    if not rows:
+        raise ValueError("cannot bootstrap an empty evaluation period")
+    if replicates < 1:
+        raise ValueError("bootstrap replicates must be positive")
+
+    rows_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    season_by_date: dict[str, int] = {}
+    for row in rows:
+        game_date = str(row["game_date"])
+        season = int(row["season"])
+        if game_date in season_by_date and season_by_date[game_date] != season:
+            raise ValueError(f"NBA local game date appears in multiple seasons: {game_date}")
+        season_by_date[game_date] = season
+        rows_by_date[game_date].append(row)
+    dates = sorted(rows_by_date)
+    blocks = [rows_by_date[game_date] for game_date in dates]
+    block_sizes = [len(block) for block in blocks]
+    metric_names = {
+        "margin": ("margin_80_covered", "margin_80_width", "margin_80pct_coverage",
+                   "margin_80pct_width"),
+        "total": ("total_80_covered", "total_80_width", "total_80pct_coverage",
+                  "total_80pct_width"),
+    }
+    block_totals: dict[str, list[tuple[float, float]]] = {}
+    for outcome, (covered_key, width_key, _coverage_name, _width_name) in metric_names.items():
+        block_totals[outcome] = [
+            (
+                math.fsum(float(row["models"]["G3"]["distribution_metrics"][covered_key])
+                          for row in block),
+                math.fsum(float(row["models"]["G3"]["distribution_metrics"][width_key])
+                          for row in block),
+            )
+            for block in blocks
+        ]
+
+    coverage_samples: dict[str, list[float]] = {outcome: [] for outcome in metric_names}
+    width_samples: dict[str, list[float]] = {outcome: [] for outcome in metric_names}
+    rng = random.Random(seed)
+    for _ in range(replicates):
+        sampled_blocks = [rng.randrange(len(blocks)) for _ in blocks]
+        sampled_games = sum(block_sizes[index] for index in sampled_blocks)
+        for outcome in metric_names:
+            totals = block_totals[outcome]
+            coverage_samples[outcome].append(
+                math.fsum(totals[index][0] for index in sampled_blocks) / sampled_games
+            )
+            width_samples[outcome].append(
+                math.fsum(totals[index][1] for index in sampled_blocks) / sampled_games
+            )
+
+    method = ("Nonparametric date-cluster bootstrap; resample NBA local game_date blocks "
+              "with replacement, retaining every game on each sampled date.")
+    reported = {}
+    for outcome, (covered_key, width_key, coverage_name, width_name) in metric_names.items():
+        coverage_values = [float(row["models"]["G3"]["distribution_metrics"][covered_key])
+                           for row in rows]
+        width_values = [float(row["models"]["G3"]["distribution_metrics"][width_key])
+                        for row in rows]
+        coverage_ordered = sorted(coverage_samples[outcome])
+        width_ordered = sorted(width_samples[outcome])
+        reported[outcome] = {
+            "coverage": sum(coverage_values) / len(rows),
+            "ci95_percentile": [
+                _quantile(coverage_ordered, 0.025), _quantile(coverage_ordered, 0.975),
+            ],
+            "p_under_nominal": sum(value < 0.80 for value in coverage_samples[outcome]) / replicates,
+            "p_over_nominal": sum(value > 0.80 for value in coverage_samples[outcome]) / replicates,
+            "width": sum(width_values) / len(rows),
+            "width_ci95_percentile": [
+                _quantile(width_ordered, 0.025), _quantile(width_ordered, 0.975),
+            ],
+            "date_clusters": len(blocks),
+            "games": len(rows),
+            "replicates": replicates,
+            "seed": seed,
+            "method": method,
+        }
+    return reported
+
+
 def _benchmark_uncertainty(eval_rows: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     return {
         "method": ("Paired nonparametric cluster bootstrap; resample NBA local game_date blocks "
@@ -593,6 +678,10 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
             row["models"]["B1 Training league-points baseline"] = point_base
 
     metrics = {period: _score_metrics(rows) for period, rows in eval_rows.items()}
+    for period, rows in eval_rows.items():
+        metrics[period]["G3"]["distribution"]["coverage_uncertainty"] = (
+            _date_clustered_coverage_bootstrap(rows)
+        )
     uncertainty = _benchmark_uncertainty(eval_rows)
     return {
         "protocol": {

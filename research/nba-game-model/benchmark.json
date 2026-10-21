@@ -416,6 +416,46 @@
           "ece_10_bin": 0.025954828029725617
         },
         "distribution": {
+          "coverage_uncertainty": {
+            "margin": {
+              "ci95_percentile": [
+                0.790687698853304,
+                0.8237725960168855
+              ],
+              "coverage": 0.8073170731707318,
+              "date_clusters": 323,
+              "games": 2460,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 0.8035,
+              "p_under_nominal": 0.193,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 35.5706504065042,
+              "width_ci95_percentile": [
+                35.479783789152684,
+                35.66123968584322
+              ]
+            },
+            "total": {
+              "ci95_percentile": [
+                0.7628096186203934,
+                0.7976448444922898
+              ],
+              "coverage": 0.7804878048780488,
+              "date_clusters": 323,
+              "games": 2460,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 0.0135,
+              "p_under_nominal": 0.9855,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 48.68451219512215,
+              "width_ci95_percentile": [
+                48.63135620833334,
+                48.736625692935476
+              ]
+            }
+          },
           "joint_score_gaussian_nll": 7.78438917809592,
           "margin_80pct_coverage": 0.8073170731707318,
           "margin_80pct_width": 35.5706504065042,
@@ -715,6 +755,46 @@
           "ece_10_bin": 0.032366000539888216
         },
         "distribution": {
+          "coverage_uncertainty": {
+            "margin": {
+              "ci95_percentile": [
+                0.8161370634032308,
+                0.8471726241094893
+              ],
+              "coverage": 0.8308943089430895,
+              "date_clusters": 329,
+              "games": 2460,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 1.0,
+              "p_under_nominal": 0.0,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 35.93081300813022,
+              "width_ci95_percentile": [
+                35.86728234097127,
+                35.99964477832512
+              ]
+            },
+            "total": {
+              "ci95_percentile": [
+                0.788623293502603,
+                0.8194508746124388
+              ],
+              "coverage": 0.8040650406504065,
+              "date_clusters": 329,
+              "games": 2460,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 0.693,
+              "p_under_nominal": 0.3045,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 48.71634146341484,
+              "width_ci95_percentile": [
+                48.651282985033404,
+                48.784099869934145
+              ]
+            }
+          },
           "joint_score_gaussian_nll": 7.740926704685541,
           "margin_80pct_coverage": 0.8308943089430895,
           "margin_80pct_width": 35.93081300813022,
