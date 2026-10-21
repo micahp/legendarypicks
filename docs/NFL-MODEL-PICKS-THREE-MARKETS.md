@@ -1,5 +1,9 @@
 # NFL Model Picks: Winner, Spread, Total
 
+**SUPERSEDED.** This describes three separate picks per game. The NFL Model Pick is now one pick
+per game per model version, chosen by the rule in [docs/MODEL-PICK-RULES.md](MODEL-PICK-RULES.md)
+("NFL order"). The text below is kept for history only and no longer describes the code.
+
 **Status:** Feature branch `fix/nfl-three-market-model-picks-2026-10-20`; do not treat as deployed until tests and merge are verified.
 
 Every NFL game-model version makes up to three **model picks**, without a separate lean or
