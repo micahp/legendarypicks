@@ -35,7 +35,7 @@ Training and evaluation use free SportsDataverse releases: ESPN team box scores 
 | 2025 | 1,230 | 1,231 | 1,230 | One NBA Cup final is crosswalked and excluded. |
 | 2026 | 1,230 | 1,231 | 1,229 | One NBA Cup final is excluded; one regular-season box score lacks aggregate turnovers. |
 
-Eligible samples are 5,827 train games (2017–2021), 2,460 validation games (2022–2023), and 2,460 untouched test games (2024–2025). A separate state refit uses 11,976 complete regular-season games through 2025–26 for prospective forecasts. The two 2017–18 missing boxes and the one 2025–26 missing-turnover game are excluded rather than imputed.
+Eligible samples are 5,827 train games (2017–2021), 2,460 validation games (2022–2023), 2,460 untouched test games (2024–2025), and 1,229 confirmation games (2025–2026). The confirmation season uses the same frozen candidates and chronological pregame state path, with no refit or parameter changes. A separate state refit uses all 11,976 complete regular-season games through 2025–26 for prospective forecasts. The two 2017–18 missing boxes and the one 2025–26 missing-turnover game are excluded rather than imputed.
 
 The existing dev DB audit found:
 
@@ -144,6 +144,30 @@ Each replicate resamples 329 validation or 323 test NBA local game-date clusters
 | Test | Margin CRPS | G2 | **G3** | +3.195177 | [+3.063270, +3.331433] | 0.0% | G3 lower loss |
 | Test | Total CRPS | G2 | **G3** | +4.655088 | [+4.473437, +4.841719] | 0.0% | G3 lower loss |
 
+### Confirmation season 2025-26
+
+The ending-year 2026 release has 1,230 regular-season schedule games, all 1,230 with crosswalked regular-season box scores, plus one crosswalked NBA Cup final that is excluded. The model scored 1,229 eligible regular-season games over 164 local dates; one box score lacks aggregate turnovers and is excluded. Eligible games by ending year are 2017: 1,229; 2018: 1,229; 2019: 1,230; 2020: 1,059; 2021: 1,080; 2022: 1,230; 2023: 1,230; 2024: 1,230; 2025: 1,230; 2026: 1,229. The full 32-comparison paired bootstrap (including candidate pairs and comparisons against B0/B1) is in `benchmark.json`; Δ is candidate minus comparator, so negative favors the candidate. Paired and coverage intervals use 2,000 date-cluster replicates with seed 20261021.
+
+| Model | Winner Brier | Winner log loss | ECE10 | Home points MAE | Away points MAE | Spread MAE | Total MAE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| B0 fixed training home-win rate | 0.24736 | 0.68787 | 0.01703 | — | — | — | — |
+| B1 fixed training league points | 0.24736 | 0.68787 | 0.01703 | 11.434 | 11.454 | 13.104 | 18.552 |
+| G1 Elo | 0.20980 | 0.60842 | 0.02825 | — | — | — | — |
+| G2 Efficiency | 0.20654 | 0.60247 | 0.02901 | 10.190 | 9.660 | 11.482 | 16.116 |
+| G3 Joint scores | 0.20613 | 0.60051 | 0.02942 | 10.200 | 9.661 | 11.477 | 16.112 |
+
+| Metric | Candidate | Comparator | Δ (candidate − comparator) | 95% CI | Result |
+| --- | --- | --- | ---: | --- | --- |
+| Winner Brier | G1 | G2 | +0.003267 | [-0.003299, +0.009834] | indistinguishable |
+| Winner Brier | G1 | G3 | +0.003676 | [-0.002104, +0.009602] | indistinguishable |
+| Winner Brier | G2 | G3 | +0.000409 | [-0.001135, +0.001856] | indistinguishable |
+
+G3's 80% margin interval covered 80.31% of games (date-clustered 95% CI 78.28–82.27%) at mean width 36.67 points (95% CI 36.60–36.74), indistinguishable from nominal. Its total interval covered 78.11% (75.39–80.61%) at mean width 48.66 points (48.59–48.72), also indistinguishable from nominal. Both coverage intervals include 80%; all three paired winner-Brier intervals include zero.
+
+**Ordering check:** No, the complete winner-Brier point-estimate order differs from 2024–25: G3 remains first, while G2 and G1 switch second and third. The 2025–26 paired intervals do not resolve those pairwise rankings.
+
+The research advancement criterion remains defined on the 2024–25 test split only. No candidate qualifies under that criterion; this confirmation result does not change the gate or promote a model.
+
 ## Prospective forecasts and grading
 
 - The standalone file `nba-model.dev.sqlite3` keeps model history, replaceable previews, immutable lock rows, immutable grade rows, and missed-window events separate from the picks DB.
@@ -155,10 +179,10 @@ Each replicate resamples 329 validation or 323 test NBA local game-date clusters
 
 ## Verification output
 
-- `pytest backend/test_nba_game_model_phase1.py -q`: **11 passed**, including deterministic date-cluster coverage resampling, paired deltas, and G2 point-mass CRPS.
+- `pytest backend/test_nba_game_model_phase1.py -q`: **12 passed**, including the confirmation chronology guard, period wiring, deterministic date-cluster coverage resampling, paired deltas, and G2 point-mass CRPS.
 - `jest components/Leagues/NbaModelTab.test.tsx --runInBand`: **3 passed**. A focused TypeScript `--noEmit` check for `NbaModelTab.tsx` passed.
 - `python3 -m py_compile backend/nba_game_model.py backend/backtest_nba_game_model.py backend/test_nba_game_model_phase1.py` passed.
-- Two full benchmark runs both printed `source_sha256_verified=true` and reported 5,827 train / 2,460 validation / 2,460 test games. Each produced 2,460 validation games over 329 local date clusters and 2,460 test games over 323 clusters. Both output files are byte-identical, SHA-256 `b89480991d20c3dd2a6e1bc9f30be87fbc67df64c636ff3a014e330a8c8a0ad8`. The new coverage-uncertainty block SHA-256 is `bb1916e8588d04c6773f66451a6a1fa077924e0f4baf0b3d9d1132b3847308a5`, calculated from sorted compact JSON of the validation and test `coverage_uncertainty` objects. Recursive comparison confirms every pre-existing benchmark key and value is byte-identical; the only added keys are `metrics.validation.G3.distribution.coverage_uncertainty` and `metrics.test.G3.distribution.coverage_uncertainty`. The paired-comparison table and top-level paired uncertainty values are unchanged.
+- Two full benchmark runs both printed `source_sha256_verified=true` and reported 5,827 train / 2,460 validation / 2,460 test / 1,229 confirmation games. The evaluation periods covered 329 validation, 323 test, and 164 confirmation local dates. Both output files are byte-identical, SHA-256 `267c5afa88ae2ba7c23d66f587ccf734f7527e82de1df77d2d668cbbfa31b365`. Recursive comparison confirms every pre-existing benchmark key and value is byte-identical; the only additions are `protocol.confirm_seasons_end_year`, `metrics.confirm_2026`, and `uncertainty.confirm_2026`. The validation/test metrics and paired-uncertainty blocks are unchanged.
 - The temporary dev-schedule runtime smoke printed: `sha256_assets_verified=20 history_rows_added=11976 historical_games=11976 schedule_rows_read_only=1273 preview_games=25 preview_rows_generated=75 preview_rows_persisted=75 locks_created=0`.
 
 To initialize the dev-only history after the branch is deployed, use the serial, hash-verified importer with explicit dev paths:
@@ -182,9 +206,9 @@ PYTHONPATH=backend python3 backend/backtest_nba_game_model.py \
 ## Research limitations and next decisions
 
 - The current schedule snapshot is missing 24 REG games; prospective coverage follows the games actually present in `nba_schedule`.
-- The historical holdout is two seasons. G1/G2/G3 have no prospective sample yet, so none is qualified for adoption.
+- The historical test holdout remains two seasons, with 2025–26 reported separately as confirmation. G1/G2/G3 have no prospective graded sample yet, so none is qualified for adoption.
 - No timestamped NBA bookmaker odds, injury feed, confirmed lineups, rest/travel features, or paid data are used. No odds benchmark or player-level simulation is included.
 - Public historical SportsDataverse files are final release snapshots rather than capture-time archives, so timestamps for later corrections to earlier-game box scores are unavailable. The backtest applies only prior-date game records and keeps all same-day results out of that date's forecasts, but it cannot reconstruct whether an old box-score correction arrived before a later game's tipoff.
-- Research-only advancement criterion: a candidate can be named the overall winner on winner Brier only if its paired 95% test interval favors it over each of the other two candidates and the validation point deltas have the same favorable sign. No candidate qualifies in this run: G3 beats G2 on both splits, but G3 versus G1 is indistinguishable on test and reverses sign between validation and test. This criterion does not define production adoption.
+- Research-only advancement criterion: a candidate can be named the overall winner on winner Brier only if its paired 95% test interval favors it over each of the other two candidates and the validation point deltas have the same favorable sign. No candidate qualifies in this run: G3 beats G2 on both validation and test, but G3 versus G1 is indistinguishable on test and reverses sign between validation and test. The 2025–26 confirmation evidence does not change this test-defined verdict. This criterion does not define production adoption.
 - G3 has lower winner Brier and log loss than G2 on both validation and test, with paired intervals excluding zero. G3 versus G1 is indistinguishable on test, and the Brier point-delta sign reverses between validation and test. G2 and G3 are indistinguishable on all four point-forecast MAEs in both splits; G3 has lower margin and total CRPS than G2's deterministic point-mass forecasts in both splits. More prospective evidence should establish whether these retrospective differences persist.
 - The NBA Model tab, timers, and API are committed on the feature branch only. No merge, prod write, release, or service restart has happened.

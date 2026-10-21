@@ -129,6 +129,352 @@
     "validation": 2460
   },
   "metrics": {
+    "confirm_2026": {
+      "B0 Home-rate baseline": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744636996,
+              "n": 1229,
+              "observed_home_win_rate": 0.5541090317331163
+            }
+          ],
+          "ece_10_bin": 0.017025342730583315
+        },
+        "games": 1229,
+        "winner_accuracy": 0.5541090317331163,
+        "winner_brier": 0.24736207498000243,
+        "winner_log_loss": 0.6878699982094302
+      },
+      "B1 Training league-points baseline": {
+        "away_points_mae": 11.454153757730792,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5711343744636996,
+              "n": 1229,
+              "observed_home_win_rate": 0.5541090317331163
+            }
+          ],
+          "ece_10_bin": 0.017025342730583315
+        },
+        "games": 1229,
+        "home_points_mae": 11.434213335608405,
+        "spread_mae": 13.103996672151174,
+        "team_points_mae": 11.444183546669597,
+        "total_mae": 18.552345685183884,
+        "winner_accuracy": 0.5541090317331163,
+        "winner_brier": 0.24736207498000243,
+        "winner_log_loss": 0.6878699982094302
+      },
+      "G1": {
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.09717112437420486,
+              "n": 1,
+              "observed_home_win_rate": 0.0
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.16232841192933928,
+              "n": 14,
+              "observed_home_win_rate": 0.0
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.25836082886253325,
+              "n": 88,
+              "observed_home_win_rate": 0.1590909090909091
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.3546748750125177,
+              "n": 118,
+              "observed_home_win_rate": 0.3559322033898305
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4471789898370602,
+              "n": 199,
+              "observed_home_win_rate": 0.39195979899497485
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5516943410435121,
+              "n": 200,
+              "observed_home_win_rate": 0.55
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6479181197202069,
+              "n": 220,
+              "observed_home_win_rate": 0.6363636363636364
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7449507237681978,
+              "n": 232,
+              "observed_home_win_rate": 0.7413793103448276
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8426570255118502,
+              "n": 137,
+              "observed_home_win_rate": 0.7883211678832117
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9161037721979712,
+              "n": 20,
+              "observed_home_win_rate": 0.85
+            }
+          ],
+          "ece_10_bin": 0.028248995897346203
+        },
+        "games": 1229,
+        "winner_accuracy": 0.677786818551668,
+        "winner_brier": 0.20980336821385145,
+        "winner_log_loss": 0.6084155494754357
+      },
+      "G2": {
+        "away_points_mae": 9.66015282786745,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.07538758030740424,
+              "n": 22,
+              "observed_home_win_rate": 0.09090909090909091
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.15494445867432505,
+              "n": 81,
+              "observed_home_win_rate": 0.2222222222222222
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2530311236963287,
+              "n": 103,
+              "observed_home_win_rate": 0.2621359223300971
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.35434748849693926,
+              "n": 141,
+              "observed_home_win_rate": 0.3617021276595745
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4514125222644127,
+              "n": 158,
+              "observed_home_win_rate": 0.5
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5483734419444273,
+              "n": 188,
+              "observed_home_win_rate": 0.5585106382978723
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.6504994082774184,
+              "n": 166,
+              "observed_home_win_rate": 0.6325301204819277
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7495325512758068,
+              "n": 142,
+              "observed_home_win_rate": 0.7605633802816901
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8497854157148047,
+              "n": 154,
+              "observed_home_win_rate": 0.8116883116883117
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.930914329042056,
+              "n": 74,
+              "observed_home_win_rate": 0.8243243243243243
+            }
+          ],
+          "ece_10_bin": 0.02900917715262482
+        },
+        "games": 1229,
+        "home_points_mae": 10.189653695466257,
+        "spread_mae": 11.48164126239012,
+        "team_points_mae": 9.924903261666852,
+        "total_mae": 16.115795281637215,
+        "winner_accuracy": 0.6769731489015459,
+        "winner_brier": 0.2065368620297483,
+        "winner_log_loss": 0.6024745631298164
+      },
+      "G3": {
+        "away_points_mae": 9.660956808762204,
+        "calibration": {
+          "bins": [
+            {
+              "high": 0.1,
+              "low": 0.0,
+              "mean_probability": 0.07478841145833333,
+              "n": 9,
+              "observed_home_win_rate": 0.0
+            },
+            {
+              "high": 0.2,
+              "low": 0.1,
+              "mean_probability": 0.15498791710805085,
+              "n": 59,
+              "observed_home_win_rate": 0.13559322033898305
+            },
+            {
+              "high": 0.3,
+              "low": 0.2,
+              "mean_probability": 0.2512634906572165,
+              "n": 97,
+              "observed_home_win_rate": 0.29896907216494845
+            },
+            {
+              "high": 0.4,
+              "low": 0.3,
+              "mean_probability": 0.35490234375,
+              "n": 150,
+              "observed_home_win_rate": 0.31333333333333335
+            },
+            {
+              "high": 0.5,
+              "low": 0.4,
+              "mean_probability": 0.4515431722005208,
+              "n": 192,
+              "observed_home_win_rate": 0.4947916666666667
+            },
+            {
+              "high": 0.6,
+              "low": 0.5,
+              "mean_probability": 0.5496970436789773,
+              "n": 220,
+              "observed_home_win_rate": 0.5636363636363636
+            },
+            {
+              "high": 0.7,
+              "low": 0.6,
+              "mean_probability": 0.648959133794399,
+              "n": 183,
+              "observed_home_win_rate": 0.6502732240437158
+            },
+            {
+              "high": 0.8,
+              "low": 0.7,
+              "mean_probability": 0.7495763917632451,
+              "n": 151,
+              "observed_home_win_rate": 0.7880794701986755
+            },
+            {
+              "high": 0.9,
+              "low": 0.8,
+              "mean_probability": 0.8480024494108607,
+              "n": 122,
+              "observed_home_win_rate": 0.8278688524590164
+            },
+            {
+              "high": 1.0,
+              "low": 0.9,
+              "mean_probability": 0.9260943868885869,
+              "n": 46,
+              "observed_home_win_rate": 0.8478260869565217
+            }
+          ],
+          "ece_10_bin": 0.029423613583197693
+        },
+        "distribution": {
+          "coverage_uncertainty": {
+            "margin": {
+              "ci95_percentile": [
+                0.7827805692791378,
+                0.8226504362605221
+              ],
+              "coverage": 0.8030919446704637,
+              "date_clusters": 164,
+              "games": 1229,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 0.6115,
+              "p_under_nominal": 0.385,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 36.6671277461351,
+              "width_ci95_percentile": [
+                36.597791411409425,
+                36.736876394922376
+              ]
+            },
+            "total": {
+              "ci95_percentile": [
+                0.7539462314604255,
+                0.8060668680880174
+              ],
+              "coverage": 0.7811228641171685,
+              "date_clusters": 164,
+              "games": 1229,
+              "method": "Nonparametric date-cluster bootstrap; resample NBA local game_date blocks with replacement, retaining every game on each sampled date.",
+              "p_over_nominal": 0.069,
+              "p_under_nominal": 0.93,
+              "replicates": 2000,
+              "seed": 20261021,
+              "width": 48.656061838893514,
+              "width_ci95_percentile": [
+                48.59174678719822,
+                48.72191750762292
+              ]
+            }
+          },
+          "joint_score_gaussian_nll": 7.828674295545372,
+          "margin_80pct_coverage": 0.8030919446704637,
+          "margin_80pct_width": 36.6671277461351,
+          "margin_crps": 8.189965092524753,
+          "simulation_count_per_game": 2048,
+          "total_80pct_coverage": 0.7811228641171685,
+          "total_80pct_width": 48.656061838893514,
+          "total_crps": 11.35511580242967
+        },
+        "games": 1229,
+        "home_points_mae": 10.199536192407445,
+        "spread_mae": 11.477063892137917,
+        "team_points_mae": 9.930246500584825,
+        "total_mae": 16.11215927583401,
+        "winner_accuracy": 0.6753458096013019,
+        "winner_brier": 0.2061274268939497,
+        "winner_log_loss": 0.600506668759871
+      }
+    },
     "test": {
       "B0 Home-rate baseline": {
         "calibration": {
@@ -843,6 +1189,9 @@
       "B0": "fixed home-win rate from training seasons",
       "B1": "fixed home/away league points-per-game means from training seasons"
     },
+    "confirm_seasons_end_year": [
+      2026
+    ],
     "g1": {
       "home_advantage_elo_points": 65.0,
       "k": 20.0,
@@ -915,6 +1264,428 @@
     "home_win_rate": 0.5711343744637034
   },
   "uncertainty": {
+    "confirm_2026": {
+      "comparisons": [
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.20980336821385145,
+          "ci95_percentile": [
+            -0.003299279805623923,
+            0.009833685739093784
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.20653686202974803,
+          "delta_candidate_minus_comparator": 0.0032665061841034293,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.1575
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.20980336821385145,
+          "ci95_percentile": [
+            -0.0021035456528717077,
+            0.009602364409222743
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.2061274268939497,
+          "delta_candidate_minus_comparator": 0.00367594131990176,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.1115
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.20980336821385145,
+          "ci95_percentile": [
+            -0.04702546166675759,
+            -0.02851348511265198
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.03755870676614709,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.20980336821385145,
+          "ci95_percentile": [
+            -0.04702546166675759,
+            -0.02851348511265198
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.03755870676614709,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.20653686202974803,
+          "ci95_percentile": [
+            -0.0011354266859428131,
+            0.0018564639148760153
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.2061274268939497,
+          "delta_candidate_minus_comparator": 0.0004094351357983306,
+          "metric": "winner_brier",
+          "p_candidate_better": 0.3065
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.20653686202974803,
+          "ci95_percentile": [
+            -0.05299757797588202,
+            -0.02940593987788878
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.04082521295025052,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.20653686202974803,
+          "ci95_percentile": [
+            -0.05299757797588202,
+            -0.02940593987788878
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.04082521295025052,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.2061274268939497,
+          "ci95_percentile": [
+            -0.05211354093396186,
+            -0.030964284415029193
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.04123464808604885,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.2061274268939497,
+          "ci95_percentile": [
+            -0.05211354093396186,
+            -0.030964284415029193
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.24736207497999854,
+          "delta_candidate_minus_comparator": -0.04123464808604885,
+          "metric": "winner_brier",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6084155494754361,
+          "ci95_percentile": [
+            -0.009463453134345367,
+            0.021576311268408418
+          ],
+          "comparator": "G2",
+          "comparator_mean": 0.6024745631298174,
+          "delta_candidate_minus_comparator": 0.005940986345618682,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.217
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6084155494754361,
+          "ci95_percentile": [
+            -0.005666355709866971,
+            0.021915490888456773
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.6005066687598711,
+          "delta_candidate_minus_comparator": 0.007908880715564948,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.1195
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6084155494754361,
+          "ci95_percentile": [
+            -0.1007574354209192,
+            -0.05845242029334
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.07945444873399898,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G1",
+          "candidate_mean": 0.6084155494754361,
+          "ci95_percentile": [
+            -0.1007574354209192,
+            -0.05845242029334
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.07945444873399898,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6024745631298174,
+          "ci95_percentile": [
+            -0.0022576017939957213,
+            0.006009569831395729
+          ],
+          "comparator": "G3",
+          "comparator_mean": 0.6005066687598711,
+          "delta_candidate_minus_comparator": 0.001967894369946266,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 0.1885
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6024745631298174,
+          "ci95_percentile": [
+            -0.11468899187715331,
+            -0.05823330666201988
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.08539543507961767,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 0.6024745631298174,
+          "ci95_percentile": [
+            -0.11468899187715331,
+            -0.05823330666201988
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.08539543507961767,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.6005066687598711,
+          "ci95_percentile": [
+            -0.11306522393280119,
+            -0.06399254293941213
+          ],
+          "comparator": "B0 Home-rate baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.08736332944956393,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 0.6005066687598711,
+          "ci95_percentile": [
+            -0.11306522393280119,
+            -0.06399254293941213
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 0.6878699982094351,
+          "delta_candidate_minus_comparator": -0.08736332944956393,
+          "metric": "winner_log_loss",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 10.18965369546624,
+          "ci95_percentile": [
+            -0.025968393869253207,
+            0.0055654593117475375
+          ],
+          "comparator": "G3",
+          "comparator_mean": 10.199536192407445,
+          "delta_candidate_minus_comparator": -0.009882496941205687,
+          "metric": "home_points_mae",
+          "p_candidate_better": 0.8975
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 10.18965369546624,
+          "ci95_percentile": [
+            -1.7712544346207182,
+            -0.77343266264173
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.434213335608497,
+          "delta_candidate_minus_comparator": -1.244559640142258,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 10.199536192407445,
+          "ci95_percentile": [
+            -1.7605897297032085,
+            -0.7612206922883418
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.434213335608497,
+          "delta_candidate_minus_comparator": -1.2346771432010524,
+          "metric": "home_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.660152827867451,
+          "ci95_percentile": [
+            -0.015876862681851355,
+            0.014289626000240271
+          ],
+          "comparator": "G3",
+          "comparator_mean": 9.660956808762204,
+          "delta_candidate_minus_comparator": -0.0008039808947533089,
+          "metric": "away_points_mae",
+          "p_candidate_better": 0.5535
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 9.660152827867451,
+          "ci95_percentile": [
+            -2.2776284033970997,
+            -1.3121563333755948
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.454153757730872,
+          "delta_candidate_minus_comparator": -1.7940009298634205,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 9.660956808762204,
+          "ci95_percentile": [
+            -2.275937851698538,
+            -1.3124315883008089
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 11.454153757730872,
+          "delta_candidate_minus_comparator": -1.7931969489686672,
+          "metric": "away_points_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.481641262390122,
+          "ci95_percentile": [
+            -0.013282868336164782,
+            0.021663985836033735
+          ],
+          "comparator": "G3",
+          "comparator_mean": 11.477063892137917,
+          "delta_candidate_minus_comparator": 0.004577370252205171,
+          "metric": "spread_mae",
+          "p_candidate_better": 0.3155
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.481641262390122,
+          "ci95_percentile": [
+            -2.070240300022021,
+            -1.1978332444896378
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 13.103996672151176,
+          "delta_candidate_minus_comparator": -1.6223554097610542,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 11.477063892137917,
+          "ci95_percentile": [
+            -2.0851204917585595,
+            -1.2016378101165155
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 13.103996672151176,
+          "delta_candidate_minus_comparator": -1.6269327800132594,
+          "metric": "spread_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 16.11579528163722,
+          "ci95_percentile": [
+            -0.022022090888334546,
+            0.029642000923659345
+          ],
+          "comparator": "G3",
+          "comparator_mean": 16.11215927583401,
+          "delta_candidate_minus_comparator": 0.003636005803208775,
+          "metric": "total_mae",
+          "p_candidate_better": 0.408
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 16.11579528163722,
+          "ci95_percentile": [
+            -3.417919629153839,
+            -1.5551715139929285
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 18.552345685183983,
+          "delta_candidate_minus_comparator": -2.4365504035467644,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G3",
+          "candidate_mean": 16.11215927583401,
+          "ci95_percentile": [
+            -3.420477763620167,
+            -1.5500986202086253
+          ],
+          "comparator": "B1 Training league-points baseline",
+          "comparator_mean": 18.552345685183983,
+          "delta_candidate_minus_comparator": -2.440186409349973,
+          "metric": "total_mae",
+          "p_candidate_better": 1.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 11.481641262390122,
+          "ci95_percentile": [
+            3.086315174212,
+            3.4931224329250137
+          ],
+          "comparator": "G3",
+          "comparator_mean": 8.189965092524753,
+          "delta_candidate_minus_comparator": 3.2916761698653687,
+          "metric": "margin_crps",
+          "p_candidate_better": 0.0
+        },
+        {
+          "candidate": "G2",
+          "candidate_mean": 16.11579528163722,
+          "ci95_percentile": [
+            4.5141221153815545,
+            5.017279563498059
+          ],
+          "comparator": "G3",
+          "comparator_mean": 11.35511580242967,
+          "delta_candidate_minus_comparator": 4.760679479207548,
+          "metric": "total_crps",
+          "p_candidate_better": 0.0
+        }
+      ],
+      "date_clusters": 164,
+      "games": 1229
+    },
     "delta_definition": "candidate metric minus comparator metric; lower is better",
     "g2_crps_definition": "G2 is treated as a deterministic point-mass distribution; its CRPS equals absolute error for margin and total.",
     "interval": "two-sided 95% percentile interval (2.5th, 97.5th percentiles)",
