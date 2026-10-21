@@ -22,6 +22,25 @@ from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+
+
+def repo_root(start: Path) -> Path:
+    for parent in (start, *start.parents):
+        if (parent / ".git").exists():
+            return parent
+    return start
+
+
+ROOT = repo_root(HERE)
+
+
+def rel_to_repo(path: Path) -> str:
+    """Record paths repo-relative when possible: an absolute working-copy path in a
+    provenance file points at a directory that will not exist for the next reader."""
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
 DEFAULT_FRAME = HERE.parent / "official-outcome-backfill-2026-10-20" / "canonical_frame.csv"
 DEFAULT_SAMPLE = HERE.parent / "event-data-audit-2026-10-20" / "sample_games.csv"
 EXPECTED_FRAME_SHA256 = "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b"
@@ -103,13 +122,14 @@ def main() -> None:
 
     by_season = Counter(int(r["season"]) for r in out_rows)
     summary = {
-        "frame_source": str(args.frame),
+        "frame_source": rel_to_repo(args.frame),
+        "frame_source_abspath": str(args.frame.resolve()),
         "frame_sha256": frame_sha,
         "frame_sha256_matches_pin": frame_sha == EXPECTED_FRAME_SHA256,
         "games": len(out_rows),
         "games_by_season": {str(k): by_season[k] for k in sorted(by_season)},
         "sample_games_in_frame": sum(1 for r in out_rows if r["in_sample"] == "1"),
-        "sample_games_file": str(args.sample),
+        "sample_games_file": rel_to_repo(args.sample),
         "games_file": args.out.name,
         "games_file_sha256": file_sha256(args.out),
         "season_definition": "season = start year of the NHL season label (2018 = 2018-19)",
