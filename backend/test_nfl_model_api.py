@@ -62,6 +62,31 @@ class Payload(unittest.TestCase):
         self.assertEqual(v1["line"]["source"], "snapshot")
         self.assertEqual(v1["line"]["home_moneyline"], 105)
 
+    def test_pick_is_one_backend_rule_on_the_frozen_line(self):
+        # margin -11.5 against the snapshot spread -1.5 -> away. The schedule line was moved to
+        # 3.0 in setUp, but the pick reads the frozen snapshot, so it must still be 'away'.
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(g["locks"][m.ADOPTED]["pick"], "away")
+
+    def test_pick_no_pick_and_no_line_are_distinct(self):
+        nl.start_run(self.con, "eq", 2026, 5, "eq-v", {})
+        self.con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            "proj_margin, proj_total, p_home_win, market_spread, market_total, market_source, "
+            "locked, locked_at, model_version) VALUES ('eq','nfl','g1',2026,5,'GB','CHI',"
+            "3.0,44.5,0.55,3.0,44.5,'nflverse',1,'t-eq','eq-v')")
+        nl.finish_run(self.con, "eq", "ok")
+        nl.start_run(self.con, "nl", 2026, 5, "nl-v", {})
+        self.con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            "proj_margin, proj_total, p_home_win, market_spread, market_total, market_source, "
+            "locked, locked_at, model_version) VALUES ('nl','nfl','g1',2026,5,'GB','CHI',"
+            "2.0,44.5,0.55,NULL,44.5,'nflverse',1,'t-nl','nl-v')")
+        nl.finish_run(self.con, "nl", "ok")
+        g, = m.locks_payload(self.con, 2026, 5)["games"]
+        self.assertEqual(g["locks"]["eq-v"]["pick"], "no_pick")
+        self.assertEqual(g["locks"]["nl-v"]["pick"], "no_line")
+
     def test_legacy_lock_shows_no_scores_and_says_where_its_line_came_from(self):
         g, = m.locks_payload(self.con, 2026, 5)["games"]
         legacy = g["locks"]["nfl-v1 cap=21.0 sigma=13.4"]
@@ -163,31 +188,6 @@ class Payload(unittest.TestCase):
     def test_epa_family(self):
         d = m.describe("nfl-epa-v2", "nfl-epa-v2 pure per-play half_life=12 lam=450 NOT-ADOPTED")
         self.assertEqual((d["family"], d["label"], d["adopted"]), ("v2", "v2 EPA", False))
-
-    def test_each_lock_separates_prediction_lean_and_wager(self):
-        g, = m.locks_payload(self.con, 2026, 5)["games"]
-        v1 = g["locks"][m.ADOPTED]
-        self.assertEqual(v1["prediction"]["margin"], -11.5)
-        self.assertEqual(v1["prediction"]["p_home_win"], 0.19)
-        self.assertIn("lean", v1)
-        self.assertIn("wager", v1)
-        self.assertEqual(v1["wager"]["policy"], "nfl-wager-policy-v1")
-
-    def test_exactly_on_the_line_is_no_lean_not_away(self):
-        # schedule spread is 3.0 after setUp's UPDATE; a lock with proj_margin 3.0 has no lean.
-        nl.start_run(self.con, "eq", 2026, 5, "eq-v", {})
-        self.con.execute(
-            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
-            "proj_margin, proj_total, p_home_win, market_spread, market_total, market_source, "
-            "locked, locked_at, model_version) VALUES ('eq','nfl','g1',2026,5,'GB','CHI',"
-            "3.0,44.5,0.55,3.0,44.5,'nflverse',1,'t-eq','eq-v')")
-        nl.finish_run(self.con, "eq", "ok")
-        g, = m.locks_payload(self.con, 2026, 5)["games"]
-        eq = g["locks"]["eq-v"]
-        self.assertEqual(eq["lean"]["spread"]["side"], "none")
-        self.assertEqual(eq["lean"]["spread"]["reason"], "level_with_line")
-        # no moneyline was ever captured for this lock: the wager is unpriceable, not "failed".
-        self.assertEqual(eq["wager"]["status"], "insufficient_price_data")
 
 
 if __name__ == "__main__":

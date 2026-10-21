@@ -89,6 +89,21 @@ def ats_result(actual_margin, spread_line):
     return "cover" if diff > 0 else "miss"
 
 
+def pick_side(proj_margin, spread_line):
+    """The model's against-the-spread side, the single rule behind every pick.
+
+    'home' when the projected home margin beats the line, 'away' when it does not, 'no_pick'
+    when it sits exactly on the line (within the grading tolerance), 'no_line' when there is no
+    usable spread. The lock payload and the grader both call this, so the pick shown before
+    kickoff is the same pick graded after it.
+    """
+    if spread_line is None:
+        return "no_line"
+    if abs(proj_margin - spread_line) < 1e-9:
+        return "no_pick"
+    return "home" if proj_margin > spread_line else "away"
+
+
 def ats_record(actual_margins, spread_lines):
     """Counts and cover rate, pushes excluded from the rate and reported separately."""
     if len(actual_margins) != len(spread_lines):

@@ -100,6 +100,17 @@ class AtsRules(unittest.TestCase):
     def test_record_with_only_pushes_has_no_rate(self):
         self.assertIsNone(m.ats_record([3], [3.0])["cover_rate"])
 
+    def test_pick_side_follows_the_line(self):
+        self.assertEqual(m.pick_side(5.0, 3.0), "home")
+        self.assertEqual(m.pick_side(2.0, 3.0), "away")
+
+    def test_pick_side_on_the_line_is_no_pick(self):
+        self.assertEqual(m.pick_side(3.0, 3.0), "no_pick")
+        self.assertEqual(m.pick_side(3.0000000005, 3.0), "no_pick")
+
+    def test_pick_side_without_a_line_is_no_line(self):
+        self.assertEqual(m.pick_side(3.0, None), "no_line")
+
 
 class Bootstrap(unittest.TestCase):
     def test_identical_losses_have_zero_interval_around_zero(self):

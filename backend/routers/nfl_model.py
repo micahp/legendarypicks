@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from _core import _db
 import check_nfl_schedule_scores as cs
-import nfl_picks_policy as picks
+import nfl_metrics as mt
 
 router = APIRouter()
 
@@ -76,37 +76,19 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
         locked[mv] = n
         models[mv] = model
     out: Dict[str, Dict[str, Any]] = {}
-    for mv, pw, ah, aa, brier, merr, ats, pt, tline, hml, aml, cap, lat, gday, gtime in con.execute(
+    for mv, pw, ah, aa, brier, merr, ats in con.execute(
             "SELECT g.model_version, g.p_home_win, pg.actual_home, pg.actual_away, pg.brier, "
-            "       pg.margin_err, pg.ats_result, g.proj_total, "
-            "       COALESCE(s.total_line, g.market_total), "
-            "       s.home_moneyline, s.away_moneyline, s.captured_at, g.locked_at, "
-            "       n.gameday, n.gametime "
+            "       pg.margin_err, pg.ats_result "
             "FROM game_projections g JOIN projection_grades pg ON pg.league = g.league "
             "AND pg.game_id = g.game_id AND pg.model_version = g.model_version "
             "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
-            "LEFT JOIN nfl_line_snapshots s ON s.snapshot_id = g.line_snapshot_id "
-            "LEFT JOIN nfl_schedule n ON n.game_id = g.game_id "
             "WHERE g.league = 'nfl' AND g.locked = 1 AND g.season = ?", (season,)):
         d = out.setdefault(mv, {"graded": 0, "su": {"win": 0, "loss": 0, "tie": 0, "no_pick": 0},
                                 "ats": {"win": 0, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0},
-                                "total": {"win": 0, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0},
-                                "priced": 0,
                                 "brier_sum": 0.0, "brier_n": 0, "abs_err_sum": 0.0})
         d["graded"] += 1
         d["su"][su_result(pw, ah, aa)] += 1
         d["ats"][ats] += 1
-        actual_total = None if ah is None or aa is None else float(ah) + float(aa)
-        total_lean = picks.total_lean_result(pt, tline, actual_total)
-        if total_lean:
-            d["total"][total_lean] += 1
-        kick = cs.kickoff_utc(gday, gtime) if gday else None
-        status = picks.price_status(
-            {"line": {"total": tline, "home_moneyline": hml, "away_moneyline": aml,
-                      "captured_at": cap or lat}},
-            kick.strftime("%Y-%m-%dT%H:%M:%SZ") if kick else None)
-        if status == "pregame":
-            d["priced"] += 1
         if brier is not None:
             d["brier_sum"] += brier
             d["brier_n"] += 1
@@ -118,11 +100,6 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
         rows.append(dict(describe(models[mv], mv), version=mv, locked=n_locked, graded=graded,
                          awaiting=n_locked - graded,
                          su=d["su"] if d else None, ats=d["ats"] if d else None,
-                         total_lean=d["total"] if d else None,
-                         wager={"policy": picks.POLICY_ID, "issued": 0,
-                                "priced": d["priced"] if d else 0,
-                                "status": "no_qualifying_wager", "reason": picks.POLICY_STATUS,
-                                "policy_note": picks.POLICY_NOTE},
                          mean_brier=(d["brier_sum"] / d["brier_n"]) if d and d["brier_n"] else None,
                          brier_n=d["brier_n"] if d else 0,
                          mean_abs_margin_err=(d["abs_err_sum"] / graded) if d else None))
@@ -190,11 +167,14 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
         grade = (None if merr is None else
                  {"brier": _f(brier), "margin_err": _f(merr), "total_err": _f(terr), "ats": ats,
                   "su": su_result(pw, ah, aa)})
+        # The pick is a single backend rule (nfl_metrics.pick_side) on the frozen spread the lock
+        # was written against, so the page can never disagree with the grader.
         locks.setdefault(gid, {})[mv] = {
             "preview": not is_locked,
             "proj_home": _f(ph), "proj_away": _f(pa), "margin": _f(pm), "total": _f(pt),
             "p_home_win": _f(pw), "locked_at": locked_at if is_locked else None,
-            "previewed_at": None if is_locked else locked_at, "line": line, "grade": grade}
+            "previewed_at": None if is_locked else locked_at,
+            "pick": mt.pick_side(_f(pm), line["spread"]), "line": line, "grade": grade}
     results = con.execute(
         "SELECT week, home_team, away_team, home_score, away_score FROM nfl_schedule WHERE season = ? "
         "AND game_type = 'REG' AND home_score IS NOT NULL AND away_score IS NOT NULL", (season,)).fetchall()
@@ -204,16 +184,11 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
         "AND game_type = 'REG' ORDER BY gameday, gametime, game_id", (season, week)).fetchall()
     for gid, home, away, loc, gameday, gametime, hs, as_, result in sched:
         kick = cs.kickoff_utc(gameday, gametime) if gameday else None
-        kick_iso = kick.strftime("%Y-%m-%dT%H:%M:%SZ") if kick else None
-        # Prediction, lean and wager are three separate claims about the same lock; the page keeps
-        # them apart instead of printing one "pick".
-        for lk in locks.get(gid, {}).values():
-            lk.update(picks.describe(lk, kick_iso))
         out["games"].append({
             "game_id": gid, "week": week, "home": home, "away": away,
             "home_record": record_before(results, home, week), "away_record": record_before(results, away, week),
             "neutral": (loc or "").strip().lower() == "neutral",
-            "kickoff_utc": kick_iso,
+            "kickoff_utc": kick.strftime("%Y-%m-%dT%H:%M:%SZ") if kick else None,
             "final": ({"home": _f(hs), "away": _f(as_)}
                       if hs is not None and as_ is not None and result is not None else None),
             "locks": locks.get(gid, {}),
