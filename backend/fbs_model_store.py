@@ -24,6 +24,8 @@ import math
 import os
 import sqlite3
 
+from fbs_lifecycle import NO_WINDOW_LIFECYCLES, is_lockable
+
 LOCK_LEAD = dt.timedelta(minutes=90)
 LOCK_PROTOCOL = "t90"
 LEGACY_PROTOCOL = "legacy"
@@ -109,13 +111,57 @@ CREATE TABLE IF NOT EXISTS fbs_model_meta (
     key TEXT PRIMARY KEY,
     value TEXT
 );
+CREATE TABLE IF NOT EXISTS fbs_fixture_revisions (
+    game_id TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    season INTEGER NOT NULL,
+    kickoff_utc TEXT NOT NULL,
+    home_team TEXT,
+    away_team TEXT,
+    home_team_id TEXT,
+    away_team_id TEXT,
+    neutral_site INTEGER,
+    observed_utc TEXT NOT NULL,
+    source TEXT NOT NULL,
+    PRIMARY KEY (game_id, revision)
+);
+CREATE TABLE IF NOT EXISTS fbs_game_status (
+    game_id TEXT PRIMARY KEY,
+    season INTEGER NOT NULL,
+    revision INTEGER NOT NULL,
+    lifecycle TEXT NOT NULL,
+    status_name TEXT,
+    observed_utc TEXT NOT NULL,
+    source TEXT NOT NULL,
+    grading_state TEXT NOT NULL,
+    reason TEXT
+);
+CREATE TABLE IF NOT EXISTS fbs_unresolved (
+    game_id TEXT PRIMARY KEY,
+    season INTEGER NOT NULL,
+    kickoff_utc TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    first_seen_utc TEXT NOT NULL,
+    last_attempt_utc TEXT NOT NULL,
+    attempts INTEGER NOT NULL,
+    next_attempt_utc TEXT NOT NULL,
+    alert_state TEXT NOT NULL,
+    resolved_utc TEXT
+);
+CREATE TABLE IF NOT EXISTS fbs_run_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subsystem TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_utc TEXT NOT NULL,
+    detail TEXT
+);
 """
 
 # Created after migration: they name lock_protocol, which an older database lacks until then.
 TRIGGERS = """
 CREATE TRIGGER IF NOT EXISTS fbs_forecast_lock_immutable
 BEFORE UPDATE OF p_home, fair_home, fair_away, kickoff_utc, locked_at_utc, late,
-    lock_protocol, model_version ON fbs_forecasts
+    lock_protocol, model_version, kickoff_revision ON fbs_forecasts
 BEGIN SELECT RAISE(ABORT, 'FBS locked forecasts are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS fbs_forecast_no_delete
 BEFORE DELETE ON fbs_forecasts
@@ -147,6 +193,8 @@ def _migrate(con: sqlite3.Connection) -> None:
         con.execute("ALTER TABLE fbs_forecasts ADD COLUMN lock_protocol TEXT")
         con.execute("UPDATE fbs_forecasts SET lock_protocol = ? WHERE lock_protocol IS NULL",
                     (LEGACY_PROTOCOL,))
+    if "kickoff_revision" not in columns:
+        con.execute("ALTER TABLE fbs_forecasts ADD COLUMN kickoff_revision INTEGER NOT NULL DEFAULT 1")
 
 
 def parse_time(value: str) -> dt.datetime:
@@ -206,9 +254,11 @@ def upsert_previews(con: sqlite3.Connection, rows: list[dict],
 
 def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
                    now: dt.datetime | None = None) -> dict:
-    """Insert each forecast once, and only inside its T-90 window. Returns counts."""
+    """Insert each forecast once, only inside its T-90 window, and only for a scheduled game whose
+    kickoff is the current fixture revision. Returns counts. A started or unverified game never locks."""
     now = now or dt.datetime.now(dt.timezone.utc)
-    report = {"inserted": 0, "existing": 0, "not_due": 0, "after_kickoff": 0}
+    report = {"inserted": 0, "existing": 0, "not_due": 0, "after_kickoff": 0,
+              "blocked_status": 0, "blocked_revision": 0}
     for row in rows:
         kickoff = parse_time(row["kickoff_utc"])
         if now < kickoff - LOCK_LEAD:
@@ -217,17 +267,29 @@ def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
         if now >= kickoff:
             report["after_kickoff"] += 1
             continue
+        status = game_status(con, row["game_id"])
+        if status is None or not is_lockable(status["lifecycle"], kickoff, now):
+            report["blocked_status"] += 1
+            continue
+        fixture = current_fixture(con, row["game_id"])
+        if fixture is None or parse_time(fixture["kickoff_utc"]) != kickoff:
+            report["blocked_revision"] += 1
+            continue
+        if (fixture["home_team_id"], fixture["away_team_id"]) != (str(row.get("home_team_id")), str(row.get("away_team_id"))):
+            report["blocked_status"] += 1      # the opponent changed: never the same fixture
+            continue
         cursor = con.execute(
             "INSERT OR IGNORE INTO fbs_forecasts"
             "(game_id,model,season,kickoff_utc,home_team,away_team,home_team_id,away_team_id,"
             " model_version,p_home,fair_home,fair_away,fitted_through,created_at_utc,"
-            " locked_at_utc,late,lock_protocol) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?)",
+            " locked_at_utc,late,lock_protocol,kickoff_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
             (row["game_id"], row["model"], row["season"], row["kickoff_utc"],
              row["home_team"], row["away_team"], row.get("home_team_id"), row.get("away_team_id"),
              row["model_version"], row["p_home"],
              american_from_probability(row["p_home"]),
              american_from_probability(1.0 - row["p_home"]),
-             row.get("fitted_through"), now.isoformat(), now.isoformat(), LOCK_PROTOCOL),
+             row.get("fitted_through"), now.isoformat(), now.isoformat(), LOCK_PROTOCOL,
+             fixture["revision"]),
         )
         report["inserted" if cursor.rowcount else "existing"] += 1
     con.commit()
@@ -235,18 +297,29 @@ def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
 
 
 def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = None) -> int:
-    """Previewed games that reached kickoff with no lock. Recorded once, never backfilled."""
+    """Previewed games that reached their current kickoff with no lock. Recorded once, never backfilled.
+
+    A postponed, cancelled, void or identity-changed game had no eligible window, so it is not a miss.
+    The kickoff used is the current fixture revision, so a moved game is not missed early.
+    """
     now = now or dt.datetime.now(dt.timezone.utc)
     locked = {(row[0], row[1]) for row in con.execute(
         "SELECT game_id, model FROM fbs_forecasts WHERE lock_protocol = ?", (LOCK_PROTOCOL,))}
     missed = 0
     for row in con.execute("SELECT game_id, model, season, kickoff_utc FROM fbs_previews").fetchall():
-        if (row["game_id"], row["model"]) in locked or now < parse_time(row["kickoff_utc"]):
+        if (row["game_id"], row["model"]) in locked:
+            continue
+        fixture = current_fixture(con, row["game_id"])
+        kickoff_text = fixture["kickoff_utc"] if fixture else row["kickoff_utc"]
+        if now < parse_time(kickoff_text):
+            continue
+        status = game_status(con, row["game_id"])
+        if status and (status["lifecycle"] in NO_WINDOW_LIFECYCLES or status["reason"] == "identity_changed"):
             continue
         cursor = con.execute(
             "INSERT OR IGNORE INTO fbs_lock_events"
             "(game_id,model,season,kickoff_utc,event_type,recorded_at_utc) VALUES(?,?,?,?,?,?)",
-            (row["game_id"], row["model"], row["season"], row["kickoff_utc"], MISSED_EVENT,
+            (row["game_id"], row["model"], row["season"], kickoff_text, MISSED_EVENT,
              now.isoformat()),
         )
         missed += cursor.rowcount
@@ -255,13 +328,17 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
 
 
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
-                    now: dt.datetime | None = None) -> int:
-    """Fill outcomes for games whose result is known. Never touches a probability."""
+                    now: dt.datetime | None = None, commit: bool = True) -> int:
+    """Fill outcomes for games whose final result is confirmed. Never touches a probability.
+    Voided and quarantined games are never graded."""
     now = now or dt.datetime.now(dt.timezone.utc)
     graded = 0
     for game_id, result in results.items():
         home_score, away_score = result.get("home_score"), result.get("away_score")
         if home_score is None or away_score is None:
+            continue
+        status = game_status(con, game_id)
+        if status and status["grading_state"] in ("void", "quarantined"):
             continue
         outcome = 1 if home_score > away_score else 0
         cursor = con.execute(
@@ -270,17 +347,31 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict],
             (outcome, home_score, away_score, now.isoformat(), game_id,
              now.isoformat()),
         )
+        if cursor.rowcount:
+            con.execute("UPDATE fbs_game_status SET grading_state='graded', lifecycle='completed', "
+                        "reason=NULL WHERE game_id=?", (game_id,))
         graded += cursor.rowcount
-    con.commit()
+    if commit:
+        con.commit()
     return graded
 
 
 def pending_grades(con: sqlite3.Connection, now: dt.datetime) -> list[tuple[str, str]]:
-    """Locked games with no result yet and a kickoff that has passed. Legacy rows are never graded:
-    they stay out of official performance and their stored values are left as they are."""
-    rows = con.execute("SELECT DISTINCT game_id, kickoff_utc FROM fbs_forecasts "
-                       "WHERE result IS NULL AND lock_protocol = ?", (LOCK_PROTOCOL,)).fetchall()
-    return [(row[0], row[1]) for row in rows if parse_time(row[1]) < now]
+    """Locked, ungraded games whose kickoff has passed, and which are due for a grading attempt.
+
+    Legacy rows are never graded. Voided and quarantined games are excluded. An unresolved game is
+    retried only when its backoff has elapsed.
+    """
+    rows = con.execute(
+        "SELECT DISTINCT f.game_id, f.kickoff_utc FROM fbs_forecasts f "
+        "WHERE f.result IS NULL AND f.lock_protocol = ? "
+        "AND NOT EXISTS (SELECT 1 FROM fbs_game_status s WHERE s.game_id = f.game_id "
+        "                AND s.grading_state IN ('void', 'quarantined', 'graded'))",
+        (LOCK_PROTOCOL,)).fetchall()
+    due_at = {row[0]: parse_time(row[1]) for row in con.execute(
+        "SELECT game_id, next_attempt_utc FROM fbs_unresolved WHERE resolved_utc IS NULL")}
+    return [(row[0], row[1]) for row in rows
+            if parse_time(row[1]) < now and due_at.get(row[0], now) <= now]
 
 
 def store_ratings(con: sqlite3.Connection, rows: list[dict], as_of: str) -> int:
@@ -329,6 +420,123 @@ def _game_shell(game_id: str, kickoff: str, home: str, away: str) -> dict:
             "status": None, "locked_at_utc": None, "late": False, "result": None, "models": {}}
 
 
+def current_fixture(con: sqlite3.Connection, game_id: str) -> dict | None:
+    row = con.execute("SELECT * FROM fbs_fixture_revisions WHERE game_id = ? "
+                      "ORDER BY revision DESC LIMIT 1", (game_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def observe_fixture(con: sqlite3.Connection, rec: dict, now: dt.datetime, source: str) -> dict:
+    """Record a fixture revision when the kickoff moves. A changed team identity is never accepted as
+    the same fixture: it is reported and the stored revision is left as it was."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    kickoff = parse_time(rec["kickoff_utc"]).isoformat()
+    home_id, away_id = str(rec.get("home_team_id")), str(rec.get("away_team_id"))
+    current = current_fixture(con, rec["game_id"])
+    if current is None:
+        revision, changed, identity_changed = 1, False, False
+    elif (current["home_team_id"], current["away_team_id"]) != (home_id, away_id):
+        revision, changed, identity_changed = current["revision"], False, True
+    elif parse_time(current["kickoff_utc"]) != parse_time(kickoff):
+        revision, changed, identity_changed = current["revision"] + 1, True, False
+    else:
+        revision, changed, identity_changed = current["revision"], False, False
+    if current is None or changed:
+        con.execute(
+            "INSERT INTO fbs_fixture_revisions(game_id,revision,season,kickoff_utc,home_team,away_team,"
+            " home_team_id,away_team_id,neutral_site,observed_utc,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (rec["game_id"], revision, int(rec["season"]), kickoff, rec.get("home_team"),
+             rec.get("away_team"), home_id, away_id, int(bool(rec.get("neutral_site"))),
+             now.isoformat(), source))
+    current = current_fixture(con, rec["game_id"])
+    return {"revision": revision, "kickoff_utc": current["kickoff_utc"], "changed": changed,
+            "identity_changed": identity_changed}
+
+
+def game_status(con: sqlite3.Connection, game_id: str) -> dict | None:
+    row = con.execute("SELECT * FROM fbs_game_status WHERE game_id = ?", (game_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def set_game_status(con: sqlite3.Connection, game_id: str, season: int, revision: int, lifecycle: str,
+                    status_name: str | None, observed_utc: str, source: str, grading_state: str,
+                    reason: str | None = None, commit: bool = True) -> None:
+    """Upsert a game's current status. A graded game keeps its grading state; nothing un-grades it."""
+    con.execute(
+        "INSERT INTO fbs_game_status(game_id,season,revision,lifecycle,status_name,observed_utc,source,"
+        " grading_state,reason) VALUES(?,?,?,?,?,?,?,?,?)"
+        " ON CONFLICT(game_id) DO UPDATE SET revision=excluded.revision, lifecycle=excluded.lifecycle,"
+        " status_name=excluded.status_name, observed_utc=excluded.observed_utc, source=excluded.source,"
+        " grading_state=CASE WHEN fbs_game_status.grading_state='graded' THEN 'graded'"
+        "                    ELSE excluded.grading_state END,"
+        " reason=excluded.reason",
+        (game_id, season, revision, lifecycle, status_name, observed_utc, source, grading_state, reason))
+    if commit:
+        con.commit()
+
+
+def set_grading_state(con: sqlite3.Connection, game_id: str, grading_state: str, reason: str,
+                      observed_utc: str, source: str, commit: bool = True) -> None:
+    """Void or quarantine a game. The stored forecast and any lock are not changed."""
+    con.execute("UPDATE fbs_game_status SET grading_state=?, reason=?, observed_utc=?, source=? "
+                "WHERE game_id=? AND grading_state != 'graded'",
+                (grading_state, reason, observed_utc, source, game_id))
+    if commit:
+        con.commit()
+
+
+def record_unresolved(con: sqlite3.Connection, game_id: str, season: int, kickoff_utc: str,
+                      reason: str, now: dt.datetime, commit: bool = True) -> dict:
+    """Keep a game that could not be classified in a visible queue, with a bounded retry schedule.
+    It is never treated as completed, cancelled or missed. The alert is timing, not an outcome."""
+    from fbs_lifecycle import alert_due, next_attempt
+    row = con.execute("SELECT * FROM fbs_unresolved WHERE game_id = ?", (game_id,)).fetchone()
+    attempts = (row["attempts"] + 1) if row else 1
+    first_seen = row["first_seen_utc"] if row else now.isoformat()
+    alert = "alerted" if alert_due(parse_time(kickoff_utc), now) else (row["alert_state"] if row else "none")
+    due = next_attempt(attempts, now)
+    con.execute(
+        "INSERT INTO fbs_unresolved(game_id,season,kickoff_utc,reason,first_seen_utc,last_attempt_utc,"
+        " attempts,next_attempt_utc,alert_state,resolved_utc) VALUES(?,?,?,?,?,?,?,?,?,NULL)"
+        " ON CONFLICT(game_id) DO UPDATE SET reason=excluded.reason, last_attempt_utc=excluded.last_attempt_utc,"
+        " attempts=excluded.attempts, next_attempt_utc=excluded.next_attempt_utc,"
+        " alert_state=excluded.alert_state, resolved_utc=NULL",
+        (game_id, season, kickoff_utc, reason, first_seen, now.isoformat(), attempts, due.isoformat(), alert))
+    if commit:
+        con.commit()
+    return {"game_id": game_id, "reason": reason, "attempts": attempts, "alert_state": alert,
+            "next_attempt_utc": due.isoformat()}
+
+
+def resolve_unresolved(con: sqlite3.Connection, game_id: str, now: dt.datetime, commit: bool = True) -> None:
+    con.execute("UPDATE fbs_unresolved SET resolved_utc=? WHERE game_id=? AND resolved_utc IS NULL",
+                (now.isoformat(), game_id))
+    if commit:
+        con.commit()
+
+
+def unresolved_queue(con: sqlite3.Connection) -> list[dict]:
+    return [dict(r) for r in con.execute(
+        "SELECT * FROM fbs_unresolved WHERE resolved_utc IS NULL ORDER BY kickoff_utc").fetchall()]
+
+
+def record_run(con: sqlite3.Connection, subsystem: str, status: str, detail: dict,
+               now: dt.datetime, commit: bool = True) -> None:
+    """A truthful per-subsystem report: what ran, what it concluded, and why it stopped."""
+    con.execute("INSERT INTO fbs_run_reports(subsystem,status,started_utc,detail) VALUES(?,?,?,?)",
+                (subsystem, status, now.isoformat(), json.dumps(detail, sort_keys=True, default=str)))
+    if commit:
+        con.commit()
+
+
+def last_runs(con: sqlite3.Connection) -> dict:
+    out = {}
+    for row in con.execute("SELECT subsystem, status, started_utc, detail FROM fbs_run_reports ORDER BY id"):
+        out[row["subsystem"]] = {"status": row["status"], "started_utc": row["started_utc"],
+                                 "detail": json.loads(row["detail"] or "{}")}
+    return out
+
+
 def export_payload(con: sqlite3.Connection, season: int) -> dict:
     rows = con.execute("SELECT * FROM fbs_forecasts WHERE season=? ORDER BY kickoff_utc",
                        (season,)).fetchall()
@@ -342,14 +550,25 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
             (season, MISSED_EVENT))}
     missed_games = {game_id for game_id, _ in missed}
 
+    statuses = {}
+    if _table_exists(con, "fbs_game_status"):
+        statuses = {r["game_id"]: dict(r) for r in con.execute(
+            "SELECT * FROM fbs_game_status WHERE season=?", (season,)).fetchall()}
+    void_games = {g for g, st in statuses.items() if st["grading_state"] == "void"}
+    quarantined = {g for g, st in statuses.items() if st["grading_state"] == "quarantined"}
+
     records = {}
     for model in MODEL_IDS:
         model_rows = [r for r in rows if r["model"] == model]
-        official = [r for r in model_rows if _protocol(r) == LOCK_PROTOCOL and not r["late"]]
+        official = [r for r in model_rows if _protocol(r) == LOCK_PROTOCOL and not r["late"]
+                    and r["game_id"] not in void_games and r["game_id"] not in quarantined]
         records[model] = {**_score(official), "forecasts": len(official),
                           "legacy": sum(1 for r in model_rows if _protocol(r) == LEGACY_PROTOCOL),
                           "late": sum(1 for r in model_rows if r["late"]),
-                          "missed": sum(1 for _, m in missed if m == model)}
+                          "missed": sum(1 for _, m in missed if m == model),
+                          "void": sum(1 for r in model_rows if r["game_id"] in void_games and _protocol(r) == LOCK_PROTOCOL),
+                          "quarantined": sum(1 for r in model_rows if r["game_id"] in quarantined),
+                          "unresolved": sum(1 for u in unresolved_queue(con) if u["season"] == season and u["game_id"] in {r["game_id"] for r in model_rows})}
 
     games: dict[str, dict] = {}
     for row in rows:
@@ -386,10 +605,18 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
                 "fitted_through": row["fitted_through"],
                 "previewed_at_utc": row["previewed_at_utc"],
             }
+    for game_id, game in games.items():
+        status = statuses.get(game_id, {})
+        game["lifecycle"] = status.get("lifecycle")
+        game["grading_state"] = status.get("grading_state")
+        game["status_reason"] = status.get("reason")
+        game["kickoff_revision"] = status.get("revision")
     ratings = [dict(r) for r in con.execute(
         "SELECT * FROM fbs_ratings WHERE season=? ORDER BY rating DESC", (season,)).fetchall()]
     meta = {r["key"]: json.loads(r["value"]) for r in con.execute(
         "SELECT key,value FROM fbs_model_meta").fetchall()}
+    meta["unresolved"] = unresolved_queue(con) if _table_exists(con, "fbs_unresolved") else []
+    meta["runs"] = last_runs(con) if _table_exists(con, "fbs_run_reports") else {}
     ordered = sorted(games.values(), key=lambda g: g["kickoff_utc"])
     return {
         "league": "ncaaf",

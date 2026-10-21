@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fbs_game_winner_baseline as base  # noqa: E402
 import fbs_model_service as service  # noqa: E402
 import fbs_model_store as store  # noqa: E402
+import fbs_lifecycle as life  # noqa: E402
 import fbs_phase3_features_c as feat_c  # noqa: E402
 from fbs_phase3_features_c import FEATURE_NAMES_C as FEATURES_C  # noqa: E402
 
@@ -44,7 +45,8 @@ MODEL_ORDER = ("g2", "c2", "g2h")
 CERTIFICATE_NAME = "fbs-parity-certificate.json"
 # Every module whose code changes the forecast. A certificate is bound to these bytes.
 FINGERPRINT_MODULES = (
-    "fbs_model_runner.py", "fbs_model_service.py", "fbs_model_store.py", "fbs_game_winner_baseline.py",
+    "fbs_model_runner.py", "fbs_model_service.py", "fbs_model_store.py", "fbs_lifecycle.py",
+    "fbs_game_winner_baseline.py",
     "fbs_phase3_features_c.py", "fbs_phase3_hierarchical.py", "fbs_phase3_increment.py",
     "fbs_phase3_increment_g.py",
 )
@@ -200,46 +202,76 @@ def parity_certified(db_path: str) -> tuple[bool, str]:
 
 # --------------------------------------------------------------------------------------- slate
 
-def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
-    """Upcoming FBS games from ESPN's public scoreboard. No key, no scraping of team pages."""
-    import urllib.request
+class SlateUnavailable(service.FBSModelError):
+    """The current scoreboard window could not be read completely. Forecasting must stop."""
 
+
+class GradeSourceUnavailable(service.FBSModelError):
+    """A historical scoreboard could not be read. Grading stops; forecasting is not affected."""
+
+
+def read_scoreboard(date: str) -> dict:
+    """One scoreboard date. An unreadable or malformed board raises; it is never an empty day."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen(ESPN_SCOREBOARD % date, timeout=20) as response:
+            payload = json.load(response)
+    except Exception as exc:
+        raise SlateUnavailable("ESPN scoreboard %s unreadable (%s)" % (date, exc))
+    if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
+        raise SlateUnavailable("ESPN scoreboard %s malformed: no events list" % date)
+    return payload
+
+
+def event_facts(event: dict) -> dict | None:
+    """Lifecycle and result facts for one scoreboard event, from ESPN's own status fields only."""
+    competition = (event.get("competitions") or [{}])[0]
+    teams = {c.get("homeAway"): c for c in competition.get("competitors", [])}
+    home, away = teams.get("home"), teams.get("away")
+    if not home or not away:
+        return None
+    status = (competition.get("status") or event.get("status") or {}).get("type", {})
+    completed = status.get("completed")
+    name = status.get("name")
+    season = (event.get("season") or {}).get("year")
+    return {
+        "game_id": str(event.get("id")),
+        "season": int(season) if season is not None else None,
+        "kickoff_utc": event.get("date"),
+        "home_team_id": str((home.get("team") or {}).get("id", "")),
+        "away_team_id": str((away.get("team") or {}).get("id", "")),
+        "home_team": (home.get("team") or {}).get("displayName") or (home.get("team") or {}).get("location"),
+        "away_team": (away.get("team") or {}).get("displayName") or (away.get("team") or {}).get("location"),
+        "neutral_site": bool(competition.get("neutralSite", False)),
+        "week": (event.get("week") or {}).get("number"),
+        "status_name": name,
+        "completed": bool(completed) if completed is not None else None,
+        "lifecycle": life.classify_status(name, completed),
+        "home_score": _score(competition, "home"), "away_score": _score(competition, "away"),
+    }
+
+
+def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
+    """Every FBS event in the current window, with ESPN's lifecycle. Any unreadable date raises."""
     now = now or dt.datetime.now(dt.timezone.utc)
-    rows = []
-    unreachable = []
+    rows, unreadable = [], []
     for offset in range(0, days + 1):
         date = (now + dt.timedelta(days=offset)).strftime("%Y%m%d")
         try:
-            with urllib.request.urlopen(ESPN_SCOREBOARD % date, timeout=20) as response:
-                payload = json.load(response)
-        except Exception as exc:
-            # An unreachable date is not an empty date. A partial slate cannot show which games
-            # exist, so the caller must stop rather than forecast a schedule with holes in it.
-            print("slate: %s unreachable (%s)" % (date, exc))
-            unreachable.append(date)
+            payload = read_scoreboard(date)
+        except SlateUnavailable as exc:
+            unreadable.append(str(exc))
             continue
-        for event in payload.get("events", []):
-            competition = (event.get("competitions") or [{}])[0]
-            teams = {c["homeAway"]: c["team"] for c in competition.get("competitors", [])}
-            home, away = teams.get("home"), teams.get("away")
-            if not home or not away:
+        for event in payload["events"]:
+            facts = event_facts(event)
+            if facts is None:
+                # An event without two competitors makes the board inconsistent: the slate is unverified.
+                unreadable.append("ESPN scoreboard %s event %s has no home and away team" % (date, event.get("id")))
                 continue
-            status = (competition.get("status") or event.get("status") or {}).get("type", {})
-            rows.append({
-                "game_id": str(event.get("id")),
-                "kickoff_utc": event.get("date"),
-                "home_team_id": str(home.get("id")), "away_team_id": str(away.get("id")),
-                "home_team": home.get("displayName") or home.get("shortDisplayName"),
-                "away_team": away.get("displayName") or away.get("shortDisplayName"),
-                "neutral_site": bool(competition.get("neutralSite", False)),
-                "week": (event.get("week") or {}).get("number"),
-                "completed": bool(status.get("completed", False)),
-                "home_score": _score(competition, "home"), "away_score": _score(competition, "away"),
-            })
-    if unreachable:
-        raise service.FBSModelError(
-            "ESPN scoreboard unreachable for %s; slate incomplete, nothing written"
-            % ", ".join(unreachable))
+            rows.append(facts)
+    if unreadable:
+        raise SlateUnavailable("current slate incomplete: " + "; ".join(unreadable)
+                               + "; no forecasts or locks written")
     slate = pd.DataFrame(rows).drop_duplicates("game_id")
     if slate.empty:
         return slate
@@ -400,48 +432,137 @@ def team_ratings(state: dict, frame: pd.DataFrame, season: int) -> list[dict]:
     return sorted(rows, key=lambda row: -row["rating"])
 
 
-def espn_final_scores(pending: list[tuple[str, str]]) -> dict[str, dict]:
-    """Final scores that ESPN itself reports, for pending games.
+BOARD_PACE_SECONDS = 1.0   # ESPN burst limit: one historical board request per second
 
-    ESPN decides finality. A game is graded only when its scoreboard event reports completed and
-    carries both scores. Games are looked up on their Eastern date, the date ESPN files them under.
-    An unreadable board is an error, never an empty day, so nothing is graded from a partial read.
-    """
-    import urllib.request
-    by_date: dict[str, list[str]] = {}
-    for game_id, kickoff in pending:
-        by_date.setdefault(eastern_date(kickoff), []).append(game_id)
-    finals, failed, absent = {}, [], []
-    for date, game_ids in sorted(by_date.items()):
-        try:
-            with urllib.request.urlopen(ESPN_SCOREBOARD % date, timeout=20) as response:
-                payload = json.load(response)
-        except Exception as exc:
-            failed.append("%s (%s)" % (date, exc))
-            continue
-        events = {str(event.get("id")): event for event in payload.get("events", [])}
-        for game_id in game_ids:
-            event = events.get(game_id)
-            if event is None:
-                absent.append(game_id)
-                continue
-            competition = (event.get("competitions") or [{}])[0]
-            status = (competition.get("status") or event.get("status") or {}).get("type", {})
-            if not status.get("completed"):
-                continue
-            home, away = _score(competition, "home"), _score(competition, "away")
-            if home is None or away is None:
-                raise service.FBSModelError("ESPN reports %s completed without both scores" % game_id)
-            finals[game_id] = {"home_score": home, "away_score": away}
-    if failed:
-        raise service.FBSModelError("ESPN scoreboard unreadable for %s; no grades written" % "; ".join(failed))
+
+def board_for_pending(pending: list[tuple[str, str]], paced: float | None = None) -> dict[str, dict | None]:
+    """Find each pending game on ESPN's boards. Eastern date first; neighbouring dates only for games
+    absent from their own date, so a reschedule across midnight is not lost. Raises GradeSourceUnavailable
+    if any requested board cannot be read. Returns game_id -> facts, or None when absent everywhere."""
+    import time
+    found: dict[str, dict | None] = {game_id: None for game_id, _ in pending}
+    kickoffs = dict(pending)
+
+    def scan(dates_by_game: dict[str, list[str]]) -> None:
+        wanted: dict[str, set[str]] = {}
+        for game_id, dates in dates_by_game.items():
+            for date in dates:
+                wanted.setdefault(date, set()).add(game_id)
+        for date, game_ids in sorted(wanted.items()):
+            try:
+                payload = read_scoreboard(date)
+            except SlateUnavailable as exc:
+                raise GradeSourceUnavailable(str(exc))
+            time.sleep(BOARD_PACE_SECONDS if paced is None else paced)
+            for event in payload["events"]:
+                facts = event_facts(event)
+                if facts and facts["game_id"] in game_ids and found.get(facts["game_id"]) is None:
+                    found[facts["game_id"]] = facts
+
+    first = {gid: [life.eastern_dates(pd.Timestamp(ko).to_pydatetime())[0]] for gid, ko in pending}
+    scan(first)
+    absent = {gid: life.eastern_dates(pd.Timestamp(kickoffs[gid]).to_pydatetime())[1:]
+              for gid in found if found[gid] is None}
     if absent:
-        print("grading: %d pending game(s) not on their ESPN board; left ungraded: %s" % (len(absent), absent))
-    return finals
+        scan(absent)
+    return found
+
+
+def archive_scores(frame: pd.DataFrame | None) -> dict[str, tuple[int, int]]:
+    if frame is None:
+        return {}
+    rows = frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")]
+    return {str(r.game_id): (int(r.home_score), int(r.away_score)) for r in rows.itertuples(index=False)}
+
+
+def plan_grades(pending: list[tuple[str, str]], facts: dict[str, dict | None],
+                archive: dict[str, tuple[int, int]]) -> list[dict]:
+    """Pure decision for each pending game: grade, void, hold, quarantine, or keep unresolved."""
+    plan = []
+    for game_id, kickoff in pending:
+        fact = facts.get(game_id)
+        if fact is None:
+            plan.append({"action": "unresolved", "game_id": game_id, "reason": "absent_from_board"})
+            continue
+        lifecycle = fact["lifecycle"]
+        base = {"game_id": game_id, "lifecycle": lifecycle, "status_name": fact["status_name"],
+                "season": fact["season"]}
+        if lifecycle in life.VOID_LIFECYCLES:
+            plan.append({**base, "action": "void", "reason": lifecycle})
+        elif lifecycle == "completed":
+            if not life.is_gradeable(lifecycle, fact["home_score"], fact["away_score"]):
+                plan.append({**base, "action": "unresolved", "reason": "completed_without_scores"})
+            elif game_id in archive and archive[game_id] != (fact["home_score"], fact["away_score"]):
+                plan.append({**base, "action": "quarantine", "reason": "archive_espn_score_mismatch",
+                             "archive": archive[game_id],
+                             "espn": (fact["home_score"], fact["away_score"])})
+            else:
+                plan.append({**base, "action": "grade", "home_score": fact["home_score"],
+                             "away_score": fact["away_score"]})
+        elif lifecycle in life.HOLD_LIFECYCLES:
+            plan.append({**base, "action": "hold", "reason": "schedule_unresolved_" + lifecycle})
+        else:
+            plan.append({**base, "action": "unresolved", "reason": "status_" + lifecycle})
+    return plan
+
+
+def grade_step(db_path: str, now: dt.datetime, frame: pd.DataFrame | None = None) -> dict:
+    """Historical grading. Independent of forecasting: it never writes a preview or a lock.
+
+    The boards are read first. If any is unreadable nothing is written. Otherwise every decision is
+    planned and then applied in one batch, so a failure cannot leave a half-graded run behind.
+    """
+    con = store.open_db(db_path)
+    try:
+        pending = store.pending_grades(con, now)
+        if not pending:
+            store.record_run(con, "grade", "nothing_due", {}, now)
+            return {"status": "nothing_due", "graded": 0}
+        try:
+            facts = board_for_pending(pending)
+        except GradeSourceUnavailable as exc:
+            store.record_run(con, "grade", "grade_source_unavailable", {"error": str(exc)}, now)
+            return {"status": "grade_source_unavailable", "graded": 0, "error": str(exc)}
+        plan = plan_grades(pending, facts, archive_scores(frame))
+        results = {}
+        for item in plan:
+            game_id = item["game_id"]
+            status = store.game_status(con, game_id)
+            season = item.get("season") or (status or {}).get("season") or 0
+            revision = (status or {}).get("revision", 1)
+            observed = now.isoformat()
+            if item["action"] == "grade":
+                results[game_id] = {"home_score": item["home_score"], "away_score": item["away_score"]}
+                store.resolve_unresolved(con, game_id, now, commit=False)
+            elif item["action"] == "void":
+                store.set_game_status(con, game_id, season, revision, item["lifecycle"], item["status_name"],
+                                      observed, "espn_scoreboard", "void", item["reason"], commit=False)
+                store.resolve_unresolved(con, game_id, now, commit=False)
+            elif item["action"] == "quarantine":
+                store.set_grading_state(con, game_id, "quarantined", item["reason"], observed,
+                                        "espn_scoreboard", commit=False)
+                store.record_unresolved(con, game_id, season, dict(pending)[game_id], item["reason"], now,
+                                        commit=False)
+            elif item["action"] == "hold":
+                store.set_game_status(con, game_id, season, revision, item["lifecycle"], item["status_name"],
+                                      observed, "espn_scoreboard", "pending", item["reason"], commit=False)
+            else:
+                kickoff = dict(pending)[game_id]
+                store.record_unresolved(con, game_id, season, kickoff, item["reason"], now, commit=False)
+        graded = store.grade_forecasts(con, results, now=now, commit=False)
+        con.commit()
+        alerts = [u["game_id"] for u in store.unresolved_queue(con) if u["alert_state"] == "alerted"]
+        counts = {a: sum(1 for p in plan if p["action"] == a) for a in
+                  ("grade", "void", "quarantine", "hold", "unresolved")}
+        detail = {**counts, "pending": len(pending), "alerts": alerts}
+        store.record_run(con, "grade", "ok", detail, now)
+        return {"status": "ok", "graded": graded, **detail}
+    finally:
+        con.close()
 
 
 def reconcile_final_scores(finals: dict[str, dict], archive: dict[str, tuple[int, int]]) -> None:
-    """Halt when the archive's score for a game disagrees with ESPN's final score."""
+    """Retained for callers that hold finals and an archive: raise on any confirmed disagreement."""
     for game_id, final in finals.items():
         if game_id in archive and archive[game_id] != (final["home_score"], final["away_score"]):
             raise service.FBSModelError(
@@ -450,81 +571,134 @@ def reconcile_final_scores(finals: dict[str, dict], archive: dict[str, tuple[int
 
 
 def eastern_date(kickoff_utc: str) -> str:
-    import pytz
-    return pd.Timestamp(kickoff_utc).tz_convert(pytz.timezone("America/New_York")).strftime("%Y%m%d")
+    return life.eastern_dates(pd.Timestamp(kickoff_utc).to_pydatetime())[0]
 
 
-def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None = None) -> dict:
-    now = now or dt.datetime.now(dt.timezone.utc)
-    frame, ratings = service.build_frame(verbose=True, return_ratings=True)
+def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame,
+                  ratings: pd.DataFrame) -> dict:
+    """Current-slate subsystem. Preflight reads the live board and the model; any failure stops it
+    before a new preview or lock is written. Only then does it write."""
     season = int(frame["season"].max())
-    slate = fetch_slate(days=days, now=now)
-    print("slate: %d games from ESPN" % len(slate))
-    if slate.empty:
-        return {"previewed": 0, "locked": {}, "missed": 0, "graded": 0,
-                "locks_blocked": None, "reason": "empty_slate"}
-
-    scored = g2_for_slate(frame, slate)
-    feats = slate_features(ratings, slate, season)
-    scored = scored.merge(feats, on="game_id", how="left")
-    uncovered = scored[scored["points_per_drive_diff"].isna()]
-    if not uncovered.empty:
-        print("slate: %d game(s) without drive-feature coverage, not forecast: %s"
-              % (len(uncovered), ", ".join(uncovered["game_id"].astype(str))))
-    scored = scored[scored["points_per_drive_diff"].notna()].copy()
-    if scored.empty:
-        return {"previewed": 0, "locked": {}, "missed": 0, "graded": 0,
-                "locks_blocked": None, "reason": "no_feature_coverage"}
-    imputed = scored[FEATURES_C].isna().any(axis=1)
-    if imputed.any():
-        print("slate: %d game(s) with a missing drive feature filled with 0.0, as in training"
-              % int(imputed.sum()))
-    for column in FEATURES_C:
-        scored[column] = scored[column].fillna(0.0)
-
-    state = service.fit(frame, now)
-    print("fitted on %d games through %s" % (state["train_games"], state["train_last_date"].date()))
-    predictions = service.predict(frame, state, scored)
-    rating_rows = team_ratings(state, frame, season)
-
-    rows = []
-    version = "fbs-%s-%s" % ("%s", state["train_last_date"].strftime("%Y%m%d"))
-    for row in predictions.itertuples(index=False):
-        kickoff = pd.Timestamp(row.kickoff_utc).tz_convert("UTC").isoformat()
-        for model in MODEL_ORDER:
-            rows.append({
-                "game_id": str(row.game_id), "model": model, "season": int(row.season),
-                "kickoff_utc": kickoff, "home_team": row.home_team, "away_team": row.away_team,
-                "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
-                "model_version": version % model,
-                "p_home": float(getattr(row, "p_" + model)),
-                "fitted_through": str(state["train_last_date"].date()),
-            })
-
-    certified, reason = parity_certified(db_path)
-    if not certified:
-        print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
     con = store.open_db(db_path)
     try:
-        # Grading is decided before anything is written: a halt here leaves no partial run behind.
-        finals = espn_final_scores(store.pending_grades(con, now))
-        reconcile_final_scores(finals, {str(r.game_id): (int(r.home_score), int(r.away_score))
-                                        for r in frame[frame["y"].notna() & (frame["coverage_status"] == "has_plays")].itertuples(index=False)})
+        try:
+            slate = fetch_slate(days=days, now=now)
+        except SlateUnavailable as exc:
+            missed = store.record_missed_windows(con, now=now)
+            store.record_run(con, "forecast", "slate_unavailable", {"error": str(exc), "missed": missed}, now)
+            return {"status": "slate_unavailable", "error": str(exc), "previewed": 0,
+                    "locked": {"blocked": "slate_unavailable"}, "missed": missed}
+        if slate.empty:
+            store.record_run(con, "forecast", "empty_slate", {}, now)
+            return {"status": "empty_slate", "previewed": 0, "locked": {}, "missed": 0}
+        print("slate: %d games from ESPN" % len(slate))
+        scored = g2_for_slate(frame, slate)
+        feats = slate_features(ratings, slate, season)
+        scored = scored.merge(feats, on="game_id", how="left")
+        uncovered = scored[scored["points_per_drive_diff"].isna()]
+        if not uncovered.empty:
+            print("slate: %d game(s) without drive-feature coverage, not forecast: %s"
+                  % (len(uncovered), ", ".join(uncovered["game_id"].astype(str))))
+        scored = scored[scored["points_per_drive_diff"].notna()].copy()
+        if scored.empty:
+            store.record_run(con, "forecast", "no_feature_coverage", {}, now)
+            return {"status": "no_feature_coverage", "previewed": 0, "locked": {}, "missed": 0}
+        imputed = scored[FEATURES_C].isna().any(axis=1)
+        if imputed.any():
+            print("slate: %d game(s) with a missing drive feature filled with 0.0, as in training"
+                  % int(imputed.sum()))
+        for column in FEATURES_C:
+            scored[column] = scored[column].fillna(0.0)
+
+        state = service.fit(frame, now)
+        print("fitted on %d games through %s" % (state["train_games"], state["train_last_date"].date()))
+        predictions = service.predict(frame, state, scored)
+        rating_rows = team_ratings(state, frame, season)
+        certified, reason = parity_certified(db_path)
+        if not certified:
+            print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
+
+        # Fixture revisions and live lifecycle come from this board only.
+        lifecycle_of = {}
+        for rec in slate.to_dict("records"):
+            obs = store.observe_fixture(con, rec, now, "espn_scoreboard")
+            lifecycle = rec["lifecycle"]
+            grading = "void" if lifecycle in life.VOID_LIFECYCLES else "pending"
+            reason_text = None
+            if obs["identity_changed"]:
+                lifecycle, grading, reason_text = "unknown", "unresolved", "identity_changed"
+            elif lifecycle == "unknown":
+                grading, reason_text = "unresolved", "status_unknown"
+            elif lifecycle in life.HOLD_LIFECYCLES:
+                reason_text = "schedule_unresolved_" + lifecycle
+            store.set_game_status(con, rec["game_id"], season, obs["revision"], lifecycle,
+                                  rec["status_name"], now.isoformat(), "espn_scoreboard", grading,
+                                  reason_text)
+            lifecycle_of[rec["game_id"]] = (lifecycle, obs)
+        for row in con.execute("SELECT game_id FROM fbs_game_status WHERE season=? AND lifecycle='scheduled'",
+                               (season,)).fetchall():
+            if str(row[0]) not in lifecycle_of:
+                store.set_game_status(con, row[0], season, store.game_status(con, row[0])["revision"],
+                                      "unknown", None, now.isoformat(), "espn_scoreboard", "unresolved",
+                                      "absent_from_board")
+
+        rows, lock_rows = [], []
+        version = "fbs-%s-%s" % ("%s", state["train_last_date"].strftime("%Y%m%d"))
+        for row in predictions.itertuples(index=False):
+            lifecycle, obs = lifecycle_of.get(str(row.game_id), ("unknown", None))
+            if obs is None or obs["identity_changed"] or lifecycle in life.VOID_LIFECYCLES:
+                continue
+            kickoff = obs["kickoff_utc"]
+            for model in MODEL_ORDER:
+                item = {
+                    "game_id": str(row.game_id), "model": model, "season": int(row.season),
+                    "kickoff_utc": kickoff, "home_team": row.home_team, "away_team": row.away_team,
+                    "home_team_id": str(row.home_team_id), "away_team_id": str(row.away_team_id),
+                    "model_version": version % model,
+                    "p_home": float(getattr(row, "p_" + model)),
+                    "fitted_through": str(state["train_last_date"].date()),
+                }
+                rows.append(item)
+                if lifecycle == "scheduled":
+                    lock_rows.append(item)
+
         previewed = store.upsert_previews(con, rows, now=now)
-        locked = store.lock_forecasts(con, rows, now=now) if certified else {"blocked": reason}
+        locked = store.lock_forecasts(con, lock_rows, now=now) if certified else {"blocked": reason}
         missed = store.record_missed_windows(con, now=now)
-        graded = store.grade_forecasts(con, finals, now=now)
         store.store_ratings(con, rating_rows, now.isoformat())
         store.set_meta(con, last_run_utc=now.isoformat(), model_version=version % "g2h",
                        train_last_date=str(state["train_last_date"].date()),
                        train_games=state["train_games"], parity_certified=certified,
                        parity_note=reason)
+        report = {"previewed": previewed, "locked": locked, "missed": missed,
+                  "locks_blocked": None if certified else reason}
+        store.record_run(con, "forecast", "ok", {"games": len(lifecycle_of), **{k: v for k, v in report.items()
+                                                                              if k != "locks_blocked"}}, now)
+        return {"status": "ok", **report}
     finally:
         con.close()
-    print("previewed: %d; locked: %s; missed: %d; graded: %d"
-          % (previewed, locked, missed, graded))
-    return {"previewed": previewed, "locked": locked, "missed": missed, "graded": graded,
-            "locks_blocked": None if certified else reason}
+
+
+def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None = None) -> dict:
+    """Forecast the current slate, then grade history. Each step reports its own status, and a failure
+    in one does not stop the other. The result keys stay flat for existing callers."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    try:
+        frame, ratings = service.build_frame(verbose=True, return_ratings=True)
+    except service.FBSModelError as exc:
+        forecast = {"status": "model_unavailable", "error": str(exc), "previewed": 0, "locked": {}, "missed": 0}
+        frame = None
+    else:
+        try:
+            forecast = forecast_step(db_path, days, now, frame, ratings)
+        except service.FBSModelError as exc:
+            forecast = {"status": "model_error", "error": str(exc), "previewed": 0, "locked": {}, "missed": 0}
+    grade = grade_step(db_path, now, frame)
+    locks_blocked = forecast.get("locks_blocked")
+    return {"forecast": forecast, "grade": grade,
+            "previewed": forecast.get("previewed", 0), "locked": forecast.get("locked", {}),
+            "missed": forecast.get("missed", 0), "graded": grade.get("graded", 0),
+            "locks_blocked": locks_blocked, "reason": forecast.get("status")}
 
 
 def audit(db_path: str = store.DEFAULT_DB) -> dict:
@@ -559,13 +733,8 @@ def audit(db_path: str = store.DEFAULT_DB) -> dict:
 
 
 def grade_only(db_path: str = store.DEFAULT_DB) -> int:
-    """Grade pending forecasts from ESPN's final scores only. The archive is cross-checked in run()."""
-    con = store.open_db(db_path)
-    try:
-        now = dt.datetime.now(dt.timezone.utc)
-        return store.grade_forecasts(con, espn_final_scores(store.pending_grades(con, now)), now=now)
-    finally:
-        con.close()
+    """Grade due games from ESPN's boards alone. The archive is cross-checked in run()."""
+    return grade_step(db_path, dt.datetime.now(dt.timezone.utc), None)["graded"]
 
 
 def main(argv=None) -> int:

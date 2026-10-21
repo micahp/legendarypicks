@@ -119,6 +119,19 @@ def con(tmp_path):
     connection.close()
 
 
+def _scheduled(con, game_id="401871055", kickoff=None, observed=None, lifecycle="scheduled"):
+    """Record a fixture revision and a live status, as the forecast step does before any lock."""
+    kickoff = kickoff or KICKOFF
+    observed = observed or (kickoff - dt.timedelta(hours=10))
+    rec = dict(game_id=game_id, season=2026, kickoff_utc=kickoff.isoformat(),
+               home_team="Florida International Panthers", away_team="Middle Tennessee Blue Raiders",
+               home_team_id="2229", away_team_id="2393", neutral_site=False)
+    obs = store.observe_fixture(con, rec, observed, "test")
+    store.set_game_status(con, game_id, 2026, obs["revision"], lifecycle, "STATUS_SCHEDULED",
+                          observed.isoformat(), "test", "pending")
+    return obs
+
+
 def test_forecast_is_not_locked_before_the_t90_window(con):
     report = store.lock_forecasts(con, [_row()], now=KICKOFF - dt.timedelta(hours=10))
     assert report["not_due"] == 1
@@ -127,6 +140,7 @@ def test_forecast_is_not_locked_before_the_t90_window(con):
 
 def test_lock_inside_window_is_labelled_and_immutable(con):
     inside = KICKOFF - dt.timedelta(minutes=45)
+    _scheduled(con)
     store.lock_forecasts(con, [_row()], now=inside)
     row = con.execute("SELECT * FROM fbs_forecasts").fetchone()
     assert row["lock_protocol"] == store.LOCK_PROTOCOL
@@ -172,6 +186,7 @@ def test_export_reports_preview_status_and_no_official_record(con):
 
 def test_export_reports_a_taken_lock_as_locked_with_its_freeze_time(con):
     inside = KICKOFF - dt.timedelta(minutes=45)
+    _scheduled(con)
     store.lock_forecasts(con, [_row(model=m) for m in store.MODEL_IDS], now=inside)
     payload = store.export_payload(con, 2026)
     game = payload["games"][0]
@@ -511,36 +526,10 @@ def _board_event(event_id, completed, home, away):
                                               {"homeAway": "away", "score": str(away)}]}]}
 
 
-def test_espn_final_scores_grades_only_what_espn_reports_completed(monkeypatch):
-    requested = []
-
-    def board(url, timeout):
-        requested.append(url)
-        return _Board({"events": [_board_event("10", True, 24, 20), _board_event("11", False, 0, 0)]})
-
-    monkeypatch.setattr("urllib.request.urlopen", board)
-    pending = [("10", "2022-12-17T05:30:00+00:00"), ("11", "2022-12-17T05:30:00+00:00"),
-               ("12", "2022-12-17T05:30:00+00:00")]
-    finals = runner.espn_final_scores(pending)
-    assert finals == {"10": {"home_score": 24, "away_score": 20}}
-    assert len(requested) == 1 and "dates=20221217" in requested[0]
 
 
-def test_espn_final_scores_uses_the_eastern_date(monkeypatch):
-    requested = []
-    monkeypatch.setattr("urllib.request.urlopen",
-                        lambda url, timeout: (requested.append(url), _Board({"events": []}))[1])
-    runner.espn_final_scores([("10", "2022-12-18T00:30:00+00:00")])
-    assert "dates=20221217" in requested[0]
 
 
-def test_unreadable_espn_board_halts_grading(monkeypatch):
-    def refuse(url, timeout):
-        raise OSError("connection reset")
-
-    monkeypatch.setattr("urllib.request.urlopen", refuse)
-    with pytest.raises(service.FBSModelError, match="unreadable"):
-        runner.espn_final_scores([("10", "2022-12-17T05:30:00+00:00")])
 
 
 def test_archive_and_espn_score_disagreement_halts():
@@ -550,6 +539,7 @@ def test_archive_and_espn_score_disagreement_halts():
 
 
 def test_pending_grades_are_unpaid_games_whose_kickoff_has_passed(con):
+    _scheduled(con, game_id="g1")
     store.lock_forecasts(con, [_row(game_id="g1"), _row(game_id="g1", model="g2")], now=KICKOFF - dt.timedelta(hours=1))
     assert store.pending_grades(con, KICKOFF - dt.timedelta(minutes=5)) == []
     assert [g for g, _ in store.pending_grades(con, KICKOFF + dt.timedelta(minutes=5))] == ["g1"]
