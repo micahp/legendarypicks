@@ -244,3 +244,97 @@ the crosswalk, resolver and identity map all read the copy database.
   consistent across providers, but the check so far used ESPN data, so it is not independent evidence.
 - Decide whether automated prospective capture should be scheduled. Any schedule would run against the
   provider sites and needs your approval first.
+
+## Verified player-level outcomes and daily collection (2026-10-20)
+
+Approved scope: official orientation audit, reviewed identity table, verified outcomes into a research table,
+CP4 grader reading only verified rows, and a daily collection job in isolated research staging.
+
+### Orientation audit (official Rolex Shanghai pages)
+
+All 131 official singles pages were fetched and parsed. Each names both players above the stat columns.
+
+- 13 sampled pages map to one ESPN game by exact name pair. In all 13, the official first-listed player is ESPN's
+  home player, and tennis24's left column equals that player's aces and double faults.
+- Across all 131 pages, the official tier covers 124 of 125 completed Shanghai games. 124 agree with tennis24
+  (the left column is ESPN home). One Retired match disagrees: hv2d66ue, Auger-Aliassime vs Ruud, where
+  official gives 2 aces to Auger-Aliassime and tennis24 gives 1. Double faults agree. It is in review.
+- Header check on tennis24 pages: the first name in the page title is ESPN's home player in 10 of 10 sampled
+  pages (Wuhan 6, Shanghai 4). The one "miss" (Zhizhen Zhang vs ESPN's "Zhang Zhizhen") is the same name in
+  a different order.
+
+### Reviewed identity table
+
+`provider_player_identity` holds each provider code, its ESPN athlete id where the codes agree, the evidence,
+and a verification status. Nothing has a reviewer yet (reviewed_by is empty).
+
+| Event | id_consistent_multi_match | unverified_single_match |
+| --- | --- | --- |
+| Shanghai (ATP) | 70 | 59 |
+| Wuhan (WTA) | 68 | 69 |
+
+No code has a conflicting athlete. Single-match codes are never assigned an athlete.
+
+### Verified outcomes (research table `research_player_match_outcomes`)
+
+Each row is one player in one completed game: tour, ESPN game id, ESPN athlete id, side, aces, double faults,
+verification tier, provider row key, the raw provider values, and `eligible_cp4`. Tiers, in priority order:
+official_labelled, cross_provider (365scores equal in the same orientation), id_consistent (both codes map to the
+game's two athletes, with a confirmed MATCH view or a cross-provider row).
+
+| Tour | Final games | Verified and eligible | Tiers | Not verified |
+| --- | --- | --- | --- | --- |
+| ATP (Shanghai) | 119 | 119 | official_labelled 119 | 0 |
+| WTA (Wuhan) | 74 | 63 | cross_provider 58, id_consistent 5 | 11 |
+
+Unverified WTA finals: 10 whose codes appear in one match and have no second provider, and McNally vs
+Starodubtseva (185318), which stays in review. Retired matches are stored and marked ineligible.
+
+### End-to-end proofs
+
+1. **Shanghai singles final** (ESPN 184947, ms001): Davidovich Fokina (athlete 3212, home) 6 aces, 1 double fault.
+   Jodar (athlete 12657, away) 12 aces, 2 double faults. This matches the official page and is tier official_labelled.
+2. **Wuhan WTA final with distinct values** (ESPN 185369, Ann Li vs Iga Swiatek): Li (athlete 3380, home) 1 ace,
+   2 double faults. Swiatek (athlete 3730, away) 0 aces, 1 double fault. Tier cross_provider: tennis24 and 365scores
+   agree on the left column, and tennis24's title lists Ann Li first, which matches ESPN's home player.
+3. **The Wuhan final itself** (Chwalinska vs Kartal, ESPN 185375) has 0 aces and 1 double fault for each player, so
+   it cannot show the assignment. It is stored as cross_provider and eligible, but it is not used as the proof.
+
+### CP4 grader
+
+The grader reads aces and double faults only from `research_player_match_outcomes` with `eligible_cp4 = 1`, and
+takes total games from the ESPN final score. The override table is no longer read.
+
+On the copy: 28 locks, 0 with a frozen distribution, so 0 graded matches and every cell is
+INSUFFICIENT_PROSPECTIVE_DATA. Verified eligible finals with frozen distributions: ATP 0, WTA 0. The retrospective
+finals above cannot become prospective evidence.
+
+### Daily collection (research staging)
+
+`backend/research_daily_collect.py` does one run:
+- copies ESPN snapshots for the registered tournaments (381 Wuhan, 315 Shanghai) from the live database,
+  read-only. The live database is in WAL mode, so reads do not block its writer;
+- enumerates each event's tennis24 results page and fetches only matches not already stored as ok or no_stats_tab;
+- rebuilds links, the review resolver, identity and outcomes inside the research database;
+- writes a JSON report with fetch counts, failures, stop reasons, memory waits, the crosswalk and the tiers.
+
+The research database is `/root/research/tennis-stats/research.db`. It is not the live database, and the live
+database is never written. Unregistered completed tournaments are listed in the report as unsupported.
+
+Smoke test: three new matches per event, all parsed ok, with links and outcomes built. No-op runs: 0 fetched,
+and the outcome tiers match the copy exactly (ATP 119, WTA 63).
+
+**The daily schedule is not installed.** Installing `/etc/cron.d/lp-tennis-research-daily` was denied by the
+permission system. The entry is saved at `/root/research/tennis-stats/cron/lp-tennis-research-daily`. To enable it,
+copy that file to `/etc/cron.d/` with your own permissions. The job runs under `/root/lp-tennis-cp4/backend`, which is
+this feature worktree, so the worktree must stay in place.
+
+### Limits
+
+- The orientation rule (left = ESPN home) is verified on 124 official-labelled Shanghai games and 10 sampled
+  headers. The Wuhan orientation rests on the header sample and on tennis24 agreeing with 365scores.
+- Game-to-match links are still name proposals. A promotion needs a tier with independent evidence: exact official
+  names and equal values, equal cross-provider values, or consistent codes plus a confirmed MATCH view.
+- The identity table has no reviewer yet. The identity tier is automated, and its exceptions go to the review queue.
+- No frozen prospective distributions exist for these matches. Their outcomes support audit and development only.
+- Production, picks.dev.db and existing locks were not written.
