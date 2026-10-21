@@ -19,6 +19,8 @@ There are 1389 distinct realized eight-part rate keys across 148,665 accepted 20
 | Attempts | 18.844 | 1.966 | 16.877 | 0.0725 |
 | SOG | 7.157 | 0.694 | 6.463 | 0.0804 |
 
+These are team-game-weighted population between-team variances: each club's mean is weighted by its number of team-game rows, rather than giving all 32 clubs equal weight.
+
 For frozen forecast means, the bucket-frequency versus home-share descriptive Shapley split is 1.926 vs 0.000 variance units for attempts, with 0.040 unallocated; for SOG it is 0.662 vs 0.005, with 0.027 unallocated.
 As a descriptive same-fold ceiling check, bucket frequencies plus site explain 16.691 of observed attempt team-mean variance (95% interval 13.635 to 20.309); 2.152 is unallocated. For SOG these values are 6.971 (95% interval 5.666 to 8.391) and 0.186. This fit uses the same 2021 outcomes and is descriptive-after-selection; it does not show that the frozen model can realize this relationship out of sample.
 

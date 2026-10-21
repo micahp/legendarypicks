@@ -1,0 +1,1190 @@
+{
+  "definitions": {
+    "count_overdispersion_index": "Fano factor Var(N)/E[N]",
+    "counterfactuals": "fixed generated-mean total with observed share distribution; fixed generated-mean share with observed total distribution",
+    "home_share": "s=H/N; share moments use N>0 rows, and zero-total rows are counted separately",
+    "share_overdispersion_index": "Var(s) / (s_bar*(1-s_bar)*E[1/N]); binomial split reference equals 1",
+    "variance_convention": "population moments (ddof=0), equally weighted game outcomes; generated rows are the fixed game-by-draw mixture",
+    "variance_decomposition": "Var(H)=s_bar^2 Var(N)+N_bar^2 Var(s)+C_joint; C_joint is the exact remainder and includes 2*N_bar*s_bar*Cov(N,s) plus product-interaction terms"
+  },
+  "generated_period_totals": {
+    "available": false,
+    "reason": "The immutable compact Phase 2A trace has no generated per-period attempt or SOG arrays; this run did not replay Monte Carlo."
+  },
+  "observed_period_totals": {
+    "OT": {
+      "attempts_by_side": {
+        "away": 864,
+        "home": 965
+      },
+      "attempts_per_attempt_population_game": 1.3940548780487805,
+      "attempts_total": 1829,
+      "official_sog_by_side_from_reconciled_pbp": {
+        "away": 552,
+        "home": 588
+      },
+      "official_sog_per_sog_eligible_game": 0.8823529411764706,
+      "official_sog_total_from_reconciled_pbp": 1140
+    },
+    "P1": {
+      "attempts_by_side": {
+        "away": 23571,
+        "home": 24985
+      },
+      "attempts_per_attempt_population_game": 37.00914634146341,
+      "attempts_total": 48556,
+      "official_sog_by_side_from_reconciled_pbp": {
+        "away": 12960,
+        "home": 13434
+      },
+      "official_sog_per_sog_eligible_game": 20.428792569659443,
+      "official_sog_total_from_reconciled_pbp": 26394
+    },
+    "P2": {
+      "attempts_by_side": {
+        "away": 24418,
+        "home": 26146
+      },
+      "attempts_per_attempt_population_game": 38.53963414634146,
+      "attempts_total": 50564,
+      "official_sog_by_side_from_reconciled_pbp": {
+        "away": 13558,
+        "home": 14430
+      },
+      "official_sog_per_sog_eligible_game": 21.6625386996904,
+      "official_sog_total_from_reconciled_pbp": 27988
+    },
+    "P3": {
+      "attempts_by_side": {
+        "away": 23333,
+        "home": 24383
+      },
+      "attempts_per_attempt_population_game": 36.36890243902439,
+      "attempts_total": 47716,
+      "official_sog_by_side_from_reconciled_pbp": {
+        "away": 12926,
+        "home": 13212
+      },
+      "official_sog_per_sog_eligible_game": 20.230650154798763,
+      "official_sog_total_from_reconciled_pbp": 26138
+    }
+  },
+  "outcomes": {
+    "attempts": {
+      "bootstrap_95": {
+        "counterfactuals": {
+          "fixed_generated_mean_share_observed_total_distribution_covariance_home_away": [
+            33.406084151657616,
+            39.0017410086509
+          ],
+          "fixed_generated_mean_share_observed_total_distribution_variance_home": [
+            34.600155815302465,
+            40.46124756710429
+          ],
+          "fixed_generated_mean_total_observed_share_distribution_covariance_home_away": [
+            -84.41092765101487,
+            -72.53570500421331
+          ],
+          "fixed_generated_mean_total_observed_share_distribution_variance_home": [
+            72.53570500421331,
+            84.41092765101487
+          ],
+          "generated_mean_share_used": [
+            0.5076218817135615,
+            0.5100093011397134
+          ],
+          "generated_mean_total_used": [
+            112.70145531631097,
+            113.1763731421494
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_covariance_home_away": [
+            -52.721358223377074,
+            -40.65528103666727
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_variance_away": [
+            104.0585074523244,
+            116.05657959634942
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_variance_home": [
+            107.96367130744775,
+            119.83152229699749
+          ],
+          "generated_total_variance_used": [
+            127.92684954995558,
+            133.2241926239758
+          ],
+          "observed_mean_share_used": [
+            0.5101122184100632,
+            0.5188895585861283
+          ],
+          "observed_share_variance_used": [
+            0.005682823968293377,
+            0.006613799829971386
+          ],
+          "observed_total_variance_used": [
+            133.65990950966224,
+            156.0572013641666
+          ]
+        },
+        "generated": {
+          "binomial_null_share_variance": [
+            0.0022311979081352726,
+            0.002240657089480923
+          ],
+          "covariance_home_away": [
+            -9.891935256944391,
+            -7.740547304817213
+          ],
+          "covariance_total_home_share": [
+            -0.005978327086998097,
+            0.013534667708745072
+          ],
+          "direct_covariance_component_home_variance": [
+            -0.6873310815069452,
+            1.5541001417600264
+          ],
+          "fano_total": [
+            1.1325201088345154,
+            1.1790251263155063
+          ],
+          "joint_component_home_variance_pct": [
+            -0.8145188000299625,
+            2.1544016547981593
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -0.6057918671016136,
+            1.6489216924972891
+          ],
+          "mean_away": [
+            55.28929830411585,
+            55.65744807545732
+          ],
+          "mean_home": [
+            57.28838843368902,
+            57.65973704268292
+          ],
+          "mean_home_share": [
+            0.5076218817135615,
+            0.5100093011397134
+          ],
+          "mean_total": [
+            112.70145531631097,
+            113.1763731421494
+          ],
+          "pace_component_home_variance": [
+            33.09865949250486,
+            34.521331467797495
+          ],
+          "pace_component_home_variance_pct": [
+            43.742663714605996,
+            45.63806137434999
+          ],
+          "product_interaction_component_home_variance": [
+            -0.1236842811135052,
+            0.3072337150039812
+          ],
+          "sd_home_share": [
+            0.056346050354656986,
+            0.05745981837718721
+          ],
+          "sd_total": [
+            11.31047521296707,
+            11.542278484265369
+          ],
+          "share_component_home_variance": [
+            40.465162614559055,
+            42.144884721528896
+          ],
+          "share_component_home_variance_pct": [
+            53.53002110171959,
+            55.69941414728883
+          ],
+          "share_overdispersion_index": [
+            1.4193169239355004,
+            1.4772409944794456
+          ],
+          "variance_away": [
+            71.0670087578891,
+            74.1153549710035
+          ],
+          "variance_home": [
+            74.06252981097411,
+            77.18150111282957
+          ],
+          "variance_home_minus_away": [
+            162.31251978740886,
+            169.2143888958574
+          ],
+          "variance_home_share": [
+            0.003174877390772059,
+            0.003301630728427207
+          ],
+          "variance_total": [
+            127.92684954995558,
+            133.2241926239758
+          ]
+        },
+        "generated_minus_observed": {
+          "binomial_null_share_variance": [
+            -7.253060125779248e-06,
+            1.904157120954128e-05
+          ],
+          "covariance_home_away": [
+            29.05008323284787,
+            42.592541746948534
+          ],
+          "covariance_total_home_share": [
+            -0.03183508051947545,
+            0.07445601200039283
+          ],
+          "direct_covariance_component_home_variance": [
+            -3.737434548988415,
+            8.700122963739643
+          ],
+          "fano_total": [
+            -0.22104418220023064,
+            -0.022560359604711665
+          ],
+          "joint_component_home_variance_pct": [
+            -4.933885499494575,
+            6.711949092935111
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -6.358867108598123,
+            6.990868327133538
+          ],
+          "mean_away": [
+            -0.12381026105182862,
+            1.020963938643291
+          ],
+          "mean_home": [
+            -1.3810058593750034,
+            -0.23274818978658324
+          ],
+          "mean_home_share": [
+            -0.009844546715466442,
+            -0.0014473304660412082
+          ],
+          "mean_total": [
+            -1.0310725514481622,
+            0.2833710461128098
+          ],
+          "pace_component_home_variance": [
+            -7.623866404233621,
+            -1.5380649360761798
+          ],
+          "pace_component_home_variance_pct": [
+            8.966589434762124,
+            15.117155976043946
+          ],
+          "product_interaction_component_home_variance": [
+            -4.023622807871998,
+            -0.35427852209212796
+          ],
+          "sd_home_share": [
+            -0.024437960592125878,
+            -0.018459692081652684
+          ],
+          "sd_total": [
+            -1.0740977224003676,
+            -0.12408486995881156
+          ],
+          "share_component_home_variance": [
+            -43.748639334839424,
+            -31.527725502596624
+          ],
+          "share_component_home_variance_pct": [
+            -17.560121729221827,
+            -8.145273498300515
+          ],
+          "share_overdispersion_index": [
+            -1.5174836489382393,
+            -1.0982237265066468
+          ],
+          "variance_away": [
+            -53.08411345218068,
+            -35.051506290118084
+          ],
+          "variance_home": [
+            -52.08760048612679,
+            -32.26044684528665
+          ],
+          "variance_home_minus_away": [
+            -183.67045420460016,
+            -132.05720421571525
+          ],
+          "variance_home_share": [
+            -0.003373479001412347,
+            -0.0024439006303721596
+          ],
+          "variance_total": [
+            -25.68566776680704,
+            -2.850640604539964
+          ]
+        },
+        "observed": {
+          "binomial_null_share_variance": [
+            0.0022168035611998785,
+            0.00224285530168997
+          ],
+          "covariance_home_away": [
+            -51.36690895312035,
+            -37.89662224691869
+          ],
+          "covariance_total_home_share": [
+            -0.06870857871032668,
+            0.0352227724266793
+          ],
+          "direct_covariance_component_home_variance": [
+            -7.978928170712546,
+            4.105353954851435
+          ],
+          "fano_total": [
+            1.1801821873951723,
+            1.3766088813050572
+          ],
+          "joint_component_home_variance_pct": [
+            -5.629834984353062,
+            5.494175428181996
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -6.335559436232018,
+            6.897174301859555
+          ],
+          "mean_away": [
+            54.44653201219512,
+            55.60912728658536
+          ],
+          "mean_home": [
+            57.69891387195122,
+            58.86053734756097
+          ],
+          "mean_home_share": [
+            0.5101122184100632,
+            0.5188895585861283
+          ],
+          "mean_total": [
+            112.6750381097561,
+            113.95588795731707
+          ],
+          "pace_component_home_variance": [
+            35.36470375042915,
+            41.429065858230175
+          ],
+          "pace_component_home_variance_pct": [
+            29.809397596657448,
+            35.60793969868252
+          ],
+          "product_interaction_component_home_variance": [
+            0.4118046219648072,
+            4.129947241018427
+          ],
+          "sd_home_share": [
+            0.07538450747002391,
+            0.08132527176480449
+          ],
+          "sd_total": [
+            11.561137896256552,
+            12.492285663725648
+          ],
+          "share_component_home_variance": [
+            72.83200094178538,
+            85.08193254353215
+          ],
+          "share_component_home_variance_pct": [
+            62.864209783927926,
+            71.91104576435737
+          ],
+          "share_overdispersion_index": [
+            2.5471120379446175,
+            2.967458988942835
+          ],
+          "variance_away": [
+            107.6881043969131,
+            125.6150102623299
+          ],
+          "variance_home": [
+            107.93318382322187,
+            127.67102050781249
+          ],
+          "variance_home_minus_away": [
+            297.73800774278703,
+            349.8408573765616
+          ],
+          "variance_home_share": [
+            0.005682823968293377,
+            0.006613799829971386
+          ],
+          "variance_total": [
+            133.65990950966224,
+            156.0572013641666
+          ]
+        }
+      },
+      "counterfactuals": {
+        "fixed_generated_mean_share_observed_total_distribution_covariance_home_away": 36.158603528453355,
+        "fixed_generated_mean_share_observed_total_distribution_variance_home": 37.45810179775845,
+        "fixed_generated_mean_total_observed_share_distribution_covariance_home_away": -78.48604636222716,
+        "fixed_generated_mean_total_observed_share_distribution_variance_home": 78.48604636222716,
+        "generated_mean_share_used": 0.50882610994031,
+        "generated_mean_total_used": 112.94002477134147,
+        "generated_total_distribution_observed_share_distribution_independent_covariance_home_away": -46.683363365242954,
+        "generated_total_distribution_observed_share_distribution_independent_variance_away": 110.04706252585149,
+        "generated_total_distribution_observed_share_distribution_independent_variance_home": 113.85422456987448,
+        "generated_total_variance_used": 130.53456036524005,
+        "observed_mean_share_used": 0.5145829657424456,
+        "observed_share_variance_used": 0.006153138565345995,
+        "observed_total_variance_used": 144.67949637027812
+      },
+      "generated": {
+        "binomial_null_share_variance": 0.0022359062380679505,
+        "covariance_home_away": -8.819710567549253,
+        "covariance_total_home_share": 0.003964938426321532,
+        "direct_covariance_component_home_variance": 0.45570491245679173,
+        "fano_total": 1.1557865391788298,
+        "joint_component_home_variance_pct": 0.7215546710546827,
+        "joint_covariance_interaction_component_home_variance": 0.5459115518450801,
+        "mean_away": 55.46922637195122,
+        "mean_home": 57.47079839939025,
+        "mean_home_share": 0.50882610994031,
+        "mean_total": 112.94002477134147,
+        "pace_component_home_variance": 33.795921142640125,
+        "pace_component_home_variance_pct": 44.66951593284454,
+        "product_interaction_component_home_variance": 0.09020663938828838,
+        "rows": 20992,
+        "sd_home_share": 0.056912868255969,
+        "sd_total": 11.425172224751803,
+        "share_component_home_variance": 41.31585115740249,
+        "share_component_home_variance_pct": 54.608929396100784,
+        "share_defined_rows": 20992,
+        "share_overdispersion_index": 1.4486629707335905,
+        "variance_away": 72.51629764845087,
+        "variance_home": 75.6576838518877,
+        "variance_home_minus_away": 165.81340263543703,
+        "variance_home_share": 0.0032390745731212837,
+        "variance_total": 130.53456036524005,
+        "zero_total_rows": 0
+      },
+      "generated_draws_per_game": 16,
+      "generated_minus_observed": {
+        "binomial_null_share_variance": 6.091526566942562e-06,
+        "covariance_home_away": 35.89034273963397,
+        "covariance_total_home_share": 0.020334299783548893,
+        "direct_covariance_component_home_variance": 2.364643853767619,
+        "fano_total": -0.1210405501683931,
+        "joint_component_home_variance_pct": 0.48097110565620593,
+        "joint_covariance_interaction_component_home_variance": 0.2629926241438767,
+        "mean_away": 0.44940929878048763,
+        "mean_home": -0.8211223323170671,
+        "mean_home_share": -0.005756855802135585,
+        "mean_total": -0.3717130335365795,
+        "pace_component_home_variance": -4.514577048930917,
+        "pace_component_home_variance_pct": 12.091715917802084,
+        "product_interaction_component_home_variance": -2.101651229623742,
+        "sd_home_share": -0.02152907566019102,
+        "sd_total": -0.6031068030342635,
+        "share_component_home_variance": -37.68767864387107,
+        "share_component_home_variance_pct": -12.572687023458279,
+        "share_overdispersion_index": -1.3108212741272691,
+        "variance_away": -43.98635841564787,
+        "variance_home": -41.93926306865811,
+        "variance_home_minus_away": -157.706306963574,
+        "variance_home_share": -0.002914063992224711,
+        "variance_total": -14.144936005038062
+      },
+      "latent_moment_fit": {
+        "covariance_sign_as_tau_grows": "negative below the reported crossing, zero at the crossing, positive above it",
+        "covariance_zero_crossing_tau_at_balanced_sigma": 0.1598910167642383,
+        "empirical_unweighted_mean_game_share": 0.5145829657424456,
+        "fit_fold": "2021 development population; descriptive-after-selection",
+        "interior_exact_solution_exists": false,
+        "logistic_normal_realized_share_variance": 0.006226766594561727,
+        "mean_home_count_share_p": 0.5144385026737968,
+        "mean_total_mu": 113.31173780487805,
+        "minimum_sigma_reaching_observed_negative_covariance_at_any_tau": 0.2395601796548838,
+        "minimum_sigma_search_tau": 0.0,
+        "model": "N and s independent; E[N]=observed mean total; CV(N)=tau; s is logit-normal with calibrated mean p=observed mean home count / mean total and logit SD sigma; H=N*s and A=N*(1-s)",
+        "observed_triplet": {
+          "covariance_home_away": -44.71005330718322,
+          "variance_away": 116.50265606409874,
+          "variance_home": 117.5969469205458
+        },
+        "predicted_triplet": {
+          "covariance_home_away": -44.710053307183216,
+          "variance_away": 114.96084619713645,
+          "variance_home": 119.1387567875081
+        },
+        "prediction_minus_observation": {
+          "covariance_home_away": 7.105427357601002e-15,
+          "variance_away": -1.5418098669622964,
+          "variance_home": 1.5418098669622964
+        },
+        "share_variance_balanced_fit": 0.006226766594561728,
+        "share_variance_implied_by_away_variance": 0.0063455114054398005,
+        "share_variance_implied_by_home_variance": 0.0061080217836836535,
+        "share_variance_implied_by_team_covariance": 0.006226766594561729,
+        "sigma_logit": 0.32390867187344047,
+        "tau_from_observed_total_variance": 0.10615210092796099,
+        "tau_sigma_identifiability": "Under the stated independent-margin moment model, tau is identified by Var(N)/mu^2 and sigma by the split variance/covariance. A nonzero empirical Cov(N,s), or a nonzero residual in the three-moment fit, shows that this two-parameter layer is not a complete description of the observed joint distribution."
+      },
+      "observed": {
+        "binomial_null_share_variance": 0.002229814711501008,
+        "covariance_home_away": -44.71005330718322,
+        "covariance_total_home_share": -0.01636936135722736,
+        "direct_covariance_component_home_variance": -1.908938941310827,
+        "fano_total": 1.2768270893472229,
+        "joint_component_home_variance_pct": 0.24058356539847683,
+        "joint_covariance_interaction_component_home_variance": 0.2829189277012034,
+        "mean_away": 55.019817073170735,
+        "mean_home": 58.291920731707314,
+        "mean_home_share": 0.5145829657424456,
+        "mean_total": 113.31173780487805,
+        "pace_component_home_variance": 38.31049819157104,
+        "pace_component_home_variance_pct": 32.577800015042456,
+        "product_interaction_component_home_variance": 2.1918578690120305,
+        "rows": 1312,
+        "sd_home_share": 0.07844194391616002,
+        "sd_total": 12.028279027786066,
+        "share_component_home_variance": 79.00352980127356,
+        "share_component_home_variance_pct": 67.18161641955906,
+        "share_defined_rows": 1312,
+        "share_overdispersion_index": 2.7594842448608596,
+        "variance_away": 116.50265606409874,
+        "variance_home": 117.5969469205458,
+        "variance_home_minus_away": 323.51970959901104,
+        "variance_home_share": 0.006153138565345995,
+        "variance_total": 144.67949637027812,
+        "zero_total_rows": 0
+      },
+      "population_games": 1312
+    },
+    "sog": {
+      "bootstrap_95": {
+        "counterfactuals": {
+          "fixed_generated_mean_share_observed_total_distribution_covariance_home_away": [
+            16.59820575048741,
+            19.365946515705478
+          ],
+          "fixed_generated_mean_share_observed_total_distribution_variance_home": [
+            17.15179281936177,
+            20.020426889481804
+          ],
+          "fixed_generated_mean_total_observed_share_distribution_covariance_home_away": [
+            -30.140003534879064,
+            -25.86926300641472
+          ],
+          "fixed_generated_mean_total_observed_share_distribution_variance_home": [
+            25.869263006414716,
+            30.140003534879064
+          ],
+          "generated_mean_share_used": [
+            0.5070395904888136,
+            0.509778006893466
+          ],
+          "generated_mean_total_used": [
+            62.03903226586687,
+            62.3354598006966
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_covariance_home_away": [
+            -13.844456050107455,
+            -9.453176838743586
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_variance_away": [
+            42.35669672122396,
+            46.88809430978731
+          ],
+          "generated_total_distribution_observed_share_distribution_independent_variance_home": [
+            43.89757901484903,
+            48.19522439975532
+          ],
+          "generated_total_variance_used": [
+            66.07789903173878,
+            68.80750522666727
+          ],
+          "observed_mean_share_used": [
+            0.5059626757442423,
+            0.5148648962229528
+          ],
+          "observed_share_variance_used": [
+            0.006698764924059244,
+            0.007786460559676856
+          ],
+          "observed_total_variance_used": [
+            66.41337854587411,
+            77.48227835740781
+          ]
+        },
+        "generated": {
+          "binomial_null_share_variance": [
+            0.0040815313347631514,
+            0.0041015627247433665
+          ],
+          "covariance_home_away": [
+            -1.1367379677463771,
+            -0.12134606156328474
+          ],
+          "covariance_total_home_share": [
+            -0.00867257423193448,
+            0.006322370626761143
+          ],
+          "direct_covariance_component_home_variance": [
+            -0.54786402776508,
+            0.39833373139100015
+          ],
+          "fano_total": [
+            1.0623119124120606,
+            1.1064407843528745
+          ],
+          "joint_component_home_variance_pct": [
+            -1.9465027723069592,
+            0.907455399681323
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -0.6700066488153356,
+            0.3190175897803321
+          ],
+          "mean_away": [
+            30.461908620356038,
+            30.683702592879257
+          ],
+          "mean_home": [
+            31.494626789860682,
+            31.72272760255418
+          ],
+          "mean_home_share": [
+            0.5070395904888136,
+            0.509778006893466
+          ],
+          "mean_total": [
+            62.03903226586687,
+            62.3354598006966
+          ],
+          "pace_component_home_variance": [
+            17.05666137037509,
+            17.79996832263125
+          ],
+          "pace_component_home_variance_pct": [
+            49.05176824299902,
+            51.05195264803469
+          ],
+          "product_interaction_component_home_variance": [
+            -0.22623352814724976,
+            0.029901264573930678
+          ],
+          "sd_home_share": [
+            0.06674205313534055,
+            0.06813401858388313
+          ],
+          "sd_total": [
+            8.128831344612614,
+            8.295028946314158
+          ],
+          "share_component_home_variance": [
+            17.211395509935883,
+            17.95412961947601
+          ],
+          "share_component_home_variance_pct": [
+            49.40264936606282,
+            51.54660724804492
+          ],
+          "share_overdispersion_index": [
+            1.088491383734158,
+            1.1345745789534567
+          ],
+          "variance_away": [
+            33.16133938411395,
+            34.62479034594364
+          ],
+          "variance_home": [
+            34.107293030790814,
+            35.52998121383885
+          ],
+          "variance_home_minus_away": [
+            68.47965307561962,
+            71.46833788162029
+          ],
+          "variance_home_share": [
+            0.004454501657418296,
+            0.004642244488467363
+          ],
+          "variance_total": [
+            66.07789903173878,
+            68.80750522666727
+          ]
+        },
+        "generated_minus_observed": {
+          "binomial_null_share_variance": [
+            3.22689077019659e-05,
+            9.55122253762339e-05
+          ],
+          "covariance_home_away": [
+            8.086054888819078,
+            13.43227143368602
+          ],
+          "covariance_total_home_share": [
+            -0.027143690649826108,
+            0.0489454588429288
+          ],
+          "direct_covariance_component_home_variance": [
+            -1.760584974582027,
+            3.165792032354794
+          ],
+          "fano_total": [
+            -0.1443138623971869,
+            0.039581344996586
+          ],
+          "joint_component_home_variance_pct": [
+            -5.039540767920164,
+            6.018955913622011
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -2.304179358824575,
+            2.7573357629228976
+          ],
+          "mean_away": [
+            -0.7484786184210521,
+            -0.022265625000000813
+          ],
+          "mean_home": [
+            -0.9971507352941142,
+            -0.2609568498452023
+          ],
+          "mean_home_share": [
+            -0.006261339879167852,
+            0.002332267340943955
+          ],
+          "mean_total": [
+            -1.4813455398606785,
+            -0.5343169504643974
+          ],
+          "pace_component_home_variance": [
+            -2.8390423633096447,
+            0.18419133572913057
+          ],
+          "pace_component_home_variance_pct": [
+            6.739817045000167,
+            13.734994165132845
+          ],
+          "product_interaction_component_home_variance": [
+            -1.109635562077724,
+            0.18925250509862032
+          ],
+          "sd_home_share": [
+            -0.02077388548554249,
+            -0.014410084812880593
+          ],
+          "sd_total": [
+            -0.6042988504465071,
+            0.07460685224826177
+          ],
+          "share_component_home_variance": [
+            -13.515170705508663,
+            -9.127130132493152
+          ],
+          "share_component_home_variance_pct": [
+            -15.262821448443804,
+            -6.540526155557337
+          ],
+          "share_overdispersion_index": [
+            -0.821316907257852,
+            -0.5518185927765993
+          ],
+          "variance_away": [
+            -17.535477306774485,
+            -9.574975131255448
+          ],
+          "variance_home": [
+            -15.821430180257867,
+            -8.793084488870825
+          ],
+          "variance_home_minus_away": [
+            -55.994406425152015,
+            -38.20629305971217
+          ],
+          "variance_home_share": [
+            -0.0032365269283178583,
+            -0.002153821829195671
+          ],
+          "variance_total": [
+            -10.254955019893869,
+            1.2252321043627803
+          ]
+        },
+        "observed": {
+          "binomial_null_share_variance": [
+            0.003997016343405602,
+            0.004058294500113478
+          ],
+          "covariance_home_away": [
+            -14.036765454715372,
+            -8.771017900703546
+          ],
+          "covariance_total_home_share": [
+            -0.04961245374107948,
+            0.02509253498705369
+          ],
+          "direct_covariance_component_home_variance": [
+            -3.2064452101998944,
+            1.6261728392314827
+          ],
+          "fano_total": [
+            1.049638160788989,
+            1.22609770452695
+          ],
+          "joint_component_home_variance_pct": [
+            -6.572839090323985,
+            4.213339759457067
+          ],
+          "joint_covariance_interaction_component_home_variance": [
+            -2.9446893384958224,
+            2.0868331055319835
+          ],
+          "mean_away": [
+            30.591331269349844,
+            31.339783281733745
+          ],
+          "mean_home": [
+            31.854411764705883,
+            32.60228328173375
+          ],
+          "mean_home_share": [
+            0.5059626757442423,
+            0.5148648962229528
+          ],
+          "mean_total": [
+            62.732140092879256,
+            63.669504643962846
+          ],
+          "pace_component_home_variance": [
+            17.26552376961445,
+            20.18075140839225
+          ],
+          "pace_component_home_variance_pct": [
+            36.30874381700201,
+            43.11540950748184
+          ],
+          "product_interaction_component_home_variance": [
+            -0.27105091976670603,
+            0.987218832561301
+          ],
+          "sd_home_share": [
+            0.08184598292752905,
+            0.08824092338035976
+          ],
+          "sd_total": [
+            8.14944038230253,
+            8.802401842343956
+          ],
+          "share_component_home_variance": [
+            26.674662145810668,
+            31.14853056274497
+          ],
+          "share_component_home_variance_pct": [
+            56.9954027013901,
+            65.70797586263394
+          ],
+          "share_overdispersion_index": [
+            1.6627301609065084,
+            1.9340915252081687
+          ],
+          "variance_away": [
+            43.38973487716742,
+            51.33480983235726
+          ],
+          "variance_home": [
+            43.674992796226356,
+            50.559970741596295
+          ],
+          "variance_home_minus_away": [
+            108.2003495552531,
+            126.05073948758256
+          ],
+          "variance_home_share": [
+            0.006698764924059244,
+            0.007786460559676856
+          ],
+          "variance_total": [
+            66.41337854587411,
+            77.48227835740781
+          ]
+        }
+      },
+      "counterfactuals": {
+        "fixed_generated_mean_share_observed_total_distribution_covariance_home_away": 17.95277682052855,
+        "fixed_generated_mean_share_observed_total_distribution_variance_home": 18.565242698179677,
+        "fixed_generated_mean_total_observed_share_distribution_covariance_home_away": -28.057664383837153,
+        "fixed_generated_mean_total_observed_share_distribution_variance_home": 28.057664383837153,
+        "generated_mean_share_used": 0.5083858035803032,
+        "generated_mean_total_used": 62.19011222910217,
+        "generated_total_distribution_observed_share_distribution_independent_covariance_home_away": -11.701511143858117,
+        "generated_total_distribution_observed_share_distribution_independent_variance_away": 44.704443231165996,
+        "generated_total_distribution_observed_share_distribution_independent_variance_home": 46.108547078010574,
+        "generated_total_variance_used": 67.40996802146034,
+        "observed_mean_share_used": 0.5104146603837401,
+        "observed_share_variance_used": 0.0072545225488931595,
+        "observed_total_variance_used": 71.83131248262707
+      },
+      "generated": {
+        "binomial_null_share_variance": 0.004091210265952759,
+        "covariance_home_away": -0.6552404046034657,
+        "covariance_total_home_share": -0.0010516044899473783,
+        "direct_covariance_component_home_variance": -0.0664962543167667,
+        "fano_total": 1.0839338538758179,
+        "joint_component_home_variance_pct": -0.49381144666855253,
+        "joint_covariance_interaction_component_home_variance": -0.17206771512993413,
+        "mean_away": 30.574593653250773,
+        "mean_home": 31.615518575851393,
+        "mean_home_share": 0.5083858035803032,
+        "mean_total": 62.19011222910217,
+        "pace_component_home_variance": 17.422519140209534,
+        "pace_component_home_variance_pct": 50.00031164905438,
+        "product_interaction_component_home_variance": -0.10557146081316743,
+        "rows": 20672,
+        "sd_home_share": 0.06744744702684927,
+        "sd_total": 8.210357362591493,
+        "share_component_home_variance": 17.59436966822859,
+        "share_component_home_variance_pct": 50.49349979761417,
+        "share_defined_rows": 20672,
+        "share_overdispersion_index": 1.1119345657440154,
+        "variance_away": 33.875627737359096,
+        "variance_home": 34.84482109330819,
+        "variance_home_minus_away": 70.03092963987422,
+        "variance_home_share": 0.0045491581104396385,
+        "variance_total": 67.40996802146034,
+        "zero_total_rows": 0
+      },
+      "generated_draws_per_game": 16,
+      "generated_minus_observed": {
+        "binomial_null_share_variance": 6.407350952687511e-05,
+        "covariance_home_away": 10.804612560535661,
+        "covariance_total_home_share": 0.011689236791952629,
+        "direct_covariance_component_home_variance": 0.7555534984453558,
+        "fano_total": -0.05255960347850719,
+        "joint_component_home_variance_pct": 0.4826790989052679,
+        "joint_covariance_interaction_component_home_variance": 0.28915585003126765,
+        "mean_away": -0.38206269349845456,
+        "mean_home": -0.6321594427244612,
+        "mean_home_share": -0.002028856803436896,
+        "mean_total": -1.0142221362229051,
+        "pace_component_home_variance": -1.2911988990204932,
+        "pace_component_home_variance_pct": 10.380114160976063,
+        "product_interaction_component_home_variance": -0.4663976484140881,
+        "sd_home_share": -0.0177260379839988,
+        "sd_total": -0.2649781754640408,
+        "share_component_home_variance": -11.385909103875743,
+        "share_component_home_variance_pct": -10.862793259881329,
+        "share_overdispersion_index": -0.6894749685404888,
+        "variance_away": -13.642617429373068,
+        "variance_home": -12.387952152864969,
+        "variance_home_minus_away": -47.63979470330935,
+        "variance_home_share": -0.002705364438453521,
+        "variance_total": -4.421344461166726
+      },
+      "latent_moment_fit": {
+        "covariance_sign_as_tau_grows": "negative below the reported crossing, zero at the crossing, positive above it",
+        "covariance_zero_crossing_tau_at_balanced_sigma": 0.1726353930206677,
+        "empirical_unweighted_mean_game_share": 0.5104146603837401,
+        "fit_fold": "2021 development population; descriptive-after-selection",
+        "interior_exact_solution_exists": false,
+        "logistic_normal_realized_share_variance": 0.007232098007778658,
+        "mean_home_count_share_p": 0.5102130786186628,
+        "mean_total_mu": 63.204334365325074,
+        "minimum_sigma_reaching_observed_negative_covariance_at_any_tau": 0.21680913964847065,
+        "minimum_sigma_search_tau": 0.0,
+        "model": "N and s independent; E[N]=observed mean total; CV(N)=tau; s is logit-normal with calibrated mean p=observed mean home count / mean total and logit SD sigma; H=N*s and A=N*(1-s)",
+        "observed_triplet": {
+          "covariance_home_away": -11.459852965139127,
+          "variance_away": 47.518245166732164,
+          "variance_home": 47.23277324617316
+        },
+        "predicted_triplet": {
+          "covariance_home_away": -11.459852965139124,
+          "variance_away": 46.64189036478586,
+          "variance_home": 48.109128048119466
+        },
+        "prediction_minus_observation": {
+          "covariance_home_away": 3.552713678800501e-15,
+          "variance_away": -0.8763548019463059,
+          "variance_home": 0.8763548019463059
+        },
+        "share_variance_balanced_fit": 0.007232098007778662,
+        "share_variance_implied_by_away_variance": 0.007447597605826544,
+        "share_variance_implied_by_home_variance": 0.0070165984097307794,
+        "share_variance_implied_by_team_covariance": 0.0072320980077786624,
+        "sigma_logit": 0.35035452892590185,
+        "tau_from_observed_total_variance": 0.13409421399911522,
+        "tau_sigma_identifiability": "Under the stated independent-margin moment model, tau is identified by Var(N)/mu^2 and sigma by the split variance/covariance. A nonzero empirical Cov(N,s), or a nonzero residual in the three-moment fit, shows that this two-parameter layer is not a complete description of the observed joint distribution."
+      },
+      "observed": {
+        "binomial_null_share_variance": 0.0040271367564258835,
+        "covariance_home_away": -11.459852965139127,
+        "covariance_total_home_share": -0.012740841281900008,
+        "direct_covariance_component_home_variance": -0.8220497527621224,
+        "fano_total": 1.136493457354325,
+        "joint_component_home_variance_pct": -0.9764905455738204,
+        "joint_covariance_interaction_component_home_variance": -0.4612235651612018,
+        "mean_away": 30.956656346749227,
+        "mean_home": 32.247678018575854,
+        "mean_home_share": 0.5104146603837401,
+        "mean_total": 63.204334365325074,
+        "pace_component_home_variance": 18.713718039230027,
+        "pace_component_home_variance_pct": 39.62019748807832,
+        "product_interaction_component_home_variance": 0.36082618760092067,
+        "rows": 1292,
+        "sd_home_share": 0.08517348501084807,
+        "sd_total": 8.475335538055534,
+        "share_component_home_variance": 28.980278772104334,
+        "share_component_home_variance_pct": 61.3562930574955,
+        "share_defined_rows": 1292,
+        "share_overdispersion_index": 1.8014095342845042,
+        "variance_away": 47.518245166732164,
+        "variance_home": 47.23277324617316,
+        "variance_home_minus_away": 117.67072434318356,
+        "variance_home_share": 0.0072545225488931595,
+        "variance_total": 71.83131248262707,
+        "zero_total_rows": 0
+      },
+      "population_games": 1292
+    }
+  },
+  "population": {
+    "2022_used_for_tuning": false,
+    "attempt_games": 1312,
+    "cluster_unit": "game_id; both team outcomes and all 16 fixed generated draws remain together",
+    "draw_seed": 20261021,
+    "draws_per_game": 16,
+    "season": 2021,
+    "sog_eligible_games": 1292
+  },
+  "provenance": {
+    "analysis_script": "research/nhl/nhl-v3-phase2b-scoring-2026-10-21/total_pace_split.py",
+    "analysis_script_sha256": "f23a7533e81ebe82b62876a48e3c40b2fb8db45e96a05b276c52766a1fde9aca",
+    "base_worktree_commit": "d2be9408d45cebc067c53c19ecf4e74c29fa19dd",
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20261024,
+    "fit_selection_note": "All latent moment fits use the 2021 development population and are descriptive-after-selection.",
+    "monte_carlo_rerun": false,
+    "phase2a_frozen_hashes": {
+      "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+      "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+      "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+    },
+    "phase2b_results_sha256": "69dc5b45f9598909d9fdd5656bc06f4163c58aeba9a4a88aca5745d047a3618a",
+    "reproduction_command": "/root/legendarypicks/backend/venv/bin/python research/nhl/nhl-v3-phase2b-scoring-2026-10-21/total_pace_split.py --bootstrap-replicates 2000",
+    "runtime_seconds": 94.83122342600836,
+    "trace_metadata": {
+      "base_commit": "dd36b4ae45d7e7050316f730a5e84629b93ce9a7",
+      "cache_files": {
+        "candidate_c": {
+          "basename": "c-v2-goal-prior-7d5a1e6d4487a74a.pickle",
+          "sha256": "914cf33839cd1560a6407602d09f5175f6ad0d90e9d58904a5dbadcfd6b93326"
+        },
+        "phase2a": {
+          "basename": "phase-2a-matched-reference-7d5a1e6d4487a74a.pickle",
+          "sha256": "835685c2b6c2b588bef8111622fcdbf3062682876296869751772a31fdcc7dbc"
+        }
+      },
+      "cache_fingerprint": "7d5a1e6d4487a74a317b9c1697db659a0e66e12f5755c937f91fb32e618e76f9",
+      "cached_simulations_reused": 41984,
+      "event_scan_seconds": 87.3502036120044,
+      "games": 1312,
+      "monte_carlo_rerun": false,
+      "phase2a_hashes": {
+        "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+        "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+        "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+      },
+      "seed": 20261021,
+      "simulations_per_game": 16,
+      "snapshot_build_seconds": 89.59466274801525,
+      "source_event_rows_verified": 1510104,
+      "source_pins": {
+        "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+        "approved_label_artifact": {
+          "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+          "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+          "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+          "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+        },
+        "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+        "artifacts": {
+          "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+          "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+          "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+          "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+          "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+          "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+        },
+        "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+        "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+        "expected_population": {
+          "games": 4876,
+          "pbp_events": 1510104,
+          "seasons": {
+            "2018": 1271,
+            "2019": 1082,
+            "2020": 868,
+            "2021": 1312,
+            "2022": 343
+          }
+        },
+        "official_artifacts": {
+          "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+          "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+        }
+      }
+    },
+    "underdispersion_reported_source_pins": {
+      "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+      "approved_label_artifact": {
+        "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+        "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+        "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+        "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+      },
+      "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+      "artifacts": {
+        "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+        "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+        "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+        "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+        "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+        "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+      },
+      "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+      "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+      "expected_population": {
+        "games": 4876,
+        "pbp_events": 1510104,
+        "seasons": {
+          "2018": 1271,
+          "2019": 1082,
+          "2020": 868,
+          "2021": 1312,
+          "2022": 343
+        }
+      },
+      "official_artifacts": {
+        "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+        "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+      }
+    },
+    "underdispersion_trace_sha256": "7a86fba3f66f7a90bfbf1b653c0871d67a43a99dd073f6fe2d86e9c71527d0e7"
+  },
+  "scope": "diagnostic only; no candidate selection, gate change, promotion, adoption, or Phase 2A modification",
+  "source_validation": {
+    "attempts_by_side": {
+      "away": 72186,
+      "home": 76479
+    },
+    "full_source_event_rows_verified_by_stream_reader": 1510104,
+    "games_scanned": 1312,
+    "official_sog_reconciled_games": 1292,
+    "sog_pbp_by_side_sog_eligible": {
+      "away": 39996,
+      "home": 41664
+    },
+    "source_event_rows_in_2021_groups": 404656
+  },
+  "title": "NHL V3 total pace and home-share diagnostic"
+}
