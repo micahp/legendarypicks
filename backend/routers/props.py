@@ -710,6 +710,11 @@ def prop_history(player_id: int = Query(...),
     nba_season = ([g for g in games if g["status"] == "played"
                    and g["season"] == target_season] if is_nba else games)
     rate_games = nba_recent if is_nba else games
+    # A DNP is out of every rate above; it is also out of the chart. Listing them drew a
+    # bench player as 69 DNP cells around 12 games, which reads as broken data. Prod's
+    # history query never returned them, and that is the behavior Micah chose (2026-10-21).
+    if is_nba:
+        games = [g for g in games if g["status"] != "dnp"]
 
     return {
         "player_id": player_id,
