@@ -10,6 +10,7 @@ const line = { spread: -1.5, total: 45.5, home_moneyline: null, away_moneyline: 
 const lock = (pHome: number, grade: unknown) => ({
   proj_home: 21, proj_away: 24, margin: -3, total: 45, p_home_win: pHome, locked_at: 't', line, grade,
   pick: 'away',
+  picks: { winner: pHome > 0.5 ? 'home' : 'away', spread: 'away', total: 'under' },
 })
 
 const payload = {
@@ -22,16 +23,17 @@ const payload = {
     game_id: 'g1', week: 5, home: 'GB', away: 'CHI', neutral: false, kickoff_utc: '2026-10-11T17:00:00Z',
     final: { home: 20, away: 27 },
     locks: {
-      [V1]: lock(0.19, { brier: 0.03, margin_err: 4.5, total_err: -1.3, ats: 'win', su: 'win' }),
-      [V2]: lock(0.7, { brier: 0.5, margin_err: 11, total_err: 2, ats: 'loss', su: 'loss' }),
+      [V1]: lock(0.19, { brier: 0.03, margin_err: 4.5, total_err: -1.3, ats: 'win', su: 'win', total: 'loss' }),
+      [V2]: lock(0.7, { brier: 0.5, margin_err: 11, total_err: 2, ats: 'loss', su: 'loss', total: 'win' }),
     },
   }],
   record: [
     { version: V1, family: 'v1', label: 'v1 points', adopted: true, locked: 13, graded: 12, awaiting: 1,
       su: { win: 8, loss: 3, tie: 1, no_pick: 0 }, ats: { win: 5, loss: 6, push: 1, no_pick: 0, no_line: 0 },
+      total: { win: 4, loss: 7, push: 1, no_pick: 0, no_line: 0 },
       mean_brier: 0.1425, brier_n: 11 },
     { version: V2, family: 'v2', label: 'v2 EPA', adopted: false, locked: 4, graded: 0, awaiting: 4,
-      su: null, ats: null, mean_brier: null, brier_n: 0 },
+      su: null, ats: null, total: null, mean_brier: null, brier_n: 0 },
   ],
 }
 
@@ -74,10 +76,11 @@ describe('NFL model tab grading', () => {
     render(<NflModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
     await waitFor(() => expect(screen.getByText('2026 record · v1 points')).toBeTruthy())
-    expect(screen.getByText('Straight-up 8-3 · 1 tie')).toBeTruthy()
-    expect(screen.getByText('Pick 5-6 · 1 push')).toBeTruthy()
+    expect(screen.getByText('Winner 8-3 · 1 tie')).toBeTruthy()
+    expect(screen.getByText('Spread 5-6 · 1 push')).toBeTruthy()
+    expect(screen.getByText('Total 4-7 · 1 push')).toBeTruthy()
     expect(screen.getByText('12 graded · 1 awaiting')).toBeTruthy()
-    expect(await screen.findByText('WIN')).toBeTruthy()
+    expect((await screen.findAllByText('WIN')).length).toBeGreaterThan(0)
     expect(document.body.textContent).not.toMatch(/\d%\s*(correct|right|winner)/i)
   })
 
@@ -94,7 +97,7 @@ describe('NFL model tab grading', () => {
   it('each graded lock shows whether the pick won', async () => {
     render(<NflModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    await waitFor(() => expect(screen.getByText('WIN')).toBeTruthy())
+    await waitFor(() => expect(screen.getAllByText('WIN').length).toBeGreaterThan(0))
   })
 
   it('a preview lock is shown as a projection without a result', async () => {
@@ -121,8 +124,28 @@ describe('NFL model tab grading', () => {
     expect(await screen.findByText('Line · lock row · captured t')).toBeTruthy()
   })
 
+  it('shows one locked pick for each market without a wager-policy UI', async () => {
+    render(<NflModelTab />)
+    expect(await screen.findByText('CHI ML')).toBeTruthy()
+    expect(screen.getAllByText('CHI -1.5').length).toBeGreaterThan(0)
+    expect(screen.getByText('Under 45.5')).toBeTruthy()
+    expect(screen.getByText('Winner pick')).toBeTruthy()
+    expect(screen.getByText('Spread pick')).toBeTruthy()
+    expect(screen.getByText('Total pick')).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/qualifying wager|lean/i)
+  })
+
+  it('shows three separate graded outcomes on the record tab', async () => {
+    render(<NflModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+    await waitFor(() => expect(screen.getByText('2026 record · v1 points')).toBeTruthy())
+    await waitFor(() => expect(screen.getAllByText('WIN').length).toBeGreaterThanOrEqual(2))
+    await waitFor(() => expect(screen.getAllByText('LOSS').length).toBeGreaterThanOrEqual(1))
+  })
+
   it('shows No pick, not an away selection, when the model sits on the line', async () => {
-    const level = { ...payload.games[0].locks[V1], pick: 'no_pick', margin: -1.5 }
+    const level = { ...payload.games[0].locks[V1], pick: 'no_pick',
+      picks: { ...payload.games[0].locks[V1].picks, spread: 'no_pick' }, margin: -1.5 }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
       ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: level } }] }),
     }))
@@ -131,7 +154,8 @@ describe('NFL model tab grading', () => {
   })
 
   it('shows No line when there is no usable spread', async () => {
-    const noLine = { ...payload.games[0].locks[V1], pick: 'no_line', line: { ...line, spread: null } }
+    const noLine = { ...payload.games[0].locks[V1], pick: 'no_line',
+      picks: { ...payload.games[0].locks[V1].picks, spread: 'no_line' }, line: { ...line, spread: null } }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
       ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: noLine } }] }),
     }))
@@ -140,7 +164,8 @@ describe('NFL model tab grading', () => {
   })
 
   it('renders exactly the pick side the backend returned', async () => {
-    const homePick = { ...payload.games[0].locks[V1], pick: 'home' } // home side vs line -1.5
+    const homePick = { ...payload.games[0].locks[V1], pick: 'home',
+      picks: { ...payload.games[0].locks[V1].picks, spread: 'home' } } // home side vs line -1.5
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
       ok: true, json: () => Promise.resolve({ ...payload, games: [{ ...payload.games[0], locks: { [V1]: homePick } }] }),
     }))
