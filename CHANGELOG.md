@@ -1,3 +1,14 @@
+## v10.0.8
+
+### NCAAF model
+
+- Group the projections and the record by day, drop the kickoff column, and show Won and Lost results in green and red on the record tab.
+- Add a Model accuracy button beside the tabs, with Brier score, winner accuracy and graded games for each model.
+
+### Homepage
+
+- Show NCAAF as live on the Models slide in place of MLB, and update the intro sentence to match.
+
 ## v10.0.7
 
 ### NCAAF model
