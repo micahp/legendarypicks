@@ -143,6 +143,8 @@ def main():
     _espn.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), ".espn-cache"), ttl=86400)
     _espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5")))
+    # Batch job: pause at the per-host window rather than raise (the shared default refuses).
+    _espn.set_on_exhausted("sleep")
 
     db = os.path.abspath(args.db)
     con = sqlite3.connect(db)

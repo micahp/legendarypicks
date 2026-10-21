@@ -4,9 +4,15 @@ import os
 import sqlite3
 import tempfile
 import unittest
+import contextlib
+import datetime as dt
+import io
+import json
 from unittest import mock
 
+import espn_client
 import ingest_nba_logs
+import paced_http
 
 
 class NbaLogIdentityTests(unittest.TestCase):
@@ -173,6 +179,152 @@ class NbaLogIdentityTests(unittest.TestCase):
             con.execute("SELECT COUNT(*) FROM player_game_logs").fetchone()[0], 0
         )
         con.close()
+
+    def test_explicit_dnp_is_recorded_as_zero_minutes_and_empty_data_is_unknown(self):
+        dnp = ingest_nba_logs._parse_line(
+            ["PTS", "REB", "AST"], [], did_not_play=True
+        )
+        self.assertEqual(dnp["MIN"], 0)
+        self.assertEqual((dnp["PTS"], dnp["FGM"], dnp["FTM"], dnp["PRA"]),
+                         (0, 0, 0, 0))
+        self.assertEqual(ingest_nba_logs._parse_line(["PTS"], []), {})
+
+    def test_ingest_persists_only_publisher_marked_dnp_as_zero_minutes(self):
+        boxscore = {"players": [{
+            "team": {"abbreviation": "BOS"},
+            "statistics": [{"names": ["PTS", "REB", "AST"], "athletes": [{
+                "athlete": {"id": "100", "displayName": "Known Guard"},
+                "didNotPlay": True,
+                "stats": [],
+            }]}],
+        }]}
+        with mock.patch.object(ingest_nba_logs, "DB", self.path), \
+             mock.patch.object(ingest_nba_logs.espn, "games", side_effect=self.games), \
+             mock.patch.object(ingest_nba_logs.espn, "boxscore", return_value=boxscore), \
+             mock.patch.object(ingest_nba_logs.time, "sleep"):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", season=2026), 1
+            )
+
+        con = sqlite3.connect(self.path)
+        row = con.execute(
+            "SELECT json_extract(stats,'$.MIN'),json_extract(stats,'$.PTS') "
+            "FROM player_game_logs"
+        ).fetchone()
+        con.close()
+        self.assertEqual(row, (0, 0))
+
+    def test_shooting_made_and_minutes_are_parsed_for_history(self):
+        stats = ingest_nba_logs._parse_line(
+            ["PTS", "REB", "AST", "MIN", "3PT", "FG", "FT"],
+            ["24", "6", "8", "35:30", "3-7", "9-18", "3-4"],
+        )
+        self.assertEqual(stats["MIN"], 35.5)
+        self.assertEqual((stats["FGM"], stats["FTM"], stats["PRA"]), (9, 3, 38))
+
+    def test_source_failure_is_not_hidden_or_written_as_an_empty_day(self):
+        with mock.patch.object(
+            ingest_nba_logs.espn, "games", side_effect=RuntimeError("ESPN unavailable")
+        ):
+            with self.assertRaisesRegex(RuntimeError, "ESPN unavailable"):
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", season=2026)
+
+        con = sqlite3.connect(self.path)
+        self.assertIsNone(con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='player_game_logs'"
+        ).fetchone())
+        con.close()
+
+    def test_dry_run_does_not_open_the_database(self):
+        boxscore = {"players": [{"statistics": [{
+            "names": ["PTS", "REB", "AST"],
+            "athletes": [{"athlete": {"id": "100"}, "stats": ["1", "2", "3"]}],
+        }]}]}
+        with mock.patch.object(ingest_nba_logs, "DB", self.path + ".unused"), \
+             mock.patch.object(ingest_nba_logs, "_fetch_range",
+                               return_value=[({}, boxscore, dt.date(2026, 1, 1))]):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-01-01", "2026-01-01", dry_run=True), 1
+            )
+        self.assertFalse(os.path.exists(self.path + ".unused"))
+
+    def test_nba_season_key_uses_espn_start_year(self):
+        self.assertEqual(ingest_nba_logs.nba_start_year(
+            dt.date(2026, 10, 20)), 2026)
+        self.assertEqual(ingest_nba_logs.nba_start_year(
+            dt.date(2026, 4, 20)), 2025)
+
+
+class NbaBatchFanOutPacingTests(unittest.TestCase):
+    """The 10-21 failure: a 14-day refresh crossed ESPN's 50-per-60s window and raised.
+
+    Driven through the real shared fetcher and its window, with urlopen and time mocked,
+    so nothing reaches ESPN. The batch fan-out must pause and finish; the serving-path
+    fetcher must still refuse the identical sequence.
+    """
+
+    BOX = {"players": [{
+        "team": {"abbreviation": "BOS"},
+        "statistics": [{
+            "names": ["PTS", "REB", "AST"],
+            "athletes": [{"athlete": {"id": "100", "displayName": "Known Guard"},
+                          "stats": ["20", "5", "7"]}],
+        }],
+    }]}
+
+    @staticmethod
+    def games(_league, _date):
+        return [{"game_id": "pace-{:02d}".format(i), "state": "post", "completed": True,
+                 "home": {"abbrev": "BOS"}, "away": {"abbrev": "NYK"}} for i in range(51)]
+
+    @classmethod
+    def urlopen(cls, _request, timeout=None):
+        inner = mock.MagicMock()
+        inner.read.return_value = json.dumps({"boxscore": cls.BOX}).encode()
+        inner.status = 200
+        outer = mock.MagicMock()
+        outer.__enter__.return_value = inner
+        return outer
+
+    def setUp(self):
+        # The fetcher's memory cache would answer the second test from the first.
+        self._cache_dir = espn_client._FETCHER.cache_dir
+        espn_client._FETCHER.cache_dir = ""
+        espn_client._FETCHER._memory.clear()
+        paced_http.reset_host_budget()
+        self.addCleanup(paced_http.reset_host_budget)
+        self.addCleanup(espn_client._FETCHER._memory.clear)
+        self.addCleanup(setattr, espn_client._FETCHER, "cache_dir", self._cache_dir)
+
+    def test_a_batch_fan_out_pauses_when_the_window_is_full_and_finishes(self):
+        stderr = io.StringIO()
+        with mock.patch.object(ingest_nba_logs.espn, "games", side_effect=self.games), \
+             mock.patch("paced_http.urllib.request.urlopen", side_effect=self.urlopen), \
+             mock.patch.object(paced_http.time, "sleep") as sleep, \
+             contextlib.redirect_stderr(stderr):
+            fetched = ingest_nba_logs._fetch_range("2026-01-01", "2026-01-01")
+
+        self.assertEqual(len(fetched), 51)
+        # Pacing sleeps are <= 1.5s; the window pause is the one that is long.
+        window_pauses = [c.args[0] for c in sleep.call_args_list if c.args[0] > 5]
+        self.assertEqual(len(window_pauses), 1, "the 51st request waits out the window once")
+        self.assertGreater(window_pauses[0], 50)
+        # The pause is announced, not silent: a silent pause reads as a hang.
+        self.assertIn("pausing", stderr.getvalue())
+        self.assertIn("not an error", stderr.getvalue())
+        self.assertLessEqual(window_pauses[0], paced_http.RATE_WINDOW)
+        # batch_pacing hands the shared fetcher back exactly as it was found.
+        self.assertEqual(espn_client._FETCHER.on_exhausted, "refuse")
+        self.assertEqual(espn_client._FETCHER.min_interval, 0.0)
+
+    def test_the_serving_path_still_refuses_the_same_sequence(self):
+        self.assertEqual(espn_client._FETCHER.on_exhausted, "refuse")
+        with mock.patch("paced_http.urllib.request.urlopen", side_effect=self.urlopen), \
+             mock.patch.object(paced_http.time, "sleep") as sleep:
+            with self.assertRaisesRegex(paced_http.BudgetExhausted, "50 requests in the last 60s"):
+                for i in range(51):
+                    espn_client.boxscore("nba", "pace-{:02d}".format(i))
+        self.assertFalse(sleep.called, "a request handler must not pause")
 
 
 if __name__ == "__main__":

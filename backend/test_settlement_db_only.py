@@ -281,15 +281,17 @@ def test_nba_settlement_reads_regular_season_markets_from_published_names():
         INSERT INTO props VALUES(6,1,'steals',1.5,'under',1);
         INSERT INTO props VALUES(7,1,'turnovers',4.5,'under',1);
         INSERT INTO props VALUES(8,1,'points_rebounds_assists',36.5,'over',1);
+        INSERT INTO props VALUES(9,1,'field_goals_made',8.5,'over',1);
+        INSERT INTO props VALUES(10,1,'free_throws_made',3.5,'under',1);
     """)
     payload = stored_summary.load(con, "nhl", "event-1")
     payload["boxscore"] = {"players": [{
         "team": {"abbreviation": "BOS"},
         "statistics": [{
-            "names": ["MIN", "PTS", "REB", "AST", "3PM", "BLK", "STL", "TO"],
+            "names": ["MIN", "PTS", "REB", "AST", "3PM", "BLK", "STL", "TO", "FG", "FT"],
             "athletes": [{
                 "athlete": {"id": "123", "displayName": "Published Player"},
-                "stats": ["32", "22", "9", "6", "3", "2", "1", "4"],
+                "stats": ["32", "22", "9", "6", "3", "2", "1", "4", "9-18", "3-4"],
             }],
         }],
     }]}
@@ -301,16 +303,53 @@ def test_nba_settlement_reads_regular_season_markets_from_published_names():
 
     result = settlement.settle_game(con, 1)
 
-    assert result == {"settled": 8, "void": 0, "unmappable": 0,
+    assert result == {"settled": 10, "void": 0, "unmappable": 0,
                       "pending": 0, "errors": 0}
     assert [tuple(row) for row in con.execute(
         "SELECT prop_id,actual_value,hit FROM prop_results ORDER BY prop_id"
     )] == [
         (1, 22.0, 1), (2, 9.0, 1), (3, 6.0, 1), (4, 3.0, 1),
         (5, 2.0, 1), (6, 1.0, 1), (7, 4.0, 1), (8, 37.0, 1),
+        (9, 9.0, 1), (10, 3.0, 1),
     ]
 
     assert settlement.resolve_market("nba", "fantasy_points") is None
+    assert settlement.resolve_market("nba", "total_made_3_points_shots") == (
+        "statistics", "3PM")
+    assert settlement.resolve_market("nba", "FGM") == ("statistics", "FG:made")
+    assert settlement.resolve_market("nba", "FTM") == ("statistics", "FT:made")
+    assert settlement.resolve_market("nba", "pra") == (None, "points_rebounds_assists")
+
+
+def test_explicit_nba_dnp_is_voided_instead_of_graded_as_zero():
+    con = _settlement_database()
+    con.executescript("""
+        UPDATE prop_games SET league='nba' WHERE id=1;
+        UPDATE scoreboard_snapshots SET league='nba' WHERE game_id='event-1';
+        DELETE FROM props;
+        INSERT INTO props VALUES(1,1,'points',10.5,'over',1);
+    """)
+    payload = stored_summary.load(con, "nhl", "event-1")
+    payload["boxscore"] = {"players": [{
+        "team": {"abbreviation": "BOS"},
+        "statistics": [{"names": ["MIN", "PTS"], "athletes": [{
+            "athlete": {"id": "123", "displayName": "Published Player"},
+            "didNotPlay": True,
+            "stats": [],
+        }]}],
+    }]}
+    con.execute(
+        "UPDATE game_summaries SET league='nba',payload=? "
+        "WHERE league='nhl' AND espn_event_id='event-1'", (json.dumps(payload),)
+    )
+
+    result = settlement.settle_game(con, 1)
+
+    assert result == {"settled": 0, "void": 1, "unmappable": 0,
+                      "pending": 0, "errors": 0}
+    assert tuple(con.execute(
+        "SELECT actual_value,hit,settled_at IS NOT NULL FROM prop_results WHERE prop_id=1"
+    ).fetchone()) == (None, None, 1)
 
 
 def test_settlement_missing_summary_stays_pending_with_reason():

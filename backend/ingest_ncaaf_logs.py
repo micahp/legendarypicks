@@ -442,6 +442,8 @@ def ingest(season, dry_run=False):
     # fetches do not trip ESPN's 403 wall (measured 2026-08-06; the wall
     # outlives short backoffs and takes the live standings tab down with it).
     espn.set_min_interval(float(os.environ.get("LP_INGEST_MIN_INTERVAL") or 0.5))
+    # Batch job: pause at ESPN's per-host window rather than raise (the shared default refuses).
+    espn.set_on_exhausted("sleep")
     # Batch job: opt into the shared fetcher's retry ladder so a transient
     # 403 from a spent host is waited out instead of killing the run (the
     # soccer ingest's _summary_retry pattern; espn_client's default retry

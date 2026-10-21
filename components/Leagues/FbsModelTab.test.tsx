@@ -62,9 +62,12 @@ describe('FBS model tab', () => {
     expect(screen.getByText('32.0%')).toBeTruthy()
   })
 
-  it('states that nothing is a qualifying wager without a price feed', async () => {
+  it('shows each team record and no price-feed or fitted-through notes', async () => {
+    serve({ ...payload, games: [{ ...upcomingGame, home_record: '5-2', away_record: '3-3' }] })
     render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText(/NCAAF moneyline or spread price feed/i)).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('5-2')).toBeTruthy())
+    expect(screen.getByText('3-3')).toBeTruthy()
+    expect(document.body.textContent).not.toMatch(/price feed|qualifying wager|fitted through/)
   })
 
   it('shows no status labels on a projection card', async () => {

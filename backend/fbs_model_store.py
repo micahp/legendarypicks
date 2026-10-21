@@ -945,6 +945,67 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
             "state": "available" if games else "awaiting_first_projection", "diagnostics": diagnostics}
 
 
+
+def _before_record(record: str | None, scored: dict | None, side: str) -> str | None:
+    """The record going into the game. A finished game's scoreboard record already counts
+    that game, so its result is taken back out."""
+    if not record or not scored:
+        return record or None
+    parts = record.split("-")
+    if len(parts) != 2 or not all(part.isdigit() for part in parts):
+        return record
+    wins, losses = int(parts[0]), int(parts[1])
+    mine, theirs = scored[side], scored["away" if side == "home" else "home"]
+    if mine > theirs and wins > 0:
+        wins -= 1
+    elif mine < theirs and losses > 0:
+        losses -= 1
+    return "%d-%d" % (wins, losses)
+
+
+def apply_scoreboard_details(payload: dict, live_db: str) -> dict:
+    """Add the scoreboard's kickoff and each team's record going into the game.
+
+    Display only. Stored kickoffs are immutable and are left as written; rows stored with a
+    date-only (midnight UTC) kickoff show the scoreboard's time when it knows the game. A game
+    the scoreboard does not know keeps the stored kickoff and has no record.
+    """
+    games = payload.get("games", [])
+    for game in games:
+        game.setdefault("home_record", None)
+        game.setdefault("away_record", None)
+    if not games or not os.path.exists(live_db):
+        return payload
+    try:
+        con = sqlite3.connect("file:%s?mode=ro" % live_db, uri=True)
+        try:
+            marks = ",".join("?" * len(games))
+            rows = con.execute("SELECT game_id, payload FROM scoreboard_snapshots WHERE league='ncaaf' "
+                               "AND game_id IN (%s) ORDER BY fetched_at" % marks,
+                               [g["game_id"] for g in games]).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return payload
+    details = {str(game_id): json.loads(raw) for game_id, raw in rows}
+    for game in games:
+        data = details.get(game["game_id"])
+        if not data:
+            continue
+        date = data.get("date")
+        if "T00:00:00" in (game.get("kickoff_utc") or "") and date and "T" in date \
+                and not date.endswith("T00:00Z"):
+            game["kickoff_utc"] = date.replace("Z", ":00+00:00") if date.count(":") == 1 else date
+        scored = None
+        home, away = (data.get("home") or {}).get("score"), (data.get("away") or {}).get("score")
+        if data.get("completed") and home is not None and away is not None:
+            scored = {"home": float(home), "away": float(away)}
+        game["home_record"] = _before_record((data.get("home") or {}).get("record"), scored, "home")
+        game["away_record"] = _before_record((data.get("away") or {}).get("record"), scored, "away")
+    games.sort(key=lambda g: g["kickoff_utc"])
+    return payload
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Create or migrate an FBS model database. Opens never migrate.")
     action = parser.add_mutually_exclusive_group(required=True)

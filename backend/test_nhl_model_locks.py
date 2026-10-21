@@ -16,8 +16,8 @@ from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_resu
                              normalize_official_result, export_locked, read_feed, DEFAULT_FEED,
                              export_previews, preview_feed, latest_game_lines, latest_standings,
                              write_standings, parse_time, model_pick, american_to_decimal,
-                             no_vig_pair, backfill_picks, market_candidates, expected_value,
-                             pick_qualifies, grade_pick, grade_game_lines, RULE_VERSION)
+                             no_vig_pair, backfill_picks, expected_value, freeze_pick,
+                             grade_pick, grade_game_lines, RULE_VERSION)
 from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
 from routers.nhl_model import locks_payload
@@ -233,17 +233,16 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(game["models"]["B3_elo"]["grade"]["official_home_goals"], 3)
         self.assertEqual(game["models"]["B3_elo"]["grade"]["statistical_home_goals"], 2)
 
-    def test_game_lines_are_graded_even_without_any_priced_recommendation(self):
+    def test_game_lines_are_graded_and_every_valid_forecast_has_a_pick_without_a_quote(self):
         lock_feed(self.con, feed(), LOCK_AT)
         result = normalize_official_result(GAME_ID, final_document())
         grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "d" * 64, "fixture")
         export = export_locked(self.con, 2026)["games"][0]
         for model_key in MODEL_KEYS:
             forecast = export["models"][model_key]
-            # Every game gets a pick; with no quote it is a structural call, unpriced.
+            # A missing sportsbook quote does not suppress a selection.
             self.assertIsNotNone(forecast["pick"])
-            self.assertIsNone(forecast["pick"]["price"])
-            self.assertFalse(forecast["pick"]["qualifies"])
+            self.assertEqual(forecast["pick_status"], "selected")
             lines = forecast["line_grades"]
             self.assertEqual(lines["version"], "line-brier-v1")
             self.assertEqual(lines["reference"]["home_minus_1_5"]["outcome"], 0)
@@ -251,6 +250,7 @@ class NHLModelLocks(unittest.TestCase):
             # The shootout-deciding goal is excluded from statistical targets.
             self.assertEqual(lines["reference"]["over_5_5"]["outcome"], 0)
             self.assertEqual(lines["locked_market"], {})
+        self.assertEqual({row[0] for row in self.con.execute("SELECT price FROM nhl_model_picks")}, {None})
 
     def test_official_total_market_probability_accounts_for_shootout_goal(self):
         # The forecast matrix has 80% on 3-3 (shootout results in 4-3)
@@ -274,7 +274,7 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(lines["reference"]["over_6_5"]["outcome"], 0)
         self.assertEqual(lines["locked_market"]["puck_home_cover"]["outcome"], 0)
 
-    def test_total_pricing_excludes_push_and_includes_shootout_decider(self):
+    def test_total_pick_uses_the_projected_total_rule_not_the_posted_market_total(self):
         matrix = [[0.0] * 8 for _ in range(8)]
         matrix[2][2] = .3  # 4 goals: under wins
         matrix[2][3] = .3  # 5 goals: under wins
@@ -282,6 +282,7 @@ class NHLModelLocks(unittest.TestCase):
         matrix[4][2] = .2  # 6 official goals: push
         forecast = {
             "game_id": int(GAME_ID), "home_win_probability": .5,
+            "projected_total_goals": 5.8,
             "p_home_minus_1_5": .2, "p_home_plus_1_5": .8,
             "p_away_minus_1_5": .2, "p_away_plus_1_5": .8,
             "p_over_5.5": .4, "p_over_6.5": 0,
@@ -289,27 +290,48 @@ class NHLModelLocks(unittest.TestCase):
         }
         quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:29:00Z",
                  "total_line": 6.0, "over_price": -110, "under_price": -110}
-        candidates = market_candidates("WSH", "MTL", forecast, quote, GAME_ID)
-        self.assertEqual(len(candidates), 2)
-        over = next(c for c in candidates if c["side"] == "over")
-        under = next(c for c in candidates if c["side"] == "under")
-        self.assertAlmostEqual(under["model_probability"], .6)
-        self.assertAlmostEqual(over["model_probability"], .2)
-        self.assertAlmostEqual(under["push_probability"], .2)
         pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
-        # Pricing diagnostics are unchanged, but the leeway rules need a projected total
-        # to choose a line, and this forecast carries none. No pick is manufactured.
-        self.assertIsNone(pick)
+        # The forecast picks Over 5.5 even though the book only posted a 6.0 total.
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "over", 5.5))
+        self.assertAlmostEqual(pick["model_probability"], .4)
+        self.assertIsNone(pick["price"])
 
-    def test_total_market_skipped_if_shootout_adjustment_cannot_be_computed(self):
-        forecast = {"home_win_probability": .5, "p_home_minus_1_5": .2,
-                    "p_home_plus_1_5": .8, "p_away_minus_1_5": .2,
-                    "p_away_plus_1_5": .8, "p_over_5.5": .5, "p_over_6.5": .4}
-        quote = {"total_line": 6.5, "over_price": -110, "under_price": -110}
-        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, GAME_ID), [])
-        quote["total_line"] = 5.5
-        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote, GAME_ID)), 2)
-        self.assertEqual(market_candidates("WSH", "MTL", forecast, quote, "2026030106"), [])
+    def test_total_pick_survives_a_missing_probability_and_unmatched_market_line(self):
+        forecast = {"projected_total_goals": 6.2}
+        quote = {"total_line": 5.5, "over_price": -110, "under_price": -110}
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("total", "under", 6.5))
+        self.assertIsNone(pick["model_probability"])
+        self.assertIsNone(pick["price"])
+
+    def test_favorite_moneyline_remains_a_pick_without_a_posted_moneyline_price(self):
+        forecast = {"projected_goal_differential_home": 1.0,
+                    "projected_total_goals": 5.9, "home_win_probability": .62}
+        quote = {"home_puck_line": -1.5, "home_moneyline": None, "away_moneyline": None}
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("ml", "home", None))
+        self.assertEqual(pick["model_probability"], .62)
+        self.assertIsNone(pick["price"])
+
+    def test_underdog_edge_keeps_the_existing_one_decimal_rounding_convention(self):
+        quote = {"home_puck_line": -1.5}
+        below_rounded_threshold = model_pick(
+            "WSH", "MTL", {"projected_goal_differential_home": .46,
+                            "home_win_probability": .6, "projected_total_goals": 5.8}, quote, GAME_ID)
+        above_rounded_threshold = model_pick(
+            "WSH", "MTL", {"projected_goal_differential_home": .44,
+                            "home_win_probability": .6, "projected_total_goals": 5.8}, quote, GAME_ID)
+        self.assertEqual((below_rounded_threshold["market"], below_rounded_threshold["side"]), ("ml", "home"))
+        self.assertEqual((above_rounded_threshold["market"], above_rounded_threshold["side"],
+                          above_rounded_threshold["line"]), ("spread", "away", 1.5))
+
+    def test_total_fallback_keeps_the_existing_five_point_five_and_six_point_five_thresholds(self):
+        expected = ((5.5, "under", 5.5), (5.6, "over", 5.5), (6.0, "over", 5.5),
+                    (6.01, "under", 6.5), (6.5, "under", 6.5), (6.6, "over", 6.5))
+        for projected, side, line in expected:
+            with self.subTest(projected_total=projected):
+                pick = model_pick("WSH", "MTL", {"projected_total_goals": projected}, None, GAME_ID)
+                self.assertEqual((pick["side"], pick["line"]), (side, line))
 
     def test_total_pick_push_is_neither_win_nor_loss(self):
         result = {"official_home_goals": 4, "official_away_goals": 2, "official_winner": "home"}
@@ -414,7 +436,7 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(payload["state"], "available")
         self.assertEqual(set(payload["games"][0]["models"]), set(MODEL_KEYS))
 
-    def test_rule_takes_the_highest_expected_value_market_the_quote_prices(self):
+    def test_positive_ev_selection_follows_the_underdog_plus_one_point_five_rule(self):
         forecast = {"projected_goal_differential_home": 0.3, "projected_total_goals": 5.8,
                     "home_win_probability": 0.55, "p_over_5.5": 0.51, "p_over_6.5": 0.35,
                     "p_home_minus_1_5": 0.26, "p_home_plus_1_5": 0.8,
@@ -424,9 +446,8 @@ class NHLModelLocks(unittest.TestCase):
                  "home_puck_line": 1.5, "home_puck_price": 200, "away_puck_price": -240,
                  "total_line": 6.5, "over_price": -115, "under_price": -105,
                  "home_moneyline": -128, "away_moneyline": 107}
-        self.assertEqual(len(market_candidates("WSH", "MTL", forecast, quote, GAME_ID)), 6)
         pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
-        # Home +1.5 at +200 against a 0.80 cover probability is the best of the six markets.
+        # The projected-margin rule selects home +1.5 independently of other markets.
         self.assertEqual((pick["market"], pick["side"], pick["line"], pick["price"]),
                          ("spread", "home", 1.5, 200))
         self.assertAlmostEqual(pick["model_probability"], 0.8)
@@ -434,11 +455,9 @@ class NHLModelLocks(unittest.TestCase):
         self.assertAlmostEqual(pick["edge"], 0.8 - no_vig_pair(200, -240)[0])
         # The expected value is computed at the offered price, so it is not the edge.
         self.assertNotAlmostEqual(pick["expected_value"], pick["edge"])
-        self.assertTrue(pick_qualifies(pick))
 
-    def test_a_quote_whose_every_market_is_negative_is_a_lean_not_a_recommendation(self):
-        # Every price is -110, so each market needs better than 52.4 percent to pay. The model
-        # is at or below that everywhere, and nothing qualifies.
+    def test_negative_ev_selection_is_still_a_model_pick(self):
+        # Every price is -110, but the frozen rule still selects the underdog +1.5.
         forecast = {"projected_goal_differential_home": 0.0, "projected_total_goals": 6.2,
                     "home_win_probability": 0.5, "p_over_5.5": 0.5, "p_over_6.5": 0.5,
                     "p_home_minus_1_5": 0.2, "p_home_plus_1_5": 0.5,
@@ -448,28 +467,97 @@ class NHLModelLocks(unittest.TestCase):
                  "home_puck_line": -1.5, "home_puck_price": -110, "away_puck_price": -110,
                  "total_line": 6.5, "over_price": -110, "under_price": -110,
                  "home_moneyline": -110, "away_moneyline": -110}
-        candidates = market_candidates("WSH", "MTL", forecast, quote, GAME_ID)
-        self.assertEqual(len(candidates), 6)
         pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
         self.assertIsNotNone(pick)
-        # The leeway hierarchy takes the away +1.5 cover here rather than chasing EV;
-        # a negative-EV number can still be the rule's pick, so "qualifies" now means
-        # only that the book posted a price for it.
+        # This is the rule's selection even though the archived price implies negative EV.
         self.assertLess(pick["expected_value"], 0)
-        self.assertTrue(pick_qualifies(pick))
 
-    def test_no_quote_still_yields_an_unpriced_pick(self):
+    def test_selected_line_without_a_posted_price_keeps_the_pick_and_probability(self):
+        forecast = {"projected_goal_differential_home": 0.3, "projected_total_goals": 5.8,
+                    "home_win_probability": 0.55, "p_home_plus_1_5": 0.8,
+                    "p_away_plus_1_5": 0.74, "p_over_5.5": 0.51, "p_over_6.5": 0.35}
+        quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:00:00Z",
+                 "home_puck_line": 1.5, "home_puck_price": None, "away_puck_price": None}
+        pick = model_pick("WSH", "MTL", forecast, quote, GAME_ID)
+        self.assertEqual((pick["market"], pick["side"], pick["line"]), ("spread", "home", 1.5))
+        self.assertAlmostEqual(pick["model_probability"], 0.8)
+        self.assertIsNone(pick["price"])
+        self.assertIsNone(pick["edge"])
+        self.assertIsNone(pick["expected_value"])
+
+    def test_missing_pick_probability_stays_missing_in_storage(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        self.con.execute("DROP TRIGGER nhl_pick_immutable_delete")
+        self.con.execute("DELETE FROM nhl_model_picks")
+        game = feed()["games"][0]
+        forecast = dict(game["models"]["B3_elo"])
+        forecast.pop("p_away_plus_1_5")
+        quote = {"source": "bovada", "captured_at_utc": "2026-10-14T16:29:00Z",
+                 "home_puck_line": -1.5, "home_puck_price": -110, "away_puck_price": -110}
+        self._insert_line("2026-10-14T16:29:00Z", -1.5, -110, -110)
+        report = {"pick_rows": 0, "already_picked": 0, "missing_picks": 0}
+        freeze_pick(self.con, game, "B3_elo", "nhl-prospective-2026-27-v1", forecast,
+                    quote, LOCK_AT, "lock", report)
+        row = self.con.execute("SELECT model_probability FROM nhl_model_picks").fetchone()
+        self.assertIsNone(row["model_probability"])
+        self.assertIsNone(export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]["pick"]["model_probability"])
+
+    def test_legacy_not_null_probability_schema_migrates_without_rewriting_picks(self):
+        lock_feed(self.con, feed(), LOCK_AT)
+        self.con.execute("DROP TRIGGER nhl_pick_immutable_update")
+        self.con.execute("DROP TRIGGER nhl_pick_immutable_delete")
+        self.con.execute("UPDATE nhl_model_picks SET rule_version='goal-diff-1' WHERE model_key='B3_elo'")
+        columns = [row[1] for row in self.con.execute("PRAGMA table_info(nhl_model_picks)")]
+        original = [tuple(row) for row in self.con.execute(
+            "SELECT %s FROM nhl_model_picks ORDER BY model_key" % ",".join(columns))]
+
+        self.con.execute("DROP INDEX idx_nhl_pick_start")
+        ddl = self.con.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='nhl_model_picks'").fetchone()[0]
+        legacy_ddl = ddl.replace("CREATE TABLE nhl_model_picks", "CREATE TABLE nhl_model_picks_legacy", 1)
+        legacy_ddl = legacy_ddl.replace("model_probability REAL,", "model_probability REAL NOT NULL,", 1)
+        self.con.execute(legacy_ddl)
+        names = ",".join(columns)
+        self.con.execute("INSERT INTO nhl_model_picks_legacy (%s) SELECT %s FROM nhl_model_picks" % (names, names))
+        self.con.execute("DROP TABLE nhl_model_picks")
+        self.con.execute("ALTER TABLE nhl_model_picks_legacy RENAME TO nhl_model_picks")
+        self.con.commit()
+
+        ensure_schema(self.con)
+        migrated = [tuple(row) for row in self.con.execute(
+            "SELECT %s FROM nhl_model_picks ORDER BY model_key" % ",".join(columns))]
+        self.assertEqual(migrated, original)
+        probability_column = next(row for row in self.con.execute("PRAGMA table_info(nhl_model_picks)")
+                                  if row[1] == "model_probability")
+        self.assertEqual(probability_column[3], 0)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.con.execute("UPDATE nhl_model_picks SET side='under'")
+
+    def test_forecast_without_a_supported_selection_has_an_explicit_missing_state(self):
+        self.assertIsNone(model_pick("WSH", "MTL", {"projected_total_goals": None}, None, GAME_ID))
+        self._insert_line("2026-10-14T16:29:00Z", -1.5)
+        lock_feed(self.con, feed(), LOCK_AT)
+        self.con.execute("DROP TRIGGER nhl_pick_immutable_delete")
+        self.con.execute("DELETE FROM nhl_model_picks")
+        self._insert_line("2026-10-14T16:31:00Z", 1.5)
+        model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
+        self.assertIsNone(model["pick"])
+        self.assertEqual(model["pick_status"], "missing")
+        self.assertEqual(model["locked_quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
+
+    def test_no_quote_still_yields_a_model_pick(self):
         report = lock_feed(self.con, feed(), LOCK_AT)
-        self.assertEqual((report["locked_rows"], report["pick_rows"], report["unpriced_models"]), (3, 3, 0))
+        self.assertEqual((report["locked_rows"], report["pick_rows"], report["missing_picks"]), (3, 3, 0))
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 3)
-        # The pick stands as a structural call; it simply carries no price or edge.
         model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
         self.assertIsNotNone(model["pick"])
+        self.assertEqual(model["pick_status"], "selected")
+        self.assertIsNone(self.con.execute(
+            "SELECT price FROM nhl_model_picks WHERE model_key='B3_elo'").fetchone()[0])
         self.assertEqual(model["home_expected_goals"], 3.0)
 
-    def test_lock_freezes_a_pick_and_the_quote_it_was_priced_against(self):
-        # Captured one minute before the lock: within the T-90 freshness window, so it can
-        # price a recommendation.
+    def test_lock_freezes_a_pick_and_its_quote_even_after_market_movement(self):
+        # Captured one minute before the lock; this quote establishes the frozen Vegas line.
         self._insert_line("2026-10-14T16:29:00Z", 1.5)
         self._insert_line("2026-10-14T16:00:00Z", 1.5)
         report = lock_feed(self.con, feed(), LOCK_AT)
@@ -488,11 +576,20 @@ class NHLModelLocks(unittest.TestCase):
 
         # The quote itself is frozen, and it is the one captured at lock.
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_frozen_quotes").fetchone()[0], 1)
-        exported = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
-        self.assertTrue(exported["priced"])
-        self.assertTrue(exported["qualifies"])
-        self.assertTrue(exported["quote_fresh"])
-        self.assertEqual(exported["quote_age_seconds"], 60)
+        model = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]
+        exported = model["pick"]
+        self.assertEqual(model["pick_status"], "selected")
+        for field in ("priced", "qualifies", "price", "quote_fresh", "quote_age_seconds",
+                      "market_probability", "edge", "expected_value"):
+            self.assertNotIn(field, exported)
+        audit = self.con.execute(
+            "SELECT price,quote_age_seconds,market_probability,edge,expected_value "
+            "FROM nhl_model_picks WHERE model_key='B7_elo_xg_poisson'").fetchone()
+        self.assertEqual(audit["price"], 200)
+        self.assertEqual(audit["quote_age_seconds"], 60)
+        self.assertIsNotNone(audit["market_probability"])
+        self.assertIsNotNone(audit["edge"])
+        self.assertIsNotNone(audit["expected_value"])
         self.assertEqual(exported["protocol_version"], "legacy-immediate")
         self.assertEqual(exported["quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
         self.assertEqual(exported["quote"]["home_puck_line"], 1.5)
@@ -503,6 +600,9 @@ class NHLModelLocks(unittest.TestCase):
         self._insert_line("2026-10-14T17:00:00Z", -1.5)
         repeat = lock_feed(self.con, feed(), LOCK_AT + dt.timedelta(minutes=1))
         self.assertEqual((repeat["locked_rows"], repeat["pick_rows"], repeat["already_picked"]), (0, 0, 0))
+        after_market_move = export_locked(self.con, 2026)["games"][0]["models"]["B7_elo_xg_poisson"]
+        self.assertEqual(after_market_move["pick"]["side"], "home")
+        self.assertEqual(after_market_move["locked_quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
         self.assertEqual({row[0] for row in self.con.execute("SELECT line_captured_at_utc FROM nhl_model_picks")},
                          {"2026-10-14T16:29:00Z"})
         self.assertEqual({row[0] for row in self.con.execute("SELECT captured_at_utc FROM nhl_frozen_quotes")},
@@ -519,13 +619,53 @@ class NHLModelLocks(unittest.TestCase):
         grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "d" * 64, "fixture")
         model = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]
         pick = model["pick"]
-        # Rule 1: the away +1.5 cover clears the printed edge, so it is the pick — not
-        # the under total the old max-EV selector preferred. Official 3-2 is a 1-goal
-        # home win, so away +1.5 covers.
-        self.assertEqual((pick["market"], pick["side"], pick["line"], pick["price"]),
-                         ("spread", "away", 1.5, -240))
+        # Rule 1: the away +1.5 cover clears the printed edge. Official 3-2 is a
+        # one-goal home win, so away +1.5 covers.
+        self.assertEqual((pick["market"], pick["side"], pick["line"]),
+                         ("spread", "away", 1.5))
+        self.assertEqual(pick["quote"]["away_puck_price"], -240)
         self.assertEqual(model["grade"]["official_winner"], "home")
         self.assertTrue(pick["result"]["won"])
+
+    def test_all_three_models_keep_independent_picks_and_grades(self):
+        payload = feed()
+        models = payload["games"][0]["models"]
+        models["B3_elo"]["projected_goal_differential_home"] = 0.3
+        models["B3_elo"]["home_win_probability"] = 0.6
+        models["B5_xg_poisson"]["projected_goal_differential_home"] = 0.6
+        models["B5_xg_poisson"]["home_win_probability"] = 0.65
+        models["B7_elo_xg_poisson"]["projected_goal_differential_home"] = 0.6
+        models["B7_elo_xg_poisson"]["home_win_probability"] = 0.45
+        models["B7_elo_xg_poisson"]["projected_total_goals"] = 5.8
+        self._insert_line("2026-10-14T16:29:00Z", -1.5)
+        lock_feed(self.con, payload, LOCK_AT)
+        result = normalize_official_result(GAME_ID, final_document())
+        grade_result(self.con, GAME_ID, result, LOCK_AT + dt.timedelta(days=1), "a" * 64, "fixture")
+
+        exported = export_locked(self.con, 2026)["games"][0]["models"]
+        self.assertEqual(set(exported), set(MODEL_KEYS))
+        picks = {key: exported[key]["pick"] for key in MODEL_KEYS}
+        self.assertEqual((picks["B3_elo"]["market"], picks["B3_elo"]["side"], picks["B3_elo"]["line"]),
+                         ("spread", "away", 1.5))
+        self.assertEqual((picks["B5_xg_poisson"]["market"], picks["B5_xg_poisson"]["side"]),
+                         ("ml", "home"))
+        self.assertEqual((picks["B7_elo_xg_poisson"]["market"], picks["B7_elo_xg_poisson"]["side"],
+                          picks["B7_elo_xg_poisson"]["line"]), ("total", "over", 5.5))
+        self.assertTrue(picks["B3_elo"]["result"]["won"])
+        self.assertTrue(picks["B5_xg_poisson"]["result"]["won"])
+        self.assertFalse(picks["B7_elo_xg_poisson"]["result"]["won"])
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 3)
+
+    def test_official_pick_settlement_covers_wins_losses_and_pushes(self):
+        result = {"official_home_goals": 3, "official_away_goals": 2, "official_winner": "home"}
+        self.assertEqual(grade_pick({"market": "ml", "side": "home", "line": None}, result)["settlement"], "won")
+        self.assertEqual(grade_pick({"market": "ml", "side": "away", "line": None}, result)["settlement"], "lost")
+        self.assertEqual(grade_pick({"market": "spread", "side": "away", "line": 1.5}, result)["settlement"], "won")
+        self.assertEqual(grade_pick({"market": "spread", "side": "home", "line": -1.5}, result)["settlement"], "lost")
+        self.assertEqual(grade_pick({"market": "total", "side": "under", "line": 5.5}, result)["settlement"], "won")
+        self.assertEqual(grade_pick({"market": "total", "side": "over", "line": 5.5}, result)["settlement"], "lost")
+        self.assertEqual(grade_pick({"market": "total", "side": "over", "line": 5.0}, result),
+                         {"won": None, "push": True, "settlement": "push"})
 
     def test_a_whole_total_can_never_push_the_pick(self):
         # The leeway rules only ever name a half line (5.5 or 6.5), so a pick cannot push.
@@ -540,8 +680,10 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual((before["market"], before["side"], before["line"]), ("total", "over", 5.5))
         self.assertEqual(before["rule_version"], RULE_VERSION)
         self.assertEqual(before["push_probability"], 0)
-        # The book posted 6.0, so there is no price for the 5.5 line the model named.
-        self.assertFalse(before["priced"])
+        # The book posted 6.0, so the model's 5.5 selection has no posted price.
+        self.assertEqual(before["quote"]["total_line"], 6.0)
+        self.assertIsNone(self.con.execute(
+            "SELECT price FROM nhl_model_picks WHERE model_key='B7_elo_xg_poisson'").fetchone()[0])
         result = {"official_home_goals": 4, "official_away_goals": 2,
                   "statistical_home_goals": 4, "statistical_away_goals": 2,
                   "home_team": "WSH", "away_team": "MTL",
@@ -557,25 +699,30 @@ class NHLModelLocks(unittest.TestCase):
         lock_feed(self.con, feed(), LOCK_AT)
         self.con.commit()
         payload = locks_payload(os.path.join(self.tmp.name, "nhl-model.db"), 2026)
-        pick = payload["games"][0]["models"]["B7_elo_xg_poisson"]["pick"]
+        model = payload["games"][0]["models"]["B7_elo_xg_poisson"]
+        pick = model["pick"]
         self.assertEqual((pick["market"], pick["side"], pick["line"]), ("ml", "home", None))
-        self.assertTrue(pick["priced"])
-        self.assertTrue(pick["qualifies"])
+        self.assertEqual(model["pick_status"], "selected")
+        for field in ("priced", "qualifies", "price", "quote_fresh", "quote_age_seconds",
+                      "market_probability", "edge", "expected_value"):
+            self.assertNotIn(field, pick)
         self.assertIsNone(pick["result"])
         self.assertEqual(pick["quote"]["captured_at_utc"], "2026-10-14T16:29:00Z")
 
-    def test_a_stale_fallback_quote_locks_the_forecast_but_cannot_qualify_a_pick(self):
+    def test_a_stale_fallback_quote_does_not_suppress_the_pick(self):
         # The refresh failed, so the newest quote is an hour old. It is frozen and its real
-        # age is recorded, but it may not price a recommendation.
+        # age is recorded as audit metadata. The pick still follows the frozen hierarchy.
         self._insert_line("2026-10-14T15:30:00Z", -1.5)
         report = lock_feed(self.con, feed(), LOCK_AT)
         self.assertEqual((report["locked_rows"], report["pick_rows"]), (3, 3))
         pick = export_locked(self.con, 2026)["games"][0]["models"]["B3_elo"]["pick"]
-        self.assertTrue(pick["priced"])
-        self.assertFalse(pick["quote_fresh"])
-        self.assertFalse(pick["qualifies"])
-        self.assertEqual(pick["quote_age_seconds"], 3600)
-        self.assertGreater(pick["expected_value"], 0)  # the lean is real; the price is not fresh
+        self.assertIsNotNone(pick)
+        audit = self.con.execute(
+            "SELECT quote_age_seconds,expected_value FROM nhl_model_picks WHERE model_key='B3_elo'").fetchone()
+        self.assertEqual(audit["quote_age_seconds"], 3600)
+        self.assertGreater(audit["expected_value"], 0)
+        for field in ("quote_fresh", "quote_age_seconds", "expected_value", "edge"):
+            self.assertNotIn(field, pick)
 
     def test_backfill_preserves_existing_picks_and_freezes_the_quote_they_used(self):
         self._insert_line("2026-10-14T14:00:00Z", 1.5)
@@ -596,30 +743,30 @@ class NHLModelLocks(unittest.TestCase):
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_frozen_quotes").fetchone()[0], 1)
         self.assertEqual(backfill_picks(self.con, 2026)["pick_rows"], 0)
 
-    def test_backfill_fills_a_lock_row_that_has_no_pick_from_its_lock_time_line(self):
+    def test_backfill_does_not_reconstruct_a_missing_historical_pick(self):
         self._insert_line("2026-10-14T14:00:00Z", 1.5)
         lock_feed(self.con, feed(), LOCK_AT)
         self.con.execute("DROP TRIGGER nhl_pick_immutable_delete")
         self.con.execute("DELETE FROM nhl_model_picks")
         self.con.commit()
         report = backfill_picks(self.con, 2026)
-        self.assertEqual((report["pick_rows"], report["skipped"]), (3, 0))
-        picks = self.con.execute("SELECT * FROM nhl_model_picks").fetchall()
-        self.assertEqual({row["provenance"] for row in picks}, {"backfill"})
-        self.assertEqual({row["line_captured_at_utc"] for row in picks}, {"2026-10-14T14:00:00Z"})
-        self.assertEqual({row["selected_at_utc"] for row in picks}, {"2026-10-14T16:30:00Z"})
+        self.assertEqual((report["pick_rows"], report["missing_picks"]), (0, 3))
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 0)
+        exported = export_locked(self.con, 2026)["games"][0]["models"]
+        self.assertTrue(all(exported[key]["pick_status"] == "missing" for key in MODEL_KEYS))
         again = backfill_picks(self.con, 2026)
-        self.assertEqual((again["pick_rows"], again["already_picked"]), (0, 3))
+        self.assertEqual((again["pick_rows"], again["missing_picks"]), (0, 3))
 
     def test_preview_pick_is_derived_for_display_and_never_stored(self):
         early = dt.datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
         self._insert_line("2026-10-14T13:00:00Z", 1.5)
         preview_feed(self.con, feed(), early)
         previews = export_previews(self.con, 2026, early)
-        pick = previews[0]["models"]["B3_elo"]["pick"]
+        model = previews[0]["models"]["B3_elo"]
+        pick = model["pick"]
         self.assertEqual((pick["market"], pick["side"], pick["line"]), ("spread", "home", 1.5))
-        self.assertTrue(pick["priced"])
-        self.assertTrue(pick["qualifies"])
+        self.assertEqual(model["pick_status"], "selected")
+        self.assertTrue(model["preview"])
         self.assertIsNone(pick["result"])
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_model_picks").fetchone()[0], 0)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM nhl_frozen_quotes").fetchone()[0], 0)

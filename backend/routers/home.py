@@ -23,17 +23,18 @@ Selection rules
              locks), never the live schedule.
   playoffs   Top five teams by p_playoffs (ties by team code) from the latest complete run, found
              with the same helpers as /api/nfl/playoff-odds. `sims` is the run's own params_json n.
-  record     The adopted model's win-loss-push against the line for the latest locked season, from
-             projection_grades via nfl_model.record_payload; null with no graded game against a line.
+  record     The adopted model's Model Pick win-loss-push for the latest locked season, from
+             nfl_model.record_payload; null with no graded pick. no_pick and no_line are not counted.
   chain      player = the featured prop's player with the recency-weighted projection that
              prop_history returns (null when the prop is null); game = the featured game; market =
              the featured game's model win probability beside the market's, from the locked
              moneylines with the vig removed (null if either moneyline is missing); season = the top
              playoff team and the next three.
 
-Spread convention (nflverse): positive spread = home team favored. Our line is the projected home
-margin read the same way. The pick is the side our line likes against the market: the away team
-when our home margin is below the market spread, the home team when above; none when equal.
+Spread convention (nflverse): positive spread = home team favored. The featured pick is the Model
+Pick from nfl_model.model_pick_for (docs/MODEL-PICK-RULES.md, "NFL order"), built from the same
+frozen lock inputs as the Model page, so the two pages cannot disagree. pick_result is its grade
+once projection_grades holds the final.
 """
 from __future__ import annotations
 
@@ -48,6 +49,7 @@ from fastapi.responses import JSONResponse
 
 from _core import _db
 import check_nfl_schedule_scores as cs
+import nfl_metrics as mt
 from routers import nfl_model
 from routers import props as props_router
 from routers.models import nfl as nfl_models
@@ -169,21 +171,13 @@ def _no_vig(home_ml, away_ml) -> Optional[float]:
     return h / (h + a)
 
 
-def _pick(home: str, away: str, margin: float, spread: Optional[float]) -> Optional[Dict[str, Any]]:
-    if spread is None or margin == spread:
-        return None
-    if margin < spread:                  # we rate home lower than the market does: take the away side
-        return {"team": away, "line": spread, "gap": spread - margin}
-    return {"team": home, "line": -spread, "gap": margin - spread}
-
-
 def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
     rows = con.execute(
         "SELECT g.game_id, g.season, g.week, g.home, g.away, g.proj_home, g.proj_away, "
         "       g.proj_margin, g.proj_total, g.p_home_win, g.locked_at, g.market_spread, "
-        "       s.snapshot_id, s.spread_line, s.home_moneyline, s.away_moneyline, s.captured_at, "
-        "       pg.ats_result, pg.margin_err, sc.gameday, sc.gametime, sc.home_score, "
-        "       sc.away_score, sc.result "
+        "       g.market_total, s.snapshot_id, s.spread_line, s.total_line, s.home_moneyline, "
+        "       s.away_moneyline, s.captured_at, pg.margin_err, pg.actual_home, pg.actual_away, "
+        "       sc.gameday, sc.gametime, sc.home_score, sc.away_score, sc.result "
         "FROM game_projections g "
         "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
         "JOIN nfl_schedule sc ON sc.game_id = g.game_id "
@@ -212,10 +206,16 @@ def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
     names = {x[0]: x[1] for x in con.execute(
         "SELECT team, team_name FROM nfl_teams WHERE season = ?", (r["season"],))}
     snap = r["snapshot_id"] is not None
-    spread = _f(r["spread_line"] if snap else r["market_spread"])
+    # The frozen lines, COALESCE(snapshot, lock row): the same inputs the Model page and grader use.
+    spread = _f(r["spread_line"] if r["spread_line"] is not None else r["market_spread"])
+    total = _f(r["total_line"] if r["total_line"] is not None else r["market_total"])
     margin = _f(r["proj_margin"])
     final = (r["home_score"] is not None and r["away_score"] is not None and r["result"] is not None)
     has_scores = r["proj_home"] is not None and r["proj_away"] is not None
+    pick = nfl_model.model_pick_for(nfl_model.StrengthTiers(con, r["season"]), r["gameday"],
+                                    r["home"], r["away"], spread, total, margin,
+                                    _f(r["proj_total"]))
+    graded = r["margin_err"] is not None
     game = {
         "game_id": r["game_id"], "season": r["season"], "week": r["week"],
         "home": r["home"], "away": r["away"],
@@ -226,9 +226,9 @@ def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
         "our_margin": margin, "our_total": _f(r["proj_total"]),
         "p_home_win": _f(r["p_home_win"]),
         "market_spread": spread,
-        "pick": _pick(r["home"], r["away"], margin, spread),
+        "pick": pick,
         "final": {"home": _f(r["home_score"]), "away": _f(r["away_score"])} if final else None,
-        "pick_result": r["ats_result"] if final else None,
+        "pick_result": mt.grade_pick(pick, r["actual_home"], r["actual_away"]) if graded else None,
         "model_label": nfl_model.describe(None, nfl_model.ADOPTED)["label"],
         "source": {"projection": "locked projection, %s" % nfl_model.ADOPTED,
                    "line": "nfl_line_snapshots" if snap else "lock row",
@@ -241,8 +241,8 @@ def featured_game(con, now: dt.datetime) -> Dict[str, Any]:
 # ---------------------------------------------------------------- record
 
 def featured_record(con) -> Dict[str, Any]:
-    """Adopted model's against-the-line tally for the latest locked season (nfl_model.record_payload).
-    `games` counts win + loss + push only; a graded game with no pick or no line is not in it."""
+    """Adopted model's Model Pick tally for the latest locked season (nfl_model.record_payload).
+    `games` counts win + loss + push only; no_pick and no_line are not in it."""
     row = con.execute("SELECT MAX(g.season) FROM game_projections g "
                       "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
                       "WHERE g.league = 'nfl' AND g.locked = 1").fetchone()
@@ -250,12 +250,12 @@ def featured_record(con) -> Dict[str, Any]:
         return {"record": None, "reason": "no locked NFL projection exists"}
     season = int(row[0])
     mine = [r for r in nfl_model.record_payload(con, season) if r["version"] == nfl_model.ADOPTED]
-    if not mine or not mine[0]["ats"]:
+    if not mine or not mine[0]["pick"]:
         return {"record": None, "reason": "no graded game for the adopted model in %d" % season}
-    ats = mine[0]["ats"]
-    w, l, p = ats["win"], ats["loss"], ats["push"]
+    tally = mine[0]["pick"]
+    w, l, p = tally["win"], tally["loss"], tally["push"]
     if w + l + p == 0:
-        return {"record": None, "reason": "no graded game against a line for the adopted model"}
+        return {"record": None, "reason": "no graded Model Pick for the adopted model"}
     return {"record": {"season": season, "win": w, "loss": l, "push": p, "games": w + l + p,
                        "model_label": mine[0]["label"],
                        "source": {"table": "projection_grades", "model_version": nfl_model.ADOPTED}},

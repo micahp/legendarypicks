@@ -30,7 +30,7 @@ export type FeaturedGame = {
   our_total: number | null
   p_home_win: number | null
   market_spread: number | null
-  pick: { team: string; line: number; gap: number } | null
+  pick: { market: string | null; side: string | null; line: number | null; rule: number | null; status: string; label: string } | null
   final: { home: number; away: number } | null
   pick_result: string | null
   model_label: string

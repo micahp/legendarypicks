@@ -515,6 +515,8 @@ def main() -> None:
     # backfill is the same shape — run_league() calls espn._get directly.
     espn.set_retry_waits((5.0, 30.0, 120.0))
     espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "0.5")))
+    # Batch job: pause at ESPN's per-host window rather than raise (the shared default refuses).
+    espn.set_on_exhausted("sleep")
     espn.set_disk_cache(
         os.environ.get("LP_ESPN_CACHE_DIR")
         or os.path.join(os.path.dirname(os.path.abspath(__file__)),

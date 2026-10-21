@@ -21,6 +21,8 @@ interface FbsGame {
   home_team: string
   away_team: string
   neutral_site: boolean
+  home_record?: string | null
+  away_record?: string | null
   result: { home_score: number; away_score: number; home_win: boolean } | null
   models: Record<string, ModelProjection>
 }
@@ -155,12 +157,6 @@ export default function FbsModelTab() {
         </div>
       </header>
 
-      <p className="text-xs text-zinc-500">
-        Predictions only. No NCAAF moneyline or spread price feed is captured yet, so nothing here is a
-        qualifying wager. Win probabilities and model fair odds. The record counts only graded
-        projections.
-      </p>
-
       {payload.state !== 'available' ? (
         <p className="py-10 text-sm text-zinc-500">No projections for {payload.season} yet.</p>
       ) : null}
@@ -183,12 +179,14 @@ export default function FbsModelTab() {
                 <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                   <Side
                     team={game.away_team}
+                    record={game.away_record}
                     probability={forecast.p_away}
                     fair={forecast.fair_away}
                     favoured={!homeFavoured}
                   />
                   <Side
                     team={game.home_team}
+                    record={game.home_record}
                     probability={forecast.p_home}
                     fair={forecast.fair_home}
                     favoured={homeFavoured}
@@ -196,9 +194,6 @@ export default function FbsModelTab() {
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
                   <Metric label="Venue" value={game.neutral_site ? 'Neutral site' : `${game.home_team} home`} />
                 </div>
-                {forecast.fitted_through ? (
-                  <div className="mt-3 text-xs text-zinc-500">fitted through {forecast.fitted_through}</div>
-                ) : null}
               </article>
             )
           })}
@@ -275,12 +270,12 @@ export default function FbsModelTab() {
   )
 }
 
-function Side({ team, probability, fair, favoured }: {
-  team: string; probability: number; fair: number | null; favoured: boolean
+function Side({ team, record, probability, fair, favoured }: {
+  team: string; record?: string | null; probability: number; fair: number | null; favoured: boolean
 }) {
   return (
     <div className="min-w-0">
-      <div className="truncate text-sm text-zinc-200">{team}</div>
+      <div className="truncate text-sm text-zinc-200">{team}{record && <span className="ml-1.5 text-xs text-zinc-500">{record}</span>}</div>
       <div className="mt-0.5 tabular-nums text-zinc-100">
         <span className={favoured ? 'font-semibold' : 'text-zinc-400'}>{pct(probability)}</span>
         <span className="ml-2 text-xs text-zinc-500">{price(fair)}</span>

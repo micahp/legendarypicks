@@ -184,6 +184,42 @@ def _db():
     return con
 
 
+# Research (CP4): pre-match count and total-games distributions frozen when a lock is created.
+# Written only by tennis_count_distributions.store_distributions, once per new lock. Old locks
+# have no rows here and are never backfilled. Rows are immutable once written.
+# Dev-only: init() does not create this table. ensure_distribution_schema() creates it, and
+# tennis_lock_sweep calls that only for the dev database (see tennis_lock_sweep.prepare_distributions).
+DISTRIBUTION_SCHEMA = """
+CREATE TABLE IF NOT EXISTS tennis_model_lock_distributions(
+  league        TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_id       TEXT NOT NULL,
+  cell          TEXT NOT NULL CHECK(cell IN ('aces','double_faults','total_games')),
+  side          TEXT NOT NULL CHECK(side IN ('home','away','match')),
+  model_version TEXT NOT NULL,
+  locked_at     TEXT NOT NULL,
+  parameters    TEXT NOT NULL,
+  support_start INTEGER NOT NULL,
+  pmf           TEXT NOT NULL,
+  trimmed_mass  REAL NOT NULL,
+  PRIMARY KEY(league, game_id, cell, side)
+);
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_update
+BEFORE UPDATE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_delete
+BEFORE DELETE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
+"""
+
+
+def ensure_distribution_schema(con):
+    con.executescript(DISTRIBUTION_SCHEMA)
+
+
 def init(con=None):
     if con is not None:
         con.executescript(SCHEMA)
@@ -601,13 +637,24 @@ def save_tennis_ranking_spine(tour, identities, con=None):
                     raise ValueError(f"duplicate existing {tour} ESPN id {source_id}")
                 by_id[source_id] = row
             by_name.setdefault(_tennis_name_key(row["name"]), []).append(row)
+        # A new ESPN id may claim exactly one same-name row that has no ESPN id yet: the
+        # publisher roster ingest (ingest_tennis_players) creates those for players outside
+        # the top 150 and binds the other way by the same unique-name rule. Refusing here
+        # failed every DEV run once such a player (Djere, Andreescu on 2026-10-20) entered
+        # the top 150. A row already holding a different ESPN id, or two candidate rows,
+        # is still a conflict: that is a duplicate for spine_merge, not a binding.
+        adopted = set()
         for source_id, name in zip(ids, names):
             current = by_id.get(source_id)
             conflicts = [
                 row for row in by_name.get(_tennis_name_key(name), [])
                 if current is None or row["id"] != current["id"]
             ]
-            if conflicts:
+            if (current is None and len(conflicts) == 1
+                    and not str(conflicts[0]["espn_id"] or "")):
+                by_id[source_id] = conflicts[0]
+                adopted.add(source_id)
+            elif conflicts:
                 raise ValueError(
                     f"{tour} ESPN id {source_id} conflicts with another stored identity by name"
                 )
@@ -619,8 +666,10 @@ def save_tennis_ranking_spine(tour, identities, con=None):
             current = by_id.get(source_id)
             if current:
                 con.execute(
-                    "UPDATE players SET name=?,team=NULL,active=?,updated_at=? WHERE id=?",
-                    (identity["name"], int(identity["active"]), updated_at, current["id"]),
+                    "UPDATE players SET name=?,team=NULL,espn_id=?,active=?,updated_at=?"
+                    " WHERE id=?",
+                    (identity["name"], source_id, int(identity["active"]), updated_at,
+                     current["id"]),
                 )
             else:
                 con.execute(
@@ -635,7 +684,8 @@ def save_tennis_ranking_spine(tour, identities, con=None):
             raise ValueError(f"{tour} active spine count mismatch after publication")
         if own:
             con.commit()
-        return {"published": 150, "inserted": sum(1 for value in ids if value not in by_id)}
+        return {"published": 150, "inserted": sum(1 for value in ids if value not in by_id),
+                "adopted": len(adopted)}
     finally:
         if own:
             con.close()
