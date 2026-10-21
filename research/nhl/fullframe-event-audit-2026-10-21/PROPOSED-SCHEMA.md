@@ -1,4 +1,9 @@
-# Proposed NHL full-frame event schema
+# NHL full-frame event schema v1 (approved)
+
+**Decision:** approved on 2026-10-21 for preliminary chronological simulator
+design. Use only component-level `ACCEPT` records and preserve quarantined or
+rejected records with their reason codes. The full-frame reconciliation and
+eligible populations are in [REPORT-FULLFRAME.md](REPORT-FULLFRAME.md).
 
 This schema preserves publisher values and audit results as separate layers. It
 does not turn every game into one all-or-nothing usability flag. Team outcomes,
@@ -40,9 +45,12 @@ One row per PBP play, including events outside the shot family.
 | Field | Type | Source/status | Notes |
 |---|---|---|---|
 | `game_id`, `source_event_id` | string | Direct | Composite source key. Missing or duplicate IDs are explicit issues. |
+| `publisher_sort_order` | integer | Direct | Publisher sequence key; verified present, unique, and strictly increasing across all 1,510,104 full-frame plays. |
+| `source_play_index` | integer | Derived from source array order | Zero-based position in the PBP `plays` array; retained as an audit key and does not repair an invalid publisher order. |
 | `event_type` | string | Direct | NHL `typeDescKey`; preserve unknown values. |
 | `period_number`, `period_type` | integer, enum | Direct | `REG`, `OT`, `SO` when published and valid. |
 | `time_in_period` | `MM:SS` string | Direct | Event clock, not continuous elapsed wall time. |
+| `source_order_disposition`, `period_number_disposition` | enum | Derived | Publisher ordering and period numbering have separate quality gates. Period-number joins are quarantined in games with a period regression. |
 | `event_owner_team_id` | integer, nullable | Direct | Must resolve to one of the two PBP team IDs. |
 | `situation_code` | four-character string, nullable | Direct | Retain raw digits in published order: away goalie, away skaters, home skaters, home goalie. |
 | `strength_state` | enum, nullable | Derived | Parse from the raw situation code for regulation/overtime; shootout events are `NOT_APPLICABLE`. Preserve the raw code alongside it. |
@@ -50,8 +58,18 @@ One row per PBP play, including events outside the shot family.
 | `situation_deployment_disposition` | enum | Derived from raw situation and accepted shifts | A match supports only the recorded event-time deployment comparison. |
 | `quality_reason_codes` | array of strings | Derived | Append-only issue references; never silently repair source values. |
 
-The source provides discrete events. It does not provide continuous puck
-position, player movement, possession, or a complete latent game state.
+Within each game, order accepted events by `publisher_sort_order` and retain
+`source_play_index` as an audit key; keep the publisher clock and period as
+separate fields. Do not sort on event IDs or clock alone. If the publisher order
+key is missing, duplicated, or decreasing, quarantine chronology rather than
+using the array index to repair it. All full-frame `sortOrder` values are
+unique and strictly increasing. Five games contain period-number regressions;
+their source ordering remains usable, while period-number joins to shifts are
+quarantined and listed by reason code. A simulator may derive a nominal elapsed
+clock under an explicit period-length convention; stoppage duration between
+events is not observed. The source provides discrete events. It does not
+provide continuous puck position, player movement, possession, or a complete
+latent game state.
 
 ## 3. `shot_event`
 

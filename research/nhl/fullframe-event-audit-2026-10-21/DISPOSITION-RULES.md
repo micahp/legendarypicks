@@ -21,6 +21,13 @@ quarantined.
 - `event_disposition=ACCEPT` when event type, source event ID, period type and
   event clock are present and valid. `QUARANTINE` missing type/ID/timeline;
   `REJECT` duplicate source event IDs.
+- Order the chronological event stream by the publisher's `sortOrder`; retain
+  the zero-based source play index as an audit key. Accept publisher chronology
+  only when sort orders are present, unique, and strictly increasing. A missing,
+  duplicated, or decreasing sort order quarantines chronology; do not use the
+  array index to repair it. If period numbers regress, quarantine period-number
+  joins to shifts for that game while keeping independently reconciled team
+  counts and publisher event order available.
 - Event owner, shooter, goalie, coordinates, shot type, and penalty fields each
   have their own disposition. A valid event row can remain accepted for one
   purpose while another field is quarantined.
