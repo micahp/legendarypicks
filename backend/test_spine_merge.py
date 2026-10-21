@@ -16,7 +16,40 @@ sys.path.insert(0, HERE)
 
 import spine_merge as sm
 
+def _real_data_dir():
+    """The data directory holding the real databases, even from a worktree.
+
+    A worktree's backend/data can hold a placeholder picks.db (an empty schema stub), and
+    pinning against that measured the stub, not the schema that ships. So a picks.db with
+    no players rows is not real; fall back to the main checkout via git's common dir.
+    """
+    local = os.path.join(HERE, "data")
+    try:
+        con = sqlite3.connect("file:{}?mode=ro".format(os.path.join(local, "picks.db")), uri=True)
+        try:
+            if con.execute("SELECT COUNT(*) FROM players").fetchone()[0] > 0:
+                return local
+        finally:
+            con.close()
+    except sqlite3.Error:
+        pass
+    try:
+        import subprocess
+        # --path-format=absolute needs git 2.31; this host's git is older, so resolve the
+        # (possibly relative) answer against HERE ourselves.
+        common = subprocess.run(
+            ["git", "-C", HERE, "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return local
+    common = os.path.normpath(os.path.join(HERE, common))
+    return os.path.join(os.path.dirname(common), "backend", "data")
+
+
+# REAL_DB is spine_merge's own default path (the fallback test asserts it); REAL_DATA is
+# where the schema pins read the real databases, which differs inside a worktree.
 REAL_DB = os.path.join(HERE, "data", "picks.db")
+REAL_DATA = _real_data_dir()
 
 
 def _fixture(path):
@@ -58,7 +91,27 @@ class ColumnDiscoveryTests(unittest.TestCase):
         con = _fixture(":memory:")
         self.assertEqual([t for t, _c in sm.referencing_columns(con) if t == "players"], [])
 
-    @unittest.skipUnless(os.path.isfile(REAL_DB), "needs the real database")
+    def test_sportsdataverse_log_player_id_is_discovered(self):
+        import migrate_schema
+
+        con = _fixture(":memory:")
+        migration = next(
+            item for item in migrate_schema.MIGRATIONS
+            if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+        )
+        table = next(
+            item for item in migration.objects
+            if item.object_type == "table"
+            and item.name == "player_game_logs_sportsdataverse"
+        )
+        con.execute(table.sql)
+        self.assertIn(
+            ("player_game_logs_sportsdataverse", "player_id"),
+            sm.referencing_columns(con),
+        )
+
+    @unittest.skipUnless(os.path.isfile(os.path.join(REAL_DATA, "picks.db")),
+                         "needs the real database")
     def test_the_installed_schemas_are_pinned_and_agree(self):
         """Pinned deliberately, and checked on BOTH databases.
 
@@ -100,19 +153,46 @@ class ColumnDiscoveryTests(unittest.TestCase):
         # 2026-09-07: both gained `published_roster.player_id`, the roster-owned identity
         # binding v0.9.3 added. Discovery picking it up is the point: a merge that did not
         # repoint it would leave roster rows naming a player id that no longer exists.
-        expected = {"picks.db": 19, "picks.dev.db": 20}
-        for name, count in expected.items():
-            path = os.path.join(HERE, "data", name)
+        # 2026-10-21: re-pinned as exact SETS, measured on the real databases (prod 27,
+        # dev 30). The 19/20 counts had been red against both since well before this, and
+        # in worktrees they ran against a placeholder picks.db with 5 columns, so the
+        # failure read as "environment". A count says the schema changed; a set says
+        # which column, and that is the question this test exists to force.
+        # dev-only: nfl_player_birth_dates, nfl_published_fantasy_points, and
+        # player_game_logs_sportsdataverse until the NBA migration runs on prod (then
+        # move it into `shared`).
+        shared = {
+            "injury_reports", "name_alias", "nfl_adp", "nfl_depth_chart",
+            "nfl_draft_notes", "nfl_dst_stats", "nfl_mock_draft_picks",
+            "nfl_player_projections", "nfl_snap_counts", "player_game_availability",
+            "player_game_logs", "player_game_logs_fotmob", "player_game_logs_ufcstats",
+            "player_game_logs_usopen", "player_game_shares", "player_projection_grades",
+            "player_projections", "player_source_ids", "player_stats",
+            "player_team_shares", "props", "published_roster", "roster_memberships",
+            "roster_snap", "tennis_atp_players", "tennis_ranking_snapshots",
+            "tennis_wta_players",
+        }
+        expected = {
+            "picks.db": shared,
+            "picks.dev.db": shared | {"nfl_player_birth_dates", "nfl_published_fantasy_points",
+                                      "player_game_logs_sportsdataverse"},
+        }
+        checked = 0
+        for name, tables in expected.items():
+            path = os.path.join(REAL_DATA, name)
             if not os.path.isfile(path):
                 continue
             con = sqlite3.connect("file:{}?mode=ro".format(path), uri=True)
             try:
                 found = sm.referencing_columns(con)
-                self.assertEqual(len(found), count,
-                                 "{} has {} player_id columns, expected {}: {}".format(
-                                     name, len(found), count, found))
             finally:
                 con.close()
+            want = {(table, "player_id") for table in tables}
+            self.assertEqual(set(found), want,
+                             "{} player_id columns differ: added {}, missing {}".format(
+                                 name, sorted(set(found) - want), sorted(want - set(found))))
+            checked += 1
+        self.assertGreater(checked, 0, "no real database found under {}".format(REAL_DATA))
 
 
 class MergeTests(unittest.TestCase):

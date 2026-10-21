@@ -12,6 +12,7 @@ import unittest
 
 import migrate_schema
 from ingest_nfl_logs import ensure_table
+import scripts_split_provider_logs
 
 
 LEGACY_LOG_DDL = """
@@ -104,6 +105,7 @@ class SchemaMigrationTests(unittest.TestCase):
     def _create_legacy(self):
         with sqlite3.connect(self.db_path) as connection:
             connection.execute(LEGACY_LOG_DDL)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
@@ -114,6 +116,7 @@ class SchemaMigrationTests(unittest.TestCase):
     def _create_current(self):
         with sqlite3.connect(self.db_path) as connection:
             ensure_table(connection)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
@@ -121,7 +124,8 @@ class SchemaMigrationTests(unittest.TestCase):
             connection.execute(LEGACY_PROP_GAMES_DDL)
             connection.execute(LEGACY_TENNIS_GRADES_DDL)
             for migration in migrate_schema.MIGRATIONS:
-                if migration.table in ("player_game_logs", "app_schema_migrations"):
+                if migration.migration_id == "20260728_001_player_game_logs_game_type" \
+                        or migration.table == "app_schema_migrations":
                     continue
                 if (migration.create_sql and not migrate_schema._table_exists(
                         connection, migration.table)):
@@ -135,8 +139,13 @@ class SchemaMigrationTests(unittest.TestCase):
                     if addition.contract.name not in names:
                         connection.execute(addition.sql)
                 for item in migration.objects:
-                    if migrate_schema._schema_object_sql(
-                            connection, item.object_type, item.name) is None:
+                    actual = migrate_schema._schema_object_sql(
+                        connection, item.object_type, item.name)
+                    if actual is not None and item.object_type == "view":
+                        # A later migration may replace a view; current is its last one.
+                        connection.execute(f"DROP VIEW {item.name}")
+                        actual = None
+                    if actual is None:
                         connection.execute(item.sql)
 
     def _backup(self, name):
@@ -250,6 +259,43 @@ class SchemaMigrationTests(unittest.TestCase):
                 connection.execute(
                     "DELETE FROM tennis_model_grades WHERE game_id='fixture'"
                 )
+
+    def test_nba_sportsdataverse_migration_creates_empty_tables_and_replaces_view(self):
+        import player_game_logs_view
+        import scripts_split_provider_logs
+
+        with sqlite3.connect(self.db_path) as connection:
+            ensure_table(connection)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
+            connection.executescript(player_game_logs_view.PREVIOUS_DDL_VIEW)
+
+        migration = next(
+            item for item in migrate_schema.MIGRATIONS
+            if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+        )
+        migrate_schema.apply_database(
+            self.db_path,
+            migrations=(migration,),
+            backup_destination=self._backup("nba-sdv.bak"),
+        )
+        with sqlite3.connect(self.db_path) as connection:
+            for table in (
+                "nba_sportsdataverse_releases",
+                "nba_sportsdataverse_games",
+                "player_game_logs_sportsdataverse",
+            ):
+                self.assertEqual(
+                    connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0],
+                    0,
+                    table,
+                )
+            view_columns = {
+                row[1] for row in connection.execute(
+                    "PRAGMA table_info(player_game_logs_all)"
+                )
+            }
+            self.assertIn("sportsdataverse_stats", view_columns)
+            self.assertIn("appearance_status", view_columns)
 
     def test_correct_unregistered_schema_is_adopted(self):
         self._create_current()

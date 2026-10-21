@@ -70,12 +70,16 @@ _MARKET_STAT_KEY = {
             "pitcher_walks": "BB", "total_pitcher_walks": "BB",
             "earned_runs": "earned_runs"},
     "nba": {"points": "PTS", "rebounds": "REB", "assists": "AST", "threes": "3PM",
+            "total_made_3_points_shots": "3PM", "total_made_3_point_shots": "3PM",
             "steals": "STL", "blocks": "BLK", "turnovers": "TO",
+            "pra": ["PTS", "REB", "AST"],
+            "points_rebounds_assists": ["PTS", "REB", "AST"],
+            "field_goals_made": "FGM", "total_field_goals_made": "FGM", "fgm": "FGM",
+            "free_throws_made": "FTM", "total_free_throws_made": "FTM", "ftm": "FTM",
             # ESPN publishes the three components on every box score. Keep the
             # chart contract on those fields instead of requiring an ingest to
             # precompute a second, competing PRA value.
-            "points_rebounds_assists": ["PTS", "REB", "AST"],
-            "pra": ["PTS", "REB", "AST"]},
+            },
     "nhl": {"goals": "goals", "assists": "assists", "points": "points",
             "shots": "shots", "shots_on_goal": "shots", "saves": "saves",
             "hits": "hits", "blocked_shots": "blockedShots",

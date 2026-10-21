@@ -11,6 +11,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -76,6 +77,31 @@ class TheShippedRegistryIsValid(unittest.TestCase):
         self.assertEqual(job["steps"], [["home_prop_refresh.py", "--apply"]])
         self.assertEqual(job["freshness"][0]["table"], "home_prop_cache")
 
+    def test_nba_recent_player_logs_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_player_logs")
+        self.assertEqual(job["databases"], ["dev"])
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "espn")
+        self.assertEqual(job["steps"], [["ingest_nba_logs.py", "--recent-days", "14"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_player_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
+    def test_sportsdataverse_nba_boxscores_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS
+                   if j["id"] == "nba_sportsdataverse_logs")
+        self.assertEqual(job["databases"], ["dev"])
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "sportsdataverse")
+        self.assertEqual(job["steps"], [["ingest_nba_sportsdataverse.py", "--recent-seasons", "2"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_sportsdataverse_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
     def test_a_job_with_no_freshness_target_is_refused(self):
@@ -133,6 +159,49 @@ class OneEngineNotTwo(unittest.TestCase):
         for target in ingest_registry.freshness_targets():
             self.assertIn("job", target)
             self.assertIn(target["job"], ingest_registry.job_ids())
+
+
+class DatabaseScopedJobs(unittest.TestCase):
+    def test_prod_database_does_not_select_the_nba_jobs_or_list_them_as_runnable(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prod_path = os.path.join(tmp, "picks.db")
+            open(prod_path, "wb").close()
+            with mock.patch.dict(os.environ, {"LP_DB_PATH": prod_path}):
+                selected, excluded = run_props_ingest._select_jobs_for_database(
+                    ingest_registry.JOBS, os.environ["LP_DB_PATH"]
+                )
+                selected_ids = {job["id"] for job in selected}
+                excluded_ids = {job["id"] for job in excluded}
+                nba_ids = {"nba_player_logs", "nba_sportsdataverse_logs"}
+                self.assertTrue(nba_ids.isdisjoint(selected_ids))
+                self.assertTrue(nba_ids.issubset(excluded_ids))
+
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    self.assertEqual(run_ingest_jobs.main(["--list"]), 0)
+                listing = output.getvalue()
+                self.assertNotIn("nba_player_logs", listing)
+                self.assertNotIn("nba_sportsdataverse_logs", listing)
+                self.assertIn("skipped_scope=2 (database=prod)", listing)
+
+                for job_id in sorted(nba_ids):
+                    output = io.StringIO()
+                    with mock.patch.object(
+                        run_props_ingest, "_try_lock", return_value=io.StringIO()
+                    ), contextlib.redirect_stdout(output):
+                        self.assertEqual(
+                            run_ingest_jobs.main(
+                                ["--only", job_id, "--dry-run"]
+                            ),
+                            0,
+                        )
+                    self.assertIn(
+                        "Skipping {}: skipped_scope (database=prod allowed=dev)".format(job_id),
+                        output.getvalue(),
+                    )
 
 
 class TheMonitorFailsClosed(unittest.TestCase):

@@ -97,11 +97,55 @@ def test_tennis_spine_refresh_inserts_new_ids_without_name_matching(tmp_path, mo
     assert scoreboard_store.save_tennis_ranking_spine("atp", identities) == {
         "published": 150,
         "inserted": 5,
+        "adopted": 0,
     }
     with sqlite3.connect(db) as con:
         assert con.execute("SELECT COUNT(*) FROM players WHERE league='atp'").fetchone()[0] == 155
         assert con.execute("SELECT COUNT(*) FROM players WHERE league='atp' AND active=1").fetchone()[0] == 150
         assert con.execute("SELECT active FROM players WHERE league='atp' AND espn_id='1'").fetchone()[0] == 0
+
+
+def test_tennis_spine_adopts_one_unbound_same_name_row(tmp_path, monkeypatch):
+    # The publisher roster ingest made "Player 151" with no ESPN id before ESPN ranked them.
+    db = tmp_path / "spine.db"
+    _ranking_db(db)
+    with sqlite3.connect(db) as con:
+        con.execute("INSERT INTO players(id,name,team,league,espn_id,active)"
+                    " VALUES(9001,'Player 151',NULL,'atp',NULL,0)")
+    monkeypatch.setenv("LP_DB_PATH", str(db))
+    identities = espn_client.tennis_ranking_identities_from_payload(
+        "atp", _identity_payload(start=2)
+    )
+
+    assert scoreboard_store.save_tennis_ranking_spine("atp", identities) == {
+        "published": 150,
+        "inserted": 0,
+        "adopted": 1,
+    }
+    with sqlite3.connect(db) as con:
+        assert con.execute("SELECT espn_id, active FROM players WHERE id=9001").fetchone() == ("151", 1)
+        assert con.execute("SELECT COUNT(*) FROM players WHERE league='atp'").fetchone()[0] == 151
+
+
+@pytest.mark.parametrize("rows", [
+    [(9001, "Player 151", "999")],                       # already bound to another ESPN id
+    [(9001, "Player 151", None), (9002, "Player 151", None)],  # two candidates
+])
+def test_tennis_spine_still_refuses_a_real_name_conflict(tmp_path, monkeypatch, rows):
+    db = tmp_path / "spine.db"
+    _ranking_db(db)
+    with sqlite3.connect(db) as con:
+        con.executemany("INSERT INTO players(id,name,team,league,espn_id,active)"
+                        " VALUES(?,?,NULL,'atp',?,0)", rows)
+    monkeypatch.setenv("LP_DB_PATH", str(db))
+    identities = espn_client.tennis_ranking_identities_from_payload(
+        "atp", _identity_payload(start=2)
+    )
+
+    with pytest.raises(ValueError, match="ESPN id 151 conflicts"):
+        scoreboard_store.save_tennis_ranking_spine("atp", identities)
+    with sqlite3.connect(db) as con:
+        assert con.execute("SELECT COUNT(*) FROM players WHERE espn_id='151'").fetchone()[0] == 0
 
 
 def _lcup_scoreboard():

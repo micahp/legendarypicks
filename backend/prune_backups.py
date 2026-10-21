@@ -107,8 +107,14 @@ def main(argv=None) -> int:
     documented = _documented_backups()
     protected = PROTECTED | documented
 
+    # `-wal` / `-shm` sidecars are never backups in their own right; they go with their
+    # backup as siblings below. Counted as candidates they took retention slots, so a
+    # sidecar could be "kept" while its backup was deleted, and then deleted itself as
+    # that backup's sibling: with --keep 1 the newest backup disappeared entirely.
     backups = sorted(
-        [p for p in DATA_DIR.iterdir() if p.is_file() and (".bak" in p.name or ".pre-" in p.name)],
+        [p for p in DATA_DIR.iterdir() if p.is_file()
+         and (".bak" in p.name or ".pre-" in p.name)
+         and not p.name.endswith(("-wal", "-shm"))],
         key=_sort_key,
     )
     # group by prefix, keep newest last
@@ -151,19 +157,26 @@ def main(argv=None) -> int:
         print("\ndry run -- pass --apply to delete")
         return 0
 
+    # A sidecar can be listed on its own and again as its backup's sibling, so a path may
+    # already be gone by the time it comes up; that is done, not an error. Any other failure
+    # is reported but does not stop the rest: a scheduled prune that halts on the first file
+    # leaves the disk to fill, which is the failure this tool exists to prevent.
     freed = 0
-    for path in to_delete:
+    failed = 0
+    for path in dict.fromkeys(to_delete):
         try:
             size = path.stat().st_size
             path.unlink()
             freed += size
             if args.verbose:
                 print(f"  deleted {path.name}")
+        except FileNotFoundError:
+            continue
         except OSError as exc:
+            failed += 1
             print(f"  ERROR deleting {path.name}: {exc}", file=sys.stderr)
-            return 1
     print(f"pruned {len(to_delete)} file(s), freed {freed / 1e6:.0f} MB")
-    return 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

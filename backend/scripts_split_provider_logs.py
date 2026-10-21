@@ -23,6 +23,11 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 
+from player_game_logs_view import (
+    DDL_VIEW as NBA_PROVIDER_DDL_VIEW,
+    ROTOWIRE_DDL_VIEW,
+)
+
 FOTMOB = "player_game_logs_fotmob"
 VIEW = "player_game_logs_all"
 
@@ -53,24 +58,13 @@ CREATE INDEX IF NOT EXISTS idx_pglf_league_date ON {FOTMOB}(league, game_date);
 # field's provenance is the column it was read from. The second leg carries appearances
 # only FotMob saw -- a LEFT JOIN alone would silently drop them, and SQLite has no FULL
 # OUTER JOIN.
-DDL_VIEW = f"""
-DROP VIEW IF EXISTS {VIEW};
-CREATE VIEW {VIEW} AS
-    SELECT e.player_id, e.league, e.season, e.game_no, e.game_id, e.game_date,
-           e.team, e.opponent, e.home_away, e.game_type,
-           e.stats AS espn_stats, f.stats AS fotmob_stats
-      FROM player_game_logs e
-      LEFT JOIN {FOTMOB} f
-        ON f.player_id = e.player_id AND f.game_date = e.game_date
-    UNION ALL
-    SELECT f.player_id, f.league, f.season, f.game_no, f.game_id, f.game_date,
-           f.team, f.opponent, f.home_away, f.game_type,
-           NULL AS espn_stats, f.stats AS fotmob_stats
-      FROM {FOTMOB} f
-     WHERE f.player_id IS NOT NULL
-       AND NOT EXISTS (SELECT 1 FROM player_game_logs e
-                        WHERE e.player_id = f.player_id AND e.game_date = f.game_date);
-"""
+DDL_VIEW = f"DROP VIEW IF EXISTS {VIEW};\n{NBA_PROVIDER_DDL_VIEW};"
+
+
+def _table_exists(con, name):
+    return con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone() is not None
 
 
 # The production columns of `player_game_logs`. Tests import this so a fixture
@@ -128,6 +122,12 @@ def main(argv=None):
         print("  check only -- nothing written")
         return 0
 
+    for required in ("player_game_logs_sportsdataverse", "nba_sportsdataverse_releases"):
+        if not _table_exists(con, required):
+            raise SystemExit(
+                "required schema is missing; apply migrate_schema.py first: " + required
+            )
+
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     backup = f"{args.db}.pre-provider-split-{stamp}.bak"
     con.execute("VACUUM INTO ?", (backup,))
@@ -151,7 +151,13 @@ def main(argv=None):
         "  AND f.season=player_game_logs.season"
         "  AND f.game_no IS player_game_logs.game_no)").rowcount
     con.commit()
-    con.executescript(DDL_VIEW)
+    view_ddl = DDL_VIEW
+    if con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' "
+        "AND name='player_game_logs_rotowire'"
+    ).fetchone():
+        view_ddl = f"DROP VIEW IF EXISTS {VIEW};\n{ROTOWIRE_DDL_VIEW};"
+    con.executescript(view_ddl)
     con.commit()
 
     after = report(con)

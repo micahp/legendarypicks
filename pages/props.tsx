@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
 import MatchForm from '../components/Props/MatchForm'
-import PropChart, { PropHistory } from '../components/Props/PropChart'
+import PropChart, { nbaSeasonStartYear, PropHistory } from '../components/Props/PropChart'
 import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
@@ -235,12 +235,15 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
   const [propChart, setPropChart] = useState<PropHistory | null>(null)
   const [propChartLoading, setPropChartLoading] = useState(false)
 
-  const openPropChart = async (gameLeague: string, playerId: number, market: string, line: number, side: string) => {
+  const openPropChart = async (gameLeague: string, gameDate: string,
+    playerId: number, market: string, line: number, side: string) => {
     const key = `${playerId}-${market}-${line}-${side}`
     if (openPropKey === key) { setOpenPropKey(null); setPropChart(null); setPropChartLoading(false); return }
     setOpenPropKey(key); setPropChart(null); setPropChartLoading(true)
     try {
       const params = new URLSearchParams({ player_id: String(playerId), market, line: String(line), side, league: gameLeague })
+      const season = gameLeague === 'nba' ? nbaSeasonStartYear(gameDate) : null
+      if (season !== null) params.set('season', String(season))
       const r = await fetch(`/api/props/history?${params}`)
       const d = await r.json()
       setPropChart(d.games?.length ? d : null)
@@ -447,7 +450,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
                                         expandedKey={hasOpenProp ? openPropKey : null}
                                         expandedContent={chartContent}
                                         onOpen={prop => openPropChart(
-                                          game.league, player.id, prop.market, prop.line, prop.side,
+                                          game.league, game.date, player.id, prop.market, prop.line, prop.side,
                                         )}
                                       />
                                     </div>

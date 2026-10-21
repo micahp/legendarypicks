@@ -1,0 +1,10 @@
+[Unit]
+Description=Prune Legendary Picks database backups daily, after the 05:19 and 05:23 timer backups
+
+[Timer]
+OnCalendar=*-*-* 06:30:00
+Persistent=true
+Unit=legendarypicks-prune-backups.service
+
+[Install]
+WantedBy=timers.target
