@@ -11,9 +11,17 @@ no fitting run may start on the strength of the revision.
 `docs/forecast-first-product-architecture-2026-10-20`, commit `123b3b49`) and its
 pre-signature amendment on 2024 cohort membership. Population, baselines, primary
 metric, decision thresholds, bootstrap settings and the recorded historical results
-are unchanged. What changes: the model structure (§6), the cohort's tuning-time
-membership rule (§2.2), the cohort's labelling (§2.3), and the evidence status of
-2025 (§9).
+are unchanged. What changes: the model structure (§6), the cohort's membership rule
+(§2.2), the cohort's labelling (§2.3), and the evidence status of 2025 (§9).
+
+**Revision 3 (2026-10-20).** Review amendments, still documentation only. §2.2 is
+restated so that membership is a property of the **target row's season** rather than
+of a run — the revision-2 wording applied one cut to a whole training block, which
+would itself have leaked for 2018–2022 rows — and gains an explicit 2018 boundary
+rule (`n_unclassifiable_2018`). §7 gains the matching assertions. §9 gains a
+definition of "frozen" that excludes retrospective reconstruction from the 2026
+confirmation. Population, baselines, metric, decision rule, bootstrap settings and
+recorded results are untouched again.
 
 Branch `research/fbs-direct-props-2026-10-20`. Parent evidence:
 `COHORT.md` (commit `9b3ab91e`) — on the pregame-definable **high-prior-volume QB**
@@ -54,39 +62,53 @@ cumulative volume before the target game ≥ that same threshold. Evaluated over
 committed cohort and is legitimate for 2025 targets: 2024 is strictly before every
 2025 game.
 
-### 2.2 Tuning-time membership — the look-ahead fix (amendment, required)
+### 2.2 Membership is a property of the row's season — the look-ahead fix
 
 That legitimacy does **not** extend backwards. At the point where a
-hyper-parameter is selected on **2024** CRPS, the 2024 season has not finished, so
-full-season 2024 volume is future information. Using the 2024 cut to define
-membership for a 2024 selection run is look-ahead leakage, and revision 1 did not
-rule it out.
+hyper-parameter is selected on **2024** CRPS the 2024 season is not finished, so
+full-season 2024 volume is future information for a 2024 target. Using the 2024 cut
+to classify 2024 rows is look-ahead leakage, and revision 1 did not rule it out.
 
-The rule is the **same membership policy shifted to the preceding season**, applied
-at every decision point:
+**The cut belongs to the target row's season, never to the run.** A row in season
+`S` is classified by season **S−1** full-season volume, with the top-quartile
+threshold recomputed on `S−1`; if the athlete has no volume in `S−1`, the fallback
+is strictly-trailing volume within `S` before that game, measured against that same
+`S−1` threshold. Applied across every season the protocol touches:
 
-| decision point | target rows | prior-season volume cut | fallback for athletes with no prior-season volume |
+| target rows | cut season | threshold | fallback for no prior-season volume |
 |---|---|---|---|
-| grid selection (§2.4 step 2) | 2024 | **2023** full-season volume, top-quartile threshold recomputed **on 2023** | strictly-trailing 2024 cumulative volume before the target game, against that same 2023 threshold |
-| `p_prior` estimation for selection | 2024 games only | **2023** cut, as above | as above |
-| refit (§2.4 step 3) and 2025 scoring | 2025 | **2024** full-season volume, threshold recomputed **on 2024** (the committed cut) | strictly-trailing 2025 cumulative volume before the target game |
+| 2025 evaluation (scoring) | 2024 | top quartile **on 2024** (the committed cut) | strictly-trailing 2025 before the target game |
+| 2024 — grid selection, `p_prior` for selection | 2023 | top quartile **on 2023** | strictly-trailing 2024 before the target game |
+| 2023 | 2022 | on 2022 | strictly-trailing 2023 |
+| 2022 | 2021 | on 2021 | strictly-trailing 2022 |
+| 2021 | 2020 | on 2020 | strictly-trailing 2021 |
+| 2020 | 2019 | on 2019 | strictly-trailing 2020 |
+| 2019 | 2018 | on 2018 | strictly-trailing 2019 |
+| 2018 | **none available** | — | **unclassifiable** — boundary rule below |
 
-For any earlier season `S` used as a target in a diagnostic or sensitivity run, the
-cut is season **S−1** volume with the threshold recomputed on `S−1`, and the
-fallback is strictly-trailing volume within `S` before the target game.
+**Boundary rule at 2018.** The Phase-5 cache begins at 2018, so 2018 rows have no
+`S−1 = 2017` volume and therefore no cut. They are **not** silently classified, not
+assigned a 2018 threshold, and not dropped from everything:
 
-Nothing carries forward across decision points: the threshold is **seasonal** and is
+- 2018 rows are **excluded from every cohort-conditioned quantity** — `p_prior`, the
+  active-QB priors of §6.4, and any top-quartile-conditioned average.
+- 2018 rows **remain** in unconditional quantities (position-level dispersion, the
+  unconditional training likelihood).
+- The count and volume are reported as `n_unclassifiable_2018`, per market,
+  alongside `n_missing_history`.
+
+Nothing carries forward across seasons: the threshold is **seasonal** and is
 recomputed from that season's own volume distribution. Applying a 2024 threshold, or
-2024 membership, to a 2024 selection run is exactly the leak this section exists to
-prevent.
+2024 membership, to a 2024 row is exactly the leak this section exists to prevent.
 
-Any prior conditioned on "high prior volume" — including `p_prior` in §6.1 — must be
-estimated with this chronological eligibility at the step where it is used. The
-`p_prior` entering the 2024 grid selection is estimated from 2018–2023 games under
-the **2023** cut; the `p_prior` used to score 2025 is estimated from 2018–2024 games
-under the **2024** cut. For 2025 target rows, strictly prior 2025 participation
-history is allowed as a **feature** (§6.1, `s` and `n`) and must not fit, select or
-re-estimate any parameter.
+Any prior conditioned on "high prior volume" — including `p_prior` in §6.1 — is
+estimated with **the membership of each contributing row**, never with one cut
+applied to a whole training block. The `p_prior` entering the 2024 grid selection
+is therefore estimated from 2018–2023 games using the **2019–2023** memberships
+(2018 excluded per the boundary rule); the `p_prior` used to score 2025 is estimated
+from 2018–2024 games using the **2019–2024** memberships. For 2025 target rows,
+strictly prior 2025 participation history is allowed as a **feature** (§6.1, `s` and
+`n`) and must not fit, select or re-estimate any parameter.
 
 ### 2.3 What this cohort is not — not a verified-starter cohort
 
@@ -116,7 +138,8 @@ Unchanged from the committed protocol:
 
 1. **Priors fit on 2018–2023** (`TUNE_SEASONS`).
 2. **Hyper-parameter grid selected on 2024 CRPS only**, using `L_tune` (priors from
-   2018–2023) and — per §2.2 — **2023** membership, never 2024 membership.
+   2018–2023) and — per §2.2 — 2024 rows classified by **2023** volume, never by
+   2024 volume, with 2018 rows carrying no cohort membership at any step.
 3. **Priors and dispersion refit on 2018–2024** (`TRAIN_SEASONS`), then 2025 is
    scored.
 4. **No 2025 row enters fitting, tuning, prior estimation or dispersion selection
@@ -231,7 +254,7 @@ Every window is computed per athlete, strictly chronologically, from rows strict
 before the target game (`shift(1)` within `athlete_id`, the `_excl_trailing`
 convention).
 
-### 6.4 Shrinkage — active-QB priors only; `k` selected on 2024 under the 2023 cut
+### 6.4 Shrinkage — active-QB priors only; `k` selected on 2024 rows, 2023 cut
 
 The all-appearance `k = 0.25` and the all-appearance position mean are **retired**
 for this model: they are the mechanism that produced the under-prediction
@@ -271,8 +294,8 @@ The grid is **not** expanded after seeing the 2025 comparison.
 
 Every feature for a target game uses **only rows strictly before that game**
 (participation history and volume history). Membership follows the shifted-season
-rule in §2.2 — the 2024 cut applies to **2025 targets only**; every pre-2025
-decision point uses its own strictly prior season. **No full-season quantity** may
+rule in §2.2 — the 2024 cut applies to **2025 targets only**; every target row in an
+earlier season uses its own strictly prior season. **No full-season quantity** may
 enter membership or features at a point where that season is not yet complete.
 
 Code-level enforcement (must be present and must fail the run if violated):
@@ -281,9 +304,10 @@ Code-level enforcement (must be present and must fail the run if violated):
 assert max_source_ns < target_kickoff_ns            # per target row
 assert not any(row.season == target_season and row.week >= target_week)  # no target/future week
 
-# membership at any decision point: the cut season must precede the target season
-assert cut_season < target_season                   # 2024 cut for 2025 rows; 2023 cut for 2024 rows
-assert threshold_season == cut_season               # threshold recomputed on its own season
+# membership: the cut season is always the target row's own S-1
+assert cut_season == target_season - 1 or cut_season is None   # None => unclassifiable, never classified
+assert cut_season is None or threshold_season == cut_season    # threshold recomputed on its own season
+assert not any(r.season == 2018 and r.cohort_member for r in cohort_rows)  # 2018: no S-1 data
 
 # no 2025 row may fit, tune or estimate anything
 assert not any(row.season == 2025 for row in fit_rows)
@@ -331,6 +355,18 @@ What that means concretely:
 - 2025 rows still may not fit, tune, estimate a prior, or select a dispersion
   parameter (§2.4). "Exploratory" relaxes the *interpretation* of the result, never
   the leakage rule.
+
+**What "frozen" has to mean for that sample**, so it cannot later be reinterpreted
+as reconstruction: a forecast is frozen only if it was written to an immutable
+artifact **before the target kickoff**, carrying its own as-of cutoff, model
+version, data-version fingerprint and — where the simulation is involved — its
+sampler seed, and was never recomputed afterwards. A forecast re-derived after the
+fact from stored box scores, backfilled rows or the final fitted parameters is a
+**retrospective reconstruction** and is **not eligible**: not as confirmation of
+this design, and not as evidence in any later product decision. The same applies to
+a 2026 row whose input snapshot was captured after its kickoff, or whose identity or
+market mapping was resolved only after the game. No such artifact exists yet, and
+this document creates none (§8).
 
 ## 10. Signature
 
