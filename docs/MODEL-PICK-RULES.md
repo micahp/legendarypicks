@@ -84,8 +84,14 @@ winning). Still one pick per game: take the first rule that applies.
    Vegas KC -6, model KC by 2: opponent +6.)
 4. **Favourite to win.** M > 0 (our model agrees on the favourite): the favourite moneyline.
    (Vegas KC -3, model KC by 1.5: KC ML.)
-5. **Total.** Everything else: the model has the underdog winning by an edge under 3.
-   (Vegas KC -1, model opponent by 1: total.) Lines still open.
+5. **Team strength decides the rest.** These are the games rules 1 to 4 leave: the model has the
+   underdog winning by an edge under 3, a pick'em, or a dead-even projection. Each team is
+   strong, mid or weak from season-to-date standings, taken before the game.
+   - Strong vs weak: the strong team moneyline.
+   - Same tier (strong-strong, mid-mid, weak-weak): the total. Lines still open.
+
+   (Vegas KC -1, model opponent by 1: KC strong and the opponent weak gives KC ML. Both mid
+   gives the total.)
 
 Results so far: the NHL replay of `leeway-2` lost 2.6% at posted prices (`docs/LEARNINGS-nhl.md`).
 That is why a Model Pick is not a wager.
