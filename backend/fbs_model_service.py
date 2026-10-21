@@ -142,11 +142,11 @@ def apply_pbp_eligibility(frame: pd.DataFrame, table: pd.DataFrame) -> tuple[pd.
 
 
 def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
-                verbose: bool = False, return_ratings: bool = False):
+                verbose: bool = False, return_team_games: bool = False):
     """One row per game: Phase 1 Elo forecast, drive features, outcome and kickoff.
 
-    With return_ratings=True returns (frame, ratings) where ratings carries the as-of team
-    metrics used to build the drive features — the same snapshot a future matchup is scored on.
+    With return_team_games=True returns (frame, team_games): the per-team-game drive metrics the
+    research recurrence builds its as-of ratings from. A future matchup is scored from the same rows.
     """
     data_dir = data_dir or DEFAULT_DATA_DIR
     seasons = seasons or seasons_available(data_dir)
@@ -171,7 +171,7 @@ def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
         os.path.join(data_dir, "espn_cfb_pbp", "play_by_play_%d.parquet" % s))]
     if pbp_missing:
         raise FBSModelError("drive features need play-by-play for %s under %s" % (pbp_missing, data_dir))
-    features_c, team_games, ratings = feat_c.build_features_c(data_dir, feature_seasons)
+    features_c, team_games, _ = feat_c.build_features_c(data_dir, feature_seasons)
     features_c["game_id"] = features_c["game_id"].astype(str)
     frame = frame.merge(features_c[["game_id"] + FEATURES_C], on="game_id", how="left")
     frame["has_drive_data"] = frame[FEATURES_C].notna().all(axis=1)
@@ -182,7 +182,7 @@ def build_frame(data_dir: str | None = None, seasons: list[int] | None = None,
     if verbose:
         print("frame: %d games, %d with outcomes, %d with drive data"
               % (len(frame), int(frame["y"].notna().sum()), int(frame["has_drive_data"].sum())))
-    return (frame, ratings) if return_ratings else frame
+    return (frame, team_games) if return_team_games else frame
 
 
 def _training(frame: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
