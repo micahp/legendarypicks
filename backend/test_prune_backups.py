@@ -97,6 +97,22 @@ class PruneBackupsTests(unittest.TestCase):
         self.assertNotIn("picks.db.bak-old-00-shm", remaining)
         self.assertIn("picks.db.bak-new-00", remaining)
 
+    def test_sidecars_listed_twice_do_not_stop_the_prune(self):
+        # A `-shm`/`-wal` sidecar contains ".bak", so it is a candidate in its own right
+        # AND is added as its backup's sibling. On 2026-10-21 the second unlink raised,
+        # the run returned 1 halfway, and later files were left behind.
+        for i in range(4):
+            self._touch(f"picks.db.bak-side-{i:02d}", age_days=i)
+            self._touch(f"picks.db.bak-side-{i:02d}-shm", age_days=i)
+            self._touch(f"picks.db.bak-side-{i:02d}-wal", age_days=i)
+        result = prune_backups.main(["--keep", "1", "--apply"])
+        self.assertEqual(result, 0)
+        remaining = sorted(p.name for p in self.data.iterdir())
+        self.assertIn("picks.db.bak-side-00", remaining)
+        for i in range(1, 4):
+            for suffix in ("", "-shm", "-wal"):
+                self.assertNotIn(f"picks.db.bak-side-{i:02d}{suffix}", remaining)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
