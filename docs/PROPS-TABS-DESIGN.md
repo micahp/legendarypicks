@@ -1,3 +1,5 @@
+> **Historical design reference (2026-10-20):** The current navigation decision is [Forecast-first leagues and market-first Props](DECISION-forecast-first-leagues-market-first-props-2026-10-20.md). Keep this older five-tab spec for history, but do not implement its standalone Props -> Model tab as the long-term destination. The current plan consolidates projections into Props cards, player details and game details. The newer document also defines the guard against defaulting leagues to uncertified game forecasts.
+
 # Props Page — Tabs & Architecture
 
 Inspired by props.cash. Five tabs ordered by dependency (each builds on the prior).
