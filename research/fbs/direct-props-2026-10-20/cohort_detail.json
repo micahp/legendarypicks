@@ -5,11 +5,24 @@
     "active_rate_median": 0.07692307692307693,
     "rows_total": 9059,
     "rows_in_game": 2534,
+    "rows_zero": 6525,
+    "rows_negative": 0,
     "frac_in_game": 0.27972182360083897,
+    "frac_zero": 0.720278176399161,
     "delta_A_total": -0.3244221322426161,
     "delta_A_contrib_in_game": 0.2776118399627258,
     "delta_A_contrib_zero": -0.602033972205342,
-    "delta_A_contrib_in_game_pct": -85.57117791061071
+    "delta_A_contrib_in_game_pct": -85.57117791061071,
+    "pregame_known": {
+      "prior_season_available": true,
+      "threshold": 132.25,
+      "rule": "2024 top-quartile season volume; strictly-trailing 2025 volume for athletes with no 2024 volume",
+      "n_member_rows": 1175,
+      "n_member_athletes": 106,
+      "n_member_games": 716,
+      "n_member_rows_observed_gt0": 872,
+      "frac_member_rows": 0.12970526548184128
+    }
   },
   "passing_yards": {
     "label": "passing yards",
@@ -17,11 +30,24 @@
     "active_rate_median": 0.0,
     "rows_total": 9059,
     "rows_in_game": 2389,
+    "rows_zero": 6650,
+    "rows_negative": 20,
     "frac_in_game": 0.26371564190307983,
+    "frac_zero": 0.7340766088972293,
     "delta_A_total": -2.881069168043076,
     "delta_A_contrib_in_game": 2.8028949026472314,
-    "delta_A_contrib_zero": -5.683964070690308,
-    "delta_A_contrib_in_game_pct": -97.28662309593409
+    "delta_A_contrib_zero": -5.65420225082331,
+    "delta_A_contrib_in_game_pct": -97.28662309593409,
+    "pregame_known": {
+      "prior_season_available": true,
+      "threshold": 1079.0,
+      "rule": "2024 top-quartile season volume; strictly-trailing 2025 volume for athletes with no 2024 volume",
+      "n_member_rows": 1146,
+      "n_member_athletes": 102,
+      "n_member_games": 714,
+      "n_member_rows_observed_gt0": 858,
+      "frac_member_rows": 0.12650402914228945
+    }
   },
   "rush_attempts": {
     "label": "rushing carries",
@@ -29,11 +55,24 @@
     "active_rate_median": 0.18181818181818182,
     "rows_total": 21800,
     "rows_in_game": 7921,
+    "rows_zero": 13879,
+    "rows_negative": 0,
     "frac_in_game": 0.363348623853211,
+    "frac_zero": 0.636651376146789,
     "delta_A_total": -0.1583069481513907,
     "delta_A_contrib_in_game": 0.11165842842957543,
     "delta_A_contrib_zero": -0.26996537658096614,
-    "delta_A_contrib_in_game_pct": -70.53286651878048
+    "delta_A_contrib_in_game_pct": -70.53286651878048,
+    "pregame_known": {
+      "prior_season_available": true,
+      "threshold": 51.0,
+      "rule": "2024 top-quartile season volume; strictly-trailing 2025 volume for athletes with no 2024 volume",
+      "n_member_rows": 3224,
+      "n_member_athletes": 308,
+      "n_member_games": 859,
+      "n_member_rows_observed_gt0": 2377,
+      "frac_member_rows": 0.14788990825688073
+    }
   },
   "rushing_yards": {
     "label": "rushing yards",
@@ -41,10 +80,23 @@
     "active_rate_median": 0.09090909090909091,
     "rows_total": 21800,
     "rows_in_game": 7036,
+    "rows_zero": 14023,
+    "rows_negative": 741,
     "frac_in_game": 0.32275229357798163,
+    "frac_zero": 0.6432568807339449,
     "delta_A_total": -1.582262359074451,
     "delta_A_contrib_in_game": 0.410301812915802,
-    "delta_A_contrib_zero": -1.992564171990253,
-    "delta_A_contrib_in_game_pct": -25.931338792373804
+    "delta_A_contrib_zero": -1.9011934877209973,
+    "delta_A_contrib_in_game_pct": -25.931338792373804,
+    "pregame_known": {
+      "prior_season_available": true,
+      "threshold": 227.0,
+      "rule": "2024 top-quartile season volume; strictly-trailing 2025 volume for athletes with no 2024 volume",
+      "n_member_rows": 3061,
+      "n_member_athletes": 291,
+      "n_member_games": 852,
+      "n_member_rows_observed_gt0": 2227,
+      "frac_member_rows": 0.14041284403669724
+    }
   }
 }
