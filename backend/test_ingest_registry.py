@@ -76,6 +76,29 @@ class TheShippedRegistryIsValid(unittest.TestCase):
         self.assertEqual(job["steps"], [["home_prop_refresh.py", "--apply"]])
         self.assertEqual(job["freshness"][0]["table"], "home_prop_cache")
 
+    def test_nba_recent_player_logs_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_player_logs")
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "espn")
+        self.assertEqual(job["steps"], [["ingest_nba_logs.py", "--recent-days", "14"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_player_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
+    def test_sportsdataverse_nba_boxscores_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS
+                   if j["id"] == "nba_sportsdataverse_logs")
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "sportsdataverse")
+        self.assertEqual(job["steps"], [["ingest_nba_sportsdataverse.py", "--recent-seasons", "2"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_sportsdataverse_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
     def test_a_job_with_no_freshness_target_is_refused(self):

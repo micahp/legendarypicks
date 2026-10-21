@@ -103,6 +103,8 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                 matched = by_name[0] if len(by_name) == 1 else None
 
             for athlete_entry in ([matched] if matched else []):
+                if athlete_entry.get("didNotPlay") is True:
+                    return None
                 stats_list = athlete_entry.get("stats", [])
                 labels = stats_group.get("labels") or stats_group.get("names") or []
                 if isinstance(stats_list, list) and len(stats_list) > 0:
@@ -128,8 +130,9 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
                                 # Kicking FG/XP and passing C/ATT are published
                                 # as made/attempted. A mapped made-stat uses the
                                 # numerator; malformed pairs still fail closed.
-                                if isinstance(val, str) and "/" in val:
-                                    made, _attempted = val.split("/", 1)
+                                if isinstance(val, str) and ("/" in val or "-" in val):
+                                    separator = "/" if "/" in val else "-"
+                                    made, _attempted = val.split(separator, 1)
                                     selected = _attempted if pair_selector == "attempted" else made
                                     try:
                                         return float(selected)
@@ -162,6 +165,34 @@ def _player_appeared(boxscore: dict, player_name: str, team: str,
                 if (not wanted_id and published_team == wanted_team
                         and _norm_name(athlete.get("displayName")) == wanted_name):
                     return True
+    return False
+
+
+def _player_did_not_play(boxscore: dict, player_name: str, team: str,
+                         espn_id: Optional[str] = None) -> bool:
+    """Return true only when ESPN explicitly marks this athlete as a DNP."""
+    players = (boxscore or {}).get("players") or []
+    wanted_id = str(espn_id or "")
+    wanted_name = _norm_name(player_name)
+    wanted_team = str(team or "").upper()
+    team_aliases = {"WAS": "WSH", "WSH": "WAS"}
+    for team_group in players:
+        published_team = str(
+            (team_group.get("team") or {}).get("abbreviation") or ""
+        ).upper()
+        if wanted_team and published_team not in (
+            wanted_team, team_aliases.get(wanted_team), team_aliases.get(published_team)
+        ):
+            continue
+        for stats_group in team_group.get("statistics", []) or []:
+            for entry in stats_group.get("athletes", []) or []:
+                athlete = entry.get("athlete") or {}
+                if wanted_id:
+                    same_player = str(athlete.get("id") or "") == wanted_id
+                else:
+                    same_player = _norm_name(athlete.get("displayName")) == wanted_name
+                if same_player:
+                    return entry.get("didNotPlay") is True
     return False
 
 

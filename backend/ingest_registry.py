@@ -113,6 +113,49 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "nba_player_logs",
+        # Recent ESPN boxscores are re-read with a 14-day overlap so late stat
+        # corrections are applied idempotently. The script fetches the complete
+        # range before its short SQLite transaction and stamps ESPN's start-year
+        # season key. It shares ESPN's host lock with every other ESPN job.
+        "cadence_min": 360,
+        "timeout_sec": 1800,
+        "host_lock": "espn",
+        "steps": [["ingest_nba_logs.py", "--recent-days", "14"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # During the offseason there may be no new NBA boxscore rows. The
+            # successful-run ledger measures refresh execution independently
+            # from whether the league had a game in the last six hours.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_player_logs' AND status = 'ok'",
+            "stale_hours": 12,
+            "label": "nba player log refresh",
+        }],
+    },
+    {
+        "id": "nba_sportsdataverse_logs",
+        # Poll the official NBA Stats release assets every six hours. The current
+        # season asset may not exist yet; the ingester reports that explicitly
+        # and still refreshes the latest published season. ESPN remains the
+        # current-season fallback until SportsDataverse publishes that release.
+        "cadence_min": 360,
+        "timeout_sec": 1200,
+        "host_lock": "sportsdataverse",
+        "steps": [["ingest_nba_sportsdataverse.py", "--recent-seasons", "2"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # This measures the release check itself. The job output reports
+            # separately whether the current-season asset has been published.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_sportsdataverse_logs' AND status = 'ok'",
+            "stale_hours": 12,
+            "label": "nba SportsDataverse release check",
+        }],
+    },
+    {
         "id": "tennis_model_grading",
         "cadence_min": 30,
         "timeout_sec": 900,
