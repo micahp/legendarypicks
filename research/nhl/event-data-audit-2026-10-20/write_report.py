@@ -17,13 +17,18 @@ OUT = HERE / "REPORT-EVENTS.md"
 
 
 def pct(x: float) -> str:
-    return f"{x:.1f}%"
+    return f"{x:.3f}%"
 
 
 def main() -> None:
     rows = list(csv.DictReader((HERE / "coverage_by_season.csv").open(newline="", encoding="utf-8")))
     summary = json.loads((HERE / "coverage_summary.json").read_text(encoding="utf-8"))
     issues = list(csv.DictReader((HERE / "contradictions.csv").open(newline="", encoding="utf-8")))
+    detail_path = HERE / "event_quality_summary.json"
+    if not detail_path.is_file():
+        raise FileNotFoundError("Run audit_event_detail.py before regenerating the combined event report")
+    detail = json.loads(detail_path.read_text(encoding="utf-8"))
+    detail_seasons = {int(r["season"]): r for r in detail["quality_by_season"]}
 
     games = int(summary["games_sampled"])
     tot_shot = sum(int(r["shot_events"]) for r in rows)
@@ -43,12 +48,16 @@ def main() -> None:
     A("Research only. Read-only against the label foundation and the event cache. No model")
     A("is fitted, no market is evaluated, nothing is written to the production database.")
     A("")
+    A("For exact field completeness, player-level approved-label reconciliation, event-time shift")
+    A("alignment, and the full-import recommendation, see the measured `REPORT-DETAIL.md` and")
+    A("`PROPOSED-SCHEMA.md`; those outputs supersede rounded summaries in this initial report.")
+    A("")
     A("## Frame and sample")
     A("")
     A("Event evidence is fetched for a deterministic stratified sample of the pinned")
     A("official-outcome frame rather than the whole frame: field availability is a property")
     A("of the source and is settled by a sample, while a full-frame fetch is a")
-    A("~100-minute network job. Every rate below is reported with its per-season n and is a")
+    A(f"~{detail['estimated_full_frame_event_bodies']['minimum_request_spacing_minutes_at_1_1s']:.0f}-minute minimum request-spacing job before network time or retries. Every rate below is reported with its per-season n and is a")
     A("statement about **the sampled games**, not about the frame.")
     A("")
     A("| season | games sampled | PBP bodies | shift bodies |")
@@ -68,7 +77,7 @@ def main() -> None:
     A("")
     A("| dimension | measured | reading |")
     A("|---|---|---|")
-    xy = sum(float(r["pct_shots_with_xy"]) * int(r["shot_events"]) for r in rows) / tot_shot if tot_shot else 0
+    xy = detail["field_completeness"]["location_xy"]["pct"] or 0
     st_unb = (sum(int(r["unblocked_with_type"]) for r in rows) /
               sum(int(r["unblocked_shot_events"]) for r in rows) * 100
               if sum(int(r["unblocked_shot_events"]) for r in rows) else 0.0)
@@ -82,13 +91,14 @@ def main() -> None:
     pbp_games = sum(int(r["pbp_games"]) for r in rows)
     pen_pct = sum(float(r["pct_penalties_complete"]) * int(r["penalty_events"]) for r in rows) / tot_pen if tot_pen else 0
     toi_pct = tot_toi_ok / tot_toi * 100 if tot_toi else 0
-    A(f"| shots and locations | {pct(xy)} of {tot_shot:,} shot events carry x/y | **complete** — every shot is placeable |")
+    A(f"| shooter identity | {detail['field_completeness']['shooter_id_direct']['present']:,}/{tot_shot:,} events have direct `shootingPlayerId`; credited scorer is available on {detail['field_completeness']['shooter_id_goal_scorer_only']['present']:,} goal events | see exact field and SOG-label reconciliation in `REPORT-DETAIL.md` |")
+    A(f"| shots and locations | {detail['field_completeness']['location_xy']['present']:,}/{tot_shot:,} shot events carry finite x/y ({xy:.3f}%) | **incomplete** — {detail['field_completeness']['location_xy']['missing']} events lack a coordinate pair |")
     A("| shot types | "
       f"{sum(int(r['unblocked_with_type']) for r in rows):,} of "
       f"{sum(int(r['unblocked_shot_events']) for r in rows):,} unblocked shot events carry `shotType`; "
       f"{sum(int(r['blocked_with_type']) for r in rows):,} of "
       f"{sum(int(r['blocked_shot_events']) for r in rows):,} blocked shots do | "
-      "usable — blocked shots are the only real gap |")
+      "partial — blocked shots lack types and two unblocked shots lack types |")
     A(f"| period scoring | {goals_ok}/{pbp_games} games reconcile goal-for-goal with the official score **once the shootout rule below is applied** | **complete** |")
     A(f"| strength states | {pct(sit)} of {sum(int(r['events_with_situation']) for r in rows):,} situation codes parse | **complete**, incl. empty net |")
     A(f"| penalties | {pct(pen_pct)} of {tot_pen:,} penalty events carry duration | **complete** |")
@@ -130,10 +140,11 @@ def main() -> None:
     A("| season | games | SO games | shot events | x/y | shot type (unblocked) | situation parsable | goals = official | SOG = official | skater TOI within 30s | contradictions |")
     A("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for r in rows:
+        exact = detail_seasons[int(r["season"])]
         unb = int(r["unblocked_shot_events"]) or 1
         unb_pct = 100.0 * int(r["unblocked_with_type"]) / unb
         A(f"| {r['season']} | {r['games']} | {r['shootout_games']} | {int(r['shot_events']):,} "
-          f"| {pct(float(r['pct_shots_with_xy']))} | {pct(unb_pct)} "
+          f"| {pct(exact['location_xy_pct'])} | {pct(unb_pct)} "
           f"| {pct(float(r['pct_events_with_situation']))} "
           f"| {r['games_goals_match']}/{r['pbp_games']} | {r['games_sog_match']}/{r['pbp_games']} "
           f"| {pct(float(r['pct_toi_within_30s']))} | {r['contradictions']} |")
@@ -193,17 +204,18 @@ def main() -> None:
     A("")
     A("## What this establishes, and what it does not")
     A("")
-    A("Establishes: the official feeds carry the event structure a simulator needs —")
-    A("located shots, shot types, strength states, period scoring, penalties, shift")
-    A("boundaries, and rosters that join to the label foundation on NHL player ID. Period")
+    A("Establishes: the official feeds carry much of the event structure a simulator needs —")
+    A("mostly located shots, partial shot types, strength states, period scoring, penalties, shift")
+    A("boundaries, and rosters that join to the label foundation on NHL player ID. See `REPORT-DETAIL.md`")
+    A("for exact field completeness, player-level SOG and goalie-label matches, and event-time shift checks. Period")
     A("scoring reconciles exactly against the official score on the sampled games once the")
     A("shootout rule is applied, and that reconciliation is the strongest anchor because it")
     A("is an independent path to the same number. Full-frame player IDs reconcile with zero")
     A("one-sided IDs across all 4,876 games.")
     A("")
-    A("Also establishes two defects that would otherwise reach a simulator silently: the")
-    A("shootout convention above, and game-level duplicated shift charts. Both are now")
-    A("detected by assertions rather than remembered by whoever wrote the simulator.")
+    A("Also establishes defects that could reach a simulator silently: the shootout")
+    A("convention above, game-level duplicated shift charts, missing shot fields, and event-time")
+    A("lineup discrepancies. The audit preserves them as explicit issue and exception rows.")
     A("")
     A("Does not establish: any rate on the full 4,876-game frame, any model, any prop")
     A("market result, or that the two sources agree everywhere outside the sample. The")
