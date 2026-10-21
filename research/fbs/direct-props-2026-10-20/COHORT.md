@@ -111,6 +111,15 @@ baseline it wins everywhere (that baseline is poor; not evidence of much). So:
 - **Passing projections cannot**: a plain trailing-5 baseline beats the model on
   exactly the starting QBs a projections page would show.
 
+**Scope of these verdicts — high-usage athletes only.** `pregame_known` is the
+top-quartile-usage slice, not all players: it holds 12.97% / 12.65% / 14.79% /
+14.04% of scored rows and 106 / 102 / 308 / 291 athletes (passing attempts /
+passing yards / rushing carries / rushing yards). A page that lists *every*
+player is **outside** this evidence: low-usage athletes were not evaluated
+pregame and no claim is made about them. Extending the claim to them needs the
+same strictly-trailing rule at a lower volume threshold — which is a new cohort,
+and therefore a new pre-registration, not a tweak to this one.
+
 ## Where the aggregate win actually comes from
 
 Zeros are the majority of every market, and the model scores far better on them
