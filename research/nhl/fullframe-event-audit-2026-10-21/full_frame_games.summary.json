@@ -1,7 +1,8 @@
 {
   "frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
   "frame_sha256_matches_pin": true,
-  "frame_source": "/root/legendarypicks/research/nhl/official-outcome-backfill-2026-10-20/canonical_frame.csv",
+  "frame_source": "research/nhl/official-outcome-backfill-2026-10-20/canonical_frame.csv",
+  "frame_source_abspath": "/root/lp-fullframe-event-audit/research/nhl/official-outcome-backfill-2026-10-20/canonical_frame.csv",
   "games": 4876,
   "games_by_season": {
     "2018": 1271,
@@ -12,7 +13,7 @@
   },
   "games_file": "full_frame_games.csv",
   "games_file_sha256": "ef02d94ff0ff5e494b8cdcb7eeca2f3e466e1fac1d30682c3e25cf4065ae55a8",
-  "sample_games_file": "/root/legendarypicks/research/nhl/event-data-audit-2026-10-20/sample_games.csv",
+  "sample_games_file": "research/nhl/event-data-audit-2026-10-20/sample_games.csv",
   "sample_games_in_frame": 300,
   "season_definition": "season = start year of the NHL season label (2018 = 2018-19)"
 }
