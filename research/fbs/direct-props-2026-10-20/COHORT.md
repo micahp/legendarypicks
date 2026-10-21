@@ -24,6 +24,16 @@ Machine output: `cohort_2025.csv`, `cohort_detail.json`. `delta` =
 `CRPS_model − CRPS_baseA`; **negative = model better**. CIs are 90%,
 bootstrapped on `game_id` (10,000 resamples, seed 20261020).
 
+> **Terminology correction (2026-10-20, documentation only).** Wherever this file
+> says "starting QBs" or "starting-QB cohort", read **pregame-identifiable
+> high-prior-volume QBs** — the top quartile of prior-season passing volume,
+> evaluated over all of their rows. That is **not** a verified-starter cohort: the
+> cut keeps quarterbacks who lost the job, transferred, or were unavailable, and no
+> depth-chart, injury or lineup feed enters membership. The corrected definition is
+> carried in [`PREREG-FBS-HURDLE-PASSING.md`](PREREG-FBS-HURDLE-PASSING.md) §2.3. No
+> measurement, table, interval, delta or verdict in this file is changed by the
+> correction; every historical result here stands exactly as measured.
+
 ## What each cohort can and cannot support
 
 - **`in_game` / `zero_usage`** — a **decomposition** of the aggregate CRPS. They
