@@ -89,15 +89,15 @@ class PropHistoryVenueTests(unittest.TestCase):
             [
                 (1, "nba", 2026, json.dumps({
                     "PTS": 24, "REB": 8, "AST": 5, "3PM": 2,
-                    "BLK": 1, "STL": 2, "TO": 3,
+                    "BLK": 1, "STL": 2, "TO": 3, "FGM": 10, "FTM": 4, "MIN": 35,
                 }), "2026-07-20", "OPP1", "home", 1, None, "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 18, "REB": 7, "AST": 4, "3PM": 1,
-                    "BLK": 0, "STL": 1, "TO": 2,
+                    "BLK": 0, "STL": 1, "TO": 2, "FGM": 6, "FTM": 3, "MIN": 30,
                 }), "2026-07-21", "OPP2", "away", 2, None, "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 21, "REB": 9, "AST": 6, "3PM": 4,
-                    "BLK": 2, "STL": 3, "TO": 1,
+                    "BLK": 2, "STL": 3, "TO": 1, "FGM": 8, "FTM": 5, "MIN": 31,
                 }), "2026-07-22", "OPP3", None, 3, None, "espn"),
             ],
         )
@@ -135,7 +135,12 @@ class PropHistoryVenueTests(unittest.TestCase):
             "blocks": [2, 0, 1],
             "steals": [3, 1, 2],
             "turnovers": [1, 2, 3],
+            "field_goals_made": [8, 6, 10],
+            "free_throws_made": [5, 3, 4],
+            "fgm": [8, 6, 10],
+            "ftm": [5, 3, 4],
             "points_rebounds_assists": [36, 29, 37],
+            "pra": [36, 29, 37],
         }
         for market, values in expected.items():
             result = props.prop_history(
@@ -145,6 +150,109 @@ class PropHistoryVenueTests(unittest.TestCase):
             self.assertEqual(
                 values, [game["value"] for game in result["games"]], market
             )
+
+    def test_nba_history_distinguishes_dnp_missing_and_played_rows(self):
+        con = sqlite3.connect(self.path)
+        con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (1, "nba", 2026, json.dumps({
+                "PTS": 0, "REB": 0, "AST": 0, "STL": 0, "BLK": 0,
+                "TO": 0, "3PM": 0, "FGM": 0, "FTM": 0, "MIN": 0,
+            }), "2026-07-23", "OPP4", "home", 4, "REG", "espn"),
+        )
+        con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (1, "nba", 2026, json.dumps({"MIN": 20}), "2026-07-24", "OPP5",
+             "away", 5, "REG", "espn"),
+        )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2026,
+        )
+
+        self.assertEqual([g["status"] for g in result["games"][:2]], ["missing", "dnp"])
+        self.assertEqual([g["appearance_status"] for g in result["games"][:2]],
+                         ["played", "dnp"])
+        self.assertIsNone(result["games"][0]["value"])
+        self.assertEqual(result["games"][1]["value"], 0)
+        self.assertEqual(result["hit_rate_n"]["l5"], 3)
+        self.assertEqual(result["hit_rate"]["season"], round(2 / 3, 3))
+
+        pushed = props.prop_history(
+            player_id=1, market="points", line=21, side="over", league="nba",
+            season=2026,
+        )
+        self.assertIsNone(pushed["games"][2]["hit"])
+        self.assertEqual(pushed["hit_rate_n"]["season"], 3)
+        self.assertEqual(pushed["hit_rate"]["season"], 0.5)
+
+    def test_nba_history_prefers_current_sportsdataverse_rows_and_keeps_dnp_out_of_rates(self):
+        import nba_sportsdataverse
+
+        con = sqlite3.connect(self.path)
+        con.row_factory = sqlite3.Row
+        nba_sportsdataverse.ensure_schema(con)
+        con.execute(
+            "INSERT INTO nba_sportsdataverse_releases VALUES(2026,2027,'active-hash',3,3,3,1,'now','now')"
+        )
+        rows = [
+            ("0022600001", "2026-07-23", "dnp", {"PTS": 0, "MIN": 0}, "DNP - Rest"),
+            ("0022600002", "2026-07-24", "played", {
+                "PTS": 30, "REB": 8, "AST": 7, "STL": 2, "BLK": 1,
+                "TO": 3, "3PM": 4, "FGM": 9, "FTM": 5, "MIN": 35,
+            }, None),
+            ("0022600003", "2026-07-25", "unknown", {}, None),
+        ]
+        for index, (source_game_id, date, status, stats, comment) in enumerate(rows, 1):
+            con.execute(
+                """INSERT INTO player_game_logs_sportsdataverse
+                     (player_id,league,season,game_no,game_id,source_game_id,game_date,team,
+                      opponent,home_away,stats,source,source_player_key,appearance_status,
+                      dnp_comment,release_hash,ingested_at,game_type)
+                   VALUES(1,'nba',2026,?,? ,?,?,'AAA','OPP','home',?,
+                          'sportsdataverse_nba_stats',?,?,?,'active-hash','now','REG')""",
+                (source_game_id, "sdv-{}".format(index), source_game_id, date,
+                 json.dumps(stats), str(500 + index), status, comment),
+            )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=25, side="over", league="nba", season=2026
+        )
+        self.assertEqual([g["status"] for g in result["games"][:3]],
+                         ["missing", "played", "dnp"])
+        self.assertEqual([g["appearance_status"] for g in result["games"][:3]],
+                         ["unknown", "played", "dnp"])
+        self.assertEqual([g["value"] for g in result["games"][:3]], [None, 30, 0])
+        self.assertIsNone(result["games"][2]["hit"])
+        self.assertEqual(result["hit_rate_n"]["season"], 4)
+        self.assertEqual(result["hit_rate"]["season"], 0.25)
+
+        fgm = props.prop_history(
+            player_id=1, market="field_goals_made", line=8.5,
+            side="over", league="nba", season=2026,
+        )
+        ftm = props.prop_history(
+            player_id=1, market="free_throws_made", line=4.5,
+            side="over", league="nba", season=2026,
+        )
+        self.assertEqual(fgm["games"][1]["value"], 9)
+        self.assertEqual(ftm["games"][1]["value"], 5)
+
+    def test_nba_season_window_uses_requested_start_year(self):
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2025,
+        )
+        self.assertEqual(result["season"], 2025)
+        self.assertIsNone(result["hit_rate"]["season"])
+        self.assertEqual(result["hit_rate_n"]["season"], 0)
 
     def test_nba_fantasy_points_stays_unmapped_without_a_published_formula(self):
         result = props.prop_history(

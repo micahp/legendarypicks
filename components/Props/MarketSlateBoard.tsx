@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
 import MatchForm from './MatchForm'
-import PropChart, { PropHistory } from './PropChart'
+import PropChart, { nbaSeasonStartYear, PropHistory } from './PropChart'
 import HorizontalScrollRail from '../HorizontalScrollRail'
 import { uniqueLineOptions } from './lineOptions'
 import { isPickem } from './odds'
@@ -70,6 +70,17 @@ type SortDirection = 'asc' | 'desc'
 
 
 const MARKET_LABELS: Record<string, string> = {
+  points: 'Points',
+  rebounds: 'Rebounds',
+  assists: 'Assists',
+  threes: '3-pointers made',
+  blocks: 'Blocks',
+  steals: 'Steals',
+  turnovers: 'Turnovers',
+  points_rebounds_assists: 'Points + rebounds + assists',
+  pra: 'PRA',
+  field_goals_made: 'Field goals made',
+  free_throws_made: 'Free throws made',
   strikeouts: 'Strikeouts',
   goals: 'Goalscorer',
   shots_on_target: 'Shots on target',
@@ -271,10 +282,10 @@ function confidenceFloor(hits: number, games: number): number {
 }
 
 function RateChip({ label, value, sample, required }: {
-  label: string; value: number; sample?: number; required: number
+  label: string; value: number | null; sample?: number; required: number
 }) {
-  const short = sample !== undefined && sample < required
-  const pct = Math.round(value * 100)
+  const short = value === null || (sample !== undefined && sample < required)
+  const pct = value === null ? 0 : Math.round(value * 100)
   const tone = short
     ? 'border-zinc-800 bg-zinc-900/60 text-zinc-600'
     : pct >= 60
@@ -527,7 +538,10 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
       // Over EVERY game held, not a window: the point of this sort is to use
       // all the evidence rather than to truncate it.
       if (sortKey === 'confidence') {
-        return confidenceFloor(history.games.filter(g => g.hit).length, history.games.length)
+        const measured = history.games.filter(g => g.hit !== null)
+        return measured.length
+          ? confidenceFloor(measured.filter(g => g.hit === true).length, measured.length)
+          : null
       }
       return history.projection === null ? null : Math.abs(history.projection - row.line)
     }
@@ -543,7 +557,10 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
         return h?.projection == null ? -Infinity : Math.abs(h.projection - row.line)
       },
       row => historyByRow[historyKey(row)]?.data?.hit_rate.season ?? -Infinity,
-      row => historyByRow[historyKey(row)]?.data?.games.length ?? -Infinity,
+      row => {
+        const games = historyByRow[historyKey(row)]?.data?.games
+        return games ? games.filter(game => game.hit !== null).length : -Infinity
+      },
       row => row.line,
     ]
     return [...windowRows].sort((a, b) => {
@@ -597,6 +614,8 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
         side: row.over ? 'over' : 'under',
         league: row.league,
       })
+      const season = row.league === 'nba' ? nbaSeasonStartYear(row.date) : null
+      if (season !== null) params.set('season', String(season))
       fetch(`/api/props/history?${params}`, { signal: controller.signal })
         .then(response => {
           if (!response.ok) throw new Error(`History request failed (${response.status})`)
@@ -790,7 +809,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
             && ['significant_strikes', 'fight_time'].includes(baseMarket(row.rawMarket))
           // Providers remain distinct offers in the data model, but this control
           // answers only one question: which numeric threshold should be shown?
-          const lineOptions = uniqueLineOptions(row.lines)
+          const lineOptions = uniqueLineOptions<BoardLine>(row.lines)
           const hasAlternates = lineOptions.length > 1
           const projection = history?.projection ?? null
           const edge = projection === null ? null : projection - row.line
@@ -886,8 +905,11 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
                             a value that is nowhere on screen asks someone to trust an
                             order they cannot check. */}
                         <span className="text-zinc-500">Confidence <strong className="text-zinc-200 tabular-nums">
-                          {history.games.length
-                            ? `${Math.round(confidenceFloor(history.games.filter(g => g.hit).length, history.games.length) * 100)}%`
+                          {history.games.some(g => g.hit !== null)
+                            ? `${Math.round(confidenceFloor(
+                              history.games.filter(g => g.hit === true).length,
+                              history.games.filter(g => g.hit !== null).length,
+                            ) * 100)}%`
                             : '—'}
                         </strong></span>
                         <span className="text-zinc-500">Projection <strong className="text-zinc-200 tabular-nums">{projection === null ? '—' : formatValue(projection)}</strong></span>
