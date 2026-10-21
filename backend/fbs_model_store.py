@@ -395,3 +395,34 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
         "state": "available" if ordered else "awaiting_first_lock",
         "source": "standalone FBS model database",
     }
+
+
+def apply_true_kickoffs(payload: dict, live_db: str) -> dict:
+    """Show the scoreboard's kickoff for rows stored with a date-only (midnight UTC) kickoff.
+
+    Display only. The stored kickoff is immutable and is left as written; a game the
+    scoreboard does not know keeps the stored value.
+    """
+    midnight = [g for g in payload.get("games", []) if "T00:00:00" in (g.get("kickoff_utc") or "")]
+    if not midnight or not os.path.exists(live_db):
+        return payload
+    try:
+        con = sqlite3.connect("file:%s?mode=ro" % live_db, uri=True)
+        try:
+            marks = ",".join("?" * len(midnight))
+            rows = con.execute("SELECT game_id, payload FROM scoreboard_snapshots WHERE league='ncaaf' "
+                               "AND game_id IN (%s) ORDER BY fetched_at" % marks,
+                               [g["game_id"] for g in midnight]).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return payload
+    real = {}
+    for game_id, raw in rows:
+        date = json.loads(raw).get("date")
+        if date and "T" in date and not date.endswith("T00:00Z"):
+            real[str(game_id)] = date.replace("Z", ":00+00:00") if date.count(":") == 1 else date
+    for game in midnight:
+        game["kickoff_utc"] = real.get(game["game_id"], game["kickoff_utc"])
+    payload["games"].sort(key=lambda g: g["kickoff_utc"])
+    return payload

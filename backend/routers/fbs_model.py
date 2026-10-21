@@ -11,10 +11,11 @@ import sqlite3
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
-from fbs_model_store import DEFAULT_DB, export_payload, open_db
+from fbs_model_store import DEFAULT_DB, apply_true_kickoffs, export_payload, open_db
 
 router = APIRouter()
 MODEL_DB = os.environ.get("FBS_MODEL_DB_PATH", DEFAULT_DB)
+LIVE_DB = os.environ.get("FBS_LIVE_DB", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "picks.dev.db"))
 SOURCE = "standalone FBS model database"
 
 
@@ -30,7 +31,7 @@ def ncaaf_model_locks(response: Response, season: int = Query(2026, ge=2020, le=
         try:
             con = open_db(MODEL_DB, readonly=True)
             try:
-                payload = export_payload(con, season)
+                payload = apply_true_kickoffs(export_payload(con, season), LIVE_DB)
             finally:
                 con.close()
         except sqlite3.Error as exc:
