@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS fbs_previews (
     fair_away INTEGER,
     fitted_through TEXT,
     previewed_at_utc TEXT NOT NULL,
+    hold_reason TEXT,
     PRIMARY KEY (game_id, model)
 );
 CREATE TABLE IF NOT EXISTS fbs_lock_events (
@@ -141,7 +142,8 @@ CREATE TABLE IF NOT EXISTS fbs_game_status (
     grading_state TEXT NOT NULL,
     reason TEXT,
     pregame_lifecycle TEXT,
-    pregame_observed_utc TEXT
+    pregame_observed_utc TEXT,
+    hold_reason TEXT
 );
 CREATE TABLE IF NOT EXISTS fbs_window_outcomes (
     game_id TEXT NOT NULL,
@@ -194,8 +196,13 @@ BEGIN SELECT RAISE(ABORT, 'FBS window outcomes are immutable'); END;
 """
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+POSTSEASON_HOLD = "postseason_research_hold"
 REQUIRED_TABLES = tuple(re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", SCHEMA))
+REQUIRED_COLUMNS = (
+    ("fbs_forecasts", "lock_protocol"), ("fbs_forecasts", "kickoff_revision"),
+    ("fbs_previews", "hold_reason"), ("fbs_game_status", "hold_reason"),
+)
 REQUIRED_TRIGGERS = tuple(re.findall(r"CREATE TRIGGER IF NOT EXISTS (\w+)", TRIGGERS))
 
 
@@ -208,14 +215,19 @@ class SchemaError(RuntimeError):
         self.code = code
 
 
-def _user_tables(con: sqlite3.Connection) -> set[str]:
+def user_tables(con: sqlite3.Connection) -> set[str]:
     return {r[0] for r in con.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")}
 
 
-def _schema_state(con: sqlite3.Connection) -> str:
+def table_columns(con: sqlite3.Connection, table: str) -> set[str]:
+    """Column names of a table, or none when the table is absent. Reads only."""
+    return {r[1] for r in con.execute("PRAGMA table_info(%s)" % table)}
+
+
+def schema_state(con: sqlite3.Connection) -> str:
     """current | empty | legacy. Reads only."""
-    tables = _user_tables(con)
+    tables = user_tables(con)
     if not tables:
         return "empty"
     version = con.execute("PRAGMA user_version").fetchone()[0]
@@ -247,7 +259,7 @@ def open_db(path: str = DEFAULT_DB, readonly: bool = False) -> sqlite3.Connectio
         if not os.path.exists(path):
             raise SchemaError("not_initialized", "%s does not exist; create a scratch database with initialize_new_db()" % path)
         con = sqlite3.connect(path)
-        state = _schema_state(con)
+        state = schema_state(con)
         if state != "current":
             con.close()
             if state == "empty":
@@ -264,7 +276,7 @@ def initialize_new_db(path: str) -> sqlite3.Connection:
     if os.path.exists(path) and os.path.getsize(path) > 0:
         probe = sqlite3.connect(path)
         try:
-            if _user_tables(probe):
+            if user_tables(probe):
                 raise SchemaError("migration_required", "%s already has tables; use migrate() or open_db()" % path)
         finally:
             probe.close()
@@ -332,8 +344,11 @@ def _exclusive_backup(path: str, backup_dir: str) -> str:
 def _upgrade_statements(con: sqlite3.Connection) -> None:
     """Bring an existing schema forward inside the caller's transaction. Order matters: the legacy backfill
     must run before the immutability triggers exist, or the backfill itself would be refused."""
-    if "fbs_forecasts" in _user_tables(con):
-        columns = {r[1] for r in con.execute("PRAGMA table_info(fbs_forecasts)")}
+    for table in ("fbs_previews", "fbs_game_status"):
+        if table in user_tables(con) and "hold_reason" not in table_columns(con, table):
+            con.execute("ALTER TABLE %s ADD COLUMN hold_reason TEXT" % table)
+    if "fbs_forecasts" in user_tables(con):
+        columns = table_columns(con, "fbs_forecasts")
         if "lock_protocol" not in columns:
             con.execute("ALTER TABLE fbs_forecasts ADD COLUMN lock_protocol TEXT")
             con.execute("UPDATE fbs_forecasts SET lock_protocol = ? WHERE lock_protocol IS NULL", (LEGACY_PROTOCOL,))
@@ -351,7 +366,7 @@ def migrate(path: str, backup_dir: str) -> dict:
         raise SchemaError("not_initialized", "%s does not exist" % path)
     probe = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     try:
-        state = _schema_state(probe)
+        state = schema_state(probe)
     finally:
         probe.close()
     if state == "current":
@@ -363,7 +378,7 @@ def migrate(path: str, backup_dir: str) -> dict:
     con = sqlite3.connect(path, isolation_level=None)
     try:
         before = {}
-        for table in sorted(_user_tables(con)):
+        for table in sorted(user_tables(con)):
             columns = [r[1] for r in con.execute("PRAGMA table_info(%s)" % table)]
             before[table] = (columns, _digest(con, table, columns))
         con.execute("BEGIN IMMEDIATE")
@@ -432,19 +447,20 @@ def upsert_previews(con: sqlite3.Connection, rows: list[dict],
         con.execute(
             "INSERT INTO fbs_previews(game_id,model,season,kickoff_utc,home_team,away_team,"
             " home_team_id,away_team_id,model_version,p_home,fair_home,fair_away,fitted_through,"
-            " previewed_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " previewed_at_utc,hold_reason) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             " ON CONFLICT(game_id,model) DO UPDATE SET kickoff_utc=excluded.kickoff_utc,"
             " home_team=excluded.home_team, away_team=excluded.away_team,"
             " home_team_id=excluded.home_team_id, away_team_id=excluded.away_team_id,"
             " model_version=excluded.model_version, p_home=excluded.p_home,"
             " fair_home=excluded.fair_home, fair_away=excluded.fair_away,"
-            " fitted_through=excluded.fitted_through, previewed_at_utc=excluded.previewed_at_utc",
+            " fitted_through=excluded.fitted_through, previewed_at_utc=excluded.previewed_at_utc,"
+            " hold_reason=COALESCE(excluded.hold_reason, fbs_previews.hold_reason)",
             (row["game_id"], row["model"], row["season"], row["kickoff_utc"],
              row["home_team"], row["away_team"], row.get("home_team_id"), row.get("away_team_id"),
              row["model_version"], row["p_home"],
              american_from_probability(row["p_home"]),
              american_from_probability(1.0 - row["p_home"]),
-             row.get("fitted_through"), now.isoformat()),
+             row.get("fitted_through"), now.isoformat(), row.get("hold_reason")),
         )
         written += 1
     if commit:
@@ -497,7 +513,7 @@ def lock_forecasts(con: sqlite3.Connection, rows: list[dict],
     return report
 
 
-def window_outcome(status: dict | None) -> tuple[str, str | None, str]:
+def window_outcome(status: dict | None, hold: str | None = None) -> tuple[str, str | None, str]:
     """Classify a window that closed without a lock. Exactly one outcome per game and model.
 
     missed_t90_window: the game was verified scheduled before its kickoff, so the window existed, and no
@@ -505,6 +521,10 @@ def window_outcome(status: dict | None) -> tuple[str, str | None, str]:
     never eligible to lock. window_not_eligible: postponed, delayed, suspended, cancelled or another
     non-window status before kickoff.
     """
+    hold = hold or (status or {}).get("hold_reason")
+    if hold:
+        # A research-only hold is not an eligible window, whatever ESPN later reports for the game.
+        return "window_not_eligible", (status or {}).get("pregame_lifecycle"), hold
     if status is None:
         return "blocked_unverified_at_cutoff", None, "no_status_observed"
     if status.get("reason") == "identity_changed":
@@ -527,7 +547,7 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
         "SELECT game_id, model FROM fbs_forecasts WHERE lock_protocol = ?", (LOCK_PROTOCOL,))}
     recorded = {(row[0], row[1]) for row in con.execute("SELECT game_id, model FROM fbs_window_outcomes")}
     counts = {"missed_t90_window": 0, "blocked_unverified_at_cutoff": 0, "window_not_eligible": 0}
-    for row in con.execute("SELECT game_id, model, season, kickoff_utc FROM fbs_previews").fetchall():
+    for row in con.execute("SELECT game_id, model, season, kickoff_utc, hold_reason FROM fbs_previews").fetchall():
         key = (row["game_id"], row["model"])
         if key in locked or key in recorded:
             continue
@@ -535,7 +555,7 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
         kickoff_text = fixture["kickoff_utc"] if fixture else row["kickoff_utc"]
         if now < parse_time(kickoff_text):
             continue
-        outcome, lifecycle, reason = window_outcome(game_status(con, row["game_id"]))
+        outcome, lifecycle, reason = window_outcome(game_status(con, row["game_id"]), row["hold_reason"])
         con.execute(
             "INSERT INTO fbs_window_outcomes(game_id,model,season,kickoff_utc,outcome,lifecycle_at_cutoff,"
             " reason,recorded_at_utc) VALUES(?,?,?,?,?,?,?,?)",
@@ -706,6 +726,14 @@ def set_game_status(con: sqlite3.Connection, game_id: str, season: int, revision
         "                           ELSE fbs_game_status.pregame_observed_utc END",
         (game_id, season, revision, lifecycle, status_name, observed_utc, source, grading_state, reason,
          pregame_lifecycle, pregame_observed, 1 if pregame else 0, 1 if pregame else 0))
+    if commit:
+        con.commit()
+
+
+def set_postseason_hold(con: sqlite3.Connection, game_id: str, commit: bool = True) -> None:
+    """Durable research-only hold on a postseason fixture. Set once; no later status write clears it."""
+    con.execute("UPDATE fbs_game_status SET hold_reason = COALESCE(hold_reason, ?) WHERE game_id = ?",
+                (POSTSEASON_HOLD, game_id))
     if commit:
         con.commit()
 
@@ -913,7 +941,7 @@ def main(argv=None) -> int:
         return 0
     probe = sqlite3.connect("file:%s?mode=ro" % args.check, uri=True)
     try:
-        state = _schema_state(probe)
+        state = schema_state(probe)
     finally:
         probe.close()
     print(json.dumps({"path": args.check, "state": state, "schema_version": SCHEMA_VERSION}))

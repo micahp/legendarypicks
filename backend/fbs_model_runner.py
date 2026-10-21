@@ -283,18 +283,41 @@ def calendar_season(kickoff_utc) -> int:
     return local.year if local.month >= 6 else local.year - 1
 
 
-def _identity(facts: dict) -> tuple:
-    return (facts["home_team_id"], facts["away_team_id"], pd.Timestamp(facts["kickoff_utc"]).value,
-            facts["season"], facts["lifecycle"], facts["status_name"])
+def forecast_horizon_end(now: dt.datetime, days: int) -> dt.datetime:
+    """Exclusive end of the preview horizon: the midnight after the Eastern date that contains now + days elapsed.
+
+    The Eastern date comes from the instant after `days` elapsed days, and the boundary is an Eastern local midnight,
+    so daylight saving is exact and the horizon always ends on a whole Eastern day. A game kicking off at that
+    midnight belongs to the next day, outside the horizon.
+    """
+    last_day = (now + dt.timedelta(days=days)).astimezone(ET_ZONE).date()
+    return ET_ZONE.localize(dt.datetime.combine(last_day + dt.timedelta(days=1), dt.time(0)))
+
+
+# Fields that two copies of one ESPN event must agree on. Final scores are compared only when both copies are final.
+# Live scores are the one source exception: they legitimately differ between two fetches made seconds apart.
+def _identity_fields(facts: dict) -> dict:
+    fields = {
+        "home_team_id": facts["home_team_id"], "away_team_id": facts["away_team_id"],
+        "home_team": facts["home_team"], "away_team": facts["away_team"],
+        "kickoff": pd.Timestamp(facts["kickoff_utc"]).value, "season": facts["season"],
+        "season_type": facts["season_type"], "week": facts["week"],
+        "neutral_site": bool(facts["neutral_site"]), "lifecycle": facts["lifecycle"],
+        "status_name": facts["status_name"], "completed": facts["completed"],
+    }
+    if facts["completed"]:
+        fields["home_score"] = facts["home_score"]
+        fields["away_score"] = facts["away_score"]
+    return fields
 
 
 def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
-    """Each FBS event on the Eastern scoreboard dates for (now, now + days], once, with ESPN's lifecycle and season.
+    """Each FBS event on the Eastern scoreboard dates for (now, horizon end), once, with ESPN's lifecycle and season.
 
-    An event copied onto two dates is kept once, and only when every copy agrees on team identity, kickoff,
-    season, lifecycle and status. Any disagreement, unreadable date, event without two teams, or event without a
-    season raises, so the slate is unverified and nothing is written from it. The requested dates are kept in
-    slate.attrs, so the absent-from-board check asks about exactly the dates that were read.
+    An event copied onto two dates is kept once, and only when every copy agrees on every field in _identity_fields().
+    Any disagreement, unreadable date, event without two teams, or event without a season raises, so the slate is
+    unverified and nothing is written from it. The requested dates are kept in slate.attrs, so the absent-from-board
+    check asks about exactly the dates that were read.
     """
     now = now or dt.datetime.now(dt.timezone.utc)
     dates = scoreboard_dates(now, days)
@@ -320,9 +343,13 @@ def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
                                + "; no forecasts or locks written")
     rows, duplicates = [], []
     for game_id, group in copies.items():
-        if len({_identity(facts) for facts in group}) > 1:
-            raise SlateUnavailable("ESPN event %s differs between scoreboard copies; no forecasts or locks written"
-                                   % game_id)
+        first = _identity_fields(group[0])
+        for other in group[1:]:
+            fields = _identity_fields(other)
+            if fields != first:
+                differing = sorted(k for k in set(first) | set(fields) if first.get(k) != fields.get(k))
+                raise SlateUnavailable("ESPN event %s differs between scoreboard copies (%s); no forecasts or locks "
+                                       "written" % (game_id, ", ".join(differing)))
         if len(group) > 1:
             duplicates.append(game_id)
         rows.append(group[0])
@@ -336,15 +363,15 @@ def fetch_slate(days: int = 10, now: dt.datetime | None = None) -> pd.DataFrame:
 
 
 def forecast_candidates(slate: pd.DataFrame, now: dt.datetime, days: int) -> tuple[pd.DataFrame, dict]:
-    """Games that may receive a NEW forecast or lock: scheduled, kickoff strictly after now and no later than the
-    horizon, with a season that agrees with the kickoff date. Every other game is returned with its reason."""
-    horizon = now + dt.timedelta(days=days)
+    """Games that may receive a NEW forecast or lock: scheduled, kickoff strictly after now and before the horizon end,
+    with a season that agrees with the kickoff date. Every other game is returned with its reason."""
+    horizon_end = forecast_horizon_end(now, days)
     keep, reasons = [], {}
     for rec in slate.to_dict("records"):
         kickoff = rec["kickoff_utc"]
         if kickoff <= now:
             reason = "started"
-        elif kickoff > horizon:
+        elif kickoff >= horizon_end:
             reason = "beyond_horizon"
         elif rec["lifecycle"] != "scheduled":
             reason = "not_scheduled:%s" % rec["lifecycle"]
@@ -413,6 +440,8 @@ def g2_for_slate(frame: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
             print("slate: skipping game %s (%s @ %s): %s FBS membership/conference unverified"
                   % (row.game_id, away, home, season))
             continue
+        # ESPN's season type, not a hardcoded phase: a postseason event carries its postseason provenance.
+        postseason = int(row.season_type) == 3
         # The schedule's full timestamp survives the prediction and lock paths.
         # Construct a fresh event from an explicit schema, not events.iloc[-1].
         event = {column: None for column in events.columns}
@@ -431,7 +460,8 @@ def g2_for_slate(frame: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
             "neutral_site": bool(row.neutral_site),
             "fbs_game": True, "fbs_participant": False, "cfb_completed": False,
             "evaluation_population": True,
-            "game_phase": "Regular season", "season_type": "regular",
+            "game_phase": "Postseason" if postseason else "Regular season",
+            "season_type": "postseason" if postseason else "regular",
             "result_source": "upcoming ESPN scoreboard",
             "home_model_favorite": np.nan,
         })
@@ -757,12 +787,15 @@ def _slate_unavailable(con, now: dt.datetime, error: str) -> dict:
 
 def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now: dt.datetime, days: int,
                     certified: bool, reason: str | None, rating_rows: list[dict], version: str, state,
-                    extra: dict, lock_withheld: set[str]) -> dict:
+                    extra: dict) -> dict:
     """Every write of one forecast run. The caller owns the transaction and commits once.
 
-    `predictions` holds only games that passed forecast_candidates(), or is None when none did. Statuses are
-    written for every game on the board, started or not, so lifecycle stays current for grading."""
-    seen = {}
+    `predictions` holds only games that passed forecast_candidates(), or is None when none did. Statuses are written
+    for every game on the board, started or not, so lifecycle stays current for grading. A postseason fixture gets
+    its durable research hold on observation, before kickoff. Its previews carry the same reason, and it is never
+    locked."""
+    horizon_end = forecast_horizon_end(now, days)
+    seen, postseason = {}, set()
     for rec in slate.to_dict("records"):
         game_id = rec["game_id"]
         season = int(rec["season"])
@@ -780,6 +813,9 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
             status_reason = "schedule_unresolved_" + lifecycle
         store.set_game_status(con, game_id, season, obs["revision"], lifecycle, rec["status_name"],
                               now.isoformat(), "espn_scoreboard", grading, status_reason, commit=False)
+        if rec.get("season_type") == 3:
+            postseason.add(str(game_id))
+            store.set_postseason_hold(con, game_id, commit=False)
         seen[game_id] = (lifecycle, obs)
         if lifecycle == "unknown" and now < store.parse_time(obs["kickoff_utc"]):
             # A pregame verification failure: visible at once, because the lock may still be taken.
@@ -795,22 +831,23 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
         if game_id in seen:
             continue
         fixture = store.current_fixture(con, game_id)
-        if eastern_date(fixture["kickoff_utc"]) not in board:
-            continue                      # not on any board this run read, so its absence says nothing
+        kickoff = store.parse_time(fixture["kickoff_utc"])
+        if eastern_date(fixture["kickoff_utc"]) not in board or kickoff >= horizon_end:
+            continue                      # not on a board this run read, or past the horizon: its absence says nothing
         revision = store.game_status(con, game_id)["revision"]
         store.set_game_status(con, game_id, row["season"], revision, "unknown", None, now.isoformat(),
                               "espn_scoreboard", "unresolved", "absent_from_board", commit=False)
-        future = now < store.parse_time(fixture["kickoff_utc"])
         store.record_unresolved(con, game_id, row["season"], fixture["kickoff_utc"], "absent_from_board", now,
-                                commit=False, lock_risk=future)
+                                commit=False, lock_risk=now < kickoff)
 
-    rows, lock_rows, withheld = [], [], []
+    rows, lock_rows, held = [], [], set()
     for row in (predictions.itertuples(index=False) if predictions is not None else []):
         lifecycle, obs = seen.get(str(row.game_id), ("unknown", None))
         if obs is None or obs["identity_changed"] or lifecycle != "scheduled":
             continue
         if now >= store.parse_time(obs["kickoff_utc"]):
             continue                      # started games never receive a new forecast
+        hold = store.POSTSEASON_HOLD if str(row.game_id) in postseason else None
         for model in MODEL_ORDER:
             item = {
                 "game_id": str(row.game_id), "model": model, "season": int(row.season),
@@ -819,10 +856,11 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
                 "model_version": version % model,
                 "p_home": float(getattr(row, "p_" + model)),
                 "fitted_through": str(state["train_last_date"].date()),
+                "hold_reason": hold,
             }
             rows.append(item)
-            if str(row.game_id) in lock_withheld:
-                withheld.append(str(row.game_id))
+            if hold:
+                held.add(str(row.game_id))
             else:
                 lock_rows.append(item)
 
@@ -843,7 +881,7 @@ def _write_forecast(con, slate: pd.DataFrame, board: set[str], predictions, now:
     report = {"previewed": previewed, "locked": locked, "missed": missed, "lock_risk": lock_risk,
               "games": len(seen), "statuses": statuses,
               "forecast_games": sorted({r["game_id"] for r in rows}),
-              "locks_withheld_postseason": sorted(set(withheld)), **extra}
+              "postseason_research_hold": sorted(held), **extra}
     store.record_run(con, "forecast", "ok", report, now, commit=False)
     return {**report, "locks_blocked": None if certified else reason}
 
@@ -860,7 +898,8 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
             return _slate_unavailable(con, now, str(exc))
         board = set(slate.attrs["requested_dates"])
         inventory = {"requested_dates": sorted(board), "slate_games": len(slate),
-                     "duplicates": slate.attrs["duplicates"]}
+                     "duplicates": slate.attrs["duplicates"],
+                     "horizon_end_utc": forecast_horizon_end(now, days).astimezone(dt.timezone.utc).isoformat()}
         if slate.empty:
             store.record_run(con, "forecast", "empty_slate", inventory, now)
             return {"status": "empty_slate", "previewed": 0, "locked": {}, "missed": {}, **inventory}
@@ -874,8 +913,6 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
             print("LOCKS NOT WRITTEN: %s" % reason, file=sys.stderr)
 
         predictions, state, rating_rows = None, None, []
-        # Postseason games are previewed, never locked: training bowl rows used week-1 ordering (see slate_features).
-        postseason = set(candidates.loc[candidates["season_type"] == 3, "game_id"].astype(str))
         if not candidates.empty:
             scored = g2_for_slate(frame, candidates)
             feats = slate_features(team_games, frame, candidates, now)
@@ -911,7 +948,7 @@ def forecast_step(db_path: str, days: int, now: dt.datetime, frame: pd.DataFrame
         store.begin(con)
         try:
             report = _write_forecast(con, slate, board, predictions, now, days, certified, reason,
-                                     rating_rows, version, state, inventory, postseason)
+                                     rating_rows, version, state, inventory)
             con.commit()
         except Exception as exc:
             con.rollback()
@@ -945,32 +982,78 @@ def run(days: int = 10, db_path: str = store.DEFAULT_DB, now: dt.datetime | None
             "reason": forecast.get("status")}
 
 
+FEATURE_OF_TABLE = {
+    "fbs_previews": "previews and postseason research holds",
+    "fbs_game_status": "fixture lifecycle, grading state and holds",
+    "fbs_fixture_revisions": "fixture revision history",
+    "fbs_window_outcomes": "T-90 window classification",
+    "fbs_unresolved": "unresolved and lock-risk queue",
+    "fbs_run_reports": "run log",
+    "fbs_lock_events": "legacy missed-window events",
+    "fbs_ratings": "team ratings",
+    "fbs_model_meta": "model metadata",
+}
+
+
 def audit(db_path: str = store.DEFAULT_DB) -> dict:
-    """Read-only provenance counts for stored rows. Changes nothing, labels nothing."""
+    """Read-only provenance counts. Never changes the file and never writes a row.
+
+    schema_status is current, migration_required (a legacy schema: the counts that schema supports are returned, and
+    each absent table is listed with the feature it would provide) or not_initialized. Each table and column is
+    checked before it is queried, so the caller never receives a raw sqlite error for a legacy file.
+    """
+    report = {"path": db_path, "schema_version_required": store.SCHEMA_VERSION}
+    if not os.path.exists(db_path):
+        return {**report, "schema_status": "not_initialized", "schema_version": None,
+                "unavailable": [{"table": None, "feature": "all", "reason": "database file does not exist"}]}
     con = store.open_db(db_path, readonly=True)
     try:
-        columns = {row[1] for row in con.execute("PRAGMA table_info(fbs_forecasts)")}
-        protocol = "COALESCE(lock_protocol, 'legacy')" if "lock_protocol" in columns else "'legacy'"
+        state = store.schema_state(con)
+        tables = store.user_tables(con)
+        report["schema_version"] = con.execute("PRAGMA user_version").fetchone()[0]
+        report["schema_status"] = {"current": "current", "legacy": "migration_required",
+                                   "empty": "not_initialized"}[state]
+        report["unavailable"] = [
+            {"table": t, "feature": FEATURE_OF_TABLE.get(t, t), "reason": "table absent in this schema"}
+            for t in store.REQUIRED_TABLES if t not in tables]
+        for table, column in store.REQUIRED_COLUMNS:
+            if table in tables and column not in store.table_columns(con, table):
+                report["unavailable"].append({"table": table, "column": column,
+                                              "feature": FEATURE_OF_TABLE.get(table, table),
+                                              "reason": "column absent in this schema"})
+        if "fbs_forecasts" not in tables:
+            return report
+        columns = store.table_columns(con, "fbs_forecasts")
         count = lambda sql: con.execute(sql).fetchone()[0]  # noqa: E731
-        report = {
+        protocol = "COALESCE(lock_protocol, 'legacy')" if "lock_protocol" in columns else "'legacy'"
+        report.update({
             "forecast_rows": count("SELECT COUNT(*) FROM fbs_forecasts"),
             "games": count("SELECT COUNT(DISTINCT game_id) FROM fbs_forecasts"),
             "midnight_utc_kickoff_rows": count(
                 "SELECT COUNT(*) FROM fbs_forecasts WHERE kickoff_utc LIKE '%T00:00:00%'"),
             "rows_by_protocol": {row[0]: row[1] for row in con.execute(
                 "SELECT %s, COUNT(*) FROM fbs_forecasts GROUP BY 1" % protocol)},
-            "late_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE late = 1"),
-            "graded_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE result IS NOT NULL"),
-        }
+            "late_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE late = 1") if "late" in columns else None,
+            "graded_rows": count("SELECT COUNT(*) FROM fbs_forecasts WHERE result IS NOT NULL")
+            if "result" in columns else None,
+        })
         if "lock_protocol" in columns:
             locked = con.execute("SELECT kickoff_utc, locked_at_utc FROM fbs_forecasts "
                                  "WHERE lock_protocol = ?", (store.LOCK_PROTOCOL,)).fetchall()
             report["t90_rows_locked_at_or_after_kickoff"] = sum(
                 1 for row in locked
                 if store.parse_time(row["locked_at_utc"]) >= store.parse_time(row["kickoff_utc"]))
-        if store._table_exists(con, "fbs_previews"):
+        if "fbs_previews" in tables:
+            preview_columns = store.table_columns(con, "fbs_previews")
             report["preview_rows"] = count("SELECT COUNT(*) FROM fbs_previews")
+            report["postseason_research_hold_previews"] = count(
+                "SELECT COUNT(*) FROM fbs_previews WHERE hold_reason = '%s'" % store.POSTSEASON_HOLD) \
+                if "hold_reason" in preview_columns else None
+        if "fbs_lock_events" in tables:
             report["missed_lock_events"] = count("SELECT COUNT(*) FROM fbs_lock_events")
+        if "fbs_window_outcomes" in tables:
+            report["window_outcomes"] = {"%s|%s" % (row[0], row[1] or ""): row[2] for row in con.execute(
+                "SELECT outcome, reason, COUNT(*) FROM fbs_window_outcomes GROUP BY 1, 2")}
         return report
     finally:
         con.close()
@@ -1008,8 +1091,9 @@ def _main(argv=None) -> int:
             return 4
         return 3 if result["locks_blocked"] else 0
     if args.audit:
-        print(json.dumps(audit(args.db), indent=2, default=str))
-        return 0
+        report = audit(args.db)
+        print(json.dumps(report, indent=2, default=str))
+        return 0 if report["schema_status"] == "current" else 5
     parser.print_help()
     return 2
 
