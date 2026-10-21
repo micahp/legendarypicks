@@ -57,6 +57,32 @@ class DiffDatabasesTests(unittest.TestCase):
         make_db(self.dev, {"player_stats": "id INTEGER, league TEXT, season INTEGER"})
         self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
 
+    def test_pre_2024_availability_season_is_advisory(self):
+        con = sqlite3.connect(self.dev)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2010)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2024)")
+        con.commit()
+        con.close()
+        con = sqlite3.connect(self.prod)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2024)")
+        con.commit()
+        con.close()
+        self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_live_availability_season_still_blocks(self):
+        con = sqlite3.connect(self.dev)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2025)")
+        con.commit()
+        con.close()
+        con = sqlite3.connect(self.prod)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.commit()
+        con.close()
+        self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
     def test_volume_drift_is_advisory(self):
         # The live shape: prod holds 409,617 odds rows, dev 3,526. Not a
         # promotion failure -- a background timer only prod runs.
