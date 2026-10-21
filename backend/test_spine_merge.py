@@ -58,6 +58,25 @@ class ColumnDiscoveryTests(unittest.TestCase):
         con = _fixture(":memory:")
         self.assertEqual([t for t, _c in sm.referencing_columns(con) if t == "players"], [])
 
+    def test_sportsdataverse_log_player_id_is_discovered(self):
+        import migrate_schema
+
+        con = _fixture(":memory:")
+        migration = next(
+            item for item in migrate_schema.MIGRATIONS
+            if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+        )
+        table = next(
+            item for item in migration.objects
+            if item.object_type == "table"
+            and item.name == "player_game_logs_sportsdataverse"
+        )
+        con.execute(table.sql)
+        self.assertIn(
+            ("player_game_logs_sportsdataverse", "player_id"),
+            sm.referencing_columns(con),
+        )
+
     @unittest.skipUnless(os.path.isfile(REAL_DB), "needs the real database")
     def test_the_installed_schemas_are_pinned_and_agree(self):
         """Pinned deliberately, and checked on BOTH databases.

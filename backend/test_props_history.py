@@ -22,7 +22,7 @@ from routers import props  # noqa: E402
 
 
 def _provider_tables(con):
-    """Create FotMob's table and the joining view from the MIGRATION's own DDL.
+    """Create provider storage and the joining view from shipped schema DDL.
 
     Not a copy. A fixture that declares its own version of a shipped schema is a
     claim about that schema, and the two drift: earlier fixtures in this file
@@ -31,10 +31,16 @@ def _provider_tables(con):
     Importing the DDL means a schema change cannot pass these tests while
     breaking production.
     """
+    import migrate_schema
     import scripts_split_provider_logs as split
     split.ensure_espn_columns(con)
     con.executescript(split.DDL_TABLE)
-    con.executescript(split.DDL_VIEW)
+    migration = next(
+        item for item in migrate_schema.MIGRATIONS
+        if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+    )
+    for schema_object in migration.objects:
+        con.execute(schema_object.sql)
 
 
 def _insert_fotmob_rows(con, rows):
@@ -192,11 +198,8 @@ class PropHistoryVenueTests(unittest.TestCase):
         self.assertEqual(pushed["hit_rate"]["season"], 0.5)
 
     def test_nba_history_prefers_current_sportsdataverse_rows_and_keeps_dnp_out_of_rates(self):
-        import nba_sportsdataverse
-
         con = sqlite3.connect(self.path)
         con.row_factory = sqlite3.Row
-        nba_sportsdataverse.ensure_schema(con)
         con.execute(
             "INSERT INTO nba_sportsdataverse_releases VALUES(2026,2027,'active-hash',3,3,3,1,'now','now')"
         )
