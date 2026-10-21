@@ -31,8 +31,8 @@ describe('ModelsSlide', () => {
   it('lists each model with its status and shows no statistics', () => {
     const { container } = render(<ModelsSlide />)
     for (const m of MODELS) expect(screen.getByText(m.name)).toBeTruthy()
-    expect(screen.getAllByText('Live')).toHaveLength(3)
-    expect(screen.getAllByText('Coming soon')).toHaveLength(4)
+    expect(screen.getAllByText('Live')).toHaveLength(4)
+    expect(screen.getAllByText('Coming soon')).toHaveLength(3)
     expect(container.textContent).not.toMatch(/%|10K|5\+ years|92/)
     expect(screen.queryByText('Model insights')).toBeNull()
   })
@@ -40,7 +40,7 @@ describe('ModelsSlide', () => {
   it('uses the homepage copy word for word', () => {
     render(<ModelsSlide />)
     expect(screen.getByText('Prediction models across multiple sports.')).toBeTruthy()
-    expect(screen.getByText('Track the models powering Legendary Picks. NFL, NHL, and ATP/WTA are live now, with MLB, NBA, MLS, and UFC coming soon.')).toBeTruthy()
+    expect(screen.getByText('Track the models powering Legendary Picks. NFL, NCAAF, NHL, and ATP/WTA are live now, with NBA, MLS, and UFC coming soon.')).toBeTruthy()
     expect(screen.getByText('Explore the models →').closest('a')?.getAttribute('href')).toBe('/leagues')
     expect(screen.getByText('Built for transparent forecasting and research.')).toBeTruthy()
     expect(screen.getByText('Sport-specific prediction models with transparent metrics.')).toBeTruthy()
