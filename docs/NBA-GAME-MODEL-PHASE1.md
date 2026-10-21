@@ -190,8 +190,14 @@ Power planning uses the game-weighted paired-Brier effect and the SD of date-clu
 | G1 − G2, confirmation effect +0.003267 | Pooled test + confirmation SD | 7 | 18.6% / 45.2% / 66.0% |
 | G1 − G2, test effect −0.000095 | Confirmation SD | 9,672 | 5.0% / 5.0% / 5.0% |
 | G1 − G2, test effect −0.000095 | Pooled test + confirmation SD | 8,215 | 5.0% / 5.0% / 5.1% |
+| G2 − G3, confirmation effect +0.000409 | Confirmation SD | 28 | 8.3% / 15.1% / 22.1% |
+| G2 − G3, confirmation effect +0.000409 | Pooled test + confirmation SD | 23 | 9.0% / 17.3% / 25.8% |
+| G2 − G3, test effect +0.001356 | Confirmation SD | 3 | 42.1% / 86.2% / 97.6% |
+| G2 − G3, test effect +0.001356 | Pooled test + confirmation SD | 3 | 49.1% / 91.9% / 99.1% |
 
 At the observed confirmation effect, G3 versus G1 is just short of 80% power after five more seasons using the confirmation variance (78.1%), and reaches it with the pooled variance (83.7%); the planning estimate is five to six seasons. At the smaller test effect, the estimate is 39–45 seasons. G1 versus G2 does not reach 80% power within five seasons even at its larger confirmation effect (59.0–66.0%); the estimate is seven to nine seasons. At the near-zero test effect, one, three, or five seasons remain at roughly the 5% false-positive rate. The results quantify evidence only; they make no adoption recommendation and do not alter the gate.
+
+For G2 versus G3, the answer depends strongly on which split's effect is assumed: the 2024–25 test effect is about 3.3 times the 2025–26 confirmation effect, shifting the estimated 80%-power requirement from three seasons under the test effect to 23–28 seasons under the confirmation effect, depending on the variance scenario.
 
 The full per-pair, per-split measurements, variance definitions, power assumptions, and formulas are in [`research/nba-game-model/power-2026-10-21.json`](../research/nba-game-model/power-2026-10-21.json).
 

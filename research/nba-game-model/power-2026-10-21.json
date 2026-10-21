@@ -231,6 +231,86 @@
             }
           }
         }
+      },
+      "G2-G3": {
+        "observed_confirm_2025_26_delta": {
+          "effect_delta_candidate_minus_comparator": 0.0004094351357983306,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 28,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.0021584340571346285,
+                "3": 0.0012461724839147338,
+                "5": 0.0009652810553407388
+              },
+              "planning_sd_per_date": 0.00986635804385656,
+              "power_by_additional_seasons": {
+                "1": 0.0829318874598779,
+                "3": 0.15127371892411667,
+                "5": 0.2209852286980789
+              },
+              "required_additional_dates_ceiling": 4558,
+              "required_additional_dates_continuous": 4557.757347750316,
+              "required_additional_season_equivalents": 27.79120333994095
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 23,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.0019612585289925464,
+                "3": 0.0011323331396642959,
+                "5": 0.0008771014784557151
+              },
+              "planning_sd_per_date": 0.008965054456792671,
+              "power_by_additional_seasons": {
+                "1": 0.09001665561968186,
+                "3": 0.17330634164886416,
+                "5": 0.2576875463885989
+              },
+              "required_additional_dates_ceiling": 3764,
+              "required_additional_dates_continuous": 3763.078867275588,
+              "required_additional_season_equivalents": 22.94560284924139
+            }
+          }
+        },
+        "observed_test_2024_25_delta": {
+          "effect_delta_candidate_minus_comparator": 0.0013561078619890587,
+          "planning_by_variance": {
+            "confirm_2025_26_date_sd": {
+              "complete_additional_seasons": 3,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.0021584340571346285,
+                "3": 0.0012461724839147338,
+                "5": 0.0009652810553407388
+              },
+              "planning_sd_per_date": 0.00986635804385656,
+              "power_by_additional_seasons": {
+                "1": 0.42092780814671227,
+                "3": 0.8618732026576355,
+                "5": 0.97591910900261
+              },
+              "required_additional_dates_ceiling": 416,
+              "required_additional_dates_continuous": 415.4635717177179,
+              "required_additional_season_equivalents": 2.533314461693402
+            },
+            "pooled_test_plus_confirm_date_sd": {
+              "complete_additional_seasons": 3,
+              "minimum_abs_delta_for_80pct_power_by_additional_seasons": {
+                "1": 0.0019612585289925464,
+                "3": 0.0011323331396642959,
+                "5": 0.0008771014784557151
+              },
+              "planning_sd_per_date": 0.008965054456792671,
+              "power_by_additional_seasons": {
+                "1": 0.4909479548059329,
+                "3": 0.9185340480686685,
+                "5": 0.9911452086325783
+              },
+              "required_additional_dates_ceiling": 344,
+              "required_additional_dates_continuous": 343.0244454820477,
+              "required_additional_season_equivalents": 2.0916124724515104
+            }
+          }
+        }
       }
     }
   },

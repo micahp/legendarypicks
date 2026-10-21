@@ -42,6 +42,19 @@ def test_benchmark_stdout_reports_confirmation_population_metrics_and_pairs():
     assert sum("CI95=" in line for line in confirm_output.splitlines()) == 32
 
 
+def test_power_analysis_includes_all_pairs_splits_and_variance_scenarios():
+    power_path = Path(__file__).resolve().parents[1] / "research" / "nba-game-model" / "power-2026-10-21.json"
+    comparisons = json.loads(power_path.read_text(encoding="utf-8"))["power_analysis"]["comparisons"]
+    pairs = {"G1-G2", "G1-G3", "G2-G3"}
+    splits = {"observed_confirm_2025_26_delta", "observed_test_2024_25_delta"}
+    scenarios = {"confirm_2025_26_date_sd", "pooled_test_plus_confirm_date_sd"}
+    assert (set(comparisons) == pairs
+            and all(set(pair_data) == splits for pair_data in comparisons.values())
+            and all(set(split_data["planning_by_variance"]) == scenarios
+                    for pair_data in comparisons.values()
+                    for split_data in pair_data.values()))
+
+
 def _game(season: int, date: str, ident: str, home: str = "BOS", away: str = "NYK",
           hs: int = 110, aws: int = 104) -> TeamGame:
     return TeamGame(ident, season, date, home, away, hs, aws,
