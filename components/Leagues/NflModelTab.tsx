@@ -245,7 +245,7 @@ export function GameCard({ game, lock, mode }: { game: ModelGame; lock: Lock; mo
           <span>Total edge <b className="font-medium tabular-nums text-zinc-100">{totalEdge(lock) == null ? '—' : `${signed(totalEdge(lock)!)} pts`}</b></span>
         </div>
       </div>
-      <div className="border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
+      <div><ModelPickBlock lock={lock} /></div>
     </article>
   )
 }
@@ -274,7 +274,7 @@ function GameProjection({ game, lock }: { game: ModelGame; lock?: Lock }) {
               </div>
             </div>
           </div>
-          <div className="mt-3 border-t border-zinc-800 pt-3"><ModelPickBlock lock={lock} /></div>
+          <div className="mt-3"><ModelPickBlock lock={lock} /></div>
           {lock.proj_home == null || lock.proj_away == null ? (
             <p className="mt-2 text-xs text-zinc-500">Projected score unavailable for this lock.</p>
           ) : (
