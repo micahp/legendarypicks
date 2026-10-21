@@ -144,20 +144,101 @@ WTA_500_OBSERVED = (
     ("Toray Pan Pacific Open Tennis", "Pan Pacific Open", "Hard"),
 )
 
-# Events on the same scoreboards that are ATP 250, WTA 250 or WTA 125. None may be tracked.
+# ---------------------------------------------------------------------------
+# 250 coverage (2026). Names are ESPN shortNames from the 2026 season lists on the ATP and WTA scoreboards
+# (ESPN year-wide query 2026-10-21, plus a 4-day WTA sweep and a weekly ATP cross-check to 2026-12-31).
+# Tiers: the ATP's 2026 calendar for the ATP; Wikipedia's 2026 WTA Tour and tennis-db for the WTA, which agree.
+# See docs/TENNIS-COVERAGE.md section 2c.
+# ---------------------------------------------------------------------------
+
+ATP_250_OBSERVED = (
+    ("Brisbane International presented by ANZ", "Brisbane International", "Hard"),
+    ("Bank of China Hong Kong Tennis Open", "Hong Kong Tennis Open", "Hard"),
+    ("Adelaide International", "Adelaide International", "Hard"),
+    ("ASB Classic", "ASB Classic", "Hard"),
+    ("Open Occitanie", "Open Occitanie", "Hard"),
+    ("IEB+ Argentina Open", "Argentina Open", "Clay"),
+    ("Delray Beach Open", "Delray Beach Open", "Hard"),
+    ("BCI Seguros Chile Open", "Chile Open", "Clay"),
+    ("Tiriac Open presented by UniCredit Bank", "Tiriac Open", "Clay"),
+    ("Fayez Sarofim & Co. U.S. Men's Clay Court Championship", "US Men's Clay Court Championship", "Clay"),
+    ("Grand Prix Hassan II", "Grand Prix Hassan II", "Clay"),
+    ("Gonet Geneva Open", "Geneva Open", "Clay"),
+    ("Boss Open", "Boss Open", "Grass"),
+    ("Libéma Open", "Libéma Open", "Grass"),
+    ("Vanda Pharmaceuticals Mallorca Championships", "Mallorca Championships", "Grass"),
+    ("Lexus Eastbourne Open", "Eastbourne Open", "Grass"),
+    ("Nordea Open", "Nordea Open", "Clay"),
+    ("EFG Swiss Open Gstaad", "Gstaad Open", "Clay"),
+    ("Plava Laguna Croatia Open Umag", "Umag Open", "Clay"),
+    ("Generali Open", "Generali Open", "Clay"),
+    ("Millennium Estoril Open", "Estoril Open", "Clay"),
+    ("Mifel Tennis Open by Telcel Oppo", "Mifel Tennis Open", "Hard"),
+    ("Winston-Salem Open", "Winston-Salem Open", "Hard"),
+    ("Chengdu Open", "Chengdu Open", "Hard"),
+    ("AITO Hangzhou Open", "Hangzhou Open", "Hard"),
+    ("Almaty Open", "Almaty Open", "Hard"),
+    ("BNP Paribas Fortis European Open", "Brussels Open", "Hard"),
+    ("Grand Prix Auvergne-Rhône-Alpes", "Lyon Open", "Hard"),
+    ("Bybit Stockholm Open", "Stockholm Open", "Hard"),
+)
+
+WTA_250_OBSERVED = (
+    ("ASB Classic", "ASB Classic", "Hard"),
+    ("Hobart International", "Hobart International", "Hard"),
+    ("Ostrava Open", "Ostrava Open", "Hard"),
+    ("Transylvania Open powered by Kaufland", "Transylvania Open", "Hard"),
+    ("ATX Open", "ATX Open", "Hard"),
+    ("Copa Colsanitas Colsubsidio", "Bogotá Open", "Clay"),
+    ("Open Capfinances Rouen Métropole", "Rouen Open", "Clay"),
+    ("Grand Prix Son Altesse Royale", "Morocco Open", "Clay"),
+    ("Libéma Open", "Libéma Open", "Grass"),
+    ("Lexus Nottingham Open", "Nottingham Open", "Grass"),
+    ("Lexus Eastbourne Open", "Eastbourne Open", "Grass"),
+    ("Unicredit Iasi Open", "Iași Open", "Clay"),
+    ("Vanda Pharmaceuticals Athens Open", "Athens Open", "Hard"),
+    ("MSC Hamburg Ladies Open", "Hamburg Ladies Open", "Clay"),
+    ("Livesport Prague Open", "Prague Open", "Hard"),
+    ("The Memphis Classic", "Memphis Classic", "Hard"),
+    ("SP Open", "São Paulo Open", "Hard"),
+    ("Korea Open", "Korea Open", "Hard"),
+    ("Kinoshita Group Japan Open", "Japan Women's Open", "Hard"),
+    ("Guangzhou Open", "Guangzhou Open", "Hard"),
+    ("Prudential Hong Kong Tennis Open", "Hong Kong Open", "Hard"),
+    ("Chennai Open", "Chennai Open", "Hard"),
+)
+
+# Events on the same scoreboards that neither the ATP 2026 calendar nor the WTA 250 lists (Wikipedia, tennis-db)
+# list as a 250. These are 125s or unlisted. None may be tracked. Jiangxi Open is on tennis-db only, and ESPN
+# publishes no November Jiangxi event in 2026, so the only Jiangxi on ESPN (a May event) stays out too.
 UNTRACKED_OBSERVED = {
-    "atp": ("BNP Paribas Fortis European Open", "Almaty Open", "Grand Prix Auvergne-Rhône-Alpes",
-            "IEB+ Argentina Open", "Delray Beach Open", "BCI Seguros Chile Open", "Gonet Geneva Open",
-            "Mifel Tennis Open by Telcel Oppo"),
-    "wta": ("Kinoshita Group Japan Open", "ASB Classic", "Hobart International", "Workday Canberra International",
-            "Korea Open", "Guangzhou Open", "Queretaro Open", "Lexus Eastbourne Open", "Libéma Open",
-            "Lexus Ilkley Open", "Memorial Eugenio Fontana", "Lexus Nottingham Open", "Odlum Brown VanOpen",
-            "The Memphis Classic", "Axeria Open 2026 powered by Intaro Sport", "Ennoble Care Philly Open",
-            "Abierto de Curitiba", "Turk Telekom Ankara Open", "Eupago Porto Open", "Delta Motors Tolentino Open",
-            "SP Open", "BBVA Open Internacional De Valencia", "Zavarovalnica Triglav Ljubljana",
-            "Transylvania Open powered by Kaufland", "Ostrava Open", "ATX Open", "L&T Mumbai Open",
-            "Megasaray Hotels Open 1", "Copa Colsanitas Colsubsidio", "Open Capfinances Rouen Métropole"),
+    "wta": ("Jiangxi Open", "Workday Canberra International", "Queretaro Open", "Lexus Ilkley Open",
+            "Memorial Eugenio Fontana", "Odlum Brown VanOpen", "Axeria Open 2026 powered by Intaro Sport",
+            "Ennoble Care Philly Open", "Abierto de Curitiba", "Turk Telekom Ankara Open", "Eupago Porto Open",
+            "Delta Motors Tolentino Open", "BBVA Open Internacional De Valencia",
+            "Zavarovalnica Triglav Ljubljana", "L&T Mumbai Open", "Megasaray Hotels Open 1",
+            "Trophée Clarins", "Istanbul Open", "Parma Ladies Open presented by Iren",
+            "Lexus Birmingham Open", "Warsaw T-Mobile Polish Open", "Dubrovnik Open"),
 }
+
+
+def test_every_observed_250_name_resolves_to_its_canonical_event():
+    for tour, rows in (("atp", ATP_250_OBSERVED), ("wta", WTA_250_OBSERVED)):
+        for espn_name, canonical, _surface in rows:
+            assert major_for_event(tour, espn_name) == canonical, f"{tour}: {espn_name}"
+
+
+def test_every_added_250_has_its_surface_and_is_never_best_of_five():
+    for tour, rows in (("atp", ATP_250_OBSERVED), ("wta", WTA_250_OBSERVED)):
+        for espn_name, canonical, surface in rows:
+            assert proj.SURFACE_BY_MAJOR[canonical] == surface, f"{espn_name} -> {surface}"
+            assert canonical not in proj.FIVE_SET_MAJORS, f"{espn_name} must be best of three"
+
+
+def test_the_2026_250_lists_are_complete_and_distinct():
+    # 29 ATP 250s on the ATP 2026 calendar; 22 WTA 250s on both Wikipedia and tennis-db.
+    assert len(ATP_250_OBSERVED) == 29 and len({c for _n, c, _s in ATP_250_OBSERVED}) == 29
+    assert len(WTA_250_OBSERVED) == 22 and len({c for _n, c, _s in WTA_250_OBSERVED}) == 22
 
 
 def test_every_observed_500_name_resolves_to_its_canonical_event():
@@ -173,7 +254,7 @@ def test_every_added_500_has_its_surface_and_is_never_best_of_five():
             assert canonical not in proj.FIVE_SET_MAJORS, f"{espn_name} must be best of three"
 
 
-def test_250s_and_125s_on_the_same_scoreboards_stay_untracked():
+def test_non_250_events_on_the_same_scoreboards_stay_untracked():
     for tour, names in UNTRACKED_OBSERVED.items():
         for name in names:
             assert major_for_event(tour, name) is None, f"{tour}: {name} must not be tracked"
