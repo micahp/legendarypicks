@@ -206,6 +206,13 @@ const PROP_PAGE_SIZE = 500
 // not an edge case.
 const MAX_PROP_PAGES = 120
 
+// Pages requested at once. NBA points on 2026-10-21 was 6,914 rows (13 books posting
+// ladders), 14 pages at the API's 500 cap; one after another, that is 14 round trips
+// through the dev tunnel while every other league needed one or two. The summary's
+// market count is offers, not rows, so the page count is not known up front: ask for a
+// batch, keep pages in order up to the first short one, and discard the rest.
+const PROP_PAGE_BATCH = 6
+
 // How many rows the board renders, and requests per-row history for, at once.
 // The board fires ONE /api/props/history fetch per rendered row, so this number
 // is a concurrency budget, not a layout preference. On 2026-09-05 the ncaaf
@@ -226,7 +233,7 @@ async function fetchAllProps(
   signal: AbortSignal,
 ): Promise<PropFetchResult> {
   const rows: BoardProp[] = []
-  for (let page = 0; page < MAX_PROP_PAGES; page += 1) {
+  const fetchPage = async (page: number): Promise<BoardProp[]> => {
     const pageParams = new URLSearchParams(params)
     pageParams.set('limit', String(PROP_PAGE_SIZE))
     pageParams.set('offset', String(page * PROP_PAGE_SIZE))
@@ -234,8 +241,18 @@ async function fetchAllProps(
     if (!response.ok) throw new Error(`Props request failed (${response.status})`)
     const data = await response.json()
     if (!Array.isArray(data)) throw new Error('Props response was not a list')
-    rows.push(...data)
-    if (data.length < PROP_PAGE_SIZE) return { rows, truncated: false }
+    return data
+  }
+  for (let start = 0; start < MAX_PROP_PAGES; start += PROP_PAGE_BATCH) {
+    const pages = Array.from(
+      { length: Math.min(PROP_PAGE_BATCH, MAX_PROP_PAGES - start) },
+      (_, i) => start + i,
+    )
+    const results = await Promise.all(pages.map(fetchPage))
+    for (const data of results) {
+      rows.push(...data)
+      if (data.length < PROP_PAGE_SIZE) return { rows, truncated: false }
+    }
   }
   // Every row we did fetch is still shown, and the board says it is incomplete.
   // Silently serving a partial board would be worse than the crash this replaces.
