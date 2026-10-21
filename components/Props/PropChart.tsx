@@ -48,13 +48,13 @@ const WINDOWS: { key: Window; label: string }[] = [
   { key: 'season', label: 'S' },
 ]
 
-export function nbaSeasonStartYear(date: string): number | null {
+export function nbaSeasonEndYear(date: string): number | null {
   const match = /^(\d{4})-(\d{2})/.exec(date || '')
   if (!match) return null
   const year = Number(match[1])
   const month = Number(match[2])
   return Number.isFinite(year) && Number.isFinite(month)
-    ? (month >= 7 ? year : year - 1)
+    ? (month >= 7 ? year + 1 : year)
     : null
 }
 

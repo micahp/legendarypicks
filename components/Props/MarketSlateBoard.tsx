@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FightForm from './FightForm'
 import MatchForm from './MatchForm'
-import PropChart, { nbaSeasonStartYear, PropHistory } from './PropChart'
+import PropChart, { nbaSeasonEndYear, PropHistory } from './PropChart'
 import HorizontalScrollRail from '../HorizontalScrollRail'
 import { uniqueLineOptions } from './lineOptions'
 import { isPickem } from './odds'
@@ -631,7 +631,7 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
         side: row.over ? 'over' : 'under',
         league: row.league,
       })
-      const season = row.league === 'nba' ? nbaSeasonStartYear(row.date) : null
+      const season = row.league === 'nba' ? nbaSeasonEndYear(row.date) : null
       if (season !== null) params.set('season', String(season))
       fetch(`/api/props/history?${params}`, { signal: controller.signal })
         .then(response => {

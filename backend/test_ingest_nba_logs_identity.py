@@ -157,6 +157,62 @@ class NbaLogIdentityTests(unittest.TestCase):
         con.close()
         self.assertEqual(rows, [("REG", 2027)])
 
+    def test_ingest_walks_multiple_regular_season_dates_and_keeps_shooting_makes(self):
+        games_by_date = {
+            "2026-10-20": [{
+                "game_id": "game-20261020", "state": "post", "completed": True,
+                "season_type": 2, "competition_type": "STD",
+                "home": {"abbrev": "BOS"}, "away": {"abbrev": "NYK"},
+            }],
+            "2026-10-21": [{
+                "game_id": "game-20261021", "state": "post", "completed": True,
+                "season_type": 2, "competition_type": "STD",
+                "home": {"abbrev": "BOS"}, "away": {"abbrev": "NYK"},
+            }],
+        }
+        boxscores = {
+            "game-20261020": {"players": [{
+                "team": {"abbreviation": "BOS"},
+                "statistics": [{
+                    "names": ["PTS", "REB", "AST", "MIN", "FG", "FT"],
+                    "athletes": [{
+                        "athlete": {"id": "100", "displayName": "Known Guard"},
+                        "stats": ["20", "5", "7", "32:00", "8-16", "2-3"],
+                    }],
+                }],
+            }]},
+            "game-20261021": {"players": [{
+                "team": {"abbreviation": "BOS"},
+                "statistics": [{
+                    "names": ["PTS", "REB", "AST", "MIN", "FG", "FT"],
+                    "athletes": [{
+                        "athlete": {"id": "100", "displayName": "Known Guard"},
+                        "stats": ["24", "6", "8", "35:30", "9-18", "3-4"],
+                    }],
+                }],
+            }]},
+        }
+        with mock.patch.object(ingest_nba_logs, "DB", self.path), \
+             mock.patch.object(ingest_nba_logs.espn, "games",
+                               side_effect=lambda _league, date: games_by_date[date]), \
+             mock.patch.object(ingest_nba_logs.espn, "boxscore",
+                               side_effect=lambda _league, game_id: boxscores[game_id]), \
+             mock.patch.object(ingest_nba_logs.time, "sleep"):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-10-20", "2026-10-21"), 2
+            )
+
+        con = sqlite3.connect(self.path)
+        rows = con.execute(
+            "SELECT game_date,game_type,season,json_extract(stats,'$.FGM'),"
+            "json_extract(stats,'$.FTM') FROM player_game_logs ORDER BY game_date"
+        ).fetchall()
+        con.close()
+        self.assertEqual(rows, [
+            ("2026-10-20", "REG", 2027, 8, 2),
+            ("2026-10-21", "REG", 2027, 9, 3),
+        ])
+
     def test_a_postponed_game_writes_nothing(self):
         """`state == "post"` is not "this game was played". A postponed game is
         also state="post", with a score of 0 rather than null, so the old filter

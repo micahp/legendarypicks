@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import MarketSlateBoard from '../components/Props/MarketSlateBoard'
 import MatchForm from '../components/Props/MatchForm'
-import PropChart, { nbaSeasonStartYear, PropHistory } from '../components/Props/PropChart'
+import PropChart, { nbaSeasonEndYear, PropHistory } from '../components/Props/PropChart'
 import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
@@ -242,7 +242,7 @@ function SlateTab({ league, leagueOrder, filterLabel, onViewAll }: {
     setOpenPropKey(key); setPropChart(null); setPropChartLoading(true)
     try {
       const params = new URLSearchParams({ player_id: String(playerId), market, line: String(line), side, league: gameLeague })
-      const season = gameLeague === 'nba' ? nbaSeasonStartYear(gameDate) : null
+      const season = gameLeague === 'nba' ? nbaSeasonEndYear(gameDate) : null
       if (season !== null) params.set('season', String(season))
       const r = await fetch(`/api/props/history?${params}`)
       const d = await r.json()

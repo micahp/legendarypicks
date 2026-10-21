@@ -63,6 +63,36 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
         _core.DB = _FIXTURE.name
         _core._init_db()
         _seed()
+        cls._seed_duplicate_nba_game()
+
+    @staticmethod
+    def _seed_duplicate_nba_game():
+        con = sqlite3.connect(_FIXTURE.name)
+        con.execute("INSERT INTO players(id,name,team,league) "
+                    "VALUES(4,'NBA Guard','NYK','nba')")
+        con.execute("INSERT INTO players(id,name,team,league) "
+                    "VALUES(5,'NBA Center','BOS','nba')")
+        con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away,espn_event_id) "
+                    "VALUES(20,'nba','2099-08-27','2099-08-27T23:00:00Z',"
+                    "'New York Knicks','Boston Celtics','')")
+        con.execute("INSERT INTO prop_games(id,league,date,start_time,home,away,espn_event_id) "
+                    "VALUES(21,'nba','2099-08-27','2099-08-27T23:00:00Z',"
+                    "'New York Knicks','Boston Celtics','401900021')")
+        rows = (
+            (80, 20, 4, 'points', 10.5, 'over', 'book-a'),
+            (81, 21, 4, 'points', 10.5, 'over', 'book-b'),
+            (82, 21, 4, 'points', 10.5, 'under', 'book-b'),
+            (83, 20, 5, 'assists', 3.5, 'over', 'book-a'),
+            (84, 21, 5, 'blocks', 0.5, 'over', 'book-b'),
+        )
+        con.executemany(
+            "INSERT INTO props(id,game_id,player_id,market,line,side,source,captured_at,odds) "
+            "VALUES(?,?,?,?,?,?,?,?,NULL)",
+            [(pid, gid, player, market, line, side, source, '2026-08-26T12:00:00Z')
+             for pid, gid, player, market, line, side, source in rows],
+        )
+        con.commit()
+        con.close()
 
     @classmethod
     def tearDownClass(cls):
@@ -136,6 +166,29 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
     def test_stats_counts_the_competition_not_the_spine(self):
         stats = props.prop_stats(market=None, league="lcup", window=365)
         self.assertEqual(sum(s["total"] for s in stats), 2)
+
+    def test_nba_duplicate_provider_rows_expand_as_one_matchup(self):
+        summary = props.props_slate(league="nba", date="2099-08-27",
+                                    summary=1, game_id=None)
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(summary[0]["game_id"], 21,
+                         "the ESPN-linked matchup row is the slate identity")
+        self.assertEqual(summary[0]["prop_count"], 4,
+                         "same player/market/line/side from two game rows counts once")
+        self.assertEqual(
+            {item["market"]: item["count"] for item in summary[0]["markets"]},
+            {"assists": 1, "blocks": 1, "points": 1},
+        )
+
+        for selected_game_id in (20, 21):
+            expanded = props.props_slate(league="nba", date=None,
+                                         summary=0, game_id=selected_game_id)
+            self.assertEqual(len(expanded), 1)
+            self.assertEqual(expanded[0]["game_id"], 21)
+            self.assertEqual(expanded[0]["prop_count"], 4)
+            listed = [prop for player in expanded[0]["players"]
+                      for prop in player["props"]]
+            self.assertEqual(len(listed), 4)
 
 
 if __name__ == "__main__":
