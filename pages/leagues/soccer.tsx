@@ -214,7 +214,13 @@ export default function SoccerLeaguePage({
 
   return (
     <>
-      <Head><title>Soccer — Legendary Picks</title></Head>
+      <Head>
+        <title>Soccer — Legendary Picks</title>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=neurology"
+        />
+      </Head>
       <div className="space-y-6">
         <LeagueSwitcher activeLeague="soccer" />
         <header>
