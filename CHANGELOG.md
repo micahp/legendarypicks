@@ -1,3 +1,16 @@
+## v10.0.7
+
+### NCAAF model
+
+- Freeze one projection per game and model at 90 minutes before kickoff, then grade it from ESPN finals or from the stored scoreboard snapshot, so grading no longer depends on ESPN alone.
+- Count the legacy forecasts in the record, add each team's record and the real kickoff time to the cards, and show the projection the same way before and after it is frozen.
+- Gate runs on a parity certificate, migrate the model database with a backup before each run, and hold postseason previews out of locks.
+- Match the other model pages: pill tabs for Projections, Record and Team Ratings, the model picker beside the title, and no venue line.
+
+### Models
+
+- Load the coming-soon icon font in the page head on the MLB, NBA, UFC and MLS model tabs, so the icon shows instead of its name.
+
 ## v10.0.6
 
 ### NFL model
