@@ -22,6 +22,8 @@ TEST_SEASONS = (2024, 2025)
 REFIT_THROUGH_SEASON = 2026
 SIMULATIONS = 2048
 EPSILON = 1e-12
+BOOTSTRAP_REPLICATES = 2000
+BOOTSTRAP_SEED = 20261021
 
 MODEL_INFO = [
     {"id": "G1", "label": "G1 Elo", "version": "nba-g1-elo-v1-k20-hca65-reg75",
@@ -322,6 +324,144 @@ def _score_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return results
 
 
+def _bootstrap_loss(row: dict[str, Any], model: str, metric: str) -> float:
+    forecast = row["models"][model]
+    if metric == "winner_brier":
+        return (forecast["p_home"] - row["outcome"]) ** 2
+    if metric == "winner_log_loss":
+        probability = forecast["p_home"]
+        outcome = row["outcome"]
+        return -(outcome * math.log(max(EPSILON, probability))
+                 + (1 - outcome) * math.log(max(EPSILON, 1 - probability)))
+
+    home = forecast.get("home_points")
+    away = forecast.get("away_points")
+    if metric == "home_points_mae":
+        return abs(home - row["home_score"])
+    if metric == "away_points_mae":
+        return abs(away - row["away_score"])
+    if metric == "spread_mae":
+        return abs((home - away) - (row["home_score"] - row["away_score"]))
+    if metric == "total_mae":
+        return abs((home + away) - (row["home_score"] + row["away_score"]))
+    if metric in {"margin_crps", "total_crps"}:
+        if model == "G3":
+            return forecast["distribution_metrics"][metric]
+        if model == "G2":
+            # A deterministic point forecast is a Dirac distribution; its CRPS is absolute error.
+            predicted = home - away if metric == "margin_crps" else home + away
+            actual = (row["home_score"] - row["away_score"]
+                      if metric == "margin_crps" else row["home_score"] + row["away_score"])
+            return abs(predicted - actual)
+    raise ValueError(f"unsupported bootstrap metric/model: {metric}/{model}")
+
+
+def _date_clustered_paired_bootstrap(
+    rows: list[dict[str, Any]], replicates: int = BOOTSTRAP_REPLICATES,
+    seed: int = BOOTSTRAP_SEED,
+) -> dict[str, Any]:
+    """Compare paired losses by resampling complete NBA local game-date blocks."""
+    if not rows:
+        raise ValueError("cannot bootstrap an empty evaluation period")
+    if replicates < 1:
+        raise ValueError("bootstrap replicates must be positive")
+
+    winner_models = ("G1", "G2", "G3")
+    winner_baselines = ("B0 Home-rate baseline", "B1 Training league-points baseline")
+    comparisons: list[tuple[str, str, str]] = []
+    for metric in ("winner_brier", "winner_log_loss"):
+        for index, candidate in enumerate(winner_models):
+            comparisons.extend((metric, candidate, other)
+                               for other in winner_models[index + 1:])
+            comparisons.extend((metric, candidate, baseline)
+                               for baseline in winner_baselines)
+    point_models = ("G2", "G3", "B1 Training league-points baseline")
+    for metric in ("home_points_mae", "away_points_mae", "spread_mae", "total_mae"):
+        for index, candidate in enumerate(point_models):
+            comparisons.extend((metric, candidate, other)
+                               for other in point_models[index + 1:])
+    for metric in ("margin_crps", "total_crps"):
+        comparisons.append((metric, "G2", "G3"))
+
+    rows_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    positions_by_date: dict[str, list[int]] = defaultdict(list)
+    season_by_date: dict[str, int] = {}
+    for row_index, row in enumerate(rows):
+        game_date = str(row["game_date"])
+        season = int(row["season"])
+        if game_date in season_by_date and season_by_date[game_date] != season:
+            raise ValueError(f"NBA local game date appears in multiple seasons: {game_date}")
+        season_by_date[game_date] = season
+        rows_by_date[game_date].append(row)
+        positions_by_date[game_date].append(row_index)
+    dates = sorted(rows_by_date)
+    blocks = [rows_by_date[game_date] for game_date in dates]
+    block_sizes = [len(block) for block in blocks]
+
+    block_deltas: list[list[float]] = []
+    estimates: list[dict[str, Any]] = []
+    for metric, candidate, comparator in comparisons:
+        candidate_losses = [_bootstrap_loss(row, candidate, metric) for row in rows]
+        comparator_losses = [_bootstrap_loss(row, comparator, metric) for row in rows]
+        # On identical sampled dates, the delta of the two means is the mean paired loss delta.
+        paired_deltas = [left - right for left, right
+                         in zip(candidate_losses, comparator_losses)]
+        block_deltas.append([
+            math.fsum(paired_deltas[index] for index in positions_by_date[game_date])
+            for game_date in dates
+        ])
+        candidate_mean = math.fsum(candidate_losses) / len(rows)
+        comparator_mean = math.fsum(comparator_losses) / len(rows)
+        estimates.append({
+            "metric": metric,
+            "candidate": candidate,
+            "comparator": comparator,
+            "candidate_mean": candidate_mean,
+            "comparator_mean": comparator_mean,
+            "delta_candidate_minus_comparator": candidate_mean - comparator_mean,
+        })
+
+    distributions: list[list[float]] = [[] for _ in comparisons]
+    rng = random.Random(seed)
+    for _ in range(replicates):
+        sampled_blocks = [rng.randrange(len(blocks)) for _ in blocks]
+        sampled_games = sum(block_sizes[index] for index in sampled_blocks)
+        for comparison_index, deltas in enumerate(block_deltas):
+            delta = math.fsum(deltas[index] for index in sampled_blocks) / sampled_games
+            distributions[comparison_index].append(delta)
+
+    reported = []
+    for estimate, deltas in zip(estimates, distributions):
+        ordered = sorted(deltas)
+        estimate["ci95_percentile"] = [
+            _quantile(ordered, 0.025), _quantile(ordered, 0.975),
+        ]
+        estimate["p_candidate_better"] = sum(value < 0 for value in deltas) / replicates
+        reported.append(estimate)
+    return {
+        "games": len(rows),
+        "date_clusters": len(blocks),
+        "comparisons": reported,
+    }
+
+
+def _benchmark_uncertainty(eval_rows: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    return {
+        "method": ("Paired nonparametric cluster bootstrap; resample NBA local game_date blocks "
+                   "with replacement, retaining every game on each sampled date."),
+        "replicates": BOOTSTRAP_REPLICATES,
+        "seed": BOOTSTRAP_SEED,
+        "random_number_generator": "Python random.Random (MT19937)",
+        "interval": "two-sided 95% percentile interval (2.5th, 97.5th percentiles)",
+        "delta_definition": "candidate metric minus comparator metric; lower is better",
+        "p_better_definition": "share of replicates with candidate-minus-comparator delta < 0",
+        "g2_crps_definition": ("G2 is treated as a deterministic point-mass distribution; its CRPS "
+                               "equals absolute error for margin and total."),
+        "validation": _date_clustered_paired_bootstrap(eval_rows["validation"]),
+        "test": _date_clustered_paired_bootstrap(eval_rows["test"]),
+    }
+
+
 def _metric_row(game: TeamGame, predictions: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return {
         "game_id": game.game_id, "season": game.season, "game_date": game.game_date,
@@ -453,6 +593,7 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
             row["models"]["B1 Training league-points baseline"] = point_base
 
     metrics = {period: _score_metrics(rows) for period, rows in eval_rows.items()}
+    uncertainty = _benchmark_uncertainty(eval_rows)
     return {
         "protocol": {
             "train_seasons_end_year": list(TRAIN_SEASONS),
@@ -488,6 +629,7 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
             "g2_training_margin_residual_sd": g2_sigma,
         },
         "metrics": metrics,
+        "uncertainty": uncertainty,
         "model_info": MODEL_INFO,
     }
 

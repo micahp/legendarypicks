@@ -79,6 +79,23 @@ def main() -> int:
                           d["margin_crps"], d["total_crps"], d["joint_score_gaussian_nll"],
                           d["margin_80pct_coverage"], d["total_80pct_coverage"],
                       ))
+    uncertainty = report["uncertainty"]
+    print("paired date-cluster bootstrap: {replicates} replicates, seed {seed}; "
+          "95% percentile intervals".format(**uncertainty))
+    for period in ("validation", "test"):
+        period_result = uncertainty[period]
+        print(f"{period} paired comparisons: {period_result['date_clusters']} NBA local game dates")
+        for comparison in period_result["comparisons"]:
+            low, high = comparison["ci95_percentile"]
+            print("  {metric}: {candidate} - {comparator} delta={delta:+.6f} "
+                  "CI95=[{low:+.6f}, {high:+.6f}] P(better)={p_better:.3f}".format(
+                      metric=comparison["metric"],
+                      candidate=comparison["candidate"],
+                      comparator=comparison["comparator"],
+                      delta=comparison["delta_candidate_minus_comparator"],
+                      low=low, high=high,
+                      p_better=comparison["p_candidate_better"],
+                  ))
     print("report:", Path(args.output).resolve())
     return 0
 
