@@ -90,7 +90,7 @@ def ats_result(actual_margin, spread_line):
 
 
 def pick_side(proj_margin, spread_line):
-    """The model's against-the-spread side, the single rule behind every pick.
+    """The model's against-the-spread side, shared by every spread-pick consumer.
 
     'home' when the projected home margin beats the line, 'away' when it does not, 'no_pick'
     when it sits exactly on the line (within the grading tolerance), 'no_line' when there is no

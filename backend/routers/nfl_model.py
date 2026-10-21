@@ -3,7 +3,8 @@ against and, once the game is final, its grade (SPEC A 2.2-2.3).
 
 READ-ONLY. Reads game_projections (locked = 1 only: the projection grading uses), model_runs for
 the model family, nfl_line_snapshots for the line, nfl_schedule for kickoff and the published
-final, projection_grades for grades. Nothing is computed here except the labels.
+final, projection_grades for outcomes. Winner/total picks and grades are deterministic from
+the frozen inputs and the settled scores stored by the grader; no extra grade columns are needed.
 
 A lock written before line snapshots existed (2026-10-11) has no snapshot; its line is the row's
 own market_spread / market_total, flagged `line.source = "lock row"`. The 10-09 legacy locks
@@ -54,9 +55,9 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
     """Season-to-date record per model version, over GRADED locked games only.
 
     Counts, not rates: n is small until midseason and a percentage over 25 games reads as more
-    than it is. `awaiting` is locks with no grade yet (not final), so the reader sees what the
-    record is conditional on. Straight-up is derived here from the lock's win probability and the
-    graded final; ATS is the grader's own result."""
+    than it is. `awaiting` is locks with no grade yet (not final). Winner and total results
+    are derived from immutable lock inputs and the score recorded in projection_grades;
+    spread uses the grader's stored ATS result."""
     locked: Dict[str, int] = {}
     models: Dict[str, Any] = {}
     for mv, model, n in con.execute(
