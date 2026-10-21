@@ -12,6 +12,7 @@ import argparse
 import datetime as dt
 import fcntl
 import os
+import re
 import sqlite3
 import subprocess
 import sys
@@ -99,9 +100,15 @@ def _lock_path(prefix: str, name: str) -> str:
     return os.path.join(LOCK_DIR, "{}{}.lock".format(prefix, name))
 
 
-def _run_lock_path(db_path: str) -> str:
+def _run_lock_path(db_path: str, label: str = "props ingest") -> str:
+    # One run lock per REGISTRY and database. It stops a registry overlapping itself; the
+    # host locks are what keep two registries off one publisher. Shared across registries,
+    # the ingest-jobs DEV half (12-16 min from :22 and :52) held it at every :04 and :34
+    # props start, so DEV props skipped every run from 2026-10-20 23:34 on.
     stem = os.path.splitext(os.path.basename(db_path))[0]
-    return _lock_path("legendarypicks-props-", stem)
+    if label == "props ingest":
+        return _lock_path("legendarypicks-props-", stem)
+    return _lock_path("legendarypicks-{}-".format(re.sub(r"[^a-z0-9]+", "-", label.lower())), stem)
 
 
 def _host_lock_path(host_lock: str) -> str:
@@ -332,7 +339,7 @@ def main(argv: Optional[Sequence[str]] = None, registry=None,
         print("ERROR: cannot open LP_DB_PATH {}: {}".format(db_path, exc), file=sys.stderr)
         return 2
 
-    run_lock = _try_lock(_run_lock_path(db_path))
+    run_lock = _try_lock(_run_lock_path(db_path, label))
     if run_lock is None:
         print("{} already running for {}; skipping".format(label, db_path))
         for provider in scoped_jobs:
