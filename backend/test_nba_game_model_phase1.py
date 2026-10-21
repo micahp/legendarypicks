@@ -50,15 +50,49 @@ def _forecast_rows(kickoff: str, previewed: str, game_id: str = "NBA001") -> lis
 
 def test_backtest_uses_one_chronological_eligible_set_for_all_models():
     games = []
-    for season in range(2017, 2026):
+    for season in range(2017, 2027):
         games.append(_game(season, f"{season}-02-01", f"g{season}"))
     result = backtest(games)
     assert result["eligible_games"] == {
-        "train": 5, "validation": 2, "test": 2, "refit_through_2025_26": 9,
+        "train": 5, "validation": 2, "test": 2, "refit_through_2025_26": 10,
     }
     assert all(value["games"] == 2 for value in result["metrics"]["test"].values())
     assert result["metrics"]["test"]["G1"].get("home_points_mae") is None
     assert result["metrics"]["test"]["G3"]["distribution"]
+    assert result["protocol"]["confirm_seasons_end_year"] == [2026]
+    assert set(result["metrics"]["confirm_2026"]) == set(result["metrics"]["test"])
+    for model in result["metrics"]["test"]:
+        assert set(result["metrics"]["confirm_2026"][model]) == set(
+            result["metrics"]["test"][model]
+        )
+    assert set(result["metrics"]["confirm_2026"]["G3"]["distribution"]) == set(
+        result["metrics"]["test"]["G3"]["distribution"]
+    )
+    assert all(value["games"] == 1 for value in result["metrics"]["confirm_2026"].values())
+    assert result["metrics"]["confirm_2026"]["G3"]["distribution"]["coverage_uncertainty"]
+    assert result["uncertainty"]["confirm_2026"]["games"] == 1
+    assert result["uncertainty"]["confirm_2026"]["date_clusters"] == 1
+    assert len(result["uncertainty"]["confirm_2026"]["comparisons"]) == 32
+    confirm_comparisons = [
+        (row["metric"], row["candidate"], row["comparator"])
+        for row in result["uncertainty"]["confirm_2026"]["comparisons"]
+    ]
+    test_comparisons = [
+        (row["metric"], row["candidate"], row["comparator"])
+        for row in result["uncertainty"]["test"]["comparisons"]
+    ]
+    assert confirm_comparisons == test_comparisons
+
+
+def test_backtest_rejects_confirmation_before_test_chronologically():
+    games = [_game(season, f"{season}-02-01", f"g{season}")
+             for season in range(2017, 2025)]
+    games.extend((
+        _game(2025, "2026-02-01", "test-late"),
+        _game(2026, "2026-01-01", "confirm-early"),
+    ))
+    with pytest.raises(ValueError, match="test games are not strictly before confirmation"):
+        backtest(games)
 
 
 def test_uncertainty_bootstrap_pairs_models_and_resamples_whole_dates():

@@ -19,6 +19,7 @@ from nba_model_data import TeamGame
 TRAIN_SEASONS = tuple(range(2017, 2022))
 VALIDATION_SEASONS = (2022, 2023)
 TEST_SEASONS = (2024, 2025)
+CONFIRM_SEASONS = (2026,)
 REFIT_THROUGH_SEASON = 2026
 SIMULATIONS = 2048
 EPSILON = 1e-12
@@ -544,6 +545,7 @@ def _benchmark_uncertainty(eval_rows: dict[str, list[dict[str, Any]]]) -> dict[s
                                "equals absolute error for margin and total."),
         "validation": _date_clustered_paired_bootstrap(eval_rows["validation"]),
         "test": _date_clustered_paired_bootstrap(eval_rows["test"]),
+        "confirm_2026": _date_clustered_paired_bootstrap(eval_rows["confirm_2026"]),
     }
 
 
@@ -564,19 +566,24 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
     train = [g for g in games if g.season in TRAIN_SEASONS]
     validation = [g for g in games if g.season in VALIDATION_SEASONS]
     test = [g for g in games if g.season in TEST_SEASONS]
-    if not train or not validation or not test:
-        raise ValueError("chronological train/validation/test split is incomplete")
+    confirm = [g for g in games if g.season in CONFIRM_SEASONS]
+    if not train or not validation or not test or not confirm:
+        raise ValueError("chronological train/validation/test/confirmation split is incomplete")
     if max(g.game_date for g in train) >= min(g.game_date for g in validation):
         raise ValueError("training games are not strictly before validation")
     if max(g.game_date for g in validation) >= min(g.game_date for g in test):
         raise ValueError("validation games are not strictly before holdout")
+    if max(g.game_date for g in test) >= min(g.game_date for g in confirm):
+        raise ValueError("test games are not strictly before confirmation")
 
     elo, efficiency = EloState(), EfficiencyState()
     residuals = ResidualDistribution()
     training_margin_errors: list[float] = []
     train_home_wins = 0
     train_home_score_sum = train_away_score_sum = 0.0
-    eval_rows: dict[str, list[dict[str, Any]]] = {"validation": [], "test": []}
+    eval_rows: dict[str, list[dict[str, Any]]] = {
+        "validation": [], "test": [], "confirm_2026": [],
+    }
     g2_sigma = None
     validation_started = False
     index = 0
@@ -609,7 +616,8 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
             else:
                 g2_p = _probability_from_margin(home_points - away_points,
                                                 g2_sigma * math.sqrt(3.0) / math.pi)
-            if season in VALIDATION_SEASONS or season in TEST_SEASONS:
+            if (season in VALIDATION_SEASONS or season in TEST_SEASONS
+                    or season in CONFIRM_SEASONS):
                 covariance = residuals.parameters()
                 sim = simulate_joint_scores(game.game_id, home_points, away_points, covariance)
                 margin_ordered = sorted(sim["margins"])
@@ -640,7 +648,12 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
                            "away_points": sim["away_points"],
                            "distribution_metrics": distribution_metrics},
                 }
-                period = "validation" if season in VALIDATION_SEASONS else "test"
+                if season in VALIDATION_SEASONS:
+                    period = "validation"
+                elif season in TEST_SEASONS:
+                    period = "test"
+                else:
+                    period = "confirm_2026"
                 eval_rows[period].append(_metric_row(game, models))
             predictions_for_date.append((game, home_points, away_points))
 
@@ -660,7 +673,9 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
 
     if not validation_started or g2_sigma is None:
         raise ValueError("validation did not follow training")
-    expected_counts = {"validation": len(validation), "test": len(test)}
+    expected_counts = {
+        "validation": len(validation), "test": len(test), "confirm_2026": len(confirm),
+    }
     for period, rows in eval_rows.items():
         if len(rows) != expected_counts[period]:
             raise ValueError(f"candidate eligibility differs in {period}: {len(rows)} != {expected_counts[period]}")
@@ -688,6 +703,7 @@ def backtest(games: Iterable[TeamGame], coverage: list[dict[str, Any]] | None = 
             "train_seasons_end_year": list(TRAIN_SEASONS),
             "validation_seasons_end_year": list(VALIDATION_SEASONS),
             "holdout_seasons_end_year": list(TEST_SEASONS),
+            "confirm_seasons_end_year": list(CONFIRM_SEASONS),
             "prospective_refit_through_end_year": REFIT_THROUGH_SEASON,
             "same_date_games_share_pregame_state": True,
             "parameters_fixed_before_evaluation": True,
