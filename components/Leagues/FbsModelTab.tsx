@@ -248,7 +248,7 @@ export default function FbsModelTab() {
                     <Metric label="Kickoff" value={kickoffLabel(row.kickoff_utc)} />
                     <Metric label="Lean" value={`${pct(lean)} ${picked}`} />
                     <Metric label="Final" value={`${row.away_score}–${row.home_score}`} />
-                    <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} />
+                    <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} tone={won ? 'text-emerald-400' : 'text-rose-400'} />
                   </article>
                 )
               })}
@@ -275,11 +275,11 @@ function Side({ team, record, probability, fair, favoured }: {
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, tone = 'text-zinc-100' }: { label: string; value: string; tone?: string }) {
   return (
     <div className="min-w-0">
       <div className="text-xs text-zinc-500">{label}</div>
-      <div className="mt-0.5 truncate tabular-nums text-sm text-zinc-100">{value}</div>
+      <div className={`mt-0.5 truncate tabular-nums text-sm ${tone}`}>{value}</div>
     </div>
   )
 }

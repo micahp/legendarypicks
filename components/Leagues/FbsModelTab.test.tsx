@@ -98,7 +98,7 @@ describe('FBS model tab', () => {
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('17–27')).toBeTruthy()
-    expect(screen.getByText('✓ Won')).toBeTruthy()
+    expect(screen.getByText('✓ Won').className).toContain('text-emerald-400')
   })
 
   it('keeps ungraded projections out of the record history', async () => {
