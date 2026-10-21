@@ -55,3 +55,36 @@ Test a two-part pregame model that forecasts opportunity separately from conditi
 ## Handoff
 
 Worker may start a hurdle refit in a new branch from research/fbs-direct-props-2026-10-20 @ ad535b9b. Keep outputs in a new research/fbs subfolder or a clearly versioned subdirectory, run falsification and deterministic reproduction, and push only when the user has authorized the push. Report the full denominator, model and baseline paired scores by cohort, uncertainty, calibration and next verdict. **No dev/prod merges, timers, lock issuance, or UI changes.**
+
+
+## Update after pregame-known cohort and unsigned prereg (2026-10-20)
+
+**This update supersedes the blanket four-market product veto above; preserve the original analysis for historical provenance.** Remote research branch \`research/fbs-direct-props-2026-10-20\` @ \`0da66e57\` includes \`COHORT.md\` and \`PREREG-FBS-HURDLE-PASSING.md\`. The latter is expressly **DRAFT / UNSIGNED**, with no new fitting run.
+
+The exact pregame-definable top-quartile cohort (membership based on 2024 full-season volume for 2025 targets, or strictly prior 2025 cumulative volume for entrants without 2024 history) is a *small slice* and scores zero-usage games too:
+
+| Market | Rows | Athletes | 2025 ΔCRPS vs baseA [90% game-cluster CI] | Interpretation |
+|---|---:|---:|---|---|
+| Passing attempts | 1,175 | 106 | +0.144 [+0.028,+0.261] | Worse; NOT_ADOPTED |
+| Passing yards | 1,146 | 102 | +4.014 [+2.363,+5.665] | Worse; NOT_ADOPTED |
+| Rushing carries | 3,224 | 308 | -0.124 [-0.162,-0.087] | Research candidate for this limited cohort |
+| Rushing yards | 3,061 | 291 | -1.923 [-2.304,-1.556] | Research candidate for this limited cohort |
+
+The pregame-known cohort represents ~13–15% of scored rows; no claim for every-player projections or lower-volume athletes. The passing hurdle prereg is limited to passing. A reject closes passing under its rule and does not overrule the independent rushing result. No model is cleared to ship or lock prospectively under this update.
+
+### Technical design recommendations to resolve before signing passing prereg
+
+These are **proposed structure choices for the draft**, not an owner signature or permission to fit:
+
+1. **Participation:** smoothed strictly-trailing **empirical** rate for \`H = (pass_attempts > 0)\`, not a pooled logistic or zero-inflated NB for this first controlled test. \`p_H=(s + p_prior)/(n + 1)\`, where \`s\` is prior positive-usage appearances among the last five available athlete box-score appearances, \`n <= 5\`, and \`p_prior\` is a training-only high-volume-QB cohort rate estimated with chronological eligibility. A row missing from box-score cannot be silently labeled \`H=0\`: DNP and absence from roster are separate unknowns.
+2. **Coupling:** Bernoulli hurdle and **zero-truncated NB conditional positive counts**, with conditional passing efficiency sampled independently of count *given pregame information*. The sampled positive count is shared with the yards simulation, maintaining coherence between pass attempts and yards. Shared latent correlation is an additional experiment only if this minimal model fails.
+3. **Window:** retain the original \`WINDOW=5\` for hurdle probability. Use the last **five positive-attempt historical appearances** for conditional count mean, while participation counts zero-attempt appearances among last five box-score appearances. Strictly chronological per athlete.
+4. **Shrinkage:** do not use all-appearance \`k=0.25\`/position mean. Estimate priors only from positive-usage QB games, and preregister conditional-volume shrinkage \`k \in {0, 0.25, 0.5, 1, 2}\` selected on 2024 only. If no positive history exists, use the training-only active-QB prior, with explicit missing-history counts.
+5. **Efficiency:** keep the existing \`EFF_WINDOW=15\` prior-opportunity efficiency method for passing yards; it already restricts numerator/denominator contribution to historical games with positive passing attempts. Model yards conditional on the sampled attempt count and empirical efficiency; do not discard zero or negative yards after positive attempts. Report coherence of pass-attempt/yard projections. No new efficiency regression in this trial.
+6. **Dispersion:** reuse the **existing, unchanged** \`SPREAD_R_GRID\` and \`SPREAD_ESD_MULT\` *values*, refitting them in the new conditional/hurdle context with only pre-2025 data under the preregistered fit/tune/refit protocol. If best parameters hit a grid edge, report the limitation; do not expand the grid after seeing the 2025 outcome.
+
+**Additional pre-signature amendment required:** the 2025 test cohort may use 2024 full-season volume, but selecting hyperparameters on 2024 must use **at most 2023 season volume** for cohort membership and any prior conditioned on "top quartile". Likewise earlier training years must use their own strictly prior-season data. Do not leak the future by using full 2024 membership to fit/select in 2024. For 2025 target rows, strictly prior 2025 participation history is allowed as a *feature* but not for model hyperparameter fitting.
+
+The frozen **2025** test has informed these decisions, so any 2025 hurdle comparison is **exploratory rather than a fresh untouched holdout**. Genuine confirmation requires a preregistered forward-only later sample with frozen pregame forecasts and verified outcomes. The unchanged signed decision rule in the passing prereg remains decisive (both original baselines, game-cluster 90% interval, all week blocks), with a simple hurdle baseline or active-only trailing comparator added as secondary falsification.
+
+**Review/signing:** The actual \`PREREG-FBS-HURDLE-PASSING.md\` owner signature must remain blank until Micah explicitly approves the design. Do not run fitting, edit the original per-row results, or claim a passing page is ready based on the proposed structure alone.
