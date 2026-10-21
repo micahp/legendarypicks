@@ -98,6 +98,10 @@ def build(con: sqlite3.Connection, event: str, tournament_id: str) -> Dict[str, 
                                "proposed": 0, "review": 0, "linked_espn_games": {}}
     linked: Dict[str, Set[str]] = {}
     for provider, provider_match_id, source_url, anchor_text in rows:
+        kept = con.execute("SELECT status FROM provider_espn_links WHERE provider=? AND provider_match_id=?",
+                           (provider, provider_match_id)).fetchone()
+        if kept and kept[0] == "stats_match":
+            continue  # promoted by provider_review_resolver; a rerun must not reset it to review
         result = link_provider_match(f"{source_url} {anchor_text or ''}", finals)
         con.execute(
             "INSERT OR REPLACE INTO provider_espn_links(provider,provider_match_id,event,espn_game_id,status,method,"
