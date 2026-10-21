@@ -88,8 +88,32 @@ FEATURE_COLUMNS = {
     ("team_game_stats", "source"): "team-stats ingest feature",
 }
 
+# Season windows on shared tables that are dev-only research backfill, not a
+# promotion that did not happen. prod deliberately serves only the live window;
+# the historical seasons exist on dev for research and are built DEV-only by
+# scripts/nfl-availability.sh. A season under the threshold is FEATURE
+# (advisory), the same decision as FEATURE tables.
+FEATURE_SEASONS_BEFORE = {
+    ("player_game_availability", "nfl"): (
+        2024,
+        "pre-2024 NFL availability is dev-only player-splits research; prod serves 2024+",
+    ),
+}
+
 BLOCKING_PREFIXES = ("SCHEMA", "SEASONS")
 ADVISORY_PREFIXES = ("VOLUME", "FEATURE")
+
+
+def _feature_season_reason(table, league, season):
+    """Reason a (table, league, season) is dev-only research, or None."""
+    entry = FEATURE_SEASONS_BEFORE.get((table, league))
+    if not entry:
+        return None
+    threshold, reason = entry
+    try:
+        return reason if int(season) < threshold else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _open(path):
@@ -233,6 +257,12 @@ def main(argv=None) -> int:
                     f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
                     f"PROD ({telemetry})")
                 continue
+            feature_reason = _feature_season_reason(table, league, season)
+            if feature_reason:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
+                    f"PROD ({feature_reason})")
+                continue
             if table in FEATURE_TABLES:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
@@ -246,6 +276,12 @@ def main(argv=None) -> int:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
                     f"DEV ({telemetry})")
+                continue
+            feature_reason = _feature_season_reason(table, league, season)
+            if feature_reason:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
+                    f"DEV ({feature_reason})")
                 continue
             if table in FEATURE_TABLES:
                 findings.append(
