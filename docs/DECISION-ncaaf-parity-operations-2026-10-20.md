@@ -119,3 +119,39 @@ Maintain frozen 2023–2025 reference parity and its **actual existing per-game 
 ### Promotion and authorization
 
 These changes are authorized as candidate research/operational-hardening code and tests **only**. After the three fixes: inspect schema guard on unmigrated copies, re-run 2,397-game parity and all tests, perform live ESPN preview-only scratch check, and present a reviewable diff/PR candidate. **Browser QA on an owner-authorized isolated server remains open.** No merge to dev, production/development server restart, operational certificate, live database migration, T-90 scheduler, locked forecast or production deployment is authorized by this note.
+
+
+## Review of a4cda8c3: postseason lock policy, horizon and legacy audits
+
+Decision date: 2026-10-21. Confirmed remote candidate \`candidate/ncaaf-parity-repair-2026-10-20\` at \`a4cda8c3d1edcd7e7f5a10d7b8f5799415799629\`; commit changes only candidate code and tests. Worker reports 110 FBS tests passing, 2,397/2,397 research parity (G2 and C2 0; G2h maximum row delta 1.5e-8), a fresh uncertified ESPN scratch run (112 ESPN events, 64 eligible forecast games/192 preview rows, 0 locks) and a successful copy-only explicit migration rehearsal preserving legacy rows. These are agent-reported empirical results; this document review inspected committed code but did **not** independently rerun the data-dependent tests.
+
+### A. Postseason forecast status: research-only previews approved; official locks NOT approved
+
+\`slate_features()\` correctly builds current as-of features from completed team history, but the committed historical research rows assign postseason bowls week 1, making their as-of inputs differ from what a real postseason forecast should know. The agent measured differences up to 10.8 feature units on three 2025 bowls. Historical parity preserves the **old**, potentially stale bowl-feature encoding; a passing parity check is not prospective validation of corrected live bowl predictions.
+
+- Allow **internal/research-only** postseason previews with conspicuous \`postseason_research_hold\` provenance. Do not treat those previews as validated forecasts or official performance records, show them as official player-facing selections, or automatically lock them.
+- **Current code has a metric bug:** \`_write_forecast()\` keeps bowls in \`fbs_previews\` and omits them from \`lock_rows\`, but their pregame lifecycle remains \`scheduled\`. \`fbs_model_store.window_outcome()\` therefore classifies such an unlocked, eligible-looking preview as \`missed_t90_window\` at kickoff. Record a **durable exclusion reason** \`postseason_research_hold\` on each affected fixture/model before cutoff, and classify it as \`window_not_eligible\`; do not inflate verified missed-window counts. Test this *after simulated kickoff*, not just while the forecast is pending. Ensure the exclusion survives later status changes (including final results).
+- Preserve ESPN \`season_type=3\` and postseason phase in constructed Elo events and report provenance rather than hardcoding \`game_phase="Regular season"\` for bowl previews (currently \`g2_for_slate()\`). Evaluate whether this changes G2 predictions, with explicit tests. Do not relax other lock gates.
+- Correct bowl chronological ordering and any resulting refitting/rebaselining **in a separate preregistered research track**. Compare original versus corrected 2023–2025 per-game features/outcomes and out-of-time proper scores. Do not silently rewrite the frozen parity ledger, its certificate gate, or existing C2/G2h parameter results to force adoption. Leave official bowl locks disabled until a separate owner research decision.
+
+### B. Ten-day forecast horizon: include the full Eastern boundary date — APPROVED
+
+Interpret the displayed \`days=10\` preview horizon as \`now < kickoff < midnight after the Eastern date containing (now + 10 elapsed days)\`. That explicitly includes **all of Saturday 2026-10-31** in the agent's reported Oct 21 Eastern run instead of cutting off at 01:15 Eastern. Calculate the **exclusive next-local-midnight boundary** with \`America/New_York\`/a timezone-aware calendar date; don't extend the UTC instant by a naïve fixed 24 hours, because the DST transition changes elapsed time.
+
+The existing \`scoreboard_dates()\` list (previous Eastern date through the inclusive last Eastern date) can continue, and every requested board must be accounted for. **Apply the identical cutoff** in \`forecast_candidates()\`, preview inventories, and absent-from-board checks. Preserve \`kickoff > now\`, current \`scheduled\` status, and independent grading, and do not make a lock whose cutoff has passed. Tests: exactly now, exactly midnight after final date, one second before it, October 31 late kickoff, Nov 1 DST transition and dates on both sides. Rerun live scratch validation and explain any 64→109 game count increase (depending on a stable slate) without inventing fixture data.
+
+### C. Legacy read-only opening and audits — APPROVED with schema-awareness
+
+Allow \`open_db(readonly=True)\` on an unmigrated file, expressly for read-only schema discovery, audit, migration planning and backup. **Do not** weaken the writable \`SCHEMA_VERSION\` gate, which must continue to fail \`migration_required\` with bytes unchanged.
+
+The \`--audit\` command must inspect \`sqlite_master\`/columns before querying each optional table and column. For a legacy DB, return useful supported legacy counts and \`schema_status="migration_required"\`, plus unavailable-feature reasons (or a structured migration-required audit result). No raw \`sqlite3.OperationalError: no such table\` and no automatic migration. Test a migrated copy and a legacy copy without optional tables/triggers, both read-only and byte-stable.
+
+### D. Additional audit discovery: duplicate event identity must cover all forecast-driving fields
+
+\`fbs_model_runner._identity()\` currently compares ESPN game ID, team IDs, kickoff, season, lifecycle and status, but **omits \`neutral_site\`, \`season_type\`, \`week\`, and any materially conflicting final-score/completion fields**. Two provider copies with the same basic identity but conflicting neutral flags could silently select the first and alter the Elo home adjustment. Fail closed on disagreement in any field that affects classification, forecast, eligibility or outcome; add injected duplicate tests for neutral-site and postseason type mismatches, preserving the existing same-copy deduplication path. Add a clear source exception if any provider field is known to legitimately vary by timestamp; never silently first-win.
+
+### E. Next stage and operational authorization
+
+Agent is authorized to implement the small policy/quality fixes above on the **candidate branch**, run unit/integrity/parity tests, and repeat a **preview-only, uncertified scratch DB** live ESPN capture and **copy-only** migration/audit check. None of these owner decisions authorize an operational DB migration, an official parity certificate, schedule installation, player-facing postseason release, live locking or production deploy.
+
+A PR/engineering code review targeting dev can be prepared **after** those fixes are evidenced, with the postseason restriction explicit. Browser QA on an **owner-authorized isolated server** is still required before **merging** to dev or operational promotion; the server has not been authorized here. Postseason **model research** need not block code review of the regular-season lifecycle if the postseason official-lock hold and metric exclusion remain enforced; lifting that hold requires a separate research approval.
