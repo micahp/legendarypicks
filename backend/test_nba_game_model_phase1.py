@@ -9,6 +9,7 @@ import pytest
 from fastapi import HTTPException, Response
 
 from nba_game_model import (MODEL_INFO, _bootstrap_loss,
+                            _date_clustered_coverage_bootstrap,
                             _date_clustered_paired_bootstrap, backtest)
 from nba_model_data import TeamGame
 from nba_model_runtime import build_preview_rows, refresh_completed_games, require_dev_picks_db
@@ -97,6 +98,42 @@ def test_uncertainty_bootstrap_pairs_models_and_resamples_whole_dates():
     # With two whole-date clusters, each bootstrap delta can only be -0.8, 0, or +0.8.
     assert comparison["ci95_percentile"] == pytest.approx([-0.8, 0.8])
     assert 0.15 < comparison["p_candidate_better"] < 0.35
+
+
+def test_g3_coverage_bootstrap_resamples_whole_dates_deterministically():
+    rows = []
+    for game_date, covered, width in (
+        ("2025-01-01", 1, 10.0),
+        ("2025-01-02", 0, 20.0),
+        ("2025-01-03", 0, 30.0),
+    ):
+        for game_number in range(2):
+            rows.append({
+                "game_id": f"{game_date}-{game_number}", "season": 2025,
+                "game_date": game_date,
+                "models": {"G3": {"distribution_metrics": {
+                    "margin_80_covered": covered,
+                    "margin_80_width": width,
+                    "total_80_covered": covered,
+                    "total_80_width": width + 10.0,
+                }}},
+            })
+
+    result = _date_clustered_coverage_bootstrap(rows, replicates=2000, seed=13)
+    assert result == _date_clustered_coverage_bootstrap(rows, replicates=2000, seed=13)
+    assert result["margin"]["coverage"] == 1 / 3
+    assert result["margin"]["width"] == 20.0
+    assert result["margin"]["date_clusters"] == 3
+    assert result["margin"]["games"] == 6
+    assert result["margin"]["replicates"] == 2000
+    assert result["margin"]["seed"] == 13
+    assert 0.94 < result["margin"]["p_under_nominal"] < 0.98
+    assert 0.02 < result["margin"]["p_over_nominal"] < 0.06
+    assert result["margin"]["p_under_nominal"] + result["margin"]["p_over_nominal"] == 1.0
+    assert result["margin"]["ci95_percentile"][0] == 0.0
+    assert result["margin"]["ci95_percentile"][1] == 1.0
+    assert result["total"]["coverage"] == 1 / 3
+    assert result["total"]["width"] == 30.0
 
 
 def test_g2_crps_is_the_absolute_error_of_its_deterministic_point_mass():
