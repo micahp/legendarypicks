@@ -139,8 +139,13 @@ class SchemaMigrationTests(unittest.TestCase):
                     if addition.contract.name not in names:
                         connection.execute(addition.sql)
                 for item in migration.objects:
-                    if migrate_schema._schema_object_sql(
-                            connection, item.object_type, item.name) is None:
+                    actual = migrate_schema._schema_object_sql(
+                        connection, item.object_type, item.name)
+                    if actual is not None and item.object_type == "view":
+                        # A later migration may replace a view; current is its last one.
+                        connection.execute(f"DROP VIEW {item.name}")
+                        actual = None
+                    if actual is None:
                         connection.execute(item.sql)
 
     def _backup(self, name):

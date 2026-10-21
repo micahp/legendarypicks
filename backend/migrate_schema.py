@@ -327,8 +327,21 @@ MIGRATIONS: tuple[Migration, ...] = (
             SchemaObject(
                 "view",
                 player_game_logs_view.VIEW,
-                player_game_logs_view.DDL_VIEW,
+                player_game_logs_view.SDV_SUBQUERY_DDL_VIEW,
                 previous_sql=player_game_logs_view.PREVIOUS_DDL_VIEW,
+            ),
+        ),
+    ),
+    Migration(
+        migration_id="20261021_001_player_game_logs_view_indexed_sdv_join",
+        table="player_game_logs",
+        additions=(),
+        objects=(
+            SchemaObject(
+                "view",
+                player_game_logs_view.VIEW,
+                player_game_logs_view.DDL_VIEW,
+                previous_sql=player_game_logs_view.SDV_SUBQUERY_DDL_VIEW,
             ),
         ),
     ),
@@ -494,8 +507,29 @@ def _schema_object_sql(
     return None if row is None else str(row[0] or "")
 
 
+def _superseding_views(migration: Migration) -> dict[str, set[str]]:
+    """View definitions that LATER migrations install, by view name.
+
+    A later migration may replace a view an earlier one created (it names the earlier text
+    as `previous_sql`). The earlier migration is still re-verified on every run, and the
+    replaced text is no longer in the database, so its view passes when a later migration
+    declares exactly what is there. Only later ones: an old definition never satisfies a
+    newer migration.
+    """
+    ids = [item.migration_id for item in MIGRATIONS]
+    if migration.migration_id not in ids:
+        return {}
+    later: dict[str, set[str]] = {}
+    for item in MIGRATIONS[ids.index(migration.migration_id) + 1:]:
+        for obj in item.objects:
+            if obj.object_type == "view":
+                later.setdefault(obj.name, set()).add(_normalize_sql(obj.sql))
+    return later
+
+
 def _verify_schema_objects(
-    connection: sqlite3.Connection, objects: Iterable[SchemaObject]
+    connection: sqlite3.Connection, objects: Iterable[SchemaObject],
+    superseded: dict[str, set[str]] | None = None,
 ) -> tuple[list[str], list[str]]:
     missing = []
     wrong = []
@@ -504,6 +538,9 @@ def _verify_schema_objects(
         label = f"{item.object_type} {item.name}"
         if actual is None:
             missing.append(label)
+        elif (item.object_type == "view" and superseded
+                and _normalize_sql(actual) in superseded.get(item.name, ())):
+            continue
         elif _normalize_sql(actual) != _normalize_sql(item.sql):
             if (item.previous_sql is not None
                     and _normalize_sql(actual)
@@ -529,7 +566,9 @@ def _verify_migration_contract(
         migration.table,
         expected.values(),
     )
-    missing, wrong = _verify_schema_objects(connection, migration.objects)
+    missing, wrong = _verify_schema_objects(
+        connection, migration.objects, _superseding_views(migration)
+    )
     errors.extend(f"missing {item}" for item in missing)
     errors.extend(f"wrong definition for {item}" for item in wrong)
     return errors
@@ -620,7 +659,7 @@ def inspect_connection(
                 )
 
         missing_objects, wrong_objects = _verify_schema_objects(
-            connection, migration.objects
+            connection, migration.objects, _superseding_views(migration)
         )
         if wrong:
             state, detail = "error", (
@@ -822,6 +861,7 @@ def apply_database(
                 connection.execute(addition.sql)
                 changed = True
 
+            superseded = _superseding_views(migration)
             for item in migration.objects:
                 actual = _schema_object_sql(
                     connection, item.object_type, item.name
@@ -829,6 +869,9 @@ def apply_database(
                 if actual is None:
                     connection.execute(item.sql)
                     changed = True
+                elif (item.object_type == "view"
+                        and _normalize_sql(actual) in superseded.get(item.name, ())):
+                    continue
                 elif _normalize_sql(actual) != _normalize_sql(item.sql):
                     if (item.previous_sql is not None
                             and _normalize_sql(actual)
