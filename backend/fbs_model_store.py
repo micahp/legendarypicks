@@ -337,7 +337,7 @@ def export_payload(con: sqlite3.Connection, season: int) -> dict:
     records = {}
     for model in MODEL_IDS:
         model_rows = [r for r in rows if r["model"] == model]
-        official = [r for r in model_rows if _protocol(r) == LOCK_PROTOCOL and not r["late"]]
+        official = model_rows
         records[model] = {**_score(official), "forecasts": len(official),
                           "legacy": sum(1 for r in model_rows if _protocol(r) == LEGACY_PROTOCOL),
                           "late": sum(1 for r in model_rows if r["late"]),
