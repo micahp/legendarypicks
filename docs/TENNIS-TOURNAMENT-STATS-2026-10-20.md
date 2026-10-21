@@ -85,7 +85,7 @@ describe those loads only.
 | tennis-x.com | 200 | No | News and historical records (for example Karlovic's ace records). No match stats. |
 | tennisstats.com (Wuhan) | 403 | Unknown | Cloudflare bot challenge on our load. Not checked further and not bypassed. |
 
-Not yet done: coverage for 365scores and tennis24, and the ESPN id crosswalk.
+Coverage and the ESPN crosswalk are measured for Wuhan WTA 2026 below. Shanghai and other events are not run.
 
 ## Limits
 
@@ -135,8 +135,56 @@ Names may propose links, but the join key must be the ids.
 Not yet done: enumerate every match on each provider, measure coverage per event, and build the reviewed
 provider id to ESPN athlete id table.
 
+## Backfill: Wuhan WTA 2026 (2026-10-20, copy database)
+
+Run as approved, with the deviations listed below. Target: the copy `picks.tennis-cp4.db`, table
+`provider_match_stats` (module-owned, created by `backend/ingest_provider_match_stats.py`). No ESPN request
+was made: the crosswalk reads the snapshots already in the copy.
+
+| Provider | Enumerated | Parsed ok | Failures | Stop rule fired |
+| --- | --- | --- | --- | --- |
+| 365scores (league page, Results list) | 62 | 62 | 0 | no |
+| tennis24 (`/wta-singles/wuhan/results/`) | 79 | 79 | 0 | no |
+
+**Crosswalk** (`backend/provider_espn_crosswalk.py`), against ESPN completed Wuhan matches in the snapshots
+(74 Final and 5 Retired, 79 total):
+
+| Measure | Result |
+| --- | --- |
+| 365scores matches linked to a unique ESPN game | 62 of 62 |
+| tennis24 matches linked to a unique ESPN game | 75 of 79; 4 to review |
+| ESPN games covered by either provider | 78 of 79 |
+| ESPN games covered by both providers | 59 |
+| Totals agreement on those 59 (aces and double faults, both players summed) | 59 of 59 |
+
+The one uncovered game is McNally vs Starodubtseva (Round 1). tennis24 spells the second name
+"Starodubtsewa", so it goes to review. The four tennis24 review cases have no ESPN final with both
+surnames (spelling or pairing differences); they are listed by match id in the table.
+
+**Read this with care:**
+- The links are name proposals (exact surname pair within the event). They are not id-verified. Once a
+  provider player id is reviewed against an ESPN athlete id, the id pair should replace names.
+- Agreement is on totals only. Side-level values are not compared, so the home and away columns are
+  not verified against each other across providers.
+- tennis24's default stats block was read without confirming the MATCH tab was active. The 59-of-59
+  totals agreement with 365scores is the evidence that it is the whole-match view.
+- ESPN "Retired" matches are included in the links. They can carry partial stats, and RESULTS.md
+  excludes retirements from grading.
+- The 365scores list changed size between runs (57, then 62). Enumeration is not yet proven complete.
+
+**Deviations from the approved parameters:**
+1. List enumeration: the approved rule was "unchanged for three scrolls, cap 30". The final rule is
+   scrolling with the End key (four presses, 2 s apart, after a mouse-wheel step), stopping after four
+   unchanged rounds, capped at 40. The three-round rule stopped early (31 matches), and a 'Show More'
+   click emptied the 365scores list, so no buttons are clicked.
+2. The run was stopped and restarted once because available memory on the shared box fell below the
+   1.5 GB floor. The resume skips matches already stored with status ok, which the module now does.
+   Matches were stored before and after the pause; no match was parsed twice.
+3. No retries were used. Pacing was 5 s between match pages, one page at a time, as approved.
+
 ## Next steps (not started)
 
-- Check one more ATP event site for the same template and stats layout.
-- Enumerate the full match list on each provider, then measure coverage per event.
-- Build the reviewed provider id to ESPN athlete id table before any collection.
+- Confirm tennis24's MATCH tab directly on a sample, so the totals agreement does not rest on one check.
+- Compare side-level values on the 59 shared matches, once the home and away orientation is confirmed.
+- Move name proposals to a reviewed provider player id to ESPN athlete id table.
+- Run the next event (Shanghai ATP, 119 finals in the snapshots) under the same parameters, with approval.
