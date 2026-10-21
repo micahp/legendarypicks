@@ -246,17 +246,18 @@ def collect_match(browser, provider: str, url: str) -> Dict[str, Any]:
         page.close()
 
 
-def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0, limit: int = 0) -> Dict[str, Any]:
+def run(db_path: str, event: str, provider: str, dry_run: bool, sample: int = 0, limit: int = 0,
+        list_url_override: Optional[str] = None) -> Dict[str, Any]:
     if db_path.endswith("picks.dev.db"):
         raise SystemExit("refusing to write to picks.dev.db; use a copy")
     from playwright.sync_api import sync_playwright
 
-    config = EVENTS[event]
-    list_url = config.get(provider)
+    config = EVENTS.get(event, {})
+    list_url = list_url_override or config.get(provider)
     if list_url is None:
         raise SystemExit(f"no list URL configured for {provider} in {event}")
     report: Dict[str, Any] = {"event": event, "provider": provider, "list_url": list_url,
-                              "espn_final_count": config["espn_final_count"], "enumerated": 0,
+                              "espn_final_count": config.get("espn_final_count"), "enumerated": 0,
                               "parsed": {}, "failures": 0, "stopped": None}
     con = None
     if not dry_run:
