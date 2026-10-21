@@ -1,0 +1,11 @@
+[Unit]
+Description=Every 30 minutes: Grade NCAAF model projections from the scoreboard snapshots
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+AccuracySec=10s
+Persistent=false
+Unit=legendarypicks-fbs-grade.service
+
+[Install]
+WantedBy=timers.target

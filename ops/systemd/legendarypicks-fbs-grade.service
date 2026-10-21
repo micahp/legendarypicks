@@ -1,0 +1,17 @@
+[Unit]
+Description=Grade NCAAF model projections from the scoreboard snapshots
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+# Migration is one explicit, idempotent step: a database already at the current schema is left untouched, and
+# an old one is backed up to a new file first and migrated in one transaction that commits only if every
+# existing row is unchanged. If it fails, the run does not start.
+ExecStartPre=/bin/mkdir -p /root/legendarypicks/backend/data/backups-fbs-model
+ExecStartPre=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/fbs_model_store.py --migrate /root/legendarypicks/backend/data/fbs-model.dev.sqlite3 --backup-dir /root/legendarypicks/backend/data/backups-fbs-model
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/legendarypicks/backend/fbs_model_runner.py --grade-scoreboard
+TimeoutStartSec=120
+
