@@ -11,10 +11,13 @@ def _database(path):
           id INTEGER PRIMARY KEY, league TEXT, home TEXT, away TEXT, date TEXT,
           espn_event_id TEXT, final_home REAL, final_away REAL
         );
-        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER);
+        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER);
         CREATE TABLE prop_results(
           prop_id INTEGER PRIMARY KEY, actual_value REAL, hit INTEGER,
           settled_at TEXT
+        );
+        CREATE TABLE player_game_logs(
+          league TEXT, source TEXT, game_id TEXT, player_id INTEGER
         );
     """)
     today = dt.date.today()
@@ -27,7 +30,7 @@ def _database(path):
              str(today + dt.timedelta(days=7)), "future", None, None),
         ],
     )
-    con.executemany("INSERT INTO props VALUES(?,?)", [(1, 1), (2, 2)])
+    con.executemany("INSERT INTO props(id,game_id) VALUES(?,?)", [(1, 1), (2, 2)])
     con.commit()
     con.close()
 
@@ -50,6 +53,22 @@ def test_default_run_never_spends_a_request_on_future_games(tmp_path, monkeypatc
     assert calls == [1]
 
 
+def test_empty_backlog_executes_both_candidate_queries(tmp_path, monkeypatch):
+    path = tmp_path / "empty.db"
+    _database(path)
+    con = sqlite3.connect(path)
+    con.execute("DELETE FROM props")
+    con.commit()
+    con.close()
+    calls = []
+    monkeypatch.setattr(settle_props, "DB", str(path))
+    monkeypatch.setattr(settle_props, "settle_game", lambda _con, gid: calls.append(gid))
+
+    settle_props._main(league="nba")
+
+    assert calls == []
+
+
 def test_max_games_bounds_one_process_working_set(tmp_path, monkeypatch):
     path = tmp_path / "settlement.db"
     _database(path)
@@ -60,7 +79,7 @@ def test_max_games_bounds_one_process_working_set(tmp_path, monkeypatch):
         "?,'other',1,0)",
         (yesterday,),
     )
-    con.execute("INSERT INTO props VALUES(3,3)")
+    con.execute("INSERT INTO props(id,game_id) VALUES(3,3)")
     con.commit()
     con.close()
     calls = []
@@ -85,10 +104,13 @@ def _aged_database(path, age_hours):
           id INTEGER PRIMARY KEY, league TEXT, home TEXT, away TEXT, date TEXT,
           espn_event_id TEXT, final_home REAL, final_away REAL, start_time TEXT
         );
-        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER);
+        CREATE TABLE props(id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER);
         CREATE TABLE prop_results(
           prop_id INTEGER PRIMARY KEY, actual_value REAL, hit INTEGER,
           settled_at TEXT
+        );
+        CREATE TABLE player_game_logs(
+          league TEXT, source TEXT, game_id TEXT, player_id INTEGER
         );
     """)
     start = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=age_hours)
@@ -96,7 +118,7 @@ def _aged_database(path, age_hours):
         "INSERT INTO prop_games VALUES(1,'nfl','Home','Away',?,?,1,0,?)",
         (start.date().isoformat(), "event-1", start.isoformat()),
     )
-    con.execute("INSERT INTO props VALUES(1,1)")
+    con.execute("INSERT INTO props(id,game_id) VALUES(1,1)")
     con.commit()
     con.close()
 
@@ -121,9 +143,9 @@ def test_game_71_hours_old_is_attempted(tmp_path, monkeypatch):
     assert calls == [1]
 
 
-def test_game_73_hours_old_is_flagged_manual_once(tmp_path, monkeypatch):
+def test_game_97_hours_old_is_flagged_manual_once(tmp_path, monkeypatch):
     path = tmp_path / "expired.db"
-    _aged_database(path, 73)
+    _aged_database(path, 97)
     calls = []
     monkeypatch.setattr(settle_props, "DB", str(path))
     monkeypatch.setattr(

@@ -446,7 +446,9 @@ def prop_history(player_id: int = Query(...),
     target_season = season
     if is_nba and target_season is None:
         today = dt.date.today()
-        target_season = today.year if today.month >= 7 else today.year - 1
+        # NBA seasons use their ending year throughout the data pipeline:
+        # October 2026 through June 2027 is season 2027.
+        target_season = today.year + 1 if today.month >= 7 else today.year
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(canonical_market)
     summary_market = league == "nhl" and canonical_market in _NHL_SUMMARY_MARKETS
     if not stat_key and not summary_market:
@@ -590,8 +592,8 @@ def prop_history(player_id: int = Query(...),
                                "json_extract(espn_stats,'$.minutes'),"
                                "json_extract(fotmob_stats,'$.minutes'))")
                 season_expr = ("CASE WHEN CAST(strftime('%m', game_date) AS INTEGER) < 7 "
-                               "THEN CAST(strftime('%Y', game_date) AS INTEGER)-1 "
-                               "ELSE CAST(strftime('%Y', game_date) AS INTEGER) END")
+                               "THEN CAST(strftime('%Y', game_date) AS INTEGER) "
+                               "ELSE CAST(strftime('%Y', game_date) AS INTEGER)+1 END")
                 rows = con.execute(
                     f"""SELECT game_id, game_date, opponent, home_away,
                                 {val_expr} AS val, {minute_expr} AS minutes,
@@ -599,7 +601,7 @@ def prop_history(player_id: int = Query(...),
                                 appearance_status
                            FROM player_game_logs_all
                           WHERE player_id=? AND league='nba'
-                            AND UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
+                            AND game_type='REG'
                           ORDER BY game_date DESC, season DESC,
                                    CAST(game_no AS INTEGER) DESC LIMIT 100""",
                     (player_id,),

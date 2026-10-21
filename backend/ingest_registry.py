@@ -117,8 +117,8 @@ JOBS: List[Dict[str, object]] = [
         "databases": ["dev"],
         # Recent ESPN boxscores are re-read with a 14-day overlap so late stat
         # corrections are applied idempotently. The script fetches the complete
-        # range before its short SQLite transaction and stamps ESPN's start-year
-        # season key. It shares ESPN's host lock with every other ESPN job.
+        # range before its short SQLite transaction and stamps ESPN's NBA
+        # ending-year season key. It shares ESPN's host lock with every ESPN job.
         "cadence_min": 360,
         "timeout_sec": 1800,
         "host_lock": "espn",

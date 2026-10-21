@@ -78,9 +78,9 @@ def _parse_line(names, values, did_not_play=False):
     return {key: value for key, value in line.items() if value is not None}
 
 
-def nba_start_year(day):
-    """NBA season key per DATA-COVERAGE-CONTRACT: the season's start year."""
-    return day.year if day.month >= 7 else day.year - 1
+def nba_season_key(day):
+    """Return ESPN's NBA season key, which names the season by ending year."""
+    return day.year + 1 if day.month >= 7 else day.year
 
 
 def _fetch_range(start, end):
@@ -213,7 +213,7 @@ def ingest(start: str, end: str, season=None, dry_run=False) -> int:
                             queued += 1
                             continue
 
-                        row_season = season if season is not None else nba_start_year(day)
+                        row_season = season if season is not None else nba_season_key(day)
                         con.execute(
                             """INSERT INTO player_game_logs
                                (player_id, league, season, game_no, game_id, game_date, team,
@@ -250,7 +250,7 @@ def main(argv=None):
     parser.add_argument("--end")
     parser.add_argument("--recent-days", type=int)
     parser.add_argument("--season", type=int,
-                        help="override the start-year season key for every fetched date")
+                        help="override ESPN's NBA season key for every fetched date")
     parser.add_argument("--dry-run", action="store_true",
                         help="fetch and parse, but do not open or write the database")
     args = parser.parse_args(argv)

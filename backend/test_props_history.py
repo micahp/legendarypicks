@@ -96,15 +96,15 @@ class PropHistoryVenueTests(unittest.TestCase):
                 (1, "nba", 2026, json.dumps({
                     "PTS": 24, "REB": 8, "AST": 5, "3PM": 2,
                     "BLK": 1, "STL": 2, "TO": 3, "FGM": 10, "FTM": 4, "MIN": 35,
-                }), "2026-07-20", "OPP1", "home", 1, None, "espn"),
+                }), "2026-07-20", "OPP1", "home", 1, "REG", "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 18, "REB": 7, "AST": 4, "3PM": 1,
                     "BLK": 0, "STL": 1, "TO": 2, "FGM": 6, "FTM": 3, "MIN": 30,
-                }), "2026-07-21", "OPP2", "away", 2, None, "espn"),
+                }), "2026-07-21", "OPP2", "away", 2, "REG", "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 21, "REB": 9, "AST": 6, "3PM": 4,
                     "BLK": 2, "STL": 3, "TO": 1, "FGM": 8, "FTM": 5, "MIN": 31,
-                }), "2026-07-22", "OPP3", None, 3, None, "espn"),
+                }), "2026-07-22", "OPP3", None, 3, "REG", "espn"),
             ],
         )
         con.commit()
@@ -151,11 +151,43 @@ class PropHistoryVenueTests(unittest.TestCase):
         for market, values in expected.items():
             result = props.prop_history(
                 player_id=1, market=market, line=0.5,
-                side="over", league="nba",
+                side="over", league="nba", season=2027,
             )
             self.assertEqual(
                 values, [game["value"] for game in result["games"]], market
             )
+            expected_rate = round(sum(value > 0.5 for value in values) / len(values), 3)
+            self.assertEqual(len(values), result["hit_rate_n"]["season"], market)
+            self.assertEqual(expected_rate, result["hit_rate"]["season"], market)
+
+    def test_nba_history_uses_regular_season_rows_only(self):
+        con = sqlite3.connect(self.path)
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "nba", 2026, json.dumps({"PTS": 100, "MIN": 30}),
+                 "2026-10-16", "PRE", "home", 4, "PRE", "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 100, "MIN": 30}),
+                 "2026-10-17", "UNK", "away", 5, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 7, "MIN": 30}),
+                 "2026-10-20", "REG", "home", 6, "REG", "espn"),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2027,
+        )
+
+        self.assertEqual("2026-10-20", result["games"][0]["date"])
+        self.assertNotIn("2026-10-16", [game["date"] for game in result["games"]])
+        self.assertNotIn("2026-10-17", [game["date"] for game in result["games"]])
+        self.assertEqual({"REG"}, {game["game_type"] for game in result["games"]})
+        self.assertEqual(4, result["hit_rate_n"]["season"])
+        self.assertEqual(0.5, result["hit_rate"]["season"])
 
     def test_nba_history_distinguishes_dnp_missing_and_played_rows(self):
         con = sqlite3.connect(self.path)
@@ -178,7 +210,7 @@ class PropHistoryVenueTests(unittest.TestCase):
 
         result = props.prop_history(
             player_id=1, market="points", line=20.5, side="over", league="nba",
-            season=2026,
+            season=2027,
         )
 
         # The DNP (07-23, MIN 0) is out of the chart as well as the rates.
@@ -192,7 +224,7 @@ class PropHistoryVenueTests(unittest.TestCase):
 
         pushed = props.prop_history(
             player_id=1, market="points", line=21, side="over", league="nba",
-            season=2026,
+            season=2027,
         )
         self.assertIsNone(pushed["games"][1]["hit"])
         self.assertEqual(pushed["hit_rate_n"]["season"], 3)
@@ -227,7 +259,7 @@ class PropHistoryVenueTests(unittest.TestCase):
         con.close()
 
         result = props.prop_history(
-            player_id=1, market="points", line=25, side="over", league="nba", season=2026
+            player_id=1, market="points", line=25, side="over", league="nba", season=2027
         )
         self.assertEqual([g["status"] for g in result["games"][:2]], ["missing", "played"])
         self.assertEqual([g["appearance_status"] for g in result["games"][:2]],
@@ -239,23 +271,30 @@ class PropHistoryVenueTests(unittest.TestCase):
 
         fgm = props.prop_history(
             player_id=1, market="field_goals_made", line=8.5,
-            side="over", league="nba", season=2026,
+            side="over", league="nba", season=2027,
         )
         ftm = props.prop_history(
             player_id=1, market="free_throws_made", line=4.5,
-            side="over", league="nba", season=2026,
+            side="over", league="nba", season=2027,
         )
         self.assertEqual(fgm["games"][1]["value"], 9)
         self.assertEqual(ftm["games"][1]["value"], 5)
 
-    def test_nba_season_window_uses_requested_start_year(self):
+    def test_nba_season_window_uses_requested_ending_year(self):
         result = props.prop_history(
             player_id=1, market="points", line=20.5, side="over", league="nba",
-            season=2025,
+            season=2026,
         )
-        self.assertEqual(result["season"], 2025)
+        self.assertEqual(result["season"], 2026)
         self.assertIsNone(result["hit_rate"]["season"])
         self.assertEqual(result["hit_rate_n"]["season"], 0)
+
+        current = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2027,
+        )
+        self.assertEqual(current["season"], 2027)
+        self.assertEqual(current["hit_rate_n"]["season"], 3)
 
     def test_nba_fantasy_points_stays_unmapped_without_a_published_formula(self):
         result = props.prop_history(
