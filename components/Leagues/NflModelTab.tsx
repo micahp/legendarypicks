@@ -160,7 +160,8 @@ type GradeMarket = 'su' | 'ats' | 'total'
 function statusLabel(lock: Lock, market: GradeMarket) {
   if (!lock.grade) return 'AWAITING'
   const result = lock.grade[market]
-  return { win: 'WIN', loss: 'LOSS', push: 'PUSH', tie: 'TIE', no_pick: 'NO PICK', no_line: 'NO LINE' }[result || ''] || '—'
+  const labels: Record<string, string> = { win: 'WIN', loss: 'LOSS', push: 'PUSH', tie: 'TIE', no_pick: 'NO PICK', no_line: 'NO LINE' }
+  return labels[result || ''] || '—'
 }
 
 function statusClass(lock: Lock, market: GradeMarket) {
