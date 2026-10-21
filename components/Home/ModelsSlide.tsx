@@ -5,9 +5,9 @@ import Link from 'next/link'
 // Copy and statuses as the homepage shows them. Edit here, not in the markup. `icon` is a Material Symbols name.
 export const MODELS: { name: string; detail: string; status: 'Live' | 'Coming soon'; icon: string }[] = [
   { name: 'NFL', detail: 'Spreads, totals and player props', status: 'Live', icon: 'sports_football' },
+  { name: 'NCAAF', detail: 'Spreads, totals and player props', status: 'Live', icon: 'sports_football' },
   { name: 'NHL', detail: 'Spreads, totals and player props', status: 'Live', icon: 'sports_hockey' },
   { name: 'ATP / WTA', detail: 'Match odds and player props', status: 'Live', icon: 'sports_tennis' },
-  { name: 'MLB', detail: 'Spreads, totals and player props', status: 'Coming soon', icon: 'sports_baseball' },
   { name: 'NBA', detail: 'Spreads, totals and player props', status: 'Coming soon', icon: 'sports_basketball' },
   { name: 'MLS', detail: 'Spreads, totals and player props', status: 'Coming soon', icon: 'sports_soccer' },
   { name: 'UFC', detail: 'Match odds and player props', status: 'Coming soon', icon: 'sports_mma' },
@@ -30,7 +30,7 @@ export default function ModelsSlide() {
         {/* Material Symbols, limited to the sport icons used above. display=block keeps the icon names from showing as text. */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=sports_baseball,sports_basketball,sports_football,sports_hockey,sports_mma,sports_soccer,sports_tennis"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=sports_basketball,sports_football,sports_hockey,sports_mma,sports_soccer,sports_tennis"
         />
       </Head>
       <div className="relative z-10 grid min-w-0 items-center gap-7 p-8 md:grid-cols-[1fr_1.05fr] md:px-12 md:py-12">
@@ -39,7 +39,7 @@ export default function ModelsSlide() {
             Prediction models across multiple sports.
           </h2>
           <p className="mt-4 max-w-xl text-zinc-300">
-            Track the models powering Legendary Picks. NFL, NHL, and ATP/WTA are live now, with MLB, NBA, MLS, and UFC coming soon.
+            Track the models powering Legendary Picks. NFL, NCAAF, NHL, and ATP/WTA are live now, with NBA, MLS, and UFC coming soon.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/leagues" className="rounded-lg border border-emerald-600 bg-emerald-600 px-5 py-2.5 font-bold text-white transition-colors hover:bg-emerald-500">
