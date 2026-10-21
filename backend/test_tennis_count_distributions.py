@@ -140,6 +140,7 @@ class FreezeRoundTripTest(unittest.TestCase):
         self.con = sqlite3.connect(":memory:")
         self.con.row_factory = sqlite3.Row
         self.con.executescript(scoreboard_store.SCHEMA)
+        scoreboard_store.ensure_distribution_schema(self.con)
 
     def _match(self):
         return {
@@ -207,16 +208,18 @@ class LookAheadGuardTest(unittest.TestCase):
         self.assertGreater(history.elo["101"], tcd.tgb.ELO_START)
 
 
-class SweepFreezeTest(unittest.TestCase):
+class SweepFixture(unittest.TestCase):
+    """An ATP history, two mapped players and one scheduled match, as the scoreboards ingest leaves them."""
     NOW = "2026-10-20T10:30:00+00:00"
+    DB_NAME = "picks.dev.db"
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
-        self.db = os.path.join(self.tmp, "synthetic.db")
+        self.db = os.path.join(self.tmp, self.DB_NAME)
         synthetic_db(self.db)
         self.con = sqlite3.connect(self.db)
         self.con.row_factory = sqlite3.Row
-        self.con.executescript(scoreboard_store.SCHEMA)
+        scoreboard_store.init(self.con)
         self.con.execute("CREATE TABLE IF NOT EXISTS players(id INTEGER PRIMARY KEY, league TEXT, espn_id TEXT)")
         self.con.execute("CREATE TABLE IF NOT EXISTS player_source_ids(source TEXT, league TEXT, "
                          "player_id INTEGER, source_player_key TEXT)")
@@ -247,6 +250,9 @@ class SweepFreezeTest(unittest.TestCase):
 
     def _distribution_count(self):
         return self.con.execute("SELECT COUNT(*) FROM tennis_model_lock_distributions").fetchone()[0]
+
+class SweepFreezeTest(SweepFixture):
+    """On the dev database every new lock freezes its distributions."""
 
     def test_a_projectable_match_locks_and_freezes_its_distributions(self):
         report = tennis_lock_sweep.sweep(self.con, now=_utc(self.NOW))
@@ -298,6 +304,21 @@ class SweepFreezeTest(unittest.TestCase):
         self.assertEqual(self._lock_count(), 1)
         row = self.con.execute("SELECT projection, model_version FROM tennis_model_locks").fetchone()
         self.assertIsNotNone(row["projection"])
+
+
+class NonDevSweepTest(SweepFixture):
+    """Outside the dev database the lock is still made, and no distribution table or row is written."""
+    DB_NAME = "picks.db"
+
+    def test_a_prod_named_database_locks_but_gets_no_distribution_table_or_rows(self):
+        report = tennis_lock_sweep.sweep(self.con, now=_utc(self.NOW))
+        self.assertEqual(report["locked"], 1)
+        self.assertEqual(report["distribution_gated"], 1)
+        self.assertEqual(report["distribution_frozen"], 0)
+        self.assertEqual(report["distribution_failed"], 0)
+        self.assertIsNone(self.con.execute(
+            "SELECT name FROM sqlite_master WHERE name LIKE 'tennis_model_lock_distribution%'").fetchone())
+        self.assertEqual(self._lock_count(), 1)
 
 
 def _utc(text):
