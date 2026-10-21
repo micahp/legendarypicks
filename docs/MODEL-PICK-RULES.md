@@ -70,7 +70,7 @@ are not the Model Pick record.
 | League | Cover threshold (S above) | Total lines | Status |
 |---|---|---|---|
 | NHL | 1.0 goal (the puck line is always 1.5) | 5.5 and 6.5, split at a projected 6.0 (the 2023 to 2025 median total) | Live (`leeway-2`) |
-| NFL | Own order, see below | **Open:** NFL totals vary (about 37 to 54), so fixed lines do not carry over. Needs the pair of lines around the posted total. | Decided except totals, not built |
+| NFL | Own order, see below | The more conservative of the posted total and our projected total | Decided in part, not built |
 
 ### NFL order (Micah, 2026-10-21)
 
@@ -86,12 +86,16 @@ winning). Still one pick per game: take the first rule that applies.
    (Vegas KC -3, model KC by 1.5: KC ML.)
 5. **Team strength decides the rest.** These are the games rules 1 to 4 leave: the model has the
    underdog winning by an edge under 3, a pick'em, or a dead-even projection. Each team is
-   strong, mid or weak from season-to-date standings, taken before the game.
+   strong, mid or weak from season-to-date points for and points against (not wins), taken
+   before the game.
    - Strong vs weak: the strong team moneyline.
-   - Same tier (strong-strong, mid-mid, weak-weak): the total. Lines still open.
+   - Same tier: the total. Strength picks the side: strong vs strong is Over, weak vs weak is
+     Under. The line is the more conservative of two: the posted total and our model's
+     projected total. Over takes the lower of the two, Under takes the higher.
+     (Strong vs strong, posted 47, model 44: Over 44. Weak vs weak, posted 42, model 45:
+     Under 45.)
 
-   (Vegas KC -1, model opponent by 1: KC strong and the opponent weak gives KC ML. Both mid
-   gives the total.)
+   (Vegas KC -1, model opponent by 1: KC strong and the opponent weak gives KC ML.)
 
 Results so far: the NHL replay of `leeway-2` lost 2.6% at posted prices (`docs/LEARNINGS-nhl.md`).
 That is why a Model Pick is not a wager.
