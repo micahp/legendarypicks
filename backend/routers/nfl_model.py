@@ -46,17 +46,8 @@ def _f(x):
 
 
 def su_result(p_home_win, home_score, away_score):
-    """Did the model's pick win straight up? Pick = the side with p > 0.5.
-
-    'win' / 'loss', 'tie' (the game ended level: no side won), or 'no_pick' (p is exactly 0.5).
-    """
-    if p_home_win is None or home_score is None or away_score is None:
-        return None
-    if home_score == away_score:
-        return "tie"
-    if p_home_win == 0.5:
-        return "no_pick"
-    return "win" if (p_home_win > 0.5) == (home_score > away_score) else "loss"
+    """Legacy name for the winner grade; the shared rule lives in nfl_metrics."""
+    return mt.grade_winner(p_home_win, home_score, away_score)
 
 
 def record_payload(con, season: int) -> List[Dict[str, Any]]:
@@ -76,19 +67,23 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
         locked[mv] = n
         models[mv] = model
     out: Dict[str, Dict[str, Any]] = {}
-    for mv, pw, ah, aa, brier, merr, ats in con.execute(
-            "SELECT g.model_version, g.p_home_win, pg.actual_home, pg.actual_away, pg.brier, "
-            "       pg.margin_err, pg.ats_result "
+    for mv, pw, pt, total_line, ah, aa, brier, merr, ats in con.execute(
+            "SELECT g.model_version, g.p_home_win, g.proj_total, "
+            "       COALESCE(s.total_line, g.market_total), pg.actual_home, pg.actual_away, "
+            "       pg.brier, pg.margin_err, pg.ats_result "
             "FROM game_projections g JOIN projection_grades pg ON pg.league = g.league "
             "AND pg.game_id = g.game_id AND pg.model_version = g.model_version "
             "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
+            "LEFT JOIN nfl_line_snapshots s ON s.snapshot_id = g.line_snapshot_id "
             "WHERE g.league = 'nfl' AND g.locked = 1 AND g.season = ?", (season,)):
         d = out.setdefault(mv, {"graded": 0, "su": {"win": 0, "loss": 0, "tie": 0, "no_pick": 0},
                                 "ats": {"win": 0, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0},
+                                "total": {"win": 0, "loss": 0, "push": 0, "no_pick": 0, "no_line": 0},
                                 "brier_sum": 0.0, "brier_n": 0, "abs_err_sum": 0.0})
         d["graded"] += 1
-        d["su"][su_result(pw, ah, aa)] += 1
+        d["su"][mt.grade_winner(pw, ah, aa)] += 1
         d["ats"][ats] += 1
+        d["total"][mt.grade_total(pt, total_line, ah, aa)] += 1
         if brier is not None:
             d["brier_sum"] += brier
             d["brier_n"] += 1
@@ -100,6 +95,7 @@ def record_payload(con, season: int) -> List[Dict[str, Any]]:
         rows.append(dict(describe(models[mv], mv), version=mv, locked=n_locked, graded=graded,
                          awaiting=n_locked - graded,
                          su=d["su"] if d else None, ats=d["ats"] if d else None,
+                         total=d["total"] if d else None,
                          mean_brier=(d["brier_sum"] / d["brier_n"]) if d and d["brier_n"] else None,
                          brier_n=d["brier_n"] if d else 0,
                          mean_abs_margin_err=(d["abs_err_sum"] / graded) if d else None))
@@ -159,14 +155,20 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
             continue  # a real lock for this game and model always wins over its preview
         d = models.setdefault(mv, dict(describe(model, mv), version=mv, locks=0, previews=0))
         d["locks" if is_locked else "previews"] += 1
-        line = ({"spread": _f(ssp), "total": _f(stot), "home_moneyline": _f(hml),
+        # Match the lock grader's COALESCE semantics even for a partially populated snapshot.
+        line = ({"spread": _f(ssp if ssp is not None else msp),
+                 "total": _f(stot if stot is not None else mtot),
+                 "home_moneyline": _f(hml),
                  "away_moneyline": _f(aml), "captured_at": cap, "source": "snapshot"}
                 if snap is not None else
                 {"spread": _f(msp), "total": _f(mtot), "home_moneyline": None,
                  "away_moneyline": None, "captured_at": locked_at, "source": "lock row"})
+        # Winner and total grades are deterministic from the immutable lock and the final
+        # scores stored by projection_grades; old graded rows need no backfill or schema change.
         grade = (None if merr is None else
                  {"brier": _f(brier), "margin_err": _f(merr), "total_err": _f(terr), "ats": ats,
-                  "su": su_result(pw, ah, aa)})
+                  "su": mt.grade_winner(pw, ah, aa),
+                  "total": mt.grade_total(pt, line["total"], ah, aa)})
         # The pick is a single backend rule (nfl_metrics.pick_side) on the frozen spread the lock
         # was written against, so the page can never disagree with the grader.
         locks.setdefault(gid, {})[mv] = {
@@ -174,7 +176,11 @@ def locks_payload(con, season: int, week: Optional[int]) -> Dict[str, Any]:
             "proj_home": _f(ph), "proj_away": _f(pa), "margin": _f(pm), "total": _f(pt),
             "p_home_win": _f(pw), "locked_at": locked_at if is_locked else None,
             "previewed_at": None if is_locked else locked_at,
-            "pick": mt.pick_side(_f(pm), line["spread"]), "line": line, "grade": grade}
+            "pick": mt.pick_side(_f(pm), line["spread"]),  # legacy ATS alias
+            "picks": {"winner": mt.pick_winner(_f(pw)),
+                      "spread": mt.pick_side(_f(pm), line["spread"]),
+                      "total": mt.pick_total(_f(pt), line["total"])},
+            "line": line, "grade": grade}
     results = con.execute(
         "SELECT week, home_team, away_team, home_score, away_score FROM nfl_schedule WHERE season = ? "
         "AND game_type = 'REG' AND home_score IS NOT NULL AND away_score IS NOT NULL", (season,)).fetchall()

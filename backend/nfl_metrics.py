@@ -104,6 +104,48 @@ def pick_side(proj_margin, spread_line):
     return "home" if proj_margin > spread_line else "away"
 
 
+def pick_winner(p_home_win):
+    """The frozen win-probability pick, independent of whether moneyline odds exist."""
+    if p_home_win is None or abs(p_home_win - 0.5) < 1e-9:
+        return "no_pick"
+    return "home" if p_home_win > 0.5 else "away"
+
+
+def pick_total(proj_total, total_line):
+    """The over/under pick against the frozen market total, not a wagering policy."""
+    if proj_total is None or total_line is None:
+        return "no_line"
+    diff = proj_total - total_line
+    if abs(diff) < 1e-9:
+        return "no_pick"
+    return "over" if diff > 0 else "under"
+
+
+def grade_winner(p_home_win, actual_home, actual_away):
+    """Grade the frozen winner pick on a finalized score. NFL ties remain 'tie'."""
+    if actual_home is None or actual_away is None:
+        return None
+    if actual_home == actual_away:
+        return "tie"
+    side = pick_winner(p_home_win)
+    if side == "no_pick":
+        return "no_pick"
+    return "win" if (side == "home") == (actual_home > actual_away) else "loss"
+
+
+def grade_total(proj_total, total_line, actual_home, actual_away):
+    """Grade the frozen over/under pick; a missing line is never treated as a loss."""
+    if actual_home is None or actual_away is None:
+        return None
+    side = pick_total(proj_total, total_line)
+    if side in ("no_pick", "no_line"):
+        return side
+    actual_total = actual_home + actual_away
+    if abs(actual_total - total_line) < 1e-9:
+        return "push"
+    return "win" if (side == "over") == (actual_total > total_line) else "loss"
+
+
 def ats_record(actual_margins, spread_lines):
     """Counts and cover rate, pushes excluded from the rate and reported separately."""
     if len(actual_margins) != len(spread_lines):
