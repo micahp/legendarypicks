@@ -75,7 +75,7 @@ describe('FBS model tab', () => {
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
     const card = screen.getByRole('article')
     expect(card.textContent).not.toMatch(/preview|locked|lock|missed|legacy|research|frozen|official|status/i)
-    expect(screen.getByText('Venue')).toBeTruthy()
+    expect(screen.queryByText('Venue')).toBeNull()
   })
 
   it('shows a projection the same way whether or not it has been frozen yet', async () => {
@@ -85,16 +85,10 @@ describe('FBS model tab', () => {
     expect(screen.getByRole('article').textContent).not.toMatch(/preview|locked|lock|frozen/i)
   })
 
-  it('shows the neutral-site venue when the game is played on neutral ground', async () => {
-    serve({ ...payload, games: [{ ...upcomingGame, neutral_site: true }] })
-    render(<FbsModelTab />)
-    await waitFor(() => expect(screen.getByText('Neutral site')).toBeTruthy())
-  })
-
   it('shows the graded count with the sample-size caveat on the record tab', async () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
-    fireEvent.click(screen.getByRole('button', { name: 'record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1200')).toBeTruthy()
     expect(screen.getByText(/treat the number as an early read/)).toBeTruthy()
   })
@@ -102,7 +96,7 @@ describe('FBS model tab', () => {
   it('lists a graded projection with its final score and result on the record tab', async () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
-    fireEvent.click(screen.getByRole('button', { name: 'record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('17–27')).toBeTruthy()
     expect(screen.getByText('✓ Won')).toBeTruthy()
   })
@@ -111,7 +105,7 @@ describe('FBS model tab', () => {
     serve({ ...payload, records: { ...payload.records, g2h: { ...payload.records.g2h, graded: 0, history: [] } } })
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
-    fireEvent.click(screen.getByRole('button', { name: 'record' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('No graded projections yet.')).toBeTruthy()
     expect(screen.queryByText('✓ Won')).toBeNull()
     expect(screen.queryByText('✗ Lost')).toBeNull()
@@ -133,7 +127,7 @@ describe('FBS model tab', () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getByText('68.0%')).toBeTruthy())
     expect(screen.queryByText(/Fair spread hint/)).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'ratings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Team Ratings' }))
     expect(screen.getByText('SEC')).toBeTruthy()
     expect(screen.getByText('0.345')).toBeTruthy()
   })

@@ -128,34 +128,26 @@ export default function FbsModelTab() {
   const recent = [...(record?.history ?? [])].reverse().slice(0, 25)
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-5">
+      <nav className="flex w-fit gap-1 rounded-full bg-zinc-900 p-1" aria-label="NCAAF model views">
+        {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined} className={`rounded-full px-3 py-1.5 text-sm ${view === key ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:text-zinc-100'}`}>{label}</button>
+        ))}
+      </nav>
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-zinc-100">FBS model</h2>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            {selected?.note}
-          </p>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">{selected?.note}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ModelSelect value={model} onChange={(event) => setModel(event.target.value)} aria-label="Model">
+        <label className="flex items-center gap-2 text-sm text-zinc-500">
+          Model
+          <ModelSelect value={model} onChange={(event) => setModel(event.target.value)} className="max-w-[18rem]">
             {payload.models.map((entry) => (
               <option key={entry.id} value={entry.id}>{entry.label}</option>
             ))}
           </ModelSelect>
-          <nav className="flex gap-1 rounded-lg bg-zinc-900 p-1 text-sm">
-            {(['projections', 'record', 'ratings'] as View[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setView(tab)}
-                className={`rounded-md px-3 py-1.5 capitalize ${view === tab ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </header>
+        </label>
+      </div>
 
       {payload.state !== 'available' ? (
         <p className="py-10 text-sm text-zinc-500">No projections for {payload.season} yet.</p>
@@ -192,7 +184,6 @@ export default function FbsModelTab() {
                     favoured={homeFavoured}
                   />
                   <Metric label="Lean" value={`${homeFavoured ? game.home_team : game.away_team}`} />
-                  <Metric label="Venue" value={game.neutral_site ? 'Neutral site' : `${game.home_team} home`} />
                 </div>
               </article>
             )
