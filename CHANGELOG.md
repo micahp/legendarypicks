@@ -1,3 +1,38 @@
+## v10.0.6
+
+### NFL model
+
+- Make one Model Pick per game and model version, chosen by a fixed rule order (favourite to cover, favourite moneyline, underdog to cover, then team strength), frozen at lock and graded once. This replaces the separate Winner, Spread and Total picks.
+- Preview v1 points, v2 EPA and v1 + Elo before their games lock, so the model page lists all three each week.
+- Put the spread and total on separate rows of each game card, enlarge the Model Pick, and drop the line capture text.
+
+### NCAAF model
+
+- Show each team's record on projections and in the record.
+- Grade finished games from scoreboard finals, count every stored forecast in the record, and show real kickoff times.
+- Drop the status labels and the header notes, and refresh and grade the model every 30 minutes.
+
+### Tennis model
+
+- Lock the V2 forecast ledger for the Ningbo Open, count unmapped surfaces apart from identity failures, and fail the job when a match is skipped.
+- Stop a page view from making a lock: the timer locks and freezes forecasts, and writes count and total-games distributions on the dev database only.
+- Add the CP4 prospective grader, the daily match-stats collector and the provider match-stat ingests (research only).
+- Bind a rankings ESPN id to one unbound same-name row.
+
+### NBA
+
+- Fold total_made_3_points_shots rows into threes, add recent logs and prop settlement, and leave DNP games out of the history chart.
+- Pause batch ingests at the ESPN per-host window instead of refusing, which restores the NBA game-log refresh.
+
+### NHL model
+
+- Remove the projection status labels.
+
+### Data and operations
+
+- Fetch prop pages in parallel batches of six, and join the history provider view through its index.
+- Take one ingest run lock per registry and database, and prune database backups daily without letting sidecars take a retention slot.
+
 ## v10.0.5
 
 ### NFL model
