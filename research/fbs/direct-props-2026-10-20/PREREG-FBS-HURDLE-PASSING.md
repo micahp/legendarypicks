@@ -23,6 +23,14 @@ definition of "frozen" that excludes retrospective reconstruction from the 2026
 confirmation. Population, baselines, metric, decision rule, bootstrap settings and
 recorded results are untouched again.
 
+**Revision 4 (2026-10-20).** Documentation only. §6.1/§6.4 now separate the two
+priors explicitly: the **participation** prior `p_prior` is
+`P(pass_attempts > 0 | cohort member)` estimated over cohort-eligible box-score
+appearances **including zero-attempt ones**, while the **conditional volume** prior
+is estimated **from positive-attempt games only**. Both follow §2.2 row by row;
+missing box-score records stay unknown in both. §7 gains the matching row-set
+assertions. Nothing else changes.
+
 Branch `research/fbs-direct-props-2026-10-20`. Parent evidence:
 `COHORT.md` (commit `9b3ab91e`) — on the pregame-definable **high-prior-volume QB**
 cohort the committed model is beaten by the plain trailing-5 baseline
@@ -90,8 +98,9 @@ is strictly-trailing volume within `S` before that game, measured against that s
 `S−1 = 2017` volume and therefore no cut. They are **not** silently classified, not
 assigned a 2018 threshold, and not dropped from everything:
 
-- 2018 rows are **excluded from every cohort-conditioned quantity** — `p_prior`, the
-  active-QB priors of §6.4, and any top-quartile-conditioned average.
+- 2018 rows are **excluded from every cohort-conditioned quantity** — both priors of
+  §6.4 (`p_prior` and the conditional volume prior), and any
+  top-quartile-conditioned average.
 - 2018 rows **remain** in unconditional quantities (position-level dispersion, the
   unconditional training likelihood).
 - The count and volume are reported as `n_unclassifiable_2018`, per market,
@@ -101,14 +110,15 @@ Nothing carries forward across seasons: the threshold is **seasonal** and is
 recomputed from that season's own volume distribution. Applying a 2024 threshold, or
 2024 membership, to a 2024 row is exactly the leak this section exists to prevent.
 
-Any prior conditioned on "high prior volume" — including `p_prior` in §6.1 — is
-estimated with **the membership of each contributing row**, never with one cut
-applied to a whole training block. The `p_prior` entering the 2024 grid selection
-is therefore estimated from 2018–2023 games using the **2019–2023** memberships
-(2018 excluded per the boundary rule); the `p_prior` used to score 2025 is estimated
-from 2018–2024 games using the **2019–2024** memberships. For 2025 target rows,
-strictly prior 2025 participation history is allowed as a **feature** (§6.1, `s` and
-`n`) and must not fit, select or re-estimate any parameter.
+Any prior conditioned on "high prior volume" — **either** prior in §6.4, the
+participation rate used in §6.1 and the conditional volume prior — is estimated with
+**the membership of each contributing row**, never with one cut applied to a whole
+training block. The `p_prior` entering the 2024 grid selection is therefore estimated
+from 2018–2023 games using the **2019–2023** memberships (2018 excluded per the
+boundary rule); the `p_prior` used to score 2025 is estimated from 2018–2024 games
+using the **2019–2024** memberships. For 2025 target rows, strictly prior 2025
+participation history is allowed as a **feature** (§6.1, `s` and `n`) and must not
+fit, select or re-estimate any parameter.
 
 ### 2.3 What this cohort is not — not a verified-starter cohort
 
@@ -218,8 +228,15 @@ where, for a target row:
 - `s` = the athlete's **positive-attempt appearances** among his **last five
   available box-score appearances** strictly before the target game;
 - `n` = the number of those available appearances, `n ≤ 5`;
-- `p_prior` = a **training-only** high-prior-volume-QB rate (§6.4), estimated with
-  the chronological eligibility of §2.2.
+- `p_prior` = the **participation prior**: `P(pass_attempts > 0 | pregame
+  high-prior-volume QB cohort)`, training-only. It is estimated over historical
+  **cohort-eligible box-score appearances, positive and zero attempts alike** — a
+  dressed quarterback with zero attempts is an `H = 0` observation and belongs in
+  both the numerator and the denominator. It is **not** estimated from
+  positive-attempt games alone; that row set belongs to the *conditional volume*
+  prior, a different estimand with a different denominator (§6.4). Membership of
+  every contributing row follows §2.2 — that row's own `S−1` cut, with 2018 excluded
+  as unclassifiable.
 
 Zero-attempt appearances **do** count in `n`: a dressed quarterback who took no snap
 is evidence about participation. A row absent from the box score enters neither `s`
@@ -254,20 +271,36 @@ Every window is computed per athlete, strictly chronologically, from rows strict
 before the target game (`shift(1)` within `athlete_id`, the `_excl_trailing`
 convention).
 
-### 6.4 Shrinkage — active-QB priors only; `k` selected on 2024 rows, 2023 cut
+### 6.4 Shrinkage — two priors, two row sets; `k` selected on 2024 rows, 2023 cut
 
 The all-appearance `k = 0.25` and the all-appearance position mean are **retired**
 for this model: they are the mechanism that produced the under-prediction
-`COHORT.md` measured. Instead:
+`COHORT.md` measured. They are replaced by **two distinct priors**, and conflating
+them is the error this section exists to prevent — they answer different questions
+over different row sets:
 
-- Priors are estimated **only from positive-usage QB games**.
+| prior | estimand | rows used | zero-attempt appearances | rows absent from the box score |
+|---|---|---|---|---|
+| **participation prior** `p_prior` (§6.1) | `P(pass_attempts > 0 \| cohort member)` | historical **cohort-eligible box-score appearances** | **included, as `H = 0`**, in numerator and denominator | **excluded — unknown, not zero** (§2.5) |
+| **conditional volume prior** (this section) | positive pass-attempt counts among users | historical **cohort-eligible appearances with `pass_attempts > 0`** | excluded — they are not observations of the count | **excluded — unknown, not zero** (§2.5) |
+
+- The **conditional passing-attempt volume prior is estimated from positive-attempt
+  games only.** It never sees a zero-attempt appearance, because a zero-attempt
+  appearance is not a draw from the conditional-on-usage count distribution.
+- The **participation prior is the opposite**: it is estimated over all
+  cohort-eligible box-score appearances, zero-attempt ones included. It cannot be
+  estimated from positive-attempt games alone — doing so would make `p_prior ≈ 1`
+  by construction and delete the hurdle's zero mass.
+- Both priors follow §2.2 **row by row**: each contributing row is classified by its
+  own `S−1` volume cut and its own season's threshold, 2018 rows are excluded as
+  unclassifiable, and nothing is estimated with a cut drawn from a later season.
 - The conditional-volume shrinkage is preregistered as a grid
-  `k ∈ {0, 0.25, 0.5, 1, 2}`, selected on **2024** CRPS only, with 2024 membership
-  built from **2023** volume (§2.2).
-- An athlete with no positive-attempt history takes the **training-only active-QB
-  prior**, and the number of rows doing so is reported explicitly
-  (`n_missing_history`) instead of being absorbed silently.
-- `p_prior` in §6.1 is that same active-QB cohort rate, estimated per §2.2.
+  `k ∈ {0, 0.25, 0.5, 1, 2}`, selected on **2024** CRPS only, with 2024 rows
+  classified from **2023** volume (§2.2).
+- An athlete with no positive-attempt history takes the **training-only conditional
+  volume prior built from positive-attempt games** — not the participation prior —
+  and the number of rows doing so is reported explicitly (`n_missing_history`)
+  instead of being absorbed silently.
 
 ### 6.5 Efficiency — unchanged `EFF_WINDOW = 15` prior-opportunity method
 
@@ -308,6 +341,11 @@ assert not any(row.season == target_season and row.week >= target_week)  # no ta
 assert cut_season == target_season - 1 or cut_season is None   # None => unclassifiable, never classified
 assert cut_season is None or threshold_season == cut_season    # threshold recomputed on its own season
 assert not any(r.season == 2018 and r.cohort_member for r in cohort_rows)  # 2018: no S-1 data
+
+# the two priors in 6.4 use different, non-interchangeable row sets
+assert all(r.pass_attempts > 0 for r in volume_prior_rows)          # conditional volume prior: users only
+assert all(r.has_box_score_row for r in participation_prior_rows)   # p_prior: unknown rows never enter
+assert len(set(volume_prior_rows) - set(participation_prior_rows)) == 0
 
 # no 2025 row may fit, tune or estimate anything
 assert not any(row.season == 2025 for row in fit_rows)
