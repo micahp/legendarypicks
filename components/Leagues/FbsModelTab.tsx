@@ -157,8 +157,7 @@ export default function FbsModelTab() {
 
       <p className="text-xs text-zinc-500">
         Predictions only — no NCAAF moneyline or spread price feed is captured yet, so nothing here is
-        a qualifying wager. Win probabilities and model fair odds. Only forecasts locked before kickoff
-        count toward the record; previews do not.
+        a qualifying wager. Win probabilities and model fair odds.
       </p>
 
       {payload.state === 'awaiting_first_lock' ? (
