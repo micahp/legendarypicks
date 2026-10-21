@@ -51,6 +51,17 @@ it ever queries logs, so a coverage number computed in SQL cannot describe what 
 shows. Replay the endpoint's own requests. If the user is looking at a page, the page is
 the instrument.
 
+**An aggregate score is a fact about the row mix, not the model.** A proper-score
+average over every item is dominated by whichever subpopulation supplies the most rows.
+A prop model "beat" its baseline on CRPS across all 9,059 scored rows while *losing* on
+every row where the athlete actually recorded the stat -- 72% of the rows were zero-usage,
+where predicting near-zero is an easy win that swamped the active rows' loss. Before you
+quote a metric as a verdict, recompute it inside the cohort the user cares about
+(`observed > 0`, regular participants, top-volume players) and report which cohort
+contributes the sign of the total. If the cohort-of-interest delta is positive while the
+aggregate is negative, the number describes the row mix and the verdict is false for the
+people who will read it.
+
 **Write the reason, not just the fix.** `first_goal_scorer` was mapped to `None` with
 "it is an ORDER market and no per-game stat answers it." The mapping was defensible; the
 reason was false, and a false reason reads as settled and stops the next person looking.
