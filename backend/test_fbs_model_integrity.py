@@ -555,3 +555,10 @@ def test_pending_grades_are_unpaid_games_whose_kickoff_has_passed(con):
     assert [g for g, _ in store.pending_grades(con, KICKOFF + dt.timedelta(minutes=5))] == ["g1"]
     store.grade_forecasts(con, {"g1": {"home_score": 24, "away_score": 20}}, now=KICKOFF + dt.timedelta(hours=3))
     assert store.pending_grades(con, KICKOFF + dt.timedelta(hours=4)) == []
+
+
+def test_legacy_rows_are_never_pending_for_grading(con):
+    con.execute("INSERT INTO fbs_forecasts(game_id,model,season,kickoff_utc,home_team,away_team,"
+                "model_version,p_home,created_at_utc,locked_at_utc,late,lock_protocol) "
+                "VALUES('legacy','g2h',2026,'2026-10-20T00:00:00+00:00','A','B','v',0.7,'x',NULL,1,'legacy')")
+    assert store.pending_grades(con, KICKOFF + dt.timedelta(days=1)) == []
