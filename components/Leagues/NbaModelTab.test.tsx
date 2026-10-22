@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import NbaModelTab from './NbaModelTab'
 
 const models = [
@@ -55,6 +55,44 @@ describe('NBA model tab', () => {
     render(<NbaModelTab />)
     await waitFor(() => expect(screen.getByText(/Preview, not locked/)).toBeTruthy())
     expect(screen.getByText(/Only forecasts captured in the T−90 lock window/)).toBeTruthy()
+  })
+
+  it('renders missed games and per-model missed counts from the API records', async () => {
+    const missed = {
+      ...payload.games[0],
+      game_id: 'missed-game',
+      scheduled_start_utc: '2026-10-20T23:00:00Z',
+      status: 'missed' as const,
+      models: {},
+    }
+    const preview = {
+      ...payload.games[0],
+      game_id: 'preview-game',
+      scheduled_start_utc: new Date(Date.now() + 86_400_000).toISOString(),
+      home_team: 'NYK',
+      away_team: 'LAL',
+      status: 'preview' as const,
+    }
+    const records = Object.fromEntries(models.map((model) => [model.id, {
+      ...payload.records[model.id as keyof typeof payload.records], missed: 1,
+    }]))
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [missed, preview], records }),
+    }))
+
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByText(/Lock window missed/)).toBeTruthy())
+
+    const missedCard = screen.getByText('BOS at DET').closest('article')
+    expect(missedCard).not.toBeNull()
+    expect(within(missedCard as HTMLElement).queryByText(/Preview, not locked/)).toBeNull()
+    expect(screen.getByText('LAL at NYK')).toBeTruthy()
+    expect(screen.getByText(/Preview, not locked/)).toBeTruthy()
+
+    for (const model of models) {
+      const row = screen.getByRole('row', { name: new RegExp(model.label) })
+      expect(within(row).getByText('Missed: 1')).toBeTruthy()
+    }
   })
 
   it('shows only locked prospective games in the grading history', async () => {

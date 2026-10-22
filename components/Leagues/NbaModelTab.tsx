@@ -87,7 +87,8 @@ export default function NbaModelTab() {
   if (error && !payload) return <div className="p-6 text-sm text-red-400">NBA model feed unavailable — {error}</div>
   if (!payload) return <div className="p-6 text-sm text-zinc-500">Loading NBA research models…</div>
 
-  const upcoming = payload.games.filter((game) => new Date(game.scheduled_start_utc).getTime() > Date.now())
+  const upcoming = payload.games.filter((game) => game.status === 'missed'
+    || new Date(game.scheduled_start_utc).getTime() > Date.now())
   const graded = payload.games.filter((game) => game.status === 'graded' && game.result)
     .slice(-10).reverse()
   const test = payload.benchmark?.metrics?.test ?? {}
@@ -135,7 +136,7 @@ export default function NbaModelTab() {
                 <th className="px-3 py-2 text-right">Team points MAE ↓</th>
                 <th className="px-3 py-2 text-right">Spread MAE ↓</th>
                 <th className="px-3 py-2 text-right">Total MAE ↓</th>
-                <th className="px-3 py-2 text-right">Prospective graded</th>
+                <th className="px-3 py-2 text-right">Prospective record</th>
               </tr>
             </thead>
             <tbody>
@@ -155,7 +156,10 @@ export default function NbaModelTab() {
                     {metricCell(score?.team_points_mae)}
                     {metricCell(score?.spread_mae)}
                     {metricCell(score?.total_mae)}
-                    <td className="px-3 py-2 text-right tabular-nums">{record?.graded ?? 0} / {record?.locked ?? 0}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      <div>{record?.graded ?? 0} graded / {record?.locked ?? 0} locked</div>
+                      <div className="mt-1 text-xs text-zinc-500">Missed: {record?.missed ?? 0}</div>
+                    </td>
                   </tr>
                 )
               })}
