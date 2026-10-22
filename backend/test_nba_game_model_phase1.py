@@ -17,7 +17,7 @@ from backtest_nba_game_model import print_report
 from nba_model_data import TeamGame
 from nba_model_runtime import build_preview_rows, refresh_completed_games, require_dev_picks_db
 from nba_model_store import (MODEL_VERSION, NBAModelStoreError,
-                             grade_forecasts, import_history, latest_live_games,
+                             grade_forecasts, grade_unlocked_previews, export_payload, import_history, latest_live_games,
                              latest_verified_results,
                              open_db, store_live_observation, upsert_previews, lock_forecasts)
 from fastapi import HTTPException
@@ -264,6 +264,72 @@ def test_lock_window_does_not_create_retrospective_forecast(tmp_path: Path):
         assert upsert_previews(model, rows, dt.datetime(2026, 10, 21, 23, 1, tzinfo=UTC)) == 0
     finally:
         model.close()
+
+
+def test_unlocked_previews_are_graded_apart_from_the_locked_record(tmp_path: Path):
+    model = open_db(str(tmp_path / "model.sqlite3"))
+    rows = _forecast_rows("2026-10-21T23:00:00Z", "2026-10-21T22:50:00Z")
+    try:
+        assert upsert_previews(model, rows, dt.datetime(2026, 10, 21, 22, 55, tzinfo=UTC)) == 3
+        # Lock window never ran: the preview is the only forecast, and is not a lock.
+        before = grade_unlocked_previews(model, {}, dt.datetime(2026, 10, 21, 23, 5, tzinfo=UTC))
+        assert before["preview_awaiting_verified_final"] == 3 and before["preview_graded"] == 0
+        result = {"NBA001": {
+            "completed": True, "summary_validated": True, "source_event_id": "ESPN001",
+            "source_hash": "final-hash", "source": "ESPN scoreboard+summary",
+            "home_team": "BOS", "away_team": "NYK", "home_score": 112, "away_score": 107,
+        }}
+        # Not graded before tipoff, even with a final in hand.
+        early = grade_unlocked_previews(model, result, dt.datetime(2026, 10, 21, 22, 59, tzinfo=UTC))
+        assert early["preview_graded"] == 0
+        after = dt.datetime(2026, 10, 22, 2, 0, tzinfo=UTC)
+        assert grade_unlocked_previews(model, result, after)["preview_graded"] == 3
+        assert grade_unlocked_previews(model, result, after)["preview_already_graded"] == 3
+        with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+            model.execute("update nba_model_preview_grades set winner_brier=0")
+        model.rollback()
+        assert model.execute("select count(*) from nba_model_grades").fetchone()[0] == 0
+
+        payload = export_payload(model, 2027, now=after)
+        game = payload["games"][0]
+        assert game["status"] == "unlocked" and game["locked_at_utc"] is None
+        assert game["result"]["home_score"] == 112
+        assert all(m["locked"] is False and m["grade"] for m in game["models"].values())
+        for record in payload["records"].values():
+            assert record["locked"] == 0 and record["graded"] == 0
+            assert record["unlocked"]["previewed"] == 1 and record["unlocked"]["graded"] == 1
+            assert record["unlocked"]["winner_brier"] is not None
+    finally:
+        model.close()
+
+
+def test_locked_games_are_not_regraded_as_previews(tmp_path: Path):
+    model = open_db(str(tmp_path / "model.sqlite3"))
+    rows = _forecast_rows("2026-10-21T23:00:00Z", "2026-10-21T21:28:00Z")
+    now = dt.datetime(2026, 10, 21, 21, 30, tzinfo=UTC)
+    try:
+        upsert_previews(model, rows, now)
+        lock_forecasts(model, rows, now)
+        result = {"NBA001": {
+            "completed": True, "summary_validated": True, "source_event_id": "ESPN001",
+            "source_hash": "final-hash", "source": "ESPN scoreboard+summary",
+            "home_team": "BOS", "away_team": "NYK", "home_score": 112, "away_score": 107,
+        }}
+        report = grade_unlocked_previews(model, result, dt.datetime(2026, 10, 22, 2, 0, tzinfo=UTC))
+        assert report == {"preview_graded": 0, "preview_already_graded": 0,
+                          "preview_awaiting_verified_final": 0}
+    finally:
+        model.close()
+
+
+def test_scoreboard_refresh_reads_one_day_at_a_time(monkeypatch):
+    from nba_model_runtime import _games_by_day_single
+    seen = []
+    monkeypatch.setattr("nba_model_runtime.espn_client.games",
+                        lambda league, day: seen.append((league, day)) or ([{"game_id": day}] if day != "2026-10-20" else []))
+    by_day, raw = _games_by_day_single("nba", "2026-10-19", "2026-10-21")
+    assert seen == [("nba", "2026-10-19"), ("nba", "2026-10-20"), ("nba", "2026-10-21")]
+    assert raw == 2 and sorted(by_day) == ["2026-10-19", "2026-10-21"]
 
 
 def test_jobs_require_a_dev_database_path(tmp_path: Path):

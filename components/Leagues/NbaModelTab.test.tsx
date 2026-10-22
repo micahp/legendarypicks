@@ -79,4 +79,28 @@ describe('NBA model tab', () => {
     expect(screen.getByText('Final 102–109')).toBeTruthy()
     expect(screen.getAllByText(/Brier 0.160/).length).toBe(3)
   })
+
+  it('lists graded unlocked previews apart from the prospective record', async () => {
+    const unlocked = {
+      ...payload.games[0],
+      game_id: 'unlocked-game',
+      scheduled_start_utc: '2026-10-20T02:00:00Z',
+      status: 'unlocked' as const,
+      result: { home_score: 118, away_score: 111 },
+      models: Object.fromEntries(models.map((model) => [model.id, {
+        model_version: model.version, home_win_probability: 0.7, locked: false,
+        projected_home_points: 112, projected_away_points: 106,
+        score_forecast_available: model.projects_scores,
+        grade: { home_score: 118, away_score: 111, winner_brier: 0.09 },
+      }])),
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [unlocked] }),
+    }))
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByText('Graded previews, not locked')).toBeTruthy())
+    expect(screen.getByText(/Final 111–118 · Not locked/)).toBeTruthy()
+    expect(screen.getAllByText(/Brier 0.090/).length).toBe(3)
+    expect(screen.getByText('No prospective forecasts have been graded yet.')).toBeTruthy()
+  })
 })

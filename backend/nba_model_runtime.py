@@ -179,9 +179,27 @@ def _scoreboard_window(games_by_day, start: dt.date, end: dt.date):
     return merged, left_count + right_count
 
 
+def _games_by_day_single(league, start, end):
+    """Scoreboard games for each day of a range, one request per day.
+
+    ESPN answers every `dates=A-B` range with HTTP 400 ("Failed to get events endpoint",
+    measured 2026-10-21, even for two days) while `dates=YYYYMMDD` still works.
+    """
+    by_day: dict[str, list] = {}
+    raw = 0
+    day, last = dt.date.fromisoformat(str(start)), dt.date.fromisoformat(str(end))
+    while day <= last:
+        rows = espn_client.games(league, day.isoformat())
+        raw += len(rows)
+        if rows:
+            by_day[day.isoformat()] = list(rows)
+        day += dt.timedelta(days=1)
+    return by_day, raw
+
+
 def refresh_completed_games(lp_db_path: str | None = None, model_db_path: str = NBA_MODEL_DB,
                             now: dt.datetime | None = None, *,
-                            games_by_day=espn_client.games_by_day,
+                            games_by_day=_games_by_day_single,
                             summary_fetch=espn_client.summary) -> dict[str, Any]:
     """Append completed games after matching the dev NBA schedule and ESPN summary."""
     now = now or dt.datetime.now(UTC)
@@ -384,10 +402,13 @@ def upsert_lock_calls(model: sqlite3.Connection, rows: list[dict[str, Any]],
 
 def grade_due_forecasts(lp_db_path: str | None = None, model_db_path: str = NBA_MODEL_DB,
                         now: dt.datetime | None = None) -> dict[str, int]:
-    from nba_model_store import grade_forecasts, latest_verified_results
+    from nba_model_store import grade_forecasts, grade_unlocked_previews, latest_verified_results
     require_dev_picks_db(lp_db_path)
     model = open_db(model_db_path)
     try:
-        return grade_forecasts(model, latest_verified_results(model), now)
+        results = latest_verified_results(model)
+        report = grade_forecasts(model, results, now)
+        report.update(grade_unlocked_previews(model, results, now))
+        return report
     finally:
         model.close()

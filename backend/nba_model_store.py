@@ -113,6 +113,26 @@ CREATE TABLE IF NOT EXISTS nba_model_grades (
     graded_at_utc TEXT NOT NULL,
     PRIMARY KEY(game_id, model)
 );
+CREATE TABLE IF NOT EXISTS nba_model_preview_grades (
+    game_id TEXT NOT NULL,
+    model TEXT NOT NULL,
+    season INTEGER NOT NULL,
+    previewed_at_utc TEXT NOT NULL,
+    result_source TEXT NOT NULL,
+    source_event_id TEXT NOT NULL,
+    final_home_score INTEGER NOT NULL,
+    final_away_score INTEGER NOT NULL,
+    home_win INTEGER NOT NULL CHECK(home_win IN (0,1)),
+    winner_brier REAL NOT NULL,
+    winner_log_loss REAL NOT NULL,
+    home_points_abs_error REAL,
+    away_points_abs_error REAL,
+    spread_abs_error REAL,
+    total_abs_error REAL,
+    source_hash TEXT NOT NULL,
+    graded_at_utc TEXT NOT NULL,
+    PRIMARY KEY(game_id, model)
+);
 CREATE TABLE IF NOT EXISTS nba_model_lock_events (
     game_id TEXT NOT NULL,
     model TEXT NOT NULL,
@@ -140,6 +160,12 @@ BEGIN SELECT RAISE(ABORT, 'NBA forecast grades are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS nba_model_grade_immutable_delete
 BEFORE DELETE ON nba_model_grades
 BEGIN SELECT RAISE(ABORT, 'NBA forecast grades are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS nba_model_preview_grade_immutable_update
+BEFORE UPDATE ON nba_model_preview_grades
+BEGIN SELECT RAISE(ABORT, 'NBA preview grades are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS nba_model_preview_grade_immutable_delete
+BEFORE DELETE ON nba_model_preview_grades
+BEGIN SELECT RAISE(ABORT, 'NBA preview grades are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS nba_model_lock_event_immutable_update
 BEFORE UPDATE ON nba_model_lock_events
 BEGIN SELECT RAISE(ABORT, 'NBA lock events are immutable'); END;
@@ -465,6 +491,20 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
     return missed
 
 
+def _score_forecast(forecast: dict[str, Any], home_score: int, away_score: int) -> tuple:
+    outcome = int(home_score > away_score)
+    probability = float(forecast["home_win_probability"])
+    brier = (probability - outcome) ** 2
+    logloss = -math.log(max(1e-12, probability if outcome else 1.0 - probability))
+    home_abs = away_abs = spread_abs = total_abs = None
+    if forecast.get("score_forecast_available") is True:
+        pred_home, pred_away = float(forecast["projected_home_points"]), float(forecast["projected_away_points"])
+        home_abs, away_abs = abs(pred_home - home_score), abs(pred_away - away_score)
+        spread_abs = abs((pred_home - pred_away) - (home_score - away_score))
+        total_abs = abs((pred_home + pred_away) - (home_score + away_score))
+    return outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs
+
+
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
                     now: dt.datetime | None = None) -> dict[str, int]:
     """Append grades only for locked forecasts with a verified, completed source result."""
@@ -499,17 +539,8 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
                     or str(result.get("away_team")) != lock["away_team"]):
                 raise NBAModelStoreError(f"{lock['game_id']}: result team identity differs from lock")
             home_score, away_score = int(result["home_score"]), int(result["away_score"])
-            outcome = int(home_score > away_score)
-            forecast = json.loads(lock["forecast_json"])
-            probability = float(forecast["home_win_probability"])
-            brier = (probability - outcome) ** 2
-            logloss = -math.log(max(1e-12, probability if outcome else 1.0 - probability))
-            home_abs = away_abs = spread_abs = total_abs = None
-            if forecast.get("score_forecast_available") is True:
-                pred_home, pred_away = float(forecast["projected_home_points"]), float(forecast["projected_away_points"])
-                home_abs, away_abs = abs(pred_home - home_score), abs(pred_away - away_score)
-                spread_abs = abs((pred_home - pred_away) - (home_score - away_score))
-                total_abs = abs((pred_home + pred_away) - (home_score + away_score))
+            outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs = _score_forecast(
+                json.loads(lock["forecast_json"]), home_score, away_score)
             con.execute(
                 "INSERT INTO nba_model_grades(game_id,model,season,result_source,source_event_id,"
                 "final_home_score,final_away_score,home_win,winner_brier,winner_log_loss,"
@@ -520,6 +551,59 @@ def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
                  home_abs, away_abs, spread_abs, total_abs, result["source_hash"], iso_utc(now)),
             )
             report["graded"] += 1
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return report
+
+
+def grade_unlocked_previews(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
+                            now: dt.datetime | None = None) -> dict[str, int]:
+    """Grade the last pregame preview of games that never locked.
+
+    A preview stops being rewritten at kickoff (`upsert_previews`), so after tipoff the
+    stored row is the final pregame forecast. These grades live in their own table and
+    never enter the locked record.
+    """
+    now = now or dt.datetime.now(UTC)
+    report = {"preview_graded": 0, "preview_already_graded": 0, "preview_awaiting_verified_final": 0}
+    con.execute("BEGIN")
+    try:
+        rows = con.execute(
+            "SELECT p.* FROM nba_model_previews p LEFT JOIN nba_model_locks l USING(game_id,model) "
+            "WHERE l.game_id IS NULL ORDER BY p.game_id,p.model"
+        ).fetchall()
+        for row in rows:
+            if con.execute("SELECT 1 FROM nba_model_preview_grades WHERE game_id=? AND model=?",
+                           (row["game_id"], row["model"])).fetchone():
+                report["preview_already_graded"] += 1
+                continue
+            result = results.get(row["game_id"])
+            if (now <= parse_time(row["scheduled_start_utc"]) or not result
+                    or result.get("completed") is not True
+                    or result.get("summary_validated") is not True
+                    or not result.get("source_event_id") or not result.get("source_hash")):
+                report["preview_awaiting_verified_final"] += 1
+                continue
+            if (str(result.get("home_team")) != row["home_team"]
+                    or str(result.get("away_team")) != row["away_team"]):
+                raise NBAModelStoreError(f"{row['game_id']}: result team identity differs from preview")
+            home_score, away_score = int(result["home_score"]), int(result["away_score"])
+            outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs = _score_forecast(
+                json.loads(row["forecast_json"]), home_score, away_score)
+            con.execute(
+                "INSERT INTO nba_model_preview_grades(game_id,model,season,previewed_at_utc,"
+                "result_source,source_event_id,final_home_score,final_away_score,home_win,"
+                "winner_brier,winner_log_loss,home_points_abs_error,away_points_abs_error,"
+                "spread_abs_error,total_abs_error,source_hash,graded_at_utc) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (row["game_id"], row["model"], row["season"], row["previewed_at_utc"],
+                 result["source"], str(result["source_event_id"]), home_score, away_score, outcome,
+                 brier, logloss, home_abs, away_abs, spread_abs, total_abs, result["source_hash"],
+                 iso_utc(now)),
+            )
+            report["preview_graded"] += 1
         con.commit()
     except Exception:
         con.rollback()
@@ -628,13 +712,58 @@ def export_payload(con: sqlite3.Connection, season: int,
                              "previewed_at_utc": row["previewed_at_utc"],
                              "feature_snapshot": json.loads(row["feature_snapshot_json"])})
             game["models"][model] = forecast
+    # Games that started without a lock: the last pregame preview, graded once a verified final
+    # exists. Kept out of the locked record, reported beside it.
+    unlocked_rows: dict[str, list[sqlite3.Row]] = {model: [] for model in MODEL_IDS}
+    if _table_exists(con, "nba_model_previews"):
+        past = con.execute(
+            "SELECT p.*,g.result_source,g.final_home_score,g.final_away_score,g.home_win,"
+            "g.winner_brier,g.winner_log_loss,g.home_points_abs_error,g.away_points_abs_error,"
+            "g.spread_abs_error,g.total_abs_error,g.graded_at_utc "
+            "FROM nba_model_previews p LEFT JOIN nba_model_locks l USING(game_id,model) "
+            "LEFT JOIN nba_model_preview_grades g USING(game_id,model) "
+            "WHERE p.season=? AND p.scheduled_start_utc<=? AND l.game_id IS NULL "
+            "ORDER BY p.scheduled_start_utc,p.game_id,p.model", (season, iso_utc(now))
+        ).fetchall()
+        for row in past:
+            game = games.setdefault(row["game_id"], {
+                "game_id": row["game_id"], "season": row["season"],
+                "scheduled_start_utc": row["scheduled_start_utc"],
+                "home_team": row["home_team"], "away_team": row["away_team"],
+                "status": "unlocked", "locked_at_utc": None, "models": {}, "result": None,
+            })
+            forecast = json.loads(row["forecast_json"])
+            forecast.update({"model_version": row["model_version"],
+                             "previewed_at_utc": row["previewed_at_utc"], "locked": False,
+                             "feature_snapshot": json.loads(row["feature_snapshot_json"])})
+            forecast["grade"] = None
+            if row["graded_at_utc"]:
+                forecast["grade"] = {
+                    "home_score": row["final_home_score"], "away_score": row["final_away_score"],
+                    "home_win": bool(row["home_win"]), "winner_brier": row["winner_brier"],
+                    "winner_log_loss": row["winner_log_loss"],
+                    "home_points_abs_error": row["home_points_abs_error"],
+                    "away_points_abs_error": row["away_points_abs_error"],
+                    "spread_abs_error": row["spread_abs_error"], "total_abs_error": row["total_abs_error"],
+                    "result_source": row["result_source"], "graded_at_utc": row["graded_at_utc"],
+                }
+                game["result"] = {"home_score": row["final_home_score"],
+                                  "away_score": row["final_away_score"],
+                                  "home_win": bool(row["home_win"])}
+            game["models"][row["model"]] = forecast
+            if row["model"] in unlocked_rows:
+                unlocked_rows[row["model"]].append(row)
     records = {}
     for model in MODEL_IDS:
         missed = sum(1 for _game, m in missed_pairs if m == model)
+        unlocked = _record(unlocked_rows[model], 0)
+        unlocked["previewed"] = unlocked.pop("locked")
+        unlocked.pop("missed")
         records[model] = {"label": model_labels[model]["label"],
                           "model_version": model_labels[model]["version"],
                           "projects_scores": model_labels[model]["projects_scores"],
-                          **_record(per_model_rows[model], missed)}
+                          **_record(per_model_rows[model], missed),
+                          "unlocked": unlocked}
     if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nba_model_history'").fetchone():
         state = "awaiting_history_import"
     elif not locks and not previews:
