@@ -385,8 +385,8 @@ def lock_due_forecasts(model_db_path: str = NBA_MODEL_DB,
                     missed = record_schedule_missed_windows(model, now)
                 finally:
                     model.execute("DETACH DATABASE nba_picks")
-        report["missed_events_recorded"] = missed
-        report["missed_window_games"] += missed
+        report["missed_window_games"] += missed["missed_window_games"]
+        report["missed_lock_events"] = missed["missed_lock_events"]
         return report
     finally:
         model.close()

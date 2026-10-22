@@ -441,10 +441,12 @@ def lock_forecasts(con: sqlite3.Connection, rows: list[dict[str, Any]],
     return report
 
 
-def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = None) -> int:
+def record_missed_windows(con: sqlite3.Connection,
+                          now: dt.datetime | None = None) -> dict[str, int]:
     now = now or dt.datetime.now(UTC)
     locked = {(r[0], r[1]) for r in con.execute("SELECT game_id,model FROM nba_model_locks")}
-    missed = 0
+    missed_games: set[str] = set()
+    missed_events = 0
     con.execute("BEGIN")
     try:
         rows = con.execute("SELECT * FROM nba_model_previews").fetchall()
@@ -452,21 +454,22 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
             key = (row["game_id"], row["model"])
             if key in locked or now < parse_time(row["scheduled_start_utc"]):
                 continue
+            missed_games.add(str(row["game_id"]))
             cursor = con.execute(
                 "INSERT OR IGNORE INTO nba_model_lock_events(game_id,model,season,event_type,"
                 "recorded_at_utc) VALUES(?,?,?,'missed_t90_window',?)",
                 (row["game_id"], row["model"], row["season"], iso_utc(now)),
             )
-            missed += cursor.rowcount
+            missed_events += cursor.rowcount
         con.commit()
     except Exception:
         con.rollback()
         raise
-    return missed
+    return {"missed_window_games": len(missed_games), "missed_lock_events": missed_events}
 
 
 def record_schedule_missed_windows(con: sqlite3.Connection,
-                                  now: dt.datetime | None = None) -> int:
+                                  now: dt.datetime | None = None) -> dict[str, int]:
     """Record missed locks for tipped schedule games, including games with no previews.
 
     The caller attaches the guarded picks database read-only as ``nba_picks``. Only
@@ -476,7 +479,8 @@ def record_schedule_missed_windows(con: sqlite3.Connection,
     model_query = " UNION ALL ".join(
         ["SELECT ? AS model"] + ["SELECT ?" for _ in MODEL_IDS[1:]]
     )
-    missed = 0
+    missed_games: set[str] = set()
+    missed_events = 0
     con.execute("BEGIN")
     try:
         rows = con.execute(
@@ -491,17 +495,18 @@ def record_schedule_missed_windows(con: sqlite3.Connection,
             (*MODEL_IDS, iso_utc(now)),
         ).fetchall()
         for row in rows:
+            missed_games.add(str(row["game_id"]))
             cursor = con.execute(
                 "INSERT OR IGNORE INTO nba_model_lock_events(game_id,model,season,event_type,"
                 "recorded_at_utc) VALUES(?,?,?,'missed_t90_window',?)",
                 (row["game_id"], row["model"], row["season"], iso_utc(now)),
             )
-            missed += cursor.rowcount
+            missed_events += cursor.rowcount
         con.commit()
     except Exception:
         con.rollback()
         raise
-    return missed
+    return {"missed_window_games": len(missed_games), "missed_lock_events": missed_events}
 
 
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],

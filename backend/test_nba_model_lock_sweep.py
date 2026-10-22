@@ -87,9 +87,10 @@ def test_zero_preview_schedule_game_records_three_events_at_tip(tmp_path):
     report = lock_due_forecasts(str(model_path), TIP, lp_db_path=picks_path)
     repeated = lock_due_forecasts(str(model_path), TIP, lp_db_path=picks_path)
 
-    assert report["missed_events_recorded"] == 3
-    assert report["missed_window_games"] == 3
-    assert repeated["missed_events_recorded"] == repeated["missed_window_games"] == 0
+    assert report["missed_window_games"] == 1
+    assert report["missed_lock_events"] == 3
+    assert repeated["missed_window_games"] == 1
+    assert repeated["missed_lock_events"] == 0
     assert _events(str(model_path)) == [(GAME_ID, "G1", "missed_t90_window"),
                                         (GAME_ID, "G2", "missed_t90_window"),
                                         (GAME_ID, "G3", "missed_t90_window")]
@@ -102,7 +103,7 @@ def test_partial_lock_set_records_only_the_missing_models(tmp_path):
 
     report = lock_due_forecasts(str(model_path), TIP, lp_db_path=picks_path)
 
-    assert report["missed_events_recorded"] == 1
+    assert report["missed_lock_events"] == 1
     assert report["missed_window_games"] == 1
     assert _events(str(model_path)) == [(GAME_ID, "G3", "missed_t90_window")]
 
@@ -115,18 +116,31 @@ def test_full_lock_set_has_no_missed_events_and_sweep_is_idempotent(tmp_path):
     first = lock_due_forecasts(str(model_path), TIP, lp_db_path=picks_path)
     second = lock_due_forecasts(str(model_path), TIP, lp_db_path=picks_path)
 
-    assert first["missed_events_recorded"] == second["missed_events_recorded"] == 0
+    assert first["missed_lock_events"] == second["missed_lock_events"] == 0
     assert first["missed_window_games"] == second["missed_window_games"] == 0
     assert _events(str(model_path)) == []
 
 
-def test_preview_recorder_remains_fallback_without_picks_connection(tmp_path, monkeypatch):
+def test_preview_fallback_and_existing_pre_tip_window_count(tmp_path, monkeypatch):
     model_path = tmp_path / "nba-model.dev.sqlite3"
     _seed_previews(model_path)
     monkeypatch.delenv("LP_DB_PATH", raising=False)
 
     report = lock_due_forecasts(str(model_path), TIP)
 
-    assert report["missed_events_recorded"] == 3
-    assert report["missed_window_games"] == 3
+    assert report["missed_window_games"] == 1
+    assert report["missed_lock_events"] == 3
     assert len(_events(str(model_path))) == 3
+
+    pre_tip_model_path = tmp_path / "nba-model-pre-tip.dev.sqlite3"
+    pre_tip_picks_path = _picks_db(tmp_path / "picks.dev.db")
+    _seed_previews(pre_tip_model_path)
+    after_window = TIP - dt.timedelta(minutes=87)
+
+    pre_tip = lock_due_forecasts(
+        str(pre_tip_model_path), after_window, lp_db_path=pre_tip_picks_path
+    )
+
+    assert pre_tip["missed_window_games"] == 1
+    assert pre_tip["missed_lock_events"] == 0
+    assert _events(str(pre_tip_model_path)) == []
