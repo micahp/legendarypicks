@@ -17,6 +17,7 @@ LOCK_LEAD = dt.timedelta(minutes=90)
 LOCK_WINDOW = dt.timedelta(minutes=2)
 PREVIEW_MAX_AGE = dt.timedelta(hours=2)
 LOCK_PROTOCOL = "t90-2m-v1"
+LATE_LOCK_PROTOCOL = "late-preview-v1"
 DEFAULT_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "nba-model.dev.sqlite3")
 MODEL_IDS = tuple(model["id"] for model in MODEL_INFO)
 MODEL_VERSION = {model["id"]: model["version"] for model in MODEL_INFO}
@@ -458,6 +459,57 @@ def lock_forecasts(con: sqlite3.Connection, rows: list[dict[str, Any]],
                      row["away_team"], row["model_version"], LOCK_PROTOCOL, iso_utc(now),
                      canonical_json(row["forecast"]), canonical_json(row["feature_snapshot"]),
                      row["source_hash"]),
+                )
+            report["inserted_games"] += 1
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return report
+
+
+def lock_previews_late(con: sqlite3.Connection, game_ids: list[str]) -> dict[str, int]:
+    """Lock named games from their stored pregame preview after the T-90 window was missed.
+
+    The lock is stamped with the preview's own `previewed_at_utc`, never with the current time,
+    so it records when the forecast really existed. Refused unless every candidate has a
+    preview stored before tipoff with a pre-tipoff feature cutoff. Protocol is distinct from
+    the T-90 lock so the two stay separable in the record.
+    """
+    report = {"inserted_games": 0, "existing_games": 0}
+    con.execute("BEGIN")
+    try:
+        for game_id in game_ids:
+            rows = con.execute("SELECT * FROM nba_model_previews WHERE game_id=? ORDER BY model",
+                               (game_id,)).fetchall()
+            if {row["model"] for row in rows} != set(MODEL_IDS):
+                raise NBAModelStoreError(f"{game_id}: needs previews for exactly G1/G2/G3")
+            existing = con.execute("SELECT COUNT(*) FROM nba_model_locks WHERE game_id=?", (game_id,)).fetchone()[0]
+            if existing == len(MODEL_IDS):
+                report["existing_games"] += 1
+                continue
+            if existing:
+                raise NBAModelStoreError(f"{game_id}: partial immutable lock set exists ({existing})")
+            for row in rows:
+                kickoff = parse_time(row["scheduled_start_utc"])
+                previewed = parse_time(row["previewed_at_utc"])
+                if row["model_version"] != MODEL_VERSION[row["model"]]:
+                    raise NBAModelStoreError(f"{game_id}/{row['model']}: mismatched model version")
+                if previewed >= kickoff:
+                    raise NBAModelStoreError(f"{game_id}/{row['model']}: preview was not stored before tipoff")
+                if parse_time(json.loads(row["feature_snapshot_json"])["cutoff_utc"]) >= kickoff:
+                    raise NBAModelStoreError(f"{game_id}/{row['model']}: feature cutoff is not pre-tipoff")
+                probability = float(json.loads(row["forecast_json"])["home_win_probability"])
+                if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
+                    raise NBAModelStoreError(f"{game_id}/{row['model']}: invalid home-win probability")
+            for row in rows:
+                con.execute(
+                    "INSERT INTO nba_model_locks(game_id,model,season,scheduled_start_utc,home_team,"
+                    "away_team,model_version,lock_protocol,locked_at_utc,forecast_json,"
+                    "feature_snapshot_json,source_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (game_id, row["model"], row["season"], row["scheduled_start_utc"], row["home_team"],
+                     row["away_team"], row["model_version"], LATE_LOCK_PROTOCOL, row["previewed_at_utc"],
+                     row["forecast_json"], row["feature_snapshot_json"], row["source_hash"]),
                 )
             report["inserted_games"] += 1
         con.commit()
