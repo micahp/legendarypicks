@@ -79,7 +79,10 @@ Retain stable track-period IDs for descriptive analysis only. For entities with 
 valid observed frames and at least 100 eligible kinematic windows in each chronological half,
 report per-half median movement rate (feet/frame), 95th percentile acceleration proxy
 (feet/frame²), and median absolute turn angle per frame. Report split-half rank stability and
-counts. Do not convert these quantities to physical speed or present them as athlete skill ratings.
+counts. Split each track-period file at the midpoint of its first and last Image Id suffix. Estimate
+turn from linear slopes on input positions 1–3 and 4–6, divide the absolute angle change by three
+frame increments, and include it only when both slope magnitudes exceed 0.1 feet/frame. Do not
+convert these quantities to physical speed or present them as athlete skill ratings.
 Do not estimate reaction ability: the release has no subsecond stimulus/onset labels. A track ID is
 not assumed to identify the same real athlete in another game.
 
