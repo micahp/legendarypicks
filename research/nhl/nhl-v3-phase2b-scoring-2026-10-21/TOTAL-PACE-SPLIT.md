@@ -4,6 +4,8 @@ Diagnostic only. The frozen Phase 2A simulator and its predictions were not chan
 
 The analysis uses the 2021 development population: 1,312 games for attempts and 1,292 games for official SOG. The 16 existing Phase 2A draws per game are held fixed. All intervals are 95% game-ID cluster bootstrap intervals, resampling games with both teams and every stored draw kept together. Every fitted value below is descriptive-after-selection on this same 2021 fold.
 
+Paired share intervals condition on the realized 16-draw set and therefore exclude simulator Monte-Carlo error, which would shrink with more draws.
+
 ## Total pace and share margins
 
 The total-count index is the Fano factor, Var(N)/E[N]. The bounded-share index is Var(s) divided by the variance expected from a binomial split at the observed mean share, s̄(1−s̄)E[1/N]; 1 is that conditional-binomial reference. Share moments use N>0 rows; zero-total rows are counted separately.

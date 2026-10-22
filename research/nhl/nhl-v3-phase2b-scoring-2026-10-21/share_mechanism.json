@@ -1,0 +1,307 @@
+{
+  "attempt_share_and_pace": {
+    "generated": {
+      "covariance_home_away": -8.819710567549253,
+      "cv_total_attempts": 0.10116141065032722,
+      "mean_home_share": 0.50882610994031,
+      "mean_total_attempts": 112.94002477134147,
+      "sd_home_share": 0.056912868255969,
+      "share_overdispersion_index": 1.4486629707335905,
+      "variance_away": 72.51629764845087,
+      "variance_home": 75.6576838518877,
+      "variance_home_minus_away": 165.81340263543703,
+      "variance_home_share": 0.0032390745731212837,
+      "variance_total_attempts": 130.53456036524005
+    },
+    "observed": {
+      "covariance_home_away": -44.71005330718322,
+      "mean_home_share": 0.5145829657424456,
+      "mean_total_attempts": 113.31173780487805,
+      "sd_home_share": 0.07844194391616002,
+      "share_overdispersion_index": 2.7594842448608596,
+      "variance_away": 116.50265606409874,
+      "variance_home": 117.5969469205458,
+      "variance_home_minus_away": 323.51970959901104,
+      "variance_home_share": 0.006153138565345995,
+      "variance_total_attempts": 144.67949637027812
+    }
+  },
+  "generated_attempt_covariance_decomposition": {
+    "components": {
+      "between_game_covariance_of_16_draw_means": {
+        "cluster_bootstrap_95_ci": [
+          -2.0884692959669158,
+          -0.8626672483781214
+        ],
+        "estimate": -1.4651171510096184
+      },
+      "conditional_covariance_given_game_and_total_attempts": {
+        "cluster_bootstrap_95_ci": [
+          -6.535292174796749,
+          -5.863516399104421
+        ],
+        "estimate": -6.205750603404472
+      },
+      "sum": {
+        "cluster_bootstrap_95_ci": [
+          -9.946041379664214,
+          -7.740150428853667
+        ],
+        "estimate": -8.819710567549254
+      },
+      "within_game_covariance_of_conditional_means_across_total_attempts": {
+        "cluster_bootstrap_95_ci": [
+          -2.031305661085175,
+          -0.30987003977705885
+        ],
+        "estimate": -1.1488428131351627
+      }
+    },
+    "definition": "Exact finite-snapshot law of total covariance: first condition on game and total attempts N; then mix over N within game; finally mix the 16-draw game means across games.",
+    "direct_generated_covariance": -8.819710567549253,
+    "state_path_identifiability": "The trace stores game-level counts, not event-level intensity/state paths. The within-game term across N therefore includes allocation, score/manpower feedback, clock exposure, and OT; it cannot identify a causal shared-state-only component.",
+    "within_game_predictive_covariance_across_16_draws": {
+      "cluster_bootstrap_95_ci": [
+        -8.333442948504192,
+        -6.389697935523058
+      ],
+      "estimate": -7.354593416539635
+    }
+  },
+  "limits": [
+    "The fixed-exogenous-path independent Poisson result is a conditional rate-process identity; the simulator's score, manpower, and OT path is endogenous to generated events.",
+    "No event-level state paths are present in the saved count trace, so the shared-state contribution cannot be separated causally without replaying or rerunning paths, which was prohibited.",
+    "Share-only moments leave generated total-attempt variance unchanged and assume N is independent of home share."
+  ],
+  "provenance": {
+    "analysis_script_sha256": "fb398c9aa3add16e1e0ad91e5ba5b9cc467b87b432d048cdcf422a08c3a8ccc9",
+    "inputs": [
+      "research/nhl/nhl-v3-phase2b-scoring-2026-10-21/underdispersion-traces.json.gz",
+      "research/nhl/nhl-v3-phase2b-scoring-2026-10-21/total_pace_split.json",
+      "research/nhl/nhl-v3-phase2b-scoring-2026-10-21/underdispersion.json"
+    ],
+    "pace_report_sha256": "fe4eb88f93c0335fdff6d940602ff258daad1799e52726b7a35b1bb7ba675cc3",
+    "phase2a_hashes": {
+      "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+      "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+      "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+    },
+    "runtime_seconds": 2.6590038489957806,
+    "simulator_sha256": "87e37b2ab4af0dbfab53b6ce9a1a3eadf53bd55541fdb7a2d447482022358076",
+    "trace_metadata": {
+      "base_commit": "dd36b4ae45d7e7050316f730a5e84629b93ce9a7",
+      "cache_files": {
+        "candidate_c": {
+          "basename": "c-v2-goal-prior-7d5a1e6d4487a74a.pickle",
+          "sha256": "914cf33839cd1560a6407602d09f5175f6ad0d90e9d58904a5dbadcfd6b93326"
+        },
+        "phase2a": {
+          "basename": "phase-2a-matched-reference-7d5a1e6d4487a74a.pickle",
+          "sha256": "835685c2b6c2b588bef8111622fcdbf3062682876296869751772a31fdcc7dbc"
+        }
+      },
+      "cache_fingerprint": "7d5a1e6d4487a74a317b9c1697db659a0e66e12f5755c937f91fb32e618e76f9",
+      "cached_simulations_reused": 41984,
+      "event_scan_seconds": 87.3502036120044,
+      "games": 1312,
+      "monte_carlo_rerun": false,
+      "phase2a_hashes": {
+        "evaluation_sha256": "24d5a55754a6b072f66203096a1936036a8d209df870ef6f8787bd0a22fc3930",
+        "fitted_model_sha256": "8e0304b9dbe4230f9deb17abda0ebe79cd89653289d2661a1612d79f8914addb",
+        "report_sha256": "b0867d3cf1ef64a30469d087a03bda9ed156bbbbe020458b3efbb562473036f0"
+      },
+      "seed": 20261021,
+      "simulations_per_game": 16,
+      "snapshot_build_seconds": 89.59466274801525,
+      "source_event_rows_verified": 1510104,
+      "source_pins": {
+        "approved_disposition_rules": "research/nhl/fullframe-event-audit-2026-10-21/DISPOSITION-RULES.md",
+        "approved_label_artifact": {
+          "path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv",
+          "reader": "research/nhl/official-outcome-backfill-2026-10-20/nhl_research_data.py",
+          "reader_base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+          "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c"
+        },
+        "approved_schema": "research/nhl/fullframe-event-audit-2026-10-21/PROPOSED-SCHEMA.md",
+        "artifacts": {
+          "event_dispositions.csv.gz": "c5ee8cc948e8de2f070d6b5b417d3756a731135d771d91d911d3e0f24c356e1f",
+          "game_metrics.csv": "7162cb7bdc0859f6d6310702e44557e84724584b27abdc958cdcfe192d1d3a17",
+          "game_source_provenance.csv.gz": "33ae97e296b797ef8e5a68e5b1e8e391ed563a3c2c1495de6e376ee797618013",
+          "player_shift_dispositions.csv.gz": "c665ef85477c34a8accabff260a87111838a6f5f6c28228cab6c65fced23be82",
+          "target_reconciliation.csv.gz": "f093d8108a5492a2bd1c7400e71b2fa8b2c782d66ee3cba855ba85e110166a47",
+          "unresolved_issues.csv.gz": "b6b39dcb332963ff9f4a08d22ae6a4d958333a700db3daa32f489273e88614fb"
+        },
+        "base_commit": "33c6b8fad5c36fd7749557c6b56bb21898e33135",
+        "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+        "expected_population": {
+          "games": 4876,
+          "pbp_events": 1510104,
+          "seasons": {
+            "2018": 1271,
+            "2019": 1082,
+            "2020": 868,
+            "2021": 1312,
+            "2022": 343
+          }
+        },
+        "official_artifacts": {
+          "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+          "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038"
+        }
+      }
+    },
+    "trace_sha256": "7a86fba3f66f7a90bfbf1b653c0871d67a43a99dd073f6fe2d86e9c71527d0e7",
+    "underdispersion_report_sha256": "572bae4a1e7cd8ad4cab1321d6eef838313be9ebccf51c6548b75dc6fc0a6586"
+  },
+  "scope": {
+    "2022_used_for_tuning": false,
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20261022,
+    "bootstrap_unit": "game ID; each selected game retains both teams and all 16 saved draws",
+    "candidate_selected": false,
+    "diagnostic_only": true,
+    "draws_per_game": 16,
+    "games": 1312,
+    "gate_changed": false,
+    "interval_conditioning": "All intervals condition on the realized 16-draw set and exclude simulator Monte Carlo error.",
+    "monte_carlo_rerun": false,
+    "phase2a_modified": false
+  },
+  "share_only_moment_counterfactual": {
+    "assumption": "Keep the empirical generated total-attempt distribution; take the observed game-level home-share mean and variance independent of N.",
+    "covariance_difference_generated_share_only_minus_observed": {
+      "cluster_bootstrap_95_ci": [
+        -5.079565434294434,
+        1.0938115127413217
+      ],
+      "estimate": -1.973310058059731
+    },
+    "covariance_residual_vs_observed": -1.973310058059731,
+    "joint_exact_match_possible_under_independent_N_and_S": false,
+    "mean_total_attempts": {
+      "cluster_bootstrap_95_ci": [
+        112.69116568216464,
+        113.18088200266769
+      ],
+      "estimate": 112.94002477134147
+    },
+    "moments": {
+      "covariance_home_away": {
+        "cluster_bootstrap_95_ci": [
+          -52.464064325773286,
+          -40.415338494308976
+        ],
+        "estimate": -46.683363365242954
+      },
+      "variance_away": {
+        "cluster_bootstrap_95_ci": [
+          103.83015446348334,
+          116.06527698777876
+        ],
+        "estimate": 110.04706252585149
+      },
+      "variance_home": {
+        "cluster_bootstrap_95_ci": [
+          107.68645476143554,
+          119.6928219807327
+        ],
+        "estimate": 113.85422456987448
+      },
+      "variance_home_minus_away": {
+        "cluster_bootstrap_95_ci": [
+          292.54557230993737,
+          340.2097649570622
+        ],
+        "estimate": 317.26801382621187
+      }
+    },
+    "observed_covariance_home_away": {
+      "cluster_bootstrap_95_ci": [
+        -51.31639672256098,
+        -37.74451784477711
+      ],
+      "estimate": -44.71005330718322
+    },
+    "observed_share_mean": {
+      "cluster_bootstrap_95_ci": [
+        0.5103711498347409,
+        0.5186545676486538
+      ],
+      "estimate": 0.5145829657424456
+    },
+    "observed_share_variance": {
+      "cluster_bootstrap_95_ci": [
+        0.005677260541839768,
+        0.006598636811718824
+      ],
+      "estimate": 0.006153138565345995
+    },
+    "share_variance_required_to_match_observed_covariance": {
+      "cluster_bootstrap_95_ci": [
+        0.0054517481703611915,
+        0.006528576498516565
+      ],
+      "difference_from_observed_share_variance": {
+        "cluster_bootstrap_95_ci": [
+          -0.00039357050515016105,
+          8.468472229915769e-05
+        ],
+        "estimate": -0.00015313615905998036
+      },
+      "estimate": 0.006000002406286014,
+      "moments_at_that_variance": {
+        "covariance_home_away": {
+          "cluster_bootstrap_95_ci": [
+            -51.31639672256098,
+            -37.7445178447771
+          ],
+          "estimate": -44.71005330718323
+        },
+        "variance_away": {
+          "cluster_bootstrap_95_ci": [
+            100.82771044314377,
+            114.96353642391912
+          ],
+          "estimate": 108.07375246779176
+        },
+        "variance_home": {
+          "cluster_bootstrap_95_ci": [
+            104.73931575225859,
+            118.7830468279113
+          ],
+          "estimate": 111.88091451181475
+        },
+        "variance_home_minus_away": {
+          "cluster_bootstrap_95_ci": [
+            281.29834547752,
+            336.46654940349305
+          ],
+          "estimate": 309.374773593973
+        }
+      }
+    },
+    "variance_home_minus_away_difference_vs_observed": {
+      "cluster_bootstrap_95_ci": [
+        -13.051207519429648,
+        0.40228153413675305
+      ],
+      "estimate": -6.251695772799167
+    },
+    "variance_total_attempts": {
+      "cluster_bootstrap_95_ci": [
+        127.76987053776412,
+        133.2518200158931
+      ],
+      "estimate": 130.53456036524005
+    },
+    "variance_total_difference_generated_minus_observed": {
+      "cluster_bootstrap_95_ci": [
+        -26.01514125616332,
+        -2.3799668664949736
+      ],
+      "estimate": -14.144936005038062
+    },
+    "variance_total_shortfall_vs_observed": -14.144936005038062
+  },
+  "title": "NHL V3 home-away attempt share mechanism diagnosis"
+}
