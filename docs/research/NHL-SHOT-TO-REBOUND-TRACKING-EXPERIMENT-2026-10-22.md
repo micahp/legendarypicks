@@ -183,3 +183,56 @@ The second control permutes each complete 26-feature movement vector, including 
 The real delta is inside the whole-vector null range for both scores, though it is in the upper tail. Thus the column-wise null's outside-range result does not survive a control that preserves movement-feature correlations. Treat its apparent harmful-alignment signal as a column-wise decorrelation artifact and drop the inference that real row alignment is harmful. The row-preserving control does not show a statistically decisive movement benefit or harm; the paired game-bootstrap intervals versus event-only still include zero. This remains a ten-game research sample. The complete 200 deltas and fold alphas are in [`tracking_robustness_null2.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness_null2.json); that file adds the row-preserving result to the prior JSON while preserving all prior values, including the original 20-replicate null.
 
 The row-preserving null fits took 71.8 seconds. The full invocation, including the release scan and nested recovery-fold reproduction, took 181.7 seconds with one BLAS/OMP thread and a maximum resident set of 81,600 KB. Disk availability remained 3.5 GB before and after. The original fixed-alpha and robustness JSON files were not modified. No test suite was run.
+
+## Power and stopping point
+
+This is a zero-refit summary of the committed 2,000-replicate game-cluster bootstrap intervals in [`tracking_robustness_null2.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness_null2.json). The interval-derived SE is `(upper − lower) / (2 × 1.959963985)`, a normal approximation to the game-level cluster-bootstrap interval and not a directly estimated standard error; `z = delta / SE`, `MDE@10 = (1.959963985 + 0.8416212336) × SE`, and projected games assume `SE ∝ 1 / sqrt(G)`. The 9-df t reference is 2.262157; `CI excludes zero` is taken directly from each committed interval. The script, exact values, formulas, population details, and protected-file hashes are in [`power_stopping.py`](../../research/nhl-shot-to-rebound-2026-10-22/power_stopping.py) and [`tracking_power.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_power.json).
+
+| Target / score | Delta [committed 95% game-bootstrap CI] | SE* | z | MDE @ 10 | Delta / MDE | Games to MDE (ceil) | CI excludes zero | Read |
+|---|---:|---:|---:|---:|---:|---:|:---:|---|
+| Recovery within 3s / Brier | +0.000864429 [-0.000117032, +0.002385610] | 0.000638441 | +1.3540 | 0.001788646 | +48.3% | 42.8 (43) | No | Underpowered at n=10 |
+| Recovery within 3s / log loss | +0.001768454 [-0.000235962, +0.004856581] | 0.001299142 | +1.3612 | 0.003639657 | +48.6% | 42.4 (43) | No | Underpowered at n=10 |
+| Goal / Brier | -0.000120542 [-0.000373325, +0.000102474] | 0.000121379 | -0.9931 | 0.000340055 | -35.4% | 79.6 (80) | No | Direction favors movement but unresolved |
+| Goal / log loss | -0.001287480 [-0.002127225, -0.000529642] | 0.000407554 | -3.1590 | 0.001141798 | -112.8% | 7.9 (8) | Yes | Detectable at n=10 |
+| Recovery team, 3 classes / Brier | +0.001299317 [-0.000172308, +0.003578682] | 0.000956903 | +1.3578 | 0.002680844 | +48.5% | 42.6 (43) | No | Underpowered at n=10 |
+| Recovery team, 3 classes / log loss | +0.001773427 [-0.000230403, +0.004857744] | 0.001298020 | +1.3663 | 0.003636515 | +48.8% | 42.0 (43) | No | Underpowered at n=10 |
+| Any follow-up shot within 5s / Brier | +0.000153658 [-0.000553980, +0.000881415] | 0.000366179 | +0.4196 | 0.001025881 | +15.0% | 445.7 (446) | No | Underpowered at n=10 |
+| Any follow-up shot within 5s / log loss | +0.000228354 [-0.002250516, +0.002755783] | 0.001277141 | +0.1788 | 0.003578018 | +6.4% | 2,455.1 (2,456) | No | Underpowered at n=10 |
+| Same-team follow-up shot within 5s / Brier | +0.000153658 [-0.000553980, +0.000881415] | 0.000366179 | +0.4196 | 0.001025881 | +15.0% | 445.7 (446) | No | Underpowered at n=10 |
+| Same-team follow-up shot within 5s / log loss | +0.000228354 [-0.002250516, +0.002755783] | 0.001277141 | +0.1788 | 0.003578018 | +6.4% | 2,455.1 (2,456) | No | Underpowered at n=10 |
+
+### Population
+
+The committed nested evaluation has 847 matched rows, 10 outer held-out games, 42 event-only parameters including the intercept, and 94 movement-augmented parameters including the intercept.
+
+| Target | Event-only rate | Positive count |
+|---|---:|---:|
+| Goal from attempt | 4.60% | 39 |
+| Recovery within 3s | 55.37% | 469 |
+| Any follow-up shot within 5s | 15.23% | 129 |
+| Same-team follow-up shot within 5s | 15.23% | 129 |
+| Recovery team category | Multiclass | No single positive count; 378 no recovery, 226 opponent recovery, 243 shooting-team recovery |
+
+| Held-out game | Rows |
+|---|---:|
+| 2025-10-11 Team A @ Team D | 100 |
+| 2025-10-17 Team F @ Team L | 76 |
+| 2025-10-24 Team B @ Team A | 104 |
+| 2025-10-24 Team E @ Team D | 67 |
+| 2025-10-28 Team C @ Team A | 113 |
+| 2025-10-29 Team G @ Team L | 75 |
+| 2025-11-02 Team D @ Team A | 104 |
+| 2025-11-16 Team H @ Team K | 52 |
+| 2025-11-19 Team I @ Team K | 85 |
+| 2025-11-28 Team J @ Team K | 71 |
+
+### Reading and stop rule
+
+- Recovery Brier is worse for movement by +0.000864, while goal Brier has a small point estimate in movement's favor (-0.000121); both intervals include zero and neither difference is resolved at 10 games.
+- The only interval excluding zero is goal log loss, which favors movement at -0.001287 [-0.002127, -0.000530]. It comes from 39 goals across 10 games and is one score for one target, with no multiplicity control across five targets and two scores; do not promote it or use it to change a gate.
+- For both follow-up targets, the interval-derived projection is about 446 games on Brier and 2,455 on log loss (ceilings 446 and 2,456). At 10 games and about 85 rows per game, follow-up prediction is a dead end for this design.
+- The recovery-team multiclass deltas are positive for movement-minus-event, but both intervals include zero; neither fitted arm's direction is resolved here.
+
+With 10 games the design cannot resolve a ~0.0009 Brier difference; getting to the ~43 games needed is a data-acquisition decision for Micah, not a modelling one.
+
+The calculation derived statistics solely from the committed robustness JSON, performed no refits or CSV reads, and completed in 0.08 seconds at 12,700 KB maximum RSS. The three protected result JSONs were byte-for-byte unchanged by SHA-256 before and after. No model, feature, candidate-selection, or gate change is made by this diagnostic.

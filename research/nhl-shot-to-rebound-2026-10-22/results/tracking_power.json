@@ -1,0 +1,298 @@
+{
+  "metadata": {
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20261022,
+    "bootstrap_unit": "game",
+    "evaluation": "outer leave-one-game-out; alpha selected independently within each outer training set by inner leave-one-game-out",
+    "input": "results/tracking_robustness_null2.json",
+    "power_method": "normal approximation using the committed game-cluster bootstrap interval-derived SE; MDE uses z_(0.975)+z_(0.80); projected games assume SE scales as 1/sqrt(G)"
+  },
+  "populations": {
+    "event_only_parameter_count_including_intercept": 42,
+    "event_rate_and_positive_count_by_target": {
+      "any_followup_shot_within_5s": {
+        "class_counts": null,
+        "event_rate": 0.15230224321133412,
+        "positive_count": 129
+      },
+      "goal_from_attempt": {
+        "class_counts": null,
+        "event_rate": 0.04604486422668241,
+        "positive_count": 39
+      },
+      "recovery_team_category": {
+        "class_counts": {
+          "no_recovery_within_3s": 378,
+          "opponent_recovery": 226,
+          "shooting_team_recovery": 243
+        },
+        "event_rate": null,
+        "positive_count": null
+      },
+      "recovery_within_3s": {
+        "class_counts": null,
+        "event_rate": 0.5537190082644629,
+        "positive_count": 469
+      },
+      "same_team_followup_shot_within_5s": {
+        "class_counts": null,
+        "event_rate": 0.15230224321133412,
+        "positive_count": 129
+      }
+    },
+    "game_rows": [
+      {
+        "game": "2025-10-11 Team A @ Team D",
+        "rows": 100
+      },
+      {
+        "game": "2025-10-17 Team F @ Team L",
+        "rows": 76
+      },
+      {
+        "game": "2025-10-24 Team B @ Team A",
+        "rows": 104
+      },
+      {
+        "game": "2025-10-24 Team E @ Team D",
+        "rows": 67
+      },
+      {
+        "game": "2025-10-28 Team C @ Team A",
+        "rows": 113
+      },
+      {
+        "game": "2025-10-29 Team G @ Team L",
+        "rows": 75
+      },
+      {
+        "game": "2025-11-02 Team D @ Team A",
+        "rows": 104
+      },
+      {
+        "game": "2025-11-16 Team H @ Team K",
+        "rows": 52
+      },
+      {
+        "game": "2025-11-19 Team I @ Team K",
+        "rows": 85
+      },
+      {
+        "game": "2025-11-28 Team J @ Team K",
+        "rows": 71
+      }
+    ],
+    "movement_augmented_parameter_count_including_intercept": 94,
+    "outer_heldout_games": 10,
+    "rows": 847
+  },
+  "provenance": {
+    "input_sha256": "d21f386fe749af0a467c56f1a884971258ca8c51e2afacb6ba899a3df21b57fe",
+    "protected_sha256": {
+      "after_write": {
+        "tracking_rebound_analysis.json": "a6bea4569c687369ae6befa86246771502b1116df89f307af37c4260643f540b",
+        "tracking_robustness.json": "2e2f07c771e350c8e08cff39cc1f02599836a4e199585566f9ddac54cb4ae4d1",
+        "tracking_robustness_null2.json": "d21f386fe749af0a467c56f1a884971258ca8c51e2afacb6ba899a3df21b57fe"
+      },
+      "before_write": {
+        "tracking_rebound_analysis.json": "a6bea4569c687369ae6befa86246771502b1116df89f307af37c4260643f540b",
+        "tracking_robustness.json": "2e2f07c771e350c8e08cff39cc1f02599836a4e199585566f9ddac54cb4ae4d1",
+        "tracking_robustness_null2.json": "d21f386fe749af0a467c56f1a884971258ca8c51e2afacb6ba899a3df21b57fe"
+      }
+    },
+    "refits_or_csv_reads": false
+  },
+  "runtime_seconds": 0.004469983978196979,
+  "targets": {
+    "any_followup_shot_within_5s": {
+      "scores": {
+        "brier": {
+          "ci95": [
+            -0.00055397986343508,
+            0.0008814150516331797
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.00015365793955757212,
+          "games_for_observed_delta_to_reach_mde": 445.74275946765937,
+          "games_for_observed_delta_to_reach_mde_ceil": 446,
+          "mde_at_n10_80pct": 0.0010258813957004518,
+          "observed_delta_as_pct_of_mde": 14.978138818148416,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.000366178900748592,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 0.4196253231506347
+        },
+        "logloss": {
+          "ci95": [
+            -0.002250516421891789,
+            0.0027557830682397666
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.00022835437329871144,
+          "games_for_observed_delta_to_reach_mde": 2455.0847455215617,
+          "games_for_observed_delta_to_reach_mde_ceil": 2456,
+          "mde_at_n10_80pct": 0.0035780184632926513,
+          "observed_delta_as_pct_of_mde": 6.382146309233117,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0012771406843303695,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 0.17880126762890045
+        }
+      }
+    },
+    "goal_from_attempt": {
+      "scores": {
+        "brier": {
+          "ci95": [
+            -0.000373324961090479,
+            0.00010247387726958311
+          ],
+          "ci_excludes_zero": false,
+          "delta": -0.00012054197960197771,
+          "games_for_observed_delta_to_reach_mde": 79.5832401755959,
+          "games_for_observed_delta_to_reach_mde_ceil": 80,
+          "mde_at_n10_80pct": 0.00034005497110616565,
+          "observed_delta_as_pct_of_mde": -35.44779222308276,
+          "read": "direction favours movement but not resolvable",
+          "se_from_ci": 0.00012137948503172677,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": -0.9931001072419269
+        },
+        "logloss": {
+          "ci95": [
+            -0.0021272253901815225,
+            -0.0005296422207247892
+          ],
+          "ci_excludes_zero": true,
+          "delta": -0.0012874802281139797,
+          "games_for_observed_delta_to_reach_mde": 7.86497448010281,
+          "games_for_observed_delta_to_reach_mde_ceil": 8,
+          "mde_at_n10_80pct": 0.0011417978665138897,
+          "observed_delta_as_pct_of_mde": -112.7590325636957,
+          "read": "detectable at n=10",
+          "se_from_ci": 0.0004075542157109416,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": -3.159040388940859
+        }
+      }
+    },
+    "recovery_team_category": {
+      "scores": {
+        "multiclass_brier": {
+          "ci95": [
+            -0.00017230783227351054,
+            0.0035786815814942306
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.0012993170272329602,
+          "games_for_observed_delta_to_reach_mde": 42.570908498349326,
+          "games_for_observed_delta_to_reach_mde_ceil": 43,
+          "mde_at_n10_80pct": 0.0026808442851914906,
+          "observed_delta_as_pct_of_mde": 48.46671007376883,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0009569026376185533,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 1.3578361853684244
+        },
+        "multiclass_logloss": {
+          "ci95": [
+            -0.00023040254217650545,
+            0.004857744159137857
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.0017734272112686078,
+          "games_for_observed_delta_to_reach_mde": 42.04787128029515,
+          "games_for_observed_delta_to_reach_mde_ceil": 43,
+          "mde_at_n10_80pct": 0.003636514930265585,
+          "observed_delta_as_pct_of_mde": 48.76721930959017,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0012980204586040807,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 1.366255207699723
+        }
+      }
+    },
+    "recovery_within_3s": {
+      "scores": {
+        "brier": {
+          "ci95": [
+            -0.00011703204216628738,
+            0.002385610033068424
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.0008644285984916178,
+          "games_for_observed_delta_to_reach_mde": 42.8144857202125,
+          "games_for_observed_delta_to_reach_mde_ceil": 43,
+          "mde_at_n10_80pct": 0.0017886463983734875,
+          "observed_delta_as_pct_of_mde": 48.32864669493586,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0006384408321754727,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 1.3539682221547404
+        },
+        "logloss": {
+          "ci95": [
+            -0.0002359616399887382,
+            0.004856581320704669
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.0017684541919683605,
+          "games_for_observed_delta_to_reach_mde": 42.35778818776723,
+          "games_for_observed_delta_to_reach_mde_ceil": 43,
+          "mde_at_n10_80pct": 0.003639656951085285,
+          "observed_delta_as_pct_of_mde": 48.58848555606421,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0012991419739514774,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 1.3612478292802908
+        }
+      }
+    },
+    "same_team_followup_shot_within_5s": {
+      "scores": {
+        "brier": {
+          "ci95": [
+            -0.00055397986343508,
+            0.0008814150516331797
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.00015365793955757212,
+          "games_for_observed_delta_to_reach_mde": 445.74275946765937,
+          "games_for_observed_delta_to_reach_mde_ceil": 446,
+          "mde_at_n10_80pct": 0.0010258813957004518,
+          "observed_delta_as_pct_of_mde": 14.978138818148416,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.000366178900748592,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 0.4196253231506347
+        },
+        "logloss": {
+          "ci95": [
+            -0.002250516421891789,
+            0.0027557830682397666
+          ],
+          "ci_excludes_zero": false,
+          "delta": 0.00022835437329871144,
+          "games_for_observed_delta_to_reach_mde": 2455.0847455215617,
+          "games_for_observed_delta_to_reach_mde_ceil": 2456,
+          "mde_at_n10_80pct": 0.0035780184632926513,
+          "observed_delta_as_pct_of_mde": 6.382146309233117,
+          "read": "underpowered at n=10",
+          "se_from_ci": 0.0012771406843303695,
+          "se_method": "normal approximation to the game-level cluster bootstrap 95% interval; not a directly estimated standard error",
+          "t_crit_9df": 2.262157,
+          "z": 0.17880126762890045
+        }
+      }
+    }
+  }
+}
