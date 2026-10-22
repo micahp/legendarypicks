@@ -32,6 +32,18 @@ REQUIRED_TRACKING_COLUMNS = {
     "Player Jersey Number", "Rink Location X (Feet)", "Rink Location Y (Feet)",
 }
 
+# Frozen historical record captured at e5d0b103, before the Image Id terminology and
+# timebase correction. This records the earlier gate outcome and is not recomputed.
+PRE_TIMEBASE_CORRECTION_GATE_RESULTS = {
+    "event_coordinate_alignment": False,
+    "forecast_window_coverage": True,
+    "initial_25_32_image_id_clock_proxy_check": False,
+    "player_identity_coverage": False,
+    "puck_frame_and_unvalidated_game_clock_proxy_check": True,
+    "release_integrity": True,
+    "tracking_coordinate_validity": True,
+}
+
 
 def parse_clock(value: str) -> int | None:
     if value is None or not value.strip():
@@ -752,7 +764,7 @@ def main() -> None:
         "release_integrity": manifest["status"] == "PASS",
         "tracking_coordinate_validity": total["inside_rink_fraction"] >= 0.99 and
                                          total["xy_present_fraction"] >= 0.99,
-        "frame_id_order": all(m["frame_id_duplicate_or_reversal"] == 0 for m in file_metrics),
+        "image_id_order": all(m["frame_id_duplicate_or_reversal"] == 0 for m in file_metrics),
         "game_clock_coverage": total["clock_row_fraction"] >= 0.99 and
                                total["clock_frame_fraction"] >= 0.99,
         "game_clock_monotonicity": all(m["clock_reversals"] == 0 for m in file_metrics),
@@ -777,10 +789,26 @@ def main() -> None:
             gm["event_alignment_by_transform"].get("identity", {}).get("p95_ft_max_across_files", float("inf")) <= 40
             for gm in game_metrics.values()) >= 8,
     }
+    documented_timebase = bool(gates["documented_subsecond_timebase"])
+    puck_continuity = gates["puck_100ms_time_continuity"]
+    timebase_assessment = {
+        "image_id_suffix_used_as": (
+            "identifier only" if not gates["image_id_order"] else
+            "time-calibrated index" if documented_timebase else
+            "within-file ordinal only"),
+        "published_capture_rate": documented_timebase,
+        "published_subsecond_timestamp": documented_timebase,
+        "puck_100ms_gap_status": (
+            "NOT ASSESSABLE" if puck_continuity is None else
+            "PASS" if puck_continuity else "FAIL"),
+    }
     result = {
         "study": "NHL ten-game movement quality audit",
         "source": str(args.data_dir),
         "manifest": manifest,
+        "timebase_assessment": timebase_assessment,
+        "initial_frozen_gate_results_before_timebase_correction": (
+            PRE_TIMEBASE_CORRECTION_GATE_RESULTS),
         "frozen_thresholds": {
             "coordinate_in_bounds_fraction": 0.99,
             "xy_present_fraction": 0.99,
@@ -804,8 +832,8 @@ def main() -> None:
             "forecast_windows_min": 10000,
             "forecast_games_min": 8,
             "forecast_windows_per_game_min": 1000,
-            "forecast_window_input_frames": 6,
-            "forecast_horizon_frames": 15,
+            "forecast_input_image_id_groups": 6,
+            "forecast_horizon_image_id_increments": 15,
         },
         "gates": gates,
         "overall": dict(total),
@@ -814,7 +842,8 @@ def main() -> None:
         "interpretation": {
             "event_alignment": "The direct unreflected mapping is frozen from the first-period pilot. Event coordinates are compared to same-game/team/jersey, same-second tracking positions; candidate sign reflections are diagnostics only.",
             "identity": "Tracking IDs and jerseys are retained as game-scoped identifiers. No cross-game athlete identity is assumed.",
-            "clock": "Image Id numeric suffix is used only as an ordinal within-file index. The Image Id/game-clock ratio is not a camera frame rate; no subsecond timebase is published. Clock reversals and blank clocks are counted. The 100ms puck timing gate is not assessable.",
+            "clock": "Numeric Image Id suffix is an ordinal within-file index only. Its ratio to whole-second Game Clock is not a documented camera capture rate; no subsecond timebase is published. Clock reversals and missing clocks are counted. Physical 100ms puck continuity is unassessable.",
+            "puck_gap_time": "The reported gap ratio uses the Image Id/game-clock proxy and is not a physical elapsed-time measurement.",
         },
         "runtime_seconds": round(time.perf_counter() - started, 3),
     }

@@ -47,6 +47,8 @@ release defines Image Id as an identifier and Game Clock at whole-second precisi
 document capture cadence. I retained the measured numeric-suffix/game-clock ratio as a diagnostic,
 not as FPS. The prediction horizon below is therefore **15 numeric Image Id suffix increments**,
 with no conversion to seconds. This terminology correction changed no examples, model, or scores.
+The `timebase_assessment` block is emitted by `audit_tracking_quality.py` from its computed Image Id
+ordering, documented-timebase, and puck-continuity gates.
 
 The frozen gate table and full raw metrics are in
 [NHL-TEN-GAME-KINEMATICS-GATES-2026-10-22.md](NHL-TEN-GAME-KINEMATICS-GATES-2026-10-22.md).
@@ -151,6 +153,33 @@ No generator was implemented. A future predictive play generator would need this
 | Physical constraints | Rink bounds, time-calibrated speed/acceleration, player reach/contact, stick and puck interactions, goalie reach and puck flight | Only rink bounds and empirical per-Image-Id movement limits were tested; collision, reachability, and puck physics are unvalidated |
 | Stochastic outputs | Joint player/puck trajectories, event transitions, outcome probabilities, and calibrated uncertainty | This experiment emits deterministic skater endpoints with calibrated radial error only; it does not generate plays or outcomes |
 | Eligibility/failure | Mark state unknown and suppress predictions after identity conflict, missing coordinates, index gap, or unsupported component | Windows reset or the full conflicted track-period identity is excluded; missing values are not imputed |
+
+## Artifact provenance
+
+`audit_tracking_quality.py` now emits the complete quality JSON, including the frozen historical
+gate snapshot. The repository regeneration command was:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  python3 research/nhl-ten-game-kinematics-2026-10-22/audit_tracking_quality.py \
+  --output-dir research/nhl-ten-game-kinematics-2026-10-22/quality
+```
+
+It exited **1** on the unchanged frozen gates: `documented_subsecond_timebase`,
+`event_coordinate_alignment`, `game_clock_monotonicity`,
+`initial_25_32_image_id_clock_proxy_check`, and `player_identity_coverage` are false;
+`puck_100ms_time_continuity` is null. This disposition matches the committed artifact. Comparing
+JSON leaves with `git show 7b57bd24:research/nhl-ten-game-kinematics-2026-10-22/quality/tracking_quality.json`
+found only `runtime_seconds` different (411.37 committed; 404.171 regenerated).
+
+A second run with the same command and `--output-dir /tmp/nhl-quality-provenance-v4-scratch` also
+exited 1 on the same gates. Its JSON differs from the repository output only in `runtime_seconds`
+(388.693). `tracking_quality_by_game.csv` remains byte-identical to the base commit
+(SHA-256 `b629324a7483b5f169fa25c320f2748ebbe557d2b28862756bf48302cdff43df`).
+`results/kinematics_model_comparison.json` remains unchanged at SHA-256
+`f20055472b49f9d8afb8d5bd8dbf81b88b59e2483f3516e1df65f650b15be27c`; the model fit was not rerun.
+Both audit runs used one numerical-library thread. `py_compile` for the audit and fit scripts and
+`git diff --check` passed.
 
 ## Runtime, artifacts, and validation
 
