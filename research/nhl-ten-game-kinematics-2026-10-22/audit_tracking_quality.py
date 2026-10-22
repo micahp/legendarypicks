@@ -426,11 +426,11 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
     step_counts = metrics.pop("frame_id_step_counts")
     metrics["adjacent_frame_gap_fraction"] = metrics["frame_id_gaps"] / max(metrics["frames"] - 1, 1)
     timed_span = metrics["start_clock_seconds"] - metrics["end_clock_seconds"]
-    if (timed_span <= 0 or metrics["first_timed_frame"] is None or
-            metrics["last_timed_frame"] is None):
-        raise RuntimeError("cannot infer tracking rate from timed frames in %s" % path)
-    metrics["inferred_fps"] = (
-        metrics["last_timed_frame"] - metrics["first_timed_frame"]) / timed_span
+    metrics["inferred_fps"] = None
+    if (timed_span > 0 and metrics["first_timed_frame"] is not None and
+            metrics["last_timed_frame"] is not None):
+        metrics["inferred_fps"] = (
+            metrics["last_timed_frame"] - metrics["first_timed_frame"]) / timed_span
     metrics["frame_id_step_counts"] = {str(k): v for k, v in sorted(step_counts.items())}
     metrics["puck_exactly_one_fraction"] = metrics["frames_exactly_one_puck"] / metrics["frames"]
     metrics["player_id_and_jersey_fraction"] = metrics["id_and_jersey_present_rows"] / max(metrics["player_rows"], 1)
@@ -439,12 +439,17 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
     metrics["puck_xy_fraction"] = metrics["puck_xy_rows"] / max(metrics["puck_rows"], 1)
     metrics["clock_row_fraction"] = (metrics["coordinate_rows"] - metrics["clock_missing_rows"]) / max(metrics["coordinate_rows"], 1)
     metrics["clock_frame_fraction"] = (metrics["frames"] - metrics["frames_missing_clock"]) / max(metrics["frames"], 1)
-    metrics["puck_gap_le_0_10_seconds_fraction"] = (
-        float(np.mean(np.asarray(puck_gap_steps, dtype=float) / metrics["inferred_fps"] <= 0.10))
-        if puck_gap_steps else 0.0)
-    metrics["puck_gap_observations"] = len(puck_gap_steps)
-    metrics["puck_gap_le_0_10_count"] = sum(
-        step / metrics["inferred_fps"] <= 0.10 for step in puck_gap_steps)
+    if metrics["inferred_fps"] is not None:
+        metrics["puck_gap_le_0_10_seconds_fraction"] = (
+            float(np.mean(np.asarray(puck_gap_steps, dtype=float) / metrics["inferred_fps"] <= 0.10))
+            if puck_gap_steps else 0.0)
+        metrics["puck_gap_observations"] = len(puck_gap_steps)
+        metrics["puck_gap_le_0_10_count"] = sum(
+            step / metrics["inferred_fps"] <= 0.10 for step in puck_gap_steps)
+    else:
+        metrics["puck_gap_le_0_10_seconds_fraction"] = None
+        metrics["puck_gap_observations"] = 0
+        metrics["puck_gap_le_0_10_count"] = 0
     alignments = []
     transforms = {"identity": (1, 1), "x_flip": (-1, 1), "y_flip": (1, -1), "xy_flip": (-1, -1)}
     for key, events in event_lookup.items():
@@ -610,16 +615,20 @@ def main() -> None:
                       "frames_with_3plus_skaters_each_team", "identity_conflicts",
                       "event_actor_clock_matches"):
             gm[field] += metrics[field]
-        gm["fps_by_file"].append(metrics["inferred_fps"])
-        gm["puck_gap_fractions"].append(metrics["puck_gap_le_0_10_seconds_fraction"])
+        if metrics["inferred_fps"] is not None:
+            gm["fps_by_file"].append(metrics["inferred_fps"])
+        if metrics["puck_gap_le_0_10_seconds_fraction"] is not None:
+            gm["puck_gap_fractions"].append(metrics["puck_gap_le_0_10_seconds_fraction"])
         for transform, values in metrics["event_alignment_by_transform"].items():
             if values["median_ft"] is not None:
                 gm["event_alignment_by_transform"][transform].append(values)
         if index == 1:
             sample_for_plot = sample_frames
-        print("audited tracking file %d/%d: %s (%d frames; %.2f inferred fps; %d windows)" %
+        rate_label = ("%.2f frame/clock-s" % metrics["inferred_fps"]
+                      if metrics["inferred_fps"] is not None else "rate unavailable")
+        print("audited tracking file %d/%d: %s (%d frames; %s; %d windows)" %
               (index, len(tracking_paths), path.name, metrics["frames"],
-               metrics["inferred_fps"], metrics["valid_windows"]), flush=True)
+               rate_label, metrics["valid_windows"]), flush=True)
 
     if set(game_metrics) != {p.name[:-len(".Events.csv")] for p in event_paths}:
         raise RuntimeError("tracking and event game populations differ")
