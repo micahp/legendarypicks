@@ -158,15 +158,16 @@ class ColumnDiscoveryTests(unittest.TestCase):
         # in worktrees they ran against a placeholder picks.db with 5 columns, so the
         # failure read as "environment". A count says the schema changed; a set says
         # which column, and that is the question this test exists to force.
-        # dev-only: nfl_player_birth_dates, nfl_published_fantasy_points, and
-        # player_game_logs_sportsdataverse until the NBA migration runs on prod (then
-        # move it into `shared`).
+        # dev-only: nfl_player_birth_dates and nfl_published_fantasy_points.
+        # The NBA migration creates the provider-owned SportsDataverse table on both
+        # databases, empty on prod until the separately approved promotion.
         shared = {
             "injury_reports", "name_alias", "nfl_adp", "nfl_depth_chart",
             "nfl_draft_notes", "nfl_dst_stats", "nfl_mock_draft_picks",
             "nfl_player_projections", "nfl_snap_counts", "player_game_availability",
             "player_game_logs", "player_game_logs_fotmob", "player_game_logs_ufcstats",
-            "player_game_logs_usopen", "player_game_shares", "player_projection_grades",
+            "player_game_logs_sportsdataverse", "player_game_logs_usopen",
+            "player_game_shares", "player_projection_grades",
             "player_projections", "player_source_ids", "player_stats",
             "player_team_shares", "props", "published_roster", "roster_memberships",
             "roster_snap", "tennis_atp_players", "tennis_ranking_snapshots",
@@ -174,8 +175,9 @@ class ColumnDiscoveryTests(unittest.TestCase):
         }
         expected = {
             "picks.db": shared,
-            "picks.dev.db": shared | {"nfl_player_birth_dates", "nfl_published_fantasy_points",
-                                      "player_game_logs_sportsdataverse"},
+            "picks.dev.db": shared | {
+                "nfl_player_birth_dates", "nfl_published_fantasy_points",
+            },
         }
         checked = 0
         for name, tables in expected.items():

@@ -89,7 +89,8 @@ Two checks are not free:
    them against the competition's real shape before trusting them (911 NCAAF games, 380 EPL
    matches, 146 FBS teams). **If a number surprises you, that is a question about the
    definition, not a defect** — see `published-first` §6.
-4. **Ingest** with ESPN's start-year season key, ESPN team codes normalised at the boundary,
+4. **Ingest** with ESPN's league-specific season key (NBA/NHL use the ending year; NFL and
+   some soccer competitions use the starting year), ESPN team codes normalised at the boundary,
    and `game_type` NOT NULL drawn from the published `types[]`.
 5. **Add the league to `ESPN_PATH` in `backend/reconcile_totals.py`** with its scope group
    and its type ids, and write its checks.
