@@ -183,7 +183,7 @@ Both audit runs used one numerical-library thread. `py_compile` for the audit an
 
 ## Runtime, artifacts, and validation
 
-- Full quality audit: **411.37 s** for manifest verification, sequential scan of 33 tracking files,
+- Full quality audit: **404.171 s** for manifest verification, sequential scan of 33 tracking files,
   aggregate checks, and visualizations.
 - Model pass: **298.95 s** for a second manifest verification, sequential feature extraction,
   identity quarantine, ten folds, prediction intervals, and scoring. Numerical libraries were
