@@ -27,6 +27,7 @@ type Forecast = {
   projected_away_points: number | null
   score_forecast_available: boolean
   locked?: boolean
+  lock_protocol?: string
   grade?: { home_score: number; away_score: number; winner_brier: number } | null
 }
 
@@ -195,7 +196,7 @@ export default function NbaModelTab() {
           <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
               <div className="font-medium text-white">{game.away_team} at {game.home_team}</div>
-              <div className="text-xs text-zinc-400">{kickoff(game.scheduled_start_utc)} · {game.status === 'locked' ? 'Locked before tipoff' : game.status === 'missed' ? 'Lock window missed' : game.status === 'graded' ? 'Graded' : 'Preview, not locked'}</div>
+              <div className="text-xs text-zinc-400">{kickoff(game.scheduled_start_utc)} · {(game.status === 'locked' || game.status === 'graded') && Object.values(game.models).some((m) => m.lock_protocol === 'late-preview-v1') ? 'Late lock from the pregame preview' : game.status === 'locked' ? 'Locked before tipoff' : game.status === 'missed' ? 'Lock window missed' : game.status === 'graded' ? 'Graded' : 'Preview, not locked'}</div>
             </div>
             <div className="grid gap-px bg-white/10 md:grid-cols-3">
               {payload.models.map((model) => {
@@ -224,7 +225,7 @@ export default function NbaModelTab() {
       <section aria-labelledby="nba-prospective-results" className="space-y-3">
         <div>
           <h3 id="nba-prospective-results" className="font-semibold text-white">Prospective grading</h3>
-          <p className="mt-1 text-xs text-zinc-500">Only immutable pre-tipoff locks appear here. Historical backtest rows are reported separately above.</p>
+          <p className="mt-1 text-xs text-zinc-500">Only immutable pre-tipoff locks appear here, including late locks taken from a stored pregame preview. Historical backtest rows are reported separately above.</p>
         </div>
         {graded.length === 0 ? (
           <p className="rounded-lg border border-white/10 p-4 text-sm text-zinc-400">No prospective forecasts have been graded yet.</p>

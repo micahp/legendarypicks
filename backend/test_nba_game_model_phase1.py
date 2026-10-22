@@ -17,7 +17,7 @@ from backtest_nba_game_model import print_report
 from nba_model_data import TeamGame
 from nba_model_runtime import build_preview_rows, refresh_completed_games, require_dev_picks_db
 from nba_model_store import (MODEL_VERSION, NBAModelStoreError,
-                             grade_forecasts, grade_unlocked_previews, export_payload, import_history, latest_live_games,
+                             grade_forecasts, grade_unlocked_previews, export_payload, lock_previews_late, import_history, latest_live_games,
                              latest_verified_results,
                              open_db, store_live_observation, upsert_previews, lock_forecasts)
 from fastapi import HTTPException
@@ -299,6 +299,35 @@ def test_unlocked_previews_are_graded_apart_from_the_locked_record(tmp_path: Pat
             assert record["locked"] == 0 and record["graded"] == 0
             assert record["unlocked"]["previewed"] == 1 and record["unlocked"]["graded"] == 1
             assert record["unlocked"]["winner_brier"] is not None
+    finally:
+        model.close()
+
+
+def test_late_lock_uses_the_preview_time_and_is_refused_without_a_pregame_preview(tmp_path: Path):
+    model = open_db(str(tmp_path / "model.sqlite3"))
+    rows = _forecast_rows("2026-10-21T23:00:00Z", "2026-10-21T22:50:00Z")
+    try:
+        assert upsert_previews(model, rows, dt.datetime(2026, 10, 21, 22, 55, tzinfo=UTC)) == 3
+        with pytest.raises(NBAModelStoreError, match="exactly G1/G2/G3"):
+            lock_previews_late(model, ["missing"])
+        assert lock_previews_late(model, ["NBA001"]) == {"inserted_games": 1, "existing_games": 0}
+        assert lock_previews_late(model, ["NBA001"]) == {"inserted_games": 0, "existing_games": 1}
+        locks = model.execute("select lock_protocol,locked_at_utc from nba_model_locks").fetchall()
+        assert {(r[0], r[1]) for r in locks} == {("late-preview-v1", "2026-10-21T22:55:00Z")}
+    finally:
+        model.close()
+
+
+def test_late_lock_refuses_a_preview_stored_at_or_after_tipoff(tmp_path: Path):
+    model = open_db(str(tmp_path / "model.sqlite3"))
+    rows = _forecast_rows("2026-10-21T23:00:00Z", "2026-10-21T22:50:00Z")
+    try:
+        upsert_previews(model, rows, dt.datetime(2026, 10, 21, 22, 55, tzinfo=UTC))
+        model.execute("update nba_model_previews set previewed_at_utc='2026-10-21T23:00:00Z'")
+        model.commit()
+        with pytest.raises(NBAModelStoreError, match="not stored before tipoff"):
+            lock_previews_late(model, ["NBA001"])
+        assert model.execute("select count(*) from nba_model_locks").fetchone()[0] == 0
     finally:
         model.close()
 
