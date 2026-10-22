@@ -465,6 +465,45 @@ def record_missed_windows(con: sqlite3.Connection, now: dt.datetime | None = Non
     return missed
 
 
+def record_schedule_missed_windows(con: sqlite3.Connection,
+                                  now: dt.datetime | None = None) -> int:
+    """Record missed locks for tipped schedule games, including games with no previews.
+
+    The caller attaches the guarded picks database read-only as ``nba_picks``. Only
+    season-2027 regular-season/Cup games published by nba.com are in this research ledger.
+    """
+    now = now or dt.datetime.now(UTC)
+    model_query = " UNION ALL ".join(
+        ["SELECT ? AS model"] + ["SELECT ?" for _ in MODEL_IDS[1:]]
+    )
+    missed = 0
+    con.execute("BEGIN")
+    try:
+        rows = con.execute(
+            f"SELECT s.game_id,s.season,expected.model "
+            f"FROM nba_picks.nba_schedule AS s "
+            f"CROSS JOIN ({model_query}) AS expected "
+            "LEFT JOIN nba_model_locks AS l "
+            "ON l.game_id=s.game_id AND l.model=expected.model "
+            "WHERE s.season=2027 AND s.season_type IN ('REG','CUP') "
+            "AND s.source='nba.com' AND s.start_utc IS NOT NULL AND s.start_utc<=? "
+            "AND l.game_id IS NULL ORDER BY s.start_utc,s.game_id,expected.model",
+            (*MODEL_IDS, iso_utc(now)),
+        ).fetchall()
+        for row in rows:
+            cursor = con.execute(
+                "INSERT OR IGNORE INTO nba_model_lock_events(game_id,model,season,event_type,"
+                "recorded_at_utc) VALUES(?,?,?,'missed_t90_window',?)",
+                (row["game_id"], row["model"], row["season"], iso_utc(now)),
+            )
+            missed += cursor.rowcount
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return missed
+
+
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
                     now: dt.datetime | None = None) -> dict[str, int]:
     """Append grades only for locked forecasts with a verified, completed source result."""

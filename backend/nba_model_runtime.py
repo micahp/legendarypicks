@@ -15,7 +15,7 @@ from nba_game_model import MODEL_INFO, build_state, forecast_game
 from nba_model_data import TeamGame
 from nba_model_store import (DEFAULT_DB, MODEL_VERSION, canonical_json, iso_utc,
                              latest_live_games, open_db, parse_time, record_missed_windows,
-                             store_live_observation,
+                             record_schedule_missed_windows, store_live_observation,
                              upsert_previews)
 from team_codes import normalize
 from team_stats_contract import extract_espn_team_stats
@@ -351,7 +351,8 @@ def refresh_previews(lp_db_path: str | None = None, model_db_path: str = NBA_MOD
 
 
 def lock_due_forecasts(model_db_path: str = NBA_MODEL_DB,
-                       now: dt.datetime | None = None) -> dict[str, Any]:
+                       now: dt.datetime | None = None, *,
+                       lp_db_path: str | None = None) -> dict[str, Any]:
     now = now or dt.datetime.now(UTC)
     model = open_db(model_db_path)
     try:
@@ -369,8 +370,23 @@ def lock_due_forecasts(model_db_path: str = NBA_MODEL_DB,
             "source_hash": row["source_hash"], "previewed_at_utc": row["previewed_at_utc"],
         } for row in rows]
         report = upsert_lock_calls(model, items, now)
-        missed = record_missed_windows(model, now)
+        picks_path = lp_db_path or os.environ.get("LP_DB_PATH")
+        if not picks_path:
+            missed = record_missed_windows(model, now)
+        else:
+            picks_path = require_dev_picks_db(picks_path)
+            picks_uri = f"{Path(picks_path).as_uri()}?mode=ro"
+            try:
+                model.execute("ATTACH DATABASE ? AS nba_picks", (picks_uri,))
+            except sqlite3.Error:
+                missed = record_missed_windows(model, now)
+            else:
+                try:
+                    missed = record_schedule_missed_windows(model, now)
+                finally:
+                    model.execute("DETACH DATABASE nba_picks")
         report["missed_events_recorded"] = missed
+        report["missed_window_games"] += missed
         return report
     finally:
         model.close()
