@@ -426,10 +426,10 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
     step_counts = metrics.pop("frame_id_step_counts")
     metrics["adjacent_frame_gap_fraction"] = metrics["frame_id_gaps"] / max(metrics["frames"] - 1, 1)
     timed_span = metrics["start_clock_seconds"] - metrics["end_clock_seconds"]
-    metrics["inferred_fps"] = None
+    metrics["image_index_in_game_clock_second_proxy"] = None
     if (timed_span > 0 and metrics["first_timed_frame"] is not None and
             metrics["last_timed_frame"] is not None):
-        metrics["inferred_fps"] = (
+        metrics["image_index_in_game_clock_second_proxy"] = (
             metrics["last_timed_frame"] - metrics["first_timed_frame"]) / timed_span
     metrics["frame_id_step_counts"] = {str(k): v for k, v in sorted(step_counts.items())}
     metrics["puck_exactly_one_fraction"] = metrics["frames_exactly_one_puck"] / metrics["frames"]
@@ -439,15 +439,16 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
     metrics["puck_xy_fraction"] = metrics["puck_xy_rows"] / max(metrics["puck_rows"], 1)
     metrics["clock_row_fraction"] = (metrics["coordinate_rows"] - metrics["clock_missing_rows"]) / max(metrics["coordinate_rows"], 1)
     metrics["clock_frame_fraction"] = (metrics["frames"] - metrics["frames_missing_clock"]) / max(metrics["frames"], 1)
-    if metrics["inferred_fps"] is not None:
-        metrics["puck_gap_le_0_10_seconds_fraction"] = (
-            float(np.mean(np.asarray(puck_gap_steps, dtype=float) / metrics["inferred_fps"] <= 0.10))
+    if metrics["image_index_in_game_clock_second_proxy"] is not None:
+        metrics["puck_gap_le_0_10_game_clock_proxy_fraction"] = (
+            float(np.mean(np.asarray(puck_gap_steps, dtype=float) /
+                          metrics["image_index_in_game_clock_second_proxy"] <= 0.10))
             if puck_gap_steps else 0.0)
         metrics["puck_gap_observations"] = len(puck_gap_steps)
         metrics["puck_gap_le_0_10_count"] = sum(
-            step / metrics["inferred_fps"] <= 0.10 for step in puck_gap_steps)
+            step / metrics["image_index_in_game_clock_second_proxy"] <= 0.10 for step in puck_gap_steps)
     else:
-        metrics["puck_gap_le_0_10_seconds_fraction"] = None
+        metrics["puck_gap_le_0_10_game_clock_proxy_fraction"] = None
         metrics["puck_gap_observations"] = 0
         metrics["puck_gap_le_0_10_count"] = 0
     alignments = []
@@ -489,6 +490,98 @@ def draw_rink(ax):
                    linewidth=0.6 if x not in (-25, 25) else 1.0, zorder=0)
 
 
+def write_trajectory_plot(output_dir: Path, sample_frames: list) -> None:
+    player_counts = collections.Counter(key for frame in sample_frames for key in frame["players"])
+    selected = [key for key, _ in player_counts.most_common(6)]
+    fig, ax = plt.subplots(figsize=(9, 6), constrained_layout=True)
+    draw_rink(ax)
+    colors = plt.cm.tab10(np.linspace(0, 1, max(len(selected), 1)))
+    for color, key in zip(colors, selected):
+        points = [frame["players"][key] for frame in sample_frames if key in frame["players"]]
+        if len(points) < 2:
+            continue
+        ax.scatter([p[0] for p in points], [p[1] for p in points], c=np.linspace(0, 1, len(points)),
+                   cmap=matplotlib.colors.ListedColormap([color]), s=5, alpha=0.65,
+                   label="%s id=%s jersey=%s" % key)
+        ax.scatter([points[0][0]], [points[0][1]], color=[color], marker="o", s=22)
+        ax.scatter([points[-1][0]], [points[-1][1]], color=[color], marker="x", s=30)
+    puck = [frame["puck"] for frame in sample_frames if frame["puck"] is not None]
+    if len(puck) > 1:
+        ax.scatter([p[0] for p in puck], [p[1] for p in puck], s=4, color="black",
+                   alpha=0.55, label="puck observations")
+    ax.set_title("Observed positions in the first 300 Image Id groups\n"
+                 "points only; missing groups are not interpolated")
+    ax.legend(fontsize=7, loc="upper right")
+    fig.savefig(output_dir / "observed_trajectories_300_image_id_groups.png", dpi=160)
+    plt.close(fig)
+
+
+def read_first_sample(data_dir: Path) -> list:
+    paths = sorted(data_dir.glob("*.Tracking_*.csv"))
+    if not paths:
+        raise RuntimeError("no tracking file found")
+    frames = []
+    current_image = None
+    current = None
+    with paths[0].open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            image = (row["Image Id"] or "").strip()
+            if image != current_image:
+                if len(frames) == 300:
+                    break
+                current_image = image
+                current = {"seq": frame_number(image), "clock": None,
+                           "players": {}, "puck": None}
+                frames.append(current)
+            entity = (row["Player or Puck"] or "").strip()
+            try:
+                x = float(row["Rink Location X (Feet)"])
+                y = float(row["Rink Location Y (Feet)"])
+            except (TypeError, ValueError):
+                continue
+            if not (math.isfinite(x) and math.isfinite(y)):
+                continue
+            if entity == "Puck":
+                current["puck"] = (x, y)
+            elif entity == "Player":
+                track_id = (row["Player Id"] or "").strip()
+                jersey = (row["Player Jersey Number"] or "").strip()
+                team = (row["Team"] or "").strip()
+                if track_id and jersey:
+                    current["players"][(team, track_id, jersey)] = (x, y)
+    return frames
+
+
+def write_coverage_plot(output_dir: Path, game_metrics: dict) -> None:
+    games = sorted(game_metrics)
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4), constrained_layout=True)
+    windows = [game_metrics[g]["valid_windows"] for g in games]
+    puck = [game_metrics[g]["puck_xy_fraction"] for g in games]
+    axes[0].bar(range(len(games)), windows, color="#2a6fbb")
+    axes[0].set_xticks(range(len(games)))
+    axes[0].set_xticklabels([g[-12:] for g in games], rotation=55, ha="right")
+    axes[0].set_ylabel("valid 21-Image-Id skater windows")
+    axes[0].set_title("Forecast-window coverage by game")
+    axes[1].bar(range(len(games)), puck, color="#3a9d6f")
+    axes[1].axhline(0.95, color="red", linestyle="--", label="frozen gate: 0.95")
+    axes[1].set_ylim(0, 1.02)
+    axes[1].set_xticks(range(len(games)))
+    axes[1].set_xticklabels([g[-12:] for g in games], rotation=55, ha="right")
+    axes[1].set_ylabel("fraction of puck rows with finite XY")
+    axes[1].set_title("Puck-coordinate coverage by game")
+    axes[1].legend()
+    fig.savefig(output_dir / "coverage_by_game.png", dpi=160)
+    plt.close(fig)
+
+
+def write_coverage_from_audit(output_dir: Path) -> None:
+    audit_path = output_dir / "tracking_quality.json"
+    if not audit_path.is_file():
+        raise RuntimeError("quality audit JSON missing: %s" % audit_path)
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    write_coverage_plot(output_dir, audit["games"])
+
+
 def write_plots(output_dir: Path, heat_player: np.ndarray, heat_puck: np.ndarray,
                 sample_frames: list, game_metrics: dict) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5), constrained_layout=True)
@@ -504,49 +597,9 @@ def write_plots(output_dir: Path, heat_player: np.ndarray, heat_puck: np.ndarray
     plt.close(fig)
 
     if sample_frames:
-        player_counts = collections.Counter(key for frame in sample_frames for key in frame["players"])
-        selected = [key for key, _ in player_counts.most_common(6)]
-        fig, ax = plt.subplots(figsize=(9, 6), constrained_layout=True)
-        draw_rink(ax)
-        colors = plt.cm.tab10(np.linspace(0, 1, max(len(selected), 1)))
-        for color, key in zip(colors, selected):
-            points = [frame["players"][key] for frame in sample_frames if key in frame["players"]]
-            if len(points) < 2:
-                continue
-            ax.scatter([p[0] for p in points], [p[1] for p in points], c=np.linspace(0, 1, len(points)),
-                       cmap=matplotlib.colors.ListedColormap([color]), s=5, alpha=0.65,
-                       label="%s id=%s jersey=%s" % key)
-            ax.scatter([points[0][0]], [points[0][1]], color=[color], marker="o", s=22)
-            ax.scatter([points[-1][0]], [points[-1][1]], color=[color], marker="x", s=30)
-        puck = [frame["puck"] for frame in sample_frames if frame["puck"] is not None]
-        if len(puck) > 1:
-            ax.scatter([p[0] for p in puck], [p[1] for p in puck], s=4, color="black",
-                       alpha=0.55, label="puck observations")
-        ax.set_title("Observed positions in one real tracking segment\n"
-                     "points only; missing frames are not interpolated")
-        ax.legend(fontsize=7, loc="upper right")
-        fig.savefig(output_dir / "observed_trajectories_10s.png", dpi=160)
-        plt.close(fig)
+        write_trajectory_plot(output_dir, sample_frames)
 
-    games = sorted(game_metrics)
-    fig, axes = plt.subplots(1, 2, figsize=(13, 4), constrained_layout=True)
-    windows = [game_metrics[g]["valid_windows"] for g in games]
-    puck = [game_metrics[g]["puck_xy_fraction"] for g in games]
-    axes[0].bar(range(len(games)), windows, color="#2a6fbb")
-    axes[0].set_xticks(range(len(games)))
-    axes[0].set_xticklabels([g[-12:] for g in games], rotation=55, ha="right")
-    axes[0].set_ylabel("valid 21-frame skater windows")
-    axes[0].set_title("Forecast-window coverage by game")
-    axes[1].bar(range(len(games)), puck, color="#3a9d6f")
-    axes[1].axhline(0.95, color="red", linestyle="--", label="frozen gate: 0.95")
-    axes[1].set_ylim(0, 1.02)
-    axes[1].set_xticks(range(len(games)))
-    axes[1].set_xticklabels([g[-12:] for g in games], rotation=55, ha="right")
-    axes[1].set_ylabel("fraction of puck rows with finite XY")
-    axes[1].set_title("Puck-coordinate coverage by game")
-    axes[1].legend()
-    fig.savefig(output_dir / "coverage_by_game.png", dpi=160)
-    plt.close(fig)
+    write_coverage_plot(output_dir, game_metrics)
 
 
 def main() -> None:
@@ -554,11 +607,26 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path,
                         default=Path("/root/lp-research-data/stathletes-big-data-cup-2026"))
     parser.add_argument("--output-dir", type=Path, default=Path(__file__).resolve().parent / "quality")
+    parser.add_argument("--sample-only", action="store_true",
+                        help="regenerate only the observed first-300-Image-Id trajectory plot")
+    parser.add_argument("--coverage-only", action="store_true",
+                        help="regenerate only the coverage plot from existing audit JSON")
     args = parser.parse_args()
     started = time.perf_counter()
     if not args.data_dir.is_dir():
         raise SystemExit("data directory not found: %s" % args.data_dir)
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    if args.sample_only:
+        sample_frames = read_first_sample(args.data_dir)
+        if len(sample_frames) != 300:
+            raise RuntimeError("expected 300 sample frames, got %d" % len(sample_frames))
+        write_trajectory_plot(args.output_dir, sample_frames)
+        print("wrote trajectory plot from %d Image Id groups" % len(sample_frames))
+        return
+    if args.coverage_only:
+        write_coverage_from_audit(args.output_dir)
+        print("wrote coverage plot from existing quality metrics")
+        return
     manifest = verify_manifest(args.data_dir)
     event_paths = sorted(args.data_dir.glob("*.Events.csv"))
     tracking_paths = sorted(args.data_dir.glob("*.Tracking_*.csv"))
@@ -586,7 +654,8 @@ def main() -> None:
         "puck_xy_rows": 0, "in_rink_xy_rows": 0, "frame_id_gaps": 0,
         "shift_eligible_rows": 0, "shift_match_rows": 0, "valid_puck_windows": 0,
         "clock_reversals": 0, "frames_with_3plus_skaters_each_team": 0,
-        "fps_by_file": [], "identity_conflicts": 0, "identity_track_count": 0,
+        "image_index_in_game_clock_second_proxy_by_file": [],
+        "identity_conflicts": 0, "identity_track_count": 0,
         "within_frame_duplicate_player_ids": 0, "puck_gap_le_0_10_count": 0,
         "puck_gap_observations": 0, "puck_gap_fractions": [],
         "event_alignment_by_transform": collections.defaultdict(list),
@@ -615,18 +684,19 @@ def main() -> None:
                       "frames_with_3plus_skaters_each_team", "identity_conflicts",
                       "event_actor_clock_matches"):
             gm[field] += metrics[field]
-        if metrics["inferred_fps"] is not None:
-            gm["fps_by_file"].append(metrics["inferred_fps"])
-        if metrics["puck_gap_le_0_10_seconds_fraction"] is not None:
-            gm["puck_gap_fractions"].append(metrics["puck_gap_le_0_10_seconds_fraction"])
+        if metrics["image_index_in_game_clock_second_proxy"] is not None:
+            gm["image_index_in_game_clock_second_proxy_by_file"].append(
+                metrics["image_index_in_game_clock_second_proxy"])
+        if metrics["puck_gap_le_0_10_game_clock_proxy_fraction"] is not None:
+            gm["puck_gap_fractions"].append(metrics["puck_gap_le_0_10_game_clock_proxy_fraction"])
         for transform, values in metrics["event_alignment_by_transform"].items():
             if values["median_ft"] is not None:
                 gm["event_alignment_by_transform"][transform].append(values)
         if index == 1:
             sample_for_plot = sample_frames
-        rate_label = ("%.2f frame/clock-s" % metrics["inferred_fps"]
-                      if metrics["inferred_fps"] is not None else "rate unavailable")
-        print("audited tracking file %d/%d: %s (%d frames; %s; %d windows)" %
+        rate_label = ("%.2f image-index/game-clock-second ratio proxy" % metrics["image_index_in_game_clock_second_proxy"]
+                      if metrics["image_index_in_game_clock_second_proxy"] is not None else "clock rate unavailable")
+        print("audited tracking file %d/%d: %s (%d Image Id groups; %s; %d windows)" %
               (index, len(tracking_paths), path.name, metrics["frames"],
                rate_label, metrics["valid_windows"]), flush=True)
 
@@ -641,8 +711,9 @@ def main() -> None:
         gm["clock_row_fraction"] = (gm["coordinate_rows"] - gm["clock_missing_rows"]) / max(gm["coordinate_rows"], 1)
         gm["clock_frame_fraction"] = (gm["frames"] - gm["frames_missing_clock"]) / max(gm["frames"], 1)
         gm["puck_xy_fraction"] = gm["puck_xy_rows"] / max(gm["puck_rows"], 1)
-        gm["inferred_fps_median"] = float(np.median(gm["fps_by_file"]))
-        gm["puck_gap_le_0_10_seconds_fraction"] = (
+        gm["image_index_in_game_clock_second_proxy_median"] = float(
+            np.median(gm["image_index_in_game_clock_second_proxy_by_file"]))
+        gm["puck_gap_le_0_10_game_clock_proxy_fraction"] = (
             gm["puck_gap_le_0_10_count"] / max(gm["puck_gap_observations"], 1))
         gm["event_alignment_by_transform"] = {
             t: {"n": sum(v["n"] for v in vals),
@@ -674,27 +745,30 @@ def main() -> None:
     total["clock_row_fraction"] = (total["coordinate_rows"] - total["clock_missing_rows"]) / max(total["coordinate_rows"], 1)
     total["clock_frame_fraction"] = (total["frames"] - total["frames_missing_clock"]) / max(total["frames"], 1)
     total["puck_xy_fraction"] = total["puck_xy_rows"] / max(total["puck_rows"], 1)
-    total["puck_gap_le_0_10_seconds_fraction"] = (
+    total["puck_gap_le_0_10_game_clock_proxy_fraction"] = (
         total["puck_gap_le_0_10_count"] / max(total["puck_gap_observations"], 1))
-    fps_games = [gm["inferred_fps_median"] for gm in game_metrics.values()]
+    proxy_games = [gm["image_index_in_game_clock_second_proxy_median"] for gm in game_metrics.values()]
     gates = {
         "release_integrity": manifest["status"] == "PASS",
         "tracking_coordinate_validity": total["inside_rink_fraction"] >= 0.99 and
                                          total["xy_present_fraction"] >= 0.99,
-        "temporal_rate": sum(25 <= fps <= 32 for fps in fps_games) >= 8 and
-                         total["clock_row_fraction"] >= 0.99 and
-                         total["clock_frame_fraction"] >= 0.99 and
-                         all(m["clock_reversals"] == 0 and m["frame_id_duplicate_or_reversal"] == 0
-                             for m in file_metrics),
+        "frame_id_order": all(m["frame_id_duplicate_or_reversal"] == 0 for m in file_metrics),
+        "game_clock_coverage": total["clock_row_fraction"] >= 0.99 and
+                               total["clock_frame_fraction"] >= 0.99,
+        "game_clock_monotonicity": all(m["clock_reversals"] == 0 for m in file_metrics),
+        "initial_25_32_image_id_clock_proxy_check": sum(
+            25 <= rate <= 32 for rate in proxy_games) >= 8,
+        "documented_subsecond_timebase": False,
         "player_identity_coverage": total["player_id_and_jersey_fraction"] >= 0.90 and
                                     total["shift_identity_match_fraction"] >= 0.90 and
                                     total["identity_conflict_fraction"] < 0.001 and
                                     total["within_frame_duplicate_player_ids"] == 0,
-        "puck_continuity": total["puck_exactly_one_fraction"] >= 0.99 and
-                           total["puck_gap_le_0_10_seconds_fraction"] >= 0.95 and
-                           total["puck_xy_fraction"] >= 0.95 and
-                           total["valid_puck_windows"] >= 10000 and
-                           sum(gm["valid_puck_windows"] >= 1000 for gm in game_metrics.values()) >= 8,
+        "puck_frame_coordinate_coverage": total["puck_exactly_one_fraction"] >= 0.99 and
+                                           total["puck_xy_fraction"] >= 0.95 and
+                                           total["valid_puck_windows"] >= 10000 and
+                                           sum(gm["valid_puck_windows"] >= 1000
+                                               for gm in game_metrics.values()) >= 8,
+        "puck_100ms_time_continuity": None,
         "forecast_window_coverage": total["valid_windows"] >= 10000 and
                                     sum(gm["valid_windows"] >= 1000 for gm in game_metrics.values()) >= 8,
         "event_coordinate_alignment": sum(
@@ -714,7 +788,7 @@ def main() -> None:
             "event_alignment_min_games": 8,
             "event_alignment_median_ft": 20,
             "event_alignment_p95_ft": 40,
-            "fps_range": [25, 32], "fps_min_games": 8,
+            "initial_frame_rate_proxy_range": [25, 32], "proxy_min_games": 8,
             "game_clock_row_fraction_min": 0.99,
             "game_clock_frame_fraction_min": 0.99,
             "player_id_and_jersey_fraction": 0.90,
@@ -722,8 +796,8 @@ def main() -> None:
             "identity_conflict_fraction_max_exclusive": 0.001,
             "puck_exactly_one_fraction": 0.99,
             "puck_xy_fraction": 0.95,
-            "puck_gap_seconds_max": 0.10,
-            "puck_gap_fraction_min": 0.95,
+            "puck_gap_game_clock_proxy_seconds_max": 0.10,
+            "puck_gap_game_clock_proxy_fraction_min": 0.95,
             "valid_puck_windows_min": 10000,
             "puck_games_min": 8,
             "puck_windows_per_game_min": 1000,
@@ -740,19 +814,19 @@ def main() -> None:
         "interpretation": {
             "event_alignment": "The direct unreflected mapping is frozen from the first-period pilot. Event coordinates are compared to same-game/team/jersey, same-second tracking positions; candidate sign reflections are diagnostics only.",
             "identity": "Tracking IDs and jerseys are retained as game-scoped identifiers. No cross-game athlete identity is assumed.",
-            "clock": "Image Id numeric suffix supplies within-file order. Game Clock is integer-second resolution; fps and physical forecast duration are estimates.",
+            "clock": "Image Id numeric suffix is used only as an ordinal within-file index. The Image Id/game-clock ratio is not a camera frame rate; no subsecond timebase is published. Clock reversals and blank clocks are counted. The 100ms puck timing gate is not assessable.",
         },
         "runtime_seconds": round(time.perf_counter() - started, 3),
     }
     out_json = args.output_dir / "tracking_quality.json"
     out_json.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (args.output_dir / "tracking_quality_by_game.csv").write_text(
-        "game,frames,player_rows,puck_rows,valid_windows,puck_exactly_one_fraction,"
+        "game,image_id_groups,player_rows,puck_rows,valid_windows,puck_exactly_one_fraction,"
         "player_id_and_jersey_fraction,inside_rink_fraction,clock_row_fraction,clock_frame_fraction,"
-        "inferred_fps_median,clock_reversals,frame_id_gaps\n" +
+        "image_index_in_game_clock_second_proxy_median,clock_reversals,frame_id_gaps\n" +
         "".join("{game},{frames},{player_rows},{puck_rows},{valid_windows},{puck_exactly_one_fraction:.6f},"
                 "{player_id_and_jersey_fraction:.6f},{inside_rink_fraction:.6f},{clock_row_fraction:.6f},"
-                "{clock_frame_fraction:.6f},{inferred_fps_median:.4f},"
+                "{clock_frame_fraction:.6f},{image_index_in_game_clock_second_proxy_median:.4f},"
                 "{clock_reversals},{frame_id_gaps}\n".format(game=g, **gm)
                 for g, gm in sorted(game_metrics.items())), encoding="utf-8")
     write_plots(args.output_dir, heat_player, heat_puck, sample_for_plot, game_metrics)
