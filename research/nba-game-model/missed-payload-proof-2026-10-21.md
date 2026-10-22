@@ -29,12 +29,17 @@ Hashes captured before the copies were made:
 - `backend/data/picks.dev.db`: `d7d19b174ce82dbf4a6df6959611a33289c82ebc085fa9fb7fe4b4c86a9a4d63`
 - `backend/data/nba-model.dev.sqlite3`: `1680ace4b528e827e2312824d2f1196978d6478c1d570a640b003789f7bc6490`
 
-Hashes checked after the scratch sweep/export:
+Hashes checked after the scratch sweep/export (first post-run check, around `2026-10-21 22:50` local):
 
 - `backend/data/picks.dev.db`: `7a413b7d07f0fa91c73cdc46e8ebf94217db0e19e6a09845357844092a203654`
 - `backend/data/nba-model.dev.sqlite3`: `1680ace4b528e827e2312824d2f1196978d6478c1d570a640b003789f7bc6490`
 
-The model DB hash is unchanged. The picks DB hash differs. Its main file and WAL modification times advanced to `2026-10-21 22:50` local while the dev service was active, indicating an external concurrent write; this task's sweep and export were directed only at the scratch copies. The requested identical-hash condition for the picks DB cannot be claimed.
+Final hashes checked after the branch push (around `2026-10-21 22:52` local):
+
+- `backend/data/picks.dev.db`: `3dbaa6c4cb66fbaa5568115b0a2d8cfd5ff7c1d22b5c8c54cdd0ad608002978e`
+- `backend/data/nba-model.dev.sqlite3`: `904995d294a926a35d707351a4cae04f829a94de27abc1abd1810cd2f5824a25`
+
+At the final check, neither source DB matched its pre-copy hash. Their main-file modification times advanced to `2026-10-21 22:52` local while the dev service was active. This is consistent with external concurrent writes; this task's sweep and export were directed only at the scratch copies. The requested identical-hash condition cannot be claimed for either DB.
 
 ## Scope
 
