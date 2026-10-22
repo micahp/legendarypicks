@@ -265,3 +265,9 @@ research/nhl/model-call-research-2026/run_favorite_puckline.py
 The lock, grade, score calculation, idempotency, identity rejection, and database immutability paths passed on the disposable copy. This proves the code path in a controlled dry run; it does not prove that the live timer will create tomorrow’s prospective lock or that a real final will grade successfully.
 
 **One-line answer:** The pipeline is validated on a copy for tomorrow’s 16:30 CT lock window, but live execution remains unproven until dev records a real lock and grade.
+
+## Later read-only observation after the push
+
+At 2026-10-22 02:00:25Z, a final read-only check of the managed dev database found six `nba_model_lock_events`, all with `recorded_at_utc=2026-10-22T02:00:00Z`: G1/G2/G3 for `0022600005`, and G1/G2/G3 for `0022600092`. The dev source still had 0 locks and 0 grades; its other table counts matched the before-run values above. The immediate post-dry-run check had shown 0 source lock events. These later rows appeared after the dry run; this run wrote only to its scratch copy and the memory-only clone.
+
+The NHL forecast file’s tracked diff also grew from 30 to 36 inserted lines between the immediate post-dry-run check and this final check. Its status path was pre-existing and was not edited by this run. The report’s `+30` diff statistic records the immediate post-dry-run snapshot; the later observed statistic was `1 file changed, 36 insertions(+)`.
