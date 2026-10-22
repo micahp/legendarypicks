@@ -80,10 +80,23 @@ A compact microstate may need shooter/puck position, direction, speed and releas
 
 Data tiers:
 1. NHL GameCenter PBP: game clocks, shot x/y and type when present, score, strength state, identity and some event descriptions; no continuous 3D tracking.
-2. Official NHL EDGE Puck and Player Tracking: NHL states that puck and player location streams exist, at up to 60 Hz puck and 15 Hz players; public EDGE provides curated skating speed, shot speed/location, zone time and other metrics, not an open raw XYZ export. NHL/league partners are logical licensing contacts. NHL EDGE public data begins around 2021-22.
+2. Official NHL EDGE Puck and Player Tracking: NHL states that puck and player location streams exist, at up to 60 Hz puck and 15 Hz players; public EDGE provides curated skating speed, shot speed/location, zone time and other metrics, not a generally available *full-game* raw XYZ export. NHL/league partners are logical licensing contacts. NHL EDGE curated public metrics begin around 2021-22. HOWEVER short per-goal 2D tracking sequences (below) are reportedly publicly viewable since 2023-24; do not conflate their restricted, goal-selected coverage with full-game tracking.
 3. Licensed tracking/commercial providers: verify actual spatial/temporal schema, sport-specific use rights, cost and permitted model-training/public display.
 4. Broadcast or highlight video: potential computer-vision reconstruction, useful for subsets and micro-events; difficult puck visibility, cuts, occlusion, perspective calibration and player identity. Standard highlights are biased toward goals and dramatic chances, not representative all-shot samples. Secure appropriate video rights and mark missing/unseen motion rather than hallucinating a continuous play.
 5. Commentary/play descriptions: can label passes, rebounds, scrambles, screens and possession changes, but contains omissions and narrator error; use as weak or manually verified supervision, not a source of exact XYZ coordinates. Audio stick/puck contact cues are future experimental signals, not current verified evidence.
+
+### Important update: NHL's goal-only tracking replays
+
+Independent documentation, third-party examples, and open-source research pipelines describe NHL Goal Visualizer / ppt-replay clips with the puck and all on-ice players tracked at approximately 10 frames/sec for roughly 12-14 seconds around a goal, reportedly available for 2023-24 onward. They have puck/player **x/y** positions in rink coordinates (some interpolation where missing), not full XYZ puck flight or full-game player tracking. These records are conditional on *a goal having occurred* and thus biased toward scoring plays. They cannot directly estimate rebound/save probabilities or all-shot movement distributions without representative non-goal comparators. Do not interpret a trailing clip as proof of a causal pass, puck possession, or player intent without validation. Goal-selected samples can test mechanics of successful scoring sequences, goalie positioning, speed and path reconstruction; unbiased outcome modeling needs failures, saves, misses and blocks too. Evaluate dataset terms, NHL tracking rights, actual clip availability, joins to goal PBP event IDs, source hashes and rate limits before ingest or redistribution.
+
+Relevant publicly documented example APIs and datasets:
+- NHL goal visualizer: https://www.nhl.com/ppt-replay/goal/2025020740/95 (illustrative pattern; availability not independently checked)
+- Unofficial technical documentation: https://problemxl.github.io/edgework/research/nhl-edge-endpoints/
+- Example analysis and outcome detector validation: https://www.edgehalla.com/nhl/methodology/goal-anatomy
+- Example goal tracking data-engineering project: https://github.com/eker3777/nhl-tracking-pipeline
+- R library goal replay: https://rentosaijo.github.io/nhlscraper/reference/replay.html
+
+NHL video/goal tracking may be copyrighted and/or subject to restrictions even if displayed on a public site. Check terms and get permission before bulk collection, training, redistribution or commercial product use.
 
 Available research directions include hockey broadcast player tracking datasets such as VIP-HTD and published puck-tracking work; inspect their licenses and whether trajectories are actual annotation, image coordinates or rink coordinates before adoption.
 
@@ -142,6 +155,7 @@ Core acceptance principle: each new simulation detail must either improve a pres
 - EA SPORTS NHL 26 integration: https://www.ea.com/games/nhl/nhl-26/news/nhl-26-gameplay-iceq2-deep-dive and https://www.ea.com/games/nhl/nhl-26/features/nhl26-gameplay-with-iceq2
 - Madden weekly ratings adjusters (historical public description): https://espnpressroom.com/feature/scores-to-settle-espn-nfl-analyst-damien-woody-reviews-his-best-and-worst-madden-ratings/
 - NFL Big Data Bowl 2025 public competition tracking description: https://www.kaggle.com/competitions/nfl-big-data-bowl-2025/data
+- NFL Big Data Bowl 2026 tracking competition (player trajectories, passing plays; terms apply): https://www.kaggle.com/competitions/nfl-big-data-bowl-2026-analytics/data
 - PropSims game-simulation and optional market-blend methodology: https://propsims.com/how-the-simulations-work/ and https://propsims.com/methodology/nfl-projections/
 - Hockey public tracking benchmark: https://openjournals.uwaterloo.ca/index.php/vsl/article/view/5858
 - Broadcast puck localization research: https://arxiv.org/abs/2105.10563
