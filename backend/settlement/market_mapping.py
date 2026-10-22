@@ -41,7 +41,7 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("nba", "points"):        ("statistics", "PTS"),
     ("nba", "rebounds"):      ("statistics", "REB"),
     ("nba", "assists"):       ("statistics", "AST"),
-    ("nba", "threes"):        ("statistics", "3PM"),
+    ("nba", "threes"):        ("statistics", "3PT"),
     ("nba", "blocks"):        ("statistics", "BLK"),
     ("nba", "steals"):        ("statistics", "STL"),
     ("nba", "turnovers"):     ("statistics", "TO"),

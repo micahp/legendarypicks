@@ -135,7 +135,7 @@ class NbaLogIdentityTests(unittest.TestCase):
         )
         con.close()
 
-    def test_game_type_is_stamped_from_the_published_phase(self):
+    def test_game_type_and_espn_season_key_are_stamped_from_the_publisher(self):
         """A row with a NULL game_type is invisible to every `game_type='REG'`
         filter we serve. This ingest wrote 24,086 of them: its INSERT never named
         the column at all, so `AND game_type='REG'` matched nothing for all of
@@ -148,14 +148,70 @@ class NbaLogIdentityTests(unittest.TestCase):
                  ingest_nba_logs.espn, "boxscore", side_effect=self.boxscore
              ), \
              mock.patch.object(ingest_nba_logs.time, "sleep"):
-            ingest_nba_logs.ingest("2026-01-01", "2026-01-01", season=2026)
+            ingest_nba_logs.ingest("2026-10-20", "2026-10-20")
 
         con = sqlite3.connect(self.path)
-        types = [r[0] for r in con.execute(
-            "SELECT game_type FROM player_game_logs"
+        rows = [tuple(r) for r in con.execute(
+            "SELECT game_type,season FROM player_game_logs"
         ).fetchall()]
         con.close()
-        self.assertEqual(types, ["REG"])
+        self.assertEqual(rows, [("REG", 2027)])
+
+    def test_ingest_walks_multiple_regular_season_dates_and_keeps_shooting_makes(self):
+        games_by_date = {
+            "2026-10-20": [{
+                "game_id": "game-20261020", "state": "post", "completed": True,
+                "season_type": 2, "competition_type": "STD",
+                "home": {"abbrev": "BOS"}, "away": {"abbrev": "NYK"},
+            }],
+            "2026-10-21": [{
+                "game_id": "game-20261021", "state": "post", "completed": True,
+                "season_type": 2, "competition_type": "STD",
+                "home": {"abbrev": "BOS"}, "away": {"abbrev": "NYK"},
+            }],
+        }
+        boxscores = {
+            "game-20261020": {"players": [{
+                "team": {"abbreviation": "BOS"},
+                "statistics": [{
+                    "names": ["PTS", "REB", "AST", "MIN", "FG", "FT"],
+                    "athletes": [{
+                        "athlete": {"id": "100", "displayName": "Known Guard"},
+                        "stats": ["20", "5", "7", "32:00", "8-16", "2-3"],
+                    }],
+                }],
+            }]},
+            "game-20261021": {"players": [{
+                "team": {"abbreviation": "BOS"},
+                "statistics": [{
+                    "names": ["PTS", "REB", "AST", "MIN", "FG", "FT"],
+                    "athletes": [{
+                        "athlete": {"id": "100", "displayName": "Known Guard"},
+                        "stats": ["24", "6", "8", "35:30", "9-18", "3-4"],
+                    }],
+                }],
+            }]},
+        }
+        with mock.patch.object(ingest_nba_logs, "DB", self.path), \
+             mock.patch.object(ingest_nba_logs.espn, "games",
+                               side_effect=lambda _league, date: games_by_date[date]), \
+             mock.patch.object(ingest_nba_logs.espn, "boxscore",
+                               side_effect=lambda _league, game_id: boxscores[game_id]), \
+             mock.patch.object(ingest_nba_logs.time, "sleep"):
+            self.assertEqual(
+                ingest_nba_logs.ingest("2026-10-20", "2026-10-21"), 2
+            )
+
+        con = sqlite3.connect(self.path)
+        rows = con.execute(
+            "SELECT game_date,game_type,season,json_extract(stats,'$.FGM'),"
+            "json_extract(stats,'$.FTM') FROM player_game_logs ORDER BY game_date"
+        ).fetchall()
+        con.close()
+        self.assertEqual(rows, [
+            ("2026-10-20", "REG", 2027, 8, 2),
+            ("2026-10-21", "REG", 2027, 9, 3),
+        ])
 
     def test_a_postponed_game_writes_nothing(self):
         """`state == "post"` is not "this game was played". A postponed game is
@@ -248,11 +304,13 @@ class NbaLogIdentityTests(unittest.TestCase):
             )
         self.assertFalse(os.path.exists(self.path + ".unused"))
 
-    def test_nba_season_key_uses_espn_start_year(self):
-        self.assertEqual(ingest_nba_logs.nba_start_year(
-            dt.date(2026, 10, 20)), 2026)
-        self.assertEqual(ingest_nba_logs.nba_start_year(
-            dt.date(2026, 4, 20)), 2025)
+    def test_nba_season_key_uses_espn_ending_year(self):
+        self.assertEqual(ingest_nba_logs.nba_season_key(
+            dt.date(2026, 10, 20)), 2027)
+        self.assertEqual(ingest_nba_logs.nba_season_key(
+            dt.date(2026, 4, 20)), 2026)
+        self.assertEqual(ingest_nba_logs.nba_season_key(
+            dt.date(2025, 10, 20)), 2026)
 
 
 class NbaBatchFanOutPacingTests(unittest.TestCase):

@@ -121,6 +121,62 @@ def _ncaaf_slate_display(con, game_ids):
             display[row["id"]] = item
     return display
 
+
+def _nba_slate_identity(date, home, away):
+    """NBA prop feeds can create separate rows for one date/matchup before linking."""
+    return (
+        "nba",
+        str(date or "").strip(),
+        str(home or "").strip().casefold(),
+        str(away or "").strip().casefold(),
+    )
+
+
+def _canonical_nba_game_id(rows):
+    """Prefer the row with the published ESPN event link, then the oldest id."""
+    id_key = "game_id" if "game_id" in rows[0].keys() else "id"
+    return min(
+        rows,
+        key=lambda row: (
+            not bool(str(row["espn_event_id"] or "").strip()),
+            int(row[id_key]),
+        ),
+    )[id_key]
+
+
+def _nba_duplicate_slate_counts(con, game_ids):
+    """Count distinct player selections across duplicate game rows without mutating data."""
+    placeholders = ",".join("?" for _ in game_ids)
+    selections = con.execute(
+        "SELECT p.player_id, p.market, p.line, p.side FROM props p "
+        "JOIN players pl ON pl.id=p.player_id "
+        "WHERE p.game_id IN ({})".format(placeholders),
+        tuple(game_ids),
+    ).fetchall()
+    prop_count = len({
+        (row["player_id"], row["market"], row["line"], row["side"])
+        for row in selections
+    })
+    base_market = (
+        "CASE WHEN instr(p.market, '___') > 0 "
+        "THEN substr(p.market, 1, instr(p.market, '___') - 1) ELSE p.market END"
+    )
+    market_rows = con.execute(
+        "SELECT p.player_id, {} AS market, p.line FROM props p "
+        "JOIN players pl ON pl.id=p.player_id "
+        "WHERE p.game_id IN ({})".format(base_market, placeholders),
+        tuple(game_ids),
+    ).fetchall()
+    by_market = {}
+    seen = set()
+    for row in market_rows:
+        key = (row["player_id"], row["market"], row["line"])
+        if key in seen:
+            continue
+        seen.add(key)
+        by_market[row["market"]] = by_market.get(row["market"], 0) + 1
+    return prop_count, by_market
+
 @router.get("/api/props")
 def list_props(player: Optional[str] = Query(None),
                market: Optional[str] = Query(None),
@@ -446,7 +502,9 @@ def prop_history(player_id: int = Query(...),
     target_season = season
     if is_nba and target_season is None:
         today = dt.date.today()
-        target_season = today.year if today.month >= 7 else today.year - 1
+        # NBA seasons use their ending year throughout the data pipeline:
+        # October 2026 through June 2027 is season 2027.
+        target_season = today.year + 1 if today.month >= 7 else today.year
     stat_key = _MARKET_STAT_KEY.get(league, {}).get(canonical_market)
     summary_market = league == "nhl" and canonical_market in _NHL_SUMMARY_MARKETS
     if not stat_key and not summary_market:
@@ -590,8 +648,8 @@ def prop_history(player_id: int = Query(...),
                                "json_extract(espn_stats,'$.minutes'),"
                                "json_extract(fotmob_stats,'$.minutes'))")
                 season_expr = ("CASE WHEN CAST(strftime('%m', game_date) AS INTEGER) < 7 "
-                               "THEN CAST(strftime('%Y', game_date) AS INTEGER)-1 "
-                               "ELSE CAST(strftime('%Y', game_date) AS INTEGER) END")
+                               "THEN CAST(strftime('%Y', game_date) AS INTEGER) "
+                               "ELSE CAST(strftime('%Y', game_date) AS INTEGER)+1 END")
                 rows = con.execute(
                     f"""SELECT game_id, game_date, opponent, home_away,
                                 {val_expr} AS val, {minute_expr} AS minutes,
@@ -599,7 +657,7 @@ def prop_history(player_id: int = Query(...),
                                 appearance_status
                            FROM player_game_logs_all
                           WHERE player_id=? AND league='nba'
-                            AND UPPER(COALESCE(game_type,'')) NOT IN ('ALLSTAR','ALL-STAR','ASG')
+                            AND game_type='REG'
                           ORDER BY game_date DESC, season DESC,
                                    CAST(game_no AS INTEGER) DESC LIMIT 100""",
                     (player_id,),
@@ -812,7 +870,8 @@ def props_slate(league: Optional[str] = Query(None),
         # while the card itself listed 454. One number, computed two ways,
         # in one endpoint -- count the distinct questions, as the expanded
         # path does when it dedupes on (market, line, side) per player.
-        gsql = ("SELECT pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time, "
+        gsql = ("SELECT pg.id AS game_id, pg.espn_event_id, pg.home, pg.away, "
+                "pg.date AS game_date, pg.start_time, "
                 "pg.league, COUNT(DISTINCT p.player_id || '|' || p.market || '|' || "
                 "p.line || '|' || p.side) AS prop_count "
                 "FROM prop_games pg JOIN props p ON p.game_id = pg.id WHERE 1=1" + filters)
@@ -851,18 +910,53 @@ def props_slate(league: Optional[str] = Query(None),
                 "market": row["market"],
                 "count": row["row_count"],
             })
-        return [{"game_id": r["game_id"],
-                 "home": ncaaf_display.get(r["game_id"], {}).get("home", r["home"]),
-                 "away": ncaaf_display.get(r["game_id"], {}).get("away", r["away"]),
-                 "home_rank": ncaaf_display.get(r["game_id"], {}).get("home_rank"),
-                 "away_rank": ncaaf_display.get(r["game_id"], {}).get("away_rank"),
-                 "date": r["game_date"],
-                 "start_time": r["start_time"], "league": r["league"], "prop_count": r["prop_count"],
-                 "markets": markets_by_game.get(r["game_id"], []), "players": []} for r in grows]
+        grouped = {}
+        for row in grows:
+            identity = (_nba_slate_identity(row["game_date"], row["home"], row["away"])
+                        if str(row["league"]).lower() == "nba"
+                        else ("id", row["game_id"]))
+            grouped.setdefault(identity, []).append(row)
+
+        result = []
+        with closing(_db()) as con:
+            for rows_for_game in grouped.values():
+                display_row = min(
+                    rows_for_game,
+                    key=lambda row: (
+                        not bool(str(row["espn_event_id"] or "").strip()),
+                        int(row["game_id"]),
+                    ),
+                )
+                game_ids = [row["game_id"] for row in rows_for_game]
+                if str(display_row["league"]).lower() == "nba" and len(game_ids) > 1:
+                    prop_count, market_counts = _nba_duplicate_slate_counts(con, game_ids)
+                    game_markets = [
+                        {"market": market, "count": count}
+                        for market, count in sorted(market_counts.items())
+                    ]
+                else:
+                    prop_count = display_row["prop_count"]
+                    game_markets = markets_by_game.get(display_row["game_id"], [])
+                display = ncaaf_display.get(display_row["game_id"], {})
+                result.append({
+                    "game_id": display_row["game_id"],
+                    "home": display.get("home", display_row["home"]),
+                    "away": display.get("away", display_row["away"]),
+                    "home_rank": display.get("home_rank"),
+                    "away_rank": display.get("away_rank"),
+                    "date": display_row["game_date"],
+                    "start_time": display_row["start_time"],
+                    "league": display_row["league"],
+                    "prop_count": prop_count,
+                    "markets": game_markets,
+                    "players": [],
+                })
+        return result
 
     sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
                     pl.id AS player_id, pl.name AS player_name, pl.team AS player_team, pl.league,
-                    pg.id AS game_id, pg.home, pg.away, pg.date AS game_date, pg.start_time,
+                    pg.id AS game_id, pg.espn_event_id, pg.home, pg.away,
+                    pg.date AS game_date, pg.start_time,
                     pg.league AS game_league
              FROM props p
              JOIN players pl ON pl.id = p.player_id
@@ -872,9 +966,24 @@ def props_slate(league: Optional[str] = Query(None),
     league_sql, league_params = _league_sql("pg.league", league, leagues)
     sql += league_sql
     params.extend(league_params)
+    nba_game_ids = None
     if game_id is not None:
-        sql += " AND pg.id = ?"
-        params.append(game_id)
+        with closing(_db()) as con:
+            selected = con.execute(
+                "SELECT league,date,home,away FROM prop_games WHERE id=?", (game_id,)
+            ).fetchone()
+            if selected and str(selected["league"]).lower() == "nba":
+                nba_game_ids = [row["id"] for row in con.execute(
+                    "SELECT id FROM prop_games WHERE LOWER(league)='nba' AND date=? "
+                    "AND LOWER(home)=LOWER(?) AND LOWER(away)=LOWER(?)",
+                    (selected["date"], selected["home"], selected["away"]),
+                ).fetchall()]
+        if nba_game_ids:
+            sql += " AND pg.id IN ({})".format(",".join("?" for _ in nba_game_ids))
+            params.extend(nba_game_ids)
+        else:
+            sql += " AND pg.id = ?"
+            params.append(game_id)
     elif date:
         sql += " AND pg.date = ?"
         params.append(date)
@@ -892,8 +1001,13 @@ def props_slate(league: Optional[str] = Query(None),
 
     # Group: game → team → player → props
     games = {}
+    game_rows = {}
     for r in rows:
-        gkey = f"{r['game_id']}"
+        identity = (_nba_slate_identity(r["game_date"], r["home"], r["away"])
+                    if str(r["game_league"]).lower() == "nba"
+                    else ("id", r["game_id"]))
+        game_rows.setdefault(identity, []).append(r)
+        gkey = identity
         if gkey not in games:
             published = ncaaf_display.get(r["game_id"], {})
             games[gkey] = {
@@ -914,6 +1028,9 @@ def props_slate(league: Optional[str] = Query(None),
                 "league": r["game_league"],
                 "players": {}
             }
+        elif (str(r["game_league"]).lower() == "nba"
+              and _canonical_nba_game_id(game_rows[identity]) == r["game_id"]):
+            games[gkey]["game_id"] = r["game_id"]
         pkey = r["player_name"]
         if pkey not in games[gkey]["players"]:
             games[gkey]["players"][pkey] = {

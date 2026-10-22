@@ -105,6 +105,7 @@ ESPN_STAT_TO_SDV = {
     "BLK": "BLK",
     "TO": "TO",
     "3PM": "3PM",
+    "3PT": "3PM",
     "FG:made": "FGM",
     "FT:made": "FTM",
 }

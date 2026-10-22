@@ -135,7 +135,7 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
                  AND uf.game_id=pg.espn_event_id AND uf.player_id=p.player_id
           ) OR datetime(COALESCE(NULLIF({start_time}, ''), pg.date || 'T00:00:00Z'))
                 > datetime('now', '-{window_hours} hours')
-          ))
+          )
           AND (? = '' OR pg.league = ?)
           AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
         GROUP BY pg.id
@@ -162,7 +162,7 @@ def _main(dry_run: bool = False, league: str = "", through: str = "",
                      AND uf.game_id=pg.espn_event_id AND uf.player_id=p.player_id
               ) OR datetime(COALESCE(NULLIF({start_time}, ''), pg.date || 'T00:00:00Z'))
                     > datetime('now', '-{window_hours} hours')
-              ))
+              )
               AND (? = '' OR pg.league = ?)
               AND pg.date <= COALESCE(NULLIF(?, ''), date('now'))
             GROUP BY pg.id
