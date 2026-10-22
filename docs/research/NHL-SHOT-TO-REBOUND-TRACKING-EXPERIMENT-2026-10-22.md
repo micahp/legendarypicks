@@ -137,15 +137,49 @@ The goal alpha remained at the grid's minimum, 0.2, in every fold. Recovery sele
 
 ### Matched-null control: recovery within 3s
 
-The 20 null replicates each independently permuted all 26 movement columns, including their missing values, across rows inside each outer training fold. Each fit retained the movement arm's 94-column design and used that fold's alpha selected from real training data by inner LOO. The held-out game's actual movement values remained untouched. This isolates whether the real row-level training alignment helps under the chosen alpha; it is not a separately tuned null model. Event-only paired comparisons still use the 42-parameter alpha-selected model.
+The 20 null replicates each independently permuted all 26 movement columns, including their missing values, across rows inside each outer training fold. Each fit retained the movement arm's 94-column design and used that fold's alpha selected from real training data by inner LOO. The held-out game's actual movement values remained untouched. Independent column permutations destroy movement-feature correlations, so this compares real features with a decorrelated movement block; it cannot isolate row alignment from the changed conditioning and shrinkage cost. It is not a separately tuned null model. Event-only paired comparisons still use the 42-parameter alpha-selected model.
 
 | Loss delta, movement minus event-only (α per outer fold inherited from tuned movement) | Real movement delta | Null mean | Null median | Null 5th–95th percentiles | Null range | Real empirical percentile |
 |---|---:|---:|---:|---:|---:|---:|
 | Recovery Brier | +0.000864 | +0.000287 | +0.000253 | +0.000004 to +0.000639 | -0.000212 to +0.000726 | 100th (20/20 null deltas lower) |
 | Recovery log loss | +0.001768 | +0.000577 | +0.000511 | -0.000003 to +0.001284 | -0.000433 to +0.001461 | 100th (20/20 null deltas lower) |
 
-For both proper scores, the real movement arm is worse than all 20 shuffled-training controls, rather than lying inside their observed range. That argues against attributing the entire recovery deficit to parameter count alone: the actual training-row movement alignment was associated with greater held-out loss than shuffled training alignment in these draws. The empirical percentile has only 5-point resolution, and the paired 2,000-replicate game-bootstrap intervals versus event-only include zero. Treat the null ranking as a warning signal, not a conclusive estimate of a general harmful effect. Full replicate deltas, fold alphas, calibration bins, and metrics are in [`tracking_robustness.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness.json).
+For both proper scores, the real movement arm is worse than all 20 independently shuffled controls. However, independently permuting the 26 columns also destroys their natural correlations, changing the conditioning of the 94-parameter design. This column-wise null cannot isolate training-row alignment from the cost of fitting a decorrelated feature block, so the difference does not identify an adverse effect of real movement alignment. Its percentile also has only 5-point resolution. The row-preserving control below addresses the correlation-structure limitation. Full replicate deltas, fold alphas, calibration bins, and metrics are in [`tracking_robustness.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness.json).
 
-**Updated decision:** “Retain the no-go: nested tuning did not improve held-out shot-sequence prediction; for recovery, real movement was worse than all 20 matched permutations, but the paired game-bootstrap interval versus event-only includes zero, so this small evaluation does not establish a reliable adverse movement effect.” Goal remains mixed and is not a positive claim: 39 positives, slightly better Brier/log loss, and lower AUC. No model or feature candidate is selected for adoption.
+**Updated decision:** “Nested shrinkage removed about three quarters of the fixed-alpha recovery Brier deficit (+0.00311 to +0.00086), indicating that much of the original gap was a regularisation artifact; the real recovery delta lies inside the 200-replicate row-preserving null range, so the column-wise null's apparent harmful-alignment reading is not identified; movement still does not beat event-only on recovery Brier, tuned follow-up Brier worsens in both arms, and the recovery game-bootstrap interval includes zero, so no adverse movement effect is established.” Goal remains mixed and is not a positive claim: 39 positives, unchanged because alpha stayed at 0.2, and lower movement AUC. No model or feature candidate is selected for adoption.
 
-The robustness computation took 112.4 seconds; the full single-process CLI invocation, including release scan and original fixed-alpha analysis, took about 3 minutes 43 seconds. BLAS/OMP thread counts were pinned to one. The existing `tracking_rebound_analysis.json` was not written; its SHA-256 matched the committed file after the run. The new JSON is 77,748 bytes. No test suite was run.
+The robustness computation took 112.4 seconds; the full single-process CLI invocation, including release scan and original fixed-alpha analysis, took about 3 minutes 43 seconds. BLAS/OMP thread counts were pinned to one. The existing `tracking_rebound_analysis.json` was not written; its SHA-256 matched the committed file after the run. The original robustness JSON is 77,748 bytes. No test suite was run.
+
+### Fixed-alpha versus nested Brier scores
+
+The fixed-alpha column uses the original results (alpha = 0.2 in both arms); nested values use the per-fold alpha selection documented above. Deltas are nested minus fixed, on the same 847 rows. Negative values mean nested shrinkage reduced Brier loss.
+
+| Outcome | Arm | Fixed α = 0.2 Brier | Nested Brier | Nested minus fixed |
+|---|---|---:|---:|---:|
+| Goal | Event-only | 0.04238 | 0.04238 | 0.00000 |
+| Goal | Movement | 0.04226 | 0.04226 | 0.00000 |
+| Recovery within 3s | Event-only | 0.24902 | 0.24821 | -0.00081 |
+| Recovery within 3s | Movement | 0.25213 | 0.24908 | -0.00305 |
+| Follow-up shot within 5s | Event-only | 0.12956 | 0.12998 | +0.00042 |
+| Follow-up shot within 5s | Movement | 0.12945 | 0.13013 | +0.00068 |
+| Recovery team, 3 classes | Event-only | 0.65127 | 0.64919 | -0.00208 |
+| Recovery team, 3 classes | Movement | 0.65951 | 0.65049 | -0.00902 |
+
+### Recovery-team benchmark limitation
+
+The three-class recovery-team comparison is not evidence of a near-null movement effect. Both conditional classifiers selected alpha = 500 in every outer fold and scored worse than a constant class-prior predictor from the observed counts (378 / 226 / 243): class-prior multiclass Brier 0.64733 and log loss 1.07081, versus nested event-only 0.64919 / 1.07342 and movement 0.65049 / 1.07520. The class-prior numbers use full-sample proportions and are descriptive, not an out-of-fold benchmark. Given the maximum shrinkage and neither fitted arm beating that reference, this row has no power to detect a movement effect in either direction; its +0.00130 Brier delta and interval must not be read as evidence of equivalence.
+
+### Row-preserving matched null
+
+The second control permutes each complete 26-feature movement vector, including its missing values, as a unit across outer-training rows. It preserves the movement block's within-vector correlations and marginal feature values while breaking the alignment with training labels and event rows. The held-out game's movement remains untouched. As in the first null, every fold uses the movement arm's alpha selected on that outer training set; no null tuning or held-out information is added. The seed schedule is `20261022 + replicate_index * 10 + sorted_game_index` (zero-based); the new null uses 200 replicates. The 94-parameter movement arm is compared with the same nested 42-parameter event-only OOF predictions.
+
+| Loss delta (movement minus event-only) | Null construction | Reps | Real delta | Null mean | Median | P05–P95 | Min–max | Real percentile |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Recovery Brier | Independent column permutations | 20 | +0.000864 | +0.000287 | +0.000253 | +0.000004 to +0.000639 | -0.000212 to +0.000726 | 100.0 |
+| Recovery Brier | Whole movement vectors | 200 | +0.000864 | +0.000371 | +0.000315 | -0.000120 to +0.001021 | -0.000245 to +0.001308 | 92.5 |
+| Recovery log loss | Independent column permutations | 20 | +0.001768 | +0.000577 | +0.000511 | -0.000003 to +0.001284 | -0.000433 to +0.001461 | 100.0 |
+| Recovery log loss | Whole movement vectors | 200 | +0.001768 | +0.000752 | +0.000642 | -0.000247 to +0.002066 | -0.000495 to +0.002658 | 92.5 |
+
+The real delta is inside the whole-vector null range for both scores, though it is in the upper tail. Thus the column-wise null's outside-range result does not survive a control that preserves movement-feature correlations. Treat its apparent harmful-alignment signal as a column-wise decorrelation artifact and drop the inference that real row alignment is harmful. The row-preserving control does not show a statistically decisive movement benefit or harm; the paired game-bootstrap intervals versus event-only still include zero. This remains a ten-game research sample. The complete 200 deltas and fold alphas are in [`tracking_robustness_null2.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness_null2.json); that file adds the row-preserving result to the prior JSON while preserving all prior values, including the original 20-replicate null.
+
+The row-preserving null fits took 71.8 seconds. The full invocation, including the release scan and nested recovery-fold reproduction, took 181.7 seconds with one BLAS/OMP thread and a maximum resident set of 81,600 KB. Disk availability remained 3.5 GB before and after. The original fixed-alpha and robustness JSON files were not modified. No test suite was run.

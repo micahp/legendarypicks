@@ -64,6 +64,7 @@ TARGETS = (
 ROBUSTNESS_ALPHAS = (0.2, 1.0, 5.0, 20.0, 100.0, 500.0)
 ROBUSTNESS_BOOTSTRAP_REPS = 2000
 ROBUSTNESS_NULL_REPS = 20
+ROW_PRESERVING_NULL_REPS = 200
 
 
 def parse_clock(value):
@@ -1160,6 +1161,90 @@ def matched_null_recovery(records, event_predictions, real_movement_predictions,
     }
 
 
+def permute_training_movement_vectors(records, seed):
+    """Move each complete 26-feature movement vector between training rows as a unit."""
+    rng = np.random.default_rng(seed)
+    source_rows = rng.permutation(len(records))
+    output = []
+    for row, source_index in zip(records, source_rows):
+        copied = dict(row)
+        copied["movement"] = dict(records[int(source_index)].get("movement") or {})
+        output.append(copied)
+    return output
+
+
+def matched_null_recovery_row_preserving(
+    records, event_predictions, real_movement_predictions, movement_folds,
+    repetitions=ROW_PRESERVING_NULL_REPS,
+):
+    """Permute whole movement vectors within outer training folds, preserving feature correlation."""
+    if repetitions <= 0:
+        raise ValueError("row-preserving null repetitions must be positive")
+    games = sorted(set(row["game"] for row in records))
+    game_indices = {game: [i for i, row in enumerate(records) if row["game"] == game] for game in games}
+    fold_alpha = {fold["held_out_game"]: fold["selected_alpha"] for fold in movement_folds}
+    y = np.asarray([row["targets"]["recovery_within_3s"] for row in records], dtype=float)
+    event_brier, event_logloss = losses(y, event_predictions)
+    real_brier, real_logloss = losses(y, real_movement_predictions)
+    real_delta_brier = float(real_brier.mean() - event_brier.mean())
+    real_delta_logloss = float(real_logloss.mean() - event_logloss.mean())
+    null_deltas_brier = []
+    null_deltas_logloss = []
+    started = time.perf_counter()
+    for replicate in range(repetitions):
+        null_predictions = np.full(len(records), np.nan, dtype=float)
+        for fold_index, game in enumerate(games):
+            test_idx = game_indices[game]
+            train_records = [row for row in records if row["game"] != game]
+            test_records = [records[index] for index in test_idx]
+            seed = 20261022 + replicate * len(games) + fold_index
+            permuted_train = permute_training_movement_vectors(train_records, seed)
+            y_train = np.asarray([
+                row["targets"]["recovery_within_3s"] for row in permuted_train
+            ], dtype=float)
+            x_train, x_test, _ = build_matrix(permuted_train, test_records, True)
+            beta = fit_logistic(x_train, y_train, alpha=fold_alpha[game])
+            null_predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
+        if np.isnan(null_predictions).any():
+            raise RuntimeError("row-preserving matched-null evaluation left predictions missing")
+        null_brier, null_logloss = losses(y, null_predictions)
+        null_deltas_brier.append(float(null_brier.mean() - event_brier.mean()))
+        null_deltas_logloss.append(float(null_logloss.mean() - event_logloss.mean()))
+
+    def summarize(values, real_delta):
+        values = np.asarray(values, dtype=float)
+        less = int(np.sum(values < real_delta))
+        ties = int(np.sum(values == real_delta))
+        return {
+            "real_movement_delta": float(real_delta),
+            "null_mean": float(values.mean()),
+            "null_median": float(np.median(values)),
+            "null_p05": float(np.percentile(values, 5)),
+            "null_p95": float(np.percentile(values, 95)),
+            "null_min": float(values.min()),
+            "null_max": float(values.max()),
+            "real_delta_empirical_percentile": float(100.0 * (less + 0.5 * ties) / len(values)),
+            "null_deltas": values.tolist(),
+        }
+
+    return {
+        "target": "recovery_within_3s",
+        "repetitions": repetitions,
+        "seed_schedule": "base seed 20261022; replicate/fold seed = base + replicate_index * 10 + sorted_game_index, indices zero-based",
+        "permutation": "whole 26-feature movement vectors, including all missing values, permuted as units across outer-training rows; held-out game movement stays intact",
+        "what_it_controls": "preserves the joint distribution and pairwise structure of movement features while breaking their row alignment with training labels and event features",
+        "alpha_control": "each null fold uses the real movement arm's alpha selected by inner leave-one-game-out on that same outer training set; no held-out labels/features enter alpha choice",
+        "movement_parameter_count": 94,
+        "outer_fold_alphas": [
+            {"held_out_game": fold["held_out_game"], "alpha": fold_alpha[fold["held_out_game"]]}
+            for fold in movement_folds
+        ],
+        "brier_movement_minus_event": summarize(null_deltas_brier, real_delta_brier),
+        "logloss_movement_minus_event": summarize(null_deltas_logloss, real_delta_logloss),
+        "fit_predict_seconds": time.perf_counter() - started,
+    }
+
+
 def run_robustness_analysis(records):
     started = time.perf_counter()
     output = {
@@ -1241,6 +1326,54 @@ def run_robustness_analysis(records):
         "matched_null_seconds": output["matched_null"]["fit_predict_seconds"],
         "bootstrap_replicates_per_comparison": ROBUSTNESS_BOOTSTRAP_REPS,
     }
+    return output
+
+
+def run_row_preserving_null_analysis(records, base_robustness_json, repetitions):
+    """Rebuild only the nested recovery OOF predictions needed for the new null."""
+    with open(base_robustness_json, "r", encoding="utf-8") as handle:
+        output = json.load(handle)
+    if output.get("matched_null", {}).get("repetitions") != ROBUSTNESS_NULL_REPS:
+        raise RuntimeError("base robustness JSON does not contain the expected 20-replicate null")
+    base_recovery = output.get("targets", {}).get("recovery_within_3s", {})
+    event_y, event_predictions, event_folds, event_seconds = nested_grouped_oof(
+        records, "recovery_within_3s", False
+    )
+    movement_y, movement_predictions, movement_folds, movement_seconds = nested_grouped_oof(
+        records, "recovery_within_3s", True
+    )
+    if not np.array_equal(event_y, movement_y):
+        raise RuntimeError("nested recovery targets differ between model arms")
+    for arm, folds in (("event_only", event_folds), ("movement_augmented", movement_folds)):
+        expected = base_recovery.get(arm, {}).get("outer_folds", [])
+        if len(expected) != len(folds) or any(
+            left["held_out_game"] != right["held_out_game"]
+            or left["selected_alpha"] != right["selected_alpha"]
+            for left, right in zip(expected, folds)
+        ):
+            raise RuntimeError("recomputed recovery folds/alphas do not match the committed base JSON")
+        recomputed_metrics = _binary_metric_summary(records, "recovery_within_3s", {
+            "event_only": event_predictions,
+            "movement_augmented": movement_predictions,
+        }[arm])
+        stored_metrics = base_recovery[arm]["metrics"]
+        for metric in ("brier", "logloss", "auc", "mean_prediction"):
+            if not math.isclose(
+                recomputed_metrics[metric], stored_metrics[metric], rel_tol=0.0, abs_tol=1e-12
+            ):
+                raise RuntimeError("recomputed %s %s does not match base robustness JSON" % (arm, metric))
+
+    row_null = matched_null_recovery_row_preserving(
+        records,
+        event_predictions,
+        movement_predictions,
+        movement_folds,
+        repetitions=repetitions,
+    )
+    row_null["base_robustness_json"] = os.path.abspath(base_robustness_json)
+    row_null["nested_event_fit_seconds_for_reproduction"] = event_seconds
+    row_null["nested_movement_fit_seconds_for_reproduction"] = movement_seconds
+    output["matched_null_row_preserving"] = row_null
     return output
 
 
@@ -1406,11 +1539,26 @@ def score_model(records, target, include_movement):
 
 def main():
     parser = argparse.ArgumentParser()
+    results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
     parser.add_argument("--data-dir", default="/root/lp-research-data/stathletes-big-data-cup-2026")
     parser.add_argument("--output-json", default=None)
     parser.add_argument("--robustness-output-json", default=None)
+    parser.add_argument("--row-preserving-null-output-json", default=None)
+    parser.add_argument("--row-preserving-null-reps", type=int, default=None)
+    parser.add_argument(
+        "--base-robustness-json",
+        default=os.path.join(results_dir, "tracking_robustness.json"),
+    )
     parser.add_argument("--bootstrap-reps", type=int, default=2000)
     args = parser.parse_args()
+    if args.row_preserving_null_output_json and args.row_preserving_null_reps is not None and args.row_preserving_null_reps <= 0:
+        parser.error("--row-preserving-null-reps must be positive when writing the row-preserving null")
+    if args.row_preserving_null_reps is not None and not args.row_preserving_null_output_json:
+        parser.error("--row-preserving-null-reps requires --row-preserving-null-output-json")
+    if args.row_preserving_null_output_json and args.robustness_output_json:
+        parser.error("choose either --robustness-output-json or --row-preserving-null-output-json")
+    if args.row_preserving_null_output_json and os.path.abspath(args.base_robustness_json) == os.path.abspath(args.row_preserving_null_output_json):
+        parser.error("base and row-preserving output JSON paths must differ")
     started = time.perf_counter()
     release_manifest = inspect_release_manifest(args.data_dir)
     orientations = load_orientations(args.data_dir)
@@ -1636,6 +1784,20 @@ def main():
         print(json.dumps({
             "robustness_output_json": os.path.abspath(args.robustness_output_json),
             "robustness_runtime_seconds": robustness["runtime"]["total_seconds"],
+        }, sort_keys=True))
+    if args.row_preserving_null_output_json:
+        robustness = run_row_preserving_null_analysis(
+            matched, args.base_robustness_json,
+            args.row_preserving_null_reps or ROW_PRESERVING_NULL_REPS,
+        )
+        robustness_rendered = json.dumps(robustness, indent=2, sort_keys=True, allow_nan=False)
+        output_dir = os.path.dirname(os.path.abspath(args.row_preserving_null_output_json))
+        os.makedirs(output_dir, exist_ok=True)
+        with open(args.row_preserving_null_output_json, "w", encoding="utf-8") as handle:
+            handle.write(robustness_rendered + "\n")
+        print(json.dumps({
+            "row_preserving_null_output_json": os.path.abspath(args.row_preserving_null_output_json),
+            "row_preserving_null_fit_predict_seconds": robustness["matched_null_row_preserving"]["fit_predict_seconds"],
         }, sort_keys=True))
 
 
