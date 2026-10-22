@@ -17,7 +17,7 @@ import re as _re
 import espn_client
 
 # ---------------------------------------------------------------------------
-# Major tournament filter -- only Grand Slams, Masters/WTA 1000, and year-end Finals.
+# Major tournament filter -- Grand Slams, Masters/1000s, 500s, 250s and year-end Finals. Singles only.
 # Substrings matched case-insensitively against ESPN's event shortName.
 # ---------------------------------------------------------------------------
 # Canonical keys -- each tuple is (canonical_name, espn_name_substrings)
@@ -59,6 +59,38 @@ _ATP_MAJORS = [
     ("Tokyo Open",             ["Kinoshita Group Japan Open"]),
     ("Vienna Open",            ["Erste Bank Open"]),
     ("Basel",                  ["Swiss Indoors Basel"]),
+    # ATP 250 singles, 2026 (29 events). Tiers from the ATP's 2026 calendar (atptour.com, "what is the 2026
+    # atp tour calendar"). Each alias is the ESPN shortName on the 2026 ATP season list. An event on the same
+    # ESPN id as a 500 or a WTA event shares its canonical name. Added 2026-10-21; docs/TENNIS-COVERAGE.md section 2c.
+    ("Brisbane International",  ["Brisbane International presented by ANZ"]),
+    ("Hong Kong Tennis Open",   ["Bank of China Hong Kong Tennis Open"]),
+    ("Adelaide International",  ["Adelaide International"]),
+    ("ASB Classic",             ["ASB Classic"]),
+    ("Open Occitanie",          ["Open Occitanie"]),
+    ("Argentina Open",          ["IEB+ Argentina Open"]),
+    ("Delray Beach Open",       ["Delray Beach Open"]),
+    ("Chile Open",              ["BCI Seguros Chile Open"]),
+    ("Tiriac Open",             ["Tiriac Open presented by UniCredit Bank"]),
+    ("US Men's Clay Court Championship", ["Fayez Sarofim & Co. U.S. Men's Clay Court Championship"]),
+    ("Grand Prix Hassan II",    ["Grand Prix Hassan II"]),
+    ("Geneva Open",             ["Gonet Geneva Open"]),
+    ("Boss Open",               ["Boss Open"]),
+    ("Libéma Open",             ["Libéma Open"]),
+    ("Mallorca Championships",  ["Vanda Pharmaceuticals Mallorca Championships"]),
+    ("Eastbourne Open",         ["Lexus Eastbourne Open"]),
+    ("Nordea Open",             ["Nordea Open"]),
+    ("Gstaad Open",             ["EFG Swiss Open Gstaad"]),
+    ("Umag Open",               ["Plava Laguna Croatia Open Umag"]),
+    ("Generali Open",           ["Generali Open"]),
+    ("Estoril Open",            ["Millennium Estoril Open"]),
+    ("Mifel Tennis Open",       ["Mifel Tennis Open by Telcel Oppo"]),
+    ("Winston-Salem Open",      ["Winston-Salem Open"]),
+    ("Chengdu Open",            ["Chengdu Open"]),
+    ("Hangzhou Open",           ["AITO Hangzhou Open"]),
+    ("Almaty Open",             ["Almaty Open"]),
+    ("Brussels Open",           ["BNP Paribas Fortis European Open"]),
+    ("Lyon Open",               ["Grand Prix Auvergne-Rhône-Alpes"]),
+    ("Stockholm Open",          ["Bybit Stockholm Open"]),
     # Finals
     ("ATP Finals",             ["ATP Finals", "Nitto ATP Finals", "ATP World Tour Finals"]),
 ]
@@ -100,6 +132,32 @@ _WTA_MAJORS = [
     ("Singapore Tennis Open",   ["Singapore Tennis Open"]),
     ("Ningbo Open",             ["Ningbo Open"]),
     ("Pan Pacific Open",        ["Toray Pan Pacific Open"]),
+    # WTA 250 singles, 2026 (22 events). Tiers from the Wikipedia 2026 WTA Tour calendar and tennis-db's WTA list,
+    # which agree on all 22. Jiangxi Open is on tennis-db only, and ESPN does not publish a November Jiangxi
+    # event in 2026, so it is not tracked. Each alias is the ESPN shortName on the 2026 WTA season list.
+    # Added 2026-10-21; docs/TENNIS-COVERAGE.md section 2c.
+    ("ASB Classic",             ["ASB Classic"]),
+    ("Hobart International",    ["Hobart International"]),
+    ("Ostrava Open",            ["Ostrava Open"]),
+    ("Transylvania Open",       ["Transylvania Open powered by Kaufland"]),
+    ("ATX Open",                ["ATX Open"]),
+    ("Bogotá Open",             ["Copa Colsanitas Colsubsidio"]),
+    ("Rouen Open",              ["Open Capfinances Rouen Métropole"]),
+    ("Morocco Open",            ["Grand Prix Son Altesse Royale"]),
+    ("Libéma Open",             ["Libéma Open"]),
+    ("Nottingham Open",         ["Lexus Nottingham Open"]),
+    ("Eastbourne Open",         ["Lexus Eastbourne Open"]),
+    ("Iași Open",               ["Unicredit Iasi Open"]),
+    ("Athens Open",             ["Vanda Pharmaceuticals Athens Open"]),
+    ("Hamburg Ladies Open",     ["MSC Hamburg Ladies Open"]),
+    ("Prague Open",             ["Livesport Prague Open"]),
+    ("Memphis Classic",         ["Memphis Classic"]),
+    ("São Paulo Open",          ["SP Open"]),
+    ("Korea Open",              ["Korea Open"]),
+    ("Japan Women's Open",      ["Kinoshita Group Japan Open"]),
+    ("Guangzhou Open",          ["Guangzhou Open"]),
+    ("Hong Kong Open",          ["Prudential Hong Kong Tennis Open"]),
+    ("Chennai Open",            ["Chennai Open"]),
     # Finals
     ("WTA Finals",             ["WTA Finals", "WTA Championships"]),
 ]
@@ -124,7 +182,7 @@ def major_for_event(league: str, event_short_name):
 
 
 def _is_major(league: str, event_short_name: str) -> bool:
-    """True if this ESPN event is a Grand Slam, Masters/1000, or Finals."""
+    """True if this ESPN event is one of the tracked tournaments in the lists above."""
     return major_for_event(league, event_short_name) is not None
 
 
