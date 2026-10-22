@@ -2,6 +2,8 @@ import React from 'react'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import NbaModelTab from './NbaModelTab'
 
+const realExport = require('../../research/nba-game-model/missed-payload-proof-2026-10-21.json')
+
 const models = [
   { id: 'G1', label: 'G1 Elo', version: 'g1-version', projects_scores: false, note: 'Elo model' },
   { id: 'G2', label: 'G2 Efficiency', version: 'g2-version', projects_scores: true, note: 'Efficiency model' },
@@ -40,7 +42,10 @@ beforeEach(() => {
   ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(payload) }))
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  jest.restoreAllMocks()
+})
 
 describe('NBA model tab', () => {
   it('compares candidates and explicitly says G1 has no score projection', async () => {
@@ -93,6 +98,71 @@ describe('NBA model tab', () => {
       const row = screen.getByRole('row', { name: new RegExp(model.label) })
       expect(within(row).getByText('Missed: 1')).toBeTruthy()
     }
+  })
+
+  it('keeps missed games out of Upcoming forecasts while showing future previews there', async () => {
+    const missed = {
+      ...payload.games[0],
+      game_id: 'missed-game',
+      scheduled_start_utc: '2026-10-20T23:00:00Z',
+      status: 'missed' as const,
+      models: {},
+    }
+    const preview = {
+      ...payload.games[0],
+      game_id: 'preview-game',
+      scheduled_start_utc: new Date(Date.now() + 86_400_000).toISOString(),
+      home_team: 'NYK',
+      away_team: 'LAL',
+      status: 'preview' as const,
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [missed, preview] }),
+    }))
+
+    render(<NbaModelTab />)
+    const upcoming = await screen.findByRole('region', { name: 'Upcoming forecasts' })
+    expect(within(upcoming).getByText('LAL at NYK')).toBeTruthy()
+    expect(within(upcoming).queryByText('BOS at DET')).toBeNull()
+
+    const missedSection = screen.getByRole('region', { name: /Missed lock windows/ })
+    expect(within(missedSection).getByText('BOS at DET')).toBeTruthy()
+  })
+
+  it('renders missed rows from the real export and keeps them separate from upcoming previews', async () => {
+    const missed = realExport.games.find((game: any) => game.status === 'missed')
+    const preview = realExport.games.find((game: any) => game.status === 'preview')
+    expect(missed).toBeDefined()
+    expect(preview).toBeDefined()
+
+    const fixtureMissed = {
+      ...payload.games[0],
+      game_id: 'shape-check',
+      scheduled_start_utc: '2026-10-20T23:00:00Z',
+      status: 'missed',
+      models: {},
+    }
+    for (const [key, value] of Object.entries(fixtureMissed)) {
+      expect(missed).toHaveProperty(key)
+      expect(typeof missed[key]).toBe(typeof value)
+    }
+
+    jest.spyOn(Date, 'now').mockReturnValue(
+      new Date(preview.scheduled_start_utc).getTime() - 1,
+    )
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve(realExport),
+    }))
+
+    render(<NbaModelTab />)
+    const missedSection = await screen.findByRole('region', { name: /Missed lock windows/ })
+    const missedLabel = `${missed.away_team} at ${missed.home_team}`
+    const previewLabel = `${preview.away_team} at ${preview.home_team}`
+    expect(within(missedSection).getByText(missedLabel)).toBeTruthy()
+
+    const upcoming = screen.getByRole('region', { name: 'Upcoming forecasts' })
+    expect(within(upcoming).getByText(previewLabel)).toBeTruthy()
+    expect(within(upcoming).queryByText(missedLabel)).toBeNull()
   })
 
   it('shows only locked prospective games in the grading history', async () => {

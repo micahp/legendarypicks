@@ -87,12 +87,41 @@ export default function NbaModelTab() {
   if (error && !payload) return <div className="p-6 text-sm text-red-400">NBA model feed unavailable — {error}</div>
   if (!payload) return <div className="p-6 text-sm text-zinc-500">Loading NBA research models…</div>
 
-  const upcoming = payload.games.filter((game) => game.status === 'missed'
-    || new Date(game.scheduled_start_utc).getTime() > Date.now())
+  const missed = payload.games.filter((game) => game.status === 'missed')
+  const upcoming = payload.games.filter((game) => game.status !== 'missed'
+    && new Date(game.scheduled_start_utc).getTime() > Date.now())
   const graded = payload.games.filter((game) => game.status === 'graded' && game.result)
     .slice(-10).reverse()
   const test = payload.benchmark?.metrics?.test ?? {}
   const validation = payload.benchmark?.metrics?.validation ?? {}
+  const forecastCard = (game: Game) => (
+    <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+        <div className="font-medium text-white">{game.away_team} at {game.home_team}</div>
+        <div className="text-xs text-zinc-400">{kickoff(game.scheduled_start_utc)} · {game.status === 'locked' ? 'Locked before tipoff' : game.status === 'missed' ? 'Lock window missed' : game.status === 'graded' ? 'Graded' : 'Preview, not locked'}</div>
+      </div>
+      <div className="grid gap-px bg-white/10 md:grid-cols-3">
+        {payload.models.map((model) => {
+          const forecast = game.models[model.id]
+          if (!forecast) return <div key={model.id} className="bg-zinc-950 p-4 text-xs text-zinc-500">{model.label}: forecast unavailable</div>
+          const score = forecast.score_forecast_available
+            ? `${forecast.projected_away_points?.toFixed(1)} – ${forecast.projected_home_points?.toFixed(1)}`
+            : 'No score projection'
+          return (
+            <div key={model.id} className="bg-zinc-950 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-white">{model.label}</span>
+                <span className="text-xs text-cyan-300">Home win {percent(forecast.home_win_probability)}</span>
+              </div>
+              <div className="mt-2 text-sm tabular-nums text-zinc-200">Away – home: {score}</div>
+              <div className="mt-1 break-all font-mono text-[10px] text-zinc-500">{forecast.model_version}</div>
+              {forecast.grade && <div className="mt-2 text-xs text-emerald-300">Final {forecast.grade.home_score}–{forecast.grade.away_score} · Brier {metric(forecast.grade.winner_brier)}</div>}
+            </div>
+          )
+        })}
+      </div>
+    </article>
+  )
 
   return (
     <div className="space-y-6">
@@ -189,35 +218,17 @@ export default function NbaModelTab() {
         </div>
         {upcoming.length === 0 ? (
           <p className="rounded-lg border border-white/10 p-4 text-sm text-zinc-400">No upcoming NBA forecasts are available yet.</p>
-        ) : upcoming.map((game) => (
-          <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-              <div className="font-medium text-white">{game.away_team} at {game.home_team}</div>
-              <div className="text-xs text-zinc-400">{kickoff(game.scheduled_start_utc)} · {game.status === 'locked' ? 'Locked before tipoff' : game.status === 'missed' ? 'Lock window missed' : game.status === 'graded' ? 'Graded' : 'Preview, not locked'}</div>
-            </div>
-            <div className="grid gap-px bg-white/10 md:grid-cols-3">
-              {payload.models.map((model) => {
-                const forecast = game.models[model.id]
-                if (!forecast) return <div key={model.id} className="bg-zinc-950 p-4 text-xs text-zinc-500">{model.label}: forecast unavailable</div>
-                const score = forecast.score_forecast_available
-                  ? `${forecast.projected_away_points?.toFixed(1)} – ${forecast.projected_home_points?.toFixed(1)}`
-                  : 'No score projection'
-                return (
-                  <div key={model.id} className="bg-zinc-950 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold text-white">{model.label}</span>
-                      <span className="text-xs text-cyan-300">Home win {percent(forecast.home_win_probability)}</span>
-                    </div>
-                    <div className="mt-2 text-sm tabular-nums text-zinc-200">Away – home: {score}</div>
-                    <div className="mt-1 break-all font-mono text-[10px] text-zinc-500">{forecast.model_version}</div>
-                    {forecast.grade && <div className="mt-2 text-xs text-emerald-300">Final {forecast.grade.home_score}–{forecast.grade.away_score} · Brier {metric(forecast.grade.winner_brier)}</div>}
-                  </div>
-                )
-              })}
-            </div>
-          </article>
-        ))}
+        ) : upcoming.map(forecastCard)}
       </section>
+
+      {missed.length > 0 && (
+        <section aria-labelledby="nba-missed-models" className="space-y-3">
+          <h3 id="nba-missed-models" className="font-semibold text-white">
+            Missed lock windows <span className="text-zinc-500">({missed.length})</span>
+          </h3>
+          {missed.map(forecastCard)}
+        </section>
+      )}
 
       <section aria-labelledby="nba-prospective-results" className="space-y-3">
         <div>
