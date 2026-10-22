@@ -309,6 +309,67 @@ def test_read_api_is_dev_scoped_and_exposes_the_benchmark(tmp_path: Path, monkey
     assert error.value.status_code == 404
 
 
+def test_read_api_attaches_schedule_read_only_for_event_only_missed_games(tmp_path, monkeypatch):
+    picks = tmp_path / "picks.dev.db"
+    schedule = sqlite3.connect(picks)
+    schedule.execute("""CREATE TABLE nba_schedule (
+      game_id TEXT, season INTEGER, season_type TEXT, start_utc TEXT, source TEXT,
+      home_team TEXT, away_team TEXT)""")
+    schedule.execute(
+        "INSERT INTO nba_schedule VALUES(?,?,?,?,?,?,?)",
+        ("0022600001", 2027, "REG", "2026-10-20T23:00:00Z", "nba.com", "DET", "BOS"),
+    )
+    schedule.commit()
+    schedule.close()
+
+    model_path = tmp_path / "nba-model.dev.sqlite3"
+    model = open_db(str(model_path))
+    model.execute(
+        "INSERT INTO nba_model_lock_events(game_id,model,season,event_type,recorded_at_utc) "
+        "VALUES('0022600001','G1',2027,'missed_t90_window','2026-10-21T00:00:00Z')"
+    )
+    model.commit()
+    model.close()
+
+    monkeypatch.setenv("LP_DB_PATH", str(picks))
+    monkeypatch.setenv("NBA_MODEL_DB_PATH", str(model_path))
+    monkeypatch.setattr(nba_model_router, "MODEL_DB", str(model_path))
+    response = nba_model_router.nba_model_locks(Response(), 2027)
+    payload = json.loads(response.body)
+
+    assert payload["games"] == [{
+        "game_id": "0022600001", "season": 2027,
+        "scheduled_start_utc": "2026-10-20T23:00:00Z", "home_team": "DET",
+        "away_team": "BOS", "status": "missed", "locked_at_utc": None,
+        "models": {}, "result": None,
+    }]
+    assert payload["records"]["G1"]["missed"] == 1
+    assert payload["records"]["G2"]["missed"] == 0
+    assert payload["records"]["G3"]["missed"] == 0
+
+
+def test_read_api_falls_back_when_dev_schedule_is_unavailable(tmp_path, monkeypatch):
+    picks = tmp_path / "picks.dev.db"
+    sqlite3.connect(picks).close()
+    model_path = tmp_path / "nba-model.dev.sqlite3"
+    model = open_db(str(model_path))
+    model.execute(
+        "INSERT INTO nba_model_lock_events(game_id,model,season,event_type,recorded_at_utc) "
+        "VALUES('0022600001','G1',2027,'missed_t90_window','2026-10-21T00:00:00Z')"
+    )
+    model.commit()
+    model.close()
+
+    monkeypatch.setenv("LP_DB_PATH", str(picks))
+    monkeypatch.setenv("NBA_MODEL_DB_PATH", str(model_path))
+    monkeypatch.setattr(nba_model_router, "MODEL_DB", str(model_path))
+    response = nba_model_router.nba_model_locks(Response(), 2027)
+    payload = json.loads(response.body)
+
+    assert payload["games"] == []
+    assert payload["records"]["G1"]["missed"] == 1
+
+
 def _fixture_schedule(path: Path) -> None:
     connection = sqlite3.connect(path)
     connection.execute("""CREATE TABLE nba_schedule (
