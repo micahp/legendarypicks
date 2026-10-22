@@ -33,7 +33,9 @@ REQUIRED_TRACKING_COLUMNS = {
 }
 
 
-def parse_clock(value: str) -> int:
+def parse_clock(value: str) -> int | None:
+    if value is None or not value.strip():
+        return None
     match = re.fullmatch(r"\s*(\d+):(\d\d)\s*", value or "")
     if not match:
         raise ValueError("invalid Game Clock: %r" % value)
@@ -190,11 +192,13 @@ def new_period_metrics(path: Path) -> dict:
         "puck_xy_rows": 0, "in_rink_xy_rows": 0,
         "shift_eligible_rows": 0, "shift_match_rows": 0,
         "frame_id_duplicate_or_reversal": 0, "frame_id_gaps": 0, "clock_reversals": 0,
+        "clock_missing_rows": 0, "frames_missing_clock": 0,
         "within_frame_duplicate_player_ids": 0, "identity_conflicts": 0,
         "identity_track_count": 0, "puck_gap_le_0_10_count": 0, "puck_gap_observations": 0,
         "clock_values_per_frame_gt1": 0, "valid_windows": 0, "valid_puck_windows": 0,
         "start_frame": None, "end_frame": None, "start_clock_seconds": None,
-        "end_clock_seconds": None, "frame_id_step_counts": collections.Counter(),
+        "end_clock_seconds": None, "first_timed_frame": None, "last_timed_frame": None,
+        "frame_id_step_counts": collections.Counter(),
         "id_to_team_jersey": collections.defaultdict(set), "identity_obs": collections.Counter(),
     }
 
@@ -225,10 +229,22 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
 
     def finish_frame():
         nonlocal current_players, puck_count, puck_xy_count, puck_valid, frame_clock_set
-        nonlocal last_puck_seq, puck_history, last_puck_target
+        nonlocal last_puck_seq, puck_history, last_puck_target, prior_clock
         if current is None:
             return
         metrics["frames"] += 1
+        if current["clock"] is None:
+            metrics["frames_missing_clock"] += 1
+        else:
+            if prior_clock is not None and current["clock"] > prior_clock:
+                metrics["clock_reversals"] += 1
+            prior_clock = current["clock"]
+            if metrics["first_timed_frame"] is None:
+                metrics["first_timed_frame"] = current["seq"]
+                metrics["start_clock_seconds"] = current["clock"]
+            metrics["last_timed_frame"] = current["seq"]
+            metrics["end_clock_seconds"] = current["clock"]
+        metrics["end_frame"] = current["seq"]
         if puck_count == 1:
             metrics["frames_exactly_one_puck"] += 1
             if last_puck_seq is not None:
@@ -289,7 +305,6 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
             seq = frame_number(image)
             period = int(row["Period"])
             clock_seconds = parse_clock(row["Game Clock"])
-            frame = (image, period, seq, clock_seconds)
             if current is None or image != current["image"]:
                 finish_frame()
                 if seq in seq_seen:
@@ -304,19 +319,14 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
                     metrics["frame_id_step_counts"][step] += 1
                     if step > 1:
                         metrics["frame_id_gaps"] += 1
-                    if clock_seconds > prior_clock:
-                        metrics["clock_reversals"] += 1
                 else:
                     metrics["start_frame"] = seq
-                    metrics["start_clock_seconds"] = clock_seconds
                 current = {"image": image, "period": period, "seq": seq,
                            "clock": clock_seconds}
                 periods_seen.add(period)
                 if len(periods_seen) > 1:
                     raise RuntimeError("tracking file contains multiple periods: %s" % path)
-                prior_seq, prior_clock = seq, clock_seconds
-                metrics["end_frame"] = seq
-                metrics["end_clock_seconds"] = clock_seconds
+                prior_seq = seq
                 sample_frame_idx += 1
                 if sample is not None and sample_frame_idx <= 300:
                     sample["frames"].append({"seq": seq, "clock": clock_seconds, "players": {}, "puck": None})
@@ -324,10 +334,18 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
                 else:
                     sample_row = None
             else:
-                if period != current["period"] or clock_seconds != current["clock"]:
+                if period != current["period"]:
                     raise RuntimeError("one Image Id maps to inconsistent period/clock in %s" % path)
+                if clock_seconds is not None:
+                    if current["clock"] is None:
+                        current["clock"] = clock_seconds
+                    elif clock_seconds != current["clock"]:
+                        raise RuntimeError("one Image Id maps to inconsistent period/clock in %s" % path)
                 sample_row = sample["frames"][-1] if sample is not None and sample_frame_idx <= 300 else None
-            frame_clock_set.add(clock_seconds)
+            if clock_seconds is None:
+                metrics["clock_missing_rows"] += 1
+            else:
+                frame_clock_set.add(clock_seconds)
             entity = (row["Player or Puck"] or "").strip()
             team = (row["Team"] or "").strip()
             if entity not in ("Player", "Puck"):
@@ -382,7 +400,7 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
                 current_players[player_key] = {"team": team, "x": x, "y": y}
             if sample_row is not None and track_id and inside:
                 sample_row["players"][(team, track_id, jersey)] = (x, y)
-            if team in ("Home", "Away") and jersey and inside:
+            if team in ("Home", "Away") and jersey and inside and clock_seconds is not None:
                 lookup_key = (period, clock_seconds, team, jersey)
                 if lookup_key in event_lookup:
                     event_positions[lookup_key].append((x, y))
@@ -398,14 +416,20 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
     del metrics["identity_obs"]
     step_counts = metrics.pop("frame_id_step_counts")
     metrics["adjacent_frame_gap_fraction"] = metrics["frame_id_gaps"] / max(metrics["frames"] - 1, 1)
-    metrics["inferred_fps"] = metrics["frames"] / max(
-        metrics["start_clock_seconds"] - metrics["end_clock_seconds"], 1)
+    timed_span = metrics["start_clock_seconds"] - metrics["end_clock_seconds"]
+    if (timed_span <= 0 or metrics["first_timed_frame"] is None or
+            metrics["last_timed_frame"] is None):
+        raise RuntimeError("cannot infer tracking rate from timed frames in %s" % path)
+    metrics["inferred_fps"] = (
+        metrics["last_timed_frame"] - metrics["first_timed_frame"]) / timed_span
     metrics["frame_id_step_counts"] = {str(k): v for k, v in sorted(step_counts.items())}
     metrics["puck_exactly_one_fraction"] = metrics["frames_exactly_one_puck"] / metrics["frames"]
     metrics["player_id_and_jersey_fraction"] = metrics["id_and_jersey_present_rows"] / max(metrics["player_rows"], 1)
     metrics["inside_rink_fraction"] = metrics["in_rink_xy_rows"] / max(metrics["coordinate_rows"], 1)
     metrics["xy_present_fraction"] = metrics["finite_xy_rows"] / max(metrics["coordinate_rows"], 1)
     metrics["puck_xy_fraction"] = metrics["puck_xy_rows"] / max(metrics["puck_rows"], 1)
+    metrics["clock_row_fraction"] = (metrics["coordinate_rows"] - metrics["clock_missing_rows"]) / max(metrics["coordinate_rows"], 1)
+    metrics["clock_frame_fraction"] = (metrics["frames"] - metrics["frames_missing_clock"]) / max(metrics["frames"], 1)
     metrics["puck_gap_le_0_10_seconds_fraction"] = (
         float(np.mean(np.asarray(puck_gap_steps, dtype=float) / metrics["inferred_fps"] <= 0.10))
         if puck_gap_steps else 0.0)
@@ -544,6 +568,7 @@ def main() -> None:
         "valid_windows": 0, "track_id_present_rows": 0, "jersey_present_rows": 0,
         "id_and_jersey_present_rows": 0,
         "coordinate_rows": 0, "missing_xy_rows": 0, "finite_xy_rows": 0,
+        "clock_missing_rows": 0, "frames_missing_clock": 0,
         "puck_xy_rows": 0, "in_rink_xy_rows": 0, "frame_id_gaps": 0,
         "shift_eligible_rows": 0, "shift_match_rows": 0, "valid_puck_windows": 0,
         "clock_reversals": 0, "frames_with_3plus_skaters_each_team": 0,
@@ -567,7 +592,8 @@ def main() -> None:
         for field in ("frames", "player_rows", "puck_rows", "frames_exactly_one_puck",
                       "valid_windows", "track_id_present_rows", "jersey_present_rows",
                       "id_and_jersey_present_rows", "coordinate_rows", "missing_xy_rows",
-                      "finite_xy_rows", "puck_xy_rows", "in_rink_xy_rows",
+                      "finite_xy_rows", "clock_missing_rows", "frames_missing_clock",
+                      "puck_xy_rows", "in_rink_xy_rows",
                       "shift_eligible_rows", "shift_match_rows", "valid_puck_windows",
                       "frame_id_gaps", "clock_reversals", "identity_track_count",
                       "within_frame_duplicate_player_ids", "puck_gap_le_0_10_count",
@@ -594,6 +620,8 @@ def main() -> None:
         gm["shift_identity_match_fraction"] = gm["shift_match_rows"] / max(gm["shift_eligible_rows"], 1)
         gm["inside_rink_fraction"] = gm["in_rink_xy_rows"] / max(gm["coordinate_rows"], 1)
         gm["xy_present_fraction"] = gm["finite_xy_rows"] / max(gm["coordinate_rows"], 1)
+        gm["clock_row_fraction"] = (gm["coordinate_rows"] - gm["clock_missing_rows"]) / max(gm["coordinate_rows"], 1)
+        gm["clock_frame_fraction"] = (gm["frames"] - gm["frames_missing_clock"]) / max(gm["frames"], 1)
         gm["puck_xy_fraction"] = gm["puck_xy_rows"] / max(gm["puck_rows"], 1)
         gm["inferred_fps_median"] = float(np.median(gm["fps_by_file"]))
         gm["puck_gap_le_0_10_seconds_fraction"] = (
@@ -613,6 +641,7 @@ def main() -> None:
                       "within_frame_duplicate_player_ids", "puck_gap_le_0_10_count",
                       "puck_gap_observations",
                       "coordinate_rows", "missing_xy_rows", "finite_xy_rows", "puck_xy_rows",
+                      "clock_missing_rows", "frames_missing_clock",
                       "shift_eligible_rows", "shift_match_rows", "valid_puck_windows",
                       "in_rink_xy_rows", "frame_id_gaps", "clock_reversals",
                       "frames_with_3plus_skaters_each_team", "identity_conflicts",
@@ -624,6 +653,8 @@ def main() -> None:
     total["identity_conflict_fraction"] = total["identity_conflicts"] / max(total["identity_track_count"], 1)
     total["inside_rink_fraction"] = total["in_rink_xy_rows"] / max(total["coordinate_rows"], 1)
     total["xy_present_fraction"] = total["finite_xy_rows"] / max(total["coordinate_rows"], 1)
+    total["clock_row_fraction"] = (total["coordinate_rows"] - total["clock_missing_rows"]) / max(total["coordinate_rows"], 1)
+    total["clock_frame_fraction"] = (total["frames"] - total["frames_missing_clock"]) / max(total["frames"], 1)
     total["puck_xy_fraction"] = total["puck_xy_rows"] / max(total["puck_rows"], 1)
     total["puck_gap_le_0_10_seconds_fraction"] = (
         total["puck_gap_le_0_10_count"] / max(total["puck_gap_observations"], 1))
@@ -633,6 +664,8 @@ def main() -> None:
         "tracking_coordinate_validity": total["inside_rink_fraction"] >= 0.99 and
                                          total["xy_present_fraction"] >= 0.99,
         "temporal_rate": sum(25 <= fps <= 32 for fps in fps_games) >= 8 and
+                         total["clock_row_fraction"] >= 0.99 and
+                         total["clock_frame_fraction"] >= 0.99 and
                          all(m["clock_reversals"] == 0 and m["frame_id_duplicate_or_reversal"] == 0
                              for m in file_metrics),
         "player_identity_coverage": total["player_id_and_jersey_fraction"] >= 0.90 and
@@ -664,6 +697,8 @@ def main() -> None:
             "event_alignment_median_ft": 20,
             "event_alignment_p95_ft": 40,
             "fps_range": [25, 32], "fps_min_games": 8,
+            "game_clock_row_fraction_min": 0.99,
+            "game_clock_frame_fraction_min": 0.99,
             "player_id_and_jersey_fraction": 0.90,
             "shift_identity_match_fraction": 0.90,
             "identity_conflict_fraction_max_exclusive": 0.001,
@@ -695,9 +730,11 @@ def main() -> None:
     out_json.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (args.output_dir / "tracking_quality_by_game.csv").write_text(
         "game,frames,player_rows,puck_rows,valid_windows,puck_exactly_one_fraction,"
-        "player_id_and_jersey_fraction,inside_rink_fraction,inferred_fps_median,clock_reversals,frame_id_gaps\n" +
+        "player_id_and_jersey_fraction,inside_rink_fraction,clock_row_fraction,clock_frame_fraction,"
+        "inferred_fps_median,clock_reversals,frame_id_gaps\n" +
         "".join("{game},{frames},{player_rows},{puck_rows},{valid_windows},{puck_exactly_one_fraction:.6f},"
-                "{player_id_and_jersey_fraction:.6f},{inside_rink_fraction:.6f},{inferred_fps_median:.4f},"
+                "{player_id_and_jersey_fraction:.6f},{inside_rink_fraction:.6f},{clock_row_fraction:.6f},"
+                "{clock_frame_fraction:.6f},{inferred_fps_median:.4f},"
                 "{clock_reversals},{frame_id_gaps}\n".format(game=g, **gm)
                 for g, gm in sorted(game_metrics.items())), encoding="utf-8")
     write_plots(args.output_dir, heat_player, heat_puck, sample_for_plot, game_metrics)
