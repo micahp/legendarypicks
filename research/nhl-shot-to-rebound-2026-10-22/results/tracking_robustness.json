@@ -1,0 +1,2189 @@
+{
+  "matched_null": {
+    "alpha_control": "each null fold uses the real movement arm's alpha selected by inner leave-one-game-out on that same outer training set; no held-out labels/features enter alpha choice",
+    "brier_movement_minus_event": {
+      "null_deltas": [
+        -0.00021211189323833146,
+        0.00026325461054407806,
+        5.9665227673533217e-05,
+        0.0007263524320315073,
+        0.00015371076590342536,
+        0.0006213308549457008,
+        0.00029530309105635366,
+        0.00024192094031902367,
+        0.00046958081941028684,
+        0.0006343920267685987,
+        1.5495655275615805e-05,
+        0.00010426078596245669,
+        0.0005070764925311222,
+        0.00046790102202379225,
+        0.0002270119929734249,
+        3.1919811551484045e-05,
+        0.0002770279869085124,
+        0.0001967089105863462,
+        0.0005136628306514068,
+        0.00013893913048781958
+      ],
+      "null_max": 0.0007263524320315073,
+      "null_mean": 0.00028667017471830785,
+      "null_median": 0.00025258777543155086,
+      "null_min": -0.00021211189323833146,
+      "null_p05": 4.115277849918456e-06,
+      "null_p95": 0.0006389900470317443,
+      "real_delta_empirical_percentile": 100.0,
+      "real_movement_delta": 0.0008644285984916178
+    },
+    "fit_predict_seconds": 8.728602907038294,
+    "logloss_movement_minus_event": {
+      "null_deltas": [
+        -0.0004327644119591634,
+        0.0005315231080741389,
+        0.00012455915618303504,
+        0.0014614093511561288,
+        0.00030508086816982694,
+        0.0012652813254526718,
+        0.000590109798996763,
+        0.0004905510149596504,
+        0.000937327605819438,
+        0.001274443106261236,
+        1.9565836263280012e-05,
+        0.00020796710224657566,
+        0.0010342328707035886,
+        0.0009424370778893243,
+        0.00045789471929147396,
+        5.838160655846636e-05,
+        0.0005681182832726339,
+        0.0003929805637097328,
+        0.0010343011703785043,
+        0.00028535322978850974
+      ],
+      "null_max": 0.0014614093511561288,
+      "null_mean": 0.0005774376691607908,
+      "null_median": 0.0005110370615168947,
+      "null_min": -0.0004327644119591634,
+      "null_p05": -3.050676147842129e-06,
+      "null_p95": 0.0012837914185059808,
+      "real_delta_empirical_percentile": 100.0,
+      "real_movement_delta": 0.0017684541919683605
+    },
+    "movement_parameter_count": 94,
+    "null_fold_alphas": [
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      },
+      {
+        "2025-10-11 Team A @ Team D": 20.0,
+        "2025-10-17 Team F @ Team L": 1.0,
+        "2025-10-24 Team B @ Team A": 5.0,
+        "2025-10-24 Team E @ Team D": 5.0,
+        "2025-10-28 Team C @ Team A": 5.0,
+        "2025-10-29 Team G @ Team L": 5.0,
+        "2025-11-02 Team D @ Team A": 5.0,
+        "2025-11-16 Team H @ Team K": 5.0,
+        "2025-11-19 Team I @ Team K": 5.0,
+        "2025-11-28 Team J @ Team K": 20.0
+      }
+    ],
+    "permutation": "each of 26 movement values/missing values independently permuted across outer-training rows; held-out game movement stays intact",
+    "repetitions": 20,
+    "seed_schedule": "base seed 20261022; replicate/fold seed = base + replicate_index * 10 + sorted_game_index, indices zero-based",
+    "target": "recovery_within_3s"
+  },
+  "metadata": {
+    "alpha_grid": [
+      0.2,
+      1.0,
+      5.0,
+      20.0,
+      100.0,
+      500.0
+    ],
+    "binary_cluster_bootstrap": {
+      "replicates": 2000,
+      "seed": 20261022,
+      "unit": "game"
+    },
+    "evaluation": "outer leave-one-game-out; alpha selected independently within each outer training set by inner leave-one-game-out",
+    "event_only_parameter_count_including_intercept": 42,
+    "game_rows": {
+      "2025-10-11 Team A @ Team D": 100,
+      "2025-10-17 Team F @ Team L": 76,
+      "2025-10-24 Team B @ Team A": 104,
+      "2025-10-24 Team E @ Team D": 67,
+      "2025-10-28 Team C @ Team A": 113,
+      "2025-10-29 Team G @ Team L": 75,
+      "2025-11-02 Team D @ Team A": 104,
+      "2025-11-16 Team H @ Team K": 52,
+      "2025-11-19 Team I @ Team K": 85,
+      "2025-11-28 Team J @ Team K": 71
+    },
+    "matched_null_repetitions": 20,
+    "movement_augmented_parameter_count_including_intercept": 94,
+    "outer_heldout_games": 10,
+    "rows": 847,
+    "selection_metric": "pooled inner-LOO Brier score; minimum selected, ties resolve to first alpha in the listed ascending grid"
+  },
+  "runtime": {
+    "bootstrap_replicates_per_comparison": 2000,
+    "matched_null_seconds": 8.728602907038294,
+    "nested_binary_model_seconds": 86.45757913502166,
+    "total_seconds": 112.44100666901795
+  },
+  "targets": {
+    "any_followup_shot_within_5s": {
+      "event_only": {
+        "fit_predict_seconds": 6.886946389044169,
+        "metrics": {
+          "auc": 0.479788819071063,
+          "brier": 0.12997791361630504,
+          "event_rate": 0.15230224321133412,
+          "logloss": 0.4300032139276892,
+          "mean_prediction": 0.1595100734759495,
+          "n": 847,
+          "positive": 129,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.15872521980699844,
+              "n": 835,
+              "observed_rate": 0.1532934131736527
+            },
+            {
+              "bin": "0.2-0.4",
+              "mean_prediction": 0.21412280794046112,
+              "n": 12,
+              "observed_rate": 0.08333333333333333
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12498504707756662,
+              "1.0": 0.12510813285874847,
+              "100.0": 0.20489895524309915,
+              "20.0": 0.1508164518666268,
+              "5.0": 0.1291125614294602,
+              "500.0": 0.23828056537138373
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13037769732386245,
+              "1.0": 0.13032203454067598,
+              "100.0": 0.20670144814195926,
+              "20.0": 0.1547645863477813,
+              "5.0": 0.13400856327402008,
+              "500.0": 0.23875026861951304
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12929360092269498,
+              "1.0": 0.129524231745682,
+              "100.0": 0.20646061649483485,
+              "20.0": 0.15424470035223162,
+              "5.0": 0.1333524860360027,
+              "500.0": 0.2386867792953499
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1323749874217435,
+              "1.0": 0.13246797864380117,
+              "100.0": 0.20753337195563418,
+              "20.0": 0.15656171783887865,
+              "5.0": 0.13617261743383074,
+              "500.0": 0.23896767669689212
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13474517142562992,
+              "1.0": 0.13460288162670253,
+              "100.0": 0.20820420077226617,
+              "20.0": 0.15805924411003608,
+              "5.0": 0.138082004485558,
+              "500.0": 0.23914137047485196
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13155957935050883,
+              "1.0": 0.1317577512729646,
+              "100.0": 0.20729153528691535,
+              "20.0": 0.15603448830831892,
+              "5.0": 0.13552371060043222,
+              "500.0": 0.23890450197974858
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1261364394690409,
+              "1.0": 0.1259267884598152,
+              "100.0": 0.20511168104681812,
+              "20.0": 0.15129396306767764,
+              "5.0": 0.12974286265852222,
+              "500.0": 0.2383357195617872
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13036529299913605,
+              "1.0": 0.13046973439066994,
+              "100.0": 0.20680384108563618,
+              "20.0": 0.1549754957288278,
+              "5.0": 0.13423682291821995,
+              "500.0": 0.23877716570081328
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12953972837731118,
+              "1.0": 0.1296651894160413,
+              "100.0": 0.20649722076093055,
+              "20.0": 0.15431949823309415,
+              "5.0": 0.13344832216671304,
+              "500.0": 0.23869687678088425
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12661359592493007,
+              "1.0": 0.12676971568323794,
+              "100.0": 0.20545368258040644,
+              "20.0": 0.15205588990914715,
+              "5.0": 0.13067511204159274,
+              "500.0": 0.2384242162920373
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 776
+          }
+        ]
+      },
+      "movement_augmented": {
+        "fit_predict_seconds": 14.57658860902302,
+        "metrics": {
+          "auc": 0.4892250221329706,
+          "brier": 0.1301315715558626,
+          "event_rate": 0.15230224321133412,
+          "logloss": 0.4302315683009879,
+          "mean_prediction": 0.164101588991294,
+          "n": 847,
+          "positive": 129,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.1620916387285141,
+              "n": 819,
+              "observed_rate": 0.15384615384615385
+            },
+            {
+              "bin": "0.2-0.4",
+              "mean_prediction": 0.22289263417760677,
+              "n": 28,
+              "observed_rate": 0.10714285714285714
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1246649004519883,
+              "1.0": 0.12486108768788078,
+              "100.0": 0.20486566586526797,
+              "20.0": 0.15076936792267084,
+              "5.0": 0.1290299511996642,
+              "500.0": 0.23826937137086254
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1303932132727893,
+              "1.0": 0.13003627132182038,
+              "100.0": 0.20666490410957103,
+              "20.0": 0.1546958474903393,
+              "5.0": 0.13387549480845853,
+              "500.0": 0.2387386743273737
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1287753972330796,
+              "1.0": 0.12904806019453655,
+              "100.0": 0.20642088825749386,
+              "20.0": 0.1541686145514757,
+              "5.0": 0.13318613377640773,
+              "500.0": 0.23867429635429518
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13284612733184858,
+              "1.0": 0.13241730192496404,
+              "100.0": 0.20750361409664286,
+              "20.0": 0.15651793185345622,
+              "5.0": 0.13611519468823763,
+              "500.0": 0.2389577123910979
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13490445542167953,
+              "1.0": 0.13445654337739651,
+              "100.0": 0.2081693159965774,
+              "20.0": 0.15801335780020062,
+              "5.0": 0.13801521594150415,
+              "500.0": 0.23912957046042407
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13132223226097567,
+              "1.0": 0.13152564841260067,
+              "100.0": 0.20726301718549442,
+              "20.0": 0.15599007227025022,
+              "5.0": 0.13543989154989144,
+              "500.0": 0.2388950157767449
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12575161397543608,
+              "1.0": 0.12555415076649354,
+              "100.0": 0.20506964089848984,
+              "20.0": 0.1512178587799028,
+              "5.0": 0.12959250321746138,
+              "500.0": 0.23832233816739057
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13030890177790477,
+              "1.0": 0.1302805644771342,
+              "100.0": 0.20677199133037702,
+              "20.0": 0.15493000459884398,
+              "5.0": 0.13416205325530028,
+              "500.0": 0.23876650281349826
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12990721886764992,
+              "1.0": 0.129575713060413,
+              "100.0": 0.20646335180685568,
+              "20.0": 0.15427041597897378,
+              "5.0": 0.13338203517693947,
+              "500.0": 0.23868554164414738
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12683661451612413,
+              "1.0": 0.1265838276010895,
+              "100.0": 0.2054180991621163,
+              "20.0": 0.15199386036785625,
+              "5.0": 0.13057112866070633,
+              "500.0": 0.23841272402837785
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 776
+          }
+        ]
+      },
+      "paired_uncertainty": {
+        "bootstrap_games": 10,
+        "bootstrap_replicates": 2000,
+        "bootstrap_unit": "game",
+        "brier_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.00055397986343508,
+            0.0008814150516331797
+          ],
+          "mean": 0.00015365793955757212
+        },
+        "logloss_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.002250516421891789,
+            0.0027557830682397666
+          ],
+          "mean": 0.00022835437329871144
+        },
+        "seed": 20261022
+      }
+    },
+    "goal_from_attempt": {
+      "event_only": {
+        "fit_predict_seconds": 7.044307175965514,
+        "metrics": {
+          "auc": 0.7958555470931709,
+          "brier": 0.04237560278601911,
+          "event_rate": 0.04604486422668241,
+          "logloss": 0.17212052584792725,
+          "mean_prediction": 0.05191541083195006,
+          "n": 847,
+          "positive": 39,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.05191541083195006,
+              "n": 847,
+              "observed_rate": 0.04604486422668241
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04420356513194291,
+              "1.0": 0.045893613395469816,
+              "100.0": 0.1766714762841517,
+              "20.0": 0.08978708497632544,
+              "5.0": 0.053868318159400276,
+              "500.0": 0.2308946312145756
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.03984769692201154,
+              "1.0": 0.04122721494116878,
+              "100.0": 0.1749259670067257,
+              "20.0": 0.08606091220495503,
+              "5.0": 0.049317621940358575,
+              "500.0": 0.2304361831439974
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.041934555761416914,
+              "1.0": 0.04368858205079999,
+              "100.0": 0.17588192583016718,
+              "20.0": 0.0881012311814344,
+              "5.0": 0.051789109394590964,
+              "500.0": 0.23068688342041668
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.043653934593622684,
+              "1.0": 0.04525574183956389,
+              "100.0": 0.1764318109473199,
+              "20.0": 0.0892750708536353,
+              "5.0": 0.05324041006674199,
+              "500.0": 0.23083155051409632
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.045011513128069454,
+              "1.0": 0.04665273947851691,
+              "100.0": 0.17692654485392986,
+              "20.0": 0.09034439491187476,
+              "5.0": 0.05457140892630506,
+              "500.0": 0.23096119802607315
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04284259344005952,
+              "1.0": 0.04450993794959715,
+              "100.0": 0.17617356755698554,
+              "20.0": 0.08871616592896824,
+              "5.0": 0.05254650953391116,
+              "500.0": 0.23076413862858272
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.03879835057609518,
+              "1.0": 0.04022864027769438,
+              "100.0": 0.1745972805743196,
+              "20.0": 0.08534055528613006,
+              "5.0": 0.04840153015196186,
+              "500.0": 0.23035039631782236
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04278486432964687,
+              "1.0": 0.044430083795908265,
+              "100.0": 0.17614697863044496,
+              "20.0": 0.08865710379990142,
+              "5.0": 0.052470642280941976,
+              "500.0": 0.2307572365704129
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.03985618891990946,
+              "1.0": 0.041519079195715305,
+              "100.0": 0.17509050101144527,
+              "20.0": 0.08639866200988822,
+              "5.0": 0.049695293228453195,
+              "500.0": 0.23047975158825273
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04489542722403466,
+              "1.0": 0.046562504531887754,
+              "100.0": 0.17692577607755625,
+              "20.0": 0.09032499997100187,
+              "5.0": 0.05451783080872377,
+              "500.0": 0.23096155277755212
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 776
+          }
+        ]
+      },
+      "movement_augmented": {
+        "fit_predict_seconds": 14.481239582994021,
+        "metrics": {
+          "auc": 0.7771642548870271,
+          "brier": 0.04225506080641713,
+          "event_rate": 0.04604486422668241,
+          "logloss": 0.17083304561981327,
+          "mean_prediction": 0.05215598080636908,
+          "n": 847,
+          "positive": 39,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.05215598080636908,
+              "n": 847,
+              "observed_rate": 0.04604486422668241
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.044097408490235905,
+              "1.0": 0.04562617993211609,
+              "100.0": 0.17660012729681346,
+              "20.0": 0.08967280901947541,
+              "5.0": 0.05370769893288979,
+              "500.0": 0.23087274480116893
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.03969819908554814,
+              "1.0": 0.041006248425821866,
+              "100.0": 0.17486062948504766,
+              "20.0": 0.08596037868709612,
+              "5.0": 0.04918289039155154,
+              "500.0": 0.23041586117681537
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04182863105449005,
+              "1.0": 0.04348732710969375,
+              "100.0": 0.1758123738896606,
+              "20.0": 0.08800072960279269,
+              "5.0": 0.05166305901180171,
+              "500.0": 0.23066493522939296
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04360317163518089,
+              "1.0": 0.045037936535786666,
+              "100.0": 0.17637166002995078,
+              "20.0": 0.08917948379588596,
+              "5.0": 0.053106607959686684,
+              "500.0": 0.23081301126317494
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04487927599319912,
+              "1.0": 0.04637240764260174,
+              "100.0": 0.1768489755900521,
+              "20.0": 0.09022507059198787,
+              "5.0": 0.054407380665841824,
+              "500.0": 0.23093714278558575
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04274419866497246,
+              "1.0": 0.04429951459654859,
+              "100.0": 0.17611441385889479,
+              "20.0": 0.08862493343409776,
+              "5.0": 0.05242020940105381,
+              "500.0": 0.23074569739312129
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.03865750813752962,
+              "1.0": 0.04001532673049186,
+              "100.0": 0.17452548003345558,
+              "20.0": 0.08523927004859519,
+              "5.0": 0.04827469575446225,
+              "500.0": 0.23032752899630157
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04264196368255891,
+              "1.0": 0.044191197970044616,
+              "100.0": 0.17607890357753722,
+              "20.0": 0.08855230810035897,
+              "5.0": 0.052328770094510035,
+              "500.0": 0.23073608177477453
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.039786761907086306,
+              "1.0": 0.04134484726117014,
+              "100.0": 0.17502951299518762,
+              "20.0": 0.08631259226617029,
+              "5.0": 0.0495872113828501,
+              "500.0": 0.23046029389713005
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.04480363711867103,
+              "1.0": 0.046305635323554084,
+              "100.0": 0.1768636473597913,
+              "20.0": 0.0902220873997548,
+              "5.0": 0.05436594711445949,
+              "500.0": 0.2309426322973026
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 776
+          }
+        ]
+      },
+      "paired_uncertainty": {
+        "bootstrap_games": 10,
+        "bootstrap_replicates": 2000,
+        "bootstrap_unit": "game",
+        "brier_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.000373324961090479,
+            0.00010247387726958311
+          ],
+          "mean": -0.00012054197960197771
+        },
+        "logloss_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.0021272253901815225,
+            -0.0005296422207247892
+          ],
+          "mean": -0.0012874802281139797
+        },
+        "seed": 20261022
+      }
+    },
+    "recovery_team_category": {
+      "event_only": {
+        "fit_predict_seconds": 5.058055305038579,
+        "metrics": {
+          "accuracy": 0.4462809917355372,
+          "class_calibration": [
+            {
+              "category": "no_recovery_within_3s",
+              "mean_predicted_probability": 0.4543607105088064,
+              "n_observed": 378,
+              "observed_rate": 0.4462809917355372
+            },
+            {
+              "category": "opponent_recovery",
+              "mean_predicted_probability": 0.2723588520483883,
+              "n_observed": 226,
+              "observed_rate": 0.2668240850059032
+            },
+            {
+              "category": "shooting_team_recovery",
+              "mean_predicted_probability": 0.2732804374428053,
+              "n_observed": 243,
+              "observed_rate": 0.28689492325855964
+            }
+          ],
+          "multiclass_brier": 0.6491921454417933,
+          "multiclass_logloss": 1.0734226250295764,
+          "n": 847
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_recovered_rows": 53,
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25130618733783155,
+              "1.0": 0.25057304606934633,
+              "100.0": 0.25020213832615024,
+              "20.0": 0.25058626426731767,
+              "5.0": 0.2508019228254686,
+              "500.0": 0.25004659370196575
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 416,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_recovered_rows": 40,
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25291784394587324,
+              "1.0": 0.25096027611496546,
+              "100.0": 0.25003730739976904,
+              "20.0": 0.25023374457906605,
+              "5.0": 0.2505167658818686,
+              "500.0": 0.2500041147052105
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 429,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_recovered_rows": 63,
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2523621129900477,
+              "1.0": 0.2508446285459678,
+              "100.0": 0.25006463663804995,
+              "20.0": 0.25029875268559537,
+              "5.0": 0.2505703218365443,
+              "500.0": 0.2500108665747729
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 406,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_recovered_rows": 37,
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25058471862391857,
+              "1.0": 0.2500118418137004,
+              "100.0": 0.2500486396736135,
+              "20.0": 0.2502203404488305,
+              "5.0": 0.250315136574564,
+              "500.0": 0.25000783180285907
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 432,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_recovered_rows": 54,
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2519705061990299,
+              "1.0": 0.2506794334097063,
+              "100.0": 0.2500876816621277,
+              "20.0": 0.25034150730122473,
+              "5.0": 0.25057743791217946,
+              "500.0": 0.25001698275676315
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 415,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_recovered_rows": 40,
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2520899828802315,
+              "1.0": 0.2504287846368036,
+              "100.0": 0.25002791112322464,
+              "20.0": 0.2501881878784555,
+              "5.0": 0.2503522826156128,
+              "500.0": 0.250002231471638
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 429,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_recovered_rows": 59,
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2546962177070518,
+              "1.0": 0.2514738769838654,
+              "100.0": 0.25013693415560656,
+              "20.0": 0.2504003925452568,
+              "5.0": 0.25069222176314687,
+              "500.0": 0.25003210253917796
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 410,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_recovered_rows": 28,
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25259575308772686,
+              "1.0": 0.2509583563868022,
+              "100.0": 0.2500847196833772,
+              "20.0": 0.2503358313294596,
+              "5.0": 0.25062118235985287,
+              "500.0": 0.25001643028266596
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 441,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_recovered_rows": 47,
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25096046171523884,
+              "1.0": 0.2503353038836929,
+              "100.0": 0.25017081193575597,
+              "20.0": 0.2505061696916036,
+              "5.0": 0.2506696614480196,
+              "500.0": 0.25003881534452627
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 422,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_recovered_rows": 48,
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2506736177178725,
+              "1.0": 0.2500995599620053,
+              "100.0": 0.2501992224999505,
+              "20.0": 0.2505349131154836,
+              "5.0": 0.2506199498610668,
+              "500.0": 0.2500471957995903
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 421,
+            "training_rows": 776
+          }
+        ]
+      },
+      "movement_augmented": {
+        "fit_predict_seconds": 11.282909515022766,
+        "metrics": {
+          "accuracy": 0.4462809917355372,
+          "class_calibration": [
+            {
+              "category": "no_recovery_within_3s",
+              "mean_predicted_probability": 0.4575251617693222,
+              "n_observed": 378,
+              "observed_rate": 0.4462809917355372
+            },
+            {
+              "category": "opponent_recovery",
+              "mean_predicted_probability": 0.2707751835282537,
+              "n_observed": 226,
+              "observed_rate": 0.2668240850059032
+            },
+            {
+              "category": "shooting_team_recovery",
+              "mean_predicted_probability": 0.2716996547024241,
+              "n_observed": 243,
+              "observed_rate": 0.28689492325855964
+            }
+          ],
+          "multiclass_brier": 0.6504914624690262,
+          "multiclass_logloss": 1.075196052240845,
+          "n": 847
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_recovered_rows": 53,
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25644358458409033,
+              "1.0": 0.2521780054573256,
+              "100.0": 0.2502195874023278,
+              "20.0": 0.2506771764453154,
+              "5.0": 0.2511647878769052,
+              "500.0": 0.2500500626177696
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 416,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_recovered_rows": 40,
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2598865340916922,
+              "1.0": 0.25331944188506195,
+              "100.0": 0.25006317858418187,
+              "20.0": 0.25036625425365017,
+              "5.0": 0.25104894910281356,
+              "500.0": 0.2500092013279265
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 429,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_recovered_rows": 63,
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2581712009201329,
+              "1.0": 0.2528228803370177,
+              "100.0": 0.25008529079244163,
+              "20.0": 0.25041027858351145,
+              "5.0": 0.2510243165576951,
+              "500.0": 0.25001481601794995
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 406,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_recovered_rows": 37,
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25707292727573006,
+              "1.0": 0.25221299700064786,
+              "100.0": 0.25007413299269987,
+              "20.0": 0.2503508130395203,
+              "5.0": 0.2508273359084984,
+              "500.0": 0.25001282218858245
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 432,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_recovered_rows": 54,
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25910422872337807,
+              "1.0": 0.25267969211774105,
+              "100.0": 0.25010405965406207,
+              "20.0": 0.2504315610671793,
+              "5.0": 0.2509670721192716,
+              "500.0": 0.25002007399395015
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 415,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_recovered_rows": 40,
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2591058318559446,
+              "1.0": 0.2526992812880005,
+              "100.0": 0.25005262492926983,
+              "20.0": 0.2503156051228553,
+              "5.0": 0.2508616847574127,
+              "500.0": 0.2500070298577384
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 429,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_recovered_rows": 59,
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2589260271241123,
+              "1.0": 0.2523156524937915,
+              "100.0": 0.25014034415010983,
+              "20.0": 0.25041797112993125,
+              "5.0": 0.25078559076138524,
+              "500.0": 0.25003284108361185
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 410,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_recovered_rows": 28,
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2598397290879488,
+              "1.0": 0.25336632848968366,
+              "100.0": 0.25011018110982014,
+              "20.0": 0.2504675208997792,
+              "5.0": 0.25115175190717715,
+              "500.0": 0.2500214069868425
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 441,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_recovered_rows": 47,
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25902599784360214,
+              "1.0": 0.2528822537452923,
+              "100.0": 0.2502005380824431,
+              "20.0": 0.25065523418727004,
+              "5.0": 0.25125124713759256,
+              "500.0": 0.25004470808614415
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 422,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_recovered_rows": 48,
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25894042306314696,
+              "1.0": 0.2529722377125615,
+              "100.0": 0.2502338526005761,
+              "20.0": 0.2507095969518021,
+              "5.0": 0.2512998266439849,
+              "500.0": 0.2500541634445438
+            },
+            "selected_alpha": 500.0,
+            "training_recovered_rows": 421,
+            "training_rows": 776
+          }
+        ]
+      },
+      "paired_uncertainty": {
+        "bootstrap_games": 10,
+        "bootstrap_replicates": 2000,
+        "bootstrap_unit": "game",
+        "multiclass_brier_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.00017230783227351054,
+            0.0035786815814942306
+          ],
+          "mean": 0.0012993170272329602
+        },
+        "multiclass_logloss_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.00023040254217650545,
+            0.004857744159137857
+          ],
+          "mean": 0.0017734272112686078
+        },
+        "seed": 20261022
+      }
+    },
+    "recovery_within_3s": {
+      "event_only": {
+        "fit_predict_seconds": 6.967571660003159,
+        "metrics": {
+          "auc": 0.46201532022427544,
+          "brier": 0.2482133306783785,
+          "event_rate": 0.5537190082644629,
+          "logloss": 0.6895896205840462,
+          "mean_prediction": 0.5456392894911936,
+          "n": 847,
+          "positive": 469,
+          "reliability_5_bins": [
+            {
+              "bin": "0.4-0.6",
+              "mean_prediction": 0.5455737366954571,
+              "n": 846,
+              "observed_rate": 0.5543735224586288
+            },
+            {
+              "bin": "0.6-0.8",
+              "mean_prediction": 0.601096954684346,
+              "n": 1,
+              "observed_rate": 0.0
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.24927853606200795,
+              "1.0": 0.24794548004077885,
+              "100.0": 0.24898102495878088,
+              "20.0": 0.24784770713008353,
+              "5.0": 0.24759293275334868,
+              "500.0": 0.24973240635515895
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2467143629934053,
+              "1.0": 0.2464030849435207,
+              "100.0": 0.2489569886172858,
+              "20.0": 0.24770830355636086,
+              "5.0": 0.24707444298872153,
+              "500.0": 0.24972816346952606
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25004263535444365,
+              "1.0": 0.24853493581216754,
+              "100.0": 0.24933276090343512,
+              "20.0": 0.24858831791732466,
+              "5.0": 0.24836540369376855,
+              "500.0": 0.2498245317557756
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2491578273963806,
+              "1.0": 0.2479303816230799,
+              "100.0": 0.24908456589563704,
+              "20.0": 0.24805066306786686,
+              "5.0": 0.2477481636395563,
+              "500.0": 0.2497598880716911
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.24835872849779395,
+              "1.0": 0.24676138371218165,
+              "100.0": 0.24855187167135218,
+              "20.0": 0.2468530832755263,
+              "5.0": 0.24634753504230056,
+              "500.0": 0.24962298714767686
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.24958867750884434,
+              "1.0": 0.24816555367838367,
+              "100.0": 0.24902139380275856,
+              "20.0": 0.24793732432533894,
+              "5.0": 0.24771647031225236,
+              "500.0": 0.2497429116330222
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2500308063807178,
+              "1.0": 0.24852788731490652,
+              "100.0": 0.24918021425701525,
+              "20.0": 0.24828742453623104,
+              "5.0": 0.2481126569180944,
+              "500.0": 0.24978395701386694
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.24970062184884254,
+              "1.0": 0.24817685391292402,
+              "100.0": 0.249050992538626,
+              "20.0": 0.24799233989146013,
+              "5.0": 0.24775571868391189,
+              "500.0": 0.24975089581949575
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.24871009161378058,
+              "1.0": 0.24788925731335956,
+              "100.0": 0.24909323431279232,
+              "20.0": 0.24807548039811692,
+              "5.0": 0.2477833189479888,
+              "500.0": 0.2497619337656262
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2504739295244168,
+              "1.0": 0.24902336430808125,
+              "100.0": 0.24943070963826186,
+              "20.0": 0.2487949467320011,
+              "5.0": 0.2486594233360731,
+              "500.0": 0.2498506150705936
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 776
+          }
+        ]
+      },
+      "movement_augmented": {
+        "fit_predict_seconds": 15.24624849203974,
+        "metrics": {
+          "auc": 0.4601087532857256,
+          "brier": 0.24907775927687012,
+          "event_rate": 0.5537190082644629,
+          "logloss": 0.6913580747760145,
+          "mean_prediction": 0.5424748382306778,
+          "n": 847,
+          "positive": 469,
+          "reliability_5_bins": [
+            {
+              "bin": "0.2-0.4",
+              "mean_prediction": 0.37900481139514997,
+              "n": 1,
+              "observed_rate": 1.0
+            },
+            {
+              "bin": "0.4-0.6",
+              "mean_prediction": 0.5420013663378291,
+              "n": 839,
+              "observed_rate": 0.5578069129916567
+            },
+            {
+              "bin": "0.6-0.8",
+              "mean_prediction": 0.6225766875071782,
+              "n": 7,
+              "observed_rate": 0.0
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2534581565422802,
+              "1.0": 0.24945805973354004,
+              "100.0": 0.24900195749995396,
+              "20.0": 0.2479494924184957,
+              "5.0": 0.24797639648860142,
+              "500.0": 0.24973659130337234
+            },
+            "selected_alpha": 20.0,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2490611364865102,
+              "1.0": 0.2465802302984509,
+              "100.0": 0.2489238107949404,
+              "20.0": 0.2475688821632679,
+              "5.0": 0.2467649844242622,
+              "500.0": 0.24972126570086933
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25308340832214354,
+              "1.0": 0.24956364071152887,
+              "100.0": 0.24933965037577835,
+              "20.0": 0.24862956309608836,
+              "5.0": 0.24857093946680278,
+              "500.0": 0.2498258019320796
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2524583571429009,
+              "1.0": 0.24900147545357168,
+              "100.0": 0.24909125963794138,
+              "20.0": 0.2480907504364447,
+              "5.0": 0.24795315653527172,
+              "500.0": 0.24976113355446297
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2519600531760136,
+              "1.0": 0.248042631605874,
+              "100.0": 0.24856932516472144,
+              "20.0": 0.2469400616900704,
+              "5.0": 0.24667597722753098,
+              "500.0": 0.24962640071872227
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25289444094048713,
+              "1.0": 0.24932634518396146,
+              "100.0": 0.24903407119008905,
+              "20.0": 0.24800355268037763,
+              "5.0": 0.24798762742453276,
+              "500.0": 0.24974536876332312
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25274969004152403,
+              "1.0": 0.2493844935642857,
+              "100.0": 0.24918602470098594,
+              "20.0": 0.2483219204534317,
+              "5.0": 0.2482816710197749,
+              "500.0": 0.24978501895386074
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25275556146854233,
+              "1.0": 0.2491683476077695,
+              "100.0": 0.24905964833395863,
+              "20.0": 0.2480391968438718,
+              "5.0": 0.24796374312587066,
+              "500.0": 0.24975255918201392
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.25313856795560263,
+              "1.0": 0.2491937322662669,
+              "100.0": 0.24909867536733887,
+              "20.0": 0.24811188026223546,
+              "5.0": 0.24799522807945382,
+              "500.0": 0.2497628792508501
+            },
+            "selected_alpha": 5.0,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.2540242948643838,
+              "1.0": 0.250069444743049,
+              "100.0": 0.24943708721875413,
+              "20.0": 0.2488301980185866,
+              "5.0": 0.24884031237711396,
+              "500.0": 0.24985187560193117
+            },
+            "selected_alpha": 20.0,
+            "training_rows": 776
+          }
+        ]
+      },
+      "paired_uncertainty": {
+        "bootstrap_games": 10,
+        "bootstrap_replicates": 2000,
+        "bootstrap_unit": "game",
+        "brier_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.00011703204216628738,
+            0.002385610033068424
+          ],
+          "mean": 0.0008644285984916178
+        },
+        "logloss_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.0002359616399887382,
+            0.004856581320704669
+          ],
+          "mean": 0.0017684541919683605
+        },
+        "seed": 20261022
+      }
+    },
+    "same_team_followup_shot_within_5s": {
+      "event_only": {
+        "fit_predict_seconds": 6.704328333958983,
+        "metrics": {
+          "auc": 0.479788819071063,
+          "brier": 0.12997791361630504,
+          "event_rate": 0.15230224321133412,
+          "logloss": 0.4300032139276892,
+          "mean_prediction": 0.1595100734759495,
+          "n": 847,
+          "positive": 129,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.15872521980699844,
+              "n": 835,
+              "observed_rate": 0.1532934131736527
+            },
+            {
+              "bin": "0.2-0.4",
+              "mean_prediction": 0.21412280794046112,
+              "n": 12,
+              "observed_rate": 0.08333333333333333
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12498504707756662,
+              "1.0": 0.12510813285874847,
+              "100.0": 0.20489895524309915,
+              "20.0": 0.1508164518666268,
+              "5.0": 0.1291125614294602,
+              "500.0": 0.23828056537138373
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13037769732386245,
+              "1.0": 0.13032203454067598,
+              "100.0": 0.20670144814195926,
+              "20.0": 0.1547645863477813,
+              "5.0": 0.13400856327402008,
+              "500.0": 0.23875026861951304
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12929360092269498,
+              "1.0": 0.129524231745682,
+              "100.0": 0.20646061649483485,
+              "20.0": 0.15424470035223162,
+              "5.0": 0.1333524860360027,
+              "500.0": 0.2386867792953499
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1323749874217435,
+              "1.0": 0.13246797864380117,
+              "100.0": 0.20753337195563418,
+              "20.0": 0.15656171783887865,
+              "5.0": 0.13617261743383074,
+              "500.0": 0.23896767669689212
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13474517142562992,
+              "1.0": 0.13460288162670253,
+              "100.0": 0.20820420077226617,
+              "20.0": 0.15805924411003608,
+              "5.0": 0.138082004485558,
+              "500.0": 0.23914137047485196
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13155957935050883,
+              "1.0": 0.1317577512729646,
+              "100.0": 0.20729153528691535,
+              "20.0": 0.15603448830831892,
+              "5.0": 0.13552371060043222,
+              "500.0": 0.23890450197974858
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1261364394690409,
+              "1.0": 0.1259267884598152,
+              "100.0": 0.20511168104681812,
+              "20.0": 0.15129396306767764,
+              "5.0": 0.12974286265852222,
+              "500.0": 0.2383357195617872
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13036529299913605,
+              "1.0": 0.13046973439066994,
+              "100.0": 0.20680384108563618,
+              "20.0": 0.1549754957288278,
+              "5.0": 0.13423682291821995,
+              "500.0": 0.23877716570081328
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12953972837731118,
+              "1.0": 0.1296651894160413,
+              "100.0": 0.20649722076093055,
+              "20.0": 0.15431949823309415,
+              "5.0": 0.13344832216671304,
+              "500.0": 0.23869687678088425
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12661359592493007,
+              "1.0": 0.12676971568323794,
+              "100.0": 0.20545368258040644,
+              "20.0": 0.15205588990914715,
+              "5.0": 0.13067511204159274,
+              "500.0": 0.2384242162920373
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 776
+          }
+        ]
+      },
+      "movement_augmented": {
+        "fit_predict_seconds": 14.550348891993053,
+        "metrics": {
+          "auc": 0.4892250221329706,
+          "brier": 0.1301315715558626,
+          "event_rate": 0.15230224321133412,
+          "logloss": 0.4302315683009879,
+          "mean_prediction": 0.164101588991294,
+          "n": 847,
+          "positive": 129,
+          "reliability_5_bins": [
+            {
+              "bin": "0.0-0.2",
+              "mean_prediction": 0.1620916387285141,
+              "n": 819,
+              "observed_rate": 0.15384615384615385
+            },
+            {
+              "bin": "0.2-0.4",
+              "mean_prediction": 0.22289263417760677,
+              "n": 28,
+              "observed_rate": 0.10714285714285714
+            }
+          ]
+        },
+        "outer_folds": [
+          {
+            "held_out_game": "2025-10-11 Team A @ Team D",
+            "held_out_rows": 100,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1246649004519883,
+              "1.0": 0.12486108768788078,
+              "100.0": 0.20486566586526797,
+              "20.0": 0.15076936792267084,
+              "5.0": 0.1290299511996642,
+              "500.0": 0.23826937137086254
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 747
+          },
+          {
+            "held_out_game": "2025-10-17 Team F @ Team L",
+            "held_out_rows": 76,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1303932132727893,
+              "1.0": 0.13003627132182038,
+              "100.0": 0.20666490410957103,
+              "20.0": 0.1546958474903393,
+              "5.0": 0.13387549480845853,
+              "500.0": 0.2387386743273737
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 771
+          },
+          {
+            "held_out_game": "2025-10-24 Team B @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.1287753972330796,
+              "1.0": 0.12904806019453655,
+              "100.0": 0.20642088825749386,
+              "20.0": 0.1541686145514757,
+              "5.0": 0.13318613377640773,
+              "500.0": 0.23867429635429518
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-10-24 Team E @ Team D",
+            "held_out_rows": 67,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13284612733184858,
+              "1.0": 0.13241730192496404,
+              "100.0": 0.20750361409664286,
+              "20.0": 0.15651793185345622,
+              "5.0": 0.13611519468823763,
+              "500.0": 0.2389577123910979
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 780
+          },
+          {
+            "held_out_game": "2025-10-28 Team C @ Team A",
+            "held_out_rows": 113,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13490445542167953,
+              "1.0": 0.13445654337739651,
+              "100.0": 0.2081693159965774,
+              "20.0": 0.15801335780020062,
+              "5.0": 0.13801521594150415,
+              "500.0": 0.23912957046042407
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 734
+          },
+          {
+            "held_out_game": "2025-10-29 Team G @ Team L",
+            "held_out_rows": 75,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13132223226097567,
+              "1.0": 0.13152564841260067,
+              "100.0": 0.20726301718549442,
+              "20.0": 0.15599007227025022,
+              "5.0": 0.13543989154989144,
+              "500.0": 0.2388950157767449
+            },
+            "selected_alpha": 0.2,
+            "training_rows": 772
+          },
+          {
+            "held_out_game": "2025-11-02 Team D @ Team A",
+            "held_out_rows": 104,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12575161397543608,
+              "1.0": 0.12555415076649354,
+              "100.0": 0.20506964089848984,
+              "20.0": 0.1512178587799028,
+              "5.0": 0.12959250321746138,
+              "500.0": 0.23832233816739057
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 743
+          },
+          {
+            "held_out_game": "2025-11-16 Team H @ Team K",
+            "held_out_rows": 52,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.13030890177790477,
+              "1.0": 0.1302805644771342,
+              "100.0": 0.20677199133037702,
+              "20.0": 0.15493000459884398,
+              "5.0": 0.13416205325530028,
+              "500.0": 0.23876650281349826
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 795
+          },
+          {
+            "held_out_game": "2025-11-19 Team I @ Team K",
+            "held_out_rows": 85,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12990721886764992,
+              "1.0": 0.129575713060413,
+              "100.0": 0.20646335180685568,
+              "20.0": 0.15427041597897378,
+              "5.0": 0.13338203517693947,
+              "500.0": 0.23868554164414738
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 762
+          },
+          {
+            "held_out_game": "2025-11-28 Team J @ Team K",
+            "held_out_rows": 71,
+            "inner_leave_one_game_out_brier_by_alpha": {
+              "0.2": 0.12683661451612413,
+              "1.0": 0.1265838276010895,
+              "100.0": 0.2054180991621163,
+              "20.0": 0.15199386036785625,
+              "5.0": 0.13057112866070633,
+              "500.0": 0.23841272402837785
+            },
+            "selected_alpha": 1.0,
+            "training_rows": 776
+          }
+        ]
+      },
+      "paired_uncertainty": {
+        "bootstrap_games": 10,
+        "bootstrap_replicates": 2000,
+        "bootstrap_unit": "game",
+        "brier_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.00055397986343508,
+            0.0008814150516331797
+          ],
+          "mean": 0.00015365793955757212
+        },
+        "logloss_movement_minus_event": {
+          "cluster_bootstrap_95pct": [
+            -0.002250516421891789,
+            0.0027557830682397666
+          ],
+          "mean": 0.00022835437329871144
+        },
+        "seed": 20261022
+      }
+    }
+  }
+}

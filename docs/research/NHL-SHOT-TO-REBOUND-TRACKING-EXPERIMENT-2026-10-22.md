@@ -80,3 +80,72 @@ The data is useful for future research on pre-shot spatial interactions, but it 
 The event baseline uses the Big Data Cup event stream so its labels align with the tracking games. The separate NHL shot-event archive was not used: team labels here are anonymized, no game identity mapping has been verified, and no NHL-archive join was attempted. No starting-goalie inference or post-shot target-game locations enter the predictors; shooter-track features are matched from the shot row to pre-shot tracking only. The 2026 Big Data Cup [user agreement](https://github.com/bigdatacup/Big-Data-Cup-2026/blob/main/legal.md) restricts publicly shared research from being used for profit. The user confirmed separate written permission exists; I did not inspect or copy that permission into the repository.
 
 This work changed no production code, live picks, Phase 2A or protected research reports. No database, ESPN, or provider-contact calls were made, and nothing was pushed.
+
+## Robustness: regularisation and a matched null
+
+This appendix keeps the original fixed-alpha analysis and its JSON unchanged. The original tables above use alpha = 0.2 in both arms. This robustness analysis uses nested outer leave-one-game-out evaluation: within each outer training set, alpha was selected independently for each arm by pooled inner leave-one-game-out Brier score over `{0.2, 1, 5, 20, 100, 500}`. Ties resolve to the first value in that order. Scaling, median imputation, and alpha selection are fitted using training games only. The outer held-out game does not affect any fit or choice.
+
+The event-only design has **42 parameters including the intercept** (11 event numeric features, each with a missingness indicator; 19 categorical indicators; intercept). The movement design has **94** (the same 42 plus 26 movement values and missingness indicators). The common evaluation set remains 847 attempts from ten games. Each outer fold trains on 734–795 attempts and tests on 52–113 (mean training size 762.3, mean test size 84.7). The recovery-team conditional model fits only the recovered subset of each training fold; its exact recovered counts are shown below. Every table in this appendix uses the alpha-selected nested fits, except the matched-null table, which inherits the movement arm's selected outer-fold alpha as specified below.
+
+### Nested metrics
+
+Metrics are from the ten outer held-out games. Calibration is shown as observed rate versus mean prediction. Paired intervals resample the ten game clusters 2,000 times with seed `20261022`; they are exploratory with only ten clusters. Binary models each use 42 versus 94 parameters, respectively. The recovery-team model composes the nested recovery probability with a separately alpha-selected conditional same-team model of the same 42/94 parameter dimensions.
+
+| Target (positive / n) | Arm | Observed rate | Mean prediction | Brier | Log loss | AUC |
+|---|---|---:|---:|---:|---:|---:|
+| Goal (39 / 847) | Event-only | 0.04604 | 0.05192 | 0.04238 | 0.17212 | 0.79586 |
+| Goal (39 / 847) | Movement | 0.04604 | 0.05216 | 0.04226 | 0.17083 | 0.77716 |
+| Recovery within 3s (469 / 847) | Event-only | 0.55372 | 0.54564 | 0.24821 | 0.68959 | 0.46202 |
+| Recovery within 3s (469 / 847) | Movement | 0.55372 | 0.54247 | 0.24908 | 0.69136 | 0.46011 |
+| Follow-up shot within 5s (129 / 847) | Event-only | 0.15230 | 0.15951 | 0.12998 | 0.43000 | 0.47979 |
+| Follow-up shot within 5s (129 / 847) | Movement | 0.15230 | 0.16410 | 0.13013 | 0.43023 | 0.48923 |
+| Same-team follow-up within 5s (129 / 847) | Event-only | 0.15230 | 0.15951 | 0.12998 | 0.43000 | 0.47979 |
+| Same-team follow-up within 5s (129 / 847) | Movement | 0.15230 | 0.16410 | 0.13013 | 0.43023 | 0.48923 |
+| Recovery team, 3 classes (847) | Event-only | — | class means below | 0.64919 | 1.07342 | — |
+| Recovery team, 3 classes (847) | Movement | — | class means below | 0.65049 | 1.07520 | — |
+
+The two follow-up labels are identical on these matched rows, so their nested predictions and scores are identical. Recovery-team observed counts are 378 no recovery, 226 opponent recovery, and 243 shooting-team recovery. Event-only mean class probabilities are 0.45436 / 0.27236 / 0.27328; movement gives 0.45753 / 0.27078 / 0.27170, in that class order.
+
+| Target; movement minus event-only | Δ Brier (95% game-bootstrap interval) | Δ log loss (95% game-bootstrap interval) |
+|---|---:|---:|
+| Goal | -0.00012 [-0.00037, +0.00010] | -0.00129 [-0.00213, -0.00053] |
+| Recovery within 3s | +0.00086 [-0.00012, +0.00239] | +0.00177 [-0.00024, +0.00486] |
+| Follow-up shot within 5s | +0.00015 [-0.00055, +0.00088] | +0.00023 [-0.00225, +0.00276] |
+| Same-team follow-up within 5s | +0.00015 [-0.00055, +0.00088] | +0.00023 [-0.00225, +0.00276] |
+| Recovery team, 3 classes | +0.00130 [-0.00017, +0.00358] | +0.00177 [-0.00023, +0.00486] |
+
+The tuned recovery and follow-up comparisons do not show a statistically supported difference from event-only under the paired game bootstrap. Goal log loss still favors movement, but goal Brier is inconclusive and AUC is lower; this remains mixed evidence with 39 goals. For recovery-team, the conditional same-team alpha is 500 in every outer fold for both arms; that strong shrinkage does not make the movement arm's small multiclass score deficit conclusive.
+
+### Selected alpha by outer fold
+
+Each alpha pair is event-only / movement. The model dimensions are 42 / 94 parameters in every binary table; outer training/test counts are listed per fold. The recovery-team conditional classifier also has 42 / 94 parameters and is trained only on the recovered counts listed separately. For each outcome, alpha was selected by inner LOO Brier over the nine outer-training games only.
+
+| Held-out game | All training / test rows | Recovered training / test rows | Goal α E / M | Recovery α E / M | Follow-up α E / M | Same-team follow-up α E / M | Conditional recovery-team α E / M |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2025-10-11 Team A @ Team D | 747 / 100 | 416 / 53 | 0.2 / 0.2 | 5 / 20 | 0.2 / 0.2 | 0.2 / 0.2 | 500 / 500 |
+| 2025-10-17 Team F @ Team L | 771 / 76 | 429 / 40 | 0.2 / 0.2 | 1 / 1 | 1 / 1 | 1 / 1 | 500 / 500 |
+| 2025-10-24 Team B @ Team A | 743 / 104 | 406 / 63 | 0.2 / 0.2 | 5 / 5 | 0.2 / 0.2 | 0.2 / 0.2 | 500 / 500 |
+| 2025-10-24 Team E @ Team D | 780 / 67 | 432 / 37 | 0.2 / 0.2 | 5 / 5 | 0.2 / 1 | 0.2 / 1 | 500 / 500 |
+| 2025-10-28 Team C @ Team A | 734 / 113 | 415 / 54 | 0.2 / 0.2 | 5 / 5 | 1 / 1 | 1 / 1 | 500 / 500 |
+| 2025-10-29 Team G @ Team L | 772 / 75 | 429 / 40 | 0.2 / 0.2 | 5 / 5 | 0.2 / 0.2 | 0.2 / 0.2 | 500 / 500 |
+| 2025-11-02 Team D @ Team A | 743 / 104 | 410 / 59 | 0.2 / 0.2 | 5 / 5 | 1 / 1 | 1 / 1 | 500 / 500 |
+| 2025-11-16 Team H @ Team K | 795 / 52 | 441 / 28 | 0.2 / 0.2 | 5 / 5 | 0.2 / 1 | 0.2 / 1 | 500 / 500 |
+| 2025-11-19 Team I @ Team K | 762 / 85 | 422 / 47 | 0.2 / 0.2 | 5 / 5 | 0.2 / 1 | 0.2 / 1 | 500 / 500 |
+| 2025-11-28 Team J @ Team K | 776 / 71 | 421 / 48 | 0.2 / 0.2 | 5 / 20 | 0.2 / 1 | 0.2 / 1 | 500 / 500 |
+
+The goal alpha remained at the grid's minimum, 0.2, in every fold. Recovery selected stronger shrinkage than the original 0.2 in most folds, with the movement arm selecting 20 in two folds. Follow-up selection varied by arm and fold. The conditional recovery-team model selected the grid maximum in all folds, indicating that its inner validation favored very strong shrinkage across this small population.
+
+### Matched-null control: recovery within 3s
+
+The 20 null replicates each independently permuted all 26 movement columns, including their missing values, across rows inside each outer training fold. Each fit retained the movement arm's 94-column design and used that fold's alpha selected from real training data by inner LOO. The held-out game's actual movement values remained untouched. This isolates whether the real row-level training alignment helps under the chosen alpha; it is not a separately tuned null model. Event-only paired comparisons still use the 42-parameter alpha-selected model.
+
+| Loss delta, movement minus event-only (α per outer fold inherited from tuned movement) | Real movement delta | Null mean | Null median | Null 5th–95th percentiles | Null range | Real empirical percentile |
+|---|---:|---:|---:|---:|---:|---:|
+| Recovery Brier | +0.000864 | +0.000287 | +0.000253 | +0.000004 to +0.000639 | -0.000212 to +0.000726 | 100th (20/20 null deltas lower) |
+| Recovery log loss | +0.001768 | +0.000577 | +0.000511 | -0.000003 to +0.001284 | -0.000433 to +0.001461 | 100th (20/20 null deltas lower) |
+
+For both proper scores, the real movement arm is worse than all 20 shuffled-training controls, rather than lying inside their observed range. That argues against attributing the entire recovery deficit to parameter count alone: the actual training-row movement alignment was associated with greater held-out loss than shuffled training alignment in these draws. The empirical percentile has only 5-point resolution, and the paired 2,000-replicate game-bootstrap intervals versus event-only include zero. Treat the null ranking as a warning signal, not a conclusive estimate of a general harmful effect. Full replicate deltas, fold alphas, calibration bins, and metrics are in [`tracking_robustness.json`](../../research/nhl-shot-to-rebound-2026-10-22/results/tracking_robustness.json).
+
+**Updated decision:** “Retain the no-go: nested tuning did not improve held-out shot-sequence prediction; for recovery, real movement was worse than all 20 matched permutations, but the paired game-bootstrap interval versus event-only includes zero, so this small evaluation does not establish a reliable adverse movement effect.” Goal remains mixed and is not a positive claim: 39 positives, slightly better Brier/log loss, and lower AUC. No model or feature candidate is selected for adoption.
+
+The robustness computation took 112.4 seconds; the full single-process CLI invocation, including release scan and original fixed-alpha analysis, took about 3 minutes 43 seconds. BLAS/OMP thread counts were pinned to one. The existing `tracking_rebound_analysis.json` was not written; its SHA-256 matched the committed file after the run. The new JSON is 77,748 bytes. No test suite was run.

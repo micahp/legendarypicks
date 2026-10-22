@@ -61,6 +61,10 @@ TARGETS = (
     "same_team_followup_shot_within_5s",
 )
 
+ROBUSTNESS_ALPHAS = (0.2, 1.0, 5.0, 20.0, 100.0, 500.0)
+ROBUSTNESS_BOOTSTRAP_REPS = 2000
+ROBUSTNESS_NULL_REPS = 20
+
 
 def parse_clock(value):
     if not value:
@@ -892,7 +896,7 @@ def fit_logistic(x_train, y_train, alpha=0.2):
     return result.x
 
 
-def grouped_oof(records, target, include_movement):
+def grouped_oof(records, target, include_movement, alpha=0.2):
     games = sorted(set(row["game"] for row in records))
     predictions = np.full(len(records), np.nan, dtype=float)
     fold_seconds = []
@@ -904,7 +908,7 @@ def grouped_oof(records, target, include_movement):
         y_train = np.asarray([row["targets"][target] for row in train_records], dtype=float)
         x_train, x_test, _ = build_matrix(train_records, test_records, include_movement)
         started = time.perf_counter()
-        beta = fit_logistic(x_train, y_train)
+        beta = fit_logistic(x_train, y_train, alpha=alpha)
         predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
         fold_seconds.append(time.perf_counter() - started)
     y = np.asarray([row["targets"][target] for row in records], dtype=float)
@@ -933,6 +937,311 @@ def grouped_conditional_recovery_team(records, include_movement):
         predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
         fold_seconds.append(time.perf_counter() - started)
     return predictions, {"folds": len(games), "fit_predict_seconds": sum(fold_seconds)}
+
+
+def _inner_binary_brier(records, target, include_movement, alpha):
+    games = sorted(set(row["game"] for row in records))
+    inner_y = []
+    inner_pred = []
+    for game in games:
+        train_records = [row for row in records if row["game"] != game]
+        valid_records = [row for row in records if row["game"] == game]
+        y_train = np.asarray([row["targets"][target] for row in train_records], dtype=float)
+        x_train, x_valid, _ = build_matrix(train_records, valid_records, include_movement)
+        beta = fit_logistic(x_train, y_train, alpha=alpha)
+        inner_y.extend(row["targets"][target] for row in valid_records)
+        inner_pred.extend(expit(np.clip(x_valid.dot(beta), -35.0, 35.0)))
+    brier, _ = losses(inner_y, inner_pred)
+    return float(brier.mean())
+
+
+def _inner_conditional_brier(records, include_movement, alpha):
+    games = sorted(set(row["game"] for row in records))
+    inner_y = []
+    inner_pred = []
+    for game in games:
+        train_records = [
+            row for row in records
+            if row["game"] != game and row["targets"]["recovery_within_3s"] == 1
+        ]
+        valid_records = [
+            row for row in records
+            if row["game"] == game and row["targets"]["recovery_within_3s"] == 1
+        ]
+        if not valid_records:
+            continue
+        if not train_records:
+            raise RuntimeError("inner conditional recovery fold has no recovered training attempts")
+        y_train = np.asarray([
+            row["targets"]["same_team_recovery_within_3s"] for row in train_records
+        ], dtype=float)
+        x_train, x_valid, _ = build_matrix(train_records, valid_records, include_movement)
+        beta = fit_logistic(x_train, y_train, alpha=alpha)
+        inner_y.extend(row["targets"]["same_team_recovery_within_3s"] for row in valid_records)
+        inner_pred.extend(expit(np.clip(x_valid.dot(beta), -35.0, 35.0)))
+    if not inner_y:
+        raise RuntimeError("inner conditional recovery validation has no recovered attempts")
+    brier, _ = losses(inner_y, inner_pred)
+    return float(brier.mean())
+
+
+def _select_alpha(train_records, include_movement, target=None, conditional=False):
+    scores = {}
+    for alpha in ROBUSTNESS_ALPHAS:
+        if conditional:
+            score = _inner_conditional_brier(train_records, include_movement, alpha)
+        else:
+            score = _inner_binary_brier(train_records, target, include_movement, alpha)
+        scores[str(alpha)] = score
+    selected = min(ROBUSTNESS_ALPHAS, key=lambda alpha: (scores[str(alpha)], ROBUSTNESS_ALPHAS.index(alpha)))
+    return selected, scores
+
+
+def nested_grouped_oof(records, target, include_movement):
+    games = sorted(set(row["game"] for row in records))
+    predictions = np.full(len(records), np.nan, dtype=float)
+    folds = []
+    started = time.perf_counter()
+    for game in games:
+        test_idx = [i for i, row in enumerate(records) if row["game"] == game]
+        train_idx = [i for i, row in enumerate(records) if row["game"] != game]
+        train_records = [records[i] for i in train_idx]
+        test_records = [records[i] for i in test_idx]
+        alpha, inner_scores = _select_alpha(train_records, include_movement, target=target)
+        y_train = np.asarray([row["targets"][target] for row in train_records], dtype=float)
+        x_train, x_test, _ = build_matrix(train_records, test_records, include_movement)
+        beta = fit_logistic(x_train, y_train, alpha=alpha)
+        predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
+        folds.append({
+            "held_out_game": game,
+            "training_rows": len(train_records),
+            "held_out_rows": len(test_records),
+            "selected_alpha": alpha,
+            "inner_leave_one_game_out_brier_by_alpha": inner_scores,
+        })
+    if np.isnan(predictions).any():
+        raise RuntimeError("nested grouped evaluation left predictions missing")
+    y = np.asarray([row["targets"][target] for row in records], dtype=float)
+    return y, predictions, folds, time.perf_counter() - started
+
+
+def nested_conditional_recovery_team_oof(records, include_movement):
+    games = sorted(set(row["game"] for row in records))
+    predictions = np.full(len(records), np.nan, dtype=float)
+    folds = []
+    started = time.perf_counter()
+    for game in games:
+        test_idx = [i for i, row in enumerate(records) if row["game"] == game]
+        train_idx = [i for i, row in enumerate(records) if row["game"] != game]
+        train_records = [records[i] for i in train_idx]
+        test_records = [records[i] for i in test_idx]
+        alpha, inner_scores = _select_alpha(train_records, include_movement, conditional=True)
+        recovered_train = [
+            row for row in train_records if row["targets"]["recovery_within_3s"] == 1
+        ]
+        y_train = np.asarray([
+            row["targets"]["same_team_recovery_within_3s"] for row in recovered_train
+        ], dtype=float)
+        x_train, x_test, _ = build_matrix(recovered_train, test_records, include_movement)
+        beta = fit_logistic(x_train, y_train, alpha=alpha)
+        predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
+        folds.append({
+            "held_out_game": game,
+            "training_rows": len(train_records),
+            "training_recovered_rows": len(recovered_train),
+            "held_out_rows": len(test_records),
+            "held_out_recovered_rows": sum(
+                row["targets"]["recovery_within_3s"] == 1 for row in test_records
+            ),
+            "selected_alpha": alpha,
+            "inner_leave_one_game_out_brier_by_alpha": inner_scores,
+        })
+    if np.isnan(predictions).any():
+        raise RuntimeError("nested conditional evaluation left predictions missing")
+    return predictions, folds, time.perf_counter() - started
+
+
+def _binary_metric_summary(records, target, predictions):
+    y = np.asarray([row["targets"][target] for row in records], dtype=float)
+    brier, logloss = losses(y, predictions)
+    return {
+        "n": int(len(y)),
+        "positive": int(y.sum()),
+        "event_rate": float(y.mean()),
+        "mean_prediction": float(np.mean(predictions)),
+        "brier": float(brier.mean()),
+        "logloss": float(logloss.mean()),
+        "auc": auc_score(y, predictions),
+        "reliability_5_bins": calibration_bins(y, predictions),
+    }
+
+
+def permute_training_movement_columns(records, seed):
+    """Independently shuffle each movement feature over training rows only."""
+    rng = np.random.default_rng(seed)
+    output = []
+    for row in records:
+        copied = dict(row)
+        copied["movement"] = dict(row.get("movement") or {})
+        output.append(copied)
+    for key in MOVEMENT_NUMERIC:
+        values = [row.get("movement", {}).get(key) for row in records]
+        shuffled = rng.permutation(np.asarray(values, dtype=object)).tolist()
+        for row, value in zip(output, shuffled):
+            row["movement"][key] = value
+    return output
+
+
+def matched_null_recovery(records, event_predictions, real_movement_predictions, movement_folds):
+    """Permute movement columns within each outer training fold; keep held-out rows intact."""
+    games = sorted(set(row["game"] for row in records))
+    game_indices = {game: [i for i, row in enumerate(records) if row["game"] == game] for game in games}
+    fold_alpha = {fold["held_out_game"]: fold["selected_alpha"] for fold in movement_folds}
+    y = np.asarray([row["targets"]["recovery_within_3s"] for row in records], dtype=float)
+    event_brier, event_logloss = losses(y, event_predictions)
+    real_brier, real_logloss = losses(y, real_movement_predictions)
+    real_delta_brier = float(real_brier.mean() - event_brier.mean())
+    real_delta_logloss = float(real_logloss.mean() - event_logloss.mean())
+    null_deltas_brier = []
+    null_deltas_logloss = []
+    null_fold_alphas = []
+    started = time.perf_counter()
+    for replicate in range(ROBUSTNESS_NULL_REPS):
+        null_predictions = np.full(len(records), np.nan, dtype=float)
+        replicate_fold_alphas = {}
+        for fold_index, game in enumerate(games):
+            test_idx = game_indices[game]
+            train_records = [row for row in records if row["game"] != game]
+            test_records = [records[index] for index in test_idx]
+            seed = 20261022 + replicate * len(games) + fold_index
+            permuted_train = permute_training_movement_columns(train_records, seed)
+            y_train = np.asarray([
+                row["targets"]["recovery_within_3s"] for row in permuted_train
+            ], dtype=float)
+            x_train, x_test, _ = build_matrix(permuted_train, test_records, True)
+            alpha = fold_alpha[game]
+            beta = fit_logistic(x_train, y_train, alpha=alpha)
+            null_predictions[test_idx] = expit(np.clip(x_test.dot(beta), -35.0, 35.0))
+            replicate_fold_alphas[game] = alpha
+        if np.isnan(null_predictions).any():
+            raise RuntimeError("matched-null evaluation left predictions missing")
+        null_brier, null_logloss = losses(y, null_predictions)
+        null_deltas_brier.append(float(null_brier.mean() - event_brier.mean()))
+        null_deltas_logloss.append(float(null_logloss.mean() - event_logloss.mean()))
+        null_fold_alphas.append(replicate_fold_alphas)
+
+    def summarize(values, real_delta):
+        values = np.asarray(values, dtype=float)
+        less = int(np.sum(values < real_delta))
+        ties = int(np.sum(values == real_delta))
+        return {
+            "real_movement_delta": float(real_delta),
+            "null_mean": float(values.mean()),
+            "null_median": float(np.median(values)),
+            "null_p05": float(np.percentile(values, 5)),
+            "null_p95": float(np.percentile(values, 95)),
+            "null_min": float(values.min()),
+            "null_max": float(values.max()),
+            "real_delta_empirical_percentile": float(100.0 * (less + 0.5 * ties) / len(values)),
+            "null_deltas": values.tolist(),
+        }
+
+    return {
+        "target": "recovery_within_3s",
+        "repetitions": ROBUSTNESS_NULL_REPS,
+        "seed_schedule": "base seed 20261022; replicate/fold seed = base + replicate_index * 10 + sorted_game_index, indices zero-based",
+        "permutation": "each of 26 movement values/missing values independently permuted across outer-training rows; held-out game movement stays intact",
+        "alpha_control": "each null fold uses the real movement arm's alpha selected by inner leave-one-game-out on that same outer training set; no held-out labels/features enter alpha choice",
+        "movement_parameter_count": 94,
+        "null_fold_alphas": null_fold_alphas,
+        "brier_movement_minus_event": summarize(null_deltas_brier, real_delta_brier),
+        "logloss_movement_minus_event": summarize(null_deltas_logloss, real_delta_logloss),
+        "fit_predict_seconds": time.perf_counter() - started,
+    }
+
+
+def run_robustness_analysis(records):
+    started = time.perf_counter()
+    output = {
+        "metadata": {
+            "evaluation": "outer leave-one-game-out; alpha selected independently within each outer training set by inner leave-one-game-out",
+            "alpha_grid": list(ROBUSTNESS_ALPHAS),
+            "selection_metric": "pooled inner-LOO Brier score; minimum selected, ties resolve to first alpha in the listed ascending grid",
+            "outer_heldout_games": 10,
+            "rows": len(records),
+            "game_rows": {game: sum(row["game"] == game for row in records) for game in sorted(set(row["game"] for row in records))},
+            "event_only_parameter_count_including_intercept": len(EVENT_NUMERIC) * 2 + sum(len(v) for v in CATEGORICAL.values()) + 1,
+            "movement_augmented_parameter_count_including_intercept": (len(EVENT_NUMERIC) + len(MOVEMENT_NUMERIC)) * 2 + sum(len(v) for v in CATEGORICAL.values()) + 1,
+            "binary_cluster_bootstrap": {"unit": "game", "replicates": ROBUSTNESS_BOOTSTRAP_REPS, "seed": 20261022},
+            "matched_null_repetitions": ROBUSTNESS_NULL_REPS,
+        },
+        "targets": {},
+        "runtime": {},
+    }
+    predictions = {}
+    for target in TARGETS:
+        target_result = {}
+        arm_predictions = {}
+        for arm, include_movement in (("event_only", False), ("movement_augmented", True)):
+            y, pred, folds, elapsed = nested_grouped_oof(records, target, include_movement)
+            arm_predictions[arm] = pred
+            target_result[arm] = {
+                "metrics": _binary_metric_summary(records, target, pred),
+                "outer_folds": folds,
+                "fit_predict_seconds": elapsed,
+            }
+        target_result["paired_uncertainty"] = bootstrap_loss_difference(
+            records, target, arm_predictions["event_only"], arm_predictions["movement_augmented"],
+            ROBUSTNESS_BOOTSTRAP_REPS,
+        )
+        output["targets"][target] = target_result
+        predictions[target] = arm_predictions
+
+    recovery_team_result = {}
+    team_predictions = {}
+    for arm, include_movement in (("event_only", False), ("movement_augmented", True)):
+        pred, folds, elapsed = nested_conditional_recovery_team_oof(records, include_movement)
+        team_predictions[arm] = pred
+        recovery_team_result[arm] = {
+            "outer_folds": folds,
+            "fit_predict_seconds": elapsed,
+        }
+    labels_event, probs_event = recovery_team_probabilities(
+        records, predictions["recovery_within_3s"]["event_only"], team_predictions["event_only"]
+    )
+    labels_move, probs_move = recovery_team_probabilities(
+        records, predictions["recovery_within_3s"]["movement_augmented"], team_predictions["movement_augmented"]
+    )
+    if not np.array_equal(labels_event, labels_move):
+        raise RuntimeError("nested recovery-category labels differ by arm")
+    metrics_event = multiclass_metrics(labels_event, probs_event)
+    metrics_move = multiclass_metrics(labels_move, probs_move)
+    recovery_team_result["event_only"]["metrics"] = {
+        key: value for key, value in metrics_event.items() if not key.startswith("row_")
+    }
+    recovery_team_result["movement_augmented"]["metrics"] = {
+        key: value for key, value in metrics_move.items() if not key.startswith("row_")
+    }
+    recovery_team_result["paired_uncertainty"] = bootstrap_multiclass_difference(
+        records, metrics_event, metrics_move, ROBUSTNESS_BOOTSTRAP_REPS
+    )
+    output["targets"]["recovery_team_category"] = recovery_team_result
+    output["matched_null"] = matched_null_recovery(
+        records,
+        predictions["recovery_within_3s"]["event_only"],
+        predictions["recovery_within_3s"]["movement_augmented"],
+        output["targets"]["recovery_within_3s"]["movement_augmented"]["outer_folds"],
+    )
+    output["runtime"] = {
+        "total_seconds": time.perf_counter() - started,
+        "nested_binary_model_seconds": sum(
+            output["targets"][target][arm]["fit_predict_seconds"]
+            for target in TARGETS for arm in ("event_only", "movement_augmented")
+        ),
+        "matched_null_seconds": output["matched_null"]["fit_predict_seconds"],
+        "bootstrap_replicates_per_comparison": ROBUSTNESS_BOOTSTRAP_REPS,
+    }
+    return output
 
 
 def auc_score(y, pred):
@@ -1099,6 +1408,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="/root/lp-research-data/stathletes-big-data-cup-2026")
     parser.add_argument("--output-json", default=None)
+    parser.add_argument("--robustness-output-json", default=None)
     parser.add_argument("--bootstrap-reps", type=int, default=2000)
     args = parser.parse_args()
     started = time.perf_counter()
@@ -1316,6 +1626,17 @@ def main():
         with open(args.output_json, "w", encoding="utf-8") as handle:
             handle.write(rendered + "\n")
     print(rendered)
+    if args.robustness_output_json:
+        robustness = run_robustness_analysis(matched)
+        robustness_rendered = json.dumps(robustness, indent=2, sort_keys=True, allow_nan=False)
+        output_dir = os.path.dirname(os.path.abspath(args.robustness_output_json))
+        os.makedirs(output_dir, exist_ok=True)
+        with open(args.robustness_output_json, "w", encoding="utf-8") as handle:
+            handle.write(robustness_rendered + "\n")
+        print(json.dumps({
+            "robustness_output_json": os.path.abspath(args.robustness_output_json),
+            "robustness_runtime_seconds": robustness["runtime"]["total_seconds"],
+        }, sort_keys=True))
 
 
 if __name__ == "__main__":
