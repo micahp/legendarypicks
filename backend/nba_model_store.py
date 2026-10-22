@@ -597,7 +597,8 @@ def _record(rows: list[sqlite3.Row], missed: int) -> dict[str, Any]:
 
 def export_payload(con: sqlite3.Connection, season: int,
                    benchmark: dict[str, Any] | None = None,
-                   now: dt.datetime | None = None) -> dict[str, Any]:
+                   now: dt.datetime | None = None,
+                   missed_schedule: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     now = now or dt.datetime.now(UTC)
     model_labels = {row["id"]: row for row in MODEL_INFO}
     locks = con.execute(
@@ -653,6 +654,21 @@ def export_payload(con: sqlite3.Connection, season: int,
         games[game_id]["result"] = {"home_score": result["home_score"],
                                      "away_score": result["away_score"],
                                      "home_win": result["home_win"]}
+
+    missed_game_ids = {game_id for game_id, _model in missed_pairs}
+    for row in missed_schedule or ():
+        game_id = str(row["game_id"])
+        if (game_id not in missed_game_ids or game_id in games
+                or row.get("season") != season
+                or row.get("season_type") not in {"REG", "CUP"}
+                or row.get("source") != "nba.com"):
+            continue
+        games[game_id] = {
+            "game_id": game_id, "season": season,
+            "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "status": "missed", "locked_at_utc": None, "models": {}, "result": None,
+        }
 
     locked_game_ids = set(games)
     for row in previews:

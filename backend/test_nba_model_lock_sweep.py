@@ -5,7 +5,7 @@ import json
 import sqlite3
 
 from nba_model_runtime import lock_due_forecasts
-from nba_model_store import LOCK_PROTOCOL, MODEL_IDS, MODEL_VERSION, open_db
+from nba_model_store import LOCK_PROTOCOL, MODEL_IDS, MODEL_VERSION, export_payload, open_db
 
 UTC = dt.timezone.utc
 TIP = dt.datetime(2026, 10, 21, 18, 0, tzinfo=UTC)
@@ -144,3 +144,53 @@ def test_preview_fallback_and_existing_pre_tip_window_count(tmp_path, monkeypatc
     assert pre_tip["missed_window_games"] == 1
     assert pre_tip["missed_lock_events"] == 0
     assert _events(str(pre_tip_model_path)) == []
+
+
+def test_export_includes_missed_games_with_schedule_metadata(tmp_path):
+    model_path = tmp_path / "nba-model.dev.sqlite3"
+    picks_path = tmp_path / "picks.dev.db"
+    previewed_game = GAME_ID
+    event_only_game = "0022600002"
+    schedule = [
+        {"game_id": previewed_game, "season": 2027, "season_type": "REG",
+         "source": "nba.com", "scheduled_start_utc": "2026-10-21T18:00:00Z",
+         "home_team": "NYK", "away_team": "BOS"},
+        {"game_id": event_only_game, "season": 2027, "season_type": "REG",
+         "source": "nba.com", "scheduled_start_utc": "2026-10-21T18:00:00Z",
+         "home_team": "MIL", "away_team": "CHI"},
+    ]
+    picks = sqlite3.connect(picks_path)
+    picks.execute("CREATE TABLE nba_schedule (game_id TEXT, season INTEGER, season_type TEXT, "
+                  "start_utc TEXT, source TEXT, home_team TEXT, away_team TEXT)")
+    picks.executemany(
+        "INSERT INTO nba_schedule VALUES(?,?,?,?,?,?,?)",
+        [(row["game_id"], row["season"], row["season_type"], row["scheduled_start_utc"],
+          row["source"], row["home_team"], row["away_team"]) for row in schedule],
+    )
+    picks.commit()
+    picks.close()
+    _seed_previews(model_path)
+
+    report = lock_due_forecasts(str(model_path), TIP, lp_db_path=str(picks_path))
+    assert report["missed_window_games"] == 2
+    assert report["missed_lock_events"] == 6
+
+    model = open_db(str(model_path), readonly=True)
+    try:
+        payload = export_payload(model, 2027, now=TIP, missed_schedule=schedule)
+    finally:
+        model.close()
+
+    games = {row["game_id"]: row for row in payload["games"]}
+    assert previewed_game in games, f"previewed missed game {previewed_game} is absent"
+    assert event_only_game in games, f"event-only missed game {event_only_game} is absent"
+    for row in schedule:
+        game = games[row["game_id"]]
+        assert game["status"] == "missed"
+        assert game["models"] == {}
+        assert game["scheduled_start_utc"] == row["scheduled_start_utc"]
+        assert game["home_team"] == row["home_team"]
+        assert game["away_team"] == row["away_team"]
+    assert {model: payload["records"][model]["missed"] for model in MODEL_IDS} == {
+        model: 2 for model in MODEL_IDS
+    }
