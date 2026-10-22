@@ -26,6 +26,7 @@ type Forecast = {
   projected_home_points: number | null
   projected_away_points: number | null
   score_forecast_available: boolean
+  locked?: boolean
   grade?: { home_score: number; away_score: number; winner_brier: number } | null
 }
 
@@ -35,7 +36,7 @@ type Game = {
   scheduled_start_utc: string
   home_team: string
   away_team: string
-  status: 'preview' | 'locked' | 'graded' | 'missed'
+  status: 'preview' | 'locked' | 'graded' | 'missed' | 'unlocked'
   locked_at_utc: string | null
   result: { home_score: number; away_score: number } | null
   models: Record<string, Forecast>
@@ -44,7 +45,7 @@ type Payload = {
   state: string
   default_model: string
   models: Model[]
-  records: Record<string, { locked: number; graded: number; awaiting: number; missed: number; winner_brier: number | null; winner_log_loss: number | null }>
+  records: Record<string, { locked: number; graded: number; awaiting: number; missed: number; winner_brier: number | null; winner_log_loss: number | null; unlocked?: { previewed: number; graded: number; winner_brier: number | null } }>
   games: Game[]
   benchmark: {
     eligible_games: { train: number; validation: number; test: number }
@@ -89,6 +90,8 @@ export default function NbaModelTab() {
 
   const upcoming = payload.games.filter((game) => new Date(game.scheduled_start_utc).getTime() > Date.now())
   const graded = payload.games.filter((game) => game.status === 'graded' && game.result)
+    .slice(-10).reverse()
+  const gradedPreviews = payload.games.filter((game) => game.status === 'unlocked' && game.result)
     .slice(-10).reverse()
   const test = payload.benchmark?.metrics?.test ?? {}
   const validation = payload.benchmark?.metrics?.validation ?? {}
@@ -155,7 +158,10 @@ export default function NbaModelTab() {
                     {metricCell(score?.team_points_mae)}
                     {metricCell(score?.spread_mae)}
                     {metricCell(score?.total_mae)}
-                    <td className="px-3 py-2 text-right tabular-nums">{record?.graded ?? 0} / {record?.locked ?? 0}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {record?.graded ?? 0} / {record?.locked ?? 0}
+                      <span className="mt-1 block text-[10px] font-normal text-zinc-500">{record?.unlocked?.graded ?? 0} unlocked previews graded</span>
+                    </td>
                   </tr>
                 )
               })}
@@ -227,6 +233,31 @@ export default function NbaModelTab() {
             <div className="flex flex-wrap justify-between gap-2 text-sm font-medium text-white">
               <span>{game.away_team} at {game.home_team}</span>
               <span>Final {game.result?.away_score}–{game.result?.home_score}</span>
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              {payload.models.map((model) => {
+                const forecast = game.models[model.id]
+                return <div key={model.id} className="text-xs text-zinc-300">
+                  {model.label}: home win {percent(forecast?.home_win_probability)} · Brier {metric(forecast?.grade?.winner_brier)}
+                </div>
+              })}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section aria-labelledby="nba-unlocked-results" className="space-y-3">
+        <div>
+          <h3 id="nba-unlocked-results" className="font-semibold text-white">Graded previews, not locked</h3>
+          <p className="mt-1 text-xs text-zinc-500">The last pregame preview of games that tipped off without a T−90 lock, graded against the verified final. These are not part of the prospective record above.</p>
+        </div>
+        {gradedPreviews.length === 0 ? (
+          <p className="rounded-lg border border-white/10 p-4 text-sm text-zinc-400">No unlocked previews have been graded yet.</p>
+        ) : gradedPreviews.map((game) => (
+          <article key={game.game_id} className="rounded-xl border border-white/10 bg-zinc-950/50 p-4">
+            <div className="flex flex-wrap justify-between gap-2 text-sm font-medium text-white">
+              <span>{game.away_team} at {game.home_team}</span>
+              <span>Final {game.result?.away_score}–{game.result?.home_score} · Not locked</span>
             </div>
             <div className="mt-3 grid gap-2 md:grid-cols-3">
               {payload.models.map((model) => {
