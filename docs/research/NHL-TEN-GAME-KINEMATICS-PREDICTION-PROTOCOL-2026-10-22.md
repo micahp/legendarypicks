@@ -27,6 +27,10 @@ experiment. Only track-period identities whose nonblank jersey mapping is consis
 file are eligible. Identity is scoped to game, period, team, track ID, and jersey; there is no
 cross-game athlete merge.
 
+After that quarantine, fitting proceeds only if at least 10,000 windows remain overall and each of
+the ten development games contributes at least 1,000. This retains the frozen window-volume floor
+for every outer held-out fold.
+
 ## Frozen target and candidates
 
 Each example uses the same skater's six consecutive observed XY positions through cutoff `t` to
