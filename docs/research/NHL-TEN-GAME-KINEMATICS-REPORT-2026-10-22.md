@@ -119,6 +119,12 @@ stability. Reaction ability is unmeasurable because no subsecond stimulus/onset 
 release's `Player Id` is retained only as a game/period-scoped tracking identity; it is not merged
 across games or treated as a verified athlete identity.
 
+Individual movement profiles are not estimable from this release because track-period IDs are
+short-lived: the median profile spans 172 Image Id groups, and only 1 of 28,723 profiles reaches
+3,000 groups. That profile has 0 eligible windows before and 298 after its period-file midpoint, so
+it never spans the split needed for a two-half estimate; this is a property of the observed data,
+not a consequence of choosing the 3,000-group threshold.
+
 ## Adequacy for the requested hockey mechanisms
 
 | Mechanism | Available evidence | Missing evidence and status |

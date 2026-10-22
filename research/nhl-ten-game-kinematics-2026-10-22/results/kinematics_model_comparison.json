@@ -612,6 +612,40 @@
     }
   },
   "player_movement_reliability": {
+    "entity_lifespan": {
+      "entities_at_least_3000_frames": 1,
+      "frames_per_entity": {
+        "max": 4498,
+        "median": 172.0,
+        "p90": 575.0,
+        "p99": 1230.56
+      },
+      "profile_entities": 28723,
+      "top_two_entities_by_frames": [
+        {
+          "file": "2025-10-29.Team.G.@.Team.L.Tracking_P3.csv",
+          "frames": 4498,
+          "jersey": "41",
+          "player_id": "8862",
+          "team": "Away",
+          "windows_by_file_midpoint_half": {
+            "first": 0,
+            "second": 298
+          }
+        },
+        {
+          "file": "2025-10-29.Team.G.@.Team.L.Tracking_P3.csv",
+          "frames": 2981,
+          "jersey": "44",
+          "player_id": "9664",
+          "team": "Away",
+          "windows_by_file_midpoint_half": {
+            "first": 0,
+            "second": 197
+          }
+        }
+      ]
+    },
     "metrics": {
       "accel": {
         "median_absolute_half_difference": null,
@@ -646,7 +680,7 @@
     "release_integrity": true,
     "tracking_coordinate_validity": true
   },
-  "runtime_seconds_total_including_release_hash_and_extraction": 298.946,
+  "runtime_seconds_total_including_release_hash_and_extraction": 305.323,
   "sample": {
     "eligible_windows": 454983,
     "excluded_conflicted_track_period_ids": 292,

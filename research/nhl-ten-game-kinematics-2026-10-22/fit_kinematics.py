@@ -368,7 +368,35 @@ def summarize_profiles(profiles: dict) -> dict:
             "n_entities": len(pairs), "spearman_split_half": corr,
             "median_absolute_half_difference": float(np.median(np.abs(np.asarray(first) - second))),
         }
-    return {"qualified_track_period_entities": len(qualified), "metrics": stability}
+    frame_counts = np.asarray([value["frames"] for value in profiles.values()], dtype=np.int64)
+    top_profiles = sorted(profiles.items(), key=lambda item: (-item[1]["frames"], item[0]))[:2]
+    top_entities = []
+    for key, value in top_profiles:
+        _, filename, team, player_id, jersey = key
+        top_entities.append({
+            "file": filename,
+            "team": team,
+            "player_id": player_id,
+            "jersey": jersey,
+            "frames": int(value["frames"]),
+            "windows_by_file_midpoint_half": {
+                "first": len(value["first"]["speed"]),
+                "second": len(value["second"]["speed"]),
+            },
+        })
+    lifespan = {
+        "profile_entities": len(profiles),
+        "frames_per_entity": {
+            "median": float(np.median(frame_counts)),
+            "p90": round(float(np.quantile(frame_counts, 0.90)), 2),
+            "p99": round(float(np.quantile(frame_counts, 0.99)), 2),
+            "max": int(frame_counts.max()),
+        },
+        "entities_at_least_3000_frames": int(np.count_nonzero(frame_counts >= 3000)),
+        "top_two_entities_by_frames": top_entities,
+    }
+    return {"qualified_track_period_entities": len(qualified), "metrics": stability,
+            "entity_lifespan": lifespan}
 
 
 def main() -> None:
@@ -500,6 +528,7 @@ def main() -> None:
         "study": "NHL ten-game frame-index kinematics comparison",
         "protocol": "docs/research/NHL-TEN-GAME-KINEMATICS-PREDICTION-PROTOCOL-2026-10-22.md",
         "development_games": games,
+        "timebase_assessment": audit["timebase_assessment"],
         "quality_gate_disposition": audit["gates"],
         "sample": {"raw_windows": data["raw_windows"], "eligible_windows": data["eligible_windows"],
                    "excluded_conflicted_track_period_ids": data["conflicted_ids"],
