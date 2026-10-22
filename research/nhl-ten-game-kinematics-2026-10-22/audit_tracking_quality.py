@@ -49,6 +49,15 @@ def frame_number(image_id: str) -> int:
     return int(match.group(1))
 
 
+def parse_period(value: str) -> int:
+    normalized = (value or "").strip().upper()
+    if normalized == "OT":
+        return 4
+    if re.fullmatch(r"\d+", normalized):
+        return int(normalized)
+    raise ValueError("invalid Period: %r" % value)
+
+
 def finite_float(value: str, field: str, path: Path, row_number: int) -> float:
     try:
         result = float(value)
@@ -303,7 +312,7 @@ def audit_tracking_file(path: Path, event_lookup: dict, heat_player: np.ndarray,
         for line, row in enumerate(reader, 2):
             image = row["Image Id"].strip()
             seq = frame_number(image)
-            period = int(row["Period"])
+            period = parse_period(row["Period"])
             clock_seconds = parse_clock(row["Game Clock"])
             if current is None or image != current["image"]:
                 finish_frame()
