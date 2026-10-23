@@ -68,6 +68,14 @@ Outer leave-one-game-out scoring. A is the stored DIAG6 distance-only prediction
 | M2 | C_minus_A log-score difference |  |  | 0.00000 [0.00000, 0.00000] |  |
 | M2 | B relative RMSE improvement | 0.000 [0.000, 0.000]% | materiality lower bound above 5.0%: False |  |  |
 
+### Interpretation correction: zero treatment application
+
+Across the ten held-out folds, B received zero nonzero-weight applications on the 2,164 common held-out pairs for both M1 and M2; C used no training pair means on any held-out pair either. The displayed B−A and C−A intervals of `[0.000, 0.000]` are structural/support-degeneracy zeros caused by no treatment application. They are not measured null effects and must never be quoted as “identity improves error by 0%.”
+
+The registered closing branch fired on a support failure. The evidential conclusion is **not testable on this source because cross-game identity is unverified**. The registered operational decision remains in force: no correction or labels, and DIAG2–DIAG6 persistence is descriptive on these ten inspected games only.
+
+The existing DIAG7 fold audit reports training-only variance-component summaries of mean `tau² = 2.4445` (range `2.1137–2.9334`), mean within variance `4.2856` (range `3.7830–4.7919`), and ICC approximately `0.363`, with 40–58 repeated game-scoped pair groups per fold. These describe within-game, across-start heterogeneity; they are non-transferable by construction and do not establish cross-game identity value.
+
 ### Per-game held-out scores
 
 Each game is evaluated only by its outer fold. Pair counts are common to A/B/C.
@@ -167,7 +175,7 @@ The preregistered materiality bar is 5.0% relative RMSE reduction, approximately
 | 2025-11-19.Team.I.@.Team.K | 249 | 61 | 50 | 64 | 74 | {'1': 480, '2': 491, '3': 477, '4': 467} |
 | 2025-11-28.Team.J.@.Team.K | 203 | 48 | 61 | 60 | 34 | {'1': 493, '2': 480, '3': 481, '4': 507} |
 
-Support collapses: none.
+Distance-bin support collapses: none. Pair-identity shrinkage support collapsed to zero weights: B had zero nonzero-weight applications across the 2,164 held-out pairs for each candidate, and C applied no training pair means to held-out pairs.
 
 ## Decision
 
