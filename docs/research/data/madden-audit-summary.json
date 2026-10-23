@@ -1,0 +1,6725 @@
+{
+  "archive": "madden_ratings_1992-2027.zip",
+  "rows": 58743,
+  "columns": 68,
+  "identity_columns": 8,
+  "attribute_columns": 60,
+  "checks": [
+    {
+      "id": "zip.integrity",
+      "status": "PASS",
+      "detail": "testzip=None"
+    },
+    {
+      "id": "shape.header_identity",
+      "status": "PASS",
+      "detail": "first 8 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'nfl_season', 'team', 'POS', 'source']"
+    },
+    {
+      "id": "shape.columns",
+      "status": "INFO",
+      "detail": "68 columns total = 8 identity + 60 attributes (spec says 73 columns and 5 identity: measured 68 and 8)"
+    },
+    {
+      "id": "shape.rows",
+      "status": "PASS",
+      "detail": "58743 rows vs expected 58743"
+    },
+    {
+      "id": "coverage.per_release_rows",
+      "status": "PASS",
+      "detail": "36 of 36 releases match coverage.json"
+    },
+    {
+      "id": "coverage.attribute_counts",
+      "status": "FAIL",
+      "detail": "2 of 60 attribute counts match coverage.json; e.g. OVR coverage.json=58743 vs CSV=50203"
+    },
+    {
+      "id": "ovr.README_claim_50203",
+      "status": "PASS",
+      "detail": "rows with OVR = 50203 (README claims 50,203)"
+    },
+    {
+      "id": "ovr.no_empty_core_rows",
+      "status": "PASS",
+      "detail": "rows where OVR, SPEED and AWR are all blank = 0"
+    },
+    {
+      "id": "attr.integer_tokens",
+      "status": "PASS",
+      "detail": "non-integer tokens: none"
+    },
+    {
+      "id": "attr.range_0_99",
+      "status": "FAIL",
+      "detail": "11 cells outside 0-99, e.g. player 184190 1997 TAK=100"
+    },
+    {
+      "id": "keys.player_release_unique",
+      "status": "FAIL",
+      "detail": "40 keys (player_id, madden_release) occur more than once, covering 81 rows; 0 identical, 40 differ by team, 40 differ in at least one attribute"
+    },
+    {
+      "id": "team.case_consistent",
+      "status": "FAIL",
+      "detail": "31 team slugs appear in more than one casing, e.g. ['Patriots', 'patriots']"
+    },
+    {
+      "id": "team.no_blank",
+      "status": "FAIL",
+      "detail": "454 rows with blank team (all source={'player_page'}); kept as team_missing, not filled"
+    },
+    {
+      "id": "team.distinct_normalized",
+      "status": "INFO",
+      "detail": "32 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)"
+    },
+    {
+      "id": "season.consistent_with_release_minus_1",
+      "status": "PASS",
+      "detail": "51356 non-blank nfl_season values agree with release-1 (0 disagree); 7387 blank values are derived from release-1"
+    },
+    {
+      "id": "source.team_page_rows",
+      "status": "PASS",
+      "detail": "7387 team_page rows vs spec 7387"
+    },
+    {
+      "id": "pos.all_mapped",
+      "status": "PASS",
+      "detail": "49 distinct primary POS tokens; unmapped: none"
+    },
+    {
+      "id": "identity.one_name_per_player_id",
+      "status": "PASS",
+      "detail": "0 player_ids carry more than one player_name"
+    },
+    {
+      "id": "identity.player_count",
+      "status": "PASS",
+      "detail": "12570 distinct player_id vs spec 12570"
+    },
+    {
+      "id": "identity.homonym_names",
+      "status": "INFO",
+      "detail": "262 normalized names map to more than one player_id (review queue, not merged)"
+    },
+    {
+      "id": "db.matches_csv_cellwise",
+      "status": "PASS",
+      "detail": "58743 DB rows vs 58743 CSV rows; 0 cell differences"
+    },
+    {
+      "id": "db.players_table_rows",
+      "status": "PASS",
+      "detail": "players table rows = 12570 vs 12570"
+    },
+    {
+      "id": "shift.attribute_presence",
+      "status": "INFO",
+      "detail": "295 attribute presence steps (>=25 pts or appear/disappear); largest in releases {2011: 41, 2012: 37, 2010: 37, 2013: 36, 2007: 16, 2002: 14}"
+    },
+    {
+      "id": "presence.no_collapse_vs_neighbours",
+      "status": "FAIL",
+      "detail": "releases with attribute cells per row under half of both neighbours: 1998 (4.4 vs 10.7/9.7), 2010 (12.2 vs 38.4/37.1), 2012 (16.5 vs 37.1/37.6)"
+    }
+  ],
+  "fail_count": 6,
+  "releases": [
+    {
+      "release": 1992,
+      "nfl_season": 1991,
+      "rows": 905,
+      "players": 905,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 28,
+      "players_per_team_mean": 32.3,
+      "attributes_with_any_value": 13,
+      "mean_nonblank_attribute_cells_per_row": 4.4,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 40,
+      "median_AWR": 26
+    },
+    {
+      "release": 1993,
+      "nfl_season": 1992,
+      "rows": 811,
+      "players": 809,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 28,
+      "players_per_team_mean": 29.0,
+      "attributes_with_any_value": 13,
+      "mean_nonblank_attribute_cells_per_row": 4.4,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 40,
+      "median_AWR": 33.0
+    },
+    {
+      "release": 1994,
+      "nfl_season": 1993,
+      "rows": 813,
+      "players": 812,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 28,
+      "players_per_team_mean": 29.0,
+      "attributes_with_any_value": 13,
+      "mean_nonblank_attribute_cells_per_row": 4.4,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": 26.0
+    },
+    {
+      "release": 1995,
+      "nfl_season": 1994,
+      "rows": 1048,
+      "players": 1048,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 28,
+      "players_per_team_mean": 37.4,
+      "attributes_with_any_value": 16,
+      "mean_nonblank_attribute_cells_per_row": 5.7,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 58.0,
+      "median_AWR": 90.0
+    },
+    {
+      "release": 1996,
+      "nfl_season": 1995,
+      "rows": 1331,
+      "players": 1330,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 30,
+      "players_per_team_mean": 44.4,
+      "attributes_with_any_value": 16,
+      "mean_nonblank_attribute_cells_per_row": 5.6,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 53.0,
+      "median_AWR": 59.0
+    },
+    {
+      "release": 1997,
+      "nfl_season": 1996,
+      "rows": 1323,
+      "players": 1323,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 30,
+      "players_per_team_mean": 44.1,
+      "attributes_with_any_value": 17,
+      "mean_nonblank_attribute_cells_per_row": 10.7,
+      "ovr_nonblank": 1323,
+      "median_OVR": 43,
+      "median_SPEED": 60,
+      "median_AWR": 50
+    },
+    {
+      "release": 1998,
+      "nfl_season": 1997,
+      "rows": 1168,
+      "players": 1165,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 30,
+      "players_per_team_mean": 38.9,
+      "attributes_with_any_value": 13,
+      "mean_nonblank_attribute_cells_per_row": 4.4,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 59.0,
+      "median_AWR": 46.0
+    },
+    {
+      "release": 1999,
+      "nfl_season": 1998,
+      "rows": 1214,
+      "players": 1214,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 30,
+      "players_per_team_mean": 40.5,
+      "attributes_with_any_value": 16,
+      "mean_nonblank_attribute_cells_per_row": 9.7,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 67.0,
+      "median_AWR": 73.0
+    },
+    {
+      "release": 2000,
+      "nfl_season": 1999,
+      "rows": 1250,
+      "players": 1249,
+      "team_page_rows": 0,
+      "blank_team_rows": 0,
+      "teams_normalized": 31,
+      "players_per_team_mean": 40.3,
+      "attributes_with_any_value": 16,
+      "mean_nonblank_attribute_cells_per_row": 9.7,
+      "ovr_nonblank": 0,
+      "median_OVR": null,
+      "median_SPEED": 59.5,
+      "median_AWR": 69.0
+    },
+    {
+      "release": 2001,
+      "nfl_season": 2000,
+      "rows": 1416,
+      "players": 1416,
+      "team_page_rows": 1299,
+      "blank_team_rows": 7,
+      "teams_normalized": 31,
+      "players_per_team_mean": 45.7,
+      "attributes_with_any_value": 21,
+      "mean_nonblank_attribute_cells_per_row": 10.5,
+      "ovr_nonblank": 1416,
+      "median_OVR": 78.0,
+      "median_SPEED": 72.5,
+      "median_AWR": 66.0
+    },
+    {
+      "release": 2002,
+      "nfl_season": 2001,
+      "rows": 1550,
+      "players": 1549,
+      "team_page_rows": 261,
+      "blank_team_rows": 11,
+      "teams_normalized": 31,
+      "players_per_team_mean": 50.0,
+      "attributes_with_any_value": 24,
+      "mean_nonblank_attribute_cells_per_row": 18.9,
+      "ovr_nonblank": 1550,
+      "median_OVR": 67.0,
+      "median_SPEED": 69,
+      "median_AWR": 68.0
+    },
+    {
+      "release": 2003,
+      "nfl_season": 2002,
+      "rows": 1582,
+      "players": 1582,
+      "team_page_rows": 243,
+      "blank_team_rows": 5,
+      "teams_normalized": 32,
+      "players_per_team_mean": 49.4,
+      "attributes_with_any_value": 17,
+      "mean_nonblank_attribute_cells_per_row": 15.0,
+      "ovr_nonblank": 1582,
+      "median_OVR": 68.0,
+      "median_SPEED": 67.0,
+      "median_AWR": null
+    },
+    {
+      "release": 2004,
+      "nfl_season": 2003,
+      "rows": 1596,
+      "players": 1595,
+      "team_page_rows": 206,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 49.9,
+      "attributes_with_any_value": 25,
+      "mean_nonblank_attribute_cells_per_row": 20.5,
+      "ovr_nonblank": 1596,
+      "median_OVR": 74.0,
+      "median_SPEED": 70.0,
+      "median_AWR": 68.0
+    },
+    {
+      "release": 2005,
+      "nfl_season": 2004,
+      "rows": 1436,
+      "players": 1436,
+      "team_page_rows": 125,
+      "blank_team_rows": 58,
+      "teams_normalized": 32,
+      "players_per_team_mean": 44.9,
+      "attributes_with_any_value": 24,
+      "mean_nonblank_attribute_cells_per_row": 17.5,
+      "ovr_nonblank": 1436,
+      "median_OVR": 78.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 72.0
+    },
+    {
+      "release": 2006,
+      "nfl_season": 2005,
+      "rows": 1517,
+      "players": 1517,
+      "team_page_rows": 108,
+      "blank_team_rows": 46,
+      "teams_normalized": 32,
+      "players_per_team_mean": 47.4,
+      "attributes_with_any_value": 25,
+      "mean_nonblank_attribute_cells_per_row": 20.2,
+      "ovr_nonblank": 1517,
+      "median_OVR": 79,
+      "median_SPEED": 75,
+      "median_AWR": 72
+    },
+    {
+      "release": 2007,
+      "nfl_season": 2006,
+      "rows": 1440,
+      "players": 1440,
+      "team_page_rows": 73,
+      "blank_team_rows": 41,
+      "teams_normalized": 32,
+      "players_per_team_mean": 45.0,
+      "attributes_with_any_value": 38,
+      "mean_nonblank_attribute_cells_per_row": 31.1,
+      "ovr_nonblank": 1440,
+      "median_OVR": 80.0,
+      "median_SPEED": 76.0,
+      "median_AWR": 72.0
+    },
+    {
+      "release": 2008,
+      "nfl_season": 2007,
+      "rows": 1455,
+      "players": 1455,
+      "team_page_rows": 49,
+      "blank_team_rows": 34,
+      "teams_normalized": 32,
+      "players_per_team_mean": 45.5,
+      "attributes_with_any_value": 47,
+      "mean_nonblank_attribute_cells_per_row": 38.1,
+      "ovr_nonblank": 1455,
+      "median_OVR": 79,
+      "median_SPEED": 77,
+      "median_AWR": 70
+    },
+    {
+      "release": 2009,
+      "nfl_season": 2008,
+      "rows": 1536,
+      "players": 1536,
+      "team_page_rows": 91,
+      "blank_team_rows": 47,
+      "teams_normalized": 32,
+      "players_per_team_mean": 48.0,
+      "attributes_with_any_value": 48,
+      "mean_nonblank_attribute_cells_per_row": 38.4,
+      "ovr_nonblank": 1536,
+      "median_OVR": 79.0,
+      "median_SPEED": 80,
+      "median_AWR": 69.0
+    },
+    {
+      "release": 2010,
+      "nfl_season": 2009,
+      "rows": 1632,
+      "players": 1632,
+      "team_page_rows": 2,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 51.0,
+      "attributes_with_any_value": 18,
+      "mean_nonblank_attribute_cells_per_row": 12.2,
+      "ovr_nonblank": 1632,
+      "median_OVR": 71.0,
+      "median_SPEED": 75,
+      "median_AWR": null
+    },
+    {
+      "release": 2011,
+      "nfl_season": 2010,
+      "rows": 1635,
+      "players": 1635,
+      "team_page_rows": 259,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 51.1,
+      "attributes_with_any_value": 52,
+      "mean_nonblank_attribute_cells_per_row": 37.1,
+      "ovr_nonblank": 1635,
+      "median_OVR": 73,
+      "median_SPEED": 77.0,
+      "median_AWR": 68
+    },
+    {
+      "release": 2012,
+      "nfl_season": 2011,
+      "rows": 1471,
+      "players": 1471,
+      "team_page_rows": 13,
+      "blank_team_rows": 95,
+      "teams_normalized": 32,
+      "players_per_team_mean": 46.0,
+      "attributes_with_any_value": 47,
+      "mean_nonblank_attribute_cells_per_row": 16.5,
+      "ovr_nonblank": 1471,
+      "median_OVR": 72,
+      "median_SPEED": 78.0,
+      "median_AWR": 67
+    },
+    {
+      "release": 2013,
+      "nfl_season": 2012,
+      "rows": 2000,
+      "players": 1999,
+      "team_page_rows": 323,
+      "blank_team_rows": 4,
+      "teams_normalized": 32,
+      "players_per_team_mean": 62.5,
+      "attributes_with_any_value": 51,
+      "mean_nonblank_attribute_cells_per_row": 37.6,
+      "ovr_nonblank": 2000,
+      "median_OVR": 72.0,
+      "median_SPEED": 79.0,
+      "median_AWR": 68.0
+    },
+    {
+      "release": 2014,
+      "nfl_season": 2013,
+      "rows": 1967,
+      "players": 1966,
+      "team_page_rows": 373,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 61.5,
+      "attributes_with_any_value": 50,
+      "mean_nonblank_attribute_cells_per_row": 35.9,
+      "ovr_nonblank": 1967,
+      "median_OVR": 73,
+      "median_SPEED": 80,
+      "median_AWR": 69
+    },
+    {
+      "release": 2015,
+      "nfl_season": 2014,
+      "rows": 1981,
+      "players": 1979,
+      "team_page_rows": 335,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 61.9,
+      "attributes_with_any_value": 49,
+      "mean_nonblank_attribute_cells_per_row": 37.4,
+      "ovr_nonblank": 1981,
+      "median_OVR": 74,
+      "median_SPEED": 81,
+      "median_AWR": 70
+    },
+    {
+      "release": 2016,
+      "nfl_season": 2015,
+      "rows": 2039,
+      "players": 2035,
+      "team_page_rows": 389,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 63.7,
+      "attributes_with_any_value": 49,
+      "mean_nonblank_attribute_cells_per_row": 36.7,
+      "ovr_nonblank": 2039,
+      "median_OVR": 74,
+      "median_SPEED": 81.0,
+      "median_AWR": 71
+    },
+    {
+      "release": 2017,
+      "nfl_season": 2016,
+      "rows": 2048,
+      "players": 2047,
+      "team_page_rows": 303,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 64.0,
+      "attributes_with_any_value": 51,
+      "mean_nonblank_attribute_cells_per_row": 38.0,
+      "ovr_nonblank": 2048,
+      "median_OVR": 71.0,
+      "median_SPEED": 82,
+      "median_AWR": 69.0
+    },
+    {
+      "release": 2018,
+      "nfl_season": 2017,
+      "rows": 2086,
+      "players": 2085,
+      "team_page_rows": 362,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 65.2,
+      "attributes_with_any_value": 51,
+      "mean_nonblank_attribute_cells_per_row": 37.3,
+      "ovr_nonblank": 2086,
+      "median_OVR": 72.0,
+      "median_SPEED": 83,
+      "median_AWR": 69.0
+    },
+    {
+      "release": 2019,
+      "nfl_season": 2018,
+      "rows": 2087,
+      "players": 2085,
+      "team_page_rows": 367,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 65.2,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 37.2,
+      "ovr_nonblank": 2087,
+      "median_OVR": 72,
+      "median_SPEED": 83,
+      "median_AWR": 70
+    },
+    {
+      "release": 2020,
+      "nfl_season": 2019,
+      "rows": 2081,
+      "players": 2078,
+      "team_page_rows": 383,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 65.0,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 37.1,
+      "ovr_nonblank": 2081,
+      "median_OVR": 70,
+      "median_SPEED": 84.0,
+      "median_AWR": 71
+    },
+    {
+      "release": 2021,
+      "nfl_season": 2020,
+      "rows": 2122,
+      "players": 2121,
+      "team_page_rows": 316,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 66.3,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 38.8,
+      "ovr_nonblank": 2122,
+      "median_OVR": 69.0,
+      "median_SPEED": 83,
+      "median_AWR": 70.0
+    },
+    {
+      "release": 2022,
+      "nfl_season": 2021,
+      "rows": 1960,
+      "players": 1960,
+      "team_page_rows": 299,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 61.2,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 39.4,
+      "ovr_nonblank": 1960,
+      "median_OVR": 70.0,
+      "median_SPEED": 85,
+      "median_AWR": 72.0
+    },
+    {
+      "release": 2023,
+      "nfl_season": 2022,
+      "rows": 2195,
+      "players": 2191,
+      "team_page_rows": 347,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 68.6,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 38.6,
+      "ovr_nonblank": 2195,
+      "median_OVR": 69,
+      "median_SPEED": 84.0,
+      "median_AWR": 70
+    },
+    {
+      "release": 2024,
+      "nfl_season": 2023,
+      "rows": 2187,
+      "players": 2185,
+      "team_page_rows": 386,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 68.3,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 38.0,
+      "ovr_nonblank": 2187,
+      "median_OVR": 70,
+      "median_SPEED": 85,
+      "median_AWR": 70
+    },
+    {
+      "release": 2025,
+      "nfl_season": 2024,
+      "rows": 2170,
+      "players": 2167,
+      "team_page_rows": 327,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 67.8,
+      "attributes_with_any_value": 54,
+      "mean_nonblank_attribute_cells_per_row": 39.1,
+      "ovr_nonblank": 2170,
+      "median_OVR": 71.0,
+      "median_SPEED": 85,
+      "median_AWR": 71.0
+    },
+    {
+      "release": 2026,
+      "nfl_season": 2025,
+      "rows": 2160,
+      "players": 2155,
+      "team_page_rows": 148,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 67.5,
+      "attributes_with_any_value": 55,
+      "mean_nonblank_attribute_cells_per_row": 50.3,
+      "ovr_nonblank": 2160,
+      "median_OVR": 71.0,
+      "median_SPEED": 85,
+      "median_AWR": 71.0
+    },
+    {
+      "release": 2027,
+      "nfl_season": 2026,
+      "rows": 1531,
+      "players": 1530,
+      "team_page_rows": 0,
+      "blank_team_rows": 106,
+      "teams_normalized": 30,
+      "players_per_team_mean": 51.0,
+      "attributes_with_any_value": 54,
+      "mean_nonblank_attribute_cells_per_row": 54,
+      "ovr_nonblank": 1531,
+      "median_OVR": 72,
+      "median_SPEED": 84,
+      "median_AWR": 73
+    }
+  ],
+  "position_group_by_release": [
+    {
+      "release": 1992,
+      "pos_group": "DB",
+      "rows": 193,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": 13.0,
+      "median_THP": null,
+      "median_CTH": 53
+    },
+    {
+      "release": 1992,
+      "pos_group": "DL",
+      "rows": 96,
+      "median_OVR": null,
+      "median_SPEED": 43.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1992,
+      "pos_group": "K",
+      "rows": 28,
+      "median_OVR": null,
+      "median_SPEED": 26.0,
+      "median_AWR": 0.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1992,
+      "pos_group": "LB",
+      "rows": 123,
+      "median_OVR": null,
+      "median_SPEED": 59,
+      "median_AWR": 59.0,
+      "median_THP": null,
+      "median_CTH": 33.0
+    },
+    {
+      "release": 1992,
+      "pos_group": "OL",
+      "rows": 136,
+      "median_OVR": null,
+      "median_SPEED": 26.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1992,
+      "pos_group": "P",
+      "rows": 25,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": 0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1992,
+      "pos_group": "QB",
+      "rows": 54,
+      "median_OVR": null,
+      "median_SPEED": 26.0,
+      "median_AWR": null,
+      "median_THP": 30.0,
+      "median_CTH": null
+    },
+    {
+      "release": 1992,
+      "pos_group": "RB",
+      "rows": 91,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 46
+    },
+    {
+      "release": 1992,
+      "pos_group": "ST",
+      "rows": 1,
+      "median_OVR": null,
+      "median_SPEED": 79,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 79
+    },
+    {
+      "release": 1992,
+      "pos_group": "TE",
+      "rows": 45,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 26
+    },
+    {
+      "release": 1992,
+      "pos_group": "WR",
+      "rows": 113,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 33
+    },
+    {
+      "release": 1993,
+      "pos_group": "DB",
+      "rows": 164,
+      "median_OVR": null,
+      "median_SPEED": 53.0,
+      "median_AWR": 20.0,
+      "median_THP": null,
+      "median_CTH": 59.0
+    },
+    {
+      "release": 1993,
+      "pos_group": "DL",
+      "rows": 87,
+      "median_OVR": null,
+      "median_SPEED": 46,
+      "median_AWR": 59,
+      "median_THP": null,
+      "median_CTH": 20
+    },
+    {
+      "release": 1993,
+      "pos_group": "K",
+      "rows": 23,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": 0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1993,
+      "pos_group": "LB",
+      "rows": 116,
+      "median_OVR": null,
+      "median_SPEED": 53.0,
+      "median_AWR": 59.0,
+      "median_THP": null,
+      "median_CTH": 29.5
+    },
+    {
+      "release": 1993,
+      "pos_group": "OL",
+      "rows": 123,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1993,
+      "pos_group": "P",
+      "rows": 24,
+      "median_OVR": null,
+      "median_SPEED": 26.0,
+      "median_AWR": 0.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1993,
+      "pos_group": "QB",
+      "rows": 48,
+      "median_OVR": null,
+      "median_SPEED": 20.0,
+      "median_AWR": null,
+      "median_THP": 40.0,
+      "median_CTH": null
+    },
+    {
+      "release": 1993,
+      "pos_group": "RB",
+      "rows": 76,
+      "median_OVR": null,
+      "median_SPEED": 53.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 53.0
+    },
+    {
+      "release": 1993,
+      "pos_group": "ST",
+      "rows": 1,
+      "median_OVR": null,
+      "median_SPEED": 92,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 99
+    },
+    {
+      "release": 1993,
+      "pos_group": "TE",
+      "rows": 45,
+      "median_OVR": null,
+      "median_SPEED": 33,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 26
+    },
+    {
+      "release": 1993,
+      "pos_group": "WR",
+      "rows": 104,
+      "median_OVR": null,
+      "median_SPEED": 46.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 33.0
+    },
+    {
+      "release": 1994,
+      "pos_group": "DB",
+      "rows": 163,
+      "median_OVR": null,
+      "median_SPEED": 66,
+      "median_AWR": 26,
+      "median_THP": null,
+      "median_CTH": 66
+    },
+    {
+      "release": 1994,
+      "pos_group": "DL",
+      "rows": 104,
+      "median_OVR": null,
+      "median_SPEED": 56.0,
+      "median_AWR": 46.0,
+      "median_THP": null,
+      "median_CTH": 56.0
+    },
+    {
+      "release": 1994,
+      "pos_group": "K",
+      "rows": 23,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": 0.0,
+      "median_THP": 0,
+      "median_CTH": null
+    },
+    {
+      "release": 1994,
+      "pos_group": "LB",
+      "rows": 96,
+      "median_OVR": null,
+      "median_SPEED": 59.0,
+      "median_AWR": 59,
+      "median_THP": null,
+      "median_CTH": 46
+    },
+    {
+      "release": 1994,
+      "pos_group": "OL",
+      "rows": 122,
+      "median_OVR": null,
+      "median_SPEED": 40.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1994,
+      "pos_group": "P",
+      "rows": 23,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": 0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1994,
+      "pos_group": "QB",
+      "rows": 51,
+      "median_OVR": null,
+      "median_SPEED": 26,
+      "median_AWR": 0.0,
+      "median_THP": 46,
+      "median_CTH": null
+    },
+    {
+      "release": 1994,
+      "pos_group": "RB",
+      "rows": 74,
+      "median_OVR": null,
+      "median_SPEED": 53.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 26.0
+    },
+    {
+      "release": 1994,
+      "pos_group": "ST",
+      "rows": 2,
+      "median_OVR": null,
+      "median_SPEED": 56.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 62.5
+    },
+    {
+      "release": 1994,
+      "pos_group": "TE",
+      "rows": 50,
+      "median_OVR": null,
+      "median_SPEED": 33.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 26.0
+    },
+    {
+      "release": 1994,
+      "pos_group": "WR",
+      "rows": 105,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": 7,
+      "median_THP": null,
+      "median_CTH": 33
+    },
+    {
+      "release": 1995,
+      "pos_group": "DB",
+      "rows": 170,
+      "median_OVR": null,
+      "median_SPEED": 90.0,
+      "median_AWR": 43.0,
+      "median_THP": null,
+      "median_CTH": 43
+    },
+    {
+      "release": 1995,
+      "pos_group": "DL",
+      "rows": 140,
+      "median_OVR": null,
+      "median_SPEED": 43.0,
+      "median_AWR": 95,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1995,
+      "pos_group": "K",
+      "rows": 25,
+      "median_OVR": null,
+      "median_SPEED": 36,
+      "median_AWR": 3,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1995,
+      "pos_group": "LB",
+      "rows": 149,
+      "median_OVR": null,
+      "median_SPEED": 58,
+      "median_AWR": 66,
+      "median_THP": null,
+      "median_CTH": 26.0
+    },
+    {
+      "release": 1995,
+      "pos_group": "OL",
+      "rows": 180,
+      "median_OVR": null,
+      "median_SPEED": 29.0,
+      "median_AWR": 95.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1995,
+      "pos_group": "P",
+      "rows": 24,
+      "median_OVR": null,
+      "median_SPEED": 39.5,
+      "median_AWR": 3.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1995,
+      "pos_group": "QB",
+      "rows": 60,
+      "median_OVR": null,
+      "median_SPEED": 36.0,
+      "median_AWR": 95,
+      "median_THP": 66,
+      "median_CTH": null
+    },
+    {
+      "release": 1995,
+      "pos_group": "RB",
+      "rows": 117,
+      "median_OVR": null,
+      "median_SPEED": 74,
+      "median_AWR": 95,
+      "median_THP": null,
+      "median_CTH": 43
+    },
+    {
+      "release": 1995,
+      "pos_group": "ST",
+      "rows": 5,
+      "median_OVR": null,
+      "median_SPEED": 50,
+      "median_AWR": 99,
+      "median_THP": null,
+      "median_CTH": 39.5
+    },
+    {
+      "release": 1995,
+      "pos_group": "TE",
+      "rows": 57,
+      "median_OVR": null,
+      "median_SPEED": 50,
+      "median_AWR": 95.0,
+      "median_THP": null,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 1995,
+      "pos_group": "WR",
+      "rows": 121,
+      "median_OVR": null,
+      "median_SPEED": 90,
+      "median_AWR": 98.0,
+      "median_THP": 90,
+      "median_CTH": 58
+    },
+    {
+      "release": 1996,
+      "pos_group": "DB",
+      "rows": 227,
+      "median_OVR": null,
+      "median_SPEED": 73,
+      "median_AWR": 40,
+      "median_THP": null,
+      "median_CTH": 53
+    },
+    {
+      "release": 1996,
+      "pos_group": "DL",
+      "rows": 170,
+      "median_OVR": null,
+      "median_SPEED": 46.0,
+      "median_AWR": 73.0,
+      "median_THP": null,
+      "median_CTH": 20.0
+    },
+    {
+      "release": 1996,
+      "pos_group": "K",
+      "rows": 29,
+      "median_OVR": null,
+      "median_SPEED": null,
+      "median_AWR": 99,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1996,
+      "pos_group": "LB",
+      "rows": 197,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": 66,
+      "median_THP": null,
+      "median_CTH": 20
+    },
+    {
+      "release": 1996,
+      "pos_group": "OL",
+      "rows": 226,
+      "median_OVR": null,
+      "median_SPEED": 46.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1996,
+      "pos_group": "P",
+      "rows": 28,
+      "median_OVR": null,
+      "median_SPEED": null,
+      "median_AWR": 99.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1996,
+      "pos_group": "QB",
+      "rows": 76,
+      "median_OVR": null,
+      "median_SPEED": 40.0,
+      "median_AWR": 99,
+      "median_THP": 66.0,
+      "median_CTH": null
+    },
+    {
+      "release": 1996,
+      "pos_group": "RB",
+      "rows": 133,
+      "median_OVR": null,
+      "median_SPEED": 59,
+      "median_AWR": 59,
+      "median_THP": null,
+      "median_CTH": 46
+    },
+    {
+      "release": 1996,
+      "pos_group": "ST",
+      "rows": 6,
+      "median_OVR": null,
+      "median_SPEED": 49.5,
+      "median_AWR": 82.5,
+      "median_THP": null,
+      "median_CTH": 23.0
+    },
+    {
+      "release": 1996,
+      "pos_group": "TE",
+      "rows": 84,
+      "median_OVR": null,
+      "median_SPEED": 46.0,
+      "median_AWR": 66.0,
+      "median_THP": null,
+      "median_CTH": 20.0
+    },
+    {
+      "release": 1996,
+      "pos_group": "WR",
+      "rows": 155,
+      "median_OVR": null,
+      "median_SPEED": 73,
+      "median_AWR": 40,
+      "median_THP": null,
+      "median_CTH": 33
+    },
+    {
+      "release": 1997,
+      "pos_group": "DB",
+      "rows": 225,
+      "median_OVR": 39,
+      "median_SPEED": 78,
+      "median_AWR": 63,
+      "median_THP": null,
+      "median_CTH": 37
+    },
+    {
+      "release": 1997,
+      "pos_group": "DL",
+      "rows": 177,
+      "median_OVR": 44,
+      "median_SPEED": 43,
+      "median_AWR": 43,
+      "median_THP": null,
+      "median_CTH": 18
+    },
+    {
+      "release": 1997,
+      "pos_group": "K",
+      "rows": 30,
+      "median_OVR": 59.0,
+      "median_SPEED": 67.0,
+      "median_AWR": 17.0,
+      "median_THP": null,
+      "median_CTH": 44
+    },
+    {
+      "release": 1997,
+      "pos_group": "LB",
+      "rows": 185,
+      "median_OVR": 40,
+      "median_SPEED": 59,
+      "median_AWR": 42,
+      "median_THP": null,
+      "median_CTH": 28
+    },
+    {
+      "release": 1997,
+      "pos_group": "OL",
+      "rows": 214,
+      "median_OVR": 66.0,
+      "median_SPEED": 28.0,
+      "median_AWR": 67.0,
+      "median_THP": null,
+      "median_CTH": 7.0
+    },
+    {
+      "release": 1997,
+      "pos_group": "P",
+      "rows": 30,
+      "median_OVR": 39.0,
+      "median_SPEED": 63.0,
+      "median_AWR": 24.5,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1997,
+      "pos_group": "QB",
+      "rows": 74,
+      "median_OVR": 37.5,
+      "median_SPEED": 47.5,
+      "median_AWR": 58.0,
+      "median_THP": 70.0,
+      "median_CTH": 10.0
+    },
+    {
+      "release": 1997,
+      "pos_group": "RB",
+      "rows": 133,
+      "median_OVR": 29,
+      "median_SPEED": 72,
+      "median_AWR": 41,
+      "median_THP": null,
+      "median_CTH": 22
+    },
+    {
+      "release": 1997,
+      "pos_group": "ST",
+      "rows": 9,
+      "median_OVR": 47,
+      "median_SPEED": 29,
+      "median_AWR": 51,
+      "median_THP": null,
+      "median_CTH": 22.0
+    },
+    {
+      "release": 1997,
+      "pos_group": "TE",
+      "rows": 89,
+      "median_OVR": 31,
+      "median_SPEED": 49,
+      "median_AWR": 30,
+      "median_THP": null,
+      "median_CTH": 26
+    },
+    {
+      "release": 1997,
+      "pos_group": "WR",
+      "rows": 157,
+      "median_OVR": 35,
+      "median_SPEED": 78,
+      "median_AWR": 38,
+      "median_THP": null,
+      "median_CTH": 39
+    },
+    {
+      "release": 1998,
+      "pos_group": "DB",
+      "rows": 196,
+      "median_OVR": null,
+      "median_SPEED": 79.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 43.0
+    },
+    {
+      "release": 1998,
+      "pos_group": "DL",
+      "rows": 158,
+      "median_OVR": null,
+      "median_SPEED": 49.5,
+      "median_AWR": 46.0,
+      "median_THP": null,
+      "median_CTH": 36.5
+    },
+    {
+      "release": 1998,
+      "pos_group": "K",
+      "rows": 22,
+      "median_OVR": null,
+      "median_SPEED": 59.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1998,
+      "pos_group": "LB",
+      "rows": 168,
+      "median_OVR": null,
+      "median_SPEED": 59.0,
+      "median_AWR": 46,
+      "median_THP": null,
+      "median_CTH": 53
+    },
+    {
+      "release": 1998,
+      "pos_group": "OL",
+      "rows": 187,
+      "median_OVR": null,
+      "median_SPEED": 46,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1998,
+      "pos_group": "P",
+      "rows": 27,
+      "median_OVR": null,
+      "median_SPEED": 59,
+      "median_AWR": null,
+      "median_THP": 59.0,
+      "median_CTH": null
+    },
+    {
+      "release": 1998,
+      "pos_group": "QB",
+      "rows": 67,
+      "median_OVR": null,
+      "median_SPEED": 46,
+      "median_AWR": null,
+      "median_THP": 66,
+      "median_CTH": null
+    },
+    {
+      "release": 1998,
+      "pos_group": "RB",
+      "rows": 114,
+      "median_OVR": null,
+      "median_SPEED": 66.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 53.0
+    },
+    {
+      "release": 1998,
+      "pos_group": "ST",
+      "rows": 11,
+      "median_OVR": null,
+      "median_SPEED": 46,
+      "median_AWR": 20,
+      "median_THP": null,
+      "median_CTH": 33
+    },
+    {
+      "release": 1998,
+      "pos_group": "TE",
+      "rows": 79,
+      "median_OVR": null,
+      "median_SPEED": 53,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 46
+    },
+    {
+      "release": 1998,
+      "pos_group": "WR",
+      "rows": 139,
+      "median_OVR": null,
+      "median_SPEED": 73,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 46
+    },
+    {
+      "release": 1999,
+      "pos_group": "DB",
+      "rows": 213,
+      "median_OVR": null,
+      "median_SPEED": 83,
+      "median_AWR": 59,
+      "median_THP": null,
+      "median_CTH": 29
+    },
+    {
+      "release": 1999,
+      "pos_group": "DL",
+      "rows": 195,
+      "median_OVR": null,
+      "median_SPEED": 55,
+      "median_AWR": 67,
+      "median_THP": null,
+      "median_CTH": 9
+    },
+    {
+      "release": 1999,
+      "pos_group": "K",
+      "rows": 28,
+      "median_OVR": null,
+      "median_SPEED": 44.0,
+      "median_AWR": 80.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1999,
+      "pos_group": "LB",
+      "rows": 160,
+      "median_OVR": null,
+      "median_SPEED": 69.0,
+      "median_AWR": 69.0,
+      "median_THP": null,
+      "median_CTH": 14.0
+    },
+    {
+      "release": 1999,
+      "pos_group": "OL",
+      "rows": 208,
+      "median_OVR": null,
+      "median_SPEED": 46.0,
+      "median_AWR": 75.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1999,
+      "pos_group": "P",
+      "rows": 27,
+      "median_OVR": null,
+      "median_SPEED": 44,
+      "median_AWR": 85,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 1999,
+      "pos_group": "QB",
+      "rows": 60,
+      "median_OVR": null,
+      "median_SPEED": 57.0,
+      "median_AWR": 72.0,
+      "median_THP": 80.0,
+      "median_CTH": 9.0
+    },
+    {
+      "release": 1999,
+      "pos_group": "RB",
+      "rows": 131,
+      "median_OVR": null,
+      "median_SPEED": 78,
+      "median_AWR": 75,
+      "median_THP": null,
+      "median_CTH": 59
+    },
+    {
+      "release": 1999,
+      "pos_group": "TE",
+      "rows": 72,
+      "median_OVR": null,
+      "median_SPEED": 62.0,
+      "median_AWR": 73.5,
+      "median_THP": null,
+      "median_CTH": 50.0
+    },
+    {
+      "release": 1999,
+      "pos_group": "WR",
+      "rows": 120,
+      "median_OVR": null,
+      "median_SPEED": 84.0,
+      "median_AWR": 78.0,
+      "median_THP": null,
+      "median_CTH": 65.0
+    },
+    {
+      "release": 2000,
+      "pos_group": "DB",
+      "rows": 215,
+      "median_OVR": null,
+      "median_SPEED": 83,
+      "median_AWR": 59,
+      "median_THP": null,
+      "median_CTH": 50
+    },
+    {
+      "release": 2000,
+      "pos_group": "DL",
+      "rows": 206,
+      "median_OVR": null,
+      "median_SPEED": 55.0,
+      "median_AWR": 69.0,
+      "median_THP": null,
+      "median_CTH": 19
+    },
+    {
+      "release": 2000,
+      "pos_group": "K",
+      "rows": 29,
+      "median_OVR": null,
+      "median_SPEED": 34,
+      "median_AWR": 78,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2000,
+      "pos_group": "LB",
+      "rows": 158,
+      "median_OVR": null,
+      "median_SPEED": 59.0,
+      "median_AWR": 64.0,
+      "median_THP": null,
+      "median_CTH": 26.5
+    },
+    {
+      "release": 2000,
+      "pos_group": "OL",
+      "rows": 214,
+      "median_OVR": null,
+      "median_SPEED": 43.0,
+      "median_AWR": 69.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2000,
+      "pos_group": "P",
+      "rows": 26,
+      "median_OVR": null,
+      "median_SPEED": 38.0,
+      "median_AWR": 75.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2000,
+      "pos_group": "QB",
+      "rows": 62,
+      "median_OVR": null,
+      "median_SPEED": 51.0,
+      "median_AWR": 69.0,
+      "median_THP": 82.0,
+      "median_CTH": 9.0
+    },
+    {
+      "release": 2000,
+      "pos_group": "RB",
+      "rows": 137,
+      "median_OVR": null,
+      "median_SPEED": 78,
+      "median_AWR": 64,
+      "median_THP": null,
+      "median_CTH": 57
+    },
+    {
+      "release": 2000,
+      "pos_group": "ST",
+      "rows": 2,
+      "median_OVR": null,
+      "median_SPEED": 50.0,
+      "median_AWR": 60.5,
+      "median_THP": null,
+      "median_CTH": 19
+    },
+    {
+      "release": 2000,
+      "pos_group": "TE",
+      "rows": 70,
+      "median_OVR": null,
+      "median_SPEED": 58.0,
+      "median_AWR": 61.0,
+      "median_THP": null,
+      "median_CTH": 64.0
+    },
+    {
+      "release": 2000,
+      "pos_group": "WR",
+      "rows": 131,
+      "median_OVR": null,
+      "median_SPEED": 83,
+      "median_AWR": 69,
+      "median_THP": null,
+      "median_CTH": 69
+    },
+    {
+      "release": 2001,
+      "pos_group": "DB",
+      "rows": 240,
+      "median_OVR": 78.0,
+      "median_SPEED": 81.0,
+      "median_AWR": 66.0,
+      "median_THP": null,
+      "median_CTH": 51.0
+    },
+    {
+      "release": 2001,
+      "pos_group": "DL",
+      "rows": 214,
+      "median_OVR": 79.5,
+      "median_SPEED": 62.0,
+      "median_AWR": 65.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 83,
+      "median_SPEED": 33,
+      "median_AWR": 73,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "LB",
+      "rows": 194,
+      "median_OVR": 75.0,
+      "median_SPEED": 71.0,
+      "median_AWR": 60.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "OL",
+      "rows": 245,
+      "median_OVR": 76,
+      "median_SPEED": 43,
+      "median_AWR": 68,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "P",
+      "rows": 30,
+      "median_OVR": 82.0,
+      "median_SPEED": 34.5,
+      "median_AWR": 72.0,
+      "median_THP": null,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "QB",
+      "rows": 80,
+      "median_OVR": 75.5,
+      "median_SPEED": 57.0,
+      "median_AWR": 67.0,
+      "median_THP": 81.5,
+      "median_CTH": null
+    },
+    {
+      "release": 2001,
+      "pos_group": "RB",
+      "rows": 141,
+      "median_OVR": 76,
+      "median_SPEED": 77,
+      "median_AWR": 63,
+      "median_THP": null,
+      "median_CTH": 61
+    },
+    {
+      "release": 2001,
+      "pos_group": "ST",
+      "rows": 5,
+      "median_OVR": 64,
+      "median_SPEED": 58,
+      "median_AWR": 56,
+      "median_THP": null,
+      "median_CTH": 52
+    },
+    {
+      "release": 2001,
+      "pos_group": "TE",
+      "rows": 79,
+      "median_OVR": 79,
+      "median_SPEED": 61,
+      "median_AWR": 61,
+      "median_THP": null,
+      "median_CTH": 61.0
+    },
+    {
+      "release": 2001,
+      "pos_group": "WR",
+      "rows": 153,
+      "median_OVR": 78,
+      "median_SPEED": 84,
+      "median_AWR": 64,
+      "median_THP": null,
+      "median_CTH": 72
+    },
+    {
+      "release": 2002,
+      "pos_group": "DB",
+      "rows": 279,
+      "median_OVR": 66,
+      "median_SPEED": 84,
+      "median_AWR": 68,
+      "median_THP": 17.0,
+      "median_CTH": 53.0
+    },
+    {
+      "release": 2002,
+      "pos_group": "DL",
+      "rows": 241,
+      "median_OVR": 67,
+      "median_SPEED": 59,
+      "median_AWR": 67,
+      "median_THP": 18,
+      "median_CTH": 19
+    },
+    {
+      "release": 2002,
+      "pos_group": "K",
+      "rows": 32,
+      "median_OVR": 72.0,
+      "median_SPEED": 34.0,
+      "median_AWR": 82.5,
+      "median_THP": 15.5,
+      "median_CTH": 23.0
+    },
+    {
+      "release": 2002,
+      "pos_group": "LB",
+      "rows": 209,
+      "median_OVR": 65,
+      "median_SPEED": 72,
+      "median_AWR": 64.0,
+      "median_THP": 20.0,
+      "median_CTH": 44.0
+    },
+    {
+      "release": 2002,
+      "pos_group": "OL",
+      "rows": 279,
+      "median_OVR": 66,
+      "median_SPEED": 44,
+      "median_AWR": 70,
+      "median_THP": 21,
+      "median_CTH": 20
+    },
+    {
+      "release": 2002,
+      "pos_group": "P",
+      "rows": 31,
+      "median_OVR": 69,
+      "median_SPEED": 40,
+      "median_AWR": 78,
+      "median_THP": 18,
+      "median_CTH": 17
+    },
+    {
+      "release": 2002,
+      "pos_group": "QB",
+      "rows": 91,
+      "median_OVR": 67,
+      "median_SPEED": 54,
+      "median_AWR": 69.0,
+      "median_THP": 80.5,
+      "median_CTH": 20.5
+    },
+    {
+      "release": 2002,
+      "pos_group": "RB",
+      "rows": 147,
+      "median_OVR": 69,
+      "median_SPEED": 78,
+      "median_AWR": 65,
+      "median_THP": 29.0,
+      "median_CTH": 61
+    },
+    {
+      "release": 2002,
+      "pos_group": "ST",
+      "rows": 6,
+      "median_OVR": 43.0,
+      "median_SPEED": 49,
+      "median_AWR": 48,
+      "median_THP": 18,
+      "median_CTH": 21
+    },
+    {
+      "release": 2002,
+      "pos_group": "TE",
+      "rows": 73,
+      "median_OVR": 68,
+      "median_SPEED": 63,
+      "median_AWR": 64.0,
+      "median_THP": 19,
+      "median_CTH": 63.5
+    },
+    {
+      "release": 2002,
+      "pos_group": "WR",
+      "rows": 162,
+      "median_OVR": 69.0,
+      "median_SPEED": 84.5,
+      "median_AWR": 68.0,
+      "median_THP": 19,
+      "median_CTH": 73.0
+    },
+    {
+      "release": 2003,
+      "pos_group": "DB",
+      "rows": 285,
+      "median_OVR": 64,
+      "median_SPEED": 84,
+      "median_AWR": null,
+      "median_THP": 20,
+      "median_CTH": 58
+    },
+    {
+      "release": 2003,
+      "pos_group": "DL",
+      "rows": 249,
+      "median_OVR": 67,
+      "median_SPEED": 57,
+      "median_AWR": null,
+      "median_THP": 21,
+      "median_CTH": 24
+    },
+    {
+      "release": 2003,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 76,
+      "median_SPEED": 30,
+      "median_AWR": null,
+      "median_THP": 24,
+      "median_CTH": 25
+    },
+    {
+      "release": 2003,
+      "pos_group": "LB",
+      "rows": 196,
+      "median_OVR": 66.0,
+      "median_SPEED": 70,
+      "median_AWR": null,
+      "median_THP": 23.5,
+      "median_CTH": 49.0
+    },
+    {
+      "release": 2003,
+      "pos_group": "OL",
+      "rows": 270,
+      "median_OVR": 70.0,
+      "median_SPEED": 41,
+      "median_AWR": null,
+      "median_THP": 25,
+      "median_CTH": 23
+    },
+    {
+      "release": 2003,
+      "pos_group": "P",
+      "rows": 33,
+      "median_OVR": 81,
+      "median_SPEED": 31,
+      "median_AWR": null,
+      "median_THP": 23,
+      "median_CTH": 29
+    },
+    {
+      "release": 2003,
+      "pos_group": "QB",
+      "rows": 87,
+      "median_OVR": 66,
+      "median_SPEED": 48,
+      "median_AWR": null,
+      "median_THP": 84,
+      "median_CTH": 25.0
+    },
+    {
+      "release": 2003,
+      "pos_group": "RB",
+      "rows": 161,
+      "median_OVR": 70,
+      "median_SPEED": 79.0,
+      "median_AWR": null,
+      "median_THP": 30.0,
+      "median_CTH": 64.0
+    },
+    {
+      "release": 2003,
+      "pos_group": "ST",
+      "rows": 4,
+      "median_OVR": 37.0,
+      "median_SPEED": 40.5,
+      "median_AWR": null,
+      "median_THP": 17.0,
+      "median_CTH": 21.0
+    },
+    {
+      "release": 2003,
+      "pos_group": "TE",
+      "rows": 85,
+      "median_OVR": 63,
+      "median_SPEED": 59,
+      "median_AWR": null,
+      "median_THP": 23,
+      "median_CTH": 67
+    },
+    {
+      "release": 2003,
+      "pos_group": "WR",
+      "rows": 177,
+      "median_OVR": 68,
+      "median_SPEED": 84.0,
+      "median_AWR": null,
+      "median_THP": 23,
+      "median_CTH": 74.5
+    },
+    {
+      "release": 2004,
+      "pos_group": "DB",
+      "rows": 275,
+      "median_OVR": 72,
+      "median_SPEED": 86,
+      "median_AWR": 67,
+      "median_THP": 20.0,
+      "median_CTH": 61
+    },
+    {
+      "release": 2004,
+      "pos_group": "DL",
+      "rows": 249,
+      "median_OVR": 75,
+      "median_SPEED": 62,
+      "median_AWR": 67,
+      "median_THP": 21.0,
+      "median_CTH": 24.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 83,
+      "median_SPEED": 33.5,
+      "median_AWR": 80,
+      "median_THP": 24.0,
+      "median_CTH": 24.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "LB",
+      "rows": 194,
+      "median_OVR": 72.5,
+      "median_SPEED": 75.0,
+      "median_AWR": 68.0,
+      "median_THP": 22.0,
+      "median_CTH": 50.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "OL",
+      "rows": 282,
+      "median_OVR": 74.5,
+      "median_SPEED": 45.0,
+      "median_AWR": 70.0,
+      "median_THP": 23.0,
+      "median_CTH": 22.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 81.5,
+      "median_SPEED": 32,
+      "median_AWR": 78.5,
+      "median_THP": 24,
+      "median_CTH": 28
+    },
+    {
+      "release": 2004,
+      "pos_group": "QB",
+      "rows": 92,
+      "median_OVR": 73.5,
+      "median_SPEED": 53.0,
+      "median_AWR": 71.5,
+      "median_THP": 86.0,
+      "median_CTH": 24.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "RB",
+      "rows": 156,
+      "median_OVR": 73.0,
+      "median_SPEED": 83.0,
+      "median_AWR": 64.0,
+      "median_THP": 29.5,
+      "median_CTH": 63.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "ST",
+      "rows": 3,
+      "median_OVR": 53,
+      "median_SPEED": 54,
+      "median_AWR": 50,
+      "median_THP": 10,
+      "median_CTH": 56
+    },
+    {
+      "release": 2004,
+      "pos_group": "TE",
+      "rows": 94,
+      "median_OVR": 68.0,
+      "median_SPEED": 65.0,
+      "median_AWR": 62.0,
+      "median_THP": 21,
+      "median_CTH": 68.0
+    },
+    {
+      "release": 2004,
+      "pos_group": "WR",
+      "rows": 182,
+      "median_OVR": 72.0,
+      "median_SPEED": 87.0,
+      "median_AWR": 65.0,
+      "median_THP": 23,
+      "median_CTH": 76.5
+    },
+    {
+      "release": 2005,
+      "pos_group": "DB",
+      "rows": 253,
+      "median_OVR": 77,
+      "median_SPEED": 87,
+      "median_AWR": 70,
+      "median_THP": 20.0,
+      "median_CTH": 63
+    },
+    {
+      "release": 2005,
+      "pos_group": "DL",
+      "rows": 219,
+      "median_OVR": 80,
+      "median_SPEED": 64,
+      "median_AWR": 70,
+      "median_THP": 21,
+      "median_CTH": 24
+    },
+    {
+      "release": 2005,
+      "pos_group": "K",
+      "rows": 31,
+      "median_OVR": 84,
+      "median_SPEED": 46.0,
+      "median_AWR": 79,
+      "median_THP": 24.0,
+      "median_CTH": 26.0
+    },
+    {
+      "release": 2005,
+      "pos_group": "LB",
+      "rows": 192,
+      "median_OVR": 78.0,
+      "median_SPEED": 76.0,
+      "median_AWR": 72.0,
+      "median_THP": 20.0,
+      "median_CTH": 52.0
+    },
+    {
+      "release": 2005,
+      "pos_group": "OL",
+      "rows": 240,
+      "median_OVR": 80.0,
+      "median_SPEED": 51,
+      "median_AWR": 75.5,
+      "median_THP": 22.5,
+      "median_CTH": 21.0
+    },
+    {
+      "release": 2005,
+      "pos_group": "P",
+      "rows": 30,
+      "median_OVR": 82.5,
+      "median_SPEED": 48.0,
+      "median_AWR": 79.5,
+      "median_THP": 23.0,
+      "median_CTH": 27.0
+    },
+    {
+      "release": 2005,
+      "pos_group": "QB",
+      "rows": 84,
+      "median_OVR": 77.5,
+      "median_SPEED": 55.5,
+      "median_AWR": 75.0,
+      "median_THP": 87.0,
+      "median_CTH": 23
+    },
+    {
+      "release": 2005,
+      "pos_group": "RB",
+      "rows": 143,
+      "median_OVR": 78,
+      "median_SPEED": 86,
+      "median_AWR": 66,
+      "median_THP": 28,
+      "median_CTH": 65
+    },
+    {
+      "release": 2005,
+      "pos_group": "ST",
+      "rows": 2,
+      "median_OVR": 61.0,
+      "median_SPEED": 55.0,
+      "median_AWR": 58.5,
+      "median_THP": 33.0,
+      "median_CTH": 60.5
+    },
+    {
+      "release": 2005,
+      "pos_group": "TE",
+      "rows": 84,
+      "median_OVR": 75.0,
+      "median_SPEED": 69.0,
+      "median_AWR": 69.0,
+      "median_THP": 21.0,
+      "median_CTH": 73.0
+    },
+    {
+      "release": 2005,
+      "pos_group": "WR",
+      "rows": 158,
+      "median_OVR": 78.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 69.5,
+      "median_THP": 22,
+      "median_CTH": 80.0
+    },
+    {
+      "release": 2006,
+      "pos_group": "DB",
+      "rows": 283,
+      "median_OVR": 78,
+      "median_SPEED": 88,
+      "median_AWR": 70,
+      "median_THP": 19.0,
+      "median_CTH": 64
+    },
+    {
+      "release": 2006,
+      "pos_group": "DL",
+      "rows": 221,
+      "median_OVR": 80,
+      "median_SPEED": 65,
+      "median_AWR": 71,
+      "median_THP": 20,
+      "median_CTH": 23
+    },
+    {
+      "release": 2006,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 85,
+      "median_SPEED": 46,
+      "median_AWR": 76,
+      "median_THP": 24,
+      "median_CTH": 26
+    },
+    {
+      "release": 2006,
+      "pos_group": "LB",
+      "rows": 198,
+      "median_OVR": 79.0,
+      "median_SPEED": 77.0,
+      "median_AWR": 74.5,
+      "median_THP": 20,
+      "median_CTH": 52
+    },
+    {
+      "release": 2006,
+      "pos_group": "OL",
+      "rows": 275,
+      "median_OVR": 80,
+      "median_SPEED": 52.0,
+      "median_AWR": 74,
+      "median_THP": 21.0,
+      "median_CTH": 21.5
+    },
+    {
+      "release": 2006,
+      "pos_group": "P",
+      "rows": 26,
+      "median_OVR": 83.5,
+      "median_SPEED": 52.5,
+      "median_AWR": 75.0,
+      "median_THP": 47.5,
+      "median_CTH": 27.0
+    },
+    {
+      "release": 2006,
+      "pos_group": "QB",
+      "rows": 82,
+      "median_OVR": 79.0,
+      "median_SPEED": 58.0,
+      "median_AWR": 76.0,
+      "median_THP": 88.0,
+      "median_CTH": 23.0
+    },
+    {
+      "release": 2006,
+      "pos_group": "RB",
+      "rows": 146,
+      "median_OVR": 79.0,
+      "median_SPEED": 87.0,
+      "median_AWR": 70.0,
+      "median_THP": 25,
+      "median_CTH": 65.5
+    },
+    {
+      "release": 2006,
+      "pos_group": "ST",
+      "rows": 6,
+      "median_OVR": 55.0,
+      "median_SPEED": 50,
+      "median_AWR": 63.0,
+      "median_THP": 60,
+      "median_CTH": 56
+    },
+    {
+      "release": 2006,
+      "pos_group": "TE",
+      "rows": 76,
+      "median_OVR": 78.0,
+      "median_SPEED": 70.0,
+      "median_AWR": 70.0,
+      "median_THP": 21,
+      "median_CTH": 74.5
+    },
+    {
+      "release": 2006,
+      "pos_group": "WR",
+      "rows": 169,
+      "median_OVR": 77,
+      "median_SPEED": 90,
+      "median_AWR": 69,
+      "median_THP": 23,
+      "median_CTH": 80
+    },
+    {
+      "release": 2007,
+      "pos_group": "DB",
+      "rows": 261,
+      "median_OVR": 79,
+      "median_SPEED": 88,
+      "median_AWR": 70,
+      "median_THP": 20.0,
+      "median_CTH": 63
+    },
+    {
+      "release": 2007,
+      "pos_group": "DL",
+      "rows": 225,
+      "median_OVR": 80,
+      "median_SPEED": 65,
+      "median_AWR": 68,
+      "median_THP": 20.0,
+      "median_CTH": 25.0
+    },
+    {
+      "release": 2007,
+      "pos_group": "K",
+      "rows": 29,
+      "median_OVR": 87,
+      "median_SPEED": 52,
+      "median_AWR": 76,
+      "median_THP": 24,
+      "median_CTH": 26
+    },
+    {
+      "release": 2007,
+      "pos_group": "LB",
+      "rows": 189,
+      "median_OVR": 79,
+      "median_SPEED": 78,
+      "median_AWR": 74,
+      "median_THP": 20.0,
+      "median_CTH": 52.0
+    },
+    {
+      "release": 2007,
+      "pos_group": "OL",
+      "rows": 257,
+      "median_OVR": 81,
+      "median_SPEED": 52.5,
+      "median_AWR": 75,
+      "median_THP": 21.0,
+      "median_CTH": 22.0
+    },
+    {
+      "release": 2007,
+      "pos_group": "P",
+      "rows": 28,
+      "median_OVR": 83.5,
+      "median_SPEED": 56,
+      "median_AWR": 73.5,
+      "median_THP": 47,
+      "median_CTH": 25
+    },
+    {
+      "release": 2007,
+      "pos_group": "QB",
+      "rows": 82,
+      "median_OVR": 79.0,
+      "median_SPEED": 61.5,
+      "median_AWR": 73.5,
+      "median_THP": 88.0,
+      "median_CTH": 26
+    },
+    {
+      "release": 2007,
+      "pos_group": "RB",
+      "rows": 129,
+      "median_OVR": 80,
+      "median_SPEED": 87,
+      "median_AWR": 68,
+      "median_THP": 25,
+      "median_CTH": 66
+    },
+    {
+      "release": 2007,
+      "pos_group": "ST",
+      "rows": 4,
+      "median_OVR": 63.0,
+      "median_SPEED": 54.0,
+      "median_AWR": 65.0,
+      "median_THP": 12.0,
+      "median_CTH": 17.0
+    },
+    {
+      "release": 2007,
+      "pos_group": "TE",
+      "rows": 81,
+      "median_OVR": 79,
+      "median_SPEED": 74,
+      "median_AWR": 70,
+      "median_THP": 21.0,
+      "median_CTH": 76
+    },
+    {
+      "release": 2007,
+      "pos_group": "WR",
+      "rows": 155,
+      "median_OVR": 78,
+      "median_SPEED": 90,
+      "median_AWR": 69,
+      "median_THP": 24,
+      "median_CTH": 81
+    },
+    {
+      "release": 2008,
+      "pos_group": "DB",
+      "rows": 256,
+      "median_OVR": 79.0,
+      "median_SPEED": 88.5,
+      "median_AWR": 69.0,
+      "median_THP": 20.0,
+      "median_CTH": 64.5
+    },
+    {
+      "release": 2008,
+      "pos_group": "DL",
+      "rows": 232,
+      "median_OVR": 78.0,
+      "median_SPEED": 66.0,
+      "median_AWR": 68.0,
+      "median_THP": 20,
+      "median_CTH": 25
+    },
+    {
+      "release": 2008,
+      "pos_group": "K",
+      "rows": 32,
+      "median_OVR": 86.0,
+      "median_SPEED": 55,
+      "median_AWR": 74.5,
+      "median_THP": 24,
+      "median_CTH": 27
+    },
+    {
+      "release": 2008,
+      "pos_group": "LB",
+      "rows": 187,
+      "median_OVR": 76,
+      "median_SPEED": 79,
+      "median_AWR": 74,
+      "median_THP": 20.0,
+      "median_CTH": 54.0
+    },
+    {
+      "release": 2008,
+      "pos_group": "OL",
+      "rows": 269,
+      "median_OVR": 80,
+      "median_SPEED": 53.0,
+      "median_AWR": 74,
+      "median_THP": 20.0,
+      "median_CTH": 22.0
+    },
+    {
+      "release": 2008,
+      "pos_group": "P",
+      "rows": 29,
+      "median_OVR": 84,
+      "median_SPEED": 61,
+      "median_AWR": 68,
+      "median_THP": 47,
+      "median_CTH": 26
+    },
+    {
+      "release": 2008,
+      "pos_group": "QB",
+      "rows": 78,
+      "median_OVR": 78.5,
+      "median_SPEED": 62.0,
+      "median_AWR": 71.5,
+      "median_THP": 88.0,
+      "median_CTH": 27
+    },
+    {
+      "release": 2008,
+      "pos_group": "RB",
+      "rows": 132,
+      "median_OVR": 79.5,
+      "median_SPEED": 87.5,
+      "median_AWR": 69.0,
+      "median_THP": 25.0,
+      "median_CTH": 70.0
+    },
+    {
+      "release": 2008,
+      "pos_group": "TE",
+      "rows": 82,
+      "median_OVR": 77.5,
+      "median_SPEED": 75.0,
+      "median_AWR": 70.0,
+      "median_THP": 22,
+      "median_CTH": 77.0
+    },
+    {
+      "release": 2008,
+      "pos_group": "WR",
+      "rows": 158,
+      "median_OVR": 74.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 70.0,
+      "median_THP": 25,
+      "median_CTH": 80.0
+    },
+    {
+      "release": 2009,
+      "pos_group": "DB",
+      "rows": 286,
+      "median_OVR": 78.5,
+      "median_SPEED": 90.0,
+      "median_AWR": 66.0,
+      "median_THP": 23,
+      "median_CTH": 66.0
+    },
+    {
+      "release": 2009,
+      "pos_group": "DL",
+      "rows": 246,
+      "median_OVR": 80.0,
+      "median_SPEED": 69.0,
+      "median_AWR": 68.0,
+      "median_THP": 21.5,
+      "median_CTH": 29.5
+    },
+    {
+      "release": 2009,
+      "pos_group": "K",
+      "rows": 34,
+      "median_OVR": 88.5,
+      "median_SPEED": 55,
+      "median_AWR": 76.0,
+      "median_THP": 25,
+      "median_CTH": 28
+    },
+    {
+      "release": 2009,
+      "pos_group": "LB",
+      "rows": 202,
+      "median_OVR": 79.0,
+      "median_SPEED": 80.0,
+      "median_AWR": 74.0,
+      "median_THP": 25,
+      "median_CTH": 56
+    },
+    {
+      "release": 2009,
+      "pos_group": "OL",
+      "rows": 271,
+      "median_OVR": 80,
+      "median_SPEED": 54.0,
+      "median_AWR": 72,
+      "median_THP": 21.0,
+      "median_CTH": 24.0
+    },
+    {
+      "release": 2009,
+      "pos_group": "P",
+      "rows": 29,
+      "median_OVR": 81,
+      "median_SPEED": 59.5,
+      "median_AWR": 70,
+      "median_THP": 47.5,
+      "median_CTH": 28.5
+    },
+    {
+      "release": 2009,
+      "pos_group": "QB",
+      "rows": 75,
+      "median_OVR": 79,
+      "median_SPEED": 64,
+      "median_AWR": 70,
+      "median_THP": 89,
+      "median_CTH": 26
+    },
+    {
+      "release": 2009,
+      "pos_group": "RB",
+      "rows": 144,
+      "median_OVR": 81.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 68.0,
+      "median_THP": 30.0,
+      "median_CTH": 74.0
+    },
+    {
+      "release": 2009,
+      "pos_group": "TE",
+      "rows": 82,
+      "median_OVR": 78.0,
+      "median_SPEED": 78.0,
+      "median_AWR": 72.0,
+      "median_THP": 25.0,
+      "median_CTH": 79.5
+    },
+    {
+      "release": 2009,
+      "pos_group": "WR",
+      "rows": 167,
+      "median_OVR": 78,
+      "median_SPEED": 92,
+      "median_AWR": 69,
+      "median_THP": 29,
+      "median_CTH": 82
+    },
+    {
+      "release": 2010,
+      "pos_group": "DB",
+      "rows": 301,
+      "median_OVR": 70,
+      "median_SPEED": 85,
+      "median_AWR": null,
+      "median_THP": 40,
+      "median_CTH": 57.0
+    },
+    {
+      "release": 2010,
+      "pos_group": "DL",
+      "rows": 262,
+      "median_OVR": 71.0,
+      "median_SPEED": 65,
+      "median_AWR": null,
+      "median_THP": 36,
+      "median_CTH": 45.0
+    },
+    {
+      "release": 2010,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 79,
+      "median_SPEED": 55.0,
+      "median_AWR": null,
+      "median_THP": 26.0,
+      "median_CTH": 45
+    },
+    {
+      "release": 2010,
+      "pos_group": "LB",
+      "rows": 217,
+      "median_OVR": 67,
+      "median_SPEED": 75,
+      "median_AWR": null,
+      "median_THP": 37.0,
+      "median_CTH": 45
+    },
+    {
+      "release": 2010,
+      "pos_group": "OL",
+      "rows": 287,
+      "median_OVR": 76,
+      "median_SPEED": 55.0,
+      "median_AWR": null,
+      "median_THP": null,
+      "median_CTH": 45
+    },
+    {
+      "release": 2010,
+      "pos_group": "P",
+      "rows": 31,
+      "median_OVR": 76,
+      "median_SPEED": 60.5,
+      "median_AWR": null,
+      "median_THP": 47.0,
+      "median_CTH": 45
+    },
+    {
+      "release": 2010,
+      "pos_group": "QB",
+      "rows": 80,
+      "median_OVR": 68.0,
+      "median_SPEED": 65.0,
+      "median_AWR": null,
+      "median_THP": 85,
+      "median_CTH": 45.0
+    },
+    {
+      "release": 2010,
+      "pos_group": "RB",
+      "rows": 142,
+      "median_OVR": 76.0,
+      "median_SPEED": 84.0,
+      "median_AWR": null,
+      "median_THP": 40.0,
+      "median_CTH": 72
+    },
+    {
+      "release": 2010,
+      "pos_group": "ST",
+      "rows": 2,
+      "median_OVR": 55.5,
+      "median_SPEED": 54.0,
+      "median_AWR": null,
+      "median_THP": 60,
+      "median_CTH": 56
+    },
+    {
+      "release": 2010,
+      "pos_group": "TE",
+      "rows": 98,
+      "median_OVR": 72.0,
+      "median_SPEED": 72,
+      "median_AWR": null,
+      "median_THP": 46.0,
+      "median_CTH": 76.0
+    },
+    {
+      "release": 2010,
+      "pos_group": "WR",
+      "rows": 177,
+      "median_OVR": 69,
+      "median_SPEED": 87,
+      "median_AWR": null,
+      "median_THP": 47.5,
+      "median_CTH": 78.0
+    },
+    {
+      "release": 2011,
+      "pos_group": "DB",
+      "rows": 296,
+      "median_OVR": 72.0,
+      "median_SPEED": 87,
+      "median_AWR": 68,
+      "median_THP": 22.0,
+      "median_CTH": 58
+    },
+    {
+      "release": 2011,
+      "pos_group": "DL",
+      "rows": 268,
+      "median_OVR": 72.0,
+      "median_SPEED": 67.0,
+      "median_AWR": 67.0,
+      "median_THP": 21.0,
+      "median_CTH": 25.0
+    },
+    {
+      "release": 2011,
+      "pos_group": "K",
+      "rows": 34,
+      "median_OVR": 79.5,
+      "median_SPEED": 58,
+      "median_AWR": 77.5,
+      "median_THP": 26,
+      "median_CTH": 27
+    },
+    {
+      "release": 2011,
+      "pos_group": "LB",
+      "rows": 222,
+      "median_OVR": 72.0,
+      "median_SPEED": 78.0,
+      "median_AWR": 71.0,
+      "median_THP": 23,
+      "median_CTH": 49
+    },
+    {
+      "release": 2011,
+      "pos_group": "OL",
+      "rows": 280,
+      "median_OVR": 76.5,
+      "median_SPEED": 56.0,
+      "median_AWR": 72.0,
+      "median_THP": 21.0,
+      "median_CTH": 25.0
+    },
+    {
+      "release": 2011,
+      "pos_group": "P",
+      "rows": 30,
+      "median_OVR": 77.0,
+      "median_SPEED": 62,
+      "median_AWR": 74.0,
+      "median_THP": 45,
+      "median_CTH": 30
+    },
+    {
+      "release": 2011,
+      "pos_group": "QB",
+      "rows": 83,
+      "median_OVR": 70,
+      "median_SPEED": 66,
+      "median_AWR": 69,
+      "median_THP": 87,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2011,
+      "pos_group": "RB",
+      "rows": 145,
+      "median_OVR": 77,
+      "median_SPEED": 86,
+      "median_AWR": 68.0,
+      "median_THP": 30.0,
+      "median_CTH": 68.5
+    },
+    {
+      "release": 2011,
+      "pos_group": "TE",
+      "rows": 94,
+      "median_OVR": 71.5,
+      "median_SPEED": 74.0,
+      "median_AWR": 65.0,
+      "median_THP": 26.5,
+      "median_CTH": 76.0
+    },
+    {
+      "release": 2011,
+      "pos_group": "WR",
+      "rows": 183,
+      "median_OVR": 70,
+      "median_SPEED": 87,
+      "median_AWR": 68,
+      "median_THP": 29.0,
+      "median_CTH": 79
+    },
+    {
+      "release": 2012,
+      "pos_group": "DB",
+      "rows": 269,
+      "median_OVR": 71,
+      "median_SPEED": 87,
+      "median_AWR": 64,
+      "median_THP": 93,
+      "median_CTH": null
+    },
+    {
+      "release": 2012,
+      "pos_group": "DL",
+      "rows": 219,
+      "median_OVR": 72,
+      "median_SPEED": 68,
+      "median_AWR": 65,
+      "median_THP": 79.5,
+      "median_CTH": null
+    },
+    {
+      "release": 2012,
+      "pos_group": "K",
+      "rows": 32,
+      "median_OVR": 80.5,
+      "median_SPEED": 60,
+      "median_AWR": 74.5,
+      "median_THP": 29,
+      "median_CTH": null
+    },
+    {
+      "release": 2012,
+      "pos_group": "LB",
+      "rows": 208,
+      "median_OVR": 71.0,
+      "median_SPEED": 79.0,
+      "median_AWR": 68.0,
+      "median_THP": 88,
+      "median_CTH": 57
+    },
+    {
+      "release": 2012,
+      "pos_group": "OL",
+      "rows": 241,
+      "median_OVR": 75,
+      "median_SPEED": 57.0,
+      "median_AWR": 69,
+      "median_THP": 78,
+      "median_CTH": null
+    },
+    {
+      "release": 2012,
+      "pos_group": "P",
+      "rows": 25,
+      "median_OVR": 77,
+      "median_SPEED": 63,
+      "median_AWR": 72,
+      "median_THP": 45,
+      "median_CTH": null
+    },
+    {
+      "release": 2012,
+      "pos_group": "QB",
+      "rows": 71,
+      "median_OVR": 73,
+      "median_SPEED": 69,
+      "median_AWR": 70,
+      "median_THP": 87.0,
+      "median_CTH": 66
+    },
+    {
+      "release": 2012,
+      "pos_group": "RB",
+      "rows": 143,
+      "median_OVR": 71,
+      "median_SPEED": 86,
+      "median_AWR": 65,
+      "median_THP": 79,
+      "median_CTH": 68
+    },
+    {
+      "release": 2012,
+      "pos_group": "ST",
+      "rows": 18,
+      "median_OVR": 60.5,
+      "median_SPEED": 66,
+      "median_AWR": 76.5,
+      "median_THP": null,
+      "median_CTH": 56.5
+    },
+    {
+      "release": 2012,
+      "pos_group": "TE",
+      "rows": 79,
+      "median_OVR": 69,
+      "median_SPEED": 77,
+      "median_AWR": 65,
+      "median_THP": null,
+      "median_CTH": 77.0
+    },
+    {
+      "release": 2012,
+      "pos_group": "WR",
+      "rows": 166,
+      "median_OVR": 70.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 65.0,
+      "median_THP": 90.0,
+      "median_CTH": 80
+    },
+    {
+      "release": 2013,
+      "pos_group": "DB",
+      "rows": 367,
+      "median_OVR": 71,
+      "median_SPEED": 88,
+      "median_AWR": 64,
+      "median_THP": 25,
+      "median_CTH": 59
+    },
+    {
+      "release": 2013,
+      "pos_group": "DL",
+      "rows": 320,
+      "median_OVR": 73.0,
+      "median_SPEED": 68.0,
+      "median_AWR": 68.5,
+      "median_THP": 21,
+      "median_CTH": 33
+    },
+    {
+      "release": 2013,
+      "pos_group": "K",
+      "rows": 39,
+      "median_OVR": 81,
+      "median_SPEED": 60.0,
+      "median_AWR": 78,
+      "median_THP": 28.5,
+      "median_CTH": 29.0
+    },
+    {
+      "release": 2013,
+      "pos_group": "LB",
+      "rows": 281,
+      "median_OVR": 71,
+      "median_SPEED": 79,
+      "median_AWR": 70,
+      "median_THP": 25,
+      "median_CTH": 51
+    },
+    {
+      "release": 2013,
+      "pos_group": "OL",
+      "rows": 315,
+      "median_OVR": 74,
+      "median_SPEED": 59,
+      "median_AWR": 70,
+      "median_THP": 24,
+      "median_CTH": 26
+    },
+    {
+      "release": 2013,
+      "pos_group": "P",
+      "rows": 31,
+      "median_OVR": 78,
+      "median_SPEED": 66.0,
+      "median_AWR": 76,
+      "median_THP": 45.0,
+      "median_CTH": 30.5
+    },
+    {
+      "release": 2013,
+      "pos_group": "QB",
+      "rows": 95,
+      "median_OVR": 73,
+      "median_SPEED": 69,
+      "median_AWR": 69,
+      "median_THP": 88,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2013,
+      "pos_group": "RB",
+      "rows": 183,
+      "median_OVR": 72,
+      "median_SPEED": 86,
+      "median_AWR": 67,
+      "median_THP": 30.0,
+      "median_CTH": 70
+    },
+    {
+      "release": 2013,
+      "pos_group": "ST",
+      "rows": 20,
+      "median_OVR": 52.5,
+      "median_SPEED": 67.0,
+      "median_AWR": 70.5,
+      "median_THP": 22.0,
+      "median_CTH": 55.0
+    },
+    {
+      "release": 2013,
+      "pos_group": "TE",
+      "rows": 116,
+      "median_OVR": 68.0,
+      "median_SPEED": 75.5,
+      "median_AWR": 68.0,
+      "median_THP": 29.0,
+      "median_CTH": 76.5
+    },
+    {
+      "release": 2013,
+      "pos_group": "WR",
+      "rows": 233,
+      "median_OVR": 70,
+      "median_SPEED": 89,
+      "median_AWR": 66,
+      "median_THP": 31,
+      "median_CTH": 79
+    },
+    {
+      "release": 2014,
+      "pos_group": "DB",
+      "rows": 375,
+      "median_OVR": 72,
+      "median_SPEED": 88,
+      "median_AWR": 65,
+      "median_THP": 25,
+      "median_CTH": 62
+    },
+    {
+      "release": 2014,
+      "pos_group": "DL",
+      "rows": 297,
+      "median_OVR": 74,
+      "median_SPEED": 69,
+      "median_AWR": 70,
+      "median_THP": 22.0,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "K",
+      "rows": 33,
+      "median_OVR": 83,
+      "median_SPEED": 63,
+      "median_AWR": 76,
+      "median_THP": 29,
+      "median_CTH": 30
+    },
+    {
+      "release": 2014,
+      "pos_group": "LB",
+      "rows": 275,
+      "median_OVR": 71,
+      "median_SPEED": 80,
+      "median_AWR": 70,
+      "median_THP": 25.0,
+      "median_CTH": 54.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "OL",
+      "rows": 320,
+      "median_OVR": 74.0,
+      "median_SPEED": 60,
+      "median_AWR": 71.0,
+      "median_THP": 25.0,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "P",
+      "rows": 31,
+      "median_OVR": 81,
+      "median_SPEED": 64,
+      "median_AWR": 77,
+      "median_THP": 45,
+      "median_CTH": 32
+    },
+    {
+      "release": 2014,
+      "pos_group": "QB",
+      "rows": 81,
+      "median_OVR": 74,
+      "median_SPEED": 70,
+      "median_AWR": 71,
+      "median_THP": 88,
+      "median_CTH": 35
+    },
+    {
+      "release": 2014,
+      "pos_group": "RB",
+      "rows": 178,
+      "median_OVR": 74.0,
+      "median_SPEED": 86.5,
+      "median_AWR": 68.5,
+      "median_THP": 30,
+      "median_CTH": 70.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "ST",
+      "rows": 21,
+      "median_OVR": 54,
+      "median_SPEED": 67.5,
+      "median_AWR": 68,
+      "median_THP": 23.5,
+      "median_CTH": 55.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "TE",
+      "rows": 128,
+      "median_OVR": 73.0,
+      "median_SPEED": 76.5,
+      "median_AWR": 67.5,
+      "median_THP": 30.0,
+      "median_CTH": 75.0
+    },
+    {
+      "release": 2014,
+      "pos_group": "WR",
+      "rows": 228,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 68.0,
+      "median_THP": 34,
+      "median_CTH": 79.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "DB",
+      "rows": 386,
+      "median_OVR": 73.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 65.0,
+      "median_THP": 25.0,
+      "median_CTH": 63.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "DL",
+      "rows": 297,
+      "median_OVR": 74,
+      "median_SPEED": 70,
+      "median_AWR": 71,
+      "median_THP": 23.0,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "K",
+      "rows": 33,
+      "median_OVR": 83,
+      "median_SPEED": 62.5,
+      "median_AWR": 79,
+      "median_THP": 29.0,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "LB",
+      "rows": 284,
+      "median_OVR": 72.0,
+      "median_SPEED": 81.0,
+      "median_AWR": 72.0,
+      "median_THP": 25,
+      "median_CTH": 55
+    },
+    {
+      "release": 2015,
+      "pos_group": "OL",
+      "rows": 312,
+      "median_OVR": 74.0,
+      "median_SPEED": 60.0,
+      "median_AWR": 72.0,
+      "median_THP": 25,
+      "median_CTH": 33
+    },
+    {
+      "release": 2015,
+      "pos_group": "P",
+      "rows": 33,
+      "median_OVR": 80,
+      "median_SPEED": 66.0,
+      "median_AWR": 79,
+      "median_THP": 45.0,
+      "median_CTH": 31.5
+    },
+    {
+      "release": 2015,
+      "pos_group": "QB",
+      "rows": 86,
+      "median_OVR": 75.5,
+      "median_SPEED": 70.0,
+      "median_AWR": 68.5,
+      "median_THP": 88.0,
+      "median_CTH": 35
+    },
+    {
+      "release": 2015,
+      "pos_group": "RB",
+      "rows": 178,
+      "median_OVR": 74.0,
+      "median_SPEED": 87.0,
+      "median_AWR": 68.0,
+      "median_THP": 30.0,
+      "median_CTH": 70.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "ST",
+      "rows": 22,
+      "median_OVR": 53.0,
+      "median_SPEED": 68.5,
+      "median_AWR": 72.5,
+      "median_THP": 23.5,
+      "median_CTH": 59.5
+    },
+    {
+      "release": 2015,
+      "pos_group": "TE",
+      "rows": 118,
+      "median_OVR": 74.0,
+      "median_SPEED": 78.0,
+      "median_AWR": 68.5,
+      "median_THP": 30.0,
+      "median_CTH": 76.0
+    },
+    {
+      "release": 2015,
+      "pos_group": "WR",
+      "rows": 232,
+      "median_OVR": 73.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 70.0,
+      "median_THP": 35,
+      "median_CTH": 81.0
+    },
+    {
+      "release": 2016,
+      "pos_group": "DB",
+      "rows": 388,
+      "median_OVR": 74.0,
+      "median_SPEED": 87.0,
+      "median_AWR": 67.0,
+      "median_THP": 26,
+      "median_CTH": 64.0
+    },
+    {
+      "release": 2016,
+      "pos_group": "DL",
+      "rows": 303,
+      "median_OVR": 74,
+      "median_SPEED": 72,
+      "median_AWR": 71,
+      "median_THP": 21.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2016,
+      "pos_group": "K",
+      "rows": 34,
+      "median_OVR": 82.5,
+      "median_SPEED": 67.0,
+      "median_AWR": 77.0,
+      "median_THP": 29.0,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2016,
+      "pos_group": "LB",
+      "rows": 285,
+      "median_OVR": 74,
+      "median_SPEED": 81,
+      "median_AWR": 74,
+      "median_THP": 25,
+      "median_CTH": 55
+    },
+    {
+      "release": 2016,
+      "pos_group": "OL",
+      "rows": 326,
+      "median_OVR": 74.0,
+      "median_SPEED": 63.0,
+      "median_AWR": 73.0,
+      "median_THP": 25,
+      "median_CTH": 35
+    },
+    {
+      "release": 2016,
+      "pos_group": "P",
+      "rows": 35,
+      "median_OVR": 81,
+      "median_SPEED": 70,
+      "median_AWR": 79,
+      "median_THP": 45,
+      "median_CTH": 35
+    },
+    {
+      "release": 2016,
+      "pos_group": "QB",
+      "rows": 84,
+      "median_OVR": 73.0,
+      "median_SPEED": 74.5,
+      "median_AWR": 70.0,
+      "median_THP": 88.0,
+      "median_CTH": 35
+    },
+    {
+      "release": 2016,
+      "pos_group": "RB",
+      "rows": 181,
+      "median_OVR": 73,
+      "median_SPEED": 86,
+      "median_AWR": 66,
+      "median_THP": 30,
+      "median_CTH": 71
+    },
+    {
+      "release": 2016,
+      "pos_group": "ST",
+      "rows": 24,
+      "median_OVR": 52.0,
+      "median_SPEED": 67,
+      "median_AWR": 66.5,
+      "median_THP": 25,
+      "median_CTH": 60
+    },
+    {
+      "release": 2016,
+      "pos_group": "TE",
+      "rows": 149,
+      "median_OVR": 74,
+      "median_SPEED": 80,
+      "median_AWR": 68,
+      "median_THP": 30.0,
+      "median_CTH": 74
+    },
+    {
+      "release": 2016,
+      "pos_group": "WR",
+      "rows": 230,
+      "median_OVR": 73.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 70.0,
+      "median_THP": 35,
+      "median_CTH": 80.5
+    },
+    {
+      "release": 2017,
+      "pos_group": "DB",
+      "rows": 394,
+      "median_OVR": 71.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 66.0,
+      "median_THP": 27,
+      "median_CTH": 66.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "DL",
+      "rows": 307,
+      "median_OVR": 70,
+      "median_SPEED": 72,
+      "median_AWR": 68,
+      "median_THP": 23.0,
+      "median_CTH": 37.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "K",
+      "rows": 37,
+      "median_OVR": 79,
+      "median_SPEED": 69.0,
+      "median_AWR": 63,
+      "median_THP": 30.5,
+      "median_CTH": 33.5
+    },
+    {
+      "release": 2017,
+      "pos_group": "LB",
+      "rows": 291,
+      "median_OVR": 71,
+      "median_SPEED": 82,
+      "median_AWR": 70,
+      "median_THP": 25,
+      "median_CTH": 56
+    },
+    {
+      "release": 2017,
+      "pos_group": "OL",
+      "rows": 331,
+      "median_OVR": 71,
+      "median_SPEED": 63.0,
+      "median_AWR": 73,
+      "median_THP": 24.0,
+      "median_CTH": 32.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 80.0,
+      "median_SPEED": 71,
+      "median_AWR": 64.0,
+      "median_THP": 45,
+      "median_CTH": 38
+    },
+    {
+      "release": 2017,
+      "pos_group": "QB",
+      "rows": 86,
+      "median_OVR": 71.0,
+      "median_SPEED": 75.0,
+      "median_AWR": 72.5,
+      "median_THP": 89.5,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "RB",
+      "rows": 170,
+      "median_OVR": 73.0,
+      "median_SPEED": 87.0,
+      "median_AWR": 70.5,
+      "median_THP": 30.0,
+      "median_CTH": 62.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "ST",
+      "rows": 26,
+      "median_OVR": 44.0,
+      "median_SPEED": 66.5,
+      "median_AWR": 65.0,
+      "median_THP": 23.5,
+      "median_CTH": 59.0
+    },
+    {
+      "release": 2017,
+      "pos_group": "TE",
+      "rows": 135,
+      "median_OVR": 72,
+      "median_SPEED": 80,
+      "median_AWR": 68,
+      "median_THP": 30,
+      "median_CTH": 76
+    },
+    {
+      "release": 2017,
+      "pos_group": "WR",
+      "rows": 237,
+      "median_OVR": 70,
+      "median_SPEED": 89,
+      "median_AWR": 69,
+      "median_THP": 35,
+      "median_CTH": 80
+    },
+    {
+      "release": 2018,
+      "pos_group": "DB",
+      "rows": 400,
+      "median_OVR": 71.5,
+      "median_SPEED": 89.0,
+      "median_AWR": 67.0,
+      "median_THP": 27.0,
+      "median_CTH": 67.5
+    },
+    {
+      "release": 2018,
+      "pos_group": "DL",
+      "rows": 324,
+      "median_OVR": 71.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 69.0,
+      "median_THP": 23.0,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2018,
+      "pos_group": "K",
+      "rows": 39,
+      "median_OVR": 76,
+      "median_SPEED": 69,
+      "median_AWR": 60,
+      "median_THP": 32,
+      "median_CTH": 35
+    },
+    {
+      "release": 2018,
+      "pos_group": "LB",
+      "rows": 283,
+      "median_OVR": 72,
+      "median_SPEED": 83,
+      "median_AWR": 69,
+      "median_THP": 25.0,
+      "median_CTH": 58.0
+    },
+    {
+      "release": 2018,
+      "pos_group": "OL",
+      "rows": 334,
+      "median_OVR": 71.0,
+      "median_SPEED": 65.0,
+      "median_AWR": 74.0,
+      "median_THP": 23.5,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2018,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 77.0,
+      "median_SPEED": 72,
+      "median_AWR": 62.0,
+      "median_THP": 42,
+      "median_CTH": 35
+    },
+    {
+      "release": 2018,
+      "pos_group": "QB",
+      "rows": 87,
+      "median_OVR": 72,
+      "median_SPEED": 77,
+      "median_AWR": 72,
+      "median_THP": 90,
+      "median_CTH": 35
+    },
+    {
+      "release": 2018,
+      "pos_group": "RB",
+      "rows": 173,
+      "median_OVR": 74,
+      "median_SPEED": 88,
+      "median_AWR": 72,
+      "median_THP": 30,
+      "median_CTH": 65
+    },
+    {
+      "release": 2018,
+      "pos_group": "ST",
+      "rows": 22,
+      "median_OVR": 44.0,
+      "median_SPEED": 68.0,
+      "median_AWR": 64.5,
+      "median_THP": 25.0,
+      "median_CTH": 60.0
+    },
+    {
+      "release": 2018,
+      "pos_group": "TE",
+      "rows": 142,
+      "median_OVR": 72.0,
+      "median_SPEED": 80.5,
+      "median_AWR": 68.0,
+      "median_THP": 30,
+      "median_CTH": 77.5
+    },
+    {
+      "release": 2018,
+      "pos_group": "WR",
+      "rows": 248,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 68.5,
+      "median_THP": 35,
+      "median_CTH": 82.0
+    },
+    {
+      "release": 2019,
+      "pos_group": "DB",
+      "rows": 399,
+      "median_OVR": 73,
+      "median_SPEED": 89,
+      "median_AWR": 69,
+      "median_THP": 26,
+      "median_CTH": 67
+    },
+    {
+      "release": 2019,
+      "pos_group": "DL",
+      "rows": 324,
+      "median_OVR": 73.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 71.5,
+      "median_THP": 23,
+      "median_CTH": 35
+    },
+    {
+      "release": 2019,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 78,
+      "median_SPEED": 74.0,
+      "median_AWR": 60,
+      "median_THP": 29.0,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2019,
+      "pos_group": "LB",
+      "rows": 282,
+      "median_OVR": 71.0,
+      "median_SPEED": 83.0,
+      "median_AWR": 68.0,
+      "median_THP": 25,
+      "median_CTH": 58
+    },
+    {
+      "release": 2019,
+      "pos_group": "OL",
+      "rows": 343,
+      "median_OVR": 69,
+      "median_SPEED": 65,
+      "median_AWR": 72,
+      "median_THP": 22,
+      "median_CTH": 29
+    },
+    {
+      "release": 2019,
+      "pos_group": "P",
+      "rows": 36,
+      "median_OVR": 78.0,
+      "median_SPEED": 72,
+      "median_AWR": 61.0,
+      "median_THP": 43,
+      "median_CTH": 34
+    },
+    {
+      "release": 2019,
+      "pos_group": "QB",
+      "rows": 85,
+      "median_OVR": 72,
+      "median_SPEED": 77,
+      "median_AWR": 74,
+      "median_THP": 91,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2019,
+      "pos_group": "RB",
+      "rows": 180,
+      "median_OVR": 72.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 73.0,
+      "median_THP": 30.0,
+      "median_CTH": 66.0
+    },
+    {
+      "release": 2019,
+      "pos_group": "ST",
+      "rows": 23,
+      "median_OVR": 43,
+      "median_SPEED": 67,
+      "median_AWR": 65,
+      "median_THP": 25,
+      "median_CTH": 60
+    },
+    {
+      "release": 2019,
+      "pos_group": "TE",
+      "rows": 137,
+      "median_OVR": 73,
+      "median_SPEED": 81,
+      "median_AWR": 70,
+      "median_THP": 30.0,
+      "median_CTH": 79
+    },
+    {
+      "release": 2019,
+      "pos_group": "WR",
+      "rows": 243,
+      "median_OVR": 73,
+      "median_SPEED": 90,
+      "median_AWR": 72,
+      "median_THP": 34.0,
+      "median_CTH": 83
+    },
+    {
+      "release": 2020,
+      "pos_group": "DB",
+      "rows": 403,
+      "median_OVR": 70,
+      "median_SPEED": 89,
+      "median_AWR": 70,
+      "median_THP": 27.0,
+      "median_CTH": 67.0
+    },
+    {
+      "release": 2020,
+      "pos_group": "DL",
+      "rows": 306,
+      "median_OVR": 70.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 71.0,
+      "median_THP": 23,
+      "median_CTH": 35
+    },
+    {
+      "release": 2020,
+      "pos_group": "K",
+      "rows": 36,
+      "median_OVR": 74.0,
+      "median_SPEED": 73,
+      "median_AWR": 59.5,
+      "median_THP": 29,
+      "median_CTH": 30
+    },
+    {
+      "release": 2020,
+      "pos_group": "LB",
+      "rows": 290,
+      "median_OVR": 69.5,
+      "median_SPEED": 84.0,
+      "median_AWR": 70.5,
+      "median_THP": 25.0,
+      "median_CTH": 58.0
+    },
+    {
+      "release": 2020,
+      "pos_group": "OL",
+      "rows": 346,
+      "median_OVR": 65.0,
+      "median_SPEED": 65,
+      "median_AWR": 74.0,
+      "median_THP": 23,
+      "median_CTH": 30
+    },
+    {
+      "release": 2020,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 74.5,
+      "median_SPEED": 73,
+      "median_AWR": 60.5,
+      "median_THP": 40,
+      "median_CTH": 32
+    },
+    {
+      "release": 2020,
+      "pos_group": "QB",
+      "rows": 89,
+      "median_OVR": 66,
+      "median_SPEED": 78,
+      "median_AWR": 71,
+      "median_THP": 85,
+      "median_CTH": 35
+    },
+    {
+      "release": 2020,
+      "pos_group": "RB",
+      "rows": 170,
+      "median_OVR": 71.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 73.0,
+      "median_THP": 30.0,
+      "median_CTH": 66.0
+    },
+    {
+      "release": 2020,
+      "pos_group": "ST",
+      "rows": 21,
+      "median_OVR": 42,
+      "median_SPEED": 67,
+      "median_AWR": 60,
+      "median_THP": 25,
+      "median_CTH": 57
+    },
+    {
+      "release": 2020,
+      "pos_group": "TE",
+      "rows": 138,
+      "median_OVR": 71.0,
+      "median_SPEED": 81.0,
+      "median_AWR": 69.0,
+      "median_THP": 29.0,
+      "median_CTH": 78.0
+    },
+    {
+      "release": 2020,
+      "pos_group": "WR",
+      "rows": 248,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 73.0,
+      "median_THP": 35.0,
+      "median_CTH": 82.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "DB",
+      "rows": 402,
+      "median_OVR": 70.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 70.0,
+      "median_THP": 27,
+      "median_CTH": 67.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "DL",
+      "rows": 329,
+      "median_OVR": 70,
+      "median_SPEED": 74,
+      "median_AWR": 70,
+      "median_THP": 23.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "K",
+      "rows": 36,
+      "median_OVR": 73.0,
+      "median_SPEED": 73.5,
+      "median_AWR": 58.0,
+      "median_THP": 30.0,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "LB",
+      "rows": 281,
+      "median_OVR": 69,
+      "median_SPEED": 84,
+      "median_AWR": 69,
+      "median_THP": 25,
+      "median_CTH": 58
+    },
+    {
+      "release": 2021,
+      "pos_group": "OL",
+      "rows": 363,
+      "median_OVR": 65,
+      "median_SPEED": 65,
+      "median_AWR": 74,
+      "median_THP": 23.0,
+      "median_CTH": 29.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "P",
+      "rows": 35,
+      "median_OVR": 74,
+      "median_SPEED": 73,
+      "median_AWR": 58,
+      "median_THP": 41,
+      "median_CTH": 33
+    },
+    {
+      "release": 2021,
+      "pos_group": "QB",
+      "rows": 93,
+      "median_OVR": 66,
+      "median_SPEED": 78,
+      "median_AWR": 70,
+      "median_THP": 86,
+      "median_CTH": 35.0
+    },
+    {
+      "release": 2021,
+      "pos_group": "RB",
+      "rows": 161,
+      "median_OVR": 72,
+      "median_SPEED": 88,
+      "median_AWR": 73,
+      "median_THP": 30.0,
+      "median_CTH": 67
+    },
+    {
+      "release": 2021,
+      "pos_group": "ST",
+      "rows": 28,
+      "median_OVR": 30.5,
+      "median_SPEED": 66,
+      "median_AWR": 60.5,
+      "median_THP": 30,
+      "median_CTH": 55
+    },
+    {
+      "release": 2021,
+      "pos_group": "TE",
+      "rows": 135,
+      "median_OVR": 67,
+      "median_SPEED": 81,
+      "median_AWR": 69,
+      "median_THP": 30,
+      "median_CTH": 79
+    },
+    {
+      "release": 2021,
+      "pos_group": "WR",
+      "rows": 259,
+      "median_OVR": 71,
+      "median_SPEED": 90,
+      "median_AWR": 72,
+      "median_THP": 33,
+      "median_CTH": 82
+    },
+    {
+      "release": 2022,
+      "pos_group": "DB",
+      "rows": 412,
+      "median_OVR": 71.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 70.0,
+      "median_THP": 27.0,
+      "median_CTH": 68.0
+    },
+    {
+      "release": 2022,
+      "pos_group": "DL",
+      "rows": 325,
+      "median_OVR": 70,
+      "median_SPEED": 74,
+      "median_AWR": 70,
+      "median_THP": 23.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2022,
+      "pos_group": "K",
+      "rows": 34,
+      "median_OVR": 75.0,
+      "median_SPEED": 73.5,
+      "median_AWR": 62.0,
+      "median_THP": 29.0,
+      "median_CTH": 33.0
+    },
+    {
+      "release": 2022,
+      "pos_group": "LB",
+      "rows": 277,
+      "median_OVR": 69,
+      "median_SPEED": 84,
+      "median_AWR": 69,
+      "median_THP": 25.0,
+      "median_CTH": 59.0
+    },
+    {
+      "release": 2022,
+      "pos_group": "OL",
+      "rows": 271,
+      "median_OVR": 70,
+      "median_SPEED": 65,
+      "median_AWR": 80,
+      "median_THP": 22,
+      "median_CTH": 29
+    },
+    {
+      "release": 2022,
+      "pos_group": "P",
+      "rows": 38,
+      "median_OVR": 74.0,
+      "median_SPEED": 73,
+      "median_AWR": 59.0,
+      "median_THP": 42,
+      "median_CTH": 35
+    },
+    {
+      "release": 2022,
+      "pos_group": "QB",
+      "rows": 63,
+      "median_OVR": 72,
+      "median_SPEED": 81,
+      "median_AWR": 72,
+      "median_THP": 88,
+      "median_CTH": 39
+    },
+    {
+      "release": 2022,
+      "pos_group": "RB",
+      "rows": 167,
+      "median_OVR": 71,
+      "median_SPEED": 88,
+      "median_AWR": 72,
+      "median_THP": 30.0,
+      "median_CTH": 67
+    },
+    {
+      "release": 2022,
+      "pos_group": "ST",
+      "rows": 1,
+      "median_OVR": 70,
+      "median_SPEED": 88,
+      "median_AWR": 65,
+      "median_THP": 23,
+      "median_CTH": 53
+    },
+    {
+      "release": 2022,
+      "pos_group": "TE",
+      "rows": 111,
+      "median_OVR": 69,
+      "median_SPEED": 82,
+      "median_AWR": 71,
+      "median_THP": 29.5,
+      "median_CTH": 80
+    },
+    {
+      "release": 2022,
+      "pos_group": "WR",
+      "rows": 261,
+      "median_OVR": 71,
+      "median_SPEED": 90,
+      "median_AWR": 72,
+      "median_THP": 32,
+      "median_CTH": 82
+    },
+    {
+      "release": 2023,
+      "pos_group": "DB",
+      "rows": 434,
+      "median_OVR": 70.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 69.0,
+      "median_THP": 27,
+      "median_CTH": 68
+    },
+    {
+      "release": 2023,
+      "pos_group": "DL",
+      "rows": 328,
+      "median_OVR": 70.0,
+      "median_SPEED": 73.5,
+      "median_AWR": 71.0,
+      "median_THP": 23.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "K",
+      "rows": 33,
+      "median_OVR": 75,
+      "median_SPEED": 72.5,
+      "median_AWR": 63,
+      "median_THP": 29.0,
+      "median_CTH": 33.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "LB",
+      "rows": 300,
+      "median_OVR": 68.0,
+      "median_SPEED": 84.0,
+      "median_AWR": 68.0,
+      "median_THP": 24,
+      "median_CTH": 58
+    },
+    {
+      "release": 2023,
+      "pos_group": "OL",
+      "rows": 357,
+      "median_OVR": 67,
+      "median_SPEED": 66,
+      "median_AWR": 76,
+      "median_THP": 22,
+      "median_CTH": 29
+    },
+    {
+      "release": 2023,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 74.5,
+      "median_SPEED": 73.5,
+      "median_AWR": 59.5,
+      "median_THP": 39.5,
+      "median_CTH": 34.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "QB",
+      "rows": 91,
+      "median_OVR": 66,
+      "median_SPEED": 80,
+      "median_AWR": 67,
+      "median_THP": 86,
+      "median_CTH": 39.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "RB",
+      "rows": 176,
+      "median_OVR": 70.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 71.0,
+      "median_THP": 30,
+      "median_CTH": 67.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "ST",
+      "rows": 30,
+      "median_OVR": 31.0,
+      "median_SPEED": 69.5,
+      "median_AWR": 61.0,
+      "median_THP": 32.0,
+      "median_CTH": 57.0
+    },
+    {
+      "release": 2023,
+      "pos_group": "TE",
+      "rows": 145,
+      "median_OVR": 66,
+      "median_SPEED": 82,
+      "median_AWR": 66,
+      "median_THP": 29.5,
+      "median_CTH": 78
+    },
+    {
+      "release": 2023,
+      "pos_group": "WR",
+      "rows": 267,
+      "median_OVR": 71,
+      "median_SPEED": 90,
+      "median_AWR": 71,
+      "median_THP": 32.0,
+      "median_CTH": 82
+    },
+    {
+      "release": 2024,
+      "pos_group": "DB",
+      "rows": 427,
+      "median_OVR": 71,
+      "median_SPEED": 90,
+      "median_AWR": 70,
+      "median_THP": 27.0,
+      "median_CTH": 68
+    },
+    {
+      "release": 2024,
+      "pos_group": "DL",
+      "rows": 324,
+      "median_OVR": 69.0,
+      "median_SPEED": 73.0,
+      "median_AWR": 70.0,
+      "median_THP": 22.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2024,
+      "pos_group": "K",
+      "rows": 35,
+      "median_OVR": 75,
+      "median_SPEED": 73,
+      "median_AWR": 64,
+      "median_THP": 29,
+      "median_CTH": 33
+    },
+    {
+      "release": 2024,
+      "pos_group": "LB",
+      "rows": 301,
+      "median_OVR": 69,
+      "median_SPEED": 85,
+      "median_AWR": 70,
+      "median_THP": 24.0,
+      "median_CTH": 59.0
+    },
+    {
+      "release": 2024,
+      "pos_group": "OL",
+      "rows": 380,
+      "median_OVR": 68.0,
+      "median_SPEED": 66,
+      "median_AWR": 75.0,
+      "median_THP": 22,
+      "median_CTH": 29
+    },
+    {
+      "release": 2024,
+      "pos_group": "P",
+      "rows": 36,
+      "median_OVR": 75.0,
+      "median_SPEED": 73.0,
+      "median_AWR": 61.5,
+      "median_THP": 41.0,
+      "median_CTH": 30.5
+    },
+    {
+      "release": 2024,
+      "pos_group": "QB",
+      "rows": 94,
+      "median_OVR": 66.0,
+      "median_SPEED": 82.0,
+      "median_AWR": 66.0,
+      "median_THP": 86.0,
+      "median_CTH": 39.0
+    },
+    {
+      "release": 2024,
+      "pos_group": "RB",
+      "rows": 160,
+      "median_OVR": 71.0,
+      "median_SPEED": 88.0,
+      "median_AWR": 72.0,
+      "median_THP": 30.0,
+      "median_CTH": 68.0
+    },
+    {
+      "release": 2024,
+      "pos_group": "ST",
+      "rows": 31,
+      "median_OVR": 31,
+      "median_SPEED": 67.5,
+      "median_AWR": 60,
+      "median_THP": 29.5,
+      "median_CTH": 56.5
+    },
+    {
+      "release": 2024,
+      "pos_group": "TE",
+      "rows": 139,
+      "median_OVR": 67,
+      "median_SPEED": 83,
+      "median_AWR": 67,
+      "median_THP": 30.0,
+      "median_CTH": 79.0
+    },
+    {
+      "release": 2024,
+      "pos_group": "WR",
+      "rows": 260,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 72.0,
+      "median_THP": 31,
+      "median_CTH": 83.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "DB",
+      "rows": 418,
+      "median_OVR": 71.5,
+      "median_SPEED": 90.0,
+      "median_AWR": 71.0,
+      "median_THP": 27.0,
+      "median_CTH": 70.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "DL",
+      "rows": 326,
+      "median_OVR": 70.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 70.5,
+      "median_THP": 22,
+      "median_CTH": 37
+    },
+    {
+      "release": 2025,
+      "pos_group": "K",
+      "rows": 39,
+      "median_OVR": 76,
+      "median_SPEED": 74.0,
+      "median_AWR": 63,
+      "median_THP": 29.0,
+      "median_CTH": 32.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "LB",
+      "rows": 294,
+      "median_OVR": 70.0,
+      "median_SPEED": 85.0,
+      "median_AWR": 71.0,
+      "median_THP": 25.0,
+      "median_CTH": 60.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "OL",
+      "rows": 377,
+      "median_OVR": 69,
+      "median_SPEED": 69.0,
+      "median_AWR": 75,
+      "median_THP": 22.0,
+      "median_CTH": 29.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "P",
+      "rows": 36,
+      "median_OVR": 75.0,
+      "median_SPEED": 76.0,
+      "median_AWR": 62.0,
+      "median_THP": 41.0,
+      "median_CTH": 30.5
+    },
+    {
+      "release": 2025,
+      "pos_group": "QB",
+      "rows": 91,
+      "median_OVR": 68,
+      "median_SPEED": 83,
+      "median_AWR": 66,
+      "median_THP": 87,
+      "median_CTH": 38.5
+    },
+    {
+      "release": 2025,
+      "pos_group": "RB",
+      "rows": 160,
+      "median_OVR": 72.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 72.0,
+      "median_THP": 29,
+      "median_CTH": 68.0
+    },
+    {
+      "release": 2025,
+      "pos_group": "ST",
+      "rows": 30,
+      "median_OVR": 31.0,
+      "median_SPEED": 75,
+      "median_AWR": 60.5,
+      "median_THP": 29,
+      "median_CTH": 56
+    },
+    {
+      "release": 2025,
+      "pos_group": "TE",
+      "rows": 143,
+      "median_OVR": 68,
+      "median_SPEED": 84,
+      "median_AWR": 68,
+      "median_THP": 29,
+      "median_CTH": 79
+    },
+    {
+      "release": 2025,
+      "pos_group": "WR",
+      "rows": 256,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 72.0,
+      "median_THP": 30,
+      "median_CTH": 83.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "DB",
+      "rows": 414,
+      "median_OVR": 72.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 72.0,
+      "median_THP": 27,
+      "median_CTH": 70
+    },
+    {
+      "release": 2026,
+      "pos_group": "DL",
+      "rows": 337,
+      "median_OVR": 71,
+      "median_SPEED": 75,
+      "median_AWR": 72,
+      "median_THP": 22.0,
+      "median_CTH": 36.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "K",
+      "rows": 37,
+      "median_OVR": 75,
+      "median_SPEED": 73,
+      "median_AWR": 59,
+      "median_THP": 29,
+      "median_CTH": 31
+    },
+    {
+      "release": 2026,
+      "pos_group": "LB",
+      "rows": 288,
+      "median_OVR": 71.0,
+      "median_SPEED": 85.0,
+      "median_AWR": 71.0,
+      "median_THP": 25,
+      "median_CTH": 60
+    },
+    {
+      "release": 2026,
+      "pos_group": "OL",
+      "rows": 379,
+      "median_OVR": 70,
+      "median_SPEED": 68.0,
+      "median_AWR": 75,
+      "median_THP": 22.0,
+      "median_CTH": 28.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "P",
+      "rows": 34,
+      "median_OVR": 75.5,
+      "median_SPEED": 75.0,
+      "median_AWR": 62.5,
+      "median_THP": 41.0,
+      "median_CTH": 33.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "QB",
+      "rows": 89,
+      "median_OVR": 69,
+      "median_SPEED": 83,
+      "median_AWR": 66,
+      "median_THP": 88,
+      "median_CTH": 39.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "RB",
+      "rows": 159,
+      "median_OVR": 73,
+      "median_SPEED": 89,
+      "median_AWR": 73,
+      "median_THP": 30,
+      "median_CTH": 68
+    },
+    {
+      "release": 2026,
+      "pos_group": "ST",
+      "rows": 32,
+      "median_OVR": 67.0,
+      "median_SPEED": 74.0,
+      "median_AWR": 59.5,
+      "median_THP": 32.0,
+      "median_CTH": 55.5
+    },
+    {
+      "release": 2026,
+      "pos_group": "TE",
+      "rows": 140,
+      "median_OVR": 68.0,
+      "median_SPEED": 83.0,
+      "median_AWR": 67.0,
+      "median_THP": 29,
+      "median_CTH": 79.0
+    },
+    {
+      "release": 2026,
+      "pos_group": "WR",
+      "rows": 251,
+      "median_OVR": 72,
+      "median_SPEED": 90,
+      "median_AWR": 73,
+      "median_THP": 31,
+      "median_CTH": 83
+    },
+    {
+      "release": 2027,
+      "pos_group": "DB",
+      "rows": 275,
+      "median_OVR": 73,
+      "median_SPEED": 90,
+      "median_AWR": 73,
+      "median_THP": 27,
+      "median_CTH": 71
+    },
+    {
+      "release": 2027,
+      "pos_group": "DL",
+      "rows": 286,
+      "median_OVR": 72.0,
+      "median_SPEED": 78.0,
+      "median_AWR": 73.0,
+      "median_THP": 22.0,
+      "median_CTH": 38.0
+    },
+    {
+      "release": 2027,
+      "pos_group": "K",
+      "rows": 30,
+      "median_OVR": 77.0,
+      "median_SPEED": 73.0,
+      "median_AWR": 61.5,
+      "median_THP": 28.5,
+      "median_CTH": 30.0
+    },
+    {
+      "release": 2027,
+      "pos_group": "LB",
+      "rows": 136,
+      "median_OVR": 71.0,
+      "median_SPEED": 86.0,
+      "median_AWR": 73.0,
+      "median_THP": 25.0,
+      "median_CTH": 62.0
+    },
+    {
+      "release": 2027,
+      "pos_group": "OL",
+      "rows": 295,
+      "median_OVR": 71,
+      "median_SPEED": 68,
+      "median_AWR": 76,
+      "median_THP": 22,
+      "median_CTH": 28
+    },
+    {
+      "release": 2027,
+      "pos_group": "P",
+      "rows": 27,
+      "median_OVR": 76,
+      "median_SPEED": 75,
+      "median_AWR": 63,
+      "median_THP": 42,
+      "median_CTH": 35
+    },
+    {
+      "release": 2027,
+      "pos_group": "QB",
+      "rows": 75,
+      "median_OVR": 69,
+      "median_SPEED": 83,
+      "median_AWR": 68,
+      "median_THP": 88,
+      "median_CTH": 40
+    },
+    {
+      "release": 2027,
+      "pos_group": "RB",
+      "rows": 104,
+      "median_OVR": 73.0,
+      "median_SPEED": 89.0,
+      "median_AWR": 74.0,
+      "median_THP": 30.0,
+      "median_CTH": 69.0
+    },
+    {
+      "release": 2027,
+      "pos_group": "ST",
+      "rows": 26,
+      "median_OVR": 69.5,
+      "median_SPEED": 73.5,
+      "median_AWR": 60.0,
+      "median_THP": 34.0,
+      "median_CTH": 55.5
+    },
+    {
+      "release": 2027,
+      "pos_group": "TE",
+      "rows": 105,
+      "median_OVR": 69,
+      "median_SPEED": 84,
+      "median_AWR": 68,
+      "median_THP": 28,
+      "median_CTH": 81
+    },
+    {
+      "release": 2027,
+      "pos_group": "WR",
+      "rows": 172,
+      "median_OVR": 73.0,
+      "median_SPEED": 90.0,
+      "median_AWR": 74.0,
+      "median_THP": 31.5,
+      "median_CTH": 83.0
+    }
+  ],
+  "attribute_presence_shifts": [
+    {
+      "attribute": "OVR",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "OVR",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 1.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "OVR",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "ACC",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "ACC",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 1.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "ACC",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "ACC",
+      "from_release": 2013,
+      "to_release": 2014,
+      "presence_from": 0.97,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "ACC",
+      "from_release": 2014,
+      "to_release": 2015,
+      "presence_from": 0.0,
+      "presence_to": 0.974
+    },
+    {
+      "attribute": "COD",
+      "from_release": 2020,
+      "to_release": 2021,
+      "presence_from": 0.0,
+      "presence_to": 0.863
+    },
+    {
+      "attribute": "STR",
+      "from_release": 1994,
+      "to_release": 1995,
+      "presence_from": 0.0,
+      "presence_to": 0.109
+    },
+    {
+      "attribute": "STR",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.171,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "STR",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 1.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.0,
+      "presence_to": 0.532
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.532,
+      "presence_to": 0.9
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.924,
+      "presence_to": 0.603
+    },
+    {
+      "attribute": "JMP",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.603,
+      "presence_to": 0.92
+    },
+    {
+      "attribute": "STA",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "STA",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 1.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "STA",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "INJ",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "TGH",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.0,
+      "presence_to": 0.879
+    },
+    {
+      "attribute": "TGH",
+      "from_release": 2005,
+      "to_release": 2006,
+      "presence_from": 0.937,
+      "presence_to": 0.02
+    },
+    {
+      "attribute": "TGH",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.02,
+      "presence_to": 0.973
+    },
+    {
+      "attribute": "TGH",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.973,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TGH",
+      "from_release": 2008,
+      "to_release": 2009,
+      "presence_from": 0.0,
+      "presence_to": 0.966
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 1994,
+      "to_release": 1995,
+      "presence_from": 0.376,
+      "presence_to": 0.981
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 1.0,
+      "presence_to": 0.151
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.151,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.991,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 1.0
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 1.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "AWR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.999
+    },
+    {
+      "attribute": "PRC",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.974
+    },
+    {
+      "attribute": "PRC",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.971,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "PRC",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.894
+    },
+    {
+      "attribute": "PRC",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.894,
+      "presence_to": 0.47
+    },
+    {
+      "attribute": "PRC",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.47,
+      "presence_to": 0.917
+    },
+    {
+      "attribute": "THP",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.056,
+      "presence_to": 0.834
+    },
+    {
+      "attribute": "THP",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.942,
+      "presence_to": 0.124
+    },
+    {
+      "attribute": "THP",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.124,
+      "presence_to": 0.845
+    },
+    {
+      "attribute": "THP",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.845,
+      "presence_to": 0.09
+    },
+    {
+      "attribute": "THP",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.09,
+      "presence_to": 0.846
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.063,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.045
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.055,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.056
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2014,
+      "to_release": 2015,
+      "presence_from": 0.06,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2016,
+      "to_release": 2017,
+      "presence_from": 0.0,
+      "presence_to": 0.05
+    },
+    {
+      "attribute": "TAC",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.052,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.0,
+      "presence_to": 0.766
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.766,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.828
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2004,
+      "to_release": 2005,
+      "presence_from": 0.828,
+      "presence_to": 0.055
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2005,
+      "to_release": 2006,
+      "presence_from": 0.055,
+      "presence_to": 0.874
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.885,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.821
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.821,
+      "presence_to": 0.052
+    },
+    {
+      "attribute": "TAS",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.052,
+      "presence_to": 0.846
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.0,
+      "presence_to": 0.766
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.766,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.828
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2004,
+      "to_release": 2005,
+      "presence_from": 0.828,
+      "presence_to": 0.055
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2005,
+      "to_release": 2006,
+      "presence_from": 0.055,
+      "presence_to": 0.874
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.885,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.821
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.821,
+      "presence_to": 0.052
+    },
+    {
+      "attribute": "TAM",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.052,
+      "presence_to": 0.846
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.0,
+      "presence_to": 0.766
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.766,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.828
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2004,
+      "to_release": 2005,
+      "presence_from": 0.828,
+      "presence_to": 0.055
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2005,
+      "to_release": 2006,
+      "presence_from": 0.055,
+      "presence_to": 0.874
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.885,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.821
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.821,
+      "presence_to": 0.052
+    },
+    {
+      "attribute": "TAD",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.052,
+      "presence_to": 0.846
+    },
+    {
+      "attribute": "PAC",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.821
+    },
+    {
+      "attribute": "PAC",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.821,
+      "presence_to": 0.051
+    },
+    {
+      "attribute": "PAC",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.051,
+      "presence_to": 0.846
+    },
+    {
+      "attribute": "TOR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.818
+    },
+    {
+      "attribute": "TOR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.818,
+      "presence_to": 0.049
+    },
+    {
+      "attribute": "TOR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.049,
+      "presence_to": 0.839
+    },
+    {
+      "attribute": "TUP",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.061
+    },
+    {
+      "attribute": "TUP",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.849
+    },
+    {
+      "attribute": "BSK",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.061
+    },
+    {
+      "attribute": "BSK",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.849
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.288,
+      "presence_to": 0.794
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 0.794,
+      "presence_to": 0.287
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.287,
+      "presence_to": 0.783
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.783,
+      "presence_to": 0.183
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.183,
+      "presence_to": 0.87
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.864,
+      "presence_to": 0.149
+    },
+    {
+      "attribute": "CAR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.149,
+      "presence_to": 0.86
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 1995,
+      "to_release": 1996,
+      "presence_from": 0.6,
+      "presence_to": 0.345
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.345,
+      "presence_to": 0.794
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 0.794,
+      "presence_to": 0.346
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.346,
+      "presence_to": 0.783
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.783,
+      "presence_to": 0.32
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.115,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.078
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.076,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.026
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.026,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.103
+    },
+    {
+      "attribute": "BTK",
+      "from_release": 2024,
+      "to_release": 2025,
+      "presence_from": 0.105,
+      "presence_to": 0.878
+    },
+    {
+      "attribute": "TRK",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.956
+    },
+    {
+      "attribute": "TRK",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.947,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "TRK",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.835
+    },
+    {
+      "attribute": "TRK",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.835,
+      "presence_to": 0.149
+    },
+    {
+      "attribute": "TRK",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.149,
+      "presence_to": 0.852
+    },
+    {
+      "attribute": "BCV",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.949
+    },
+    {
+      "attribute": "BCV",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.939,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "BCV",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.818
+    },
+    {
+      "attribute": "BCV",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.818,
+      "presence_to": 0.097
+    },
+    {
+      "attribute": "BCV",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.097,
+      "presence_to": 0.839
+    },
+    {
+      "attribute": "SFA",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.949
+    },
+    {
+      "attribute": "SFA",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.939,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "SFA",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.818
+    },
+    {
+      "attribute": "SFA",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.818,
+      "presence_to": 0.097
+    },
+    {
+      "attribute": "SFA",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.097,
+      "presence_to": 0.839
+    },
+    {
+      "attribute": "SPM",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.956
+    },
+    {
+      "attribute": "SPM",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.947,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "SPM",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.835
+    },
+    {
+      "attribute": "SPM",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.835,
+      "presence_to": 0.268
+    },
+    {
+      "attribute": "SPM",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.268,
+      "presence_to": 0.852
+    },
+    {
+      "attribute": "JKM",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.956
+    },
+    {
+      "attribute": "JKM",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.947,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "JKM",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.835
+    },
+    {
+      "attribute": "JKM",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.835,
+      "presence_to": 0.268
+    },
+    {
+      "attribute": "JKM",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.268,
+      "presence_to": 0.852
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 1995,
+      "to_release": 1996,
+      "presence_from": 0.438,
+      "presence_to": 0.729
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.783,
+      "presence_to": 0.433
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.433,
+      "presence_to": 0.891
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.969,
+      "presence_to": 0.575
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.575,
+      "presence_to": 0.919
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.919,
+      "presence_to": 0.269
+    },
+    {
+      "attribute": "CTH",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.269,
+      "presence_to": 0.913
+    },
+    {
+      "attribute": "SPC",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.97
+    },
+    {
+      "attribute": "SPC",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.943,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "SPC",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.841
+    },
+    {
+      "attribute": "SPC",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.841,
+      "presence_to": 0.171
+    },
+    {
+      "attribute": "SPC",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.171,
+      "presence_to": 0.862
+    },
+    {
+      "attribute": "CIT",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.973
+    },
+    {
+      "attribute": "CIT",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.955,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "CIT",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.864
+    },
+    {
+      "attribute": "CIT",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.864,
+      "presence_to": 0.172
+    },
+    {
+      "attribute": "CIT",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.172,
+      "presence_to": 0.883
+    },
+    {
+      "attribute": "SRR",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.931
+    },
+    {
+      "attribute": "SRR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.884,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "SRR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.785
+    },
+    {
+      "attribute": "SRR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.785,
+      "presence_to": 0.01
+    },
+    {
+      "attribute": "SRR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.01,
+      "presence_to": 0.775
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.931
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.884,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.785
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.785,
+      "presence_to": 0.01
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.01,
+      "presence_to": 0.775
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.774,
+      "presence_to": 0.085
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2021,
+      "to_release": 2022,
+      "presence_from": 0.097,
+      "presence_to": 0.88
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2022,
+      "to_release": 2023,
+      "presence_from": 0.88,
+      "presence_to": 0.104
+    },
+    {
+      "attribute": "MRR",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.854
+    },
+    {
+      "attribute": "DRR",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.931
+    },
+    {
+      "attribute": "DRR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.884,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "DRR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.785
+    },
+    {
+      "attribute": "DRR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.785,
+      "presence_to": 0.01
+    },
+    {
+      "attribute": "DRR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.01,
+      "presence_to": 0.775
+    },
+    {
+      "attribute": "RLS",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.931
+    },
+    {
+      "attribute": "RLS",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.884,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RLS",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.785
+    },
+    {
+      "attribute": "RLS",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.785,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RLS",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.0,
+      "presence_to": 0.775
+    },
+    {
+      "attribute": "RBK",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.239,
+      "presence_to": 0.851
+    },
+    {
+      "attribute": "RBK",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.951,
+      "presence_to": 0.512
+    },
+    {
+      "attribute": "RBK",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.512,
+      "presence_to": 0.873
+    },
+    {
+      "attribute": "RBK",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.873,
+      "presence_to": 0.17
+    },
+    {
+      "attribute": "RBK",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.17,
+      "presence_to": 0.871
+    },
+    {
+      "attribute": "RBP",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.079
+    },
+    {
+      "attribute": "RBP",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.853
+    },
+    {
+      "attribute": "RBF",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.079
+    },
+    {
+      "attribute": "RBF",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.853
+    },
+    {
+      "attribute": "PBK",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.233,
+      "presence_to": 0.851
+    },
+    {
+      "attribute": "PBK",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.951,
+      "presence_to": 0.311
+    },
+    {
+      "attribute": "PBK",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.311,
+      "presence_to": 0.873
+    },
+    {
+      "attribute": "PBK",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.873,
+      "presence_to": 0.17
+    },
+    {
+      "attribute": "PBK",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.17,
+      "presence_to": 0.871
+    },
+    {
+      "attribute": "PBP",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.079
+    },
+    {
+      "attribute": "PBP",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.853
+    },
+    {
+      "attribute": "PBF",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.079
+    },
+    {
+      "attribute": "PBF",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.853
+    },
+    {
+      "attribute": "IBL",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.959
+    },
+    {
+      "attribute": "IBL",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.951,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "IBL",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.873
+    },
+    {
+      "attribute": "IBL",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.873,
+      "presence_to": 0.17
+    },
+    {
+      "attribute": "IBL",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.17,
+      "presence_to": 0.871
+    },
+    {
+      "attribute": "LBK",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.0,
+      "presence_to": 0.079
+    },
+    {
+      "attribute": "LBK",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.853
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.446,
+      "presence_to": 0.794
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 1997,
+      "to_release": 1998,
+      "presence_from": 0.794,
+      "presence_to": 0.489
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 1998,
+      "to_release": 1999,
+      "presence_from": 0.489,
+      "presence_to": 0.783
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.783,
+      "presence_to": 0.471
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.471,
+      "presence_to": 0.891
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.975,
+      "presence_to": 0.59
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.59,
+      "presence_to": 0.924
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.924,
+      "presence_to": 0.47
+    },
+    {
+      "attribute": "TAK",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.47,
+      "presence_to": 0.925
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.0,
+      "presence_to": 0.46
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.46,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.983
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.971,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.894
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.894,
+      "presence_to": 0.47
+    },
+    {
+      "attribute": "POW",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.47,
+      "presence_to": 0.917
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 1994,
+      "to_release": 1995,
+      "presence_from": 0.0,
+      "presence_to": 0.159
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.276,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.965
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.959,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.865
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.865,
+      "presence_to": 0.469
+    },
+    {
+      "attribute": "PUR",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.469,
+      "presence_to": 0.887
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.065
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.075,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.08
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.08,
+      "presence_to": 0.469
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.469,
+      "presence_to": 0.113
+    },
+    {
+      "attribute": "BSH",
+      "from_release": 2024,
+      "to_release": 2025,
+      "presence_from": 0.114,
+      "presence_to": 0.893
+    },
+    {
+      "attribute": "PMV",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.057
+    },
+    {
+      "attribute": "PMV",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.064,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "PMV",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.057
+    },
+    {
+      "attribute": "PMV",
+      "from_release": 2024,
+      "to_release": 2025,
+      "presence_from": 0.093,
+      "presence_to": 0.873
+    },
+    {
+      "attribute": "FMV",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.057
+    },
+    {
+      "attribute": "FMV",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.064,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "FMV",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.057
+    },
+    {
+      "attribute": "FMV",
+      "from_release": 2024,
+      "to_release": 2025,
+      "presence_from": 0.093,
+      "presence_to": 0.873
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 1994,
+      "to_release": 1995,
+      "presence_from": 0.0,
+      "presence_to": 0.176
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 1996,
+      "to_release": 1997,
+      "presence_from": 0.171,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.967
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.963,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.869
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.869,
+      "presence_to": 0.319
+    },
+    {
+      "attribute": "MCV",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.319,
+      "presence_to": 0.889
+    },
+    {
+      "attribute": "ZCV",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.967
+    },
+    {
+      "attribute": "ZCV",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.963,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "ZCV",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.869
+    },
+    {
+      "attribute": "ZCV",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.869,
+      "presence_to": 0.319
+    },
+    {
+      "attribute": "ZCV",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.319,
+      "presence_to": 0.889
+    },
+    {
+      "attribute": "PRS",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.97
+    },
+    {
+      "attribute": "PRS",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.952,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "PRS",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.847
+    },
+    {
+      "attribute": "PRS",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.847,
+      "presence_to": 0.317
+    },
+    {
+      "attribute": "PRS",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.317,
+      "presence_to": 0.869
+    },
+    {
+      "attribute": "KPW",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.046,
+      "presence_to": 0.858
+    },
+    {
+      "attribute": "KPW",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.941,
+      "presence_to": 0.041
+    },
+    {
+      "attribute": "KPW",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.041,
+      "presence_to": 0.842
+    },
+    {
+      "attribute": "KPW",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.842,
+      "presence_to": 0.039
+    },
+    {
+      "attribute": "KPW",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.039,
+      "presence_to": 0.845
+    },
+    {
+      "attribute": "KAC",
+      "from_release": 2001,
+      "to_release": 2002,
+      "presence_from": 0.046,
+      "presence_to": 0.858
+    },
+    {
+      "attribute": "KAC",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.941,
+      "presence_to": 0.038
+    },
+    {
+      "attribute": "KAC",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.038,
+      "presence_to": 0.842
+    },
+    {
+      "attribute": "KAC",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.842,
+      "presence_to": 0.039
+    },
+    {
+      "attribute": "KAC",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.039,
+      "presence_to": 0.845
+    },
+    {
+      "attribute": "KRN",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.877
+    },
+    {
+      "attribute": "KRN",
+      "from_release": 2004,
+      "to_release": 2005,
+      "presence_from": 0.877,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "KRN",
+      "from_release": 2005,
+      "to_release": 2006,
+      "presence_from": 0.0,
+      "presence_to": 0.932
+    },
+    {
+      "attribute": "KRN",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.819,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "KRN",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.0,
+      "presence_to": 0.845
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.004
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.004,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.0,
+      "presence_to": 0.007
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2024,
+      "to_release": 2025,
+      "presence_from": 0.004,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2025,
+      "to_release": 2026,
+      "presence_from": 0.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RUN",
+      "from_release": 2026,
+      "to_release": 2027,
+      "presence_from": 0.0,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "ELU",
+      "from_release": 2006,
+      "to_release": 2007,
+      "presence_from": 0.0,
+      "presence_to": 0.049
+    },
+    {
+      "attribute": "ELU",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.055,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "ELU",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.032
+    },
+    {
+      "attribute": "ELU",
+      "from_release": 2020,
+      "to_release": 2021,
+      "presence_from": 0.065,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RR",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.004
+    },
+    {
+      "attribute": "RR",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.008,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RR",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.029
+    },
+    {
+      "attribute": "RR",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.03,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RTE",
+      "from_release": 2007,
+      "to_release": 2008,
+      "presence_from": 0.0,
+      "presence_to": 0.036
+    },
+    {
+      "attribute": "RTE",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.055,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "RTE",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.032
+    },
+    {
+      "attribute": "RTE",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.052,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2000,
+      "to_release": 2001,
+      "presence_from": 0.0,
+      "presence_to": 0.052
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2002,
+      "to_release": 2003,
+      "presence_from": 0.009,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2003,
+      "to_release": 2004,
+      "presence_from": 0.0,
+      "presence_to": 0.004
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2009,
+      "to_release": 2010,
+      "presence_from": 0.001,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2010,
+      "to_release": 2011,
+      "presence_from": 0.0,
+      "presence_to": 0.004
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2011,
+      "to_release": 2012,
+      "presence_from": 0.004,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2012,
+      "to_release": 2013,
+      "presence_from": 0.0,
+      "presence_to": 0.007
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2014,
+      "to_release": 2015,
+      "presence_from": 0.006,
+      "presence_to": 0.0
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2016,
+      "to_release": 2017,
+      "presence_from": 0.0,
+      "presence_to": 0.005
+    },
+    {
+      "attribute": "THA",
+      "from_release": 2018,
+      "to_release": 2019,
+      "presence_from": 0.006,
+      "presence_to": 0.0
+    }
+  ],
+  "duplicate_keys": 40,
+  "duplicate_rows": 81,
+  "blank_team_rows": 454,
+  "team_case_pairs": 31,
+  "team_distinct_normalized": 32,
+  "coverage_json_attribute_mismatches": 58,
+  "coverage_json_attribute_examples": {
+    "OVR": {
+      "coverage_json": 58743,
+      "csv": 50203
+    },
+    "SPEED": {
+      "coverage_json": 57223,
+      "csv": 57056
+    },
+    "ACC": {
+      "coverage_json": 54914,
+      "csv": 49121
+    },
+    "AWR": {
+      "coverage_json": 57705,
+      "csv": 52642
+    },
+    "STR": {
+      "coverage_json": 55098,
+      "csv": 50962
+    }
+  }
+}

@@ -1,0 +1,549 @@
+{
+  "editions": {
+    "madden-06.csv": {
+      "release_label": 2006,
+      "overlap_by_candidate": {
+        "2006": 47
+      },
+      "rows": 66,
+      "matched_unique": 47,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 19
+    },
+    "madden-07.csv": {
+      "release_label": 2007,
+      "overlap_by_candidate": {
+        "2007": 48
+      },
+      "rows": 63,
+      "matched_unique": 48,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 15
+    },
+    "madden-08.csv": {
+      "release_label": 2008,
+      "overlap_by_candidate": {
+        "2008": 45
+      },
+      "rows": 64,
+      "matched_unique": 45,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 19
+    },
+    "madden-09.csv": {
+      "release_label": 2009,
+      "overlap_by_candidate": {
+        "2009": 44
+      },
+      "rows": 64,
+      "matched_unique": 44,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 20
+    },
+    "madden-10.csv": {
+      "release_label": 2010,
+      "overlap_by_candidate": {
+        "2010": 45
+      },
+      "rows": 67,
+      "matched_unique": 45,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 22
+    },
+    "madden-11.csv": {
+      "release_label": 2011,
+      "overlap_by_candidate": {
+        "2011": 49
+      },
+      "rows": 71,
+      "matched_unique": 49,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 22
+    },
+    "madden-12.csv": {
+      "release_label": 2012,
+      "overlap_by_candidate": {
+        "2012": 43
+      },
+      "rows": 68,
+      "matched_unique": 43,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 25
+    },
+    "madden-13.csv": {
+      "release_label": 2013,
+      "overlap_by_candidate": {
+        "2013": 49
+      },
+      "rows": 59,
+      "matched_unique": 49,
+      "ambiguous_name_skipped": 2,
+      "not_in_archive": 8
+    },
+    "madden-15.csv": {
+      "release_label": 2015,
+      "overlap_by_candidate": {
+        "2015": 55
+      },
+      "rows": 65,
+      "matched_unique": 55,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 10
+    },
+    "madden-16.csv": {
+      "release_label": 2016,
+      "overlap_by_candidate": {
+        "2016": 61
+      },
+      "rows": 70,
+      "matched_unique": 61,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 9
+    },
+    "madden-17.csv": {
+      "release_label": 2017,
+      "overlap_by_candidate": {
+        "2017": 65
+      },
+      "rows": 80,
+      "matched_unique": 65,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 15
+    },
+    "madden-18.csv": {
+      "release_label": 2018,
+      "overlap_by_candidate": {
+        "2018": 63
+      },
+      "rows": 84,
+      "matched_unique": 63,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 21
+    },
+    "madden-19.csv": {
+      "release_label": 2019,
+      "overlap_by_candidate": {
+        "2019": 60
+      },
+      "rows": 79,
+      "matched_unique": 60,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 18
+    },
+    "madden-20.csv": {
+      "release_label": 2020,
+      "overlap_by_candidate": {
+        "2020": 65
+      },
+      "rows": 85,
+      "matched_unique": 65,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 20
+    },
+    "madden-2002.csv": {
+      "release_label": 2002,
+      "overlap_by_candidate": {
+        "2002": 43
+      },
+      "rows": 63,
+      "matched_unique": 43,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 20
+    },
+    "madden-2003.csv": {
+      "release_label": 2003,
+      "overlap_by_candidate": {
+        "2003": 44
+      },
+      "rows": 63,
+      "matched_unique": 44,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 18
+    },
+    "madden-2004.csv": {
+      "release_label": 2004,
+      "overlap_by_candidate": {
+        "2004": 46
+      },
+      "rows": 66,
+      "matched_unique": 46,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 19
+    },
+    "madden-2005.csv": {
+      "release_label": 2005,
+      "overlap_by_candidate": {
+        "2005": 47
+      },
+      "rows": 64,
+      "matched_unique": 47,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 17
+    },
+    "madden-21.csv": {
+      "release_label": 2021,
+      "overlap_by_candidate": {
+        "2021": 66
+      },
+      "rows": 96,
+      "matched_unique": 66,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 29
+    },
+    "madden-22.csv": {
+      "release_label": 2022,
+      "overlap_by_candidate": {
+        "2022": 62
+      },
+      "rows": 90,
+      "matched_unique": 62,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 28
+    },
+    "madden-23.csv": {
+      "release_label": 2023,
+      "overlap_by_candidate": {
+        "2023": 72
+      },
+      "rows": 94,
+      "matched_unique": 72,
+      "ambiguous_name_skipped": 2,
+      "not_in_archive": 20
+    },
+    "madden-24.csv": {
+      "release_label": 2024,
+      "overlap_by_candidate": {
+        "2024": 63
+      },
+      "rows": 84,
+      "matched_unique": 63,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 20
+    },
+    "madden-25-2013.csv": {
+      "release_label": 2014,
+      "overlap_by_candidate": {
+        "2013": 43,
+        "2014": 54
+      },
+      "rows": 61,
+      "matched_unique": 54,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 6
+    },
+    "madden-25.csv": {
+      "release_label": 2025,
+      "overlap_by_candidate": {
+        "2025": 68
+      },
+      "rows": 99,
+      "matched_unique": 68,
+      "ambiguous_name_skipped": 0,
+      "not_in_archive": 31
+    },
+    "madden-26.csv": {
+      "release_label": 2026,
+      "overlap_by_candidate": {
+        "2026": 57
+      },
+      "rows": 64,
+      "matched_unique": 57,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 6
+    },
+    "madden-27.csv": {
+      "release_label": 2027,
+      "overlap_by_candidate": {
+        "2027": 40
+      },
+      "rows": 59,
+      "matched_unique": 40,
+      "ambiguous_name_skipped": 1,
+      "not_in_archive": 18
+    }
+  },
+  "per_attribute": {
+    "ACC": {
+      "archive_column": "ACC",
+      "pairs": 1326,
+      "exact_share": 0.842,
+      "mean_abs_diff": 0.72
+    },
+    "AGI": {
+      "archive_column": "AGI",
+      "pairs": 1392,
+      "exact_share": 0.829,
+      "mean_abs_diff": 0.74
+    },
+    "AWR": {
+      "archive_column": "AWR",
+      "pairs": 1312,
+      "exact_share": 0.845,
+      "mean_abs_diff": 0.9
+    },
+    "BCV": {
+      "archive_column": "BCV",
+      "pairs": 961,
+      "exact_share": 0.961,
+      "mean_abs_diff": 0.42
+    },
+    "BSH": {
+      "archive_column": "BSH",
+      "pairs": 91,
+      "exact_share": 0.879,
+      "mean_abs_diff": 0.24
+    },
+    "BSK": {
+      "archive_column": "BSK",
+      "pairs": 90,
+      "exact_share": 0.956,
+      "mean_abs_diff": 0.09
+    },
+    "BTK": {
+      "archive_column": "BTK",
+      "pairs": 90,
+      "exact_share": 0.944,
+      "mean_abs_diff": 0.5
+    },
+    "CAR": {
+      "archive_column": "CAR",
+      "pairs": 1242,
+      "exact_share": 0.862,
+      "mean_abs_diff": 1.1
+    },
+    "CIT": {
+      "archive_column": "CIT",
+      "pairs": 950,
+      "exact_share": 0.923,
+      "mean_abs_diff": 0.73
+    },
+    "COD": {
+      "archive_column": "COD",
+      "pairs": 379,
+      "exact_share": 0.953,
+      "mean_abs_diff": 0.29
+    },
+    "CTH": {
+      "archive_column": "CTH",
+      "pairs": 1275,
+      "exact_share": 0.845,
+      "mean_abs_diff": 1.03
+    },
+    "DRR": {
+      "archive_column": "DRR",
+      "pairs": 908,
+      "exact_share": 0.954,
+      "mean_abs_diff": 0.37
+    },
+    "FMV": {
+      "archive_column": "FMV",
+      "pairs": 91,
+      "exact_share": 0.89,
+      "mean_abs_diff": 0.4
+    },
+    "IMP": {
+      "archive_column": "IBL",
+      "pairs": 984,
+      "exact_share": 0.941,
+      "mean_abs_diff": 0.69
+    },
+    "JKM": {
+      "archive_column": "JKM",
+      "pairs": 976,
+      "exact_share": 0.946,
+      "mean_abs_diff": 0.45
+    },
+    "JMP": {
+      "archive_column": "JMP",
+      "pairs": 1312,
+      "exact_share": 0.831,
+      "mean_abs_diff": 1.05
+    },
+    "LBK": {
+      "archive_column": "LBK",
+      "pairs": 90,
+      "exact_share": 0.933,
+      "mean_abs_diff": 0.4
+    },
+    "MAN": {
+      "archive_column": "MCV",
+      "pairs": 1011,
+      "exact_share": 0.911,
+      "mean_abs_diff": 0.79
+    },
+    "MRR": {
+      "archive_column": "MRR",
+      "pairs": 589,
+      "exact_share": 0.92,
+      "mean_abs_diff": 0.56
+    },
+    "OVR": {
+      "archive_column": "OVR",
+      "pairs": 1401,
+      "exact_share": 0.823,
+      "mean_abs_diff": 1.05
+    },
+    "PBF": {
+      "archive_column": "PBF",
+      "pairs": 90,
+      "exact_share": 0.9,
+      "mean_abs_diff": 0.32
+    },
+    "PBK": {
+      "archive_column": "PBK",
+      "pairs": 1219,
+      "exact_share": 0.87,
+      "mean_abs_diff": 1.02
+    },
+    "PBP": {
+      "archive_column": "PBP",
+      "pairs": 90,
+      "exact_share": 0.9,
+      "mean_abs_diff": 0.33
+    },
+    "PMV": {
+      "archive_column": "PMV",
+      "pairs": 91,
+      "exact_share": 0.868,
+      "mean_abs_diff": 0.36
+    },
+    "PRS": {
+      "archive_column": "PRS",
+      "pairs": 947,
+      "exact_share": 0.931,
+      "mean_abs_diff": 0.95
+    },
+    "PUR": {
+      "archive_column": "PUR",
+      "pairs": 1013,
+      "exact_share": 0.909,
+      "mean_abs_diff": 0.67
+    },
+    "RBF": {
+      "archive_column": "RBF",
+      "pairs": 90,
+      "exact_share": 0.867,
+      "mean_abs_diff": 0.47
+    },
+    "RBK": {
+      "archive_column": "RBK",
+      "pairs": 1228,
+      "exact_share": 0.867,
+      "mean_abs_diff": 1.14
+    },
+    "RBP": {
+      "archive_column": "RBP",
+      "pairs": 90,
+      "exact_share": 0.856,
+      "mean_abs_diff": 0.47
+    },
+    "REL": {
+      "archive_column": "RLS",
+      "pairs": 874,
+      "exact_share": 0.985,
+      "mean_abs_diff": 0.11
+    },
+    "SFA": {
+      "archive_column": "SFA",
+      "pairs": 961,
+      "exact_share": 0.964,
+      "mean_abs_diff": 0.5
+    },
+    "SPC": {
+      "archive_column": "SPC",
+      "pairs": 936,
+      "exact_share": 0.939,
+      "mean_abs_diff": 0.6
+    },
+    "SPD": {
+      "archive_column": "SPEED",
+      "pairs": 1380,
+      "exact_share": 0.844,
+      "mean_abs_diff": 0.67
+    },
+    "SPM": {
+      "archive_column": "SPM",
+      "pairs": 976,
+      "exact_share": 0.943,
+      "mean_abs_diff": 0.52
+    },
+    "SRR": {
+      "archive_column": "SRR",
+      "pairs": 908,
+      "exact_share": 0.956,
+      "mean_abs_diff": 0.35
+    },
+    "STA": {
+      "archive_column": "STA",
+      "pairs": 1399,
+      "exact_share": 0.772,
+      "mean_abs_diff": 1.41
+    },
+    "STR": {
+      "archive_column": "STR",
+      "pairs": 1392,
+      "exact_share": 0.819,
+      "mean_abs_diff": 0.91
+    },
+    "TAD": {
+      "archive_column": "TAD",
+      "pairs": 1089,
+      "exact_share": 0.97,
+      "mean_abs_diff": 0.36
+    },
+    "TAM": {
+      "archive_column": "TAM",
+      "pairs": 1089,
+      "exact_share": 0.97,
+      "mean_abs_diff": 0.4
+    },
+    "TAS": {
+      "archive_column": "TAS",
+      "pairs": 1089,
+      "exact_share": 0.968,
+      "mean_abs_diff": 0.47
+    },
+    "TGH": {
+      "archive_column": "TGH",
+      "pairs": 1221,
+      "exact_share": 0.804,
+      "mean_abs_diff": 1.61
+    },
+    "THP": {
+      "archive_column": "THP",
+      "pairs": 1189,
+      "exact_share": 0.892,
+      "mean_abs_diff": 1.09
+    },
+    "TKL": {
+      "archive_column": "TAK",
+      "pairs": 1297,
+      "exact_share": 0.829,
+      "mean_abs_diff": 1.18
+    },
+    "TOR": {
+      "archive_column": "TOR",
+      "pairs": 827,
+      "exact_share": 0.964,
+      "mean_abs_diff": 0.51
+    },
+    "TRK": {
+      "archive_column": "TRK",
+      "pairs": 973,
+      "exact_share": 0.961,
+      "mean_abs_diff": 0.64
+    },
+    "TUP": {
+      "archive_column": "TUP",
+      "pairs": 90,
+      "exact_share": 0.967,
+      "mean_abs_diff": 0.03
+    },
+    "ZON": {
+      "archive_column": "ZCV",
+      "pairs": 1011,
+      "exact_share": 0.907,
+      "mean_abs_diff": 0.78
+    }
+  }
+}

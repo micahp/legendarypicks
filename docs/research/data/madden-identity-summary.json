@@ -1,0 +1,195 @@
+{
+  "player_ids": 12570,
+  "tiers": {
+    "high_unique_name_position_match": 11237,
+    "review_position_mismatch": 191,
+    "review_homonym_position_resolved": 701,
+    "review_homonym": 244,
+    "review_shared_gsis": 4,
+    "unresolved_no_nfl_name_match": 193
+  },
+  "auto_accepted_gsis": 11237,
+  "per_release_high_tier_share": {
+    "1992": {
+      "rows": 905,
+      "high_tier_rows": 792,
+      "high_tier_share": 0.875
+    },
+    "1993": {
+      "rows": 811,
+      "high_tier_rows": 713,
+      "high_tier_share": 0.879
+    },
+    "1994": {
+      "rows": 813,
+      "high_tier_rows": 703,
+      "high_tier_share": 0.865
+    },
+    "1995": {
+      "rows": 1048,
+      "high_tier_rows": 906,
+      "high_tier_share": 0.865
+    },
+    "1996": {
+      "rows": 1331,
+      "high_tier_rows": 1166,
+      "high_tier_share": 0.876
+    },
+    "1997": {
+      "rows": 1323,
+      "high_tier_rows": 1166,
+      "high_tier_share": 0.881
+    },
+    "1998": {
+      "rows": 1168,
+      "high_tier_rows": 1029,
+      "high_tier_share": 0.881
+    },
+    "1999": {
+      "rows": 1214,
+      "high_tier_rows": 1068,
+      "high_tier_share": 0.88
+    },
+    "2000": {
+      "rows": 1250,
+      "high_tier_rows": 1093,
+      "high_tier_share": 0.874
+    },
+    "2001": {
+      "rows": 1416,
+      "high_tier_rows": 1257,
+      "high_tier_share": 0.888
+    },
+    "2002": {
+      "rows": 1550,
+      "high_tier_rows": 1378,
+      "high_tier_share": 0.889
+    },
+    "2003": {
+      "rows": 1582,
+      "high_tier_rows": 1406,
+      "high_tier_share": 0.889
+    },
+    "2004": {
+      "rows": 1596,
+      "high_tier_rows": 1423,
+      "high_tier_share": 0.892
+    },
+    "2005": {
+      "rows": 1436,
+      "high_tier_rows": 1298,
+      "high_tier_share": 0.904
+    },
+    "2006": {
+      "rows": 1517,
+      "high_tier_rows": 1367,
+      "high_tier_share": 0.901
+    },
+    "2007": {
+      "rows": 1440,
+      "high_tier_rows": 1301,
+      "high_tier_share": 0.903
+    },
+    "2008": {
+      "rows": 1455,
+      "high_tier_rows": 1307,
+      "high_tier_share": 0.898
+    },
+    "2009": {
+      "rows": 1536,
+      "high_tier_rows": 1366,
+      "high_tier_share": 0.889
+    },
+    "2010": {
+      "rows": 1632,
+      "high_tier_rows": 1448,
+      "high_tier_share": 0.887
+    },
+    "2011": {
+      "rows": 1635,
+      "high_tier_rows": 1460,
+      "high_tier_share": 0.893
+    },
+    "2012": {
+      "rows": 1471,
+      "high_tier_rows": 1307,
+      "high_tier_share": 0.889
+    },
+    "2013": {
+      "rows": 2000,
+      "high_tier_rows": 1783,
+      "high_tier_share": 0.891
+    },
+    "2014": {
+      "rows": 1967,
+      "high_tier_rows": 1755,
+      "high_tier_share": 0.892
+    },
+    "2015": {
+      "rows": 1981,
+      "high_tier_rows": 1771,
+      "high_tier_share": 0.894
+    },
+    "2016": {
+      "rows": 2039,
+      "high_tier_rows": 1829,
+      "high_tier_share": 0.897
+    },
+    "2017": {
+      "rows": 2048,
+      "high_tier_rows": 1848,
+      "high_tier_share": 0.902
+    },
+    "2018": {
+      "rows": 2086,
+      "high_tier_rows": 1881,
+      "high_tier_share": 0.902
+    },
+    "2019": {
+      "rows": 2087,
+      "high_tier_rows": 1879,
+      "high_tier_share": 0.9
+    },
+    "2020": {
+      "rows": 2081,
+      "high_tier_rows": 1883,
+      "high_tier_share": 0.905
+    },
+    "2021": {
+      "rows": 2122,
+      "high_tier_rows": 1918,
+      "high_tier_share": 0.904
+    },
+    "2022": {
+      "rows": 1960,
+      "high_tier_rows": 1778,
+      "high_tier_share": 0.907
+    },
+    "2023": {
+      "rows": 2195,
+      "high_tier_rows": 1997,
+      "high_tier_share": 0.91
+    },
+    "2024": {
+      "rows": 2187,
+      "high_tier_rows": 1996,
+      "high_tier_share": 0.913
+    },
+    "2025": {
+      "rows": 2170,
+      "high_tier_rows": 1984,
+      "high_tier_share": 0.914
+    },
+    "2026": {
+      "rows": 2160,
+      "high_tier_rows": 1984,
+      "high_tier_share": 0.919
+    },
+    "2027": {
+      "rows": 1531,
+      "high_tier_rows": 1435,
+      "high_tier_share": 0.937
+    }
+  },
+  "matching_rule": "exact normalized name (accents, punctuation, Jr/Sr/II-V stripped) against nfl_hist_player_ids.display_name; no team or season check (the NFL table has no team-season rows); no nickname matching"
+}

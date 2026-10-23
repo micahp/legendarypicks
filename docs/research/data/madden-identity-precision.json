@@ -1,0 +1,14 @@
+{
+  "span_seasons": [
+    2013,
+    2025
+  ],
+  "high_tier_players_with_pfr": 11227,
+  "player_seasons_tested": 24486,
+  "matched_present_in_snaps": 21395,
+  "matched_rate": 0.874,
+  "shuffled_control_present": 10524,
+  "shuffled_control_rate": 0.43,
+  "seed": 20261023,
+  "reading": "matched_rate far above shuffled_control_rate means the name-plus-position matches point at the right people; the gap is the precision signal. A low matched_rate can also reflect players who did not play (kickers, practice squad, retired) and is not evidence of a wrong match."
+}
