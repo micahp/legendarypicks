@@ -55,9 +55,10 @@ Madden <year>"). That is real absence, not a scrape gap.
   left as their own columns rather than guessed into another bucket.
 - **Old releases have no OVR.** Madden 1992-1996 era pages carry only a handful of
   attributes (SPD/AGI/AWR/…), no overall. Those rows have `OVR` blank.
-- **`team`** is the franchise slug the site uses for that season, so historical names
-  differ (`raiders` vs the Oakland years, `rams` vs St. Louis, `titans` vs `oilers`).
-  64 distinct slugs appear in total.
+- **`team`** is the franchise slug the site uses for that season, lowercased, so
+  historical names differ (`raiders` covers the Oakland years, `rams` St. Louis,
+  `titans` the Oilers). 33 distinct slugs in total; 453 rows have no team listed
+  at the source (free agents / no-team entries).
 - **Coverage caveat.** The site's own copy claims "40,725 players · 69,861 player-seasons".
   Every player page reachable from its sitemap and every team-season roster page was
   crawled (12,570 player pages, 1,043 team-season pages, 0 fetch failures), and this
@@ -66,6 +67,28 @@ Madden <year>"). That is real absence, not a scrape gap.
   Madden ratings page.
 - Verified by re-fetching 20 random players live after the build: 84 seasons, 0
   mismatches on any attribute.
+
+## Coverage by release
+
+Rows per release, players per team, and how many of the 60 attributes even exist in
+that era. This is the shape of the source, not scrape loss:
+
+| Releases | Rows/yr | Players/team | Attributes available | OVR |
+|---|---|---|---|---|
+| 1992-1996 | 811-1,331 | 29-44 | 16 (SPD, AGI, STR, AWR, THP, TAC, CAR, BTK, CTH, RBK, PBK, TAK, PUR, MCV, KPW, KAC) | none |
+| 1997 | 1,323 | 44 | 26 | yes |
+| 1998-2000 | 1,168-1,250 | 39-41 | 16-26, thin rows | no OVR in source |
+| 2001-2012 | 1,416-1,635 | 45-51 | 26-52 | yes |
+| 2013-2026 | 1,960-2,195 | 61-69 | 55-59 | yes |
+| 2027 | 1,531 | 51 | 54 | yes (partial release, 30 teams on the site) |
+
+So: modern-era coverage is effectively complete at roughly full 53-man-plus rosters
+per team every year. 1992-2000 is thinner because the site itself holds fewer players
+and fewer attributes for those releases - no OVR at all outside 1997, and roughly
+4-10 attribute cells per row. Treat pre-2001 rows as partial records.
+
+Team counts per release match the real league (28 teams 1992-1994, 30 in 1996-1999,
+31 in 2000-2001, 32 from 2002).
 
 ## Quick queries
 
