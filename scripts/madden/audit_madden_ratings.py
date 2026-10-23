@@ -64,15 +64,41 @@ def norm_name(s):
 
 
 class Report:
-    def __init__(self):
+    def __init__(self, waivers=None):
         self.checks = []
         self.fails = 0
+        self.waived = 0
+        self.waivers = waivers or {}
 
-    def add(self, cid, status, detail):
-        self.checks.append({'id': cid, 'status': status, 'detail': detail})
+    def add(self, cid, status, detail, measured=None):
+        # A waiver applies only to the exact measured values it was accepted for. Otherwise the
+        # check stays a FAIL, and the detail says why the waiver no longer applies.
+        measured = json.loads(json.dumps(measured, sort_keys=True)) if measured is not None else None
+        waiver = self.waivers.get(cid)
+        if status == 'FAIL' and waiver is not None:
+            if measured == waiver['measured']:
+                status = 'WAIVED'
+                detail = f"{detail} [accepted exception: {waiver['reason']}]"
+                self.waived += 1
+            else:
+                detail = f"{detail} [waiver does not match: measured {measured}, waived {waiver['measured']}]"
+        self.checks.append({'id': cid, 'status': status, 'detail': detail, 'measured': measured})
         if status == 'FAIL':
             self.fails += 1
-        print(f'[{status:4}] {cid}: {detail}')
+        print(f'[{status:6}] {cid}: {detail}')
+
+
+DEFAULT_EXCEPTIONS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'docs', 'research',
+                                  'madden-audit-exceptions.json')
+
+
+def load_waivers(path):
+    """Read accepted exceptions keyed by check id. A missing file means no waivers, not an error."""
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    return {e['check']: e for e in data['exceptions']}
 
 
 def load_csv(zf):
@@ -87,11 +113,12 @@ def main():
     ap.add_argument('--zip', required=True)
     ap.add_argument('--derived-dir', required=True)
     ap.add_argument('--summary-json', required=True)
+    ap.add_argument('--exceptions', default=DEFAULT_EXCEPTIONS)
     args = ap.parse_args()
     os.makedirs(args.derived_dir, exist_ok=True)
     os.makedirs(os.path.dirname(args.summary_json), exist_ok=True)
 
-    rep = Report()
+    rep = Report(load_waivers(args.exceptions))
     zf = zipfile.ZipFile(args.zip)
     bad_zip = zf.testzip()
     rep.add('zip.integrity', 'PASS' if bad_zip is None else 'FAIL', f'testzip={bad_zip}')
@@ -192,7 +219,9 @@ def main():
             f'non-integer tokens: {dict(tokens_bad) or "none"}')
     rep.add('attr.range_0_99', 'PASS' if not range_bad else 'FAIL',
             f'{len(range_bad)} cells outside 0-99' +
-            (f', e.g. player {range_bad[0][0]} {range_bad[0][1]} {range_bad[0][2]}={range_bad[0][3]}' if range_bad else ''))
+            (f', e.g. player {range_bad[0][0]} {range_bad[0][1]} {range_bad[0][2]}={range_bad[0][3]}' if range_bad else ''),
+            measured={'cells': len(range_bad), 'values': sorted({v[3] for v in range_bad}),
+                      'releases': sorted({v[1] for v in range_bad})})
 
     # 5. Keys and duplicates
     doc_key = defaultdict(list)
@@ -235,7 +264,8 @@ def main():
     blank_team = [r for r in rows if not r['team'].strip()]
     rep.add('team.no_blank', 'PASS' if not blank_team else 'FAIL',
             f'{len(blank_team)} rows with blank team (all source={set(r["source"] for r in blank_team)}); '
-            f'kept as team_missing, not filled')
+            f'kept as team_missing, not filled',
+            measured={'rows': len(blank_team), 'sources': sorted({r['source'] for r in blank_team})})
     norm_teams = {t for t in low}
     rep.add('team.distinct_normalized', 'INFO',
             f'{len(norm_teams)} distinct non-blank team slugs after lowercasing (current NFL franchises: 32)')
@@ -245,7 +275,8 @@ def main():
             teams_by_rel[int(r['madden_release'])].add(r['team'].strip().lower())
     short = {y: len(teams_by_rel[y]) for y in range(2003, 2028) if len(teams_by_rel[y]) != 32}
     rep.add('team.32_franchises_2003_2027', 'PASS' if not short else 'FAIL',
-            'releases 2003-2027 whose team count is not 32: ' + (str(short) if short else 'none'))
+            'releases 2003-2027 whose team count is not 32: ' + (str(short) if short else 'none'),
+            measured={'short': {str(k): v for k, v in short.items()}})
 
     # 7. nfl_season: text in player pages, blank in team pages
     season_bad = []
@@ -394,7 +425,8 @@ def main():
             collapse.append((y, cells_by_rel[y], cells_by_rel[prev], cells_by_rel[nxt]))
     rep.add('presence.no_collapse_vs_neighbours', 'PASS' if not collapse else 'FAIL',
             'releases with attribute cells per row under half of both neighbours: ' +
-            (', '.join(f'{y} ({c} vs {p}/{n})' for y, c, p, n in collapse) if collapse else 'none'))
+            (', '.join(f'{y} ({c} vs {p}/{n})' for y, c, p, n in collapse) if collapse else 'none'),
+            measured={'releases': sorted(y for y, _, _, _ in collapse)})
 
     # Position x release aggregates (commit-safe: counts and medians only)
     grp_rows = []
@@ -454,6 +486,7 @@ def main():
         'attribute_columns': len(ATTR),
         'checks': rep.checks,
         'fail_count': rep.fails,
+        'waived_count': rep.waived,
         'releases': rel_summary,
         'position_group_by_release': grp_rows,
         'attribute_presence_shifts': shifts,
@@ -470,6 +503,7 @@ def main():
         json.dump(summary, f, indent=2)
         f.write('\n')
     print(f'wrote {args.summary_json}')
+    print(f'WAIVED count: {rep.waived}')
     print(f'FAIL count: {rep.fails}')
     return 1 if rep.fails else 0
 

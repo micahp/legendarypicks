@@ -1,0 +1,27 @@
+{
+  "decided_by": "user, 2026-10-23",
+  "scope": "Accepted for now, to be revisited on the next bundle. Each waiver applies only to the exact measured values listed. If a rebuild changes them, the check fails again. Waived checks still appear in every audit run as WAIVED, with their reason.",
+  "bundle": "sha256 a12eb4d90a7886bdbb39554ac445e93a5af52700e196a919d2dac201a95f2958",
+  "exceptions": [
+    {
+      "check": "attr.range_0_99",
+      "measured": {"cells": 11, "values": ["100"], "releases": ["1997"]},
+      "reason": "Site prints 100 in Madden 1997 only; every other release tops out at 99 (producer re-read Jessie Tuggle's page). Value kept, not clamped. Verified here: 11 cells in 10 rows, all 1997. The value_flags column the producer describes is not in this bundle."
+    },
+    {
+      "check": "team.no_blank",
+      "measured": {"rows": 454, "sources": ["player_page"]},
+      "reason": "453 of the 454 rows are the only row for their player-release, and no roster-page entry exists to backfill from. The 454th is Mike Williams 2013's blank row; his other row carries Seahawks. Verified here: 454 blank rows, 453 of them sole rows."
+    },
+    {
+      "check": "team.32_franchises_2003_2027",
+      "measured": {"short": {"2027": 30}},
+      "reason": "Giants and Jets /madden/team/*/2027 pages return HTTP 200 with an empty table (producer, not re-fetched here). Verified here: 60 of the 106 blank 2027 rows had Giants or Jets in the 2026 release. The other 46 blank 2027 rows are not explained and remain open."
+    },
+    {
+      "check": "presence.no_collapse_vs_neighbours",
+      "measured": {"releases": [2010, 2012]},
+      "reason": "Producer counted numeric cells in raw HTML against stored values for four players per release (2008-2013 all match; not re-read here). Verified here: Stafford's 2010 player page has 12 populated cells. The team-page comparison (10 cells) is not in the archive, so it is unverified here."
+    }
+  ]
+}

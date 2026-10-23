@@ -8,175 +8,232 @@
     {
       "id": "zip.integrity",
       "status": "PASS",
-      "detail": "testzip=None"
+      "detail": "testzip=None",
+      "measured": null
     },
     {
       "id": "shape.header_identity",
       "status": "PASS",
-      "detail": "first 10 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated']"
+      "detail": "first 10 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated']",
+      "measured": null
     },
     {
       "id": "shape.columns",
       "status": "PASS",
-      "detail": "70 columns = 10 identity + 60 attributes (expected 70: 10 identity + 60 attributes)"
+      "detail": "70 columns = 10 identity + 60 attributes (expected 70: 10 identity + 60 attributes)",
+      "measured": null
     },
     {
       "id": "shape.rows",
       "status": "PASS",
-      "detail": "58743 rows vs expected 58743"
+      "detail": "58743 rows vs expected 58743",
+      "measured": null
     },
     {
       "id": "readme.column_count",
       "status": "PASS",
-      "detail": "README contents table says \"\u00d7 73 columns\"; the file has 70 and the README numbers say 70"
+      "detail": "README contents table says \"\u00d7 73 columns\"; the file has 70 and the README numbers say 70",
+      "measured": null
     },
     {
       "id": "spec.column_count",
       "status": "PASS",
-      "detail": "repo spec doc agrees; the file has 70"
+      "detail": "repo spec doc agrees; the file has 70",
+      "measured": null
     },
     {
       "id": "coverage.per_release_rows",
       "status": "PASS",
-      "detail": "36 of 36 releases match coverage.json"
+      "detail": "36 of 36 releases match coverage.json",
+      "measured": null
     },
     {
       "id": "zip.by_year_matches_long",
       "status": "PASS",
-      "detail": "36 of 36 by_year files equal the long CSV slice"
+      "detail": "36 of 36 by_year files equal the long CSV slice",
+      "measured": null
     },
     {
       "id": "coverage.attribute_counts",
       "status": "PASS",
-      "detail": "60 of 60 attribute counts match coverage.json; e.g. OVR coverage.json=58345 vs CSV=58345"
+      "detail": "60 of 60 attribute counts match coverage.json; e.g. OVR coverage.json=58345 vs CSV=58345",
+      "measured": null
     },
     {
       "id": "ovr.README_counts",
       "status": "PASS",
-      "detail": "OVR present 58345 (README 58,345), EA-published 50203 (README 50,203), site-calculated 8142 (README 8,142)"
+      "detail": "OVR present 58345 (README 58,345), EA-published 50203 (README 50,203), site-calculated 8142 (README 8,142)",
+      "measured": null
     },
     {
       "id": "ovr.calculated_flag_values",
       "status": "PASS",
-      "detail": "site_calculated values: ['', 'OVR']"
+      "detail": "site_calculated values: ['', 'OVR']",
+      "measured": null
     },
     {
       "id": "ovr.calculated_only_1992_2000",
       "status": "PASS",
-      "detail": "releases with site-calculated OVR: ['1992', '1993', '1994', '1995', '1996', '1998', '1999', '2000']"
+      "detail": "releases with site-calculated OVR: ['1992', '1993', '1994', '1995', '1996', '1998', '1999', '2000']",
+      "measured": null
     },
     {
       "id": "ovr.no_empty_core_rows",
       "status": "PASS",
-      "detail": "rows where OVR, SPEED and AWR are all blank = 0"
+      "detail": "rows where OVR, SPEED and AWR are all blank = 0",
+      "measured": null
     },
     {
       "id": "attr.integer_tokens",
       "status": "PASS",
-      "detail": "non-integer tokens: none"
+      "detail": "non-integer tokens: none",
+      "measured": null
     },
     {
       "id": "attr.range_0_99",
-      "status": "FAIL",
-      "detail": "11 cells outside 0-99, e.g. player 184190 1997 TAK=100"
+      "status": "WAIVED",
+      "detail": "11 cells outside 0-99, e.g. player 184190 1997 TAK=100 [accepted exception: Site prints 100 in Madden 1997 only; every other release tops out at 99 (producer re-read Jessie Tuggle's page). Value kept, not clamped. Verified here: 11 cells in 10 rows, all 1997. The value_flags column the producer describes is not in this bundle.]",
+      "measured": {
+        "cells": 11,
+        "releases": [
+          "1997"
+        ],
+        "values": [
+          "100"
+        ]
+      }
     },
     {
       "id": "keys.documented_key_unique",
       "status": "PASS",
-      "detail": "(player_id, madden_release, dupe_seq) is duplicated for 0 keys; the README documents this key"
+      "detail": "(player_id, madden_release, dupe_seq) is duplicated for 0 keys; the README documents this key",
+      "measured": null
     },
     {
       "id": "keys.stint_sequence_contiguous",
       "status": "PASS",
-      "detail": "40 player-releases have more than one row (81 rows); dupe_seq is not 0..n-1 for 0"
+      "detail": "40 player-releases have more than one row (81 rows); dupe_seq is not 0..n-1 for 0",
+      "measured": null
     },
     {
       "id": "keys.stints_differ_by_team",
       "status": "PASS",
-      "detail": "0 multi-row player-releases have one team on every row; the README says these rows are team changes"
+      "detail": "0 multi-row player-releases have one team on every row; the README says these rows are team changes",
+      "measured": null
     },
     {
       "id": "keys.stint_ratings_differ",
       "status": "INFO",
-      "detail": "0 identical, 40 differ by team, 40 of 40 differ in at least one attribute; a value that changes within one release is a leakage question"
+      "detail": "0 identical, 40 differ by team, 40 of 40 differ in at least one attribute; a value that changes within one release is a leakage question",
+      "measured": null
     },
     {
       "id": "team.case_consistent",
       "status": "PASS",
-      "detail": "0 team slugs appear in more than one casing, e.g. []"
+      "detail": "0 team slugs appear in more than one casing, e.g. []",
+      "measured": null
     },
     {
       "id": "team.no_blank",
-      "status": "FAIL",
-      "detail": "454 rows with blank team (all source={'player_page'}); kept as team_missing, not filled"
+      "status": "WAIVED",
+      "detail": "454 rows with blank team (all source={'player_page'}); kept as team_missing, not filled [accepted exception: 453 of the 454 rows are the only row for their player-release, and no roster-page entry exists to backfill from. The 454th is Mike Williams 2013's blank row; his other row carries Seahawks. Verified here: 454 blank rows, 453 of them sole rows.]",
+      "measured": {
+        "rows": 454,
+        "sources": [
+          "player_page"
+        ]
+      }
     },
     {
       "id": "team.distinct_normalized",
       "status": "INFO",
-      "detail": "32 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)"
+      "detail": "32 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)",
+      "measured": null
     },
     {
       "id": "team.32_franchises_2003_2027",
-      "status": "FAIL",
-      "detail": "releases 2003-2027 whose team count is not 32: {2027: 30}"
+      "status": "WAIVED",
+      "detail": "releases 2003-2027 whose team count is not 32: {2027: 30} [accepted exception: Giants and Jets /madden/team/*/2027 pages return HTTP 200 with an empty table (producer, not re-fetched here). Verified here: 60 of the 106 blank 2027 rows had Giants or Jets in the 2026 release. The other 46 blank 2027 rows are not explained and remain open.]",
+      "measured": {
+        "short": {
+          "2027": 30
+        }
+      }
     },
     {
       "id": "season.consistent_with_release_minus_1",
       "status": "PASS",
-      "detail": "51356 non-blank nfl_season values agree with release-1 (0 disagree); 7387 blank values are derived from release-1"
+      "detail": "51356 non-blank nfl_season values agree with release-1 (0 disagree); 7387 blank values are derived from release-1",
+      "measured": null
     },
     {
       "id": "source.team_page_rows",
       "status": "PASS",
-      "detail": "7387 team_page rows vs spec 7387"
+      "detail": "7387 team_page rows vs spec 7387",
+      "measured": null
     },
     {
       "id": "pos.all_mapped",
       "status": "PASS",
-      "detail": "49 distinct primary POS tokens; unmapped: none"
+      "detail": "49 distinct primary POS tokens; unmapped: none",
+      "measured": null
     },
     {
       "id": "identity.one_name_per_player_id",
       "status": "PASS",
-      "detail": "0 player_ids carry more than one player_name"
+      "detail": "0 player_ids carry more than one player_name",
+      "measured": null
     },
     {
       "id": "identity.player_count",
       "status": "PASS",
-      "detail": "12570 distinct player_id vs spec 12570"
+      "detail": "12570 distinct player_id vs spec 12570",
+      "measured": null
     },
     {
       "id": "identity.name_is_person_only",
       "status": "PASS",
-      "detail": "0 player_ids (0 rows) carry position or team text in player_name, e.g. []"
+      "detail": "0 player_ids (0 rows) carry position or team text in player_name, e.g. []",
+      "measured": null
     },
     {
       "id": "identity.homonym_names",
       "status": "INFO",
-      "detail": "283 normalized names map to more than one player_id (review queue, not merged)"
+      "detail": "283 normalized names map to more than one player_id (review queue, not merged)",
+      "measured": null
     },
     {
       "id": "db.matches_csv_cellwise",
       "status": "PASS",
-      "detail": "58743 DB rows vs 58743 CSV rows; 0 cell differences"
+      "detail": "58743 DB rows vs 58743 CSV rows; 0 cell differences",
+      "measured": null
     },
     {
       "id": "db.players_table_rows",
       "status": "PASS",
-      "detail": "players table rows = 12570 vs 12570"
+      "detail": "players table rows = 12570 vs 12570",
+      "measured": null
     },
     {
       "id": "shift.attribute_presence",
       "status": "INFO",
-      "detail": "292 attribute presence steps (>=25 pts or appear/disappear); largest in releases {2011: 41, 2012: 37, 2010: 37, 2013: 36, 2007: 16, 2002: 14}"
+      "detail": "292 attribute presence steps (>=25 pts or appear/disappear); largest in releases {2011: 41, 2012: 37, 2010: 37, 2013: 36, 2007: 16, 2002: 14}",
+      "measured": null
     },
     {
       "id": "presence.no_collapse_vs_neighbours",
-      "status": "FAIL",
-      "detail": "releases with attribute cells per row under half of both neighbours: 2010 (12.2 vs 38.4/37.1), 2012 (16.5 vs 37.1/37.6)"
+      "status": "WAIVED",
+      "detail": "releases with attribute cells per row under half of both neighbours: 2010 (12.2 vs 38.4/37.1), 2012 (16.5 vs 37.1/37.6) [accepted exception: Producer counted numeric cells in raw HTML against stored values for four players per release (2008-2013 all match; not re-read here). Verified here: Stafford's 2010 player page has 12 populated cells. The team-page comparison (10 cells) is not in the archive, so it is unverified here.]",
+      "measured": {
+        "releases": [
+          2010,
+          2012
+        ]
+      }
     }
   ],
-  "fail_count": 4,
+  "fail_count": 0,
+  "waived_count": 4,
   "releases": [
     {
       "release": 1992,
