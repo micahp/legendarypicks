@@ -109,7 +109,7 @@ These are composable layers, **not** a commitment that every production forecast
 1. **Drive definitions:** Why does the game-level report count 22.08 simulated drives/game while the drive-specific evaluator reports 22.89? Align scope, counts and conventions.
 2. **Statistical drive mechanism:** Test D1–D7 one at a time, starting with clock/kneels, down-conditioned pass yardage, fourth-down decision context and red-zone diagnostic breakdown.
 3. **Player mechanics:** Why is completion so low in the constrained 120-pass free-physics smoke test? Instrument release timing, route separation, target reach, catch window, drops and defender contest before changing coefficients.
-4. **3D engine proof:** Compare Rapier vs Jolt on true three-dimensional tackle, failed wrap, pass/deflection and 22-player scenes. Keep physics and animation provenance distinct.
+4. **3D engine proof:** Initial Rapier vs Jolt feasibility is complete: genuine 3D contact/falls and receiver-ball impact demonstrated, **but no successful grip escape or secure catch**. Next: grasp/joint break, balance recovery, hand-ball possession, full-play throughput and mobile/cross-machine validation. Keep physics and animation provenance distinct.
 5. **Rare events:** Establish whether physics can *actually* produce sacks, interceptions, loose balls, fumble recoveries and field goals, not simply replay or assign them.
 6. **Ratings reliability:** Validate player input confidence and sensitivity against actual tracking/observed outcomes where licensed data permits. Avoid interpreting overall rating as a physical law.
 7. **Physics ↔ sequence integration:** Specify how free-play physical results update official down, distance, clock, possession, points and player stats. Statistical-only fallback must be explicit and separately counted.
@@ -124,6 +124,7 @@ These are composable layers, **not** a commitment that every production forecast
 | 2026-10-22 | **Requirement** | Prospective play outcomes cannot be conditioned on a real final spot, real credited tackler or the result being predicted | Prevent reconstruction masquerading as prediction |
 | 2026-10-22 | **Requirement** | Player **contacts** should be resolved in genuine 3D, not only visually presented in Three.js | Essential to the intended mechanistic tackle/catch model |
 | 2026-10-22 | **Research direction, not solver adoption** | Evaluate Rapier 3D vs Jolt while keeping Three.js rendering | Check determinism, contact quality, throughput, licensing |
+| 2026-10-22 | **Measured feasibility, no adoption** | Rapier and Jolt simulate 3D rigid-body contact/falls and receiver-ball impact; true tackle grip, break and secure catches are still missing | Benchmark is only a 0.25-second proxy; advance to grasp/balance/ball possession before any solver replacement |
 | 2026-10-22 | **Not adopted** | NFL sequence v0.1 as a game-winner model; current free-physics outcome frequencies as calibrated NFL rates | Brier under baseline; play mechanics unvalidated |
 
 ## 9. Running experiment log
@@ -138,6 +139,17 @@ Add a new dated entry for every significant finding; link the **immutable** repo
 - **Observation:** Gridiron free run/pass mechanics generate nonanchored gain/loss/catch variation, but a 120-pass smoke sample yielded only 25 completions. Player contact currently lacks full 3D mechanics.
 - **Hypothesis:** Causal, ratings-sensitive execution can change the *structure* of randomness and drive outcomes, if physical mechanics, behavior and starting conditions are measured rather than invented.
 - **Next evidence:** Paired physics-engine comparison, per-mechanism player-rating sensitivity and drive-level ablations with held-out evaluation.
+
+### 2026-10-22 — Rapier 3D vs Jolt: controlled feasibility, not solver adoption
+
+- **Question:** Can a mature 3D rigid-body solver replace custom planar contact while preserving Gridiron's custom play, movement and behavior policies?
+- **Evidence:** [Gridiron 3D comparison report](https://github.com/micahp/gridiron-physics/blob/e130f3a101adae59a276613a81c34956e22de1fb/research/physics-3d-evaluation/REPORT.md); [results JSON](https://github.com/micahp/gridiron-physics/blob/e130f3a101adae59a276613a81c34956e22de1fb/research/physics-3d-evaluation/results.json); [commit `e130f3a`](https://github.com/micahp/gridiron-physics/commit/e130f3a101adae59a276613a81c34956e22de1fb) on `research/3d-physics-engine-evaluation`.
+- **Controlled setup:** Five rigidly attached volumetric colliders per dynamic player body, no articulated skeleton, fixed timestep 120 Hz; tests of contact/fall with fixed starting positions and deterministic policies, plus ball–receiver contact feasibility. The reported seed did not alter a stochastic policy.
+- **Observed:** Both engines resolved real 3D contact, player falls and rigid football contact. **Neither** produced a demonstrated secure catch, physically validated deflection, wrap/grip release, or successful strength-driven broken tackle. One strength-motor escape attempt ended with carrier fall in **both** solvers.
+- **Runtime:** 22 bodies, 110 colliders, 30 steps (0.25 simulated seconds) per episode, 1,000 episodes on the recorded AMD EPYC Node host: **Rapier 7.62 ms/episode**, **Jolt 3.53 ms/episode** (Jolt ~2.16× faster for this proxy). These are **not** full-play, articulated-player, browser/mobile or production throughput claims. Jolt impulse magnitudes are estimates and not directly comparable to Rapier's solver impulse output.
+- **Decision:** **Research-only feasibility established; no solver adopted or deployed.** Keep Three.js; preserve football decision and movement controllers, and evaluate moving rigid-body collision/rotation/joints to a mature 3D solver. Rapier is the first candidate; Jolt remains a serious challenger.
+- **Next falsifiable test:** Before choosing a solver, use the **same** controlled policies to demonstrate constrained grip and break, player balance and recoverable near-falls, ball-to-hand contact and secure possession/deflection, 22-player full-play and browser/mobile throughput, and repeatability across devices. Do not call 3D torso contact an NFL catch or tilting a complete tackle.
+- **Integration boundary:** Historical result-constrained reconstruction must remain distinct from prospective physical play outcome generation; any adapter must not receive the actual future end spot or tackler.
 
 ### YYYY-MM-DD — [short experiment title]
 
