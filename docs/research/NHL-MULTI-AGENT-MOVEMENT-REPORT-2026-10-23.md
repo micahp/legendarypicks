@@ -10,10 +10,11 @@
 The interaction model improves the one-step endpoint benchmark and the 30- and 45-observation
 free-running endpoints. It misses the frozen rollout criterion because its +1 error is worse than
 M0. Its joint geometry also degrades: pair-distance, team-spacing, and nearest-opponent distribution
-errors rise at +45, even as the global occupancy histogram improves. M2 removes nearly all
-empirical-spacing-floor violations and rink-boundary projections, but does not improve +45 position
-error over M1. These are mixed results on ten inspected development games, so none supports adoption
-as an NHL simulator or use in Legendary Picks probabilities.
+errors rise at +45, even as the global occupancy histogram improves. M2 reduces below-floor pairs
+from 0.395 to 0.109 per state, but residual sub-floor pairs remain; the protocol warns the two-pass
+spacing projection may leave such pairs. M2 keeps all predicted players within rink boundaries but
+does not improve +45 position error over M1. These are mixed results on ten inspected development
+games, so none supports adoption as an NHL simulator or use in Legendary Picks probabilities.
 
 The implemented system is useful as a reproducible research harness: it loads a multi-player hockey
 state, executes all three policies for 45 ordinal observation steps without recorded future positions,
