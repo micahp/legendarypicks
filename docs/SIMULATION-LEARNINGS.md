@@ -151,6 +151,8 @@ Add a new dated entry for every significant finding; link the **immutable** repo
 - **Next falsifiable test:** Before choosing a solver, use the **same** controlled policies to demonstrate constrained grip and break, player balance and recoverable near-falls, ball-to-hand contact and secure possession/deflection, 22-player full-play and browser/mobile throughput, and repeatability across devices. Do not call 3D torso contact an NFL catch or tilting a complete tackle.
 - **Integration boundary:** Historical result-constrained reconstruction must remain distinct from prospective physical play outcome generation; any adapter must not receive the actual future end spot or tackler.
 
+### 2026-10-22 — Ratings audit and causal-sensitivity gaps
+
 ### YYYY-MM-DD — [short experiment title]
 
 - **Question / hypothesis:**
