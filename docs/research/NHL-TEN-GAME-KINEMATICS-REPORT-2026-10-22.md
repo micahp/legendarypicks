@@ -157,11 +157,21 @@ No generator was implemented. A future predictive play generator would need this
 ## Artifact provenance
 
 `audit_tracking_quality.py` now emits the complete quality JSON, including the frozen historical
-gate snapshot. The repository regeneration command was:
+gate snapshot. The original audit run did not record its interpreter or library versions. CPython 3.8
+cache timestamps are consistent with, but do not prove, use of the backend venv (Python 3.8.10).
+That interpreter reports matplotlib 3.7.5 and NumPy 1.24.4; verify with:
+
+```bash
+/root/legendarypicks/backend/venv/bin/python -c \
+  "import matplotlib, numpy; print(matplotlib.__version__, numpy.__version__)"
+```
+
+The host default `python3` is 3.14.7 and lacks both imports. The runnable repository regeneration command is:
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  python3 research/nhl-ten-game-kinematics-2026-10-22/audit_tracking_quality.py \
+  /root/legendarypicks/backend/venv/bin/python \
+  research/nhl-ten-game-kinematics-2026-10-22/audit_tracking_quality.py \
   --output-dir research/nhl-ten-game-kinematics-2026-10-22/quality
 ```
 
@@ -178,8 +188,13 @@ exited 1 on the same gates. Its JSON differs from the repository output only in 
 (SHA-256 `b629324a7483b5f169fa25c320f2748ebbe557d2b28862756bf48302cdff43df`).
 `results/kinematics_model_comparison.json` remains unchanged at SHA-256
 `f20055472b49f9d8afb8d5bd8dbf81b88b59e2483f3516e1df65f650b15be27c`; the model fit was not rerun.
-Both audit runs used one numerical-library thread. `py_compile` for the audit and fit scripts and
-`git diff --check` passed.
+The repository runs differed only in `runtime_seconds`, but did not record their interpreter. An
+independent review reproduction (Python 3.12 with newer NumPy) matched all six gate outcomes and
+every rounding-relevant number; its CSV had the same SHA-256, while its JSON had 129 final-digit
+differences in `event_alignment_by_transform` (e.g. `4.081121478157957` vs `4.081121478157956`, at
+most about `1e-13` relative) plus runtime. Outputs reproduce to reported precision across environments, not byte-for-byte JSON identity. Both
+audit runs constrained numerical libraries to one thread. `py_compile` for the audit and fit scripts
+and `git diff --check` passed.
 
 ## Runtime, artifacts, and validation
 
