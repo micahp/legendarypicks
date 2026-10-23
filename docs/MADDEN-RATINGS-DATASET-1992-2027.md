@@ -11,7 +11,7 @@ verified against the source.
 
 | File | What it is |
 |---|---|
-| `out/madden_ratings_long.csv` | 58,743 rows x 72 columns. One row per player per Madden release, all attributes. |
+| `out/madden_ratings_long.csv` | 58,743 rows x 73 columns. One row per player per Madden release, all attributes. |
 | `out/by_year/madden_<year>.csv` | 36 files, 1992 to 2027. Same rows sliced per release, for "year by year" work. |
 | `out/madden_player_seasons.db` | SQLite. `ratings` table (same data) + `players` table (career span, peak OVR, teams). Indexed on player_id and madden_release. |
 | `out/coverage.json` | Per-column non-null counts, recomputed on every build. |
@@ -24,7 +24,7 @@ Numbers:
 
 - 12,570 players, 58,743 player-seasons
 - 36 releases: Madden NFL 1992 through Madden NFL 2027
-- 60 attribute columns (OVR, SPEED ... KRN) + 12 identity columns = 72
+- 60 attribute columns (OVR, SPEED ... KRN) + 13 identity columns = 73
 - OVR on 58,345 rows: 50,203 EA-published, 8,142 calculated by the site
 - 32 franchise slugs, plus 23 `fa` rows and 325 rows where the source cell is empty
 
@@ -32,17 +32,19 @@ Numbers:
 
 Identity: `player_id`, `player_name`, `slug`, `madden_release`, `dupe_seq` (see below),
 `nfl_season` (the season the ratings cover, e.g. Madden 2026 = 2025 NFL season),
-`team`, `team_inferred`, `POS`, `source`, `site_calculated`, `value_flags`.
+`team`, `team_inferred`, `team_inferred_ambiguous`, `POS`, `source`, `site_calculated`, `value_flags`.
 
 `team` is the site's franchise slug, lowercased. Two non-franchise values exist:
 `fa` where the source prints the free-agent marker (23 rows), and empty where the
 source cell is empty (325 rows, 280 of them in 2005-2012). Blank never means "we
 failed to look": all 325 cells were re-fetched and frozen, see the team-cell note.
 
-`team_inferred` is set on 11 of those blank rows where the page heading names a
-franchise (e.g. "Kenny Clark WR - Vikings") that agrees with a team the same player
-carries in another season. It is a heading-derived guess kept in its own column;
-`team` is never overwritten with it.
+`team_inferred` is set on 93 of those blank rows, where the site names a franchise
+elsewhere on the player page (profile Team field, milestone line, or heading) and the
+player has exactly one franchise in his known seasons, so the season is unambiguous.
+`team_inferred_ambiguous` is set on a further 20 rows where the page names a team but
+the player has several franchises, so the signal does not fix that season. `team` is
+never overwritten by either column.
 
 `site_calculated` lists attributes on that row whose value nfldraftbuzz computed
 itself. Only ever `OVR`: EA published no overall for Madden 1992-1996 and 1998-2000,
@@ -96,10 +98,14 @@ A blank cell means the site shows `-` there ("not tracked in Madden <year>").
   numeric ratings. 324 of the 325 are the only row for that player-release; the 325th is
   Mike Williams 2013, whose other row carries Seattle. Only 1 of the 325 appears on a
   team-season roster page.
-  One caveat on the stronger reading: the *cell* is empty, not necessarily the site.
-  Eleven of the 325 have a franchise named in the page heading that matches their other
-  seasons, so those are recoverable as `team_inferred`. The other 314 have no team
-  anywhere on their player page, and no roster page either.
+  The cell is empty far more often than the site is: 113 of the 325 name a franchise
+  elsewhere on the page - the profile panel's Team field (all 113), a milestone line such as
+  "Played for the Chargers across every Madden release in his career" (93 of the 113),
+  or the heading (11 of them). 93 of those are single-franchise players, filed in `team_inferred`;
+  20 are multi-team players where the season stays ambiguous, filed in
+  `team_inferred_ambiguous`. The remaining 212 rows belong to players whose every
+  season is teamless: no profile team, no milestone, no heading team, no roster page.
+  All of it is captured in `checks/blank_signals.json`.
 - **Team slugs follow the site's per-season franchise slug**, so `raiders` covers the
   Oakland years, `rams` St. Louis, `titans` the Oilers. 32 franchises.
 - **Coverage caveat.** The site claims "40,725 players - 69,861 player-seasons".
@@ -144,8 +150,13 @@ diffs them against the CSV. Last run: 26/26 player-seasons match, every team-pag
 thinner than its player-page row, exit 0.
 
 `verify_blanks.py` (offline): re-parses all 325 frozen team cells and asserts each is
-empty (no text, image or link) while its row still has numeric ratings, and that the
-CSV agrees on every key. Last run: 325/325, PASS, exit 0.
+empty (no text, image or link) while its row still has numeric ratings, that the CSV
+agrees on every key, and that the `team_inferred` / `team_inferred_ambiguous` columns
+match `checks/blank_signals.json`. Last run: 325/325, PASS, exit 0.
+
+Page signals are harvested by `harvest_blank_signals.py`, which needs network; the
+build order is `build_dataset.py` -> `harvest_blank_signals.py` -> `build_dataset.py`,
+and the harvested file is shipped so the second build is reproducible offline.
 
 `source_limits.py` regenerates `out/source_limits.json` from the data, so the limits
 file can never drift from the bundle.
