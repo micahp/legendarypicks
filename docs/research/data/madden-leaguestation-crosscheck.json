@@ -8,7 +8,10 @@
       "rows": 66,
       "matched_unique": 47,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 19
+      "not_in_archive": 19,
+      "ovr_pairs": 47,
+      "ovr_exact_share": 0.936,
+      "ovr_mean_abs_diff": 0.36
     },
     "madden-07.csv": {
       "release_label": 2007,
@@ -18,7 +21,10 @@
       "rows": 63,
       "matched_unique": 48,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 15
+      "not_in_archive": 15,
+      "ovr_pairs": 48,
+      "ovr_exact_share": 0.938,
+      "ovr_mean_abs_diff": 0.46
     },
     "madden-08.csv": {
       "release_label": 2008,
@@ -28,7 +34,10 @@
       "rows": 64,
       "matched_unique": 45,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 19
+      "not_in_archive": 19,
+      "ovr_pairs": 45,
+      "ovr_exact_share": 1.0,
+      "ovr_mean_abs_diff": 0
     },
     "madden-09.csv": {
       "release_label": 2009,
@@ -38,7 +47,10 @@
       "rows": 64,
       "matched_unique": 44,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 20
+      "not_in_archive": 20,
+      "ovr_pairs": 44,
+      "ovr_exact_share": 0.955,
+      "ovr_mean_abs_diff": 0.18
     },
     "madden-10.csv": {
       "release_label": 2010,
@@ -48,7 +60,10 @@
       "rows": 67,
       "matched_unique": 45,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 22
+      "not_in_archive": 22,
+      "ovr_pairs": 45,
+      "ovr_exact_share": 0.067,
+      "ovr_mean_abs_diff": 5.93
     },
     "madden-11.csv": {
       "release_label": 2011,
@@ -58,7 +73,10 @@
       "rows": 71,
       "matched_unique": 49,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 22
+      "not_in_archive": 22,
+      "ovr_pairs": 49,
+      "ovr_exact_share": 0.898,
+      "ovr_mean_abs_diff": 0.73
     },
     "madden-12.csv": {
       "release_label": 2012,
@@ -68,7 +86,10 @@
       "rows": 68,
       "matched_unique": 43,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 25
+      "not_in_archive": 25,
+      "ovr_pairs": 43,
+      "ovr_exact_share": 0.953,
+      "ovr_mean_abs_diff": 0.16
     },
     "madden-13.csv": {
       "release_label": 2013,
@@ -78,7 +99,10 @@
       "rows": 59,
       "matched_unique": 49,
       "ambiguous_name_skipped": 2,
-      "not_in_archive": 8
+      "not_in_archive": 8,
+      "ovr_pairs": 49,
+      "ovr_exact_share": 0.918,
+      "ovr_mean_abs_diff": 0.65
     },
     "madden-15.csv": {
       "release_label": 2015,
@@ -88,7 +112,10 @@
       "rows": 65,
       "matched_unique": 55,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 10
+      "not_in_archive": 10,
+      "ovr_pairs": 55,
+      "ovr_exact_share": 0.909,
+      "ovr_mean_abs_diff": 0.65
     },
     "madden-16.csv": {
       "release_label": 2016,
@@ -98,7 +125,10 @@
       "rows": 70,
       "matched_unique": 61,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 9
+      "not_in_archive": 9,
+      "ovr_pairs": 61,
+      "ovr_exact_share": 0.787,
+      "ovr_mean_abs_diff": 0.93
     },
     "madden-17.csv": {
       "release_label": 2017,
@@ -108,7 +138,10 @@
       "rows": 80,
       "matched_unique": 65,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 15
+      "not_in_archive": 15,
+      "ovr_pairs": 65,
+      "ovr_exact_share": 0.892,
+      "ovr_mean_abs_diff": 0.85
     },
     "madden-18.csv": {
       "release_label": 2018,
@@ -118,7 +151,10 @@
       "rows": 84,
       "matched_unique": 63,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 21
+      "not_in_archive": 21,
+      "ovr_pairs": 63,
+      "ovr_exact_share": 0.778,
+      "ovr_mean_abs_diff": 1.73
     },
     "madden-19.csv": {
       "release_label": 2019,
@@ -128,7 +164,10 @@
       "rows": 79,
       "matched_unique": 60,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 18
+      "not_in_archive": 18,
+      "ovr_pairs": 60,
+      "ovr_exact_share": 0.8,
+      "ovr_mean_abs_diff": 1.12
     },
     "madden-20.csv": {
       "release_label": 2020,
@@ -138,7 +177,10 @@
       "rows": 85,
       "matched_unique": 65,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 20
+      "not_in_archive": 20,
+      "ovr_pairs": 65,
+      "ovr_exact_share": 0.738,
+      "ovr_mean_abs_diff": 2.03
     },
     "madden-2002.csv": {
       "release_label": 2002,
@@ -148,7 +190,10 @@
       "rows": 63,
       "matched_unique": 43,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 20
+      "not_in_archive": 20,
+      "ovr_pairs": 43,
+      "ovr_exact_share": 0.953,
+      "ovr_mean_abs_diff": 0.93
     },
     "madden-2003.csv": {
       "release_label": 2003,
@@ -158,7 +203,10 @@
       "rows": 63,
       "matched_unique": 44,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 18
+      "not_in_archive": 18,
+      "ovr_pairs": 44,
+      "ovr_exact_share": 0.932,
+      "ovr_mean_abs_diff": 0.36
     },
     "madden-2004.csv": {
       "release_label": 2004,
@@ -168,7 +216,10 @@
       "rows": 66,
       "matched_unique": 46,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 19
+      "not_in_archive": 19,
+      "ovr_pairs": 46,
+      "ovr_exact_share": 0.913,
+      "ovr_mean_abs_diff": 0.37
     },
     "madden-2005.csv": {
       "release_label": 2005,
@@ -178,7 +229,10 @@
       "rows": 64,
       "matched_unique": 47,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 17
+      "not_in_archive": 17,
+      "ovr_pairs": 47,
+      "ovr_exact_share": 0.936,
+      "ovr_mean_abs_diff": 0.28
     },
     "madden-21.csv": {
       "release_label": 2021,
@@ -188,7 +242,10 @@
       "rows": 96,
       "matched_unique": 66,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 29
+      "not_in_archive": 29,
+      "ovr_pairs": 66,
+      "ovr_exact_share": 0.848,
+      "ovr_mean_abs_diff": 1.39
     },
     "madden-22.csv": {
       "release_label": 2022,
@@ -198,7 +255,10 @@
       "rows": 90,
       "matched_unique": 62,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 28
+      "not_in_archive": 28,
+      "ovr_pairs": 62,
+      "ovr_exact_share": 0.79,
+      "ovr_mean_abs_diff": 0.87
     },
     "madden-23.csv": {
       "release_label": 2023,
@@ -208,7 +268,10 @@
       "rows": 94,
       "matched_unique": 72,
       "ambiguous_name_skipped": 2,
-      "not_in_archive": 20
+      "not_in_archive": 20,
+      "ovr_pairs": 72,
+      "ovr_exact_share": 0.833,
+      "ovr_mean_abs_diff": 1.39
     },
     "madden-24.csv": {
       "release_label": 2024,
@@ -218,7 +281,10 @@
       "rows": 84,
       "matched_unique": 63,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 20
+      "not_in_archive": 20,
+      "ovr_pairs": 63,
+      "ovr_exact_share": 0.841,
+      "ovr_mean_abs_diff": 1.29
     },
     "madden-25-2013.csv": {
       "release_label": 2014,
@@ -229,7 +295,10 @@
       "rows": 61,
       "matched_unique": 54,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 6
+      "not_in_archive": 6,
+      "ovr_pairs": 54,
+      "ovr_exact_share": 0.926,
+      "ovr_mean_abs_diff": 0.24
     },
     "madden-25.csv": {
       "release_label": 2025,
@@ -239,7 +308,10 @@
       "rows": 99,
       "matched_unique": 68,
       "ambiguous_name_skipped": 0,
-      "not_in_archive": 31
+      "not_in_archive": 31,
+      "ovr_pairs": 68,
+      "ovr_exact_share": 0.897,
+      "ovr_mean_abs_diff": 1.09
     },
     "madden-26.csv": {
       "release_label": 2026,
@@ -249,7 +321,10 @@
       "rows": 64,
       "matched_unique": 57,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 6
+      "not_in_archive": 6,
+      "ovr_pairs": 57,
+      "ovr_exact_share": 0.404,
+      "ovr_mean_abs_diff": 1.47
     },
     "madden-27.csv": {
       "release_label": 2027,
@@ -259,7 +334,10 @@
       "rows": 59,
       "matched_unique": 40,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 18
+      "not_in_archive": 18,
+      "ovr_pairs": 40,
+      "ovr_exact_share": 0.575,
+      "ovr_mean_abs_diff": 0.97
     }
   },
   "per_attribute": {

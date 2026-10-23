@@ -84,6 +84,7 @@ def main():
             print(f'FAIL: {ed} overlap tie {scores}; cannot decide the release label')
             return 1
         matched = ambiguous = missing = 0
+        ovr_pairs = []
         for r in rows:
             cands = index.get((best, norm_name(r['Player'])), [])
             if not cands:
@@ -94,6 +95,9 @@ def main():
                 continue
             matched += 1
             a = cands[0]
+            lo, ao = to_int(r['OVR']), to_int(a['OVR'])
+            if lo is not None and ao is not None:
+                ovr_pairs.append((lo, ao))
             for col, val in r.items():
                 if col in NON_ATTR:
                     continue
@@ -106,7 +110,12 @@ def main():
                 compared[col].append((lv, av))
         summary['editions'][ed] = {'release_label': best, 'overlap_by_candidate': scores,
                                    'rows': len(rows), 'matched_unique': matched,
-                                   'ambiguous_name_skipped': ambiguous, 'not_in_archive': missing}
+                                   'ambiguous_name_skipped': ambiguous, 'not_in_archive': missing,
+                                   'ovr_pairs': len(ovr_pairs),
+                                   'ovr_exact_share': round(sum(1 for lv, av in ovr_pairs if lv == av) / len(ovr_pairs), 3)
+                                   if ovr_pairs else None,
+                                   'ovr_mean_abs_diff': round(statistics.mean(abs(lv - av) for lv, av in ovr_pairs), 2)
+                                   if ovr_pairs else None}
         print(f'{ed}: release {best} (overlap {scores}); rows {len(rows)}, matched {matched}, '
               f'ambiguous {ambiguous}, not in archive {missing}')
 

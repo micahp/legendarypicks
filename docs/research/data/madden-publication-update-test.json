@@ -1,0 +1,218 @@
+{
+  "release": 2027,
+  "changes_tested": 29,
+  "tally": {
+    "old": 18,
+    "new": 0,
+    "other": 6,
+    "absent": 5,
+    "ambiguous": 0
+  },
+  "rows": [
+    {
+      "player": "T.J. Watt",
+      "old": 93,
+      "new": 96,
+      "archive": null,
+      "match": "absent"
+    },
+    {
+      "player": "Justin Jefferson",
+      "old": 94,
+      "new": 96,
+      "archive": 94,
+      "match": "old"
+    },
+    {
+      "player": "Fred Warner",
+      "old": 97,
+      "new": 98,
+      "archive": 97,
+      "match": "old"
+    },
+    {
+      "player": "Bijan Robinson",
+      "old": 95,
+      "new": 96,
+      "archive": 95,
+      "match": "old"
+    },
+    {
+      "player": "Lamar Jackson",
+      "old": 94,
+      "new": 95,
+      "archive": 94,
+      "match": "old"
+    },
+    {
+      "player": "Aidan Hutchinson",
+      "old": 93,
+      "new": 94,
+      "archive": 93,
+      "match": "old"
+    },
+    {
+      "player": "Derrick Henry",
+      "old": 93,
+      "new": 94,
+      "archive": 93,
+      "match": "old"
+    },
+    {
+      "player": "Zack Baun",
+      "old": 92,
+      "new": 93,
+      "archive": 92,
+      "match": "old"
+    },
+    {
+      "player": "Caleb Williams",
+      "old": 90,
+      "new": 91,
+      "archive": 90,
+      "match": "old"
+    },
+    {
+      "player": "Kenneth Walker",
+      "old": 90,
+      "new": 91,
+      "archive": null,
+      "match": "absent"
+    },
+    {
+      "player": "Quinyon Mitchell",
+      "old": 89,
+      "new": 90,
+      "archive": 89,
+      "match": "old"
+    },
+    {
+      "player": "Trey Hendrickson",
+      "old": 88,
+      "new": 89,
+      "archive": 90,
+      "match": "other"
+    },
+    {
+      "player": "Zay Flowers",
+      "old": 88,
+      "new": 89,
+      "archive": 88,
+      "match": "old"
+    },
+    {
+      "player": "Chris Olave",
+      "old": 87,
+      "new": 88,
+      "archive": 87,
+      "match": "old"
+    },
+    {
+      "player": "George Pickens",
+      "old": 87,
+      "new": 88,
+      "archive": 89,
+      "match": "other"
+    },
+    {
+      "player": "D'Andre Swift",
+      "old": 85,
+      "new": 86,
+      "archive": null,
+      "match": "absent"
+    },
+    {
+      "player": "Julian Love",
+      "old": 85,
+      "new": 86,
+      "archive": 85,
+      "match": "old"
+    },
+    {
+      "player": "Bucky Irving",
+      "old": 84,
+      "new": 85,
+      "archive": 86,
+      "match": "other"
+    },
+    {
+      "player": "Jaylen Waddle",
+      "old": 84,
+      "new": 85,
+      "archive": 86,
+      "match": "other"
+    },
+    {
+      "player": "Kevin Byard III",
+      "old": 84,
+      "new": 85,
+      "archive": null,
+      "match": "absent"
+    },
+    {
+      "player": "Jevon Holland",
+      "old": 83,
+      "new": 84,
+      "archive": 83,
+      "match": "old"
+    },
+    {
+      "player": "Landon Dickerson",
+      "old": 83,
+      "new": 84,
+      "archive": 85,
+      "match": "other"
+    },
+    {
+      "player": "Drake Maye",
+      "old": 92,
+      "new": 89,
+      "archive": 92,
+      "match": "old"
+    },
+    {
+      "player": "James Cook III",
+      "old": 94,
+      "new": 93,
+      "archive": null,
+      "match": "absent"
+    },
+    {
+      "player": "DeForest Buckner",
+      "old": 93,
+      "new": 92,
+      "archive": 91,
+      "match": "other"
+    },
+    {
+      "player": "Quinnen Williams",
+      "old": 92,
+      "new": 91,
+      "archive": 92,
+      "match": "old"
+    },
+    {
+      "player": "Josh Jacobs",
+      "old": 91,
+      "new": 90,
+      "archive": 91,
+      "match": "old"
+    },
+    {
+      "player": "Jaylon Johnson",
+      "old": 90,
+      "new": 89,
+      "archive": 90,
+      "match": "old"
+    },
+    {
+      "player": "Justin Herbert",
+      "old": 90,
+      "new": 89,
+      "archive": 90,
+      "match": "old"
+    }
+  ],
+  "source": "https://sports.yahoo.com/articles/madden-27-ratings-reveals-biggest-104642370.html",
+  "source_date": "2026-09-18"
+}
