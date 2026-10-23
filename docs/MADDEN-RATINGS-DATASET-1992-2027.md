@@ -11,7 +11,7 @@ verified against the source.
 
 | File | What it is |
 |---|---|
-| `out/madden_ratings_long.csv` | 58,743 rows x 71 columns. One row per player per Madden release, all attributes. |
+| `out/madden_ratings_long.csv` | 58,743 rows x 72 columns. One row per player per Madden release, all attributes. |
 | `out/by_year/madden_<year>.csv` | 36 files, 1992 to 2027. Same rows sliced per release, for "year by year" work. |
 | `out/madden_player_seasons.db` | SQLite. `ratings` table (same data) + `players` table (career span, peak OVR, teams). Indexed on player_id and madden_release. |
 | `out/coverage.json` | Per-column non-null counts, recomputed on every build. |
@@ -24,7 +24,7 @@ Numbers:
 
 - 12,570 players, 58,743 player-seasons
 - 36 releases: Madden NFL 1992 through Madden NFL 2027
-- 60 attribute columns (OVR, SPEED ... KRN) + 11 identity columns = 71
+- 60 attribute columns (OVR, SPEED ... KRN) + 12 identity columns = 72
 - OVR on 58,345 rows: 50,203 EA-published, 8,142 calculated by the site
 - 32 franchise slugs, plus 23 `fa` rows and 325 rows where the source cell is empty
 
@@ -32,12 +32,17 @@ Numbers:
 
 Identity: `player_id`, `player_name`, `slug`, `madden_release`, `dupe_seq` (see below),
 `nfl_season` (the season the ratings cover, e.g. Madden 2026 = 2025 NFL season),
-`team`, `POS`, `source`, `site_calculated`, `value_flags`.
+`team`, `team_inferred`, `POS`, `source`, `site_calculated`, `value_flags`.
 
 `team` is the site's franchise slug, lowercased. Two non-franchise values exist:
 `fa` where the source prints the free-agent marker (23 rows), and empty where the
 source cell is empty (325 rows, 280 of them in 2005-2012). Blank never means "we
-failed to look" - see the team-cell note below.
+failed to look": all 325 cells were re-fetched and frozen, see the team-cell note.
+
+`team_inferred` is set on 11 of those blank rows where the page heading names a
+franchise (e.g. "Kenny Clark WR - Vikings") that agrees with a team the same player
+carries in another season. It is a heading-derived guess kept in its own column;
+`team` is never overwritten with it.
 
 `site_calculated` lists attributes on that row whose value nfldraftbuzz computed
 itself. Only ever `OVR`: EA published no overall for Madden 1992-1996 and 1998-2000,
@@ -85,12 +90,16 @@ A blank cell means the site shows `-` there ("not tracked in Madden <year>").
   78 / Seahawks 76). Both kept; `dupe_seq` makes `(player_id, madden_release, dupe_seq)`
   unique.
 - **325 rows have an empty team cell**: 2012 95, 2005 58, 2009 47, 2006 46, 2007 41,
-  2008 34, 2013 4, none in 2027. Checked row by row against the site, not sampled:
-  all 325 raw cells are frozen in `checks/blanks/`, and every one contains no text, no
-  badge and no link, while its row still carries numeric ratings. 324 of the 325 are
-  the only row for that player-release; the 325th is Mike Williams 2013, whose other
-  row carries Seattle. No roster page covers these player-seasons either (1 of 325 has
-  a team anywhere else), so there is nothing to backfill from. Not imputed.
+  2008 34, 2013 4, none in 2027. Checked row by row against the site, not sampled: all
+  325 raw cells are frozen in `checks/blanks/`, and every one is an empty
+  `<td class="mr-team">` with no text, no badge and no link, while its row keeps its
+  numeric ratings. 324 of the 325 are the only row for that player-release; the 325th is
+  Mike Williams 2013, whose other row carries Seattle. Only 1 of the 325 appears on a
+  team-season roster page.
+  One caveat on the stronger reading: the *cell* is empty, not necessarily the site.
+  Eleven of the 325 have a franchise named in the page heading that matches their other
+  seasons, so those are recoverable as `team_inferred`. The other 314 have no team
+  anywhere on their player page, and no roster page either.
 - **Team slugs follow the site's per-season franchise slug**, so `raiders` covers the
   Oakland years, `rams` St. Louis, `titans` the Oilers. 32 franchises.
 - **Coverage caveat.** The site claims "40,725 players - 69,861 player-seasons".
