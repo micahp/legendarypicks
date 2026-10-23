@@ -36,6 +36,20 @@ Before Q1 or Q2, the evaluator must verify all of the following and emit no iden
 
 Re-read the exact pinned values from the DIAG7 result. A hash, ancestry, population, or value mismatch stops execution before Q1/Q2.
 
+### Vendored-source snapshot pins
+
+To make the local-source search reproducible, also fail closed unless these already-present manifests and their declared data artifacts match:
+
+| Vendored artifact | Required SHA-256 / value |
+|---|---|
+| Stathletes Big Data Cup local `download-manifest.json` | `6ca13bfa3503d9a86b7dde9589aba4988fd5e9599318e0b97f2f84e94cfcb437`; 54 declared assets |
+| Movement-data `extraction_manifest.json` | `03ded9f5df01f4932405eee3c420e8f932da2d7b1a77a1ab6bb4bdd0d2bc0746`; source release manifest SHA matches the preceding row |
+| `normalized_observations.jsonl.gz` | SHA-256 `c92789cf3a35b9ba81e2d414e491c385f76cac97f27c720e4cf42af7f75f3227`, 734,478,925 compressed bytes |
+| `rollout_starts.json.gz` | SHA-256 `07d8523d9e8d89748981f326cce92d3bcedb899feea51b5bc12caa8e04a2a5de`, 1,025,769 bytes |
+| `training_windows.npz` | SHA-256 `694eb82615d6cd7ab442da23da9d7016aa9e47b6692e5469856a06de2991abd6`, 132,355,130 bytes |
+
+Verify every one of the 54 source-release asset paths and hashes against the pinned download manifest before inventory. The smoke data tree and any other existing NHL-related subdirectory under `/root/lp-research-data` are inside the declared search scope; do not silently omit them.
+
 ## Q1 — local identity-source inventory
 
 The frozen population is the ten game identifiers and 2,164 +45 within-team pairs in DIAG7. Image Id is ordinal. The current tracking player-object field inventory recorded by DIAG7 is `history`, `id`, `jersey`, `raw_id`, `team`, `x`, and `y`; DIAG8 will inspect all player and event fields in the frozen tracking artifacts, not assume that this list is complete.
