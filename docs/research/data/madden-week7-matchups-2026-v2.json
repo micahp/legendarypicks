@@ -1,0 +1,4273 @@
+{
+  "schema": "madden-week7-matchups-2026/v2",
+  "generated_at_utc": "2026-10-23T08:40:27.192630+00:00",
+  "season": 2026,
+  "week": 7,
+  "madden_release_label": 2027,
+  "madden_season_mapped": 2026,
+  "coverage_rule": "a dimension is flagged low when either side has under 60% of its expected players",
+  "team_units": {
+    "ARI": {
+      "equal": {
+        "QB": 63.33,
+        "REC": 81.18,
+        "RB": 65.87,
+        "PBLK": 69.86,
+        "RBLK": 70.54,
+        "PRUSH": 48.78,
+        "RDEF": 65.97,
+        "MAN": 58.55,
+        "ZONE": 63.68,
+        "TACK": 63.31
+      },
+      "usage": {
+        "QB": 63.33,
+        "REC": 82.92,
+        "RB": 65.87,
+        "PBLK": 70.22,
+        "RBLK": 71.52,
+        "PRUSH": 48.91,
+        "RDEF": 65.74,
+        "MAN": 59.19,
+        "ZONE": 62.92,
+        "TACK": 65.1
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 2,
+        "RDEF": 5,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 7
+      }
+    },
+    "ATL": {
+      "equal": {
+        "QB": null,
+        "REC": 52.71,
+        "RB": 87.5,
+        "PBLK": 79.8,
+        "RBLK": 67.4,
+        "PRUSH": 59.63,
+        "RDEF": 56.23,
+        "MAN": 47.73,
+        "ZONE": 51.09,
+        "TACK": 84.35
+      },
+      "usage": {
+        "QB": null,
+        "REC": 57.2,
+        "RB": 87.5,
+        "PBLK": 79.02,
+        "RBLK": 68.17,
+        "PRUSH": 59.27,
+        "RDEF": 55.4,
+        "MAN": 47.73,
+        "ZONE": 51.09,
+        "TACK": 84.31
+      },
+      "n": {
+        "QB": 0,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 3,
+        "RDEF": 4,
+        "MAN": 1,
+        "ZONE": 1,
+        "TACK": 2
+      }
+    },
+    "BAL": {
+      "equal": {
+        "QB": null,
+        "REC": 75.6,
+        "RB": 62.18,
+        "PBLK": 68.45,
+        "RBLK": 63.31,
+        "PRUSH": 58.47,
+        "RDEF": 90.83,
+        "MAN": 71.24,
+        "ZONE": 68.47,
+        "TACK": 76.4
+      },
+      "usage": {
+        "QB": null,
+        "REC": 76.5,
+        "RB": 62.18,
+        "PBLK": 68.81,
+        "RBLK": 64.24,
+        "PRUSH": 59.89,
+        "RDEF": 91.44,
+        "MAN": 71.33,
+        "ZONE": 68.65,
+        "TACK": 76.71
+      },
+      "n": {
+        "QB": 0,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 3,
+        "RDEF": 6,
+        "MAN": 5,
+        "ZONE": 5,
+        "TACK": 8
+      }
+    },
+    "BUF": {
+      "equal": {
+        "QB": null,
+        "REC": 71.74,
+        "RB": null,
+        "PBLK": 59.94,
+        "RBLK": 52.49,
+        "PRUSH": 61.36,
+        "RDEF": 64.62,
+        "MAN": 76.06,
+        "ZONE": 83.88,
+        "TACK": 57.44
+      },
+      "usage": {
+        "QB": null,
+        "REC": 71.84,
+        "RB": null,
+        "PBLK": 79.79,
+        "RBLK": 72.26,
+        "PRUSH": 61.54,
+        "RDEF": 65.01,
+        "MAN": 76.54,
+        "ZONE": 84.05,
+        "TACK": 59.17
+      },
+      "n": {
+        "QB": 0,
+        "REC": 3,
+        "RB": 0,
+        "PBLK": 2,
+        "RBLK": 2,
+        "PRUSH": 4,
+        "RDEF": 6,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "CAR": {
+      "equal": {
+        "QB": 71.83,
+        "REC": 70.31,
+        "RB": 70.51,
+        "PBLK": 84.03,
+        "RBLK": 59.66,
+        "PRUSH": 58.74,
+        "RDEF": 90.53,
+        "MAN": 69.0,
+        "ZONE": 74.27,
+        "TACK": 65.47
+      },
+      "usage": {
+        "QB": 71.83,
+        "REC": 72.51,
+        "RB": 70.51,
+        "PBLK": 83.86,
+        "RBLK": 58.87,
+        "PRUSH": 58.74,
+        "RDEF": 90.41,
+        "MAN": 71.81,
+        "ZONE": 75.56,
+        "TACK": 66.02
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 1,
+        "RDEF": 3,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 4
+      }
+    },
+    "CHI": {
+      "equal": {
+        "QB": 83.83,
+        "REC": 73.91,
+        "RB": null,
+        "PBLK": 79.91,
+        "RBLK": 75.07,
+        "PRUSH": 62.41,
+        "RDEF": 64.25,
+        "MAN": 80.27,
+        "ZONE": 78.45,
+        "TACK": 54.18
+      },
+      "usage": {
+        "QB": 83.83,
+        "REC": 75.61,
+        "RB": null,
+        "PBLK": 80.69,
+        "RBLK": 77.36,
+        "PRUSH": 62.92,
+        "RDEF": 65.85,
+        "MAN": 80.97,
+        "ZONE": 76.4,
+        "TACK": 50.94
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 0,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 4,
+        "RDEF": 4,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 2
+      }
+    },
+    "CIN": {
+      "equal": {
+        "QB": 90.83,
+        "REC": 57.27,
+        "RB": 67.31,
+        "PBLK": 65.84,
+        "RBLK": 56.65,
+        "PRUSH": 67.6,
+        "RDEF": 59.29,
+        "MAN": 45.58,
+        "ZONE": 45.58,
+        "TACK": 57.42
+      },
+      "usage": {
+        "QB": 90.83,
+        "REC": 59.72,
+        "RB": 67.31,
+        "PBLK": 65.8,
+        "RBLK": 56.63,
+        "PRUSH": 67.65,
+        "RDEF": 62.43,
+        "MAN": 47.12,
+        "ZONE": 49.92,
+        "TACK": 64.37
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 2,
+        "RDEF": 4,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "CLE": {
+      "equal": {
+        "QB": 43.0,
+        "REC": 73.77,
+        "RB": null,
+        "PBLK": 85.27,
+        "RBLK": 63.77,
+        "PRUSH": 70.48,
+        "RDEF": 66.82,
+        "MAN": 72.14,
+        "ZONE": 74.18,
+        "TACK": 64.82
+      },
+      "usage": {
+        "QB": 43.0,
+        "REC": 73.77,
+        "RB": null,
+        "PBLK": 85.16,
+        "RBLK": 64.08,
+        "PRUSH": 70.84,
+        "RDEF": 66.66,
+        "MAN": 74.59,
+        "ZONE": 75.7,
+        "TACK": 65.01
+      },
+      "n": {
+        "QB": 1,
+        "REC": 1,
+        "RB": 0,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 4,
+        "RDEF": 6,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 6
+      }
+    },
+    "DAL": {
+      "equal": {
+        "QB": 90.33,
+        "REC": 82.25,
+        "RB": 80.61,
+        "PBLK": 55.11,
+        "RBLK": 80.06,
+        "PRUSH": 42.66,
+        "RDEF": 63.08,
+        "MAN": 64.57,
+        "ZONE": 72.27,
+        "TACK": 60.53
+      },
+      "usage": {
+        "QB": 90.33,
+        "REC": 82.88,
+        "RB": 80.61,
+        "PBLK": 55.07,
+        "RBLK": 80.16,
+        "PRUSH": 49.93,
+        "RDEF": 63.42,
+        "MAN": 68.63,
+        "ZONE": 74.45,
+        "TACK": 60.05
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 3,
+        "RDEF": 4,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 5
+      }
+    },
+    "DEN": {
+      "equal": {
+        "QB": 74.67,
+        "REC": 83.99,
+        "RB": 70.99,
+        "PBLK": 83.44,
+        "RBLK": 85.2,
+        "PRUSH": 41.32,
+        "RDEF": 60.04,
+        "MAN": 63.55,
+        "ZONE": 70.55,
+        "TACK": 59.02
+      },
+      "usage": {
+        "QB": 74.67,
+        "REC": 84.11,
+        "RB": 70.99,
+        "PBLK": 83.41,
+        "RBLK": 85.17,
+        "PRUSH": 41.75,
+        "RDEF": 62.28,
+        "MAN": 63.45,
+        "ZONE": 70.05,
+        "TACK": 63.14
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 2,
+        "RDEF": 5,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 5
+      }
+    },
+    "DET": {
+      "equal": {
+        "QB": 84.5,
+        "REC": 73.53,
+        "RB": 91.19,
+        "PBLK": 63.14,
+        "RBLK": 66.24,
+        "PRUSH": 69.7,
+        "RDEF": 82.75,
+        "MAN": 54.95,
+        "ZONE": 49.09,
+        "TACK": 59.64
+      },
+      "usage": {
+        "QB": 84.5,
+        "REC": 75.37,
+        "RB": 91.19,
+        "PBLK": 63.9,
+        "RBLK": 66.31,
+        "PRUSH": 73.4,
+        "RDEF": 83.93,
+        "MAN": 55.01,
+        "ZONE": 48.58,
+        "TACK": 61.16
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 3,
+        "RDEF": 3,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 4
+      }
+    },
+    "GB": {
+      "equal": {
+        "QB": 85.83,
+        "REC": 73.49,
+        "RB": null,
+        "PBLK": 23.95,
+        "RBLK": 22.26,
+        "PRUSH": 60.49,
+        "RDEF": 57.56,
+        "MAN": 59.61,
+        "ZONE": 58.79,
+        "TACK": 73.59
+      },
+      "usage": {
+        "QB": 85.83,
+        "REC": 73.44,
+        "RB": null,
+        "PBLK": 23.95,
+        "RBLK": 22.32,
+        "PRUSH": 60.64,
+        "RDEF": 58.29,
+        "MAN": 59.83,
+        "ZONE": 58.46,
+        "TACK": 74.44
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 0,
+        "PBLK": 2,
+        "RBLK": 2,
+        "PRUSH": 4,
+        "RDEF": 7,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 6
+      }
+    },
+    "HOU": {
+      "equal": {
+        "QB": null,
+        "REC": 73.21,
+        "RB": 64.26,
+        "PBLK": 61.92,
+        "RBLK": 63.56,
+        "PRUSH": 63.87,
+        "RDEF": 68.66,
+        "MAN": 66.57,
+        "ZONE": 76.5,
+        "TACK": 70.98
+      },
+      "usage": {
+        "QB": null,
+        "REC": 74.54,
+        "RB": 64.26,
+        "PBLK": 62.04,
+        "RBLK": 63.36,
+        "PRUSH": 65.7,
+        "RDEF": 67.76,
+        "MAN": 66.64,
+        "ZONE": 76.38,
+        "TACK": 72.56
+      },
+      "n": {
+        "QB": 0,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 3,
+        "RDEF": 4,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 5
+      }
+    },
+    "IND": {
+      "equal": {
+        "QB": 75.5,
+        "REC": 67.27,
+        "RB": 93.43,
+        "PBLK": 76.47,
+        "RBLK": 78.67,
+        "PRUSH": 60.49,
+        "RDEF": 70.98,
+        "MAN": 61.27,
+        "ZONE": 51.09,
+        "TACK": 86.06
+      },
+      "usage": {
+        "QB": 75.5,
+        "REC": 69.25,
+        "RB": 93.43,
+        "PBLK": 76.43,
+        "RBLK": 78.66,
+        "PRUSH": 62.34,
+        "RDEF": 71.23,
+        "MAN": 61.27,
+        "ZONE": 51.09,
+        "TACK": 86.06
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 4,
+        "RDEF": 4,
+        "MAN": 1,
+        "ZONE": 1,
+        "TACK": 1
+      }
+    },
+    "JAX": {
+      "equal": {
+        "QB": 80.33,
+        "REC": 71.63,
+        "RB": 66.19,
+        "PBLK": 74.44,
+        "RBLK": 68.47,
+        "PRUSH": 51.55,
+        "RDEF": 68.42,
+        "MAN": 64.64,
+        "ZONE": 56.82,
+        "TACK": 53.71
+      },
+      "usage": {
+        "QB": 80.33,
+        "REC": 71.61,
+        "RB": 66.19,
+        "PBLK": 74.48,
+        "RBLK": 68.55,
+        "PRUSH": 56.84,
+        "RDEF": 67.81,
+        "MAN": 64.63,
+        "ZONE": 57.23,
+        "TACK": 57.03
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 3,
+        "RDEF": 6,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 7
+      }
+    },
+    "KC": {
+      "equal": {
+        "QB": 92.33,
+        "REC": 71.85,
+        "RB": null,
+        "PBLK": 85.8,
+        "RBLK": 86.55,
+        "PRUSH": 73.43,
+        "RDEF": 69.42,
+        "MAN": 48.06,
+        "ZONE": 46.79,
+        "TACK": 67.75
+      },
+      "usage": {
+        "QB": 92.33,
+        "REC": 72.1,
+        "RB": null,
+        "PBLK": 85.8,
+        "RBLK": 86.55,
+        "PRUSH": 73.43,
+        "RDEF": 79.03,
+        "MAN": 47.96,
+        "ZONE": 46.48,
+        "TACK": 73.8
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 0,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 1,
+        "RDEF": 4,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 6
+      }
+    },
+    "LAC": {
+      "equal": {
+        "QB": 90.67,
+        "REC": 65.23,
+        "RB": 76.12,
+        "PBLK": 60.28,
+        "RBLK": 67.46,
+        "PRUSH": 42.57,
+        "RDEF": 70.57,
+        "MAN": 70.91,
+        "ZONE": 69.09,
+        "TACK": 71.01
+      },
+      "usage": {
+        "QB": 90.67,
+        "REC": 64.85,
+        "RB": 76.12,
+        "PBLK": 63.07,
+        "RBLK": 69.15,
+        "PRUSH": 42.91,
+        "RDEF": 70.0,
+        "MAN": 72.43,
+        "ZONE": 70.89,
+        "TACK": 69.79
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 4,
+        "RDEF": 6,
+        "MAN": 5,
+        "ZONE": 5,
+        "TACK": 7
+      }
+    },
+    "LAR": {
+      "equal": {
+        "QB": 93.67,
+        "REC": 74.3,
+        "RB": 79.01,
+        "PBLK": 66.85,
+        "RBLK": 90.55,
+        "PRUSH": 63.48,
+        "RDEF": 79.49,
+        "MAN": 75.36,
+        "ZONE": 75.5,
+        "TACK": 69.33
+      },
+      "usage": {
+        "QB": 93.67,
+        "REC": 78.55,
+        "RB": 79.01,
+        "PBLK": 66.83,
+        "RBLK": 90.52,
+        "PRUSH": 66.66,
+        "RDEF": 78.88,
+        "MAN": 76.51,
+        "ZONE": 77.13,
+        "TACK": 68.97
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 3,
+        "RDEF": 3,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 4
+      }
+    },
+    "LV": {
+      "equal": {
+        "QB": 65.67,
+        "REC": 62.19,
+        "RB": 86.22,
+        "PBLK": 67.72,
+        "RBLK": 74.39,
+        "PRUSH": 68.79,
+        "RDEF": 65.54,
+        "MAN": 74.41,
+        "ZONE": 72.82,
+        "TACK": 74.56
+      },
+      "usage": {
+        "QB": 65.67,
+        "REC": 61.73,
+        "RB": 86.22,
+        "PBLK": 67.72,
+        "RBLK": 74.39,
+        "PRUSH": 71.5,
+        "RDEF": 69.03,
+        "MAN": 73.06,
+        "ZONE": 72.07,
+        "TACK": 80.73
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 4,
+        "RDEF": 7,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 5
+      }
+    },
+    "MIA": {
+      "equal": {
+        "QB": 53.67,
+        "REC": 58.16,
+        "RB": null,
+        "PBLK": 51.83,
+        "RBLK": 61.62,
+        "PRUSH": 36.95,
+        "RDEF": 69.5,
+        "MAN": null,
+        "ZONE": null,
+        "TACK": 95.1
+      },
+      "usage": {
+        "QB": 53.67,
+        "REC": 56.92,
+        "RB": null,
+        "PBLK": 54.0,
+        "RBLK": 62.57,
+        "PRUSH": 37.14,
+        "RDEF": 72.96,
+        "MAN": null,
+        "ZONE": null,
+        "TACK": 95.1
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 0,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 2,
+        "RDEF": 3,
+        "MAN": 0,
+        "ZONE": 0,
+        "TACK": 1
+      }
+    },
+    "MIN": {
+      "equal": {
+        "QB": 40.5,
+        "REC": 73.71,
+        "RB": null,
+        "PBLK": 72.97,
+        "RBLK": 70.9,
+        "PRUSH": 51.05,
+        "RDEF": 70.67,
+        "MAN": 39.23,
+        "ZONE": 37.45,
+        "TACK": 71.96
+      },
+      "usage": {
+        "QB": 40.5,
+        "REC": 74.74,
+        "RB": null,
+        "PBLK": 72.49,
+        "RBLK": 70.76,
+        "PRUSH": 54.81,
+        "RDEF": 71.78,
+        "MAN": 39.63,
+        "ZONE": 36.71,
+        "TACK": 74.04
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 0,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 2,
+        "RDEF": 4,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 4
+      }
+    },
+    "NE": {
+      "equal": {
+        "QB": 88.5,
+        "REC": 71.78,
+        "RB": 55.77,
+        "PBLK": 75.4,
+        "RBLK": 73.48,
+        "PRUSH": 66.28,
+        "RDEF": 64.47,
+        "MAN": 80.52,
+        "ZONE": 77.03,
+        "TACK": 69.81
+      },
+      "usage": {
+        "QB": 88.5,
+        "REC": 72.33,
+        "RB": 55.77,
+        "PBLK": 75.1,
+        "RBLK": 72.94,
+        "PRUSH": 68.3,
+        "RDEF": 66.15,
+        "MAN": 80.89,
+        "ZONE": 76.97,
+        "TACK": 69.56
+      },
+      "n": {
+        "QB": 1,
+        "REC": 4,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 3,
+        "RDEF": 5,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "NO": {
+      "equal": {
+        "QB": 70.0,
+        "REC": 86.0,
+        "RB": null,
+        "PBLK": 73.28,
+        "RBLK": 76.44,
+        "PRUSH": 61.51,
+        "RDEF": 66.07,
+        "MAN": 53.18,
+        "ZONE": 45.41,
+        "TACK": 65.77
+      },
+      "usage": {
+        "QB": 70.0,
+        "REC": 86.74,
+        "RB": null,
+        "PBLK": 73.28,
+        "RBLK": 76.44,
+        "PRUSH": 62.09,
+        "RDEF": 67.95,
+        "MAN": 53.96,
+        "ZONE": 45.15,
+        "TACK": 67.41
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 0,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 4,
+        "RDEF": 7,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 7
+      }
+    },
+    "NYG": {
+      "equal": {
+        "QB": 57.67,
+        "REC": 77.19,
+        "RB": 74.84,
+        "PBLK": 84.82,
+        "RBLK": 77.82,
+        "PRUSH": 55.44,
+        "RDEF": 69.65,
+        "MAN": 68.95,
+        "ZONE": 63.64,
+        "TACK": 56.5
+      },
+      "usage": {
+        "QB": 57.67,
+        "REC": 78.0,
+        "RB": 74.84,
+        "PBLK": 86.54,
+        "RBLK": 78.51,
+        "PRUSH": 55.18,
+        "RDEF": 72.12,
+        "MAN": 69.57,
+        "ZONE": 64.79,
+        "TACK": 56.69
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 3,
+        "RDEF": 5,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 6
+      }
+    },
+    "NYJ": {
+      "equal": {
+        "QB": 67.83,
+        "REC": 74.1,
+        "RB": 50.96,
+        "PBLK": 76.36,
+        "RBLK": 72.43,
+        "PRUSH": 44.0,
+        "RDEF": 77.72,
+        "MAN": 69.41,
+        "ZONE": 75.27,
+        "TACK": 83.97
+      },
+      "usage": {
+        "QB": 67.83,
+        "REC": 74.91,
+        "RB": 50.96,
+        "PBLK": 76.32,
+        "RBLK": 72.4,
+        "PRUSH": 42.84,
+        "RDEF": 77.53,
+        "MAN": 66.53,
+        "ZONE": 73.64,
+        "TACK": 83.17
+      },
+      "n": {
+        "QB": 1,
+        "REC": 3,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 2,
+        "RDEF": 4,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 4
+      }
+    },
+    "PHI": {
+      "equal": {
+        "QB": 78.0,
+        "REC": 73.49,
+        "RB": 89.9,
+        "PBLK": 73.02,
+        "RBLK": 71.75,
+        "PRUSH": 73.23,
+        "RDEF": 78.48,
+        "MAN": 58.15,
+        "ZONE": 56.48,
+        "TACK": 80.32
+      },
+      "usage": {
+        "QB": 78.0,
+        "REC": 71.72,
+        "RB": 89.9,
+        "PBLK": 75.21,
+        "RBLK": 74.27,
+        "PRUSH": 75.35,
+        "RDEF": 79.24,
+        "MAN": 59.72,
+        "ZONE": 58.88,
+        "TACK": 80.53
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 3,
+        "RDEF": 5,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "PIT": {
+      "equal": {
+        "QB": 76.67,
+        "REC": 73.02,
+        "RB": 78.53,
+        "PBLK": 75.14,
+        "RBLK": 65.06,
+        "PRUSH": 37.65,
+        "RDEF": 67.38,
+        "MAN": 70.77,
+        "ZONE": 70.73,
+        "TACK": 84.3
+      },
+      "usage": {
+        "QB": 76.67,
+        "REC": 73.02,
+        "RB": 78.53,
+        "PBLK": 77.54,
+        "RBLK": 69.9,
+        "PRUSH": 41.77,
+        "RDEF": 67.62,
+        "MAN": 70.77,
+        "ZONE": 70.73,
+        "TACK": 85.53
+      },
+      "n": {
+        "QB": 1,
+        "REC": 1,
+        "RB": 1,
+        "PBLK": 4,
+        "RBLK": 4,
+        "PRUSH": 2,
+        "RDEF": 5,
+        "MAN": 2,
+        "ZONE": 2,
+        "TACK": 5
+      }
+    },
+    "SEA": {
+      "equal": {
+        "QB": 34.0,
+        "REC": 73.22,
+        "RB": 51.92,
+        "PBLK": 68.66,
+        "RBLK": 61.18,
+        "PRUSH": 44.52,
+        "RDEF": 64.04,
+        "MAN": 76.95,
+        "ZONE": 67.77,
+        "TACK": 76.81
+      },
+      "usage": {
+        "QB": 34.0,
+        "REC": 74.01,
+        "RB": 51.92,
+        "PBLK": 71.22,
+        "RBLK": 64.41,
+        "PRUSH": 44.52,
+        "RDEF": 62.36,
+        "MAN": 76.1,
+        "ZONE": 66.84,
+        "TACK": 76.12
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 1,
+        "RDEF": 3,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 6
+      }
+    },
+    "SF": {
+      "equal": {
+        "QB": 83.33,
+        "REC": 78.24,
+        "RB": 81.41,
+        "PBLK": 63.57,
+        "RBLK": 81.92,
+        "PRUSH": 74.86,
+        "RDEF": 79.6,
+        "MAN": 68.75,
+        "ZONE": 71.0,
+        "TACK": 71.07
+      },
+      "usage": {
+        "QB": 83.33,
+        "REC": 81.01,
+        "RB": 81.41,
+        "PBLK": 62.83,
+        "RBLK": 81.53,
+        "PRUSH": 74.73,
+        "RDEF": 80.9,
+        "MAN": 69.62,
+        "ZONE": 71.6,
+        "TACK": 71.2
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 3,
+        "RDEF": 5,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 6
+      }
+    },
+    "TB": {
+      "equal": {
+        "QB": 83.0,
+        "REC": 71.45,
+        "RB": 70.51,
+        "PBLK": 80.61,
+        "RBLK": 72.11,
+        "PRUSH": 69.29,
+        "RDEF": 78.86,
+        "MAN": 74.45,
+        "ZONE": 80.91,
+        "TACK": 64.18
+      },
+      "usage": {
+        "QB": 83.0,
+        "REC": 71.01,
+        "RB": 70.51,
+        "PBLK": 80.61,
+        "RBLK": 72.11,
+        "PRUSH": 69.15,
+        "RDEF": 79.06,
+        "MAN": 74.1,
+        "ZONE": 81.07,
+        "TACK": 65.71
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 5,
+        "RBLK": 5,
+        "PRUSH": 2,
+        "RDEF": 4,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "TEN": {
+      "equal": {
+        "QB": null,
+        "REC": 61.13,
+        "RB": 67.79,
+        "PBLK": 49.42,
+        "RBLK": 45.61,
+        "PRUSH": 68.94,
+        "RDEF": 67.51,
+        "MAN": 65.03,
+        "ZONE": 71.45,
+        "TACK": 50.82
+      },
+      "usage": {
+        "QB": null,
+        "REC": 60.11,
+        "RB": 67.79,
+        "PBLK": 49.42,
+        "RBLK": 45.61,
+        "PRUSH": 71.76,
+        "RDEF": 71.29,
+        "MAN": 64.57,
+        "ZONE": 70.7,
+        "TACK": 48.69
+      },
+      "n": {
+        "QB": 0,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 3,
+        "RBLK": 3,
+        "PRUSH": 2,
+        "RDEF": 4,
+        "MAN": 3,
+        "ZONE": 3,
+        "TACK": 5
+      }
+    },
+    "WSH": {
+      "equal": {
+        "QB": 67.0,
+        "REC": 78.75,
+        "RB": 64.58,
+        "PBLK": 72.37,
+        "RBLK": 51.58,
+        "PRUSH": 57.3,
+        "RDEF": 62.93,
+        "MAN": 60.32,
+        "ZONE": 56.86,
+        "TACK": 65.28
+      },
+      "usage": {
+        "QB": 67.0,
+        "REC": 79.3,
+        "RB": 64.58,
+        "PBLK": 73.92,
+        "RBLK": 50.29,
+        "PRUSH": 57.13,
+        "RDEF": 64.96,
+        "MAN": 59.81,
+        "ZONE": 57.64,
+        "TACK": 66.21
+      },
+      "n": {
+        "QB": 1,
+        "REC": 2,
+        "RB": 1,
+        "PBLK": 2,
+        "RBLK": 2,
+        "PRUSH": 3,
+        "RDEF": 4,
+        "MAN": 4,
+        "ZONE": 4,
+        "TACK": 5
+      }
+    }
+  },
+  "coverage_by_team": [
+    {
+      "team": "ARI",
+      "starters_identified": 23,
+      "matched_2027": 18,
+      "matched_share": 0.78,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 18,
+        "no_identity_name_in_other_release": 2,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 29
+    },
+    {
+      "team": "ATL",
+      "starters_identified": 23,
+      "matched_2027": 14,
+      "matched_share": 0.61,
+      "status": {
+        "high_identity_no_2027_row": 5,
+        "matched_2027": 14,
+        "no_identity_name_absent_from_archive": 2,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 32
+    },
+    {
+      "team": "BAL",
+      "starters_identified": 23,
+      "matched_2027": 20,
+      "matched_share": 0.87,
+      "status": {
+        "high_identity_no_2027_row": 1,
+        "matched_2027": 20,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 2,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 3,
+      "transactions_since_2026_08_04": 30
+    },
+    {
+      "team": "BUF",
+      "starters_identified": 23,
+      "matched_2027": 14,
+      "matched_share": 0.61,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 14,
+        "no_identity_name_absent_from_archive": 2,
+        "no_identity_name_in_other_release": 2,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 0,
+      "transactions_since_2026_08_04": 22
+    },
+    {
+      "team": "CAR",
+      "starters_identified": 23,
+      "matched_2027": 13,
+      "matched_share": 0.57,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 13,
+        "no_identity_name_absent_from_archive": 6,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 31
+    },
+    {
+      "team": "CHI",
+      "starters_identified": 23,
+      "matched_2027": 16,
+      "matched_share": 0.7,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 16,
+        "no_identity_name_absent_from_archive": 3,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 3,
+      "transactions_since_2026_08_04": 30
+    },
+    {
+      "team": "CIN",
+      "starters_identified": 23,
+      "matched_2027": 15,
+      "matched_share": 0.65,
+      "status": {
+        "high_identity_no_2027_row": 5,
+        "matched_2027": 15,
+        "review_name_team_position_in_2027": 3
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 17
+    },
+    {
+      "team": "CLE",
+      "starters_identified": 23,
+      "matched_2027": 15,
+      "matched_share": 0.65,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 15,
+        "no_identity_name_absent_from_archive": 4,
+        "review_name_only_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 0,
+      "transactions_since_2026_08_04": 38
+    },
+    {
+      "team": "DAL",
+      "starters_identified": 23,
+      "matched_2027": 18,
+      "matched_share": 0.78,
+      "status": {
+        "high_identity_no_2027_row": 1,
+        "matched_2027": 18,
+        "no_identity_name_absent_from_archive": 2,
+        "review_name_only_in_2027": 1,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 21
+    },
+    {
+      "team": "DEN",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 1,
+        "no_identity_name_in_other_release": 1,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 15
+    },
+    {
+      "team": "DET",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 2,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 37
+    },
+    {
+      "team": "GB",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 3,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 30
+    },
+    {
+      "team": "HOU",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 4,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 37
+    },
+    {
+      "team": "IND",
+      "starters_identified": 23,
+      "matched_2027": 15,
+      "matched_share": 0.65,
+      "status": {
+        "high_identity_no_2027_row": 5,
+        "matched_2027": 15,
+        "no_identity_name_absent_from_archive": 3
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 28
+    },
+    {
+      "team": "JAX",
+      "starters_identified": 23,
+      "matched_2027": 19,
+      "matched_share": 0.83,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 19,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 25
+    },
+    {
+      "team": "KC",
+      "starters_identified": 23,
+      "matched_2027": 15,
+      "matched_share": 0.65,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 15,
+        "no_identity_name_absent_from_archive": 3,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 16
+    },
+    {
+      "team": "LAC",
+      "starters_identified": 23,
+      "matched_2027": 21,
+      "matched_share": 0.91,
+      "status": {
+        "high_identity_no_2027_row": 1,
+        "matched_2027": 21,
+        "no_identity_name_absent_from_archive": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 4,
+      "transactions_since_2026_08_04": 25
+    },
+    {
+      "team": "LAR",
+      "starters_identified": 23,
+      "matched_2027": 16,
+      "matched_share": 0.7,
+      "status": {
+        "high_identity_no_2027_row": 4,
+        "matched_2027": 16,
+        "no_identity_name_absent_from_archive": 2,
+        "review_name_only_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 0,
+      "transactions_since_2026_08_04": 32
+    },
+    {
+      "team": "LV",
+      "starters_identified": 23,
+      "matched_2027": 18,
+      "matched_share": 0.78,
+      "status": {
+        "high_identity_no_2027_row": 1,
+        "matched_2027": 18,
+        "no_identity_name_absent_from_archive": 3,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 23
+    },
+    {
+      "team": "MIA",
+      "starters_identified": 23,
+      "matched_2027": 9,
+      "matched_share": 0.39,
+      "status": {
+        "high_identity_no_2027_row": 6,
+        "matched_2027": 9,
+        "no_identity_name_absent_from_archive": 5,
+        "no_identity_name_in_other_release": 1,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 39
+    },
+    {
+      "team": "MIN",
+      "starters_identified": 23,
+      "matched_2027": 13,
+      "matched_share": 0.57,
+      "status": {
+        "high_identity_no_2027_row": 4,
+        "matched_2027": 13,
+        "no_identity_name_absent_from_archive": 1,
+        "no_identity_name_in_other_release": 2,
+        "review_name_only_in_2027": 1,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 31
+    },
+    {
+      "team": "NE",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 2,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 41
+    },
+    {
+      "team": "NO",
+      "starters_identified": 23,
+      "matched_2027": 18,
+      "matched_share": 0.78,
+      "status": {
+        "high_identity_no_2027_row": 4,
+        "matched_2027": 18,
+        "no_identity_name_absent_from_archive": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 29
+    },
+    {
+      "team": "NYG",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 3,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 38
+    },
+    {
+      "team": "NYJ",
+      "starters_identified": 23,
+      "matched_2027": 15,
+      "matched_share": 0.65,
+      "status": {
+        "high_identity_no_2027_row": 4,
+        "matched_2027": 15,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_team_position_in_2027": 3
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 25
+    },
+    {
+      "team": "PHI",
+      "starters_identified": 23,
+      "matched_2027": 17,
+      "matched_share": 0.74,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 17,
+        "no_identity_name_absent_from_archive": 1,
+        "review_name_only_in_2027": 1,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 3,
+      "transactions_since_2026_08_04": 27
+    },
+    {
+      "team": "PIT",
+      "starters_identified": 23,
+      "matched_2027": 14,
+      "matched_share": 0.61,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 14,
+        "no_identity_name_absent_from_archive": 3,
+        "no_identity_name_in_other_release": 2,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 28
+    },
+    {
+      "team": "SEA",
+      "starters_identified": 23,
+      "matched_2027": 16,
+      "matched_share": 0.7,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 16,
+        "no_identity_name_in_other_release": 2,
+        "review_name_team_position_in_2027": 2
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 39
+    },
+    {
+      "team": "SF",
+      "starters_identified": 23,
+      "matched_2027": 18,
+      "matched_share": 0.78,
+      "status": {
+        "high_identity_no_2027_row": 2,
+        "matched_2027": 18,
+        "no_identity_name_absent_from_archive": 2,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 2,
+      "last_known_out_or_doubtful": 4,
+      "transactions_since_2026_08_04": 35
+    },
+    {
+      "team": "TB",
+      "starters_identified": 23,
+      "matched_2027": 16,
+      "matched_share": 0.7,
+      "status": {
+        "high_identity_no_2027_row": 3,
+        "matched_2027": 16,
+        "no_identity_name_absent_from_archive": 3,
+        "no_identity_name_in_other_release": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 1,
+      "low_usage_starters": 0,
+      "last_known_out_or_doubtful": 2,
+      "transactions_since_2026_08_04": 17
+    },
+    {
+      "team": "TEN",
+      "starters_identified": 23,
+      "matched_2027": 13,
+      "matched_share": 0.57,
+      "status": {
+        "high_identity_no_2027_row": 6,
+        "matched_2027": 13,
+        "no_identity_name_absent_from_archive": 1,
+        "no_identity_name_in_other_release": 2,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 29
+    },
+    {
+      "team": "WSH",
+      "starters_identified": 23,
+      "matched_2027": 14,
+      "matched_share": 0.61,
+      "status": {
+        "high_identity_no_2027_row": 5,
+        "matched_2027": 14,
+        "no_identity_name_absent_from_archive": 2,
+        "no_identity_name_in_other_release": 1,
+        "review_name_team_position_in_2027": 1
+      },
+      "madden_team_blank_among_matched": 0,
+      "stint_unresolved": 0,
+      "position_group_disagreements": 0,
+      "low_usage_starters": 1,
+      "last_known_out_or_doubtful": 1,
+      "transactions_since_2026_08_04": 33
+    }
+  ],
+  "games": [
+    {
+      "game_id": "2026_07_NE_CHI",
+      "weekday": "Thursday",
+      "gameday": "2026-10-22",
+      "gametime_as_stored": "20:15",
+      "away": "NE",
+      "home": "CHI",
+      "completed_before_experiment": true,
+      "retrospective_final": {
+        "home": 30,
+        "away": 24,
+        "margin_home_minus_away": 6,
+        "source": "game_summaries.espn_event_id=401873010"
+      },
+      "retrospective_margin_agrees_with_ratings_net": true,
+      "lp_projection": null,
+      "lp_margin_home_minus_away": null,
+      "ratings_net_home_minus_away_equal": 0.64,
+      "ratings_net_home_minus_away_usage": 0.21,
+      "paired_dimensions_used": 1,
+      "agreement_with_lp_direction": "not computable",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 13.63,
+          "usage": 12.39,
+          "n_offense": 5,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 10.6,
+          "usage": 11.21,
+          "n_offense": 5,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 3.31,
+          "usage": 2.94,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 6.8,
+          "usage": 6.86,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -6.61,
+          "usage": -5.28,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -3.12,
+          "usage": -1.36,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 5,
+          "coverage_flag": "low"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 12.99,
+          "usage": 12.18,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 9.23,
+          "usage": 7.09,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 8.23,
+          "usage": 7.53,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 10.05,
+          "usage": 12.1,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -8.49,
+          "usage": -8.64,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -6.67,
+          "usage": -4.07,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 1.59,
+          "usage": 4.83,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "home_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 13.63
+        },
+        {
+          "side": "away_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 12.99
+        },
+        {
+          "side": "home_offense",
+          "dimension": "run_blocking_vs_run_defense",
+          "diff": 10.6
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "CHI": 7,
+          "NE": 6
+        },
+        "madden_team_blank_starters": {
+          "CHI": 0,
+          "NE": 0
+        },
+        "review_name_team_position_starters": {
+          "CHI": 1,
+          "NE": 1
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 41,
+          "home": 30
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_PIT_NO",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "09:30",
+      "away": "PIT",
+      "home": "NO",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "NO",
+        "away": "PIT",
+        "proj_home": 22.016122755133978,
+        "proj_away": 26.94441818915982,
+        "proj_margin": -4.928295434025841,
+        "proj_total": 48.9605409442938,
+        "p_home_win": 0.3554350073462166,
+        "market_spread": -3.5,
+        "market_total": 44.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -4.928295434025841,
+      "ratings_net_home_minus_away_equal": 10.07,
+      "ratings_net_home_minus_away_usage": 6.87,
+      "paired_dimensions_used": 1,
+      "agreement_with_lp_direction": "conflict",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 35.63,
+          "usage": 31.51,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 9.06,
+          "usage": 8.82,
+          "n_offense": 4,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -0.77,
+          "usage": -0.77,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -0.73,
+          "usage": -0.73,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 15.23,
+          "usage": 15.97,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 15.27,
+          "usage": 16.01,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 5,
+          "coverage_flag": "low"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 13.63,
+          "usage": 15.45,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -1.01,
+          "usage": 1.95,
+          "n_offense": 4,
+          "n_defense": 7,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 23.49,
+          "usage": 22.71,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 31.26,
+          "usage": 31.52,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 19.84,
+          "usage": 19.06,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 27.61,
+          "usage": 27.87,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 12.76,
+          "usage": 11.12,
+          "n_offense": 1,
+          "n_defense": 7,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": 31.26
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_man_coverage",
+          "diff": 23.49
+        },
+        {
+          "side": "away_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 13.63
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "NO": 5,
+          "PIT": 9
+        },
+        "madden_team_blank_starters": {
+          "NO": 0,
+          "PIT": 0
+        },
+        "review_name_team_position_starters": {
+          "NO": 0,
+          "PIT": 1
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 28,
+          "home": 29
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_SF_ATL",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "SF",
+      "home": "ATL",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "ATL",
+        "away": "SF",
+        "proj_home": 22.360497904824978,
+        "proj_away": 27.8606102531336,
+        "proj_margin": -5.5001123483086225,
+        "proj_total": 50.22110815795858,
+        "p_home_win": 0.33954771655917365,
+        "market_spread": -2.5,
+        "market_total": 49.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -5.5001123483086225,
+      "ratings_net_home_minus_away_equal": 1.0,
+      "ratings_net_home_minus_away_usage": 0.73,
+      "paired_dimensions_used": 1,
+      "agreement_with_lp_direction": "neutral",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 4.94,
+          "usage": 4.29,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -12.2,
+          "usage": -12.73,
+          "n_offense": 4,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -16.04,
+          "usage": -12.42,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -18.29,
+          "usage": -14.4,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 16.43,
+          "usage": 16.3,
+          "n_offense": 1,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 3.94,
+          "usage": 3.56,
+          "n_offense": 5,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 25.69,
+          "usage": 26.13,
+          "n_offense": 5,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 35.6,
+          "usage": 35.6,
+          "n_offense": 1,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 32.24,
+          "usage": 32.24,
+          "n_offense": 1,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 30.51,
+          "usage": 33.28,
+          "n_offense": 2,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 27.15,
+          "usage": 29.92,
+          "n_offense": 2,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": -2.94,
+          "usage": -2.9,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_zone_coverage",
+          "diff": -18.29
+        },
+        {
+          "side": "home_offense",
+          "dimension": "rb_vs_tackling",
+          "diff": 16.43
+        },
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_man_coverage",
+          "diff": -16.04
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "ATL": 9,
+          "SF": 5
+        },
+        "madden_team_blank_starters": {
+          "ATL": 0,
+          "SF": 0
+        },
+        "review_name_team_position_starters": {
+          "ATL": 2,
+          "SF": 1
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 35,
+          "home": 32
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_CIN_BAL",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "CIN",
+      "home": "BAL",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "BAL",
+        "away": "CIN",
+        "proj_home": 23.833596955290677,
+        "proj_away": 25.13728034554285,
+        "proj_margin": -1.303683390252175,
+        "proj_total": 48.97087730083353,
+        "p_home_win": 0.4609430508478049,
+        "market_spread": -1.5,
+        "market_total": 48.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -1.303683390252175,
+      "ratings_net_home_minus_away_equal": 33.02,
+      "ratings_net_home_minus_away_usage": 27.9,
+      "paired_dimensions_used": 3,
+      "agreement_with_lp_direction": "conflict",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 0.85,
+          "usage": 1.16,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 4.02,
+          "usage": 1.81,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 30.02,
+          "usage": 29.38,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 30.02,
+          "usage": 26.58,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 4.76,
+          "usage": -2.19,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 7.37,
+          "usage": 5.91,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -34.18,
+          "usage": -34.81,
+          "n_offense": 3,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 19.59,
+          "usage": 19.5,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 22.36,
+          "usage": 22.18,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -13.97,
+          "usage": -11.61,
+          "n_offense": 3,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -11.2,
+          "usage": -8.93,
+          "n_offense": 3,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": -9.09,
+          "usage": -9.4,
+          "n_offense": 1,
+          "n_defense": 8,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "run_blocking_vs_run_defense",
+          "diff": -34.18
+        },
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_man_coverage",
+          "diff": 30.02
+        },
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_zone_coverage",
+          "diff": 30.02
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "BAL": 3,
+          "CIN": 8
+        },
+        "madden_team_blank_starters": {
+          "BAL": 0,
+          "CIN": 0
+        },
+        "review_name_team_position_starters": {
+          "BAL": 1,
+          "CIN": 3
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 17,
+          "home": 30
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_TB_CAR",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "TB",
+      "home": "CAR",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "CAR",
+        "away": "TB",
+        "proj_home": 25.306629939783853,
+        "proj_away": 20.600604119234852,
+        "proj_margin": 4.7060258205490015,
+        "proj_total": 45.907234059018705,
+        "p_home_win": 0.6383191667417073,
+        "market_spread": 3.0,
+        "market_total": 44.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": 4.7060258205490015,
+      "ratings_net_home_minus_away_equal": null,
+      "ratings_net_home_minus_away_usage": null,
+      "paired_dimensions_used": 0,
+      "agreement_with_lp_direction": "not computable",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 14.74,
+          "usage": 14.71,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -19.2,
+          "usage": -20.19,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -2.62,
+          "usage": -2.27,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -9.08,
+          "usage": -9.24,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -4.14,
+          "usage": -1.59,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -10.6,
+          "usage": -8.56,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 6.33,
+          "usage": 4.8,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 21.87,
+          "usage": 21.87,
+          "n_offense": 5,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -18.42,
+          "usage": -18.3,
+          "n_offense": 5,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 14.0,
+          "usage": 11.19,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 8.73,
+          "usage": 7.44,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 2.45,
+          "usage": -0.8,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -2.82,
+          "usage": -4.55,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 5.04,
+          "usage": 4.49,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_zone_coverage",
+          "diff": -10.6
+        },
+        {
+          "side": "home_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": -9.08
+        },
+        {
+          "side": "home_offense",
+          "dimension": "rb_vs_tackling",
+          "diff": 6.33
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "CAR": 10,
+          "TB": 7
+        },
+        "madden_team_blank_starters": {
+          "CAR": 0,
+          "TB": 0
+        },
+        "review_name_team_position_starters": {
+          "CAR": 2,
+          "TB": 0
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 17,
+          "home": 31
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_NYG_HOU",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "NYG",
+      "home": "HOU",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "HOU",
+        "away": "NYG",
+        "proj_home": 25.284909379316513,
+        "proj_away": 20.890317469817667,
+        "proj_margin": 4.394591909498846,
+        "proj_total": 46.17522684913418,
+        "p_home_win": 0.6295057919593898,
+        "market_spread": 10.5,
+        "market_total": 42.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": 4.394591909498846,
+      "ratings_net_home_minus_away_equal": -2.01,
+      "ratings_net_home_minus_away_usage": -1.74,
+      "paired_dimensions_used": 4,
+      "agreement_with_lp_direction": "conflict",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 6.48,
+          "usage": 6.86,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -6.09,
+          "usage": -8.76,
+          "n_offense": 4,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 4.26,
+          "usage": 4.97,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 9.57,
+          "usage": 9.75,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 7.76,
+          "usage": 7.57,
+          "n_offense": 1,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 20.95,
+          "usage": 20.84,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 9.16,
+          "usage": 10.75,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -8.9,
+          "usage": -8.97,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -18.83,
+          "usage": -18.71,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 10.62,
+          "usage": 11.36,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 0.69,
+          "usage": 1.62,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 3.86,
+          "usage": 2.28,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 20.95
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": -18.83
+        },
+        {
+          "side": "away_offense",
+          "dimension": "receivers_vs_man_coverage",
+          "diff": 10.62
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "HOU": 6,
+          "NYG": 6
+        },
+        "madden_team_blank_starters": {
+          "HOU": 0,
+          "NYG": 0
+        },
+        "review_name_team_position_starters": {
+          "HOU": 0,
+          "NYG": 1
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 38,
+          "home": 37
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_IND_MIN",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "IND",
+      "home": "MIN",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "MIN",
+        "away": "IND",
+        "proj_home": 25.709442489354295,
+        "proj_away": 16.749759990836548,
+        "proj_margin": 8.959682498517747,
+        "proj_total": 42.45920248019084,
+        "p_home_win": 0.7498169057674916,
+        "market_spread": 6.5,
+        "market_total": 41.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": 8.959682498517747,
+      "ratings_net_home_minus_away_equal": null,
+      "ratings_net_home_minus_away_usage": null,
+      "paired_dimensions_used": 0,
+      "agreement_with_lp_direction": "not computable",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 12.48,
+          "usage": 10.15,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -0.08,
+          "usage": -0.47,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -20.77,
+          "usage": -20.77,
+          "n_offense": 1,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -10.59,
+          "usage": -10.59,
+          "n_offense": 1,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 12.44,
+          "usage": 13.47,
+          "n_offense": 2,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 22.62,
+          "usage": 23.65,
+          "n_offense": 2,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 25.42,
+          "usage": 21.62,
+          "n_offense": 5,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 8.0,
+          "usage": 6.88,
+          "n_offense": 5,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 36.27,
+          "usage": 35.87,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 38.05,
+          "usage": 38.79,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 28.04,
+          "usage": 29.62,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 29.82,
+          "usage": 32.54,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 21.47,
+          "usage": 19.39,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "home_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 12.48
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "MIN": 10,
+          "IND": 8
+        },
+        "madden_team_blank_starters": {
+          "MIN": 0,
+          "IND": 0
+        },
+        "review_name_team_position_starters": {
+          "MIN": 2,
+          "IND": 0
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 28,
+          "home": 31
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_MIA_NYJ",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "MIA",
+      "home": "NYJ",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "NYJ",
+        "away": "MIA",
+        "proj_home": 22.404096232168293,
+        "proj_away": 18.338073757574087,
+        "proj_margin": 4.066022474594206,
+        "proj_total": 40.74216998974238,
+        "p_home_win": 0.6201333187813858,
+        "market_spread": 4.5,
+        "market_total": 39.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": 4.066022474594206,
+      "ratings_net_home_minus_away_equal": null,
+      "ratings_net_home_minus_away_usage": null,
+      "paired_dimensions_used": 0,
+      "agreement_with_lp_direction": "not computable",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 39.41,
+          "usage": 39.18,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 2.93,
+          "usage": -0.56,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 1,
+          "n_defense": 0,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 1,
+          "n_defense": 0,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 3,
+          "n_defense": 0,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 3,
+          "n_defense": 0,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": -44.14,
+          "usage": -44.14,
+          "n_offense": 1,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 7.83,
+          "usage": 11.16,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -16.1,
+          "usage": -14.96,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -15.74,
+          "usage": -12.86,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -21.6,
+          "usage": -19.97,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -11.25,
+          "usage": -9.61,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -17.11,
+          "usage": -16.72,
+          "n_offense": 2,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [],
+      "uncertainties": {
+        "unmatched_starters": {
+          "NYJ": 8,
+          "MIA": 14
+        },
+        "madden_team_blank_starters": {
+          "NYJ": 0,
+          "MIA": 0
+        },
+        "review_name_team_position_starters": {
+          "NYJ": 3,
+          "MIA": 2
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 39,
+          "home": 25
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_CLE_TEN",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "13:00",
+      "away": "CLE",
+      "home": "TEN",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "TEN",
+        "away": "CLE",
+        "proj_home": 14.232634102272199,
+        "proj_away": 20.35158962805291,
+        "proj_margin": -6.118955525780711,
+        "proj_total": 34.58422373032511,
+        "p_home_win": 0.32267023429825764,
+        "market_spread": -1.5,
+        "market_total": 37.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -6.118955525780711,
+      "ratings_net_home_minus_away_equal": null,
+      "ratings_net_home_minus_away_usage": null,
+      "paired_dimensions_used": 0,
+      "agreement_with_lp_direction": "not computable",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": -21.06,
+          "usage": -21.42,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -21.21,
+          "usage": -21.05,
+          "n_offense": 3,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -11.01,
+          "usage": -14.48,
+          "n_offense": 2,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -13.05,
+          "usage": -15.59,
+          "n_offense": 2,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 2.97,
+          "usage": 2.78,
+          "n_offense": 1,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 16.33,
+          "usage": 13.4,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -3.74,
+          "usage": -7.21,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -22.03,
+          "usage": -21.57,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -28.45,
+          "usage": -27.7,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 8.74,
+          "usage": 9.2,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 2.32,
+          "usage": 3.07,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 5,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": -28.45
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_man_coverage",
+          "diff": -22.03
+        },
+        {
+          "side": "home_offense",
+          "dimension": "run_blocking_vs_run_defense",
+          "diff": -21.21
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "TEN": 10,
+          "CLE": 8
+        },
+        "madden_team_blank_starters": {
+          "TEN": 0,
+          "CLE": 0
+        },
+        "review_name_team_position_starters": {
+          "TEN": 1,
+          "CLE": 0
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 38,
+          "home": 29
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_DEN_ARI",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "16:05",
+      "away": "DEN",
+      "home": "ARI",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "ARI",
+        "away": "DEN",
+        "proj_home": 18.851547989808807,
+        "proj_away": 26.015228758503802,
+        "proj_margin": -7.163680768694995,
+        "proj_total": 44.86677674831261,
+        "p_home_win": 0.29500374371665095,
+        "market_spread": -4.5,
+        "market_total": 43.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -7.163680768694995,
+      "ratings_net_home_minus_away_equal": -4.78,
+      "ratings_net_home_minus_away_usage": -6.67,
+      "paired_dimensions_used": 2,
+      "agreement_with_lp_direction": "agree",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 28.54,
+          "usage": 28.47,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 10.5,
+          "usage": 9.24,
+          "n_offense": 4,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -0.22,
+          "usage": -0.12,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -7.22,
+          "usage": -6.72,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 17.63,
+          "usage": 19.47,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 10.63,
+          "usage": 12.87,
+          "n_offense": 3,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 6.85,
+          "usage": 2.73,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 34.66,
+          "usage": 34.5,
+          "n_offense": 5,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 19.23,
+          "usage": 19.43,
+          "n_offense": 5,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 16.12,
+          "usage": 15.48,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 10.99,
+          "usage": 11.75,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 25.44,
+          "usage": 24.92,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 20.31,
+          "usage": 21.19,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 7.68,
+          "usage": 5.89,
+          "n_offense": 1,
+          "n_defense": 7,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "receivers_vs_man_coverage",
+          "diff": 25.44
+        },
+        {
+          "side": "away_offense",
+          "dimension": "receivers_vs_zone_coverage",
+          "diff": 20.31
+        },
+        {
+          "side": "away_offense",
+          "dimension": "run_blocking_vs_run_defense",
+          "diff": 19.23
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "ARI": 5,
+          "DEN": 6
+        },
+        "madden_team_blank_starters": {
+          "ARI": 0,
+          "DEN": 0
+        },
+        "review_name_team_position_starters": {
+          "ARI": 1,
+          "DEN": 2
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 15,
+          "home": 29
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_GB_DET",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "16:25",
+      "away": "GB",
+      "home": "DET",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "DET",
+        "away": "GB",
+        "proj_home": 25.413519512667087,
+        "proj_away": 25.436577125041076,
+        "proj_margin": -0.0230576123739894,
+        "proj_total": 50.85009663770816,
+        "p_home_win": 0.49930811193307445,
+        "market_spread": 3.0,
+        "market_total": 53.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -0.0230576123739894,
+      "ratings_net_home_minus_away_equal": -7.82,
+      "ratings_net_home_minus_away_usage": -7.05,
+      "paired_dimensions_used": 4,
+      "agreement_with_lp_direction": "neutral",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 2.65,
+          "usage": 3.26,
+          "n_offense": 5,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 8.68,
+          "usage": 8.02,
+          "n_offense": 5,
+          "n_defense": 7,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 24.89,
+          "usage": 24.67,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 25.71,
+          "usage": 26.04,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 13.92,
+          "usage": 15.54,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 14.74,
+          "usage": 16.91,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 17.6,
+          "usage": 16.75,
+          "n_offense": 1,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": -45.75,
+          "usage": -49.45,
+          "n_offense": 2,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -60.49,
+          "usage": -61.61,
+          "n_offense": 2,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 30.88,
+          "usage": 30.82,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 36.74,
+          "usage": 37.25,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 18.54,
+          "usage": 18.43,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 24.4,
+          "usage": 24.86,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": 36.74
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_man_coverage",
+          "diff": 30.88
+        },
+        {
+          "side": "home_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": 25.71
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "DET": 6,
+          "GB": 6
+        },
+        "madden_team_blank_starters": {
+          "DET": 0,
+          "GB": 0
+        },
+        "review_name_team_position_starters": {
+          "DET": 2,
+          "GB": 2
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 30,
+          "home": 37
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_LA_LV",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "16:25",
+      "away": "LAR",
+      "home": "LV",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "LV",
+        "away": "LAR",
+        "proj_home": 25.306186978649805,
+        "proj_away": 25.885614714087673,
+        "proj_margin": -0.5794277354378679,
+        "proj_total": 51.19180169273748,
+        "p_home_win": 0.48261864873687804,
+        "market_spread": -3.5,
+        "market_total": 48.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -0.5794277354378679,
+      "ratings_net_home_minus_away_equal": 6.18,
+      "ratings_net_home_minus_away_usage": 5.73,
+      "paired_dimensions_used": 1,
+      "agreement_with_lp_direction": "neutral",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 4.24,
+          "usage": 1.06,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -5.1,
+          "usage": -4.49,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -9.69,
+          "usage": -10.84,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -9.83,
+          "usage": -11.46,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -13.17,
+          "usage": -14.78,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": -13.31,
+          "usage": -15.4,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 16.89,
+          "usage": 17.25,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": -1.94,
+          "usage": -4.67,
+          "n_offense": 3,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 25.01,
+          "usage": 21.49,
+          "n_offense": 3,
+          "n_defense": 7,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 19.26,
+          "usage": 20.61,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 20.85,
+          "usage": 21.6,
+          "n_offense": 1,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -0.11,
+          "usage": 5.49,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 1.48,
+          "usage": 6.48,
+          "n_offense": 4,
+          "n_defense": 2,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 4.45,
+          "usage": -1.72,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "run_blocking_vs_run_defense",
+          "diff": 25.01
+        },
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_zone_coverage",
+          "diff": -13.31
+        },
+        {
+          "side": "home_offense",
+          "dimension": "receivers_vs_man_coverage",
+          "diff": -13.17
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "LV": 5,
+          "LAR": 7
+        },
+        "madden_team_blank_starters": {
+          "LV": 0,
+          "LAR": 0
+        },
+        "review_name_team_position_starters": {
+          "LV": 1,
+          "LAR": 0
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 32,
+          "home": 23
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_KC_SEA",
+      "weekday": "Sunday",
+      "gameday": "2026-10-25",
+      "gametime_as_stored": "20:20",
+      "away": "KC",
+      "home": "SEA",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "SEA",
+        "away": "KC",
+        "proj_home": 20.611834699147295,
+        "proj_away": 22.33103521273994,
+        "proj_margin": -1.7192005135926465,
+        "proj_total": 42.942869911887236,
+        "p_home_win": 0.4485554634435542,
+        "market_spread": 3.0,
+        "market_total": 42.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": -1.7192005135926465,
+      "ratings_net_home_minus_away_equal": -33.39,
+      "ratings_net_home_minus_away_usage": -34.08,
+      "paired_dimensions_used": 2,
+      "agreement_with_lp_direction": "agree",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": -4.77,
+          "usage": -2.21,
+          "n_offense": 5,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": -8.24,
+          "usage": -14.62,
+          "n_offense": 5,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": -14.06,
+          "usage": -13.96,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": -12.79,
+          "usage": -12.48,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 25.16,
+          "usage": 26.05,
+          "n_offense": 2,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 26.43,
+          "usage": 27.53,
+          "n_offense": 2,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": -15.83,
+          "usage": -21.88,
+          "n_offense": 1,
+          "n_defense": 6,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 41.28,
+          "usage": 41.28,
+          "n_offense": 3,
+          "n_defense": 1,
+          "coverage_flag": "low"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 22.51,
+          "usage": 24.19,
+          "n_offense": 3,
+          "n_defense": 3,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 15.38,
+          "usage": 16.23,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 24.56,
+          "usage": 25.49,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": -5.1,
+          "usage": -4.0,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 4.08,
+          "usage": 5.26,
+          "n_offense": 4,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": null,
+          "usage": null,
+          "n_offense": 0,
+          "n_defense": 6,
+          "coverage_flag": "low"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": 24.56
+        },
+        {
+          "side": "home_offense",
+          "dimension": "rb_vs_tackling",
+          "diff": -15.83
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_man_coverage",
+          "diff": 15.38
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "SEA": 7,
+          "KC": 8
+        },
+        "madden_team_blank_starters": {
+          "SEA": 0,
+          "KC": 0
+        },
+        "review_name_team_position_starters": {
+          "SEA": 2,
+          "KC": 2
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 16,
+          "home": 39
+        },
+        "usage_weeks": "1-5"
+      }
+    },
+    {
+      "game_id": "2026_07_DAL_PHI",
+      "weekday": "Monday",
+      "gameday": "2026-10-26",
+      "gametime_as_stored": "20:15",
+      "away": "DAL",
+      "home": "PHI",
+      "completed_before_experiment": false,
+      "retrospective_final": null,
+      "retrospective_margin_agrees_with_ratings_net": null,
+      "lp_projection": {
+        "home": "PHI",
+        "away": "DAL",
+        "proj_home": 23.18400664074574,
+        "proj_away": 23.142121747571316,
+        "proj_margin": 0.0418848931744229,
+        "proj_total": 46.32612838831706,
+        "p_home_win": 0.5012568354386142,
+        "market_spread": -4.5,
+        "market_total": 44.5,
+        "run_id": "nfl-preview-v1-2026-w07-2026-10-23T08:05:01.337723+00:00"
+      },
+      "lp_margin_home_minus_away": 0.0418848931744229,
+      "ratings_net_home_minus_away_equal": 7.67,
+      "ratings_net_home_minus_away_usage": 6.55,
+      "paired_dimensions_used": 4,
+      "agreement_with_lp_direction": "neutral",
+      "dimensions_home_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": 30.36,
+          "usage": 25.28,
+          "n_offense": 5,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 8.67,
+          "usage": 10.85,
+          "n_offense": 5,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 13.43,
+          "usage": 9.37,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 5.73,
+          "usage": 3.55,
+          "n_offense": 1,
+          "n_defense": 4,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 8.92,
+          "usage": 3.09,
+          "n_offense": 2,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 1.22,
+          "usage": -2.73,
+          "n_offense": 2,
+          "n_defense": 4,
+          "coverage_flag": "low"
+        },
+        "rb_vs_tackling": {
+          "equal": 29.37,
+          "usage": 29.85,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "dimensions_away_offense": {
+        "pass_protection_vs_pass_rush": {
+          "equal": -18.12,
+          "usage": -20.28,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "run_blocking_vs_run_defense": {
+          "equal": 1.58,
+          "usage": 0.92,
+          "n_offense": 4,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_man_coverage": {
+          "equal": 32.18,
+          "usage": 30.61,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "qb_vs_zone_coverage": {
+          "equal": 33.85,
+          "usage": 31.45,
+          "n_offense": 1,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_man_coverage": {
+          "equal": 24.1,
+          "usage": 23.16,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "receivers_vs_zone_coverage": {
+          "equal": 25.77,
+          "usage": 24.0,
+          "n_offense": 4,
+          "n_defense": 3,
+          "coverage_flag": "ok"
+        },
+        "rb_vs_tackling": {
+          "equal": 0.29,
+          "usage": 0.08,
+          "n_offense": 1,
+          "n_defense": 5,
+          "coverage_flag": "ok"
+        }
+      },
+      "top_three_observed_differences": [
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_zone_coverage",
+          "diff": 33.85
+        },
+        {
+          "side": "away_offense",
+          "dimension": "qb_vs_man_coverage",
+          "diff": 32.18
+        },
+        {
+          "side": "home_offense",
+          "dimension": "pass_protection_vs_pass_rush",
+          "diff": 30.36
+        }
+      ],
+      "uncertainties": {
+        "unmatched_starters": {
+          "PHI": 6,
+          "DAL": 5
+        },
+        "madden_team_blank_starters": {
+          "PHI": 0,
+          "DAL": 0
+        },
+        "review_name_team_position_starters": {
+          "PHI": 1,
+          "DAL": 1
+        },
+        "week7_injury_report_rows": 0,
+        "transactions_since_2026_08_04": {
+          "away": 21,
+          "home": 27
+        },
+        "usage_weeks": "1-5"
+      }
+    }
+  ],
+  "composites": {
+    "QB": [
+      "THP",
+      "TAS",
+      "TAM",
+      "TAD",
+      "PAC",
+      "TOR",
+      "TUP",
+      "AWR"
+    ],
+    "REC": [
+      "SPD",
+      "ACC",
+      "AGI",
+      "SRR",
+      "MRR",
+      "DRR",
+      "RLS",
+      "CTH",
+      "CIT",
+      "SPC"
+    ],
+    "RB": [
+      "SPD",
+      "ACC",
+      "COD",
+      "CAR",
+      "BCV",
+      "BTK",
+      "TRK",
+      "ELU"
+    ],
+    "PBLK": [
+      "PBK",
+      "PBP",
+      "PBF"
+    ],
+    "RBLK": [
+      "RBK",
+      "RBP",
+      "RBF"
+    ],
+    "PRUSH": [
+      "PMV",
+      "FMV",
+      "ACC"
+    ],
+    "RDEF": [
+      "BSH",
+      "STR",
+      "TAK"
+    ],
+    "MAN": [
+      "MCV",
+      "PRS",
+      "PRC",
+      "SPD",
+      "ACC"
+    ],
+    "ZONE": [
+      "ZCV",
+      "SPD",
+      "ACC"
+    ],
+    "TACK": [
+      "TAK",
+      "PUR",
+      "POW"
+    ]
+  },
+  "composite_roles": {
+    "QB": [
+      "QB"
+    ],
+    "REC": [
+      "WR",
+      "TE"
+    ],
+    "RB": [
+      "RB"
+    ],
+    "PBLK": [
+      "OL"
+    ],
+    "RBLK": [
+      "OL"
+    ],
+    "PRUSH": [
+      "DL"
+    ],
+    "RDEF": [
+      "DL",
+      "LB"
+    ],
+    "MAN": [
+      "DB"
+    ],
+    "ZONE": [
+      "DB"
+    ],
+    "TACK": [
+      "DB",
+      "LB"
+    ]
+  },
+  "dimensions": [
+    {
+      "label": "pass_protection_vs_pass_rush",
+      "offense": "PBLK",
+      "defense": "PRUSH"
+    },
+    {
+      "label": "run_blocking_vs_run_defense",
+      "offense": "RBLK",
+      "defense": "RDEF"
+    },
+    {
+      "label": "qb_vs_man_coverage",
+      "offense": "QB",
+      "defense": "MAN"
+    },
+    {
+      "label": "qb_vs_zone_coverage",
+      "offense": "QB",
+      "defense": "ZONE"
+    },
+    {
+      "label": "receivers_vs_man_coverage",
+      "offense": "REC",
+      "defense": "MAN"
+    },
+    {
+      "label": "receivers_vs_zone_coverage",
+      "offense": "REC",
+      "defense": "ZONE"
+    },
+    {
+      "label": "rb_vs_tackling",
+      "offense": "RB",
+      "defense": "TACK"
+    }
+  ],
+  "reported_only_attributes": {
+    "IBL": "impact blocking applies to run and pass, so it is not forced into either index",
+    "TAC": "historical label, not THA: never merged into a Gridiron rating",
+    "TAS/TAM/TAD": "used per depth in the QB profile, not averaged into one accuracy score",
+    "SRR/MRR/DRR": "route-running depths are kept separate inside the REC composite"
+  },
+  "unmapped_madden_team_slugs": [],
+  "ambiguous_gsis_dropped": 0,
+  "madden27_multi_stint_player_ids": 1,
+  "week7_injury_report_rows": 0,
+  "player_projection_rows_week7": 0,
+  "player_projection_distinct_players_week6": 317
+}
