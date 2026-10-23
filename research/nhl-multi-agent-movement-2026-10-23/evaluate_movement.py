@@ -236,7 +236,7 @@ def frame_metrics(preds: dict, actual: dict, initial: dict, spacing_floor: float
         a=np.asarray(actual["players"][pid]); p=np.asarray(preds[pid]); err.append(float(np.linalg.norm(p-a)))
         init=initial_by_id[pid]; ad=a-np.asarray(init); pd=p-np.asarray(init)
         displacement.append(abs(float(np.linalg.norm(pd)-np.linalg.norm(ad))))
-        if np.linalg.norm(ad)>=1 and np.linalg.norm(pd)>=1:
+        if np.linalg.norm(ad)>=1:
             heading.append(abs(angle_delta(math.atan2(pd[1],pd[0]),math.atan2(ad[1],ad[0]))))
         obspts.append(a);simpts.append(p)
     for i,pid in enumerate(ids):
@@ -397,7 +397,7 @@ def main():
     models_by_game={};limits_by_game={};one_predictions={}
     def score_one(mask,pred):
         e=np.linalg.norm(pred-y[mask],axis=1);disp=np.linalg.norm(pred-pos[mask],axis=1);td=np.linalg.norm(y[mask]-pos[mask],axis=1)
-        valid=(disp>=1)&(td>=1);angles=[]
+        valid=td>=1;angles=[]
         if valid.any():
             a=pred[valid]-pos[mask][valid];b=y[mask][valid]-pos[mask][valid]
             cross=a[:,0]*b[:,1]-a[:,1]*b[:,0];dot=(a*b).sum(axis=1);angles=np.abs(np.arctan2(cross,dot))
