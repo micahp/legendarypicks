@@ -1,8 +1,8 @@
 {
   "archive": "madden_ratings_1992-2027.zip",
   "rows": 58743,
-  "columns": 73,
-  "identity_columns": 13,
+  "columns": 71,
+  "identity_columns": 11,
   "attribute_columns": 60,
   "checks": [
     {
@@ -14,13 +14,13 @@
     {
       "id": "shape.header_identity",
       "status": "PASS",
-      "detail": "first 13 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'team_inferred', 'team_inferred_ambiguous', 'POS', 'source', 'site_calculated', 'value_flags']",
+      "detail": "first 11 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated', 'value_flags']",
       "measured": null
     },
     {
       "id": "shape.columns",
       "status": "PASS",
-      "detail": "73 columns = 13 identity + 60 attributes (expected 73: 13 identity + 60 attributes)",
+      "detail": "71 columns = 11 identity + 60 attributes (expected 71: 11 identity + 60 attributes)",
       "measured": null
     },
     {
@@ -32,13 +32,13 @@
     {
       "id": "readme.column_count",
       "status": "PASS",
-      "detail": "README states column counts [73]; the file has 73",
+      "detail": "README states column counts [71]; the file has 71",
       "measured": null
     },
     {
       "id": "spec.column_count",
       "status": "PASS",
-      "detail": "repo spec doc states column counts [73]; the file has 73",
+      "detail": "repo spec doc states column counts [71]; the file has 71",
       "measured": null
     },
     {
@@ -54,9 +54,9 @@
       "measured": null
     },
     {
-      "id": "team_inferred.bookkeeping",
+      "id": "team_inferred.withdrawn",
       "status": "PASS",
-      "detail": "inferred 93, candidates 20, blank 325, agreeing signals 113",
+      "detail": "columns absent: True; signal file carries the career-team warning: True; register refers to team_inferred: False",
       "measured": null
     },
     {
@@ -147,8 +147,8 @@
     },
     {
       "id": "team.no_blank",
-      "status": "FAIL",
-      "detail": "325 rows with blank team (all source={'player_page'}); kept as team_missing, not filled [waiver does not match: measured {'rows': 325, 'sources': ['player_page']}, waived {'rows': 454, 'sources': ['player_page']}]",
+      "status": "WAIVED",
+      "detail": "325 rows with blank team (all source={'player_page'}); kept as team_missing, not filled [accepted exception: Re-accepted by user 2026-10-23 at 325 rows. Every one of the 325 has a frozen empty team cell (producer re-fetched all 325; each is an empty <td class=\"mr-team\"> with no text, badge or link) while the row keeps its ratings. 324 are the only row for their player-release; 1 is a shared Mike Williams 2013 row whose other stint carries Seattle. 1 appears on a team-season roster page. No imputed team is shipped. Verified here: 325 blank rows, 324 sole, 1 shared, ratings present, no team changed between the 03:58 and 04:06 bundles. No local team data exists for 2004-2008, where most of them sit.]",
       "measured": {
         "rows": 325,
         "sources": [
@@ -242,8 +242,8 @@
       }
     }
   ],
-  "fail_count": 1,
-  "waived_count": 2,
+  "fail_count": 0,
+  "waived_count": 3,
   "releases": [
     {
       "release": 1992,

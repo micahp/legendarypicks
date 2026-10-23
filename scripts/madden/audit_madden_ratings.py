@@ -30,11 +30,11 @@ import zipfile
 from collections import Counter, defaultdict
 
 EXPECTED_ROWS = 58743
-EXPECTED_COLUMNS = 73  # bundle 2026-10-23 03:58: 13 identity + 60 attributes
+EXPECTED_COLUMNS = 71  # bundle dc854cd2 (2026-10-23 04:06): 11 identity + 60 attributes
 EXPECTED_TEAM_PAGE_ROWS = 7387
 EXPECTED_PLAYERS = 12570
 IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team',
-            'team_inferred', 'team_inferred_ambiguous', 'POS', 'source', 'site_calculated', 'value_flags']
+            'POS', 'source', 'site_calculated', 'value_flags']
 
 # Madden POS (primary token before a slash) -> position group. Anything not listed is
 # reported as OTHER and fails the check: an unmapped position is never silently grouped.
@@ -190,29 +190,16 @@ def main():
                 f'{len(expected)} published register counts checked' +
                 (f'; mismatches: {mism}' if mism else ''))
 
-    # team_inferred is the producer's derived team for blank rows. Its bookkeeping must match the rows, and it
-    # must never sit on a row that already has a published team.
-    if 'checks/blank_signals.json' in zf.namelist():
-        sig = json.loads(zf.read('checks/blank_signals.json'))
-        inferred_n = sum(1 for r in rows if r['team_inferred'].strip())
-        cand_n = sum(1 for r in rows if r['team_inferred_ambiguous'].strip())
-        blank_n2 = sum(1 for r in rows if not r['team'].strip())
-        on_published = sum(1 for r in rows if r['team'].strip() and
-                           (r['team_inferred'].strip() or r['team_inferred_ambiguous'].strip()))
-        both = sum(1 for r in rows if r['team_inferred'].strip() and r['team_inferred_ambiguous'].strip())
-        problems = []
-        if sig['blank_rows'] != blank_n2:
-            problems.append(f"signals list {sig['blank_rows']} blank rows, rows have {blank_n2}")
-        if sig['rows_with_agreeing_signal'] != inferred_n + cand_n:
-            problems.append(f"agreeing signals {sig['rows_with_agreeing_signal']} vs inferred {inferred_n} + "
-                            f"candidates {cand_n}")
-        if on_published:
-            problems.append(f'{on_published} rows with a published team carry an inference')
-        if both:
-            problems.append(f'{both} rows carry both an inferred team and a candidate')
-        rep.add('team_inferred.bookkeeping', 'PASS' if not problems else 'FAIL',
-                f'inferred {inferred_n}, candidates {cand_n}, blank {blank_n2}, agreeing signals '
-                f"{sig['rows_with_agreeing_signal']}" + (f'; {problems}' if problems else ''))
+    # The producer withdrew team_inferred. The bundle must not carry it, the register must not point consumers at
+    # it, and the signal file must warn that its team is the player's career team, not the season team.
+    withdrawn = not any(c in header for c in ('team_inferred', 'team_inferred_ambiguous'))
+    signal_note = json.loads(zf.read('checks/blank_signals.json')).get('note', '') \
+        if 'checks/blank_signals.json' in zf.namelist() else ''
+    warned = 'WARNING' in signal_note and 'career' in signal_note
+    register_text = zf.read('out/source_limits.json').decode('utf-8') if 'out/source_limits.json' in zf.namelist() else ''
+    rep.add('team_inferred.withdrawn', 'PASS' if withdrawn and warned and 'team_inferred' not in register_text else 'FAIL',
+            f'columns absent: {withdrawn}; signal file carries the career-team warning: {warned}; '
+            f"register refers to team_inferred: {'team_inferred' in register_text}")
 
     # Every out/by_year/madden_<year>.csv must be the same multiset of rows as the long CSV slice.
     def row_key(d):

@@ -19,13 +19,12 @@
     {
       "check": "team.no_blank",
       "measured": {
-        "rows": 454,
+        "rows": 325,
         "sources": [
           "player_page"
         ]
       },
-      "reason": "453 of the 454 rows are the only row for their player-release, and no roster-page entry exists to backfill from. The 454th is Mike Williams 2013's blank row; his other row carries Seahawks. Verified here: 454 blank rows, 453 of them sole rows.",
-      "note": "Superseded for the 2026-10-23 03:36 bundle: 325 blank rows (register: 324 sole, 1 shared), not 454. The 129 rows that were blank before now carry a team or the free-agent marker fa. Not re-accepted yet; the measured values differ, so the waiver does not apply."
+      "reason": "Re-accepted by user 2026-10-23 at 325 rows. Every one of the 325 has a frozen empty team cell (producer re-fetched all 325; each is an empty <td class=\"mr-team\"> with no text, badge or link) while the row keeps its ratings. 324 are the only row for their player-release; 1 is a shared Mike Williams 2013 row whose other stint carries Seattle. 1 appears on a team-season roster page. No imputed team is shipped. Verified here: 325 blank rows, 324 sole, 1 shared, ratings present, no team changed between the 03:58 and 04:06 bundles. No local team data exists for 2004-2008, where most of them sit."
     },
     {
       "check": "presence.no_collapse_vs_neighbours",
@@ -50,6 +49,10 @@
     {
       "sha256": "9bfd717bba38c8179e4dfe6195e290fc7f7ecc73fc1ad494845a4838135f1747",
       "note": "03:58 bundle: 73 columns with team_inferred and team_inferred_ambiguous; published team unchanged; team.no_blank still 325 rows and needs re-acceptance; team_inferred checked against NFL depth/snap data: 2 agree, 4 disagree of 6 checkable"
+    },
+    {
+      "sha256": "dc854cd21bf06f7c265ea8330477b353bd7491f41479edfa4f332f7a1e3eb842",
+      "note": "04:06 bundle: team_inferred withdrawn; 71 columns; team.no_blank re-accepted at 325"
     }
   ]
 }
