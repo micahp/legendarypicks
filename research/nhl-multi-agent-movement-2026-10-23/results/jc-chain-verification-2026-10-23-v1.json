@@ -1,0 +1,3031 @@
+{
+  "all_checked": true,
+  "artifact_hashes": {
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-attribution-jcdiag-2026-10-23-v1.json": {
+      "bytes": 1942620,
+      "sha256": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag2-pair-persistence-2026-10-23-v1.json": {
+      "bytes": 5596565,
+      "sha256": "54dbb4e6322dc240ac42910f3c69bab9dfcd781c89e234fa2161d8068b8ed3ed"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag3-pair-shrink-2026-10-23-v1.json": {
+      "bytes": 10708907,
+      "sha256": "e2003ce0f3702f0d94d2915c512b74320ff4f2aed04b3af5137a3d01286051fd"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag4-additive-offset-2026-10-23-v1.json": {
+      "bytes": 1744131,
+      "sha256": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag5-delta-persistence-2026-10-23-v1.json": {
+      "bytes": 1310127,
+      "sha256": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag6-distance-conditioned-2026-10-23-v1.json": {
+      "bytes": 5144013,
+      "sha256": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag7-oos-pair-value-2026-10-23-v1.json": {
+      "bytes": 76326,
+      "sha256": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce"
+    },
+    "research/nhl-multi-agent-movement-2026-10-23/results/jc-diag8-identity-feasibility-2026-10-23-v1.json": {
+      "bytes": 1547298,
+      "sha256": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8"
+    }
+  },
+  "checker_sha256": "3b410b1be6e2825441a469872072f854820cba84c10e52b576ae900dab2cc31a",
+  "checks": [
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-attribution-jcdiag-2026-10-23-v1.json",
+      "observed": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": "54dbb4e6322dc240ac42910f3c69bab9dfcd781c89e234fa2161d8068b8ed3ed",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "observed": "54dbb4e6322dc240ac42910f3c69bab9dfcd781c89e234fa2161d8068b8ed3ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": "e2003ce0f3702f0d94d2915c512b74320ff4f2aed04b3af5137a3d01286051fd",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "observed": "e2003ce0f3702f0d94d2915c512b74320ff4f2aed04b3af5137a3d01286051fd",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag4-additive-offset-2026-10-23-v1.json",
+      "observed": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "observed": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "observed": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "observed": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 76326,
+      "field_path": "byte_count",
+      "name": "pinned_bytes_jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "observed": 76326,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "field_path": "SHA-256",
+      "name": "pinned_sha256_jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "observed": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 1547298,
+      "field_path": "byte_count",
+      "name": "pinned_bytes_jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "observed": 1547298,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "name": "memo_citation_01_sha256",
+      "observed": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_01_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/overall_reading",
+      "name": "memo_citation_01_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M1/equal_game_mean_ratio",
+      "name": "memo_citation_01_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M2/equal_game_mean_ratio",
+      "name": "memo_citation_01_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "name": "memo_citation_02_sha256",
+      "observed": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_02_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_02_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_02_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "name": "memo_citation_03_sha256",
+      "observed": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_03_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/verified_cross_game_identity_source",
+      "name": "memo_citation_03_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/qualifying_identity_source_count",
+      "name": "memo_citation_03_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-attribution-jcdiag-2026-10-23-v1.json",
+      "name": "memo_citation_04_sha256",
+      "observed": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_04_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/status",
+      "name": "memo_citation_04_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q6_constraint_activity_mechanism_screen/explicit_player_or_pair_activity_label_paths",
+      "name": "memo_citation_04_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q6_constraint_activity_mechanism_screen/linkable_activity_labels_found",
+      "name": "memo_citation_04_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1_pair_type_and_team_decomposition/role_labels",
+      "name": "memo_citation_04_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": "54dbb4e6322dc240ac42910f3c69bab9dfcd781c89e234fa2161d8068b8ed3ed",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "name": "memo_citation_05_sha256",
+      "observed": "54dbb4e6322dc240ac42910f3c69bab9dfcd781c89e234fa2161d8068b8ed3ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_05_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/P1_plus15_to_plus45_pair_persistence/summary/models/EqualTeam/M1/observed_share/equal_game_mean_available_games",
+      "name": "memo_citation_05_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/P1_plus15_to_plus45_pair_persistence/summary/models/EqualTeam/M1/permutation_null_mean/equal_game_mean_available_games",
+      "name": "memo_citation_05_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": "e2003ce0f3702f0d94d2915c512b74320ff4f2aed04b3af5137a3d01286051fd",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "name": "memo_citation_06_sha256",
+      "observed": "e2003ce0f3702f0d94d2915c512b74320ff4f2aed04b3af5137a3d01286051fd",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_06_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1_through_origin_slopes/by_horizon/45/EqualTeam/M1/equal_game_kappa/equal_game_mean",
+      "name": "memo_citation_06_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q3_fixed_slope_residual_structure_plus45/by_candidate/M1/overall_common_three_horizon_support/metrics/residual_ft/equal_game_mean",
+      "name": "memo_citation_06_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag4-additive-offset-2026-10-23-v1.json",
+      "name": "memo_citation_07_sha256",
+      "observed": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_07_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q3/transitions/plus15_to_plus45/summaries/M0/raw/observed_share/equal_game_mean",
+      "name": "memo_citation_07_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q3/transitions/plus15_to_plus45/summaries/M0/raw/permutation_null_mean/equal_game_mean",
+      "name": "memo_citation_07_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "name": "memo_citation_08_sha256",
+      "observed": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_08_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M1/summary/observed_minus_null/equal_game_mean",
+      "name": "memo_citation_08_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M2/summary/observed_minus_null/equal_game_mean",
+      "name": "memo_citation_08_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "name": "memo_citation_09_sha256",
+      "observed": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_09_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/overall_reading",
+      "name": "memo_citation_09_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M1/equal_game_mean_ratio",
+      "name": "memo_citation_09_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M2/equal_game_mean_ratio",
+      "name": "memo_citation_09_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "name": "memo_citation_10_sha256",
+      "observed": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_10_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_10_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_10_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/pair_row_count",
+      "name": "memo_citation_10_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "name": "memo_citation_11_sha256",
+      "observed": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_11_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/verified_cross_game_identity_source",
+      "name": "memo_citation_11_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/qualifying_identity_source_count",
+      "name": "memo_citation_11_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/unmatched_pair_count",
+      "name": "memo_citation_11_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "name": "memo_citation_12_sha256",
+      "observed": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_12_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M1/summary/observed_minus_null/equal_game_mean",
+      "name": "memo_citation_12_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M2/summary/observed_minus_null/equal_game_mean",
+      "name": "memo_citation_12_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_12_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/scored_start_count",
+      "name": "memo_citation_12_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_count",
+      "name": "memo_citation_12_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts_by_team",
+      "name": "memo_citation_12_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/equalteam_plus45_cells",
+      "name": "memo_citation_12_field_07",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_12_field_08",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag4-additive-offset-2026-10-23-v1.json",
+      "name": "memo_citation_13_sha256",
+      "observed": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_13_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_13_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/rollout_starts",
+      "name": "memo_citation_13_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_scored_starts",
+      "name": "memo_citation_13_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts",
+      "name": "memo_citation_13_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/equalteam_eligible_plus45_start_team_cells",
+      "name": "memo_citation_13_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_13_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "name": "memo_citation_14_sha256",
+      "observed": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_14_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M1/equal_game_mean_ratio",
+      "name": "memo_citation_14_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/primary_retained_fractions/M2/equal_game_mean_ratio",
+      "name": "memo_citation_14_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/overall_reading",
+      "name": "memo_citation_14_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_14_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_scored_start_count",
+      "name": "memo_citation_14_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_count",
+      "name": "memo_citation_14_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts_by_team",
+      "name": "memo_citation_14_field_07",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_equalteam_cells",
+      "name": "memo_citation_14_field_08",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_14_field_09",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag4-additive-offset-2026-10-23-v1.json",
+      "name": "memo_citation_15_sha256",
+      "observed": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_15_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_15_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/rollout_starts",
+      "name": "memo_citation_15_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_scored_starts",
+      "name": "memo_citation_15_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts",
+      "name": "memo_citation_15_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/equalteam_eligible_plus45_start_team_cells",
+      "name": "memo_citation_15_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_15_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "name": "memo_citation_16_sha256",
+      "observed": "9510d70d418c09da63a6218077b8c1e2b7cc9a11e3b7ed82e63a5457c1039099",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_16_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q4/distance_gradient/bins/M1",
+      "name": "memo_citation_16_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q4/distance_gradient/bins/M2",
+      "name": "memo_citation_16_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_16_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/population_statement",
+      "name": "memo_citation_16_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/scored_start_count",
+      "name": "memo_citation_16_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_count",
+      "name": "memo_citation_16_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts_by_team",
+      "name": "memo_citation_16_field_07",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/equalteam_plus45_cells",
+      "name": "memo_citation_16_field_08",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_16_field_09",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "name": "memo_citation_17_sha256",
+      "observed": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_17_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_17_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_17_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_17_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/pair_row_count",
+      "name": "memo_citation_17_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/raw_rollout_start_count",
+      "name": "memo_citation_17_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/scored_start_count",
+      "name": "memo_citation_17_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag4-additive-offset-2026-10-23-v1.json",
+      "name": "memo_citation_18_sha256",
+      "observed": "cf9681fa36416ce56996b66c1179c7f17a30a4ed544a0b07b5cd59d896cdc947",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_18_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/game_count",
+      "name": "memo_citation_18_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/rollout_starts",
+      "name": "memo_citation_18_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_scored_starts",
+      "name": "memo_citation_18_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/plus45_pair_counts",
+      "name": "memo_citation_18_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/equalteam_eligible_plus45_start_team_cells",
+      "name": "memo_citation_18_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/population/timebase",
+      "name": "memo_citation_18_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "name": "memo_citation_19_sha256",
+      "observed": "fa0d853a39cc33591e1157896572c40a58e374270cf26603cd56850ae6311dce",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_19_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_19_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit",
+      "name": "memo_citation_19_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-attribution-jcdiag-2026-10-23-v1.json",
+      "name": "memo_citation_20_sha256",
+      "observed": "f47910cde7e09865299667c1c2a6603d9c749e48fb1fed3e3eec0c7da5752e8c",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_20_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1_pair_type_and_team_decomposition/role_labels",
+      "name": "memo_citation_20_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q6_constraint_activity_mechanism_screen/linkable_activity_labels_found",
+      "name": "memo_citation_20_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "name": "memo_citation_21_sha256",
+      "observed": "8dfe2f551727484e43c612c5e2ede85ce0d237f4f479edb89e7ad1e5e59c62ed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_21_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/overall_reading",
+      "name": "memo_citation_21_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/candidate_readings/M1/Q3_state",
+      "name": "memo_citation_21_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q5/candidate_readings/M2/Q3_state",
+      "name": "memo_citation_21_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "field_path": "memo citation hash for research/nhl-multi-agent-movement-2026-10-23/results/jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "name": "memo_citation_22_sha256",
+      "observed": "5a7342f6ef63169b42390bf08ae3c216298bf45c649b8e414fddd8c6a61a34a8",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "citation field list",
+      "name": "memo_citation_22_has_field",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/candidate_source_paths",
+      "name": "memo_citation_22_field_01",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/raw_source_asset_counts/asset_files_by_type",
+      "name": "memo_citation_22_field_02",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/repository_identity_artifacts",
+      "name": "memo_citation_22_field_03",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/qualifying_identity_source_count",
+      "name": "memo_citation_22_field_04",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/pairwise_comparison_count",
+      "name": "memo_citation_22_field_05",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/numeric_raw_id_range_overlap_pairs",
+      "name": "memo_citation_22_field_06",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/numeric_jersey_value_overlap_pairs",
+      "name": "memo_citation_22_field_07",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/exact_numeric_raw_id_value_overlap_pairs",
+      "name": "memo_citation_22_field_08",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/exact_raw_id_literal_overlap_pairs",
+      "name": "memo_citation_22_field_09",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/tracking_id_overlap/composite_id_exact_overlap_pairs",
+      "name": "memo_citation_22_field_10",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q1/repository_identity_artifacts/0",
+      "name": "memo_citation_22_field_11",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "present",
+      "field_path": "/Q2/unmatched_distance_bins",
+      "name": "memo_citation_22_field_12",
+      "observed": "present",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-attribution-jcdiag-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag4-additive-offset-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "memo citation presence",
+      "name": "memo_cites_jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "descriptive attribution only; no candidate scoring, selection, policy change, or adoption",
+      "field_path": "/status",
+      "name": "D1_status",
+      "observed": "descriptive attribution only; no candidate scoring, selection, policy change, or adoption",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": false,
+      "field_path": "/Q6_constraint_activity_mechanism_screen/linkable_activity_labels_found",
+      "name": "D1_linkable_activity_labels",
+      "observed": false,
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": "not estimable",
+      "field_path": "/Q1_pair_type_and_team_decomposition/role_labels/status",
+      "name": "D1_role_label_status",
+      "observed": "not estimable",
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": [],
+      "field_path": "/Q1_pair_type_and_team_decomposition/role_labels/fields_found",
+      "name": "D1_role_fields_empty",
+      "observed": [],
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": [],
+      "field_path": "/Q6_constraint_activity_mechanism_screen/explicit_player_or_pair_activity_label_paths",
+      "name": "D1_activity_label_paths_empty",
+      "observed": [],
+      "passed": true
+    },
+    {
+      "artifact": "jc-attribution-jcdiag-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q6_constraint_activity_mechanism_screen/explicit_player_or_pair_activity_label_paths",
+      "name": "D1_activity_label_path_count",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": 0.8305414523474803,
+      "field_path": "/P1_plus15_to_plus45_pair_persistence/summary/models/EqualTeam/M1/observed_share/equal_game_mean_available_games",
+      "name": "D2_M1_observed_share",
+      "observed": 0.8305414523474803,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag2-pair-persistence-2026-10-23-v1.json",
+      "expected": 0.6201172173403376,
+      "field_path": "/P1_plus15_to_plus45_pair_persistence/summary/models/EqualTeam/M1/permutation_null_mean/equal_game_mean_available_games",
+      "name": "D2_M1_null_share",
+      "observed": 0.6201172173403376,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": 0.9187677553966251,
+      "field_path": "/Q1_through_origin_slopes/by_horizon/45/EqualTeam/M1/equal_game_kappa/equal_game_mean",
+      "name": "D3_M1_kappa_plus45",
+      "observed": 0.9187677553966251,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": 0.917783443374861,
+      "field_path": "/Q1_through_origin_slopes/by_horizon/45/EqualTeam/M2/equal_game_kappa/equal_game_mean",
+      "name": "D3_M2_kappa_plus45",
+      "observed": 0.917783443374861,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": -4.2508129518662505,
+      "field_path": "/Q3_fixed_slope_residual_structure_plus45/by_candidate/M1/overall_common_three_horizon_support/metrics/residual_ft/equal_game_mean",
+      "name": "D3_M1_residual",
+      "observed": -4.2508129518662505,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag3-pair-shrink-2026-10-23-v1.json",
+      "expected": -4.273154725868025,
+      "field_path": "/Q3_fixed_slope_residual_structure_plus45/by_candidate/M2/overall_common_three_horizon_support/metrics/residual_ft/equal_game_mean",
+      "name": "D3_M2_residual",
+      "observed": -4.273154725868025,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 0.7630291734469827,
+      "field_path": "/Q3/transitions/plus15_to_plus45/summaries/M0/raw/observed_share/equal_game_mean",
+      "name": "D4_M0_raw_share",
+      "observed": 0.7630291734469827,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 0.47819563088399875,
+      "field_path": "/Q3/transitions/plus15_to_plus45/summaries/M0/raw/permutation_null_mean/equal_game_mean",
+      "name": "D4_M0_null_share",
+      "observed": 0.47819563088399875,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/population/game_count",
+      "name": "D4_population_population_game_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 200,
+      "field_path": "/population/rollout_starts",
+      "name": "D4_population_population_rollout_starts",
+      "observed": 200,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 172,
+      "field_path": "/population/plus45_scored_starts",
+      "name": "D4_population_population_plus45_scored_starts",
+      "observed": 172,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/population/plus45_pair_counts/total",
+      "name": "D4_population_population_plus45_pair_counts_total",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 1064,
+      "field_path": "/population/plus45_pair_counts/Home",
+      "name": "D4_population_population_plus45_pair_counts_Home",
+      "observed": 1064,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 1100,
+      "field_path": "/population/plus45_pair_counts/Away",
+      "name": "D4_population_population_plus45_pair_counts_Away",
+      "observed": 1100,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": 142,
+      "field_path": "/population/equalteam_eligible_plus45_start_team_cells",
+      "name": "D4_population_population_equalteam_eligible_plus45_start_team_cells",
+      "observed": 142,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag4-additive-offset-2026-10-23-v1.json",
+      "expected": "ordinal Image Id increments, not seconds",
+      "field_path": "/population/timebase",
+      "name": "D4_population_population_timebase",
+      "observed": "ordinal Image Id increments, not seconds",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 0.38596525340316096,
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M1/summary/observed_minus_null/equal_game_mean",
+      "name": "D5_M1_corrected_delta_gap",
+      "observed": 0.38596525340316096,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 0.35597797432366096,
+      "field_path": "/Q2/transitions/plus15_to_plus45/models/M2/summary/observed_minus_null/equal_game_mean",
+      "name": "D5_M2_corrected_delta_gap",
+      "observed": 0.35597797432366096,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 4,
+      "field_path": "/Q4/distance_gradient/bins/M1",
+      "name": "D5_M1_distance_bin_count",
+      "observed": 4,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "field_path": "/Q4/distance_gradient/bins/M1/*/bin",
+      "name": "D5_M1_bin_labels",
+      "observed": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M1/1:2",
+      "name": "D5_M1_strictly_more_negative_bin_1_to_2",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M1/2:3",
+      "name": "D5_M1_strictly_more_negative_bin_2_to_3",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M1/3:4",
+      "name": "D5_M1_strictly_more_negative_bin_3_to_4",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -2.136556824375522,
+      "field_path": "/Q4/distance_gradient/bins/M1/bin1/metrics_ft/delta/equal_game_mean",
+      "name": "D5_M1_bin1_delta",
+      "observed": -2.136556824375522,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -6.456252087389958,
+      "field_path": "/Q4/distance_gradient/bins/M1/bin4/metrics_ft/delta/equal_game_mean",
+      "name": "D5_M1_bin4_delta",
+      "observed": -6.456252087389958,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 4,
+      "field_path": "/Q4/distance_gradient/bins/M2",
+      "name": "D5_M2_distance_bin_count",
+      "observed": 4,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "field_path": "/Q4/distance_gradient/bins/M2/*/bin",
+      "name": "D5_M2_bin_labels",
+      "observed": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M2/1:2",
+      "name": "D5_M2_strictly_more_negative_bin_1_to_2",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M2/2:3",
+      "name": "D5_M2_strictly_more_negative_bin_2_to_3",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/Q4/distance_gradient/bins/M2/3:4",
+      "name": "D5_M2_strictly_more_negative_bin_3_to_4",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -2.1566900410137624,
+      "field_path": "/Q4/distance_gradient/bins/M2/bin1/metrics_ft/delta/equal_game_mean",
+      "name": "D5_M2_bin1_delta",
+      "observed": -2.1566900410137624,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -6.527259047160311,
+      "field_path": "/Q4/distance_gradient/bins/M2/bin4/metrics_ft/delta/equal_game_mean",
+      "name": "D5_M2_bin4_delta",
+      "observed": -6.527259047160311,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -4.319695263014435,
+      "field_path": "/Q4/distance_gradient/gradient_comparison/M1/delta_bin4_minus_bin1_ft",
+      "name": "D5_M1_bin1_to_bin4_delta",
+      "observed": -4.319695263014435,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": -4.370569006146549,
+      "field_path": "/Q4/distance_gradient/gradient_comparison/M2/delta_bin4_minus_bin1_ft",
+      "name": "D5_M2_bin1_to_bin4_delta",
+      "observed": -4.370569006146549,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/population/game_count",
+      "name": "D5_population_population_game_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 172,
+      "field_path": "/population/scored_start_count",
+      "name": "D5_population_population_scored_start_count",
+      "observed": 172,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/population/plus45_pair_count",
+      "name": "D5_population_population_plus45_pair_count",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 1064,
+      "field_path": "/population/plus45_pair_counts_by_team/Home",
+      "name": "D5_population_population_plus45_pair_counts_by_team_Home",
+      "observed": 1064,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 1100,
+      "field_path": "/population/plus45_pair_counts_by_team/Away",
+      "name": "D5_population_population_plus45_pair_counts_by_team_Away",
+      "observed": 1100,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": 142,
+      "field_path": "/population/equalteam_plus45_cells",
+      "name": "D5_population_population_equalteam_plus45_cells",
+      "observed": 142,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": "ordinal Image Id increments, not seconds",
+      "field_path": "/population/timebase",
+      "name": "D5_population_population_timebase",
+      "observed": "ordinal Image Id increments, not seconds",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag5-delta-persistence-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/population/population_statement",
+      "name": "D5_population_statement_confirms_starts",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "mixed",
+      "field_path": "/Q5/overall_reading",
+      "name": "D6_registered_reading",
+      "observed": "mixed",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 0.8933858227557131,
+      "field_path": "/Q5/primary_retained_fractions/M1/equal_game_mean_ratio",
+      "name": "D6_M1_retained_raw_ratio",
+      "observed": 0.8933858227557131,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 0.9442712649286923,
+      "field_path": "/Q5/primary_retained_fractions/M2/equal_game_mean_ratio",
+      "name": "D6_M2_retained_raw_ratio",
+      "observed": 0.9442712649286923,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/population/game_count",
+      "name": "D6_population_population_game_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 172,
+      "field_path": "/population/rollout_start_count",
+      "name": "D6_population_population_rollout_start_count",
+      "observed": 172,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 172,
+      "field_path": "/population/plus45_scored_start_count",
+      "name": "D6_population_population_plus45_scored_start_count",
+      "observed": 172,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/population/plus45_pair_count",
+      "name": "D6_population_population_plus45_pair_count",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 1064,
+      "field_path": "/population/plus45_pair_counts_by_team/Home",
+      "name": "D6_population_population_plus45_pair_counts_by_team_Home",
+      "observed": 1064,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 1100,
+      "field_path": "/population/plus45_pair_counts_by_team/Away",
+      "name": "D6_population_population_plus45_pair_counts_by_team_Away",
+      "observed": 1100,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": 142,
+      "field_path": "/population/plus45_equalteam_cells",
+      "name": "D6_population_population_plus45_equalteam_cells",
+      "observed": 142,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": "ordinal Image Id increments, not seconds",
+      "field_path": "/population/timebase",
+      "name": "D6_population_population_timebase",
+      "observed": "ordinal Image Id increments, not seconds",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag6-distance-conditioned-2026-10-23-v1.json",
+      "expected": true,
+      "field_path": "/population/statement",
+      "name": "D6_population_statement_confirms_starts",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit",
+      "name": "D7_M1_fold_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-11.Team.A.@.Team.D_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 186,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-11.Team.A.@.Team.D_B_unseen",
+      "observed": 186,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-11.Team.A.@.Team.D_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-17.Team.F.@.Team.L_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 158,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-17.Team.F.@.Team.L_B_unseen",
+      "observed": 158,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-17.Team.F.@.Team.L_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-24.Team.B.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 274,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-24.Team.B.@.Team.A_B_unseen",
+      "observed": 274,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-24.Team.B.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-24.Team.E.@.Team.D_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 238,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-24.Team.E.@.Team.D_B_unseen",
+      "observed": 238,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-24.Team.E.@.Team.D_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-28.Team.C.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 243,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-28.Team.C.@.Team.A_B_unseen",
+      "observed": 243,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-28.Team.C.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-10-29.Team.G.@.Team.L_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 220,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-10-29.Team.G.@.Team.L_B_unseen",
+      "observed": 220,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-10-29.Team.G.@.Team.L_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-11-02.Team.D.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 227,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-11-02.Team.D.@.Team.A_B_unseen",
+      "observed": 227,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-11-02.Team.D.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-11-16.Team.H.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 166,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-11-16.Team.H.@.Team.K_B_unseen",
+      "observed": 166,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-11-16.Team.H.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-11-19.Team.I.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 249,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-11-19.Team.I.@.Team.K_B_unseen",
+      "observed": 249,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-11-19.Team.I.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M1_2025-11-28.Team.J.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 203,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M1_2025-11-28.Team.J.@.Team.K_B_unseen",
+      "observed": 203,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M1_2025-11-28.Team.J.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/B_nonzero_weight",
+      "name": "D7_M1_B_nonzero_total",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/B_unseen_or_zero_weight",
+      "name": "D7_M1_B_unseen_total",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/heldout_pair_count",
+      "name": "D7_M1_heldout_pair_total",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit",
+      "name": "D7_M2_fold_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-11.Team.A.@.Team.D_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 186,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-11.Team.A.@.Team.D_B_unseen",
+      "observed": 186,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-11.Team.A.@.Team.D/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-11.Team.A.@.Team.D_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-17.Team.F.@.Team.L_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 158,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-17.Team.F.@.Team.L_B_unseen",
+      "observed": 158,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-17.Team.F.@.Team.L/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-17.Team.F.@.Team.L_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-24.Team.B.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 274,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-24.Team.B.@.Team.A_B_unseen",
+      "observed": 274,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.B.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-24.Team.B.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-24.Team.E.@.Team.D_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 238,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-24.Team.E.@.Team.D_B_unseen",
+      "observed": 238,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-24.Team.E.@.Team.D/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-24.Team.E.@.Team.D_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-28.Team.C.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 243,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-28.Team.C.@.Team.A_B_unseen",
+      "observed": 243,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-28.Team.C.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-28.Team.C.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-10-29.Team.G.@.Team.L_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 220,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-10-29.Team.G.@.Team.L_B_unseen",
+      "observed": 220,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-10-29.Team.G.@.Team.L/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-10-29.Team.G.@.Team.L_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-11-02.Team.D.@.Team.A_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 227,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-11-02.Team.D.@.Team.A_B_unseen",
+      "observed": 227,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-02.Team.D.@.Team.A/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-11-02.Team.D.@.Team.A_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-11-16.Team.H.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 166,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-11-16.Team.H.@.Team.K_B_unseen",
+      "observed": 166,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-16.Team.H.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-11-16.Team.H.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-11-19.Team.I.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 249,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-11-19.Team.I.@.Team.K_B_unseen",
+      "observed": 249,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-19.Team.I.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-11-19.Team.I.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/B_nonzero_weight",
+      "name": "D7_M2_2025-11-28.Team.J.@.Team.K_B_nonzero",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 203,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/B_unseen_or_zero_weight",
+      "name": "D7_M2_2025-11-28.Team.J.@.Team.K_B_unseen",
+      "observed": 203,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/2025-11-28.Team.J.@.Team.K/heldout_unseen_and_weight_counts/C_training_mean_used",
+      "name": "D7_M2_2025-11-28.Team.J.@.Team.K_C_training_mean",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/B_nonzero_weight",
+      "name": "D7_M2_B_nonzero_total",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/B_unseen_or_zero_weight",
+      "name": "D7_M2_B_unseen_total",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/heldout_pair_count",
+      "name": "D7_M2_heldout_pair_total",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2.1137048754904875,
+      "field_path": "derived.M1.tau2_min; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_tau2_min",
+      "observed": 2.1137048754904875,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2.933435460884494,
+      "field_path": "derived.M1.tau2_max; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_tau2_max",
+      "observed": 2.933435460884494,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 3.7829577014139035,
+      "field_path": "derived.M1.within_min; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_within_min",
+      "observed": 3.7829577014139035,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 4.791856605302006,
+      "field_path": "derived.M1.within_max; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_within_max",
+      "observed": 4.791856605302006,
+      "passed": true,
+      "tolerance": 1e-10
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2.4444585166,
+      "field_path": "derived.M1.mean_tau2; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_mean_tau2_primary_gate",
+      "observed": 2.4444585166471624,
+      "passed": true,
+      "tolerance": 0.001
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 4.2856119544,
+      "field_path": "derived.M1.mean_within_variance; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_mean_within_primary_gate",
+      "observed": 4.285611954400953,
+      "passed": true,
+      "tolerance": 0.001
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0.363214,
+      "field_path": "derived.M1.ICC_from_M1_means; source=Q1/candidates/M1/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M1_ICC_primary_gate",
+      "observed": 0.3632144012700764,
+      "passed": true,
+      "tolerance": 5e-07
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2.4441426679,
+      "field_path": "derived.M2.mean_tau2; source=Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M2_mean_tau2_informational",
+      "observed": 2.4441426678674176,
+      "passed": true,
+      "tolerance": 1e-09
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 4.4076516409,
+      "field_path": "derived.M2.mean_within_variance; source=Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M2_mean_within_informational",
+      "observed": 4.407651640861156,
+      "passed": true,
+      "tolerance": 1e-09
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0.356716,
+      "field_path": "derived.M2.ICC_from_M2_means; source=Q1/candidates/M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_M2_ICC_informational",
+      "observed": 0.35671570945347825,
+      "passed": true,
+      "tolerance": 5e-07
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 2.4443005923,
+      "field_path": "derived.M1+M2.mean_tau2; source=Q1/candidates/M1+M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_pooled_mean_tau2_informational",
+      "observed": 2.44430059225729,
+      "passed": true,
+      "tolerance": 1e-09
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 4.3466317976,
+      "field_path": "derived.M1+M2.mean_within_variance; source=Q1/candidates/M1+M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_pooled_mean_within_informational",
+      "observed": 4.346631797631055,
+      "passed": true,
+      "tolerance": 1e-09
+    },
+    {
+      "artifact": "jc-diag7-oos-pair-value-2026-10-23-v1.json",
+      "expected": 0.359936,
+      "field_path": "derived.M1+M2.ICC_from_pooled_means; source=Q1/candidates/M1+M2/outer_fold_training_and_fallback_audit/*/variance_components",
+      "name": "D7_pooled_ICC_informational",
+      "observed": 0.3599359339664223,
+      "passed": true,
+      "tolerance": 5e-07
+    },
+    {
+      "artifact": "memo",
+      "expected": true,
+      "field_path": "ICC gate label",
+      "name": "D7_primary_gate_label_is_M1_only",
+      "observed": true,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "none",
+      "field_path": "/Q1/verified_cross_game_identity_source",
+      "name": "D8_Q1_verified_cross_game_identity_source",
+      "observed": "none",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/qualifying_identity_source_count",
+      "name": "D8_Q1_qualifying_identity_source_count",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 69,
+      "field_path": "/Q1/research_data_file_count",
+      "name": "D8_Q1_research_data_file_count",
+      "observed": 69,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 1586547032,
+      "field_path": "/Q1/research_data_bytes_total",
+      "name": "D8_Q1_research_data_bytes_total",
+      "observed": 1586547032,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 45,
+      "field_path": "/Q1/tracking_id_overlap/pairwise_comparison_count",
+      "name": "D8_Q1_tracking_id_overlap_pairwise_comparison_count",
+      "observed": 45,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 45,
+      "field_path": "/Q1/tracking_id_overlap/numeric_jersey_value_overlap_pairs",
+      "name": "D8_Q1_tracking_id_overlap_numeric_jersey_value_overlap_pairs",
+      "observed": 45,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 45,
+      "field_path": "/Q1/tracking_id_overlap/exact_numeric_raw_id_value_overlap_pairs",
+      "name": "D8_Q1_tracking_id_overlap_exact_numeric_raw_id_value_overlap_pairs",
+      "observed": 45,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 45,
+      "field_path": "/Q1/tracking_id_overlap/exact_raw_id_literal_overlap_pairs",
+      "name": "D8_Q1_tracking_id_overlap_exact_raw_id_literal_overlap_pairs",
+      "observed": 45,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 0,
+      "field_path": "/Q1/tracking_id_overlap/composite_id_exact_overlap_pairs",
+      "name": "D8_Q1_tracking_id_overlap_composite_id_exact_overlap_pairs",
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 2164,
+      "field_path": "/Q2/unmatched_pair_count",
+      "name": "D8_Q2_unmatched_pair_count",
+      "observed": 2164,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 114,
+      "field_path": "/provenance_gate/passed_count",
+      "name": "D8_provenance_gate_passed_count",
+      "observed": 114,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 114,
+      "field_path": "/provenance_gate/check_count",
+      "name": "D8_provenance_gate_check_count",
+      "observed": 114,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 57,
+      "field_path": "/Q1/candidate_source_paths",
+      "name": "D8_candidate_path_count",
+      "observed": 57,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 4,
+      "field_path": "/Q1/repository_identity_artifacts",
+      "name": "D8_repository_identity_artifact_count",
+      "observed": 4,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/Q1/raw_source_asset_counts/asset_files_by_type/events",
+      "name": "D8_raw_events_file_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 10,
+      "field_path": "/Q1/raw_source_asset_counts/asset_files_by_type/shifts",
+      "name": "D8_raw_shifts_file_count",
+      "observed": 10,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 33,
+      "field_path": "/Q1/raw_source_asset_counts/asset_files_by_type/tracking",
+      "name": "D8_raw_tracking_file_count",
+      "observed": 33,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 53,
+      "field_path": "/Q1/raw_source_asset_counts/asset_files_by_type/{events,shifts,tracking}",
+      "name": "D8_raw_stathletes_file_count",
+      "observed": 53,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 1038,
+      "field_path": "/Q1/repository_identity_artifacts/0/row_count",
+      "name": "D8_published_identity_entry_count",
+      "observed": 1038,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": "nhl_id",
+      "field_path": "/Q1/repository_identity_artifacts/0/persistent_athlete_id_field",
+      "name": "D8_published_identity_field",
+      "observed": "nhl_id",
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": false,
+      "field_path": "/Q1/repository_identity_artifacts/0/game_identifier_present",
+      "name": "D8_published_identity_no_game_id",
+      "observed": false,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": false,
+      "field_path": "/Q1/repository_identity_artifacts/0/direct_tracking_identity_crosswalk",
+      "name": "D8_published_identity_no_track_crosswalk",
+      "observed": false,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/1/unmatched",
+      "name": "D8_bin_1_unmatched",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/1/total",
+      "name": "D8_bin_1_total",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/2/unmatched",
+      "name": "D8_bin_2_unmatched",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/2/total",
+      "name": "D8_bin_2_total",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/3/unmatched",
+      "name": "D8_bin_3_unmatched",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/3/total",
+      "name": "D8_bin_3_total",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/4/unmatched",
+      "name": "D8_bin_4_unmatched",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "jc-diag8-identity-feasibility-2026-10-23-v1.json",
+      "expected": 541,
+      "field_path": "/Q2/unmatched_distance_bins/4/total",
+      "name": "D8_bin_4_total",
+      "observed": 541,
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.8305414523",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.8305414523",
+      "observed": "0.8305414523",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.6201172173",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.6201172173",
+      "observed": "0.6201172173",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.9187677554",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.9187677554",
+      "observed": "0.9187677554",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "−4.2508129519",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_−4.2508129519",
+      "observed": "−4.2508129519",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.7630291734",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.7630291734",
+      "observed": "0.7630291734",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.4781956309",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.4781956309",
+      "observed": "0.4781956309",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.3859652534",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.3859652534",
+      "observed": "0.3859652534",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.3559779743",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.3559779743",
+      "observed": "0.3559779743",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.8933858228",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.8933858228",
+      "observed": "0.8933858228",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.9442712649",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.9442712649",
+      "observed": "0.9442712649",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "−2.1365568244",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_−2.1365568244",
+      "observed": "−2.1365568244",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "−6.4562520874",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_−6.4562520874",
+      "observed": "−6.4562520874",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "−2.1566900410",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_−2.1566900410",
+      "observed": "−2.1566900410",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "−6.5272590472",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_−6.5272590472",
+      "observed": "−6.5272590472",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2.1137048755",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2.1137048755",
+      "observed": "2.1137048755",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2.9334354609",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2.9334354609",
+      "observed": "2.9334354609",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "3.7829577014",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_3.7829577014",
+      "observed": "3.7829577014",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "4.7918566053",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_4.7918566053",
+      "observed": "4.7918566053",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2.4444585166",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2.4444585166",
+      "observed": "2.4444585166",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "4.2856119544",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_4.2856119544",
+      "observed": "4.2856119544",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.363214",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.363214",
+      "observed": "0.363214",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2.4441426679",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2.4441426679",
+      "observed": "2.4441426679",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "4.4076516409",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_4.4076516409",
+      "observed": "4.4076516409",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.356716",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.356716",
+      "observed": "0.356716",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2.4443005923",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2.4443005923",
+      "observed": "2.4443005923",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "4.3466317976",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_4.3466317976",
+      "observed": "4.3466317976",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "0.359936",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_0.359936",
+      "observed": "0.359936",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "57 candidate sources",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_57 candidate sources",
+      "observed": "57 candidate sources",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "53 raw Stathletes",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_53 raw Stathletes",
+      "observed": "53 raw Stathletes",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "4 repository identity artifacts",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_4 repository identity artifacts",
+      "observed": "4 repository identity artifacts",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "1,038",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_1,038",
+      "observed": "1,038",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "45 pairwise",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_45 pairwise",
+      "observed": "45 pairwise",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "2,164",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_2,164",
+      "observed": "2,164",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "541/541",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_541/541",
+      "observed": "541/541",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "142 EqualTeam",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_142 EqualTeam",
+      "observed": "142 EqualTeam",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "200 starts",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_200 starts",
+      "observed": "200 starts",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "172 group-scored",
+      "field_path": "required cited value/text",
+      "name": "memo_contains_172 group-scored",
+      "observed": "172 group-scored",
+      "passed": true
+    },
+    {
+      "artifact": "memo",
+      "expected": "verified 369/369; exit code 0",
+      "field_path": "last non-empty line",
+      "name": "memo_final_verification_line",
+      "observed": "verified 369/369; exit code 0",
+      "passed": true
+    }
+  ],
+  "memo_sha256": "f8541bc6e5bc77a8b90ac93dcbf2e9dc6cfcd8f5e23c520534c0ee06d8190a05",
+  "schema_version": 1
+}
