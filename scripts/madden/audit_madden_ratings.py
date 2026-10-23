@@ -30,6 +30,7 @@ import zipfile
 from collections import Counter, defaultdict
 
 EXPECTED_ROWS = 58743
+EXPECTED_COLUMNS = 73  # docs/MADDEN-RATINGS-DATASET-1992-2027.md says 73; the archive has 68
 EXPECTED_TEAM_PAGE_ROWS = 7387
 EXPECTED_PLAYERS = 12570
 IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'nfl_season', 'team', 'POS', 'source']
@@ -101,9 +102,9 @@ def main():
     # 1. Shape
     rep.add('shape.header_identity', 'PASS' if header[:8] == IDENTITY else 'FAIL',
             f'first 8 columns = {header[:8]}')
-    rep.add('shape.columns', 'INFO',
-            f'{len(header)} columns total = {len(IDENTITY)} identity + {len(ATTR)} attributes '
-            f'(spec says 73 columns and 5 identity: measured {len(header)} and {len(IDENTITY)})')
+    rep.add('shape.columns_match_spec', 'PASS' if len(header) == EXPECTED_COLUMNS else 'FAIL',
+            f'{len(header)} columns = {len(IDENTITY)} identity + {len(ATTR)} attributes; '
+            f'spec says {EXPECTED_COLUMNS} columns and 5 identity')
     rep.add('shape.rows', 'PASS' if len(rows) == EXPECTED_ROWS else 'FAIL',
             f'{len(rows)} rows vs expected {EXPECTED_ROWS}')
 
@@ -182,6 +183,13 @@ def main():
     norm_teams = {t for t in low}
     rep.add('team.distinct_normalized', 'INFO',
             f'{len(norm_teams)} distinct non-blank team slugs after lowercasing (current NFL franchises: 32)')
+    teams_by_rel = defaultdict(set)
+    for r in rows:
+        if r['team'].strip():
+            teams_by_rel[int(r['madden_release'])].add(r['team'].strip().lower())
+    short = {y: len(teams_by_rel[y]) for y in range(2003, 2028) if len(teams_by_rel[y]) != 32}
+    rep.add('team.32_franchises_2003_2027', 'PASS' if not short else 'FAIL',
+            'releases 2003-2027 whose team count is not 32: ' + (str(short) if short else 'none'))
 
     # 7. nfl_season: text in player pages, blank in team pages
     season_bad = []
@@ -227,6 +235,13 @@ def main():
             f'{len(multi_name_ids)} player_ids carry more than one player_name')
     rep.add('identity.player_count', 'PASS' if len(names_per_id) == EXPECTED_PLAYERS else 'FAIL',
             f'{len(names_per_id)} distinct player_id vs spec {EXPECTED_PLAYERS}')
+    malformed_re = re.compile(r'\s-\s|\s\(|\||\s(?:HB|WR|QB|RB|TE|OL|DL|LB|DB|CB|SS|FS|S|K|P|OT|OG|DE|DT|LT|RT|LG|RG|FB|LS|KR|PR|C|G|T)$')
+    malformed_rows = [r for r in rows if malformed_re.search(r['player_name'])]
+    malformed_ids = {r['player_id'] for r in malformed_rows}
+    malformed_examples = sorted({r['player_name'] for r in malformed_rows})[:2]
+    rep.add('identity.name_is_person_only', 'PASS' if not malformed_rows else 'FAIL',
+            f'{len(malformed_ids)} player_ids ({len(malformed_rows)} rows) carry position or team text in '
+            f'player_name, e.g. {malformed_examples}')
     homonyms = {k: v for k, v in ids_per_name.items() if len(v) > 1}
     rep.add('identity.homonym_names', 'INFO',
             f'{len(homonyms)} normalized names map to more than one player_id (review queue, not merged)')

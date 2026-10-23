@@ -545,5 +545,6 @@
       "exact_share": 0.907,
       "mean_abs_diff": 0.78
     }
-  }
+  },
+  "same_release_absent_rows": 475
 }

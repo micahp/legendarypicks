@@ -16,9 +16,9 @@
       "detail": "first 8 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'nfl_season', 'team', 'POS', 'source']"
     },
     {
-      "id": "shape.columns",
-      "status": "INFO",
-      "detail": "68 columns total = 8 identity + 60 attributes (spec says 73 columns and 5 identity: measured 68 and 8)"
+      "id": "shape.columns_match_spec",
+      "status": "FAIL",
+      "detail": "68 columns = 8 identity + 60 attributes; spec says 73 columns and 5 identity"
     },
     {
       "id": "shape.rows",
@@ -76,6 +76,11 @@
       "detail": "32 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)"
     },
     {
+      "id": "team.32_franchises_2003_2027",
+      "status": "FAIL",
+      "detail": "releases 2003-2027 whose team count is not 32: {2027: 30}"
+    },
+    {
       "id": "season.consistent_with_release_minus_1",
       "status": "PASS",
       "detail": "51356 non-blank nfl_season values agree with release-1 (0 disagree); 7387 blank values are derived from release-1"
@@ -99,6 +104,11 @@
       "id": "identity.player_count",
       "status": "PASS",
       "detail": "12570 distinct player_id vs spec 12570"
+    },
+    {
+      "id": "identity.name_is_person_only",
+      "status": "FAIL",
+      "detail": "24 player_ids (42 rows) carry position or team text in player_name, e.g. ['Aaron Wallace LLB - Raiders', 'Andre Coleman TE - Chargers']"
     },
     {
       "id": "identity.homonym_names",
@@ -126,7 +136,7 @@
       "detail": "releases with attribute cells per row under half of both neighbours: 1998 (4.4 vs 10.7/9.7), 2010 (12.2 vs 38.4/37.1), 2012 (16.5 vs 37.1/37.6)"
     }
   ],
-  "fail_count": 6,
+  "fail_count": 9,
   "releases": [
     {
       "release": 1992,

@@ -124,11 +124,15 @@ def main():
         print(f"  {col:>5} -> {v['archive_column']:<6} pairs {v['pairs']:>5}  exact {v['exact_share']:.3f}  "
               f"mean|diff| {v['mean_abs_diff']}")
 
+    absent = sum(e['not_in_archive'] for e in summary['editions'].values())
+    summary['same_release_absent_rows'] = absent
+    print(f'FAIL: {absent} League Station rows have no same-release archive match' if absent else
+          'PASS: every League Station row has a same-release archive match')
     with open(args.summary_json, 'w') as f:
         json.dump(summary, f, indent=2)
         f.write('\n')
     print(f'wrote {args.summary_json}')
-    return 0
+    return 1 if absent else 0
 
 
 if __name__ == '__main__':
