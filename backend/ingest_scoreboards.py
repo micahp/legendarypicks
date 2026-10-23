@@ -41,6 +41,7 @@ Printed per host on every run, always, per rung 6 of the `espn-request-budget`
 skill. A job whose cost nobody can see is one nobody can size later.
 """
 import argparse
+from contextlib import closing
 import datetime as dt
 import fcntl
 import os
@@ -320,6 +321,21 @@ def _refresh(league, date, verbose=True):
             scoreboard_store.save_tennis_draws(league, draws, source="espn", observed_on=date)
     except Exception as exc:
         return 0, f"{type(exc).__name__}: {exc}"
+
+    # A tracked tournament's field is wider than the top-150 spine. Bring the spine up to the
+    # slate in the same pass (no request: the athletes are in the games just fetched), or the
+    # model cannot project qualifiers and lucky losers. A failure here must not lose the slate.
+    if league in ("atp", "wta") and games:
+        try:
+            import tennis_event_spine
+            with closing(scoreboard_store._db()) as spine_con:
+                spine = tennis_event_spine.sync_event_players(league, games, spine_con)
+                spine_con.commit()
+            if verbose and (spine["inserted"] or spine["adopted"] or spine["bound"] or spine["unresolved"]):
+                print(f"  spine {league:6} {date}  +{spine['inserted']} new, {spine['adopted']} bound, "
+                      f"{spine['bound']} sackmann, {spine['unresolved']} unresolved")
+        except Exception as exc:
+            print(f"  spine sync failed league={league} date={date}: {type(exc).__name__}: {exc}")
 
     # "Write the preview whenever we find out about the game." This job is now
     # where we find out, so the kick moved here out of the request handler --
