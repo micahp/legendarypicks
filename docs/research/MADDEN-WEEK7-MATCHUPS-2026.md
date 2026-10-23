@@ -19,6 +19,23 @@ stored).
 - **The Patriots–Bears retrospective is not a fair test.** The Madden snapshot was scraped on Oct 22, the day
   of that game. The official lock missed the direction.
 
+## Bundle update: 03:36 archive (sha256 642777…758)
+
+The archive was rebuilt after the freeze. The v1 freeze (`a12eb4d9…`) and its outputs are unchanged. The v2 run
+(`madden-week7-frozen-v2-2026-10-23.json`, `madden-week7-matchups-2026-v2.json`,
+`madden-week7-sensitivity-2026-v2.json`) reflects the new bundle:
+
+- **Ratings are unchanged.** No attribute cell differs from the previous bundle. Team units and game dimensions are
+  identical.
+- **Giants and Jets rows now carry team badges.** Four starters move from name-only review into name, team and
+  position review. They stay out of the primary run.
+- **One sensitivity result changes:** NYG @ HOU moves from -2.01 to -0.62 in the review-included run. The LP
+  direction goes from conflict to neutral.
+- **Team agreement with the snapshot** for the 512 matched starters: 509 agree, 3 disagree. Kayshon Boutte (NE vs HOU),
+  Atonio Mafi (LV vs TEN) and Lucas Patrick (NYG vs WSH, newly filled) are the disagreements.
+
+The Phase 1 rows below describe the v1 freeze. The Giants and Jets line is superseded by this note.
+
 ## Phase 1: verification
 
 | Check | Result |
