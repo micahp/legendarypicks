@@ -30,11 +30,11 @@ import zipfile
 from collections import Counter, defaultdict
 
 EXPECTED_ROWS = 58743
-EXPECTED_COLUMNS = 70  # README: 10 identity + 60 attributes; the repo spec doc still says 73
+EXPECTED_COLUMNS = 71  # README (bundle 2026-10-23 03:36): 11 identity + 60 attributes
 EXPECTED_TEAM_PAGE_ROWS = 7387
 EXPECTED_PLAYERS = 12570
 IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS',
-            'source', 'site_calculated']
+            'source', 'site_calculated', 'value_flags']
 
 # Madden POS (primary token before a slash) -> position group. Anything not listed is
 # reported as OTHER and fails the check: an unmapped position is never silently grouped.
@@ -132,7 +132,7 @@ def main():
             f'first {len(IDENTITY)} columns = {header[:len(IDENTITY)]}')
     rep.add('shape.columns', 'PASS' if len(header) == EXPECTED_COLUMNS else 'FAIL',
             f'{len(header)} columns = {len(IDENTITY)} identity + {len(ATTR)} attributes '
-            f'(expected {EXPECTED_COLUMNS}: 10 identity + 60 attributes)')
+            f'(expected {EXPECTED_COLUMNS}: {len(IDENTITY)} identity + 60 attributes)')
     rep.add('shape.rows', 'PASS' if len(rows) == EXPECTED_ROWS else 'FAIL',
             f'{len(rows)} rows vs expected {EXPECTED_ROWS}')
     readme = zf.read('README.md').decode('utf-8')
@@ -141,9 +141,13 @@ def main():
     spec_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'docs',
                              'MADDEN-RATINGS-DATASET-1992-2027.md')
     spec_text = open(spec_path, encoding='utf-8').read() if os.path.exists(spec_path) else ''
-    rep.add('spec.column_count', 'FAIL' if ('73 columns' in spec_text or not spec_text) else 'PASS',
-            f'repo spec doc {"says 73 columns" if "73 columns" in spec_text else "missing or unreadable" if not spec_text else "agrees"}; '
-            f'the file has {len(header)}')
+    # Every column count the spec states must equal the file's count.
+    stated = sorted({int(n) for n in re.findall(r'(\d+) columns', spec_text)} |
+                    {int(n) for n in re.findall(r'identity columns = (\d+)', spec_text)})
+    stale = [n for n in stated if n != len(header)]
+    rep.add('spec.column_count', 'PASS' if spec_text and stated and not stale else 'FAIL',
+            f'repo spec doc states column counts {stated}; the file has {len(header)}'
+            + (f'; stale: {stale}' if stale else ''))
 
     # 2. Oracle: coverage.json (publisher-side counts are ours, so compare to the archive's own file)
     per_rel_csv = Counter(r['madden_release'] for r in rows)
@@ -152,6 +156,36 @@ def main():
     rep.add('coverage.per_release_rows', 'PASS' if not mism else 'FAIL',
             f'{len(per_rel_cov) - len(mism)} of {len(per_rel_cov)} releases match coverage.json' +
             (f'; mismatches {mism}' if mism else ''))
+
+    # The archive ships its own register of known limits. Each count it publishes must match the rows.
+    if 'out/source_limits.json' not in zf.namelist():
+        rep.add('register.present', 'FAIL', 'out/source_limits.json is missing from the bundle')
+    else:
+        register = json.loads(zf.read('out/source_limits.json'))
+        limits = {it['check']: it for it in register['known_limits']}
+        blank_n = sum(1 for r in rows if not r['team'].strip())
+        fa_n = sum(1 for r in rows if r['team'].strip().lower() == 'fa')
+        oor_n = sum(1 for r in rows for a in ATTR
+                    if r[a].strip() and re.fullmatch(r'-?\d+', r[a].strip()) and not 0 <= int(r[a]) <= 99)
+        dup_groups = defaultdict(int)
+        for r in rows:
+            dup_groups[(r['player_id'], r['madden_release'])] += 1
+        dup_n = sum(1 for n in dup_groups.values() if n > 1)
+        r27 = [r for r in rows if r['madden_release'] == '2027']
+        teams27 = {r['team'].strip().lower() for r in r27 if r['team'].strip() and r['team'].strip().lower() != 'fa'}
+        teamless27 = sum(1 for r in r27 if not r['team'].strip())
+        expected = [
+            ('blank_team.count', limits['blank_team']['count'], blank_n),
+            ('blank_team.free_agent_rows_total', limits['blank_team']['free_agent_rows_total'], fa_n),
+            ('out_of_range_values.count', limits['out_of_range_values']['count'], oor_n),
+            ('duplicate_player_release.count', limits['duplicate_player_release']['count'], dup_n),
+            ('release_incomplete.teams_present', limits['release_incomplete']['teams_present'], len(teams27)),
+            ('release_incomplete.teamless_rows_2027', limits['release_incomplete']['teamless_rows_2027'], teamless27),
+        ]
+        mism = [f'{name}: register {reg} vs rows {got}' for name, reg, got in expected if reg != got]
+        rep.add('register.counts_match_rows', 'PASS' if not mism else 'FAIL',
+                f'{len(expected)} published register counts checked' +
+                (f'; mismatches: {mism}' if mism else ''))
 
     # Every out/by_year/madden_<year>.csv must be the same multiset of rows as the long CSV slice.
     def row_key(d):
@@ -271,7 +305,8 @@ def main():
             f'{len(norm_teams)} distinct non-blank team slugs after lowercasing (current NFL franchises: 32)')
     teams_by_rel = defaultdict(set)
     for r in rows:
-        if r['team'].strip():
+        # 'fa' is the free-agent marker (see register.counts_match_rows), not a franchise.
+        if r['team'].strip() and r['team'].strip().lower() != 'fa':
             teams_by_rel[int(r['madden_release'])].add(r['team'].strip().lower())
     short = {y: len(teams_by_rel[y]) for y in range(2003, 2028) if len(teams_by_rel[y]) != 32}
     rep.add('team.32_franchises_2003_2027', 'PASS' if not short else 'FAIL',

@@ -1,8 +1,8 @@
 {
   "archive": "madden_ratings_1992-2027.zip",
   "rows": 58743,
-  "columns": 70,
-  "identity_columns": 10,
+  "columns": 71,
+  "identity_columns": 11,
   "attribute_columns": 60,
   "checks": [
     {
@@ -14,13 +14,13 @@
     {
       "id": "shape.header_identity",
       "status": "PASS",
-      "detail": "first 10 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated']",
+      "detail": "first 11 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated', 'value_flags']",
       "measured": null
     },
     {
       "id": "shape.columns",
       "status": "PASS",
-      "detail": "70 columns = 10 identity + 60 attributes (expected 70: 10 identity + 60 attributes)",
+      "detail": "71 columns = 11 identity + 60 attributes (expected 71: 11 identity + 60 attributes)",
       "measured": null
     },
     {
@@ -32,19 +32,25 @@
     {
       "id": "readme.column_count",
       "status": "PASS",
-      "detail": "README contents table says \"\u00d7 73 columns\"; the file has 70 and the README numbers say 70",
+      "detail": "README contents table says \"\u00d7 73 columns\"; the file has 71 and the README numbers say 70",
       "measured": null
     },
     {
       "id": "spec.column_count",
       "status": "PASS",
-      "detail": "repo spec doc agrees; the file has 70",
+      "detail": "repo spec doc states column counts [71]; the file has 71",
       "measured": null
     },
     {
       "id": "coverage.per_release_rows",
       "status": "PASS",
       "detail": "36 of 36 releases match coverage.json",
+      "measured": null
+    },
+    {
+      "id": "register.counts_match_rows",
+      "status": "PASS",
+      "detail": "6 published register counts checked",
       "measured": null
     },
     {
@@ -92,7 +98,7 @@
     {
       "id": "attr.range_0_99",
       "status": "WAIVED",
-      "detail": "11 cells outside 0-99, e.g. player 184190 1997 TAK=100 [accepted exception: Site prints 100 in Madden 1997 only; every other release tops out at 99 (producer re-read Jessie Tuggle's page). Value kept, not clamped. Verified here: 11 cells in 10 rows, all 1997. The value_flags column the producer describes is not in this bundle.]",
+      "detail": "11 cells outside 0-99, e.g. player 184190 1997 TAK=100 [accepted exception: Site prints 100 in Madden 1997 only; every other release tops out at 99 (producer re-read Jessie Tuggle's page). Value kept, not clamped. The bundle now carries value_flags on the same 10 rows (11 cells), and its own register lists the same 11 cells.]",
       "measured": {
         "cells": 11,
         "releases": [
@@ -135,10 +141,10 @@
     },
     {
       "id": "team.no_blank",
-      "status": "WAIVED",
-      "detail": "454 rows with blank team (all source={'player_page'}); kept as team_missing, not filled [accepted exception: 453 of the 454 rows are the only row for their player-release, and no roster-page entry exists to backfill from. The 454th is Mike Williams 2013's blank row; his other row carries Seahawks. Verified here: 454 blank rows, 453 of them sole rows.]",
+      "status": "FAIL",
+      "detail": "325 rows with blank team (all source={'player_page'}); kept as team_missing, not filled [waiver does not match: measured {'rows': 325, 'sources': ['player_page']}, waived {'rows': 454, 'sources': ['player_page']}]",
       "measured": {
-        "rows": 454,
+        "rows": 325,
         "sources": [
           "player_page"
         ]
@@ -147,17 +153,15 @@
     {
       "id": "team.distinct_normalized",
       "status": "INFO",
-      "detail": "32 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)",
+      "detail": "33 distinct non-blank team slugs after lowercasing (current NFL franchises: 32)",
       "measured": null
     },
     {
       "id": "team.32_franchises_2003_2027",
-      "status": "WAIVED",
-      "detail": "releases 2003-2027 whose team count is not 32: {2027: 30} [accepted exception: Giants and Jets /madden/team/*/2027 pages return HTTP 200 with an empty table (producer, not re-fetched here). Verified here: 60 of the 106 blank 2027 rows had Giants or Jets in the 2026 release. The other 46 blank 2027 rows are not explained and remain open.]",
+      "status": "PASS",
+      "detail": "releases 2003-2027 whose team count is not 32: none",
       "measured": {
-        "short": {
-          "2027": 30
-        }
+        "short": {}
       }
     },
     {
@@ -232,8 +236,8 @@
       }
     }
   ],
-  "fail_count": 0,
-  "waived_count": 4,
+  "fail_count": 1,
+  "waived_count": 2,
   "releases": [
     {
       "release": 1992,
@@ -385,9 +389,9 @@
       "rows": 1416,
       "players": 1416,
       "team_page_rows": 1299,
-      "blank_team_rows": 7,
-      "teams_normalized": 31,
-      "players_per_team_mean": 45.7,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 44.2,
       "attributes_with_any_value": 21,
       "mean_nonblank_attribute_cells_per_row": 10.5,
       "ovr_nonblank": 1416,
@@ -401,9 +405,9 @@
       "rows": 1550,
       "players": 1549,
       "team_page_rows": 261,
-      "blank_team_rows": 11,
-      "teams_normalized": 31,
-      "players_per_team_mean": 50.0,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 48.4,
       "attributes_with_any_value": 24,
       "mean_nonblank_attribute_cells_per_row": 18.9,
       "ovr_nonblank": 1550,
@@ -417,9 +421,9 @@
       "rows": 1582,
       "players": 1582,
       "team_page_rows": 243,
-      "blank_team_rows": 5,
-      "teams_normalized": 32,
-      "players_per_team_mean": 49.4,
+      "blank_team_rows": 0,
+      "teams_normalized": 33,
+      "players_per_team_mean": 47.9,
       "attributes_with_any_value": 17,
       "mean_nonblank_attribute_cells_per_row": 15.0,
       "ovr_nonblank": 1582,
@@ -801,9 +805,9 @@
       "rows": 1531,
       "players": 1530,
       "team_page_rows": 0,
-      "blank_team_rows": 106,
-      "teams_normalized": 30,
-      "players_per_team_mean": 51.0,
+      "blank_team_rows": 0,
+      "teams_normalized": 32,
+      "players_per_team_mean": 47.8,
       "attributes_with_any_value": 54,
       "mean_nonblank_attribute_cells_per_row": 54,
       "ovr_nonblank": 1531,
@@ -6782,9 +6786,9 @@
   ],
   "duplicate_keys": 40,
   "duplicate_rows": 81,
-  "blank_team_rows": 454,
+  "blank_team_rows": 325,
   "team_case_pairs": 0,
-  "team_distinct_normalized": 32,
+  "team_distinct_normalized": 33,
   "coverage_json_attribute_mismatches": 0,
   "coverage_json_attribute_examples": {
     "OVR": {

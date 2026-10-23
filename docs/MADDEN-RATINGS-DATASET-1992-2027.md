@@ -13,7 +13,7 @@ with every attribute column the site shows.
 
 | File | What it is |
 |---|---|
-| `out/madden_ratings_long.csv` | 58,743 rows × 70 columns. One row per player per Madden release, all attributes. |
+| `out/madden_ratings_long.csv` | 58,743 rows × 71 columns. One row per player per Madden release, all attributes. |
 | `out/by_year/madden_<year>.csv` | 36 files, 1992 → 2027. Same rows sliced per release, for "year by year" work. |
 | `out/madden_player_seasons.db` | SQLite. `ratings` table (same data) + `players` table (career span, peak OVR, teams). Indexed on player_id and madden_release. |
 | `out/coverage.json` | The counts below, machine-readable. |
@@ -23,7 +23,7 @@ Numbers:
 - 12,570 players
 - 58,743 player-seasons
 - 36 releases: Madden NFL 1992 through Madden NFL 2027
-- 60 attribute columns (OVR, SPEED … KRN) + 10 identity columns = 70
+- 60 attribute columns (OVR, SPEED … KRN) + 11 identity columns = 71
 - 58,345 rows have an OVR: 50,203 EA-published, 8,142 calculated by the site (see Notes)
 - 0 rows where OVR, SPEED and AWR are all empty
 
@@ -33,7 +33,8 @@ Identity: `player_id` (site id), `player_name`, `slug` (site URL slug),
 `madden_release` (year in the game title), `dupe_seq` (0, 1 or 2 when a player is listed
 for more than one team in one release; the key is `(player_id, madden_release, dupe_seq)`),
 `nfl_season` (the season the ratings cover, e.g. Madden 2026 = 2025 NFL season), `team`,
-`POS`, `source`, `site_calculated` (`OVR` when the site computed the overall itself).
+`POS`, `source`, `site_calculated` (`OVR` when the site computed the overall itself),
+`value_flags` (names any cell outside the 0-99 range, for example `TAK=100`; the raw value is kept).
 
 Attributes, in the site's own shorthand:
 
