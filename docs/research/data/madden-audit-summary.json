@@ -27,7 +27,7 @@
     },
     {
       "id": "readme.column_count",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "README contents table says \"\u00d7 73 columns\"; the file has 70 and the README numbers say 70"
     },
     {
@@ -92,13 +92,13 @@
     },
     {
       "id": "keys.stints_differ_by_team",
-      "status": "FAIL",
-      "detail": "1 multi-row player-releases have one team on every row; the README says these rows are team changes"
+      "status": "PASS",
+      "detail": "0 multi-row player-releases have one team on every row; the README says these rows are team changes"
     },
     {
       "id": "keys.stint_ratings_differ",
       "status": "INFO",
-      "detail": "0 identical, 39 differ by team, 40 of 40 differ in at least one attribute; a value that changes within one release is a leakage question"
+      "detail": "0 identical, 40 differ by team, 40 of 40 differ in at least one attribute; a value that changes within one release is a leakage question"
     },
     {
       "id": "team.case_consistent",
@@ -108,7 +108,7 @@
     {
       "id": "team.no_blank",
       "status": "FAIL",
-      "detail": "453 rows with blank team (all source={'player_page'}); kept as team_missing, not filled"
+      "detail": "454 rows with blank team (all source={'player_page'}); kept as team_missing, not filled"
     },
     {
       "id": "team.distinct_normalized",
@@ -147,13 +147,13 @@
     },
     {
       "id": "identity.name_is_person_only",
-      "status": "FAIL",
-      "detail": "24 player_ids (42 rows) carry position or team text in player_name, e.g. ['Aaron Wallace LLB - Raiders', 'Andre Coleman TE - Chargers']"
+      "status": "PASS",
+      "detail": "0 player_ids (0 rows) carry position or team text in player_name, e.g. []"
     },
     {
       "id": "identity.homonym_names",
       "status": "INFO",
-      "detail": "262 normalized names map to more than one player_id (review queue, not merged)"
+      "detail": "283 normalized names map to more than one player_id (review queue, not merged)"
     },
     {
       "id": "db.matches_csv_cellwise",
@@ -176,7 +176,7 @@
       "detail": "releases with attribute cells per row under half of both neighbours: 2010 (12.2 vs 38.4/37.1), 2012 (16.5 vs 37.1/37.6)"
     }
   ],
-  "fail_count": 7,
+  "fail_count": 4,
   "releases": [
     {
       "release": 1992,
@@ -520,7 +520,7 @@
       "rows": 2000,
       "players": 1999,
       "team_page_rows": 323,
-      "blank_team_rows": 3,
+      "blank_team_rows": 4,
       "teams_normalized": 32,
       "players_per_team_mean": 62.5,
       "attributes_with_any_value": 51,
@@ -6725,7 +6725,7 @@
   ],
   "duplicate_keys": 40,
   "duplicate_rows": 81,
-  "blank_team_rows": 453,
+  "blank_team_rows": 454,
   "team_case_pairs": 0,
   "team_distinct_normalized": 32,
   "coverage_json_attribute_mismatches": 0,

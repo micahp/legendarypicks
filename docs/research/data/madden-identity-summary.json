@@ -2,11 +2,11 @@
   "player_ids": 12570,
   "tiers": {
     "high_unique_name_position_match": 11237,
-    "review_position_mismatch": 191,
-    "review_homonym_position_resolved": 701,
-    "review_homonym": 244,
+    "review_position_mismatch": 192,
+    "review_homonym_position_resolved": 717,
+    "review_homonym": 251,
     "review_shared_gsis": 4,
-    "unresolved_no_nfl_name_match": 193
+    "unresolved_no_nfl_name_match": 169
   },
   "auto_accepted_gsis": 11237,
   "per_release_high_tier_share": {

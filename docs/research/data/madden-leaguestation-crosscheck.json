@@ -198,15 +198,15 @@
     "madden-2003.csv": {
       "release_label": 2003,
       "overlap_by_candidate": {
-        "2003": 44
+        "2003": 45
       },
       "rows": 63,
-      "matched_unique": 44,
+      "matched_unique": 45,
       "ambiguous_name_skipped": 1,
-      "not_in_archive": 18,
-      "ovr_pairs": 44,
-      "ovr_exact_share": 0.932,
-      "ovr_mean_abs_diff": 0.36
+      "not_in_archive": 17,
+      "ovr_pairs": 45,
+      "ovr_exact_share": 0.911,
+      "ovr_mean_abs_diff": 0.73
     },
     "madden-2004.csv": {
       "release_label": 2004,
@@ -457,9 +457,9 @@
     },
     "OVR": {
       "archive_column": "OVR",
-      "pairs": 1401,
-      "exact_share": 0.823,
-      "mean_abs_diff": 1.05
+      "pairs": 1402,
+      "exact_share": 0.822,
+      "mean_abs_diff": 1.06
     },
     "PBF": {
       "archive_column": "PBF",
@@ -624,5 +624,5 @@
       "mean_abs_diff": 0.78
     }
   },
-  "same_release_absent_rows": 475
+  "same_release_absent_rows": 474
 }
