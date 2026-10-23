@@ -5,8 +5,8 @@
 - **Dataset: strict audit passes; cross-check still open.** The audit passes 29 checks, waives 3 accepted
   exceptions and fails 0 (exit 0). The League Station cross-check was last run on the 03:36 bundle and fails on
   474 rows with no same-release match. That result is not waived.
-- **Training: not run.** Blocked by three things: the cross-check gap, the source-rights assessment (skipped at your
-  instruction), and no release verified as a launch-day snapshot (snapshot status is `unverified` for every release).
+- **Training: not run.** Blocked by the cross-check gap and by no release verified as a launch-day snapshot (snapshot
+  status is `unverified` for every release). The licence is user-reported (section 7), with scope not yet stated.
 - **Model feasibility: not assessed.** It depends on the three blockers above.
 - **Gridiron Physics ratings: unchanged.**
 
@@ -145,9 +145,11 @@ in the schema; the register advises joining on `player_id`.
 
 ## 7. Source rights
 
-**Not assessed**, as you instructed. Until it is, the archive stays isolated, and nothing derived from it goes into a
-commercially intended model. The League Station preview, used only for validation, carries its own licence terms:
-personal and non-commercial use, and no automated extraction.
+**Licence reported by the user, not verified.** On 2026-10-23 the user reported that their manager confirmed a licence
+has been granted for this work. No licence document has been seen here, and the scope is not stated: which
+counterparties (nfldraftbuzz, EA, League Station), and whether it covers internal research only or commercial use.
+The source-rights assessment itself was not performed. The League Station preview, used only for validation, carries
+its own terms: personal and non-commercial use, and no automated extraction, unless separately licensed.
 
 ## 8. Model feasibility
 
