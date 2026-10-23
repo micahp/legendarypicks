@@ -46,6 +46,10 @@
     {
       "sha256": "642777736edf9edc791c51207f1781f445166ac8ba463e1f7e23b8ef4726e758",
       "note": "current bundle, 03:36 local; team.32 waiver removed because 2027 now has 32 franchises"
+    },
+    {
+      "sha256": "9bfd717bba38c8179e4dfe6195e290fc7f7ecc73fc1ad494845a4838135f1747",
+      "note": "03:58 bundle: 73 columns with team_inferred and team_inferred_ambiguous; published team unchanged; team.no_blank still 325 rows and needs re-acceptance; team_inferred checked against NFL depth/snap data: 2 agree, 4 disagree of 6 checkable"
     }
   ]
 }

@@ -1,8 +1,8 @@
 {
   "archive": "madden_ratings_1992-2027.zip",
   "rows": 58743,
-  "columns": 71,
-  "identity_columns": 11,
+  "columns": 73,
+  "identity_columns": 13,
   "attribute_columns": 60,
   "checks": [
     {
@@ -14,13 +14,13 @@
     {
       "id": "shape.header_identity",
       "status": "PASS",
-      "detail": "first 11 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS', 'source', 'site_calculated', 'value_flags']",
+      "detail": "first 13 columns = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'team_inferred', 'team_inferred_ambiguous', 'POS', 'source', 'site_calculated', 'value_flags']",
       "measured": null
     },
     {
       "id": "shape.columns",
       "status": "PASS",
-      "detail": "71 columns = 11 identity + 60 attributes (expected 71: 11 identity + 60 attributes)",
+      "detail": "73 columns = 13 identity + 60 attributes (expected 73: 13 identity + 60 attributes)",
       "measured": null
     },
     {
@@ -32,13 +32,13 @@
     {
       "id": "readme.column_count",
       "status": "PASS",
-      "detail": "README contents table says \"\u00d7 73 columns\"; the file has 71 and the README numbers say 70",
+      "detail": "README states column counts [73]; the file has 73",
       "measured": null
     },
     {
       "id": "spec.column_count",
       "status": "PASS",
-      "detail": "repo spec doc states column counts [71]; the file has 71",
+      "detail": "repo spec doc states column counts [73]; the file has 73",
       "measured": null
     },
     {
@@ -51,6 +51,12 @@
       "id": "register.counts_match_rows",
       "status": "PASS",
       "detail": "6 published register counts checked",
+      "measured": null
+    },
+    {
+      "id": "team_inferred.bookkeeping",
+      "status": "PASS",
+      "detail": "inferred 93, candidates 20, blank 325, agreeing signals 113",
       "measured": null
     },
     {

@@ -30,11 +30,11 @@ import zipfile
 from collections import Counter, defaultdict
 
 EXPECTED_ROWS = 58743
-EXPECTED_COLUMNS = 71  # README (bundle 2026-10-23 03:36): 11 identity + 60 attributes
+EXPECTED_COLUMNS = 73  # bundle 2026-10-23 03:58: 13 identity + 60 attributes
 EXPECTED_TEAM_PAGE_ROWS = 7387
 EXPECTED_PLAYERS = 12570
-IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS',
-            'source', 'site_calculated', 'value_flags']
+IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team',
+            'team_inferred', 'team_inferred_ambiguous', 'POS', 'source', 'site_calculated', 'value_flags']
 
 # Madden POS (primary token before a slash) -> position group. Anything not listed is
 # reported as OTHER and fails the check: an unmapped position is never silently grouped.
@@ -136,8 +136,11 @@ def main():
     rep.add('shape.rows', 'PASS' if len(rows) == EXPECTED_ROWS else 'FAIL',
             f'{len(rows)} rows vs expected {EXPECTED_ROWS}')
     readme = zf.read('README.md').decode('utf-8')
-    rep.add('readme.column_count', 'FAIL' if '× 73 columns' in readme else 'PASS',
-            f'README contents table says "× 73 columns"; the file has {len(header)} and the README numbers say 70')
+    # The file-level count is the contents-table statement ("rows x N columns"); other "N columns" phrases
+    # count populated columns per release and are not the file's width.
+    readme_counts = sorted({int(n) for n in re.findall(r'rows [x×] (\d+) columns', readme)})
+    rep.add('readme.column_count', 'PASS' if readme_counts and readme_counts == [len(header)] else 'FAIL',
+            f'README states column counts {readme_counts}; the file has {len(header)}')
     spec_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'docs',
                              'MADDEN-RATINGS-DATASET-1992-2027.md')
     spec_text = open(spec_path, encoding='utf-8').read() if os.path.exists(spec_path) else ''
@@ -186,6 +189,30 @@ def main():
         rep.add('register.counts_match_rows', 'PASS' if not mism else 'FAIL',
                 f'{len(expected)} published register counts checked' +
                 (f'; mismatches: {mism}' if mism else ''))
+
+    # team_inferred is the producer's derived team for blank rows. Its bookkeeping must match the rows, and it
+    # must never sit on a row that already has a published team.
+    if 'checks/blank_signals.json' in zf.namelist():
+        sig = json.loads(zf.read('checks/blank_signals.json'))
+        inferred_n = sum(1 for r in rows if r['team_inferred'].strip())
+        cand_n = sum(1 for r in rows if r['team_inferred_ambiguous'].strip())
+        blank_n2 = sum(1 for r in rows if not r['team'].strip())
+        on_published = sum(1 for r in rows if r['team'].strip() and
+                           (r['team_inferred'].strip() or r['team_inferred_ambiguous'].strip()))
+        both = sum(1 for r in rows if r['team_inferred'].strip() and r['team_inferred_ambiguous'].strip())
+        problems = []
+        if sig['blank_rows'] != blank_n2:
+            problems.append(f"signals list {sig['blank_rows']} blank rows, rows have {blank_n2}")
+        if sig['rows_with_agreeing_signal'] != inferred_n + cand_n:
+            problems.append(f"agreeing signals {sig['rows_with_agreeing_signal']} vs inferred {inferred_n} + "
+                            f"candidates {cand_n}")
+        if on_published:
+            problems.append(f'{on_published} rows with a published team carry an inference')
+        if both:
+            problems.append(f'{both} rows carry both an inferred team and a candidate')
+        rep.add('team_inferred.bookkeeping', 'PASS' if not problems else 'FAIL',
+                f'inferred {inferred_n}, candidates {cand_n}, blank {blank_n2}, agreeing signals '
+                f"{sig['rows_with_agreeing_signal']}" + (f'; {problems}' if problems else ''))
 
     # Every out/by_year/madden_<year>.csv must be the same multiset of rows as the long CSV slice.
     def row_key(d):
