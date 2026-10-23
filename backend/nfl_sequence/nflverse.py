@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
-from .model import fg_bin, situation
+from .model import clock_window, fg_bin, situation
 
 COLUMNS = [
     "game_id", "play_id", "season", "season_type", "week",
@@ -106,7 +106,11 @@ def iter_observations(rows: List[Dict[str, Any]], skips: Counter) -> Iterator[Ob
             int(row["qtr"]),
             int(row["posteam_score"]) - int(row["defteam_score"] or 0),
         )
-        yield ("call", ctx, call)
+        # Only the call table reads the time window; the other tables keep the v0.1 context.
+        quarter = int(row["qtr"])
+        gs = int(row["game_seconds_remaining"])
+        quarter_clock = gs - 900 * (4 - quarter) if quarter <= 4 else gs
+        yield ("call", dict(ctx, late=clock_window(quarter, quarter_clock)), call)
         sub = "incomplete" if (call == "pass" and row["incomplete_pass"] == 1) else "normal"
         elapsed = _runoff(row, nxt, skips)
         if elapsed is not None:

@@ -386,13 +386,13 @@ def unsupported_measured(games: Dict[str, Dict[str, Any]], observations: int, pe
     }
 
 
-def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int], trials: int, schedule_db: Optional[str]) -> Dict[str, Any]:
+def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int], trials: int, schedule_db: Optional[str], variant_names: Sequence[str] = VARIANT_NAMES) -> Dict[str, Any]:
     started = time.time()
     with open(os.path.join(model_dir, "manifest.json")) as handle:
         train_manifest = json.load(handle)
     finals = train_manifest["finals"]
     base_rate = finals["home_wins"] / (finals["home_wins"] + finals["away_wins"])
-    models = {name: StatModel.load(os.path.join(model_dir, "nfl-seq-v0.1-%s.json" % name)) for name in VARIANT_NAMES}
+    models = {name: StatModel.load(os.path.join(model_dir, "nfl-seq-v0.1-%s.json" % name)) for name in variant_names}
 
     all_rows: List[Dict[str, Any]] = []
     reconstruction: Dict[str, Any] = {}
@@ -427,7 +427,7 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
     }
 
     variants: Dict[str, Any] = {}
-    for name in VARIANT_NAMES:
+    for name in variant_names:
         records, aggregate = simulate_games(models[name], games, trials)
         variants[name] = {
             "scoring": score_metrics(records),
@@ -479,9 +479,10 @@ def main() -> None:
     parser.add_argument("--test-seasons", required=True)
     parser.add_argument("--trials", type=int, default=100)
     parser.add_argument("--schedule-db")
+    parser.add_argument("--variants", default=",".join(VARIANT_NAMES))
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
-    report = run_evaluation(args.source_dir, args.model_dir, parse_seasons(args.test_seasons), args.trials, args.schedule_db)
+    report = run_evaluation(args.source_dir, args.model_dir, parse_seasons(args.test_seasons), args.trials, args.schedule_db, args.variants.split(","))
     with open(args.out, "w") as handle:
         json.dump(report, handle, indent=2, sort_keys=True, default=str)
     print(json.dumps({"out": args.out, "elapsed_seconds": report["elapsed_seconds"]}, indent=2))

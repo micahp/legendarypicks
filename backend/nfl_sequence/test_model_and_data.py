@@ -44,7 +44,7 @@ def test_penalties_and_two_point_tries_are_skipped_and_counted():
 def test_qb_scramble_coded_as_a_run_becomes_a_pass_scramble():
     rows = [row(play_id=1.0, play_type="run", posteam=HOME_TEAM, defteam=AWAY_TEAM, down=2, ydstogo=7, yardline_100=60, qb_scramble=1, yards_gained=4, fumble_lost=0)]
     observations = list(iter_observations(rows, Counter()))
-    assert ("call", situation(2, 7, 60, 1, 0), "pass") in observations
+    assert ("call", dict(situation(2, 7, 60, 1, 0), late="early"), "pass") in observations
     assert any(name == "pass_class" and value == "scramble" for name, _, value in observations)
     assert any(name == "scramble_yards" and value == "4" for name, _, value in observations)
 

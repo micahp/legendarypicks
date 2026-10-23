@@ -30,6 +30,15 @@ FULL: List[Level] = [
     ("down",),
     (),
 ]
+CLOCK_FULL: List[Level] = [
+    ("down", "dist", "field", "score", "qtr", "late"),
+    ("down", "dist", "field", "score", "late"),
+    ("down", "dist", "field", "late"),
+    ("down", "dist", "field"),
+    ("down", "dist"),
+    ("down",),
+    (),
+]
 COARSE: List[Level] = [("down", "dist", "field"), ("down", "dist"), ("down",), ()]
 YARDS_SITUATION: List[Level] = [("down", "dist", "field"), ("dist", "field"), ("field",), ()]
 PASS_YARDS: List[Level] = [("dist", "field"), ("field",), ()]
@@ -47,6 +56,14 @@ PHYSICAL_LEVELS: Dict[str, List[Level]] = {
     "fumble": [("call",), ()],
 }
 VARIANT_LEVELS: Dict[str, Dict[str, List[Level]]] = {
+    "clock": {
+        "call": CLOCK_FULL,
+        "pass_class": FULL,
+        "run_yards": YARDS_SITUATION,
+        "pass_yards": PASS_YARDS,
+        "sack_yards": FIELD_ONLY,
+        "scramble_yards": FIELD_ONLY,
+    },
     "main": {
         "call": FULL,
         "pass_class": FULL,
@@ -72,6 +89,15 @@ VARIANT_LEVELS: Dict[str, Dict[str, List[Level]]] = {
         "scramble_yards": FLAT,
     },
 }
+
+
+LATE_PERIODS = (2, 4, 5)
+LATE_WINDOW_SECONDS = 120
+
+
+def clock_window(period: int, clock: int) -> str:
+    """'late' in the last two minutes of the second half, the fourth quarter or overtime; else 'early'."""
+    return "late" if period in LATE_PERIODS and clock <= LATE_WINDOW_SECONDS else "early"
 
 
 def dist_bin(ydstogo: int) -> str:
@@ -231,6 +257,7 @@ class StatModel:
                     for compiled in table._compiled
                 ],
             }
+
         return {
             "schema": MODEL_SCHEMA,
             "model_version": "nfl-seq-v0.1",

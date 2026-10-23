@@ -16,7 +16,7 @@ import random
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .events import Event
-from .model import StatModel, fg_bin, situation, weighted
+from .model import StatModel, clock_window, fg_bin, situation, weighted
 from .playbook import CALLS, NeutralPlaybook, Playbook, checked_weights
 from .rules import apply, initial_state
 from .state import AWAY, GameState, HOME, OVERTIME_SECONDS, REGULATION_SECONDS, other, validate_state
@@ -241,7 +241,7 @@ class Run:
         team = self.sim.team(state.offense)
         diff = state.score(state.offense) - state.score(other(state.offense))
         ctx = situation(state.down, state.ydstogo, state.yardline_100, state.period, diff)
-        base = model["call"].probabilities(ctx)
+        base = model["call"].probabilities(dict(ctx, late=clock_window(state.period, state.clock)))
         weights = checked_weights(
             self.sim.playbook.call_weights(public_state(state, self.sim.home_team, self.sim.away_team), team)
         )

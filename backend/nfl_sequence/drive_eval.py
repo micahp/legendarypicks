@@ -33,6 +33,8 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
+from .model import clock_window
+
 SCRIMMAGE = ("run", "pass", "sack", "scramble", "interception", "punt", "field_goal", "kneel", "spike")
 SNAP_PASS = ("run", "pass", "sack", "scramble")
 YARDAGE = ("run", "pass", "sack", "scramble", "kneel", "spike")
@@ -502,7 +504,8 @@ def tally_game(plays: Sequence[Play], counts: Counter) -> List[int]:
         for distance in drive.fg_distances:
             counts["fg_dist_sum"] += distance
             counts["fg_dist_n"] += 1
-            counts["fg_dist_bin:%s:att" % _bin(distance, FG_BINS)] += 1
+            counts["fg_dist_bin:%s:att" % _bin(min(distance, 99), FG_BINS)] += 1
+            counts["fg_over_99_yards"] += int(distance > 99)
         counts["kick_touchback"] += int(drive.kick_touchback)
         counts["kick_present"] += int(drive.kick_present)
         if drive.start_yardline is not None:
@@ -550,9 +553,9 @@ def tally_game(plays: Sequence[Play], counts: Counter) -> List[int]:
             if play.fumble:
                 counts["fumbles_lost"] += 1
         if play.kind == "field_goal" and play.kick_distance is not None and play.made:
-            counts["fg_dist_bin:%s:made" % _bin(play.kick_distance, FG_BINS)] += 1
+            counts["fg_dist_bin:%s:made" % _bin(min(play.kick_distance, 99), FG_BINS)] += 1
         if play.kind in SCRIMMAGE and play.down is not None and play.clock is not None:
-            window = "late" if (play.period in (2, 4, 5) and play.clock <= 120) else "early"
+            window = clock_window(play.period, play.clock)
             lead = "lead" if play.points_off_before > play.points_def_before else ("trail" if play.points_off_before < play.points_def_before else "tied")
             counts["call_timing:%s:%s:%s" % (window, lead, call_class(play.kind))] += 1
         if play.kind in ("run", "pass") and play.down is not None and play.ydstogo is not None:
@@ -626,7 +629,7 @@ def cmd_sim(args: argparse.Namespace) -> None:
     for season in seasons:
         rows.extend(read_season(os.path.join(args.source_dir, "play_by_play_%d.parquet" % season)))
     games = actual_game_table(rows)
-    model = StatModel.load(os.path.join(args.model_dir, "nfl-seq-v0.1-main.json"))
+    model = StatModel.load(os.path.join(args.model_dir, "nfl-seq-v0.1-%s.json" % args.variant))
     game_ids = sorted(games)
     mine = [g for index, g in enumerate(game_ids) if index % args.shards == args.shard]
     counts_by_trial: Dict[int, Counter] = {t: Counter() for t in range(args.trials)}
@@ -698,6 +701,7 @@ def main() -> None:
     sim = sub.add_parser("sim", help="simulate the test games and tally drives per trial")
     sim.add_argument("--source-dir", required=True)
     sim.add_argument("--model-dir", required=True)
+    sim.add_argument("--variant", default="main")
     sim.add_argument("--test-seasons", required=True)
     sim.add_argument("--trials", type=int, default=100)
     sim.add_argument("--shard", type=int, default=0)
@@ -1003,7 +1007,7 @@ def run_examples(args: argparse.Namespace) -> List[str]:
     for season in _parse_seasons(args.test_seasons):
         rows.extend(read_season(os.path.join(args.source_dir, "play_by_play_%d.parquet" % season)))
     games = actual_game_table(rows)
-    model = StatModel.load(os.path.join(args.model_dir, "nfl-seq-v0.1-main.json"))
+    model = StatModel.load(os.path.join(args.model_dir, "nfl-seq-v0.1-%s.json" % args.variant))
     want_sim = {o: args.per_outcome for o in want_real}
     out.append("# Simulated drives, model nfl-seq-v0.1 main, trial 0 of each game (same seeds as the evaluation)")
     out.append("")

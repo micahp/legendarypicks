@@ -14,7 +14,7 @@ import hashlib
 import json
 import os
 from collections import Counter
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
 from .model import CountBuilder, DEFAULT_MIN_N, MODEL_SCHEMA, VARIANT_LEVELS
 from .nflverse import game_finals, iter_observations, read_season
@@ -42,9 +42,9 @@ def parse_seasons(text: str) -> List[int]:
     return sorted(set(seasons))
 
 
-def fit(source_dir: str, seasons: List[int], min_n: int, out_dir: str) -> Dict[str, object]:
+def fit(source_dir: str, seasons: List[int], min_n: int, out_dir: str, variants: Sequence[str] = VARIANTS) -> Dict[str, object]:
     skips: Counter = Counter()
-    builders = {variant: CountBuilder(variant, min_n) for variant in VARIANTS}
+    builders = {variant: CountBuilder(variant, min_n) for variant in variants}
     source = {}
     observations = Counter()
     games = 0
@@ -94,8 +94,9 @@ def main() -> None:
     parser.add_argument("--train-seasons", required=True)
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--min-n", type=int, default=DEFAULT_MIN_N)
+    parser.add_argument("--variants", default=",".join(VARIANTS), help="comma-separated variant names to write")
     args = parser.parse_args()
-    manifest = fit(args.source_dir, parse_seasons(args.train_seasons), args.min_n, args.out_dir)
+    manifest = fit(args.source_dir, parse_seasons(args.train_seasons), args.min_n, args.out_dir, args.variants.split(","))
     print(json.dumps({"games": manifest["games"], "observations": manifest["observations"], "skips": manifest["skips"]}, indent=2))
 
 

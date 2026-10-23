@@ -1,0 +1,68 @@
+{
+  "finals": {
+    "away_mean": 21.868847150259068,
+    "away_wins": 1364,
+    "games": 3088,
+    "home_mean": 23.83678756476684,
+    "home_wins": 1714,
+    "ties": 10
+  },
+  "games": 3088,
+  "min_n": 200,
+  "observations": {
+    "call": 423601,
+    "elapsed": 402475,
+    "fg": 11873,
+    "fumble": 381346,
+    "kickoff_implied_return": 14619,
+    "kickoff_touchback": 31600,
+    "pass_class": 233315,
+    "pass_yards": 132391,
+    "punt_gross": 24918,
+    "punt_return": 24918,
+    "run_yards": 148031,
+    "sack_yards": 14241,
+    "scramble_yards": 8434,
+    "xp": 14739
+  },
+  "schema": "nfl-seq-model/1",
+  "skips": {
+    "deleted_or_aborted": 1247,
+    "kickoff_spot_missing": 768,
+    "kickoff_spot_period_change": 3,
+    "missing_situation": 2,
+    "not_a_play": 16174,
+    "penalty_or_no_play": 60387,
+    "runoff_out_of_range": 372,
+    "two_point_attempt": 1070,
+    "xp_result_missing": 15
+  },
+  "source_sha256": {
+    "play_by_play_2010.parquet": "d2ef9c407319719910ad8de8c4c1b88f0ea945ffb3f78f48ef32fa3ed3a7573b",
+    "play_by_play_2011.parquet": "c54753b8137b88dab260489b1462cbf1309c3d11741eb8d10e5f1b0a9b8795b1",
+    "play_by_play_2012.parquet": "447b90789104aac70427ec9d3b51df7247234029d0ecabd269279369b1cc6278",
+    "play_by_play_2013.parquet": "f454605a1983b3946baf0ffadf3a0b9f5e04735c4b84732e0483f2049a780d00",
+    "play_by_play_2014.parquet": "54c01408d8f0ff9e013a4ea51428b91d610101f72545d082e932f5710e2fb4f7",
+    "play_by_play_2015.parquet": "01b5ae7d06633a2e66b418404461a3d4ff055ad2f3a87d453cebcc8d3fda7ed9",
+    "play_by_play_2016.parquet": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b",
+    "play_by_play_2017.parquet": "84eacd963c1fdd45965f6222c62e9329a7f3412f029d92c1ac5e34a1bb4d3710",
+    "play_by_play_2018.parquet": "2e6f2dce7c7ebd46e985cabe0c17eb72b39a77f98cb4478409294f50b5820150",
+    "play_by_play_2019.parquet": "60c3067017db2d28a78f66a79b657268be8578d9a5288e6a827efdcd7fe42540",
+    "play_by_play_2020.parquet": "8889f5d8782b5c5dce3c3644acdc0322b228a7e9cb13fa36cbac250e260e9f60",
+    "play_by_play_2021.parquet": "333ad34378e5339d5172717cc83378e908daf02c8699416ab3e17c2ec10f78d8"
+  },
+  "train_seasons": [
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ]
+}
