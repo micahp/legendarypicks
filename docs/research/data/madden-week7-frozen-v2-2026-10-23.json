@@ -1,9 +1,9 @@
 {
-  "frozen_at_utc": "2026-10-23T08:40:27.192630+00:00",
+  "frozen_at_utc": "2026-10-23T08:41:03.465348+00:00",
   "before_first_kickoff": true,
   "madden_archive_sha256": "642777736edf9edc791c51207f1781f445166ac8ba463e1f7e23b8ef4726e758",
   "identity_crosswalk_sha256": "3cd5f89f250e3e5a55758fbc734ac721afed89513fde7aab19a1a2e6462ab581",
-  "git_revision": "24262b65fcef93556b787ad86d83788724325ed7",
+  "git_revision": "90b991883d5c172c414172ef842d1f193e0d5257",
   "ratings_edition": "Madden NFL 27 (dataset label 2027, covers the 2026 season)",
   "snapshot_timing": "unverified: archive has no snapshot date; post-launch updates confirmed for Madden 27",
   "roster_cutoff": {
