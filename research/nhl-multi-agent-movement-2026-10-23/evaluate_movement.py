@@ -215,11 +215,14 @@ def rollout(start: dict, m0: dict, m1: dict, limits: dict) -> tuple[dict,dict,di
 def frame_metrics(preds: dict, actual: dict, initial: dict, spacing_floor: float) -> dict:
     common=sorted(set(preds)&set(actual["players"]))
     if not common: return {"n_positions":0,"position_error_mean":None}
+    initial_by_id={p["id"]:[p["x"],p["y"]] for p in initial["players"]}
+    unexpected=set(common)-set(initial_by_id)
+    if unexpected: raise RuntimeError(f"predicted/observed identity is absent from the cutoff state: {sorted(unexpected)[:3]}")
     err=[]; heading=[]; displacement=[]; pairerr=[]; spacing=[]; nearest=[]; simnearest=[]
     obspts=[];simpts=[]; ids=common
     for pid in ids:
         a=np.asarray(actual["players"][pid]); p=np.asarray(preds[pid]); err.append(float(np.linalg.norm(p-a)))
-        init=initial[pid]; ad=a-np.asarray(init); pd=p-np.asarray(init)
+        init=initial_by_id[pid]; ad=a-np.asarray(init); pd=p-np.asarray(init)
         displacement.append(abs(float(np.linalg.norm(pd)-np.linalg.norm(ad))))
         if np.linalg.norm(ad)>=1 and np.linalg.norm(pd)>=1:
             heading.append(abs(angle_delta(math.atan2(pd[1],pd[0]),math.atan2(ad[1],ad[0]))))
