@@ -1,0 +1,19 @@
+{
+  "frozen_at_utc": "2026-10-23T08:34:21.553243+00:00",
+  "before_first_kickoff": true,
+  "madden_archive_sha256": "a12eb4d90a7886bdbb39554ac445e93a5af52700e196a919d2dac201a95f2958",
+  "identity_crosswalk_sha256": "3cd5f89f250e3e5a55758fbc734ac721afed89513fde7aab19a1a2e6462ab581",
+  "git_revision": "9418d5364219d60e9a15774b21d7a94969af61ea",
+  "ratings_edition": "Madden NFL 27 (dataset label 2027, covers the 2026 season)",
+  "snapshot_timing": "unverified: archive has no snapshot date; post-launch updates confirmed for Madden 27",
+  "roster_cutoff": {
+    "roster_snapshot_published": "2026-08-04",
+    "transactions_through": "2026-10-21",
+    "depth_chart_snapshot_max": "2026-10-19",
+    "player_game_logs_through": "2026-10-19"
+  },
+  "nfl_schedule_rows_week7": 14,
+  "projection_model": "nfl-ratings-v1 preview (nfl-preview-v1), latest run per game",
+  "official_lock_runs_week7": "nfl-lock-2026-w07 covers NE-CHI only (completed Thursday game)",
+  "read_only_database": "/root/legendarypicks/backend/data/picks.dev.db"
+}
