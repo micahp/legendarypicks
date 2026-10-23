@@ -76,6 +76,7 @@ The full normalized observation sequence is a reproducible external artifact. On
 - Fit feature means/scales, regression coefficients, movement bounds, turn limits, spacing threshold, and uncertainty calibration on outer-training games only.
 - For each fold, use the next game in sorted order as calibration, skipping the held-out game; fit calibration on the remaining eight games. Refit point models on all nine outer-training games.
 - Fixed seed 20261023 and 10,000 game-cluster bootstrap replicates. Do not add Monte Carlo noise to movement proposals.
+- Rollout candidate selection uses a per-file deterministic reservoir seeded by SHA-256 of the source filename plus the fixed seed. Retain up to ten candidates per period file, allocate exactly twenty starts per game as evenly as possible across that game's eligible period files, then take evenly spaced positions from the sorted retained candidates. If a period cannot fill its quota, redistribute the remainder over other retained candidates in sorted period/time order; fail if twenty starts still cannot be formed.
 
 ### M0: independent learned kinematics
 
@@ -117,7 +118,7 @@ Score one-step controller positions at +1 and free-running positions at +1, +5, 
 
 ## Metrics and decision rule
 
-Report equal-game-weighted mean, median, and P90 position error by horizon; heading and displacement error; pair-distance error; team spacing; 2D occupancy divergence; closing-distance distributions; boundary violations; proximity below the empirical spacing floor; path smoothness and turn exceedances; missing labels; identity exclusions; calibration coverage; runtime; and 95% game-cluster bootstrap intervals.
+Report equal-game-weighted mean, median, and P90 position error by horizon; heading and displacement error; pair-distance error; team spacing; 2D occupancy divergence using 10-foot cells over X [-100,100] and Y [-42.5,42.5] with total-variation distance; opponent closing-distance distributions; boundary violations; proximity below the empirical spacing floor; path smoothness and turn exceedances; missing labels; identity exclusions; endpoint calibration coverage; runtime; and 95% game-cluster bootstrap intervals.
 
 Call the development interaction signal supported only if M1 reduces equal-game mean position error by at least 2% versus M0 at both +1 and +45, with both paired 95% bootstrap intervals entirely below zero. Otherwise report no supported development interaction improvement. Report M2 minus M1 separately under the same metrics; favorable results do not validate real-world physical mechanics.
 
@@ -125,7 +126,7 @@ Adoption requires independent games, validated timing, identity continuity, trac
 
 ## Representative scenario selection
 
-Choose examples using state at or before cutoff only. Labels are geometry descriptions, not event interpretations:
+Choose the first deterministic qualifying cutoff for each category using state at or before cutoff only, and preserve those category examples in addition to the shared 200 rollout starts. Also retain all 200 starts (20 per game) in the visual archive. Labels are geometry descriptions, not event interpretations:
 
 1. puck near a team’s attacking end, only in period one with supplied orientation; label puck-proximity, not possession;
 2. puck near a team’s defending end under the same period-one orientation;
