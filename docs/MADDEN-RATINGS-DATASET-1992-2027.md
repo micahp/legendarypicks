@@ -14,17 +14,18 @@ with every attribute column the site shows.
 
 | File | What it is |
 |---|---|
-| `out/madden_ratings_long.csv` | 58,743 rows x 70 columns. One row per player per Madden release, all attributes. |
+| `out/madden_ratings_long.csv` | 58,743 rows x 71 columns. One row per player per Madden release, all attributes. |
 | `out/by_year/madden_<year>.csv` | 36 files, 1992 to 2027. Same rows sliced per release, for "year by year" work. |
 | `out/madden_player_seasons.db` | SQLite. `ratings` table (same data) + `players` table (career span, peak OVR, teams). Indexed on player_id and madden_release. |
 | `out/coverage.json` | Per-column non-null counts, recomputed on every build. |
+| `out/source_limits.json` | Machine-readable record of every validator-flagged property that is a source limit, with counts, evidence and consumer options. |
 
 Numbers:
 
 - 12,570 players
 - 58,743 player-seasons
 - 36 releases: Madden NFL 1992 through Madden NFL 2027
-- 60 attribute columns (OVR, SPEED ... KRN) + 10 identity columns = 70
+- 60 attribute columns (OVR, SPEED ... KRN) + 11 identity columns = 71
 - OVR present on 58,345 rows: 50,203 EA-published, 8,142 calculated by the site
 - 32 franchise slugs, plus 454 rows where the source shows no team
 
@@ -33,7 +34,11 @@ Numbers:
 Identity: `player_id` (site id), `player_name`, `slug` (site URL slug),
 `madden_release` (year in the game title), `dupe_seq` (see below),
 `nfl_season` (the season the ratings cover, e.g. Madden 2026 = 2025 NFL season),
-`team`, `POS`, `source`, `site_calculated`.
+`team`, `POS`, `source`, `site_calculated`, `value_flags`.
+
+`value_flags` names any attribute on the row whose value is outside EA's 0-99 scale,
+as `ATTR=value`. It is non-empty on 10 rows (11 cells), all Madden 1997. Values are
+never rewritten, only flagged; clamp at load time if you need a 0-99 guarantee.
 
 `player_name` comes from the player page heading, with the site's `WR - Buccaneers`
 position/team suffix stripped; suffixes like `Jr.` and hyphenated names are preserved.
@@ -71,9 +76,9 @@ Madden <year>"). That is real absence, not a scrape gap.
   the 1992-2004 era: throw accuracy for quarterbacks, kick accuracy for specialists.
   `THA` is the later-era throw-accuracy column on team pages only.
 - **11 cells read exactly 100, all in Madden 1997** (TAK x3, CTH x4, RBK x2, PBK x1,
-  AWR x1). Verified in the source HTML: the site publishes those numbers. Not clamped
-  or altered here; Madden 1997 shipped on a 0-99 scale, so treat these as the site's
-  own cap artifact.
+  AWR x1, across 10 rows). Verified in the source HTML: the site publishes those
+  numbers. Every other release tops out at 99, so this is the site's own defect, not a
+  scale difference. Not clamped or altered here; named in `value_flags` instead.
 - **40 player-releases appear twice.** The source lists a player once per team when he
   changed teams mid-season (William Perry 1994: Bears 46 OVR / Eagles 69 OVR; Mel Gray
   1998; Mike Williams 2013 has one teamless row at 78 and a Seahawks row at 76). Both
@@ -131,6 +136,13 @@ casing and blanks, duplicate keys, `coverage.json` vs CSV, and CSV vs SQLite
 cell-for-cell. Last run: 0 stale entries, 0 mixed-case teams, 454 blanks, 40 duplicate
 keys all carrying distinct `dupe_seq`, 0 of 60 attribute counts disagreeing, 0 cell
 diffs.
+
+`source_limits.py` writes `out/source_limits.json`: each remaining flag with its count,
+the evidence that it comes from the source rather than the scrape, and what a consumer
+can do about it. Current entries: 11 out-of-range cells (1997), 454 teamless rows, the
+incomplete 2027 release, the 2010/2012 attribute density drop, and the 40 duplicate
+player-releases. Every one of those is recorded as unfixable by better scraping, with
+the specific evidence inline - no silent exclusions.
 
 `spotcheck.py` re-fetches 20 random players from the live site and diffs every
 attribute; last run 84 seasons, 0 mismatches. It needs network, so it is not
