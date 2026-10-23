@@ -6,15 +6,22 @@ import argparse
 import gzip
 import json
 import math
+import os
 import subprocess
 import time
 from pathlib import Path
+
+for variable in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ[variable] = "1"
 
 import numpy as np
 
 SEED, BOOTSTRAPS, H = 20261023, 10_000, 45
 RINK_X, RINK_Y = (-100.0, 100.0), (-42.5, 42.5)
 ALPHA, FEATURE_VERSION = 0.1, "nhl-movement-features-v0.1"
+T6=np.arange(6,dtype=float)
+LIN6=np.linalg.pinv(np.column_stack((np.ones(6),T6)))
+QUAD6=np.linalg.pinv(np.column_stack((np.ones(6),T6,T6*T6)))
 
 
 def ridge_fit(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -91,9 +98,9 @@ def project_pair_spacing(pred: np.ndarray, files: np.ndarray, cutoffs: np.ndarra
 
 
 def baseline_features(history: list[list[float]]) -> np.ndarray:
-    q = np.asarray(history[-6:], dtype=float); t = np.arange(len(q), dtype=float)
-    lin = np.linalg.pinv(np.column_stack((np.ones(len(q)), t))) @ q
-    quad = np.linalg.pinv(np.column_stack((np.ones(len(q)), t, t*t))) @ q
+    q = np.asarray(history[-6:], dtype=float)
+    lin = LIN6 @ q
+    quad = QUAD6 @ q
     return np.asarray([*lin[1], *(2*quad[2])], dtype=float)
 
 
