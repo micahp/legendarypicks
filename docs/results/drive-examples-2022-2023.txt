@@ -1,0 +1,334 @@
+# Real drives, nflverse 2023, regular season
+
+real 2023_01_ARI_WAS drive 1: punt | 9 snaps, 2 first downs, 26 net yds, 241 s, start 75, offense WAS
+    kickoff               @35    yds  +0    0s  Q1 15:00 FIRST DOWN
+    run            1&10   @75    yds  +3   30s  Q1 15:00
+    pass           2&7    @72    yds  +6   35s  Q1 14:30
+    run            3&1    @66    yds  +2   39s  Q1 13:55 FIRST DOWN
+    pass           1&10   @64    yds  +0    4s  Q1 13:16
+    pass           2&10   @64    yds +12   38s  Q1 13:12 FIRST DOWN
+    pass           1&10   @52    yds  +1   38s  Q1 12:34
+    pass           2&9    @51    yds  +0    5s  Q1 11:56
+    pass           3&9    @51    yds  +2   43s  Q1 11:51
+    punt           4&7    @49    yds  +0    9s  Q1 11:08
+
+real 2023_01_ARI_WAS drive 2: punt | 7 snaps, 1 first downs, 13 net yds, 228 s, start 83, offense ARI
+    run            1&10   @83    yds  -1   31s  Q1 10:59
+    run            2&11   @84    yds  +6   37s  Q1 10:28
+    pass           3&5    @78    yds  +6   39s  Q1 09:51 FIRST DOWN
+    pass           1&10   @72    yds  +0    4s  Q1 09:12
+    pass           2&10   @72    yds  -3   40s  Q1 09:08
+    run            3&13   @75    yds  +5   43s  Q1 08:28
+    punt           4&8    @70    yds  +0   34s  Q1 07:45
+
+real 2023_01_ARI_WAS drive 3: touchdown | 6 snaps, 2 first downs, 24 net yds, 176 s, start 76, offense WAS
+    pass           1&10   @76    yds  +6   31s  Q1 07:11
+    run            2&4    @70    yds  +3   30s  Q1 06:40
+    pass           3&1    @67    yds  +3   23s  Q1 06:10 FIRST DOWN
+    run            1&10   @49    yds  -1   45s  Q1 05:47 FIRST DOWN
+    run            1&10   @13    yds  +6   40s  Q1 05:02
+    pass           2&4    @7     yds  +7    7s  Q1 04:22 pts off +6 def +0
+    pat                   @15    yds  +0    0s  Q1 04:15 made pts off +1 def +0
+
+real 2023_01_ARI_WAS drive 4: field_goal_made | 8 snaps, 2 first downs, 64 net yds, 202 s, start 75, offense ARI
+    kickoff               @35    yds  +0    0s  Q1 04:15 FIRST DOWN
+    run            1&10   @75    yds  +4   30s  Q1 04:15
+    run            2&6    @71    yds +29   44s  Q1 03:45 FIRST DOWN
+    pass           1&10   @42    yds  -1   45s  Q1 03:01
+    pass           2&11   @43    yds +31   33s  Q1 02:16 FIRST DOWN
+    pass           1&10   @12    yds  +0    5s  Q1 01:43
+    run            2&10   @12    yds  +1   38s  Q1 01:38
+    pass           3&9    @11    yds  +0    4s  Q1 01:00
+    field_goal     4&9    @11    yds  +0    3s  Q1 00:56 made pts off +3 def +0
+
+real 2023_01_ARI_WAS drive 5: turnover | 2 snaps, 0 first downs, -1 net yds, 61 s, start 75, offense WAS
+    kickoff               @35    yds  +0    0s  Q1 00:53 FIRST DOWN
+    sack           1&10   @75    yds  -1   53s  Q1 00:53
+    interception   1&10   @71    yds  +0    8s  Q2 14:54
+
+real 2023_01_ARI_WAS drive 6: field_goal_made | 4 snaps, 0 first downs, 1 net yds, 80 s, start 37, offense ARI
+    pass           1&10   @37    yds  +4   38s  Q2 14:46
+    run            2&6    @33    yds  -3   34s  Q2 14:08
+    pass           3&9    @36    yds  +0    3s  Q2 13:34
+    field_goal     4&9    @36    yds  +0    5s  Q2 13:31 made pts off +3 def +0
+
+real 2023_01_ARI_WAS drive 7: turnover | 8 snaps, 3 first downs, 59 net yds, 275 s, start 75, offense WAS
+    kickoff               @35    yds  +0    0s  Q2 13:26 FIRST DOWN
+    run            1&10   @75    yds  +6   37s  Q2 13:26
+    run            2&4    @69    yds  +5   34s  Q2 12:49 FIRST DOWN
+    scramble       1&10   @64    yds  +5   44s  Q2 12:15
+    run            2&5    @59    yds  +3   44s  Q2 11:31
+    pass           3&2    @56    yds +19   37s  Q2 10:47 FIRST DOWN
+    pass           1&10   @37    yds  +1   34s  Q2 10:10
+    pass           2&9    @36    yds +17   41s  Q2 09:36 FIRST DOWN
+    run            1&10   @19    yds  +3    4s  Q2 08:55 FUMBLE LOST
+
+real 2023_01_ARI_WAS drive 11: defensive_touchdown | 4 snaps, 1 first downs, -10 net yds, 34 s, start 88, offense WAS
+    pass           1&10   @88    yds +14   20s  Q2 01:29 FIRST DOWN
+    pass           1&10   @74    yds  +0    4s  Q2 01:09
+    pass           2&10   @74    yds  +0    3s  Q2 01:05
+    sack           3&10   @74    yds -24    7s  Q2 01:02 FUMBLE LOST pts off +0 def +7
+
+real 2023_01_ARI_WAS drive 18: touchdown | 7 snaps, 2 first downs, 29 net yds, 194 s, start 29, offense WAS
+    run            1&10   @29    yds  +4    2s  Q3 00:02
+    run            2&6    @25    yds  +7   31s  Q4 15:00 FIRST DOWN
+    run            1&10   @18    yds  +7   51s  Q4 14:29
+    run            2&3    @11    yds  +3   58s  Q4 13:38 FIRST DOWN
+    pass           1&8    @8     yds  +0    4s  Q4 12:40
+    run            2&8    @8     yds  +2   42s  Q4 12:36
+    scramble       3&6    @6     yds  +6    6s  Q4 11:54 pts off +6 def +0
+    pat                   @15    yds  +0    0s  Q4 11:48 made pts off +1 def +0
+
+real 2023_01_ARI_WAS drive 23: turnover_on_downs | 6 snaps, 1 first downs, 7 net yds, 73 s, start 75, offense ARI
+    kickoff               @35    yds  +0    0s  Q4 02:23 FIRST DOWN
+    pass           1&10   @75    yds  +4   21s  Q4 02:23
+    run            2&1    @66    yds  +3    5s  Q4 02:02 FIRST DOWN
+    pass           1&10   @63    yds  +2   28s  Q4 01:57
+    sack           2&8    @61    yds  -8    7s  Q4 01:29
+    pass           3&16   @69    yds  +6    7s  Q4 01:22
+    pass           4&10   @63    yds  +0    5s  Q4 01:15
+
+real 2023_01_BUF_NYJ drive 10: kneel_end_game | 1 snaps, 0 first downs, -1 net yds, 17 s, start 75, offense NYJ
+    kickoff               @35    yds  +0    0s  Q2 00:17 FIRST DOWN
+    kneel          1&10   @75    yds  -1   17s  Q2 00:17
+
+real 2023_01_BUF_NYJ drive 21: kneel_end_game | 1 snaps, 0 first downs, -1 net yds, 2 s, start 75, offense NYJ
+    kickoff               @35    yds  +0    0s  Q4 00:02 FIRST DOWN
+    kneel          1&10   @75    yds  -1    2s  Q4 00:02
+
+real 2023_01_BUF_NYJ drive 22: defensive_touchdown | 4 snaps, 0 first downs, 3 net yds, 600 s, start 80, offense BUF
+    kickoff               @35    yds  +0    0s  Q5 10:00 FIRST DOWN
+    pass           1&15   @80    yds  +0    3s  Q5 10:00
+    run            2&15   @80    yds  +3   31s  Q5 09:57
+    pass           3&12   @77    yds  +0    5s  Q5 09:26
+    punt           4&12   @77    yds  +0  561s  Q5 09:21 pts off +0 def +6
+
+real 2023_01_CAR_ATL drive 2: turnover_on_downs | 11 snaps, 3 first downs, 48 net yds, 414 s, start 60, offense CAR
+    run            1&10   @60    yds  +4   44s  Q1 13:02
+    pass           2&6    @56    yds +12   39s  Q1 12:18 FIRST DOWN
+    run            1&10   @44    yds  +9   45s  Q1 11:39
+    run            2&1    @35    yds  +2   38s  Q1 10:54 FIRST DOWN
+    run            1&10   @33    yds  -3   39s  Q1 10:16
+    pass           2&13   @36    yds  +2   39s  Q1 09:37
+    pass           3&11   @34    yds +14   42s  Q1 08:58 FIRST DOWN
+    run            1&10   @20    yds  +5   41s  Q1 08:16
+    run            2&5    @15    yds  +4   39s  Q1 07:35
+    run            3&1    @11    yds  +0   42s  Q1 06:56
+    run            4&1    @11    yds  -1    6s  Q1 06:14
+
+real 2023_01_CAR_ATL drive 11: clock_expiration | 4 snaps, 1 first downs, -2 net yds, 84 s, start 72, offense ATL
+    pass           1&10   @72    yds  +0   10s  Q2 01:24
+    run            2&10   @72    yds  +4   33s  Q2 01:14
+    pass           3&6    @68    yds  +7    7s  Q2 00:41 FIRST DOWN
+    sack           1&10   @61    yds -13   34s  Q2 00:34
+
+real 2023_01_CIN_CLE drive 19: field_goal_missed | 7 snaps, 1 first downs, 17 net yds, 169 s, start 50, offense CIN
+    run            1&10   @50    yds  -3   40s  Q3 09:42
+    pass           2&13   @53    yds +10   42s  Q3 09:02
+    pass           3&3    @43    yds  +4   33s  Q3 08:20 FIRST DOWN
+    pass           1&10   @39    yds  +0    3s  Q3 07:47
+    run            2&10   @39    yds  +6   42s  Q3 07:44
+    pass           3&4    @33    yds  +0    5s  Q3 07:02
+    field_goal     4&4    @33    yds  +0    4s  Q3 06:57 missed
+
+real 2023_01_DAL_NYG drive 9: field_goal_missed | 15 snaps, 4 first downs, 52 net yds, 418 s, start 75, offense NYG
+    kickoff               @35    yds  +0    0s  Q2 08:03 FIRST DOWN
+    run            1&10   @75    yds  +0   63s  Q2 08:03 FIRST DOWN
+    pass           1&10   @70    yds  +6   33s  Q2 07:00
+    run            2&4    @64    yds  +3   35s  Q2 06:27
+    pass           3&1    @61    yds  +8   28s  Q2 05:52 FIRST DOWN
+    run            1&10   @53    yds  -2   36s  Q2 05:24
+    pass           2&12   @55    yds  +0    4s  Q2 04:48
+    scramble       3&12   @55    yds  +7   13s  Q2 04:44
+    pass           4&5    @48    yds +22   45s  Q2 04:31 FIRST DOWN
+    run            1&10   @26    yds  +2   34s  Q2 03:46
+    run            2&8    @24    yds  +3   40s  Q2 03:12
+    pass           3&5    @21    yds  +7   32s  Q2 02:32 FIRST DOWN
+    sack           1&10   @14    yds  -5   40s  Q2 02:00
+    pass           2&15   @19    yds  +0    4s  Q2 01:20
+    scramble       3&15   @19    yds  +1    6s  Q2 01:16
+    field_goal     4&14   @18    yds  +0    5s  Q2 01:10 missed
+
+real 2023_01_DAL_NYG drive 11: clock_expiration | 2 snaps, 0 first downs, -7 net yds, 42 s, start 71, offense NYG
+    pass           1&10   @71    yds  +0    5s  Q2 00:42
+    sack           2&10   @71    yds  -7   37s  Q2 00:37
+
+real 2023_01_TEN_NO drive 1: no_offensive_snap | 0 snaps, 0 first downs, 0 net yds, 0 s, start None, offense NO
+    kickoff               @35    yds  +0    4s  Q1 15:00 FUMBLE LOST
+
+real 2023_03_IND_BAL drive 22: safety_against_offense | 3 snaps, 0 first downs, -1 net yds, 13 s, start 98, offense IND
+    pass           1&10   @98    yds  +0    3s  Q4 02:14
+    pass           2&11   @99    yds  +0    8s  Q4 02:11 pts off +0 def +2
+    sack           3&11   @99    yds  -1    2s  Q4 02:05 pts off +0 def +2
+
+real 2023_03_NE_NYJ drive 22: safety_against_offense | 3 snaps, 0 first downs, -5 net yds, 25 s, start 90, offense NYJ
+    pass           1&10   @90    yds  +0    6s  Q4 02:44
+    pass           2&10   @90    yds  +0   11s  Q4 02:38
+    sack           3&15   @95    yds  -5    8s  Q4 02:27 pts off +0 def +2
+
+real 2023_05_HOU_ATL drive 13: no_offensive_snap | 0 snaps, 0 first downs, 0 net yds, 0 s, start None, offense ATL
+    kickoff               @35    yds  +0    3s  Q2 00:03
+
+# Simulated drives, model nfl-seq-v0.1 main, trial 0 of each game (same seeds as the evaluation)
+
+sim 2022_01_BAL_NYJ drive 0: touchdown | 7 snaps, 2 first downs, 79 net yds, 235 s, start 79, offense BAL
+    kickoff                      yds  +0    1s  Q1 15:00 FIRST DOWN
+    run            1&10   @79    yds  +2   44s  Q1 14:59
+    pass           2&8    @77    yds +12   34s  Q1 14:15 FIRST DOWN
+    run            1&10   @65    yds  +0    9s  Q1 13:41
+    run            2&10   @65    yds  +2   38s  Q1 13:32
+    pass           3&8    @63    yds +54   40s  Q1 12:54 FIRST DOWN
+    run            1&9    @9     yds  +6   40s  Q1 12:14
+    pass           2&3    @3     yds  +3   30s  Q1 11:34 pts off +6 def +0
+    pat                          yds  +0    0s  Q1 11:04 made pts off +1 def +0
+
+sim 2022_01_BAL_NYJ drive 1: punt | 7 snaps, 1 first downs, 17 net yds, 157 s, start 75, offense NYJ
+    kickoff                      yds  +0    6s  Q1 11:04 FIRST DOWN
+    pass           1&10   @75    yds  +5    6s  Q1 10:58
+    pass           2&5    @70    yds  +1   39s  Q1 10:52
+    pass           3&4    @69    yds  +8   38s  Q1 10:13 FIRST DOWN
+    run            1&10   @61    yds  +3   31s  Q1 09:35
+    pass           2&7    @58    yds  +0    8s  Q1 09:04
+    pass           3&7    @58    yds  +0    6s  Q1 08:56
+    punt           4&7    @58    yds  +0   29s  Q1 08:50
+
+sim 2022_01_BAL_NYJ drive 2: touchdown | 12 snaps, 5 first downs, 87 net yds, 404 s, start 87, offense BAL
+    run            1&10   @87    yds  +3   34s  Q1 08:21
+    run            2&7    @84    yds  +4   44s  Q1 07:47
+    pass           3&3    @80    yds +11   37s  Q1 07:03 FIRST DOWN
+    pass           1&10   @69    yds +19   16s  Q1 06:26 FIRST DOWN
+    pass           1&10   @50    yds +16    9s  Q1 06:10 FIRST DOWN
+    pass           1&10   @34    yds +20   40s  Q1 06:01 FIRST DOWN
+    pass           1&10   @14    yds  +0    6s  Q1 05:21
+    pass           2&10   @14    yds  +7   50s  Q1 05:15
+    scramble       3&3    @7     yds  +4   42s  Q1 04:25 FIRST DOWN
+    run            1&3    @3     yds  +0   38s  Q1 03:43
+    run            2&3    @3     yds  -1   42s  Q1 03:05
+    pass           3&4    @4     yds  +4   46s  Q1 02:23 pts off +6 def +0
+    pat                          yds  +0    0s  Q1 01:37 made pts off +1 def +0
+
+sim 2022_01_BAL_NYJ drive 3: turnover | 2 snaps, 0 first downs, 15 net yds, 48 s, start 75, offense NYJ
+    kickoff                      yds  +0    1s  Q1 01:37 FIRST DOWN
+    run            1&10   @75    yds  +3   32s  Q1 01:36
+    pass           2&7    @72    yds +12   16s  Q1 01:04 FUMBLE LOST
+
+sim 2022_01_BAL_NYJ drive 4: punt | 4 snaps, 0 first downs, -1 net yds, 91 s, start 40, offense BAL
+    run            1&10   @40    yds  -2   27s  Q1 00:48
+    pass           2&12   @42    yds  +7   21s  Q1 00:21
+    run            3&5    @35    yds  -6   36s  Q2 15:00
+    punt           4&11   @41    yds  +0    7s  Q2 14:24
+
+sim 2022_01_BAL_NYJ drive 6: turnover | 7 snaps, 4 first downs, 55 net yds, 234 s, start 80, offense BAL
+    run            1&10   @80    yds  +8   43s  Q2 12:20
+    run            2&2    @72    yds  +2   36s  Q2 11:37 FIRST DOWN
+    pass           1&10   @70    yds +12   46s  Q2 11:01 FIRST DOWN
+    pass           1&10   @58    yds +21   31s  Q2 10:15 FIRST DOWN
+    pass           1&10   @37    yds  +0    6s  Q2 09:44
+    pass           2&10   @37    yds +13   37s  Q2 09:38 FIRST DOWN
+    run            1&10   @24    yds  -1   35s  Q2 09:01 FUMBLE LOST
+
+sim 2022_01_BAL_NYJ drive 9: field_goal_made | 4 snaps, 1 first downs, 59 net yds, 72 s, start 89, offense NYJ
+    pass           1&10   @89    yds  +2   36s  Q2 04:38
+    pass           2&8    @87    yds  +7    8s  Q2 04:02
+    pass           3&1    @80    yds +50   25s  Q2 03:54 FIRST DOWN
+    field_goal     1&10   @30    yds  +0    3s  Q2 03:29 made pts off +3 def +0
+
+sim 2022_01_BAL_NYJ drive 11: clock_expiration | 5 snaps, 3 first downs, 58 net yds, 99 s, start 70, offense NYJ
+    run            1&10   @70    yds  +5    4s  Q2 01:39
+    pass           2&5    @65    yds  +9   39s  Q2 01:35 FIRST DOWN
+    pass           1&10   @56    yds +16   34s  Q2 00:56 FIRST DOWN
+    pass           1&10   @40    yds +19    7s  Q2 00:22 FIRST DOWN
+    pass           1&10   @21    yds  +9   15s  Q2 00:15
+
+sim 2022_01_BAL_NYJ drive 16: turnover_on_downs | 9 snaps, 2 first downs, 16 net yds, 205 s, start 94, offense NYJ
+    run            1&10   @94    yds  +5    6s  Q3 00:06
+    pass           2&5    @89    yds  +7   38s  Q4 15:00 FIRST DOWN
+    pass           1&10   @82    yds  +0    5s  Q4 14:22
+    pass           2&10   @82    yds  +9   28s  Q4 14:17
+    run            3&1    @73    yds  +2   37s  Q4 13:49 FIRST DOWN
+    sack           1&10   @71    yds -10   34s  Q4 13:12
+    pass           2&20   @81    yds  +0    4s  Q4 12:38
+    pass           3&20   @81    yds  +3   45s  Q4 12:34
+    pass           4&17   @78    yds  +0    8s  Q4 11:49
+
+sim 2022_01_BAL_NYJ drive 17: field_goal_missed | 4 snaps, 0 first downs, 7 net yds, 83 s, start 22, offense BAL
+    run            1&10   @22    yds  +4   33s  Q4 11:41
+    pass           2&6    @18    yds  +0    5s  Q4 11:08
+    pass           3&6    @18    yds  +3   39s  Q4 11:03
+    field_goal     4&3    @15    yds  +0    6s  Q4 10:24 missed
+
+sim 2022_01_BAL_NYJ drive 19: field_goal_made | 7 snaps, 1 first downs, 54 net yds, 184 s, start 67, offense BAL
+    run            1&10   @67    yds  -1   42s  Q4 08:25
+    pass           2&11   @68    yds  +9   33s  Q4 07:43
+    pass           3&2    @59    yds +38   35s  Q4 07:10 FIRST DOWN
+    run            1&10   @21    yds  +3   41s  Q4 06:35
+    pass           2&7    @18    yds  +0    6s  Q4 05:54
+    pass           3&7    @18    yds  +5   23s  Q4 05:48
+    field_goal     4&2    @13    yds  +0    4s  Q4 05:25 made pts off +3 def +0
+
+sim 2022_01_BAL_NYJ drive 22: clock_expiration | 10 snaps, 3 first downs, 62 net yds, 194 s, start 84, offense NYJ
+    pass           1&10   @84    yds  +4    7s  Q4 03:14
+    run            2&6    @80    yds  +4   21s  Q4 03:07
+    pass           3&2    @76    yds  +0    1s  Q4 02:46
+    run            4&2    @76    yds  +5   45s  Q4 02:45 FIRST DOWN
+    run            1&10   @71    yds +21    3s  Q4 02:00 FIRST DOWN
+    run            1&10   @50    yds  +2   41s  Q4 01:57
+    pass           2&8    @48    yds  +0    4s  Q4 01:16
+    pass           3&8    @48    yds  +9   23s  Q4 01:12 FIRST DOWN
+    run            1&10   @39    yds  +6   45s  Q4 00:49
+    pass           2&4    @33    yds +11    4s  Q4 00:04
+
+sim 2022_01_BUF_LA drive 6: field_goal_missed | 6 snaps, 2 first downs, 30 net yds, 129 s, start 58, offense BUF
+    run            1&10   @58    yds +11   43s  Q1 07:27 FIRST DOWN
+    run            1&10   @47    yds +10   37s  Q1 06:44 FIRST DOWN
+    pass           1&10   @37    yds  +0    4s  Q1 06:07
+    run            2&10   @37    yds  +4   25s  Q1 06:03
+    pass           3&6    @33    yds  +5   16s  Q1 05:38
+    field_goal     4&1    @28    yds  +0    4s  Q1 05:22 missed
+
+sim 2022_01_BUF_LA drive 20: turnover_on_downs | 4 snaps, 0 first downs, -2 net yds, 63 s, start 75, offense LA
+    kickoff                      yds  +0    1s  Q4 07:06 FIRST DOWN
+    run            1&10   @75    yds  +3   43s  Q4 07:05
+    sack           2&7    @72    yds  -5   10s  Q4 06:22
+    pass           3&12   @77    yds  +0    5s  Q4 06:12
+    pass           4&12   @77    yds  +0    5s  Q4 06:07
+
+sim 2022_01_DEN_SEA drive 0: safety_against_offense | 2 snaps, 0 first downs, -7 net yds, 62 s, start 94, offense SEA
+    kickoff                      yds  +0    1s  Q1 15:00 FIRST DOWN
+    pass           1&10   @94    yds  -5   29s  Q1 14:59
+    run            2&15   @99    yds  -2   33s  Q1 14:30 pts off +0 def +2
+
+sim 2022_01_JAX_WAS drive 16: defensive_touchdown | 4 snaps, 0 first downs, 4 net yds, 48 s, start 75, offense WAS
+    kickoff                      yds  +0    1s  Q3 00:33 FIRST DOWN
+    run            1&10   @75    yds  +4   32s  Q3 00:32
+    pass           2&6    @71    yds  +0    4s  Q4 15:00
+    pass           3&6    @71    yds  +0    5s  Q4 14:56
+    punt           4&6    @71    yds  +0    7s  Q4 14:51 pts off +0 def +6
+    pat                          yds  +0    0s  Q4 14:44 made pts off +1 def +0
+
+sim 2022_01_SF_CHI drive 16: safety_against_offense | 2 snaps, 0 first downs, -5 net yds, 85 s, start 95, offense SF
+    run            1&10   @95    yds  +5   45s  Q3 02:48
+    sack           2&5    @90    yds -10   40s  Q3 02:03 pts off +0 def +2
+
+sim 2022_03_ATL_SEA drive 10: defensive_touchdown | 4 snaps, 0 first downs, 5 net yds, 92 s, start 93, offense ATL
+    pass           1&10   @93    yds  +0    3s  Q3 10:14
+    run            2&10   @93    yds  -4   31s  Q3 10:11
+    pass           3&14   @97    yds  +9   48s  Q3 09:40
+    punt           4&5    @88    yds  +0   10s  Q3 08:52 pts off +0 def +6
+    pat                          yds  +0    0s  Q3 08:42 made pts off +1 def +0
+
+sim 2022_03_BUF_MIA drive 23: kneel_end_game | 3 snaps, 1 first downs, 27 net yds, 128 s, start 56, offense MIA
+    run            1&10   @56    yds  +5   40s  Q4 02:08
+    run            2&5    @51    yds +23   46s  Q4 01:28 FIRST DOWN
+    kneel          1&10   @28    yds  -1   42s  Q4 00:42
+
+sim 2022_03_LA_ARI drive 16: kneel_end_game | 8 snaps, 3 first downs, 73 net yds, 224 s, start 81, offense LA
+    pass           1&10   @81    yds +33   43s  Q3 12:53 FIRST DOWN
+    pass           1&10   @48    yds +22   41s  Q3 12:10 FIRST DOWN
+    pass           1&10   @26    yds  +9    5s  Q3 11:29
+    run            2&1    @17    yds  +5   36s  Q3 11:24 FIRST DOWN
+    pass           1&10   @12    yds  +0    4s  Q3 10:48
+    scramble       2&10   @12    yds  +5   46s  Q3 10:44
+    pass           3&5    @7     yds  +0    7s  Q3 09:58
+    kneel          4&5    @7     yds  -1   42s  Q3 09:51
+
