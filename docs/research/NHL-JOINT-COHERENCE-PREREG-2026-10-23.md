@@ -144,3 +144,27 @@ horizon and uncertainty status. Label recorded positions **observed** and genera
 
 No policy is selected or adopted in this milestone. The ten-game sample remains development-only,
 and independent tracking is required for any adoption claim.
+
+## Amendment frozen before evaluation: exact spacing-onset profile
+
+The primary reporting horizons and JC decision rule above remain unchanged. To meet the task's
+request to locate when players begin separating incorrectly, calculate the same group measures at
+every +1 through +45 ordinal increment, not seconds. For every model and step, retain the same
+common-label and two-tracks-per-team rules, equal-game weighting, per-state counts and paired
+10-game bootstrap intervals. These 45-step profiles are descriptive diagnostics only; they do not
+add a success gate or policy-selection opportunity. Report all steps so the first change is not
+chosen after inspecting a sparse subset of horizons.
+
+At each step also report two signed direction diagnostics, in feet: (a) each team's mean predicted
+within-team pair distance minus its observed mean, plus the equal-team average; positive means the
+generated group is more spread out, negative means more compact; (b) for nearest-opponent distances,
+the model-minus-observed differences at quantiles 0.10, 0.25, 0.50, 0.75 and 0.90 and their
+equal-weight mean, with positive indicating greater separation. These signed quantities diagnose
+direction and onset only; they do not replace the four registered error families or enter the JC
+decision. For each signed diagnostic, label its earliest step whose unadjusted game-cluster
+interval excludes zero as a descriptive onset, not a confirmatory finding; no multiplicity correction
+is added.
+
+Use linear interpolation for empirical pair-error P90, nearest-opponent quantiles, and bootstrap
+percentile endpoints. This amendment changes no model, input, primary horizon, JC decision rule,
+gate, threshold, or coefficient.
