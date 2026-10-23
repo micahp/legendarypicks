@@ -30,10 +30,11 @@ import zipfile
 from collections import Counter, defaultdict
 
 EXPECTED_ROWS = 58743
-EXPECTED_COLUMNS = 73  # docs/MADDEN-RATINGS-DATASET-1992-2027.md says 73; the archive has 68
+EXPECTED_COLUMNS = 70  # README: 10 identity + 60 attributes; the repo spec doc still says 73
 EXPECTED_TEAM_PAGE_ROWS = 7387
 EXPECTED_PLAYERS = 12570
-IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'nfl_season', 'team', 'POS', 'source']
+IDENTITY = ['player_id', 'player_name', 'slug', 'madden_release', 'dupe_seq', 'nfl_season', 'team', 'POS',
+            'source', 'site_calculated']
 
 # Madden POS (primary token before a slash) -> position group. Anything not listed is
 # reported as OTHER and fails the check: an unmapped position is never silently grouped.
@@ -100,13 +101,22 @@ def main():
     coverage = json.loads(zf.read('out/coverage.json'))
 
     # 1. Shape
-    rep.add('shape.header_identity', 'PASS' if header[:8] == IDENTITY else 'FAIL',
-            f'first 8 columns = {header[:8]}')
-    rep.add('shape.columns_match_spec', 'PASS' if len(header) == EXPECTED_COLUMNS else 'FAIL',
-            f'{len(header)} columns = {len(IDENTITY)} identity + {len(ATTR)} attributes; '
-            f'spec says {EXPECTED_COLUMNS} columns and 5 identity')
+    rep.add('shape.header_identity', 'PASS' if header[:len(IDENTITY)] == IDENTITY else 'FAIL',
+            f'first {len(IDENTITY)} columns = {header[:len(IDENTITY)]}')
+    rep.add('shape.columns', 'PASS' if len(header) == EXPECTED_COLUMNS else 'FAIL',
+            f'{len(header)} columns = {len(IDENTITY)} identity + {len(ATTR)} attributes '
+            f'(expected {EXPECTED_COLUMNS}: 10 identity + 60 attributes)')
     rep.add('shape.rows', 'PASS' if len(rows) == EXPECTED_ROWS else 'FAIL',
             f'{len(rows)} rows vs expected {EXPECTED_ROWS}')
+    readme = zf.read('README.md').decode('utf-8')
+    rep.add('readme.column_count', 'FAIL' if '× 73 columns' in readme else 'PASS',
+            f'README contents table says "× 73 columns"; the file has {len(header)} and the README numbers say 70')
+    spec_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'docs',
+                             'MADDEN-RATINGS-DATASET-1992-2027.md')
+    spec_text = open(spec_path, encoding='utf-8').read() if os.path.exists(spec_path) else ''
+    rep.add('spec.column_count', 'FAIL' if ('73 columns' in spec_text or not spec_text) else 'PASS',
+            f'repo spec doc {"says 73 columns" if "73 columns" in spec_text else "missing or unreadable" if not spec_text else "agrees"}; '
+            f'the file has {len(header)}')
 
     # 2. Oracle: coverage.json (publisher-side counts are ours, so compare to the archive's own file)
     per_rel_csv = Counter(r['madden_release'] for r in rows)
@@ -116,6 +126,28 @@ def main():
             f'{len(per_rel_cov) - len(mism)} of {len(per_rel_cov)} releases match coverage.json' +
             (f'; mismatches {mism}' if mism else ''))
 
+    # Every out/by_year/madden_<year>.csv must be the same multiset of rows as the long CSV slice.
+    def row_key(d):
+        return tuple(d.get(c, '').strip() for c in header)
+
+    stale = []
+    for y in sorted(per_rel_csv, key=int):
+        name = f'out/by_year/madden_{y}.csv'
+        if name not in zf.namelist():
+            stale.append((y, 'missing file'))
+            continue
+        by = list(csv.DictReader(io.StringIO(zf.read(name).decode('utf-8'))))
+        if set(by[0].keys()) != set(header):
+            stale.append((y, 'columns differ'))
+            continue
+        long_keys = sorted(row_key(r) for r in rows if r['madden_release'] == y)
+        by_keys = sorted(row_key(r) for r in by)
+        if long_keys != by_keys:
+            stale.append((y, len(by), len(long_keys)))
+    rep.add('zip.by_year_matches_long', 'PASS' if not stale else 'FAIL',
+            f'{len(per_rel_csv) - len(stale)} of {len(per_rel_csv)} by_year files equal the long CSV slice' +
+            (f'; stale: {stale}' if stale else ''))
+
     # attribute_present_counts in coverage.json vs the CSV's non-blank cells
     cov_attr = coverage['attribute_present_counts']
     actual_attr = {a: sum(1 for r in rows if r[a].strip() != '') for a in ATTR}
@@ -124,10 +156,20 @@ def main():
             f'{len(ATTR) - len(attr_mism)} of {len(ATTR)} attribute counts match coverage.json; '
             f'e.g. OVR coverage.json={cov_attr["OVR"]} vs CSV={actual_attr["OVR"]}')
 
-    # 3. OVR presence: README says 50,203
+    # 3. OVR: the README splits presence into EA-published and site-calculated values
     ovr_nonblank = actual_attr['OVR']
-    rep.add('ovr.README_claim_50203', 'PASS' if ovr_nonblank == 50203 else 'FAIL',
-            f'rows with OVR = {ovr_nonblank} (README claims 50,203)')
+    ea_pub = sum(1 for r in rows if r['OVR'].strip() and not r['site_calculated'].strip())
+    calc_n = sum(1 for r in rows if r['site_calculated'].strip())
+    rep.add('ovr.README_counts', 'PASS' if (ovr_nonblank, ea_pub, calc_n) == (58345, 50203, 8142) else 'FAIL',
+            f'OVR present {ovr_nonblank} (README 58,345), EA-published {ea_pub} (README 50,203), '
+            f'site-calculated {calc_n} (README 8,142)')
+    calc_flags = {r['site_calculated'].strip() for r in rows}
+    rep.add('ovr.calculated_flag_values', 'PASS' if calc_flags <= {'', 'OVR'} else 'FAIL',
+            f'site_calculated values: {sorted(calc_flags)}')
+    calc_rel = {r['madden_release'] for r in rows if r['site_calculated'].strip()}
+    expected_calc = {str(y) for y in list(range(1992, 1997)) + list(range(1998, 2001))}
+    rep.add('ovr.calculated_only_1992_2000', 'PASS' if calc_rel == expected_calc else 'FAIL',
+            f'releases with site-calculated OVR: {sorted(calc_rel, key=int)}')
     all_empty = sum(1 for r in rows if not any(r[c].strip() for c in ('OVR', 'SPEED', 'AWR')))
     rep.add('ovr.no_empty_core_rows', 'PASS' if all_empty == 0 else 'FAIL',
             f'rows where OVR, SPEED and AWR are all blank = {all_empty}')
@@ -153,6 +195,12 @@ def main():
             (f', e.g. player {range_bad[0][0]} {range_bad[0][1]} {range_bad[0][2]}={range_bad[0][3]}' if range_bad else ''))
 
     # 5. Keys and duplicates
+    doc_key = defaultdict(list)
+    for i, r in enumerate(rows):
+        doc_key[(r['player_id'], r['madden_release'], r['dupe_seq'])].append(i)
+    doc_key_dups = sum(1 for v in doc_key.values() if len(v) > 1)
+    rep.add('keys.documented_key_unique', 'PASS' if doc_key_dups == 0 else 'FAIL',
+            f'(player_id, madden_release, dupe_seq) is duplicated for {doc_key_dups} keys; the README documents this key')
     key_groups = defaultdict(list)
     for i, r in enumerate(rows):
         key_groups[(r['player_id'], r['madden_release'])].append(i)
@@ -163,9 +211,17 @@ def main():
     team_differs = sum(1 for v in dup_keys.values() if len({rows[j]['team'].strip().lower() for j in v}) > 1)
     rating_differs = sum(1 for v in dup_keys.values()
                          if any(len({rows[j][c] for j in v}) > 1 for c in ATTR))
-    rep.add('keys.player_release_unique', 'PASS' if not dup_keys else 'FAIL',
-            f'{len(dup_keys)} keys (player_id, madden_release) occur more than once, covering {dup_rows} rows; '
-            f'{identical} identical, {team_differs} differ by team, {rating_differs} differ in at least one attribute')
+    seq_bad = [k for k, v in dup_keys.items() if sorted(int(rows[i]['dupe_seq']) for i in v) != list(range(len(v)))]
+    rep.add('keys.stint_sequence_contiguous', 'PASS' if not seq_bad else 'FAIL',
+            f'{len(dup_keys)} player-releases have more than one row ({dup_rows} rows); '
+            f'dupe_seq is not 0..n-1 for {len(seq_bad)}')
+    same_team = [k for k, v in dup_keys.items() if len({rows[i]['team'].strip().lower() for i in v}) == 1]
+    rep.add('keys.stints_differ_by_team', 'PASS' if not same_team else 'FAIL',
+            f'{len(same_team)} multi-row player-releases have one team on every row; '
+            f'the README says these rows are team changes')
+    rep.add('keys.stint_ratings_differ', 'INFO',
+            f'{identical} identical, {team_differs} differ by team, {rating_differs} of {len(dup_keys)} differ in at '
+            f'least one attribute; a value that changes within one release is a leakage question')
 
     # 6. Team: casing, blanks, normalized count
     raw_team = Counter(r['team'] for r in rows)
@@ -360,6 +416,7 @@ def main():
     out_path = os.path.join(args.derived_dir, 'normalized_ratings.csv')
     out_cols = ['row_id', 'player_id', 'player_name', 'slug', 'madden_release', 'nfl_season', 'season_source',
                 'team_raw', 'team_norm', 'team_missing', 'POS', 'pos_primary', 'pos_group', 'source',
+                'dupe_seq', 'site_calculated',
                 'key_duplicate', 'ovr_present', 'attr_present_count'] + ATTR
     dup_row_ids = {i for v in dup_keys.values() for i in v}
     with open(out_path, 'w', newline='') as f:
@@ -374,6 +431,7 @@ def main():
                         'source_text' if s else 'derived_release_minus_1',
                         r['team'], team_norm, 1 if not team_norm else 0,
                         r['POS'], prim, POS_GROUP.get(prim, 'OTHER'), r['source'],
+                        r['dupe_seq'], r['site_calculated'],
                         1 if i in dup_row_ids else 0,
                         1 if r['OVR'].strip() else 0,
                         sum(1 for a in ATTR if r[a].strip())] + [r[a].strip() for a in ATTR])

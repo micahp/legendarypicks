@@ -1,5 +1,5 @@
 source_column,gridiron_rating,relation,basis,caveat,archive_nonblank_cells,first_release_present,last_release_present
-OVR,,none,publisher overall; Gridiron OVR is its own league percentile,"comparison target only, never an input feature",50203,1997,2027
+OVR,,none,publisher overall; Gridiron OVR is its own league percentile,"comparison target only, never an input feature",58345,1992,2027
 SPEED,SPD,renamed,Gridiron SPD is the 40-yard-dash curve (RATINGS.md),"EA speed rating, not measured velocity; do not treat as tracking data",57056,1992,2027
 ACC,ACC,exact,Gridiron ACC from 10-yard time (RATINGS.md),,49121,1997,2027
 AGI,AGI,exact,Gridiron AGI from 3-cone and shuttle (RATINGS.md),,56556,1992,2027

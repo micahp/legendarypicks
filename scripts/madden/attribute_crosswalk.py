@@ -20,6 +20,7 @@ written here explicitly.
 import argparse
 import csv
 import io
+import os
 import statistics
 import sys
 import zipfile
@@ -128,7 +129,9 @@ def main():
 
     zf = zipfile.ZipFile(args.zip)
     rows = list(csv.DictReader(io.StringIO(zf.read('out/madden_ratings_long.csv').decode('utf-8'))))
-    attrs = list(rows[0].keys())[8:]
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from audit_madden_ratings import IDENTITY  # noqa: E402
+    attrs = list(rows[0].keys())[len(IDENTITY):]
 
     missing_src = [a for a in attrs if a not in MAP]
     extra_src = [a for a in MAP if a not in attrs]
