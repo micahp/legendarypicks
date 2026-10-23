@@ -184,8 +184,8 @@ misuse; the caller must label it.
 
 The engine does not model these. Each is listed in every script's `unsupported_mechanics` and measured in the results.
 
-- **Penalties.** Never generated. Penalty rows are about 7.8% of 2022 to 2023 scrimmage rows. They are excluded from training.
-- **Two-point tries.** Every try is an extra point. About 1% of conversions.
+- **Penalties.** Never generated. Penalty rows are 6.49% of the 94,556 regular-season rows in 2022 to 2023 (8.02% of the 76,470 run, pass and no-play rows). They are excluded from training. Source: `denominators` in [RESULTS](RESULTS-nfl-sequence-v0.1-2026-10-22.md).
+- **Two-point tries.** Every try is an extra point. 9.45% of conversion attempts (246 of 2,602 in 2022 to 2023; the other 2,356 are extra points). Source: [RESULTS](RESULTS-nfl-sequence-v0.1-2026-10-22.md).
 - **Timeouts and challenges.** Never called. The public state reports 3 for each side. The clock is set only by the
   empirical run-off per play type.
 - **Participants and rosters.** `participants` is `null`. No passer, receiver or rusher is named.
@@ -199,7 +199,7 @@ The engine does not model these. Each is listed in every script's `unsupported_m
   clock management are not modelled beyond the quarter bin.
 - **Missed field-goal spot and blocked kicks.** A miss gives the ball at the line of scrimmage; blocks are not generated.
 - **Team strength.** The engine is team-agnostic apart from the playbook's call weights. Game-level scoring therefore reflects league
-  scoring, not a team's quality; the winner is near a coin flip. This is the honest limit of v0.1.
+  scoring, not a team's quality. Measured on the held-out seasons, winner accuracy is 0.494 (95% CI 0.453 to 0.532) against a coin flip of 0.5 and an always-home rate of 0.558; the main variant's Brier score is worse than the base-rate forecast. This is the honest limit of v0.1. See [RESULTS](RESULTS-nfl-sequence-v0.1-2026-10-22.md).
 
 ## 8. Model artifacts
 

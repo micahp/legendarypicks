@@ -22,7 +22,7 @@ COLUMNS = [
     "play_type", "yards_gained", "penalty", "play_deleted", "aborted_play", "two_point_attempt",
     "qb_kneel", "qb_spike", "qb_scramble", "sack", "interception", "complete_pass",
     "incomplete_pass", "out_of_bounds", "fumble_lost", "kick_distance", "field_goal_result",
-    "extra_point_result", "touchback", "return_yards", "kickoff_attempt", "punt_attempt",
+    "extra_point_result", "extra_point_attempt", "two_point_conv_result", "touchback", "return_yards", "kickoff_attempt", "punt_attempt",
     "home_team", "away_team", "total_home_score", "total_away_score", "drive",
 ]
 CALL_BY_PLAY_TYPE = {"run": "run", "pass": "pass", "punt": "punt", "field_goal": "field_goal", "qb_kneel": "kneel", "qb_spike": "spike"}

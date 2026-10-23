@@ -25,6 +25,7 @@ import hashlib
 import json
 import math
 import os
+import random
 import sqlite3
 import time
 from collections import Counter
@@ -37,6 +38,8 @@ from .simulate import MODEL_VERSION, Simulator, derive_seed, script
 from .train import parse_seasons
 
 VARIANT_NAMES = ("main", "state_transition", "frequency")
+BOOTSTRAP_REPS = 2000
+BOOTSTRAP_SEED = 20261022
 CALL_TYPES = ("run", "pass", "punt", "field_goal", "kneel", "spike")
 ECE_BINS = 10
 
@@ -243,6 +246,9 @@ def simulate_games(model: StatModel, games: Dict[str, Dict[str, Any]], trials: i
         margins = sorted(h - a for h, a in zip(homes, aways))
         decisive_home = sum(1 for h, a in zip(homes, aways) if h > a)
         decisive_away = sum(1 for h, a in zip(homes, aways) if a > h)
+        decisive_total = decisive_home + decisive_away
+        if decisive_total == 0:
+            raise RuntimeError("no decisive trial for game %s" % game_id)
         records.append(
             {
                 "game_id": game_id,
@@ -256,9 +262,9 @@ def simulate_games(model: StatModel, games: Dict[str, Dict[str, Any]], trials: i
                 "p90_total": _quantile(totals, 0.9),
                 "p10_margin": _quantile(margins, 0.1),
                 "p90_margin": _quantile(margins, 0.9),
-                # Laplace-smoothed so a finite trial count never reports certainty.
-                "p_home_decisive": (decisive_home + 1) / (decisive_home + decisive_away + 2),
-                "p_home": p_home_hits / len(homes),
+                # Raw share of decisive trials won by the home side: the average over seeded trials.
+                "p_home_decisive": decisive_home / decisive_total,
+                "p_home_outright": p_home_hits / len(homes),
             }
         )
         plays_per_game.append(sum(game_plays) / len(game_plays))
@@ -279,6 +285,51 @@ def simulate_games(model: StatModel, games: Dict[str, Dict[str, Any]], trials: i
         "call_share": {call: play_totals[call] / max(1, sum(play_totals[c] for c in CALL_TYPES)) for call in CALL_TYPES},
     }
     return records, aggregate
+
+
+def _brier(p: float, won: bool) -> float:
+    return (p - (1.0 if won else 0.0)) ** 2
+
+
+def game_bootstrap(records: Sequence[Dict[str, Any]], base_rate: float, reps: int = BOOTSTRAP_REPS, seed: int = BOOTSTRAP_SEED) -> Dict[str, Any]:
+    """Resample whole games (ties excluded) and report 95% percentile intervals.
+
+    The unit of inference is the game: each game's win probability is an average over its seeded
+    trials, and the trials are not independent samples of the games. Baselines: the no-skill base
+    rate for Brier and log loss, and a coin flip (p = 0.5) for accuracy.
+    """
+    decisive = [(g["p_home_decisive"], g["home"] > g["away"]) for g in records if g["home"] != g["away"]]
+    n = len(decisive)
+    rng = random.Random(seed)
+
+    def stats(sample: Sequence[Tuple[float, bool]]) -> Dict[str, float]:
+        m = len(sample)
+        brier = sum(_brier(p, won) for p, won in sample) / m
+        base_brier = sum(_brier(base_rate, won) for _, won in sample) / m
+        loss = sum(_log_loss(p if won else 1 - p) for p, won in sample) / m
+        base_loss = sum(_log_loss(base_rate if won else 1 - base_rate) for _, won in sample) / m
+        accuracy = sum(1 for p, won in sample if (p > 0.5) == won) / m
+        return {
+            "brier": brier,
+            "log_loss": loss,
+            "accuracy": accuracy,
+            "base_brier": base_brier,
+            "base_log_loss": base_loss,
+            "brier_minus_base": brier - base_brier,
+            "log_loss_minus_base": loss - base_loss,
+        }
+
+    point = stats(decisive)
+    draws: Dict[str, List[float]] = {key: [] for key in point}
+    for _ in range(reps):
+        sample = [decisive[rng.randrange(n)] for _ in range(n)]
+        for key, value in stats(sample).items():
+            draws[key].append(value)
+    intervals = {}
+    for key, values in draws.items():
+        values.sort()
+        intervals[key] = {"estimate": point[key], "ci95": [values[int(0.025 * reps)], values[int(0.975 * reps) - 1]]}
+    return {"decisive_games": n, "ties": len(records) - n, "bootstrap_reps": reps, "seed": seed, "base_rate_home": base_rate, "metrics": intervals}
 
 
 def constant_records(games: Dict[str, Dict[str, Any]], finals: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -340,6 +391,7 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
     with open(os.path.join(model_dir, "manifest.json")) as handle:
         train_manifest = json.load(handle)
     finals = train_manifest["finals"]
+    base_rate = finals["home_wins"] / (finals["home_wins"] + finals["away_wins"])
     models = {name: StatModel.load(os.path.join(model_dir, "nfl-seq-v0.1-%s.json" % name)) for name in VARIANT_NAMES}
 
     all_rows: List[Dict[str, Any]] = []
@@ -348,6 +400,9 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
     observations: List[Tuple[str, Dict[str, str], str]] = []
     penalty_rows = 0
     two_point_rows = 0
+    xp_attempt_rows = 0
+    reg_rows = 0
+    run_pass_nopl_rows = 0
     for season in test_seasons:
         rows = read_season(os.path.join(source_dir, "play_by_play_%d.parquet" % season))
         all_rows.extend(rows)
@@ -356,6 +411,9 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
         observations.extend(iter_observations(rows, skips))
         penalty_rows += sum(1 for r in rows if r["penalty"] == 1)
         two_point_rows += sum(1 for r in rows if r["two_point_attempt"] == 1)
+        xp_attempt_rows += sum(1 for r in rows if r["extra_point_attempt"] == 1)
+        reg_rows += len(rows)
+        run_pass_nopl_rows += sum(1 for r in rows if r["play_type"] in ("run", "pass", "no_play"))
 
     games = actual_game_table(all_rows)
     actual = {
@@ -373,10 +431,13 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
         records, aggregate = simulate_games(models[name], games, trials)
         variants[name] = {
             "scoring": score_metrics(records),
+            "scoring_bootstrap": game_bootstrap(records, base_rate),
             "event_validity": aggregate,
             "calibration": play_calibration(models[name], observations),
+            "games": records,
         }
-    variants["constant_league_average"] = {"scoring": score_metrics(constant_records(games, finals))}
+    constant = constant_records(games, finals)
+    variants["constant_league_average"] = {"scoring": score_metrics(constant), "scoring_bootstrap": game_bootstrap(constant, base_rate)}
 
     report = {
         "model_version": MODEL_VERSION,
@@ -386,6 +447,22 @@ def run_evaluation(source_dir: str, model_dir: str, test_seasons: Sequence[int],
         "actual": actual,
         "variants": variants,
         "reconstruction": reconstruction,
+        "denominators": {
+            "reg_rows": reg_rows,
+            "run_pass_no_play_rows": run_pass_nopl_rows,
+            "penalty_rows": penalty_rows,
+            "extra_point_attempt_rows": xp_attempt_rows,
+            "two_point_attempt_rows": two_point_rows,
+            "penalty_share_of_reg_rows": penalty_rows / reg_rows,
+            "penalty_share_of_run_pass_no_play_rows": penalty_rows / run_pass_nopl_rows,
+            "two_point_share_of_conversion_attempts": two_point_rows / (xp_attempt_rows + two_point_rows),
+        },
+        "test_game_outcomes": {
+            "games": len(games),
+            "home_wins": sum(1 for g in games.values() if g["home"] > g["away"]),
+            "away_wins": sum(1 for g in games.values() if g["away"] > g["home"]),
+            "ties": sum(1 for g in games.values() if g["home"] == g["away"]),
+        },
         "unsupported_mechanics": unsupported_measured(games, len(observations), penalty_rows, two_point_rows),
         "skips_test_rows": dict(sorted(skips.items())),
         "elapsed_seconds": round(time.time() - started, 1),
