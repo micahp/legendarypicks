@@ -35,7 +35,7 @@ decisive score. The trials of one game are not independent evidence about that g
 Tied games are excluded from the win metrics (2 games, `scoring_bootstrap.ties`).
 
 No-skill baselines:
-- Brier and log loss: a constant forecast equal to the **training** home-win base rate, 0.5569 (training seasons only; key `variants.main.scoring_bootstrap.base_rate_home`).
+- Brier and log loss: a constant forecast equal to the **training** home-win base rate, 0.5569 = 1,714 home wins of 3,078 decisive training games (3,088 games, 10 ties; `backend/nfl_sequence/models/manifest.json`, key `finals`). The value is also in `variants.main.scoring_bootstrap.base_rate_home`.
   The test-season home-win share among decisive games is 0.5582; the always-home accuracy equals that share.
 - Accuracy: a coin flip, 0.5.
 
@@ -102,7 +102,13 @@ Keys: `variants.<name>.calibration.{call,pass_class}`. ECE uses 10 bins over the
 Each recorded play is applied to its recorded pre-play state and compared with the recorded pre-play state of the next play.
 Steps do not cascade. Keys: `reconstruction.2022.counts` and `reconstruction.2023.counts`, summed.
 
-- checked transitions: 71615; matches: 68496 (0.9564)
+- rows: 91,786 total; 71,615 checked (68,496 matches, 3,119 mismatches); 20,171 excluded, in these categories:
+  - `unsupported_play_row`: 10,452
+  - `next_row_is_penalty_or_no_play`: 8,949
+  - `overtime_not_checked`: 571
+  - `next_state_incomplete`: 182
+  - `runoff_anomaly`: 16
+  - `event_invalid:ValueError`: 1
 - mismatches by recorded-play attribution, largest first:
   - `mismatch:yardline_100@kickoff_return`: 1434
   - `mismatch:yardline_100@interception`: 615
