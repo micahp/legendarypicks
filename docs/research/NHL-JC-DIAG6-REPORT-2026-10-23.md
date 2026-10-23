@@ -94,6 +94,14 @@ Q1 uses raw candidate-minus-M0 deltas. A held-out `(team,horizon,bin)` predictio
 | plus30_to_plus45 | M1 delta | 0.0662 [0.0570, 0.0748] | 0.3762 [0.3306, 0.4187] | 0.9899 [0.9810, 0.9961] | 0.6136 [0.5714, 0.6604] | 123 | 277 / 1:32:32 |
 | plus30_to_plus45 | M2 delta | 0.0698 [0.0598, 0.0788] | 0.3752 [0.3304, 0.4161] | 0.9877 [0.9788, 0.9942] | 0.6125 [0.5701, 0.6594] | 123 | 278 / 1:31:31 |
 
+### Correction: Q1 gaps and retained fractions are not interchangeable
+
+The Q1 **Raw gap** is the same delta series evaluated with the same permutation map, but its share statistic is near saturation (for M1, observed 0.9867 and null 0.8992). It is not comparable to DIAG5's 0.3860 gap. The Q1 `retained_fraction` values 4.29 (M1) and 3.82 (M2) divide gaps from differently saturated share statistics; they are **not retained fractions and must never be quoted as retention**.
+
+The registered retained fractions are the Q2 matched-cell values: M1 0.8934 [0.8418, 0.9474] and M2 0.9443 [0.8955, 0.9960]. Their raw denominators are the matched-cell gaps 0.3870 and 0.3572, on 247 / 252 cells and 100 / 103 EqualTeam starts, respectively. These differ from DIAG5's full-population gaps 0.3860 / 0.3560 because a retained-fraction ratio requires the raw and conditioned estimates to use the same eligible cells and starts; Q2 restricts both to matched support.
+
+**Post-hoc manager check, not part of the registered reading:** normalize each share gap by its available headroom, `(observed − null) / (1 − null)`. The DIAG5-to-DIAG6 headroom-normalized gap ratios are 0.912 / 0.873 = 104% for M1 and 0.862 / 0.807 = 107% for M2. This cross-check is scale-sensitive and does not replace the registered Q2 matched-cell retained fractions.
+
 ### Q1 distance-response fits and fallback audit
 
 Every held-out game/team/horizon/bin fit is in the JSON, including its training pair counts, nine training games, prediction, held-out pair count, and fallback flag.
