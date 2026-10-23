@@ -42,6 +42,18 @@ def q90(values: np.ndarray) -> float:
     return float(ordered[min(len(ordered)-1, max(0, math.ceil(.90*(len(ordered)+1))-1))])
 
 
+def json_default(value):
+    if isinstance(value, np.generic):
+        value = value.item()
+    elif isinstance(value, np.ndarray):
+        value = value.tolist()
+    else:
+        raise TypeError(f"not JSON serializable: {type(value).__name__}")
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("non-finite numeric result cannot be serialized")
+    return value
+
+
 def thresholds(data: dict, train_games: list[int]) -> dict:
     def selected(values, groups, quantile):
         a = values[np.isin(groups, train_games)]
@@ -514,7 +526,10 @@ def main():
     serialized_models={"protocol":"docs/research/NHL-MULTI-AGENT-MOVEMENT-PROTOCOL-2026-10-23.md",
         "feature_version":FEATURE_VERSION,"seed":SEED,"folds":models_by_game,"constraints":limits_by_game,
         "calibration_radii_90":radii,"timebase":"ordinal Image Id increments; no seconds conversion"}
-    models_path=args.output_dir/"fold_models.json";models_path.write_text(json.dumps(serialized_models,indent=2)+"\n")
+    models_path=args.output_dir/f"fold_models-{git_commit[:12]}.json"
+    with models_path.open("x", encoding="utf-8") as f:
+        json.dump(serialized_models, f, indent=2, default=json_default, allow_nan=False)
+        f.write("\n")
     visual={"archive_version":"nhl-movement-visual-v0.1","legendarypicks_git_commit":git_commit,
             "gridiron_physics_git_commit":args.gridiron_commit,
             "source_hashes":json.load(open(args.data_dir/"extraction_manifest.json"))["artifacts"],
@@ -522,7 +537,8 @@ def main():
             "scenarios":scenario_cache}
     archive_path=args.output_dir/f"scenario_archive-{git_commit[:12]}.json.gz"
     if archive_path.exists(): raise FileExistsError(f"refusing to overwrite versioned archive {archive_path}")
-    with gzip.open(archive_path,"wt",encoding="utf-8",compresslevel=6) as f: json.dump(visual,f,separators=(",",":"))
+    with gzip.open(archive_path,"xt",encoding="utf-8",compresslevel=6) as f:
+        json.dump(visual, f, separators=(",",":"), default=json_default, allow_nan=False)
     samples_compact=[{**s,"metrics":[clean_metrics(r) for r in s["metrics"]]} for s in samples]
     extraction=json.load(open(args.data_dir/"extraction_manifest.json"))
     scores={"study":"NHL multi-agent movement v0.1, ten-game inspected development sample",
@@ -545,10 +561,14 @@ def main():
         "fold_models":str(models_path),"independent_adoption_test":False,
         "runtime_seconds":round(time.perf_counter()-started,3),
         "interpretation":"All results are grouped within-sample development comparisons. No independent-game validation; no timed physics or collision claim."}
-    scorepath=args.output_dir/"movement_comparison.json";scorepath.write_text(json.dumps(scores,indent=2,sort_keys=True)+"\n")
+    scorepath=args.output_dir/f"movement_comparison-{git_commit[:12]}.json"
+    with scorepath.open("x", encoding="utf-8") as f:
+        json.dump(scores, f, indent=2, sort_keys=True, default=json_default, allow_nan=False)
+        f.write("\n")
     print(json.dumps({"one_step_equal_game_mean":overall_one,"one_step_paired_intervals":one_intervals,
         "rollout_by_horizon":roll_overall,"scenario_categories":sorted(scenario_cache),
-        "runtime_seconds":scores["runtime_seconds"],"output":str(scorepath)},indent=2),flush=True)
+        "runtime_seconds":scores["runtime_seconds"],"output":str(scorepath)},indent=2,
+        default=json_default,allow_nan=False),flush=True)
 
 
 if __name__=="__main__":main()
