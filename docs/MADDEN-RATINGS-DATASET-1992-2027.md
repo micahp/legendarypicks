@@ -17,6 +17,7 @@ verified against the source.
 | `out/coverage.json` | Per-column non-null counts, recomputed on every build. |
 | `out/source_limits.json` | Every validator-flagged property that is a source limit, with counts, evidence and consumer options. |
 | `checks/` + `verify_evidence.py` | Frozen raw table rows (48 files, 26 player-seasons) and an offline script that recounts them. This is the evidence behind the attribute-density claims. |
+| `checks/blanks/` + `verify_blanks.py` | The raw `<td class="mr-team">` for **all 325** blank-team rows, plus an offline script that checks each one is empty at the source while the row still carries ratings. |
 | `audit_bundle.py`, `source_limits.py` | The offline audit and the limits-file generator, so both can be re-run on your side. |
 
 Numbers:
@@ -84,9 +85,12 @@ A blank cell means the site shows `-` there ("not tracked in Madden <year>").
   78 / Seahawks 76). Both kept; `dupe_seq` makes `(player_id, madden_release, dupe_seq)`
   unique.
 - **325 rows have an empty team cell**: 2012 95, 2005 58, 2009 47, 2006 46, 2007 41,
-  2008 34, 2013 4. The site leaves the cell blank and no roster page covers those
-  player-seasons either (1 of 325 has a team anywhere else), so there is nothing to
-  backfill from. Not imputed.
+  2008 34, 2013 4, none in 2027. Checked row by row against the site, not sampled:
+  all 325 raw cells are frozen in `checks/blanks/`, and every one contains no text, no
+  badge and no link, while its row still carries numeric ratings. 324 of the 325 are
+  the only row for that player-release; the 325th is Mike Williams 2013, whose other
+  row carries Seattle. No roster page covers these player-seasons either (1 of 325 has
+  a team anywhere else), so there is nothing to backfill from. Not imputed.
 - **Team slugs follow the site's per-season franchise slug**, so `raiders` covers the
   Oakland years, `rams` St. Louis, `titans` the Oilers. 32 franchises.
 - **Coverage caveat.** The site claims "40,725 players - 69,861 player-seasons".
@@ -129,6 +133,10 @@ entries, 0 mixed-case teams, 325 blanks, 40 duplicate keys with distinct `dupe_s
 `verify_evidence.py` (offline): recounts the 48 frozen table rows in `checks/` and
 diffs them against the CSV. Last run: 26/26 player-seasons match, every team-page row
 thinner than its player-page row, exit 0.
+
+`verify_blanks.py` (offline): re-parses all 325 frozen team cells and asserts each is
+empty (no text, image or link) while its row still has numeric ratings, and that the
+CSV agrees on every key. Last run: 325/325, PASS, exit 0.
 
 `source_limits.py` regenerates `out/source_limits.json` from the data, so the limits
 file can never drift from the bundle.
