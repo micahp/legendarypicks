@@ -25,6 +25,29 @@ No timing relationship will be fitted. Horizons and movement rates use numeric I
 
 The event-coordinate alignment gate failed. Event coordinates, event types, outcomes, event-derived possession, shot labels, and goalie roles are excluded from features, scenario selection, and targets. Puck proximity is a geometry proxy, never a possession label.
 
+## Input quality gates and frozen dispositions
+
+These data gates are checked before fitting; a failed gate narrows use rather than being repaired with
+future labels or inferred identities.
+
+| Gate | Acceptance condition | Measured disposition |
+|---|---|---|
+| Release integrity | All 54 manifest assets match published byte counts and SHA-256 values. | Existing audit PASS; the extractor independently rehashes all assets. |
+| Rink XY validity | At least 99.0% of coordinate rows are finite and inside the declared rink bounds. | 8,355,303 / 8,401,602 = 99.449%; PASS for XY movement research. |
+| Ordinal ordering | Image Id suffixes strictly increase within each period file; a suffix gap resets a track history. | Existing order gate PASS; 793 gaps are retained as missing observations, never bridged. |
+| Timed simulation | A publisher-documented subsecond timebase and independently validated cadence are available. | FAIL: no timestamp/cadence field; 27 game-clock reversals and 1,102 missing-clock observation groups. Use ordinal suffix increments only. |
+| Athlete identity | No conflicting jersey mapping among fitted track-period IDs; quarantine every conflicting ID and its windows. | 292 / 32,312 IDs conflict (0.904%); 7,697 / 462,680 windows excluded; 454,983 remain. Cross-game identity remains unverified. |
+| Endpoint training coverage | At least 10,000 eligible windows overall and 1,000 in every game. | Prior quarantine audit: 454,983 total and more than 31,000 in each game; PASS. Exact extractor counts must reconcile again. |
+| Autonomous start coverage | Exactly 20 valid starts per game, spread across eligible period files; each has 3 stable skaters per team, six consecutive pre-cutoff observations, and 45 suffix increments remaining. | Enforced as a fail-loud extraction gate; future locations are not used to qualify or select starts. |
+| Event integration | Prior event-to-track coordinate-alignment gate must pass before any event-linked movement label is used. | FAIL; events and all event-derived features/labels are excluded. |
+| Puck movement | A puck displacement feature is present only when current and immediately prior consecutive XY are valid; otherwise mark unavailable. Timed or physical puck flight requires independently validated continuity and Z. | Current puck XY exists in 918,907 / 959,754 groups (95.744%); continuous flight and Z remain unvalidated. No physical puck simulation. |
+| Player-specific skill | Require enough persistent, identity-verified within-player observations for split-half reliability before fitting athlete-specific parameters. | Prior split-half audit qualified 0 track-period entities; only 1 entity reached 3,000 frames. Preserve scoped track IDs, but fit pooled policies and claim no individual skill. |
+
+The coordinate condition is sufficient to model observed 2D rink positions, not to align event records.
+The identity condition is sufficient for within-file track histories, not cross-game athlete models.
+The puck condition supports a missing-aware relative-position feature, not possession, shot trajectory,
+goalie response, rebound, or puck physics. The source does not adequately identify those targets.
+
 ## Eligibility and normalized state
 
 Read the source release from /root/lp-research-data/stathletes-big-data-cup-2026. Recheck manifest sizes and SHA-256 values before extraction. Keep the source release and full normalized observation stream outside both repositories.
