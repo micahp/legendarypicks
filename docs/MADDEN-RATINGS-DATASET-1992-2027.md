@@ -11,7 +11,7 @@ verified against the source.
 
 | File | What it is |
 |---|---|
-| `out/madden_ratings_long.csv` | 58,743 rows x 73 columns. One row per player per Madden release, all attributes. |
+| `out/madden_ratings_long.csv` | 58,743 rows x 71 columns. One row per player per Madden release, all attributes. |
 | `out/by_year/madden_<year>.csv` | 36 files, 1992 to 2027. Same rows sliced per release, for "year by year" work. |
 | `out/madden_player_seasons.db` | SQLite. `ratings` table (same data) + `players` table (career span, peak OVR, teams). Indexed on player_id and madden_release. |
 | `out/coverage.json` | Per-column non-null counts, recomputed on every build. |
@@ -24,7 +24,7 @@ Numbers:
 
 - 12,570 players, 58,743 player-seasons
 - 36 releases: Madden NFL 1992 through Madden NFL 2027
-- 60 attribute columns (OVR, SPEED ... KRN) + 13 identity columns = 73
+- 60 attribute columns (OVR, SPEED ... KRN) + 11 identity columns = 71
 - OVR on 58,345 rows: 50,203 EA-published, 8,142 calculated by the site
 - 32 franchise slugs, plus 23 `fa` rows and 325 rows where the source cell is empty
 
@@ -32,19 +32,15 @@ Numbers:
 
 Identity: `player_id`, `player_name`, `slug`, `madden_release`, `dupe_seq` (see below),
 `nfl_season` (the season the ratings cover, e.g. Madden 2026 = 2025 NFL season),
-`team`, `team_inferred`, `team_inferred_ambiguous`, `POS`, `source`, `site_calculated`, `value_flags`.
+`team`, `POS`, `source`, `site_calculated`, `value_flags`.
 
 `team` is the site's franchise slug, lowercased. Two non-franchise values exist:
 `fa` where the source prints the free-agent marker (23 rows), and empty where the
 source cell is empty (325 rows, 280 of them in 2005-2012). Blank never means "we
 failed to look": all 325 cells were re-fetched and frozen, see the team-cell note.
 
-`team_inferred` is set on 93 of those blank rows, where the site names a franchise
-elsewhere on the player page (profile Team field, milestone line, or heading) and the
-player has exactly one franchise in his known seasons, so the season is unambiguous.
-`team_inferred_ambiguous` is set on a further 20 rows where the page names a team but
-the player has several franchises, so the signal does not fix that season. `team` is
-never overwritten by either column.
+No team is imputed for those blank rows. See the note below on why the site's
+page-level team field cannot be used for that.
 
 `site_calculated` lists attributes on that row whose value nfldraftbuzz computed
 itself. Only ever `OVR`: EA published no overall for Madden 1992-1996 and 1998-2000,
