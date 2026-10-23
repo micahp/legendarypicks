@@ -165,6 +165,14 @@ Add a new dated entry for every significant finding; link the **immutable** repo
 
 **Decision:** Neither NFL clock v0.2 nor contact-energy probe authorizes production promotion. Continue the isolated clock/state experiments and physically causal 3D contact work, and retain statistical-only baseline.
 
+### 2026-10-23 — Many-body physics stress suite, visual archive and historical ratings inventory
+
+- **New physical acceptance target:** Test adversarial *simultaneous multi-player contact*, not only one carrier versus one defender: fumble piles with a loose 3D ball, gang tackles, shared/half sacks, and short-yardage tush-push scrums. Measure collision and constraint stability, ball possession, meaningful defender contributions, balance and contact-driven forward progress. A 22-player low-contact formation benchmark does not establish 22-player pileup stability.
+- **Visual experiment archive:** Save every solver/version/fixture as a repeatable, viewable Three.js replay and fixed-camera video with pinned code/engine versions, seed, state, ratings and contact/energy metrics. Preserve prior versions for human visual comparison as well as machine evaluation. Gridiron implementation plan: [Roadmap M4b](https://github.com/micahp/gridiron-physics/blob/main/ROADMAP.md).
+- **Important correction:** The previous contact-energy ledger's label “Jolt energy diverted into defender motion” has been **withdrawn** by [Gridiron `edd4057`](https://github.com/micahp/gridiron-physics/commit/edd4057d97af61700fdec9bca3433f9065bf63d1). Its whole-system normal-impulse approximation cannot establish the cause. A 900-tick horizon changes some 180-tick tilt observations. Actual tackle-scale gravity-only controls exceeded the 0.05 J per-step target: Rapier max 0.090421 J/step, 4.222032 J cumulative; Jolt 0.360987 J/step, 16.963764 J cumulative. This does not establish which engine better predicts football.
+- **Ratings dataset documented, not yet adopted:** [Historical Madden dataset specification](https://github.com/micahp/legendarypicks/blob/dev/docs/MADDEN-RATINGS-DATASET-1992-2027.md) records **58,743 player-release rows**, **12,570 players**, **36 Madden releases (1992–2027)**, 60 rating/alias attribute columns with heterogeneous coverage; a merged career-page and team-page collection. Raw CSV/SQLite/archive live outside the repository in the workspace scraper folder. Before training: establish actual snapshot timestamps (launch vs updates), Madden release to NFL season mapping, identity/position joins and permission for ML/commercial use. Dataset presence alone is not legal or predictive validation.
+- **Decision:** Stress tests and dataset profiling are independent research tracks. Neither solver is adopted, and archived Madden values are not yet the physical engine's authoritative ratings.
+
 ### YYYY-MM-DD — [short experiment title]
 
 - **Question / hypothesis:**
