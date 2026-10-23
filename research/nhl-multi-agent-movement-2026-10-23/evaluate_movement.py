@@ -421,34 +421,32 @@ def main():
                         "target_sequence_count":len(actual_by_seq),"initial_players":len(start["players"])})
         if si%10==9: print(f"rolled {si+1}/{len(startrows)} shared starts",flush=True)
 
-        # First deterministic pre-cutoff-selected example for each geometry category, visualized in all models.
-        for category in start.get("categories",[]):
-            if category in scenario_cache: continue
-            frames=[]
-            obs0={"image_id":start["cutoff_image_id"],"seq":start["cutoff_seq"],
-                  "players":{p["id"]:[p["x"],p["y"]] for p in start["players"]},"puck":start.get("puck"),
-                  "missing_xy_count":start.get("cutoff_missing_xy_count",0),
-                  "conflicted_present":start.get("cutoff_identity_conflict_present",False)}
-            frames.append({"step":0,"observed":obs0,"models":{m:{"players":{p["id"]:[p["x"],p["y"]] for p in start["players"]},
-                                                                    "puck":start.get("puck")} for m in paths}})
-            for h in range(1,H+1):
-                actual=actual_by_seq.get(int(start["cutoff_seq"])+h)
-                frames.append({"step":h,"image_id":actual["image_id"] if actual else None,
-                               "observed":actual,"models":{m:{"players":paths[m][h],"puck":puck_paths[m][h]} for m in paths}})
-            scenario_cache[category]={"scenario_id":f"{game}|{start['period']}|{start['cutoff_seq']}",
-                "category":category,"label":"geometry proxy; no possession or event interpretation",
-                "game":game,"period":start["period"],"source_file":start["source_file"],
-                "cutoff_image_id":start["cutoff_image_id"],"cutoff_seq":start["cutoff_seq"],
-                "horizon_ordinal_steps":H,"random_seed":SEED,"timebase_validated":False,
-                "period_one_goalie_right_team":start.get("period_one_goalie_right_team"),
-                "initial_state":{"observationStep":0,"puck":start.get("puck"),
-                    "puckHistory":[{"x":xy[0],"y":xy[1]} for xy in (start.get("puck_history") or [])],
-                    "players":[{"id":p["id"],"team":p["team"],"x":p["x"],"y":p["y"],
-                                "history":[{"x":xy[0],"y":xy[1]} for xy in p["history"]]} for p in start["players"]]},
-                "identity_conflicts_quarantined":True,"source_manifest_sha256":json.load(open(args.data_dir/"extraction_manifest.json"))["source_release"]["manifest_sha256"],
-                "model_version":FEATURE_VERSION,"policy_config":{"M0":"independent learned kinematics","M1":"puck and permutation-invariant player interactions",
-                    "M2":"M1 plus train-only ordinal constraints; 2D spacing proxy"},"constraints":lim,
-                "frames":frames}
+        # Preserve every frozen pre-cutoff-selected rollout start for visual inspection.
+        scenario_id=f"{game}|{start['period']}|{start['cutoff_seq']}"
+        frames=[]
+        observed_cutoff={"image_id":start["cutoff_image_id"],"seq":start["cutoff_seq"],
+            "players":{p["id"]:[p["x"],p["y"]] for p in start["players"]},"puck":start.get("puck"),
+            "tracking_uncertainty_category":"tracking_missingness_or_identity_conflict" in start.get("categories",[])}
+        frames.append({"step":0,"observed":observed_cutoff,
+            "models":{m:{"players":{p["id"]:[p["x"],p["y"]] for p in start["players"]},"puck":start.get("puck")} for m in paths}})
+        for h in range(1,H+1):
+            actual=actual_by_seq.get(int(start["cutoff_seq"])+h)
+            frames.append({"step":h,"image_id":actual["image_id"] if actual else None,
+                           "observed":actual,"models":{m:{"players":paths[m][h],"puck":puck_paths[m][h]} for m in paths}})
+        scenario_cache[scenario_id]={"scenario_id":scenario_id,
+            "categories":start.get("categories",[]),"label":"geometry proxy; no possession or event interpretation",
+            "game":game,"period":start["period"],"source_file":start["source_file"],
+            "cutoff_image_id":start["cutoff_image_id"],"cutoff_seq":start["cutoff_seq"],
+            "horizon_ordinal_steps":H,"random_seed":SEED,"timebase_validated":False,
+            "period_one_goalie_right_team":start.get("period_one_goalie_right_team"),
+            "initial_state":{"observationStep":0,"puck":start.get("puck"),
+                "puckHistory":[{"x":xy[0],"y":xy[1]} for xy in (start.get("puck_history") or [])],
+                "players":[{"id":p["id"],"team":p["team"],"x":p["x"],"y":p["y"],
+                            "history":[{"x":xy[0],"y":xy[1]} for xy in p["history"]]} for p in start["players"]]},
+            "identity_conflicts_quarantined":True,"source_manifest_sha256":json.load(open(args.data_dir/"extraction_manifest.json"))["source_release"]["manifest_sha256"],
+            "model_version":FEATURE_VERSION,"policy_config":{"M0":"independent learned kinematics","M1":"puck and permutation-invariant player interactions",
+                "M2":"M1 plus train-only ordinal constraints; 2D spacing proxy"},"constraints":lim,
+            "frames":frames}
 
     # Score rollouts at equal game weight and bootstrap paired differences by whole game.
     horizons=(1,5,15,30,45);roll_by_game={g:{} for g in games};roll_overall={}
@@ -520,7 +518,8 @@ def main():
         "rollout_by_horizon_ordinal_steps":roll_overall,"rollout_by_game":roll_by_game,
         "rollout_paired_game_bootstrap":bootstrap_roll,"rollout_absolute_game_bootstrap":roll_mean_intervals,
         "rollout_samples":samples_compact,
-        "scenario_categories_available":sorted(scenario_cache),"scenario_archive":str(archive_path),
+        "scenario_categories_available":sorted({c for s in startrows for c in s.get("categories",[])}),
+        "scenario_archive":str(archive_path),"versioned_visual_scenario_count":len(scenario_cache),
         "fold_models":str(models_path),"independent_adoption_test":False,
         "runtime_seconds":round(time.perf_counter()-started,3),
         "interpretation":"All results are grouped within-sample development comparisons. No independent-game validation; no timed physics or collision claim."}
