@@ -51,11 +51,13 @@ UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kick
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
-    'timeouts': {'guard': 'no timeout is drawn or charged: the published table has no timeout fields, and the sampled '
-                          'runoff is used as recorded',
+    'timeouts': {'guard': 'no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout '
+                          'charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); '
+                          'the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook',
                  'enforced_by': 'unsupported_rules; valid_full_game is false'},
-    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled: observed runoff already carries any stoppage '
-                                    'in the sampled play; the warning itself is not identifiable in the data',
+    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not '
+                                    'checked for a warning stoppage: the warning is not identifiable in the play-by-play, so '
+                                    'whether observed runoffs carry it is unverified',
                            'enforced_by': 'unsupported_rules; valid_full_game is false'},
     'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
                   'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
@@ -108,6 +110,25 @@ def fg_bucket(yardline_100):
         if yardline_100 < limit:
             return label
     return '50+'
+
+
+def drive_index_mismatches(record):
+    """Every play state whose drive_index is not its drive's game-level index: (drive numbers, state count, examples).
+
+    Counted in full, not stopped at the first. The archived 5fcaa6bc record has 280 such states in 23 drives (2 to 24), which
+    is the known finding of 23 drive-index mismatches.
+    """
+    bad_drives, states, examples = set(), 0, []
+    for d in record['drives']:
+        for play in d['plays']:
+            for side in ('state_before', 'state_after'):
+                got = play[side].get('drive_index')
+                if got != d['index']:
+                    bad_drives.add(d['index'])
+                    states += 1
+                    if len(examples) < 3:
+                        examples.append(f'drive {d["index"]}: play {play["sequence"]} {side} carries drive_index {got}')
+    return sorted(bad_drives), states, examples
 
 
 def missed_field_goal_spot(kick_yardline_100):
@@ -590,12 +611,10 @@ def validate_game(record):
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
     elif record['final_quarter'] >= 3 and record['complete_regulation']:
         raise AssertionError('a complete game must have two half-start kickoffs')
-    for d in record['drives']:
-        for play in d['plays']:
-            for side in ('state_before', 'state_after'):
-                if play[side].get('drive_index') != d['index']:
-                    raise AssertionError(f'drive {d["index"]}: {side} carries drive_index '
-                                         f'{play[side].get("drive_index")}, not {d["index"]}')
+    bad_drives, bad_states, examples = drive_index_mismatches(record)
+    if bad_drives:
+        raise AssertionError(f'{len(bad_drives)} drive-index mismatches: {bad_states} play states carry the wrong drive_index '
+                             f'in drives {bad_drives}; first: {examples[0]}')
     checks.append('every play state carries its drive index, in state_before and state_after')
     missing = [r for r in UNSUPPORTED_RULES if r not in record.get('guards', {})]
     if missing:

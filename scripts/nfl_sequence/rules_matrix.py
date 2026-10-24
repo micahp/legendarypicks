@@ -306,12 +306,10 @@ def _drive_index(record):
     indices = [d['index'] for d in record['drives']]
     if indices != list(range(1, len(indices) + 1)):
         return FAIL, f'drive indices are not 1..{len(indices)}: {indices[:10]}'
-    for d in record['drives']:
-        for play in d['plays']:
-            for side in ('state_before', 'state_after'):
-                if play[side].get('drive_index') != d['index']:
-                    return FAIL, (f'drive {d["index"]}: play {play["sequence"]} {side} carries drive_index '
-                                  f'{play[side].get("drive_index")}')
+    bad_drives, bad_states, examples = gs.drive_index_mismatches(record)
+    if bad_drives:
+        return FAIL, (f'{len(bad_drives)} drive-index mismatches: {bad_states} play states in drives {bad_drives}; '
+                      f'first: {examples[0]}')
     return PASS, f'{len(indices)} drives, every play state carries its drive index'
 
 
@@ -398,8 +396,10 @@ def check(record):
     add('Drive index: every play state carries its game-level drive index', _drive_index(record))
     add('Points equal the points on the drives', _points(record))
     add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
-    add('Timeouts: three per team per half', (UNSUPPORTED, 'not modelled: the published table has no timeout fields, '
-                                                           'so the observed clock runoff is used as recorded'))
+    add('Timeouts: three per team per half', (UNSUPPORTED, 'not drawn: the published table has no timeout fields. A sampled '
+                                                           'play flagged with a timeout charges one of the three to the side it '
+                                                           'names, if that side has one left; its stoppage is inside the observed '
+                                                           'runoff; the rule itself is not checked against the rulebook'))
     add('Unmodelled rules: each carries a named guard', _guards(record))
     add('Two-minute warning', (UNSUPPORTED, 'not modelled'))
     add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))

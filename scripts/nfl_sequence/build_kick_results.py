@@ -68,7 +68,8 @@ def main():
         writer.writeheader()
         writer.writerows(rows)
     manifest['rows'] = {f'{s}|{k}': n for (s, k), n in sorted(seen.items())}
-    manifest['output'] = {'path': str(out.relative_to(REPO)), 'sha256': sha256(out), 'rows': len(rows)}
+    manifest['output'] = {'path': str(out.relative_to(REPO)) if out.is_relative_to(REPO) else str(out),
+                          'sha256': sha256(out), 'rows': len(rows)}
     Path(str(out) + '.manifest.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n')
     print(f'wrote {out} ({len(rows)} rows)')
     for key, n in sorted(manifest['rows'].items()):

@@ -3,6 +3,7 @@
 Run: python3 -m unittest scripts/nfl_sequence/test_game_state.py
 """
 import copy
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -456,6 +457,25 @@ class MissedFieldGoalSpot(unittest.TestCase):
         self.assertEqual(gs.missed_field_goal_spot(20), 80)
         self.assertEqual(gs.missed_field_goal_spot(21), 79)
 
+    def test_the_engine_boundary_at_the_20_on_both_sides(self):
+        # A kick from the 20 leaves the receiver at its own 20 (80); a kick from the 21 leaves it at the 79.
+        for kick_yl, expected in ((20, 80), (21, 79)):
+            _, calls = spy_simulate(lambda: gs.play_game(
+                1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=kick_yl), certain_kicks(fg_made=False)),
+                winner_choice='receive', max_drives=2))
+            self.assertEqual(calls[1]['start']['yl'], expected, f'a missed kick from the {kick_yl}')
+
+    def test_the_matrix_rejects_the_20_boundary_value_for_a_kick_from_the_21(self):
+        # Negative fixture: a kick from the 21 must leave the receiver at the 79. The 80 (the value for a kick from the 20)
+        # must fail.
+        record, _ = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=21), certain_kicks(fg_made=False)),
+            winner_choice='receive', max_drives=2))
+        self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 79)
+        record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 80
+        row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
+        self.assertEqual(row['status'], 'FAIL')
+
     def test_the_engine_starts_the_receiving_team_at_the_rule_spot(self):
         record, calls = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
@@ -471,6 +491,62 @@ class MissedFieldGoalSpot(unittest.TestCase):
         record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 85
         row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
         self.assertEqual(row['status'], 'FAIL')
+
+
+class TimeoutCharges(unittest.TestCase):
+    """An observed timeout flag charges the side it names, at most three per half, and the count never goes negative."""
+
+    def test_flags_charge_at_most_three_per_half_and_reset_at_halftime(self):
+        # Every sampled play is flagged with a timeout called by the offense (A). The count must reach zero and stop there.
+        facts = {('G1', 1.0): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A'}}
+        reference = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), facts)
+        record = gs.play_game(3, reference, winner_choice='receive')  # the default drive cap, so the game reaches halftime
+        self.assertIn(3, {q for d in record['drives'] for p in d['plays'] for q in (p['state_before']['quarter'],)},
+                      'the game must reach the third quarter for the halftime reset to be checked')
+        states = [(state['quarter'], state['home_timeouts'], state['away_timeouts'])
+                  for d in record['drives'] for p in d['plays'] for state in (p['state_before'], p['state_after'])]
+        self.assertTrue(all(0 <= home <= 3 and 0 <= away <= 3 for _, home, away in states), 'counts stay in 0..3')
+        first_half = [home for quarter, home, _ in states if quarter in (1, 2)]
+        self.assertIn(0, first_half, 'a flagged side runs out of timeouts in the first half')
+        self.assertEqual(min(first_half), 0)
+        second_half = [home for quarter, home, _ in states if quarter in (3, 4)]
+        self.assertIn(3, second_half, 'the count resets to three at halftime')
+
+
+class DriveIndexFindings(unittest.TestCase):
+    """The drive-index finding. The archived 5fcaa6bc record (regression/) has drive_index 1 on every play state of drives 2
+    to 24: 23 drives and 280 play states. Every one must be counted and rejected, not just the first."""
+
+    REGRESSION = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'regression' / 'lp-e2-game-seed1-5fcaa6bc.json'
+    CURRENT = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'e2-game-seed1.json'
+
+    def regression_record(self):
+        with open(self.REGRESSION) as f:
+            return json.load(f)['record']
+
+    def test_the_archived_record_is_counted_in_full(self):
+        bad, states, examples = gs.drive_index_mismatches(self.regression_record())
+        self.assertEqual(len(bad), 23)
+        self.assertEqual((bad[0], bad[-1]), (2, 24))
+        self.assertEqual(states, 280)
+        self.assertTrue(examples[0].startswith('drive 2: play'))
+
+    def test_the_validator_rejects_it_and_states_every_count(self):
+        with self.assertRaises(AssertionError) as caught:
+            gs.validate_game(self.regression_record())
+        self.assertIn('23 drive-index mismatches', str(caught.exception))
+        self.assertIn('280 play states', str(caught.exception))
+
+    def test_the_matrix_row_fails_with_the_same_count(self):
+        row = next(r for r in rm.check(self.regression_record()) if r['case'].startswith('Drive index'))
+        self.assertEqual(row['status'], 'FAIL')
+        self.assertIn('23 drive-index mismatches', row['evidence'])
+
+    def test_the_committed_seed_one_record_has_no_mismatch(self):
+        with open(self.CURRENT) as f:
+            record = json.load(f)
+        record = record.get('record', record)
+        self.assertEqual(gs.drive_index_mismatches(record)[0], [])
 
 
 def _empty_e1_pool():
