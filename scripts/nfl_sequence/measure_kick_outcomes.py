@@ -8,6 +8,7 @@ printed here is the SQL recorded in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md.
 import argparse
 import math
 import sqlite3
+from pathlib import Path
 
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
 WINDOW = 'season BETWEEN 2022 AND 2025 AND week <= 18'
@@ -36,19 +37,50 @@ def wilson(k, n, z=1.96):
     return (round(c - h, 3), round(c + h, 3))
 
 
-def load_kick_table(db=DEFAULT_DB):
+KICK_RESULTS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'kick_results_2022_2025.csv'
+
+
+def load_try_results(path=KICK_RESULTS):
+    """Extra-point and two-point outcomes from the publisher's result fields, read from the rebuilt CSV.
+
+    An extra point is made on `extra_point_result` == 'good' and missed on 'failed'. A blocked extra point and a row with no
+    result are not in either count: they are returned under `excluded`, with their numbers. A two-point try is made on
+    `two_point_conv_result` == 'success' and missed on 'failure'. Nothing is read from `success`.
+    """
+    import csv
+    ep = {'good': 0, 'failed': 0, 'blocked': 0, 'missing': 0}
+    tp = {'success': 0, 'failure': 0, 'missing': 0}
+    with open(path, newline='') as f:
+        for r in csv.DictReader(f):
+            if r['play_type'] == 'extra_point':
+                key = r['extra_point_result'] or 'missing'
+                ep[key] = ep.get(key, 0) + 1
+            if r['two_point_attempt'] in ('1', '1.0'):
+                key = r['two_point_conv_result'] or 'missing'
+                tp[key] = tp.get(key, 0) + 1
+    return {'extra_point': (ep['good'], ep['failed']), 'two_point': (tp['success'], tp['failure']),
+            'excluded': {'extra_point': {'blocked': ep['blocked'], 'missing': ep['missing']},
+                         'two_point': {'missing': tp['missing']}},
+            'source': f'{path.name} (publisher fields extra_point_result, two_point_conv_result)'}
+
+
+def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
     """Published kick outcomes for the primary window, as (made, missed) pairs. Read-only.
 
-    {'field_goal': {bucket: (made, missed)}, 'extra_point': (made, missed), 'two_point': (made, missed), 'source': str}
+    Field goals come from the dev table's `series_result`, as before. Extra points and two-point tries come from the
+    publisher's result fields (load_try_results), not from `success`.
+    {'field_goal': {bucket: (made, missed)}, 'extra_point': (made, missed), 'two_point': (made, missed),
+     'excluded': {...}, 'source': str}
     """
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         field_goal = {b: (m or 0, x or 0) for b, m, x in con.execute(FG_BY_BUCKET_SQL)}
-        extra_point = tuple(v or 0 for v in con.execute(EP_SQL).fetchone())
-        two_point = tuple(v or 0 for v in con.execute(TWO_POINT_SQL).fetchone())
     finally:
         con.close()
-    return {'field_goal': field_goal, 'extra_point': extra_point, 'two_point': two_point, 'source': f'nfl_pbp {WINDOW}'}
+    tries = load_try_results(results)
+    return {'field_goal': field_goal, 'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
+            'excluded': tries['excluded'],
+            'source': f"nfl_pbp {WINDOW} (field goals); {tries['source']} (tries)"}
 
 
 def rows(con, sql):
