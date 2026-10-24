@@ -1,35 +1,44 @@
 {
   "drive": {
     "clock_runoff_total_seconds": 113,
+    "field_goal_attempts": 0,
     "first_downs": 1,
     "plays": 4,
     "plays_with_negative_yards": 0,
+    "punts": 0,
+    "quarter_changes": 0,
     "terminal": "turnover",
     "touchdown": false,
     "turnovers": 1,
     "yards": 21
   },
   "gaps": [
-    "punts, field goals, kickoffs, extra points, two-point tries: not modelled",
+    "field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no result",
+    "extra points, kickoffs, two-point tries: not modelled",
     "penalties, quarter changes, timeouts, two-minute rules: not modelled",
     "score, points and player stats: null; touchdown points are not computed",
     "participants: null; no pregame roster",
-    "fourth-down plays sampled from observed go-for-it plays only (no punt or field-goal choice)",
-    "turnover field position taken from the new offense's next published snap in the same game",
-    "turnovers that are touchdowns excluded from the pool"
+    "punt yardage is not recorded: a punt gives the receiving spot only",
+    "punt pool excludes return touchdowns, penalties and plays with no following snap",
+    "turnovers that are touchdowns excluded from the pool",
+    "personnel is not conditioned; game time is conditioned only through the derived clock",
+    "halftime: the second-half choices and kickoff are not modelled. Normal simulations give each team one half-opening kickoff; that is an authored simulation default for E2, not a rule that the opposite of the opening receiver kicks",
+    "quarter ends after Q1 and Q3 change ends and continue the series; no kickoff is generated",
+    "overtime and tie-breaking: not modelled"
   ],
   "mode": "drive_statistical_demo",
   "model_version": "e1-empirical-v0",
   "outcome_pool": {
     "excluded_from_pool": {
-      "negative derived clock runoff": 43,
+      "negative derived clock runoff": 53,
       "no same-quarter next snap for clock runoff": 27,
-      "penalty (not modelled)": 1962,
+      "penalty (not modelled)": 2666,
+      "punt without a clean receiving-team snap": 969,
       "qb_scramble (not in E1 vocabulary)": 3883,
       "turnover that is a touchdown (not modelled)": 204,
       "turnover without a clean new-offense snap": 366
     },
-    "pool_sha256": "35ab31eb623cc26fac0d30bc38390757d543418e600b67dfc4c95de1a48c4ef9",
+    "pool_sha256": "cf2872733890820801822cdfb914256e3f8adcc3398c5895bad40e747092cfd4",
     "seasons": [
       2022,
       2023,
@@ -41,7 +50,7 @@
       "note": "pool spans 2022-2025 with no as-of cutoff; not an as-of simulation",
       "status": "retrospective"
     },
-    "usable_plays": 127151
+    "usable_plays": 138235
   },
   "plays": [
     {
@@ -57,18 +66,23 @@
           "dir": 1,
           "los": 28
         },
-        "assignment_version": "e0-field-end-v1",
+        "assignment_version": "e1-field-end-v2",
         "before": {
           "dir": 1,
           "los": 25
         },
-        "source": "authored_demo_convention"
+        "source": "authored_demo_orientation"
       },
       "id": "e1-seed12:1",
       "outcome": {
         "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
         "clock_runoff_seconds": 37,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
         "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
         "receiver_id": null,
         "rusher_id": null,
         "safety": false,
@@ -141,18 +155,23 @@
           "dir": 1,
           "los": 37
         },
-        "assignment_version": "e0-field-end-v1",
+        "assignment_version": "e1-field-end-v2",
         "before": {
           "dir": 1,
           "los": 28
         },
-        "source": "authored_demo_convention"
+        "source": "authored_demo_orientation"
       },
       "id": "e1-seed12:2",
       "outcome": {
         "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
         "clock_runoff_seconds": 33,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
         "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
         "receiver_id": null,
         "rusher_id": null,
         "safety": false,
@@ -173,6 +192,7 @@
           "50-79"
         ],
         "cell_event_counts": {
+          "field_goal_attempt": 2,
           "fumble_lost": 61,
           "interception": 87,
           "pass_complete": 4107,
@@ -180,7 +200,7 @@
           "run": 2818,
           "sack": 378
         },
-        "cell_size": 9221
+        "cell_size": 9223
       },
       "sequence": 2,
       "state_after": {
@@ -225,18 +245,23 @@
           "dir": 1,
           "los": 43
         },
-        "assignment_version": "e0-field-end-v1",
+        "assignment_version": "e1-field-end-v2",
         "before": {
           "dir": 1,
           "los": 37
         },
-        "source": "authored_demo_convention"
+        "source": "authored_demo_orientation"
       },
       "id": "e1-seed12:3",
       "outcome": {
         "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
         "clock_runoff_seconds": 36,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
         "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
         "receiver_id": null,
         "rusher_id": null,
         "safety": false,
@@ -309,18 +334,23 @@
           "dir": -1,
           "los": 31
         },
-        "assignment_version": "e0-field-end-v1",
+        "assignment_version": "e1-field-end-v2",
         "before": {
           "dir": 1,
           "los": 43
         },
-        "source": "authored_demo_convention"
+        "source": "authored_demo_orientation"
       },
       "id": "e1-seed12:4",
       "outcome": {
         "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
         "clock_runoff_seconds": 7,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
         "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
         "receiver_id": null,
         "rusher_id": null,
         "safety": false,
@@ -398,6 +428,7 @@
   "start_state": {
     "clock": 900,
     "defense": "DEF",
+    "dir": 1,
     "down": 1,
     "offense": "OFF",
     "quarter": 1,
