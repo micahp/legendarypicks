@@ -586,7 +586,8 @@ class _Game:
             'mode': 'legal_game_state_first_piece', 'seed': self.seed, 'simulation_id': self.simulation_id,
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
-            'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
+            'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete and not guarded,
+            'regulation_end_reached': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
             'complete_game': bool(complete and blocker is None and not tied and not guarded),
             'scope_out': scope_out,
@@ -733,7 +734,7 @@ def validate_game(record):
         validate_half_start([{'quarter': k['quarter'], 'kicking_team': k['kicking_team'],
                               'receiving_team': k['receiving_team'], 'reason': 'half_start'} for k in recorded_half])
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
-    elif record['final_quarter'] >= 3 and record['complete_regulation']:
+    elif record['final_quarter'] >= 3 and (record['complete_regulation'] or record.get('regulation_end_reached')):
         raise AssertionError('a complete game must have two half-start kickoffs')
     bad_drives, bad_states, examples = drive_index_mismatches(record)
     if bad_drives:

@@ -47,8 +47,10 @@ def main():
         failed = sorted(k for k, v in lc.run(record).items() if v)
         matrix_fail = sum(1 for r in rm.check(record) if r['status'] == 'FAIL')
         complete = bool(record['complete_regulation'])
+        regulation_end = bool(record['regulation_end_reached'])
         row = {'seed': seed, 'status': record['status'], 'blocker': record.get('blocker') or '',
                'complete_regulation': complete,
+               'regulation_end_reached': regulation_end,
                'complete_game': bool(record['complete_game']),
                'legal_modelled': lc.legal_modelled(record),
                'legal_complete_game': lc.legal_complete_game(record),
@@ -59,8 +61,9 @@ def main():
                'matrix_fail': matrix_fail}
         rows.append(row)
         old = frozen[seed]
-        same = (record['status'] == old['status'] and (record.get('blocker') or '') == old['blocker']
-                and complete == (old['complete_game'] == 'True') and matrix_fail == int(old['matrix_fail']))
+        sim_status = 'complete_regulation' if record['status'] == 'regulation_end_guarded' else record['status']
+        same = (sim_status == old['status'] and (record.get('blocker') or '') == old['blocker']
+                and regulation_end == (old['complete_game'] == 'True') and matrix_fail == int(old['matrix_fail']))
         if not same:
             mismatches.append({'seed': seed, 'engine_now': row, 'frozen': {k: old[k] for k in
                                                                             ('status', 'blocker', 'complete_game',
@@ -79,6 +82,7 @@ def main():
         'blocked_never_complete': all(not r['complete_regulation'] for r in rows if r['status'] == 'blocked'),
         'blocked_described_complete': sum(1 for r in rows if r['status'] == 'blocked' and r['complete_regulation']),
         'complete_game': sum(1 for r in rows if r['complete_game']),
+        'regulation_end_reached': sum(1 for r in rows if r['regulation_end_reached']),
         'regulation_end_guarded': sum(1 for r in rows if r['status'] == 'regulation_end_guarded'),
         'guarded_described_complete': sum(1 for r in rows if r['unmodelled_transitions'] and (
             r['status'] == 'complete_regulation' or r['complete_game'])),
