@@ -62,7 +62,23 @@ These are usable as the observed play-outcome and drive/game baseline, owned by 
 - The 280 label-only and 6 event-only plays are unresolved. The label-only plays may be assists where the tracking marks contact another way. That is not verified.
 - The exact-event play list is at `/root/nfl-tracking-data/bdb2025/week1_tackle_event_plays.json`.
 
-**Not verified.** The tackler identity on each `tackle` event against the labels; the other weeks; any reconciliation beyond play counts.
+**All nine weeks (profiled 2026-10-24, `scripts/profile_bdb2025_weeks.py`).** Every week's play count matches `plays.csv`. Season totals: 136 games, 16,124 plays, 59,327,373 tracking rows, 2,579,451 ball rows.
+
+| Week | Games | Plays | Exact `tackle` event | Event and label | Event only | Label only | Ball rows |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 16 | 1952 | 1205 | 1199 | 6 | 280 | 308,900 |
+| 2 | 16 | 1809 | 1131 | 1126 | 5 | 237 | 291,493 |
+| 3 | 16 | 1959 | 1197 | 1185 | 12 | 275 | 309,965 |
+| 4 | 16 | 1830 | 1193 | 1187 | 6 | 209 | 293,372 |
+| 5 | 16 | 1906 | 1182 | 1180 | 2 | 263 | 308,829 |
+| 6 | 14 | 1697 | 1062 | 1057 | 5 | 230 | 271,282 |
+| 7 | 14 | 1665 | 1055 | 1053 | 2 | 233 | 261,897 |
+| 8 | 15 | 1771 | 1075 | 1073 | 2 | 297 | 287,118 |
+| 9 | 13 | 1535 | 946 | 940 | 6 | 218 | 246,595 |
+
+Season: 10,046 plays with the exact `tackle` event; 10,000 of them also carry a solo or assist label. 46 plays are event-only and 2,242 are label-only. Frames per play range from 12 to 1,010 across weeks. Per-week tackle-event play lists are at `/root/nfl-tracking-data/bdb2025/week<N>_tackle_event_plays.json`, and the full profile is at `/root/nfl-tracking-data/bdb2025/week_profiles.json`.
+
+**Not verified.** The tackler identity on each `tackle` event against the labels; label-only and event-only plays are unresolved; any reconciliation beyond play counts and tackle flags.
 
 **Reproduce.** `python3 scripts/fetch_bdb2025_week.py tracking_week_1.csv games.csv plays.csv player_play.csv players.csv`, then `sha256sum -c` against `SHA256SUMS.txt`.
 
