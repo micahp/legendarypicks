@@ -86,6 +86,9 @@ sampled outcomes or random draws.
 
 ## Rules matrix
 
+Every play's `state_before` and `state_after` carry the game-level `drive_index` of its drive. `validate_game` raises on a
+mismatch, and the matrix has an independent row that fails it. E1 writes `drive_index: 1` on every play; E2 overwrites it.
+
 `rules_matrix.check(record)` recomputes each row of the section-7 matrix from the drives, plays, kickoffs and boundaries. It
 does not read the engine's flags. Each row is PASS, FAIL, PARTIAL, UNSUPPORTED, NOT_APPLICABLE (this game did not take the
 path) or BLOCKED. The emitter refuses to write a payload with a FAIL. The row statuses for the emitted game are in its payload.
