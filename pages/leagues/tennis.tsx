@@ -281,12 +281,13 @@ function ScoresPanel({ date, setDate, games, loading, error, tour }: {
             const tourGames = games.filter(game => String(game.league || '').toLowerCase() === item)
             if (!tourGames.length) return null
             return (
-              <section key={item} aria-labelledby={`${item}-scores-heading`} className="space-y-3">
-                <h2 id={`${item}-scores-heading`} className="text-lg font-bold text-zinc-100">
+              <section key={item} aria-labelledby={`${item}-scores-heading`} className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-2 space-y-2">
+                <h2 id={`${item}-scores-heading`} className="text-base font-semibold text-zinc-200">
                   {item.toUpperCase()}
                 </h2>
-                <div className="grid gap-x-10 gap-y-3 md:grid-cols-2">
+                <div className="relative grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
                   {tourGames.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}
+                  <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px bg-zinc-800 md:block" />
                 </div>
               </section>
             )
