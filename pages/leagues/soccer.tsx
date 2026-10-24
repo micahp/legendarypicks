@@ -327,13 +327,7 @@ function ScoresPanel({ date, setDate, games, loading, error, competition }: {
         <button aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))} className="px-3 py-1 text-zinc-400 hover:text-white">→</button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
-        <div className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-2 space-y-2">
-          <h2 className="text-base font-semibold text-zinc-200">{label}</h2>
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-x-10 [&>*]:border-t [&>*]:border-zinc-800 [&>*:first-child]:border-t-0 md:[&>*:nth-child(2)]:border-t-0">
-            {games.map(game => <GameCard key={game.gameId} {...game} />)}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px bg-zinc-800 md:block" />
-          </div>
-        </div>
+        <div className="grid gap-3 md:grid-cols-2">{games.map(game => <div key={game.gameId} className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-1 shadow transition-colors hover:border-zinc-700"><GameCard {...game} /></div>)}</div>
       ) : <Unavailable text={`No ${label} matches were published for this date.`} />}
     </section>
   )
