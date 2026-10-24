@@ -3,6 +3,7 @@
 Run: python3 -m unittest scripts/nfl_sequence/test_game_state.py
 """
 import copy
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -490,6 +491,42 @@ class MissedFieldGoalSpot(unittest.TestCase):
         record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 85
         row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
         self.assertEqual(row['status'], 'FAIL')
+
+
+class DriveIndexFindings(unittest.TestCase):
+    """The drive-index finding. The archived 5fcaa6bc record (regression/) has drive_index 1 on every play state of drives 2
+    to 24: 23 drives and 280 play states. Every one must be counted and rejected, not just the first."""
+
+    REGRESSION = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'regression' / 'lp-e2-game-seed1-5fcaa6bc.json'
+    CURRENT = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'e2-game-seed1.json'
+
+    def regression_record(self):
+        with open(self.REGRESSION) as f:
+            return json.load(f)['record']
+
+    def test_the_archived_record_is_counted_in_full(self):
+        bad, states, examples = gs.drive_index_mismatches(self.regression_record())
+        self.assertEqual(len(bad), 23)
+        self.assertEqual((bad[0], bad[-1]), (2, 24))
+        self.assertEqual(states, 280)
+        self.assertTrue(examples[0].startswith('drive 2: play'))
+
+    def test_the_validator_rejects_it_and_states_every_count(self):
+        with self.assertRaises(AssertionError) as caught:
+            gs.validate_game(self.regression_record())
+        self.assertIn('23 drive-index mismatches', str(caught.exception))
+        self.assertIn('280 play states', str(caught.exception))
+
+    def test_the_matrix_row_fails_with_the_same_count(self):
+        row = next(r for r in rm.check(self.regression_record()) if r['case'].startswith('Drive index'))
+        self.assertEqual(row['status'], 'FAIL')
+        self.assertIn('23 drive-index mismatches', row['evidence'])
+
+    def test_the_committed_seed_one_record_has_no_mismatch(self):
+        with open(self.CURRENT) as f:
+            record = json.load(f)
+        record = record.get('record', record)
+        self.assertEqual(gs.drive_index_mismatches(record)[0], [])
 
 
 def _empty_e1_pool():

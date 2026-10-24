@@ -110,6 +110,25 @@ def fg_bucket(yardline_100):
     return '50+'
 
 
+def drive_index_mismatches(record):
+    """Every play state whose drive_index is not its drive's game-level index: (drive numbers, state count, examples).
+
+    Counted in full, not stopped at the first. The archived 5fcaa6bc record has 280 such states in 23 drives (2 to 24), which
+    is the known finding of 23 drive-index mismatches.
+    """
+    bad_drives, states, examples = set(), 0, []
+    for d in record['drives']:
+        for play in d['plays']:
+            for side in ('state_before', 'state_after'):
+                got = play[side].get('drive_index')
+                if got != d['index']:
+                    bad_drives.add(d['index'])
+                    states += 1
+                    if len(examples) < 3:
+                        examples.append(f'drive {d["index"]}: play {play["sequence"]} {side} carries drive_index {got}')
+    return sorted(bad_drives), states, examples
+
+
 def missed_field_goal_spot(kick_yardline_100):
     """Yardline_100 of the receiving team after a missed field goal, from the spot of the kick.
 
@@ -586,12 +605,10 @@ def validate_game(record):
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
     elif record['final_quarter'] >= 3 and record['complete_regulation']:
         raise AssertionError('a complete game must have two half-start kickoffs')
-    for d in record['drives']:
-        for play in d['plays']:
-            for side in ('state_before', 'state_after'):
-                if play[side].get('drive_index') != d['index']:
-                    raise AssertionError(f'drive {d["index"]}: {side} carries drive_index '
-                                         f'{play[side].get("drive_index")}, not {d["index"]}')
+    bad_drives, bad_states, examples = drive_index_mismatches(record)
+    if bad_drives:
+        raise AssertionError(f'{len(bad_drives)} drive-index mismatches: {bad_states} play states carry the wrong drive_index '
+                             f'in drives {bad_drives}; first: {examples[0]}')
     checks.append('every play state carries its drive index, in state_before and state_after')
     missing = [r for r in UNSUPPORTED_RULES if r not in record.get('guards', {})]
     if missing:
