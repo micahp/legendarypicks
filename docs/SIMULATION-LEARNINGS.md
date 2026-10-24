@@ -240,7 +240,7 @@ Add a new dated entry for every significant finding; link the **immutable** repo
 - **Interpretation:** Agents coordinated file ownership but did **not** coordinate the causal question, fixtures, metrics or adoption criterion. Same athlete pair cannot turn legacy tackle selection/drag and genuine 3D force-derived grip into directly comparable outcomes. Production physics, LP forecasts and grading remain unchanged.
 - **Next gate:** Pin the source/commit, run per-track matched ablations and output a common typed summary. One integration coordinator analyzes source mismatches, rating-to-controller hypotheses, unexplained contact discontinuities, changed selection versus post-contact travel, numeric gate failures and missing empirical validity before any selective integration PR.
 
-### YYYY-MM-DD — [short experiment title]
+### 2026-10-23 — Legacy Madden tackle recentering unmasks a 3 m wrap-force defect### YYYY-MM-DD — [short experiment title]
 
 - **Question / hypothesis:**
 - **Baseline and treatment:**
