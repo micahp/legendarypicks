@@ -47,6 +47,10 @@ These two limits must travel with any handoff from E1. Passing `check_drive` doe
     The start offense's direction flips.
   - Q2 expiry: `halftime` terminal. The first-half drive ends, and the scrimmage state is null.
   - Q4 expiry: `end_of_regulation` terminal. Overtime is not modelled.
+- **Halftime and regulation endpoint (schema 1.1).** A `halftime` or `end_of_regulation` record has a null scrimmage state
+  and a null field endpoint (`field.after.dir` and `los` are null). The final play's position is kept in
+  `outcome.final_play_yardline_100`, and is not a scrimmage state. Records before 1.1 used a field endpoint at these
+  terminals, and that is superseded. The drive profile is now `schema_version` 1.1; the E0 record stays at 1.0.
 - **Orientation.** The start offense flips at each change of ends only. The other team is always opposite. Halftime does
   not flip. The v1 convention (`e0-field-end-v1`), which gave every offense the same direction, is not used by E1.
 
@@ -156,16 +160,16 @@ Each fixture was generated and rerun byte-identically after the boundary change.
 
 | File | Terminal | Plays | Yards | First downs | Quarter changes | Negative-yardage plays | SHA-256 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `623d6e564e0d4bd370fc253f4fa41c20be1a530c44c05a239327e2a8e60064ab` |
-| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `768dc6e344d73c244acae2467ba1e36ed7121e210e875512dc1bdfb9f2a8d994` |
-| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `0d92a4eb920d785a3f20084b6075a540fd76af597f8e036761ad4f292a3dfd46` |
-| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `85c87a777947de72ea0fda06422d21f5650a21ec1c415c6c5fc7d320f9041816` |
-| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `4780350629f3029637172731f3fef0f87c38120a438e489411457a086064bf95` |
-| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `1ec51f3c3d55777391ab031d37faa44457c67b89289b96e24e480e257d31987b` |
-| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `8576bebaa38e1d894d718d08be1c4cb7a4b8db29271ae20d7a4c8d985ad75397` |
-| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `17f53ea8cc5c77ce9e5c173189b41a0771acab90ef59405829f393ea5758a6f6` |
-| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `d622ca9cfe9f051ea5348fb7343c5e4b22daeb532793bba7555dd373d28868f4` |
-| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `71f8f43bb9af9d441a23d9f3d9b8162be401de859ad7e964d2a84975df8b04f0` |
+| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `fcef11c09b2992c8c0cb602588d75a1de054df79aac9c0cd2b591b5ffca3537a` |
+| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `0f42f55bd616b298548a37c4c0d14b8a3647a6b86111ec17f4043e4e7dcc74c3` |
+| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `67ae504795361501a09ce3e94317073576fc443ca7c3a542a009526106189182` |
+| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `e76ab3e343d58e5c567a14e7bf92d6300200f68b8333afaed97c5c697eb18e79` |
+| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `fac40496678828cdedf840c0a96d35075cfeaa22349068483418041b25b64002` |
+| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `ee58944fbb86503f7ac8dd14202afa427c57872ed9eb167b0813c9aecbb95e62` |
+| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `cecde97f37ede4a0c49028f18e165f0178ae2a36038dee04d1ffca95fb9e48a7` |
+| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `60e1acf10bba25634ecc82b70ca0afea4ece7b47d4fdf53c8e85221c419a1f60` |
+| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `1e1ad6ea0682de35f3b7cf487298b639d1953bc9dcb9eecd403fc292aa3dc0ba` |
+| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `740e5c5335f349224808ae116148cf51d34f527029c1a093b93de6893e4764a0` |
 
 What each fixture shows:
 

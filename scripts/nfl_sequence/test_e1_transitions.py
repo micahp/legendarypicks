@@ -69,6 +69,9 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(last['clock_seconds'], 0)
         self.assertIsNone(last['yardline_100'])
         self.assertFalse(plays[-1]['outcome']['turnover'])
+        self.assertIsNone(plays[-1]['field']['after']['dir'], 'no scrimmage endpoint at halftime (schema 1.1)')
+        self.assertIsNone(plays[-1]['field']['after']['los'])
+        self.assertIsNotNone(plays[-1]['outcome']['final_play_yardline_100'], 'the final play position is kept in outcome')
         e1.check_drive(plays, terminal)
 
     def test_q4_expiry_is_regulation_end(self):

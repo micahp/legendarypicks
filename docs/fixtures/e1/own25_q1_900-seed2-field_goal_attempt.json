@@ -1145,7 +1145,7 @@
     "sources_as_of_verified": false
   },
   "rules_version": "e1-drive-2026-10-24",
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "seed": 2,
   "simulation_id": "e1-own25_q1_900-seed2",
   "start_state": {

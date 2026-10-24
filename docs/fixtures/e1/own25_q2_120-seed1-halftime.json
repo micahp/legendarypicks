@@ -332,8 +332,8 @@
       "event_type": "pass_complete",
       "field": {
         "after": {
-          "dir": 1,
-          "los": 47
+          "dir": null,
+          "los": null
         },
         "assignment_version": "e1-field-end-v2",
         "before": {
@@ -423,7 +423,7 @@
     "sources_as_of_verified": false
   },
   "rules_version": "e1-drive-2026-10-24",
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "seed": 1,
   "simulation_id": "e1-own25_q2_120-seed1",
   "start_state": {
