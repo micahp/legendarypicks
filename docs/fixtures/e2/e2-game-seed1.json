@@ -99,6 +99,11 @@
    "evidence": "drives score {'A': 11, 'B': 17}, equal to the record"
   },
   {
+   "case": "Provisional clock rules: practice-sourced, pending the 2026 rulebook",
+   "status": "NOT_APPLICABLE",
+   "evidence": "no score expired a quarter in this game"
+  },
+  {
    "case": "Timeouts: three per team per half",
    "status": "UNSUPPORTED",
    "evidence": "not modelled: the published table has no timeout fields, so the observed clock runoff is used as recorded"
@@ -135,7 +140,7 @@
   }
  ],
  "rules_matrix_summary": {
-  "NOT_APPLICABLE": 3,
+  "NOT_APPLICABLE": 4,
   "PASS": 13,
   "UNSUPPORTED": 5,
   "PARTIAL": 1
@@ -165,6 +170,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 60,
     "after_drive": 0,
+    "clock_rule": null,
     "source": {
      "game_id": "2025_14_DEN_LV",
      "play_id": 2466,
@@ -181,6 +187,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 75,
     "after_drive": 2,
+    "clock_rule": null,
     "source": {
      "game_id": "2023_13_LAC_NE",
      "play_id": 39,
@@ -197,6 +204,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 71,
     "after_drive": 6,
+    "clock_rule": null,
     "source": {
      "game_id": "2025_02_SEA_PIT",
      "play_id": 569,
@@ -213,6 +221,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 75,
     "after_drive": 7,
+    "clock_rule": null,
     "source": {
      "game_id": "2023_08_BAL_ARI",
      "play_id": 39,
@@ -229,6 +238,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 70,
     "after_drive": 9,
+    "clock_rule": null,
     "source": {
      "game_id": "2024_11_GB_CHI",
      "play_id": 2129,
@@ -245,6 +255,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 70,
     "after_drive": 12,
+    "clock_rule": null,
     "source": {
      "game_id": "2024_16_NE_BUF",
      "play_id": 2485,
@@ -261,6 +272,7 @@
     "clock_clamped_to_zero": false,
     "spot_yardline_100": 75,
     "after_drive": 21,
+    "clock_rule": null,
     "source": {
      "game_id": "2022_01_GB_MIN",
      "play_id": 1659,
@@ -16316,6 +16328,37 @@
    "blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick",
    "timeouts, the two-minute warning, penalties, onside kicks, overtime and the exception coin-toss paths are not modelled, and each is listed in unsupported_rules",
    "participants are the players on the observed plays each simulated play was sampled from: they are labelled as sampled, and they are not this game's roster, lineup or substitutions"
-  ]
+  ],
+  "provisional_rules": [
+   {
+    "id": "post_score_kick_after_quarter_expiry",
+    "label": "provisional_practice_rule",
+    "status": "pending_2026_rulebook",
+    "applies_to": "a touchdown, made field goal or safety whose clock expires in Q1 or Q3",
+    "effect": "the scoring side (or the conceding side, after a safety) kicks off at the start of the next quarter",
+    "source": "NFL practice, not written in docs/rules/NFL-2026-GAME-STATE-RULES.md. Confirm against the 2026 rulebook before it is read as a rules-file fact."
+   },
+   {
+    "id": "no_post_score_kick_at_halftime",
+    "label": "provisional_practice_rule",
+    "status": "pending_2026_rulebook",
+    "applies_to": "a score whose clock expires in Q2",
+    "effect": "no post-score kickoff; the second-half kickoff from the ledger follows",
+    "source": "NFL practice, not written in docs/rules/NFL-2026-GAME-STATE-RULES.md. Confirm against the 2026 rulebook before it is read as a rules-file fact."
+   },
+   {
+    "id": "quarter_ends_during_kick_return",
+    "label": "authored_modelling_choice",
+    "status": "pending_2026_rulebook",
+    "applies_to": "a kickoff whose runoff exhausts the clock",
+    "effect": "the quarter ends on the return; the receiver starts the next quarter at the kick spot",
+    "source": "authored modelling choice, matching E1 clamping a play runoff at 0:00; not in the rules file"
+   }
+  ],
+  "provisional_counts": {
+   "post_score_kickoffs_after_quarter_expiry": 0,
+   "skipped_post_score_kicks_at_halftime": 0,
+   "quarter_ends_during_kick_return": 0
+  }
  }
 }

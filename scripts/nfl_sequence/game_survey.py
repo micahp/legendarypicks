@@ -54,7 +54,8 @@ def main():
     print(f'boundaries: {dict(boundaries)}')
     print(f'field goals drawn: {dict(fg)}')
     print(f'tries drawn: {dict(tries)}')
-    print(f'points per game: mean {points_total / n:.1f}; drives per game: mean {drives_total / n:.1f}, max {drives_max}')
+    print(f'points per game: mean {points_total / n:.1f}; '
+          f'drives per game: mean {drives_total / n:.1f}, max {drives_max}')
     print(f'kickoff pool: usable {len(ref.kickoff_pool)}, excluded {dict(kex)}')
     print('rules matrix, games per status:')
     fails = 0

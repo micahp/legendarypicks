@@ -1,10 +1,12 @@
 """Check one generated game against the 2026 mandatory test matrix (docs/rules/NFL-2026-GAME-STATE-RULES.md, section 7).
 
-Every row is recomputed from the record's drives, plays, kickoffs and boundaries. None of it is read from the engine's own
-flags. A row is one of:
+Every row is recomputed from the record's drives, plays, kickoffs and boundaries. None of it is read from the engine's
+own flags. A row is one of:
 - PASS: the check ran and held;
 - FAIL: the check ran and did not hold. A complete game with a FAIL is not emitted;
 - PARTIAL: the check holds for what is modelled, and the row names what is not;
+- PROVISIONAL: the check holds for a rule that is practice-sourced and not written in the rules file. The row says so
+  and stays pending the 2026 rulebook;
 - UNSUPPORTED: the rule is not modelled, and the record says so in unsupported_rules;
 - NOT_APPLICABLE: this game did not take that path (for example, the winner received, so the defer row does not apply);
 - BLOCKED: the game did not finish, so the check cannot apply.
@@ -18,8 +20,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import game_state as gs  # noqa: E402
 
-PASS, FAIL, PARTIAL, UNSUPPORTED, NOT_APPLICABLE, BLOCKED = (
-    'PASS', 'FAIL', 'PARTIAL', 'UNSUPPORTED', 'NOT_APPLICABLE', 'BLOCKED')
+PASS, FAIL, PARTIAL, UNSUPPORTED, NOT_APPLICABLE, BLOCKED, PROVISIONAL = (
+    'PASS', 'FAIL', 'PARTIAL', 'UNSUPPORTED', 'NOT_APPLICABLE', 'BLOCKED', 'PROVISIONAL')
 SCORING = ('touchdown', 'safety', 'field_goal_attempt')
 
 
@@ -36,12 +38,15 @@ def _ends_on_zero(drive):
 
 
 def _expected_kick_after(drive):
-    """A score is followed by a kick unless the clock expires in Q2 (halftime, then the second-half kickoff) or Q4 (the end)."""
+    """A score is followed by a kick unless the clock expires in Q2 (halftime, then the second-half kickoff) or Q4 (the
+    end).
+    """
     return not (_ends_on_zero(drive) and drive['end_quarter'] in (2, 4))
 
 
 def _defer_row(record, deferred):
-    """Rules section 7: a defer gives the loser the Q1 receive and the winner the Q3 receive; a receive is the reverse."""
+    """Rules section 7: a defer gives the loser the Q1 receive and the winner the Q3 receive; a receive is the reverse.
+    """
     ledger, k = record['ledger'], _half_starts(record)
     if ledger['winner_deferred'] != deferred:
         return NOT_APPLICABLE, 'this game took the other opening path'
@@ -71,10 +76,13 @@ def _exception_refused():
 
 
 def _change_of_ends(record, from_quarter):
-    """Q1->Q2 or Q3->Q4: no kickoff or new drive at the change of ends; a kickoff opening the quarter follows a score only."""
+    """Q1->Q2 or Q3->Q4: no kickoff or new drive at the change of ends; a kickoff opening the quarter follows a score
+    only.
+    """
     to_quarter = from_quarter + 1
     drives = record['drives']
-    mid = [b for b in record['boundaries'] if b['kind'] == 'change_of_ends_mid_drive' and b['from_quarter'] == from_quarter]
+    mid = [b for b in record['boundaries']
+           if b['kind'] == 'change_of_ends_mid_drive' and b['from_quarter'] == from_quarter]
     expiry = [b for b in record['boundaries'] if b['kind'] in ('change_of_ends', 'change_of_ends_during_return')
               and b['from_quarter'] == from_quarter]
     if not mid and not expiry:
@@ -86,7 +94,8 @@ def _change_of_ends(record, from_quarter):
             return FAIL, f'a Q{from_quarter} expiry ended drive {b["drive_index"]}: a drive must continue'
         a, nxt = plays[idx]['state_after'], plays[idx + 1]['state_before']
         if (a['offense_team'], a['yardline_100'], a['down']) != (nxt['offense_team'], nxt['yardline_100'], nxt['down']):
-            return FAIL, f'possession, spot or down changed across the Q{from_quarter} expiry in drive {b["drive_index"]}'
+            return FAIL, (f'possession, spot or down changed across the Q{from_quarter} expiry in drive '
+                          f'{b["drive_index"]}')
     opened = [k for k in record['kickoffs'] if k['quarter'] == to_quarter and k['clock_before'] == gs.QUARTER_LENGTH
               and k['kind'] != 'half_start']
     for k in opened:
@@ -97,8 +106,9 @@ def _change_of_ends(record, from_quarter):
         expired_old_quarter = prev['end_quarter'] == from_quarter and _ends_on_zero(prev)
         if prev['terminal'] not in SCORING or not (ran_into_new_quarter or expired_old_quarter):
             return FAIL, f'a kickoff opened Q{to_quarter} without a score that ended the quarter change'
-    return PASS, (f'{len(mid)} mid-drive change(s) keep the drive; {len(expiry)} change(s) at a possession end keep the '
-                  f'possession; {len(opened)} kickoff(s) open Q{to_quarter} after a score that expired Q{from_quarter}')
+    return PASS, (f'{len(mid)} mid-drive change(s) keep the drive; {len(expiry)} change(s) at a possession end keep '
+                  f'the possession; {len(opened)} kickoff(s) open Q{to_quarter} after a score that expired '
+                  f'Q{from_quarter}')
 
 
 def _halftime(record, ledger_kicks):
@@ -197,7 +207,8 @@ def _fg_safety(record):
         follow = [k for k in _kicks_after(record, d['index']) if k['kind'] == 'safety_free_kick']
         if _expected_kick_after(d) and (not follow or follow[0]['kicking_team'] != d['offense_team']):
             return FAIL, f'safety drive {d["index"]}: the free kick is not by the conceding team'
-    return PASS, f'{made} made field goal(s) (3 each, kicker kicks off), {missed} missed, {len(sft)} safety(ies) (2 each)'
+    return PASS, (f'{made} made field goal(s) (3 each, kicker kicks off), {missed} missed, '
+                  f'{len(sft)} safety(ies) (2 each)')
 
 
 def _clock(record):
@@ -221,10 +232,12 @@ def _continuity(record):
         return FAIL, 'the first drive does not start with the Q1 receiver'
     halftime_after = {b['drive_index'] for b in record['boundaries'] if b['kind'] == 'halftime'}
     for prev, nxt in zip(drives, drives[1:]):
-        if prev['index'] in halftime_after:  # the second half is opened by its own kickoff, whichever event ran the clock
+        # The second half is opened by its own kickoff, whichever event ran the clock.
+        if prev['index'] in halftime_after:
             continue
         if nxt['offense_team'] == prev['offense_team']:
-            return FAIL, f'drives {prev["index"]} and {nxt["index"]} have the same offense with no halftime between them'
+            return FAIL, (f'drives {prev["index"]} and {nxt["index"]} have the same offense with no halftime '
+                          f'between them')
     return PASS, f'{len(drives)} drives chain: each new drive starts with the team the previous event gave the ball to'
 
 
@@ -237,6 +250,30 @@ def _points(record):
     if by != record['points']:
         return FAIL, f'drives score {by}, the record says {record["points"]}'
     return PASS, f'drives score {by}, equal to the record'
+
+
+def _provisional(record):
+    """The two practice-sourced clock rules, recomputed from the drives: a score that expires Q1 or Q3 is followed by a
+    kickoff in the next quarter, and a score that expires Q2 is not. Pending the 2026 rulebook, so PROVISIONAL,
+    never PASS.
+    """
+    kicked = skipped = 0
+    for d in record['drives']:
+        if d['points_scored_on_drive'] is None or not _ends_on_zero(d):
+            continue
+        follow = [k for k in _kicks_after(record, d['index'])]
+        if d['end_quarter'] in (1, 3):
+            if not follow:
+                return FAIL, f'drive {d["index"]} scored at the Q{d["end_quarter"]} expiry with no kickoff after it'
+            kicked += 1
+        elif d['end_quarter'] == 2:
+            if follow:
+                return FAIL, f'drive {d["index"]} scored at the Q2 expiry and still kicked off'
+            skipped += 1
+    if not kicked and not skipped:
+        return NOT_APPLICABLE, 'no score expired a quarter in this game'
+    return PROVISIONAL, (f'practice rule, pending the 2026 rulebook: {kicked} post-score kickoff(s) after a Q1/Q3 '
+                         f'expiry, {skipped} score(s) at the Q2 expiry with no post-score kickoff')
 
 
 def check(record):
@@ -265,22 +302,26 @@ def check(record):
     add('Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a drive terminal', _clock(record))
     add('Continuity between drives and quarters', _continuity(record))
     add('Points equal the points on the drives', _points(record))
+    add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
     add('Timeouts: three per team per half', (UNSUPPORTED, 'not modelled: the published table has no timeout fields, '
                                                            'so the observed clock runoff is used as recorded'))
     add('Two-minute warning', (UNSUPPORTED, 'not modelled'))
     add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))
     add('Onside kick', (UNSUPPORTED, 'not modelled: every kickoff is drawn from the observed kickoff pool'))
     if record['tied']:
-        add('Overtime after a tie', (BLOCKED, 'tied after regulation: overtime is not modelled, so the game is blocked'))
+        add('Overtime after a tie',
+            (BLOCKED, 'tied after regulation: overtime is not modelled, so the game is blocked'))
     else:
         add('Overtime after a tie', (NOT_APPLICABLE, 'no tie after regulation'))
-    sampled = sum(1 for d in record['drives'] for p in d['plays'] if p['participants']['attribution'] == 'sampled_observed_play')
+    sampled = sum(1 for d in record['drives'] for p in d['plays']
+                  if p['participants']['attribution'] == 'sampled_observed_play')
     add('Player lineups and physical motion', (UNSUPPORTED, f'not modelled; {sampled} plays carry labelled sampled '
                                                              "participants, not this game's lineup"))
-    fourth = Counter(p['decision']['type'] for d in record['drives'] for p in d['plays'] if p['state_before']['down'] == 4)
-    add('Fourth-down choices: punt, field goal or go for it', (PARTIAL, f'sampled from observed plays by down, distance '
-                                                                       f'and field position: {dict(fourth)}; not '
-                                                                       f'conditioned on score or time'))
+    fourth = Counter(p['decision']['type'] for d in record['drives'] for p in d['plays']
+                     if p['state_before']['down'] == 4)
+    add('Fourth-down choices: punt, field goal or go for it',
+        (PARTIAL, f'sampled from observed plays by down, distance and field position: {dict(fourth)}; not conditioned '
+                  f'on score or time'))
     return rows
 
 

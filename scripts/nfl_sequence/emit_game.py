@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Emit one full generated E2 game as a JSON payload, checked against the rules matrix. Reads the dev database read-only.
+"""Emit one full generated E2 game as a JSON payload, checked against the rules matrix.
+
+Reads the dev database read-only.
 
 The game is the first seed, from 1 up to --scan, that completes regulation untied and unblocked. Its matrix rows are
 recomputed from the record. The payload is refused, and nothing is written, if the game is not complete or if any row
@@ -47,8 +49,8 @@ def main():
         'mode': chosen['mode'],
         'seed': chosen['seed'],
         'generated_by': 'scripts/nfl_sequence/emit_game.py',
-        'seed_selection': f'first seed in 1..{args.scan} that completes regulation untied and unblocked; seed {chosen["seed"]} '
-                          f'is the {scanned}th scanned',
+        'seed_selection': (f'first seed in 1..{args.scan} that completes regulation untied and unblocked; '
+                           f'seed {chosen["seed"]} is the {scanned}th scanned'),
         'sources': {
             'database': 'dev nfl_pbp, opened read-only',
             'window': 'season 2022-2025, week <= 18 (E1 window)',

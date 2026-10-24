@@ -29,7 +29,8 @@ def team_stats(drives, points):
     for d in drives:
         t = team(d['offense_team'])
         t['drives'] += 1
-        t['possession_seconds'] += _elapsed(d['end_quarter'], d['end_clock']) - _elapsed(d['quarter_start'], d['clock_start'])
+        end = _elapsed(d['end_quarter'], d['end_clock'])
+        t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
         for play in d['plays']:
             ev, out = play['event_type'], play['outcome']
             if ev in SCRIMMAGE_EVENTS:
@@ -122,6 +123,7 @@ def compute(drives, points):
         'team': team_stats(drives, points),
         'player': player_lines(drives),
         'player_attribution': ATTRIBUTION,
-        'player_note': ('Players are the participants of the observed plays each simulated play was sampled from. They are '
+        'player_note': ('Players are the participants of the observed plays each simulated play was sampled from. '
+                        'They are '
                         'not this game\'s roster or lineup, and these lines are not evidence about those players.'),
     }

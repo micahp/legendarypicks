@@ -1,7 +1,7 @@
 """Observed reference data for E2 games, loaded once from the dev nfl_pbp table. Read-only.
 
-The window is E1's: 2022-2025, weeks 1-18. The pool, the kickoff pool, the kick table and the participant lookup all come
-from that window, so every draw in a game is from the same observed seasons.
+The window is E1's: 2022-2025, weeks 1-18. The pool, the kickoff pool, the kick table and the participant lookup all
+come from that window, so every draw in a game is from the same observed seasons.
 """
 import sqlite3
 import sys
