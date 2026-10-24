@@ -1,0 +1,497 @@
+down,distance_bucket,field_zone,metric,numerator,denominator,rate,eligible_action_rows,denominator_note
+1.0,0-3,opponent_half_21-50,pass_share_of_pass_run_rows,0,2,0.0,2,play_type pass/run rows
+1.0,0-3,opponent_half_21-50,rush_share_of_pass_run_rows,2,2,1.0,2,play_type pass/run rows
+1.0,0-3,opponent_half_21-50,first_down_series_terminal_per_series_action,2,2,1.0,2,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,0-3,opponent_half_21-50,completion_per_known_pass_attempt,0,0,,2,pass_attempt rows with non-null complete_pass
+1.0,0-3,opponent_half_21-50,sack_per_known_dropback,0,0,,2,qb_dropback rows with non-null sack
+1.0,0-3,opponent_half_21-50,turnover_per_known_scrimmage_action,0,2,0.0,2,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,0-3,opponent_half_21-50,epa_success_per_known_row,0,2,0.0,2,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,0-3,opponent_half_21-50,touchdown_per_known_action_row,0,2,0.0,2,eligible action rows with non-null touchdown flag
+1.0,0-3,red_zone_0-20,pass_share_of_pass_run_rows,337,1193,0.28248113998323554,1272,play_type pass/run rows
+1.0,0-3,red_zone_0-20,rush_share_of_pass_run_rows,856,1193,0.7175188600167645,1272,play_type pass/run rows
+1.0,0-3,red_zone_0-20,first_down_series_terminal_per_series_action,17,1272,0.013364779874213837,1272,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,0-3,red_zone_0-20,completion_per_known_pass_attempt,166,337,0.49258160237388726,1272,pass_attempt rows with non-null complete_pass
+1.0,0-3,red_zone_0-20,sack_per_known_dropback,10,347,0.02881844380403458,1272,qb_dropback rows with non-null sack
+1.0,0-3,red_zone_0-20,turnover_per_known_scrimmage_action,19,1193,0.01592623637887678,1272,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,0-3,red_zone_0-20,epa_success_per_known_row,613,1272,0.48191823899371067,1272,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,0-3,red_zone_0-20,touchdown_per_known_action_row,553,1271,0.43509047993705746,1272,eligible action rows with non-null touchdown flag
+1.0,11+,backed_up_81-99,pass_share_of_pass_run_rows,253,415,0.6096385542168675,436,play_type pass/run rows
+1.0,11+,backed_up_81-99,rush_share_of_pass_run_rows,162,415,0.39036144578313253,436,play_type pass/run rows
+1.0,11+,backed_up_81-99,first_down_series_terminal_per_series_action,31,436,0.07110091743119266,436,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,11+,backed_up_81-99,completion_per_known_pass_attempt,169,253,0.6679841897233202,436,pass_attempt rows with non-null complete_pass
+1.0,11+,backed_up_81-99,sack_per_known_dropback,10,263,0.03802281368821293,436,qb_dropback rows with non-null sack
+1.0,11+,backed_up_81-99,turnover_per_known_scrimmage_action,8,415,0.01927710843373494,436,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,11+,backed_up_81-99,epa_success_per_known_row,176,436,0.4036697247706422,436,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,11+,backed_up_81-99,touchdown_per_known_action_row,1,436,0.0022935779816513763,436,eligible action rows with non-null touchdown flag
+1.0,11+,opponent_half_21-50,pass_share_of_pass_run_rows,475,688,0.690406976744186,732,play_type pass/run rows
+1.0,11+,opponent_half_21-50,rush_share_of_pass_run_rows,213,688,0.30959302325581395,732,play_type pass/run rows
+1.0,11+,opponent_half_21-50,first_down_series_terminal_per_series_action,37,732,0.050546448087431695,732,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,11+,opponent_half_21-50,completion_per_known_pass_attempt,288,475,0.6063157894736843,732,pass_attempt rows with non-null complete_pass
+1.0,11+,opponent_half_21-50,sack_per_known_dropback,28,493,0.056795131845841784,732,qb_dropback rows with non-null sack
+1.0,11+,opponent_half_21-50,turnover_per_known_scrimmage_action,15,688,0.02180232558139535,732,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,11+,opponent_half_21-50,epa_success_per_known_row,272,732,0.37158469945355194,732,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,11+,opponent_half_21-50,touchdown_per_known_action_row,13,732,0.017759562841530054,732,eligible action rows with non-null touchdown flag
+1.0,11+,own_half_51-80,pass_share_of_pass_run_rows,705,1014,0.6952662721893491,1076,play_type pass/run rows
+1.0,11+,own_half_51-80,rush_share_of_pass_run_rows,309,1014,0.3047337278106509,1076,play_type pass/run rows
+1.0,11+,own_half_51-80,first_down_series_terminal_per_series_action,117,1076,0.1087360594795539,1076,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,11+,own_half_51-80,completion_per_known_pass_attempt,481,705,0.6822695035460993,1076,pass_attempt rows with non-null complete_pass
+1.0,11+,own_half_51-80,sack_per_known_dropback,41,740,0.05540540540540541,1076,qb_dropback rows with non-null sack
+1.0,11+,own_half_51-80,turnover_per_known_scrimmage_action,28,1014,0.027613412228796843,1076,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,11+,own_half_51-80,epa_success_per_known_row,450,1076,0.41821561338289964,1076,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,11+,own_half_51-80,touchdown_per_known_action_row,6,1075,0.005581395348837209,1076,eligible action rows with non-null touchdown flag
+1.0,11+,red_zone_0-20,pass_share_of_pass_run_rows,81,136,0.5955882352941176,143,play_type pass/run rows
+1.0,11+,red_zone_0-20,rush_share_of_pass_run_rows,55,136,0.40441176470588236,143,play_type pass/run rows
+1.0,11+,red_zone_0-20,first_down_series_terminal_per_series_action,3,143,0.02097902097902098,143,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,11+,red_zone_0-20,completion_per_known_pass_attempt,54,81,0.6666666666666666,143,pass_attempt rows with non-null complete_pass
+1.0,11+,red_zone_0-20,sack_per_known_dropback,3,88,0.03409090909090909,143,qb_dropback rows with non-null sack
+1.0,11+,red_zone_0-20,turnover_per_known_scrimmage_action,2,136,0.014705882352941176,143,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,11+,red_zone_0-20,epa_success_per_known_row,59,143,0.4125874125874126,143,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,11+,red_zone_0-20,touchdown_per_known_action_row,11,143,0.07692307692307693,143,eligible action rows with non-null touchdown flag
+1.0,4-6,backed_up_81-99,pass_share_of_pass_run_rows,8,25,0.32,28,play_type pass/run rows
+1.0,4-6,backed_up_81-99,rush_share_of_pass_run_rows,17,25,0.68,28,play_type pass/run rows
+1.0,4-6,backed_up_81-99,first_down_series_terminal_per_series_action,10,28,0.35714285714285715,28,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,4-6,backed_up_81-99,completion_per_known_pass_attempt,5,8,0.625,28,pass_attempt rows with non-null complete_pass
+1.0,4-6,backed_up_81-99,sack_per_known_dropback,1,8,0.125,28,qb_dropback rows with non-null sack
+1.0,4-6,backed_up_81-99,turnover_per_known_scrimmage_action,1,25,0.04,28,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,4-6,backed_up_81-99,epa_success_per_known_row,15,28,0.5357142857142857,28,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,4-6,backed_up_81-99,touchdown_per_known_action_row,1,28,0.03571428571428571,28,eligible action rows with non-null touchdown flag
+1.0,4-6,opponent_half_21-50,pass_share_of_pass_run_rows,53,113,0.4690265486725664,120,play_type pass/run rows
+1.0,4-6,opponent_half_21-50,rush_share_of_pass_run_rows,60,113,0.5309734513274337,120,play_type pass/run rows
+1.0,4-6,opponent_half_21-50,first_down_series_terminal_per_series_action,55,120,0.4583333333333333,120,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,4-6,opponent_half_21-50,completion_per_known_pass_attempt,34,53,0.6415094339622641,120,pass_attempt rows with non-null complete_pass
+1.0,4-6,opponent_half_21-50,sack_per_known_dropback,5,56,0.08928571428571429,120,qb_dropback rows with non-null sack
+1.0,4-6,opponent_half_21-50,turnover_per_known_scrimmage_action,1,113,0.008849557522123894,120,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,4-6,opponent_half_21-50,epa_success_per_known_row,66,120,0.55,120,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,4-6,opponent_half_21-50,touchdown_per_known_action_row,1,120,0.008333333333333333,120,eligible action rows with non-null touchdown flag
+1.0,4-6,own_half_51-80,pass_share_of_pass_run_rows,68,149,0.4563758389261745,162,play_type pass/run rows
+1.0,4-6,own_half_51-80,rush_share_of_pass_run_rows,81,149,0.5436241610738255,162,play_type pass/run rows
+1.0,4-6,own_half_51-80,first_down_series_terminal_per_series_action,64,162,0.3950617283950617,162,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,4-6,own_half_51-80,completion_per_known_pass_attempt,41,68,0.6029411764705882,162,pass_attempt rows with non-null complete_pass
+1.0,4-6,own_half_51-80,sack_per_known_dropback,1,72,0.013888888888888888,162,qb_dropback rows with non-null sack
+1.0,4-6,own_half_51-80,turnover_per_known_scrimmage_action,3,149,0.020134228187919462,162,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,4-6,own_half_51-80,epa_success_per_known_row,81,162,0.5,162,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,4-6,own_half_51-80,touchdown_per_known_action_row,0,161,0.0,162,eligible action rows with non-null touchdown flag
+1.0,4-6,red_zone_0-20,pass_share_of_pass_run_rows,347,1085,0.31981566820276497,1169,play_type pass/run rows
+1.0,4-6,red_zone_0-20,rush_share_of_pass_run_rows,738,1085,0.680184331797235,1169,play_type pass/run rows
+1.0,4-6,red_zone_0-20,first_down_series_terminal_per_series_action,30,1169,0.02566295979469632,1169,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,4-6,red_zone_0-20,completion_per_known_pass_attempt,181,347,0.521613832853026,1169,pass_attempt rows with non-null complete_pass
+1.0,4-6,red_zone_0-20,sack_per_known_dropback,16,364,0.04395604395604396,1169,qb_dropback rows with non-null sack
+1.0,4-6,red_zone_0-20,turnover_per_known_scrimmage_action,17,1085,0.01566820276497696,1169,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,4-6,red_zone_0-20,epa_success_per_known_row,534,1169,0.4568006843455945,1169,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,4-6,red_zone_0-20,touchdown_per_known_action_row,265,1168,0.2268835616438356,1169,eligible action rows with non-null touchdown flag
+1.0,7-10,backed_up_81-99,pass_share_of_pass_run_rows,1931,4586,0.42106410815525513,4838,play_type pass/run rows
+1.0,7-10,backed_up_81-99,rush_share_of_pass_run_rows,2655,4586,0.5789358918447449,4838,play_type pass/run rows
+1.0,7-10,backed_up_81-99,first_down_series_terminal_per_series_action,887,4838,0.1833402232327408,4838,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,7-10,backed_up_81-99,completion_per_known_pass_attempt,1284,1931,0.6649404453650958,4838,pass_attempt rows with non-null complete_pass
+1.0,7-10,backed_up_81-99,sack_per_known_dropback,72,2020,0.03564356435643564,4838,qb_dropback rows with non-null sack
+1.0,7-10,backed_up_81-99,turnover_per_known_scrimmage_action,66,4586,0.01439162668992586,4838,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,7-10,backed_up_81-99,epa_success_per_known_row,1845,4838,0.3813559322033898,4838,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,7-10,backed_up_81-99,touchdown_per_known_action_row,21,4836,0.004342431761786601,4838,eligible action rows with non-null touchdown flag
+1.0,7-10,opponent_half_21-50,pass_share_of_pass_run_rows,7825,16599,0.47141394059883124,17642,play_type pass/run rows
+1.0,7-10,opponent_half_21-50,rush_share_of_pass_run_rows,8774,16599,0.5285860594011688,17642,play_type pass/run rows
+1.0,7-10,opponent_half_21-50,first_down_series_terminal_per_series_action,3092,17642,0.17526357555832672,17642,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,7-10,opponent_half_21-50,completion_per_known_pass_attempt,4912,7825,0.6277316293929712,17642,pass_attempt rows with non-null complete_pass
+1.0,7-10,opponent_half_21-50,sack_per_known_dropback,427,8224,0.05192120622568094,17642,qb_dropback rows with non-null sack
+1.0,7-10,opponent_half_21-50,turnover_per_known_scrimmage_action,262,16599,0.015784083378516778,17642,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,7-10,opponent_half_21-50,epa_success_per_known_row,7397,17642,0.4192835279446775,17642,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,7-10,opponent_half_21-50,touchdown_per_known_action_row,356,17622,0.020202020202020204,17642,eligible action rows with non-null touchdown flag
+1.0,7-10,own_half_51-80,pass_share_of_pass_run_rows,13585,26885,0.5053003533568905,28355,play_type pass/run rows
+1.0,7-10,own_half_51-80,rush_share_of_pass_run_rows,13300,26885,0.49469964664310956,28355,play_type pass/run rows
+1.0,7-10,own_half_51-80,first_down_series_terminal_per_series_action,5781,28355,0.20387938635161348,28355,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,7-10,own_half_51-80,completion_per_known_pass_attempt,8825,13585,0.6496135443503864,28355,pass_attempt rows with non-null complete_pass
+1.0,7-10,own_half_51-80,sack_per_known_dropback,760,14219,0.05344960967719249,28355,qb_dropback rows with non-null sack
+1.0,7-10,own_half_51-80,turnover_per_known_scrimmage_action,434,26885,0.016142830574669892,28355,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,7-10,own_half_51-80,epa_success_per_known_row,12039,28355,0.424581202609769,28355,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,7-10,own_half_51-80,touchdown_per_known_action_row,143,28326,0.005048365459295347,28355,eligible action rows with non-null touchdown flag
+1.0,7-10,red_zone_0-20,pass_share_of_pass_run_rows,2173,5467,0.3974757636729468,5830,play_type pass/run rows
+1.0,7-10,red_zone_0-20,rush_share_of_pass_run_rows,3294,5467,0.6025242363270532,5830,play_type pass/run rows
+1.0,7-10,red_zone_0-20,first_down_series_terminal_per_series_action,419,5830,0.07186963979416809,5830,rows with non-null series; First down labels deduplicated to the final play of each game/series
+1.0,7-10,red_zone_0-20,completion_per_known_pass_attempt,1279,2173,0.5885872066267832,5830,pass_attempt rows with non-null complete_pass
+1.0,7-10,red_zone_0-20,sack_per_known_dropback,98,2301,0.042590178183398525,5830,qb_dropback rows with non-null sack
+1.0,7-10,red_zone_0-20,turnover_per_known_scrimmage_action,66,5467,0.012072434607645875,5830,qb_dropback or rush_attempt rows with both turnover flags known
+1.0,7-10,red_zone_0-20,epa_success_per_known_row,2288,5830,0.39245283018867927,5830,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+1.0,7-10,red_zone_0-20,touchdown_per_known_action_row,537,5826,0.092173017507724,5830,eligible action rows with non-null touchdown flag
+2.0,0-3,backed_up_81-99,pass_share_of_pass_run_rows,75,237,0.31645569620253167,244,play_type pass/run rows
+2.0,0-3,backed_up_81-99,rush_share_of_pass_run_rows,162,237,0.6835443037974683,244,play_type pass/run rows
+2.0,0-3,backed_up_81-99,first_down_series_terminal_per_series_action,152,244,0.6229508196721312,244,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,0-3,backed_up_81-99,completion_per_known_pass_attempt,46,75,0.6133333333333333,244,pass_attempt rows with non-null complete_pass
+2.0,0-3,backed_up_81-99,sack_per_known_dropback,4,79,0.05063291139240506,244,qb_dropback rows with non-null sack
+2.0,0-3,backed_up_81-99,turnover_per_known_scrimmage_action,1,237,0.004219409282700422,244,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,0-3,backed_up_81-99,epa_success_per_known_row,142,244,0.5819672131147541,244,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,0-3,backed_up_81-99,touchdown_per_known_action_row,2,244,0.00819672131147541,244,eligible action rows with non-null touchdown flag
+2.0,0-3,opponent_half_21-50,pass_share_of_pass_run_rows,762,2116,0.3601134215500945,2235,play_type pass/run rows
+2.0,0-3,opponent_half_21-50,rush_share_of_pass_run_rows,1354,2116,0.6398865784499055,2235,play_type pass/run rows
+2.0,0-3,opponent_half_21-50,first_down_series_terminal_per_series_action,1316,2235,0.5888143176733781,2235,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,0-3,opponent_half_21-50,completion_per_known_pass_attempt,497,762,0.652230971128609,2235,pass_attempt rows with non-null complete_pass
+2.0,0-3,opponent_half_21-50,sack_per_known_dropback,43,794,0.05415617128463476,2235,qb_dropback rows with non-null sack
+2.0,0-3,opponent_half_21-50,turnover_per_known_scrimmage_action,30,2116,0.014177693761814745,2235,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,0-3,opponent_half_21-50,epa_success_per_known_row,1250,2235,0.5592841163310962,2235,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,0-3,opponent_half_21-50,touchdown_per_known_action_row,32,2230,0.014349775784753363,2235,eligible action rows with non-null touchdown flag
+2.0,0-3,own_half_51-80,pass_share_of_pass_run_rows,1101,2936,0.375,3067,play_type pass/run rows
+2.0,0-3,own_half_51-80,rush_share_of_pass_run_rows,1835,2936,0.625,3067,play_type pass/run rows
+2.0,0-3,own_half_51-80,first_down_series_terminal_per_series_action,1930,3067,0.6292794261493316,3067,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,0-3,own_half_51-80,completion_per_known_pass_attempt,723,1101,0.6566757493188011,3067,pass_attempt rows with non-null complete_pass
+2.0,0-3,own_half_51-80,sack_per_known_dropback,68,1156,0.058823529411764705,3067,qb_dropback rows with non-null sack
+2.0,0-3,own_half_51-80,turnover_per_known_scrimmage_action,34,2936,0.011580381471389645,3067,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,0-3,own_half_51-80,epa_success_per_known_row,1691,3067,0.5513531137919792,3067,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,0-3,own_half_51-80,touchdown_per_known_action_row,8,3064,0.0026109660574412533,3067,eligible action rows with non-null touchdown flag
+2.0,0-3,red_zone_0-20,pass_share_of_pass_run_rows,648,1918,0.337851929092805,2046,play_type pass/run rows
+2.0,0-3,red_zone_0-20,rush_share_of_pass_run_rows,1270,1918,0.662148070907195,2046,play_type pass/run rows
+2.0,0-3,red_zone_0-20,first_down_series_terminal_per_series_action,400,2046,0.19550342130987292,2046,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,0-3,red_zone_0-20,completion_per_known_pass_attempt,344,648,0.5308641975308642,2046,pass_attempt rows with non-null complete_pass
+2.0,0-3,red_zone_0-20,sack_per_known_dropback,28,669,0.04185351270553064,2046,qb_dropback rows with non-null sack
+2.0,0-3,red_zone_0-20,turnover_per_known_scrimmage_action,18,1918,0.009384775808133473,2046,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,0-3,red_zone_0-20,epa_success_per_known_row,1006,2046,0.4916911045943304,2046,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,0-3,red_zone_0-20,touchdown_per_known_action_row,601,2045,0.2938875305623472,2046,eligible action rows with non-null touchdown flag
+2.0,11+,backed_up_81-99,pass_share_of_pass_run_rows,706,967,0.7300930713547052,1022,play_type pass/run rows
+2.0,11+,backed_up_81-99,rush_share_of_pass_run_rows,261,967,0.26990692864529475,1022,play_type pass/run rows
+2.0,11+,backed_up_81-99,first_down_series_terminal_per_series_action,122,1022,0.11937377690802348,1022,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,11+,backed_up_81-99,completion_per_known_pass_attempt,456,706,0.6458923512747875,1022,pass_attempt rows with non-null complete_pass
+2.0,11+,backed_up_81-99,sack_per_known_dropback,25,739,0.03382949932341001,1022,qb_dropback rows with non-null sack
+2.0,11+,backed_up_81-99,turnover_per_known_scrimmage_action,26,967,0.02688728024819028,1022,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,11+,backed_up_81-99,epa_success_per_known_row,410,1022,0.40117416829745595,1022,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,11+,backed_up_81-99,touchdown_per_known_action_row,7,1022,0.00684931506849315,1022,eligible action rows with non-null touchdown flag
+2.0,11+,opponent_half_21-50,pass_share_of_pass_run_rows,1584,2067,0.7663280116110305,2234,play_type pass/run rows
+2.0,11+,opponent_half_21-50,rush_share_of_pass_run_rows,483,2067,0.23367198838896952,2234,play_type pass/run rows
+2.0,11+,opponent_half_21-50,first_down_series_terminal_per_series_action,305,2234,0.13652641002685764,2234,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,11+,opponent_half_21-50,completion_per_known_pass_attempt,1028,1584,0.648989898989899,2234,pass_attempt rows with non-null complete_pass
+2.0,11+,opponent_half_21-50,sack_per_known_dropback,90,1679,0.05360333531864205,2234,qb_dropback rows with non-null sack
+2.0,11+,opponent_half_21-50,turnover_per_known_scrimmage_action,47,2067,0.022738268021286888,2234,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,11+,opponent_half_21-50,epa_success_per_known_row,979,2234,0.43822739480752015,2234,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,11+,opponent_half_21-50,touchdown_per_known_action_row,50,2232,0.022401433691756272,2234,eligible action rows with non-null touchdown flag
+2.0,11+,own_half_51-80,pass_share_of_pass_run_rows,2374,2976,0.7977150537634409,3197,play_type pass/run rows
+2.0,11+,own_half_51-80,rush_share_of_pass_run_rows,602,2976,0.20228494623655913,3197,play_type pass/run rows
+2.0,11+,own_half_51-80,first_down_series_terminal_per_series_action,475,3197,0.14857679074132,3197,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,11+,own_half_51-80,completion_per_known_pass_attempt,1500,2374,0.6318449873631002,3197,pass_attempt rows with non-null complete_pass
+2.0,11+,own_half_51-80,sack_per_known_dropback,149,2485,0.05995975855130785,3197,qb_dropback rows with non-null sack
+2.0,11+,own_half_51-80,turnover_per_known_scrimmage_action,77,2976,0.025873655913978496,3197,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,11+,own_half_51-80,epa_success_per_known_row,1214,3197,0.3797309978104473,3197,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,11+,own_half_51-80,touchdown_per_known_action_row,18,3193,0.005637331663012841,3197,eligible action rows with non-null touchdown flag
+2.0,11+,red_zone_0-20,pass_share_of_pass_run_rows,379,525,0.7219047619047619,565,play_type pass/run rows
+2.0,11+,red_zone_0-20,rush_share_of_pass_run_rows,146,525,0.2780952380952381,565,play_type pass/run rows
+2.0,11+,red_zone_0-20,first_down_series_terminal_per_series_action,26,565,0.04601769911504425,565,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,11+,red_zone_0-20,completion_per_known_pass_attempt,218,379,0.575197889182058,565,pass_attempt rows with non-null complete_pass
+2.0,11+,red_zone_0-20,sack_per_known_dropback,23,405,0.056790123456790124,565,qb_dropback rows with non-null sack
+2.0,11+,red_zone_0-20,turnover_per_known_scrimmage_action,14,525,0.02666666666666667,565,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,11+,red_zone_0-20,epa_success_per_known_row,204,565,0.36106194690265486,565,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,11+,red_zone_0-20,touchdown_per_known_action_row,43,561,0.0766488413547237,565,eligible action rows with non-null touchdown flag
+2.0,4-6,backed_up_81-99,pass_share_of_pass_run_rows,298,582,0.5120274914089347,611,play_type pass/run rows
+2.0,4-6,backed_up_81-99,rush_share_of_pass_run_rows,284,582,0.4879725085910653,611,play_type pass/run rows
+2.0,4-6,backed_up_81-99,first_down_series_terminal_per_series_action,243,611,0.397708674304419,611,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,4-6,backed_up_81-99,completion_per_known_pass_attempt,203,298,0.6812080536912751,611,pass_attempt rows with non-null complete_pass
+2.0,4-6,backed_up_81-99,sack_per_known_dropback,12,312,0.038461538461538464,611,qb_dropback rows with non-null sack
+2.0,4-6,backed_up_81-99,turnover_per_known_scrimmage_action,7,582,0.012027491408934709,611,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,4-6,backed_up_81-99,epa_success_per_known_row,307,611,0.502454991816694,611,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,4-6,backed_up_81-99,touchdown_per_known_action_row,4,611,0.006546644844517185,611,eligible action rows with non-null touchdown flag
+2.0,4-6,opponent_half_21-50,pass_share_of_pass_run_rows,1548,3254,0.4757221880762139,3455,play_type pass/run rows
+2.0,4-6,opponent_half_21-50,rush_share_of_pass_run_rows,1706,3254,0.5242778119237861,3455,play_type pass/run rows
+2.0,4-6,opponent_half_21-50,first_down_series_terminal_per_series_action,1243,3455,0.3597684515195369,3455,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,4-6,opponent_half_21-50,completion_per_known_pass_attempt,953,1548,0.6156330749354005,3455,pass_attempt rows with non-null complete_pass
+2.0,4-6,opponent_half_21-50,sack_per_known_dropback,93,1621,0.05737199259716225,3455,qb_dropback rows with non-null sack
+2.0,4-6,opponent_half_21-50,turnover_per_known_scrimmage_action,46,3254,0.014136447449293177,3455,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,4-6,opponent_half_21-50,epa_success_per_known_row,1612,3455,0.4665701881331404,3455,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,4-6,opponent_half_21-50,touchdown_per_known_action_row,57,3451,0.0165169516082295,3455,eligible action rows with non-null touchdown flag
+2.0,4-6,own_half_51-80,pass_share_of_pass_run_rows,2425,4741,0.5114954650917528,5037,play_type pass/run rows
+2.0,4-6,own_half_51-80,rush_share_of_pass_run_rows,2316,4741,0.4885045349082472,5037,play_type pass/run rows
+2.0,4-6,own_half_51-80,first_down_series_terminal_per_series_action,1946,5037,0.3863410760373238,5037,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,4-6,own_half_51-80,completion_per_known_pass_attempt,1578,2425,0.650721649484536,5037,pass_attempt rows with non-null complete_pass
+2.0,4-6,own_half_51-80,sack_per_known_dropback,155,2546,0.06087981146897094,5037,qb_dropback rows with non-null sack
+2.0,4-6,own_half_51-80,turnover_per_known_scrimmage_action,73,4741,0.015397595443999157,5037,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,4-6,own_half_51-80,epa_success_per_known_row,2441,5037,0.4846138574548342,5037,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,4-6,own_half_51-80,touchdown_per_known_action_row,32,5033,0.006358036956089807,5037,eligible action rows with non-null touchdown flag
+2.0,4-6,red_zone_0-20,pass_share_of_pass_run_rows,999,1978,0.5050556117290192,2107,play_type pass/run rows
+2.0,4-6,red_zone_0-20,rush_share_of_pass_run_rows,979,1978,0.4949443882709808,2107,play_type pass/run rows
+2.0,4-6,red_zone_0-20,first_down_series_terminal_per_series_action,328,2107,0.15567157095396297,2107,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,4-6,red_zone_0-20,completion_per_known_pass_attempt,538,999,0.5385385385385385,2107,pass_attempt rows with non-null complete_pass
+2.0,4-6,red_zone_0-20,sack_per_known_dropback,46,1054,0.04364326375711575,2107,qb_dropback rows with non-null sack
+2.0,4-6,red_zone_0-20,turnover_per_known_scrimmage_action,29,1978,0.014661274014155713,2107,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,4-6,red_zone_0-20,epa_success_per_known_row,945,2107,0.4485049833887043,2107,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,4-6,red_zone_0-20,touchdown_per_known_action_row,389,2103,0.1849738468854018,2107,eligible action rows with non-null touchdown flag
+2.0,7-10,backed_up_81-99,pass_share_of_pass_run_rows,1026,1625,0.6313846153846154,1707,play_type pass/run rows
+2.0,7-10,backed_up_81-99,rush_share_of_pass_run_rows,599,1625,0.3686153846153846,1707,play_type pass/run rows
+2.0,7-10,backed_up_81-99,first_down_series_terminal_per_series_action,414,1707,0.24253075571177504,1707,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,7-10,backed_up_81-99,completion_per_known_pass_attempt,662,1026,0.645224171539961,1707,pass_attempt rows with non-null complete_pass
+2.0,7-10,backed_up_81-99,sack_per_known_dropback,48,1074,0.0446927374301676,1707,qb_dropback rows with non-null sack
+2.0,7-10,backed_up_81-99,turnover_per_known_scrimmage_action,33,1625,0.020307692307692308,1707,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,7-10,backed_up_81-99,epa_success_per_known_row,707,1707,0.4141769185705917,1707,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,7-10,backed_up_81-99,touchdown_per_known_action_row,8,1705,0.00469208211143695,1707,eligible action rows with non-null touchdown flag
+2.0,7-10,opponent_half_21-50,pass_share_of_pass_run_rows,4079,6346,0.642767097384179,6762,play_type pass/run rows
+2.0,7-10,opponent_half_21-50,rush_share_of_pass_run_rows,2267,6346,0.35723290261582097,6762,play_type pass/run rows
+2.0,7-10,opponent_half_21-50,first_down_series_terminal_per_series_action,1567,6762,0.23173617272996155,6762,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,7-10,opponent_half_21-50,completion_per_known_pass_attempt,2618,4080,0.6416666666666667,6762,pass_attempt rows with non-null complete_pass
+2.0,7-10,opponent_half_21-50,sack_per_known_dropback,239,4277,0.055880289922843114,6762,qb_dropback rows with non-null sack
+2.0,7-10,opponent_half_21-50,turnover_per_known_scrimmage_action,136,6346,0.021430822565395524,6762,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,7-10,opponent_half_21-50,epa_success_per_known_row,2961,6762,0.43788819875776397,6762,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,7-10,opponent_half_21-50,touchdown_per_known_action_row,147,6752,0.02177132701421801,6762,eligible action rows with non-null touchdown flag
+2.0,7-10,own_half_51-80,pass_share_of_pass_run_rows,6510,9692,0.6716879900949236,10300,play_type pass/run rows
+2.0,7-10,own_half_51-80,rush_share_of_pass_run_rows,3182,9692,0.32831200990507636,10300,play_type pass/run rows
+2.0,7-10,own_half_51-80,first_down_series_terminal_per_series_action,2577,10300,0.25019417475728156,10300,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,7-10,own_half_51-80,completion_per_known_pass_attempt,4178,6510,0.6417818740399386,10300,pass_attempt rows with non-null complete_pass
+2.0,7-10,own_half_51-80,sack_per_known_dropback,413,6806,0.06068175139582721,10300,qb_dropback rows with non-null sack
+2.0,7-10,own_half_51-80,turnover_per_known_scrimmage_action,199,9692,0.020532397853900125,10300,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,7-10,own_half_51-80,epa_success_per_known_row,4267,10300,0.4142718446601942,10300,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,7-10,own_half_51-80,touchdown_per_known_action_row,47,10288,0.004568429237947123,10300,eligible action rows with non-null touchdown flag
+2.0,7-10,red_zone_0-20,pass_share_of_pass_run_rows,1595,2451,0.6507547939616483,2629,play_type pass/run rows
+2.0,7-10,red_zone_0-20,rush_share_of_pass_run_rows,856,2451,0.3492452060383517,2629,play_type pass/run rows
+2.0,7-10,red_zone_0-20,first_down_series_terminal_per_series_action,231,2629,0.08786610878661087,2629,rows with non-null series; First down labels deduplicated to the final play of each game/series
+2.0,7-10,red_zone_0-20,completion_per_known_pass_attempt,896,1595,0.561755485893417,2629,pass_attempt rows with non-null complete_pass
+2.0,7-10,red_zone_0-20,sack_per_known_dropback,102,1690,0.06035502958579882,2629,qb_dropback rows with non-null sack
+2.0,7-10,red_zone_0-20,turnover_per_known_scrimmage_action,42,2451,0.017135862913096694,2629,qb_dropback or rush_attempt rows with both turnover flags known
+2.0,7-10,red_zone_0-20,epa_success_per_known_row,905,2629,0.34423735260555344,2629,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+2.0,7-10,red_zone_0-20,touchdown_per_known_action_row,327,2623,0.12466641250476554,2629,eligible action rows with non-null touchdown flag
+3.0,0-3,backed_up_81-99,pass_share_of_pass_run_rows,179,313,0.5718849840255591,333,play_type pass/run rows
+3.0,0-3,backed_up_81-99,rush_share_of_pass_run_rows,134,313,0.4281150159744409,333,play_type pass/run rows
+3.0,0-3,backed_up_81-99,first_down_series_terminal_per_series_action,170,333,0.5105105105105106,333,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,0-3,backed_up_81-99,completion_per_known_pass_attempt,97,179,0.5418994413407822,333,pass_attempt rows with non-null complete_pass
+3.0,0-3,backed_up_81-99,sack_per_known_dropback,15,189,0.07936507936507936,333,qb_dropback rows with non-null sack
+3.0,0-3,backed_up_81-99,turnover_per_known_scrimmage_action,11,313,0.03514376996805112,333,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,0-3,backed_up_81-99,epa_success_per_known_row,179,333,0.5375375375375375,333,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,0-3,backed_up_81-99,touchdown_per_known_action_row,3,333,0.009009009009009009,333,eligible action rows with non-null touchdown flag
+3.0,0-3,opponent_half_21-50,pass_share_of_pass_run_rows,1056,2583,0.4088269454123113,2760,play_type pass/run rows
+3.0,0-3,opponent_half_21-50,rush_share_of_pass_run_rows,1527,2583,0.5911730545876888,2760,play_type pass/run rows
+3.0,0-3,opponent_half_21-50,first_down_series_terminal_per_series_action,1495,2760,0.5416666666666666,2760,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,0-3,opponent_half_21-50,completion_per_known_pass_attempt,609,1056,0.5767045454545454,2760,pass_attempt rows with non-null complete_pass
+3.0,0-3,opponent_half_21-50,sack_per_known_dropback,70,1128,0.06205673758865248,2760,qb_dropback rows with non-null sack
+3.0,0-3,opponent_half_21-50,turnover_per_known_scrimmage_action,43,2583,0.01664730933023616,2760,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,0-3,opponent_half_21-50,epa_success_per_known_row,1657,2760,0.6003623188405797,2760,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,0-3,opponent_half_21-50,touchdown_per_known_action_row,53,2759,0.01920985864443639,2760,eligible action rows with non-null touchdown flag
+3.0,0-3,own_half_51-80,pass_share_of_pass_run_rows,1760,3328,0.5288461538461539,3581,play_type pass/run rows
+3.0,0-3,own_half_51-80,rush_share_of_pass_run_rows,1568,3328,0.47115384615384615,3581,play_type pass/run rows
+3.0,0-3,own_half_51-80,first_down_series_terminal_per_series_action,2010,3581,0.5612957274504329,3581,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,0-3,own_half_51-80,completion_per_known_pass_attempt,1017,1760,0.5778409090909091,3581,pass_attempt rows with non-null complete_pass
+3.0,0-3,own_half_51-80,sack_per_known_dropback,154,1867,0.08248527048741296,3581,qb_dropback rows with non-null sack
+3.0,0-3,own_half_51-80,turnover_per_known_scrimmage_action,52,3328,0.015625,3581,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,0-3,own_half_51-80,epa_success_per_known_row,2104,3581,0.5875453783859257,3581,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,0-3,own_half_51-80,touchdown_per_known_action_row,32,3581,0.008936051382295447,3581,eligible action rows with non-null touchdown flag
+3.0,0-3,red_zone_0-20,pass_share_of_pass_run_rows,800,1815,0.44077134986225897,1962,play_type pass/run rows
+3.0,0-3,red_zone_0-20,rush_share_of_pass_run_rows,1015,1815,0.559228650137741,1962,play_type pass/run rows
+3.0,0-3,red_zone_0-20,first_down_series_terminal_per_series_action,512,1962,0.2609582059123344,1962,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,0-3,red_zone_0-20,completion_per_known_pass_attempt,399,800,0.49875,1962,pass_attempt rows with non-null complete_pass
+3.0,0-3,red_zone_0-20,sack_per_known_dropback,58,856,0.06775700934579439,1962,qb_dropback rows with non-null sack
+3.0,0-3,red_zone_0-20,turnover_per_known_scrimmage_action,28,1815,0.015426997245179064,1962,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,0-3,red_zone_0-20,epa_success_per_known_row,1043,1962,0.5316004077471967,1962,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,0-3,red_zone_0-20,touchdown_per_known_action_row,476,1960,0.24285714285714285,1962,eligible action rows with non-null touchdown flag
+3.0,11+,backed_up_81-99,pass_share_of_pass_run_rows,612,780,0.7846153846153846,827,play_type pass/run rows
+3.0,11+,backed_up_81-99,rush_share_of_pass_run_rows,168,780,0.2153846153846154,827,play_type pass/run rows
+3.0,11+,backed_up_81-99,first_down_series_terminal_per_series_action,101,827,0.12212817412333736,827,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,11+,backed_up_81-99,completion_per_known_pass_attempt,379,612,0.619281045751634,827,pass_attempt rows with non-null complete_pass
+3.0,11+,backed_up_81-99,sack_per_known_dropback,59,645,0.09147286821705426,827,qb_dropback rows with non-null sack
+3.0,11+,backed_up_81-99,turnover_per_known_scrimmage_action,24,780,0.03076923076923077,827,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,11+,backed_up_81-99,epa_success_per_known_row,232,827,0.28053204353083433,827,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,11+,backed_up_81-99,touchdown_per_known_action_row,9,827,0.010882708585247884,827,eligible action rows with non-null touchdown flag
+3.0,11+,opponent_half_21-50,pass_share_of_pass_run_rows,1330,1576,0.8439086294416244,1710,play_type pass/run rows
+3.0,11+,opponent_half_21-50,rush_share_of_pass_run_rows,246,1576,0.15609137055837563,1710,play_type pass/run rows
+3.0,11+,opponent_half_21-50,first_down_series_terminal_per_series_action,212,1710,0.1239766081871345,1710,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,11+,opponent_half_21-50,completion_per_known_pass_attempt,784,1330,0.5894736842105263,1710,pass_attempt rows with non-null complete_pass
+3.0,11+,opponent_half_21-50,sack_per_known_dropback,121,1410,0.08581560283687943,1710,qb_dropback rows with non-null sack
+3.0,11+,opponent_half_21-50,turnover_per_known_scrimmage_action,51,1576,0.03236040609137056,1710,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,11+,opponent_half_21-50,epa_success_per_known_row,570,1710,0.3333333333333333,1710,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,11+,opponent_half_21-50,touchdown_per_known_action_row,36,1708,0.02107728337236534,1710,eligible action rows with non-null touchdown flag
+3.0,11+,own_half_51-80,pass_share_of_pass_run_rows,2021,2350,0.86,2564,play_type pass/run rows
+3.0,11+,own_half_51-80,rush_share_of_pass_run_rows,329,2350,0.14,2564,play_type pass/run rows
+3.0,11+,own_half_51-80,first_down_series_terminal_per_series_action,445,2564,0.1735569422776911,2564,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,11+,own_half_51-80,completion_per_known_pass_attempt,1196,2021,0.5917862444334487,2564,pass_attempt rows with non-null complete_pass
+3.0,11+,own_half_51-80,sack_per_known_dropback,233,2163,0.1077207582061951,2564,qb_dropback rows with non-null sack
+3.0,11+,own_half_51-80,turnover_per_known_scrimmage_action,75,2350,0.031914893617021274,2564,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,11+,own_half_51-80,epa_success_per_known_row,652,2564,0.2542901716068643,2564,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,11+,own_half_51-80,touchdown_per_known_action_row,11,2562,0.00429352068696331,2564,eligible action rows with non-null touchdown flag
+3.0,11+,red_zone_0-20,pass_share_of_pass_run_rows,325,392,0.8290816326530612,424,play_type pass/run rows
+3.0,11+,red_zone_0-20,rush_share_of_pass_run_rows,67,392,0.17091836734693877,424,play_type pass/run rows
+3.0,11+,red_zone_0-20,first_down_series_terminal_per_series_action,28,424,0.0660377358490566,424,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,11+,red_zone_0-20,completion_per_known_pass_attempt,147,325,0.4523076923076923,424,pass_attempt rows with non-null complete_pass
+3.0,11+,red_zone_0-20,sack_per_known_dropback,31,347,0.0893371757925072,424,qb_dropback rows with non-null sack
+3.0,11+,red_zone_0-20,turnover_per_known_scrimmage_action,16,392,0.04081632653061224,424,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,11+,red_zone_0-20,epa_success_per_known_row,101,424,0.23820754716981132,424,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,11+,red_zone_0-20,touchdown_per_known_action_row,40,424,0.09433962264150944,424,eligible action rows with non-null touchdown flag
+3.0,4-6,backed_up_81-99,pass_share_of_pass_run_rows,352,398,0.8844221105527639,434,play_type pass/run rows
+3.0,4-6,backed_up_81-99,rush_share_of_pass_run_rows,46,398,0.11557788944723618,434,play_type pass/run rows
+3.0,4-6,backed_up_81-99,first_down_series_terminal_per_series_action,199,434,0.45852534562211983,434,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,4-6,backed_up_81-99,completion_per_known_pass_attempt,203,352,0.5767045454545454,434,pass_attempt rows with non-null complete_pass
+3.0,4-6,backed_up_81-99,sack_per_known_dropback,29,376,0.07712765957446809,434,qb_dropback rows with non-null sack
+3.0,4-6,backed_up_81-99,turnover_per_known_scrimmage_action,9,398,0.022613065326633167,434,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,4-6,backed_up_81-99,epa_success_per_known_row,208,434,0.4792626728110599,434,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,4-6,backed_up_81-99,touchdown_per_known_action_row,1,432,0.0023148148148148147,434,eligible action rows with non-null touchdown flag
+3.0,4-6,opponent_half_21-50,pass_share_of_pass_run_rows,1780,2212,0.8047016274864376,2447,play_type pass/run rows
+3.0,4-6,opponent_half_21-50,rush_share_of_pass_run_rows,432,2212,0.19529837251356238,2447,play_type pass/run rows
+3.0,4-6,opponent_half_21-50,first_down_series_terminal_per_series_action,926,2447,0.37842255823457294,2447,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,4-6,opponent_half_21-50,completion_per_known_pass_attempt,968,1780,0.5438202247191011,2447,pass_attempt rows with non-null complete_pass
+3.0,4-6,opponent_half_21-50,sack_per_known_dropback,170,1899,0.08952080042127436,2447,qb_dropback rows with non-null sack
+3.0,4-6,opponent_half_21-50,turnover_per_known_scrimmage_action,46,2212,0.020795660036166366,2447,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,4-6,opponent_half_21-50,epa_success_per_known_row,1113,2447,0.45484266448712707,2447,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,4-6,opponent_half_21-50,touchdown_per_known_action_row,74,2437,0.030365203118588428,2447,eligible action rows with non-null touchdown flag
+3.0,4-6,own_half_51-80,pass_share_of_pass_run_rows,2643,2968,0.8904986522911051,3279,play_type pass/run rows
+3.0,4-6,own_half_51-80,rush_share_of_pass_run_rows,325,2968,0.10950134770889487,3279,play_type pass/run rows
+3.0,4-6,own_half_51-80,first_down_series_terminal_per_series_action,1393,3279,0.4248246416590424,3279,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,4-6,own_half_51-80,completion_per_known_pass_attempt,1402,2643,0.5304578130911842,3279,pass_attempt rows with non-null complete_pass
+3.0,4-6,own_half_51-80,sack_per_known_dropback,284,2818,0.10078069552874379,3279,qb_dropback rows with non-null sack
+3.0,4-6,own_half_51-80,turnover_per_known_scrimmage_action,95,2968,0.032008086253369275,3279,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,4-6,own_half_51-80,epa_success_per_known_row,1494,3279,0.4556267154620311,3279,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,4-6,own_half_51-80,touchdown_per_known_action_row,34,3273,0.010388023220287198,3279,eligible action rows with non-null touchdown flag
+3.0,4-6,red_zone_0-20,pass_share_of_pass_run_rows,1067,1271,0.8394964594807238,1414,play_type pass/run rows
+3.0,4-6,red_zone_0-20,rush_share_of_pass_run_rows,204,1271,0.16050354051927615,1414,play_type pass/run rows
+3.0,4-6,red_zone_0-20,first_down_series_terminal_per_series_action,246,1414,0.173974540311174,1414,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,4-6,red_zone_0-20,completion_per_known_pass_attempt,503,1067,0.47141518275538896,1414,pass_attempt rows with non-null complete_pass
+3.0,4-6,red_zone_0-20,sack_per_known_dropback,114,1121,0.1016949152542373,1414,qb_dropback rows with non-null sack
+3.0,4-6,red_zone_0-20,turnover_per_known_scrimmage_action,45,1271,0.03540519276160504,1414,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,4-6,red_zone_0-20,epa_success_per_known_row,580,1414,0.4101838755304102,1414,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,4-6,red_zone_0-20,touchdown_per_known_action_row,292,1411,0.2069454287739192,1414,eligible action rows with non-null touchdown flag
+3.0,7-10,backed_up_81-99,pass_share_of_pass_run_rows,503,582,0.8642611683848798,636,play_type pass/run rows
+3.0,7-10,backed_up_81-99,rush_share_of_pass_run_rows,79,582,0.13573883161512026,636,play_type pass/run rows
+3.0,7-10,backed_up_81-99,first_down_series_terminal_per_series_action,172,636,0.27044025157232704,636,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,7-10,backed_up_81-99,completion_per_known_pass_attempt,255,503,0.5069582504970179,636,pass_attempt rows with non-null complete_pass
+3.0,7-10,backed_up_81-99,sack_per_known_dropback,65,535,0.12149532710280374,636,qb_dropback rows with non-null sack
+3.0,7-10,backed_up_81-99,turnover_per_known_scrimmage_action,17,582,0.029209621993127148,636,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,7-10,backed_up_81-99,epa_success_per_known_row,193,636,0.30345911949685533,636,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,7-10,backed_up_81-99,touchdown_per_known_action_row,5,634,0.007886435331230283,636,eligible action rows with non-null touchdown flag
+3.0,7-10,opponent_half_21-50,pass_share_of_pass_run_rows,2060,2392,0.8612040133779264,2642,play_type pass/run rows
+3.0,7-10,opponent_half_21-50,rush_share_of_pass_run_rows,332,2392,0.13879598662207357,2642,play_type pass/run rows
+3.0,7-10,opponent_half_21-50,first_down_series_terminal_per_series_action,754,2642,0.2853898561695685,2642,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,7-10,opponent_half_21-50,completion_per_known_pass_attempt,1095,2060,0.5315533980582524,2642,pass_attempt rows with non-null complete_pass
+3.0,7-10,opponent_half_21-50,sack_per_known_dropback,203,2187,0.09282121627800641,2642,qb_dropback rows with non-null sack
+3.0,7-10,opponent_half_21-50,turnover_per_known_scrimmage_action,62,2392,0.025919732441471572,2642,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,7-10,opponent_half_21-50,epa_success_per_known_row,1019,2642,0.38569265707797123,2642,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,7-10,opponent_half_21-50,touchdown_per_known_action_row,76,2636,0.028831562974203338,2642,eligible action rows with non-null touchdown flag
+3.0,7-10,own_half_51-80,pass_share_of_pass_run_rows,3286,3624,0.9067328918322296,4026,play_type pass/run rows
+3.0,7-10,own_half_51-80,rush_share_of_pass_run_rows,338,3624,0.09326710816777042,4026,play_type pass/run rows
+3.0,7-10,own_half_51-80,first_down_series_terminal_per_series_action,1259,4026,0.31271733730750123,4026,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,7-10,own_half_51-80,completion_per_known_pass_attempt,1620,3286,0.4930006086427267,4026,pass_attempt rows with non-null complete_pass
+3.0,7-10,own_half_51-80,sack_per_known_dropback,449,3502,0.1282124500285551,4026,qb_dropback rows with non-null sack
+3.0,7-10,own_half_51-80,turnover_per_known_scrimmage_action,116,3624,0.03200883002207505,4026,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,7-10,own_half_51-80,epa_success_per_known_row,1402,4026,0.3482364629905613,4026,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,7-10,own_half_51-80,touchdown_per_known_action_row,32,4016,0.00796812749003984,4026,eligible action rows with non-null touchdown flag
+3.0,7-10,red_zone_0-20,pass_share_of_pass_run_rows,976,1110,0.8792792792792793,1237,play_type pass/run rows
+3.0,7-10,red_zone_0-20,rush_share_of_pass_run_rows,134,1110,0.12072072072072072,1237,play_type pass/run rows
+3.0,7-10,red_zone_0-20,first_down_series_terminal_per_series_action,155,1237,0.12530315278900567,1237,rows with non-null series; First down labels deduplicated to the final play of each game/series
+3.0,7-10,red_zone_0-20,completion_per_known_pass_attempt,444,976,0.45491803278688525,1237,pass_attempt rows with non-null complete_pass
+3.0,7-10,red_zone_0-20,sack_per_known_dropback,93,1044,0.08908045977011494,1237,qb_dropback rows with non-null sack
+3.0,7-10,red_zone_0-20,turnover_per_known_scrimmage_action,38,1110,0.03423423423423423,1237,qb_dropback or rush_attempt rows with both turnover flags known
+3.0,7-10,red_zone_0-20,epa_success_per_known_row,420,1237,0.3395311236863379,1237,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+3.0,7-10,red_zone_0-20,touchdown_per_known_action_row,183,1231,0.148659626320065,1237,eligible action rows with non-null touchdown flag
+4.0,0-3,backed_up_81-99,pass_share_of_pass_run_rows,10,20,0.5,30,play_type pass/run rows
+4.0,0-3,backed_up_81-99,rush_share_of_pass_run_rows,10,20,0.5,30,play_type pass/run rows
+4.0,0-3,backed_up_81-99,first_down_series_terminal_per_series_action,16,30,0.5333333333333333,30,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,0-3,backed_up_81-99,completion_per_known_pass_attempt,7,10,0.7,30,pass_attempt rows with non-null complete_pass
+4.0,0-3,backed_up_81-99,sack_per_known_dropback,1,11,0.09090909090909091,30,qb_dropback rows with non-null sack
+4.0,0-3,backed_up_81-99,turnover_per_known_scrimmage_action,0,20,0.0,30,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,0-3,backed_up_81-99,epa_success_per_known_row,19,30,0.6333333333333333,30,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,0-3,backed_up_81-99,touchdown_per_known_action_row,0,30,0.0,30,eligible action rows with non-null touchdown flag
+4.0,0-3,opponent_half_21-50,pass_share_of_pass_run_rows,500,963,0.5192107995846313,1109,play_type pass/run rows
+4.0,0-3,opponent_half_21-50,rush_share_of_pass_run_rows,463,963,0.48078920041536866,1109,play_type pass/run rows
+4.0,0-3,opponent_half_21-50,first_down_series_terminal_per_series_action,547,1109,0.4932371505861136,1109,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,0-3,opponent_half_21-50,completion_per_known_pass_attempt,291,500,0.582,1109,pass_attempt rows with non-null complete_pass
+4.0,0-3,opponent_half_21-50,sack_per_known_dropback,26,529,0.04914933837429111,1109,qb_dropback rows with non-null sack
+4.0,0-3,opponent_half_21-50,turnover_per_known_scrimmage_action,28,964,0.029045643153526972,1109,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,0-3,opponent_half_21-50,epa_success_per_known_row,652,1109,0.587917042380523,1109,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,0-3,opponent_half_21-50,touchdown_per_known_action_row,32,1108,0.02888086642599278,1109,eligible action rows with non-null touchdown flag
+4.0,0-3,own_half_51-80,pass_share_of_pass_run_rows,173,486,0.3559670781893004,623,play_type pass/run rows
+4.0,0-3,own_half_51-80,rush_share_of_pass_run_rows,313,486,0.6440329218106996,623,play_type pass/run rows
+4.0,0-3,own_half_51-80,first_down_series_terminal_per_series_action,304,623,0.48796147672552165,623,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,0-3,own_half_51-80,completion_per_known_pass_attempt,92,173,0.5317919075144508,623,pass_attempt rows with non-null complete_pass
+4.0,0-3,own_half_51-80,sack_per_known_dropback,18,188,0.09574468085106383,623,qb_dropback rows with non-null sack
+4.0,0-3,own_half_51-80,turnover_per_known_scrimmage_action,10,486,0.0205761316872428,623,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,0-3,own_half_51-80,epa_success_per_known_row,345,623,0.5537720706260032,623,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,0-3,own_half_51-80,touchdown_per_known_action_row,4,621,0.00644122383252818,623,eligible action rows with non-null touchdown flag
+4.0,0-3,red_zone_0-20,pass_share_of_pass_run_rows,290,612,0.4738562091503268,705,play_type pass/run rows
+4.0,0-3,red_zone_0-20,rush_share_of_pass_run_rows,322,612,0.5261437908496732,705,play_type pass/run rows
+4.0,0-3,red_zone_0-20,first_down_series_terminal_per_series_action,195,705,0.2765957446808511,705,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,0-3,red_zone_0-20,completion_per_known_pass_attempt,161,290,0.5551724137931034,705,pass_attempt rows with non-null complete_pass
+4.0,0-3,red_zone_0-20,sack_per_known_dropback,17,316,0.05379746835443038,705,qb_dropback rows with non-null sack
+4.0,0-3,red_zone_0-20,turnover_per_known_scrimmage_action,14,612,0.02287581699346405,705,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,0-3,red_zone_0-20,epa_success_per_known_row,410,705,0.5815602836879432,705,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,0-3,red_zone_0-20,touchdown_per_known_action_row,183,705,0.25957446808510637,705,eligible action rows with non-null touchdown flag
+4.0,11+,backed_up_81-99,pass_share_of_pass_run_rows,20,24,0.8333333333333334,49,play_type pass/run rows
+4.0,11+,backed_up_81-99,rush_share_of_pass_run_rows,4,24,0.16666666666666666,49,play_type pass/run rows
+4.0,11+,backed_up_81-99,first_down_series_terminal_per_series_action,6,49,0.12244897959183673,49,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,11+,backed_up_81-99,completion_per_known_pass_attempt,4,20,0.2,49,pass_attempt rows with non-null complete_pass
+4.0,11+,backed_up_81-99,sack_per_known_dropback,1,21,0.047619047619047616,49,qb_dropback rows with non-null sack
+4.0,11+,backed_up_81-99,turnover_per_known_scrimmage_action,7,24,0.2916666666666667,49,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,11+,backed_up_81-99,epa_success_per_known_row,13,49,0.2653061224489796,49,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,11+,backed_up_81-99,touchdown_per_known_action_row,1,49,0.02040816326530612,49,eligible action rows with non-null touchdown flag
+4.0,11+,opponent_half_21-50,pass_share_of_pass_run_rows,81,90,0.9,157,play_type pass/run rows
+4.0,11+,opponent_half_21-50,rush_share_of_pass_run_rows,9,90,0.1,157,play_type pass/run rows
+4.0,11+,opponent_half_21-50,first_down_series_terminal_per_series_action,14,157,0.08917197452229299,157,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,11+,opponent_half_21-50,completion_per_known_pass_attempt,27,81,0.3333333333333333,157,pass_attempt rows with non-null complete_pass
+4.0,11+,opponent_half_21-50,sack_per_known_dropback,11,88,0.125,157,qb_dropback rows with non-null sack
+4.0,11+,opponent_half_21-50,turnover_per_known_scrimmage_action,4,90,0.044444444444444446,157,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,11+,opponent_half_21-50,epa_success_per_known_row,40,157,0.25477707006369427,157,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,11+,opponent_half_21-50,touchdown_per_known_action_row,4,150,0.02666666666666667,157,eligible action rows with non-null touchdown flag
+4.0,11+,own_half_51-80,pass_share_of_pass_run_rows,87,96,0.90625,170,play_type pass/run rows
+4.0,11+,own_half_51-80,rush_share_of_pass_run_rows,9,96,0.09375,170,play_type pass/run rows
+4.0,11+,own_half_51-80,first_down_series_terminal_per_series_action,21,170,0.12352941176470589,170,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,11+,own_half_51-80,completion_per_known_pass_attempt,34,87,0.39080459770114945,170,pass_attempt rows with non-null complete_pass
+4.0,11+,own_half_51-80,sack_per_known_dropback,11,91,0.12087912087912088,170,qb_dropback rows with non-null sack
+4.0,11+,own_half_51-80,turnover_per_known_scrimmage_action,8,96,0.08333333333333333,170,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,11+,own_half_51-80,epa_success_per_known_row,43,170,0.2529411764705882,170,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,11+,own_half_51-80,touchdown_per_known_action_row,0,163,0.0,170,eligible action rows with non-null touchdown flag
+4.0,11+,red_zone_0-20,pass_share_of_pass_run_rows,21,22,0.9545454545454546,39,play_type pass/run rows
+4.0,11+,red_zone_0-20,rush_share_of_pass_run_rows,1,22,0.045454545454545456,39,play_type pass/run rows
+4.0,11+,red_zone_0-20,first_down_series_terminal_per_series_action,4,39,0.10256410256410256,39,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,11+,red_zone_0-20,completion_per_known_pass_attempt,5,21,0.23809523809523808,39,pass_attempt rows with non-null complete_pass
+4.0,11+,red_zone_0-20,sack_per_known_dropback,2,22,0.09090909090909091,39,qb_dropback rows with non-null sack
+4.0,11+,red_zone_0-20,turnover_per_known_scrimmage_action,2,22,0.09090909090909091,39,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,11+,red_zone_0-20,epa_success_per_known_row,13,39,0.3333333333333333,39,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,11+,red_zone_0-20,touchdown_per_known_action_row,2,39,0.05128205128205128,39,eligible action rows with non-null touchdown flag
+4.0,4-6,backed_up_81-99,pass_share_of_pass_run_rows,7,7,1.0,16,play_type pass/run rows
+4.0,4-6,backed_up_81-99,rush_share_of_pass_run_rows,0,7,0.0,16,play_type pass/run rows
+4.0,4-6,backed_up_81-99,first_down_series_terminal_per_series_action,8,16,0.5,16,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,4-6,backed_up_81-99,completion_per_known_pass_attempt,4,7,0.5714285714285714,16,pass_attempt rows with non-null complete_pass
+4.0,4-6,backed_up_81-99,sack_per_known_dropback,0,7,0.0,16,qb_dropback rows with non-null sack
+4.0,4-6,backed_up_81-99,turnover_per_known_scrimmage_action,0,7,0.0,16,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,4-6,backed_up_81-99,epa_success_per_known_row,10,16,0.625,16,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,4-6,backed_up_81-99,touchdown_per_known_action_row,0,16,0.0,16,eligible action rows with non-null touchdown flag
+4.0,4-6,opponent_half_21-50,pass_share_of_pass_run_rows,256,281,0.9110320284697508,406,play_type pass/run rows
+4.0,4-6,opponent_half_21-50,rush_share_of_pass_run_rows,25,281,0.08896797153024912,406,play_type pass/run rows
+4.0,4-6,opponent_half_21-50,first_down_series_terminal_per_series_action,134,406,0.33004926108374383,406,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,4-6,opponent_half_21-50,completion_per_known_pass_attempt,132,256,0.515625,406,pass_attempt rows with non-null complete_pass
+4.0,4-6,opponent_half_21-50,sack_per_known_dropback,15,268,0.055970149253731345,406,qb_dropback rows with non-null sack
+4.0,4-6,opponent_half_21-50,turnover_per_known_scrimmage_action,19,281,0.06761565836298933,406,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,4-6,opponent_half_21-50,epa_success_per_known_row,167,406,0.41133004926108374,406,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,4-6,opponent_half_21-50,touchdown_per_known_action_row,9,399,0.022556390977443608,406,eligible action rows with non-null touchdown flag
+4.0,4-6,own_half_51-80,pass_share_of_pass_run_rows,113,130,0.8692307692307693,221,play_type pass/run rows
+4.0,4-6,own_half_51-80,rush_share_of_pass_run_rows,17,130,0.13076923076923078,221,play_type pass/run rows
+4.0,4-6,own_half_51-80,first_down_series_terminal_per_series_action,78,221,0.35294117647058826,221,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,4-6,own_half_51-80,completion_per_known_pass_attempt,64,113,0.5663716814159292,221,pass_attempt rows with non-null complete_pass
+4.0,4-6,own_half_51-80,sack_per_known_dropback,7,121,0.05785123966942149,221,qb_dropback rows with non-null sack
+4.0,4-6,own_half_51-80,turnover_per_known_scrimmage_action,4,130,0.03076923076923077,221,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,4-6,own_half_51-80,epa_success_per_known_row,92,221,0.416289592760181,221,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,4-6,own_half_51-80,touchdown_per_known_action_row,0,217,0.0,221,eligible action rows with non-null touchdown flag
+4.0,4-6,red_zone_0-20,pass_share_of_pass_run_rows,98,108,0.9074074074074074,148,play_type pass/run rows
+4.0,4-6,red_zone_0-20,rush_share_of_pass_run_rows,10,108,0.09259259259259259,148,play_type pass/run rows
+4.0,4-6,red_zone_0-20,first_down_series_terminal_per_series_action,23,148,0.1554054054054054,148,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,4-6,red_zone_0-20,completion_per_known_pass_attempt,43,98,0.4387755102040816,148,pass_attempt rows with non-null complete_pass
+4.0,4-6,red_zone_0-20,sack_per_known_dropback,6,105,0.05714285714285714,148,qb_dropback rows with non-null sack
+4.0,4-6,red_zone_0-20,turnover_per_known_scrimmage_action,3,108,0.027777777777777776,148,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,4-6,red_zone_0-20,epa_success_per_known_row,67,148,0.4527027027027027,148,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,4-6,red_zone_0-20,touchdown_per_known_action_row,29,147,0.19727891156462585,148,eligible action rows with non-null touchdown flag
+4.0,7-10,backed_up_81-99,pass_share_of_pass_run_rows,3,3,1.0,10,play_type pass/run rows
+4.0,7-10,backed_up_81-99,rush_share_of_pass_run_rows,0,3,0.0,10,play_type pass/run rows
+4.0,7-10,backed_up_81-99,first_down_series_terminal_per_series_action,3,10,0.3,10,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,7-10,backed_up_81-99,completion_per_known_pass_attempt,1,3,0.3333333333333333,10,pass_attempt rows with non-null complete_pass
+4.0,7-10,backed_up_81-99,sack_per_known_dropback,1,3,0.3333333333333333,10,qb_dropback rows with non-null sack
+4.0,7-10,backed_up_81-99,turnover_per_known_scrimmage_action,0,3,0.0,10,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,7-10,backed_up_81-99,epa_success_per_known_row,4,10,0.4,10,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,7-10,backed_up_81-99,touchdown_per_known_action_row,0,10,0.0,10,eligible action rows with non-null touchdown flag
+4.0,7-10,opponent_half_21-50,pass_share_of_pass_run_rows,138,151,0.9139072847682119,223,play_type pass/run rows
+4.0,7-10,opponent_half_21-50,rush_share_of_pass_run_rows,13,151,0.08609271523178808,223,play_type pass/run rows
+4.0,7-10,opponent_half_21-50,first_down_series_terminal_per_series_action,44,223,0.19730941704035873,223,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,7-10,opponent_half_21-50,completion_per_known_pass_attempt,56,138,0.4057971014492754,223,pass_attempt rows with non-null complete_pass
+4.0,7-10,opponent_half_21-50,sack_per_known_dropback,16,144,0.1111111111111111,223,qb_dropback rows with non-null sack
+4.0,7-10,opponent_half_21-50,turnover_per_known_scrimmage_action,13,151,0.08609271523178808,223,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,7-10,opponent_half_21-50,epa_success_per_known_row,66,223,0.29596412556053814,223,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,7-10,opponent_half_21-50,touchdown_per_known_action_row,8,218,0.03669724770642202,223,eligible action rows with non-null touchdown flag
+4.0,7-10,own_half_51-80,pass_share_of_pass_run_rows,114,128,0.890625,195,play_type pass/run rows
+4.0,7-10,own_half_51-80,rush_share_of_pass_run_rows,14,128,0.109375,195,play_type pass/run rows
+4.0,7-10,own_half_51-80,first_down_series_terminal_per_series_action,43,195,0.2205128205128205,195,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,7-10,own_half_51-80,completion_per_known_pass_attempt,43,114,0.37719298245614036,195,pass_attempt rows with non-null complete_pass
+4.0,7-10,own_half_51-80,sack_per_known_dropback,14,119,0.11764705882352941,195,qb_dropback rows with non-null sack
+4.0,7-10,own_half_51-80,turnover_per_known_scrimmage_action,9,128,0.0703125,195,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,7-10,own_half_51-80,epa_success_per_known_row,59,195,0.30256410256410254,195,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,7-10,own_half_51-80,touchdown_per_known_action_row,0,194,0.0,195,eligible action rows with non-null touchdown flag
+4.0,7-10,red_zone_0-20,pass_share_of_pass_run_rows,51,53,0.9622641509433962,76,play_type pass/run rows
+4.0,7-10,red_zone_0-20,rush_share_of_pass_run_rows,2,53,0.03773584905660377,76,play_type pass/run rows
+4.0,7-10,red_zone_0-20,first_down_series_terminal_per_series_action,6,76,0.07894736842105263,76,rows with non-null series; First down labels deduplicated to the final play of each game/series
+4.0,7-10,red_zone_0-20,completion_per_known_pass_attempt,20,51,0.39215686274509803,76,pass_attempt rows with non-null complete_pass
+4.0,7-10,red_zone_0-20,sack_per_known_dropback,4,52,0.07692307692307693,76,qb_dropback rows with non-null sack
+4.0,7-10,red_zone_0-20,turnover_per_known_scrimmage_action,2,53,0.03773584905660377,76,qb_dropback or rush_attempt rows with both turnover flags known
+4.0,7-10,red_zone_0-20,epa_success_per_known_row,29,76,0.3815789473684211,76,"success in {0,1}; nflverse success is EPA-positive, not a first-down flag"
+4.0,7-10,red_zone_0-20,touchdown_per_known_action_row,14,76,0.18421052631578946,76,eligible action rows with non-null touchdown flag
