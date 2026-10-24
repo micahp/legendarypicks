@@ -525,6 +525,60 @@ class TimeoutCharges(unittest.TestCase):
         self.assertIn(3, second_half, 'the count resets to three at halftime')
 
 
+class TimeoutTransition(unittest.TestCase):
+    """A timeout is a transition: the count is written once, in state_after; the clock stops for it and the next play
+    restarts from the clock the flagged play leaves."""
+
+    FLAGGED = {('G1', 1.0): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A'}}
+
+    def game(self, facts):
+        reference = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), facts)
+        return gs.play_game(3, reference, winner_choice='receive')
+
+    @staticmethod
+    def plays(record):
+        return [p for d in record['drives'] for p in d['plays']]
+
+    def test_the_count_is_written_once_in_state_after_and_only_for_the_charged_side(self):
+        record = self.game(self.FLAGGED)
+        applied = 0
+        for p in self.plays(record):
+            part = p['participants']
+            charged_key = None
+            if part['timeout_applied']:
+                charged_key = f"{'home' if part['timeout_charged_to'] == 'A' else 'away'}_timeouts"
+                applied += 1
+            for key in ('home_timeouts', 'away_timeouts'):
+                drop = p['state_before'][key] - p['state_after'][key]
+                self.assertEqual(drop, 1 if key == charged_key else 0, f'{key} on play {p["sequence"]}')
+        self.assertGreater(applied, 0, 'the fixture must charge at least one timeout')
+
+    def test_a_timeout_stops_the_clock_and_the_next_play_restarts_from_that_clock(self):
+        record = self.game(self.FLAGGED)
+        checked = 0
+        for d in record['drives']:
+            for a, b in zip(d['plays'], d['plays'][1:]):
+                if a['participants']['timeout_applied']:
+                    checked += 1
+                    # the clock moves by the sampled runoff only: the charge adds no time
+                    self.assertEqual(a['state_after']['clock_seconds'],
+                                     a['state_before']['clock_seconds'] - a['outcome']['clock_runoff_seconds'])
+                # the next play restarts from the clock and counts that the flagged play left
+                self.assertEqual(b['state_before']['clock_seconds'], a['state_after']['clock_seconds'])
+                self.assertEqual(b['state_before']['home_timeouts'], a['state_after']['home_timeouts'])
+                self.assertEqual(b['state_before']['away_timeouts'], a['state_after']['away_timeouts'])
+        self.assertGreater(checked, 0)
+
+    def test_a_timeout_changes_the_counts_and_nothing_on_the_clock(self):
+        flagged, plain = self.game(self.FLAGGED), self.game({})
+        clock = lambda rec: [(p['state_before']['quarter'], p['state_before']['clock_seconds'],
+                              p['outcome']['clock_runoff_seconds']) for p in self.plays(rec)]
+        self.assertEqual(clock(flagged), clock(plain))
+        self.assertEqual(flagged['points'], plain['points'])
+        self.assertNotEqual([p['state_after']['home_timeouts'] for p in self.plays(flagged)],
+                            [p['state_after']['home_timeouts'] for p in self.plays(plain)])
+
+
 class DriveIndexFindings(unittest.TestCase):
     """The drive-index finding. The archived 5fcaa6bc record (regression/) has drive_index 1 on every play state of drives 2
     to 24: 23 drives and 280 play states. Every one must be counted and rejected, not just the first."""

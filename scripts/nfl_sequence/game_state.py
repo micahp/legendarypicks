@@ -422,20 +422,26 @@ class _Game:
             _stamp_scores(self._last_plays, before, after)
 
     def _apply_timeouts(self, plays):
-        """A flagged sampled play has a timeout called by the team the observed play names. It is charged to that side
-        of this game when that side still has one; the state then carries the counts (A home, B away)."""
+        """A timeout is a transition, not a value written into both sides of a play.
+
+        state_before carries the counts the previous play left. A flagged sampled play has a timeout called by the team the
+        observed play names; it is charged to that side when that side still has one, and the charge appears only in
+        state_after. The timeout is a clock stop: it does not move the clock. The stoppage time is already inside the sampled
+        runoff, and the next play starts from the clock this play leaves.
+        """
         for play in plays:
             part = play['participants']
             part['timeout_applied'] = False
+            play['state_before']['home_timeouts'] = self.timeouts['A']
+            play['state_before']['away_timeouts'] = self.timeouts['B']
             if part['timeout']:
                 mapped = self.offense if part['timeout_team'] == part['posteam'] else self.defense
                 if self.timeouts[mapped] > 0:
                     self.timeouts[mapped] -= 1
                     part['timeout_applied'] = True
                 part['timeout_charged_to'] = mapped
-            for side in ('state_before', 'state_after'):
-                play[side]['home_timeouts'] = self.timeouts['A']
-                play[side]['away_timeouts'] = self.timeouts['B']
+            play['state_after']['home_timeouts'] = self.timeouts['A']
+            play['state_after']['away_timeouts'] = self.timeouts['B']
 
     def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
