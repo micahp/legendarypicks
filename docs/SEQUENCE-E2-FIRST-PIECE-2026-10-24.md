@@ -167,7 +167,11 @@ The first survey of this engine reported 6 matrix FAIL rows, in 6 seeds (76, 85,
   reference being required, the game-wide play ID and sequence contract, and the matrix (a clean game has no FAIL, and mutated records do
   fail: a repeated kicker, a points total that disagrees with the drives, and a clock that rises inside a quarter).
 - `python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py` (inherited from E1): **11 of 11 pass**.
-- Both files together: **40 tests OK**.
+- Both files together: **40 tests OK**. This is the older record; it does not include the modules below.
+- Full suite, one run from the repository root: `python3 -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` on
+  `976de8ea`: **Ran 75 tests, OK; failures 0, errors 0, skipped 0**. By module: `test_game_state.py` 46 (the 29 recorded above
+  and 17 with no earlier record), `test_e1_transitions.py` 11, `test_shared_v1.py` 11, `test_kick_results.py` 4,
+  `test_fixtures.py` 3. The 35 methods without an earlier record are all in this run.
 
 ## Kick outcomes in the dev database
 
