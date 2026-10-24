@@ -23,6 +23,7 @@ import game_state as gs  # noqa: E402
 PASS, FAIL, PARTIAL, UNSUPPORTED, NOT_APPLICABLE, BLOCKED, PROVISIONAL = (
     'PASS', 'FAIL', 'PARTIAL', 'UNSUPPORTED', 'NOT_APPLICABLE', 'BLOCKED', 'PROVISIONAL')
 SCORING = ('touchdown', 'safety', 'field_goal_attempt')
+HOLDER_OFFSET = 7  # the holder's placement behind the snap; the same authored value as game_state.HOLDER_OFFSET, kept separate
 
 
 def _half_starts(record):
@@ -279,8 +280,10 @@ def _provisional(record):
 def _missed_fg_spot(record):
     """A missed field goal gives the receiving team the spot of the kick, or its own 20 when that spot is inside its 20.
 
-    Re-derived here from the kick spot, not read from the engine. Source: the review note cites Rule 11-4-2. The rulebook text
-    is not in the repository, so the rule is marked as cited, not verified.
+    The kick spot is the holder's spot: the snap position plus HOLDER_OFFSET, capped at 99. The published yardline_100 is the
+    snap position, so the check takes the snap from the state and adds the offset itself, and does not read the engine's
+    recorded kick spot. Source: the review note cites Rule 11-4-2. The rulebook text is not in the repository, so the rule is
+    marked as cited, not verified.
     """
     checked = 0
     for i, d in enumerate(record['drives']):
@@ -288,17 +291,19 @@ def _missed_fg_spot(record):
             continue
         if i + 1 >= len(record['drives']):
             continue  # the game ended on the miss: no next drive to check
-        kick_yl = d['plays'][-1]['state_before']['yardline_100']
-        spot = 100 - kick_yl
+        snap_yl = d['plays'][-1]['state_before']['yardline_100']
+        kick_spot = min(99, snap_yl + HOLDER_OFFSET)
+        spot = 100 - kick_spot
         expected = 80 if spot > 80 else spot
         nxt = record['drives'][i + 1]
         got = nxt['plays'][0]['state_before']['yardline_100']
         if nxt['offense_team'] == d['offense_team'] or got != expected:
-            return FAIL, f'missed field goal in drive {d["index"]} from {kick_yl}: next drive starts at {got}, expected {expected}'
+            return FAIL, (f'missed field goal in drive {d["index"]} from snap {snap_yl} (kick spot {kick_spot}): next drive '
+                          f'starts at {got}, expected {expected}')
         checked += 1
     if not checked:
         return NOT_APPLICABLE, 'no missed field goal followed by a drive in this game'
-    return PASS, f'{checked} missed field goal(s): receiving team at the kick spot, or its own 20 (Rule 11-4-2 as cited)'
+    return PASS, f'{checked} missed field goal(s): receiving team at the kick spot (snap + {HOLDER_OFFSET}), or its own 20'
 
 
 def _drive_index(record):

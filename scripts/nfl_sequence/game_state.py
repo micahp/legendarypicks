@@ -45,6 +45,11 @@ FG_POINTS = 3
 SAFETY_POINTS = 2
 TRY_POINTS = {'extra_point': 1, 'two_point': 2}
 FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
+# The kick spot is the holder's position, not the snap. The published yardline_100 of a field goal is the snap position, the
+# line of scrimmage. The holder stands HOLDER_OFFSET yards behind it, so the ball is kicked that much further from the goal.
+# The offset is an authored placement value, not a number taken from the published data; the rules matrix carries its own
+# copy and checks against it.
+HOLDER_OFFSET = 7
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
                      'exception_coin_toss', 'lineups')
@@ -131,15 +136,24 @@ def drive_index_mismatches(record):
     return sorted(bad_drives), states, examples
 
 
-def missed_field_goal_spot(kick_yardline_100):
-    """Yardline_100 of the receiving team after a missed field goal, from the spot of the kick.
+def kick_spot_yardline_100(snap_yardline_100):
+    """Yardline_100 of the kick, from the snap position: the holder stands HOLDER_OFFSET yards further from the goal.
+
+    Capped at 99, the kicking team's own goal line. A field goal snapped from further back than that is not in the data.
+    """
+    return min(99, snap_yardline_100 + HOLDER_OFFSET)
+
+
+def missed_field_goal_spot(kick_spot_yardline_100):
+    """Yardline_100 of the receiving team after a missed field goal, from the spot of the kick (the holder's spot).
 
     Review note, Rule 11-4-2: the receiving team takes possession at the spot of the kick, or at its own 20 when the kick
     spot is inside its 20. The rulebook text is not in the repository, so this rule is cited from the review and is marked
-    as such in the rules matrix. The receiving team's yardline_100 is 100 - kick_yl; when that is inside its own 20 (above
-    80), the spot is 80. Blocked kicks are not missed kicks and are never passed here (they are scoped out of the table).
+    as such in the rules matrix. The receiving team's yardline_100 is 100 - kick spot; when that is inside its own 20 (above
+    80), the spot is 80. The argument is the kick spot, not the snap position. Blocked kicks are not missed kicks and are
+    never passed here (they are scoped out of the table).
     """
-    spot = 100 - kick_yardline_100
+    spot = 100 - kick_spot_yardline_100
     return 80 if spot > 80 else spot
 
 
@@ -459,19 +473,22 @@ class _Game:
         elif terminal == 'end_of_regulation':
             self.status = 'complete_regulation'
         elif terminal == 'field_goal_attempt':
-            kick_yl = plays[-1]['state_before']['yardline_100']
-            bucket = fg_bucket(kick_yl)
+            snap_yl = plays[-1]['state_before']['yardline_100']  # the published yardline_100 is the snap position
+            kick_spot = kick_spot_yardline_100(snap_yl)  # the holder's spot: where the ball is actually kicked from
+            bucket = fg_bucket(snap_yl)  # the published make-rate cells are keyed on the snap position, so the bucket is too
             made, why = _draw(self.rng, self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
             if why:
                 self.block(why)
                 return
             drive['field_goal_made'] = made
+            drive['snap_yardline_100'] = snap_yl
+            drive['kick_spot_yardline_100'] = kick_spot
             if made:
                 self.points[self.offense] += FG_POINTS
                 drive['points_scored_on_drive'] = {'team': self.offense, 'points': FG_POINTS, 'try': None}
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
             else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
-                self._continue(('possession', self.defense, missed_field_goal_spot(kick_yl)))
+                self._continue(('possession', self.defense, missed_field_goal_spot(kick_spot)))
         elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
             self._continue(('possession', last['offense_team'], last['yardline_100']))
         elif terminal == 'touchdown':
