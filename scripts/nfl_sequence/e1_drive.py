@@ -123,13 +123,21 @@ def classify(row, nxt, excluded):
     return None
 
 
-def build_pool(rows):
+def build_pool(rows, regulation_only=False):
+    """The sampling pool, keyed on down, distance and field position.
+
+    With `regulation_only`, overtime rows (quarter 5 or later) are not sampled. A regulation-only candidate must not draw its
+    outcomes from overtime, and the excluded rows are counted under 'overtime rows (regulation-only pool)', not dropped silently.
+    """
     excluded = Counter()
     pool, by_game = {}, {}
     for r in rows:
         by_game.setdefault(r['game_id'], []).append(r)
     for plays in by_game.values():
         for i, row in enumerate(plays):
+            if regulation_only and (row['qtr'] is None or int(row['qtr']) > 4):
+                excluded['overtime rows (regulation-only pool)'] += 1
+                continue
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
