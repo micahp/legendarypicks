@@ -55,6 +55,18 @@
         "type": "run"
       },
       "event_type": "run",
+      "field": {
+        "after": {
+          "dir": 1,
+          "los": 12
+        },
+        "assignment_version": "e0-field-end-v1",
+        "before": {
+          "dir": 1,
+          "los": 12
+        },
+        "source": "authored_demo_convention"
+      },
       "id": "e0-seed1042:1",
       "outcome": {
         "clock_runoff_seconds": null,

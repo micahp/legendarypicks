@@ -43,6 +43,20 @@ def as_int(x):
     return None if x is None else int(x)
 
 
+FIELD_END_VERSION = 'e0-field-end-v1'
+
+
+def field_end(qtr):
+    """Authored demo convention, not an observed fact: the offense attacks x=100 (dir +1) in quarters 1-2
+    and x=0 (dir -1) in quarters 3-4. A real period needs a sourced coin-toss/end assignment."""
+    return 1 if qtr in (1, 2) else -1
+
+
+def los(direction, yardline_100):
+    """Contract conversion: dir +1 => los = 100 - yardline_100; dir -1 => los = yardline_100."""
+    return 100 - yardline_100 if direction == 1 else yardline_100
+
+
 def validate_pool(pool):
     """Apply the reducer to every pool row and count illegal results; never skip a row silently."""
     checked, illegal = 0, Counter()
@@ -215,6 +229,19 @@ def main():
     if after.get('yardline_100') is not None and not (1 <= after['yardline_100'] <= 99):
         raise AssertionError(f'illegal yardline {after["yardline_100"]}')
 
+    d_before = field_end(start['qtr'])
+    if 'end_of_drive' in after or after.get('yardline_100') is None:
+        d_after, los_after = None, None
+    else:
+        d_after = -d_before if flags['turnover_on_downs'] else d_before
+        los_after = los(d_after, after['yardline_100'])
+    field = {'assignment_version': FIELD_END_VERSION, 'source': 'authored_demo_convention',
+             'before': {'dir': d_before, 'los': los(d_before, state_before['yardline_100'])},
+             'after': {'dir': d_after, 'los': los_after}}
+    for side in (field['before'], field['after']):
+        if side['los'] is not None and not 0 <= side['los'] <= 100:
+            raise AssertionError(f'los out of range: {side}')
+
     record = {
         'schema_version': '1.0', 'mode': 'single_play_statistical_demo', 'valid_full_game': False,
         'simulation_id': f'e0-seed{args.seed}', 'game_id': start['game_id'],
@@ -239,6 +266,7 @@ def main():
                         'sampled_from': {'game_id': outcome_row['game_id'], 'play_id': int(outcome_row['play_id']),
                                          'game_date': outcome_row['game_date']}},
             'state_after': state_after,
+            'field': field,
         }],
         'provenance': {'outcomes': 'sampled_empirical_nfl_pbp', 'lineups': None, 'routes': None, 'motion': None,
                        'sources_as_of_verified': False, 'as_of_utc': None, 'snapshot_hash': None},
