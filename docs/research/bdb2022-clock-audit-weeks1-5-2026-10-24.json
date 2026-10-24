@@ -1,0 +1,208 @@
+{
+ "by_outcome": {
+  "fumble": {
+   "in_play_seconds": {
+    "mean": 5.91,
+    "median": 5.1,
+    "n": 63,
+    "p10": 2.7,
+    "p90": 8.4
+   },
+   "residual_seconds": {
+    "mean": 2.57,
+    "median": 3.1,
+    "n": 63,
+    "p10": 1.0,
+    "p90": 5.8
+   },
+   "runoff_seconds": {
+    "mean": 8.48,
+    "median": 9.0,
+    "n": 63,
+    "p10": 5.0,
+    "p90": 12.0
+   }
+  },
+  "interception": {
+   "in_play_seconds": {
+    "mean": 5.04,
+    "median": 4.6,
+    "n": 105,
+    "p10": 3.6,
+    "p90": 7.1
+   },
+   "residual_seconds": {
+    "mean": 2.71,
+    "median": 2.4,
+    "n": 104,
+    "p10": 0.0,
+    "p90": 6.9
+   },
+   "runoff_seconds": {
+    "mean": 7.75,
+    "median": 7.5,
+    "n": 104,
+    "p10": 5.0,
+    "p90": 11.0
+   }
+  },
+  "other": {
+   "in_play_seconds": {
+    "mean": 0.8,
+    "median": 0.7,
+    "n": 116,
+    "p10": 0.5,
+    "p90": 1.1
+   },
+   "residual_seconds": {
+    "mean": 18.52,
+    "median": 18.5,
+    "n": 115,
+    "p10": -0.4,
+    "p90": 38.4
+   },
+   "runoff_seconds": {
+    "mean": 19.31,
+    "median": 19.0,
+    "n": 115,
+    "p10": 0.0,
+    "p90": 39.0
+   }
+  },
+  "pass_complete": {
+   "in_play_seconds": {
+    "mean": 5.57,
+    "median": 5.4,
+    "n": 2996,
+    "p10": 4.0,
+    "p90": 7.5
+   },
+   "residual_seconds": {
+    "mean": 26.8,
+    "median": 30.9,
+    "n": 2993,
+    "p10": 3.5,
+    "p90": 38.9
+   },
+   "runoff_seconds": {
+    "mean": 32.38,
+    "median": 36.0,
+    "n": 2994,
+    "p10": 10.0,
+    "p90": 45.0
+   }
+  },
+  "pass_incomplete": {
+   "in_play_seconds": {
+    "mean": 4.6,
+    "median": 4.4,
+    "n": 1692,
+    "p10": 3.1,
+    "p90": 6.4
+   },
+   "residual_seconds": {
+    "mean": 0.2,
+    "median": 0.3,
+    "n": 1689,
+    "p10": -0.7,
+    "p90": 1.2
+   },
+   "runoff_seconds": {
+    "mean": 4.8,
+    "median": 5.0,
+    "n": 1690,
+    "p10": 3.0,
+    "p90": 7.0
+   }
+  },
+  "run": {
+   "in_play_seconds": {
+    "mean": 4.64,
+    "median": 4.4,
+    "n": 3579,
+    "p10": 3.3,
+    "p90": 6.3
+   },
+   "residual_seconds": {
+    "mean": 29.79,
+    "median": 33.3,
+    "n": 3574,
+    "p10": 13.6,
+    "p90": 39.9
+   },
+   "runoff_seconds": {
+    "mean": 34.44,
+    "median": 38.0,
+    "n": 3591,
+    "p10": 18.0,
+    "p90": 45.0
+   }
+  },
+  "sack": {
+   "in_play_seconds": {
+    "mean": 4.61,
+    "median": 4.3,
+    "n": 308,
+    "p10": 3.2,
+    "p90": 6.5
+   },
+   "residual_seconds": {
+    "mean": 30.33,
+    "median": 35.5,
+    "n": 307,
+    "p10": 3.7,
+    "p90": 41.3
+   },
+   "runoff_seconds": {
+    "mean": 34.94,
+    "median": 40.0,
+    "n": 307,
+    "p10": 8.0,
+    "p90": 46.0
+   }
+  },
+  "touchdown": {
+   "in_play_seconds": {
+    "mean": 4.9,
+    "median": 4.4,
+    "n": 343,
+    "p10": 2.9,
+    "p90": 7.6
+   },
+   "residual_seconds": {
+    "mean": 0.59,
+    "median": 0.6,
+    "n": 342,
+    "p10": -0.8,
+    "p90": 2.1
+   },
+   "runoff_seconds": {
+    "mean": 5.47,
+    "median": 5.0,
+    "n": 346,
+    "p10": 3.0,
+    "p90": 9.0
+   }
+  }
+ },
+ "coverage": {
+  "in_play_resolved": 9202,
+  "out_of_bounds": 920,
+  "penalty_flag": 134,
+  "plays_weeks_1_5_matched": 9225,
+  "residual_resolved": 9187,
+  "runoff_resolved": 9210,
+  "timeout_called": 20,
+  "timeouts_remaining": "unresolvable (no per-play timeout counts in either source)"
+ },
+ "stats": {
+  "negative runoff (unresolvable)": 9,
+  "no ball_snap for the play": 17,
+  "no next snap in the quarter (unresolvable runoff)": 6,
+  "no terminal event for the play": 6
+ },
+ "weeks": [
+  1,
+  5
+ ]
+}
