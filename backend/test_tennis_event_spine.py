@@ -80,6 +80,14 @@ class EventSpine(unittest.TestCase):
         out = self.sync(game(("30", "Wang Xinyu"), ("31", "Nobody Known")))
         self.assertEqual((out["bound"], out["unresolved"]), (1, 1))
 
+    def test_a_publisher_row_in_the_other_name_order_is_adopted_not_duplicated(self):
+        self.con.execute("INSERT INTO players(name,league) VALUES('Xinyu Wang','atp')")
+        self.con.execute("INSERT INTO tennis_atp_players VALUES (7,'Xinyu','Wang')")
+        out = self.sync(game(("30", "Wang Xinyu"), ("31", "Nobody Known")))
+        self.assertEqual((out["adopted"], out["inserted"]), (1, 1))
+        self.assertEqual(self.con.execute(
+            "SELECT espn_id FROM players WHERE name='Xinyu Wang'").fetchone()[0], "30")
+
     def test_an_existing_player_without_a_binding_gets_one(self):
         self.con.execute("INSERT INTO players(name,league,espn_id) VALUES('Vit Kopriva','atp','11')")
         out = self.sync(game(("11", "Vit Kopriva"), ("10", "Jacob Fearnley")))
