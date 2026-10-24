@@ -248,33 +248,11 @@ class NcaafScheduleTests(unittest.TestCase):
         self.assertIn("football/college-football", get.call_args.args[0])
 
     @patch.object(espn, "_get")
-    def test_ncaaf_week_uses_published_date_window_not_capped_week_query(self, get):
-        def event(event_id, season, season_type, week):
-            return {
-                "id": event_id,
-                "date": "2026-08-29T19:00Z",
-                "season": {"year": season, "type": season_type},
-                "week": {"number": week},
-                "competitions": [{
-                    "status": {"type": {"state": "pre", "description": "Scheduled"}},
-                    "competitors": [],
-                }],
-            }
-        get.return_value = {"events": [
-            event("wanted", 2026, 2, 1),
-            event("wrong-week", 2026, 2, 2),
-        ]}
+    def test_ncaaf_week_games_are_not_fetched_by_the_espn_client(self, get):
+        with self.assertRaises(ValueError):
+            espn.football_schedule_week_games("ncaaf", 2026, 2, 1)
 
-        games_for_week = espn.football_schedule_week_games(
-            "ncaaf", 2026, 2, 1,
-            "2026-08-22T07:00Z", "2026-09-08T06:59Z",
-        )
-
-        self.assertEqual([game["game_id"] for game in games_for_week], ["wanted"])
-        url = get.call_args.args[0]
-        self.assertIn("dates=20260822-20260908", url)
-        self.assertIn("groups=80", url)
-        self.assertNotIn("week=1", url)
+        get.assert_not_called()
 
     @patch.object(games.espn, "football_schedule_weeks", return_value=NCAAF_PHASES)
     def test_ncaaf_catalog_defaults_to_published_week(self, catalog):
