@@ -12,9 +12,9 @@ Branch `feat/nfl-sequence-e2-kickoffs-2026-10-24`, on the E1 head `2248f7e1`. Mo
 
 This branch does not change the E1 generator, its fixtures, or the shared contract `GRIDIRON-CONTRACT-v1`.
 
-**Status: a complete regulation game, from the opening kickoff to the final whistle.** In 300 seeded games, 289 reach the end of regulation untied, and 11 are blocked (9 ties, where overtime is not modelled, and 2 thin field-goal cells). The rules matrix has 0 FAIL rows across all 300. `valid_full_game` is 0, by the contract (decision 1 below).
+**Status: a complete regulation game, from the opening kickoff to the final whistle.** In 300 seeded games, 293 reach the end of regulation untied, and 7 are blocked: 5 are regulation ties, where overtime is not modelled, and 2 hit a thin field-goal cell. The rules matrix has 0 FAIL rows across all 300. `valid_full_game` is 0, by the contract (decision 1 below). The survey block below is the source of truth for these figures. The earlier figures (289 reaching regulation with 11 blocked, and a seed-1 payload of 144 plays with a final score of A 11, B 17) came from an earlier engine run and are superseded.
 
-The emitted payload is `docs/fixtures/e2/e2-game-seed1.json` (seed 1: 24 drives, 144 plays, final score A 11, B 17). It carries the full record, every drive's plays with contiguous game-wide IDs, and the rules-matrix rows recomputed from the record. Reloading the file and re-running the matrix gives the same rows.
+The emitted payload is `docs/fixtures/e2/e2-game-seed1.json` (seed 1: 24 drives, 143 plays, final score A 14, B 10). It carries the full record, every drive's plays with contiguous game-wide IDs, and the rules-matrix rows recomputed from the record. Reloading the file and re-running the matrix gives the same rows.
 
 ## Decisions (settled)
 
