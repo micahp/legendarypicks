@@ -1,0 +1,42 @@
+{
+ "checks": {
+  "both_choices_sampled": true,
+  "both_winners_sampled": true,
+  "counts_match_pin": true
+ },
+ "counts": {
+  "choice": {
+   "defer": 145,
+   "receive": 155
+  },
+  "winner": {
+   "A": 153,
+   "B": 147
+  },
+  "winner_choice": {
+   "A-defer": 70,
+   "A-receive": 83,
+   "B-defer": 75,
+   "B-receive": 72
+  }
+ },
+ "max_drives": 1,
+ "passed": true,
+ "pinned": {
+  "choice": {
+   "defer": 145,
+   "receive": 155
+  },
+  "winner": {
+   "A": 153,
+   "B": 147
+  },
+  "winner_choice": {
+   "A-defer": 70,
+   "A-receive": 83,
+   "B-defer": 75,
+   "B-receive": 72
+  }
+ },
+ "seeds": 300
+}
