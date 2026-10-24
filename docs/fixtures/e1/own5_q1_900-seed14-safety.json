@@ -1,5 +1,6 @@
 {
   "drive": {
+    "clock_clamped_plays": 0,
     "clock_runoff_total_seconds": 59,
     "field_goal_attempts": 0,
     "first_downs": 0,
@@ -13,7 +14,8 @@
     "yards": -18
   },
   "gaps": [
-    "field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no result",
+    "field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no points and no next possession. The kickoff after a made kick and the change of possession after a missed kick are not modelled",
+    "clock runoff is the interval between consecutive published snaps in the same quarter, sampled from observed plays. It is not a game-clock model: no clock-stop rules, timeouts or two-minute warning. A runoff longer than the remaining quarter time is clamped to zero and flagged per play, so the clock shows bookkeeping, not realistic clock behaviour",
     "extra points, kickoffs, two-point tries: not modelled",
     "penalties, quarter changes, timeouts, two-minute rules: not modelled",
     "score, points and player stats: null; touchdown points are not computed",
