@@ -10,8 +10,11 @@ Scope in this piece:
 - the clock carried between drives, and regulation end.
 
 Explicitly not modelled, and handled as branches that stop or stay pending:
-- field-goal results: an attempt stops the game as `field_goal_result_unpublished`, because the result is not published;
-- try (extra point and two-point) results: a touchdown leaves its try pending, so the game cannot be valid;
+- field-goal results: an attempt stops the game as `field_goal_result_unpublished`. The result IS in nfl_pbp
+  (`series_result`, measured in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md); the engine does not consume it yet, and the
+  blocker key keeps its old name so this pass changes no engine behaviour;
+- try (extra point and two-point) results: a touchdown leaves its try pending, so the game cannot be valid. The result
+  IS in nfl_pbp (`success`), and the engine does not consume it yet;
 - onside kicks, overtime, penalties, timeouts, the exception coin-toss paths (`explicit_exception_scenario`), and player
   statistics (no participants are supplied).
 
@@ -183,7 +186,8 @@ def play_game(seed, pool, kickoff_pool, winner_choice=None, max_drives=80):
             break
         start = {'quarter': quarter, 'clock': clock, 'offense': offense, 'defense': defense, 'yl': yl, 'down': down,
                  'togo': togo, 'dir': ledger.attacks_x100(offense, quarter)}
-        plays, terminal = e1.simulate(start, seed * 1000 + len(drives), pool)
+        simulation_id = f'e2-{seed}-drive{len(drives) + 1}'
+        plays, terminal = e1.simulate(start, seed * 1000 + len(drives), pool, simulation_id)
         if plays is None:
             blocker, status = terminal, 'blocked'
             break
@@ -240,8 +244,9 @@ def play_game(seed, pool, kickoff_pool, winner_choice=None, max_drives=80):
         'pat_pending': {'A': pat_pending['A'], 'B': pat_pending['B']},
         'status': status or 'blocked', 'blocker': blocker, 'tied': tied,
         'final_quarter': quarter, 'final_clock_seconds': clock,
-        'gaps': ['field-goal results are not published: an attempt stops the game',
-                 'try (extra point and two-point) results are not published: touchdown points are pending',
+        'gaps': ['field-goal results are published in nfl_pbp (series_result) but not consumed: '
+                 'an attempt stops the game',
+                 'try results are published in nfl_pbp (success) but not consumed: touchdown points are pending',
                  'onside kicks, overtime, penalties, timeouts and the exception coin-toss paths are not modelled',
                  'player statistics are null: no participants are supplied'],
     }
