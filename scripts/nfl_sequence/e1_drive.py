@@ -36,6 +36,7 @@ RULES_VERSION = 'e1-drive-2026-10-24'
 EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
           'field_goal_attempt')
 KICK_EVENTS = ('punt', 'field_goal_attempt')
+POSSESSION_TERMINALS = ('turnover', 'turnover_on_downs', 'punt')  # a play that hands the ball over; a score or a field goal does not
 MIN_POOL = 50  # 4th-down cells hold fewer observed plays than the others; sizes are recorded in each play
 MAX_PLAYS = 60
 PLAY_TYPES = ('run', 'pass', 'punt', 'field_goal')
@@ -186,16 +187,19 @@ def simulate(start, seed, pool, simulation_id):
         clock_after = max(0, clock_raw)
         quarter_change = False
         terminal = play_terminal
-        if terminal is None and clock_after == 0:
-            if st['quarter'] in FLIP_AFTER:
-                quarter_change = True  # change of ends; the drive and series continue, no kickoff
-            elif st['quarter'] == 2:
-                terminal = 'halftime'  # the first-half drive ends; second-half choices and kickoff are not modelled
-            else:
-                terminal = 'end_of_regulation'  # Q4 expiry; overtime and tie-breaking are not modelled
+        # The clock runs out on this play. A play that also hands the ball over still ends at the expiry. In Q1 or Q3 the quarter
+        # changes on it and the other team starts the next quarter. In Q2 or Q4 the half or the game ends, and no possession
+        # carries over: the next snap is the half-start kickoff.
+        clock_expired = clock_after == 0 and play_terminal in (None,) + POSSESSION_TERMINALS
+        if clock_expired and st['quarter'] in FLIP_AFTER:
+            quarter_change = True  # change of ends; the drive and series continue, no kickoff; a turnover here still ends the drive
+        elif clock_expired and st['quarter'] == 2:
+            terminal = 'halftime'  # the first-half drive ends; second-half choices and kickoff are not modelled
+        elif clock_expired:
+            terminal = 'end_of_regulation'  # Q4 expiry; overtime and tie-breaking are not modelled
         if after is None:  # touchdown, safety, field-goal attempt, halftime, end of regulation: no scrimmage spot
             after = {'offense': st['offense'], 'defense': st['defense'], 'down': None, 'togo': None, 'yl': None}
-        ended_by_clock_only = terminal in ('halftime', 'end_of_regulation') and play_terminal is None
+        ended_by_clock_only = clock_expired and not quarter_change and play_terminal is None  # a possession change keeps its spot
         next_quarter = st['quarter'] + 1 if quarter_change else st['quarter']
         state_clock_after = QUARTER_LENGTH if quarter_change else clock_after
         yl_after = after['yl']
@@ -285,8 +289,10 @@ def check_drive(plays, terminal):
         else:
             if sa['quarter'] != sb['quarter'] + 1 or not o['quarter_change'] or sa['clock_seconds'] != QUARTER_LENGTH:
                 raise AssertionError(f'play {i + 1}: illegal quarter transition')
-            if sa.get('end_of_drive'):
-                raise AssertionError(f'play {i + 1}: a quarter change cannot end the drive')
+            if sa.get('end_of_drive') not in (None,) + POSSESSION_TERMINALS:
+                raise AssertionError(f'play {i + 1}: a quarter change can end the drive only with a possession change')
+        if sa.get('end_of_drive') in POSSESSION_TERMINALS and sa['quarter'] in (2, 4) and sa['clock_seconds'] == 0:
+            raise AssertionError(f'play {i + 1}: a {sa["end_of_drive"]} at the end of Q{sa["quarter"]} ends the half, not the drive')
         if sa.get('end_of_drive') == 'halftime' and (sa['quarter'] != 2 or sa['clock_seconds'] != 0):
             raise AssertionError(f'play {i + 1}: halftime terminal outside the end of Q2')
         if sa.get('end_of_drive') == 'end_of_regulation' and (sa['quarter'] != 4 or sa['clock_seconds'] != 0):
