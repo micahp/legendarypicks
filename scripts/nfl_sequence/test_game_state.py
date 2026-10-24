@@ -3,6 +3,7 @@
 Run: python3 -m unittest scripts/nfl_sequence/test_game_state.py
 """
 import copy
+import random
 import json
 import sys
 import unittest
@@ -262,21 +263,15 @@ class Clock(unittest.TestCase):
         self.assertEqual(record['drives'][1]['quarter_start'], 2)
         gs.validate_game(record)
 
-    def test_a_score_that_expires_the_half_is_followed_by_the_second_half_kickoff_only(self):
-        # Q1 ends on a score (kickoff opens Q2), then the Q2 drive scores on its last play: no post-score kick at
-        # halftime.
+    def test_a_score_at_the_two_minute_stop_is_followed_by_a_post_score_kickoff_in_q2(self):
+        # Q1 ends on a score (the kickoff opens Q2); the Q2 drive then scores on its last play at the two-minute stop. The stop
+        # holds the clock at 2:00, so the half does not end on that score: the post-score kickoff starts from 2:00.
         record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
                               max_drives=3)
         kinds = [(k['kind'], k['quarter']) for k in record['kickoffs']]
         self.assertEqual(kinds[:2], [('half_start', 1), ('post_score', 2)])
-        self.assertEqual(record['drives'][1]['end_quarter'], 2)
-        self.assertEqual(record['drives'][1]['end_clock'], 0)
-        self.assertIn(('half_start', 3), kinds)
-        skipped = [b for b in record['boundaries'] if b['kind'] == 'skipped_post_score_kick']
-        self.assertEqual(len(skipped), 1)
-        self.assertEqual(skipped[0]['clock_rule'], gs.PRACTICE_RULE)
-        self.assertEqual(record['provisional_counts']['skipped_post_score_kicks_at_halftime'], 1)
-        self.assertNotIn(('post_score', 2), kinds[2:], 'a score that expired Q2 has no post-score kickoff')
+        self.assertEqual(record['drives'][1]['end_clock'], 120)
+        self.assertEqual([w['quarter'] for w in record['two_minute_warnings']], [2])
         gs.validate_game(record)
 
     def test_a_punt_that_expires_q1_keeps_the_receiving_team_and_its_spot(self):
@@ -582,12 +577,13 @@ class UnmodelledTransitions(unittest.TestCase):
         self.assertFalse(record['valid_full_game'])
 
     def test_a_two_minute_crossing_is_listed_in_the_record(self):
+        # The crossing is modelled, not guarded: the stop is recorded and the clock sits at 2:00 after it.
         record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
-        crossings = [t for t in record['unmodelled_transitions'] if t['kind'] == 'two_minute_warning']
-        self.assertTrue(crossings, 'a 100-second runoff crosses 2:00 in a late half')
-        self.assertTrue(all(t['quarter'] in (2, 4) for t in crossings))
-        self.assertFalse(record['valid_full_game'])
-
+        stops = [t for d in record['drives'] for p in d['plays'] for t in [p] if p['outcome'].get('two_minute_warning')]
+        self.assertTrue(stops, 'a 100-second runoff crosses 2:00 in a late half')
+        self.assertTrue(all(p['state_after']['clock_seconds'] == 120 for p in stops))
+        self.assertTrue(all(p['state_before']['quarter'] in (2, 4) for p in stops))
+        gs.validate_game(record)
 
 class FiveSecondKick(unittest.TestCase):
     """A made field goal takes at most KICK_DURATION_SECONDS of clock. The observed runoff beyond that is not charged to the
@@ -807,9 +803,11 @@ class UnmodelledKinds(unittest.TestCase):
         self.assertFalse(record['complete_game'])
 
     def test_a_guarded_game_described_as_complete_is_refused(self):
-        # Adversarial: a two-minute crossing, with the record's status relabelled as a complete regulation game.
-        record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
-        self.assertIn('two_minute_warning', self.kinds(record))
+        # Adversarial: a missed field goal awarded under Rule 11-4-2 is guarded (its touch exception is unmodelled); the record's
+        # status is relabelled as a complete regulation game, and validate_game refuses it.
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25),
+                                     certain_kicks(fg_made=False)), winner_choice='receive', max_drives=2)
+        self.assertIn('missed_field_goal_return', self.kinds(record))
         with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
             gs.validate_game({**record, 'status': 'complete_regulation'})
 
@@ -852,6 +850,91 @@ class KickoffClock(unittest.TestCase):
         tampered['drives'][0]['plays'][0]['state_after']['clock_seconds'] = -3
         with self.assertRaisesRegex(AssertionError, 'negative game clock'):
             gs.validate_game(tampered)
+
+
+class TwoMinuteWarning(unittest.TestCase):
+    """The two-minute warning (Rule 3 Section 41; Rule 4 Section 4, item (h)): the first dead ball at or below 2:00 in the second or
+    fourth quarter stops the clock at 2:00, once per half, and the half resets the warning."""
+
+    def test_a_play_ending_at_2_01_does_not_stop_the_clock(self):
+        self.assertEqual(gs.two_minute_stop(2, 125, 121, set()), (121, False))
+
+    def test_a_play_ending_at_2_00_stops_the_clock_at_2_00(self):
+        self.assertEqual(gs.two_minute_stop(2, 121, 120, set()), (120, True))
+
+    def test_a_crossing_stops_at_2_00_and_the_charge_ends_there(self):
+        self.assertEqual(gs.two_minute_stop(4, 125, 110, set()), (120, True))
+
+    def test_a_second_dead_ball_in_the_same_half_does_not_stop_again(self):
+        self.assertEqual(gs.two_minute_stop(2, 118, 100, {2}), (100, False))
+
+    def test_the_warning_resets_at_halftime_so_the_fourth_quarter_stops_too(self):
+        self.assertEqual(gs.two_minute_stop(4, 125, 110, {2}), (120, True), 'the fourth quarter is a new half')
+
+    def test_quarters_one_and_three_never_stop_for_the_warning(self):
+        self.assertEqual(gs.two_minute_stop(1, 125, 110, set()), (110, False))
+        self.assertEqual(gs.two_minute_stop(3, 125, 110, set()), (110, False))
+
+    def test_a_crossing_play_in_q2_is_stopped_and_charged_only_to_2_00(self):
+        g = gs._Game(7, ref(StaticPool('run', 5, 10), kickoff_pool()), gs.CoinTossLedger('A', 'B', 'receive'), random.Random(7))
+        g.quarter, g.clock, g.offense, g.defense, g.yl, g.down, g.togo = 2, 125, 'A', 'B', 50, 1, 10
+        g._drive_body()
+        stop = next(p for d in g.drives for p in d['plays'] if p['outcome'].get('two_minute_warning'))
+        self.assertEqual((stop['state_before']['clock_seconds'], stop['state_after']['clock_seconds']), (125, 120))
+        self.assertEqual((stop['outcome']['clock_runoff_seconds'], stop['outcome']['observed_runoff_seconds']), (5, 10))
+        self.assertEqual(g.warned_quarters, {2})
+
+    def test_a_play_ending_at_2_01_in_q2_is_not_stopped(self):
+        g = gs._Game(7, ref(StaticPool('run', 5, 4), kickoff_pool()), gs.CoinTossLedger('A', 'B', 'receive'), random.Random(7))
+        g.quarter, g.clock, g.offense, g.defense, g.yl, g.down, g.togo = 2, 125, 'A', 'B', 50, 1, 10
+        g._drive_body()
+        first = g.drives[0]['plays'][0]
+        self.assertEqual(first['state_after']['clock_seconds'], 121, 'the first play ends at 2:01')
+        self.assertFalse(first['outcome'].get('two_minute_warning'), 'a dead ball at 2:01 is not the warning')
+        stop = next(p for d in g.drives for p in d['plays'] if p['outcome'].get('two_minute_warning'))
+        self.assertEqual(stop['state_after']['clock_seconds'], 120, 'the warning comes at the first dead ball at or below 2:00')
+
+
+
+class TimeoutStop(unittest.TestCase):
+    """A timeout is an explicit stop. state_before carries the count before the call; state_after carries the count after it; the
+    stop records the counts, the clock at the stop, and the restart. A corrupted pre-call count is refused."""
+
+    def timed_game(self):
+        observed = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), {
+            ('G1', 1.0): {'timeout': True, 'timeout_team': 'A', 'posteam': 'A', 'passer_id': None, 'rusher_id': None,
+                          'receiver_id': None, 'air_yards': None, 'yards_after_catch': None, 'out_of_bounds': 0}})
+        return gs.play_game(1, observed, winner_choice='receive', max_drives=2)
+
+    def flagged(self, record):
+        return next(p for d in record['drives'] for p in d['plays'] if p['participants'].get('timeout'))
+
+    def test_the_flagged_play_carries_its_pre_call_count_and_one_fewer_on_the_charged_side(self):
+        play = self.flagged(self.timed_game())
+        side = {'A': 'home', 'B': 'away'}[play['participants']['timeout_charged_to']]
+        self.assertEqual(play['state_before'][f'{side}_timeouts'] - 1, play['state_after'][f'{side}_timeouts'])
+        other = 'away' if side == 'home' else 'home'
+        self.assertEqual(play['state_before'][f'{other}_timeouts'], play['state_after'][f'{other}_timeouts'])
+
+    def test_the_stop_is_explicit_with_its_counts_and_its_clock(self):
+        play = self.flagged(self.timed_game())
+        stop = play['outcome']['timeout_stop']
+        self.assertEqual(stop['counts_before'], {'home': play['state_before']['home_timeouts'],
+                                                 'away': play['state_before']['away_timeouts']})
+        self.assertEqual(stop['counts_after'], {'home': play['state_after']['home_timeouts'],
+                                                'away': play['state_after']['away_timeouts']})
+        self.assertEqual(stop['clock_at_stop'], play['state_after']['clock_seconds'])
+        self.assertTrue(stop['applied'])
+
+    def test_a_corrupted_pre_call_count_is_refused(self):
+        record = copy.deepcopy(self.timed_game())
+        play = self.flagged(record)
+        side = {'A': 'home', 'B': 'away'}[play['participants']['timeout_charged_to']]
+        play['state_before'][f'{side}_timeouts'] = play['state_after'][f'{side}_timeouts']  # the post-call value, written pre-call
+        with self.assertRaisesRegex(AssertionError, 'timeout count breaks|disagrees with its states'):
+            gs.validate_game(record)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -55,7 +55,7 @@ HOLDER_OFFSET = 7
 # charge is capped at this value, and the rest of the observed runoff is not charged to the kick.
 KICK_DURATION_SECONDS = 5
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
-UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
+UNSUPPORTED_RULES = ('timeouts', 'penalties', 'onside_kicks', 'overtime',
                      'exception_coin_toss', 'lineups', 'missed_field_goal_return')
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
@@ -64,10 +64,6 @@ GUARDS = {
                           'charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); '
                           'the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook',
                  'enforced_by': 'unsupported_rules; valid_full_game is false'},
-    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not '
-                                    'checked for a warning stoppage: the warning is not identifiable in the play-by-play, so '
-                                    'whether observed runoffs carry it is unverified',
-                           'enforced_by': 'unsupported_rules; valid_full_game is false'},
     'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
                   'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
     'onside_kicks': {'guard': 'every kickoff is drawn from the observed kickoff pool; no onside kick is drawn',
@@ -112,6 +108,16 @@ GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates 
         'modelled, and each is listed in unsupported_rules',
         'participants are the players on the observed plays each simulated play was sampled from: they are labelled as '
         'sampled, and they are not this game\'s roster, lineup or substitutions']
+
+
+def two_minute_stop(quarter, before, after, warned_quarters):
+    """The two-minute warning stop (Rule 3 Section 41; Rule 4 Section 4, item (h)). A play or kickoff whose clock passes from above
+    2:00 to at or below it, in the second or fourth quarter, stops the clock at 2:00. The warning is once per half, so a quarter
+    already in `warned_quarters` never stops again. Returns (clock after the stop, stopped).
+    """
+    if quarter in LATE_QUARTERS and quarter not in warned_quarters and before > TWO_MINUTE_MARK >= after:
+        return TWO_MINUTE_MARK, True
+    return after, False
 
 
 def other(team, teams):
@@ -354,6 +360,7 @@ class _Game:
         self.yl = self.down = self.togo = None
         self.events, self.drives, self.boundaries = [], [], []
         self.timeouts = {'A': 3, 'B': 3}  # per half; A is the home side, B the away side (authored labels)
+        self.warned_quarters = set()  # the late quarters whose two-minute warning has stopped the clock this half
         self.points = Counter()
         self.status = None
         self.blocker = None
@@ -377,6 +384,7 @@ class _Game:
                                 'drive_index': len(self.drives)})
         self.quarter, self.clock = 3, QUARTER_LENGTH
         self.timeouts = {'A': 3, 'B': 3}  # a new half: three per team
+        self.warned_quarters = set()  # a new half: the two-minute warning can stop the clock once more
         k = self.kickoffs[1]
         self._kick('half_start', k['kicking_team'], k['receiving_team'])
 
@@ -389,10 +397,16 @@ class _Game:
         # The made-kick rule, applied to a kickoff: a runoff that fits is charged in full; a runoff that does not fit expires the
         # quarter. The expiry sets the clock to zero explicitly, and the overrun is recorded, not clamped away.
         expires = sample['runoff'] >= clock_before
-        self.clock = 0 if expires else clock_before - sample['runoff']
+        after_clock = 0 if expires else clock_before - sample['runoff']
+        after_clock, stopped = (0, False) if expires else two_minute_stop(self.quarter, clock_before, after_clock,
+                                                                          self.warned_quarters)
+        if stopped:
+            self.warned_quarters.add(self.quarter)
+        self.clock = after_clock
         self.events.append({'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': self.quarter,
                             'clock_before': clock_before, 'runoff_seconds': sample['runoff'],
                             'clock_clamped_to_zero': False, 'clock_expired_during_kickoff': expires,
+                            'two_minute_warning': stopped,
                             'runoff_overrun_seconds': sample['runoff'] - clock_before if expires else 0,
                             'spot_yardline_100': sample['spot'], 'after_drive': len(self.drives),
                             'clock_rule': clock_rule,
@@ -466,6 +480,51 @@ class _Game:
         drive['end_clock'] = before - charge
         self.clock = before - charge
 
+    def _two_minute_stop_plays(self, plays, terminal, start):
+        """Apply the two-minute warning to a drive. The first play that passes 2:00 in a late half stops the clock at 2:00. Its
+        charge stops at the dead ball: the time after it is not charged, and the next snap starts from 2:00. The plays after the
+        stop were drawn from the wrong clock, so they are drawn again from the stop, from the same position and with the same
+        pool. Returns (plays, terminal), or None when the game was blocked here.
+        """
+        last = len(plays) - 1
+        for k, play in enumerate(plays):
+            b, a = play['state_before'], play['state_after']
+            stop_clock, stopped = two_minute_stop(b['quarter'], b['clock_seconds'], a['clock_seconds'], self.warned_quarters)
+            if not stopped:
+                continue
+            self.warned_quarters.add(b['quarter'])
+            outcome = play['outcome']
+            outcome['observed_runoff_seconds'] = outcome['clock_runoff_seconds']
+            outcome['clock_runoff_seconds'] = b['clock_seconds'] - TWO_MINUTE_MARK
+            outcome['two_minute_warning'] = True
+            a['clock_seconds'] = stop_clock
+            if k == last and terminal not in CLOCK_ENDED_TERMINALS:
+                return plays, terminal  # the drive ends on a football terminal here; the next possession starts at 2:00
+            if k == last:
+                pos = outcome['dead_ball_position']  # the half or game was ended by the clock: the position is kept here
+            else:
+                pos = {'offense': a['offense_team'], 'defense': a['defense_team'], 'down': a['down'],
+                       'togo': a['yards_to_go'], 'yl': a['yardline_100']}
+            if pos is None:
+                self.block('two_minute_stop_position_unavailable')
+                return None
+            # The stop is no longer the drive's end: the play carries the scrimmage position at the dead ball, not the ending tag.
+            a.pop('end_of_drive', None)
+            a.update(offense_team=pos['offense'], defense_team=pos['defense'], down=pos['down'], yards_to_go=pos['togo'],
+                     yardline_100=pos['yl'])
+            d_q = start['dir'] * (-1) ** e1.flips_between(start['quarter'], b['quarter'])
+            dir_pos = d_q if pos['offense'] == start['offense'] else -d_q  # the direction of the team that has the ball here
+            if k == last:  # the endpoint E1 left empty, because the clock ended the half, now has the position at the dead ball
+                play['field']['after'] = {'dir': dir_pos, 'los': e1.e0.los(dir_pos, pos['yl'])}
+            start2 = dict(start, quarter=b['quarter'], clock=TWO_MINUTE_MARK, offense=pos['offense'], defense=pos['defense'],
+                          yl=pos['yl'], down=pos['down'], togo=pos['togo'], dir=dir_pos)
+            plays2, terminal2 = e1.simulate(start2, self.seed * 7919 + k + 1, self.ref.pool, self.simulation_id)
+            if plays2 is None:
+                self.block(terminal2)
+                return None
+            return plays[:k + 1] + plays2, terminal2
+        return plays, terminal
+
     def _apply_timeouts(self, plays):
         """A timeout is a transition, not a value written into both sides of a play.
 
@@ -487,6 +546,12 @@ class _Game:
                 part['timeout_charged_to'] = mapped
             play['state_after']['home_timeouts'] = self.timeouts['A']
             play['state_after']['away_timeouts'] = self.timeouts['B']
+            if part['timeout']:
+                play['outcome']['timeout_stop'] = {
+                    'called_by': part['timeout_charged_to'], 'applied': part['timeout_applied'],
+                    'counts_before': {'home': play['state_before']['home_timeouts'], 'away': play['state_before']['away_timeouts']},
+                    'counts_after': {'home': play['state_after']['home_timeouts'], 'away': play['state_after']['away_timeouts']},
+                    'clock_at_stop': play['state_after']['clock_seconds'], 'restart': 'the next snap, from clock_at_stop'}
 
     def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
@@ -501,6 +566,10 @@ class _Game:
             # the game is blocked, never completed
             self.block('penalty_not_modelled')
             return
+        stopped = self._two_minute_stop_plays(plays, terminal, start)
+        if stopped is None:
+            return
+        plays, terminal = stopped
         e1.check_drive(plays, terminal)
         self._last_plays = plays
         drive_index = len(self.drives) + 1
@@ -596,6 +665,7 @@ class _Game:
             'complete_game': bool(complete and blocker is None and not tied and not guarded),
             'scope_out': scope_out,
             'unmodelled_transitions': guarded,
+            'two_minute_warnings': two_minute_warnings(self.drives, self.events),
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
             'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
             'gaps': GAPS,
@@ -621,6 +691,21 @@ def _stamp_scores(plays, before, after):
 
 TWO_MINUTE_MARK = 120
 LATE_QUARTERS = (2, 4)
+CLOCK_ENDED_TERMINALS = ('halftime', 'end_of_regulation')  # a drive ended by the clock, not by a football play
+
+
+def two_minute_warnings(drives, kickoffs):
+    """Each two-minute stop the engine applied, from the plays and the kickoffs, in game order."""
+    found = []
+    for event in kickoffs:
+        if event.get('two_minute_warning'):
+            found.append({'source': 'kickoff', 'quarter': event['quarter'], 'clock_seconds': TWO_MINUTE_MARK})
+    for d in drives:
+        for p in d['plays']:
+            if p['outcome'].get('two_minute_warning'):
+                found.append({'source': 'play', 'drive_index': d['index'], 'sequence': p['sequence'],
+                              'quarter': p['state_before']['quarter'], 'clock_seconds': TWO_MINUTE_MARK})
+    return found
 
 
 def unmodelled_transitions(drives):
@@ -639,14 +724,10 @@ def unmodelled_transitions(drives):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
             if p['participants'].get('timeout'):
                 found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})
-            b, a = p['state_before'], p['state_after']
-            if b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter'] and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']:
-                found.append({'kind': 'two_minute_warning', 'drive_index': d['index'], 'sequence': p['sequence'],
-                              'quarter': b['quarter']})
     return found
 
 
-UNMODELLED_GUARD = {'two_minute_warning': 'two_minute_warning', 'penalty': 'penalties', 'timeout': 'timeouts',
+UNMODELLED_GUARD = {'penalty': 'penalties', 'timeout': 'timeouts',
                     'missed_field_goal_return': 'missed_field_goal_return'}
 KICKOFF_KINDS = ('half_start', 'post_score', 'post_field_goal', 'safety_free_kick')
 
@@ -784,6 +865,35 @@ def validate_game(record):
             raise AssertionError('quarter went backwards')
         quarter_prev = d['quarter_start']
     checks.append('quarters never decrease')
+    # Continuity: the timeout counts carry from one play to the next, across drives and kickoffs, except at the halftime reset;
+    # the clock carries from one play to the next within a drive. A broken chain is refused, not repaired.
+    prev = None
+    for d in record['drives']:
+        for i, p in enumerate(d['plays']):
+            if prev is not None:
+                halftime = prev['state_after']['quarter'] == 2 and p['state_before']['quarter'] == 3
+                for key in ('home_timeouts', 'away_timeouts'):
+                    if not halftime and prev['state_after'][key] != p['state_before'][key]:
+                        raise AssertionError(f"timeout count breaks at drive {d['index']} play {p['sequence']}: {key} "
+                                             f"{prev['state_after'][key]} then {p['state_before'][key]}")
+                if i > 0 and prev['state_after']['clock_seconds'] != p['state_before']['clock_seconds']:
+                    raise AssertionError(f"clock breaks inside drive {d['index']} at play {p['sequence']}")
+            prev = p
+    for d in record['drives']:
+        for p in d['plays']:
+            stop = p['outcome'].get('timeout_stop')
+            if stop is None:
+                continue
+            want_before = {'home': p['state_before']['home_timeouts'], 'away': p['state_before']['away_timeouts']}
+            want_after = {'home': p['state_after']['home_timeouts'], 'away': p['state_after']['away_timeouts']}
+            if stop['counts_before'] != want_before or stop['counts_after'] != want_after:
+                raise AssertionError(f"timeout stop at drive {d['index']} play {p['sequence']} disagrees with its states")
+            if stop['applied']:
+                side = {'A': 'home', 'B': 'away'}[stop['called_by']]
+                if want_before[side] - 1 != want_after[side]:
+                    raise AssertionError(f"applied timeout at drive {d['index']} play {p['sequence']} does not drop its side by one")
+    checks.append('timeout counts carry across plays and the halftime reset; clocks carry within a drive')
+    checks.append('each explicit timeout stop agrees with the counts on its play')
     if record['valid_full_game']:
         if (not record['complete_regulation'] or record['blocker'] is not None or record['tied']
                 or record['unsupported_rules']):
