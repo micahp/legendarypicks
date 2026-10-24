@@ -493,6 +493,26 @@ class MissedFieldGoalSpot(unittest.TestCase):
         self.assertEqual(row['status'], 'FAIL')
 
 
+class TimeoutCharges(unittest.TestCase):
+    """An observed timeout flag charges the side it names, at most three per half, and the count never goes negative."""
+
+    def test_flags_charge_at_most_three_per_half_and_reset_at_halftime(self):
+        # Every sampled play is flagged with a timeout called by the offense (A). The count must reach zero and stop there.
+        facts = {('G1', 1.0): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A'}}
+        reference = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), facts)
+        record = gs.play_game(3, reference, winner_choice='receive')  # the default drive cap, so the game reaches halftime
+        self.assertIn(3, {q for d in record['drives'] for p in d['plays'] for q in (p['state_before']['quarter'],)},
+                      'the game must reach the third quarter for the halftime reset to be checked')
+        states = [(state['quarter'], state['home_timeouts'], state['away_timeouts'])
+                  for d in record['drives'] for p in d['plays'] for state in (p['state_before'], p['state_after'])]
+        self.assertTrue(all(0 <= home <= 3 and 0 <= away <= 3 for _, home, away in states), 'counts stay in 0..3')
+        first_half = [home for quarter, home, _ in states if quarter in (1, 2)]
+        self.assertIn(0, first_half, 'a flagged side runs out of timeouts in the first half')
+        self.assertEqual(min(first_half), 0)
+        second_half = [home for quarter, home, _ in states if quarter in (3, 4)]
+        self.assertIn(3, second_half, 'the count resets to three at halftime')
+
+
 class DriveIndexFindings(unittest.TestCase):
     """The drive-index finding. The archived 5fcaa6bc record (regression/) has drive_index 1 on every play state of drives 2
     to 24: 23 drives and 280 play states. Every one must be counted and rejected, not just the first."""
