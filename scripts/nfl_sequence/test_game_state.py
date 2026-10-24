@@ -41,7 +41,8 @@ def ref(pool, kpool, kicks=None):
 
 
 def spy_simulate(run):
-    """Run `run()` with E1's simulate wrapped. Returns (result, calls), where each call holds the start and the id."""
+    """Run `run()` with E1's simulate wrapped. Returns (result, calls), where each call holds the start and the id.
+    """
     calls, real = [], gs.e1.simulate
 
     def spy(start, seed, pool, simulation_id):
@@ -171,7 +172,8 @@ class Scoring(unittest.TestCase):
         gs.validate_game(record)
 
     def test_a_made_field_goal_scores_three_and_the_kicker_kicks_off(self):
-        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(), certain_kicks(fg_made=True)),
+        fg = ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(), certain_kicks(fg_made=True))
+        record = gs.play_game(1, fg,
                               winner_choice='receive', max_drives=2)
         kicker = record['drives'][0]['offense_team']
         self.assertTrue(record['drives'][0]['field_goal_made'])
@@ -210,12 +212,16 @@ class Clock(unittest.TestCase):
                               max_drives=2)
         post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
         self.assertEqual((post['quarter'], post['clock_before']), (2, 900), 'the post-score kickoff opens Q2')
+        self.assertEqual(post['clock_rule'], gs.PRACTICE_RULE, 'a practice-sourced rule, labelled as such')
+        self.assertEqual({r['label'] for r in record['provisional_rules']}, {gs.PRACTICE_RULE, gs.AUTHORED_RULE})
+        self.assertTrue(all(r['status'] == gs.PENDING_2026 for r in record['provisional_rules']))
         self.assertEqual(record['boundaries'][0]['kind'], 'change_of_ends')
         self.assertEqual(record['drives'][1]['quarter_start'], 2)
         gs.validate_game(record)
 
     def test_a_score_that_expires_the_half_is_followed_by_the_second_half_kickoff_only(self):
-        # Q1 ends on a score (kickoff opens Q2), then the Q2 drive scores on its last play: no post-score kick at halftime.
+        # Q1 ends on a score (kickoff opens Q2), then the Q2 drive scores on its last play: no post-score kick at
+        # halftime.
         record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
                               max_drives=3)
         kinds = [(k['kind'], k['quarter']) for k in record['kickoffs']]
@@ -223,19 +229,25 @@ class Clock(unittest.TestCase):
         self.assertEqual(record['drives'][1]['end_quarter'], 2)
         self.assertEqual(record['drives'][1]['end_clock'], 0)
         self.assertIn(('half_start', 3), kinds)
+        skipped = [b for b in record['boundaries'] if b['kind'] == 'skipped_post_score_kick']
+        self.assertEqual(len(skipped), 1)
+        self.assertEqual(skipped[0]['clock_rule'], gs.PRACTICE_RULE)
+        self.assertEqual(record['provisional_counts']['skipped_post_score_kicks_at_halftime'], 1)
         self.assertNotIn(('post_score', 2), kinds[2:], 'a score that expired Q2 has no post-score kickoff')
         gs.validate_game(record)
 
     def test_a_punt_that_expires_q1_keeps_the_receiving_team_and_its_spot(self):
         record, calls = spy_simulate(lambda: gs.play_game(
-            1, ref(StaticPool('punt', 0, 890, spot=40), kickoff_pool(runoff=10)), winner_choice='receive', max_drives=2))
+            1, ref(StaticPool('punt', 0, 890, spot=40), kickoff_pool(runoff=10)), winner_choice='receive',
+            max_drives=2))
         self.assertEqual(record['drives'][0]['terminal'], 'punt')
         self.assertEqual(record['drives'][0]['end_quarter'], 1)
         self.assertEqual(calls[1]['start']['quarter'], 2)
         self.assertEqual(calls[1]['start']['clock'], 900)
         self.assertEqual(calls[1]['start']['offense'], calls[0]['start']['defense'], 'the punt receiver keeps the ball')
         self.assertEqual(calls[1]['start']['yl'], 40)
-        self.assertEqual(len([k for k in record['kickoffs'] if k['quarter'] == 2]), 0, 'a change of ends has no kickoff')
+        self.assertEqual(len([k for k in record['kickoffs'] if k['quarter'] == 2]), 0,
+                         'a change of ends has no kickoff')
         gs.validate_game(record)
 
     def test_a_kick_that_runs_the_clock_out_ends_the_quarter_on_the_return(self):

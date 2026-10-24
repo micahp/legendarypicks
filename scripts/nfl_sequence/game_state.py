@@ -4,25 +4,26 @@ Scope:
 - the coin-toss ledger for the normal-game policy (docs/rules/NFL-2026-GAME-STATE-RULES.md, sections 1-3 and 7): the
   first-choice captain receives, and each team kicks off once per half;
 - the two half-start kickoffs, derived from the ledger and validated;
-- scoring: touchdowns (6, then a try: an extra point for 1, or a two-point try for 2), field goals (3, made or missed), and
-  safeties (2);
+- scoring: touchdowns (6, then a try: an extra point for 1, or a two-point try for 2), field goals (3, made or missed),
+  and safeties (2);
 - restarts after scores (the scoring team kicks off; a safety is a free kick by the conceding team), after halftime (the
   second-half kickoff), and after punts and turnovers (the receiving team starts at its published spot);
-- clock management: quarters are 15 minutes, a quarter change keeps possession and the spot (no kickoff, rules section 2),
-  halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends
-  regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires in;
+- clock management: quarters are 15 minutes, a quarter change keeps possession and the spot (no kickoff, rules section
+  2), halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends
+  regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires
+  in;
 - participants: each play carries the observed passer, rusher and receiver ids of the play it was sampled from, labelled
   as such, and player and team lines are computed from the plays (game_stats.py).
 
-Kick outcomes are drawn from the published nfl_pbp rates (measure_kick_outcomes.py, 2022-2025, weeks 1-18): a field goal's
-make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and the share of post-touchdown attempts
-that were two-point tries. Each draw is a labelled sample from a published rate, not the outcome of a real game. A cell with
-fewer than MIN_KICK_N attempts blocks the game, and nothing is filled from a neighbouring cell.
+Kick outcomes are drawn from the published nfl_pbp rates (measure_kick_outcomes.py, 2022-2025, weeks 1-18): a field
+goal's make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and the share of post-touchdown
+attempts that were two-point tries. Each draw is a labelled sample from a published rate, not the outcome of a real
+game. A cell with fewer than MIN_KICK_N attempts blocks the game, and nothing is filled from a neighbouring cell.
 
 Explicitly not modelled. Each one is listed in every record's `unsupported_rules`, and the rules matrix marks it:
-timeouts (the published table has no timeout fields), the two-minute warning, penalties (E1 excludes penalty plays), onside
-kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`), the exception coin-toss paths, and
-lineups (participants are the players on the sampled observed plays, not this game's roster).
+timeouts (the published table has no timeout fields), the two-minute warning, penalties (E1 excludes penalty plays),
+onside kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`), the exception coin-toss
+paths, and lineups (participants are the players on the sampled observed plays, not this game's roster).
 
 Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
@@ -48,7 +49,27 @@ MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applie
 UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
                      'exception_coin_toss', 'lineups')
 SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
-GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw is a '
+PRACTICE_RULE = 'provisional_practice_rule'
+AUTHORED_RULE = 'authored_modelling_choice'
+PENDING_2026 = 'pending_2026_rulebook'
+PRACTICE_SOURCE = ('NFL practice, not written in docs/rules/NFL-2026-GAME-STATE-RULES.md. Confirm against the 2026 '
+                   'rulebook before it is read as a rules-file fact.')
+PROVISIONAL_RULES = (
+    {'id': 'post_score_kick_after_quarter_expiry', 'label': PRACTICE_RULE, 'status': PENDING_2026,
+     'applies_to': 'a touchdown, made field goal or safety whose clock expires in Q1 or Q3',
+     'effect': 'the scoring side (or the conceding side, after a safety) kicks off at the start of the next quarter',
+     'source': PRACTICE_SOURCE},
+    {'id': 'no_post_score_kick_at_halftime', 'label': PRACTICE_RULE, 'status': PENDING_2026,
+     'applies_to': 'a score whose clock expires in Q2',
+     'effect': 'no post-score kickoff; the second-half kickoff from the ledger follows',
+     'source': PRACTICE_SOURCE},
+    {'id': 'quarter_ends_during_kick_return', 'label': AUTHORED_RULE, 'status': PENDING_2026,
+     'applies_to': 'a kickoff whose runoff exhausts the clock',
+     'effect': 'the quarter ends on the return; the receiver starts the next quarter at the kick spot',
+     'source': 'authored modelling choice, matching E1 clamping a play runoff at 0:00; not in the rules file'},
+)
+GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw '
+        'is a '
         'labelled sample, not the result of a real game',
         'blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick',
         'timeouts, the two-minute warning, penalties, onside kicks, overtime and the exception coin-toss paths are not '
@@ -100,9 +121,9 @@ class Reference:
 class CoinTossLedger:
     """Normal-game coin-toss ledger for two teams, `winner` and `loser`.
 
-    `winner_choice` is `receive` or `defer`. Normal mode refuses kick and goal-to-defend choices, which the rules file
-    says must not be sampled. The first-choice captain receives. In the defer path the loser has the first-half choice,
-    and the winner has the second-half choice.
+    `winner_choice` is `receive` or `defer`. Normal mode refuses kick and goal-to-defend choices, which the rules
+    file says must not be sampled. The first-choice captain receives. In the defer path the loser has the first-half
+    choice, and the winner has the second-half choice.
     """
 
     def __init__(self, winner, loser, winner_choice, mode=NORMAL_MODE):
@@ -146,8 +167,8 @@ class CoinTossLedger:
     def attacks_x100(self, team, quarter):
         """Orientation: +1 when `team` attacks stadium x=100 in `quarter`. Authored, not sourced.
 
-        Q1 goal-first-half team defends x=0; ends change after Q1, so Q2 flips. Halftime does not flip ends.
-        Q3 uses the second-half goal choice (authored); ends change after Q3, so Q4 flips.
+        Q1 goal-first-half team defends x=0; ends change after Q1, so Q2 flips. Halftime does not flip ends. Q3
+        uses the second-half goal choice (authored); ends change after Q3, so Q4 flips.
         """
         if quarter == 1:
             attacker = self.goal_first_half
@@ -161,7 +182,8 @@ class CoinTossLedger:
 
 
 def validate_half_start(kickoffs):
-    """Fail closed on the normal-game invariant: exactly two half-start kickoffs, one per team, Q3 receiver kicks Q1."""
+    """Fail closed on the normal-game invariant: exactly two half-start kickoffs, one per team, Q3 receiver kicks Q1.
+    """
     half = [k for k in kickoffs if k['reason'] == 'half_start']
     if len(half) != 2 or sorted(k['quarter'] for k in half) != [1, 3]:
         raise AssertionError(f'expected two half-start kickoffs in Q1 and Q3, got {half}')
@@ -211,7 +233,8 @@ def _draw(rng, cell, name):
 
 
 def _try_after_touchdown(rng, kicks):
-    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra point.
+    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra
+    point.
 
     Returns (points, record, None), or (None, None, reason) when the cell it needs is too thin.
     """
@@ -264,8 +287,10 @@ class _Game:
         k = self.kickoffs[1]
         self._kick('half_start', k['kicking_team'], k['receiving_team'])
 
-    def _kick(self, kind, kicker, receiver):
-        """A kickoff, sampled from the observed kickoff pool. A kick that runs the clock out ends the quarter on the return."""
+    def _kick(self, kind, kicker, receiver, clock_rule=None):
+        """A kickoff, sampled from the observed kickoff pool. A kick that runs the clock out ends the quarter on
+        the return.
+        """
         sample = self.rng.choice(self.ref.kickoff_pool)
         clock_before = self.clock
         self.clock = max(0, self.clock - sample['runoff'])
@@ -273,11 +298,13 @@ class _Game:
                             'clock_before': clock_before, 'runoff_seconds': sample['runoff'],
                             'clock_clamped_to_zero': clock_before - sample['runoff'] < 0,
                             'spot_yardline_100': sample['spot'], 'after_drive': len(self.drives),
+                            'clock_rule': clock_rule,
                             'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
                                        'game_date': sample['game_date']}})
         if self.clock > 0:
             self._take_possession(receiver, sample['spot'])
             return
+        self.events[-1]['clock_rule'] = AUTHORED_RULE
         boundary = quarter_end_kind(self.quarter)
         if boundary == 'quarter_change':
             self._new_quarter('change_of_ends_during_return')
@@ -287,23 +314,28 @@ class _Game:
         else:
             self.status = 'complete_regulation'
 
-    def _apply(self, then):
+    def _apply(self, then, clock_rule=None):
         if then[0] == 'possession':
             self._take_possession(then[1], then[2])
         else:
             _, kind, kicker, receiver = then
-            self._kick(kind, kicker, receiver)
+            self._kick(kind, kicker, receiver, clock_rule)
 
     def _continue(self, then):
-        """The event that follows a play. An expired clock resolves the quarter first (rules file, sections 2-3)."""
+        """The event that follows a play. An expired clock resolves the quarter first (rules file, sections 2-3).
+        """
         if self.clock > 0:
             self._apply(then)
             return
         boundary = quarter_end_kind(self.quarter)
         if boundary == 'quarter_change':
             self._new_quarter('change_of_ends')
-            self._apply(then)
+            self._apply(then, PRACTICE_RULE if then[0] == 'kick' else None)
         elif boundary == 'halftime':
+            if then[0] == 'kick':  # a score that expires Q2: no post-score kickoff (provisional practice rule)
+                self.boundaries.append({'from_quarter': 2, 'to_quarter': 3, 'kind': 'skipped_post_score_kick',
+                                        'skipped_kind': then[1], 'clock_rule': PRACTICE_RULE,
+                                        'drive_index': len(self.drives)})
             self._half_start()
         else:
             self.status = 'complete_regulation'
@@ -396,13 +428,22 @@ class _Game:
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
             'unsupported_rules': list(UNSUPPORTED_RULES), 'gaps': GAPS,
+            'provisional_rules': [dict(r) for r in PROVISIONAL_RULES],
+            'provisional_counts': {
+                'post_score_kickoffs_after_quarter_expiry': sum(1 for k in self.events
+                                                                if k['clock_rule'] == PRACTICE_RULE),
+                'skipped_post_score_kicks_at_halftime': sum(1 for b in self.boundaries
+                                                            if b.get('clock_rule') == PRACTICE_RULE),
+                'quarter_ends_during_kick_return': sum(1 for k in self.events if k['clock_rule'] == AUTHORED_RULE),
+            },
         }
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
-    `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent default.
+    `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
+    default.
     """
     rng = random.Random(seed)
     choice = winner_choice or rng.choice(['receive', 'defer'])
@@ -412,7 +453,8 @@ def play_game(seed, ref, winner_choice=None, max_drives=80):
 
 
 def validate_game(record):
-    """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed."""
+    """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
+    """
     checks = []
     simulation_id = record.get('simulation_id')
     if not isinstance(simulation_id, str) or not simulation_id:
@@ -421,7 +463,8 @@ def validate_game(record):
     for drive in record['drives']:
         for play in drive['plays']:
             if play.get('sequence') != expected_sequence or play.get('id') != f'{simulation_id}:{expected_sequence}':
-                raise AssertionError(f'play {expected_sequence} must use game-wide id {simulation_id}:{expected_sequence}')
+                raise AssertionError(
+                    f'play {expected_sequence} must use game-wide id {simulation_id}:{expected_sequence}')
             expected_sequence += 1
     checks.append('game-wide play IDs use one simulation_id and contiguous sequence')
     ledger = record['ledger']
@@ -432,7 +475,8 @@ def validate_game(record):
         raise AssertionError(f'more than two half-start kickoffs recorded: {recorded_half}')
     for got in recorded_half:
         want = next((k for k in expected_half if k['quarter'] == got['quarter']), None)
-        if want is None or (got['kicking_team'], got['receiving_team']) != (want['kicking_team'], want['receiving_team']):
+        if want is None or ((got['kicking_team'], got['receiving_team'])
+                            != (want['kicking_team'], want['receiving_team'])):
             raise AssertionError(f'recorded half-start kickoff disagrees with the ledger: {got}')
     checks.append('recorded half-start kickoffs equal the ledger')
     if len(recorded_half) == 2:
@@ -469,7 +513,9 @@ def validate_game(record):
         quarter_prev = d['quarter_start']
     checks.append('quarters never decrease')
     if record['valid_full_game']:
-        if not record['complete_regulation'] or record['blocker'] is not None or record['tied'] or record['unsupported_rules']:
-            raise AssertionError('valid_full_game requires complete regulation, no blocker, no tie and no unsupported rule')
+        if (not record['complete_regulation'] or record['blocker'] is not None or record['tied']
+                or record['unsupported_rules']):
+            raise AssertionError(
+                'valid_full_game requires complete regulation, no blocker, no tie and no unsupported rule')
     checks.append('valid_full_game only when complete, unblocked, untied and with no unsupported rule')
     return checks

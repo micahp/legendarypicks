@@ -16,23 +16,28 @@ This branch does not change the E1 generator, its fixtures, or the shared contra
 
 The emitted payload is `docs/fixtures/e2/e2-game-seed1.json` (seed 1: 24 drives, 144 plays, final score A 11, B 17). It carries the full record, every drive's plays with contiguous game-wide IDs, and the rules-matrix rows recomputed from the record. Reloading the file and re-running the matrix gives the same rows.
 
-## Decisions taken without a check-in
+## Decisions (settled)
 
-These were ambiguous. Each one keeps the shared contract and the observed data, and each is stated here so it can be
-reversed.
+Micah confirmed these four on 2026-10-24. Each keeps the shared contract and the observed data, and the record says what it
+does.
 
-1. **`valid_full_game` stays `false`.** The contract says a game must not claim `valid_full_game=true` while a rule is not
-   modelled and not marked. Timeouts, the two-minute warning, penalties, onside kicks, overtime and player lineups are not
-   modelled, so each is listed in `unsupported_rules` and the flag stays false. The completion claim is `complete_regulation`.
-   If Micah reads "complete game" as `valid_full_game`, that needs a decision on those six rules, not a change of flag.
-2. **A tie after regulation blocks the game** as `overtime_not_modelled`. Overtime rules are version-sensitive and the rules
-   file says to guard them, so no overtime is invented.
-3. **A clock at 0:00 is resolved by the quarter it expires in**, using the rules file's quarter rules (sections 2 and 3). The
-   rules that are not in the file are marked below.
-4. **Player lines use the observed play's participants**, labelled `sampled_observed_play`. These are the passer, rusher and
-   receiver ids of the play each simulated play was sampled from. They are not this game's roster or lineup, and the record
-   says so on every line. Without those ids the player block would be empty, and the stats would not exist.
-5. **The emitted seed is the first seed that completes regulation untied.** The survey gives the full distribution.
+1. **`valid_full_game` is `false`, and the completion claim is `complete_regulation`.** The shared contract forbids
+   `valid_full_game=true` while a rule is unmodelled and unmarked. Timeouts, the two-minute warning, penalties, onside kicks,
+   overtime and player lineups are unmodelled, so each is listed in `unsupported_rules`, and the flag stays `false`.
+2. **A tie after regulation stays blocked** as `overtime_not_modelled`. Overtime is not modelled, and it is not modelled just to
+   make a game pass.
+3. **Two clock rules are provisional practice rules, not rules-file rules.** A touchdown, made field goal or safety whose clock
+   expires in Q1 or Q3 is followed by a kickoff in the next quarter. A score whose clock expires in Q2 gets no post-score kickoff.
+   Both are labelled `provisional_practice_rule` with status `pending_2026_rulebook`. The record lists them in
+   `provisional_rules` with a source note, and it counts their use in `provisional_counts`. The rules matrix reports them as
+   PROVISIONAL, never PASS. A third rule, a quarter ending during a kick's return, is an authored modelling choice that matches
+   E1's clamp. It is labelled `authored_modelling_choice`.
+4. **Player lines are attributed per sampled play, with a per-record label.** Each play's passer, rusher and receiver are the
+   ids of the observed play it was sampled from, labelled `sampled_observed_play`. The record's `player_note` says these are not
+   this game's roster or lineup, and each player line carries the same label.
+
+The quarter rules other than the two above come from the rules file (sections 2, 3 and 5). The payload seed is the first seed
+that completes regulation untied. That is a choice of example, not a rule.
 
 ## Clock across quarters and halves
 
@@ -45,11 +50,11 @@ expired in:
 | Q2 | Halftime. No further play. The Q3 kickoff from the ledger (rules section 3). | Halftime. No post-score kickoff: the Q3 kickoff from the ledger replaces it. | Halftime. The Q3 kickoff from the ledger. |
 | Q4 | Regulation ends. | Regulation ends after the try. No kickoff. | Regulation ends. |
 
-The Q1, Q3 and Q4 rows are from the rules file (sections 2, 3 and 5). The rule that a score at the end of Q1 or Q3 is kicked
-off in the new quarter, and the rule that a score at the end of Q2 gets no post-score kickoff, are standard NFL practice and
-are not written in the rules file. They are flagged here for confirmation against the 2026 rulebook. A clock that runs out
-during a kick ends the quarter on the return, and the receiver starts the next quarter at the kick's spot. That is also the
-clamp E1 applies to a play's runoff.
+The Q1, Q3 and Q4 rows come from the rules file (sections 2, 3 and 5), except the two provisional rules: the kickoff after a
+score that expires Q1 or Q3, and the absence of one after a score that expires Q2. Those are labelled
+`provisional_practice_rule` with status `pending_2026_rulebook`, and the matrix reports them as PROVISIONAL. A kick that runs
+the clock out ends the quarter on the return, and the receiver starts the next quarter at the kick's spot. That is an
+authored modelling choice, labelled `authored_modelling_choice`, and it matches E1's clamp of a play's runoff at 0:00.
 
 A quarter change inside a drive (a play that expires Q1 or Q3 mid-drive) keeps the drive, as E1 already did. The
 `boundaries` list records every quarter change and halftime, with its kind.
@@ -199,15 +204,13 @@ any two-point try, and there are no score columns, so the two-point rate is chec
 
 Reproduce: `python3 scripts/nfl_sequence/measure_kick_outcomes.py` (read-only, `mode=ro`, about 5 seconds).
 
-## Decided and still open
+## Settled, and still open
 
 - **Decided (Micah, 2026-10-24): consume the published outcomes.** The field-goal and try blocker is gone. The
   `field_goal_result_unpublished` key appears in no record.
-- **Open, for Micah:**
-  - The six unmodelled rules listed under "Decisions" (timeouts, two-minute warning, penalties, onside kicks, overtime,
-    lineups). Each one blocks `valid_full_game`.
-  - The two rules marked as NFL practice rather than the rules file (the post-score kickoff at the end of Q1 or Q3, and the
-    absence of one at the end of Q2). Confirm against the 2026 rulebook.
+- **Settled (Micah, 2026-10-24):** the four decisions above.
+- **Still open, not part of those four:**
+  - The two provisional practice rules are pending the 2026 rulebook check. They stay labelled until that check is done.
   - Whether the 8 `Opp touchdown` field-goal rows count as misses (85.2% becomes 85.1%).
   - Whether the two-point rate should be trusted before a score-based check exists.
 
