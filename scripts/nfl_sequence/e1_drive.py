@@ -147,7 +147,7 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool):
+def simulate(start, seed, pool, simulation_id):
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -215,8 +215,9 @@ def simulate(start, seed, pool):
         # The final play's position is kept in outcome.final_play_yardline_100 instead.
         after_has_position = yl_after is not None and not ended_by_clock_only
         after_dir = dir_of(after['offense'], next_quarter) if after_has_position else None
+        sequence = len(plays) + 1
         play = {
-            'sequence': len(plays) + 1, 'id': f'e1-seed{seed}:{len(plays) + 1}', 'event_type': event,
+            'sequence': sequence, 'id': f'{simulation_id}:{sequence}', 'event_type': event,
             'state_before': state_before,
             'sampling': {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares)},
             'decision': {'type': decision_type, 'concept': None, 'coverage': None,
@@ -343,7 +344,8 @@ def main():
     if args.survey:
         counts, reasons = Counter(), Counter()
         for s in range(1, args.survey + 1):
-            plays, terminal = simulate(start, s, pool)
+            simulation_id = f'e1-{args.start}-seed{s}'
+            plays, terminal = simulate(start, s, pool, simulation_id)
             if plays is None:
                 counts['incomplete'] += 1
                 reasons[terminal.split(' (')[0]] += 1
@@ -354,13 +356,14 @@ def main():
         return
     if args.seed is None:
         raise SystemExit('pass --seed or --survey')
-    plays, terminal = simulate(start, args.seed, pool)
+    simulation_id = f'e1-{args.start}-seed{args.seed}'
+    plays, terminal = simulate(start, args.seed, pool, simulation_id)
     if plays is None:
         raise SystemExit(f'drive incomplete: {terminal}')
     summary = check_drive(plays, terminal)
     record = {
         'schema_version': '1.1', 'mode': 'drive_statistical_demo', 'valid_full_game': False,
-        'simulation_id': f'e1-{args.start}-seed{args.seed}', 'seed': args.seed,
+        'simulation_id': simulation_id, 'seed': args.seed,
         'model_version': MODEL_VERSION, 'rules_version': RULES_VERSION,
         'start_state': {'source': 'authored demonstration state, not a pregame state', **start},
         'plays': plays,
