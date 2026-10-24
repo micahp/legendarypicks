@@ -306,12 +306,10 @@ def _drive_index(record):
     indices = [d['index'] for d in record['drives']]
     if indices != list(range(1, len(indices) + 1)):
         return FAIL, f'drive indices are not 1..{len(indices)}: {indices[:10]}'
-    for d in record['drives']:
-        for play in d['plays']:
-            for side in ('state_before', 'state_after'):
-                if play[side].get('drive_index') != d['index']:
-                    return FAIL, (f'drive {d["index"]}: play {play["sequence"]} {side} carries drive_index '
-                                  f'{play[side].get("drive_index")}')
+    bad_drives, bad_states, examples = gs.drive_index_mismatches(record)
+    if bad_drives:
+        return FAIL, (f'{len(bad_drives)} drive-index mismatches: {bad_states} play states in drives {bad_drives}; '
+                      f'first: {examples[0]}')
     return PASS, f'{len(indices)} drives, every play state carries its drive index'
 
 
