@@ -421,7 +421,7 @@ export default function ScoresPage() {
               return (
                 <div key={league} className="rounded-2xl bg-zinc-900 px-5 pt-4 pb-2 space-y-2">
                   <h2 className="text-base font-semibold text-zinc-200">{LEAGUE_LABELS[league] || league}</h2>
-                  {subKeys.map((sub) => {
+                  {subKeys.map((sub, subIndex) => {
                     const sg = subGroups[sub]
                     // Compute shared time if all games in this group have the same start time
                     const times = [...new Set(sg.map((g: Game) => {
@@ -430,7 +430,7 @@ export default function ScoresPage() {
                     }))]
                     const timeLabel = times.length === 1 ? ' · ' + times[0] : ''
                     return (
-                    <div key={sub || league} className="space-y-3">
+                    <div key={sub || league} className={`space-y-3 ${sub && subIndex > 0 ? 'pt-5' : ''}`}>
                       {sub && (
                         <h3 className="text-sm font-medium text-zinc-500">
                           {sub}{timeLabel}
