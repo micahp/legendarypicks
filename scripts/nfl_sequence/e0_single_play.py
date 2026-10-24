@@ -25,7 +25,7 @@ POOL_SEASONS = (2022, 2023, 2024, 2025)
 START_SEASON = 2025
 MIN_POOL = 200
 EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')
-COLUMNS = ('game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'home_team', 'away_team', 'qtr',
+COLUMNS = ('game_id', 'play_id', 'season', 'week', 'game_date', 'posteam', 'defteam', 'home_team', 'away_team', 'qtr',
            'down', 'ydstogo', 'yardline_100', 'game_seconds_remaining', 'play_type', 'yards_gained',
            'touchdown', 'interception', 'fumble_lost', 'sack', 'complete_pass', 'qb_scramble', 'penalty',
            'two_point_attempt', 'drive')
@@ -179,6 +179,7 @@ def main():
     if not candidates:
         raise SystemExit(f'no sampled outcome for event {event} in cell {key}')
     _, outcome_row = rng.choice(candidates)
+    future_rows = [r for _, r in cell if r['game_date'] > start['game_date']]
     yards = int(outcome_row['yards_gained'])
     touchdown = bool(outcome_row['touchdown'] == 1)
 
@@ -221,7 +222,13 @@ def main():
         'model_version': MODEL_VERSION, 'rules_version': RULES_VERSION, 'seed': args.seed,
         'teams': {'home': start['home_team'], 'away': start['away_team']},
         'outcome_pool': {'seasons': list(POOL_SEASONS), 'cell': list(key), 'cell_size': len(cell),
-                         'event_shares': dict(shares), 'start_game_excluded': start['game_id']},
+                         'event_shares': dict(shares), 'start_game_excluded': start['game_id'],
+                         'temporal_eligibility': {
+                             'status': 'retrospective', 'as_of_date': None,
+                             'start_game_date': start['game_date'],
+                             'cell_rows_dated_after_start': len(future_rows),
+                             'cell_rows_total': len(cell),
+                             'note': 'pool is not restricted to games before the start state; this record is not an as-of-time simulation'}},
         'plays': [{
             'sequence': 1, 'id': f'e0-seed{args.seed}:1', 'event_type': event,
             'state_before': state_before,
@@ -229,7 +236,8 @@ def main():
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
                         'yards_gained': yards, 'touchdown': touchdown, 'turnover': flags['turnover_on_downs'],
                         'safety': flags['safety'], 'clock_runoff_seconds': None,
-                        'sampled_from': {'game_id': outcome_row['game_id'], 'play_id': int(outcome_row['play_id'])}},
+                        'sampled_from': {'game_id': outcome_row['game_id'], 'play_id': int(outcome_row['play_id']),
+                                         'game_date': outcome_row['game_date']}},
             'state_after': state_after,
         }],
         'provenance': {'outcomes': 'sampled_empirical_nfl_pbp', 'lineups': None, 'routes': None, 'motion': None,
