@@ -8,6 +8,12 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## E0 HANDOFF STATUS — 2026-10-24: pushed LP retrospective fixture
+
+On `feat/nfl-sequence-e0-2026-10-24`, remote head [`853f46f4`](https://github.com/micahp/legendarypicks/blob/853f46f4c78c0edab8138ee4c713b35ac96b7336/docs/SEQUENCE-E0-LP-INVENTORY-2026-10-24.md) provides the seed-1042 single-play demo and reproducible transition tests. It is **not as-of eligible**, as 1,016/5,572 comparison-cell plays occur after the October 5, 2025 start game. The [shared E0 gate status and adapter contract issues](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md) are current: maintain `mode=single_play_statistical_demo`, `valid_full_game=false`, `sources_as_of_verified=false`, unknown clock/score/timeouts/participants, and immutable LP outcomes. The proposed v1 contract's full-game mode is **not yet satisfied**. LP sequence agent should await explicit hermes2 adapter/field-direction/missing-value agreement and a passing transport demo before implementing E1. No prod edits/merges.
+
+Separately, [snap cohort reconciliation `23dfa70b`](https://github.com/micahp/legendarypicks/blob/23dfa70b563fd418ac216ab806a73f982362d0b1/docs/research/BDB2025-SNAP-COHORT-RECONCILIATION-2026-10-24.md) verifies 9,289 canonical plays, 99 extra **unknown-formation** plays in Gridiron (not confirmed special teams), and 68 LP exclusions outside its manifest (27 history, 24 blank formation, 17 snap definition). This supports movement research; it **does not block** E0/E1 game delivery.
+
 ## MOVEMENT RESEARCH STOP RULE — 2026-10-24
 
 Read [the coordinator's movement-policy materiality decision](https://github.com/micahp/gridiron-physics/blob/main/docs/research/MOVEMENT-POLICY-MATERIALITY-DECISION-2026-10-24.md). Agent-reported snap-anchored results show the legacy controller beating same-history constant acceleration by only **3.72 mm at 1 s**, despite statistically passing the prior threshold-free prereg rule. **Do not build a more complex movement model or spend weeks 6–9 holdout on this controller now.** Keep the original prereg, per-play artifacts, and this **post-development** materiality policy distinct: a future policy must deliver ≥0.05 m AND ≥5% paired game-weighted 1-second MAE lift plus a game-clustered interval below zero, without meaningful coherence/performance regression.
