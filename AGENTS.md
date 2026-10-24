@@ -8,6 +8,15 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## LATEST E1 VIEWER + OOB DECISION — 2026-10-24 (takes precedence)
+
+**Gridiron E1 repin DONE:** [`f2a00a09`](https://github.com/micahp/gridiron-physics/commit/f2a00a0973e901c7590220cd569dde80cdf6245c) is already pinned to LP `641e1b2ea7882389778a14e6c52b58583f7e9917`. Reports **25/25 Node tests**, E0a pass and ten Chromium DOM checks, plus `clock_clamped_plays` summary validation. The new LP SHA is **accepted as current read-only research pin**; earlier AGENTS text saying the viewer is still on `945754` is **stale historical status**. See [current LP integration decision](docs/research/E1-DRIVE-INTEGRATION-DECISION-2026-10-24.md).
+
+**LP must now finish A–D** in its research E1 branch: correct `gaps` quarter-change text, remove obsolete `end_of_period` in active terminal registry, null unavailable next-state `field.after` at Q2/Q4 terminal while preserving separately labeled final dead-ball position, fix play IDs to `<simulation_id>:<sequence>`. Regenerate ten fixtures/hashes, test exact new pin; **then** Gridiron repins again and runs all tests. Do not change full-game v1 contract or fabricate result/clock/kickoff/participants.
+
+**OOB threshold candidate NOT ADOPTED:** Gridiron [`1ea4ee63`](https://github.com/micahp/gridiron-physics/commit/1ea4ee63a98ecc379b36bc22e09acff3762ba320) reports mixed matched-event timing, unchanged median error, and worse unmatched-denominator spot-tail diagnostic. Existing center threshold stays. No more physics threshold sweeps needed or production change; keep weeks 6–9 held out. E2 coin toss, half-opening kickoffs (different kicking teams in normal mode), score/tries, restarts and game log are priority.
+
+
 ## E1 CROSS-REPO INTEGRATION DECISION — 2026-10-24
 
 **Binding handoff:** [`docs/research/E1-DRIVE-INTEGRATION-DECISION-2026-10-24.md`](docs/research/E1-DRIVE-INTEGRATION-DECISION-2026-10-24.md). LP E1 branch is **`641e1b2ea7882389778a14e6c52b58583f7e9917`**, one commit past the previously pinned `94575408`. It added honest FG-unknown and sampled/clamped-clock disclosures, plus `drive.clock_clamped_plays`. Gridiron E1 viewer `8f29df013d8281477c56247d410595854cba2e4b` works on **older 945754** fixtures only. **Choose the newer LP head as baseline but do NOT claim the current Grid viewer has tested it.** LP owner first resolves A: false `gaps` description of quarter changes; B: stale `reducer.TERMINALS.end_of_period`; C: `field.after` must be null when `state_after` has no next scrimmage LOS at Q2/Q4 terminal (retain distinctly labeled `outcome.final_play_yardline_100`); D: fix E1 play IDs to `<simulation_id>:<sequence>`. Rerun focused transition checks/survey/repro and regenerate all ten fixtures/hash table. Then tell hermes2 exact new pin.
