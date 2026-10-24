@@ -30,6 +30,21 @@ try {
 } catch (error) {
   out.adapter = { accepted: false, error: error.message };
 }
+try {
+  // The viewer requires a complete regulation record. A guarded seed is not one, so the default run refuses it; the same
+  // envelope is then validated structurally, with that requirement off, and its findings are reported.
+  const v = adapter.adaptLpGamePayload(payload, { requireCompleteRegulation: false });
+  out.adapterValidationOnly = {
+    accepted: true,
+    sourcePlayCount: v.sourcePlayCount,
+    validationPassed: v.validation.passed,
+    validationFindings: v.validation.findings.length,
+    footballStateFindings: v.footballStateAudit.finding_count,
+    sharedV1Violations: v.sharedV1Audit.violations,
+  };
+} catch (error) {
+  out.adapterValidationOnly = { accepted: false, error: error.message };
+}
 if (v1Path) {
   const doc = JSON.parse(await readFile(v1Path, 'utf8'));
   out.v1Document = { file: v1Path, violations: adapter.auditGridironContractV1Record(doc).violations };
