@@ -309,6 +309,7 @@ def check_drive(plays, terminal):
             'punts': sum(1 for p in plays if p['outcome']['punt']),
             'field_goal_attempts': sum(1 for p in plays if p['outcome']['field_goal_attempt']),
             'quarter_changes': sum(1 for p in plays if p['outcome']['quarter_change']),
+            'clock_clamped_plays': sum(1 for p in plays if p['outcome']['clock_clamped_to_zero']),
             'clock_runoff_total_seconds': sum(p['outcome']['clock_runoff_seconds'] for p in plays),
             'plays_with_negative_yards': sum(1 for p in plays if (p['outcome']['yards_gained'] or 0) < 0)}
 
@@ -365,7 +366,11 @@ def main():
                          'excluded_from_pool': dict(excluded), 'pool_sha256': pool_digest(pool),
                          'temporal_eligibility': {'status': 'retrospective', 'as_of_date': None,
                                                    'note': 'pool spans 2022-2025 with no as-of cutoff; not an as-of simulation'}},
-        'gaps': ['field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no result',
+        'gaps': ['field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no points and '
+                 'no next possession. The kickoff after a made kick and the change of possession after a missed kick are not modelled',
+                 'clock runoff is the interval between consecutive published snaps in the same quarter, sampled from observed plays. '
+                 'It is not a game-clock model: no clock-stop rules, timeouts or two-minute warning. A runoff longer than the '
+                 'remaining quarter time is clamped to zero and flagged per play, so the clock shows bookkeeping, not realistic clock behaviour',
                  'extra points, kickoffs, two-point tries: not modelled',
                  'penalties, quarter changes, timeouts, two-minute rules: not modelled',
                  'score, points and player stats: null; touchdown points are not computed',

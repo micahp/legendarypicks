@@ -12,6 +12,26 @@ This revision replaces the earlier draft. That draft ended drives at Q1 and Q3 e
 Its `end_of_period` terminal, survey and fixtures are superseded. They are kept in
 `docs/fixtures/e1/superseded-end-of-period-2026-10-24/`.
 
+## Handoff boundaries
+
+These two limits must travel with any handoff from E1. Passing `check_drive` does not remove either one.
+
+1. **A field-goal attempt has no result.** The `nfl_pbp` table has no field-goal result column. I checked for any column
+   name containing `kick`, `punt`, `field_goal` or `fg`, and found none. The
+   attempt is a terminal with no points and no next possession. A made kick's kickoff, and a missed kick's change of
+   possession, are not modelled. The next play after a field goal is usually a kickoff in the pool (3,071 of 4,325 field-goal
+   rows), which suggests a derivation, but that derivation is not implemented and has not been checked against any
+   result. Until it is, no record can reconcile points or the possession that follows a field-goal attempt.
+
+2. **Clock runoff is a sampled interval, not a clock model.** Runoff is the time between consecutive published snaps
+   in the same quarter. It is not a game-clock model: there are no clock-stop rules, timeouts or two-minute warning. A
+   runoff longer than the remaining quarter time is clamped to zero, and each play carries `clock_clamped_to_zero`.
+   Measured on the survey below (1,200 drives, four starts at 300 seeds each): **594 of 7,016 plays (8.5%) are clamped,
+   and 594 of 1,200 drives (49.5%) contain one.** In this sample each clamped drive has exactly one clamp, and it
+   leaves the clock at zero on the play that reaches it. Pooled runoffs across
+   138,235 plays have a median of 32 s, a 90th percentile of 44 s, and a maximum of 289 s. The checker verifies that the
+   clock is monotone and reconciles across plays. It does not verify that the clock is realistic.
+
 ## What the generator does
 
 - **Start.** An authored possession state from `STARTS` in `scripts/nfl_sequence/e1_drive.py`. The `dir` field is the
@@ -21,7 +41,7 @@ Its `end_of_period` terminal, survey and fixtures are superseded. They are kept 
   `field_goal_attempt`. The reducer applies the sampled outcome.
 - **Reducer.** `scripts/nfl_sequence/reducer.py`, shared with E0. A touchdown is decided from the state's own yardline,
   not from the sampled row's flag. A turnover or punt starts the receiving offense at the published spot of its next
-  snap. A field-goal attempt is a terminal with no result, because made or missed is not in the published columns.
+  snap. A field-goal attempt is a terminal with no result (boundary 1).
 - **Quarter and half transitions** (rules file, sections 2 and 3):
   - Q1 and Q3 expiry: both teams change ends. The drive and series continue, with no kickoff and no drive terminal.
     The start offense's direction flips.
@@ -40,7 +60,7 @@ The rules file, section 7, requires these before E2 can call a game complete:
 - **Points.** Touchdown, field-goal and safety points are not computed. There are no extra points, two-point tries, or
   post-score kickoffs.
 - **Participants and player stats.** Null. There is no pregame roster.
-- **Personnel and game time.** Not conditioned. Time enters only through the derived clock.
+- **Personnel and game time.** Not conditioned. Time enters only through the derived clock (boundary 2).
 - **Timeouts, two-minute warnings, penalties, overtime.** Not modelled. Penalty plays are excluded from the pool.
 - **Fourth downs.** The choice is sampled from the observed mix in the cell: go-for-it, punt or field-goal attempt. It is
   not conditioned on time or score, which the pool does not carry.
@@ -113,8 +133,10 @@ not a football estimate. The 4th-down mix is observed, and time and score are no
 - field-goal attempts have no next field position, and punts give the receiving spot;
 - each direction is +1 or −1, and each `los` is in 0–100.
 
+The checker is bookkeeping. It does not test the realism of runoff (boundary 2) or of field-goal outcomes (boundary 1).
+
 The drive summary is recomputed from the play records: plays, yards, first downs, turnovers, punts, field-goal attempts,
-quarter changes, clock runoff and negative-yardage plays.
+quarter changes, clock-clamped plays, clock runoff and negative-yardage plays.
 
 The transition tests (`scripts/nfl_sequence/test_e1_transitions.py`, eight tests) cover:
 
@@ -130,20 +152,20 @@ Run them with `python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py`.
 
 ## Fixtures (`docs/fixtures/e1/`)
 
-Each fixture was generated and rerun byte-identically.
+Each fixture was generated and rerun byte-identically after the boundary change.
 
 | File | Terminal | Plays | Yards | First downs | Quarter changes | Negative-yardage plays | SHA-256 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `12a5e26518966c8ef4ad3ed54f5f406b28d03374b2bd33b3f2072486f09eea38` |
-| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `c3404c15eae702e886ea8f0e9500fd8f08440ce83a2624a4f6e308fdecc9371a` |
-| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `cd1bf00a38257bf33935af9161cd39e0f5034f89d511f426de235b154c39b0b3` |
-| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `6eca1064d391e1510d69cd4f344a882286b9c0b77f4fa1eb461b9515d15bccdd` |
-| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `7c5d49a5a0cc39ed1e8d15e24217f0a210451b68a53a6fb6bbf9912ab569ac3b` |
-| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `67785be05b4ae869f4cc93387442f044214e6466e86b21892f9465ec6d37c9bf` |
-| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `19b866af330cd3315d9bfe28974f9c26972ac7c49e4c04313cc005b52c2c79b0` |
-| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `81e062cebc30b6bfd649a269deec8c16206438d2a6b53c8ad1745c2dbc7fcf95` |
-| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `eb8d0d8bafad81f3053233b87b7c47172bfe276de4d9d7e70488ff4845d61f3f` |
-| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `351e6197bc408e7474151d80e18871f4510ad69a7a3fda1e3831c86cb0bb5624` |
+| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `c3cf78967b9cf394804c6c86a0f863987c3430b66f2833cdca3fa80974dab40d` |
+| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `96cd33db943e73e51917e86ab12b92f3fb094bcf0866503a6a841a972909fec0` |
+| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `b06dffa0be7574fee7b741a87c1e2089ab923ff1fee79d9cd92ac83d240ebd66` |
+| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `018366250b5b8a8738069312a6f4d4fed9959417df5525fb6fe12eea511f525c` |
+| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `39da91b81900bb8f83ba5222172f684c52bafae06cc569e318656c0c7ebb5372` |
+| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `6da22cb335bc2625bab1742e172cbfcf846bc474f17630ef76a33fde1f2ead2b` |
+| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `adbc3cd901088ba84900dc52330a5719fe645741b9e09b5f939c326d34fda435` |
+| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `bc455d6e800fbc3f27a9dd4446c0482fa055150efafd1c0a39d779bc4691eceb` |
+| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `9ede265522d3e32aa12cc40cb32312ddaf0a4617c0df8079b37bdc00d9bf1bc2` |
+| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `1bf9bdfdd9ddee37e608762a135862ff19b58e865fad2ea56ae3b05b6909d91e` |
 
 What each fixture shows:
 
@@ -152,13 +174,13 @@ What each fixture shows:
 - **Turnover on downs in Q2:** the rules-file matrix row. The other offense takes over at the complementary spot, and the
   direction flips.
 - **Punt:** the receiving team starts at the published spot.
-- **Field-goal attempt:** terminal with no result.
+- **Field-goal attempt:** terminal with no result (boundary 1).
 - **Halftime:** Q2 expiry ends the first-half drive. There is no kickoff and no scrimmage state after the half.
 - **End of regulation:** Q4 expiry. Overtime is not modelled.
 - **Safety:** scrimmage state is null. The free kick is not modelled.
 - **Quarter change then punt:** Q1 and Q3 expiry each flip the direction and continue the drive with no kickoff.
 
-Each fixture's `gaps` list states that second-half kickoffs, points, participants and player stats are not modelled.
+Each fixture's `gaps` list states both boundaries, the second-half kickoff, points, participants and player stats.
 
 ## Reproduce
 
@@ -177,6 +199,9 @@ for the digest to match.
 
 - **Half-start kickoffs** are the largest open item. Until they are modelled and tested, E1 cannot establish the rules
   file's normal-game invariant, and no E1 output may be presented as a game.
+- **Field-goal results** (boundary 1). Points and the following possession cannot be reconciled until a made or missed
+  result is sourced or derived and tested.
+- **Clock realism** (boundary 2). Runoff is a sampled snap interval with quarter-end clamping, not a clock model.
 - **Touchdown points and score** are not computed, so score agreement with a play log cannot be tested.
 - **Sampling** uses observed plays from 2022–2025 with no as-of cutoff. The rules file notes that a pool containing future
   games does not validate a forecast, and this pool contains them.
