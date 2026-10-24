@@ -172,6 +172,11 @@ The first survey of this engine reported 6 matrix FAIL rows, in 6 seeds (76, 85,
   `976de8ea`: **Ran 75 tests, OK; failures 0, errors 0, skipped 0**. By module: `test_game_state.py` 46 (the 29 recorded above
   and 17 with no earlier record), `test_e1_transitions.py` 11, `test_shared_v1.py` 11, `test_kick_results.py` 4,
   `test_fixtures.py` 3. The 35 methods without an earlier record are all in this run.
+- Toss sampling, seeds 1–300 (2026-10-24): winner A 153, B 147; choice receive 155, defer 145, from `play_game` with no fixed
+  winner. The frozen survey CSV does not record the winner, so this count comes from the engine.
+- Later on the same branch, after the blocker work: `Ran 81 tests, OK; failures 0, errors 0, skipped 0`. Three added
+  methods were first shadowed by a duplicate class name (a `DriveIndex` class defined twice) and did not run until the
+  duplicate was renamed; the count above is the one that includes them.
 
 ## Kick outcomes in the dev database
 
