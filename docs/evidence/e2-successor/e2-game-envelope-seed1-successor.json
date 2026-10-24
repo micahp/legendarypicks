@@ -6,13 +6,13 @@
  "source": {
   "repository": "micahp/legendarypicks",
   "branch": "feat/nfl-sequence-e2-successor-2026-10-24",
-  "base_commit": "c131fda249dcf9af642dd6ba267905e88803a74a",
+  "base_commit": "bd5f338309a0729df5702e21c08689a0e67ec7fc",
   "producer_worktree_dirty": false,
   "producer_file_sha256": {
    "scripts/nfl_sequence/game_state.py": "d894ac82ba47015ea57f6355b4a252000ea7e71d07814beaf82c82ba9a5cf4f1",
    "scripts/nfl_sequence/rules_matrix.py": "84f5809798fd866430b0fc60633c26b786d250ebd99a2de17b85cdc412cbc767",
    "scripts/nfl_sequence/e1_drive.py": "0d606b2bbcfb17ff22a6a00a3cfafc2e0c44f1d85e2bb4c9317bf6175c477c5c",
-   "scripts/nfl_sequence/shared_v1.py": "54d79f68081b129d70db36917ecfcbb8015a47a63bdc1874705dfe451ef5d333"
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
   },
   "data_source": {
    "table": "nfl_pbp",
@@ -15962,6 +15962,7 @@
    "winner_deferred": false
   },
   "mode": "legal_game_state_first_piece",
+  "model_version": "c131fda249dcf9af642dd6ba267905e88803a74a",
   "points": {
    "A": 24,
    "B": 27
@@ -15997,6 +15998,7 @@
     "status": "pending_2026_rulebook"
    }
   ],
+  "rules_version": "5e60ed7ddeb81e3164091b816a00e4cae5e33c76163e92dc26c4547c49c63628",
   "scope_out": [],
   "seed": 1,
   "simulation_id": "e2-e1-empirical-v0-seed1",
