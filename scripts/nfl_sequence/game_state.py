@@ -1,27 +1,28 @@
-"""E2 first piece: coin-toss ledger, half-start kickoffs, and linkage of E1 drives into one game.
+"""E2 game: coin-toss ledger, kickoffs, scoring, clock management, and linkage of E1 drives into one regulation game.
 
-Scope in this piece:
-- the coin-toss ledger for the normal-game policy (docs/rules/NFL-2026-GAME-STATE-RULES.md, section 3 and 7):
-  the first-choice captain receives, and each team kicks off once per half;
+Scope:
+- the coin-toss ledger for the normal-game policy (docs/rules/NFL-2026-GAME-STATE-RULES.md, sections 1-3 and 7): the
+  first-choice captain receives, and each team kicks off once per half;
 - the two half-start kickoffs, derived from the ledger and validated;
-- restarts after scores (the scoring team kicks off), after a safety (the conceding team kicks the free kick), at
-  halftime (the second-half kickoff), and after punts and turnovers (the receiving team starts at its published spot);
-- field goals: made for 3 and a kickoff by the kicker, or missed and the other team takes over at the spot of the kick;
-- tries: after each touchdown (6 points), an extra point (1) or a two-point try (2), then the kickoff;
-- the clock carried between drives, and regulation end.
+- scoring: touchdowns (6, then a try: an extra point for 1, or a two-point try for 2), field goals (3, made or missed), and
+  safeties (2);
+- restarts after scores (the scoring team kicks off; a safety is a free kick by the conceding team), after halftime (the
+  second-half kickoff), and after punts and turnovers (the receiving team starts at its published spot);
+- clock management: quarters are 15 minutes, a quarter change keeps possession and the spot (no kickoff, rules section 2),
+  halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends
+  regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires in;
+- participants: each play carries the observed passer, rusher and receiver ids of the play it was sampled from, labelled
+  as such, and player and team lines are computed from the plays (game_stats.py).
 
-Kick outcomes are drawn from the published nfl_pbp rates (scripts/nfl_sequence/measure_kick_outcomes.py, 2022-2025,
-weeks 1-18): a field goal's make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and
-the share of post-touchdown attempts that were two-point tries. Each draw is a labelled sample from that published rate. It is not
-the outcome of a real game. A cell with fewer than MIN_KICK_N attempts blocks the game; nothing is filled from a
-neighbouring cell.
+Kick outcomes are drawn from the published nfl_pbp rates (measure_kick_outcomes.py, 2022-2025, weeks 1-18): a field goal's
+make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and the share of post-touchdown attempts
+that were two-point tries. Each draw is a labelled sample from a published rate, not the outcome of a real game. A cell with
+fewer than MIN_KICK_N attempts blocks the game, and nothing is filled from a neighbouring cell.
 
-Explicitly not modelled, and handled as branches that stop the game:
-- blocked kicks, returned misses and touchbacks: a missed kick gives the other team the spot of the kick;
-- restarts that cross a quarter end, including a score in the last seconds of a half;
-- a change of possession with the clock already at zero;
-- onside kicks, overtime, penalties, timeouts, the exception coin-toss paths (`explicit_exception_scenario`), and player
-  statistics (no participants are supplied).
+Explicitly not modelled. Each one is listed in every record's `unsupported_rules`, and the rules matrix marks it:
+timeouts (the published table has no timeout fields), the two-minute warning, penalties (E1 excludes penalty plays), onside
+kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`), the exception coin-toss paths, and
+lineups (participants are the players on the sampled observed plays, not this game's roster).
 
 Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
@@ -33,6 +34,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
+import game_stats  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
@@ -43,6 +45,16 @@ SAFETY_POINTS = 2
 TRY_POINTS = {'extra_point': 1, 'two_point': 2}
 FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
+UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
+                     'exception_coin_toss', 'lineups')
+SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
+GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw is a '
+        'labelled sample, not the result of a real game',
+        'blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick',
+        'timeouts, the two-minute warning, penalties, onside kicks, overtime and the exception coin-toss paths are not '
+        'modelled, and each is listed in unsupported_rules',
+        'participants are the players on the observed plays each simulated play was sampled from: they are labelled as '
+        'sampled, and they are not this game\'s roster, lineup or substitutions']
 
 
 def other(team, teams):
@@ -57,6 +69,34 @@ def fg_bucket(yardline_100):
     return '50+'
 
 
+def quarter_end_kind(quarter):
+    """What an expired clock means at the end of `quarter` when no play is left (rules file, sections 2-3)."""
+    if quarter in (1, 3):
+        return 'quarter_change'
+    if quarter == 2:
+        return 'halftime'
+    return 'regulation_end'
+
+
+class Reference:
+    """The observed data a game is drawn from. Built once by e2_reference.load().
+
+    `participants` maps (game_id, play_id) of an observed play to (passer, rusher, receiver) ids.
+    """
+
+    def __init__(self, pool, kickoff_pool, kicks, participants):
+        self.pool = pool
+        self.kickoff_pool = kickoff_pool
+        self.kicks = kicks
+        self.participants = participants
+
+    def participants_for(self, play):
+        src = play['outcome']['sampled_from']
+        passer, rusher, receiver = self.participants.get((src['game_id'], src['play_id']), (None, None, None))
+        return {'passer_id': passer, 'rusher_id': rusher, 'receiver_id': receiver,
+                'attribution': 'sampled_observed_play', 'sampled_from': src}
+
+
 class CoinTossLedger:
     """Normal-game coin-toss ledger for two teams, `winner` and `loser`.
 
@@ -69,7 +109,7 @@ class CoinTossLedger:
         if winner == loser:
             raise ValueError('winner and loser must differ')
         if mode == EXCEPTION_MODE:
-            raise NotImplementedError('explicit_exception_scenario is not implemented in the first E2 piece')
+            raise NotImplementedError('explicit_exception_scenario is not implemented in this E2 piece')
         if mode != NORMAL_MODE:
             raise ValueError(f'unknown policy mode {mode!r}')
         if winner_choice not in ('receive', 'defer'):
@@ -159,19 +199,6 @@ def build_kickoff_pool(rows):
     return pool, excluded
 
 
-def _restart(kind, kicker, receiver, quarter, clock, kickoff_pool, rng, events):
-    """Sample a kickoff from the pool and return (clock_after, spot), or (None, reason) if it cannot be placed."""
-    sample = rng.choice(kickoff_pool)
-    clock_after = clock - sample['runoff']
-    events.append({'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': quarter,
-                   'clock_before': clock, 'runoff_seconds': sample['runoff'], 'spot_yardline_100': sample['spot'],
-                   'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
-                              'game_date': sample['game_date']}})
-    if clock_after <= 0:
-        return None, 'restart_crosses_quarter_end'
-    return clock_after, sample['spot']
-
-
 def _draw(rng, cell, name):
     """A made or missed draw at the published rate of `cell` = (made, missed).
 
@@ -184,8 +211,7 @@ def _draw(rng, cell, name):
 
 
 def _try_after_touchdown(rng, kicks):
-    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra
-    point.
+    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra point.
 
     Returns (points, record, None), or (None, None, reason) when the cell it needs is too thin.
     """
@@ -198,140 +224,191 @@ def _try_after_touchdown(rng, kicks):
     return (TRY_POINTS[kind] if made else 0), {'kind': kind, 'made': made}, None
 
 
-def play_game(seed, pool, kickoff_pool, kicks, winner_choice=None, max_drives=80):
-    """Link E1 drives into one game under the normal-game policy. Returns a record; it never raises for a branch.
+class _Game:
+    """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
-    `kicks` is the published kick table (measure_kick_outcomes.load_kick_table). It is required, so a game is never
-    played with a silent default.
+    def __init__(self, seed, ref, ledger, rng):
+        self.seed = seed
+        self.ref = ref
+        self.ledger = ledger
+        self.rng = rng
+        self.kickoffs = ledger.half_start_kickoffs()
+        self.quarter, self.clock = 1, QUARTER_LENGTH
+        self.offense = self.defense = None
+        self.yl = self.down = self.togo = None
+        self.events, self.drives, self.boundaries = [], [], []
+        self.points = Counter()
+        self.status = None
+        self.blocker = None
+
+    def block(self, reason):
+        self.blocker, self.status = reason, 'blocked'
+
+    def _take_possession(self, offense, yl):
+        self.offense, self.defense = offense, other(offense, self.ledger.teams)
+        self.yl, self.down, self.togo = yl, 1, min(10, yl)
+
+    def _new_quarter(self, kind):
+        self.boundaries.append({'from_quarter': self.quarter, 'to_quarter': self.quarter + 1, 'kind': kind,
+                                'clock_before': 0, 'drive_index': len(self.drives)})
+        self.quarter += 1
+        self.clock = QUARTER_LENGTH
+
+    def _half_start(self):
+        """Halftime: the first half is over, and the second-half kickoff follows (rules file, section 3)."""
+        self.boundaries.append({'from_quarter': 2, 'to_quarter': 3, 'kind': 'halftime', 'clock_before': 0,
+                                'drive_index': len(self.drives)})
+        self.quarter, self.clock = 3, QUARTER_LENGTH
+        k = self.kickoffs[1]
+        self._kick('half_start', k['kicking_team'], k['receiving_team'])
+
+    def _kick(self, kind, kicker, receiver):
+        """A kickoff, sampled from the observed kickoff pool. A kick that runs the clock out ends the quarter on the return."""
+        sample = self.rng.choice(self.ref.kickoff_pool)
+        clock_before = self.clock
+        self.clock = max(0, self.clock - sample['runoff'])
+        self.events.append({'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': self.quarter,
+                            'clock_before': clock_before, 'runoff_seconds': sample['runoff'],
+                            'clock_clamped_to_zero': clock_before - sample['runoff'] < 0,
+                            'spot_yardline_100': sample['spot'], 'after_drive': len(self.drives),
+                            'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
+                                       'game_date': sample['game_date']}})
+        if self.clock > 0:
+            self._take_possession(receiver, sample['spot'])
+            return
+        boundary = quarter_end_kind(self.quarter)
+        if boundary == 'quarter_change':
+            self._new_quarter('change_of_ends_during_return')
+            self._take_possession(receiver, sample['spot'])
+        elif boundary == 'halftime':
+            self._half_start()
+        else:
+            self.status = 'complete_regulation'
+
+    def _apply(self, then):
+        if then[0] == 'possession':
+            self._take_possession(then[1], then[2])
+        else:
+            _, kind, kicker, receiver = then
+            self._kick(kind, kicker, receiver)
+
+    def _continue(self, then):
+        """The event that follows a play. An expired clock resolves the quarter first (rules file, sections 2-3)."""
+        if self.clock > 0:
+            self._apply(then)
+            return
+        boundary = quarter_end_kind(self.quarter)
+        if boundary == 'quarter_change':
+            self._new_quarter('change_of_ends')
+            self._apply(then)
+        elif boundary == 'halftime':
+            self._half_start()
+        else:
+            self.status = 'complete_regulation'
+
+    def _drive(self):
+        start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
+                 'yl': self.yl, 'down': self.down, 'togo': self.togo,
+                 'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
+        simulation_id = f'e2-{self.seed}-drive{len(self.drives) + 1}'
+        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, simulation_id)
+        if plays is None:
+            self.block(terminal)
+            return
+        e1.check_drive(plays, terminal)
+        for play in plays:
+            play['participants'] = self.ref.participants_for(play)
+        last = plays[-1]['state_after']
+        drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
+                 'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
+                 'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
+                 'points_scored_on_drive': None, 'field_goal_made': None}
+        self.drives.append(drive)
+        for play in plays:  # a quarter change inside a drive: the drive goes on (rules file, section 2)
+            if play['outcome']['quarter_change']:
+                self.boundaries.append({'from_quarter': play['state_before']['quarter'],
+                                        'to_quarter': play['state_after']['quarter'],
+                                        'kind': 'change_of_ends_mid_drive', 'drive_index': drive['index']})
+        self.quarter, self.clock = last['quarter'], last['clock_seconds']
+        if terminal == 'halftime':
+            self._half_start()
+        elif terminal == 'end_of_regulation':
+            self.status = 'complete_regulation'
+        elif terminal == 'field_goal_attempt':
+            kick_yl = plays[-1]['state_before']['yardline_100']
+            bucket = fg_bucket(kick_yl)
+            made, why = _draw(self.rng, self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
+            if why:
+                self.block(why)
+                return
+            drive['field_goal_made'] = made
+            if made:
+                self.points[self.offense] += FG_POINTS
+                drive['points_scored_on_drive'] = {'team': self.offense, 'points': FG_POINTS, 'try': None}
+                self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
+            else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
+                self._continue(('possession', self.defense, 100 - kick_yl))
+        elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
+            self._continue(('possession', last['offense_team'], last['yardline_100']))
+        elif terminal == 'touchdown':
+            scorer = self.offense
+            try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks)
+            if why:
+                self.block(why)
+                return
+            self.points[scorer] += TD_POINTS + try_points
+            drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
+            self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
+        elif terminal == 'safety':
+            scorer = self.defense
+            self.points[scorer] += SAFETY_POINTS
+            drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
+            self._continue(('kick', 'safety_free_kick', self.offense, scorer))
+        else:
+            self.block(f'unhandled_terminal:{terminal}')
+
+    def run(self, max_drives):
+        k = self.kickoffs[0]
+        self._kick('half_start', k['kicking_team'], k['receiving_team'])
+        while self.status is None:
+            if len(self.drives) >= max_drives:
+                self.block('drive_limit')
+                break
+            self._drive()
+        return self
+
+    def record(self):
+        tied = self.points['A'] == self.points['B']
+        status, blocker = self.status or 'blocked', self.blocker
+        if status == 'complete_regulation' and tied:
+            status, blocker = 'blocked', 'overtime_not_modelled'
+        complete = status == 'complete_regulation'
+        points = {'A': self.points['A'], 'B': self.points['B']}
+        return {
+            'mode': 'legal_game_state_first_piece', 'seed': self.seed,
+            'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
+            'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
+            'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
+            'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
+            'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
+            'unsupported_rules': list(UNSUPPORTED_RULES), 'gaps': GAPS,
+        }
+
+
+def play_game(seed, ref, winner_choice=None, max_drives=80):
+    """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
+
+    `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent default.
     """
     rng = random.Random(seed)
     choice = winner_choice or rng.choice(['receive', 'defer'])
     ledger = CoinTossLedger('A', 'B', choice)
-    kickoffs = ledger.half_start_kickoffs()
-    validate_half_start(kickoffs)
-    events, drives = [], []
-    points = Counter()
-    blocker = None
-    quarter, clock = 1, QUARTER_LENGTH
-    status = None
-
-    # Opening kickoff: Q1 half-start.
-    clock_after, spot = _restart('half_start', kickoffs[0]['kicking_team'], kickoffs[0]['receiving_team'],
-                                 1, clock, kickoff_pool, rng, events)
-    if clock_after is None:
-        blocker, status = spot, 'blocked'
-        spot = None
-    else:
-        clock = clock_after
-    offense = kickoffs[0]['receiving_team']
-    defense = other(offense, ledger.teams)
-    yl = spot
-    down, togo = 1, 10
-    while status is None:
-        if len(drives) >= max_drives:
-            blocker, status = 'drive_limit', 'blocked'
-            break
-        start = {'quarter': quarter, 'clock': clock, 'offense': offense, 'defense': defense, 'yl': yl, 'down': down,
-                 'togo': togo, 'dir': ledger.attacks_x100(offense, quarter)}
-        simulation_id = f'e2-{seed}-drive{len(drives) + 1}'
-        plays, terminal = e1.simulate(start, seed * 1000 + len(drives), pool, simulation_id)
-        if plays is None:
-            blocker, status = terminal, 'blocked'
-            break
-        e1.check_drive(plays, terminal)
-        last = plays[-1]['state_after']
-        drive = {'index': len(drives) + 1, 'offense_team': offense, 'quarter_start': quarter,
-                 'clock_start': clock, 'plays': len(plays), 'terminal': terminal,
-                 'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
-                 'points_scored_on_drive': None, 'field_goal_made': None}
-        drives.append(drive)
-        quarter, clock = last['quarter'], last['clock_seconds']
-        if terminal == 'end_of_regulation':
-            status = 'complete_regulation'
-            break
-
-        change = None  # (new offense, spot) when possession changes without a kickoff
-        restart = None  # (kind, kicker, receiver) when a kickoff follows
-        if terminal == 'field_goal_attempt':
-            kick_yl = plays[-1]['state_before']['yardline_100']
-            bucket = fg_bucket(kick_yl)
-            made, why = _draw(rng, kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
-            if why:
-                blocker, status = why, 'blocked'
-                break
-            drive['field_goal_made'] = made
-            if made:
-                points[offense] += FG_POINTS
-                drive['points_scored_on_drive'] = {'team': offense, 'points': FG_POINTS, 'try': None}
-                restart = ('post_field_goal', offense, other(offense, ledger.teams))
-            else:
-                change = (defense, 100 - kick_yl)  # the other team takes over at the spot of the kick
-        elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
-            change = (last['offense_team'], last['yardline_100'])
-        elif terminal == 'touchdown':
-            scorer = offense
-            try_points, try_record, why = _try_after_touchdown(rng, kicks)
-            if why:
-                blocker, status = why, 'blocked'
-                break
-            points[scorer] += TD_POINTS + try_points
-            drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
-            restart = ('post_score', scorer, other(scorer, ledger.teams))
-        elif terminal == 'safety':
-            scorer = defense
-            points[scorer] += SAFETY_POINTS
-            drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
-            restart = ('safety_free_kick', offense, scorer)
-        elif terminal == 'halftime':
-            quarter, clock = 3, QUARTER_LENGTH
-            restart = ('half_start', kickoffs[1]['kicking_team'], kickoffs[1]['receiving_team'])
-        else:
-            blocker, status = f'unhandled_terminal:{terminal}', 'blocked'
-            break
-
-        if change is not None:
-            if clock == 0:
-                blocker, status = 'possession_change_at_zero_clock', 'blocked'
-                break
-            offense, yl = change
-            defense = other(offense, ledger.teams)
-            down, togo = 1, min(10, yl)
-            continue
-
-        kind, kicker, receiver = restart
-        clock_after, spot = _restart(kind, kicker, receiver, quarter, clock, kickoff_pool, rng, events)
-        if clock_after is None:
-            blocker, status = spot, 'blocked'
-            break
-        clock = clock_after
-        offense, defense = receiver, kicker
-        yl, down, togo = spot, 1, 10
-
-    tied = points['A'] == points['B']
-    completed = status == 'complete_regulation'
-    record = {
-        'mode': 'legal_game_state_first_piece', 'seed': seed, 'valid_full_game': False,
-        'ledger': ledger.ledger(), 'kickoffs': events, 'drives': drives,
-        'points': {'A': points['A'], 'B': points['B']},
-        'status': status or 'blocked', 'blocker': blocker, 'tied': tied,
-        'final_quarter': quarter, 'final_clock_seconds': clock,
-        'gaps': ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): '
-                 'each draw is a labelled sample, not the result of a real game',
-                 'blocked kicks and returned misses are not modelled: a missed kick gives the other team the kick spot',
-                 'restarts that cross a quarter end, including a score in the last seconds of a half, block the game',
-                 'onside kicks, overtime, penalties, timeouts and the exception coin-toss paths are not modelled',
-                 'player statistics are null: no participants are supplied'],
-    }
-    record['valid_full_game'] = bool(completed and not tied and blocker is None)
-    return record
+    validate_half_start(ledger.half_start_kickoffs())
+    return _Game(seed, ref, ledger, rng).run(max_drives).record()
 
 
 def validate_game(record):
-    """Fail closed on every ledger and ordering invariant. Returns the list of checks that passed.
-
-    The recorded half-start kickoffs must equal the ledger's expected kickoffs. A game blocked before halftime has only
-    the Q1 kickoff, so the two-kickoff invariant applies only when the Q3 kickoff was reached.
-    """
+    """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed."""
     checks = []
     ledger = record['ledger']
     expected = CoinTossLedger(ledger['winner'], ledger['loser'], ledger['winner_choice'], ledger['policy_mode'])
@@ -348,25 +425,24 @@ def validate_game(record):
         validate_half_start([{'quarter': k['quarter'], 'kicking_team': k['kicking_team'],
                               'receiving_team': k['receiving_team'], 'reason': 'half_start'} for k in recorded_half])
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
-    elif record['final_quarter'] >= 3 and record['status'] == 'complete_regulation':
+    elif record['final_quarter'] >= 3 and record['complete_regulation']:
         raise AssertionError('a complete game must have two half-start kickoffs')
     by_team = Counter()
     for d in record['drives']:
         p = d['points_scored_on_drive']
-        last_drive = d is record['drives'][-1]
         if d['terminal'] == 'touchdown':
             if p is None:  # only a try that could not be drawn (a thin cell) leaves a touchdown unscored, and it blocks
-                if record['blocker'] is None or not last_drive:
-                    raise AssertionError(f'touchdown drive without a recorded try: {d}')
+                if record['blocker'] is None or d is not record['drives'][-1]:
+                    raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
             else:
                 t = p['try']
                 if t is None or t['kind'] not in TRY_POINTS:
-                    raise AssertionError(f'touchdown drive without a recorded try: {d}')
+                    raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
                 if p['points'] != TD_POINTS + (TRY_POINTS[t['kind']] if t['made'] else 0):
-                    raise AssertionError(f'touchdown points disagree with the try: {d}')
+                    raise AssertionError(f'touchdown points disagree with the try: {d["index"]}')
         if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is not None:
             if d['field_goal_made'] != bool(p):
-                raise AssertionError(f'field goal result disagrees with its points: {d}')
+                raise AssertionError(f'field goal result disagrees with its points: {d["index"]}')
         if p is not None:
             by_team[p['team']] += p['points']
     if by_team['A'] != record['points']['A'] or by_team['B'] != record['points']['B']:
@@ -379,7 +455,7 @@ def validate_game(record):
         quarter_prev = d['quarter_start']
     checks.append('quarters never decrease')
     if record['valid_full_game']:
-        if record['status'] != 'complete_regulation' or record['blocker'] is not None or record['tied']:
-            raise AssertionError('valid_full_game requires complete regulation, no blocker and no tie')
-    checks.append('valid_full_game only when complete, unblocked and untied')
+        if not record['complete_regulation'] or record['blocker'] is not None or record['tied'] or record['unsupported_rules']:
+            raise AssertionError('valid_full_game requires complete regulation, no blocker, no tie and no unsupported rule')
+    checks.append('valid_full_game only when complete, unblocked, untied and with no unsupported rule')
     return checks
