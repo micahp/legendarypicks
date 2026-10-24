@@ -3,9 +3,15 @@
 What was run, against what, and what it showed. Nothing in the Gridiron repository was changed. Its adapter was imported
 read-only, from a `git archive` of its committed tree and from its working tree, and both gave the same results.
 
+## Pins
+
+- LP base commit for the envelope: `1ca7560924fe` (full SHA in `docs/fixtures/e2/e2-game-envelope-seed1.json`).
+- Gridiron adapter: `/root/gridiron-e2-game-viewer` HEAD `854cea5` (committed tree, extracted with `git archive`).
+- Fixture manifest: `docs/fixtures/e2/MANIFEST.json`.
+
 ## Inputs
 
-- LP envelope: `docs/fixtures/e2/e2-game-envelope-seed1.json`. Contract `gridiron.lp-full-game-payload` 1.0.0, wrapping the
+- LP envelope: `docs/fixtures/e2/e2-game-envelope-seed1.json`, pinned to `1ca7560924fe`. Contract `gridiron.lp-full-game-payload` 1.0.0, wrapping the
   unaltered LP engine record for seed 1 (`docs/fixtures/e2/e2-game-seed1.json`). 24 drives, 143 plays.
 - LP shared v1 document: `docs/fixtures/e2/e2-game-seed1.v1.json`, produced by `scripts/nfl_sequence/shared_v1.py` from the
   same record.

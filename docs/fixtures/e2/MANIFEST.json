@@ -6,6 +6,11 @@
   "sha256": "ae7b8a304dda480c3708b2543172f3fdc5064b156bf1b25816855acf31bc21b7"
  },
  "fixtures": {
+  "e2-game-envelope-seed1.json": {
+   "base_commit": "1ca7560924fe",
+   "bytes": 410858,
+   "sha256": "b573713b10b2201c32a0827ab499a5b2b2a6d7de985ab05b7e4bfc51dce1f1a1"
+  },
   "e2-game-seed1.json": {
    "bytes": 415555,
    "sha256": "0a3ed1cb216fa3f23784b427d2bf6e68ac877ab1995fb86cd5998d35d5b47821"
