@@ -5,6 +5,7 @@ Run: python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py
 The generator is driven by a fake pool that always returns one observed play, so each test controls the outcome
 and the derived clock runoff. These tests cover transition legality, not the football distribution.
 """
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -113,6 +114,30 @@ class Reducer(unittest.TestCase):
         self.assertIsNone(after)
         self.assertEqual(terminal, 'field_goal_attempt')
         self.assertTrue(flags['field_goal_attempt'])
+
+
+FIXTURE_DIR = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e1'
+
+
+class Vocabulary(unittest.TestCase):
+    def test_terminals_constant_is_the_e1_vocabulary(self):
+        self.assertEqual(
+            reducer.TERMINALS,
+            ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt',
+             'halftime', 'end_of_regulation'))
+        self.assertNotIn('end_of_period', reducer.TERMINALS)
+
+    def test_pinned_records_use_exactly_the_terminals_in_the_constant(self):
+        used = set()
+        for path in FIXTURE_DIR.glob('*.json'):
+            record = json.loads(path.read_text())
+            terminal = record['plays'][-1]['state_after'].get('end_of_drive')
+            self.assertIsNotNone(terminal, path.name)
+            used.add(terminal)
+            for play in record['plays'][:-1]:
+                self.assertNotIn('end_of_drive', play['state_after'], path.name)
+        self.assertEqual(used, set(reducer.TERMINALS))
+        self.assertNotIn('end_of_period', used)
 
 
 if __name__ == '__main__':

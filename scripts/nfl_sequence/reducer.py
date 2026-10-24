@@ -14,7 +14,8 @@ Decisions:
 TURNOVER_EVENTS = ('interception', 'fumble_lost')
 DOWN_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')
 EVENT_VOCABULARY = DOWN_EVENTS + TURNOVER_EVENTS + ('punt', 'field_goal_attempt')
-TERMINALS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt', 'end_of_period')
+TERMINALS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt',
+             'halftime', 'end_of_regulation')
 FLAGS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt')
 
 
@@ -26,8 +27,9 @@ def apply_play(st, event, yards, spot=None):
     """Apply one sampled play. Returns (after, terminal, flags).
 
     `after` is the state at the next snap, or None when the drive ends with no next snap (touchdown, safety,
-    field-goal attempt). `terminal` is None when the drive goes on, otherwise one of TERMINALS except end_of_period,
-    which the drive loop decides from the clock.
+    field-goal attempt). `terminal` is None when the drive goes on, otherwise one of TERMINALS. The drive loop decides
+    `halftime` (Q2 expiry) and `end_of_regulation` (Q4 expiry) from the clock. A Q1 or Q3 expiry is a change of ends,
+    not a terminal, so `end_of_period` is not a terminal.
     """
     if event not in EVENT_VOCABULARY:
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
