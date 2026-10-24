@@ -1,5 +1,8 @@
 # NFL sequence generator, LP E1 drive status (2026-10-24)
 
+> **Superseded in part (2026-10-24, later).** The quarter-end rules below are wrong. Q1 and Q3 ends change ends and continue the drive, with no kickoff. Q2 ends at a `halftime` terminal, and Q4 ends at `end_of_regulation`. The `end_of_period` terminal, the survey numbers, and the fixtures in `docs/fixtures/e1/` predate that change and must be regenerated. See `docs/rules/NFL-2026-GAME-STATE-RULES.md` on legendarypicks dev.
+
+
 Stacked on `feat/nfl-sequence-e0-2026-10-24` (693e1767). Plan: `docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md`
 (Gridiron repo, main). E1 is LP's complete-drive gate.
 
