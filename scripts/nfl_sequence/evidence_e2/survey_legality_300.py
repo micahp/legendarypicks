@@ -49,6 +49,7 @@ def main():
         complete = bool(record['complete_regulation'])
         row = {'seed': seed, 'status': record['status'], 'blocker': record.get('blocker') or '',
                'complete_regulation': complete,
+               'complete_game': bool(record['complete_game']),
                'legal_modelled': lc.legal_modelled(record),
                'legal_complete_game': lc.legal_complete_game(record),
                'checker_failed_checks': ';'.join(failed),
@@ -77,6 +78,10 @@ def main():
         'complete_regulation': sum(1 for r in rows if r['complete_regulation']),
         'blocked_never_complete': all(not r['complete_regulation'] for r in rows if r['status'] == 'blocked'),
         'blocked_described_complete': sum(1 for r in rows if r['status'] == 'blocked' and r['complete_regulation']),
+        'complete_game': sum(1 for r in rows if r['complete_game']),
+        'regulation_end_guarded': sum(1 for r in rows if r['status'] == 'regulation_end_guarded'),
+        'guarded_described_complete': sum(1 for r in rows if r['unmodelled_transitions'] and (
+            r['status'] == 'complete_regulation' or r['complete_game'])),
         'validate_game_passed': len(rows),
         'scope_out_seeds': {reason: sum(1 for r in rows if reason in r['scope_out'].split(';'))
                             for reason in ('overtime', 'rare kick outcome', 'thin E1 pool cell', 'penalty', 'drive limit',

@@ -577,17 +577,20 @@ class _Game:
         if status == 'complete_regulation' and tied:
             status, blocker = 'blocked', 'overtime_not_modelled'
         complete = status == 'complete_regulation'
+        guarded = unmodelled_transitions(self.drives)
+        if complete and guarded:
+            status = 'regulation_end_guarded'  # the simulation reached regulation end, but it is not a complete game
         points = {'A': self.points['A'], 'B': self.points['B']}
-        scope_out = scope_out_reasons(blocker, complete, tied)
+        scope_out = scope_out_reasons(blocker, complete, tied) + guard_reasons(guarded)
         return {
             'mode': 'legal_game_state_first_piece', 'seed': self.seed, 'simulation_id': self.simulation_id,
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
             'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
-            'complete_game': bool(complete and blocker is None and not tied),
+            'complete_game': bool(complete and blocker is None and not tied and not guarded),
             'scope_out': scope_out,
-            'unmodelled_transitions': unmodelled_transitions(self.drives),
+            'unmodelled_transitions': guarded,
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
             'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
             'gaps': GAPS,
@@ -616,20 +619,40 @@ LATE_QUARTERS = (2, 4)
 
 
 def unmodelled_transitions(drives):
-    """The transitions the engine does not model, read from the plays: a penalty on a play, and a clock that crosses the
-    two-minute mark in the second or fourth quarter (the two-minute warning stops the clock there). The record carries the list;
-    the independent legality checker derives the same list from the plays and does not trust this one.
+    """The transitions the engine does not model, read from the drives and plays: a penalty on a play; a clock that crosses the
+    two-minute mark in the second or fourth quarter (the two-minute warning stops the clock there); a timeout stoppage, whose
+    time is inside the observed runoff; and a missed field goal awarded at the spot of the kick, without the receivers' touch
+    exception of Rule 11-4-2. Each one is guarded: a game that contains one is never a complete game. The record carries the
+    list; the independent checker derives the same list from the plays and does not trust this one.
     """
     found = []
     for d in drives:
+        if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
+            found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
+            if p['participants'].get('timeout'):
+                found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})
             b, a = p['state_before'], p['state_after']
             if b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter'] and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']:
                 found.append({'kind': 'two_minute_warning', 'drive_index': d['index'], 'sequence': p['sequence'],
                               'quarter': b['quarter']})
     return found
+
+
+UNMODELLED_GUARD = {'two_minute_warning': 'two_minute_warning', 'penalty': 'penalties', 'timeout': 'timeouts',
+                    'missed_field_goal_return': 'missed_field_goal_return'}
+KICKOFF_KINDS = ('half_start', 'post_score', 'post_field_goal', 'safety_free_kick')
+
+
+def guard_reasons(guarded):
+    """One scope reason per unmodelled kind that occurs, each naming the guard that scopes it out."""
+    reasons = []
+    for kind in sorted({t['kind'] for t in guarded}):
+        guard = UNMODELLED_GUARD[kind]
+        reasons.append({'reason': f'unmodelled transition: {kind}', 'detail': f"guard {guard}: {GUARDS[guard]['guard']}"})
+    return reasons
 
 
 def scope_out_reasons(blocker, complete, tied):
@@ -672,9 +695,15 @@ def validate_game(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
     """
     checks = []
-    # Scope refusals first: a record may not call a blocked or tied game complete, whatever its other fields say.
+    # Scope refusals first: a record may not call a blocked, tied or guarded game complete, whatever its other fields say.
     if record.get('blocker') is not None and (record.get('complete_regulation') or record.get('complete_game')):
         raise AssertionError(f"a blocked record ({record['blocker']}) is never described as a complete game")
+    if record.get('unmodelled_transitions') and (record.get('complete_game') or record.get('status') == 'complete_regulation'):
+        kinds = sorted({t['kind'] for t in record['unmodelled_transitions']})
+        raise AssertionError(f'a guarded game is never described as a complete game; it contains {kinds}')
+    for k in record.get('kickoffs', []):
+        if k['kind'] not in KICKOFF_KINDS:
+            raise AssertionError(f"kickoff kind outside the engine's vocabulary: {k['kind']!r} (onside kicks are not modelled)")
     if record.get('complete_regulation') and record['points']['A'] == record['points']['B']:
         raise AssertionError('a tied regulation game is not a complete game: overtime is not modelled (scoped out)')
     simulation_id = record.get('simulation_id')

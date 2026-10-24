@@ -229,15 +229,20 @@ def check_conversions(record):
 
 
 def check_unmodelled(record):
-    """Transitions the engine does not model, read from the plays themselves and not from the record's own list: a penalty on a
-    play, and a clock that crosses the two-minute mark in the second or fourth quarter (the two-minute warning stops the clock
-    there). A record with any of these is not a legal complete game, however it is labelled.
+    """Transitions the engine does not model, derived from the drives and plays, not from the record's own list: a penalty on a
+    play; a clock that crosses the two-minute mark in the second or fourth quarter (the warning stops the clock there); a
+    timeout stoppage whose time is inside the observed runoff; and a missed field goal awarded at the spot of the kick, without
+    the Rule 11-4-2 receivers' touch exception. A record with any of these is not a legal complete game, however it is labelled.
     """
     findings = []
     for d in record['drives']:
+        if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
+            findings.append(f'missed field goal return not modelled: drive {d["index"]}')
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
+            if p['participants'].get('timeout'):
+                findings.append(f'timeout stoppage not modelled: drive {d["index"]} play {p["sequence"]}')
             b, a = p['state_before'], p['state_after']
             if (b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter']
                     and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']):
