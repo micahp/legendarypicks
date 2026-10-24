@@ -17,7 +17,6 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import e1_drive as e1  # noqa: E402
 import game_state as gs  # noqa: E402
 
 CONTRACT_SHA256 = 'ae7b8a304dda480c3708b2543172f3fdc5064b156bf1b25816855acf31bc21b7'
@@ -178,8 +177,8 @@ def build_document(record, legacy_seed_label=None):
         'scheduled_kickoff_utc': None,
         'as_of_utc': None,
         'snapshot_hash': None,
-        'model_version': e1.MODEL_VERSION,
-        'rules_version': 'nfl-2026-regular-season',
+        'model_version': record['model_version'],  # stamped by versions.stamp; a record without it fails here
+        'rules_version': record['rules_version'],
         'seed': record['seed'],
         'teams': {'home': 'A', 'away': 'B'},
         'roster_snapshot_id': None,

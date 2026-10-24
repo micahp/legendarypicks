@@ -14,6 +14,7 @@ import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
 import rules_matrix as rm  # noqa: E402
 import shared_v1 as sv  # noqa: E402
+import versions  # noqa: E402
 
 
 def main():
@@ -27,8 +28,9 @@ def main():
     complete = valid = drives_total = points_total = drives_max = 0
     reached_q3 = 0
     per_seed = []
+    stamps = versions.stamp({})  # one clean-tree check for the run; the stamps are the same for every game
     for seed in range(1, args.games + 1):
-        record = gs.play_game(seed, ref)
+        record = {**gs.play_game(seed, ref), **stamps}
         gs.validate_game(record)
         rows = rm.check(record)
         per_seed.append({'seed': seed, 'status': record['status'], 'blocker': record['blocker'] or '',
