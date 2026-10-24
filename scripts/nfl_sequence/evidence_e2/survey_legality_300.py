@@ -5,6 +5,10 @@ outcome with the frozen per-seed survey (docs/fixtures/e2/survey-per-seed-300.cs
 The engine plays the games. The legality checker (legality_check.py) judges them and imports nothing from the engine. The
 matrix count is taken from rules_matrix as the frozen survey took it, so the two counts can be compared directly.
 
+Two verdicts are reported and kept apart. `legal_modelled` is consistency under the modelled rules. `legal_complete_game`
+also requires complete regulation and no unmodelled transition (penalty, two-minute warning). A complete game that crosses
+2:00 in a late half is therefore legal under the modelled rules and is not a legal complete game.
+
 Writes one row per seed and a summary. Usage: python3 survey_legality_300.py [--out-dir DIR]
 """
 import argparse
@@ -39,12 +43,16 @@ def main():
     rows, mismatches = [], []
     for seed in range(1, 301):
         record = gs.play_game(seed, ref)
-        findings = lc.run(record)
-        failed = sorted(k for k, v in findings.items() if v)
+        failed = sorted(k for k, v in lc.run(record).items() if v)
         matrix_fail = sum(1 for r in rm.check(record) if r['status'] == 'FAIL')
         complete = bool(record['complete_regulation'])
         row = {'seed': seed, 'status': record['status'], 'blocker': record.get('blocker') or '',
-               'complete_regulation': complete, 'checker_legal': not failed, 'checker_failed_checks': ';'.join(failed),
+               'complete_regulation': complete,
+               'legal_modelled': lc.legal_modelled(record),
+               'legal_complete_game': lc.legal_complete_game(record),
+               'checker_failed_checks': ';'.join(failed),
+               'try_findings': len(lc.check_conversions(record)),
+               'unmodelled_transitions': len(record.get('unmodelled_transitions') or []),
                'matrix_fail': matrix_fail}
         rows.append(row)
         old = frozen[seed]
@@ -55,7 +63,7 @@ def main():
                                                                             ('status', 'blocker', 'complete_game',
                                                                              'matrix_fail')}})
         if seed % 50 == 0:
-            print(f'seed {seed}: {sum(1 for r in rows if r["checker_legal"])} legal so far', flush=True)
+            print(f'seed {seed}: {sum(1 for r in rows if r["legal_modelled"])} legal_modelled so far', flush=True)
 
     with open(out_dir / 'legality-survey-300.csv', 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
@@ -66,8 +74,12 @@ def main():
         'status': dict(Counter(r['status'] for r in rows)),
         'complete_regulation': sum(1 for r in rows if r['complete_regulation']),
         'blocked_never_complete': all(not r['complete_regulation'] for r in rows if r['status'] == 'blocked'),
-        'checker_legal': sum(1 for r in rows if r['checker_legal']),
-        'checker_illegal': [r['seed'] for r in rows if not r['checker_legal']],
+        'legal_modelled': sum(1 for r in rows if r['legal_modelled']),
+        'legal_modelled_illegal': [r['seed'] for r in rows if not r['legal_modelled']],
+        'legal_complete_game': sum(1 for r in rows if r['legal_complete_game']),
+        'complete_but_unmodelled': sum(1 for r in rows if r['complete_regulation'] and r['unmodelled_transitions']),
+        'records_with_unmodelled_transitions': sum(1 for r in rows if r['unmodelled_transitions']),
+        'try_findings_total': sum(r['try_findings'] for r in rows),
         'matrix_fail_rows': sum(r['matrix_fail'] for r in rows),
         'matches_frozen_survey': len(rows) - len(mismatches),
         'mismatches_vs_frozen': mismatches,

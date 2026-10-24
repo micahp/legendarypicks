@@ -1,5 +1,6 @@
-"""Tests for the independent legality checker: the frozen seed-1 record must pass, and each negative fixture (a mutated copy
-of it) must fail the named check. Nothing here imports the engine.
+"""Tests for the independent legality checker. The successor seed-1 record must pass the modelled checks. Each negative fixture (a
+mutated copy of it, or the frozen record) must fail the named check. A record with an unmodelled penalty or two-minute-warning
+transition must not pass as a legal complete game. Nothing here imports the engine.
 
 Run: python3 -m unittest scripts/nfl_sequence/evidence_e2/test_legality.py
 """
@@ -13,13 +14,19 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import legality_check as lc  # noqa: E402
 
-SEED1 = HERE.parents[2] / 'docs' / 'fixtures' / 'e2' / 'e2-game-seed1.json'
+ROOT = HERE.parents[2]
+SUCCESSOR_SEED1 = ROOT / 'docs' / 'evidence' / 'e2-successor' / 'seed1-game-successor.json'
+FROZEN_SEED1 = ROOT / 'docs' / 'fixtures' / 'e2' / 'e2-game-seed1.json'
+
+
+def load(path):
+    with open(path) as f:
+        record = json.load(f)
+    return copy.deepcopy(record.get('record', record))
 
 
 def seed1():
-    with open(SEED1) as f:
-        record = json.load(f)
-    return copy.deepcopy(record.get('record', record))
+    return load(SUCCESSOR_SEED1)
 
 
 def failed_checks(record):
@@ -34,23 +41,48 @@ def first_same_quarter_pair(record):
     raise AssertionError('no two consecutive plays in one quarter')
 
 
-class Positive(unittest.TestCase):
-    def test_the_frozen_seed_one_record_is_legal(self):
-        self.assertEqual(failed_checks(seed1()), set())
+def first_try_drive(record):
+    for d in record['drives']:
+        if (d.get('points_scored_on_drive') or {}).get('try') is not None:
+            return d
+    raise AssertionError('no drive with a try record')
 
-    def test_a_blocked_record_that_is_not_complete_is_legal(self):
+
+UNMODELLED = {'check_unmodelled'}
+
+
+class Positive(unittest.TestCase):
+    def test_the_successor_seed_one_record_is_legal_under_the_modelled_rules(self):
+        self.assertTrue(lc.legal_modelled(seed1()))
+        self.assertEqual(failed_checks(seed1()) - UNMODELLED, set())
+
+    def test_a_blocked_record_that_is_not_complete_is_legal_under_the_modelled_rules(self):
         record = seed1()
         record['status'], record['blocker'] = 'blocked', 'overtime_not_modelled'
         record['complete_regulation'] = record['complete_game'] = False
-        self.assertEqual(failed_checks(record), set())
+        self.assertTrue(lc.legal_modelled(record))
+        self.assertEqual(failed_checks(record) - UNMODELLED, set())
 
 
-class NegativeFixtures(unittest.TestCase):
-    """Each fixture must fail: the named check, and the checker as a whole."""
+class ScopeGuard(unittest.TestCase):
+    """The two-minute warning is not modelled. A complete game that crosses 2:00 in the second or fourth quarter is legal under
+    the modelled rules and is not a legal complete game."""
 
+    def test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing(self):
+        record = seed1()
+        self.assertTrue(record['complete_regulation'])
+        self.assertTrue(record['unmodelled_transitions'], 'seed one crosses 2:00 in a late half')
+        self.assertFalse(lc.legal_complete_game(record))
+
+
+class Fails(unittest.TestCase):
     def assertFails(self, record, check):
         failed = failed_checks(record)
         self.assertIn(check, failed, f'expected {check}, got {sorted(failed)}')
+
+
+class NegativeFixtures(Fails):
+    """Each fixture must fail: the named check, and the checker as a whole."""
 
     def test_a_clock_that_rises_inside_a_quarter(self):
         record = seed1()
@@ -132,14 +164,55 @@ class NegativeFixtures(unittest.TestCase):
         self.fail('seed one has no touchdown drive to mutate')
 
 
-class FixtureSplit(unittest.TestCase):
-    """The evidence counts these tests as 14 in total: two positive and twelve negative fixtures. This test pins the split so
-    the count in the evidence can be checked against this file."""
+class TryFieldNegatives(Fails):
+    """The publisher result field on every extra-point and two-point try."""
 
-    def test_two_positive_and_twelve_negative_fixtures(self):
+    def test_the_frozen_seed_one_record_fails_because_its_tries_lack_the_publisher_field(self):
+        # The frozen record's three extra-point tries are {kind, made}: the Codex ingest guard rejects them for that reason.
+        record = load(FROZEN_SEED1)
+        self.assertIn('check_conversions', failed_checks(record))
+        findings = lc.check_conversions(record)
+        self.assertEqual(len(findings), 3)
+        self.assertTrue(all('lacks the publisher field extra_point_result' in f for f in findings))
+
+    def test_a_try_result_that_disagrees_with_its_made_flag_fails(self):
+        record = seed1()
+        drive = first_try_drive(record)
+        drive['points_scored_on_drive']['try']['extra_point_result'] = 'failed'  # made is True on this try
+        self.assertFails(record, 'check_conversions')
+
+    def test_an_epa_style_success_flag_fails_a_try(self):
+        record = seed1()
+        drive = first_try_drive(record)
+        drive['points_scored_on_drive']['try']['success'] = True
+        self.assertFails(record, 'check_conversions')
+
+
+class UnmodelledNegatives(Fails):
+    """A penalty transition, or a two-minute warning the record does not model, cannot pass as a legal complete game."""
+
+    def test_a_penalty_transition_cannot_pass_as_a_legal_complete_game(self):
+        record = seed1()
+        record['drives'][0]['plays'][0]['outcome']['penalty'] = True  # negative fixture
+        self.assertIn('check_unmodelled', failed_checks(record))
+        self.assertFalse(lc.legal_complete_game(record))
+
+    def test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list(self):
+        record = seed1()
+        record.pop('unmodelled_transitions', None)  # negative fixture: the record no longer lists its transitions
+        self.assertIn('check_unmodelled', failed_checks(record))
+        self.assertFalse(lc.legal_complete_game(record))
+
+
+class FixtureSplit(unittest.TestCase):
+    """The counts of these tests, pinned so the evidence can be checked against this file: two positive fixtures and eighteen
+    negative fixtures (twenty tests in total, with this count test itself excluded)."""
+
+    def test_two_positive_and_eighteen_negative_fixtures(self):
         positive = [m for m in vars(Positive) if m.startswith('test_')]
-        negative = [m for m in vars(NegativeFixtures) if m.startswith('test_')]
-        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 12, 14))
+        negative = [m for cls in (NegativeFixtures, TryFieldNegatives, UnmodelledNegatives, ScopeGuard)
+                    for m in vars(cls) if m.startswith('test_')]
+        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 18, 20))
 
 
 if __name__ == '__main__':

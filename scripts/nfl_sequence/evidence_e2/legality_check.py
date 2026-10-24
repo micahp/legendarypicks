@@ -197,17 +197,81 @@ def check_events(record):
     return findings
 
 
-CHECKS = (check_blocked, check_completion, check_points, check_drives, check_clock_and_quarter,
-          check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events)
+TRY_FIELDS = {'extra_point': ('extra_point_result', {'good': True, 'failed': False}),
+              'two_point': ('two_point_conv_result', {'success': True, 'failure': False})}
+TWO_MINUTE_MARK = 120
+LATE_QUARTERS = (2, 4)
+
+
+def check_conversions(record):
+    """Every extra-point and two-point try carries its publisher result field, with a value that matches its made flag. An
+    EPA-derived `success` flag is never accepted as a try result, and a touchdown needs a try record unless the game is blocked.
+    """
+    findings = []
+    for d in record['drives']:
+        t = (d.get('points_scored_on_drive') or {}).get('try')
+        if t is None:
+            if d['terminal'] == 'touchdown' and record.get('status') != 'blocked':
+                findings.append(f'drive {d["index"]}: a touchdown with no try record')
+            continue
+        kind = t.get('kind')
+        if kind not in TRY_FIELDS:
+            findings.append(f'drive {d["index"]}: try kind {kind!r} has no publisher field')
+            continue
+        field, values = TRY_FIELDS[kind]
+        if field not in t:
+            findings.append(f'drive {d["index"]}: {kind} try lacks the publisher field {field}')
+        elif values.get(t[field]) is None or values[t[field]] != bool(t.get('made')):
+            findings.append(f'drive {d["index"]}: {kind} try {field}={t[field]!r} disagrees with made={t.get("made")!r}')
+        if 'success' in t or any('epa' in k.lower() for k in t):
+            findings.append(f'drive {d["index"]}: {kind} try carries an EPA-derived success flag')
+    return findings
+
+
+def check_unmodelled(record):
+    """Transitions the engine does not model, read from the plays themselves and not from the record's own list: a penalty on a
+    play, and a clock that crosses the two-minute mark in the second or fourth quarter (the two-minute warning stops the clock
+    there). A record with any of these is not a legal complete game, however it is labelled.
+    """
+    findings = []
+    for d in record['drives']:
+        for p in d['plays']:
+            if p['outcome'].get('penalty'):
+                findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
+            b, a = p['state_before'], p['state_after']
+            if (b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter']
+                    and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']):
+                findings.append(f'two-minute warning transition not modelled: drive {d["index"]} play {p["sequence"]} '
+                                f'crosses 2:00 in Q{b["quarter"]}')
+    return findings
+
+
+MODELLED_CHECKS = (check_blocked, check_completion, check_points, check_drives, check_clock_and_quarter,
+                   check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events,
+                   check_conversions)
+UNMODELLED_CHECKS = (check_unmodelled,)
+CHECKS = MODELLED_CHECKS + UNMODELLED_CHECKS
 
 
 def run(record):
-    """{check name: findings} for every check."""
+    """{check name: findings} for every check, modelled and unmodelled."""
     return {fn.__name__: fn(record) for fn in CHECKS}
 
 
+def legal_modelled(record):
+    """Every check on what the engine models passes. Unmodelled transitions are not judged here."""
+    return all(not findings for fn in MODELLED_CHECKS for findings in [fn(record)])
+
+
+def legal_complete_game(record):
+    """A legal complete game: consistent under the modelled rules, complete regulation, and with no unmodelled transition."""
+    return (legal_modelled(record) and bool(record.get('complete_regulation'))
+            and not check_unmodelled(record))
+
+
 def legal(record):
-    return all(not findings for findings in run(record).values())
+    """Kept for the earlier evidence: the modelled-rule verdict."""
+    return legal_modelled(record)
 
 
 def main():
@@ -216,8 +280,9 @@ def main():
     record = record.get('record', record)
     results = run(record)
     failed = {k: v for k, v in results.items() if v}
-    print(json.dumps({'legal': not failed, 'checks': len(results), 'failed': failed}, indent=1))
-    return 0 if not failed else 1
+    print(json.dumps({'legal_modelled': legal_modelled(record), 'legal_complete_game': legal_complete_game(record),
+                      'checks': len(results), 'failed': failed}, indent=1))
+    return 0 if legal_modelled(record) else 1
 
 
 if __name__ == '__main__':

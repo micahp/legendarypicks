@@ -152,7 +152,8 @@ class Scoring(unittest.TestCase):
         self.assertGreaterEqual(len(post), 1)
         self.assertEqual(post[0]['kicking_team'], scorer, 'the team that scored kicks off next')
         self.assertEqual(record['points'][scorer], 7, 'a touchdown and a made extra point')
-        self.assertEqual(record['drives'][0]['points_scored_on_drive']['try'], {'kind': 'extra_point', 'made': True})
+        self.assertEqual(record['drives'][0]['points_scored_on_drive']['try'],
+                         {'kind': 'extra_point', 'made': True, 'extra_point_result': 'good'})
         gs.validate_game(record)
 
     def test_a_missed_extra_point_scores_six(self):
@@ -170,7 +171,47 @@ class Scoring(unittest.TestCase):
         scorer = record['drives'][0]['offense_team']
         self.assertEqual(record['points'][scorer], 8)
         self.assertEqual(record['drives'][0]['points_scored_on_drive']['try']['kind'], 'two_point')
+        self.assertEqual(record['drives'][0]['points_scored_on_drive']['try'],
+                         {'kind': 'two_point', 'made': True, 'two_point_conv_result': 'success'})
         gs.validate_game(record)
+
+
+class TryPublisherField(unittest.TestCase):
+    """Every extra-point and two-point record carries its publisher result field, with the publisher's value for its made flag.
+    No record carries an EPA-derived `success` flag. A try without the field is rejected."""
+
+    def test_every_extra_point_and_two_point_try_carries_its_publisher_field(self):
+        two_point_kicks = certain_kicks()
+        two_point_kicks['two_point'], two_point_kicks['extra_point'] = (60, 0), (0, 0)
+        for kicks, kind, field, value in ((certain_kicks(), 'extra_point', 'extra_point_result', 'good'),
+                                          (two_point_kicks, 'two_point', 'two_point_conv_result', 'success')):
+            record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), kicks), winner_choice='receive',
+                                  max_drives=1)
+            t = record['drives'][0]['points_scored_on_drive']['try']
+            self.assertEqual((t['kind'], t[field], t['made']), (kind, value, True))
+            self.assertNotIn('success', t)
+            gs.validate_game(record)
+
+    def test_a_missed_try_carries_the_failed_value(self):
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), certain_kicks(ep_made=False)),
+                              winner_choice='receive', max_drives=1)
+        t = record['drives'][0]['points_scored_on_drive']['try']
+        self.assertEqual(t, {'kind': 'extra_point', 'made': False, 'extra_point_result': 'failed'})
+
+    def test_a_try_without_its_publisher_field_is_rejected(self):
+        # Negative fixture: the try is the frozen seed-one shape, {kind, made}, with no publisher field.
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), certain_kicks()),
+                              winner_choice='receive', max_drives=1)
+        del record['drives'][0]['points_scored_on_drive']['try']['extra_point_result']
+        with self.assertRaises(AssertionError):
+            gs.validate_game(record)
+
+    def test_an_epa_style_success_flag_in_a_try_is_rejected(self):
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), certain_kicks()),
+                              winner_choice='receive', max_drives=1)
+        record['drives'][0]['points_scored_on_drive']['try']['success'] = True  # negative fixture
+        with self.assertRaises(AssertionError):
+            gs.validate_game(record)
 
     def test_a_made_field_goal_scores_three_and_the_kicker_kicks_off(self):
         fg = ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(), certain_kicks(fg_made=True))
@@ -523,6 +564,28 @@ class TimeoutCharges(unittest.TestCase):
         self.assertEqual(min(first_half), 0)
         second_half = [home for quarter, home, _ in states if quarter in (3, 4)]
         self.assertIn(3, second_half, 'the count resets to three at halftime')
+
+
+class UnmodelledTransitions(unittest.TestCase):
+    """Penalties and the two-minute warning are not modelled. A sampled penalty blocks the game; a two-minute crossing is listed in
+    the record, so the record cannot be read as a complete game without it."""
+
+    def test_a_sampled_penalty_blocks_the_game_and_is_not_completed(self):
+        pool = StaticPool('run', 10, 30)
+        for entry in pool.entries:
+            entry[1]['penalty'] = 1  # every sampled play is a penalty play: negative fixture
+        record = gs.play_game(1, ref(pool, kickoff_pool()), winner_choice='receive', max_drives=3)
+        self.assertEqual(record['status'], 'blocked')
+        self.assertEqual(record['blocker'], 'penalty_not_modelled')
+        self.assertFalse(record['complete_regulation'])
+        self.assertFalse(record['valid_full_game'])
+
+    def test_a_two_minute_crossing_is_listed_in_the_record(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
+        crossings = [t for t in record['unmodelled_transitions'] if t['kind'] == 'two_minute_warning']
+        self.assertTrue(crossings, 'a 100-second runoff crosses 2:00 in a late half')
+        self.assertTrue(all(t['quarter'] in (2, 4) for t in crossings))
+        self.assertFalse(record['valid_full_game'])
 
 
 class FiveSecondKick(unittest.TestCase):
