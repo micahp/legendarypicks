@@ -156,16 +156,16 @@ Each fixture was generated and rerun byte-identically after the boundary change.
 
 | File | Terminal | Plays | Yards | First downs | Quarter changes | Negative-yardage plays | SHA-256 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `c3cf78967b9cf394804c6c86a0f863987c3430b66f2833cdca3fa80974dab40d` |
-| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `96cd33db943e73e51917e86ab12b92f3fb094bcf0866503a6a841a972909fec0` |
-| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `b06dffa0be7574fee7b741a87c1e2089ab923ff1fee79d9cd92ac83d240ebd66` |
-| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `018366250b5b8a8738069312a6f4d4fed9959417df5525fb6fe12eea511f525c` |
-| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `39da91b81900bb8f83ba5222172f684c52bafae06cc569e318656c0c7ebb5372` |
-| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `6da22cb335bc2625bab1742e172cbfcf846bc474f17630ef76a33fde1f2ead2b` |
-| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `adbc3cd901088ba84900dc52330a5719fe645741b9e09b5f939c326d34fda435` |
-| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `bc455d6e800fbc3f27a9dd4446c0482fa055150efafd1c0a39d779bc4691eceb` |
-| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `9ede265522d3e32aa12cc40cb32312ddaf0a4617c0df8079b37bdc00d9bf1bc2` |
-| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `1bf9bdfdd9ddee37e608762a135862ff19b58e865fad2ea56ae3b05b6909d91e` |
+| `own25_q1_900-seed6-touchdown.json` | touchdown | 11 | 77 | 4 | 0 | 1 | `623d6e564e0d4bd370fc253f4fa41c20be1a530c44c05a239327e2a8e60064ab` |
+| `own25_q1_900-seed12-turnover.json` | turnover | 4 | 21 | 1 | 0 | 0 | `768dc6e344d73c244acae2467ba1e36ed7121e210e875512dc1bdfb9f2a8d994` |
+| `own25_q1_900-seed1-punt.json` | punt | 7 | 26 | 2 | 0 | 0 | `0d92a4eb920d785a3f20084b6075a540fd76af597f8e036761ad4f292a3dfd46` |
+| `own25_q1_900-seed2-field_goal_attempt.json` | field_goal_attempt | 12 | 55 | 4 | 0 | 2 | `85c87a777947de72ea0fda06422d21f5650a21ec1c415c6c5fc7d320f9041816` |
+| `own25_q2_120-seed15-turnover_on_downs.json` | turnover_on_downs | 4 | −9 | 0 | 0 | 2 | `4780350629f3029637172731f3fef0f87c38120a438e489411457a086064bf95` |
+| `own25_q2_120-seed1-halftime.json` | halftime | 4 | 22 | 2 | 0 | 0 | `1ec51f3c3d55777391ab031d37faa44457c67b89289b96e24e480e257d31987b` |
+| `own25_q4_150-seed1-end_of_regulation.json` | end_of_regulation | 5 | 26 | 2 | 0 | 0 | `8576bebaa38e1d894d718d08be1c4cb7a4b8db29271ae20d7a4c8d985ad75397` |
+| `own5_q1_900-seed14-safety.json` | safety | 3 | −18 | 0 | 0 | 2 | `17f53ea8cc5c77ce9e5c173189b41a0771acab90ef59405829f393ea5758a6f6` |
+| `own25_q1_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `d622ca9cfe9f051ea5348fb7343c5e4b22daeb532793bba7555dd373d28868f4` |
+| `own25_q3_060-seed1-quarter_change_then_punt.json` | punt | 7 | 26 | 2 | 1 | 0 | `71f8f43bb9af9d441a23d9f3d9b8162be401de859ad7e964d2a84975df8b04f0` |
 
 What each fixture shows:
 

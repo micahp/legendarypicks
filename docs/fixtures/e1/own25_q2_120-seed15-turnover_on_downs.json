@@ -17,7 +17,7 @@
     "field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no points and no next possession. The kickoff after a made kick and the change of possession after a missed kick are not modelled",
     "clock runoff is the interval between consecutive published snaps in the same quarter, sampled from observed plays. It is not a game-clock model: no clock-stop rules, timeouts or two-minute warning. A runoff longer than the remaining quarter time is clamped to zero and flagged per play, so the clock shows bookkeeping, not realistic clock behaviour",
     "extra points, kickoffs, two-point tries: not modelled",
-    "penalties, quarter changes, timeouts, two-minute rules: not modelled",
+    "not modelled: kickoff after a score, second-half choices and kickoff, real clock-stop rules (timeouts, two-minute warning, out-of-bounds stoppage), penalties",
     "score, points and player stats: null; touchdown points are not computed",
     "participants: null; no pregame roster",
     "punt yardage is not recorded: a punt gives the receiving spot only",
@@ -25,7 +25,7 @@
     "turnovers that are touchdowns excluded from the pool",
     "personnel is not conditioned; game time is conditioned only through the derived clock",
     "halftime: the second-half choices and kickoff are not modelled. Normal simulations give each team one half-opening kickoff; that is an authored simulation default for E2, not a rule that the opposite of the opening receiver kicks",
-    "quarter ends after Q1 and Q3 change ends and continue the series; no kickoff is generated",
+    "modelled: change of ends at 0:00 of Q1 and Q3 as bookkeeping (direction flips, the same drive and series continue, the period clock resets to 15:00, no kickoff)",
     "overtime and tie-breaking: not modelled"
   ],
   "mode": "drive_statistical_demo",
