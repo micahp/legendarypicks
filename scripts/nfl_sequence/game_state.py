@@ -454,15 +454,18 @@ class _Game:
         }
 
 
-def play_game(seed, ref, winner_choice=None, max_drives=80):
+def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
-    default.
+    default. The toss winner (team 'A' or 'B') and the winner's choice (receive or defer) are both sampled from the seed,
+    unless a caller fixes them for a test.
     """
     rng = random.Random(seed)
+    toss_winner = winner or rng.choice(['A', 'B'])
+    toss_loser = other(toss_winner, ('A', 'B'))
     choice = winner_choice or rng.choice(['receive', 'defer'])
-    ledger = CoinTossLedger('A', 'B', choice)
+    ledger = CoinTossLedger(toss_winner, toss_loser, choice)
     validate_half_start(ledger.half_start_kickoffs())
     return _Game(seed, ref, ledger, rng).run(max_drives).record()
 
