@@ -165,16 +165,18 @@ The outcomes are in the kept columns:
 
 - **Field goal:** `series_result` = `Field goal` (made) or `Missed field goal` (missed), on `play_type = 'field_goal'`.
   Excluded: 18 `QB kneel`, 8 `Opp touchdown`, 1 `Turnover`.
-- **Extra point:** `success` = 1 (good) or 0 (missed), on `play_type = 'extra_point'` with `series_result` in (`Touchdown`,
-  `Opp touchdown`).
-- **Two-point try:** `success` = 1 (converted) or 0 (not), on `two_point_attempt = 1`.
+- **Extra point:** `extra_point_result` = `good` (made) or `failed` (missed), on `play_type = 'extra_point'`. A `blocked`
+  extra point and a row with no result are excluded (38 and 11 in the window), not counted as misses. The rebuilt table is
+  `docs/fixtures/e2/kick_results_2022_2025.csv`, from the raw nflverse files, with `build_kick_results.py`.
+- **Two-point try:** `two_point_conv_result` = `success` or `failure`, on `two_point_attempt = 1`. Nothing is read from
+  `success`.
 
 Primary window: 2022–2025, weeks 1–18, the same window E1 samples from.
 
 | draw | published rate | made / missed in the window | floor per cell |
 | --- | ---: | ---: | ---: |
 | field goal, by `yardline_100` 1–9 / 10–19 / 20–29 / 30–39 / 40–49 / 50+ | 98.2 / 95.0 / 83.1 / 72.6 / 54.9 / 25.0% | 698/13, 1109/58, 980/200, 809/305, 67/55, 1/3 | 30 attempts |
-| extra point | 95.4% | 4644 / 226 | 30 attempts |
+| extra point (`extra_point_result`: good / failed; blocked and missing excluded) | 96.3% | 4643 / 178 | 30 attempts |
 | two-point try | 47.2% | 240 / 269 | 30 attempts |
 | two-point share of post-touchdown attempts | 9.5% | 509 of 5,379 | none |
 
