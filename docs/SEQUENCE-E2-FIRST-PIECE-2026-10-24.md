@@ -180,19 +180,21 @@ Primary window: 2022–2025, weeks 1–18, the same window E1 samples from.
 | two-point try | 47.2% | 240 / 269 | 30 attempts |
 | two-point share of post-touchdown attempts | 9.5% | 509 of 5,379 | none |
 
-Field goals by bucket, with Wilson 95% intervals (kick yards are about `yardline_100 + 17`):
+Field goals by bucket, rebuilt from the publisher's `field_goal_result` (`build_kick_results.py`), with Wilson 95% intervals.
+Kick yards are about `yardline_100 + 17`. Blocked kicks are excluded: a blocked kick is not a missed kick, its spot rule is
+different, and the engine does not model it. The window holds 86 blocked field-goal rows and 19 rows whose series label is not
+a kick (18 `QB kneel`, 1 `Turnover`); both are excluded and counted.
 
 | `yardline_100` | kick (yards) | made | missed | make rate | Wilson 95% |
 | --- | --- | ---: | ---: | ---: | --- |
-| 1–9 | 18–26 | 698 | 13 | 98.2% | 96.9–98.9% |
-| 10–19 | 27–36 | 1109 | 58 | 95.0% | 93.6–96.1% |
-| 20–29 | 37–46 | 980 | 200 | 83.1% | 80.8–85.1% |
-| 30–39 | 47–56 | 809 | 305 | 72.6% | 69.9–75.2% |
-| 40–49 | 57–66 | 67 | 55 | 54.9% | 46.1–63.5% |
+| 1–9 | 18–26 | 698 | 10 | 98.6% | 97.4–99.2% |
+| 10–19 | 27–36 | 1109 | 43 | 96.3% | 95.0–97.2% |
+| 20–29 | 37–46 | 980 | 179 | 84.6% | 82.4–86.5% |
+| 30–39 | 47–56 | 809 | 273 | 74.8% | 72.1–77.3% |
+| 40–49 | 57–66 | 67 | 48 | 58.3% | 49.0–66.9% |
 | 50+ | 67+ | 1 | 3 | 25.0% | 4.6–69.9% (n = 4, thin) |
 
-Sensitivity: counting the 8 `Opp touchdown` field-goal rows as misses moves the make rate from 85.2% to 85.1%. Five of those
-eight are followed by an extra point by the other team, which fits a missed kick returned for a touchdown. They stay excluded.
+Total: 3664 made, 556 missed, 86.8%. The earlier 85.2% counted the 78 blocked kicks as misses.
 
 Per-season stability (all seasons): field goals stay between 81.7% (2019) and 86.6% (2013). Extra points are 98.8–99.6%
 through 2014 and 92.4–95.9% from 2015, a step that fits the 2015 rule change moving the PAT to the 15-yard line. That rule
