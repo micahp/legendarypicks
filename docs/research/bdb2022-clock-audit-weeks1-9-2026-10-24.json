@@ -1,0 +1,670 @@
+{
+ "by_outcome": {
+  "fumble": {
+   "in_play_seconds": {
+    "mean": 5.8,
+    "median": 4.95,
+    "n": 100,
+    "p10": 2.7,
+    "p90": 8.4
+   },
+   "residual_seconds": {
+    "mean": 2.27,
+    "median": 3.1,
+    "n": 100,
+    "p10": -0.2,
+    "p90": 5.9
+   },
+   "runoff_seconds": {
+    "mean": 8.07,
+    "median": 8.0,
+    "n": 100,
+    "p10": 4.0,
+    "p90": 12.0
+   }
+  },
+  "interception": {
+   "in_play_seconds": {
+    "mean": 5.06,
+    "median": 4.7,
+    "n": 168,
+    "p10": 3.7,
+    "p90": 7.0
+   },
+   "residual_seconds": {
+    "mean": 2.97,
+    "median": 2.7,
+    "n": 167,
+    "p10": 0.0,
+    "p90": 7.1
+   },
+   "runoff_seconds": {
+    "mean": 8.03,
+    "median": 8.0,
+    "n": 167,
+    "p10": 5.0,
+    "p90": 12.0
+   }
+  },
+  "other": {
+   "in_play_seconds": {
+    "mean": 0.84,
+    "median": 0.7,
+    "n": 180,
+    "p10": 0.5,
+    "p90": 1.2
+   },
+   "residual_seconds": {
+    "mean": 19.92,
+    "median": 21.5,
+    "n": 179,
+    "p10": -0.1,
+    "p90": 40.3
+   },
+   "runoff_seconds": {
+    "mean": 20.76,
+    "median": 22.0,
+    "n": 179,
+    "p10": 1.0,
+    "p90": 41.0
+   }
+  },
+  "pass_complete": {
+   "in_play_seconds": {
+    "mean": 5.58,
+    "median": 5.4,
+    "n": 5109,
+    "p10": 4.0,
+    "p90": 7.5
+   },
+   "residual_seconds": {
+    "mean": 26.49,
+    "median": 30.6,
+    "n": 5104,
+    "p10": 2.4,
+    "p90": 38.9
+   },
+   "runoff_seconds": {
+    "mean": 32.08,
+    "median": 36.0,
+    "n": 5111,
+    "p10": 9.0,
+    "p90": 45.0
+   }
+  },
+  "pass_incomplete": {
+   "in_play_seconds": {
+    "mean": 4.62,
+    "median": 4.4,
+    "n": 2781,
+    "p10": 3.1,
+    "p90": 6.5
+   },
+   "residual_seconds": {
+    "mean": 0.14,
+    "median": 0.2,
+    "n": 2778,
+    "p10": -0.8,
+    "p90": 1.2
+   },
+   "runoff_seconds": {
+    "mean": 4.76,
+    "median": 5.0,
+    "n": 2829,
+    "p10": 3.0,
+    "p90": 7.0
+   }
+  },
+  "run": {
+   "in_play_seconds": {
+    "mean": 4.64,
+    "median": 4.4,
+    "n": 6157,
+    "p10": 3.3,
+    "p90": 6.3
+   },
+   "residual_seconds": {
+    "mean": 29.86,
+    "median": 33.45,
+    "n": 6152,
+    "p10": 13.3,
+    "p90": 39.9
+   },
+   "runoff_seconds": {
+    "mean": 34.5,
+    "median": 38.0,
+    "n": 6209,
+    "p10": 18.0,
+    "p90": 45.0
+   }
+  },
+  "sack": {
+   "in_play_seconds": {
+    "mean": 4.59,
+    "median": 4.3,
+    "n": 544,
+    "p10": 3.2,
+    "p90": 6.3
+   },
+   "residual_seconds": {
+    "mean": 29.67,
+    "median": 34.9,
+    "n": 543,
+    "p10": 3.1,
+    "p90": 41.0
+   },
+   "runoff_seconds": {
+    "mean": 34.26,
+    "median": 40.0,
+    "n": 546,
+    "p10": 8.0,
+    "p90": 46.0
+   }
+  },
+  "touchdown": {
+   "in_play_seconds": {
+    "mean": 4.92,
+    "median": 4.5,
+    "n": 602,
+    "p10": 2.8,
+    "p90": 7.8
+   },
+   "residual_seconds": {
+    "mean": 0.62,
+    "median": 0.6,
+    "n": 601,
+    "p10": -0.7,
+    "p90": 2.0
+   },
+   "runoff_seconds": {
+    "mean": 5.52,
+    "median": 5.0,
+    "n": 607,
+    "p10": 3.0,
+    "p90": 9.0
+   }
+  }
+ },
+ "by_stop_class": {
+  "incomplete_or_touchdown": {
+   "in_play_seconds": {
+    "mean": 4.67,
+    "median": 4.4,
+    "n": 3383,
+    "p10": 3.0,
+    "p90": 6.6
+   },
+   "residual_seconds": {
+    "mean": 0.22,
+    "median": 0.3,
+    "n": 3379,
+    "p10": -0.8,
+    "p90": 1.3
+   },
+   "runoff_seconds": {
+    "mean": 4.89,
+    "median": 5.0,
+    "n": 3436,
+    "p10": 3.0,
+    "p90": 7.0
+   }
+  },
+  "no_observed_stop": {
+   "in_play_seconds": {
+    "mean": 4.85,
+    "median": 4.6,
+    "n": 10589,
+    "p10": 3.3,
+    "p90": 6.8
+   },
+   "residual_seconds": {
+    "mean": 28.59,
+    "median": 32.9,
+    "n": 10576,
+    "p10": 5.0,
+    "p90": 39.9
+   },
+   "runoff_seconds": {
+    "mean": 33.45,
+    "median": 38.0,
+    "n": 10638,
+    "p10": 10.0,
+    "p90": 45.0
+   }
+  },
+  "out_of_bounds_or_timeout": {
+   "in_play_seconds": {
+    "mean": 5.87,
+    "median": 5.6,
+    "n": 1669,
+    "p10": 4.3,
+    "p90": 7.8
+   },
+   "residual_seconds": {
+    "mean": 22.11,
+    "median": 27.1,
+    "n": 1669,
+    "p10": 0.1,
+    "p90": 34.9
+   },
+   "runoff_seconds": {
+    "mean": 28.02,
+    "median": 33.0,
+    "n": 1674,
+    "p10": 5.0,
+    "p90": 41.0
+   }
+  }
+ },
+ "coverage": {
+  "in_play_resolved": 15641,
+  "out_of_bounds": 1656,
+  "penalty_flag": 211,
+  "plays_matched": 15765,
+  "residual_resolved": 15624,
+  "runoff_resolved": 15748,
+  "timeout_called": 37,
+  "timeouts_remaining": "unresolvable (no per-play timeout counts in either source)"
+ },
+ "focus": [
+  {
+   "away": "CIN",
+   "dataset_games": [
+    {
+     "away": "CIN",
+     "bdb_game": 2022100913,
+     "home": "BAL",
+     "lp_game_id": "2022_05_CIN_BAL",
+     "matched_plays": 115
+    }
+   ],
+   "gameday": "2026-10-25",
+   "home": "BAL",
+   "in_play": {
+    "mean": 5.09,
+    "median": 5.0,
+    "n": 115,
+    "p10": 3.2,
+    "p90": 6.9
+   },
+   "matched_plays": 115,
+   "residual": {
+    "mean": 22.56,
+    "median": 31.9,
+    "n": 115,
+    "p10": -0.3,
+    "p90": 39.1
+   },
+   "runoff": {
+    "mean": 27.65,
+    "median": 37.0,
+    "n": 115,
+    "p10": 3.0,
+    "p90": 44.0
+   },
+   "schedule_game_id": "2026_07_CIN_BAL"
+  },
+  {
+   "away": "CLE",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "TEN",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_CLE_TEN"
+  },
+  {
+   "away": "DEN",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "ARI",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_DEN_ARI"
+  },
+  {
+   "away": "GB",
+   "dataset_games": [
+    {
+     "away": "GB",
+     "bdb_game": 2022110603,
+     "home": "DET",
+     "lp_game_id": "2022_09_GB_DET",
+     "matched_plays": 117
+    }
+   ],
+   "gameday": "2026-10-25",
+   "home": "DET",
+   "in_play": {
+    "mean": 4.65,
+    "median": 4.4,
+    "n": 115,
+    "p10": 3.2,
+    "p90": 6.9
+   },
+   "matched_plays": 117,
+   "residual": {
+    "mean": 21.58,
+    "median": 28.6,
+    "n": 115,
+    "p10": -0.1,
+    "p90": 39.8
+   },
+   "runoff": {
+    "mean": 26.15,
+    "median": 34.0,
+    "n": 117,
+    "p10": 4.0,
+    "p90": 44.0
+   },
+   "schedule_game_id": "2026_07_GB_DET"
+  },
+  {
+   "away": "IND",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "MIN",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_IND_MIN"
+  },
+  {
+   "away": "KC",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "SEA",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_KC_SEA"
+  },
+  {
+   "away": "LAR",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "LV",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_LA_LV"
+  },
+  {
+   "away": "MIA",
+   "dataset_games": [
+    {
+     "away": "MIA",
+     "bdb_game": 2022100907,
+     "home": "NYJ",
+     "lp_game_id": "2022_05_MIA_NYJ",
+     "matched_plays": 108
+    }
+   ],
+   "gameday": "2026-10-25",
+   "home": "NYJ",
+   "in_play": {
+    "mean": 5.16,
+    "median": 4.9,
+    "n": 107,
+    "p10": 3.4,
+    "p90": 6.9
+   },
+   "matched_plays": 108,
+   "residual": {
+    "mean": 23.71,
+    "median": 31.9,
+    "n": 107,
+    "p10": -0.4,
+    "p90": 39.6
+   },
+   "runoff": {
+    "mean": 28.6,
+    "median": 37.0,
+    "n": 108,
+    "p10": 4.0,
+    "p90": 44.0
+   },
+   "schedule_game_id": "2026_07_MIA_NYJ"
+  },
+  {
+   "away": "NYG",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "HOU",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_NYG_HOU"
+  },
+  {
+   "away": "PIT",
+   "dataset_games": [],
+   "gameday": "2026-10-25",
+   "home": "NO",
+   "in_play": {
+    "n": 0
+   },
+   "matched_plays": 0,
+   "residual": {
+    "n": 0
+   },
+   "runoff": {
+    "n": 0
+   },
+   "schedule_game_id": "2026_07_PIT_NO"
+  },
+  {
+   "away": "SF",
+   "dataset_games": [
+    {
+     "away": "SF",
+     "bdb_game": 2022101600,
+     "home": "ATL",
+     "lp_game_id": "2022_06_SF_ATL",
+     "matched_plays": 107
+    }
+   ],
+   "gameday": "2026-10-25",
+   "home": "ATL",
+   "in_play": {
+    "mean": 4.89,
+    "median": 4.6,
+    "n": 107,
+    "p10": 3.2,
+    "p90": 6.7
+   },
+   "matched_plays": 107,
+   "residual": {
+    "mean": 24.26,
+    "median": 31.9,
+    "n": 107,
+    "p10": 0.3,
+    "p90": 40.5
+   },
+   "runoff": {
+    "mean": 29.15,
+    "median": 37.0,
+    "n": 107,
+    "p10": 5.0,
+    "p90": 45.0
+   },
+   "schedule_game_id": "2026_07_SF_ATL"
+  },
+  {
+   "away": "TB",
+   "dataset_games": [
+    {
+     "away": "TB",
+     "bdb_game": 2022102301,
+     "home": "CAR",
+     "lp_game_id": "2022_07_TB_CAR",
+     "matched_plays": 108
+    }
+   ],
+   "gameday": "2026-10-25",
+   "home": "CAR",
+   "in_play": {
+    "mean": 5.01,
+    "median": 4.8,
+    "n": 108,
+    "p10": 3.5,
+    "p90": 6.7
+   },
+   "matched_plays": 108,
+   "residual": {
+    "mean": 23.17,
+    "median": 28.05,
+    "n": 108,
+    "p10": 0.0,
+    "p90": 39.7
+   },
+   "runoff": {
+    "mean": 28.18,
+    "median": 33.5,
+    "n": 108,
+    "p10": 5.0,
+    "p90": 44.0
+   },
+   "schedule_game_id": "2026_07_TB_CAR"
+  },
+  {
+   "away": "DAL",
+   "dataset_games": [
+    {
+     "away": "DAL",
+     "bdb_game": 2022101611,
+     "home": "PHI",
+     "lp_game_id": "2022_06_DAL_PHI",
+     "matched_plays": 128
+    }
+   ],
+   "gameday": "2026-10-26",
+   "home": "PHI",
+   "in_play": {
+    "mean": 4.62,
+    "median": 4.5,
+    "n": 128,
+    "p10": 3.0,
+    "p90": 6.5
+   },
+   "matched_plays": 128,
+   "residual": {
+    "mean": 21.44,
+    "median": 26.3,
+    "n": 128,
+    "p10": -0.1,
+    "p90": 38.2
+   },
+   "runoff": {
+    "mean": 26.06,
+    "median": 30.0,
+    "n": 128,
+    "p10": 4.0,
+    "p90": 43.0
+   },
+   "schedule_game_id": "2026_07_DAL_PHI"
+  }
+ ],
+ "out_of_bounds_by_two_minute": {
+  "last_two_minutes_of_half": {
+   "in_play_seconds": {
+    "mean": 5.7,
+    "median": 5.4,
+    "n": 216,
+    "p10": 4.1,
+    "p90": 7.8
+   },
+   "residual_seconds": {
+    "mean": -0.5,
+    "median": 0.1,
+    "n": 216,
+    "p10": -4.9,
+    "p90": 1.0
+   },
+   "runoff_seconds": {
+    "mean": 5.21,
+    "median": 5.0,
+    "n": 216,
+    "p10": 0.0,
+    "p90": 8.0
+   }
+  },
+  "otherwise": {
+   "in_play_seconds": {
+    "mean": 5.9,
+    "median": 5.7,
+    "n": 1435,
+    "p10": 4.3,
+    "p90": 7.8
+   },
+   "residual_seconds": {
+    "mean": 25.43,
+    "median": 28.6,
+    "n": 1435,
+    "p10": 8.9,
+    "p90": 35.3
+   },
+   "runoff_seconds": {
+    "mean": 31.36,
+    "median": 34.0,
+    "n": 1440,
+    "p10": 14.0,
+    "p90": 42.0
+   }
+  }
+ },
+ "stats": {
+  "negative runoff (unresolvable)": 11,
+  "no ball_snap for the play": 62,
+  "no next snap in the quarter (unresolvable runoff)": 6,
+  "no terminal event for the play": 62
+ },
+ "weeks": [
+  1,
+  9
+ ]
+}

@@ -1,5 +1,7 @@
 # 2022 Big Data Bowl clock decomposition audit, weeks 1–5 (2026-10-24)
 
+Superseded for the full window by `BDB2022-CLOCK-AUDIT-WEEKS1-9-2026-10-24.md`, which reproduces these weeks 1–5 figures unchanged. The sentence about weeks 6–9 below is no longer current.
+
 Scope: the matched plays of weeks 1–5 (9,225 of the 16,124 tracked plays, from `bdb2022-join-pairs-2026-10-24.csv`). Weeks 6–9 are reserved for scoring and are not read. Overtime is not read. The script is `scripts/bdb/bdb2022_clock_audit.py`; the per-play table is `bdb2022-clock-audit-weeks1-5-2026-10-24.csv`; the summary is the matching `.json`.
 
 ## Quantities and labels

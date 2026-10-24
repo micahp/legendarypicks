@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Clock decomposition audit on the 2022 BDB tracking plays that join to LP nfl_pbp, weeks 1-5 only.
+"""Clock decomposition audit on the 2022 BDB tracking plays that join to LP nfl_pbp, for the weeks given on the command line
+(default 1-9).
 
-Weeks 6-9 are reserved for scoring and are not read here. Each quantity is labelled:
+Each quantity is labelled:
 - observed:      read directly from a source timestamp, count or flag;
 - inferred:      computed from observed values (for example a difference of two timestamps);
 - unresolvable:  the source cannot supply it for the play, so it is counted and left null.
 
-Sources (read only): tracking event rows extracted from tracking_week_1..5.csv (ball_snap and terminal events), BDB
+Sources (read only): tracking event rows extracted to events_w{N}.csv in --events-dir (ball_snap and terminal events), BDB
 plays.csv (quarter, down, distance, pre-snap scores, possession team), the matched pairs from bdb2022_join.py, and LP nfl_pbp
-(clock stamps, play type, flags) through the dev database, opened mode=ro. Overtime is not read.
+(clock stamps, play type, flags) through the dev database, opened mode=ro. Overtime is not read. The play-flags table
+(timeout, out of bounds) is read from the E2 worktree (EXTRAS).
 
-Usage: python3 bdb2022_clock_audit.py --events-dir DIR [--out-dir DIR]
+Usage: python3 bdb2022_clock_audit.py --events-dir DIR [--out-dir DIR] [--first-week 1 --last-week 9]
+       [--focus-from 2026-10-25 --focus-to 2026-10-26]
 """
 import argparse
 import csv
@@ -30,7 +33,7 @@ _spec.loader.exec_module(join)
 
 BDB = join.BDB
 DB = join.DB
-WEEKS = (1, 5)
+WEEKS = (1, 9)  # set from --first-week and --last-week in main()
 TERMINAL = ('tackle', 'out_of_bounds', 'touchdown', 'qb_sack', 'qb_slide', 'qb_kneel', 'qb_spike',
             'pass_outcome_incomplete', 'pass_outcome_interception', 'pass_outcome_touchdown', 'touchback',
             'fumble_defense_recovered', 'qb_strip_sack')
@@ -127,11 +130,67 @@ def summarize(values):
             'p90': round(q(0.90), 2), 'mean': round(statistics.fmean(values), 2)}
 
 
+def group_summary(rows, key):
+    groups = defaultdict(lambda: defaultdict(list))
+    for x in rows:
+        for field in ('in_play_seconds', 'runoff_seconds', 'residual_seconds'):
+            if x[field] is not None:
+                groups[key(x)][field].append(x[field])
+    return {k: {f: summarize(v) for f, v in fields.items()} for k, fields in sorted(groups.items())}
+
+
+def two_minute_class(x):
+    if x['quarter_seconds_remaining'] is None:
+        return 'unresolved'
+    if x['quarter'] in (2, 4) and x['quarter_seconds_remaining'] <= 120:
+        return 'last_two_minutes_of_half'
+    return 'otherwise'
+
+
+def focus_matchups(date_from, date_to, games, game_map, rows):
+    """This weekend's schedule pairings, and the dataset games that repeat each pairing, with their clock medians.
+
+    The schedule comes from nfl_schedule in the dev database (read only). A pairing appears in the dataset when the same two
+    clubs, in either home/away order, play in a game in the audited weeks, whether or not that game has matched plays.
+    Those are earlier meetings, not a prediction for the 2026 game.
+    """
+    con = sqlite3.connect(DB, uri=True)
+    try:
+        sched = con.execute("SELECT game_id, gameday, away_team, home_team FROM nfl_schedule WHERE season = 2026 "
+                            "AND gameday BETWEEN ? AND ? ORDER BY gameday, game_id", (date_from, date_to)).fetchall()
+    finally:
+        con.close()
+    dataset = defaultdict(list)
+    for bdb_id, lp_id in game_map.items():
+        g = games[bdb_id]
+        dataset[tuple(sorted((g['away'], g['home'])))].append((int(bdb_id), lp_id, g))
+    by_game = defaultdict(list)
+    for x in rows:
+        by_game[x['bdb_game']].append(x)
+    out = []
+    for gid, day, away, home in sched:
+        meetings = dataset.get(tuple(sorted((away, home))), [])
+        plays = [x for bdb_id, _, _ in meetings for x in by_game.get(bdb_id, [])]
+        med = lambda key: summarize([float(x[key]) for x in plays if x[key] is not None])
+        out.append({'schedule_game_id': gid, 'gameday': day, 'away': away, 'home': home,
+                    'dataset_games': [{'bdb_game': b, 'lp_game_id': lp, 'away': g['away'], 'home': g['home'],
+                                       'matched_plays': len(by_game.get(b, []))} for b, lp, g in meetings],
+                    'matched_plays': len(plays), 'in_play': med('in_play_seconds'),
+                    'runoff': med('runoff_seconds'), 'residual': med('residual_seconds')})
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--events-dir', required=True)
     ap.add_argument('--out-dir', default=str(HERE.parents[1] / 'docs' / 'research'))
+    ap.add_argument('--first-week', type=int, default=1)
+    ap.add_argument('--last-week', type=int, default=9)
+    ap.add_argument('--focus-from', default='2026-10-25', help='first game date of the focus weekend (schedule)')
+    ap.add_argument('--focus-to', default='2026-10-26', help='last game date of the focus weekend (schedule)')
     args = ap.parse_args()
+    global WEEKS
+    WEEKS = (args.first_week, args.last_week)
 
     snap, term = read_tracking_events(args.events_dir)
     games, bdb = load_bdb_weeks()
@@ -213,11 +272,18 @@ def main():
 
         oob_timeout = extras.get((lp_id, lp_pid), (0, False))
         out = outcome_class(r)
+        if out in ('pass_incomplete', 'touchdown'):
+            stop = 'incomplete_or_touchdown'
+        elif oob_timeout[0] or oob_timeout[1]:
+            stop = 'out_of_bounds_or_timeout'
+        else:
+            stop = 'no_observed_stop'
         residual = None if (in_play is None or runoff is None) else round(runoff - in_play, 2)
         rows.append({
             'bdb_game': key[0], 'bdb_play': key[1], 'lp_game_id': lp_id, 'lp_play_id': lp_pid, 'week': g['week'],
             'quarter': q, 'down': r['down'], 'distance': r['ydstogo'], 'offense': offense, 'score_diff': score_diff,
-            'outcome': out, 'terminal_event': t_term[1] if t_term else None,
+            'outcome': out, 'stop_class': stop, 'terminal_event': t_term[1] if t_term else None,
+            'quarter_seconds_remaining': None if r['gsr'] is None else join.lp_quarter_clock(q, r['gsr']),
             'in_play_seconds': in_play, 'runoff_seconds': runoff, 'residual_seconds': residual,
             'timeout_called': int(oob_timeout[0]), 'out_of_bounds': int(oob_timeout[1]),
             'penalty_flag': r['penalty'] or 0,
@@ -225,15 +291,11 @@ def main():
         })
     rows.sort(key=lambda x: (x['week'], x['bdb_game'], x['bdb_play']))
 
-    # summaries by label, by outcome
-    by_out = defaultdict(lambda: defaultdict(list))
-    for x in rows:
-        for field in ('in_play_seconds', 'runoff_seconds', 'residual_seconds'):
-            if x[field] is not None:
-                by_out[x['outcome']][field].append(x[field])
-    summary = {o: {f: summarize(v) for f, v in fields.items()} for o, fields in sorted(by_out.items())}
+    summary = group_summary(rows, lambda x: x['outcome'])
+    by_stop = group_summary(rows, lambda x: x['stop_class'])
+    oob_two_minute = group_summary([x for x in rows if x['out_of_bounds']], two_minute_class)
     coverage = {
-        'plays_weeks_1_5_matched': len(rows),
+        'plays_matched': len(rows),
         'in_play_resolved': sum(1 for x in rows if x['in_play_seconds'] is not None),
         'runoff_resolved': sum(1 for x in rows if x['runoff_seconds'] is not None),
         'residual_resolved': sum(1 for x in rows if x['residual_seconds'] is not None),
@@ -242,14 +304,17 @@ def main():
         'penalty_flag': sum(1 for x in rows if x['penalty_flag'] == 1),
         'timeouts_remaining': 'unresolvable (no per-play timeout counts in either source)',
     }
+    focus = focus_matchups(args.focus_from, args.focus_to, games, game_map, rows)
+    tag = f'weeks{WEEKS[0]}-{WEEKS[1]}-2026-10-24'
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    with open(out_dir / 'bdb2022-clock-audit-weeks1-5-2026-10-24.csv', 'w', newline='') as f:
+    with open(out_dir / f'bdb2022-clock-audit-{tag}.csv', 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
-    result = {'weeks': list(WEEKS), 'stats': dict(stats), 'coverage': coverage, 'by_outcome': summary}
-    (out_dir / 'bdb2022-clock-audit-weeks1-5-2026-10-24.json').write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
+    result = {'weeks': list(WEEKS), 'stats': dict(stats), 'coverage': coverage, 'by_outcome': summary,
+              'by_stop_class': by_stop, 'out_of_bounds_by_two_minute': oob_two_minute, 'focus': focus}
+    (out_dir / f'bdb2022-clock-audit-{tag}.json').write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
     print(json.dumps(result, indent=1, sort_keys=True))
 
 
