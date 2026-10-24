@@ -18,13 +18,32 @@ UNSOURCED = {'V-mode', 'V-unresolved-game_id', 'V-unresolved-scheduled_kickoff_u
              'V-unresolved-snapshot_hash', 'V-unresolved-roster_snapshot_id', 'V-duration-seconds'}
 
 
-def document():
+TEST_STAMPS = {'model_version': 'test-model', 'rules_version': 'test-rules'}  # fixed values: the tests do not need a clean tree
+
+
+def played(**stamps):
     rec = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool()), winner_choice='receive', max_drives=2)
-    return sv.build_document(rec)
+    return {**rec, **stamps}
+
+
+def document():
+    return sv.build_document(played(**TEST_STAMPS))
 
 
 def ids(doc):
     return {v['id'] for v in sv.check_document(doc)}
+
+
+class Stamps(unittest.TestCase):
+    """The document takes its two version fields from the record. A record without them is refused, not given a label."""
+
+    def test_the_document_carries_the_record_stamps(self):
+        doc = document()
+        self.assertEqual((doc['model_version'], doc['rules_version']), ('test-model', 'test-rules'))
+
+    def test_a_record_without_its_version_stamps_is_refused(self):
+        with self.assertRaises(KeyError):
+            sv.build_document(played())
 
 
 class Projection(unittest.TestCase):

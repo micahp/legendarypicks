@@ -13,8 +13,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-PRODUCER_FILES = ('scripts/nfl_sequence/game_state.py', 'scripts/nfl_sequence/rules_matrix.py',
-                  'scripts/nfl_sequence/e1_drive.py', 'scripts/nfl_sequence/shared_v1.py')
+sys.path.insert(0, str(HERE.parent))
+import versions  # noqa: E402
+
+PRODUCER_FILES = versions.RULE_FILES  # the same scoped set that defines rules_version
 
 
 def git(*args):
