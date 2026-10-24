@@ -286,7 +286,7 @@ function ScoresPanel({ date, setDate, games, loading, error, tour }: {
                   {item.toUpperCase()}
                 </h2>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {tourGames.map(game => <div key={`${game.league}-${game.gameId}`} className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-1 shadow transition-colors hover:border-zinc-700"><GameCard {...game} /></div>)}
+                  {tourGames.map(game => <div key={`${game.league}-${game.gameId}`} className="rounded-xl bg-zinc-900 px-4 py-1 shadow"><GameCard {...game} /></div>)}
                 </div>
               </section>
             )
