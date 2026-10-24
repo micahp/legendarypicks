@@ -8,6 +8,12 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## E1 AUTHORIZED — 2026-10-24: use correct NFL field ends
+
+Read [coordinator field-direction decision](https://github.com/micahp/gridiron-physics/blob/main/docs/research/E0-FIELD-END-CONVENTION-DECISION-2026-10-24.md) and [shared delivery plan](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md). LP E0 at `693e1767` and Gridiron E0a at `15b0b34` agree on the new authored demo fixture. Q2 seed-1042 `dir=+1`, `los=12` is correct for the **explicitly authored presentation assignment** only. **The general formula all offenses +1 in Q1/Q2, −1 in Q3/Q4 is NOT NFL-correct**. Team ends flip between Q1/Q2 and Q3/Q4; halftime gets an explicit independent second-half choice. Implement a versioned **per-team/per-quarter** attacking-end mapping and transition tests in E1; do not derive direction from quarter alone or home/away. A possession change flips which team attacks but does not spontaneously move the absolute spot. Preserve source/mode label and LP event authority.
+
+**LP sequence owner: START E1** as a research worktree now that E0a fixture transport is accepted and cross-repo fixture pin is confirmed. Focus on legal drive with clock, downs, spot, score, possession and drive endings, deterministic seed, labeled fallback and test coverage. **Do not wait for E0b** 3D participant-specific replay. Existing retrospective pool still cannot support an as-of prediction claim; keep as-of/roster gaps explicit. No push/merge/deploy without user approval under ordinary repo safety rules.
+
 ## E0a IMPLEMENTATION RECEIVED — 2026-10-24: LP signoff unlocks E1
 
 Gridiron's [research E0a commit `629705da`](https://github.com/micahp/gridiron-physics/commit/629705da81bfc7baa75b9eb55137c9b4239ba07f) is pushed and independently inspected. It provides a working validator, read-only retrospective record viewer and focused tests; LP and Gridiron copies of seed-1042 fixture match byte-for-byte (Git blob SHA `c65a9b6699e2ca64b3e6312f9f5c64cc9e7a7a47`). **E0a is accepted for read-only demo transport**, not 3D physical replay or full `pregame_full_game` contract conformance. Read the [shared E0a gate decision](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md).
