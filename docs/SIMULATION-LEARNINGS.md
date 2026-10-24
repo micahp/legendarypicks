@@ -10,6 +10,14 @@
 
 This document is a **running synthesis**, not the source of record for evaluations. Keep the dated reports, code revisions, raw results, and held-out boundaries immutable; link them here. Update this file when research changes our understanding. Do not rewrite failed experiments into successes.
 
+## ACTIVE WORK PRIORITY — 2026-10-23: test actual football before more synthetic physics
+
+[**Cross-project football-first agent directive**](https://github.com/micahp/gridiron-physics/blob/main/docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md) supersedes **older suggested next experiments**, not the empirical findings recorded below. First establish what NFL tracking frames and outcomes can legitimately be observed. Test cheap movement and behavioral baselines against those observations, then evaluate physics-assisted motion on the same information cutoffs and cohort. Preserve the NFL sequence model as the drive/game baseline; it is not necessary to perfect physical contact before evaluating real drives.
+
+**Stop by default:** extra broad Rapier/Jolt synthetic sweeps, novel generic rigid-body/grasp solvers, uncalibrated Madden-to-force conversion and historical training of 35/60 Madden rating heads. Existing numerical safety defects can receive narrow fixes only if they block an explicit evaluation. Distinguish Big Data Bowl 2026's *post-throw conditional movement* (target and ball-landing information is supplied) from genuinely free-running post-snap NFL prediction. If a complete post-snap cohort does not exist locally, conduct an availability/terms audit and narrow the experiment rather than fabricating future data.
+
+**Ownership:** LP: source records, time-based eligibility, historical state/identity, simple trajectory and behavioral baselines, play/drive/game scoring. Gridiron: existing physics engine/movement execution and Three.js visualization. One independent integrator: real-data acceptance tests and integration choice. No LP production forecast, locking, grading, or DB modification is authorized by the research directive.
+
 ## 1. Research thesis
 
 A conventional statistical game generator estimates `P(next event or outcome | observed game state)`. A physical/behavioral generator can instead sample **causes** (player roles, choices, physical attributes, initial conditions, execution uncertainty) and calculate how their interactions produce an outcome.
@@ -104,21 +112,20 @@ These are composable layers, **not** a commitment that every production forecast
 
 **Principle:** Preserve what predicts well, test mechanisms against actual event sequences, and reject complexity when it harms the measured goal. The physical model may be most valuable for selected interactions or to train a fast surrogate rather than running for every production game.
 
-## 7. Open questions and prioritized work
+## 7. Open questions and prioritized work (active 2026-10-23)
 
-1. **Drive definitions:** Why does the game-level report count 22.08 simulated drives/game while the drive-specific evaluator reports 22.89? Align scope, counts and conventions.
-2. **Statistical drive mechanism:** Test D1–D7 one at a time, starting with clock/kneels, down-conditioned pass yardage, fourth-down decision context and red-zone diagnostic breakdown.
-3. **Player mechanics:** Why is completion so low in the constrained 120-pass free-physics smoke test? Instrument release timing, route separation, target reach, catch window, drops and defender contest before changing coefficients.
-4. **3D engine proof:** Initial Rapier vs Jolt feasibility is complete: genuine 3D contact/falls and receiver-ball impact demonstrated, **but no successful grip escape or secure catch**. Next: grasp/joint break, balance recovery, hand-ball possession, full-play throughput and mobile/cross-machine validation. Keep physics and animation provenance distinct.
-5. **Rare events:** Establish whether physics can *actually* produce sacks, interceptions, loose balls, fumble recoveries and field goals, not simply replay or assign them.
-6. **Ratings reliability:** Validate player input confidence and sensitivity against actual tracking/observed outcomes where licensed data permits. Avoid interpreting overall rating as a physical law.
-7. **Physics ↔ sequence integration:** Specify how free-play physical results update official down, distance, clock, possession, points and player stats. Statistical-only fallback must be explicit and separately counted.
-8. **Team-specific predictions:** Add as-of team/player strength only behind held-out tests. Do not treat v0.1 team-agnostic winner probabilities as production forecasts.
+1. **Data availability and honest scope first:** Which local/licensed NFL datasets actually include full post-snap player/ball trajectories and end events? Verify the source, cadence, game/play/player IDs, missingness, access/terms and permissible cutoff. If only BDB 2026 post-throw conditional tracking is available, run **that** task with its supplied ball-landing and receiver input clearly disclosed, not a fictional from-snap simulation.
+2. **Movement baselines before physics:** On 5–10 correctly joined real examples, then 20–50 if coverage permits, compare hold-last, constant velocity, bounded kinematics, established open tracking baselines and one learned role-aware policy. Evaluate free-running position error by horizon **and** pair/player/team spatial coherence; record hidden-future rules, failure examples and sample eligibility.
+3. **Gridiron replay of same eligible states:** Reuse available research movement adapter, Three.js, and selected established 3D physics only when the measured task demands them. Display actual observed versus predicted paths, unavailable frames, contact opportunities and outcome deltas. Do not interpret renderer Z or synthetic hand forces as observed NFL measurements.
+4. **Direct play consequences:** Only where observed end spots and events are actually present, evaluate yards gained, contact/time-to-tackle, catches, sacks, fumbles, clock and possession from fully declared as-of inputs. Predeclare metrics and baselines; statistic/hybrid outcomes are acceptable as transparent challengers.
+5. **Drive and game validation in parallel:** Continue v0.2 LP play-by-play D1–D7 drive diagnostics (kneels, fourth downs, red-zone, clock, defensive returns) and compare real/scored distributions on aligned eligible samples. Reconcile 22.08 vs 22.89 drives/game counting. A future fresh evaluation is needed before prediction-skill promotion.
+6. **Agent separation and stop criteria:** LP owns observation/policy/state/score; Gridiron owns execution/replay; integrator owns comparison. No more generic standalone Madden-to-contact sweeps or broad 35-attribute training until evidence from real plays justifies them. Fix known numerical defects only through narrow reproducible safety tests. Keep all past results and no production writes/merges without review.
 
 ## 8. Decisions ledger
 
 | Date | Status | Decision or observation | Reason / revisit criterion |
 | --- | --- | --- | --- |
+| 2026-10-23 | **Active direction supersedes older next-task advice** | Real NFL movement and play/drive evaluation with established physics and cheap statistical baselines comes before additional synthetic solver/rating sweeps | [Football-first agent directive](https://github.com/micahp/gridiron-physics/blob/main/docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md); revisit only with measured real-play failure and explicit research gate |
 | 2026-10-22 | **Agreed research principle** | Evaluate **real drives**, not just individual plays and final scores | D1–D7 were invisible in averages |
 | 2026-10-22 | **Keep** | Statistical-only generator remains an experimental baseline and potential production component | Physics must earn incremental value |
 | 2026-10-22 | **Requirement** | Prospective play outcomes cannot be conditioned on a real final spot, real credited tackler or the result being predicted | Prevent reconstruction masquerading as prediction |
@@ -240,7 +247,19 @@ Add a new dated entry for every significant finding; link the **immutable** repo
 - **Interpretation:** Agents coordinated file ownership but did **not** coordinate the causal question, fixtures, metrics or adoption criterion. Same athlete pair cannot turn legacy tackle selection/drag and genuine 3D force-derived grip into directly comparable outcomes. Production physics, LP forecasts and grading remain unchanged.
 - **Next gate:** Pin the source/commit, run per-track matched ablations and output a common typed summary. One integration coordinator analyzes source mismatches, rating-to-controller hypotheses, unexplained contact discontinuities, changed selection versus post-contact travel, numeric gate failures and missing empirical validity before any selective integration PR.
 
-### 2026-10-23 — Legacy Madden tackle recentering unmasks a 3 m wrap-force defect### 2026-10-23 — M4d finished: 376 physical ablations and coordinator integration verdict### YYYY-MM-DD — [short experiment title]
+### 2026-10-23 — Legacy Madden tackle recentering unmasks a 3 m wrap-force defect
+
+### 2026-10-23 — M4d finished: 376 physical ablations and coordinator integration verdict
+
+### 2026-10-23 — Direction change: established physics as a tool, observed football as the test
+
+- **Decision:** Pause open-ended Rapier/Jolt rigid-body/controller invention, standalone synthetic Madden STR/TKL/BTK contact sweeps, and broad historical Madden supervised-rating work. Keep M1b/M4b/M4c/M4d and legacy defect results, hashes, and negative findings immutable. A narrow critical numerical fix may proceed only when tied to a documented safety/evaluation failure.
+- **Primary observable target:** Audit actually accessible NFL tracking first; declare information available at snap or throw. Big Data Bowl 2026 prediction supplies a post-throw movement challenge with the target receiver and landing coordinates known, **not** prospective play-from-snap truth; Big Data Bowl 2025 source coverage must be verified rather than assumed. No fabricated post-snap outcomes.
+- **First benchmark:** 5–10 real eligible movement examples, 20–50 if coverage exists; hold-last/constant velocity/kinematic and suitable published behavioral baselines versus LP learned policy and Gridiron execution, with one actual/forecast viewer and grouped time-honest evaluation. Preserve LP v0.2 statistical PBP as separate drive/game baseline.
+- **Owners and gates:** LP tracking and behavior, Gridiron replay/physics, LP drive scoring, single integration coordinator. Baseline skill/geometry, real play outcomes if observed, drive/score distributions, and held-out prediction remain separate promotion gates. No research branch merges or production state changes authorized.
+- **Source:** [Football-first agent directive](https://github.com/micahp/gridiron-physics/blob/main/docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md) and [Gridiron AGENTS.md](https://github.com/micahp/gridiron-physics/blob/main/AGENTS.md).
+
+### YYYY-MM-DD — [short experiment title]
 
 - **Question / hypothesis:**
 - **Baseline and treatment:**
