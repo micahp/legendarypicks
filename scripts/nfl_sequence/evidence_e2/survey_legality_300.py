@@ -25,6 +25,7 @@ import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
 import legality_check as lc  # noqa: E402
 import rules_matrix as rm  # noqa: E402
+import drive_index_check as di  # noqa: E402
 
 FROZEN = HERE.parents[2] / 'docs' / 'fixtures' / 'e2' / 'survey-per-seed-300.csv'
 
@@ -41,9 +42,13 @@ def main():
         frozen = {int(r['seed']): r for r in csv.DictReader(f)}
 
     rows, mismatches = [], []
+    di_drives = di_states = di_checked = 0
     for seed in range(1, 301):
         record = gs.play_game(seed, ref)
         gs.validate_game(record)  # fail closed: any refused invariant stops the survey
+        seed_drives, seed_states, seed_checked = di.check_record(record)
+        di_drives, di_states, di_checked = di_drives + seed_drives, di_states + seed_states, di_checked + seed_checked
+        di.require_zero(seed_drives, seed_states, f'seed {seed}')  # the drive index is asserted on every seed
         failed = sorted(k for k, v in lc.run(record).items() if v)
         matrix_fail = sum(1 for r in rm.check(record) if r['status'] == 'FAIL')
         complete = bool(record['complete_regulation'])
@@ -87,6 +92,9 @@ def main():
         'guarded_described_complete': sum(1 for r in rows if r['unmodelled_transitions'] and (
             r['status'] == 'complete_regulation' or r['complete_game'])),
         'validate_game_passed': len(rows),
+        'drive_index_mismatch_drives': di_drives,
+        'drive_index_mismatch_states': di_states,
+        'drive_index_states_checked': di_checked,
         'scope_out_seeds': {reason: sum(1 for r in rows if reason in r['scope_out'].split(';'))
                             for reason in ('overtime', 'rare kick outcome', 'thin E1 pool cell', 'penalty', 'drive limit',
                                            'other')},
