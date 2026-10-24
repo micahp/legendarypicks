@@ -1,6 +1,6 @@
 # NFL player-tracking feasibility, Phase 0 (LP data side, 2026-10-23)
 
-**Status:** Conditional post-throw tracking is now downloaded and verified for 2023 weeks 1–7 (see the verified section). Full-play, from-snap tracking is still not present in these files. The 2025 release is untested here.
+**Status:** Conditional post-throw tracking is now downloaded and verified for 2023 weeks 1–7 (see the verified section). Full-play, from-snap tracking is still not present in these files. The 2025 cohort is staged from an unofficial GitHub copy (see the 2025 section).
 
 Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md` (`origin/main`), Phase 0 and the LP tracking owner role.
 
@@ -28,6 +28,43 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 | `nfl_hist_ftn_charting` | 185,215 | 2022–2025 | none | charting booleans (play action, screen, RPO, blitzers, drop, contested) |
 
 These are usable as the observed play-outcome and drive/game baseline, owned by LP. They cannot supply player trajectories.
+
+## 2025 Big Data Bowl cohort, week 1, staged from a GitHub copy (2026-10-23)
+
+**Why not Kaggle.** The 2025 competition's data was removed from Kaggle (user report, 2026-10-23). The token's account gets HTTP 403 for the files, and the listing shows only a README.
+
+**Source (unofficial).** GitHub repository `b00nk3r/NFL-Big-Data-Bowl-2025`, commit `e28d3b25725799ef2213680016db5325f6f90014`, path `code/data/`, stored with Git LFS. The repository's Apache-2.0 licence covers its code, not the competition data. Permitted use: user-reported, not verified against a licence. This is a third-party re-hosting and not the official release.
+
+**Season.** The data is the **2022 season, weeks 1–9** (136 games in `games.csv`), not the 2025 season. The name refers to the competition year.
+
+**Staged files** (outside git, `/root/nfl-tracking-data/bdb2025/code-data/`; each verified by its LFS SHA-256 and size; full hashes in `SHA256SUMS.txt` and `PROVENANCE.json`):
+
+| File | Bytes |
+| --- | ---: |
+| `tracking_week_1.csv` | 971,403,802 |
+| `player_play.csv` | 52,533,762 |
+| `plays.csv` | 6,892,353 |
+| `players.csv` | 104,749 |
+| `games.csv` | 7,128 |
+
+**Week 1, tracking (all 7,104,700 rows read).**
+- 16 games and 1,952 plays. `plays.csv` has 1,952 plays for the same 16 games, so the play counts reconcile.
+- `frameType` is BEFORE_SNAP, SNAP and AFTER_SNAP. Frames per play: min 17, median 158.5, max 697. Pre-snap frames are included, so these are full plays.
+- Frame interval 0.1 s (10 Hz), from the timestamps: median and IQR both 0.1 s.
+- Coordinates: x 0.1 to 119.8 and y −2.5 to 57.5 (first 500k rows), consistent with yards on a 120 × 53.3 field. `playDirection` is a column; the file is not normalised by it.
+- Ball rows: 308,900, with blank `nflId` and `displayName` `football`.
+- Events: `tackle` 27,715 rows, `first_contact` 28,865, `out_of_bounds` 4,968.
+
+**Tackle labels, week 1.**
+- Plays with the exact `tackle` event: 1,205.
+- Plays with a solo or assist flag in `player_play.csv` (`soloTackle`, `tackleAssist` or `assistedTackle` = 1): 1,479. Solo only: 1,097.
+- Both: 1,199. Event only: 6. Label only: 280.
+- The 280 label-only and 6 event-only plays are unresolved. The label-only plays may be assists where the tracking marks contact another way. That is not verified.
+- The exact-event play list is at `/root/nfl-tracking-data/bdb2025/week1_tackle_event_plays.json`.
+
+**Not verified.** The tackler identity on each `tackle` event against the labels; the other weeks; any reconciliation beyond play counts.
+
+**Reproduce.** `python3 scripts/fetch_bdb2025_week.py tracking_week_1.csv games.csv plays.csv player_play.csv players.csv`, then `sha256sum -c` against `SHA256SUMS.txt`.
 
 ## Verified after rules acceptance (2026-10-23)
 
@@ -82,9 +119,9 @@ The user stated on 2026-10-23 that the rights are already in place, and asked th
 
 ## Consequence for the directive
 
-1. **Full-play, from-snap tracking:** not present in the 2026 prediction data. Inputs end at a last frame of 9–74, and labels cover predicted players only. The 2025 release is untested here.
+1. **Full-play, from-snap tracking:** not present in the 2026 prediction data. Inputs end at a last frame of 9–74, and labels cover predicted players only. The 2025 cohort is staged from an unofficial GitHub copy (see the 2025 section).
 2. **Narrow fallback (2026 Big Data Bowl throw-to-arrival):** feasible. Inputs and labels for 2023 weeks 1–7 are downloaded and joined (below). Scoring against labels is the conditional post-throw benchmark only.
-3. **Blocker resolved 2026-10-23:** the user accepted the competition rules and downloads succeeded. The 2025 cohort is untested.
+3. **Blocker resolved 2026-10-23:** the user accepted the competition rules and downloads succeeded. The 2025 cohort is staged from an unofficial GitHub copy (see the 2025 section).
 
 ## Fields the directive requires, status
 
