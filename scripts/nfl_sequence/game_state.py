@@ -137,11 +137,12 @@ class Reference:
     `participants` maps (game_id, play_id) of an observed play to (passer, rusher, receiver) ids.
     """
 
-    def __init__(self, pool, kickoff_pool, kicks, participants):
+    def __init__(self, pool, kickoff_pool, kicks, participants, clock_model=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         self.kicks = kicks
         self.participants = participants
+        self.clock_model = clock_model  # None is the E2 default; a fitted clock_d.Model selects the research clock
 
     def participants_for(self, play):
         src = play['outcome']['sampled_from']
@@ -290,6 +291,7 @@ class _Game:
         self.simulation_id = f'e2-{e1.MODEL_VERSION}-seed{seed}'
         self.next_play_sequence = 1
         self.ref = ref
+        self.clock_draws = ref.clock_model.for_game(seed) if ref.clock_model is not None else None
         self.ledger = ledger
         self.rng = rng
         self.kickoffs = ledger.half_start_kickoffs()
@@ -406,7 +408,9 @@ class _Game:
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
-        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id)
+        research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
+        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id,
+                                      **research)
         if plays is None:
             self.block(terminal)
             return
