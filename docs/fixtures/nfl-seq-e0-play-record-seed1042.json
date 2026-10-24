@@ -37,7 +37,15 @@
       2024,
       2025
     ],
-    "start_game_excluded": "2025_05_LV_IND"
+    "start_game_excluded": "2025_05_LV_IND",
+    "temporal_eligibility": {
+      "as_of_date": null,
+      "cell_rows_dated_after_start": 1016,
+      "cell_rows_total": 5572,
+      "note": "pool is not restricted to games before the start state; this record is not an as-of-time simulation",
+      "start_game_date": "2025-10-05",
+      "status": "retrospective"
+    }
   },
   "plays": [
     {
@@ -55,6 +63,7 @@
         "rusher_id": null,
         "safety": false,
         "sampled_from": {
+          "game_date": "2022-10-06",
           "game_id": "2022_05_IND_DEN",
           "play_id": 515
         },
