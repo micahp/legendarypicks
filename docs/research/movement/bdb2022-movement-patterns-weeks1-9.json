@@ -1,0 +1,143 @@
+{
+ "cells_reported": 139,
+ "cells_suppressed": 19,
+ "counts": {
+  "player-play rows": 346830
+ },
+ "min_rows": 30,
+ "suppressed": [
+  {
+   "down": "1",
+   "n": 18,
+   "play_kind": "pass",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "2",
+   "n": 8,
+   "play_kind": "pass",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "4",
+   "n": 1,
+   "play_kind": "pass",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "1",
+   "n": 23,
+   "play_kind": "run",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "2",
+   "n": 10,
+   "play_kind": "run",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "3",
+   "n": 4,
+   "play_kind": "run",
+   "position": "DB",
+   "side": "defense"
+  },
+  {
+   "down": "4",
+   "n": 5,
+   "play_kind": "pass",
+   "position": "LB",
+   "side": "defense"
+  },
+  {
+   "down": "3",
+   "n": 12,
+   "play_kind": "run",
+   "position": "LB",
+   "side": "defense"
+  },
+  {
+   "down": "4",
+   "n": 2,
+   "play_kind": "run",
+   "position": "LB",
+   "side": "defense"
+  },
+  {
+   "down": "4",
+   "n": 19,
+   "play_kind": "run",
+   "position": "MLB",
+   "side": "defense"
+  },
+  {
+   "down": "2",
+   "n": 1,
+   "play_kind": "pass",
+   "position": "WR",
+   "side": "defense"
+  },
+  {
+   "down": "1",
+   "n": 1,
+   "play_kind": "run",
+   "position": "DT",
+   "side": "offense"
+  },
+  {
+   "down": "4",
+   "n": 7,
+   "play_kind": "pass",
+   "position": "FB",
+   "side": "offense"
+  },
+  {
+   "down": "4",
+   "n": 12,
+   "play_kind": "run",
+   "position": "FB",
+   "side": "offense"
+  },
+  {
+   "down": "1",
+   "n": 1,
+   "play_kind": "run",
+   "position": "FS",
+   "side": "offense"
+  },
+  {
+   "down": "2",
+   "n": 1,
+   "play_kind": "run",
+   "position": "FS",
+   "side": "offense"
+  },
+  {
+   "down": "1",
+   "n": 3,
+   "play_kind": "run",
+   "position": "ILB",
+   "side": "offense"
+  },
+  {
+   "down": "2",
+   "n": 1,
+   "play_kind": "run",
+   "position": "ILB",
+   "side": "offense"
+  },
+  {
+   "down": "1",
+   "n": 2,
+   "play_kind": "run",
+   "position": "OLB",
+   "side": "offense"
+  }
+ ]
+}
