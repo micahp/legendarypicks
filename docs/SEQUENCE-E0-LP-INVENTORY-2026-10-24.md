@@ -158,9 +158,9 @@ display it as authored, never as observed or as a real period's end assignment.
 | Pinned v1 payload agreed with Gridiron | **Not done.** Pending hermes2 agreement on the interface above |
 | Gridiron adapter accepts the record without changing it | **Not done.** Gridiron agent's role |
 
-## Known defect in this E0 reducer (open)
+## Former defect in the E0 reducer (resolved)
 
-The E0 generator decides touchdowns from the sampled row's `touchdown` flag, and it raises an error when a gain reaches the goal line without that flag. The sampled row's yardline is only in the same bucket as the state's, so the flag can be wrong for the state. E1 reproduced the mismatch on its first run. The committed seed-1042 fixture is unaffected, because its sampled yards are 0. E0 has not been regenerated for other seeds, and this reducer has not been changed. The fix is the E1 rule: a run or completion that gains at least the state's own `yardline_100` is a touchdown, and the sampled flag is recorded only. See `docs/SEQUENCE-E1-LP-DRIVE-2026-10-24.md` on `feat/nfl-sequence-e1-2026-10-24`.
+The E0 generator used to decide touchdowns from the sampled row's `touchdown` flag, and it raised when a gain reached the goal line without that flag. The sampled yardline is only in the state's bucket, so the flag could be wrong for the state. E0 now calls the shared reducer (`scripts/nfl_sequence/reducer.py`), which decides a touchdown from the state's own `yardline_100`. The seed-1042 fixture is byte-identical after the change. Across seeds 1–40, 39 run; seed 7 stops because its cell `(4, '4-6', '80-99')` has 6 observed plays, under the 200-play floor. That refusal is by design, and no fallback is used.
 
 ## Not started
 
