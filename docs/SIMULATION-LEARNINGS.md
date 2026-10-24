@@ -18,6 +18,12 @@ This document is a **running synthesis**, not the source of record for evaluatio
 
 **E0–E2 game generation remains highest priority:** one generated play, one legal drive, one complete two-team NFL game with score/clock/possession/player stats and Gridiron playback. No movement/physics/Madden adoption or live LP changes.
 
+## NORMAL-HALF-KICKOFF MODEL DECISION — 2026-10-24
+
+**The user clarified the target behavior:** We are simulating *what NFL teams normally choose*, not uniformly sampling rare legal coin-toss oddities. In **normal NFL game mode**, exactly two **`half_start` kickoff** events must occur with **different kicking teams**. The Q1 opening receiver kicks to open Q3 and the Q1 kicker receives. This is a **hard invariant and 0% sampled exception policy**, not a soft statistical preference. It does **not** apply to other kicks after scores. The documented rare legal same-team-twice scenario is confined to verified observed-game reconstruction or separately opted-in exception test mode, excluded from ordinary simulated distributions and forecast grading. Opening choice policy: toss winner **receives or defers**; first-choice team in each half chooses to **receive**. Produce and test a complete toss/choice ledger, two actual kickoffs and subsequent drive setup. Missing kickoff or repeated half kicker in normal mode invalidates the game outright.
+
+[Binding implementation/tests in the revised NFL 2026 rules contract](docs/rules/NFL-2026-GAME-STATE-RULES.md). This decision **supersedes earlier permissive instructions** about the legal exception. Preserve the difference between official legal possibility and production modeling policy without gray area.
+
 ## NFL 2026 rules correction and E1 state — 2026-10-24
 
 **Required canonical reference:** [NFL 2026 game-state rules contract](docs/rules/NFL-2026-GAME-STATE-RULES.md), based on the official 2026 NFL rulebook. The previous E0 direction-only discussion missed a central transition: **halftime requires second-half coin-toss/deferral choice resolution and an actual kickoff**. The team receiving after halftime is determined by those choices; it is not always the opponent of the opening receiver. Teams **change ends but keep their drive at Q1/Q3**; the first-half series **ends at Q2**, and a free kick restarts Q3. Field-end assignments belong to each team and quarter and are not inferred from home/away or from universal Q1/Q2 and Q3/Q4 signs.
