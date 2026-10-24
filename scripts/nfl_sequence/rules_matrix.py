@@ -396,8 +396,10 @@ def check(record):
     add('Drive index: every play state carries its game-level drive index', _drive_index(record))
     add('Points equal the points on the drives', _points(record))
     add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
-    add('Timeouts: three per team per half', (UNSUPPORTED, 'not modelled: the published table has no timeout fields, '
-                                                           'so the observed clock runoff is used as recorded'))
+    add('Timeouts: three per team per half', (UNSUPPORTED, 'not drawn: the published table has no timeout fields. A sampled '
+                                                           'play flagged with a timeout charges one of the three to the side it '
+                                                           'names, if that side has one left; its stoppage is inside the observed '
+                                                           'runoff; the rule itself is not checked against the rulebook'))
     add('Unmodelled rules: each carries a named guard', _guards(record))
     add('Two-minute warning', (UNSUPPORTED, 'not modelled'))
     add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))

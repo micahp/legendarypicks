@@ -51,11 +51,13 @@ UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kick
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
-    'timeouts': {'guard': 'no timeout is drawn or charged: the published table has no timeout fields, and the sampled '
-                          'runoff is used as recorded',
+    'timeouts': {'guard': 'no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout '
+                          'charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); '
+                          'the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook',
                  'enforced_by': 'unsupported_rules; valid_full_game is false'},
-    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled: observed runoff already carries any stoppage '
-                                    'in the sampled play; the warning itself is not identifiable in the data',
+    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not '
+                                    'checked for a warning stoppage: the warning is not identifiable in the play-by-play, so '
+                                    'whether observed runoffs carry it is unverified',
                            'enforced_by': 'unsupported_rules; valid_full_game is false'},
     'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
                   'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
