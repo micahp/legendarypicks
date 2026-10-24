@@ -10,6 +10,14 @@
 
 This document is a **running synthesis**, not the source of record for evaluations. Keep the dated reports, code revisions, raw results, and held-out boundaries immutable; link them here. Update this file when research changes our understanding. Do not rewrite failed experiments into successes.
 
+## MOVEMENT RESEARCH DECISION — 2026-10-24: low-cost kinematics, full-game priority
+
+[Coordinator decision and planned held-out gate](https://github.com/micahp/gridiron-physics/blob/main/docs/research/MOVEMENT-POLICY-MATERIALITY-DECISION-2026-10-24.md), made **after development**. Agent-reported, **uncommitted** research from 2022 Big Data Bowl snap-anchored movement: for 9,289 scored plays in 80 games at 1 s, constant acceleration improves over constant velocity by **113.2 mm** (game-clustered interval for diff [−121.9, −104.6] mm), while additional legacy locomotion gains only **3.72 mm** (interval [−5.10, −2.71] mm). Acceleration accounts for ~97% of their combined gain. The original preregistered rule formally says `moreSophisticatedPolicyJustified=true`, because it lacks a practical floor; **we reject acting on such a tiny difference, without erasing or revising the old rule**. The earlier 0 m minimum-separation result included the observed origin and is not evidence of accurate contact.
+
+**Future, post-development policy** for a genuinely new movement challenger: report game-weighted, identical-input, 1 s position MAE; require ≥0.050 m AND ≥5% reduction over best kinematic, 95% game-clustered paired interval below zero, no major spatial/runtime regression. Preserve weeks 6–9 instead of checking them now for the existing controller. **Reconcile** the currently reported **9,456 manifest rows / 9,388 snap-anchored plays / 9,289 scored plays** by ID and exclusion reason before any new movement claim. Agents report source worktrees **not yet committed/pushed**; this decision document is not an independent rerun.
+
+**E0–E2 game generation remains highest priority:** one generated play, one legal drive, one complete two-team NFL game with score/clock/possession/player stats and Gridiron playback. No movement/physics/Madden adoption or live LP changes.
+
 ## ACTIVE PRODUCT DELIVERY PRIORITY — 2026-10-24: one complete simulated football game
 
 **Source of truth:** [End-to-end football simulator delivery plan](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md) and [LP AGENTS.md](../AGENTS.md). Supersedes prior **next experiment priorities**, not their historical measurement claims. Our end state is a game that LP can generate coherently through players, play decisions, downs, drives, score/clock/possession and box scores; Gridiron can render, inspect and ultimately make playable; and repeated samples can be *tested* for usefulness in Legendary Picks probabilities and player props.
