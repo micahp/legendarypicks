@@ -1,0 +1,222 @@
+{
+ "draws_per_play": 100,
+ "drive_skipped": {
+  "fewer than 3 plays": 54,
+  "play without down, distance or field position": 507,
+  "quarter change or a play outside the modelled outcomes": 536,
+  "thin pool for one model (dropped for all)": 51,
+  "unresolved runoff inside the drive": 2
+ },
+ "drives": {
+  "A": {
+   "draw_mean_median": 117.1,
+   "draw_p25": 71.5,
+   "draw_p75": 174.8,
+   "mean_abs_error_per_drive": 23.0,
+   "n_drives": 54
+  },
+  "B": {
+   "draw_mean_median": 109.5,
+   "draw_p25": 73.6,
+   "draw_p75": 183.0,
+   "mean_abs_error_per_drive": 18.3,
+   "n_drives": 54
+  },
+  "C": {
+   "draw_mean_median": 112.4,
+   "draw_p25": 72.4,
+   "draw_p75": 181.3,
+   "mean_abs_error_per_drive": 19.3,
+   "n_drives": 54
+  },
+  "observed": {
+   "median": 112.5,
+   "n_drives": 54,
+   "p25": 79.0,
+   "p75": 190.0
+  }
+ },
+ "fit": "weeks 1-5 matched plays",
+ "min_cell": 50,
+ "models": {
+  "A": {
+   "oob_last_two_minutes_draw_median": 36.0,
+   "oob_last_two_minutes_n_plays": 78,
+   "oob_last_two_minutes_observed_median": 5.0,
+   "oob_otherwise_draw_median": 37.0,
+   "oob_otherwise_n_plays": 603,
+   "oob_otherwise_observed_median": 35.0,
+   "per_outcome": {
+    "interception": {
+     "draw_median": 9.0,
+     "n_plays": 30,
+     "observed_median": 8.5,
+     "w1_seconds": 0.67
+    },
+    "other": {
+     "draw_median": 13.0,
+     "n_plays": 58,
+     "observed_median": 25.0,
+     "w1_seconds": 5.56
+    },
+    "pass_complete": {
+     "draw_median": 36.0,
+     "n_plays": 1979,
+     "observed_median": 36.0,
+     "w1_seconds": 0.67
+    },
+    "pass_incomplete": {
+     "draw_median": 5.0,
+     "n_plays": 1005,
+     "observed_median": 5.0,
+     "w1_seconds": 0.08
+    },
+    "run": {
+     "draw_median": 38.0,
+     "n_plays": 2449,
+     "observed_median": 38.0,
+     "w1_seconds": 0.37
+    },
+    "sack": {
+     "draw_median": 40.0,
+     "n_plays": 178,
+     "observed_median": 40.0,
+     "w1_seconds": 2.49
+    },
+    "touchdown": {
+     "draw_median": 5.0,
+     "n_plays": 182,
+     "observed_median": 5.5,
+     "w1_seconds": 0.39
+    }
+   },
+   "quarter_end_rate_all": 0.0295,
+   "quarter_end_rate_last_two_minutes_of_half": 0.1533,
+   "quarter_end_rate_otherwise": 0.0147
+  },
+  "B": {
+   "oob_last_two_minutes_draw_median": 5.0,
+   "oob_last_two_minutes_n_plays": 78,
+   "oob_last_two_minutes_observed_median": 5.0,
+   "oob_otherwise_draw_median": 34.0,
+   "oob_otherwise_n_plays": 603,
+   "oob_otherwise_observed_median": 35.0,
+   "per_outcome": {
+    "interception": {
+     "draw_median": 7.0,
+     "n_plays": 30,
+     "observed_median": 8.5,
+     "w1_seconds": 1.14
+    },
+    "other": {
+     "draw_median": 19.0,
+     "n_plays": 58,
+     "observed_median": 25.0,
+     "w1_seconds": 4.17
+    },
+    "pass_complete": {
+     "draw_median": 36.0,
+     "n_plays": 1979,
+     "observed_median": 36.0,
+     "w1_seconds": 0.53
+    },
+    "pass_incomplete": {
+     "draw_median": 5.0,
+     "n_plays": 1005,
+     "observed_median": 5.0,
+     "w1_seconds": 0.05
+    },
+    "run": {
+     "draw_median": 38.0,
+     "n_plays": 2449,
+     "observed_median": 38.0,
+     "w1_seconds": 0.28
+    },
+    "sack": {
+     "draw_median": 41.0,
+     "n_plays": 178,
+     "observed_median": 40.0,
+     "w1_seconds": 0.69
+    },
+    "touchdown": {
+     "draw_median": 5.0,
+     "n_plays": 182,
+     "observed_median": 5.5,
+     "w1_seconds": 0.21
+    }
+   },
+   "quarter_end_rate_all": 0.0208,
+   "quarter_end_rate_last_two_minutes_of_half": 0.0671,
+   "quarter_end_rate_otherwise": 0.0153
+  },
+  "C": {
+   "oob_last_two_minutes_draw_median": 5.4,
+   "oob_last_two_minutes_n_plays": 78,
+   "oob_last_two_minutes_observed_median": 5.0,
+   "oob_otherwise_draw_median": 33.5,
+   "oob_otherwise_n_plays": 603,
+   "oob_otherwise_observed_median": 35.0,
+   "per_outcome": {
+    "interception": {
+     "draw_median": 7.7,
+     "n_plays": 30,
+     "observed_median": 8.5,
+     "w1_seconds": 0.96
+    },
+    "other": {
+     "draw_median": 19.2,
+     "n_plays": 58,
+     "observed_median": 25.0,
+     "w1_seconds": 4.0
+    },
+    "pass_complete": {
+     "draw_median": 36.1,
+     "n_plays": 1979,
+     "observed_median": 36.0,
+     "w1_seconds": 0.54
+    },
+    "pass_incomplete": {
+     "draw_median": 4.7,
+     "n_plays": 1005,
+     "observed_median": 5.0,
+     "w1_seconds": 0.31
+    },
+    "run": {
+     "draw_median": 37.9,
+     "n_plays": 2449,
+     "observed_median": 38.0,
+     "w1_seconds": 0.43
+    },
+    "sack": {
+     "draw_median": 41.0,
+     "n_plays": 178,
+     "observed_median": 40.0,
+     "w1_seconds": 0.74
+    },
+    "touchdown": {
+     "draw_median": 5.2,
+     "n_plays": 182,
+     "observed_median": 5.5,
+     "w1_seconds": 0.38
+    }
+   },
+   "quarter_end_rate_all": 0.0203,
+   "quarter_end_rate_last_two_minutes_of_half": 0.0648,
+   "quarter_end_rate_otherwise": 0.015
+  }
+ },
+ "observed_quarter_end_share": {
+  "all": 0.0228,
+  "last_two_minutes_of_half": 0.0673
+ },
+ "seed": 20261024,
+ "skipped": {
+  "model A: thin pool for this play": 535,
+  "model B: thin pool for this play": 148,
+  "model C: thin pool for this play": 148,
+  "test play without an observed runoff": 2
+ },
+ "test": "weeks 6-9 matched plays",
+ "test_plays_total": 6540,
+ "test_plays_used": 5881
+}
