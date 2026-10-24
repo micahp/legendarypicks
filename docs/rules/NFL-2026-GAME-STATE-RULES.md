@@ -4,7 +4,7 @@
 
 **Ownership:** Legendary Picks owns legal game/drive state and authoritative play outcomes. Gridiron Physics consumes versioned outcomes and makes the sequence inspectable; no independently guessed scores, directions, post-play ball spots or kickoff recipients. Physics-determined outcomes, if added later, require their own tested research interface. Both agents should read this reference and document which rules are implemented/tested versus missing.
 
-**Why this exists:** The prior E0 demo assigned `dir=+1` to **every offense** in Q1–Q2 and `dir=-1` in Q3–Q4. That is **not** an NFL rule. The actual half starts with a **kickoff** determined by choices made around the opening coin toss and before the second half. Teams also change goals after Q1 and Q3 without changing possession or ending the drive. E1 must not infer a kickoff from "opposite of opening receiver," derive direction from home/away, or mark all quarter boundaries as drive terminals.
+**Why this exists:** The prior E0 demo assigned `dir=+1` to **every offense** in Q1–Q2 and `dir=-1` in Q3–Q4. That is **not** an NFL rule. The actual half starts with a **kickoff** determined by choices made around the opening coin toss and before the second half. Teams also change goals after Q1 and Q3 without changing possession or ending the drive. E1 must never substitute an inferred possession for an actual kickoff event. In **normal** simulations, the opening receiver is explicitly required to kick off Q3, and that requirement must be confirmed against the recorded toss/choice ledger. Never derive field direction from home/away or mark all quarter boundaries as drive terminals.
 
 ## STRICT DEFAULT SIMULATION POLICY — NOT OPTIONAL
 
