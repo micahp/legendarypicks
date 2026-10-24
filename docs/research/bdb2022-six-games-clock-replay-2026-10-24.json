@@ -1,0 +1,814 @@
+{
+ "draws_per_quarter": 100,
+ "fit": "every matched play outside the six games",
+ "games": {
+  "2022_05_CIN_BAL": "2026_07_CIN_BAL",
+  "2022_05_MIA_NYJ": "2026_07_MIA_NYJ",
+  "2022_06_DAL_PHI": "2026_07_DAL_PHI",
+  "2022_06_SF_ATL": "2026_07_SF_ATL",
+  "2022_07_TB_CAR": "2026_07_TB_CAR",
+  "2022_09_GB_DET": "2026_07_GB_DET"
+ },
+ "models": {
+  "A": {
+   "game_totals": {
+    "2022_05_CIN_BAL": {
+     "median_total_error_seconds": 18.0,
+     "share_overshoot": 0.57
+    },
+    "2022_05_MIA_NYJ": {
+     "median_total_error_seconds": -176.5,
+     "share_overshoot": 0.11
+    },
+    "2022_06_DAL_PHI": {
+     "median_total_error_seconds": 59.5,
+     "share_overshoot": 0.76
+    },
+    "2022_07_TB_CAR": {
+     "median_total_error_seconds": -271.5,
+     "share_overshoot": 0.01
+    },
+    "2022_09_GB_DET": {
+     "median_total_error_seconds": -2.5,
+     "share_overshoot": 0.5
+    }
+   },
+   "mean_abs_error_seconds": 88.7,
+   "median_error_seconds": -16.5,
+   "play_draws": {
+    "modelled": 703,
+    "observed: not a modelled play": 155,
+    "observed: thin pool": 58
+   },
+   "quarters": [
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -80.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -150.0,
+     "p90": 10.0,
+     "plays": 39,
+     "quarter": 1,
+     "share_overshoot": 0.15
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": 144.0,
+     "observed_clock_seconds": 900.0,
+     "p10": 48.0,
+     "p90": 195.0,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.99
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -85.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -155.0,
+     "p90": -34.0,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.03
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": 56.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -25.0,
+     "p90": 123.0,
+     "plays": 41,
+     "quarter": 4,
+     "share_overshoot": 0.83
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -146.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -229.0,
+     "p90": -93.0,
+     "plays": 40,
+     "quarter": 1,
+     "share_overshoot": 0.0
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": 99.0,
+     "observed_clock_seconds": 900.0,
+     "p10": 1.0,
+     "p90": 161.0,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.91
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -59.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -147.0,
+     "p90": 7.0,
+     "plays": 34,
+     "quarter": 3,
+     "share_overshoot": 0.15
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -29.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -123.0,
+     "p90": 59.0,
+     "plays": 46,
+     "quarter": 4,
+     "share_overshoot": 0.3
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": -114.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -189.0,
+     "p90": -36.0,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.01
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 60.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -32.0,
+     "p90": 113.0,
+     "plays": 52,
+     "quarter": 2,
+     "share_overshoot": 0.81
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 43.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -48.0,
+     "p90": 105.0,
+     "plays": 39,
+     "quarter": 3,
+     "share_overshoot": 0.71
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 92.0,
+     "observed_clock_seconds": 900.0,
+     "p10": 16.0,
+     "p90": 159.0,
+     "plays": 48,
+     "quarter": 4,
+     "share_overshoot": 0.92
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -61.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -109.0,
+     "p90": 6.0,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.14
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -53.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -119.0,
+     "p90": -4.0,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.09
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": 129.0,
+     "observed_clock_seconds": 900.0,
+     "p10": 30.0,
+     "p90": 209.0,
+     "plays": 43,
+     "quarter": 4,
+     "share_overshoot": 0.97
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -182.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -250.0,
+     "p90": -115.0,
+     "plays": 32,
+     "quarter": 1,
+     "share_overshoot": 0.0
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": 66.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -8.0,
+     "p90": 136.0,
+     "plays": 38,
+     "quarter": 2,
+     "share_overshoot": 0.88
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -7.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -91.0,
+     "p90": 58.0,
+     "plays": 46,
+     "quarter": 3,
+     "share_overshoot": 0.43
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -133.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -211.0,
+     "p90": -76.0,
+     "plays": 36,
+     "quarter": 4,
+     "share_overshoot": 0.0
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": -29.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -118.0,
+     "p90": 49.0,
+     "plays": 38,
+     "quarter": 1,
+     "share_overshoot": 0.32
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 65.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -32.0,
+     "p90": 134.0,
+     "plays": 40,
+     "quarter": 2,
+     "share_overshoot": 0.84
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 14.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -66.0,
+     "p90": 84.0,
+     "plays": 41,
+     "quarter": 3,
+     "share_overshoot": 0.56
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": -68.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -143.0,
+     "p90": 19.0,
+     "plays": 44,
+     "quarter": 4,
+     "share_overshoot": 0.21
+    }
+   ],
+   "share_overshoot": 0.4457,
+   "share_undershoot": 0.5504
+  },
+  "B": {
+   "game_totals": {
+    "2022_05_CIN_BAL": {
+     "median_total_error_seconds": -66.0,
+     "share_overshoot": 0.26
+    },
+    "2022_05_MIA_NYJ": {
+     "median_total_error_seconds": -222.5,
+     "share_overshoot": 0.01
+    },
+    "2022_06_DAL_PHI": {
+     "median_total_error_seconds": 90.5,
+     "share_overshoot": 0.71
+    },
+    "2022_07_TB_CAR": {
+     "median_total_error_seconds": -200.0,
+     "share_overshoot": 0.03
+    },
+    "2022_09_GB_DET": {
+     "median_total_error_seconds": -71.5,
+     "share_overshoot": 0.26
+    }
+   },
+   "mean_abs_error_seconds": 61.63,
+   "median_error_seconds": -23.0,
+   "play_draws": {
+    "modelled": 701,
+    "observed: not a modelled play": 155,
+    "observed: thin pool": 60
+   },
+   "quarters": [
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -42.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -98.0,
+     "p90": -1.0,
+     "plays": 39,
+     "quarter": 1,
+     "share_overshoot": 0.09
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": 51.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -13.0,
+     "p90": 124.0,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.83
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -82.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -141.0,
+     "p90": -25.0,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.02
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": 4.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -75.0,
+     "p90": 76.0,
+     "plays": 41,
+     "quarter": 4,
+     "share_overshoot": 0.53
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -75.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -131.0,
+     "p90": -33.0,
+     "plays": 40,
+     "quarter": 1,
+     "share_overshoot": 0.03
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -48.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -125.0,
+     "p90": 21.0,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.22
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -66.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -123.0,
+     "p90": -16.0,
+     "plays": 34,
+     "quarter": 3,
+     "share_overshoot": 0.04
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -21.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -98.0,
+     "p90": 41.0,
+     "plays": 46,
+     "quarter": 4,
+     "share_overshoot": 0.33
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": -59.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -110.0,
+     "p90": 3.0,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.11
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 30.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -61.0,
+     "p90": 82.0,
+     "plays": 52,
+     "quarter": 2,
+     "share_overshoot": 0.68
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 67.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -8.0,
+     "p90": 117.0,
+     "plays": 39,
+     "quarter": 3,
+     "share_overshoot": 0.88
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 59.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -34.0,
+     "p90": 133.0,
+     "plays": 48,
+     "quarter": 4,
+     "share_overshoot": 0.82
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -44.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -106.0,
+     "p90": 11.0,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.18
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -13.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -88.0,
+     "p90": 37.0,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.35
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": 93.0,
+     "observed_clock_seconds": 900.0,
+     "p10": 36.0,
+     "p90": 155.0,
+     "plays": 43,
+     "quarter": 4,
+     "share_overshoot": 0.97
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -113.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -177.0,
+     "p90": -56.0,
+     "plays": 32,
+     "quarter": 1,
+     "share_overshoot": 0.01
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -28.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -98.0,
+     "p90": 39.0,
+     "plays": 38,
+     "quarter": 2,
+     "share_overshoot": 0.29
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": 38.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -32.0,
+     "p90": 88.0,
+     "plays": 46,
+     "quarter": 3,
+     "share_overshoot": 0.68
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -94.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -173.0,
+     "p90": -15.0,
+     "plays": 36,
+     "quarter": 4,
+     "share_overshoot": 0.05
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 15.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -50.0,
+     "p90": 64.0,
+     "plays": 38,
+     "quarter": 1,
+     "share_overshoot": 0.58
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": -6.0,
+     "observed_clock_seconds": 900.0,
+     "p10": -77.0,
+     "p90": 55.0,
+     "plays": 40,
+     "quarter": 2,
+     "share_overshoot": 0.46
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 1.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -56.0,
+     "p90": 47.0,
+     "plays": 41,
+     "quarter": 3,
+     "share_overshoot": 0.5
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": -62.5,
+     "observed_clock_seconds": 900.0,
+     "p10": -142.0,
+     "p90": -7.0,
+     "plays": 44,
+     "quarter": 4,
+     "share_overshoot": 0.07
+    }
+   ],
+   "share_overshoot": 0.3791,
+   "share_undershoot": 0.6174
+  },
+  "C": {
+   "game_totals": {
+    "2022_05_CIN_BAL": {
+     "median_total_error_seconds": -70.9,
+     "share_overshoot": 0.23
+    },
+    "2022_05_MIA_NYJ": {
+     "median_total_error_seconds": -206.0,
+     "share_overshoot": 0.01
+    },
+    "2022_06_DAL_PHI": {
+     "median_total_error_seconds": 80.6,
+     "share_overshoot": 0.76
+    },
+    "2022_07_TB_CAR": {
+     "median_total_error_seconds": -212.7,
+     "share_overshoot": 0.02
+    },
+    "2022_09_GB_DET": {
+     "median_total_error_seconds": -75.5,
+     "share_overshoot": 0.28
+    }
+   },
+   "mean_abs_error_seconds": 61.78,
+   "median_error_seconds": -23.4,
+   "play_draws": {
+    "modelled": 701,
+    "observed: not a modelled play": 155,
+    "observed: thin pool": 60
+   },
+   "quarters": [
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -44.65,
+     "observed_clock_seconds": 900.0,
+     "p10": -93.3,
+     "p90": 6.3,
+     "plays": 39,
+     "quarter": 1,
+     "share_overshoot": 0.13
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": 63.35,
+     "observed_clock_seconds": 900.0,
+     "p10": -19.5,
+     "p90": 124.3,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.84
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -79.9,
+     "observed_clock_seconds": 900.0,
+     "p10": -162.1,
+     "p90": -30.7,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.03
+    },
+    {
+     "game": "2022_05_CIN_BAL",
+     "median_error_seconds": -6.05,
+     "observed_clock_seconds": 900.0,
+     "p10": -92.8,
+     "p90": 62.0,
+     "plays": 41,
+     "quarter": 4,
+     "share_overshoot": 0.46
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -65.85,
+     "observed_clock_seconds": 900.0,
+     "p10": -124.8,
+     "p90": -5.2,
+     "plays": 40,
+     "quarter": 1,
+     "share_overshoot": 0.07
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -52.45,
+     "observed_clock_seconds": 900.0,
+     "p10": -117.4,
+     "p90": 13.3,
+     "plays": 50,
+     "quarter": 2,
+     "share_overshoot": 0.15
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -69.7,
+     "observed_clock_seconds": 900.0,
+     "p10": -141.7,
+     "p90": -11.9,
+     "plays": 34,
+     "quarter": 3,
+     "share_overshoot": 0.07
+    },
+    {
+     "game": "2022_05_MIA_NYJ",
+     "median_error_seconds": -20.4,
+     "observed_clock_seconds": 900.0,
+     "p10": -92.2,
+     "p90": 52.9,
+     "plays": 46,
+     "quarter": 4,
+     "share_overshoot": 0.36
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": -52.4,
+     "observed_clock_seconds": 900.0,
+     "p10": -119.6,
+     "p90": 4.7,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.13
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 21.15,
+     "observed_clock_seconds": 900.0,
+     "p10": -58.1,
+     "p90": 84.1,
+     "plays": 52,
+     "quarter": 2,
+     "share_overshoot": 0.59
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 53.45,
+     "observed_clock_seconds": 900.0,
+     "p10": -5.8,
+     "p90": 119.8,
+     "plays": 39,
+     "quarter": 3,
+     "share_overshoot": 0.89
+    },
+    {
+     "game": "2022_06_DAL_PHI",
+     "median_error_seconds": 60.05,
+     "observed_clock_seconds": 900.0,
+     "p10": -31.8,
+     "p90": 135.7,
+     "plays": 48,
+     "quarter": 4,
+     "share_overshoot": 0.8
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -40.55,
+     "observed_clock_seconds": 900.0,
+     "p10": -127.6,
+     "p90": 8.5,
+     "plays": 35,
+     "quarter": 1,
+     "share_overshoot": 0.16
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": -19.7,
+     "observed_clock_seconds": 900.0,
+     "p10": -84.9,
+     "p90": 46.9,
+     "plays": 36,
+     "quarter": 3,
+     "share_overshoot": 0.38
+    },
+    {
+     "game": "2022_06_SF_ATL",
+     "median_error_seconds": 89.2,
+     "observed_clock_seconds": 900.0,
+     "p10": 18.9,
+     "p90": 150.3,
+     "plays": 43,
+     "quarter": 4,
+     "share_overshoot": 0.95
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -105.8,
+     "observed_clock_seconds": 900.0,
+     "p10": -164.2,
+     "p90": -56.1,
+     "plays": 32,
+     "quarter": 1,
+     "share_overshoot": 0.0
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -29.3,
+     "observed_clock_seconds": 900.0,
+     "p10": -89.0,
+     "p90": 33.5,
+     "plays": 38,
+     "quarter": 2,
+     "share_overshoot": 0.29
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": 24.05,
+     "observed_clock_seconds": 900.0,
+     "p10": -43.3,
+     "p90": 90.5,
+     "plays": 46,
+     "quarter": 3,
+     "share_overshoot": 0.71
+    },
+    {
+     "game": "2022_07_TB_CAR",
+     "median_error_seconds": -97.15,
+     "observed_clock_seconds": 900.0,
+     "p10": -179.4,
+     "p90": -26.8,
+     "plays": 36,
+     "quarter": 4,
+     "share_overshoot": 0.02
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 0.8,
+     "observed_clock_seconds": 900.0,
+     "p10": -58.7,
+     "p90": 50.5,
+     "plays": 38,
+     "quarter": 1,
+     "share_overshoot": 0.51
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 6.55,
+     "observed_clock_seconds": 900.0,
+     "p10": -89.0,
+     "p90": 58.2,
+     "plays": 40,
+     "quarter": 2,
+     "share_overshoot": 0.54
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": 6.75,
+     "observed_clock_seconds": 900.0,
+     "p10": -67.5,
+     "p90": 57.9,
+     "plays": 41,
+     "quarter": 3,
+     "share_overshoot": 0.55
+    },
+    {
+     "game": "2022_09_GB_DET",
+     "median_error_seconds": -56.85,
+     "observed_clock_seconds": 900.0,
+     "p10": -120.1,
+     "p90": -1.1,
+     "plays": 44,
+     "quarter": 4,
+     "share_overshoot": 0.09
+    }
+   ],
+   "share_overshoot": 0.3791,
+   "share_undershoot": 0.6209
+  }
+ },
+ "quarters_used": 23,
+ "seed": 20261025,
+ "skipped": {
+  "unresolved runoff inside the quarter": 1
+ }
+}

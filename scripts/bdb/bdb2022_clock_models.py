@@ -104,7 +104,8 @@ def load_matched(lp_by_key):
     matched, bad = [], Counter()
     for r in csv.DictReader(open(CSV_PATH)):
         lp = lp_by_key[(r['lp_game_id'], int(float(r['lp_play_id'])))]
-        x = {'week': int(r['week']), 'down': int(float(r['down'])), 'distance': int(float(r['distance'])),
+        x = {'game': r['lp_game_id'], 'week': int(r['week']), 'down': int(float(r['down'])),
+             'distance': int(float(r['distance'])),
              'yardline': lp['yardline_100'], 'outcome': r['outcome'], 'stop': r['stop_class'],
              'quarter': int(float(r['quarter'])), 'quarter_seconds_remaining': num(r['quarter_seconds_remaining']),
              'in_play': num(r['in_play_seconds']), 'runoff': num(r['runoff_seconds']),
