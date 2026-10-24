@@ -189,6 +189,11 @@ The outcomes are in the kept columns:
 
 Primary window: 2022–2025, weeks 1–18, the same window E1 samples from.
 
+Independent check (2026-10-24): the fixture was regenerated with `build_kick_results.py` into a scratch path and is
+byte-identical to the committed CSV (SHA-256 `193f2d23…0a93`, 9,704 rows). A separate pyarrow query over the four raw
+files (`REG`, weeks 1–18, checked against `/root/nflverse-raw/SHA256SUMS`) gives the same counts: extra point `good` 4,643,
+`failed` 178, `blocked` 38, empty 11; two-point `success` 240, `failure` 269.
+
 | draw | published rate | made / missed in the window | floor per cell |
 | --- | ---: | ---: | ---: |
 | field goal, by `yardline_100` 1–9 / 10–19 / 20–29 / 30–39 / 40–49 / 50+ | 98.2 / 95.0 / 83.1 / 72.6 / 54.9 / 25.0% | 698/13, 1109/58, 980/200, 809/305, 67/55, 1/3 | 30 attempts |
