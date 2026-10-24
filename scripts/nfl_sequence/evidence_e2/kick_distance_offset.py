@@ -2,8 +2,8 @@
 """Measure the publisher's kick_distance against the engine's kick-spot transform, on the field-goal rows of the kick table.
 
 The engine puts the holder HOLDER_OFFSET yards behind the line of scrimmage (game_state.kick_spot_yardline_100). The kick
-then runs from that spot to the end line, which the rulebook puts ENDZONE_DEPTH yards beyond the goal line (Rule 1, Section
-2, Article 2: "The end line is 10 yards from the goal line"). So the engine implies
+then runs from that spot to the end line, which the rulebook puts ENDZONE_DEPTH yards beyond the goal line (Rule 3, Section
+11, Article 2: "The end line is 10 yards from the goal line"). So the engine implies
 kick_distance = yardline_100 + HOLDER_OFFSET + ENDZONE_DEPTH, that is yardline_100 + 17.
 
 Reads docs/fixtures/e2/kick_results_2022_2025.csv (read only). Writes docs/evidence/e2-successor/kick-distance-offset.json.
@@ -23,7 +23,7 @@ import game_state as gs  # noqa: E402
 ROOT = HERE.parents[2]
 TABLE = ROOT / 'docs' / 'fixtures' / 'e2' / 'kick_results_2022_2025.csv'
 OUT = ROOT / 'docs' / 'evidence' / 'e2-successor' / 'kick-distance-offset.json'
-ENDZONE_DEPTH = 10  # yards from the goal line to the end line; rulebook Rule 1, Section 2, Article 2
+ENDZONE_DEPTH = 10  # yards from the goal line to the end line; rulebook Rule 3, Section 11, Article 2
 
 
 def main():
