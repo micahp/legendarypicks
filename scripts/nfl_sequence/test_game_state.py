@@ -331,6 +331,46 @@ class RulesMatrix(unittest.TestCase):
             self.assertEqual(row['status'], 'UNSUPPORTED', case)
 
 
+class TossSymmetry(unittest.TestCase):
+    """Both toss winners and both choices, sampled and verified. Nothing is fixed to team A."""
+
+    def _game(self, winner, choice):
+        return gs.play_game(3, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice=choice, max_drives=3,
+                            winner=winner)
+
+    def test_every_winner_and_choice_gives_the_matrix_kickoffs(self):
+        for winner in ('A', 'B'):
+            for choice in ('receive', 'defer'):
+                record = self._game(winner, choice)
+                gs.validate_game(record)
+                rows = {r['case']: r['status'] for r in rm.check(record)}
+                self.assertNotIn('FAIL', rows.values(), (winner, choice))
+                self.assertEqual(record['ledger']['winner'], winner)
+
+    def test_the_defer_and_receive_kickoffs_follow_the_matrix(self):
+        # Matrix section 7: a receive gives the winner the Q1 receive and the loser the Q3 receive; a defer is the reverse.
+        receive = self._game('A', 'receive')
+        defer = self._game('A', 'defer')
+        recv_q1 = next(k for k in receive['kickoffs'] if k['kind'] == 'half_start' and k['quarter'] == 1)
+        defer_q1 = next(k for k in defer['kickoffs'] if k['kind'] == 'half_start' and k['quarter'] == 1)
+        self.assertEqual(recv_q1['receiving_team'], 'A')
+        self.assertEqual(defer_q1['receiving_team'], 'B')
+
+    def test_sampling_covers_both_winners_and_both_choices(self):
+        seen = set()
+        for seed in range(1, 41):
+            record = gs.play_game(seed, ref(StaticPool('run', 10, 450), kickoff_pool()), max_drives=1)
+            seen.add((record['ledger']['winner'], record['ledger']['winner_choice']))
+        self.assertEqual(seen, {('A', 'receive'), ('A', 'defer'), ('B', 'receive'), ('B', 'defer')})
+
+    def test_a_ledger_that_disagrees_with_the_kickoffs_is_rejected(self):
+        # Negative fixture: the ledger says B won, but the kickoffs were built for A.
+        record = self._game('A', 'receive')
+        record['ledger']['winner'], record['ledger']['loser'] = 'B', 'A'
+        with self.assertRaises(AssertionError):
+            gs.validate_game(record)
+
+
 class DriveIndex(unittest.TestCase):
     def test_every_play_state_carries_its_drive_index(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)

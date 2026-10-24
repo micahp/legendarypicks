@@ -104,6 +104,9 @@ Rows that are not modelled are named, not passed:
 
 ## Orientation
 
+The toss winner (team A or B) and the winner's choice (receive or defer) are both sampled from the seed. Tests cover both
+winners with both choices. Nothing is fixed to team A.
+
 Authored, not sourced, and labelled in every record. The goal-first-half team defends x=0 in Q1. Ends change after Q1 and
 after Q3, and halftime does not flip ends. The Q3 orientation uses the second-half goal choice.
 
