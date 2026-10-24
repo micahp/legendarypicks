@@ -211,7 +211,10 @@ def simulate(start, seed, pool):
             decision_type = 'field_goal_attempt'
         else:
             decision_type = 'run' if row['play_type'] == 'run' else 'dropback'
-        after_dir = dir_of(after['offense'], next_quarter) if yl_after is not None else None
+        # A half or regulation end has no scrimmage state, so no field endpoint is recorded for it (schema 1.1).
+        # The final play's position is kept in outcome.final_play_yardline_100 instead.
+        after_has_position = yl_after is not None and not ended_by_clock_only
+        after_dir = dir_of(after['offense'], next_quarter) if after_has_position else None
         play = {
             'sequence': len(plays) + 1, 'id': f'e1-seed{seed}:{len(plays) + 1}', 'event_type': event,
             'state_before': state_before,
@@ -237,7 +240,7 @@ def simulate(start, seed, pool):
                       'before': {'dir': dir_of(st['offense'], st['quarter']),
                                  'los': e0.los(dir_of(st['offense'], st['quarter']), st['yl'])},
                       'after': {'dir': after_dir,
-                                'los': e0.los(after_dir, yl_after) if yl_after is not None else None}},
+                                'los': e0.los(after_dir, yl_after) if after_has_position else None}},
         }
         plays.append(play)
         st = {'quarter': next_quarter, 'offense': after['offense'], 'defense': after['defense'],
@@ -293,6 +296,8 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
         if o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
             raise AssertionError(f'play {i + 1}: field-goal flag and terminal disagree')
+        if (sa['yardline_100'] is None) != (p['field']['after']['dir'] is None):
+            raise AssertionError(f'play {i + 1}: field endpoint and scrimmage state disagree about a position')
         if o['field_goal_attempt'] and sa['yardline_100'] is not None:
             raise AssertionError(f'play {i + 1}: a field-goal attempt has no next field position')
         if o['punt'] and sa['yardline_100'] is None:
@@ -354,7 +359,7 @@ def main():
         raise SystemExit(f'drive incomplete: {terminal}')
     summary = check_drive(plays, terminal)
     record = {
-        'schema_version': '1.0', 'mode': 'drive_statistical_demo', 'valid_full_game': False,
+        'schema_version': '1.1', 'mode': 'drive_statistical_demo', 'valid_full_game': False,
         'simulation_id': f'e1-{args.start}-seed{args.seed}', 'seed': args.seed,
         'model_version': MODEL_VERSION, 'rules_version': RULES_VERSION,
         'start_state': {'source': 'authored demonstration state, not a pregame state', **start},
