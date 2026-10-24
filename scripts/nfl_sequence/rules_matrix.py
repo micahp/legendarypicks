@@ -301,6 +301,20 @@ def _missed_fg_spot(record):
     return PASS, f'{checked} missed field goal(s): receiving team at the kick spot, or its own 20 (Rule 11-4-2 as cited)'
 
 
+def _drive_index(record):
+    """Every play's state_before and state_after carry its drive's game-level index, and the indices run 1..n."""
+    indices = [d['index'] for d in record['drives']]
+    if indices != list(range(1, len(indices) + 1)):
+        return FAIL, f'drive indices are not 1..{len(indices)}: {indices[:10]}'
+    for d in record['drives']:
+        for play in d['plays']:
+            for side in ('state_before', 'state_after'):
+                if play[side].get('drive_index') != d['index']:
+                    return FAIL, (f'drive {d["index"]}: play {play["sequence"]} {side} carries drive_index '
+                                  f'{play[side].get("drive_index")}')
+    return PASS, f'{len(indices)} drives, every play state carries its drive index'
+
+
 def check(record):
     """The matrix rows for one record. Ledger rows use the ledger's own teams; every other row reads the record."""
     rows = []
@@ -327,6 +341,7 @@ def check(record):
     add('Made field goal (3) and safety (2), with the correct post-score kick', _fg_safety(record))
     add('Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a drive terminal', _clock(record))
     add('Continuity between drives and quarters', _continuity(record))
+    add('Drive index: every play state carries its game-level drive index', _drive_index(record))
     add('Points equal the points on the drives', _points(record))
     add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
     add('Timeouts: three per team per half', (UNSUPPORTED, 'not modelled: the published table has no timeout fields, '

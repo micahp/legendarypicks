@@ -361,11 +361,14 @@ class _Game:
             self.block(terminal)
             return
         e1.check_drive(plays, terminal)
+        drive_index = len(self.drives) + 1
         for play in plays:
             play['sequence'] = self.next_play_sequence
             play['id'] = f'{self.simulation_id}:{self.next_play_sequence}'
             self.next_play_sequence += 1
             play['participants'] = self.ref.participants_for(play)
+            play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
+            play['state_after']['drive_index'] = drive_index
         last = plays[-1]['state_after']
         drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
                  'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
@@ -497,6 +500,13 @@ def validate_game(record):
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
     elif record['final_quarter'] >= 3 and record['complete_regulation']:
         raise AssertionError('a complete game must have two half-start kickoffs')
+    for d in record['drives']:
+        for play in d['plays']:
+            for side in ('state_before', 'state_after'):
+                if play[side].get('drive_index') != d['index']:
+                    raise AssertionError(f'drive {d["index"]}: {side} carries drive_index '
+                                         f'{play[side].get("drive_index")}, not {d["index"]}')
+    checks.append('every play state carries its drive index, in state_before and state_after')
     by_team = Counter()
     for d in record['drives']:
         p = d['points_scored_on_drive']

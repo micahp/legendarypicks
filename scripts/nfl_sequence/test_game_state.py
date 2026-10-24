@@ -331,6 +331,29 @@ class RulesMatrix(unittest.TestCase):
             self.assertEqual(row['status'], 'UNSUPPORTED', case)
 
 
+class DriveIndex(unittest.TestCase):
+    def test_every_play_state_carries_its_drive_index(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+        for d in record['drives']:
+            for play in d['plays']:
+                self.assertEqual(play['state_before']['drive_index'], d['index'])
+                self.assertEqual(play['state_after']['drive_index'], d['index'])
+        gs.validate_game(record)
+
+    def test_a_mismatched_state_after_index_is_rejected_by_the_validator(self):
+        # Negative fixture: one play's state_after points at another drive.
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+        record['drives'][1]['plays'][0]['state_after']['drive_index'] = 1
+        with self.assertRaises(AssertionError):
+            gs.validate_game(record)
+
+    def test_a_mismatched_state_before_index_fails_the_matrix(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+        record['drives'][1]['plays'][0]['state_before']['drive_index'] = 99
+        row = next(r for r in rm.check(record) if r['case'].startswith('Drive index'))
+        self.assertEqual(row['status'], 'FAIL')
+
+
 class MissedFieldGoalSpot(unittest.TestCase):
     """Rule 11-4-2 as cited in the review: the spot of the kick, or the receiving team's own 20 when the spot is inside it."""
 
