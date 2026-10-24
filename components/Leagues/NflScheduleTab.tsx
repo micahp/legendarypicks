@@ -14,9 +14,25 @@ interface NflScheduleTabProps {
   games: Game[]
   gamesLoading: boolean
   gamesError: string | null
+  unreadDays: string[]
   catalogLoading: boolean
   catalogError: string | null
   onSelectWeek: (key: string) => void
+}
+
+function formatDay(date: string) {
+  return new Date(date + 'T12:00:00').toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+// Days we have not read yet are unknown, not empty. Name them when there are a
+// few; a whole unread week is named by its label instead of a long date list.
+function unreadNote(label: string | undefined, unreadDays: string[]) {
+  if (unreadDays.length > 7) return `Games for ${label} aren't posted yet.`
+  return `Games for ${unreadDays.map(formatDay).join(', ')} aren't posted yet.`
 }
 
 export default function NflScheduleTab({
@@ -31,6 +47,7 @@ export default function NflScheduleTab({
   games,
   gamesLoading,
   gamesError,
+  unreadDays,
   catalogLoading,
   catalogError,
   onSelectWeek,
@@ -175,7 +192,9 @@ export default function NflScheduleTab({
         </div>
       ) : gamesError ? null : games.length === 0 ? (
         <div className="text-center py-12 text-zinc-500 text-sm">
-          No games scheduled for {weekEntry?.label}.
+          {unreadDays.length > 0
+            ? unreadNote(weekEntry?.label, unreadDays)
+            : `No games scheduled for ${weekEntry?.label}.`}
         </div>
       ) : (
         <div className="space-y-6">
@@ -195,6 +214,11 @@ export default function NflScheduleTab({
               </div>
             </section>
           ))}
+          {unreadDays.length > 0 && (
+            <p className="text-center text-zinc-500 text-sm">
+              {unreadNote(weekEntry?.label, unreadDays)}
+            </p>
+          )}
         </div>
       )}
     </div>
