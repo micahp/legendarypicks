@@ -8,7 +8,8 @@ publisher's athlete id, so this runs in the same pass and costs no request.
 
 For each athlete on a stored slate:
   1. already in the spine by ESPN id -> keep it;
-  2. exactly one same-name row with no ESPN id -> bind the id to that row (the
+  2. exactly one same-name row (or same name in the other word order) with no ESPN id
+     -> bind the id to that row (the
      publisher roster ingest creates such rows); never steal a row that holds a
      different id, and never pick between two;
   3. otherwise insert one.
@@ -85,6 +86,12 @@ def sync_event_players(tour, games, con):
         if espn_id in by_espn:
             continue
         same_name = by_name.get(normalize(name), [])
+        if not same_name:
+            # A publisher row may carry the name in the other order ("Yihan Qu" for ESPN's
+            # "Qu Yihan"); inserting beside it would make a second person.
+            words = normalize(name).split()
+            if len(words) == 2:
+                same_name = by_name.get(f"{words[1]} {words[0]}", [])
         free = [r for r in same_name if not r[2]]
         if len(same_name) == 1 and len(free) == 1:
             con.execute("UPDATE players SET espn_id=?,updated_at=? WHERE id=?",
