@@ -70,34 +70,24 @@ def nfl_schedule_weeks(season):
     return football_schedule_weeks("nfl", season)
 
 
-def football_schedule_week_games(league, season, season_type, week,
-                                 start_time=None, end_time=None):
-    """Return one football week, filtered to its published identity.
+def football_schedule_week_games(league, season, season_type, week):
+    """Return one NFL week, filtered to its published identity.
 
-    ESPN's NCAAF ``week=`` response caps at 25 games even with ``limit=1000``.
-    Its published calendar window returns the complete slate, so NCAAF uses
-    that bounded date range plus ``groups=80`` and then applies the same strict
-    season/type/week filter. NFL never exceeds the cap and keeps its existing
-    one-week request.
+    NFL only. NCAAF weeks are built from the stored slates in
+    routers/games/schedule.py: the ``week=`` query caps at 25 games, and the
+    date-range query that once returned the complete NCAAF slate now answers
+    HTTP 400.
     """
     league = str(league or "").lower()
-    if league not in _WEEK_LEAGUES:
-        raise ValueError("week schedule league must be nfl or ncaaf")
+    if league != "nfl":
+        raise ValueError("week games for ncaaf come from the stored slates")
     season = int(season)
     season_type = int(season_type)
     week = int(week)
     _, path = espn_client._check(league)
-    if league == "ncaaf":
-        if not start_time or not end_time:
-            raise ValueError("NCAAF week games require published start/end times")
-        start = str(start_time)[:10].replace("-", "")
-        end = str(end_time)[:10].replace("-", "")
-        url = (espn_client._SITE.format(path=path)
-               + f"/scoreboard?dates={start}-{end}&limit=1000&groups=80")
-    else:
-        url = (espn_client._SITE.format(path=path)
-               + f"/scoreboard?dates={season}&seasontype={season_type}"
-                 f"&week={week}&limit=100")
+    url = (espn_client._SITE.format(path=path)
+           + f"/scoreboard?dates={season}&seasontype={season_type}"
+             f"&week={week}&limit=100")
     data = espn_client._get(url, ttl=20)
     events = []
     for event in data.get("events") or []:
