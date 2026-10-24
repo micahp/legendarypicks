@@ -178,6 +178,27 @@ The first survey of this engine reported 6 matrix FAIL rows, in 6 seeds (76, 85,
   methods were first shadowed by a duplicate class name (a `DriveIndex` class defined twice) and did not run until the
   duplicate was renamed; the count above is the one that includes them.
 
+## Blocker list: status on this branch (2026-10-24)
+
+Final suite on `7f40f815`: `python3 -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` gives **Ran 82 tests, OK;
+failures 0, errors 0, skipped 0**.
+
+| # | Blocker | Status | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 1 | Extra-point and two-point rates from `extra_point_result` and `two_point_conv_result` | Verified | `606991c9` | The regenerated fixture is byte-identical to the committed CSV. A pyarrow recount over the raw files gives extra points 4,643 good, 178 failed, 38 blocked, 11 empty, and two-point tries 240 success, 269 failure. `test_kick_results.py` (4). |
+| 2 | Rule 11-4-2 missed-field-goal spot, with boundary tests | Done | `5f229944` | The unit tests cover the spot at 35, 25, 15, 5 and at the boundary 20 and 21. An engine test checks that a kick from the 20 leaves the receiver at 80 and from the 21 at 79. A matrix negative fixture fails the 80 for a kick from the 21. The rule text is cited from the review and is not in the repository, so it is still unverified. |
+| 3 | `drive_index` mismatch rejection covering the 23 findings | Done | `2e23235b` | The archived 5fcaa6bc record (`regression/`, sha256 `ff061723…`) has drive_index 1 on every play state of drives 2 to 24: **23 drives, 280 states**. The validator and the matrix both count every drive and state. A regression test pins 23 and 280. |
+| 4 | Both coin-toss winners sampled, not fixed to A | Verified; no code change | — | Over seeds 1–300 from `play_game` with no fixed winner: winner A 153, B 147; choice receive 155, defer 145. `TossSymmetry` (4). |
+| 5 | Clock, timeout, two-minute-warning and penalty transitions implemented or guarded | Done | `7f40f815` | Guards exist for timeouts, two-minute warning, penalties, onside kicks, overtime, lineups and the exception coin toss, and the validator requires each. The timeout guard now describes what `_apply_timeouts` does: an observed timeout flag charges the side it names, at most three per half, reset at halftime. A new test checks the counts stay in 0 to 3, reach 0 in the first half, and reset to 3 at halftime. The two-minute-warning guard now says the warning's effect on the runoff is unverified. |
+
+Reconciliation with the Gridiron manifest for the archived 5fcaa6bc record: its 576 score-state gaps are 288 `home_score`
+plus 288 `away_score` states, and its 576 timeout-state gaps are 288 `home_timeouts` plus 288 `away_timeouts` states. The
+current record has none of these gaps.
+
+Two notes for the re-review. The frozen fixtures keep the earlier guard wording; the change is documentation, and the
+fixture hash checks still pass. Three tests were first shadowed by a duplicate class name and did not run; they are
+collected now (see the run above).
+
 ## Kick outcomes in the dev database
 
 The published rates the engine draws from. `nfl_pbp` (the curated nflverse table on dev) keeps `series_result` and `success`,
