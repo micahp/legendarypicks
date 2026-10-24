@@ -456,6 +456,25 @@ class MissedFieldGoalSpot(unittest.TestCase):
         self.assertEqual(gs.missed_field_goal_spot(20), 80)
         self.assertEqual(gs.missed_field_goal_spot(21), 79)
 
+    def test_the_engine_boundary_at_the_20_on_both_sides(self):
+        # A kick from the 20 leaves the receiver at its own 20 (80); a kick from the 21 leaves it at the 79.
+        for kick_yl, expected in ((20, 80), (21, 79)):
+            _, calls = spy_simulate(lambda: gs.play_game(
+                1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=kick_yl), certain_kicks(fg_made=False)),
+                winner_choice='receive', max_drives=2))
+            self.assertEqual(calls[1]['start']['yl'], expected, f'a missed kick from the {kick_yl}')
+
+    def test_the_matrix_rejects_the_20_boundary_value_for_a_kick_from_the_21(self):
+        # Negative fixture: a kick from the 21 must leave the receiver at the 79. The 80 (the value for a kick from the 20)
+        # must fail.
+        record, _ = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=21), certain_kicks(fg_made=False)),
+            winner_choice='receive', max_drives=2))
+        self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 79)
+        record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 80
+        row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
+        self.assertEqual(row['status'], 'FAIL')
+
     def test_the_engine_starts_the_receiving_team_at_the_rule_spot(self):
         record, calls = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
