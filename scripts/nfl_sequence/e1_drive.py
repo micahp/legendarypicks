@@ -51,6 +51,9 @@ STARTS = {
     'own40_q4_4th5_600': {'quarter': 4, 'clock': 600, 'offense': 'OFF', 'defense': 'DEF', 'yl': 60, 'down': 4, 'togo': 5, 'dir': 1},
     'own5_q1_900': {'quarter': 1, 'clock': 900, 'offense': 'OFF', 'defense': 'DEF', 'yl': 95, 'down': 1, 'togo': 10, 'dir': 1},
     'own25_q2_120': {'quarter': 2, 'clock': 120, 'offense': 'OFF', 'defense': 'DEF', 'yl': 75, 'down': 1, 'togo': 10, 'dir': 1},
+    # Short clocks so that a drive is likely to cross a change of ends after Q1 or Q3.
+    'own25_q1_060': {'quarter': 1, 'clock': 60, 'offense': 'OFF', 'defense': 'DEF', 'yl': 75, 'down': 1, 'togo': 10, 'dir': 1},
+    'own25_q3_060': {'quarter': 3, 'clock': 60, 'offense': 'OFF', 'defense': 'DEF', 'yl': 75, 'down': 1, 'togo': 10, 'dir': 1},
 }
 # `dir` is the authored orientation of the start offense in the starting quarter. The rules file requires
 # authored orientation to be labeled; it is not a sourced fact about a real game.
