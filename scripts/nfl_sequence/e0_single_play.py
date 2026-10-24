@@ -15,8 +15,12 @@ import hashlib
 import json
 import random
 import sqlite3
+import sys
 from collections import Counter
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import reducer  # noqa: E402  shared with E1
 
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
 MODEL_VERSION = 'e0-empirical-v0'
@@ -137,28 +141,17 @@ def build_pool(rows, excluded):
 
 
 def reduce_play(state, event, yards, touchdown):
-    """Apply one sampled play to the offense-relative state. Returns (state_after, flags)."""
-    down, togo, yl = state['down'], state['yards_to_go'], state['yardline_100']
-    flags = {'touchdown': False, 'turnover_on_downs': False, 'safety': False}
-    if event in ('run', 'pass_complete') and touchdown:
-        flags['touchdown'] = True
-        return {'end_of_drive': 'touchdown', 'offense_team': None, 'defense_team': None, 'down': None,
-                'yards_to_go': None, 'yardline_100': None}, flags
-    new_yl = yl - yards
-    if new_yl >= 100:
-        flags['safety'] = True
-        return {'end_of_drive': 'safety', 'offense_team': None, 'defense_team': None, 'down': None,
-                'yards_to_go': None, 'yardline_100': None}, flags
-    if new_yl <= 0:
-        raise ValueError(f'reducer: yards {yards} reach the end zone but touchdown flag is {touchdown}')
-    if yards >= togo:
-        return {'down': 1, 'yards_to_go': min(10, new_yl), 'yardline_100': new_yl}, flags
-    if down == 4:
-        flags['turnover_on_downs'] = True
-        flipped = 100 - new_yl
-        return {'down': 1, 'yards_to_go': min(10, flipped), 'yardline_100': flipped,
-                'swap_possession': True}, flags
-    return {'down': down + 1, 'yards_to_go': togo - yards, 'yardline_100': new_yl}, flags
+    """E0 adapter over the shared reducer. `touchdown` (the sampled flag) is accepted for the call shape but is
+    not used: a touchdown is decided from the state's own yardline."""
+    st = {'offense': 'OFF', 'defense': 'DEF', 'down': state['down'], 'togo': state['yards_to_go'],
+          'yl': state['yardline_100']}
+    after, terminal, flags = reducer.apply_play(st, event, yards)
+    if after is None:
+        return {'end_of_drive': terminal, 'down': None, 'yards_to_go': None, 'yardline_100': None}, flags
+    out = {'down': after['down'], 'yards_to_go': after['togo'], 'yardline_100': after['yl']}
+    if after['offense'] != st['offense']:
+        out['swap_possession'] = True
+    return out, flags
 
 
 def main():
@@ -208,8 +201,6 @@ def main():
     after, flags = reduce_play(
         {'down': state_before['down'], 'yards_to_go': state_before['yards_to_go'],
          'yardline_100': state_before['yardline_100']}, event, yards, touchdown)
-    if flags['touchdown'] is False and touchdown:
-        raise AssertionError('touchdown flag lost in reducer')
     if after.get('swap_possession'):
         offense, defense = defense, offense
         after.pop('swap_possession')
@@ -261,7 +252,7 @@ def main():
             'state_before': state_before,
             'decision': {'type': 'run' if event == 'run' else 'dropback', 'concept': None, 'coverage': None},
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
-                        'yards_gained': yards, 'touchdown': touchdown, 'turnover': flags['turnover_on_downs'],
+                        'yards_gained': yards, 'touchdown': flags['touchdown'], 'turnover': flags['turnover_on_downs'],
                         'safety': flags['safety'], 'clock_runoff_seconds': None,
                         'sampled_from': {'game_id': outcome_row['game_id'], 'play_id': int(outcome_row['play_id']),
                                          'game_date': outcome_row['game_date']}},
