@@ -400,6 +400,24 @@ class ProvisionalIsNeverPass(unittest.TestCase):
         self.assertIn('provisional practice rule', rows['Q1->Q2 change of ends']['evidence'])
 
 
+class ScopedOut(unittest.TestCase):
+    def test_a_tied_regulation_game_is_scoped_out_as_overtime(self):
+        # A zero-yard run game ends regulation 0-0: overtime is not modelled, so the game is not complete.
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
+        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 regulation tie')
+        self.assertFalse(record['complete_game'])
+        self.assertEqual(record['scope_out'][0]['reason'], 'overtime')
+        gs.validate_game(record)
+
+    def test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome(self):
+        kicks = certain_kicks()
+        kicks['field_goal']['20-29'] = (5, 5)
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
+                              winner_choice='receive')
+        self.assertFalse(record['complete_game'])
+        self.assertEqual(record['scope_out'][0]['reason'], 'rare kick outcome')
+
+
 class DriveIndex(unittest.TestCase):
     def test_every_play_state_carries_its_drive_index(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
