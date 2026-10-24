@@ -227,6 +227,19 @@ Reproduce: `python3 scripts/nfl_sequence/measure_kick_outcomes.py` (read-only, `
   - Whether the 8 `Opp touchdown` field-goal rows count as misses (85.2% becomes 85.1%).
   - Whether the two-point rate should be trusted before a score-based check exists.
 
+## Shared contract v1 projection
+
+`shared_v1.py` projects a record onto the shared document (`docs/GRIDIRON-CONTRACT-v1.md`, sha256 `ae7b8a30...`, identical in
+all 122 copies on the box). Kickoffs, extra points and two-point tries, period ends, the game end and safeties are plays in the
+contract vocabulary. Each state carries the running score, the timeouts (3 per team per half, charged to the side the sampled
+play names), `drive_index`, and the v1 field names. Each outcome carries `air_yards`, `yac` and `out_of_bounds` from the
+observed play it was sampled from. Team and player summaries are recomputed from the play log alone.
+
+The checker (`check_document`) works from the document alone. Seven violations remain, and each is a field the source cannot
+supply: `mode` (no pregame snapshot), `game_id`, `scheduled_kickoff_utc`, `as_of_utc`, `snapshot_hash`, `roster_snapshot_id`,
+and play `duration_seconds` (the published table has no play duration). They stay null and are reported; nothing is filled in
+to make them pass.
+
 ## Not done
 
 - **Timeouts, two-minute warning, penalties, untimed downs, onside kicks, overtime, exception coin-toss paths, and lineups.**

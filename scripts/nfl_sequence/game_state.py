@@ -145,9 +145,12 @@ class Reference:
 
     def participants_for(self, play):
         src = play['outcome']['sampled_from']
-        passer, rusher, receiver = self.participants.get((src['game_id'], src['play_id']), (None, None, None))
-        return {'passer_id': passer, 'rusher_id': rusher, 'receiver_id': receiver,
-                'attribution': 'sampled_observed_play', 'sampled_from': src}
+        facts = self.participants.get((src['game_id'], src['play_id']), {})
+        keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'air_yards', 'yards_after_catch', 'timeout',
+                'timeout_team', 'out_of_bounds')
+        out = {k: facts.get(k) for k in keys}
+        out.update(attribution='sampled_observed_play', sampled_from=src)
+        return out
 
 
 class CoinTossLedger:
@@ -294,6 +297,7 @@ class _Game:
         self.offense = self.defense = None
         self.yl = self.down = self.togo = None
         self.events, self.drives, self.boundaries = [], [], []
+        self.timeouts = {'A': 3, 'B': 3}  # per half; A is the home side, B the away side (authored labels)
         self.points = Counter()
         self.status = None
         self.blocker = None
@@ -316,6 +320,7 @@ class _Game:
         self.boundaries.append({'from_quarter': 2, 'to_quarter': 3, 'kind': 'halftime', 'clock_before': 0,
                                 'drive_index': len(self.drives)})
         self.quarter, self.clock = 3, QUARTER_LENGTH
+        self.timeouts = {'A': 3, 'B': 3}  # a new half: three per team
         k = self.kickoffs[1]
         self._kick('half_start', k['kicking_team'], k['receiving_team'])
 
@@ -373,6 +378,31 @@ class _Game:
             self.status = 'complete_regulation'
 
     def _drive(self):
+        """One drive. The plays are stamped with the score before and after it, so every state carries the running score."""
+        before = (self.points['A'], self.points['B'])
+        self._last_plays = None
+        self._drive_body()
+        if self._last_plays:
+            after = (self.points['A'], self.points['B'])
+            _stamp_scores(self._last_plays, before, after)
+
+    def _apply_timeouts(self, plays):
+        """A flagged sampled play has a timeout called by the team the observed play names. It is charged to that side
+        of this game when that side still has one; the state then carries the counts (A home, B away)."""
+        for play in plays:
+            part = play['participants']
+            part['timeout_applied'] = False
+            if part['timeout']:
+                mapped = self.offense if part['timeout_team'] == part['posteam'] else self.defense
+                if self.timeouts[mapped] > 0:
+                    self.timeouts[mapped] -= 1
+                    part['timeout_applied'] = True
+                part['timeout_charged_to'] = mapped
+            for side in ('state_before', 'state_after'):
+                play[side]['home_timeouts'] = self.timeouts['A']
+                play[side]['away_timeouts'] = self.timeouts['B']
+
+    def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
@@ -381,6 +411,7 @@ class _Game:
             self.block(terminal)
             return
         e1.check_drive(plays, terminal)
+        self._last_plays = plays
         drive_index = len(self.drives) + 1
         for play in plays:
             play['sequence'] = self.next_play_sequence
@@ -389,6 +420,7 @@ class _Game:
             play['participants'] = self.ref.participants_for(play)
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
+        self._apply_timeouts(plays)
         last = plays[-1]['state_after']
         drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
                  'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
@@ -476,6 +508,15 @@ class _Game:
                 'quarter_ends_during_kick_return': sum(1 for k in self.events if k['clock_rule'] == AUTHORED_RULE),
             },
         }
+
+
+def _stamp_scores(plays, before, after):
+    """Every state of the drive carries the score before it. Only the last play's state_after takes the score after it."""
+    for i, play in enumerate(plays):
+        last = i == len(plays) - 1
+        for side, score in (('state_before', before), ('state_after', after if last else before)):
+            play[side]['home_score'] = score[0]
+            play[side]['away_score'] = score[1]
 
 
 def scope_out_reasons(blocker, complete, tied):
