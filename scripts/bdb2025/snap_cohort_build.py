@@ -16,14 +16,16 @@ import json
 import math
 from pathlib import Path
 
+from snap_clock import TIME_SEMANTICS, tracking_time
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = Path("/root/nfl-tracking-data/bdb2025")
 CODE_DATA = DATA / "code-data"
 AUDIT = DATA / "audit"
-MANIFEST_DEFAULT = ROOT / "docs/research/bdb2025-snap-all-player-manifest-v1.csv"
-SUMMARY_DEFAULT = ROOT / "docs/research/bdb2025-snap-all-player-cohort-v1.json"
-OBSERVATIONS_DEFAULT = AUDIT / "bdb2025-snap-all-player-observations-v1.jsonl.gz"
+MANIFEST_DEFAULT = ROOT / "docs/research/bdb2025-snap-all-player-manifest-v2.csv"
+SUMMARY_DEFAULT = ROOT / "docs/research/bdb2025-snap-all-player-cohort-v2.json"
+OBSERVATIONS_DEFAULT = AUDIT / "bdb2025-snap-all-player-observations-v2.jsonl.gz"
 YARDS_TO_METERS = 0.9144
 HISTORY_FRAMES = 5
 HORIZON_FRAMES = 10
@@ -166,6 +168,7 @@ def assess_play(key, rows, frames, plays, players):
         "snapFrame": snap,
         "inputFrameIds": input_frames,
         "labelFrameIds": label_frames,
+        "trackingTime": tracking_time(snap, input_frames, label_frames),
         "playDirection": directions[0],
         "offenseTeam": offense,
         "defenseTeam": defense,
@@ -275,7 +278,7 @@ def main():
         writer.writeheader()
         writer.writerows(manifest_rows)
     summary = {
-        "schemaVersion": "bdb2025-snap-all-player-cohort/v1",
+        "schemaVersion": "bdb2025-snap-all-player-cohort/v2",
         "dataset": "unofficial b00nk3r/NFL-Big-Data-Bowl-2025 mirror; 2022 season",
         "weeksScanned": weeks,
         "weeksReserved": [6, 7, 8, 9],
@@ -287,6 +290,7 @@ def main():
             "requiredPresence": "22 unique players and one football row at every frame from snapFrame-5 through snapFrame+10",
             "prohibitedInputs": ["eventual tackle frame", "credited tackler", "player_play outcome labels", "post-snap coordinates"],
         },
+        **TIME_SEMANTICS,
         "sourceSha256FromStagedManifest": source_hashes(weeks),
         "includedTotal": len(manifest_rows),
         "includedByWeek": {str(w): counters[w]["included"] for w in weeks},

@@ -8,13 +8,15 @@ import hashlib
 import json
 from pathlib import Path
 
+from snap_clock import TIME_SEMANTICS, tracking_time
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = Path("/root/nfl-tracking-data/bdb2025")
 PARTS = DATA / "audit/bdb2025-snap-all-player-parts-v1"
-MANIFEST_OUT = ROOT / "docs/research/bdb2025-snap-all-player-manifest-v1.csv"
-SUMMARY_OUT = ROOT / "docs/research/bdb2025-snap-all-player-cohort-v1.json"
-OBSERVATIONS_OUT = DATA / "audit/bdb2025-snap-all-player-observations-v1-combined.jsonl.gz"
+MANIFEST_OUT = ROOT / "docs/research/bdb2025-snap-all-player-manifest-v2.csv"
+SUMMARY_OUT = ROOT / "docs/research/bdb2025-snap-all-player-cohort-v2.json"
+OBSERVATIONS_OUT = DATA / "audit/bdb2025-snap-all-player-observations-v2-combined.jsonl.gz"
 
 
 def digest(path):
@@ -85,10 +87,16 @@ def main():
         for _, _, observations_path, _ in parts:
             with gzip.open(observations_path, "rt", encoding="utf-8") as source:
                 for line in source:
-                    target.write(line)
+                    observation = json.loads(line)
+                    expected_time = tracking_time(
+                        observation["snapFrame"], observation["inputFrameIds"], observation["labelFrameIds"])
+                    if "trackingTime" in observation and observation["trackingTime"] != expected_time:
+                        raise RuntimeError(f"Observation has inconsistent trackingTime: {observation['gameId']} {observation['playId']}")
+                    observation["trackingTime"] = expected_time
+                    target.write(json.dumps(observation, separators=(",", ":")) + "\n")
 
     summary = {
-        "schemaVersion": "bdb2025-snap-all-player-cohort/v1",
+        "schemaVersion": "bdb2025-snap-all-player-cohort/v2",
         "dataset": "unofficial b00nk3r/NFL-Big-Data-Bowl-2025 mirror; 2022 season",
         "weeksScanned": [1, 2, 3, 4, 5],
         "weeksReserved": [6, 7, 8, 9],
@@ -100,6 +108,7 @@ def main():
             "requiredPresence": "22 unique players and one football row at every frame from snapFrame-5 through snapFrame+10",
             "prohibitedInputs": ["eventual tackle frame", "credited tackler", "player_play outcome labels", "post-snap coordinates"],
         },
+        **TIME_SEMANTICS,
         "sourceSha256FromStagedManifest": source_hashes,
         "includedTotal": len(all_rows),
         "includedByWeek": {str(week): sum(int(row["week"]) == week for row in all_rows) for week in range(1, 6)},
