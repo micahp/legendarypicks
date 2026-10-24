@@ -7,7 +7,8 @@ Definitions used: a pass attempt is any pass play that is not a sack (intercepti
 a rush is a run play; yards on a touchdown are capped at the goal line; possession time is the elapsed-clock difference
 between the start and end of each drive, with elapsed = (quarter - 1) * 900 + (900 - clock).
 
-Usage: python3 seed1_stats_check.py [--out PATH]
+Usage: python3 seed1_stats_check.py [--record PATH] [--out PATH]
+The default record is the frozen seed-1 game; pass the successor record with --record.
 """
 import argparse
 import copy
@@ -113,9 +114,11 @@ def sha256(path):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument('--record', default=str(SEED1))
     ap.add_argument('--out', default=str(HERE.parents[2] / 'docs' / 'evidence' / 'e2' / 'seed1-stats-recomputed.json'))
     args = ap.parse_args()
-    raw = json.load(open(SEED1))
+    source = Path(args.record)
+    raw = json.load(open(source))
     record = copy.deepcopy(raw.get('record', raw))
     stored = record['stats']
 
@@ -129,7 +132,7 @@ def main():
                                             if mine.get(k) != theirs.get(k)}}
     player_match = recomputed_players == stored['player']
     result = {
-        'source': {'file': 'docs/fixtures/e2/e2-game-seed1.json', 'sha256': sha256(SEED1)},
+        'source': {'file': str(source.resolve().relative_to(HERE.parents[2])), 'sha256': sha256(source)},
         'seed': record['seed'], 'status': record['status'], 'points': record['points'],
         'team_stats_recomputed': recomputed_team, 'team_stats_stored_match': {k: v['match'] for k, v in team_match.items()},
         'team_differences': {k: v['differences'] for k, v in team_match.items() if v['differences']},

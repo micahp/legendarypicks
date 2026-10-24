@@ -242,6 +242,9 @@ def simulate(start, seed, pool, simulation_id):
                         'clock_only_terminal': ended_by_clock_only,
                         'final_play_yardline_100': yl_after if ended_by_clock_only else None,
                         'sampled_touchdown_flag': bool(row['touchdown'] == 1),
+                        # the observed play's penalty flag. The pool excludes penalty plays, so this is False on every
+                        # sampled play; a True would be an unmodelled transition and blocks the game (see game_state)
+                        'penalty': bool(row.get('penalty') == 1),
                         'sampled_from': {'game_id': row['game_id'], 'play_id': int(row['play_id']),
                                          'game_date': row['game_date']}},
             'state_after': state_after,

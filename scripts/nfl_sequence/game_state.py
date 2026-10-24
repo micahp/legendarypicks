@@ -306,6 +306,18 @@ def _draw(rng, cell, name):
     return rng.random() < made / (made + missed), None
 
 
+# Every try record carries the publisher's own result field for its kind, with the publisher's own values. No EPA-derived
+# `success` flag is ever written into a try record: nflverse `success` is EPA-positive and is not a make result.
+TRY_PUBLISHER_FIELD = {'extra_point': 'extra_point_result', 'two_point': 'two_point_conv_result'}
+TRY_PUBLISHER_VALUE = {'extra_point': {True: 'good', False: 'failed'}, 'two_point': {True: 'success', False: 'failure'}}
+
+
+def try_record(kind, made):
+    """A try record: the kind, the made flag, and the publisher field for the kind (`extra_point_result` or
+    `two_point_conv_result`), carrying the publisher value that matches the made flag."""
+    return {'kind': kind, 'made': made, TRY_PUBLISHER_FIELD[kind]: TRY_PUBLISHER_VALUE[kind][made]}
+
+
 def _try_after_touchdown(rng, kicks):
     """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra
     point.
@@ -318,7 +330,7 @@ def _try_after_touchdown(rng, kicks):
     made, why = _draw(rng, kicks[kind], kind)
     if why:
         return None, None, why
-    return (TRY_POINTS[kind] if made else 0), {'kind': kind, 'made': made}, None
+    return (TRY_POINTS[kind] if made else 0), try_record(kind, made), None
 
 
 class _Game:
@@ -475,6 +487,11 @@ class _Game:
         if plays is None:
             self.block(terminal)
             return
+        if any(p['outcome'].get('penalty') for p in plays):
+            # a penalty is an unmodelled transition: the pool excludes penalty plays, so this should never be drawn; if it is,
+            # the game is blocked, never completed
+            self.block('penalty_not_modelled')
+            return
         e1.check_drive(plays, terminal)
         self._last_plays = plays
         drive_index = len(self.drives) + 1
@@ -565,6 +582,7 @@ class _Game:
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
             'complete_game': bool(complete and blocker is None and not tied),
             'scope_out': scope_out,
+            'unmodelled_transitions': unmodelled_transitions(self.drives),
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
             'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
             'gaps': GAPS,
@@ -588,10 +606,33 @@ def _stamp_scores(plays, before, after):
             play[side]['away_score'] = score[1]
 
 
+TWO_MINUTE_MARK = 120
+LATE_QUARTERS = (2, 4)
+
+
+def unmodelled_transitions(drives):
+    """The transitions the engine does not model, read from the plays: a penalty on a play, and a clock that crosses the
+    two-minute mark in the second or fourth quarter (the two-minute warning stops the clock there). The record carries the list;
+    the independent legality checker derives the same list from the plays and does not trust this one.
+    """
+    found = []
+    for d in drives:
+        for p in d['plays']:
+            if p['outcome'].get('penalty'):
+                found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
+            b, a = p['state_before'], p['state_after']
+            if b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter'] and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']:
+                found.append({'kind': 'two_minute_warning', 'drive_index': d['index'], 'sequence': p['sequence'],
+                              'quarter': b['quarter']})
+    return found
+
+
 def scope_out_reasons(blocker, complete, tied):
     """Why a seed is not a complete game. Scoped out, not guessed: each reason is named and carried in the record."""
     reasons = []
-    if blocker == 'overtime_not_modelled':
+    if blocker == 'penalty_not_modelled':
+        reasons.append({'reason': 'penalty', 'detail': 'a penalty transition is not modelled; the game is blocked, not completed'})
+    elif blocker == 'overtime_not_modelled':
         reasons.append({'reason': 'overtime', 'detail': 'tied after regulation; overtime is rule-version-sensitive and '
                                                         'not modelled, so the tied game is not complete'})
     elif blocker and blocker.startswith('thin_kick_cell'):
@@ -677,6 +718,10 @@ def validate_game(record):
                     raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
                 if p['points'] != TD_POINTS + (TRY_POINTS[t['kind']] if t['made'] else 0):
                     raise AssertionError(f'touchdown points disagree with the try: {d["index"]}')
+                field = TRY_PUBLISHER_FIELD[t['kind']]
+                if field not in t or t[field] != TRY_PUBLISHER_VALUE[t['kind']][t['made']] or 'success' in t:
+                    raise AssertionError(f'try lacks its publisher result field {field}, or carries an EPA-style success '
+                                         f'flag: {d["index"]}')
         if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is not None:
             if d['field_goal_made'] != bool(p):
                 raise AssertionError(f'field goal result disagrees with its points: {d["index"]}')
