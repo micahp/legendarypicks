@@ -8,6 +8,12 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## NON-NEGOTIABLE KICKOFF POLICY — 2026-10-24
+
+**Normal LP game simulations MUST have two half-opening kickoffs with different kicking teams.** The Q1 kickoff receiving team **kicks to start Q3**; the Q1 kicking team **receives to start Q3**. Record coin toss, winner's **receive or defer** decision, the two half-specific legal choice resolutions and the actual kickoff events, but **do not randomly choose kick-without-deferring, defend-a-goal-first or receive-both-halves** in normal games. **Zero probability, not simply an extremely low weight.** Unusual legally possible choices are allowed **ONLY** for source-verified historical reconstruction or an explicitly user-requested and flagged `explicit_exception_scenario`, excluded from normal forecasts, distributions and ordinary batch testing.
+
+**Fail closed:** `normal_nfl_game` cannot set `valid_full_game=true` unless `half_start_kickoffs.length===2`, the kicking teams are opposite, kickoff event times are Q1/Q3, toss/choice ledger is consistent, and all postkickoff possession state is computed from the actual kickoff outcome. Test both opening receive and defer paths and a double-kicker rejection fixture. Distinguish kickoffs after scoring; these are not `half_start` kickoffs. The [updated canonical rules contract](docs/rules/NFL-2026-GAME-STATE-RULES.md) controls over older permissive comments about legal counterexamples. **Do not implement or authorize random exceptions.**
+
 ## NFL 2026 GAME-STATE RULES — 2026-10-24 (authoritative for E1/E2 work)
 
 **Read [`docs/rules/NFL-2026-GAME-STATE-RULES.md`](docs/rules/NFL-2026-GAME-STATE-RULES.md) first.** It is the **single canonical LP↔Gridiron engineering rules reference**, grounded in the [official NFL 2026 rulebook](https://operations.nfl.com/rules-officiating/2026-nfl-rulebook). NFL halves start with a kickoff determined by pregame toss choices/deferral and second-half privileges. **Opening receiver need not kick after halftime.** Q1→Q2 and Q3→Q4 change defended goals but **do not end the drive or cause kickoff**; Q2→Q3 ends the half and initiates a new kickoff after half-choice resolution. Team directions come from explicit **team × period** choices, not Q1/Q2=+1 for every offense or home/away. Maintain a persistent kickoff/coin-toss ledger; no inferred second-half receiver.
