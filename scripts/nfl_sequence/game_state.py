@@ -48,6 +48,26 @@ FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
                      'exception_coin_toss', 'lineups')
+# Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
+# record claim the rule is modelled.
+GUARDS = {
+    'timeouts': {'guard': 'no timeout is drawn or charged: the published table has no timeout fields, and the sampled '
+                          'runoff is used as recorded',
+                 'enforced_by': 'unsupported_rules; valid_full_game is false'},
+    'two_minute_warning': {'guard': 'no two-minute stoppage is modelled: observed runoff already carries any stoppage '
+                                    'in the sampled play; the warning itself is not identifiable in the data',
+                           'enforced_by': 'unsupported_rules; valid_full_game is false'},
+    'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
+                  'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
+    'onside_kicks': {'guard': 'every kickoff is drawn from the observed kickoff pool; no onside kick is drawn',
+                     'enforced_by': 'kickoff pool; unsupported_rules'},
+    'overtime': {'guard': 'a tie after regulation blocks the game as overtime_not_modelled',
+                 'enforced_by': 'record status; the game is not complete'},
+    'exception_coin_toss': {'guard': 'explicit_exception_scenario raises NotImplementedError in CoinTossLedger',
+                            'enforced_by': 'CoinTossLedger'},
+    'lineups': {'guard': 'participants are labelled sampled_observed_play; no lineup or substitution is modelled',
+                'enforced_by': 'participants attribution label'},
+}
 SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
 PRACTICE_RULE = 'provisional_practice_rule'
 AUTHORED_RULE = 'authored_modelling_choice'
@@ -442,7 +462,8 @@ class _Game:
             'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
-            'unsupported_rules': list(UNSUPPORTED_RULES), 'gaps': GAPS,
+            'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
+            'gaps': GAPS,
             'provisional_rules': [dict(r) for r in PROVISIONAL_RULES],
             'provisional_counts': {
                 'post_score_kickoffs_after_quarter_expiry': sum(1 for k in self.events
@@ -510,6 +531,10 @@ def validate_game(record):
                     raise AssertionError(f'drive {d["index"]}: {side} carries drive_index '
                                          f'{play[side].get("drive_index")}, not {d["index"]}')
     checks.append('every play state carries its drive index, in state_before and state_after')
+    missing = [r for r in UNSUPPORTED_RULES if r not in record.get('guards', {})]
+    if missing:
+        raise AssertionError(f'unsupported rules without a guard: {missing}')
+    checks.append('every unsupported rule carries a guard')
     by_team = Counter()
     for d in record['drives']:
         p = d['points_scored_on_drive']
