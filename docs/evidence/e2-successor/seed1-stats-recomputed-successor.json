@@ -1165,9 +1165,9 @@
  "seed": 1,
  "source": {
   "file": "docs/evidence/e2-successor/seed1-game-successor.json",
-  "sha256": "71092fb2eaa82cd1a9ee8a24f18c1ee0bb1699dda61d2b8054ea0479e9906dbf"
+  "sha256": "39e7f0ab8ba6c278a6149c7b28953f6d5cde37a4382961088564091e7cdf41f3"
  },
- "status": "complete_regulation",
+ "status": "regulation_end_guarded",
  "team_differences": {},
  "team_stats_recomputed": {
   "A": {

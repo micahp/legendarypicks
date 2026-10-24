@@ -2,9 +2,9 @@
  "checks": {
   "problems": [],
   "resolved": {
-   "citations": 30,
-   "tests": 54,
-   "transitions": 20
+   "citations": 35,
+   "tests": 66,
+   "transitions": 23
   }
  },
  "kick_distance": {
@@ -42,7 +42,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      211
+      216
      ],
      "snippet": "only receive or defer"
     }
@@ -79,7 +79,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      217
+      222
      ],
      "snippet": "self.first_chooser = loser if self.deferred else winner"
     }
@@ -115,7 +115,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      370
+      375
      ],
      "snippet": "Halftime: the first half is over"
     }
@@ -155,7 +155,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      512
+      521
      ],
      "snippet": "a quarter change inside a drive: the drive goes on"
     },
@@ -202,14 +202,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      169
+      174
      ],
      "snippet": "return 'halftime'"
     },
     {
      "file": "game_state.py",
      "lines": [
-      164
+      169
      ],
      "snippet": "def quarter_end_kind"
     }
@@ -245,7 +245,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      170
+      175
      ],
      "snippet": "return 'regulation_end'"
     }
@@ -265,16 +265,16 @@
    "transition": "game_state:quarter_end_kind"
   },
   {
-   "adversarial": [],
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused"
+   ],
    "citations": [
     [
      "game_state.py",
      "overtime_not_modelled"
     ]
    ],
-   "gaps": [
-    "GAP: no adversarial test"
-   ],
+   "gaps": [],
    "id": "R07",
    "located": [
     {
@@ -282,14 +282,14 @@
      "lines": [
       25,
       75,
-      573,
-      635
+      582,
+      668
      ],
      "snippet": "overtime_not_modelled"
     }
    ],
    "lp_reference": "Rules file section 7 (overtime row, Rule 16)",
-   "note": "GAP: no test that validate_game refuses a tied record marked complete. The guard is the block itself.",
+   "note": "validate_game refuses a tied game described as complete.",
    "positive": [
     "test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime"
    ],
@@ -323,14 +323,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      321
+      326
      ],
      "snippet": "def _try_after_touchdown"
     },
     {
      "file": "game_state.py",
      "lines": [
-      315
+      320
      ],
      "snippet": "def try_record"
     }
@@ -367,7 +367,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      522
+      531
      ],
      "snippet": "elif terminal == 'field_goal_attempt':"
     }
@@ -437,6 +437,10 @@
     [
      "game_state.py",
      "def missed_field_goal_spot"
+    ],
+    [
+     "game_state.py",
+     "'missed_field_goal_return': {'guard'"
     ]
    ],
    "gaps": [],
@@ -445,7 +449,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      154
+      159
      ],
      "snippet": "Review note, Rule 11-4-2"
     },
@@ -460,15 +464,24 @@
     {
      "file": "game_state.py",
      "lines": [
-      151
+      156
      ],
      "snippet": "def missed_field_goal_spot"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      81
+     ],
+     "snippet": "'missed_field_goal_return': {'guard'"
     }
    ],
    "lp_reference": "Rules file section 4 and the review note cited by the engine",
-   "note": "The engine docstring says the rulebook text is not in the repository; the text is now verified. Not modelled: 11-4-2 exceptions (1) and (2), where the receivers touch the ball beyond the line of scrimmage.",
+   "note": "The engine docstring says the rulebook text is not in the repository; the text is now verified. The exceptions (1) and (2), where the receivers touch the ball beyond the line of scrimmage, are guarded: missed_field_goal_return is an unsupported rule, so valid_full_game is false.",
    "positive": [
-    "test_game_state.MissedFieldGoalSpot.test_the_spot_of_the_kick_when_it_is_outside_the_receivers_20",
+    "test_game_state.UnmodelledKinds.test_a_missed_field_goal_is_an_unmodelled_return",
+    "test_game_state.MissedFieldGoalBoundaries.test_one_yard_inside_the_receivers_20_gives_their_20",
+    "test_game_state.MissedFieldGoalBoundaries.test_one_yard_outside_the_receivers_20_gives_the_spot_of_the_kick",
     "test_game_state.MissedFieldGoalSpot.test_the_receivers_own_20_when_the_kick_spot_is_inside_its_20"
    ],
    "rule": "A missed field goal: the receiving team takes the ball at the spot of the kick, or at its own 20 when the kick spot is inside its 20.",
@@ -507,13 +520,13 @@
     {
      "file": "game_state.py",
      "lines": [
-      143
+      148
      ],
      "snippet": "def kick_spot_yardline_100"
     }
    ],
    "lp_reference": "Rules file section 7 (kick-spot row)",
-   "note": "DISAGREEMENT, one place. The rule minimum is 7. The engine implies kick_distance = yardline_100 + 17 (holder 7 + end line 10, Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows (see the kick_distance_offset block below). The engine keeps 7, and the publisher offset is kept as the reference.",
+   "note": "DISAGREEMENT, one place. The rule minimum is 7. The engine implies kick_distance = yardline_100 + 17 (holder 7 + end line 10, Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows. Ruling: the engine keeps +17; the publisher offset is its own measurement convention, not a rule. Full record in kick-distance-offset.json, source_engine_difference.",
    "positive": [
     "test_game_state.MissedFieldGoalSpot.test_the_engine_snap_and_kick_spot_differ_and_the_receiver_starts_at_the_kick_spot_rule"
    ],
@@ -551,7 +564,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      440
+      449
      ],
      "snippet": "def _charge_made_kick"
     },
@@ -606,7 +619,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      460
+      469
      ],
      "snippet": "def _apply_timeouts"
     },
@@ -621,6 +634,7 @@
    "lp_reference": "Rules file section 7 (timeouts row)",
    "note": "Timeouts are charged from flags only; no timeout is drawn from the table, so the count is observed, not sampled.",
    "positive": [
+    "test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage",
     "test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime",
     "test_game_state.TimeoutTransition.test_a_timeout_changes_the_counts_and_nothing_on_the_clock"
    ],
@@ -635,6 +649,7 @@
   },
   {
    "adversarial": [
+    "test_game_state.UnmodelledKinds.test_a_guarded_game_described_as_complete_is_refused",
     "test_legality.UnmodelledNegatives.test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list",
     "test_legality.ScopeGuard.test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing"
    ],
@@ -686,8 +701,8 @@
     {
      "file": "game_state.py",
      "lines": [
-      493,
-      633
+      502,
+      666
      ],
      "snippet": "penalty_not_modelled"
     }
@@ -796,16 +811,16 @@
     {
      "file": "game_state.py",
      "lines": [
-      86,
-      92,
-      96
+      91,
+      97,
+      101
      ],
      "snippet": "PRACTICE_SOURCE"
     },
     {
      "file": "game_state.py",
      "lines": [
-      85
+      90
      ],
      "snippet": "PENDING_2026 = 'pending_2026_rulebook'"
     }
@@ -840,7 +855,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      241
+      246
      ],
      "snippet": "def attacks_x100"
     }
@@ -858,6 +873,124 @@
    },
    "status": "representation",
    "transition": "game_state:CoinTossLedger.attacks_x100"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_rare_kick_outcome_described_as_complete_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "MIN_KICK_N = 30"
+    ]
+   ],
+   "gaps": [],
+   "id": "R21",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      57
+     ],
+     "snippet": "MIN_KICK_N = 30"
+    }
+   ],
+   "lp_reference": "Rules file section 6 (sample selection)",
+   "note": "A blocked record is never complete: validate_game refuses it.",
+   "positive": [
+    "test_game_state.ScopedOut.test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome"
+   ],
+   "rule": "Rare kick outcomes: a published field-goal cell with fewer than MIN_KICK_N attempts blocks the game.",
+   "rulebook": {
+    "article": "not applicable: LP scoping floor (the E1 pool floor applied to kick cells)",
+    "quote": "",
+    "status": "not applicable"
+   },
+   "status": "guard",
+   "transition": "game_state:_draw"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_blocked_overtime_game_described_as_complete_is_refused",
+    "test_game_state.UnmodelledKinds.test_a_guarded_game_with_its_complete_flag_set_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "is never described as a complete game"
+    ],
+    [
+     "game_state.py",
+     "a tied regulation game is not a complete game"
+    ]
+   ],
+   "gaps": [],
+   "id": "R22",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      709,
+      712
+     ],
+     "snippet": "is never described as a complete game"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      717
+     ],
+     "snippet": "a tied regulation game is not a complete game"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (overtime row)",
+   "note": "",
+   "positive": [
+    "test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime"
+   ],
+   "rule": "No blocked or tied game is described as a complete game.",
+   "rulebook": {
+    "article": "not applicable: LP scoping rule",
+    "quote": "",
+    "status": "not applicable"
+   },
+   "status": "guard",
+   "transition": "game_state:validate_game"
+  },
+  {
+   "adversarial": [
+    "test_game_state.UnmodelledKinds.test_an_onside_kickoff_kind_is_refused_because_it_is_not_modelled"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "'onside_kicks': {'guard'"
+    ]
+   ],
+   "gaps": [],
+   "id": "R23",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      73
+     ],
+     "snippet": "'onside_kicks': {'guard'"
+    }
+   ],
+   "lp_reference": "Rules file section 5 (onside_kicks guard)",
+   "note": "not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_game_state.Validators.test_recorded_kickoffs_must_match_the_ledger"
+   ],
+   "rule": "Onside kicks: not modelled. Every kickoff is drawn from the observed kickoff pool; an onside kind is refused.",
+   "rulebook": {
+    "article": "RULE 6 FREE KICKS (onside kick)",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "guard",
+   "transition": "game_state:validate_game"
   }
  ],
  "rulebook": {
