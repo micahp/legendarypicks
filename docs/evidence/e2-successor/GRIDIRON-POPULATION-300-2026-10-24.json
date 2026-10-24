@@ -1,0 +1,1112 @@
+{
+ "heads": {
+  "/tmp/claude-0/-root-lp-nfl-props/a5372ef5-13c9-489b-ab2d-00e9af6e68e3/scratchpad/gridiron_13b18faa": {
+   "accepted": 300,
+   "finding_texts": {
+    "Drive 10: next offense disagrees with its scoring restart receiver.": 1,
+    "Kickoff 6 receiver disagrees with the next drive offense.": 1,
+    "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.": 8,
+    "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.": 8,
+    "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.": 1,
+    "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.": 8,
+    "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart.": 3,
+    "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart.": 2,
+    "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart.": 1,
+    "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart.": 1
+   },
+   "football_finding_seeds": 38,
+   "passed": 299,
+   "rows": [
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 9,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 11,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 32,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 34,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 47,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 50,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 60,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 69,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 78,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart."
+     ],
+     "seed": 90,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 101,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 131,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 133,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 154,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 158,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 159,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 167,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.",
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 176,
+     "validation": [
+      "Kickoff 6 receiver disagrees with the next drive offense.",
+      "Drive 10: next offense disagrees with its scoring restart receiver."
+     ]
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 177,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 184,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 195,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 197,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 203,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 206,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 212,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.",
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 223,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 225,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 238,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 247,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart."
+     ],
+     "seed": 250,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 256,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 269,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 270,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 278,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 286,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 294,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 297,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 300,
+     "validation": []
+    }
+   ],
+   "seeds": 300,
+   "validation_finding_seeds": 1
+  },
+  "/tmp/claude-0/-root-lp-nfl-props/a5372ef5-13c9-489b-ab2d-00e9af6e68e3/scratchpad/gridiron_de64ae12": {
+   "accepted": 300,
+   "finding_texts": {
+    "Drive 10: next offense disagrees with its scoring restart receiver.": 1,
+    "Kickoff 6 receiver disagrees with the next drive offense.": 1,
+    "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.": 8,
+    "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.": 8,
+    "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.": 1,
+    "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.": 8,
+    "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart.": 3,
+    "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart.": 2,
+    "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart.": 1,
+    "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart.": 1
+   },
+   "football_finding_seeds": 38,
+   "passed": 299,
+   "rows": [
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 9,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 11,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 32,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 34,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 47,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 50,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 60,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 69,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 78,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart."
+     ],
+     "seed": 90,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 101,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 131,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 133,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 154,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 158,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 159,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 167,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.",
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 176,
+     "validation": [
+      "Kickoff 6 receiver disagrees with the next drive offense.",
+      "Drive 10: next offense disagrees with its scoring restart receiver."
+     ]
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 177,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 184,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 195,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 197,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 203,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 206,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 212,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.",
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 223,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 225,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 238,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 247,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart."
+     ],
+     "seed": 250,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 256,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 269,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 270,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 278,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 286,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 294,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 297,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 300,
+     "validation": []
+    }
+   ],
+   "seeds": 300,
+   "validation_finding_seeds": 1
+  },
+  "/tmp/gridiron-main-72c7": {
+   "accepted": 300,
+   "finding_texts": {
+    "Drive 10: next offense disagrees with its scoring restart receiver.": 1,
+    "Kickoff 6 receiver disagrees with the next drive offense.": 1,
+    "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.": 8,
+    "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.": 8,
+    "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.": 1,
+    "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.": 8,
+    "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart.": 3,
+    "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart.": 2,
+    "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart.": 1,
+    "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart.": 3,
+    "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart.": 2,
+    "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart.": 1,
+    "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart.": 1
+   },
+   "football_finding_seeds": 38,
+   "passed": 299,
+   "rows": [
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 24 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 9,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 11,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 32,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 34,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 47,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 50,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 17 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 60,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 69,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 11 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 78,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 16 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 16 next possession disagrees with its scoring restart."
+     ],
+     "seed": 90,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 101,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 10 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 131,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 133,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 154,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 158,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 159,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 8 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 167,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_possession_mismatch: The next drive offense must be the recorded kick receiver.",
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_restart_possession_invalid: Drive 10 next possession disagrees with its scoring restart."
+     ],
+     "seed": 176,
+     "validation": [
+      "Kickoff 6 receiver disagrees with the next drive offense.",
+      "Drive 10: next offense disagrees with its scoring restart receiver."
+     ]
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 4 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 177,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 184,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 7 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 195,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 197,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 15 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 203,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 18 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 206,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 22 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 212,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 6 scoring event lacks its correctly linked restart.",
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 223,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 225,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 238,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 21 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 247,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff.",
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 14 scoring event lacks its correctly linked restart.",
+      "scoring_restart_possession_invalid: Drive 14 next possession disagrees with its scoring restart."
+     ],
+     "seed": 250,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 256,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 13 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 269,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "halftime_restart_invalid: Halftime must end Q2 and the Q3 half-start kick must follow it per the toss ledger.",
+      "scoring_kick_restart_invalid: Drive 9 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 270,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 278,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "kick_restart_quarter_mismatch: Kick quarter must match the next drive quarter.",
+      "kick_restart_clock_mismatch: The next drive clock must reflect the recorded kick runoff."
+     ],
+     "seed": 286,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 3 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 294,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 12 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 297,
+     "validation": []
+    },
+    {
+     "accepted": true,
+     "football_state": [
+      "scoring_kick_restart_invalid: Drive 5 scoring event lacks its correctly linked restart."
+     ],
+     "seed": 300,
+     "validation": []
+    }
+   ],
+   "seeds": 300,
+   "validation_finding_seeds": 1
+  }
+ },
+ "records": 300
+}

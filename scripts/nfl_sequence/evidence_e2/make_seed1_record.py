@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Play seed 1 of the successor engine and write its record with the two version stamps (versions.py).
+"""Play seed 1 and write the versioned research record, including an exact hash of the producing source tree.
 
-Refuses to run while the producing files have uncommitted changes. Usage: python3 make_seed1_record.py [--out PATH]
+The source fingerprint permits reproducible research output from an uncommitted tree. It does not relax the clean-tree
+requirement of versions.stamp() for release records. Usage: python3 make_seed1_record.py [--out PATH]
 """
 import argparse
 import json
@@ -22,9 +23,9 @@ def main():
     ap.add_argument('--out', default=str(DEFAULT_OUT))
     args = ap.parse_args()
     ref, _ = er.load()
-    record = versions.stamp(gs.play_game(1, ref))
+    record = versions.research_stamp(gs.play_game(1, ref))
     Path(args.out).write_text(json.dumps(record, indent=1, sort_keys=True) + '\n')
-    print(f"wrote {args.out}: model {record['model_version'][:12]}, rules {record['rules_version'][:12]}, "
+    print(f"wrote {args.out}: model base {record['model_version'][:12]}, source {record['research_source']['source_tree_sha256'][:12]}, "
           f"status {record['status']}, points {record['points']}")
 
 

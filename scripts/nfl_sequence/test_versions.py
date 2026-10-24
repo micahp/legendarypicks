@@ -65,6 +65,16 @@ class ModelVersion(unittest.TestCase):
         log = [c for c in calls if c[0] == 'log'][0]
         self.assertEqual(log[-len(versions.ENGINE_FILES):], versions.ENGINE_FILES)
 
+    def test_research_stamp_pins_dirty_source_without_weakening_release_stamp(self):
+        snapshot = {'base_model_version': SHA, 'source_file_sha256': {'engine.py': 'a' * 64},
+                    'source_tree_sha256': 'b' * 64, 'producer_file_sha256': {'rules.py': 'c' * 64},
+                    'producer_worktree_dirty': True}
+        with mock.patch.object(versions, 'source_snapshot', return_value=snapshot):
+            stamped = versions.research_stamp({'seed': 1})
+        self.assertEqual(stamped['model_version'], SHA)
+        self.assertEqual(stamped['research_source'], snapshot)
+        self.assertEqual(stamped['rules_version'], versions.rules_version(snapshot['producer_file_sha256']))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -38,16 +38,12 @@ fails `legal_complete_game`.
 Tests: `test_game_state.UnmodelledTransitions.test_a_sampled_penalty_blocks_the_game_and_is_not_completed` (engine);
 `test_legality.UnmodelledNegatives.test_a_penalty_transition_cannot_pass_as_a_legal_complete_game` (checker).
 
-## 3. Two-minute warning (blocker 5)
+## 3. Two-minute warning and clock lifecycle (blocker 5)
 
-- Not modelled. A transition is a play whose `state_before.clock > 120 >= state_after.clock` in quarter 2 or 4.
-- The engine lists each crossing in the record (`unmodelled_transitions`, kind `two_minute_warning`).
-- The checker derives crossings from the plays, so removing the list from a record does not hide them
-  (`test_legality.UnmodelledNegatives.test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list`).
-- The successor seed-1 record crosses 2:00 twice: drive 9 play 66 (Q2) and drive 17 play 136 (Q4). It is
-  `legal_modelled` and not `legal_complete_game`.
-- The 300-seed count of complete games that cross 2:00 is in `legality-survey-300-summary.json`
-  (`complete_but_unmodelled`). That count is the scope of this guard in the survey.
+- The event marker is modelled: a scrimmage down or kickoff that crosses 2:00 in Q2 or Q4 is marked at its actual post-down/post-kick clock. The play is not rewound to 2:00. Rule 3 Section 41 places the automatic timeout at the end of the last down legally snapped or kicked before 2:00.
+- The independent checker derives crossings from plays and kickoffs and verifies the marker; it also verifies no more than one warning in each half.
+- The LP rules contract requires timeout, warning, clock runoff, clock-start/stop and restart as separate substates. This engine has no clock running/stopped state or explicit restart transition, so `clock_start_stop` is an unsupported rule on every record. The marker is not full clock-rule coverage and cannot support `valid_full_game=true`.
+- The 300-seed evidence reports warning marker counts and affected seeds separately from event-specific guards. See `unmodelled-transitions-300.json` and its generated Markdown inventory.
 
 ## 4. Overtime (repair 5)
 
@@ -84,7 +80,7 @@ Measured by `evidence_e2/toss_sampling_check.py` on seeds 1–300 (`max_drives=1
 
 ## 8. Known gaps, stated
 
-- Two-minute warning and penalties are not modelled. The guards above decide what a record may claim.
+- Two-minute crossing markers are modelled, but clock running/stopped state and explicit restart transitions are not. Penalties are not modelled. The guards above decide what a record may claim.
 - Overtime is not modelled. The pool excludes it, and a tied game blocks.
 - `duration_seconds` is null for all 141 plays of the successor seed-1 record; the published table has no play duration.
   LP's `shared_v1` reports this as a contract violation (7 total). The Gridiron v1 audit reports 6 and does not check duration.

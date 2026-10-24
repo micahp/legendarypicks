@@ -10,6 +10,10 @@ scoped id the Gridiron envelope already pins under source.producer_file_sha256. 
 the envelope contains the record.
 
 The engine itself does not stamp its records: a commit cannot contain its own SHA. The producer calls stamp() on a clean tree.
+
+Research evidence can be generated from an uncommitted tree only through research_stamp(). Its model_version remains the base
+engine commit, while research_source records the exact hashes of the current engine and rule files. Release stamping remains
+fail-closed and requires a clean source tree.
 """
 import hashlib
 import json
@@ -45,6 +49,30 @@ def assert_clean(paths):
 def model_version():
     assert_clean(ENGINE_FILES)
     return _git('log', '-1', '--format=%H', '--', *ENGINE_FILES)
+
+
+def source_snapshot():
+    """The exact research source tree, including dirty engine/rule files, plus its last committed engine base."""
+    paths = tuple(sorted(set(ENGINE_FILES) | set(RULE_FILES)))
+    hashes = file_hashes(paths)
+    return {
+        'base_model_version': _git('log', '-1', '--format=%H', '--', *ENGINE_FILES),
+        'source_file_sha256': hashes,
+        'source_tree_sha256': hashlib.sha256(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()).hexdigest(),
+        'producer_file_sha256': file_hashes(RULE_FILES),
+        'producer_worktree_dirty': bool(_git('status', '--porcelain', '--', *paths)),
+    }
+
+
+def research_stamp(record, source=None):
+    """Stamp a research record with its base commit and exact source-tree fingerprint, even when source files are dirty."""
+    source = source_snapshot() if source is None else source
+    return {
+        **record,
+        'model_version': source['base_model_version'],
+        'rules_version': rules_version(source['producer_file_sha256']),
+        'research_source': source,
+    }
 
 
 def stamp(record):

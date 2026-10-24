@@ -20,16 +20,16 @@ SURVEY = ROOT / 'docs' / 'evidence' / 'e2-successor' / 'legality-survey-300-summ
 OUT = ROOT / 'docs' / 'evidence' / 'e2-successor' / 'UNMODELLED-TRANSITIONS-300-2026-10-24.md'
 
 # treatment: 'guard' (not modelled; the record is guarded and never a complete game), 'blocked' (the game stops, blocker named),
-# 'refused' (the engine cannot draw it; the validator refuses it), or 'implemented' (modelled, with tests).
+# 'refused' (the engine cannot draw it; the validator refuses it), or 'partial' (event detection works, full transition does not).
 INVENTORY = {
     'two_minute_warning': {
-        'treatment': 'guard',
-        'fails_loudly': 'the game is status regulation_end_guarded, complete_game is false, and validate_game refuses a complete '
-                        'claim; the checker reports check_unmodelled',
-        'tests': ['test_game_state.UnmodelledKinds.test_a_guarded_game_described_as_complete_is_refused',
-                  'test_game_state.UnmodelledTransitions.test_a_two_minute_crossing_is_listed_in_the_record',
-                  'test_legality.UnmodelledNegatives.test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list'],
-        'note': 'The clock is not stopped at 2:00; the sampled runoff is used as recorded.',
+        'treatment': 'guarded; crossing marker is partial, full clock lifecycle unsupported',
+        'fails_loudly': 'the record and independent checker classify each crossing as unmodelled; the game is not complete',
+        'tests': ['test_game_state.UnmodelledTransitions.test_a_two_minute_crossing_is_recorded_without_rewinding_the_clock',
+                  'test_game_state.UnmodelledTransitions.test_a_missing_two_minute_guard_event_is_refused',
+                  'test_legality.ScopeGuard.test_clock_start_stop_lifecycle_remains_explicitly_unsupported'],
+        'note': 'The crossing marker and actual post-down clock are checked. The running/stopped state and explicit restart '
+                'transition required by the LP rules contract are not represented; each occurrence maps to the clock_start_stop guard.',
     },
     'penalty': {
         'treatment': 'blocked',
@@ -43,9 +43,11 @@ INVENTORY = {
         'fails_loudly': 'the game is guarded: complete_game is false, and the checker reports check_unmodelled',
         'tests': ['test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage',
                   'test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime',
-                  'test_game_state.TimeoutTransition.test_the_count_is_written_once_in_state_after_and_only_for_the_charged_side'],
-        'note': 'The count is implemented: a timeout is charged to a side that has one left. Its stoppage time is inside the observed '
-                'runoff, so the clock effect is guarded.',
+                  'test_game_state.TimeoutTransition.test_the_count_is_written_once_in_state_after_and_only_for_the_charged_side',
+                  'test_game_state.TimeoutStop.test_the_stop_is_explicit_with_its_counts_and_its_clock'],
+        'note': 'The count is implemented: a timeout is charged to a side that has one left, and each stop is recorded explicitly '
+                '(timeout_stop: the counts before and after, the clock at the stop, the restart). Its stoppage time is inside the '
+                'observed runoff, so the clock effect is guarded.',
     },
     'overtime_block': {
         'treatment': 'blocked',
@@ -79,6 +81,29 @@ INVENTORY = {
 }
 
 
+# Event markers that are detected and checked, while the complete transition remains guarded in the inventory above. Their tests
+# are checked to resolve on every build, like the inventory's.
+PARTIALLY_REPRESENTED = {
+    'two_minute_warning': {
+        'rule': 'RULE 3 DEFINITIONS, SECTION 41; RULE 4 GAME TIMING, SECTION 3 STARTING THE GAME CLOCK, ARTICLE 2; SECTION 4 item (h)',
+        'tests': ['test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_01_does_not_stop_the_clock',
+                  'test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_00_warns_at_2_00',
+                  'test_game_state.TwoMinuteWarning.test_a_crossing_keeps_the_actual_post_down_clock',
+                  'test_game_state.TwoMinuteWarning.test_a_kickoff_warning_keeps_the_observed_post_kick_clock',
+                  'test_game_state.TwoMinuteWarning.test_a_period_expiry_does_not_trigger_a_warning',
+                  'test_game_state.TwoMinuteWarning.test_a_second_dead_ball_in_the_same_half_does_not_stop_again',
+                  'test_game_state.TwoMinuteWarning.test_the_warning_resets_at_halftime_so_the_fourth_quarter_warns_too',
+                  'test_legality.UnmodelledNegatives.test_a_crossing_without_a_warning_marker_cannot_pass_as_legal',
+                  'test_legality.ScopeGuard.test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker',
+                  'test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal'],
+        'note': 'Rule 3 Section 41 places the automatic timeout at the end of the last down snapped or kicked before 2:00. '
+                'The marker keeps that down\'s actual end value and the independent checker derives crossings from scrimmage '
+                'downs and kickoffs. The explicit running/stopped state and restart transition required by the LP rules contract '
+                'are not represented; see the two_minute_warning event guard and clock_start_stop unsupported-rule entry.',
+    },
+}
+
+
 # Negative fixtures for each guarded transition family and the clock. Each row names the guard it proves, and every test name is
 # checked to resolve before the document is written.
 NEGATIVE_FIXTURES = [
@@ -93,13 +118,17 @@ NEGATIVE_FIXTURES = [
      'test_legality.NegativeFixtures.test_a_complete_game_that_does_not_end_at_zero'),
     ('clock', 'a clock that rises inside a quarter fails the rules matrix',
      'test_game_state.RulesMatrix.test_a_clock_that_rises_inside_a_quarter_is_a_failure'),
-    ('two-minute warning', 'a crossing removed from the record is still derived from the plays and refuses the complete claim',
-     'test_legality.UnmodelledNegatives.test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list'),
-    ('two-minute warning', 'the seed-1 record is not a legal complete game because of its two-minute crossing',
-     'test_legality.ScopeGuard.test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing'),
-    ('two-minute warning', 'a guarded game relabelled complete_regulation is refused by validate_game',
+    ('two-minute warning (modelled)', 'a crossing without its warning marker cannot pass as legal (checker)',
+     'test_legality.UnmodelledNegatives.test_a_crossing_without_a_warning_marker_cannot_pass_as_legal'),
+    ('two-minute warning (modelled)', 'a second stop in the same half cannot pass as legal (checker)',
+     'test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal'),
+    ('two-minute warning (modelled)', 'a play ending at 2:01 is not stopped',
+     'test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_01_does_not_stop_the_clock'),
+    ('two-minute warning (modelled)', 'the seed-1 record is not a legal complete game (its guarded transitions)',
+     'test_legality.ScopeGuard.test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_its_guarded_transitions'),
+    ('guarded game (any guard)', 'a guarded game relabelled complete_regulation is refused by validate_game',
      'test_game_state.UnmodelledKinds.test_a_guarded_game_described_as_complete_is_refused'),
-    ('two-minute warning', 'a guarded game with its complete flag set is refused by validate_game',
+    ('guarded game (any guard)', 'a guarded game with its complete flag set is refused by validate_game',
      'test_game_state.UnmodelledKinds.test_a_guarded_game_with_its_complete_flag_set_is_refused'),
     ('penalty', 'a sampled penalty blocks the game and it is never complete',
      'test_game_state.UnmodelledTransitions.test_a_sampled_penalty_blocks_the_game_and_is_not_completed'),
@@ -118,7 +147,7 @@ def main():
     data = json.loads(SRC.read_text())
     summary = json.loads(SURVEY.read_text())
     counts = {t['type']: t for t in data['types']}
-    for name, spec in INVENTORY.items():
+    for name, spec in list(INVENTORY.items()) + list(PARTIALLY_REPRESENTED.items()):
         for test in spec['tests']:
             if not tb.check_test_id(test):
                 raise SystemExit(f'{name}: test {test} does not resolve')
@@ -141,14 +170,23 @@ def main():
         lines.append(f"| `{name}` | {c['count']} | {c['seeds_affected']} | {c['printed_heading']} | {spec['treatment']} | "
                      f"{spec['fails_loudly']} | {tests} |")
     lines += ['', '`lineups` is a labelling guard, not a transition: participants are labelled sampled_observed_play.', '',
-              '## Counts by quarter', '',
-              f"Two-minute crossings by quarter: {', '.join(f'{k}: {v}' for k, v in data['two_minute_warning_by_quarter'].items())}.",
+              '## Partial event representation', '',
+              'These event markers are detected and independently checked, but their complete rules-required state transitions are not represented.', '',
+              '| transition | printed rule heading | tests |', '|---|---|---|']
+    for name, spec in PARTIALLY_REPRESENTED.items():
+        tests = '<br>'.join(f'`{t}`' for t in spec['tests'])
+        lines.append(f"| `{name}` | {spec['rule']} | {tests} |")
+    lines += ['', '## Counts by quarter', '',
+              f"Two-minute warning markers by quarter (clock lifecycle unsupported): {', '.join(f'{k}: {v}' for k, v in data['two_minute_warning_by_quarter'].items())}.",
               f"Seeds with at least one unmodelled transition: {data['seeds_with_any_unmodelled_transition']} of 300.", '',
               '## Notes per type', '']
     for name, spec in INVENTORY.items():
         lines.append(f"- `{name}`: {spec['note']}")
-    lines += ['', '## Negative fixtures for the guards', '',
-              'Each row is a test that fails if the guard stops refusing the claim. Test names are checked to resolve on every build.', '',
+    for name, spec in PARTIALLY_REPRESENTED.items():
+        lines.append(f"- `{name}` (partial): {spec['note']}")
+    lines += ['', '## Negative fixtures', '',
+              'Each row is a test that fails if the guard, or the modelled rule, stops refusing the claim. Test names are checked to '
+              'resolve on every build.', '',
               '| guard family | what the fixture proves | test |', '|---|---|---|']
     for guard, claim, test in NEGATIVE_FIXTURES:
         lines.append(f'| {guard} | {claim} | `{test}` |')

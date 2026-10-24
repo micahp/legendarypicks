@@ -38,7 +38,8 @@ LP_CHECK = {
 GRIDIRON_ONLY = {
     'V-teams-unresolved': ('the home and away teams are authored labels A and B; no real identity is sampled',
                            'Gridiron: "missing real home/away team identities"'),
-    'V-valid-full-game': ('valid_full_game is false: the record makes no full-game claim, because unsupported rules remain',
+    'V-valid-full-game': ('valid_full_game is false: this legal_game_state_first_piece record is not a pregame_full_game; '
+                          'unresolved contract inputs and unsupported transitions prevent certification',
                           'Gridiron: "record.valid_full_game is not true"'),
 }
 EXPECTED = {**{k: v[0] for k, v in LP_CHECK.items()}, **{k: v[0] for k, v in GRIDIRON_ONLY.items()}}

@@ -89,15 +89,33 @@ def _change_of_ends(record, from_quarter):
               and b['from_quarter'] == from_quarter]
     if not mid and not expiry:
         return NOT_APPLICABLE, f'the game did not reach Q{to_quarter}'
+    possession_ends = 0
     for b in mid:
-        plays = drives[b['drive_index'] - 1]['plays']
+        drive_index = b['drive_index']
+        drive = drives[drive_index - 1]
+        plays = drive['plays']
         idx = next(i for i, p in enumerate(plays) if p['outcome']['quarter_change'])
+        a = plays[idx]['state_after']
         if idx == len(plays) - 1:
-            return FAIL, f'a Q{from_quarter} expiry ended drive {b["drive_index"]}: a drive must continue'
-        a, nxt = plays[idx]['state_after'], plays[idx + 1]['state_before']
-        if (a['offense_team'], a['yardline_100'], a['down']) != (nxt['offense_team'], nxt['yardline_100'], nxt['down']):
-            return FAIL, (f'possession, spot or down changed across the Q{from_quarter} expiry in drive '
-                          f'{b["drive_index"]}')
+            if drive['terminal'] not in ('punt', 'turnover', 'turnover_on_downs'):
+                return FAIL, f'a Q{from_quarter} expiry ended drive {drive_index} without a possession-ending play'
+            if drive_index >= len(drives):
+                return BLOCKED, f'drive {drive_index} changed possession at the Q{from_quarter} expiry, but the next drive is absent'
+            following = drives[drive_index]['plays'][0]
+            before = following['state_before']
+            if any(a[k] != before[k] for k in ('quarter', 'clock_seconds', 'offense_team', 'yardline_100', 'down', 'yards_to_go')):
+                return FAIL, f'possession, spot, down or clock changed at the Q{from_quarter} expiry after drive {drive_index}'
+            if plays[idx]['field']['after']['dir'] != following['field']['before']['dir']:
+                return FAIL, f'attacking direction changed incorrectly at the Q{from_quarter} expiry after drive {drive_index}'
+            possession_ends += 1
+        else:
+            nxt = plays[idx + 1]
+            after = nxt['state_before']
+            if any(a[k] != after[k] for k in ('quarter', 'clock_seconds', 'offense_team', 'yardline_100', 'down', 'yards_to_go')):
+                return FAIL, (f'possession, spot, down or clock changed across the Q{from_quarter} expiry in drive '
+                              f'{drive_index}')
+            if plays[idx]['field']['after']['dir'] != nxt['field']['before']['dir']:
+                return FAIL, f'attacking direction changed across the Q{from_quarter} expiry in drive {drive_index}'
     opened = [k for k in record['kickoffs'] if k['quarter'] == to_quarter and k['clock_before'] == gs.QUARTER_LENGTH
               and k['kind'] != 'half_start']
     for k in opened:
@@ -108,7 +126,7 @@ def _change_of_ends(record, from_quarter):
         expired_old_quarter = prev['end_quarter'] == from_quarter and _ends_on_zero(prev)
         if prev['terminal'] not in SCORING or not (ran_into_new_quarter or expired_old_quarter):
             return FAIL, f'a kickoff opened Q{to_quarter} without a score that ended the quarter change'
-    return PASS, (f'{len(mid)} mid-drive change(s) keep the drive; {len(expiry)} change(s) at a possession end keep '
+    return PASS, (f'{len(mid) - possession_ends} mid-drive change(s) keep the drive; {possession_ends} change(s) at a possession end keep '
                   f'the possession; {len(opened)} kickoff(s) open Q{to_quarter} after a score that expired '
                   f'Q{from_quarter}')
 
@@ -145,7 +163,7 @@ def _both_half_kickoffs(record):
 
 
 def _turnover_on_downs_q2(record):
-    hits = [d for d in record['drives'] if d['terminal'] == 'turnover_on_downs' and d['end_quarter'] == 2
+    hits = [d for d in record['drives'] if d['terminal'] == 'turnover_on_downs' and d['plays'][-1]['state_before']['quarter'] == 2
             and not _ends_on_zero(d)]
     if not hits:
         return NOT_APPLICABLE, 'no turnover on downs in Q2 in this game'
@@ -161,6 +179,43 @@ def _turnover_on_downs_q2(record):
         if nxt['plays'][0]['field']['before']['dir'] != -last['field']['before']['dir']:
             return FAIL, f'drive {d["index"]}: the attacking direction did not flip'
     return PASS, f'{len(hits)} turnover(s) on downs in Q2: offense changes, spot and direction hold'
+
+
+def _two_minute_warning(record):
+    """Derive the warning from down and kickoff clocks, then compare its recorded event markers."""
+    expected_plays, expected_kicks = set(), set()
+    for drive in record['drives']:
+        for play in drive['plays']:
+            before, after = play['state_before'], play['state_after']
+            if (before['quarter'] in (2, 4) and after['quarter'] == before['quarter'] and
+                    before['clock_seconds'] > 120 >= after['clock_seconds'] > 0):
+                expected_plays.add((drive['index'], play['sequence'], after['clock_seconds']))
+    for i, kick in enumerate(record['kickoffs']):
+        clock_after = kick.get('clock_after', max(0, kick['clock_before'] - kick['runoff_seconds']))
+        expired = kick.get('clock_expired_during_kickoff', kick['runoff_seconds'] >= kick['clock_before'])
+        if (kick['quarter'] in (2, 4) and not expired and kick['clock_before'] > 120 >= clock_after > 0):
+            expected_kicks.add((i, clock_after))
+
+    marked_plays = {(drive['index'], play['sequence'], play['state_after']['clock_seconds'])
+                    for drive in record['drives'] for play in drive['plays']
+                    if play['outcome'].get('two_minute_warning')}
+    marked_kicks = {(i, kick.get('clock_after', max(0, kick['clock_before'] - kick['runoff_seconds'])))
+                    for i, kick in enumerate(record['kickoffs'])
+                    if kick.get('two_minute_warning')}
+    if expected_plays != marked_plays or expected_kicks != marked_kicks:
+        return FAIL, (f'warning markers disagree with independently derived crossings: plays '
+                      f'{len(marked_plays)}/{len(expected_plays)}, kickoffs {len(marked_kicks)}/{len(expected_kicks)}')
+    # Enforce at most one warning in each half, across scrimmage plays and kickoffs.
+    counts = {q: sum(1 for drive in record['drives'] for play in drive['plays']
+                     if play['outcome'].get('two_minute_warning') and play['state_before']['quarter'] == q)
+              + sum(1 for kick in record['kickoffs'] if kick.get('two_minute_warning') and kick['quarter'] == q)
+              for q in (2, 4)}
+    if any(n > 1 for n in counts.values()):
+        return FAIL, f'more than one warning in a half: {counts}'
+    if not expected_plays and not expected_kicks:
+        return NOT_APPLICABLE, 'no down or kickoff crossed 2:00 before the period ended'
+    return PASS, (f'{len(expected_plays)} play warning marker(s) and {len(expected_kicks)} kickoff warning marker(s), at their '
+                  'observed post-down clocks; at most one per half. Clock state/restart lifecycle is separately unsupported.')
 
 
 def _touchdowns(record):
@@ -427,7 +482,9 @@ def check(record):
                                                            'names, if that side has one left; its stoppage is inside the observed '
                                                            'runoff; the rule itself is not checked against the rulebook'))
     add('Unmodelled rules: each carries a named guard', _guards(record))
-    add('Two-minute warning', (UNSUPPORTED, 'not modelled'))
+    add('Two-minute warning crossing marker', _two_minute_warning(record))
+    add('Clock running/stopped and restart state',
+        (UNSUPPORTED, record.get('guards', {}).get('clock_start_stop', {}).get('guard', 'missing clock_start_stop guard')))
     add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))
     add('Onside kick', (UNSUPPORTED, 'not modelled: every kickoff is drawn from the observed kickoff pool'))
     if record['tied']:
