@@ -1,6 +1,6 @@
 # NFL player-tracking feasibility, Phase 0 (LP data side, 2026-10-23)
 
-**Status:** No NFL full-player tracking is available on this box, and none can be downloaded until the token's account accepts the competition rules on kaggle.com. Listings from the Kaggle API are recorded below; no tracking file has been read. The directive's stop condition applies: narrow to the published 2026 Big Data Bowl throw-to-arrival benchmark only after the files are provided, or record the access blocker. No full-play validation is claimed.
+**Status:** Conditional post-throw tracking is now downloaded and verified for 2023 weeks 1–7 (see the verified section). Full-play, from-snap tracking is still not present in these files. The 2025 release is untested here.
 
 Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md` (`origin/main`), Phase 0 and the LP tracking owner role.
 
@@ -9,7 +9,7 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 | Check | Command or source | Result |
 | --- | --- | --- |
 | Local filenames | `find /root /data /srv /mnt /home /opt /var/lib -xdev` for `*tracking*`, `*bigdatabowl*`, `*big-data-bowl*`, `*big_data_bowl*`, `tracking_week*`, `plays.csv`, `games.csv`, `player_play*` | Only NHL tracking: `/root/lp-research-data/stathletes-big-data-cup-2026/*Tracking_P*.csv` (hockey, not NFL). Other matches were unrelated package and cache files. |
-| Kaggle access | `KAGGLE_API_TOKEN` in `/root/.hermes/.env` (added by the user, 2026-10-23; value not recorded here) | The token authenticates: the competition file listings return HTTP 200. Every file download returns HTTP 403, 'You must accept this competition's rules before you'll be able to download files.' Rule acceptance is a human step on kaggle.com for the token's account. |
+| Kaggle access | `KAGGLE_API_TOKEN` in `/root/.hermes/.env` (added by the user, 2026-10-23; value not recorded here) | The token authenticates. Downloads returned HTTP 403 until the user accepted the competition's rules on kaggle.com; they succeeded after that (2026-10-23). |
 | LP dev database, read-only | `/root/legendarypicks/backend/data/picks.dev.db` (126 tables) | No table has positional tracking columns. Columns checked for x, y, s, a, o, dir, frameId, nflId: none found in any NFL table. |
 
 ## Kaggle listings (metadata only, via the API)
@@ -17,7 +17,7 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 | Competition | Listing | Notes |
 | --- | --- | --- |
 | `nfl-big-data-bowl-2025` | README only (78 bytes) | Tracking files are not listed through this token. |
-| `nfl-big-data-bowl-2026-prediction` | 20 files, 334,797,422 bytes total | 11 `kaggle_evaluation/` code files, `test.csv` (177,525 B), `test_input.csv` (8,509,084 B), `train/input_2023_w01.csv` to `w07.csv` (39.9 to 51.1 MB each). No `train/output_*` label files are listed. |
+| `nfl-big-data-bowl-2026-prediction` | 20 files listed, 334,797,422 bytes | The listing is **incomplete**. It omits `train/output_*` label files, which exist and download for weeks 1–7. Listed: 11 `kaggle_evaluation/` code files, `test.csv`, `test_input.csv`, `train/input_2023_w01.csv` to `w07.csv`. |
 
 ## NFL play-level tables that do exist (observed context, not frames)
 
@@ -28,6 +28,35 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 | `nfl_hist_ftn_charting` | 185,215 | 2022–2025 | none | charting booleans (play action, screen, RPO, blitzers, drop, contested) |
 
 These are usable as the observed play-outcome and drive/game baseline, owned by LP. They cannot supply player trajectories.
+
+## Verified after rules acceptance (2026-10-23)
+
+Downloaded with `scripts/fetch_bdb2026_tracking.py` (token from the environment, never stored). Files are outside git at `/root/nfl-tracking-data/bdb2026-prediction/train/`. The sha256 manifest is `/root/nfl-tracking-data/bdb2026-prediction/SHA256SUMS.txt`. Permitted use: user-reported, not assessed here.
+
+**Coverage, 2023 season weeks 1–7 (the only weeks downloaded):**
+
+| Week | Games | Plays | Predicted player-tracks | Labels joined |
+| --- | ---: | ---: | ---: | --- |
+| 1 | 16 | 819 | 2,679 | 100% |
+| 2 | 16 | 850 | 2,758 | 100% |
+| 3 | 16 | 904 | 2,959 | 100% |
+| 4 | 16 | 779 | 2,517 | 100% |
+| 5 | 14 | 742 | 2,449 | 100% |
+| 6 | 15 | 793 | 2,608 | 100% |
+| 7 | 13 | 693 | 2,292 | 100% |
+| **Total** | 106 game-weeks | 5,580 | 18,262 | 100% |
+
+**Inputs (week 1 read in full).** 285,714 rows: 155,397 defensive-coverage rows and 130,317 offense rows. Roles present: Passer, Targeted Receiver, Other Route Runner, Defensive Coverage. Columns include `game_id`, `play_id`, `nfl_id`, `frame_id`, `x`, `y`, `s`, `a`, `dir`, `o`, `play_direction`, `absolute_yardline_number`, `player_to_predict`, `num_frames_output`, `ball_land_x`, `ball_land_y`. Every `nfl_id` is numeric, so there are **no ball rows** and no ball trajectory.
+
+**Frames and timing.** `frame_id` starts at 1 on every play. The last input frame is 9–74 (median 27 frames per play). The frame rate is **10 Hz**, inferred from displacement over reported speed: median 0.1004 s between frames, IQR 0.0996–0.1013 s, 128,036 consecutive pairs. The columns do not state it.
+
+**Missingness.** None in `x`, `y`, `s`, `a`, `dir`, `o`, `nfl_id`, `frame_id` for week 1. Labels were not checked for missingness, and other weeks' inputs were not checked either.
+
+**Labels.** Output columns are `game_id`, `play_id`, `nfl_id`, `frame_id`, `x`, `y`. In week 1 every predicted player (2,679 of 2,679) has output rows equal to its `num_frames_output`. Output horizons run from 5 to 94 frames (median 10).
+
+**Limits.** The inputs end before the throw, and post-throw positions exist only as labels for predicted players. So this is the conditional post-throw benchmark (directive A), not full-play tracking, and it cannot support a free-snap simulation claim. Whether frame 1 is the snap, and where the last input frame sits relative to ball release, is the competition's stated design. It is not verified here. The labels' missingness and the other weeks' label checks are not done.
+
+**Reproduce.** `KAGGLE_API_TOKEN=... python3 scripts/fetch_bdb2026_tracking.py`, then `sha256sum -c` against `SHA256SUMS.txt`.
 
 ## Supplement: independent LP DB check, 2026-10-23
 
@@ -53,13 +82,13 @@ The user stated on 2026-10-23 that the rights are already in place, and asked th
 
 ## Consequence for the directive
 
-1. **Full-play, from-snap tracking:** not available locally. Not verified in the 2025 or 2026 public releases from here, because the download needs credentials.
-2. **Narrow fallback (2026 Big Data Bowl throw-to-arrival):** needs the competition files. The 2026 prediction task starts at ball release and provides the target receiver and landing coordinates, so it is admissible only as a conditional post-throw benchmark.
-3. **Blocker needing your action:** accept the rules of `nfl-big-data-bowl-2026-prediction` (and `nfl-big-data-bowl-2025` if that cohort is wanted) on kaggle.com with the account that owns the token. Nothing was downloaded. A one-week check (`train/input_2023_w01.csv`, about 49 MB) is queued for after acceptance.
+1. **Full-play, from-snap tracking:** not present in the 2026 prediction data. Inputs end at a last frame of 9–74, and labels cover predicted players only. The 2025 release is untested here.
+2. **Narrow fallback (2026 Big Data Bowl throw-to-arrival):** feasible. Inputs and labels for 2023 weeks 1–7 are downloaded and joined (below). Scoring against labels is the conditional post-throw benchmark only.
+3. **Blocker resolved 2026-10-23:** the user accepted the competition rules and downloads succeeded. The 2025 cohort is untested.
 
 ## Fields the directive requires, status
 
-Coverage, timestamp cadence, snap/throw/terminal events, orientation, team and field orientation, missingness and source keys: **not verifiable until files exist**. None are claimed here.
+Coverage, timestamp cadence, snap/throw/terminal events, orientation, missingness and source keys: verified for the 2026 prediction inputs and labels, weeks 1–7, in the section below. Snap and terminal events are **not verified** (the competition's event definitions were not read here). Team/field orientation is not normalised in these files. Other fields: not verified.
 
 ## Reproduce
 
