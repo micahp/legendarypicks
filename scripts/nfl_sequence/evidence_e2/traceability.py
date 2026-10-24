@@ -159,7 +159,7 @@ ROWS = [
          adversarial=['test_game_state.MissedFieldGoalSpot.test_the_20_exception_applies_to_the_kick_spot_not_the_snap'],
          status='modelled',
          note='DISAGREEMENT, one place. The rule minimum is 7. The engine implies kick_distance = yardline_100 + 17 (holder 7 + end line 10, '
-              'Rule 1 Section 2 Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows (see the '
+              'Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows (see the '
               'kick_distance_offset block below). The engine keeps 7, and the publisher offset is kept as the reference.'),
     dict(id='R13', rule='A made field goal runs off at most five seconds of game clock.',
          rulebook=dict(article='11-4-2 Field Goal Attempt Notes (5)', status='verified',
@@ -188,7 +188,7 @@ ROWS = [
          status='guard',
          note='Timeouts are charged from flags only; no timeout is drawn from the table, so the count is observed, not sampled.'),
     dict(id='R15', rule='The two-minute warning: the referee signals it, and the clock stops, at 2:00 in the second and fourth quarters.',
-         rulebook=dict(article='4-4 (item h); definition Rule 1 Section 41', status='verified',
+         rulebook=dict(article='4-4 (item h); definition Rule 3, Section 41', status='verified',
                        quote='"when the Referee signals the two-minute warning for a half"'),
          lp_reference='Rules file section 5 (two_minute_warning substate)',
          transition='game_state:unmodelled_transitions',
