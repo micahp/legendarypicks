@@ -26,7 +26,8 @@ These two limits must travel with any handoff from E1. Passing `check_drive` doe
 2. **Clock runoff is a sampled interval, not a clock model.** Runoff is the time between consecutive published snaps
    in the same quarter. It is not a game-clock model: there are no clock-stop rules, timeouts or two-minute warning. A
    runoff longer than the remaining quarter time is clamped to zero, and each play carries `clock_clamped_to_zero`.
-   Measured on the survey below (1,200 drives, four starts at 300 seeds each): **594 of 7,016 plays (8.5%) are clamped,
+   Measured by `scripts/nfl_sequence/clamp_census.py` over four named starts at seeds 1–300 each (`own25_q1_900`,
+   `own25_q4_150`, `own25_q2_120`, `own25_q1_060`; 1,200 drives): **594 of 7,016 plays (8.5%) are clamped,
    and 594 of 1,200 drives (49.5%) contain one.** In this sample each clamped drive has exactly one clamp, and it
    leaves the clock at zero on the play that reaches it. Pooled runoffs across
    138,235 plays have a median of 32 s, a 90th percentile of 44 s, and a maximum of 289 s. The checker verifies that the
@@ -187,6 +188,15 @@ What each fixture shows:
 Each fixture's `gaps` list states both boundaries, the second-half kickoff, points, participants and player stats.
 
 ## Reproduce
+
+Boundary-2 census (the four starts above, seeds 1–300, `check_drive` on every drive; about two minutes):
+
+```
+cd /root/lp-nfl-sequence-e1
+python3 scripts/nfl_sequence/clamp_census.py
+```
+
+Its output at this head: `TOTAL: drives=1200 plays=7016 clamped=594 (8.5% of plays) drives_with_one_clamp=594 drives_with_any_clamp=594 incomplete=0`.
 
 ```
 cd /root/lp-nfl-sequence-e1
