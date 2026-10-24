@@ -132,5 +132,15 @@ class NegativeFixtures(unittest.TestCase):
         self.fail('seed one has no touchdown drive to mutate')
 
 
+class FixtureSplit(unittest.TestCase):
+    """The evidence counts these tests as 14 in total: two positive and twelve negative fixtures. This test pins the split so
+    the count in the evidence can be checked against this file."""
+
+    def test_two_positive_and_twelve_negative_fixtures(self):
+        positive = [m for m in vars(Positive) if m.startswith('test_')]
+        negative = [m for m in vars(NegativeFixtures) if m.startswith('test_')]
+        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 12, 14))
+
+
 if __name__ == '__main__':
     unittest.main()
