@@ -1,0 +1,28 @@
+{
+ "bdb_games": 136,
+ "bdb_plays": 16124,
+ "final_candidate_count_distribution": {
+  "0": 222,
+  "1": 15765,
+  "2": 2,
+  "3": 1
+ },
+ "funnel_plays_still_matching_after_step": {
+  "clock": 15990,
+  "distance": 15990,
+  "down": 15990,
+  "game": 15990,
+  "quarter": 15990,
+  "spot": 15768,
+  "team": 15990
+ },
+ "funnel_step_that_eliminated_all_candidates": {
+  "spot": 222
+ },
+ "games_matched": 136,
+ "games_unmatched": [],
+ "outcomes": {},
+ "overtime_plays_not_checked": 134,
+ "spot_unknown_plays": 222,
+ "unique_matches": 15765
+}
