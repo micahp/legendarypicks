@@ -298,7 +298,8 @@ class Clock(unittest.TestCase):
         record, calls = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=20)), winner_choice='receive', max_drives=2))
         post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
-        self.assertEqual((post['quarter'], post['clock_before'], post['clock_clamped_to_zero']), (1, 10, True))
+        self.assertEqual((post['quarter'], post['clock_before'], post['clock_expired_during_kickoff'],
+                          post['runoff_overrun_seconds'], post['clock_clamped_to_zero']), (1, 10, True, 10, False))
         self.assertEqual(calls[1]['start']['quarter'], 2)
         self.assertEqual(calls[1]['start']['clock'], 900)
         self.assertEqual(calls[1]['start']['offense'], post['receiving_team'])
@@ -821,6 +822,35 @@ class UnmodelledKinds(unittest.TestCase):
         record = gs.play_game(1, ref(StaticPool('run', 10, 30), kickoff_pool()), winner_choice='receive', max_drives=2)
         tampered = {**record, 'kickoffs': record['kickoffs'] + [{**record['kickoffs'][0], 'kind': 'onside'}]}
         with self.assertRaisesRegex(AssertionError, 'onside kicks are not modelled'):
+            gs.validate_game(tampered)
+
+
+class KickoffClock(unittest.TestCase):
+    """A kickoff is charged its observed runoff when that fits in the clock. A runoff that does not fit expires the quarter, with
+    the overrun recorded. No kickoff clamps a clock, and a negative clock is refused by validate_game."""
+
+    def test_a_kickoff_that_fits_is_charged_its_runoff_in_full(self):
+        record, calls = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=5)), winner_choice='receive', max_drives=2))
+        post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
+        self.assertEqual((post['runoff_seconds'], post['clock_expired_during_kickoff']), (5, False))
+        self.assertEqual(calls[1]['start']['clock'], post['clock_before'] - 5, 'the kickoff takes exactly its runoff off the clock')
+        gs.validate_game(record)
+
+    def test_a_kickoff_longer_than_the_clock_expires_the_quarter_and_records_the_overrun(self):
+        record, _ = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=20)), winner_choice='receive', max_drives=2))
+        post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
+        self.assertTrue(post['clock_expired_during_kickoff'])
+        self.assertEqual(post['runoff_overrun_seconds'], 10)
+        self.assertFalse(post['clock_clamped_to_zero'])
+        gs.validate_game(record)
+
+    def test_a_negative_clock_is_refused_so_no_clamp_can_hide_one(self):
+        record = gs.play_game(1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=5)), winner_choice='receive', max_drives=2)
+        tampered = copy.deepcopy(record)
+        tampered['drives'][0]['plays'][0]['state_after']['clock_seconds'] = -3
+        with self.assertRaisesRegex(AssertionError, 'negative game clock'):
             gs.validate_game(tampered)
 
 if __name__ == '__main__':

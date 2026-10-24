@@ -70,7 +70,8 @@ class ScopeGuard(unittest.TestCase):
 
     def test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing(self):
         record = seed1()
-        self.assertTrue(record['complete_regulation'])
+        self.assertTrue(record['regulation_end_reached'])
+        self.assertFalse(record['complete_regulation'], 'a guarded game is not a complete regulation game')
         self.assertTrue(record['unmodelled_transitions'], 'seed one crosses 2:00 in a late half')
         self.assertFalse(lc.legal_complete_game(record))
 
@@ -128,6 +129,7 @@ class NegativeFixtures(Fails):
     def test_a_blocked_record_marked_as_a_complete_game(self):
         record = seed1()
         record['status'], record['blocker'] = 'blocked', 'overtime_not_modelled'
+        record['complete_regulation'] = True  # the negative fixture: a blocked game marked complete
         self.assertFails(record, 'check_blocked')
 
     def test_a_down_of_five(self):
@@ -151,6 +153,7 @@ class NegativeFixtures(Fails):
 
     def test_a_complete_game_that_does_not_end_at_zero(self):
         record = seed1()
+        record['complete_regulation'] = True  # the negative fixture: a complete regulation game
         record['final_clock_seconds'] = 5
         self.assertFails(record, 'check_completion')
 
@@ -203,6 +206,28 @@ class UnmodelledNegatives(Fails):
         self.assertIn('check_unmodelled', failed_checks(record))
         self.assertFalse(lc.legal_complete_game(record))
 
+class UnmodelledKindNegatives(Fails):
+    """The timeout stoppage and the missed-field-goal return are derived from the plays. Neither can pass as a legal complete game."""
+
+    def test_a_timeout_stoppage_cannot_pass_as_a_legal_complete_game(self):
+        record = seed1()
+        record['complete_regulation'] = True  # the negative fixture: a complete regulation game
+        play = record['drives'][0]['plays'][0]
+        play['participants']['timeout'] = True  # a stoppage the engine does not model
+        self.assertIn('check_unmodelled', failed_checks(record))
+        self.assertFalse(lc.legal_complete_game(record))
+        self.assertTrue(any(f.startswith('timeout stoppage not modelled') for f in lc.check_unmodelled(record)))
+
+    def test_a_missed_field_goal_return_cannot_pass_as_a_legal_complete_game(self):
+        record = seed1()
+        record['complete_regulation'] = True
+        drive = next(d for d in record['drives'] if d['terminal'] != 'field_goal_attempt')
+        drive['terminal'], drive['field_goal_made'] = 'field_goal_attempt', False  # a missed kick whose return is not modelled
+        self.assertIn('check_unmodelled', failed_checks(record))
+        self.assertFalse(lc.legal_complete_game(record))
+        self.assertTrue(any(f.startswith('missed field goal return not modelled') for f in lc.check_unmodelled(record)))
+
+
 
 class FixtureSplit(unittest.TestCase):
     """The counts of these tests, pinned so the evidence can be checked against this file: two positive fixtures and eighteen
@@ -210,9 +235,9 @@ class FixtureSplit(unittest.TestCase):
 
     def test_two_positive_and_eighteen_negative_fixtures(self):
         positive = [m for m in vars(Positive) if m.startswith('test_')]
-        negative = [m for cls in (NegativeFixtures, TryFieldNegatives, UnmodelledNegatives, ScopeGuard)
+        negative = [m for cls in (NegativeFixtures, TryFieldNegatives, UnmodelledNegatives, UnmodelledKindNegatives, ScopeGuard)
                     for m in vars(cls) if m.startswith('test_')]
-        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 18, 20))
+        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 20, 22))
 
 
 if __name__ == '__main__':
