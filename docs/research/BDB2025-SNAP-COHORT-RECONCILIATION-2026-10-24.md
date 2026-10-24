@@ -20,9 +20,10 @@ Two cohorts were built for weeks 1–5 of the 2022 BDB2025 mirror:
 
 ## The 99 Gridiron-only plays
 
-All 99 are LP plays excluded for `blank_formation` (`offenseFormation` is the literal string `NA`). They are kept as a
-**separate, labelled stratum**, not as part of the movement benchmark. Gridiron keeps them, so they may be
-kick-type or special-teams plays, but that has not been verified here.
+All 99 are LP plays excluded for `blank_formation` (`offenseFormation` is the literal string `NA`). By `plays.csv` flags,
+92 are quarterback kneels (`qbKneel = 1`) and 7 are quarterback spikes (`qbSpike = TRUE`). In `playDescription`, 91 of the 92
+kneel-flagged plays mention a kneel and the remaining one does not, and all 7 spike plays mention a spike. These flags do not establish that no other kick-type play is in the set; that was not separately checked.
+They are kept as a **separate, labelled stratum**, not as part of the movement benchmark.
 
 ## The 68 plays absent from the Gridiron manifest
 
