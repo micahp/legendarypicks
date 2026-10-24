@@ -6,15 +6,20 @@ Scope in this piece:
 - the two half-start kickoffs, derived from the ledger and validated;
 - restarts after scores (the scoring team kicks off), after a safety (the conceding team kicks the free kick), at
   halftime (the second-half kickoff), and after punts and turnovers (the receiving team starts at its published spot);
-- a scoring ledger for touchdowns (6, with the try pending) and safeties (2);
+- field goals: made for 3 and a kickoff by the kicker, or missed and the other team takes over at the spot of the kick;
+- tries: after each touchdown (6 points), an extra point (1) or a two-point try (2), then the kickoff;
 - the clock carried between drives, and regulation end.
 
-Explicitly not modelled, and handled as branches that stop or stay pending:
-- field-goal results: an attempt stops the game as `field_goal_result_unpublished`. The result IS in nfl_pbp
-  (`series_result`, measured in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md); the engine does not consume it yet, and the
-  blocker key keeps its old name so this pass changes no engine behaviour;
-- try (extra point and two-point) results: a touchdown leaves its try pending, so the game cannot be valid. The result
-  IS in nfl_pbp (`success`), and the engine does not consume it yet;
+Kick outcomes are drawn from the published nfl_pbp rates (scripts/nfl_sequence/measure_kick_outcomes.py, 2022-2025,
+weeks 1-18): a field goal's make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and
+the share of post-touchdown attempts that were two-point tries. Each draw is a labelled sample from that published rate. It is not
+the outcome of a real game. A cell with fewer than MIN_KICK_N attempts blocks the game; nothing is filled from a
+neighbouring cell.
+
+Explicitly not modelled, and handled as branches that stop the game:
+- blocked kicks, returned misses and touchbacks: a missed kick gives the other team the spot of the kick;
+- restarts that cross a quarter end, including a score in the last seconds of a half;
+- a change of possession with the clock already at zero;
 - onside kicks, overtime, penalties, timeouts, the exception coin-toss paths (`explicit_exception_scenario`), and player
   statistics (no participants are supplied).
 
@@ -33,11 +38,23 @@ NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
 QUARTER_LENGTH = 900
 TD_POINTS = 6
+FG_POINTS = 3
 SAFETY_POINTS = 2
+TRY_POINTS = {'extra_point': 1, 'two_point': 2}
+FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
+MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 
 
 def other(team, teams):
     return teams[1] if team == teams[0] else teams[0]
+
+
+def fg_bucket(yardline_100):
+    """The yardline_100 bucket of a field goal, with the same labels as measure_kick_outcomes.BUCKET."""
+    for limit, label in ((10, '1-9'), (20, '10-19'), (30, '20-29'), (40, '30-39'), (50, '40-49')):
+        if yardline_100 < limit:
+            return label
+    return '50+'
 
 
 class CoinTossLedger:
@@ -155,15 +172,45 @@ def _restart(kind, kicker, receiver, quarter, clock, kickoff_pool, rng, events):
     return clock_after, sample['spot']
 
 
-def play_game(seed, pool, kickoff_pool, winner_choice=None, max_drives=80):
-    """Link E1 drives into one game under the normal-game policy. Returns a record; it never raises for a branch."""
+def _draw(rng, cell, name):
+    """A made or missed draw at the published rate of `cell` = (made, missed).
+
+    Returns (made, None), or (None, reason) when the cell is too thin.
+    """
+    made, missed = cell
+    if made + missed < MIN_KICK_N:
+        return None, f'thin_kick_cell:{name}'
+    return rng.random() < made / (made + missed), None
+
+
+def _try_after_touchdown(rng, kicks):
+    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra
+    point.
+
+    Returns (points, record, None), or (None, None, reason) when the cell it needs is too thin.
+    """
+    two_tries = sum(kicks['two_point'])
+    total = two_tries + sum(kicks['extra_point'])
+    kind = 'two_point' if rng.random() < (two_tries / total if total else 0) else 'extra_point'
+    made, why = _draw(rng, kicks[kind], kind)
+    if why:
+        return None, None, why
+    return (TRY_POINTS[kind] if made else 0), {'kind': kind, 'made': made}, None
+
+
+def play_game(seed, pool, kickoff_pool, kicks, winner_choice=None, max_drives=80):
+    """Link E1 drives into one game under the normal-game policy. Returns a record; it never raises for a branch.
+
+    `kicks` is the published kick table (measure_kick_outcomes.load_kick_table). It is required, so a game is never
+    played with a silent default.
+    """
     rng = random.Random(seed)
     choice = winner_choice or rng.choice(['receive', 'defer'])
     ledger = CoinTossLedger('A', 'B', choice)
     kickoffs = ledger.half_start_kickoffs()
     validate_half_start(kickoffs)
     events, drives = [], []
-    points, pat_pending = Counter(), Counter()
+    points = Counter()
     blocker = None
     quarter, clock = 1, QUARTER_LENGTH
     status = None
@@ -193,40 +240,65 @@ def play_game(seed, pool, kickoff_pool, winner_choice=None, max_drives=80):
             break
         e1.check_drive(plays, terminal)
         last = plays[-1]['state_after']
-        drives.append({'index': len(drives) + 1, 'offense_team': offense, 'quarter_start': quarter,
-                       'clock_start': clock, 'plays': len(plays), 'terminal': terminal,
-                       'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
-                       'points_scored_on_drive': None})
+        drive = {'index': len(drives) + 1, 'offense_team': offense, 'quarter_start': quarter,
+                 'clock_start': clock, 'plays': len(plays), 'terminal': terminal,
+                 'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
+                 'points_scored_on_drive': None, 'field_goal_made': None}
+        drives.append(drive)
         quarter, clock = last['quarter'], last['clock_seconds']
-        if terminal == 'field_goal_attempt':
-            blocker, status = 'field_goal_result_unpublished', 'blocked'
-            break
         if terminal == 'end_of_regulation':
             status = 'complete_regulation'
             break
-        if terminal in ('punt', 'turnover', 'turnover_on_downs'):
-            offense = last['offense_team']
-            defense = other(offense, ledger.teams)
-            yl = last['yardline_100']
-            down, togo = 1, min(10, yl)
-            continue
-        if terminal == 'touchdown':
+
+        change = None  # (new offense, spot) when possession changes without a kickoff
+        restart = None  # (kind, kicker, receiver) when a kickoff follows
+        if terminal == 'field_goal_attempt':
+            kick_yl = plays[-1]['state_before']['yardline_100']
+            bucket = fg_bucket(kick_yl)
+            made, why = _draw(rng, kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
+            if why:
+                blocker, status = why, 'blocked'
+                break
+            drive['field_goal_made'] = made
+            if made:
+                points[offense] += FG_POINTS
+                drive['points_scored_on_drive'] = {'team': offense, 'points': FG_POINTS, 'try': None}
+                restart = ('post_field_goal', offense, other(offense, ledger.teams))
+            else:
+                change = (defense, 100 - kick_yl)  # the other team takes over at the spot of the kick
+        elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
+            change = (last['offense_team'], last['yardline_100'])
+        elif terminal == 'touchdown':
             scorer = offense
-            points[scorer] += TD_POINTS
-            pat_pending[scorer] += 1
-            drives[-1]['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS, 'try': 'pending'}
-            kicker, receiver, kind = scorer, other(scorer, ledger.teams), 'post_score'
+            try_points, try_record, why = _try_after_touchdown(rng, kicks)
+            if why:
+                blocker, status = why, 'blocked'
+                break
+            points[scorer] += TD_POINTS + try_points
+            drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
+            restart = ('post_score', scorer, other(scorer, ledger.teams))
         elif terminal == 'safety':
             scorer = defense
             points[scorer] += SAFETY_POINTS
-            drives[-1]['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
-            kicker, receiver, kind = offense, scorer, 'safety_free_kick'
+            drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
+            restart = ('safety_free_kick', offense, scorer)
         elif terminal == 'halftime':
-            kicker, receiver, kind = kickoffs[1]['kicking_team'], kickoffs[1]['receiving_team'], 'half_start'
             quarter, clock = 3, QUARTER_LENGTH
+            restart = ('half_start', kickoffs[1]['kicking_team'], kickoffs[1]['receiving_team'])
         else:
             blocker, status = f'unhandled_terminal:{terminal}', 'blocked'
             break
+
+        if change is not None:
+            if clock == 0:
+                blocker, status = 'possession_change_at_zero_clock', 'blocked'
+                break
+            offense, yl = change
+            defense = other(offense, ledger.teams)
+            down, togo = 1, min(10, yl)
+            continue
+
+        kind, kicker, receiver = restart
         clock_after, spot = _restart(kind, kicker, receiver, quarter, clock, kickoff_pool, rng, events)
         if clock_after is None:
             blocker, status = spot, 'blocked'
@@ -241,17 +313,16 @@ def play_game(seed, pool, kickoff_pool, winner_choice=None, max_drives=80):
         'mode': 'legal_game_state_first_piece', 'seed': seed, 'valid_full_game': False,
         'ledger': ledger.ledger(), 'kickoffs': events, 'drives': drives,
         'points': {'A': points['A'], 'B': points['B']},
-        'pat_pending': {'A': pat_pending['A'], 'B': pat_pending['B']},
         'status': status or 'blocked', 'blocker': blocker, 'tied': tied,
         'final_quarter': quarter, 'final_clock_seconds': clock,
-        'gaps': ['field-goal results are published in nfl_pbp (series_result) but not consumed: '
-                 'an attempt stops the game',
-                 'try results are published in nfl_pbp (success) but not consumed: touchdown points are pending',
+        'gaps': ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): '
+                 'each draw is a labelled sample, not the result of a real game',
+                 'blocked kicks and returned misses are not modelled: a missed kick gives the other team the kick spot',
+                 'restarts that cross a quarter end, including a score in the last seconds of a half, block the game',
                  'onside kicks, overtime, penalties, timeouts and the exception coin-toss paths are not modelled',
                  'player statistics are null: no participants are supplied'],
     }
-    record['valid_full_game'] = bool(completed and not tied and sum(pat_pending.values()) == 0
-                                     and blocker is None)
+    record['valid_full_game'] = bool(completed and not tied and blocker is None)
     return record
 
 
@@ -279,14 +350,28 @@ def validate_game(record):
         checks.append('two half-start kickoffs, one per team, Q3 reverses Q1')
     elif record['final_quarter'] >= 3 and record['status'] == 'complete_regulation':
         raise AssertionError('a complete game must have two half-start kickoffs')
-    td = sum(1 for d in record['drives'] if d['terminal'] == 'touchdown')
-    safety = sum(1 for d in record['drives'] if d['terminal'] == 'safety')
-    if sum(record['points'].values()) != TD_POINTS * td + SAFETY_POINTS * safety:
-        raise AssertionError('points ledger disagrees with touchdown and safety drives')
-    checks.append('points equal 6 per touchdown plus 2 per safety')
-    if sum(record['pat_pending'].values()) != td:
-        raise AssertionError('pending tries must equal touchdowns')
-    checks.append('one pending try per touchdown')
+    by_team = Counter()
+    for d in record['drives']:
+        p = d['points_scored_on_drive']
+        last_drive = d is record['drives'][-1]
+        if d['terminal'] == 'touchdown':
+            if p is None:  # only a try that could not be drawn (a thin cell) leaves a touchdown unscored, and it blocks
+                if record['blocker'] is None or not last_drive:
+                    raise AssertionError(f'touchdown drive without a recorded try: {d}')
+            else:
+                t = p['try']
+                if t is None or t['kind'] not in TRY_POINTS:
+                    raise AssertionError(f'touchdown drive without a recorded try: {d}')
+                if p['points'] != TD_POINTS + (TRY_POINTS[t['kind']] if t['made'] else 0):
+                    raise AssertionError(f'touchdown points disagree with the try: {d}')
+        if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is not None:
+            if d['field_goal_made'] != bool(p):
+                raise AssertionError(f'field goal result disagrees with its points: {d}')
+        if p is not None:
+            by_team[p['team']] += p['points']
+    if by_team['A'] != record['points']['A'] or by_team['B'] != record['points']['B']:
+        raise AssertionError('points ledger disagrees with the points recorded on each drive')
+    checks.append('game points equal the points recorded on each drive, touchdown tries included')
     quarter_prev = 0
     for d in record['drives']:
         if d['quarter_start'] < quarter_prev:
@@ -296,7 +381,5 @@ def validate_game(record):
     if record['valid_full_game']:
         if record['status'] != 'complete_regulation' or record['blocker'] is not None or record['tied']:
             raise AssertionError('valid_full_game requires complete regulation, no blocker and no tie')
-        if sum(record['pat_pending'].values()) != 0:
-            raise AssertionError('valid_full_game cannot have pending tries')
-    checks.append('valid_full_game only when complete, unblocked, untied and with no pending tries')
+    checks.append('valid_full_game only when complete, unblocked and untied')
     return checks

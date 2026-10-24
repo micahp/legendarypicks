@@ -2,8 +2,8 @@
 
 Run: python3 scripts/nfl_sequence/measure_kick_outcomes.py [--db PATH]
 
-The database is opened with mode=ro. The SQL printed here is the SQL recorded in
-docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md, and every number in that doc comes from this output.
+The database is opened with mode=ro. load_kick_table() is the table the E2 engine draws its kick outcomes from. The SQL
+printed here is the SQL recorded in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md.
 """
 import argparse
 import math
@@ -13,6 +13,16 @@ DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
 WINDOW = 'season BETWEEN 2022 AND 2025 AND week <= 18'
 FG_MADE, FG_MISSED = 'Field goal', 'Missed field goal'
 EP_SCORED = ('Touchdown', 'Opp touchdown')
+BUCKET = """CASE WHEN yardline_100 < 10 THEN '1-9' WHEN yardline_100 < 20 THEN '10-19'
+WHEN yardline_100 < 30 THEN '20-29' WHEN yardline_100 < 40 THEN '30-39' WHEN yardline_100 < 50 THEN '40-49'
+ELSE '50+' END"""
+FG_BY_BUCKET_SQL = f"""SELECT {BUCKET} AS bucket,
+  SUM(series_result = '{FG_MADE}') AS made, SUM(series_result = '{FG_MISSED}') AS missed
+FROM nfl_pbp WHERE play_type = 'field_goal' AND {WINDOW} AND series_result IN ('{FG_MADE}', '{FG_MISSED}')
+GROUP BY bucket ORDER BY bucket"""
+EP_SQL = f"""SELECT SUM(success = 1), SUM(success = 0) FROM nfl_pbp
+WHERE play_type = 'extra_point' AND series_result IN ('Touchdown', 'Opp touchdown') AND {WINDOW}"""
+TWO_POINT_SQL = f"""SELECT SUM(success = 1), SUM(success = 0) FROM nfl_pbp WHERE two_point_attempt = 1 AND {WINDOW}"""
 
 
 def wilson(k, n, z=1.96):
@@ -24,6 +34,21 @@ def wilson(k, n, z=1.96):
     c = (p + z * z / (2 * n)) / d
     h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
     return (round(c - h, 3), round(c + h, 3))
+
+
+def load_kick_table(db=DEFAULT_DB):
+    """Published kick outcomes for the primary window, as (made, missed) pairs. Read-only.
+
+    {'field_goal': {bucket: (made, missed)}, 'extra_point': (made, missed), 'two_point': (made, missed), 'source': str}
+    """
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    try:
+        field_goal = {b: (m or 0, x or 0) for b, m, x in con.execute(FG_BY_BUCKET_SQL)}
+        extra_point = tuple(v or 0 for v in con.execute(EP_SQL).fetchone())
+        two_point = tuple(v or 0 for v in con.execute(TWO_POINT_SQL).fetchone())
+    finally:
+        con.close()
+    return {'field_goal': field_goal, 'extra_point': extra_point, 'two_point': two_point, 'source': f'nfl_pbp {WINDOW}'}
 
 
 def rows(con, sql):
@@ -68,10 +93,7 @@ FROM nfl_pbp WHERE play_type = 'field_goal' GROUP BY season ORDER BY season"""
         print(f'  {season:>6d} {m:6d} {x:6d} {e:5d} {rate:6.3f}')
 
     # 3. Field goals by yardline_100 (yards to the opponent's end zone at the snap; kick distance ~ yardline_100 + 17).
-    bucket = """CASE WHEN yardline_100 < 10 THEN '1-9' WHEN yardline_100 < 20 THEN '10-19'
-WHEN yardline_100 < 30 THEN '20-29' WHEN yardline_100 < 40 THEN '30-39' WHEN yardline_100 < 50 THEN '40-49'
-ELSE '50+' END"""
-    sql = f"""SELECT {bucket} AS bucket,
+    sql = f"""SELECT {BUCKET} AS bucket,
   SUM(series_result = '{FG_MADE}') AS made, SUM(series_result = '{FG_MISSED}') AS missed
 FROM nfl_pbp WHERE play_type = 'field_goal' AND {WINDOW} AND series_result IN ('{FG_MADE}', '{FG_MISSED}')
 GROUP BY bucket ORDER BY bucket"""
@@ -95,7 +117,7 @@ GROUP BY 1, 2, 3 ORDER BY 1, 4 DESC"""
     for lab, nt, pos, n in rows(con, sql):
         print(f'  {str(lab):20s} next={str(nt):10s} next_possession={pos:13s} {n:6d}')
 
-    # 5. Extra points by season, all seasons, and the primary window.
+    # 5. Extra points by season, all seasons (made = success 1; series_result Touchdown or Opp touchdown).
     sql = f"""SELECT season, SUM(success = 1) AS made, SUM(success = 0) AS missed
 FROM nfl_pbp WHERE play_type = 'extra_point' AND series_result IN ('Touchdown', 'Opp touchdown')
 GROUP BY season ORDER BY season"""
@@ -128,6 +150,7 @@ FROM nfl_pbp WHERE two_point_attempt = 1 AND {WINDOW} GROUP BY success"""
     k = sum(n for s, n, _, _ in tp if s == 1)
     t = sum(n for _, n, _, _ in tp)
     print(f'  converted={k} of {t} rate {k / t:.4f}  Wilson95 {wilson(k, t)}')
+    con.close()
 
 
 if __name__ == '__main__':

@@ -1,14 +1,15 @@
 # NFL sequence generator, LP E2 first piece: kickoffs, linkage, the game ledger and the kick outcomes (2026-10-24)
 
 Branch `feat/nfl-sequence-e2-kickoffs-2026-10-24`, rebased onto the E1 head `2248f7e1`. Modules:
-`scripts/nfl_sequence/game_state.py` (state machine), `scripts/nfl_sequence/test_game_state.py` (13 tests),
+`scripts/nfl_sequence/game_state.py` (state machine), `scripts/nfl_sequence/test_game_state.py` (20 tests),
 `scripts/nfl_sequence/game_survey.py` (300-game survey) and `scripts/nfl_sequence/measure_kick_outcomes.py` (read-only
-measurement of kick outcomes in the dev database). This branch does not change the E1 generator or its fixtures.
+kick-outcome table from the dev database, which the survey passes to the engine). This branch does not change the E1
+generator or its fixtures.
 
-**Status: first piece, not a legal game.** The state machine links E1 drives into one game under the normal-game policy,
-and it validates every game it produces. No game is valid. The engine still stops a game at its first field-goal attempt
-and leaves every touchdown's try pending. Those results are published in `nfl_pbp`, so the stop is a policy decision for
-Micah, not a gap in the data (see "Kick outcomes" below). Nothing is invented to fill either gap.
+**Status: the engine consumes the published kick outcomes, and 229 of 300 seeded games are valid full games.** Of the 300,
+236 reach the end of regulation. Seven of those are tied, so they are invalid, because overtime is not modelled. The other 64
+are blocked, each with a named reason (see "Survey"). No field-goal blocker remains. Each kick draw is a labelled sample from
+a published rate, and it is not the outcome of a real game.
 
 ## Decision D: E1 uses the shared play-ID form; E2 records use their own mode
 
@@ -32,15 +33,18 @@ only, so no E1 play ID reaches an E2 record today. A unit test spies on the call
 | E1 terminal | Next restart in this piece |
 | --- | --- |
 | `punt`, `turnover`, `turnover_on_downs` | The receiving offense continues from its published spot. No kickoff. |
-| `touchdown` | Points: 6, with the try pending. The scoring team kicks off to the other team (`post_score`). |
+| `touchdown` | Points: 6, then a try. An extra point (1) at the published extra-point rate, or a two-point try (2) at the published two-point rate, chosen at the measured share of post-touchdown attempts (9.5%). Then the scoring team kicks off to the other team (`post_score`). |
 | `safety` | Points: 2 for the defense. The conceding team kicks the free kick (`safety_free_kick`). |
 | `halftime` | Q3 kickoff from the ledger (`half_start`). The clock resets to 15:00. |
 | `end_of_regulation` | Game complete. A tie is not valid, because overtime is not modelled. |
-| `field_goal_attempt` | Game blocked: `field_goal_result_unpublished`. The key name predates the measurement below; it is kept so this pass changes no engine behaviour. |
+| `field_goal_attempt` | Made, drawn at the published make rate for its `yardline_100` bucket: 3 points, then the kicker kicks off (`post_field_goal`). Missed: the other team takes over at the spot of the kick, `100 - yardline_100`, first and ten. |
 
 Each restart samples a kickoff from the pool: the receiving team's first run or pass in the same quarter gives the spot,
 and the kickoff's clock runoff comes from the published interval. If the restart would cross the quarter end, the game
-blocks with `restart_crosses_quarter_end`.
+blocks with `restart_crosses_quarter_end`. That includes a score in the last seconds of a half.
+
+A punt, turnover or missed field goal with the clock already at 0:00 blocks the game with `possession_change_at_zero_clock`.
+Quarter-end handling for a change of possession is not modelled, so the game is not guessed through it.
 
 **Kickoff convention in the published data.** On a kickoff row `posteam` is the receiving team, and `defteam` is the
 kicking team. This is the reverse of the punt convention, and the pool is built on it. A clean receiving snap was found
@@ -51,32 +55,46 @@ for 10,037 kickoffs, and 962 were excluded.
 Authored, not sourced, and labelled in every record. The goal-first-half team defends x=0 in Q1. Ends change after Q1
 and after Q3, and halftime does not flip ends. The Q3 orientation uses the second-half goal choice.
 
-## Survey (300 seeded games, `scripts/nfl_sequence/game_survey.py --games 300`, at `2248f7e1`)
+## Survey (300 seeded games, `scripts/nfl_sequence/game_survey.py --games 300`, at `ca418fbd` plus this pass)
 
 ```
-games=300 validated=300 valid_full_game=0
-status {'blocked': 298, 'complete_regulation': 2}
-blocker {'field_goal_result_unpublished': 296, 'restart_crosses_quarter_end': 2, None: 2}
-reached the Q3 half-start kickoff: 17 (5.7%)
-games with a pending try: 131
-drives per game: mean 4.3, max 25
+games=300 validated=300 valid_full_game=229
+status {'complete_regulation': 236, 'blocked': 64}
+blocker {None: 236, 'thin_kick_cell:field_goal:50+': 2, 'restart_crosses_quarter_end': 36, 'possession_change_at_zero_clock': 25, "thin pool cell (2, '11+', '1-9') (0 observed plays, floor 50); no fallback": 1}
+reached the Q3 half-start kickoff: 261 (87.0%)
+field goals drawn: {'made': 1014, 'missed': 240}
+tries drawn: {'extra_point made': 891, 'two_point made': 43, 'two_point missed': 67, 'extra_point missed': 42}
+points per game: mean 34.4
+drives per game: mean 20.5, max 30
 kickoff pool: usable 10037, excluded {'kickoff without a clean receiving snap': 962}
+kick table: nfl_pbp season BETWEEN 2022 AND 2025 AND week <= 18
 ```
 
-The numbers did not move in the rebase. The RNG seed of each drive is unchanged, and the only E1 change was the play-ID
-string, which E2 does not record. Every game passed `validate_game`. The two games that reached regulation were not valid,
-because a try was pending or the game was tied.
+Every game passed `validate_game`. The earlier survey, which stopped every game at its first field goal, is superseded: no
+game is blocked by a field goal now. The seven complete games that are not valid are ties. The 64 blocked games are:
+
+- 36 `restart_crosses_quarter_end`: a restart with no time left in the quarter, including a score in the last seconds of a half.
+- 25 `possession_change_at_zero_clock`: a punt, turnover or missed field goal with the clock at 0:00.
+- 2 `thin_kick_cell:field_goal:50+`: that cell has 4 attempts in the window, below the floor of 30.
+- 1 E1 pool cell with no observed plays, `(2, '11+', '1-9')`. E1 refuses it, as it was designed to.
+
+The draws sit inside the published rates. Field goals drawn: 1014 made of 1254, 80.9% (the published rate is 85.2%; the gap is not
+explained here, and the per-bucket mix of the E1 sample is not checked). Extra points: 891 of 933, 95.5% (published 95.4%). Two-point tries: 43 of 110, 39.1%
+(published 47.2%; 110 draws carry a 95% interval of about ±9 points). Two-point tries are 10.5% of post-touchdown attempts
+(published 9.5%).
 
 ## Tests
 
-- `python3 -m unittest scripts/nfl_sequence/test_game_state.py`: **13 of 13 pass**. They cover the ledger (refusals, both
+- `python3 -m unittest scripts/nfl_sequence/test_game_state.py`: **20 of 20 pass**. They cover the ledger (refusals, both
   coin-toss paths, the second-half chooser), the half-start validator (same-team refusal, ledger agreement), the kickoff pool
-  convention (receiving-team posteam, and exclusion of a kicker's next snap), the post-score kickoff by the scorer, a
-  field-goal attempt stopping the game with no invented result, halftime producing the Q3 kickoff, and the E2 profile id
-  passed to E1 on every drive. The profile-id test fails when the call is changed to a wrong id (checked by mutation).
+  convention (receiving-team posteam, and exclusion of a kicker's next snap), the bucket labels, a touchdown taking its try
+  before the scorer's kickoff, a missed extra point (6), a two-point try (8), a made field goal (3, then the kicker's kickoff),
+  a missed field goal (the other team starts at the kick's spot, checked by spying on E1's start state), a thin cell blocking
+  without a fill, halftime producing the Q3 kickoff, the kick table being required, a touchdown whose points disagree with its
+  try being refused, and the E2 profile id passed to E1 on every drive.
 - `python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py` (inherited from E1): **11 of 11 pass**. It had 10 at
   `e621e83e`; the E1 branch added one.
-- Both files together: 24 tests OK.
+- Both files together: **31 tests OK**.
 
 ## Kick outcomes in the dev database: the "not published" claim was false
 
@@ -90,8 +108,7 @@ columns, which is why the name check came up empty. The outcomes are in the kept
   (`Touchdown`, `Opp touchdown`).
 - **Two-point try:** `success` = 1 (converted) or 0 (not), on `two_point_attempt = 1`.
 
-So the engine's gap text was wrong. The gap text in each record is corrected in this pass. The engine's blocking behaviour
-is unchanged (see "Decision needed").
+So the engine's gap text was wrong. It is corrected, and the engine now consumes these outcomes (see "Consumed in E2").
 
 Reproduce with `python3 scripts/nfl_sequence/measure_kick_outcomes.py`. It opens `/root/legendarypicks/backend/data/picks.dev.db`
 with `mode=ro` and takes about 5 seconds. The primary window is 2022–2025, weeks 1–18, the same window E1 samples from.
@@ -213,34 +230,42 @@ GROUP BY success;
 
 The next-play check and the per-season tables are in `measure_kick_outcomes.py` (sections 2, 4 and 5).
 
-## Proposed table for E2, if the published outcomes are consumed
+## Consumed in E2 (this pass)
 
-| attempt | rate (primary window) | interval | record fields |
-| --- | --- | --- | --- |
-| field goal, by `yardline_100` | see the bucket table above | Wilson 95% | `source: nfl_pbp (nflverse)`, `window: 2022-2025 wk<=18` |
-| extra point | 95.4% (4644 / 4870) | 94.7–95.9% | as above |
-| two-point try | 47.2% (240 / 509) | 42.9–51.5% | as above, and a note that it is checked against EPA only |
+The engine takes its kick table from `measure_kick_outcomes.load_kick_table()`, which reads the primary window above, and it
+refuses to run without one. Each draw is a labelled sample at the published rate:
 
-These are league-wide rates for attempts at a field position, not a model of any kicker.
+| draw | published rate | made / missed in the window | floor per cell |
+| --- | ---: | ---: | ---: |
+| field goal, by `yardline_100` bucket | 98.2, 95.0, 83.1, 72.6, 54.9, 25.0% | 698/13, 1109/58, 980/200, 809/305, 67/55, 1/3 | 30 attempts |
+| extra point | 95.4% | 4644 / 226 | 30 attempts |
+| two-point try | 47.2% | 240 / 269 | 30 attempts |
+| two-point share of post-touchdown attempts | 9.5% | 509 of 5,379 | none (the try cell has its own floor) |
 
-## Decision needed (Micah)
+A cell below its floor blocks the game (`thin_kick_cell:<name>`). Nothing is filled from a neighbouring cell. The
+`yardline_100` buckets are 1–9, 10–19, 20–29, 30–39, 40–49 and 50+. Only the 50+ cell is thin.
 
-The outcomes are published, so the question is no longer whether a source exists. It is whether E2 should consume the
-`nfl_pbp` outcomes:
+These are league-wide rates for attempts at a field position, not a model of any kicker. The missed-field-goal spot follows the
+rules file's change-of-possession rule, `new yardline_100 = 100 - old yardline_100`, with the ball at the same dead-ball spot.
+Blocked kicks, returned misses and touchbacks on a missed kick are not modelled.
 
-1. **Consume the published outcomes.** This is the recommendation, since the source is on the box and the table above is
-   measured. Each attempt draws its result from the bucket rate, and every record names the window and the query. This is an
-   engine change, and it is not part of this pass.
-2. Keep the blocker until a policy is chosen.
-3. A labelled authored default. This is allowed only for a clearly hypothetical game, and every record must say so.
+## Decided and still open
 
-Also for Micah: whether the 8 `Opp touchdown` field-goal rows count as misses (85.2% becomes 85.1%), and whether the 2-pt
-rate should be trusted before a score-based check exists.
+- **Decided (Micah, 2026-10-24): consume the published outcomes.** The field-goal and try blocker is gone. The
+  `field_goal_result_unpublished` key appears in no record.
+- **Open, for Micah:**
+  - The 36 `restart_crosses_quarter_end` and 25 `possession_change_at_zero_clock` blocks are clock-edge cases. The rules
+    file does not settle them in this piece: a change of possession at quarter end, and a score in the last seconds of a
+    half. They are blocked, not guessed. Resolving them is the next rules step.
+  - Whether the 8 `Opp touchdown` field-goal rows count as misses (85.2% becomes 85.1%).
+  - Whether the two-point rate should be trusted before a score-based check exists. `nfl_pbp` has no score columns, and no TD
+    flag is set on any two-point try, so the check is EPA only.
 
 ## Not done
 
-- **Field-goal and try results are not consumed by the engine.** The blocker stays until the decision above is made.
+- **Clock-edge cases** (above). 61 of the 64 blocked games stop on them.
 - **Onside kicks, overtime, penalties, timeouts, the two-minute warning, and the exception coin-toss paths.** Not modelled.
+- **Blocked kicks, returned misses, and touchbacks on a missed kick.** Not modelled.
 - **Player statistics.** Null. No participants are supplied, and none are sampled.
 - **Clock realism.** Kickoff and drive times are the sampled intervals (boundary 2 from E1).
-- **Restarts that cross a quarter end.** These block the game. They are not resolved.
+- **E1 pool coverage.** One cell, `(2, '11+', '1-9')`, has no observed plays. E1 refuses it, and the game is blocked.
