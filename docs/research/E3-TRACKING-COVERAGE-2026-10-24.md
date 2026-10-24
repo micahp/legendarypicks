@@ -82,7 +82,10 @@ The earlier report gave 789 complete, 2,014 partial and 46 none, against a denom
 field goals as plays that must be tracked. Recomputed with that criterion, on the same LP data and this join's tracking flags, the
 counts are 790 complete, 2,013 partial and 43 none, out of 2,846 drives that have at least one run, pass, punt or field goal. The
 differences from the earlier figures (+1 complete, −1 partial, −3 none) are not fully traced. The 3 plays this join newly verifies
-account for at most 3 of them. The earlier denominator of 3,091 does not reproduce from the same LP rows, and it is not explained here.
+account for at most 3 of them. The earlier denominator of 3,091 is reproduced exactly by grouping the LP rows on (game_id, drive) with a NULL drive kept as its own
+key: 2,955 drives plus one phantom group for each of the 136 games. The 264 NULL-drive rows are 213 with no play type, 29 extra points,
+19 no-plays and 3 scrimmage plays. This is the likely origin of the 3,091; the earlier script was not re-run. The 789-versus-790
+complete difference is still not traced.
 
 ## What this does not establish
 
