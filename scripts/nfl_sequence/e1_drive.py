@@ -237,6 +237,8 @@ def simulate(start, seed, pool, simulation_id):
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
                         'punt': flags['punt'], 'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'clock_runoff_seconds': runoff,
+                        'dead_ball_position': (None if after is None else {'offense': after['offense'],
+                            'defense': after['defense'], 'down': after['down'], 'togo': after['togo'], 'yl': after['yl']}),
                         'clock_clamped_to_zero': clock_raw < 0,
                         'quarter_change': quarter_change,
                         'clock_only_terminal': ended_by_clock_only,

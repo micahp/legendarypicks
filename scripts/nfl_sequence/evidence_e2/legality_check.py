@@ -243,15 +243,30 @@ def check_unmodelled(record):
                 findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
             if p['participants'].get('timeout'):
                 findings.append(f'timeout stoppage not modelled: drive {d["index"]} play {p["sequence"]}')
-            b, a = p['state_before'], p['state_after']
-            if (b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter']
-                    and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']):
-                findings.append(f'two-minute warning transition not modelled: drive {d["index"]} play {p["sequence"]} '
-                                f'crosses 2:00 in Q{b["quarter"]}')
     return findings
 
 
-MODELLED_CHECKS = (check_blocked, check_completion, check_points, check_drives, check_clock_and_quarter,
+def check_two_minute(record):
+    """Rule 3 Section 41 and Rule 4 Section 4 item (h): a play that passes from above 2:00 to at or below it, in the second or fourth
+    quarter, stops the clock at 2:00 and is recorded as the warning; each late quarter has at most one such stop per half. Derived
+    from the plays here, not from the record's own warning list."""
+    findings, warned = [], set()
+    for d in record['drives']:
+        for p in d['plays']:
+            b, a = p['state_before'], p['state_after']
+            if b['quarter'] in LATE_QUARTERS and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']:
+                if a['clock_seconds'] != TWO_MINUTE_MARK:
+                    findings.append(f'two-minute stop not applied: drive {d["index"]} play {p["sequence"]} ends at '
+                                    f'{a["clock_seconds"]} seconds in Q{b["quarter"]}, not 120')
+                if not p['outcome'].get('two_minute_warning'):
+                    findings.append(f'two-minute stop not recorded: drive {d["index"]} play {p["sequence"]}')
+                if b['quarter'] in warned:
+                    findings.append(f'second two-minute stop in the same half: drive {d["index"]} play {p["sequence"]}')
+                warned.add(b['quarter'])
+    return findings
+
+
+MODELLED_CHECKS = (check_blocked, check_completion, check_points, check_drives, check_clock_and_quarter, check_two_minute,
                    check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events,
                    check_conversions)
 UNMODELLED_CHECKS = (check_unmodelled,)
