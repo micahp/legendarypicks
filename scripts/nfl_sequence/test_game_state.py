@@ -1,13 +1,15 @@
-"""Unit tests for the E2 first piece (game_state.py): coin-toss ledger, kickoffs, linkage, kick outcomes, validators.
+"""Unit tests for the E2 game (game_state.py, game_stats.py, rules_matrix.py): ledger, kickoffs, scoring, clock, matrix.
 
 Run: python3 -m unittest scripts/nfl_sequence/test_game_state.py
 """
+import copy
 import sys
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import game_state as gs  # noqa: E402
+import rules_matrix as rm  # noqa: E402
 
 
 class StaticPool:
@@ -33,6 +35,11 @@ def certain_kicks(fg_made=True, ep_made=True):
     return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
+def ref(pool, kpool, kicks=None):
+    """An observed Reference with no participant lookups, so every play's participants are null."""
+    return gs.Reference(pool, kpool, kicks or certain_kicks(), {})
+
+
 def spy_simulate(run):
     """Run `run()` with E1's simulate wrapped. Returns (result, calls), where each call holds the start and the id."""
     calls, real = [], gs.e1.simulate
@@ -55,7 +62,7 @@ class Ledger(unittest.TestCase):
             with self.assertRaises(ValueError, msg=choice):
                 gs.CoinTossLedger('A', 'B', choice)
 
-    def test_exception_mode_is_not_implemented_in_this_piece(self):
+    def test_exception_mode_is_not_implemented(self):
         with self.assertRaises(NotImplementedError):
             gs.CoinTossLedger('A', 'B', 'receive', mode=gs.EXCEPTION_MODE)
 
@@ -86,19 +93,18 @@ class Validators(unittest.TestCase):
             gs.validate_half_start(bad)
 
     def test_recorded_kickoffs_must_match_the_ledger(self):
-        record = gs.play_game(3, _empty_e1_pool(), kickoff_pool(), certain_kicks(), winner_choice='receive')
+        record = gs.play_game(3, ref(_empty_e1_pool(), kickoff_pool()), winner_choice='receive')
         record['kickoffs'][0]['kicking_team'] = 'A'
         record['kickoffs'][0]['receiving_team'] = 'B'
         with self.assertRaises(AssertionError):
             gs.validate_game(record)
 
-    def test_the_kick_table_is_required(self):
+    def test_the_reference_is_required(self):
         with self.assertRaises(TypeError):
-            gs.play_game(3, _empty_e1_pool(), kickoff_pool(), winner_choice='receive')
+            gs.play_game(3, winner_choice='receive')
 
     def test_a_touchdown_whose_points_disagree_with_its_try_is_refused(self):
-        record = gs.play_game(1, StaticPool('run', 80, 20), kickoff_pool(), certain_kicks(), winner_choice='receive',
-                              max_drives=1)
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool()), winner_choice='receive', max_drives=1)
         record['drives'][0]['points_scored_on_drive']['points'] = 6  # the try was made, so the points must be 7
         with self.assertRaises(AssertionError):
             gs.validate_game(record)
@@ -136,11 +142,9 @@ class FieldGoalBuckets(unittest.TestCase):
             self.assertEqual(gs.fg_bucket(yl), label, yl)
 
 
-class Linkage(unittest.TestCase):
+class Scoring(unittest.TestCase):
     def test_a_touchdown_takes_its_try_then_the_scoring_team_kicks_off(self):
-        # Q1 opening: B receives (A kicks) in the receive path. The first play scores, so the scorer kicks next.
-        record = gs.play_game(1, StaticPool('run', 80, 20), kickoff_pool(), certain_kicks(), winner_choice='receive',
-                              max_drives=2)
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool()), winner_choice='receive', max_drives=2)
         post = [k for k in record['kickoffs'] if k['kind'] == 'post_score']
         scorer = record['drives'][0]['offense_team']
         self.assertGreaterEqual(len(post), 1)
@@ -150,7 +154,7 @@ class Linkage(unittest.TestCase):
         gs.validate_game(record)
 
     def test_a_missed_extra_point_scores_six(self):
-        record = gs.play_game(1, StaticPool('run', 80, 20), kickoff_pool(), certain_kicks(ep_made=False),
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), certain_kicks(ep_made=False)),
                               winner_choice='receive', max_drives=1)
         scorer = record['drives'][0]['offense_team']
         self.assertEqual(record['points'][scorer], 6)
@@ -159,7 +163,7 @@ class Linkage(unittest.TestCase):
     def test_a_two_point_try_scores_eight_when_it_is_chosen_and_made(self):
         kicks = certain_kicks()
         kicks['two_point'], kicks['extra_point'] = (60, 0), (0, 0)  # every post-touchdown attempt is a two-point try
-        record = gs.play_game(1, StaticPool('run', 80, 20), kickoff_pool(), kicks, winner_choice='receive',
+        record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool(), kicks), winner_choice='receive',
                               max_drives=1)
         scorer = record['drives'][0]['offense_team']
         self.assertEqual(record['points'][scorer], 8)
@@ -167,7 +171,7 @@ class Linkage(unittest.TestCase):
         gs.validate_game(record)
 
     def test_a_made_field_goal_scores_three_and_the_kicker_kicks_off(self):
-        record = gs.play_game(1, StaticPool('field_goal_attempt', 0, 20), kickoff_pool(), certain_kicks(fg_made=True),
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(), certain_kicks(fg_made=True)),
                               winner_choice='receive', max_drives=2)
         kicker = record['drives'][0]['offense_team']
         self.assertTrue(record['drives'][0]['field_goal_made'])
@@ -179,7 +183,7 @@ class Linkage(unittest.TestCase):
     def test_a_missed_field_goal_gives_the_other_team_the_spot_of_the_kick(self):
         # The kickoff lands at the 25 and the FG is kicked from there, so the other team starts at yardline_100 75.
         record, calls = spy_simulate(lambda: gs.play_game(
-            1, StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), certain_kicks(fg_made=False),
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
         self.assertFalse(record['drives'][0]['field_goal_made'])
         self.assertEqual(record['points'], {'A': 0, 'B': 0})
@@ -191,17 +195,65 @@ class Linkage(unittest.TestCase):
     def test_a_thin_published_cell_blocks_the_game_and_is_not_filled(self):
         kicks = certain_kicks()
         kicks['field_goal']['20-29'] = (5, 5)  # 10 attempts, below the floor
-        record = gs.play_game(1, StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks,
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
                               winner_choice='receive')
         self.assertEqual(record['status'], 'blocked')
         self.assertEqual(record['blocker'], 'thin_kick_cell:field_goal:20-29')
         self.assertFalse(record['valid_full_game'])
         gs.validate_game(record)
 
+
+class Clock(unittest.TestCase):
+    def test_a_touchdown_on_the_last_play_of_q1_kicks_off_to_open_q2(self):
+        # Opening kickoff runs 10s, so Q1 has 890s left. The first play runs them out with a touchdown.
+        record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
+                              max_drives=2)
+        post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
+        self.assertEqual((post['quarter'], post['clock_before']), (2, 900), 'the post-score kickoff opens Q2')
+        self.assertEqual(record['boundaries'][0]['kind'], 'change_of_ends')
+        self.assertEqual(record['drives'][1]['quarter_start'], 2)
+        gs.validate_game(record)
+
+    def test_a_score_that_expires_the_half_is_followed_by_the_second_half_kickoff_only(self):
+        # Q1 ends on a score (kickoff opens Q2), then the Q2 drive scores on its last play: no post-score kick at halftime.
+        record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
+                              max_drives=3)
+        kinds = [(k['kind'], k['quarter']) for k in record['kickoffs']]
+        self.assertEqual(kinds[:2], [('half_start', 1), ('post_score', 2)])
+        self.assertEqual(record['drives'][1]['end_quarter'], 2)
+        self.assertEqual(record['drives'][1]['end_clock'], 0)
+        self.assertIn(('half_start', 3), kinds)
+        self.assertNotIn(('post_score', 2), kinds[2:], 'a score that expired Q2 has no post-score kickoff')
+        gs.validate_game(record)
+
+    def test_a_punt_that_expires_q1_keeps_the_receiving_team_and_its_spot(self):
+        record, calls = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('punt', 0, 890, spot=40), kickoff_pool(runoff=10)), winner_choice='receive', max_drives=2))
+        self.assertEqual(record['drives'][0]['terminal'], 'punt')
+        self.assertEqual(record['drives'][0]['end_quarter'], 1)
+        self.assertEqual(calls[1]['start']['quarter'], 2)
+        self.assertEqual(calls[1]['start']['clock'], 900)
+        self.assertEqual(calls[1]['start']['offense'], calls[0]['start']['defense'], 'the punt receiver keeps the ball')
+        self.assertEqual(calls[1]['start']['yl'], 40)
+        self.assertEqual(len([k for k in record['kickoffs'] if k['quarter'] == 2]), 0, 'a change of ends has no kickoff')
+        gs.validate_game(record)
+
+    def test_a_kick_that_runs_the_clock_out_ends_the_quarter_on_the_return(self):
+        # Opening 20s, Q1 TD leaves 10s, and the post-score kickoff runs 20s: the quarter ends during the return.
+        record, calls = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=20)), winner_choice='receive', max_drives=2))
+        post = [k for k in record['kickoffs'] if k['kind'] == 'post_score'][0]
+        self.assertEqual((post['quarter'], post['clock_before'], post['clock_clamped_to_zero']), (1, 10, True))
+        self.assertEqual(calls[1]['start']['quarter'], 2)
+        self.assertEqual(calls[1]['start']['clock'], 900)
+        self.assertEqual(calls[1]['start']['offense'], post['receiving_team'])
+        gs.validate_game(record)
+
+
+class HalfStart(unittest.TestCase):
     def test_halftime_ends_the_first_half_and_the_second_half_kickoff_is_generated(self):
         # Each play runs 450 seconds, so Q1 and then Q2 expire inside the same drive. The drive ends at halftime.
-        record = gs.play_game(1, StaticPool('run', 10, 450), kickoff_pool(), certain_kicks(), winner_choice='receive',
-                              max_drives=3)
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
         self.assertIn('halftime', [d['terminal'] for d in record['drives']])
         half = [k for k in record['kickoffs'] if k['kind'] == 'half_start']
         self.assertEqual(sorted(k['quarter'] for k in half), [1, 3])
@@ -213,10 +265,47 @@ class ProfileId(unittest.TestCase):
     def test_each_drive_passes_an_e2_profile_id_to_e1(self):
         # E1 emits play ids as <simulation_id>:<sequence>. E2 passes its own profile id, one per drive.
         record, calls = spy_simulate(lambda: gs.play_game(
-            3, StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), winner_choice='receive', max_drives=2))
+            3, ref(StaticPool('run', 10, 30), kickoff_pool()), winner_choice='receive', max_drives=2))
         ids = [c['simulation_id'] for c in calls]
         self.assertEqual(ids[0], 'e2-3-drive1')
         self.assertTrue(all(s.startswith('e2-3-drive') for s in ids), ids)
+
+
+class RulesMatrix(unittest.TestCase):
+    def _halftime_record(self):
+        return gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+
+    def test_a_clean_game_has_no_failing_row(self):
+        rows = rm.check(self._halftime_record())
+        self.assertEqual([r for r in rows if r['status'] == 'FAIL'], [])
+
+    def test_the_same_team_kicking_both_half_openers_is_a_failure(self):
+        record = self._halftime_record()
+        q3 = next(k for k in record['kickoffs'] if k['kind'] == 'half_start' and k['quarter'] == 3)
+        q1 = next(k for k in record['kickoffs'] if k['kind'] == 'half_start' and k['quarter'] == 1)
+        q3['kicking_team'] = q1['kicking_team']
+        row = next(r for r in rm.check(record) if r['case'].startswith('Both half-opening'))
+        self.assertEqual(row['status'], 'FAIL')
+
+    def test_a_points_total_that_disagrees_with_the_drives_is_a_failure(self):
+        record = copy.deepcopy(self._halftime_record())
+        record['points']['A'] += 3
+        row = next(r for r in rm.check(record) if r['case'].startswith('Points equal'))
+        self.assertEqual(row['status'], 'FAIL')
+
+    def test_a_clock_that_rises_inside_a_quarter_is_a_failure(self):
+        record = copy.deepcopy(self._halftime_record())
+        play = record['drives'][0]['plays'][0]
+        play['state_after']['clock_seconds'] = play['state_before']['clock_seconds'] + 5
+        play['state_after']['quarter'] = play['state_before']['quarter']
+        row = next(r for r in rm.check(record) if r['case'].startswith('Clock'))
+        self.assertEqual(row['status'], 'FAIL')
+
+    def test_unsupported_rules_are_named_not_passed(self):
+        rows = rm.check(self._halftime_record())
+        for case in ('Timeouts', 'Two-minute warning', 'Penalties', 'Onside kick', 'Player lineups'):
+            row = next(r for r in rows if r['case'].startswith(case))
+            self.assertEqual(row['status'], 'UNSUPPORTED', case)
 
 
 def _empty_e1_pool():
