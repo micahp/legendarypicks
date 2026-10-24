@@ -262,13 +262,24 @@ class HalfStart(unittest.TestCase):
 
 
 class ProfileId(unittest.TestCase):
-    def test_each_drive_passes_an_e2_profile_id_to_e1(self):
-        # E1 emits play ids as <simulation_id>:<sequence>. E2 passes its own profile id, one per drive.
+    def test_the_game_uses_one_simulation_id_and_global_play_sequence(self):
         record, calls = spy_simulate(lambda: gs.play_game(
             3, ref(StaticPool('run', 10, 30), kickoff_pool()), winner_choice='receive', max_drives=2))
         ids = [c['simulation_id'] for c in calls]
-        self.assertEqual(ids[0], 'e2-3-drive1')
-        self.assertTrue(all(s.startswith('e2-3-drive') for s in ids), ids)
+        self.assertEqual(ids, [record['simulation_id']] * len(calls))
+        self.assertEqual(record['simulation_id'], f'e2-{gs.e1.MODEL_VERSION}-seed3')
+        plays = [play for drive in record['drives'] for play in drive['plays']]
+        self.assertEqual([play['sequence'] for play in plays], list(range(1, len(plays) + 1)))
+        self.assertEqual([play['id'] for play in plays],
+                         [f'{record["simulation_id"]}:{sequence}' for sequence in range(1, len(plays) + 1)])
+        self.assertGreater(record['drives'][1]['plays'][0]['sequence'], record['drives'][0]['plays'][-1]['sequence'])
+        gs.validate_game(record)
+
+        broken = copy.deepcopy(record)
+        broken['drives'][1]['plays'][0]['sequence'] = 1
+        broken['drives'][1]['plays'][0]['id'] = f'{record["simulation_id"]}:1'
+        with self.assertRaisesRegex(AssertionError, 'game-wide id'):
+            gs.validate_game(broken)
 
 
 class RulesMatrix(unittest.TestCase):
