@@ -1,3 +1,25 @@
+## v10.0.9
+
+### NCAAF schedule
+
+- The week view is built from stored slates, one day at a time. It no longer uses ESPN's date-range request, which now fails for NCAAF, so weeks no longer show "Unable to load games."
+- Days we have not read yet are listed as not loaded yet, instead of showing as empty days.
+
+### Scores
+
+- A scheduled game's start time sits in the live pill's slot.
+- Tennis and soccer league scores use the Scores page's tinted league panel, and tournament headings have more space above them.
+
+### Tennis
+
+- ATP and WTA 250 singles are tracked, and every athlete on a tracked slate is added to the player spine.
+- A player a bookmaker writes family name first resolves to their existing row instead of a duplicate.
+
+### NBA model
+
+- Unlocked previews are graded apart from the locked record, and late-preview locks come from stored pregame previews.
+- Benchmark intervals are date-clustered.
+
 ## v10.0.8
 
 ### NCAAF model
