@@ -124,6 +124,24 @@ class Linkage(unittest.TestCase):
         gs.validate_game(record)
 
 
+class ProfileId(unittest.TestCase):
+    def test_each_drive_passes_an_e2_profile_id_to_e1(self):
+        # E1 emits play ids as <simulation_id>:<sequence>. E2 passes its own profile id, one per drive.
+        seen, real = [], gs.e1.simulate
+
+        def spy(start, seed, pool, simulation_id):
+            seen.append(simulation_id)
+            return real(start, seed, pool, simulation_id)
+
+        gs.e1.simulate = spy
+        try:
+            gs.play_game(3, StaticPool('run', 10, 30), kickoff_pool(), winner_choice='receive', max_drives=2)
+        finally:
+            gs.e1.simulate = real
+        self.assertEqual(seen[0], 'e2-3-drive1')
+        self.assertTrue(all(s.startswith('e2-3-drive') for s in seen), seen)
+
+
 def _empty_e1_pool():
     return StaticPool('run', 0, 1)
 
