@@ -20,7 +20,8 @@ def main():
     for name in STARTS:
         row = {'drives': 0, 'plays': 0, 'clamped': 0, 'one_clamp': 0, 'any_clamp': 0, 'incomplete': 0}
         for seed in range(1, SEEDS + 1):
-            plays, terminal = e1.simulate(e1.STARTS[name], seed, pool)
+            simulation_id = f'e1-{name}-seed{seed}'
+            plays, terminal = e1.simulate(e1.STARTS[name], seed, pool, simulation_id)
             if plays is None:
                 row['incomplete'] += 1
                 continue

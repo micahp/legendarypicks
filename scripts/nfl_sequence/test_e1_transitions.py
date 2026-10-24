@@ -43,7 +43,7 @@ class QuarterTransitions(unittest.TestCase):
     def test_q1_expiry_continues_the_series_without_a_kickoff(self):
         # The first run outlasts the 100 seconds left, so Q1 expires on it. The drive goes on in Q2 and ends on a punt.
         pool = FakePool(('run', 4, 300, None), ('punt', 0, 10, 22))
-        plays, terminal = e1.simulate(start(1, 100), 1, pool)
+        plays, terminal = e1.simulate(start(1, 100), 1, pool, 'e1-test-seed1')
         self.assertEqual(terminal, 'punt')
         self.assertEqual(len(plays), 2)
         first = plays[0]
@@ -61,7 +61,7 @@ class QuarterTransitions(unittest.TestCase):
         e1.check_drive(plays, terminal)
 
     def test_q2_expiry_is_halftime_and_not_a_turnover_on_downs(self):
-        plays, terminal = e1.simulate(start(2, 100), 1, FakePool(('run', 4, 300, None)))
+        plays, terminal = e1.simulate(start(2, 100), 1, FakePool(('run', 4, 300, None)), 'e1-test-seed1')
         self.assertEqual(terminal, 'halftime')
         last = plays[-1]['state_after']
         self.assertEqual(last['end_of_drive'], 'halftime')
@@ -75,7 +75,7 @@ class QuarterTransitions(unittest.TestCase):
         e1.check_drive(plays, terminal)
 
     def test_q4_expiry_is_regulation_end(self):
-        plays, terminal = e1.simulate(start(4, 100), 1, FakePool(('run', 4, 300, None)))
+        plays, terminal = e1.simulate(start(4, 100), 1, FakePool(('run', 4, 300, None)), 'e1-test-seed1')
         self.assertEqual(terminal, 'end_of_regulation')
         self.assertEqual(plays[-1]['state_after']['quarter'], 4)
         e1.check_drive(plays, terminal)
@@ -83,7 +83,7 @@ class QuarterTransitions(unittest.TestCase):
     def test_no_drive_terminates_at_q1_or_q3_expiry(self):
         for q in (1, 3):
             pool = FakePool(('run', 4, 300, None), ('punt', 0, 10, 22))
-            plays, terminal = e1.simulate(start(q, 100), 1, pool)
+            plays, terminal = e1.simulate(start(q, 100), 1, pool, 'e1-test-seed1')
             self.assertEqual(terminal, 'punt')
             self.assertTrue(plays[0]['outcome']['quarter_change'])
             self.assertNotIn(terminal, ('end_of_period', 'halftime', 'end_of_regulation'))
@@ -141,6 +141,18 @@ class Vocabulary(unittest.TestCase):
                 self.assertNotIn('end_of_drive', play['state_after'], path.name)
         self.assertEqual(used, set(reducer.TERMINALS))
         self.assertNotIn('end_of_period', used)
+
+    def test_generated_and_pinned_play_ids_follow_the_simulation_id_contract(self):
+        plays, _ = e1.simulate(start(1, 100), 1, FakePool(('run', 4, 10, None)), 'e1-contract-test')
+        self.assertTrue(plays)
+        self.assertEqual([p['id'] for p in plays], [f'e1-contract-test:{i}' for i in range(1, len(plays) + 1)])
+        for path in FIXTURE_DIR.glob('*.json'):
+            record = json.loads(path.read_text())
+            self.assertEqual(
+                [p['id'] for p in record['plays']],
+                [f"{record['simulation_id']}:{i}" for i in range(1, len(record['plays']) + 1)],
+                path.name,
+            )
 
 
 if __name__ == '__main__':
