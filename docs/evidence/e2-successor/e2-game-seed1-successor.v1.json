@@ -6,8 +6,8 @@
  "scheduled_kickoff_utc": null,
  "as_of_utc": null,
  "snapshot_hash": null,
- "model_version": "e1-empirical-v0",
- "rules_version": "nfl-2026-regular-season",
+ "model_version": "c131fda249dcf9af642dd6ba267905e88803a74a",
+ "rules_version": "5e60ed7ddeb81e3164091b816a00e4cae5e33c76163e92dc26c4547c49c63628",
  "seed": 1,
  "teams": {
   "home": "A",

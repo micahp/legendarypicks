@@ -15,8 +15,6 @@
   "sharedV1Violations": [
    "mode is not pregame_full_game",
    "missing stable game_id",
-   "missing model_version",
-   "missing rules_version",
    "missing or invalid top-level as_of_utc before scheduled_kickoff_utc",
    "missing real home/away team identities",
    "missing eligible roster snapshot",
