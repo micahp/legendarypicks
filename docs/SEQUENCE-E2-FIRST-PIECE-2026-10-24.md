@@ -73,6 +73,13 @@ summed from those plays. A touchdown credits no more yards than the distance to 
 observed yards describe a different spot. Team lines (plays, rushing, passing, turnovers, punts, field goals, possession time,
 points) come from the same plays.
 
+### Game-wide play identity
+
+Every generated game has one `simulation_id` (`e2-<model-version>-seed<seed>`). Play `sequence` starts at 1 and increases
+across drive boundaries; every play ID is `<simulation_id>:<sequence>`. The game validator checks this namespace and
+contiguous ordering. E1's per-drive sequences are normalized after drive validation, and this relabelling does not affect its
+sampled outcomes or random draws.
+
 ## Rules matrix
 
 `rules_matrix.check(record)` recomputes each row of the section-7 matrix from the drives, plays, kickoffs and boundaries. It
@@ -106,7 +113,7 @@ after Q3, and halftime does not flip ends. The Q3 orientation uses the second-ha
   labels, scoring (a touchdown then its try then the scorer's kickoff, a missed extra point, a two-point try, a made and a missed
   field goal, a thin cell that blocks), the clock (a touchdown on the last play of Q1, a score that expires Q2 with no
   post-score kickoff, a punt that expires Q1 with the receiver keeping the ball, a kick that runs the clock out), halftime, the
-  reference being required, the E2 profile id passed to E1, and the matrix (a clean game has no FAIL, and mutated records do
+  reference being required, the game-wide play ID and sequence contract, and the matrix (a clean game has no FAIL, and mutated records do
   fail: a repeated kicker, a points total that disagrees with the drives, and a clock that rises inside a quarter).
 - `python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py` (inherited from E1): **11 of 11 pass**.
 - Both files together: **40 tests OK**.

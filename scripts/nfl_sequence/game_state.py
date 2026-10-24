@@ -229,6 +229,8 @@ class _Game:
 
     def __init__(self, seed, ref, ledger, rng):
         self.seed = seed
+        self.simulation_id = f'e2-{e1.MODEL_VERSION}-seed{seed}'
+        self.next_play_sequence = 1
         self.ref = ref
         self.ledger = ledger
         self.rng = rng
@@ -310,13 +312,15 @@ class _Game:
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
-        simulation_id = f'e2-{self.seed}-drive{len(self.drives) + 1}'
-        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, simulation_id)
+        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id)
         if plays is None:
             self.block(terminal)
             return
         e1.check_drive(plays, terminal)
         for play in plays:
+            play['sequence'] = self.next_play_sequence
+            play['id'] = f'{self.simulation_id}:{self.next_play_sequence}'
+            self.next_play_sequence += 1
             play['participants'] = self.ref.participants_for(play)
         last = plays[-1]['state_after']
         drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
@@ -385,7 +389,7 @@ class _Game:
         complete = status == 'complete_regulation'
         points = {'A': self.points['A'], 'B': self.points['B']}
         return {
-            'mode': 'legal_game_state_first_piece', 'seed': self.seed,
+            'mode': 'legal_game_state_first_piece', 'seed': self.seed, 'simulation_id': self.simulation_id,
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
             'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
@@ -410,6 +414,16 @@ def play_game(seed, ref, winner_choice=None, max_drives=80):
 def validate_game(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed."""
     checks = []
+    simulation_id = record.get('simulation_id')
+    if not isinstance(simulation_id, str) or not simulation_id:
+        raise AssertionError('game record requires one non-empty simulation_id')
+    expected_sequence = 1
+    for drive in record['drives']:
+        for play in drive['plays']:
+            if play.get('sequence') != expected_sequence or play.get('id') != f'{simulation_id}:{expected_sequence}':
+                raise AssertionError(f'play {expected_sequence} must use game-wide id {simulation_id}:{expected_sequence}')
+            expected_sequence += 1
+    checks.append('game-wide play IDs use one simulation_id and contiguous sequence')
     ledger = record['ledger']
     expected = CoinTossLedger(ledger['winner'], ledger['loser'], ledger['winner_choice'], ledger['policy_mode'])
     expected_half = expected.half_start_kickoffs()
