@@ -8,6 +8,18 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## ACTIVE TOP PRIORITY — 2026-10-24: finish an end-to-end NFL game simulator
+
+**Required:** [Shared End-to-End Football Simulator Delivery Plan](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md). It supersedes older *next-task* tracking/physics experiments but preserves their reports and all safety/verification/identity rules below.
+
+**Deliverable:** A reproducible **hypothetical full game** using existing LP statistical play/drive/game generation as the outcome authority and Gridiron Physics' Three.js viewer as playback, with legal score/downs/distance/clock/possession and reconciled team + player statistics. Then test observed NFL play/drive/game distributions and eventual future forecast skill. **Statistical-script playback is not physically resolved football**; a physics/hybrid v2 is a separate experimental mechanism, not required to finish the first game.
+
+**LP sequence agent is critical-path owner.** First inventory existing statistical sequence branches, run commands, reducer tests and the mirrored proposed `GRIDIRON-CONTRACT-v1.md` before coding. E0 = one generated play and immutable record consumed by Gridiron; E1 = one complete legal drive; E2 = complete game with all required rules or disclosed fallbacks, deterministic seed and score/player-stat reconciliation; E3 = distribution and later holdout forecasting tests. Own play/game state, event legality and player statistics. Do not make Gridiron silently pick the outcomes in v1 or change the mirrored v1 contract in only one repo.
+
+**LP tracking/behavior agents are supporting, not blockers.** Preserve the completed 2022 Big Data Bowl tackle audit and 40-play conditional movement study. Continue a fair from-snap study only where it resolves a specific observed-play limitation in E3; do not delay E0–E2 for more centimeter-level motion or synthetic contact physics. Madden ratings and 3D tackle calibration remain research-only.
+
+**Cross-agent handoff:** Deliver exact pinned play/game payload, source and code commits, pregame eligibility, reproducible run command, reducer assertions, clearly labeled sampled/physical/fallback mechanism and a versioned example to the Gridiron viewer owner. Publish one shared integration manifest and clear per-gate failures. Do not push, merge, restart services or modify production picks/grades/DB absent explicit approval.
+
 ## Current NFL simulation direction (2026-10-23; supersedes older next-task priorities)
 
 The active cross-repository brief is [Gridiron Physics Football-first Agent Directive](https://github.com/micahp/gridiron-physics/blob/main/docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md). Read it before working on NFL simulation, tracking, movement, game-state modeling or Madden ratings. Its **priorities** supersede older “next experiment” advice; existing `AGENTS.md` safety, verification, identity, ops and commit rules still apply.
