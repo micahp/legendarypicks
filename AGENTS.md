@@ -8,6 +8,12 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## MOVEMENT RESEARCH STOP RULE — 2026-10-24
+
+Read [the coordinator's movement-policy materiality decision](https://github.com/micahp/gridiron-physics/blob/main/docs/research/MOVEMENT-POLICY-MATERIALITY-DECISION-2026-10-24.md). Agent-reported snap-anchored results show the legacy controller beating same-history constant acceleration by only **3.72 mm at 1 s**, despite statistically passing the prior threshold-free prereg rule. **Do not build a more complex movement model or spend weeks 6–9 holdout on this controller now.** Keep the original prereg, per-play artifacts, and this **post-development** materiality policy distinct: a future policy must deliver ≥0.05 m AND ≥5% paired game-weighted 1-second MAE lift plus a game-clustered interval below zero, without meaningful coherence/performance regression.
+
+LP tracking owner should reconcile **9,456 local manifest rows, 9,388 included snap plays, and 9,289 scored plays** by exact ID/eligibility *before* any further comparison, and preserve weeks 6–9 for a frozen confirmation at an appropriate time. Incoming research deliverables were reported **uncommitted/unpushed** and must not be described as verified GitHub results. LP sequence/reducer remains the **critical path E0–E2** for a complete generated game. Historical 2022 tracking / rights / provenance caveats still apply.
+
 ## ACTIVE TOP PRIORITY — 2026-10-24: finish an end-to-end NFL game simulator
 
 **Required:** [Shared End-to-End Football Simulator Delivery Plan](https://github.com/micahp/gridiron-physics/blob/main/docs/END-TO-END-FOOTBALL-SIMULATOR-DELIVERY-PLAN-2026-10-24.md). It supersedes older *next-task* tracking/physics experiments but preserves their reports and all safety/verification/identity rules below.
