@@ -51,4 +51,15 @@ describe('week-based football schedule hook', () => {
     expect(result.current.selectedKey).toBe('2:1')
     expect(result.current.games[0].league).toBe('NCAAF')
   })
+
+  it('keeps the days the week has not read yet, apart from its games', async () => {
+    getWeek.mockResolvedValueOnce({
+      games: [{ game_id: '401856766', date: '2026-08-29T16:00Z' }],
+      unread_days: ['2026-09-06'],
+    })
+    const { result } = renderHook(() => useFootballScheduleWeeks('ncaaf', true, null))
+
+    await waitFor(() => expect(result.current.games).toHaveLength(1))
+    expect(result.current.unreadDays).toEqual(['2026-09-06'])
+  })
 })

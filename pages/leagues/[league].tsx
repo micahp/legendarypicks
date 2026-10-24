@@ -257,6 +257,7 @@ export default function LeagueHubPage() {
             games={footballSchedule.games}
             gamesLoading={footballSchedule.gamesLoading}
             gamesError={footballSchedule.gamesError}
+            unreadDays={footballSchedule.unreadDays}
             catalogLoading={footballSchedule.catalogLoading}
             catalogError={footballSchedule.catalogError}
             onSelectWeek={route.selectScheduleWeek}

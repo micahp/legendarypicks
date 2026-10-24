@@ -15,6 +15,7 @@ interface NflScheduleState {
   games: Game[]
   gamesError: string | null
   gamesLoading: boolean
+  unreadDays: string[]
   selectedKey: string
   weekEntry: NflWeekEntry | null
   phaseLabel: string
@@ -34,6 +35,7 @@ export function useFootballScheduleWeeks(
   const [games, setGames] = useState<Game[]>([])
   const [gamesError, setGamesError] = useState<string | null>(null)
   const [gamesLoading, setGamesLoading] = useState(false)
+  const [unreadDays, setUnreadDays] = useState<string[]>([])
 
   // Resolve target week: explicit > catalog default
   const selectedKey = useMemo(() => {
@@ -105,6 +107,7 @@ export function useFootballScheduleWeeks(
     }
     let ignore = false
     setGames([])
+    setUnreadDays([])
     setGamesLoading(true)
     setGamesError(null)
     SportsService.getFootballScheduleWeek(league, catalog.season, weekEntry.season_type, weekEntry.week).then(data => {
@@ -114,6 +117,7 @@ export function useFootballScheduleWeeks(
           ...normalizeGame(g, league),
           league: league.toUpperCase(),
         })))
+        setUnreadDays(Array.isArray(data.unread_days) ? data.unread_days : [])
       } else {
         setGamesError('Unable to load games.')
       }
@@ -146,6 +150,7 @@ export function useFootballScheduleWeeks(
     games,
     gamesError,
     gamesLoading,
+    unreadDays,
     selectedKey,
     weekEntry,
     phaseLabel,
