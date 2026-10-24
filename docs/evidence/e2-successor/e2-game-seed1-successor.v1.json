@@ -6,8 +6,8 @@
  "scheduled_kickoff_utc": null,
  "as_of_utc": null,
  "snapshot_hash": null,
- "model_version": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
- "rules_version": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167",
+ "model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+ "rules_version": "5ea4eecd2fa94e24c4efa857c35f2aa20724e37b85e5adb49b69a84de875fb7a",
  "seed": 1,
  "teams": {
   "home": "A",
@@ -9270,8 +9270,8 @@
   "blocker": null,
   "complete_game": false,
   "unsupported_rules": [
+   "clock_start_stop",
    "timeouts",
-   "two_minute_warning",
    "penalties",
    "onside_kicks",
    "overtime",

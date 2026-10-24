@@ -106,6 +106,15 @@ class Validators(unittest.TestCase):
         with self.assertRaises(TypeError):
             gs.play_game(3, winner_choice='receive')
 
+    def test_research_mode_cannot_claim_a_valid_full_pregame_game(self):
+        record = gs.play_game(3, ref(_empty_e1_pool(), kickoff_pool()), winner_choice='receive', max_drives=1)
+        self.assertEqual(record['mode'], 'legal_game_state_first_piece')
+        self.assertFalse(record['valid_full_game'])
+        record['valid_full_game'] = True
+        record['unsupported_rules'] = []
+        with self.assertRaisesRegex(AssertionError, 'pregame_full_game'):
+            gs.validate_game(record)
+
     def test_a_touchdown_whose_points_disagree_with_its_try_is_refused(self):
         record = gs.play_game(1, ref(StaticPool('run', 80, 20), kickoff_pool()), winner_choice='receive', max_drives=1)
         record['drives'][0]['points_scored_on_drive']['points'] = 6  # the try was made, so the points must be 7
@@ -263,16 +272,17 @@ class Clock(unittest.TestCase):
         self.assertEqual(record['drives'][1]['quarter_start'], 2)
         gs.validate_game(record)
 
-    def test_a_score_at_the_two_minute_stop_is_followed_by_a_post_score_kickoff_in_q2(self):
-        # Q1 ends on a score (the kickoff opens Q2); the Q2 drive then scores on its last play at the two-minute stop. The stop
-        # holds the clock at 2:00, so the half does not end on that score: the post-score kickoff starts from 2:00.
-        record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
-                              max_drives=3)
-        kinds = [(k['kind'], k['quarter']) for k in record['kickoffs']]
-        self.assertEqual(kinds[:2], [('half_start', 1), ('post_score', 2)])
-        self.assertEqual(record['drives'][1]['end_clock'], 120)
-        self.assertEqual([w['quarter'] for w in record['two_minute_warnings']], [2])
-        gs.validate_game(record)
+    def test_a_score_after_the_two_minute_warning_keeps_the_actual_clock_and_kickoff_expiry(self):
+        # The Q2 touchdown down starts at 15:00 and ends at 0:20. The warning follows the down at 0:20; it does not rewind the
+        # clock to 2:00, and the sampled post-score kickoff starts from 0:20.
+        g = gs._Game(1, ref(StaticPool('run', 80, 880), kickoff_pool(runoff=10)),
+                     gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
+        g.quarter, g.clock, g.offense, g.defense, g.yl, g.down, g.togo = 2, 900, 'A', 'B', 50, 1, 10
+        g._drive_body()
+        self.assertEqual(g.drives[0]['end_clock'], 20)
+        self.assertEqual(g.drives[0]['plays'][-1]['outcome']['two_minute_warning'], True)
+        self.assertEqual(g.events[0]['clock_before'], 20)
+        self.assertFalse(g.events[0]['clock_expired_during_kickoff'])
 
     def test_a_punt_that_expires_q1_keeps_the_receiving_team_and_its_spot(self):
         record, calls = spy_simulate(lambda: gs.play_game(
@@ -286,7 +296,21 @@ class Clock(unittest.TestCase):
         self.assertEqual(calls[1]['start']['yl'], 40)
         self.assertEqual(len([k for k in record['kickoffs'] if k['quarter'] == 2]), 0,
                          'a change of ends has no kickoff')
+        rows = {r['case']: r for r in rm.check(record)}
+        self.assertEqual(rows['Q1->Q2 change of ends']['status'], 'PASS')
         gs.validate_game(record)
+
+    def test_a_q1_turnover_on_downs_at_the_boundary_is_not_misclassified_as_q2(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 223), kickoff_pool(runoff=10)), winner_choice='receive',
+                              max_drives=2)
+        drive = record['drives'][0]
+        self.assertEqual(drive['terminal'], 'turnover_on_downs')
+        self.assertEqual(drive['end_quarter'], 2)
+        self.assertEqual(drive['plays'][-1]['state_before']['quarter'], 1)
+        rows = {r['case']: r for r in rm.check(record)}
+        self.assertEqual(rows['Q1->Q2 change of ends']['status'], 'PASS')
+        first_drive_only = dict(record, drives=record['drives'][:1])
+        self.assertEqual(rm._turnover_on_downs_q2(first_drive_only)[0], 'NOT_APPLICABLE')
 
     def test_a_kick_that_runs_the_clock_out_ends_the_quarter_on_the_return(self):
         # Opening 20s, Q1 TD leaves 10s, and the post-score kickoff runs 20s: the quarter ends during the return.
@@ -365,9 +389,13 @@ class RulesMatrix(unittest.TestCase):
 
     def test_unsupported_rules_are_named_not_passed(self):
         rows = rm.check(self._halftime_record())
-        for case in ('Timeouts', 'Two-minute warning', 'Penalties', 'Onside kick', 'Player lineups'):
+        for case in ('Clock running/stopped', 'Timeouts', 'Penalties', 'Onside kick', 'Player lineups'):
             row = next(r for r in rows if r['case'].startswith(case))
             self.assertEqual(row['status'], 'UNSUPPORTED', case)
+        warning = next(r for r in rows if r['case'] == 'Two-minute warning crossing marker')
+        self.assertIn(warning['status'], ('PASS', 'NOT_APPLICABLE'))
+        clock_state = next(r for r in rows if r['case'] == 'Clock running/stopped and restart state')
+        self.assertEqual(clock_state['status'], 'UNSUPPORTED')
 
 
 class TossSymmetry(unittest.TestCase):
@@ -563,8 +591,7 @@ class TimeoutCharges(unittest.TestCase):
 
 
 class UnmodelledTransitions(unittest.TestCase):
-    """Penalties and the two-minute warning are not modelled. A sampled penalty blocks the game; a two-minute crossing is listed in
-    the record, so the record cannot be read as a complete game without it."""
+    """Penalties remain guarded; a two-minute crossing marker is checked, while clock lifecycle remains unsupported."""
 
     def test_a_sampled_penalty_blocks_the_game_and_is_not_completed(self):
         pool = StaticPool('run', 10, 30)
@@ -576,14 +603,26 @@ class UnmodelledTransitions(unittest.TestCase):
         self.assertFalse(record['complete_regulation'])
         self.assertFalse(record['valid_full_game'])
 
-    def test_a_two_minute_crossing_is_listed_in_the_record(self):
-        # The crossing is modelled, not guarded: the stop is recorded and the clock sits at 2:00 after it.
+    def test_a_two_minute_crossing_is_recorded_without_rewinding_the_clock(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
         stops = [t for d in record['drives'] for p in d['plays'] for t in [p] if p['outcome'].get('two_minute_warning')]
         self.assertTrue(stops, 'a 100-second runoff crosses 2:00 in a late half')
-        self.assertTrue(all(p['state_after']['clock_seconds'] == 120 for p in stops))
+        self.assertTrue(all(0 < p['state_after']['clock_seconds'] < 120 for p in stops))
         self.assertTrue(all(p['state_before']['quarter'] in (2, 4) for p in stops))
+        self.assertTrue(any(t['kind'] == 'two_minute_warning' for t in record['unmodelled_transitions']))
+        self.assertIn('clock_start_stop', record['unsupported_rules'])
+        self.assertIn('clock_start_stop', record['guards'])
+        self.assertFalse(record['valid_full_game'])
+        self.assertFalse(record['complete_game'])
         gs.validate_game(record)
+
+    def test_a_missing_two_minute_guard_event_is_refused(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
+        self.assertTrue(any(t['kind'] == 'two_minute_warning' for t in record['unmodelled_transitions']))
+        record['unmodelled_transitions'] = [t for t in record['unmodelled_transitions']
+                                            if t['kind'] != 'two_minute_warning']
+        with self.assertRaisesRegex(AssertionError, 'unmodelled transition list disagrees'):
+            gs.validate_game(record)
 
 class FiveSecondKick(unittest.TestCase):
     """A made field goal takes at most KICK_DURATION_SECONDS of clock. The observed runoff beyond that is not charged to the
@@ -853,35 +892,47 @@ class KickoffClock(unittest.TestCase):
 
 
 class TwoMinuteWarning(unittest.TestCase):
-    """The two-minute warning (Rule 3 Section 41; Rule 4 Section 4, item (h)): the first dead ball at or below 2:00 in the second or
-    fourth quarter stops the clock at 2:00, once per half, and the half resets the warning."""
+    """Rule 3 Section 41: the warning follows the last pre-2:00 down at its actual dead-ball clock value."""
 
     def test_a_play_ending_at_2_01_does_not_stop_the_clock(self):
         self.assertEqual(gs.two_minute_stop(2, 125, 121, set()), (121, False))
 
-    def test_a_play_ending_at_2_00_stops_the_clock_at_2_00(self):
+    def test_a_play_ending_at_2_00_warns_at_2_00(self):
         self.assertEqual(gs.two_minute_stop(2, 121, 120, set()), (120, True))
 
-    def test_a_crossing_stops_at_2_00_and_the_charge_ends_there(self):
-        self.assertEqual(gs.two_minute_stop(4, 125, 110, set()), (120, True))
+    def test_a_crossing_keeps_the_actual_post_down_clock(self):
+        self.assertEqual(gs.two_minute_stop(4, 125, 110, set()), (110, True))
+
+    def test_a_period_expiry_does_not_trigger_a_warning(self):
+        self.assertEqual(gs.two_minute_stop(2, 125, 0, set()), (0, False))
 
     def test_a_second_dead_ball_in_the_same_half_does_not_stop_again(self):
         self.assertEqual(gs.two_minute_stop(2, 118, 100, {2}), (100, False))
 
-    def test_the_warning_resets_at_halftime_so_the_fourth_quarter_stops_too(self):
-        self.assertEqual(gs.two_minute_stop(4, 125, 110, {2}), (120, True), 'the fourth quarter is a new half')
+    def test_the_warning_resets_at_halftime_so_the_fourth_quarter_warns_too(self):
+        self.assertEqual(gs.two_minute_stop(4, 125, 110, {2}), (110, True), 'the fourth quarter is a new half')
+
+    def test_a_kickoff_warning_keeps_the_observed_post_kick_clock(self):
+        g = gs._Game(7, ref(StaticPool('run', 5, 10), kickoff_pool(runoff=15)),
+                     gs.CoinTossLedger('A', 'B', 'receive'), random.Random(7))
+        g.quarter, g.clock = 2, 125
+        g._kick('post_score', 'A', 'B')
+        event = g.events[0]
+        self.assertEqual(event['clock_after'], 110)
+        self.assertTrue(event['two_minute_warning'])
+        self.assertEqual(g.clock, 110)
 
     def test_quarters_one_and_three_never_stop_for_the_warning(self):
         self.assertEqual(gs.two_minute_stop(1, 125, 110, set()), (110, False))
         self.assertEqual(gs.two_minute_stop(3, 125, 110, set()), (110, False))
 
-    def test_a_crossing_play_in_q2_is_stopped_and_charged_only_to_2_00(self):
+    def test_a_crossing_play_in_q2_keeps_its_observed_runoff(self):
         g = gs._Game(7, ref(StaticPool('run', 5, 10), kickoff_pool()), gs.CoinTossLedger('A', 'B', 'receive'), random.Random(7))
         g.quarter, g.clock, g.offense, g.defense, g.yl, g.down, g.togo = 2, 125, 'A', 'B', 50, 1, 10
         g._drive_body()
         stop = next(p for d in g.drives for p in d['plays'] if p['outcome'].get('two_minute_warning'))
-        self.assertEqual((stop['state_before']['clock_seconds'], stop['state_after']['clock_seconds']), (125, 120))
-        self.assertEqual((stop['outcome']['clock_runoff_seconds'], stop['outcome']['observed_runoff_seconds']), (5, 10))
+        self.assertEqual((stop['state_before']['clock_seconds'], stop['state_after']['clock_seconds']), (125, 115))
+        self.assertEqual(stop['outcome']['clock_runoff_seconds'], 10)
         self.assertEqual(g.warned_quarters, {2})
 
     def test_a_play_ending_at_2_01_in_q2_is_not_stopped(self):
@@ -892,7 +943,7 @@ class TwoMinuteWarning(unittest.TestCase):
         self.assertEqual(first['state_after']['clock_seconds'], 121, 'the first play ends at 2:01')
         self.assertFalse(first['outcome'].get('two_minute_warning'), 'a dead ball at 2:01 is not the warning')
         stop = next(p for d in g.drives for p in d['plays'] if p['outcome'].get('two_minute_warning'))
-        self.assertEqual(stop['state_after']['clock_seconds'], 120, 'the warning comes at the first dead ball at or below 2:00')
+        self.assertEqual(stop['state_after']['clock_seconds'], 117, 'the warning keeps the post-down clock value')
 
 
 

@@ -33,6 +33,16 @@ def check_blocked(record):
     return findings
 
 
+def check_clock_state_guard(record):
+    """The record must disclose that clock running/stopped and restart substates are not represented."""
+    findings = []
+    if 'clock_start_stop' not in record.get('unsupported_rules', []):
+        findings.append('clock start/stop lifecycle is not listed as an unsupported rule')
+    if 'clock_start_stop' not in record.get('guards', {}):
+        findings.append('clock start/stop lifecycle has no named guard')
+    return findings
+
+
 def check_completion(record):
     if not record.get('complete_regulation'):
         return []
@@ -185,7 +195,10 @@ def check_events(record):
     for d in record['drives']:
         for i, p in enumerate(d['plays']):
             ev = p['event_type']
-            if ev == 'punt' and d['terminal'] != 'punt':
+            # A punt ends its drive, or it runs the clock out in Q2 or Q4: then the half or the game ends the drive, on that punt.
+            clock_ends = (d['terminal'] in LATE_CLOCK_TERMINALS and i == len(d['plays']) - 1
+                          and p['state_after']['clock_seconds'] == 0)
+            if ev == 'punt' and d['terminal'] != 'punt' and not clock_ends:
                 findings.append(f'drive {d["index"]}: a punt play in a drive that ends {d["terminal"]}')
             if ev == 'field_goal_attempt' and (i != len(d['plays']) - 1 or d['terminal'] != 'field_goal_attempt'):
                 findings.append(f'drive {d["index"]}: a field goal attempt that is not the last play of the drive')
@@ -229,11 +242,8 @@ def check_conversions(record):
 
 
 def check_unmodelled(record):
-    """Transitions the engine does not model, derived from the drives and plays, not from the record's own list: a penalty on a
-    play; a clock that crosses the two-minute mark in the second or fourth quarter (the warning stops the clock there); a
-    timeout stoppage whose time is inside the observed runoff; and a missed field goal awarded at the spot of the kick, without
-    the Rule 11-4-2 receivers' touch exception. A record with any of these is not a legal complete game, however it is labelled.
-    """
+    """Derive unmodelled events from the record, without trusting its transition list: penalties, sampled timeout stoppages,
+    missed-field-goal touch exceptions and two-minute crossings whose explicit clock-stop/restart lifecycle is unsupported."""
     findings = []
     for d in record['drives']:
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
@@ -243,31 +253,78 @@ def check_unmodelled(record):
                 findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
             if p['participants'].get('timeout'):
                 findings.append(f'timeout stoppage not modelled: drive {d["index"]} play {p["sequence"]}')
+            before, after = p['state_before'], p['state_after']
+            if (before['quarter'] in LATE_QUARTERS and after['quarter'] == before['quarter']
+                    and before['clock_seconds'] > TWO_MINUTE_MARK >= after['clock_seconds'] > 0):
+                findings.append(f'two-minute warning clock lifecycle not modelled: drive {d["index"]} play {p["sequence"]}')
+    for i, kick in enumerate(record['kickoffs']):
+        clock_after = kick.get('clock_after', max(0, kick['clock_before'] - kick['runoff_seconds']))
+        expired = kick.get('clock_expired_during_kickoff', kick['runoff_seconds'] >= kick['clock_before'])
+        if (kick['quarter'] in LATE_QUARTERS and not expired
+                and kick['clock_before'] > TWO_MINUTE_MARK >= clock_after > 0):
+            findings.append(f'two-minute warning clock lifecycle not modelled: kickoff {i}')
     return findings
 
 
 def check_two_minute(record):
-    """Rule 3 Section 41 and Rule 4 Section 4 item (h): a play that passes from above 2:00 to at or below it, in the second or fourth
-    quarter, stops the clock at 2:00 and is recorded as the warning; each late quarter has at most one such stop per half. Derived
-    from the plays here, not from the record's own warning list."""
-    findings, warned = [], set()
+    """Independently derive each warning from the down's actual end clock, including kickoffs.
+
+    Rule 3 Section 41 places the automatic timeout at the end of the down that crosses 2:00. The clock keeps its observed value
+    at the dead ball; a play that expires the period does not trigger another warning.
+    """
+    findings = []
+    expected_plays, expected_kicks = set(), set()
     for d in record['drives']:
         for p in d['plays']:
             b, a = p['state_before'], p['state_after']
-            if b['quarter'] in LATE_QUARTERS and b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds']:
-                if a['clock_seconds'] != TWO_MINUTE_MARK:
-                    findings.append(f'two-minute stop not applied: drive {d["index"]} play {p["sequence"]} ends at '
-                                    f'{a["clock_seconds"]} seconds in Q{b["quarter"]}, not 120')
-                if not p['outcome'].get('two_minute_warning'):
-                    findings.append(f'two-minute stop not recorded: drive {d["index"]} play {p["sequence"]}')
-                if b['quarter'] in warned:
-                    findings.append(f'second two-minute stop in the same half: drive {d["index"]} play {p["sequence"]}')
-                warned.add(b['quarter'])
+            if (b['quarter'] in LATE_QUARTERS and a['quarter'] == b['quarter'] and
+                    b['clock_seconds'] > TWO_MINUTE_MARK >= a['clock_seconds'] > 0):
+                expected_plays.add((d['index'], p['sequence'], a['clock_seconds']))
+    for i, k in enumerate(record['kickoffs']):
+        clock_after = k.get('clock_after', max(0, k['clock_before'] - k['runoff_seconds']))
+        expired = k.get('clock_expired_during_kickoff', k['runoff_seconds'] >= k['clock_before'])
+        if (k['quarter'] in LATE_QUARTERS and not expired and
+                k['clock_before'] > TWO_MINUTE_MARK >= clock_after > 0):
+            expected_kicks.add((i, clock_after))
+
+    marked_plays = {(d['index'], p['sequence'], p['state_after']['clock_seconds'])
+                    for d in record['drives'] for p in d['plays'] if p['outcome'].get('two_minute_warning')}
+    marked_kicks = {(i, k.get('clock_after', max(0, k['clock_before'] - k['runoff_seconds'])))
+                    for i, k in enumerate(record['kickoffs'])
+                    if k.get('two_minute_warning')}
+    if marked_plays != expected_plays:
+        findings.append(f'play warning markers disagree with derived crossings: {len(marked_plays)} marked, '
+                        f'{len(expected_plays)} expected')
+    if marked_kicks != expected_kicks:
+        findings.append(f'kickoff warning markers disagree with derived crossings: {len(marked_kicks)} marked, '
+                        f'{len(expected_kicks)} expected')
+    for q in LATE_QUARTERS:
+        count = sum(1 for d in record['drives'] for p in d['plays']
+                    if p['outcome'].get('two_minute_warning') and p['state_before']['quarter'] == q)
+        count += sum(1 for k in record['kickoffs'] if k.get('two_minute_warning') and k['quarter'] == q)
+        if count > 1:
+            findings.append(f'more than one two-minute warning in Q{q}: {count}')
     return findings
 
 
-MODELLED_CHECKS = (check_blocked, check_completion, check_points, check_drives, check_clock_and_quarter, check_two_minute,
-                   check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events,
+POSSESSION_TERMINALS = ('turnover', 'turnover_on_downs', 'punt')
+LATE_CLOCK_TERMINALS = ('halftime', 'end_of_regulation')
+
+
+def check_half_end(record):
+    """A possession change on the play that runs out the clock in Q2 or Q4 ends the half, so no drive ends on it. Derived from
+    each drive's last play, not from the terminal alone."""
+    findings = []
+    for d in record['drives']:
+        last = d['plays'][-1]['state_after']
+        if d['terminal'] in POSSESSION_TERMINALS and last['quarter'] in LATE_QUARTERS and last['clock_seconds'] == 0:
+            findings.append(f'drive {d["index"]} ends by {d["terminal"]} at the end of Q{last["quarter"]}: the half or the game '
+                            f'ends the drive')
+    return findings
+
+
+MODELLED_CHECKS = (check_blocked, check_clock_state_guard, check_completion, check_points, check_drives, check_clock_and_quarter, check_two_minute,
+                   check_half_end, check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events,
                    check_conversions)
 UNMODELLED_CHECKS = (check_unmodelled,)
 CHECKS = MODELLED_CHECKS + UNMODELLED_CHECKS

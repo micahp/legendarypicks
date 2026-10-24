@@ -1,6 +1,6 @@
 """Tests for the independent legality checker. The successor seed-1 record must pass the modelled checks. Each negative fixture (a
-mutated copy of it, or the frozen record) must fail the named check. A record with an unmodelled penalty or two-minute-warning
-transition must not pass as a legal complete game. Nothing here imports the engine.
+mutated copy of it, or the frozen record) must fail the named check. A record with an unmodelled penalty or missing clock
+start/stop guard must not pass as a legal complete game. Nothing here imports the engine.
 
 Run: python3 -m unittest scripts/nfl_sequence/evidence_e2/test_legality.py
 """
@@ -54,7 +54,7 @@ UNMODELLED = {'check_unmodelled'}
 class Positive(unittest.TestCase):
     def test_the_successor_seed_one_record_is_legal_under_the_modelled_rules(self):
         self.assertTrue(lc.legal_modelled(seed1()))
-        self.assertEqual(failed_checks(seed1()) - UNMODELLED, set())
+        self.assertEqual(failed_checks(seed1()) - UNMODELLED, set())  # the guarded transitions are the only failures
 
     def test_a_blocked_record_that_is_not_complete_is_legal_under_the_modelled_rules(self):
         record = seed1()
@@ -65,15 +65,41 @@ class Positive(unittest.TestCase):
 
 
 class ScopeGuard(unittest.TestCase):
-    """The two-minute warning is not modelled. A complete game that crosses 2:00 in the second or fourth quarter is legal under
-    the modelled rules and is not a legal complete game."""
+    """The warning marker is checked at its actual clock value; the full clock lifecycle remains guarded."""
 
-    def test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing(self):
+    def test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_its_guarded_transitions(self):
         record = seed1()
         self.assertTrue(record['regulation_end_reached'])
         self.assertFalse(record['complete_regulation'], 'a guarded game is not a complete regulation game')
-        self.assertTrue(record['unmodelled_transitions'], 'seed one crosses 2:00 in a late half')
+        kinds = {t['kind'] for t in record['unmodelled_transitions']}
+        self.assertIn('two_minute_warning', kinds, 'the warning marker exists but its clock lifecycle is unmodelled')
+        self.assertTrue(kinds, 'seed one carries a guarded transition')
         self.assertFalse(lc.legal_complete_game(record))
+        self.assertTrue(any(x.startswith('two-minute warning clock lifecycle not modelled')
+                            for x in lc.check_unmodelled(record)))
+
+    def test_the_successor_seed_one_records_two_minute_stops_at_the_post_down_clock(self):
+        record = seed1()
+        self.assertTrue(record['two_minute_warnings'])
+        self.assertTrue(all(0 < w['clock_seconds'] <= 120 for w in record['two_minute_warnings']))
+        self.assertEqual(lc.check_two_minute(record), [])
+
+    def test_clock_start_stop_lifecycle_remains_explicitly_unsupported(self):
+        record = seed1()
+        self.assertIn('clock_start_stop', record['unsupported_rules'])
+        self.assertIn('clock_start_stop', record['guards'])
+        self.assertEqual(lc.check_clock_state_guard(record), [])
+        record['unsupported_rules'].remove('clock_start_stop')
+        record['guards'].pop('clock_start_stop')
+        self.assertTrue(lc.check_clock_state_guard(record))
+
+    def test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker(self):
+        record = {'drives': [], 'kickoffs': [{'quarter': 4, 'clock_before': 125, 'clock_after': 110,
+                                              'runoff_seconds': 15, 'clock_expired_during_kickoff': False,
+                                              'two_minute_warning': True}]}
+        self.assertEqual(lc.check_two_minute(record), [])
+        record['kickoffs'][0]['two_minute_warning'] = False
+        self.assertTrue(lc.check_two_minute(record))
 
 
 class Fails(unittest.TestCase):
@@ -166,6 +192,14 @@ class NegativeFixtures(Fails):
                 return
         self.fail('seed one has no touchdown drive to mutate')
 
+    def test_a_turnover_that_ends_the_half_cannot_pass_as_a_drive_end(self):
+        # Negative fixture: a halftime drive relabelled as a turnover, as the old engine recorded it at a Q2 expiry.
+        record = seed1()
+        drive = next(d for d in record['drives'] if d['terminal'] == 'halftime')
+        drive['terminal'] = 'turnover'
+        drive['plays'][-1]['state_after']['end_of_drive'] = 'turnover'
+        self.assertIn('check_half_end', failed_checks(record))
+        self.assertTrue(any('ends the drive' in f for f in lc.check_half_end(record)))
 
 class TryFieldNegatives(Fails):
     """The publisher result field on every extra-point and two-point try."""
@@ -192,7 +226,7 @@ class TryFieldNegatives(Fails):
 
 
 class UnmodelledNegatives(Fails):
-    """A penalty transition, or a two-minute warning the record does not model, cannot pass as a legal complete game."""
+    """A penalty or a missing/duplicated two-minute-warning event cannot pass the independent checks."""
 
     def test_a_penalty_transition_cannot_pass_as_a_legal_complete_game(self):
         record = seed1()
@@ -200,11 +234,33 @@ class UnmodelledNegatives(Fails):
         self.assertIn('check_unmodelled', failed_checks(record))
         self.assertFalse(lc.legal_complete_game(record))
 
-    def test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list(self):
+    def test_a_crossing_without_a_warning_marker_cannot_pass_as_legal(self):
+        # Negative fixture: the play has a legal post-down clock, but the automatic warning event is missing.
         record = seed1()
-        record.pop('unmodelled_transitions', None)  # negative fixture: the record no longer lists its transitions
-        self.assertIn('check_unmodelled', failed_checks(record))
-        self.assertFalse(lc.legal_complete_game(record))
+        for d in record['drives']:
+            for p in d['plays']:
+                if (p['state_before']['quarter'] in (2, 4) and p['state_after']['quarter'] == p['state_before']['quarter']
+                        and p['state_before']['clock_seconds'] > 120 >= p['state_after']['clock_seconds'] > 0):
+                    p['outcome']['two_minute_warning'] = False
+                    self.assertIn('check_two_minute', failed_checks(record))
+                    self.assertFalse(lc.legal_modelled(record))
+                    return
+        self.fail('seed one has no two-minute crossing to mutate')
+
+    def test_a_second_stop_in_the_same_half_cannot_pass_as_legal(self):
+        # Negative fixture: a late-half crossing is copied into a second play of the same quarter, so the half has two stops.
+        record = seed1()
+        for d in record['drives']:
+            for p in d['plays']:
+                if (p['state_before']['quarter'] in (2, 4) and p['state_after']['quarter'] == p['state_before']['quarter']
+                        and p['state_before']['clock_seconds'] > 120 >= p['state_after']['clock_seconds'] > 0):
+                    twin = copy.deepcopy(p)
+                    twin['state_before']['clock_seconds'] = 121
+                    twin['state_after']['clock_seconds'] = 119
+                    d['plays'].insert(d['plays'].index(p) + 1, twin)
+                    self.assertIn('check_two_minute', failed_checks(record))
+                    return
+        self.fail('seed one has no two-minute crossing to copy')
 
 class UnmodelledKindNegatives(Fails):
     """The timeout stoppage and the missed-field-goal return are derived from the plays. Neither can pass as a legal complete game."""
@@ -230,14 +286,14 @@ class UnmodelledKindNegatives(Fails):
 
 
 class FixtureSplit(unittest.TestCase):
-    """The counts of these tests, pinned so the evidence can be checked against this file: two positive fixtures and eighteen
-    negative fixtures (twenty tests in total, with this count test itself excluded)."""
+    """The counts of these tests, pinned so the evidence can be checked against this file: two positive fixtures and twenty-five
+    negative fixtures (twenty-seven tests in total, with this count test itself excluded)."""
 
-    def test_two_positive_and_eighteen_negative_fixtures(self):
+    def test_two_positive_and_twenty_three_negative_fixtures(self):
         positive = [m for m in vars(Positive) if m.startswith('test_')]
         negative = [m for cls in (NegativeFixtures, TryFieldNegatives, UnmodelledNegatives, UnmodelledKindNegatives, ScopeGuard)
                     for m in vars(cls) if m.startswith('test_')]
-        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 20, 22))
+        self.assertEqual((len(positive), len(negative), len(positive) + len(negative)), (2, 25, 27))
 
 
 if __name__ == '__main__':

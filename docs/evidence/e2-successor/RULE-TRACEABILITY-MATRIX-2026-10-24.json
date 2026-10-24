@@ -2,9 +2,9 @@
  "checks": {
   "problems": [],
   "resolved": {
-   "citations": 35,
-   "tests": 66,
-   "transitions": 23
+   "citations": 38,
+   "tests": 81,
+   "transitions": 25
   }
  },
  "kick_distance": {
@@ -42,7 +42,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      216
+      230
      ],
      "snippet": "only receive or defer"
     }
@@ -79,7 +79,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      222
+      236
      ],
      "snippet": "self.first_chooser = loser if self.deferred else winner"
     }
@@ -115,7 +115,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      375
+      390
      ],
      "snippet": "Halftime: the first half is over"
     }
@@ -155,14 +155,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      521
+      577
      ],
      "snippet": "a quarter change inside a drive: the drive goes on"
     },
     {
      "file": "e1_drive.py",
      "lines": [
-      61
+      62
      ],
      "snippet": "FLIP_AFTER = (1, 3)"
     }
@@ -184,7 +184,8 @@
   },
   {
    "adversarial": [
-    "test_game_state.Clock.test_a_score_that_expires_the_half_is_followed_by_the_second_half_kickoff_only"
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_terminal_at_the_end_of_q2_is_refused_by_the_drive_check",
+    "test_legality.NegativeFixtures.test_a_turnover_that_ends_the_half_cannot_pass_as_a_drive_end"
    ],
    "citations": [
     [
@@ -202,22 +203,24 @@
     {
      "file": "game_state.py",
      "lines": [
-      174
+      188
      ],
      "snippet": "return 'halftime'"
     },
     {
      "file": "game_state.py",
      "lines": [
-      169
+      183
      ],
      "snippet": "def quarter_end_kind"
     }
    ],
    "lp_reference": "Rules file section 3",
-   "note": "The rulebook text for \"the first-half drive does not cross halftime\" is not read.",
+   "note": "A possession change on the play that runs out the Q2 or Q4 clock ends the half, not the drive: the next snap is the half-start kickoff, which Rule 4 Section 2 Article 1 prints as \"kick off ... for the start of each half\". The half-end clock case is checked by check_half_end in the legality checker.",
    "positive": [
     "test_e1_transitions.QuarterTransitions.test_q2_expiry_is_halftime_and_not_a_turnover_on_downs",
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_at_the_q2_expiry_ends_the_half_and_not_the_drive",
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_at_the_q1_expiry_ends_the_drive_in_the_new_quarter",
     "test_game_state.HalfStart.test_halftime_ends_the_first_half_and_the_second_half_kickoff_is_generated"
    ],
    "rule": "The second-quarter expiry is the halftime: the first half ends, with no turnover on downs.",
@@ -245,7 +248,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      175
+      189
      ],
      "snippet": "return 'regulation_end'"
     }
@@ -281,9 +284,9 @@
      "file": "game_state.py",
      "lines": [
       25,
-      75,
-      582,
-      668
+      76,
+      641,
+      741
      ],
      "snippet": "overtime_not_modelled"
     }
@@ -323,14 +326,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      326
+      340
      ],
      "snippet": "def _try_after_touchdown"
     },
     {
      "file": "game_state.py",
      "lines": [
-      320
+      334
      ],
      "snippet": "def try_record"
     }
@@ -367,7 +370,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      531
+      587
      ],
      "snippet": "elif terminal == 'field_goal_attempt':"
     }
@@ -403,7 +406,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      45
+      47
      ],
      "snippet": "SAFETY_POINTS = 2"
     }
@@ -449,29 +452,29 @@
     {
      "file": "game_state.py",
      "lines": [
-      159
+      173
      ],
      "snippet": "Review note, Rule 11-4-2"
     },
     {
      "file": "rules_matrix.py",
      "lines": [
-      305,
-      417
+      360,
+      472
      ],
      "snippet": "Rule 11-4-2"
     },
     {
      "file": "game_state.py",
      "lines": [
-      156
+      170
      ],
      "snippet": "def missed_field_goal_spot"
     },
     {
      "file": "game_state.py",
      "lines": [
-      81
+      82
      ],
      "snippet": "'missed_field_goal_return': {'guard'"
     }
@@ -513,14 +516,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      52
+      54
      ],
      "snippet": "HOLDER_OFFSET = 7"
     },
     {
      "file": "game_state.py",
      "lines": [
-      148
+      162
      ],
      "snippet": "def kick_spot_yardline_100"
     }
@@ -560,38 +563,39 @@
    ],
    "gaps": [],
    "id": "R13",
+   "implementation": "implemented",
    "located": [
     {
      "file": "game_state.py",
      "lines": [
-      449
+      472
      ],
      "snippet": "def _charge_made_kick"
     },
     {
      "file": "game_state.py",
      "lines": [
-      56
+      58
      ],
      "snippet": "KICK_DURATION_SECONDS = 5"
     },
     {
      "file": "rules_matrix.py",
      "lines": [
-      418
+      473
      ],
      "snippet": "Field goal made: the kick takes at most five seconds of clock"
     }
    ],
    "lp_reference": "Rules file section 7 (clock row)",
-   "note": "The rule's cap also covers unsuccessful kicks that do not land in the field of play; the engine applies the cap to made kicks only. A missed kick keeps its observed runoff, pinned by the adversarial test.",
+   "note": "Implemented for a made field goal. The unsuccessful-kick clause is row R24.",
    "positive": [
     "test_game_state.FiveSecondKick.test_a_made_kick_with_a_long_observed_runoff_is_charged_five_seconds",
     "test_game_state.FiveSecondKick.test_the_kickoff_after_a_made_kick_starts_from_the_charged_clock"
    ],
    "rule": "A made field goal runs off at most five seconds of game clock.",
    "rulebook": {
-    "article": "11-4-2 Field Goal Attempt Notes (5)",
+    "article": "11-4-2 Field Goal Attempt Notes (5), clause for a successful field goal",
     "quote": "\"For a successful field goal ... the maximum amount of time that can run off the game clock is five seconds.\"",
     "status": "verified"
    },
@@ -600,6 +604,43 @@
   },
   {
    "adversarial": [
+    "test_game_state.FiveSecondKick.test_a_missed_kick_keeps_its_observed_runoff"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def _charge_made_kick"
+    ]
+   ],
+   "gaps": [],
+   "id": "R24",
+   "implementation": "unsupported",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      472
+     ],
+     "snippet": "def _charge_made_kick"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (clock row)",
+   "note": "UNSUPPORTED: the engine has no field-of-play landing for a missed kick, so the cap is not applied to misses. The test pins the uncapped runoff.",
+   "positive": [
+    "test_game_state.FiveSecondKick.test_a_missed_kick_keeps_its_observed_runoff"
+   ],
+   "rule": "Five-second runoff, unsuccessful kick that does not land in the field of play (the second clause of note 5).",
+   "rulebook": {
+    "article": "11-4-2 Field Goal Attempt Notes (5), clause for an unsuccessful attempt not landing in the field of play",
+    "quote": "\"or for an unsuccessful attempt that does not land in the field of play, the maximum amount of time ... is five seconds.\"",
+    "status": "verified"
+   },
+   "status": "unsupported",
+   "transition": "game_state:_Game._charge_made_kick"
+  },
+  {
+   "adversarial": [
+    "test_game_state.TimeoutStop.test_a_corrupted_pre_call_count_is_refused",
     "test_game_state.Guards.test_a_record_without_the_timeout_guard_is_rejected",
     "test_game_state.TimeoutTransition.test_the_count_is_written_once_in_state_after_and_only_for_the_charged_side"
    ],
@@ -619,14 +660,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      469
+      518
      ],
      "snippet": "def _apply_timeouts"
     },
     {
      "file": "game_state.py",
      "lines": [
-      63
+      68
      ],
      "snippet": "no timeout is drawn"
     }
@@ -634,6 +675,8 @@
    "lp_reference": "Rules file section 7 (timeouts row)",
    "note": "Timeouts are charged from flags only; no timeout is drawn from the table, so the count is observed, not sampled.",
    "positive": [
+    "test_game_state.TimeoutStop.test_the_stop_is_explicit_with_its_counts_and_its_clock",
+    "test_game_state.TimeoutStop.test_the_flagged_play_carries_its_pre_call_count_and_one_fewer_on_the_charged_side",
     "test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage",
     "test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime",
     "test_game_state.TimeoutTransition.test_a_timeout_changes_the_counts_and_nothing_on_the_clock"
@@ -649,14 +692,21 @@
   },
   {
    "adversarial": [
-    "test_game_state.UnmodelledKinds.test_a_guarded_game_described_as_complete_is_refused",
-    "test_legality.UnmodelledNegatives.test_the_two_minute_crossing_is_derived_from_the_plays_not_the_records_own_list",
-    "test_legality.ScopeGuard.test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_the_two_minute_crossing"
+    "test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_01_does_not_stop_the_clock",
+    "test_game_state.TwoMinuteWarning.test_a_period_expiry_does_not_trigger_a_warning",
+    "test_game_state.TwoMinuteWarning.test_a_second_dead_ball_in_the_same_half_does_not_stop_again",
+    "test_legality.UnmodelledNegatives.test_a_crossing_without_a_warning_marker_cannot_pass_as_legal",
+    "test_legality.ScopeGuard.test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker",
+    "test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal"
    ],
    "citations": [
     [
      "game_state.py",
-     "no two-minute stoppage is modelled"
+     "def two_minute_stop"
+    ],
+    [
+     "game_state.py",
+     "def _two_minute_stop_plays"
     ]
    ],
    "gaps": [],
@@ -665,25 +715,34 @@
     {
      "file": "game_state.py",
      "lines": [
-      67
+      120
      ],
-     "snippet": "no two-minute stoppage is modelled"
+     "snippet": "def two_minute_stop"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      492
+     ],
+     "snippet": "def _two_minute_stop_plays"
     }
    ],
    "lp_reference": "Rules file section 5 (two_minute_warning substate)",
-   "note": "Not modelled: the warning stoppage. The sampled runoff is not checked for it.",
+   "note": "The crossing marker and actual clock value are modelled and independently checked. The explicit running/stopped state and restart transitions required by the LP rules contract are unsupported under clock_start_stop; this is not full clock-rule coverage.",
    "positive": [
-    "test_game_state.UnmodelledTransitions.test_a_two_minute_crossing_is_listed_in_the_record",
-    "test_game_state.Guards.test_every_unmodelled_rule_carries_a_guard_and_is_never_pass"
+    "test_game_state.TwoMinuteWarning.test_a_crossing_keeps_the_actual_post_down_clock",
+    "test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_00_warns_at_2_00",
+    "test_game_state.TwoMinuteWarning.test_the_warning_resets_at_halftime_so_the_fourth_quarter_warns_too",
+    "test_game_state.TwoMinuteWarning.test_a_kickoff_warning_keeps_the_observed_post_kick_clock"
    ],
-   "rule": "The two-minute warning: the referee signals it, and the clock stops, at 2:00 in the second and fourth quarters.",
+   "rule": "Automatic timeout at the conclusion of the last down legally snapped or kicked before 2:00 in Q2 or Q4; keep the actual clock value at the end of that down.",
    "rulebook": {
-    "article": "4-4 (item h); definition Rule 3, Section 41",
-    "quote": "\"when the Referee signals the two-minute warning for a half\"",
+    "article": "Rule 3 Section 41; Rule 4 Section 3 Article 2; Rule 4 Section 4(h)",
+    "quote": "\"at the conclusion of the last down for which the ball is legally snapped or kicked prior to two minutes remaining\"",
     "status": "verified"
    },
-   "status": "guard",
-   "transition": "game_state:unmodelled_transitions"
+   "status": "partial",
+   "transition": "game_state:two_minute_stop"
   },
   {
    "adversarial": [
@@ -701,8 +760,8 @@
     {
      "file": "game_state.py",
      "lines": [
-      502,
-      666
+      557,
+      739
      ],
      "snippet": "penalty_not_modelled"
     }
@@ -737,7 +796,7 @@
     {
      "file": "e1_drive.py",
      "lines": [
-      73
+      74
      ],
      "snippet": "def classify"
     }
@@ -772,7 +831,7 @@
     {
      "file": "e1_drive.py",
      "lines": [
-      73
+      74
      ],
      "snippet": "def classify"
     }
@@ -811,16 +870,16 @@
     {
      "file": "game_state.py",
      "lines": [
-      91,
-      97,
-      101
+      92,
+      98,
+      102
      ],
      "snippet": "PRACTICE_SOURCE"
     },
     {
      "file": "game_state.py",
      "lines": [
-      90
+      91
      ],
      "snippet": "PENDING_2026 = 'pending_2026_rulebook'"
     }
@@ -855,7 +914,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      246
+      260
      ],
      "snippet": "def attacks_x100"
     }
@@ -890,7 +949,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      57
+      59
      ],
      "snippet": "MIN_KICK_N = 30"
     }
@@ -930,15 +989,15 @@
     {
      "file": "game_state.py",
      "lines": [
-      709,
-      712
+      782,
+      785
      ],
      "snippet": "is never described as a complete game"
     },
     {
      "file": "game_state.py",
      "lines": [
-      717
+      790
      ],
      "snippet": "a tied regulation game is not a complete game"
     }
@@ -959,6 +1018,42 @@
   },
   {
    "adversarial": [
+    "test_game_state.KickoffClock.test_a_negative_clock_is_refused_so_no_clamp_can_hide_one"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "after_clock = 0 if expires else clock_be"
+    ]
+   ],
+   "gaps": [],
+   "id": "R25",
+   "implementation": "deviation",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      408
+     ],
+     "snippet": "after_clock = 0 if expires else clock_be"
+    }
+   ],
+   "lp_reference": "Rules file section 7",
+   "note": "A documented deviation: no five-second cap is applied to kickoffs, because the printed cap is for field goals only. Recorded, not fitted to the data.",
+   "positive": [
+    "test_game_state.KickoffClock.test_a_kickoff_that_fits_is_charged_its_runoff_in_full"
+   ],
+   "rule": "Kickoff clock: the clock starts after a free kick only when the ball is legally touched, so the kickoff runoff is uncapped and the expiry is explicit.",
+   "rulebook": {
+    "article": "Rule 4 Section 3 Article 1 (Free kick down)",
+    "quote": "\"The game clock operator shall start the game clock (time in) after a free kick when the ball is legally touched in the field of play.\"",
+    "status": "verified"
+   },
+   "status": "deviation",
+   "transition": "game_state:_Game._kick"
+  },
+  {
+   "adversarial": [
     "test_game_state.UnmodelledKinds.test_an_onside_kickoff_kind_is_refused_because_it_is_not_modelled"
    ],
    "citations": [
@@ -973,7 +1068,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      73
+      74
      ],
      "snippet": "'onside_kicks': {'guard'"
     }

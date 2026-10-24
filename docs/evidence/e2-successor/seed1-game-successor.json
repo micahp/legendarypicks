@@ -58,6 +58,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 41
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -166,6 +173,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 38,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 1,
+       "yl": 32
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -275,6 +289,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 43,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 27
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -384,6 +405,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 27,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 10,
+       "yl": 27
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -493,6 +521,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 2,
+       "yl": 19
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -602,6 +637,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 1,
+       "yl": 18
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -711,6 +753,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 2,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 82
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -833,6 +882,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 21,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 72
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -941,6 +997,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 1,
+       "yl": 63
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1049,6 +1112,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 29,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1158,6 +1228,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 1,
+       "yl": 41
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1266,6 +1343,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 37
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1375,6 +1459,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 46,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 8,
+       "yl": 35
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1484,6 +1575,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 8,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 3,
+       "yl": 30
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1593,6 +1691,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1702,6 +1807,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 33,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 10,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1811,6 +1923,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 10,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -1920,6 +2039,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 4,
+       "offense": "B",
+       "togo": 10,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2029,6 +2155,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": true,
       "final_play_yardline_100": null,
       "kick_duration_seconds": 5,
@@ -2160,6 +2293,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 47,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 5,
+       "yl": 65
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2268,6 +2408,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 5,
+       "yl": 65
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2376,6 +2523,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 29,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 55
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2484,6 +2638,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 44
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2592,6 +2753,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 4,
+       "yl": 38
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2701,6 +2869,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 30
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2810,6 +2985,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 34,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 6,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -2919,6 +3101,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 6,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3028,6 +3217,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 38,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 17
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3137,6 +3333,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 40,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 11,
+       "yl": 18
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3246,6 +3449,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 1,
+       "yl": 8
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3355,6 +3565,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 1,
+       "yl": 8
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3464,6 +3681,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 5,
+       "yl": 5
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3573,6 +3797,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 3,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 5,
+       "yl": 5
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3682,6 +3913,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": null,
+       "offense": "A",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3813,6 +4051,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 40,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 63
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -3921,6 +4166,13 @@
       "clock_clamped_to_zero": true,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 10,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4051,6 +4303,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 36,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 1,
+       "yl": 61
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4159,6 +4418,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 43,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 43
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4268,6 +4534,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 44,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 21
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4377,6 +4650,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 5,
+       "yl": 5
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4486,6 +4766,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 5,
+       "yl": 5
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4595,6 +4882,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": null,
+       "offense": "A",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4726,6 +5020,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 18,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 37
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4834,6 +5135,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 33,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 21
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -4943,6 +5251,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 8,
+       "yl": 8
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5052,6 +5367,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 1,
+       "yl": 1
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5161,6 +5483,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 40,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5292,6 +5621,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 64
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5400,6 +5736,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 3,
+       "yl": 57
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5508,6 +5851,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 3,
+       "yl": 57
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5617,6 +5967,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 29,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 1,
+       "yl": 55
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5726,6 +6083,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 54
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5741,6 +6105,20 @@
        "play_id": 804
       },
       "sampled_touchdown_flag": false,
+      "timeout_stop": {
+       "applied": true,
+       "called_by": "B",
+       "clock_at_stop": 393,
+       "counts_after": {
+        "away": 2,
+        "home": 3
+       },
+       "counts_before": {
+        "away": 3,
+        "home": 3
+       },
+       "restart": "the next snap, from clock_at_stop"
+      },
       "touchdown": false,
       "turnover": false,
       "yards_gained": 1
@@ -5836,6 +6214,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 10,
+       "yl": 54
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -5944,6 +6329,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 22,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 1,
+       "yl": 45
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6053,6 +6445,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 43,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 43
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6162,6 +6561,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 1,
+       "yl": 34
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6271,6 +6677,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 24,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 29
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6380,6 +6793,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 23,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 12
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6489,6 +6909,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 28,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 5,
+       "yl": 7
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6598,6 +7025,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 80
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6721,6 +7155,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 10,
+       "yl": 80
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6829,6 +7270,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 51,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 10,
+       "yl": 80
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -6937,6 +7385,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 10,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 4,
+       "offense": "B",
+       "togo": 10,
+       "yl": 80
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7045,6 +7500,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 12,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 54
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7166,6 +7628,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 3,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 2,
+       "yl": 46
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7274,6 +7743,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 34
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7291,6 +7767,7 @@
       "sampled_touchdown_flag": false,
       "touchdown": false,
       "turnover": false,
+      "two_minute_warning": true,
       "yards_gained": 12
      },
      "participants": {
@@ -7383,6 +7860,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 36,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 8,
+       "yl": 32
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7492,6 +7976,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 4,
+       "yl": 28
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7601,6 +8092,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 4,
+       "yl": 28
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -7710,6 +8208,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": null,
+       "offense": "A",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": true,
       "final_play_yardline_100": null,
       "kick_duration_seconds": 4,
@@ -7841,6 +8346,13 @@
       "clock_clamped_to_zero": true,
       "clock_only_terminal": true,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 8,
+       "yl": 73
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": 73,
       "passer_id": null,
@@ -7964,6 +8476,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 1,
+       "yl": 61
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8072,6 +8591,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 56
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8181,6 +8707,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 8,
+       "yl": 54
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8289,6 +8822,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 40,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 4,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8398,6 +8938,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 39
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8506,6 +9053,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 34,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 5,
+       "yl": 34
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8615,6 +9169,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": true,
       "final_play_yardline_100": null,
       "kick_duration_seconds": 5,
@@ -8745,6 +9306,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 4,
+       "yl": 75
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8853,6 +9421,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 33,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 61
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -8961,6 +9536,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 1,
+       "yl": 52
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9069,6 +9651,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 23,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9178,6 +9767,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 12,
+       "yl": 52
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9286,6 +9882,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 38
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9394,6 +9997,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 10,
+       "yl": 38
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9503,6 +10113,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 10,
+       "yl": 38
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9612,6 +10229,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 2,
+       "yl": 30
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9721,6 +10345,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 28
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9831,6 +10462,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 29,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 8,
+       "yl": 26
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -9940,6 +10578,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 47,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 18
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10049,6 +10694,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 36,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 2,
+       "yl": 10
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10158,6 +10810,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 6,
+       "yl": 6
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10266,6 +10925,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 6,
+       "yl": 6
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10375,6 +11041,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 7,
+       "yl": 7
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10484,6 +11157,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": null,
+       "offense": "A",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10615,6 +11295,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 54
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10723,6 +11410,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 32,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 6,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10831,6 +11525,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 29,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 6,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -10939,6 +11640,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 4,
+       "offense": "B",
+       "togo": 6,
+       "yl": 50
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11047,6 +11755,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 86
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11170,6 +11885,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 10,
+       "yl": 86
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11278,6 +12000,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 45,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 71
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11386,6 +12115,13 @@
       "clock_clamped_to_zero": true,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 32,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 2,
+       "yl": 63
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11494,6 +12230,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 47,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 56
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11603,6 +12346,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 32,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 9,
+       "yl": 55
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11711,6 +12461,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 2,
+       "yl": 48
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11820,6 +12577,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 31,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 2,
+       "yl": 48
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -11929,6 +12693,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 27,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 44
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12039,6 +12810,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 35,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 4,
+       "yl": 38
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12148,6 +12926,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 43,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 10,
+       "yl": 44
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12257,6 +13042,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 10,
+       "yl": 44
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12366,6 +13158,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 6,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 80
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12491,6 +13290,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 67
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12599,6 +13405,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 51
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12707,6 +13520,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 25,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 2,
+       "yl": 43
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12815,6 +13635,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 44,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 34
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -12924,6 +13751,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 10,
+       "yl": 34
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13033,6 +13867,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 11,
+       "yl": 35
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13142,6 +13983,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 24
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13251,6 +14099,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 5,
+       "yl": 19
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13360,6 +14215,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 1,
+       "yl": 15
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13469,6 +14331,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 5,
+       "yl": 5
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13578,6 +14447,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 38,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 2,
+       "yl": 2
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13687,6 +14563,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 25,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 6,
+       "yl": 6
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13796,6 +14679,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 3,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 4,
+       "offense": "B",
+       "togo": 6,
+       "yl": 6
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -13905,6 +14795,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 0,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": true,
       "final_play_yardline_100": null,
       "kick_duration_seconds": 0,
@@ -14033,6 +14930,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 43,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 9,
+       "yl": 69
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14141,6 +15045,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 3,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 3,
+       "offense": "A",
+       "togo": 9,
+       "yl": 69
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14250,6 +15161,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 4,
+       "offense": "A",
+       "togo": 9,
+       "yl": 69
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14358,6 +15276,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 72
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14482,6 +15407,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 5,
+       "yl": 67
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14590,6 +15522,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 35,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 58
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14698,6 +15637,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 37
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14806,6 +15752,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 38,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 1,
+       "offense": "B",
+       "togo": 10,
+       "yl": 22
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -14915,6 +15868,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 37,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 2,
+       "offense": "B",
+       "togo": 9,
+       "yl": 21
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -15024,6 +15984,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 7,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 3,
+       "offense": "B",
+       "togo": 9,
+       "yl": 21
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -15041,6 +16008,7 @@
       "sampled_touchdown_flag": false,
       "touchdown": false,
       "turnover": false,
+      "two_minute_warning": true,
       "yards_gained": 0
      },
      "participants": {
@@ -15133,6 +16101,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 4,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": 4,
+       "offense": "B",
+       "togo": 9,
+       "yl": 21
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -15242,6 +16217,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 5,
+      "dead_ball_position": {
+       "defense": "A",
+       "down": null,
+       "offense": "B",
+       "togo": null,
+       "yl": null
+      },
       "field_goal_attempt": true,
       "final_play_yardline_100": null,
       "kick_duration_seconds": 5,
@@ -15373,6 +16355,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 41,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 1,
+       "yl": 71
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -15481,6 +16470,13 @@
       "clock_clamped_to_zero": false,
       "clock_only_terminal": false,
       "clock_runoff_seconds": 39,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 1,
+       "offense": "A",
+       "togo": 10,
+       "yl": 66
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": null,
       "passer_id": null,
@@ -15590,6 +16586,13 @@
       "clock_clamped_to_zero": true,
       "clock_only_terminal": true,
       "clock_runoff_seconds": 42,
+      "dead_ball_position": {
+       "defense": "B",
+       "down": 2,
+       "offense": "A",
+       "togo": 10,
+       "yl": 66
+      },
       "field_goal_attempt": false,
       "final_play_yardline_100": 66,
       "passer_id": null,
@@ -15685,10 +16688,15 @@
  "gaps": [
   "field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw is a labelled sample, not the result of a real game",
   "blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick",
-  "timeouts, the two-minute warning, penalties, onside kicks, overtime and the exception coin-toss paths are not modelled, and each is listed in unsupported_rules",
+  "timeouts, penalties, onside kicks, overtime and the exception coin-toss paths are not modelled, and each is listed in unsupported_rules",
+  "two-minute warning crossings are marked at the actual post-down clock, but clock running/stopped state and explicit clock restart transitions remain unsupported and are listed in unsupported_rules",
   "participants are the players on the observed plays each simulated play was sampled from: they are labelled as sampled, and they are not this game's roster, lineup or substitutions"
  ],
  "guards": {
+  "clock_start_stop": {
+   "enforced_by": "unsupported_rules; valid_full_game is false",
+   "guard": "numeric runoff and two-minute crossing markers are recorded, but the rules-required clock running/stopped state and explicit restart transitions are not modelled"
+  },
   "exception_coin_toss": {
    "enforced_by": "CoinTossLedger",
    "guard": "explicit_exception_scenario raises NotImplementedError in CoinTossLedger"
@@ -15716,15 +16724,12 @@
   "timeouts": {
    "enforced_by": "unsupported_rules; valid_full_game is false",
    "guard": "no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook"
-  },
-  "two_minute_warning": {
-   "enforced_by": "unsupported_rules; valid_full_game is false",
-   "guard": "no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not checked for a warning stoppage: the warning is not identifiable in the play-by-play, so whether observed runoffs carry it is unverified"
   }
  },
  "kickoffs": [
   {
    "after_drive": 0,
+   "clock_after": 900,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15740,10 +16745,12 @@
     "game_id": "2023_13_SF_PHI",
     "play_id": 1949
    },
-   "spot_yardline_100": 75
+   "spot_yardline_100": 75,
+   "two_minute_warning": false
   },
   {
    "after_drive": 2,
+   "clock_after": 430,
    "clock_before": 430,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15759,10 +16766,12 @@
     "game_id": "2024_18_NO_TB",
     "play_id": 1534
    },
-   "spot_yardline_100": 70
+   "spot_yardline_100": 70,
+   "two_minute_warning": false
   },
   {
    "after_drive": 3,
+   "clock_after": 48,
    "clock_before": 48,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15778,10 +16787,12 @@
     "game_id": "2023_08_CLE_SEA",
     "play_id": 731
    },
-   "spot_yardline_100": 75
+   "spot_yardline_100": 75,
+   "two_minute_warning": false
   },
   {
    "after_drive": 4,
+   "clock_after": 900,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15797,10 +16808,12 @@
     "game_id": "2024_11_KC_BUF",
     "play_id": 3874
    },
-   "spot_yardline_100": 70
+   "spot_yardline_100": 70,
+   "two_minute_warning": false
   },
   {
    "after_drive": 5,
+   "clock_after": 683,
    "clock_before": 683,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15816,10 +16829,12 @@
     "game_id": "2022_01_GB_MIN",
     "play_id": 1659
    },
-   "spot_yardline_100": 75
+   "spot_yardline_100": 75,
+   "two_minute_warning": false
   },
   {
    "after_drive": 6,
+   "clock_after": 511,
    "clock_before": 511,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15835,10 +16850,12 @@
     "game_id": "2023_10_IND_NE",
     "play_id": 2026
    },
-   "spot_yardline_100": 75
+   "spot_yardline_100": 75,
+   "two_minute_warning": false
   },
   {
    "after_drive": 9,
+   "clock_after": 35,
    "clock_before": 35,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15854,10 +16871,12 @@
     "game_id": "2022_13_LAC_LV",
     "play_id": 659
    },
-   "spot_yardline_100": 75
+   "spot_yardline_100": 75,
+   "two_minute_warning": false
   },
   {
    "after_drive": 10,
+   "clock_after": 900,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15873,10 +16892,12 @@
     "game_id": "2024_03_BAL_DAL",
     "play_id": 908
    },
-   "spot_yardline_100": 70
+   "spot_yardline_100": 70,
+   "two_minute_warning": false
   },
   {
    "after_drive": 11,
+   "clock_after": 655,
    "clock_before": 660,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15892,10 +16913,12 @@
     "game_id": "2022_03_SF_DEN",
     "play_id": 2425
    },
-   "spot_yardline_100": 81
+   "spot_yardline_100": 81,
+   "two_minute_warning": false
   },
   {
    "after_drive": 12,
+   "clock_after": 186,
    "clock_before": 186,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15911,10 +16934,12 @@
     "game_id": "2024_10_NE_CHI",
     "play_id": 2049
    },
-   "spot_yardline_100": 70
+   "spot_yardline_100": 70,
+   "two_minute_warning": false
   },
   {
    "after_drive": 15,
+   "clock_after": 335,
    "clock_before": 335,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15930,10 +16955,12 @@
     "game_id": "2024_15_NE_ARI",
     "play_id": 40
    },
-   "spot_yardline_100": 70
+   "spot_yardline_100": 70,
+   "two_minute_warning": false
   },
   {
    "after_drive": 17,
+   "clock_after": 101,
    "clock_before": 107,
    "clock_clamped_to_zero": false,
    "clock_expired_during_kickoff": false,
@@ -15949,7 +16976,8 @@
     "game_id": "2025_09_LAC_TEN",
     "play_id": 1771
    },
-   "spot_yardline_100": 80
+   "spot_yardline_100": 80,
+   "two_minute_warning": false
   }
  ],
  "ledger": {
@@ -15963,7 +16991,7 @@
   "winner_deferred": false
  },
  "mode": "legal_game_state_first_piece",
- "model_version": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
+ "model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
  "points": {
   "A": 24,
   "B": 27
@@ -16000,14 +17028,33 @@
   }
  ],
  "regulation_end_reached": true,
- "rules_version": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167",
+ "research_source": {
+  "base_model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "producer_file_sha256": {
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "producer_worktree_dirty": true,
+  "source_file_sha256": {
+   "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/e2_reference.py": "4b60136a0f27b981c75ad61588d0a1922882d181c1c33d80022463cd0ac1ea1d",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "source_tree_sha256": "79a65db640e587798f2a067853a3ba8f723aadfbb10e3021cddb3c92ec08c117"
+ },
+ "rules_version": "5ea4eecd2fa94e24c4efa857c35f2aa20724e37b85e5adb49b69a84de875fb7a",
  "scope_out": [
   {
    "detail": "guard timeouts: no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook",
    "reason": "unmodelled transition: timeout"
   },
   {
-   "detail": "guard two_minute_warning: no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not checked for a warning stoppage: the warning is not identifiable in the play-by-play, so whether observed runoffs carry it is unverified",
+   "detail": "guard clock_start_stop: numeric runoff and two-minute crossing markers are recorded, but the rules-required clock running/stopped state and explicit restart transitions are not modelled",
    "reason": "unmodelled transition: two_minute_warning"
   }
  ],
@@ -17211,6 +18258,22 @@
  },
  "status": "regulation_end_guarded",
  "tied": false,
+ "two_minute_warnings": [
+  {
+   "clock_seconds": 85,
+   "drive_index": 9,
+   "quarter": 2,
+   "sequence": 66,
+   "source": "play"
+  },
+  {
+   "clock_seconds": 116,
+   "drive_index": 17,
+   "quarter": 4,
+   "sequence": 136,
+   "source": "play"
+  }
+ ],
  "unmodelled_transitions": [
   {
    "drive_index": 7,
@@ -17220,19 +18283,17 @@
   {
    "drive_index": 9,
    "kind": "two_minute_warning",
-   "quarter": 2,
    "sequence": 66
   },
   {
    "drive_index": 17,
    "kind": "two_minute_warning",
-   "quarter": 4,
    "sequence": 136
   }
  ],
  "unsupported_rules": [
+  "clock_start_stop",
   "timeouts",
-  "two_minute_warning",
   "penalties",
   "onside_kicks",
   "overtime",

@@ -39,7 +39,9 @@ try {
     sourcePlayCount: v.sourcePlayCount,
     validationPassed: v.validation.passed,
     validationFindings: v.validation.findings.length,
+    validationFindingTexts: v.validation.findings,
     footballStateFindings: v.footballStateAudit.finding_count,
+    footballStateFindingTexts: v.footballStateAudit.findings.map((f) => `${f.code}: ${f.message}`),
     sharedV1Violations: v.sharedV1Audit.violations,
   };
 } catch (error) {

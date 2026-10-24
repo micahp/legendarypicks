@@ -4,9 +4,9 @@
  "count": 9,
  "record": {
   "file": "docs/evidence/e2-successor/seed1-game-successor.json",
-  "model_version": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
-  "rules_version": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167",
-  "sha256": "39e7f0ab8ba6c278a6149c7b28953f6d5cde37a4382961088564091e7cdf41f3"
+  "model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "rules_version": "5ea4eecd2fa94e24c4efa857c35f2aa20724e37b85e5adb49b69a84de875fb7a",
+  "sha256": "e13f060ddb95f3cf9d5d8d69a1c19448686b212100f5d72cbabc2b793fdad169"
  },
  "residuals": [
   {
@@ -79,7 +79,7 @@
    "guard_test": "test_shared_v1_residuals.Guards.test_valid_guard_fires",
    "id": "V-valid-full-game",
    "source": "gridiron adapter audit (no LP check)",
-   "why_not_sourced": "valid_full_game is false: the record makes no full-game claim, because unsupported rules remain"
+   "why_not_sourced": "valid_full_game is false: this legal_game_state_first_piece record is not a pregame_full_game; unresolved contract inputs and unsupported transitions prevent certification"
   }
  ],
  "valid_full_game": false

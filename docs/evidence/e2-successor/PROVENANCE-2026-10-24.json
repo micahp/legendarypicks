@@ -2,7 +2,7 @@
  "branch": "feat/nfl-sequence-e2-successor-2026-10-24",
  "code_commits": {
   "citation_heading_fix": "9e830cc0ab67c0d5c80f0ac995907ac497b22935",
-  "engine_head": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
+  "engine_head": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
   "version_stamps_and_matrix": "bd5f338309a0729df5702e21c08689a0e67ec7fc"
  },
  "data_fixture_sha256": {
@@ -11,23 +11,23 @@
  },
  "engine_and_rule_file_sha256": {
   "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
-  "scripts/nfl_sequence/e1_drive.py": "0d606b2bbcfb17ff22a6a00a3cfafc2e0c44f1d85e2bb4c9317bf6175c477c5c",
+  "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
   "scripts/nfl_sequence/e2_reference.py": "4b60136a0f27b981c75ad61588d0a1922882d181c1c33d80022463cd0ac1ea1d",
-  "scripts/nfl_sequence/game_state.py": "e233b6a1126be8dbfd5d0411ebdd905dbf75beb6a4a4c24edda47290e9fce0b3",
-  "scripts/nfl_sequence/rules_matrix.py": "84f5809798fd866430b0fc60633c26b786d250ebd99a2de17b85cdc412cbc767",
+  "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+  "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
  },
- "engine_commits_after_survey_c131fda2": "75962ffe fix(nfl): kickoff clock charges its runoff or expires the quarter, with no clamp; nine shared-v1 residuals each guarded\nd6b0bb38 fix(nfl): a guarded game reports complete_regulation false; the simulation fact is regulation_end_reached\nc812d5d3 fix(nfl): guard every unmodelled transition and refuse complete claims on guarded games\n15fc55cd fix(nfl): E2 gate blockers 1, 2, 6 and 7 in code: publisher-only conversion tool, 11-4-2 guard and boundaries, scope refusals",
+ "engine_commits_after_previous_survey": "dfef3e8e fix(nfl): a possession change on the play that runs out the clock ends the quarter or the half\n18d07c97 fix(nfl): model the two-minute warning; make timeout stops explicit and continuity-checked\n75962ffe fix(nfl): kickoff clock charges its runoff or expires the quarter, with no clamp; nine shared-v1 residuals each guarded\nd6b0bb38 fix(nfl): a guarded game reports complete_regulation false; the simulation fact is regulation_end_reached\nc812d5d3 fix(nfl): guard every unmodelled transition and refuse complete claims on guarded games\n15fc55cd fix(nfl): E2 gate blockers 1, 2, 6 and 7 in code: publisher-only conversion tool, 11-4-2 guard and boundaries, scope refusals",
  "envelope": {
-  "base_commit": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
+  "base_commit": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
   "contract": {
    "name": "gridiron.lp-full-game-payload",
    "version": "1.0.0"
   },
   "producer_file_sha256": {
-   "scripts/nfl_sequence/e1_drive.py": "0d606b2bbcfb17ff22a6a00a3cfafc2e0c44f1d85e2bb4c9317bf6175c477c5c",
-   "scripts/nfl_sequence/game_state.py": "e233b6a1126be8dbfd5d0411ebdd905dbf75beb6a4a4c24edda47290e9fce0b3",
-   "scripts/nfl_sequence/rules_matrix.py": "84f5809798fd866430b0fc60633c26b786d250ebd99a2de17b85cdc412cbc767",
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
    "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
   }
  },
@@ -35,29 +35,32 @@
   "scripts/bdb/e3_tracking_join.py": "d7ce5da80ae89865bd0faf4c315d4070492d5a6e3fad97b2fde5d03cd9f2e60a",
   "scripts/bdb/tracking_coverage_doc.py": "7d6cdfb01b19d9efc6f82cc3227937945a8188cf4247c6fc0fa5894965ac4b6b",
   "scripts/nfl_sequence/evidence_e2/build_clock_baseline.py": "bae24ac0ca0fc1bd2c5fd922834c8bd3a82fb459e47e944eb722e54275a23568",
-  "scripts/nfl_sequence/evidence_e2/build_envelope.py": "daa157bc9ba768102e36d7462025fc51ed152df6c424aedebfabf3a6d905b570",
+  "scripts/nfl_sequence/evidence_e2/build_envelope.py": "38145969a9878ad1206af75169db4151f09012a03dd25302b3bb9977071c761a",
   "scripts/nfl_sequence/evidence_e2/drive_index_check.py": "59295cd64f5f264c9982e97643ed3dc62b336d9b300f036b96bb438809007369",
-  "scripts/nfl_sequence/evidence_e2/gate_review_request.py": "5764bfd512a33d1d155ed20b1e9d489b9b048a096005ad1eeecc33c2155cf104",
-  "scripts/nfl_sequence/evidence_e2/gridiron_adapter_proof.mjs": "b7a937b6139d9e41dd36f47cd97f317dd039a2f6f79fb176706c72514b196991",
+  "scripts/nfl_sequence/evidence_e2/gate_review_request.py": "b90d47d2d568c3f6b532adcde8f57a14be16533545b73379fd2e4f0e900164f0",
+  "scripts/nfl_sequence/evidence_e2/gridiron_adapter_proof.mjs": "5a660a147f9f32657a6743248aada90d9f1416d6d2f3d61bcb89740e8eb98517",
+  "scripts/nfl_sequence/evidence_e2/gridiron_population.py": "2085e845af73af41e41eebb5b134bf67d014e26eaa37ac01817f753651d8e3d1",
   "scripts/nfl_sequence/evidence_e2/kick_distance_offset.py": "4492d6ed39380fc391fe6ee1d7614a29edd83beee0c7823cc26ed8e6ab224b06",
-  "scripts/nfl_sequence/evidence_e2/legality_check.py": "2e3c1667c25c618798a93371f31fcd71ca5756ad5994be1a06fa952875075189",
-  "scripts/nfl_sequence/evidence_e2/make_seed1_record.py": "2edf93f7f1df953c79080322f8be2e9c8ced406eda2b2c807e19f389b5f1d313",
+  "scripts/nfl_sequence/evidence_e2/legality_check.py": "981edc11b2adbc12de90360c3c88b1784499fe2ea1fb9ac3562ca886b79be7c2",
+  "scripts/nfl_sequence/evidence_e2/make_seed1_record.py": "87c8f933e1553871a960a639ca7226ab169070b26f1bcd56f2bd6dbebf5eea2a",
+  "scripts/nfl_sequence/evidence_e2/mismatch_explain.py": "c76f96691e10a22c737f17c011f00c6fb75175dc4e8c72c83d754e43d88c50ca",
   "scripts/nfl_sequence/evidence_e2/overtime_rows_check.py": "af6dd4f20e38fd241f99e1d518fd66c14d5fa0efc44d3cb129a33aeb43c4d422",
+  "scripts/nfl_sequence/evidence_e2/provenance.py": "17b830336be276eedd9bdde88897437b2d4fff82386509128f9add80e6a946e4",
   "scripts/nfl_sequence/evidence_e2/seed1_stats_check.py": "023ee94b4d18d4e30b1085fe4362266106366c6a08599a50c46f98c13b07810e",
-  "scripts/nfl_sequence/evidence_e2/shared_v1_residuals.py": "6149a78336a60c7afb1512f8ee6ca63d0839c5e571015e878ed4918b79bad6b2",
-  "scripts/nfl_sequence/evidence_e2/survey_doc.py": "edf6859c32011a72ed863c6cd30a7fb8696afc942e2f1eb6488f313fde5e071a",
-  "scripts/nfl_sequence/evidence_e2/survey_legality_300.py": "5a52ffcadce2ecda090c5fc3b1eb9e2d75bc41d869ba82efb2f1e4acc1fb56a6",
+  "scripts/nfl_sequence/evidence_e2/shared_v1_residuals.py": "f83a4fb4e4f157dd5c81cba1e7764868aa6383bf8cea83697e9359fa00c2501b",
+  "scripts/nfl_sequence/evidence_e2/survey_doc.py": "d0a27be7908d2e7126421d49efcf54ba535c1c988facdd4a2e6a19dfebdc6375",
+  "scripts/nfl_sequence/evidence_e2/survey_legality_300.py": "fb2b57a09c0f9559bb8929c8f54977c93e97dc43e16e300b3d1d18ba0ce3a8b8",
   "scripts/nfl_sequence/evidence_e2/test_drive_index_corpus.py": "bc61bd176a11ca6272272c486534c1f263d58be0b862181d16c219ebd7d62bc0",
-  "scripts/nfl_sequence/evidence_e2/test_legality.py": "39089039272d6ddae117f1265b509f47bd31a845db997d95825508969fee89ed",
+  "scripts/nfl_sequence/evidence_e2/test_legality.py": "61b4a9ec2385102ac42b471fa279cfb570a0d8ec54b572a4da28caa67b06b7e2",
   "scripts/nfl_sequence/evidence_e2/test_shared_v1_residuals.py": "934e5cf0ee6c54503c2a7788eb05066c0907ef70a85943928f0be1b08008ed1c",
   "scripts/nfl_sequence/evidence_e2/test_traceability.py": "229942f3f4ae53e770935b94438940ff9ada4e776eaf82571f5e8992141b17ee",
   "scripts/nfl_sequence/evidence_e2/toss_sampling_check.py": "2ef416f0d2c228f648e75ff2a84f2d91b46dd80fa190ae98d5c22df073576f0e",
-  "scripts/nfl_sequence/evidence_e2/traceability.py": "7362abcc58dd8fd4dd0b583a658e230054a47303a187e1c5977ec7a9eecb998e",
+  "scripts/nfl_sequence/evidence_e2/traceability.py": "d0127cec47bc1fa57123bb88e8448b0ab343ee9ea532ee707ba6a8fef1c24faa",
   "scripts/nfl_sequence/evidence_e2/try_rates_check.py": "34ab1fc9ec3bef589cc6f92c24751bbc710ee3799f8324d03ed5a3bfa95ef471",
-  "scripts/nfl_sequence/evidence_e2/unmodelled_doc.py": "aeb4d1186945d308aeca2c79d16765ec9e67ad8783df0f51399802d634ce6b65",
-  "scripts/nfl_sequence/evidence_e2/unmodelled_enumeration.py": "ca6af6c85d731cc4139b084f438f01fd7c94f727ba26376cd9417f2474ea4bc0",
-  "scripts/nfl_sequence/test_versions.py": "75da1f7f1fca3b3fb67d74f22bd12d6eea45f7534dc633de135ab22a2f929a43",
-  "scripts/nfl_sequence/versions.py": "9cac8a82430cf8800946046ab047d6d23ea49965c72dc01fd8b3ec779755bd0f"
+  "scripts/nfl_sequence/evidence_e2/unmodelled_doc.py": "ee714d2b105e36f5c1b1ed9701eb4ceea567afd0068296b8352f8503c340b4c2",
+  "scripts/nfl_sequence/evidence_e2/unmodelled_enumeration.py": "18bee802f1c7a6d778c5a995aa3dbb933070fd2b7ad621734c3bd676ca7bed8e",
+  "scripts/nfl_sequence/test_versions.py": "30970118be5cc56430dcf6b0bf81f5effcff7490cf69f9094df61d9e8457965f",
+  "scripts/nfl_sequence/versions.py": "0e2b12b153cf2382ac70dc1bd4203cd51b38f8402d99a98bae54fa96dc4558f2"
  },
  "frozen_fixture_sha256": {
   "docs/fixtures/e2/e2-game-envelope-seed1.json": "b573713b10b2201c32a0827ab499a5b2b2a6d7de985ab05b7e4bfc51dce1f1a1",
@@ -76,40 +79,79 @@
  },
  "gridiron_heads": {
   "13b18faa": "13b18faa9d9dbe78570df7d45636f2313f25d8ea",
-  "de64ae12": "de64ae12486171bbe5114323ba45db5fcc21d23a"
+  "de64ae12": "de64ae12486171bbe5114323ba45db5fcc21d23a",
+  "origin/main": "72c7a7471b266ffcf8d187c651758bb1719129de"
+ },
+ "gridiron_unmerged_followup": {
+  "adapter_in_checkout": false,
+  "base_common_commit_with_main": "967a40cffd21f83b0e9901c9d4fd9cf6891e7df5",
+  "branch": "origin/fix/week7-game-state-rules",
+  "commit": "c32e453d8637ac1350d0435a6255b65ccbfdd344",
+  "merged_into_main": false
+ },
+ "lp_rules_reference": {
+  "git_blob": "142f0002f74871933f82aef5b53481fc9d7f00d7",
+  "origin_dev_head": "d4194afbe2bdaa1d51e2c3012e5a679ec726be93",
+  "path": "docs/rules/NFL-2026-GAME-STATE-RULES.md",
+  "ref": "origin/dev",
+  "repository": "micahp/legendarypicks",
+  "sha256": "87b0102e9deb5d879e960c3191b479161df9eae88c1f194accd9374ccb50c99d",
+  "url": "https://github.com/micahp/legendarypicks/blob/dev/docs/rules/NFL-2026-GAME-STATE-RULES.md"
  },
  "model_version": {
   "meaning": "most recent commit changing an ENGINE_FILES file",
-  "value": "75962ffe5fca9eddee9b49ff377031c5075e2c16"
+  "value": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b"
  },
  "outputs_sha256": {
-  "EVIDENCE-E2-SUCCESSOR-2026-10-24.md": "1e261d58090000b4b5eff007fbf420be7b71e57f6ea7d4b6606b40e88bdc8c09",
-  "GATE-REVIEW-REQUEST-E2-SUCCESSOR.md": "822df2086792f5899a1dc7f0304bd9e4d27f8ca2e3cbdb50d3bd92c57e53e262",
-  "RULE-TRACEABILITY-MATRIX-2026-10-24.json": "90c6f8cf867c49a89689df2f2f87955552240aa605c1d18ac22fdb642b6320c6",
-  "RULE-TRACEABILITY-MATRIX-2026-10-24.md": "2370ee341160a39168e8c7ab4cb32c0e9b7e5a806a523534dafe083f86f6fc87",
-  "SOURCE-SEMANTICS-AUDIT-2026-10-24.md": "02ff6443bdce6efe9ef20b339f3d6b55d7a1e9964fb254709626c4ce7f445986",
-  "SURVEY-300-SUCCESSOR-2026-10-24.md": "14f9f0fd2ca9fc2ac1b26ea1eeb02b1f2047979029689d34a7bfe8967daa9937",
-  "UNMODELLED-TRANSITIONS-300-2026-10-24.md": "cfc685a54c601dd68a3b0e97a05b2b0bd6bca5d32039585b2f775b0f90ae609c",
-  "VERSION-DEFINITIONS-2026-10-24.md": "066905d51dc7137da35e79fdef69abff552ac65f2775b358b37e26917b9434e3",
-  "e2-game-envelope-seed1-successor.json": "63d38f1bf6925d13d431f36a5bc4b8c8929096a9c986b0050f4507f6bcb4a0c8",
-  "e2-game-seed1-successor.v1.json": "f5e9039ee62043123d99b7d1971f79025c70da54053869b5898c29e7c15a0680",
-  "gridiron-adapter-proof-13b18faa.json": "fe0cebd913e6f4bd0026c917200191ea9625671a4f81841c611aa2d539f0615a",
-  "gridiron-adapter-proof-de64ae12.json": "8477c8f47037c829f816a471f576ba0c156e0af8ee502a016f19b06a11a9fed0",
+  "EVIDENCE-E2-SUCCESSOR-2026-10-24.md": "0eabb161fbbb3596fa9dce3b80350ae6db05ea5bbabb81f7d0cc3fd1aeb31750",
+  "GATE-REVIEW-REQUEST-E2-SUCCESSOR.md": "8fc5f3ea7033b4b0915771837ce74e0bcf8fcd8d8c3bbb892094f5a2d0e468fa",
+  "GRIDIRON-POPULATION-300-2026-10-24.json": "6e31e78c5856747d775776f1661575013e68f6e151621d033be9300577cf538a",
+  "MISMATCH-300-SUCCESSOR-2026-10-24.json": "fe97a21a697f7934a0b87236028e3879f4ec0538bde5627a22477ff3632ee9b0",
+  "MISMATCH-300-SUCCESSOR-2026-10-24.md": "ca7e447a9dc0e94f87a7c440b1ee5b3cbdd96513f46d20bf9327cb527cce50ac",
+  "RULE-TRACEABILITY-MATRIX-2026-10-24.json": "969860974120b29f7f78421fc484b111ede6d464a7b10ecb248c2f2f1c321bed",
+  "RULE-TRACEABILITY-MATRIX-2026-10-24.md": "b256d09ae88916b59d9d11930fd1858442829f9b61d60107055e5fbcb0de724f",
+  "SOURCE-SEMANTICS-AUDIT-2026-10-24.md": "9e7258f7854899950a10d82f751a8355686de82751776a9b5caeaf4401475779",
+  "SURVEY-300-SUCCESSOR-2026-10-24.md": "26e108aab99c84e516ab0014e19fef9cf2b5611ab3cc6c18050b9167eb9016db",
+  "UNMODELLED-TRANSITIONS-300-2026-10-24.md": "a09c85631ab9b2e11399b4bb1dd5ce7d479abeca91b72e5d9531730fd1ee37f6",
+  "VERSION-DEFINITIONS-2026-10-24.md": "549fca636ff93a8e957471c5c063ad8414c98c133620aee560623fbbe86db9cf",
+  "e2-game-envelope-seed1-successor.json": "e5a7916443bd25367e167a0df8c786450e73346bd01e477fe28d083fbb0ca8f6",
+  "e2-game-seed1-successor.v1.json": "91a8953e7229aec135113dae526b6ff43756ecf56fb9564012dd1773562a192c",
+  "gridiron-adapter-proof-13b18faa.json": "1034b2ce4881c489b40a641af658f829d0e2d676d623387c7a31027a3dadf54b",
+  "gridiron-adapter-proof-de64ae12.json": "1eb60be7653fab692cb91930bacdb7a3c1bb9a4434902e85035976da31e70960",
   "kick-distance-offset.json": "8068e7973b8c7679c8b02d83a8304f7067a5589546e83cd69b37ed8e366128a2",
-  "legality-survey-300-summary.json": "d52896350ca150a263393c52eec158052512cdd15e6340c5ca33d994f1b5cea8",
-  "legality-survey-300.csv": "cb9d5055d021c43adc08bedc7cd6e969bee33a12445b11d5279afe5ca87101b3",
+  "legality-survey-300-summary.json": "b943b025e4b35fd746e907e9c43c5cb7cebb1f535617a49cedafa7ed30f94d0d",
+  "legality-survey-300.csv": "5904f9c86e9b9608a92afee1dee6016142806c393b3cb61795f27c71ba40f4e9",
   "overtime-rows-evaluation.json": "cd33bf3da5d62a7cbde2e4bceb8a94f964dbefaf6b876435c024d5578e8c0c79",
-  "seed1-game-successor.json": "39e7f0ab8ba6c278a6149c7b28953f6d5cde37a4382961088564091e7cdf41f3",
-  "seed1-stats-recomputed-successor.json": "562003f4e56ce64fbc8ef2dc572b251df79561a9db286390357e5aa6682245aa",
-  "shared-v1-residuals.json": "71b846441df617313d3ed4481a43e8df0b54491d6953a74f3f994b8eae2f8bb0",
+  "seed1-game-successor.json": "e13f060ddb95f3cf9d5d8d69a1c19448686b212100f5d72cbabc2b793fdad169",
+  "seed1-stats-recomputed-successor.json": "a2e4909f5c83ce842856f2d6cab5ff738127d894a6fb78f48afd7accdf2fc999",
+  "shared-v1-residuals.json": "6adb265847e87a155bbfbab0bc257ab1d8082aa69e15f409d0ebeefb140a240b",
   "toss-sampling-300.json": "a94ad8002fdf6c9d72748e093021033b4a362896bfd9edc4be0b91bf1f898f9e",
   "try-rates-publisher-vs-success.json": "83ead8be6b0258cb668da017a4274ef87174ceae82294767d2ab238889ea6af5",
-  "unmodelled-transitions-300.json": "6eef05ced76bdf3915b739455ab38babdbcd31d4be1603466451122ee3bcdfcb"
+  "unmodelled-transitions-300.json": "f7171a0d32c16fd2681d889f05220a64a0dedb39de74e60dae957fa6a4665262"
  },
- "producer_commit_c131fda2": "c131fda249dcf9af642dd6ba267905e88803a74a",
+ "previous_survey_engine_commit": "c131fda249dcf9af642dd6ba267905e88803a74a",
+ "research_source": {
+  "base_model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "producer_file_sha256": {
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "producer_worktree_dirty": true,
+  "source_file_sha256": {
+   "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/e2_reference.py": "4b60136a0f27b981c75ad61588d0a1922882d181c1c33d80022463cd0ac1ea1d",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "source_tree_sha256": "79a65db640e587798f2a067853a3ba8f723aadfbb10e3021cddb3c92ec08c117"
+ },
  "rules_version": {
   "meaning": "SHA-256 of the RULE_FILES producer map (VERSION-DEFINITIONS)",
-  "value": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167"
+  "value": "5ea4eecd2fa94e24c4efa857c35f2aa20724e37b85e5adb49b69a84de875fb7a"
  },
  "valid_full_game": false
 }
