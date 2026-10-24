@@ -371,6 +371,35 @@ class TossSymmetry(unittest.TestCase):
             gs.validate_game(record)
 
 
+class Guards(unittest.TestCase):
+    def test_every_unmodelled_rule_carries_a_guard_and_is_never_pass(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+        self.assertEqual(set(record['guards']), set(gs.UNSUPPORTED_RULES))
+        rows = {r['case']: r['status'] for r in rm.check(record)}
+        self.assertEqual(rows['Unmodelled rules: each carries a named guard'], 'UNSUPPORTED')
+        self.assertEqual(rows['Timeouts: three per team per half'], 'UNSUPPORTED')
+
+    def test_a_record_without_the_timeout_guard_is_rejected(self):
+        # Negative fixture: removing a guard must fail the validator and the matrix.
+        record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
+        del record['guards']['timeouts']
+        with self.assertRaises(AssertionError):
+            gs.validate_game(record)
+        row = next(r for r in rm.check(record) if r['case'].startswith('Unmodelled rules'))
+        self.assertEqual(row['status'], 'FAIL')
+
+
+class ProvisionalIsNeverPass(unittest.TestCase):
+    def test_a_score_that_expires_q1_marks_its_rows_provisional(self):
+        # A touchdown on the last play of Q1 is kicked off in Q2 under the practice rule: the rows must say PROVISIONAL.
+        record = gs.play_game(1, ref(StaticPool('run', 80, 890), kickoff_pool(runoff=10)), winner_choice='receive',
+                              max_drives=2)
+        rows = {r['case']: r for r in rm.check(record)}
+        self.assertEqual(rows['Q1->Q2 change of ends']['status'], 'PROVISIONAL')
+        self.assertEqual(rows['Touchdown: six points, a distinct try, post-score kickoff']['status'], 'PROVISIONAL')
+        self.assertIn('provisional practice rule', rows['Q1->Q2 change of ends']['evidence'])
+
+
 class DriveIndex(unittest.TestCase):
     def test_every_play_state_carries_its_drive_index(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)

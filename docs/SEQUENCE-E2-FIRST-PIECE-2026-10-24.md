@@ -86,6 +86,8 @@ sampled outcomes or random draws.
 
 ## Rules matrix
 
+Every unmodelled rule (timeouts, the two-minute warning, penalties, onside kicks, overtime, the exception coin toss, lineups) has a named guard in the record's `guards`. The validator requires them, and the matrix checks them. A row that depends on a practice-sourced clock rule is PROVISIONAL, never PASS: the Q1 and Q3 change-of-ends rows, the Q2 halftime row, and the touchdown and field-goal rows whose score expires Q1 or Q3.
+
 Every play's `state_before` and `state_after` carry the game-level `drive_index` of its drive. `validate_game` raises on a
 mismatch, and the matrix has an independent row that fails it. E1 writes `drive_index: 1` on every play; E2 overwrites it.
 

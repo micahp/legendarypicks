@@ -315,6 +315,60 @@ def _drive_index(record):
     return PASS, f'{len(indices)} drives, every play state carries its drive index'
 
 
+def _provisional_into(record, quarter):
+    """Kickoffs that open `quarter` after a score: the practice-sourced rule, recomputed from the kickoffs."""
+    return sum(1 for k in record['kickoffs'] if k['kind'] != 'half_start' and k['quarter'] == quarter
+               and k['clock_before'] == gs.QUARTER_LENGTH)
+
+
+def _provisional_skips(record):
+    """Scores that expire Q2: the practice rule says no post-score kickoff follows them."""
+    return sum(1 for d in record['drives'] if d['terminal'] in SCORING and d['end_quarter'] == 2 and _ends_on_zero(d))
+
+
+def _provisional_expiry_scores(record, terminals):
+    """Scores that expire Q1 or Q3: the post-score kickoff that follows is the practice rule."""
+    return sum(1 for d in record['drives'] if d['terminal'] in terminals and d['end_quarter'] in (1, 3)
+               and _ends_on_zero(d) and d['points_scored_on_drive'] is not None)
+
+
+# A row whose PASS depends on a practice-sourced rule is reported PROVISIONAL, never PASS.
+PROVISIONAL_DEPENDENCIES = {
+    'Q1->Q2 change of ends': lambda r: ('kickoffs that open Q2 after a score', _provisional_into(r, 2)),
+    'Q3->Q4 change of ends': lambda r: ('kickoffs that open Q4 after a score', _provisional_into(r, 4)),
+    'Q2->Q3 halftime: kickoff, clock reset, second-half choice':
+        lambda r: ('scores that expire Q2 with no post-score kickoff', _provisional_skips(r)),
+    'Touchdown: six points, a distinct try, post-score kickoff':
+        lambda r: ('touchdowns that expire Q1 or Q3, kicked off in the next quarter',
+                   _provisional_expiry_scores(r, ('touchdown',))),
+    'Made field goal (3) and safety (2), with the correct post-score kick':
+        lambda r: ('field goals and safeties that expire Q1 or Q3, kicked off in the next quarter',
+                   _provisional_expiry_scores(r, ('field_goal_attempt', 'safety'))),
+}
+
+
+def _mark_provisional(record, rows):
+    for row in rows:
+        dep = PROVISIONAL_DEPENDENCIES.get(row['case'])
+        if dep is None or row['status'] != PASS:
+            continue
+        label, count = dep(record)
+        if count:
+            row['status'] = PROVISIONAL
+            row['evidence'] = (f"{row['evidence']}; provisional practice rule, pending the 2026 rulebook: "
+                               f"{count} {label}")
+    return rows
+
+
+def _guards(record):
+    """Every unmodelled rule carries a named guard in the record. A missing guard fails; a guard never makes a rule PASS."""
+    guards = record.get('guards', {})
+    missing = [r for r in gs.UNSUPPORTED_RULES if not guards.get(r, {}).get('guard')]
+    if missing:
+        return FAIL, f'unsupported rules without a guard: {missing}'
+    return UNSUPPORTED, f'{len(gs.UNSUPPORTED_RULES)} unmodelled rules, each with a named guard'
+
+
 def check(record):
     """The matrix rows for one record. Ledger rows use the ledger's own teams; every other row reads the record."""
     rows = []
@@ -346,6 +400,7 @@ def check(record):
     add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
     add('Timeouts: three per team per half', (UNSUPPORTED, 'not modelled: the published table has no timeout fields, '
                                                            'so the observed clock runoff is used as recorded'))
+    add('Unmodelled rules: each carries a named guard', _guards(record))
     add('Two-minute warning', (UNSUPPORTED, 'not modelled'))
     add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))
     add('Onside kick', (UNSUPPORTED, 'not modelled: every kickoff is drawn from the observed kickoff pool'))
@@ -363,7 +418,7 @@ def check(record):
     add('Fourth-down choices: punt, field goal or go for it',
         (PARTIAL, f'sampled from observed plays by down, distance and field position: {dict(fourth)}; not conditioned '
                   f'on score or time'))
-    return rows
+    return _mark_provisional(record, rows)
 
 
 def summary(rows):
