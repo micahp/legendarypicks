@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
 import rules_matrix as rm  # noqa: E402
+import shared_v1 as sv  # noqa: E402
 
 
 def main():
@@ -33,7 +34,8 @@ def main():
         per_seed.append({'seed': seed, 'status': record['status'], 'blocker': record['blocker'] or '',
                          'complete_game': record['complete_game'], 'valid_full_game': record['valid_full_game'],
                          'scope_out': ';'.join(x['reason'] for x in record['scope_out']),
-                         'matrix_fail': sum(1 for r in rows if r['status'] == 'FAIL')})
+                         'matrix_fail': sum(1 for r in rows if r['status'] == 'FAIL'),
+                         'v1_violations': ';'.join(sorted(v['id'] for v in sv.check_document(sv.build_document(record))))})
         status[record['status']] += 1
         blocker[record['blocker']] += 1
         complete += record['complete_regulation']

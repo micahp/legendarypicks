@@ -1,0 +1,8963 @@
+{
+ "schema_version": "1.0",
+ "mode": "legal_game_state_first_piece",
+ "simulation_id": "e2-e1-empirical-v0-seed1",
+ "game_id": null,
+ "scheduled_kickoff_utc": null,
+ "as_of_utc": null,
+ "snapshot_hash": null,
+ "model_version": "e1-empirical-v0",
+ "rules_version": "nfl-2026-regular-season",
+ "seed": 1,
+ "teams": {
+  "home": "A",
+  "away": "B"
+ },
+ "roster_snapshot_id": null,
+ "provenance": {
+  "outcomes": "sampled_observed_plays",
+  "lineups": "sampled_observed_participants",
+  "routes": "not_modelled",
+  "motion": "not_modelled",
+  "sources_as_of_verified": false
+ },
+ "plays": [
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 900,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 0,
+    "away_score": 0,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "half_start",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 75,
+    "runoff_seconds": 0,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2023_13_LAC_NE",
+     "play_id": 39,
+     "game_date": "2023-12-03"
+    }
+   },
+   "sequence": 1,
+   "id": "e2-e1-empirical-v0-seed1:1"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 861,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 56,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036355",
+    "receiver_id": "00-0033536",
+    "rusher_id": null,
+    "air_yards": 13.0,
+    "yac": 6.0,
+    "yards_gained": 19,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 39,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 2,
+   "id": "e2-e1-empirical-v0-seed1:2"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 861,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 56,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 826,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033893",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 3,
+   "id": "e2-e1-empirical-v0-seed1:3"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 826,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 802,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 46,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0035710",
+    "receiver_id": "00-0036223",
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": 3.0,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 24,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 4,
+   "id": "e2-e1-empirical-v0-seed1:4"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 802,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 46,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 771,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 44,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039384",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 31,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 5,
+   "id": "e2-e1-empirical-v0-seed1:5"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 771,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 44,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 729,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 43,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039384",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 6,
+   "id": "e2-e1-empirical-v0-seed1:6"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 729,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 43,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 682,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 27,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0029263",
+    "receiver_id": "00-0038976",
+    "rusher_id": null,
+    "air_yards": 15.0,
+    "yac": 1.0,
+    "yards_gained": 16,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 47,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 7,
+   "id": "e2-e1-empirical-v0-seed1:7"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 682,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 27,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 648,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 9,
+    "yardline_100": 9,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036355",
+    "receiver_id": "00-0034159",
+    "rusher_id": null,
+    "air_yards": 15.0,
+    "yac": 3.0,
+    "yards_gained": 18,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 34,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 8,
+   "id": "e2-e1-empirical-v0-seed1:8"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 648,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 9,
+    "yardline_100": 9,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 604,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 8,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035700",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 44,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 9,
+   "id": "e2-e1-empirical-v0-seed1:9"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 604,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 8,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 6,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036328",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 10,
+   "id": "e2-e1-empirical-v0-seed1:10"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 0,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 6,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026158",
+    "receiver_id": "00-0038979",
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": 3.0,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 0,
+    "out_of_bounds": false,
+    "touchdown": true,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 11,
+   "id": "e2-e1-empirical-v0-seed1:11"
+  },
+  {
+   "event_type": "extra_point",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 1
+   },
+   "decision": {
+    "type": "extra_point",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "result": "good",
+    "points": 1
+   },
+   "sequence": 12,
+   "id": "e2-e1-empirical-v0-seed1:12"
+  },
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 567,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 561,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "post_score",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 71,
+    "runoff_seconds": 6,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2025_02_SEA_PIT",
+     "play_id": 569,
+     "game_date": "2025-09-14"
+    }
+   },
+   "sequence": 13,
+   "id": "e2-e1-empirical-v0-seed1:13"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 561,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 534,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 56,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0038102",
+    "receiver_id": "00-0037228",
+    "rusher_id": null,
+    "air_yards": -5.0,
+    "yac": 20.0,
+    "yards_gained": 15,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 27,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 14,
+   "id": "e2-e1-empirical-v0-seed1:14"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 534,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 56,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 512,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036264",
+    "receiver_id": "00-0039146",
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": 1.0,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 22,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 15,
+   "id": "e2-e1-empirical-v0-seed1:15"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 512,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 509,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0031280",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 11.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 3,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 16,
+   "id": "e2-e1-empirical-v0-seed1:16"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 509,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 503,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039163",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 7.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 17,
+   "id": "e2-e1-empirical-v0-seed1:17"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 503,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 6,
+    "yardline_100": 52,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 497,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 91,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 2
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 18,
+   "id": "e2-e1-empirical-v0-seed1:18"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 497,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 91,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 480,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038797",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 17,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 19,
+   "id": "e2-e1-empirical-v0-seed1:19"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 480,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 474,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034855",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 15.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 20,
+   "id": "e2-e1-empirical-v0-seed1:20"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 474,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 440,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0023459",
+    "receiver_id": "00-0034521",
+    "rusher_id": null,
+    "air_yards": 7.0,
+    "yac": 20.0,
+    "yards_gained": 27,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 34,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 21,
+   "id": "e2-e1-empirical-v0-seed1:21"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 440,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 400,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 38,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038134",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 20,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 22,
+   "id": "e2-e1-empirical-v0-seed1:22"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 400,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 38,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 394,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 11,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039923",
+    "receiver_id": "00-0033293",
+    "rusher_id": null,
+    "air_yards": 25.0,
+    "yac": 2.0,
+    "yards_gained": 27,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 23,
+   "id": "e2-e1-empirical-v0-seed1:23"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 394,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 11,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 359,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 6,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0034844",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 5,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 24,
+   "id": "e2-e1-empirical-v0-seed1:24"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 359,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 6,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 318,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 4,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039067",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 41,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 25,
+   "id": "e2-e1-empirical-v0-seed1:25"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 318,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 4,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 273,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 4,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033897",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 45,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 26,
+   "id": "e2-e1-empirical-v0-seed1:26"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 273,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 4,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 273,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 96,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 3
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036879",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 0,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": true
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 27,
+   "id": "e2-e1-empirical-v0-seed1:27"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 273,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 96,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 238,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 93,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033045",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 28,
+   "id": "e2-e1-empirical-v0-seed1:28"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 238,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 93,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 202,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037197",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 8,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 36,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 29,
+   "id": "e2-e1-empirical-v0-seed1:29"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 202,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 85,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 160,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 79,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038542",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 30,
+   "id": "e2-e1-empirical-v0-seed1:30"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 160,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 79,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 125,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039384",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 31,
+   "id": "e2-e1-empirical-v0-seed1:31"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 125,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 80,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039040",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 45,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 32,
+   "id": "e2-e1-empirical-v0-seed1:32"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 80,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 43,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026143",
+    "receiver_id": "00-0036876",
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": 0.0,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 33,
+   "id": "e2-e1-empirical-v0-seed1:33"
+  },
+  {
+   "event_type": "sack",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 43,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 9,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 72,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037012",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 34,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 34,
+   "id": "e2-e1-empirical-v0-seed1:34"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 9,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 72,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 9,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 35,
+   "id": "e2-e1-empirical-v0-seed1:35"
+  },
+  {
+   "event_type": "period_end",
+   "state_before": {
+    "quarter": 1,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "state_after": {
+    "quarter": 1,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 4
+   },
+   "decision": {
+    "type": "period_end",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "from_quarter": 1,
+    "to_quarter": 2,
+    "kind": "change_of_ends"
+   },
+   "sequence": 36,
+   "id": "e2-e1-empirical-v0-seed1:36"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 893,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 13,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039139",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 37,
+   "id": "e2-e1-empirical-v0-seed1:37"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 893,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 13,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 855,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0040398",
+    "receiver_id": "00-0039890",
+    "rusher_id": null,
+    "air_yards": 8.0,
+    "yac": 0.0,
+    "yards_gained": 8,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 38,
+   "id": "e2-e1-empirical-v0-seed1:38"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 855,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 3,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 847,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026498",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 8,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 39,
+   "id": "e2-e1-empirical-v0-seed1:39"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 847,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 4,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 840,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 5
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 40,
+   "id": "e2-e1-empirical-v0-seed1:40"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 840,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 806,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034796",
+    "receiver_id": "00-0034753",
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": 1.0,
+    "yards_gained": 5,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 34,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 41,
+   "id": "e2-e1-empirical-v0-seed1:41"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 806,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 765,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039732",
+    "receiver_id": "00-0039373",
+    "rusher_id": null,
+    "air_yards": -1.0,
+    "yac": 14.0,
+    "yards_gained": 13,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 41,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 42,
+   "id": "e2-e1-empirical-v0-seed1:42"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 765,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 737,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 5,
+    "yardline_100": 5,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037834",
+    "receiver_id": "00-0036261",
+    "rusher_id": null,
+    "air_yards": 16.0,
+    "yac": 37.0,
+    "yards_gained": 53,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 28,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 43,
+   "id": "e2-e1-empirical-v0-seed1:43"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 737,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 1,
+    "yards_to_go": 5,
+    "yardline_100": 5,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 732,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 1,
+    "yardline_100": 1,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039738",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 44,
+   "id": "e2-e1-empirical-v0-seed1:44"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 732,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 0,
+    "down": 2,
+    "yards_to_go": 1,
+    "yardline_100": 1,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 692,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035250",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": true,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 45,
+   "id": "e2-e1-empirical-v0-seed1:45"
+  },
+  {
+   "event_type": "extra_point",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 692,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 692,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 6
+   },
+   "decision": {
+    "type": "extra_point",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "result": "good",
+    "points": 1
+   },
+   "sequence": 46,
+   "id": "e2-e1-empirical-v0-seed1:46"
+  },
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 692,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 685,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 90,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "post_score",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 90,
+    "runoff_seconds": 7,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2022_12_HOU_MIA",
+     "play_id": 381,
+     "game_date": "2022-11-27"
+    }
+   },
+   "sequence": 47,
+   "id": "e2-e1-empirical-v0-seed1:47"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 685,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 90,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 649,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037746",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 36,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 48,
+   "id": "e2-e1-empirical-v0-seed1:48"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 649,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 608,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035664",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 41,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 49,
+   "id": "e2-e1-empirical-v0-seed1:49"
+  },
+  {
+   "event_type": "sack",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 608,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 6,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 598,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 12,
+    "yardline_100": 92,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0028118",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 10,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 50,
+   "id": "e2-e1-empirical-v0-seed1:50"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 598,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 12,
+    "yardline_100": 92,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 591,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 7
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 51,
+   "id": "e2-e1-empirical-v0-seed1:51"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 591,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 587,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026498",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 52,
+   "id": "e2-e1-empirical-v0-seed1:52"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 587,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 583,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0035710",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 53,
+   "id": "e2-e1-empirical-v0-seed1:53"
+  },
+  {
+   "event_type": "sack",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 583,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 10,
+    "yardline_100": 53,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 554,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 17,
+    "yardline_100": 60,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0040676",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 29,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 54,
+   "id": "e2-e1-empirical-v0-seed1:54"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 554,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 17,
+    "yardline_100": 60,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 543,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 64,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 8
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 11,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 55,
+   "id": "e2-e1-empirical-v0-seed1:55"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 543,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 64,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 539,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 59,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0023459",
+    "receiver_id": "00-0036894",
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": 0.0,
+    "yards_gained": 5,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 56,
+   "id": "e2-e1-empirical-v0-seed1:56"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 539,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 59,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 497,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035700",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 57,
+   "id": "e2-e1-empirical-v0-seed1:57"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 497,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 460,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 57,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0034972",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 58,
+   "id": "e2-e1-empirical-v0-seed1:58"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 460,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 57,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 450,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 79,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 9
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 10,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 59,
+   "id": "e2-e1-empirical-v0-seed1:59"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 450,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 79,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 10
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 415,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 10
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035261",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 60,
+   "id": "e2-e1-empirical-v0-seed1:60"
+  },
+  {
+   "event_type": "fumble",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 415,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 10
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 404,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 10
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 24,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 11,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": true
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 61,
+   "id": "e2-e1-empirical-v0-seed1:61"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 404,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 369,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0028986",
+    "receiver_id": "00-0035250",
+    "rusher_id": null,
+    "air_yards": 2.0,
+    "yac": 5.0,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 62,
+   "id": "e2-e1-empirical-v0-seed1:62"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 369,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 331,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0034844",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 63,
+   "id": "e2-e1-empirical-v0-seed1:63"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 331,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 296,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036275",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 64,
+   "id": "e2-e1-empirical-v0-seed1:64"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 296,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 253,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033858",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 65,
+   "id": "e2-e1-empirical-v0-seed1:65"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 253,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 246,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0033873",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 0.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 66,
+   "id": "e2-e1-empirical-v0-seed1:66"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 246,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 240,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0023459",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 29.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 67,
+   "id": "e2-e1-empirical-v0-seed1:67"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 240,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 3,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 230,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 11
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 10,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 68,
+   "id": "e2-e1-empirical-v0-seed1:68"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 230,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 195,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033280",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 18,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 69,
+   "id": "e2-e1-empirical-v0-seed1:69"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 195,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 58,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 153,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 51,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0040784",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 70,
+   "id": "e2-e1-empirical-v0-seed1:70"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 153,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 51,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 113,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037525",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 71,
+   "id": "e2-e1-empirical-v0-seed1:71"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 113,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 77,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 41,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036355",
+    "receiver_id": "00-0038544",
+    "rusher_id": null,
+    "air_yards": -3.0,
+    "yac": 9.0,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 36,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 72,
+   "id": "e2-e1-empirical-v0-seed1:72"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 77,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 41,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 39,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 2,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036251",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 73,
+   "id": "e2-e1-empirical-v0-seed1:73"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 39,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 2,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 9,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035685",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 30,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 74,
+   "id": "e2-e1-empirical-v0-seed1:74"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 9,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 6,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0038122",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 7.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 3,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 75,
+   "id": "e2-e1-empirical-v0-seed1:75"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 6,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 2,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036972",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 76,
+   "id": "e2-e1-empirical-v0-seed1:76"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 2,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 0,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0029263",
+    "receiver_id": "00-0036407",
+    "rusher_id": null,
+    "air_yards": 7.0,
+    "yac": 0.0,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 77,
+   "id": "e2-e1-empirical-v0-seed1:77"
+  },
+  {
+   "event_type": "period_end",
+   "state_before": {
+    "quarter": 2,
+    "clock_seconds": 0,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "state_after": {
+    "quarter": 2,
+    "clock_seconds": 0,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 12
+   },
+   "decision": {
+    "type": "period_end",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "from_quarter": 2,
+    "to_quarter": 3,
+    "kind": "halftime"
+   },
+   "sequence": 78,
+   "id": "e2-e1-empirical-v0-seed1:78"
+  },
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 892,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "half_start",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 47,
+    "runoff_seconds": 8,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2025_04_JAX_SF",
+     "play_id": 2303,
+     "game_date": "2025-09-28"
+    }
+   },
+   "sequence": 79,
+   "id": "e2-e1-empirical-v0-seed1:79"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 892,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 846,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036328",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 46,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 80,
+   "id": "e2-e1-empirical-v0-seed1:80"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 846,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 47,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 801,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 36,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0040494",
+    "receiver_id": "00-0037276",
+    "rusher_id": null,
+    "air_yards": -3.0,
+    "yac": 14.0,
+    "yards_gained": 11,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 45,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 81,
+   "id": "e2-e1-empirical-v0-seed1:81"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 801,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 36,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 762,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0031687",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 39,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 82,
+   "id": "e2-e1-empirical-v0-seed1:82"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 762,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 716,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 5,
+    "yardline_100": 31,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036264",
+    "receiver_id": "00-0038797",
+    "rusher_id": null,
+    "air_yards": -4.0,
+    "yac": 8.0,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 46,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 83,
+   "id": "e2-e1-empirical-v0-seed1:83"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 716,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 5,
+    "yardline_100": 31,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 694,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 25,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0035993",
+    "receiver_id": "00-0034753",
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": 2.0,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 22,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 84,
+   "id": "e2-e1-empirical-v0-seed1:84"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 694,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 25,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 669,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 2,
+    "yardline_100": 17,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039918",
+    "receiver_id": "00-0034827",
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": 3.0,
+    "yards_gained": 8,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 25,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 85,
+   "id": "e2-e1-empirical-v0-seed1:85"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 669,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 2,
+    "yardline_100": 17,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 638,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 18,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038134",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 31,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 86,
+   "id": "e2-e1-empirical-v0-seed1:86"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 638,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 18,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 595,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 15,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0034184",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 87,
+   "id": "e2-e1-empirical-v0-seed1:87"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 595,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 15,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 560,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 13,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036973",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 88,
+   "id": "e2-e1-empirical-v0-seed1:88"
+  },
+  {
+   "event_type": "sack",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 560,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 13,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 517,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 16,
+    "yardline_100": 21,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037834",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": -8,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 89,
+   "id": "e2-e1-empirical-v0-seed1:89"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 517,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 16,
+    "yardline_100": 21,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 512,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 16,
+    "yardline_100": 21,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026158",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 2.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 90,
+   "id": "e2-e1-empirical-v0-seed1:90"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 512,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 16,
+    "yardline_100": 21,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 505,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 13
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 91,
+   "id": "e2-e1-empirical-v0-seed1:91"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 505,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 500,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0033949",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 10.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 92,
+   "id": "e2-e1-empirical-v0-seed1:92"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 500,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 10,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 477,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 80,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0033119",
+    "receiver_id": "00-0036924",
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": 3.0,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 23,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 93,
+   "id": "e2-e1-empirical-v0-seed1:93"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 477,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 80,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 473,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 4,
+    "yardline_100": 80,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034857",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 2.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 94,
+   "id": "e2-e1-empirical-v0-seed1:94"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 473,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 4,
+    "yardline_100": 80,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 460,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 36,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 14
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 13,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 95,
+   "id": "e2-e1-empirical-v0-seed1:95"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 460,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 36,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 428,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 29,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036389",
+    "receiver_id": "00-0035676",
+    "rusher_id": null,
+    "air_yards": 6.0,
+    "yac": 1.0,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 32,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 96,
+   "id": "e2-e1-empirical-v0-seed1:96"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 428,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 29,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 390,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 2,
+    "yardline_100": 28,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036555",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 97,
+   "id": "e2-e1-empirical-v0-seed1:97"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 390,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 2,
+    "yardline_100": 28,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 374,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 1,
+    "yardline_100": 27,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038120",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 16,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 98,
+   "id": "e2-e1-empirical-v0-seed1:98"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 374,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 1,
+    "yardline_100": 27,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 369,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 15
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039150",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": true
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 99,
+   "id": "e2-e1-empirical-v0-seed1:99"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 369,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 332,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036997",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 100,
+   "id": "e2-e1-empirical-v0-seed1:100"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 332,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 326,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034857",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 30.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 101,
+   "id": "e2-e1-empirical-v0-seed1:101"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 326,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 322,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039376",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 102,
+   "id": "e2-e1-empirical-v0-seed1:102"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 322,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 312,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 82,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 16
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 10,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 103,
+   "id": "e2-e1-empirical-v0-seed1:103"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 312,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 82,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 312,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036158",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 0,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 104,
+   "id": "e2-e1-empirical-v0-seed1:104"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 312,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 3,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 271,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036997",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 41,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 105,
+   "id": "e2-e1-empirical-v0-seed1:105"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 271,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 233,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 66,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034869",
+    "receiver_id": "00-0035229",
+    "rusher_id": null,
+    "air_yards": 7.0,
+    "yac": 2.0,
+    "yards_gained": 9,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 106,
+   "id": "e2-e1-empirical-v0-seed1:106"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 233,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 66,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 190,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 14,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0031800",
+    "receiver_id": "00-0037746",
+    "rusher_id": null,
+    "air_yards": -4.0,
+    "yac": 0.0,
+    "yards_gained": -4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 107,
+   "id": "e2-e1-empirical-v0-seed1:107"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 190,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 14,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 148,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 17,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039163",
+    "receiver_id": "00-0036554",
+    "rusher_id": null,
+    "air_yards": -3.0,
+    "yac": 0.0,
+    "yards_gained": -3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 108,
+   "id": "e2-e1-empirical-v0-seed1:108"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 148,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 17,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 148,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 12,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039165",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 5,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 0,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 109,
+   "id": "e2-e1-empirical-v0-seed1:109"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 148,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 12,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 140,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 17
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 8,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 110,
+   "id": "e2-e1-empirical-v0-seed1:110"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 140,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 103,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 64,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0039732",
+    "receiver_id": "00-0040730",
+    "rusher_id": null,
+    "air_yards": 6.0,
+    "yac": 0.0,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 111,
+   "id": "e2-e1-empirical-v0-seed1:111"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 103,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 64,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 61,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 60,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036223",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 112,
+   "id": "e2-e1-empirical-v0-seed1:112"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 61,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 60,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 3,
+    "clock_seconds": 22,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 57,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036223",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 39,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 113,
+   "id": "e2-e1-empirical-v0-seed1:113"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 3,
+    "clock_seconds": 22,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 57,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036893",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 31,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 114,
+   "id": "e2-e1-empirical-v0-seed1:114"
+  },
+  {
+   "event_type": "period_end",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "period_end",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "from_quarter": 3,
+    "to_quarter": 4
+   },
+   "sequence": 115,
+   "id": "e2-e1-empirical-v0-seed1:115"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 900,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 896,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037834",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": -6.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 116,
+   "id": "e2-e1-empirical-v0-seed1:116"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 896,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 4,
+    "yardline_100": 54,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 888,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 88,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 18
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 8,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 117,
+   "id": "e2-e1-empirical-v0-seed1:117"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 888,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 88,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 853,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0038542",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 35,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 118,
+   "id": "e2-e1-empirical-v0-seed1:118"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 853,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 86,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 827,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026158",
+    "receiver_id": "00-0038619",
+    "rusher_id": null,
+    "air_yards": 11.0,
+    "yac": 0.0,
+    "yards_gained": 11,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 26,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 119,
+   "id": "e2-e1-empirical-v0-seed1:119"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 827,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 790,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 2,
+    "yardline_100": 67,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035261",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 8,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 120,
+   "id": "e2-e1-empirical-v0-seed1:120"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 790,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 2,
+    "yardline_100": 67,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 752,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039391",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 121,
+   "id": "e2-e1-empirical-v0-seed1:121"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 752,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 723,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 51,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0033873",
+    "receiver_id": "00-0035662",
+    "rusher_id": null,
+    "air_yards": 6.0,
+    "yac": 4.0,
+    "yards_gained": 10,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 29,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 122,
+   "id": "e2-e1-empirical-v0-seed1:122"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 723,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 51,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 683,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035831",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 123,
+   "id": "e2-e1-empirical-v0-seed1:123"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 683,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 680,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0028118",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 3,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 124,
+   "id": "e2-e1-empirical-v0-seed1:124"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 680,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 676,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0029604",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 17.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 125,
+   "id": "e2-e1-empirical-v0-seed1:125"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 676,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 9,
+    "yardline_100": 50,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 669,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 88,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 19
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 7,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 126,
+   "id": "e2-e1-empirical-v0-seed1:126"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 669,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 88,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 632,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 82,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033699",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 127,
+   "id": "e2-e1-empirical-v0-seed1:127"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 632,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 4,
+    "yardline_100": 82,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 608,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0032764",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 6,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 24,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 128,
+   "id": "e2-e1-empirical-v0-seed1:128"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 608,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 76,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 569,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037248",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 39,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 129,
+   "id": "e2-e1-empirical-v0-seed1:129"
+  },
+  {
+   "event_type": "interception",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 569,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 73,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 563,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 42,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 20
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0026498",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 17.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": true
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 130,
+   "id": "e2-e1-empirical-v0-seed1:130"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 563,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 42,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 557,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036984",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 6,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 131,
+   "id": "e2-e1-empirical-v0-seed1:131"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 557,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 2,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 552,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0033275",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 5.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 132,
+   "id": "e2-e1-empirical-v0-seed1:132"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 552,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 3,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 519,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0038582",
+    "receiver_id": "00-0035662",
+    "rusher_id": null,
+    "air_yards": -2.0,
+    "yac": 2.0,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 33,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 133,
+   "id": "e2-e1-empirical-v0-seed1:133"
+  },
+  {
+   "event_type": "field_goal",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 519,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 7,
+    "down": 4,
+    "yards_to_go": 7,
+    "yardline_100": 39,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 514,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 21
+   },
+   "decision": {
+    "type": "field_goal_attempt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 134,
+   "id": "e2-e1-empirical-v0-seed1:134"
+  },
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 514,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 7,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 514,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "post_field_goal",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 70,
+    "runoff_seconds": 0,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2024_11_GB_CHI",
+     "play_id": 2129,
+     "game_date": "2024-11-17"
+    }
+   },
+   "sequence": 135,
+   "id": "e2-e1-empirical-v0-seed1:135"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 514,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 70,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 474,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037013",
+    "receiver_id": "00-0037740",
+    "rusher_id": null,
+    "air_yards": -1.0,
+    "yac": 6.0,
+    "yards_gained": 5,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 136,
+   "id": "e2-e1-empirical-v0-seed1:136"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 474,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 5,
+    "yardline_100": 65,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 436,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 45,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036212",
+    "receiver_id": "00-0036613",
+    "rusher_id": null,
+    "air_yards": -1.0,
+    "yac": 21.0,
+    "yards_gained": 20,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 137,
+   "id": "e2-e1-empirical-v0-seed1:137"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 436,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 45,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 397,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037012",
+    "receiver_id": "00-0039410",
+    "rusher_id": null,
+    "air_yards": 8.0,
+    "yac": 2.0,
+    "yards_gained": 10,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 39,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 138,
+   "id": "e2-e1-empirical-v0-seed1:138"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 397,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 35,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 360,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 33,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0034857",
+    "receiver_id": "00-0037261",
+    "rusher_id": null,
+    "air_yards": -3.0,
+    "yac": 5.0,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 37,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 139,
+   "id": "e2-e1-empirical-v0-seed1:139"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 360,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 8,
+    "yardline_100": 33,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 320,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 1,
+    "yardline_100": 26,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0039040",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": true,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 140,
+   "id": "e2-e1-empirical-v0-seed1:140"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 320,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 1,
+    "yardline_100": 26,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 277,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 15,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035657",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 11,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 141,
+   "id": "e2-e1-empirical-v0-seed1:141"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 277,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 15,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 268,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 2,
+    "yardline_100": 2,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0030578",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 13,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 9,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 142,
+   "id": "e2-e1-empirical-v0-seed1:142"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 268,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 7,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 2,
+    "yardline_100": 2,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0036919",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 4,
+    "out_of_bounds": false,
+    "touchdown": true,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 143,
+   "id": "e2-e1-empirical-v0-seed1:143"
+  },
+  {
+   "event_type": "extra_point",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 22
+   },
+   "decision": {
+    "type": "extra_point",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "result": "good",
+    "points": 1
+   },
+   "sequence": 144,
+   "id": "e2-e1-empirical-v0-seed1:144"
+  },
+  {
+   "event_type": "kickoff",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "kickoff",
+    "reason": "post_score",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "kickoff_spot_yardline_100": 75,
+    "runoff_seconds": 0,
+    "clock_clamped_to_zero": false,
+    "source_play": {
+     "game_id": "2022_01_GB_MIN",
+     "play_id": 1659,
+     "game_date": "2022-09-11"
+    }
+   },
+   "sequence": 145,
+   "id": "e2-e1-empirical-v0-seed1:145"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 264,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 75,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 220,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0032764",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 44,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 146,
+   "id": "e2-e1-empirical-v0-seed1:146"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 220,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 71,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 196,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035700",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 3,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 24,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 147,
+   "id": "e2-e1-empirical-v0-seed1:147"
+  },
+  {
+   "event_type": "pass_complete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 196,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 3,
+    "yardline_100": 68,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 153,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 4,
+    "yards_to_go": 1,
+    "yardline_100": 66,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0037834",
+    "receiver_id": "00-0036259",
+    "rusher_id": null,
+    "air_yards": 2.0,
+    "yac": 0.0,
+    "yards_gained": 2,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 43,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 148,
+   "id": "e2-e1-empirical-v0-seed1:148"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 153,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 4,
+    "yards_to_go": 1,
+    "yardline_100": 66,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 113,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 62,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037228",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 40,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 149,
+   "id": "e2-e1-empirical-v0-seed1:149"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 113,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 62,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 75,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0037228",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 1,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 150,
+   "id": "e2-e1-empirical-v0-seed1:150"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 75,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 72,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0036971",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 4.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 3,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 151,
+   "id": "e2-e1-empirical-v0-seed1:151"
+  },
+  {
+   "event_type": "pass_incomplete",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 72,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 3,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 67,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 4,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "dropback",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": "00-0031503",
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": 3.0,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 5,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 152,
+   "id": "e2-e1-empirical-v0-seed1:152"
+  },
+  {
+   "event_type": "punt",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 67,
+    "offense_team": "B",
+    "defense_team": "A",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 4,
+    "yards_to_go": 9,
+    "yardline_100": 61,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 57,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 91,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 23
+   },
+   "decision": {
+    "type": "punt",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": null,
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 0,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 10,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 153,
+   "id": "e2-e1-empirical-v0-seed1:153"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 57,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 1,
+    "yards_to_go": 10,
+    "yardline_100": 91,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 19,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 87,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0035250",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 4,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 38,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 154,
+   "id": "e2-e1-empirical-v0-seed1:154"
+  },
+  {
+   "event_type": "run",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 19,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": 2,
+    "yards_to_go": 6,
+    "yardline_100": 87,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "decision": {
+    "type": "run",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "passer_id": null,
+    "receiver_id": null,
+    "rusher_id": "00-0033925",
+    "air_yards": null,
+    "yac": null,
+    "yards_gained": 7,
+    "duration_seconds": null,
+    "clock_runoff_seconds": 42,
+    "out_of_bounds": false,
+    "touchdown": false,
+    "turnover": false
+   },
+   "participants_attribution": "sampled_observed_play",
+   "sequence": 155,
+   "id": "e2-e1-empirical-v0-seed1:155"
+  },
+  {
+   "event_type": "game_end",
+   "state_before": {
+    "quarter": 4,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "state_after": {
+    "quarter": 4,
+    "clock_seconds": 0,
+    "offense_team": "A",
+    "defense_team": "B",
+    "home_score": 14,
+    "away_score": 10,
+    "down": null,
+    "yards_to_go": null,
+    "yardline_100": null,
+    "home_timeouts": 3,
+    "away_timeouts": 3,
+    "drive_index": 24
+   },
+   "decision": {
+    "type": "game_end",
+    "concept": null,
+    "coverage": null
+   },
+   "outcome": {
+    "final_home_score": 14,
+    "final_away_score": 10
+   },
+   "sequence": 156,
+   "id": "e2-e1-empirical-v0-seed1:156"
+  }
+ ],
+ "summary": {
+  "home_score": 14,
+  "away_score": 10,
+  "player_stats": {
+   "00-0023459": {
+    "passing": {
+     "att": 3,
+     "comp": 2,
+     "yds": 32,
+     "td": 0
+    }
+   },
+   "00-0026143": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0026158": {
+    "passing": {
+     "att": 3,
+     "comp": 2,
+     "yds": 17,
+     "td": 1
+    }
+   },
+   "00-0026498": {
+    "passing": {
+     "att": 3,
+     "int": 1
+    }
+   },
+   "00-0028118": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0028986": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0029263": {
+    "passing": {
+     "att": 2,
+     "comp": 2,
+     "yds": 23,
+     "td": 0
+    }
+   },
+   "00-0029604": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0030578": {
+    "rushing": {
+     "att": 1,
+     "yds": 13,
+     "td": 0
+    }
+   },
+   "00-0031280": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0031503": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0031687": {
+    "rushing": {
+     "att": 1,
+     "yds": 1,
+     "td": 0
+    }
+   },
+   "00-0031800": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": -4,
+     "td": 0
+    }
+   },
+   "00-0032764": {
+    "rushing": {
+     "att": 2,
+     "yds": 10,
+     "td": 0
+    }
+   },
+   "00-0033045": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0033119": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0033275": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0033280": {
+    "rushing": {
+     "att": 1,
+     "yds": 18,
+     "td": 0
+    }
+   },
+   "00-0033293": {
+    "receiving": {
+     "rec": 1,
+     "yds": 27,
+     "td": 0
+    }
+   },
+   "00-0033536": {
+    "receiving": {
+     "rec": 1,
+     "yds": 19,
+     "td": 0
+    }
+   },
+   "00-0033699": {
+    "rushing": {
+     "att": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0033858": {
+    "rushing": {
+     "att": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0033873": {
+    "passing": {
+     "att": 2,
+     "comp": 1,
+     "yds": 10,
+     "td": 0
+    }
+   },
+   "00-0033893": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0033897": {
+    "rushing": {
+     "att": 1,
+     "yds": 0,
+     "td": 0
+    }
+   },
+   "00-0033925": {
+    "rushing": {
+     "att": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0033949": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0034159": {
+    "receiving": {
+     "rec": 1,
+     "yds": 18,
+     "td": 0
+    }
+   },
+   "00-0034184": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0034521": {
+    "receiving": {
+     "rec": 1,
+     "yds": 27,
+     "td": 0
+    }
+   },
+   "00-0034753": {
+    "receiving": {
+     "rec": 2,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0034796": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0034827": {
+    "receiving": {
+     "rec": 1,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0034844": {
+    "rushing": {
+     "att": 2,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0034855": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0034857": {
+    "passing": {
+     "att": 3,
+     "comp": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0034869": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 9,
+     "td": 0
+    }
+   },
+   "00-0034972": {
+    "rushing": {
+     "att": 1,
+     "yds": 1,
+     "td": 0
+    }
+   },
+   "00-0035229": {
+    "receiving": {
+     "rec": 1,
+     "yds": 9,
+     "td": 0
+    }
+   },
+   "00-0035250": {
+    "receiving": {
+     "rec": 1,
+     "yds": 7,
+     "td": 0
+    },
+    "rushing": {
+     "att": 2,
+     "yds": 5,
+     "td": 1
+    }
+   },
+   "00-0035261": {
+    "rushing": {
+     "att": 2,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0035657": {
+    "rushing": {
+     "att": 1,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0035662": {
+    "receiving": {
+     "rec": 2,
+     "yds": 10,
+     "td": 0
+    }
+   },
+   "00-0035664": {
+    "rushing": {
+     "att": 1,
+     "yds": 0,
+     "td": 0
+    }
+   },
+   "00-0035676": {
+    "receiving": {
+     "rec": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0035685": {
+    "rushing": {
+     "att": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0035700": {
+    "rushing": {
+     "att": 3,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0035710": {
+    "passing": {
+     "att": 2,
+     "comp": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0035831": {
+    "rushing": {
+     "att": 1,
+     "yds": 1,
+     "td": 0
+    }
+   },
+   "00-0035993": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0036158": {
+    "rushing": {
+     "att": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0036212": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 20,
+     "td": 0
+    }
+   },
+   "00-0036223": {
+    "receiving": {
+     "rec": 1,
+     "yds": 7,
+     "td": 0
+    },
+    "rushing": {
+     "att": 2,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0036251": {
+    "rushing": {
+     "att": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0036259": {
+    "receiving": {
+     "rec": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0036261": {
+    "receiving": {
+     "rec": 1,
+     "yds": 53,
+     "td": 0
+    }
+   },
+   "00-0036264": {
+    "passing": {
+     "att": 2,
+     "comp": 2,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0036275": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0036328": {
+    "rushing": {
+     "att": 2,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0036355": {
+    "passing": {
+     "att": 3,
+     "comp": 3,
+     "yds": 43,
+     "td": 0
+    }
+   },
+   "00-0036389": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0036407": {
+    "receiving": {
+     "rec": 1,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0036554": {
+    "receiving": {
+     "rec": 1,
+     "yds": -3,
+     "td": 0
+    }
+   },
+   "00-0036555": {
+    "rushing": {
+     "att": 1,
+     "yds": 1,
+     "td": 0
+    }
+   },
+   "00-0036613": {
+    "receiving": {
+     "rec": 1,
+     "yds": 20,
+     "td": 0
+    }
+   },
+   "00-0036876": {
+    "receiving": {
+     "rec": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0036879": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0036893": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0036894": {
+    "receiving": {
+     "rec": 1,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0036919": {
+    "rushing": {
+     "att": 1,
+     "yds": 2,
+     "td": 1
+    }
+   },
+   "00-0036924": {
+    "receiving": {
+     "rec": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0036971": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0036972": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0036973": {
+    "rushing": {
+     "att": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0036984": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0036997": {
+    "rushing": {
+     "att": 2,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0037012": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 10,
+     "td": 0
+    }
+   },
+   "00-0037013": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0037197": {
+    "rushing": {
+     "att": 1,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0037228": {
+    "receiving": {
+     "rec": 1,
+     "yds": 15,
+     "td": 0
+    },
+    "rushing": {
+     "att": 2,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0037248": {
+    "rushing": {
+     "att": 1,
+     "yds": 3,
+     "td": 0
+    }
+   },
+   "00-0037261": {
+    "receiving": {
+     "rec": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0037276": {
+    "receiving": {
+     "rec": 1,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0037525": {
+    "rushing": {
+     "att": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0037740": {
+    "receiving": {
+     "rec": 1,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0037746": {
+    "receiving": {
+     "rec": 1,
+     "yds": -4,
+     "td": 0
+    },
+    "rushing": {
+     "att": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0037834": {
+    "passing": {
+     "att": 3,
+     "comp": 2,
+     "yds": 55,
+     "td": 0
+    }
+   },
+   "00-0038102": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 15,
+     "td": 0
+    }
+   },
+   "00-0038120": {
+    "rushing": {
+     "att": 1,
+     "yds": 1,
+     "td": 0
+    }
+   },
+   "00-0038122": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0038134": {
+    "rushing": {
+     "att": 2,
+     "yds": 19,
+     "td": 0
+    }
+   },
+   "00-0038542": {
+    "rushing": {
+     "att": 2,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0038544": {
+    "receiving": {
+     "rec": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0038582": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 0,
+     "td": 0
+    }
+   },
+   "00-0038619": {
+    "receiving": {
+     "rec": 1,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0038797": {
+    "receiving": {
+     "rec": 1,
+     "yds": 4,
+     "td": 0
+    },
+    "rushing": {
+     "att": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0038976": {
+    "receiving": {
+     "rec": 1,
+     "yds": 16,
+     "td": 0
+    }
+   },
+   "00-0038979": {
+    "receiving": {
+     "rec": 1,
+     "yds": 6,
+     "td": 1
+    }
+   },
+   "00-0039040": {
+    "rushing": {
+     "att": 2,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0039067": {
+    "rushing": {
+     "att": 1,
+     "yds": 2,
+     "td": 0
+    }
+   },
+   "00-0039139": {
+    "rushing": {
+     "att": 1,
+     "yds": -3,
+     "td": 0
+    }
+   },
+   "00-0039146": {
+    "receiving": {
+     "rec": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0039150": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0039163": {
+    "passing": {
+     "att": 2,
+     "comp": 1,
+     "yds": -3,
+     "td": 0
+    }
+   },
+   "00-0039165": {
+    "rushing": {
+     "att": 1,
+     "yds": 5,
+     "td": 0
+    }
+   },
+   "00-0039373": {
+    "receiving": {
+     "rec": 1,
+     "yds": 13,
+     "td": 0
+    }
+   },
+   "00-0039376": {
+    "passing": {
+     "att": 1
+    }
+   },
+   "00-0039384": {
+    "rushing": {
+     "att": 3,
+     "yds": 7,
+     "td": 0
+    }
+   },
+   "00-0039391": {
+    "rushing": {
+     "att": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0039410": {
+    "receiving": {
+     "rec": 1,
+     "yds": 10,
+     "td": 0
+    }
+   },
+   "00-0039732": {
+    "passing": {
+     "att": 2,
+     "comp": 2,
+     "yds": 19,
+     "td": 0
+    }
+   },
+   "00-0039738": {
+    "rushing": {
+     "att": 1,
+     "yds": 4,
+     "td": 0
+    }
+   },
+   "00-0039890": {
+    "receiving": {
+     "rec": 1,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0039918": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0039923": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 27,
+     "td": 0
+    }
+   },
+   "00-0040398": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 8,
+     "td": 0
+    }
+   },
+   "00-0040494": {
+    "passing": {
+     "att": 1,
+     "comp": 1,
+     "yds": 11,
+     "td": 0
+    }
+   },
+   "00-0040730": {
+    "receiving": {
+     "rec": 1,
+     "yds": 6,
+     "td": 0
+    }
+   },
+   "00-0040784": {
+    "rushing": {
+     "att": 1,
+     "yds": 7,
+     "td": 0
+    }
+   }
+  },
+  "team_stats": {
+   "A": {
+    "pass_att": 27,
+    "pass_comp": 16,
+    "pass_yds": 189,
+    "plays": 66,
+    "rush_att": 31,
+    "rush_yds": 127,
+    "sacks": 1,
+    "touchdowns": 2,
+    "turnovers": 2
+   },
+   "B": {
+    "pass_att": 33,
+    "pass_comp": 20,
+    "pass_yds": 168,
+    "plays": 77,
+    "rush_att": 32,
+    "rush_yds": 115,
+    "sacks": 3,
+    "touchdowns": 1,
+    "turnovers": 2
+   }
+  },
+  "valid_full_game": false
+ },
+ "unresolved": {
+  "game_id": "no scheduled game key: the game is an authored hypothetical, not a fixture",
+  "scheduled_kickoff_utc": "no scheduled kickoff: not a pregame simulation",
+  "as_of_utc": "no as-of time: not a pregame simulation",
+  "snapshot_hash": "no pregame snapshot: the record is not built from one",
+  "roster_snapshot_id": "no roster snapshot: lineups are not modelled"
+ },
+ "engine_status": {
+  "status": "complete_regulation",
+  "blocker": null,
+  "complete_game": true,
+  "unsupported_rules": [
+   "timeouts",
+   "two_minute_warning",
+   "penalties",
+   "onside_kicks",
+   "overtime",
+   "exception_coin_toss",
+   "lineups"
+  ]
+ }
+}
