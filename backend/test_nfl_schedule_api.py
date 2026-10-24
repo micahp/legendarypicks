@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 import os
 import sys
@@ -247,33 +248,11 @@ class NcaafScheduleTests(unittest.TestCase):
         self.assertIn("football/college-football", get.call_args.args[0])
 
     @patch.object(espn, "_get")
-    def test_ncaaf_week_uses_published_date_window_not_capped_week_query(self, get):
-        def event(event_id, season, season_type, week):
-            return {
-                "id": event_id,
-                "date": "2026-08-29T19:00Z",
-                "season": {"year": season, "type": season_type},
-                "week": {"number": week},
-                "competitions": [{
-                    "status": {"type": {"state": "pre", "description": "Scheduled"}},
-                    "competitors": [],
-                }],
-            }
-        get.return_value = {"events": [
-            event("wanted", 2026, 2, 1),
-            event("wrong-week", 2026, 2, 2),
-        ]}
+    def test_ncaaf_week_games_are_not_fetched_by_the_espn_client(self, get):
+        with self.assertRaises(ValueError):
+            espn.football_schedule_week_games("ncaaf", 2026, 2, 1)
 
-        games_for_week = espn.football_schedule_week_games(
-            "ncaaf", 2026, 2, 1,
-            "2026-08-22T07:00Z", "2026-09-08T06:59Z",
-        )
-
-        self.assertEqual([game["game_id"] for game in games_for_week], ["wanted"])
-        url = get.call_args.args[0]
-        self.assertIn("dates=20260822-20260908", url)
-        self.assertIn("groups=80", url)
-        self.assertNotIn("week=1", url)
+        get.assert_not_called()
 
     @patch.object(games.espn, "football_schedule_weeks", return_value=NCAAF_PHASES)
     def test_ncaaf_catalog_defaults_to_published_week(self, catalog):
@@ -282,19 +261,87 @@ class NcaafScheduleTests(unittest.TestCase):
         self.assertEqual(payload["league"], "ncaaf")
         self.assertEqual(payload["default_week_key"], "2:1")
 
-    @patch.object(games.espn, "football_schedule_week_games")
-    @patch.object(games.espn, "football_schedule_weeks", return_value=NCAAF_PHASES)
-    def test_ncaaf_week_supports_cfp_999_and_passes_calendar_bounds(self, catalog, week_games):
-        week_games.return_value = []
+    WEEK_8 = [{
+        "season_type": 2, "label": "Regular Season",
+        "start_time": "2026-08-22T07:00Z", "end_time": "2026-12-13T07:59Z",
+        "weeks": [{
+            "key": "2:8", "season_type": 2, "week": 8,
+            "label": "Week 8", "alternate_label": "Week 8",
+            "detail": "Oct 19-25",
+            "start_time": "2026-10-19T07:00Z",
+            "end_time": "2026-10-26T06:59Z",
+        }],
+    }]
 
+    @staticmethod
+    def _game(game_id, date, season_type=2):
+        return {"game_id": game_id, "date": date, "season_type": season_type, "state": "pre"}
+
+    @patch("routers.games.schedule._today", return_value=dt.date(2026, 10, 24))
+    @patch.object(games.espn, "games")
+    @patch.object(games, "_scoreboard_snapshot", return_value=None)
+    @patch("scoreboard_store.read", return_value=None)
+    @patch.object(games.espn, "football_schedule_weeks", return_value=NCAAF_PHASES)
+    def test_ncaaf_cfp_days_never_read_are_listed_not_requested(self, catalog, read, snapshot, daily, today):
         payload = json.loads(games.get_ncaaf_schedule_week(2026, 3, 999).body)
 
         self.assertEqual(payload["contract"], "ncaaf-schedule-week-v1")
         self.assertEqual(payload["selected_week"]["label"], "CFP")
-        week_games.assert_called_once_with(
-            "ncaaf", 2026, 3, 999,
-            "2026-12-18T08:00Z", "2027-01-28T07:59Z",
-        )
+        self.assertEqual(payload["games"], [])
+        self.assertEqual(len(payload["unread_days"]), 42)
+        self.assertEqual(payload["unread_days"][0], "2026-12-18")
+        self.assertEqual(payload["unread_days"][-1], "2027-01-28")
+        daily.assert_not_called()
+
+    @patch("routers.games.schedule._today", return_value=dt.date(2026, 10, 24))
+    @patch.object(games.espn, "games")
+    @patch.object(games, "_scoreboard_snapshot")
+    @patch("scoreboard_store.read")
+    @patch.object(games.espn, "football_schedule_weeks", return_value=WEEK_8)
+    def test_ncaaf_week_serves_stored_days_inside_the_window(self, catalog, read, snapshot, daily, today):
+        read.side_effect = lambda league, day: None if day > "2026-10-24" else {"games": []}
+        slates = {
+            "2026-10-19": [self._game("a", "2026-10-19T19:00Z"),
+                           self._game("early", "2026-10-19T06:30Z")],
+            "2026-10-22": [self._game("b", "2026-10-22T23:00Z", season_type=3)],
+            "2026-10-24": [self._game("c", "2026-10-24T19:30Z"),
+                           self._game("a", "2026-10-19T19:00Z")],
+        }
+        snapshot.side_effect = lambda league, day: (slates.get(day, []), 5)
+
+        payload = json.loads(games.get_ncaaf_schedule_week(2026, 2, 8).body)
+
+        self.assertEqual([g["game_id"] for g in payload["games"]], ["a", "c"])
+        self.assertEqual(payload["unread_days"], ["2026-10-25", "2026-10-26"])
+        daily.assert_not_called()
+
+    @patch("routers.games.schedule._today", return_value=dt.date(2026, 10, 24))
+    @patch.object(games, "_capture_completed_day")
+    @patch.object(games.espn, "games")
+    @patch.object(games, "_scoreboard_snapshot")
+    @patch("scoreboard_store.read", return_value=None)
+    @patch.object(games.espn, "football_schedule_weeks", return_value=WEEK_8)
+    def test_ncaaf_finished_day_never_read_is_fetched_once_and_stored(self, catalog, read, snapshot, daily, capture, today):
+        snapshot.side_effect = lambda league, day: None if day == "2026-10-20" else ([], 5)
+        daily.return_value = [self._game("x", "2026-10-20T19:00Z")]
+
+        payload = json.loads(games.get_ncaaf_schedule_week(2026, 2, 8).body)
+
+        self.assertEqual([g["game_id"] for g in payload["games"]], ["x"])
+        daily.assert_called_once_with("ncaaf", "2026-10-20")
+        capture.assert_called_once_with("ncaaf", "2026-10-20", daily.return_value)
+
+    @patch("routers.games.schedule._today", return_value=dt.date(2026, 10, 24))
+    @patch.object(games.espn, "games", side_effect=ConnectionError("espn down"))
+    @patch.object(games, "_scoreboard_snapshot", return_value=None)
+    @patch("scoreboard_store.read", return_value=None)
+    @patch.object(games.espn, "football_schedule_weeks", return_value=WEEK_8)
+    def test_ncaaf_unavailable_finished_day_fails_loudly(self, catalog, read, snapshot, daily, today):
+        with self.assertRaises(HTTPException) as raised:
+            games.get_ncaaf_schedule_week(2026, 2, 8)
+
+        self.assertEqual(raised.exception.status_code, 502)
+        self.assertIn("NCAAF schedule week games unavailable", raised.exception.detail)
 
 
 if __name__ == "__main__":
