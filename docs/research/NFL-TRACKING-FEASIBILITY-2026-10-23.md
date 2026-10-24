@@ -1,6 +1,6 @@
 # NFL player-tracking feasibility, Phase 0 (LP data side, 2026-10-23)
 
-**Status:** No NFL full-player tracking is available on this box. The directive's stop condition applies: narrow to the published 2026 Big Data Bowl throw-to-arrival benchmark only after the files are provided, or record the access blocker. No full-play validation is claimed.
+**Status:** No NFL full-player tracking is available on this box, and none can be downloaded until the token's account accepts the competition rules on kaggle.com. Listings from the Kaggle API are recorded below; no tracking file has been read. The directive's stop condition applies: narrow to the published 2026 Big Data Bowl throw-to-arrival benchmark only after the files are provided, or record the access blocker. No full-play validation is claimed.
 
 Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md` (`origin/main`), Phase 0 and the LP tracking owner role.
 
@@ -9,8 +9,15 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 | Check | Command or source | Result |
 | --- | --- | --- |
 | Local filenames | `find /root /data /srv /mnt /home /opt /var/lib -xdev` for `*tracking*`, `*bigdatabowl*`, `*big-data-bowl*`, `*big_data_bowl*`, `tracking_week*`, `plays.csv`, `games.csv`, `player_play*` | Only NHL tracking: `/root/lp-research-data/stathletes-big-data-cup-2026/*Tracking_P*.csv` (hockey, not NFL). Other matches were unrelated package and cache files. |
-| Kaggle credentials | `/root/.kaggle/kaggle.json`, `KAGGLE*` environment variables, `import kaggle` | All absent on 2026-10-23. The public 2025/2026 Big Data Bowl files need an account download. |
+| Kaggle access | `KAGGLE_API_TOKEN` in `/root/.hermes/.env` (added by the user, 2026-10-23; value not recorded here) | The token authenticates: the competition file listings return HTTP 200. Every file download returns HTTP 403, 'You must accept this competition's rules before you'll be able to download files.' Rule acceptance is a human step on kaggle.com for the token's account. |
 | LP dev database, read-only | `/root/legendarypicks/backend/data/picks.dev.db` (126 tables) | No table has positional tracking columns. Columns checked for x, y, s, a, o, dir, frameId, nflId: none found in any NFL table. |
+
+## Kaggle listings (metadata only, via the API)
+
+| Competition | Listing | Notes |
+| --- | --- | --- |
+| `nfl-big-data-bowl-2025` | README only (78 bytes) | Tracking files are not listed through this token. |
+| `nfl-big-data-bowl-2026-prediction` | 20 files, 334,797,422 bytes total | 11 `kaggle_evaluation/` code files, `test.csv` (177,525 B), `test_input.csv` (8,509,084 B), `train/input_2023_w01.csv` to `w07.csv` (39.9 to 51.1 MB each). No `train/output_*` label files are listed. |
 
 ## NFL play-level tables that do exist (observed context, not frames)
 
@@ -30,7 +37,7 @@ The user stated on 2026-10-23 that the rights are already in place, and asked th
 
 1. **Full-play, from-snap tracking:** not available locally. Not verified in the 2025 or 2026 public releases from here, because the download needs credentials.
 2. **Narrow fallback (2026 Big Data Bowl throw-to-arrival):** needs the competition files. The 2026 prediction task starts at ball release and provides the target receiver and landing coordinates, so it is admissible only as a conditional post-throw benchmark.
-3. **Blocker needing your action:** place the Big Data Bowl files at a local path, or provide Kaggle credentials for a download. Not downloaded without that authorization.
+3. **Blocker needing your action:** accept the rules of `nfl-big-data-bowl-2026-prediction` (and `nfl-big-data-bowl-2025` if that cohort is wanted) on kaggle.com with the account that owns the token. Nothing was downloaded. A one-week check (`train/input_2023_w01.csv`, about 49 MB) is queued for after acceptance.
 
 ## Fields the directive requires, status
 
