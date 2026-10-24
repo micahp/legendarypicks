@@ -2,13 +2,12 @@
  "gridiron_root": "/tmp/claude-0/-root-lp-nfl-props/a5372ef5-13c9-489b-ab2d-00e9af6e68e3/scratchpad/gridiron_de64ae12",
  "envelope": "docs/evidence/e2-successor/e2-game-envelope-seed1-successor.json",
  "adapter": {
+  "accepted": false,
+  "error": "viewer requires a complete regulation record"
+ },
+ "adapterValidationOnly": {
   "accepted": true,
   "sourcePlayCount": 141,
-  "drives": 18,
-  "scores": {
-   "A": 24,
-   "B": 27
-  },
   "validationPassed": true,
   "validationFindings": 0,
   "footballStateFindings": 0,

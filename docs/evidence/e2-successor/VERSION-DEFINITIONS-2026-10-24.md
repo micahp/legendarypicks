@@ -1,7 +1,8 @@
 # E2 successor: version definitions (2026-10-24)
 
 Every E2 game record carries two stamps. Both are defined and computed in `scripts/nfl_sequence/versions.py`. This document is
-the only place their meaning is written down. The stage labels they replace are listed at the end.
+the only place their meaning is written down. The stage labels they replace are listed at the end, and the scoped-out
+transitions are listed in `UNMODELLED-TRANSITIONS-300-2026-10-24.md`.
 
 ## model_version
 
@@ -9,7 +10,7 @@ the only place their meaning is written down. The stage labels they replace are 
   `ENGINE_FILES`: `game_state.py`, `e1_drive.py`, `e2_reference.py`, `e0_single_play.py`.
 - **Stamped by:** `versions.stamp()`, which refuses to run while any engine or rule file has uncommitted changes. So the value
   always names code that exists and was run.
-- **Value on the seed-1 record:** `c131fda249dcf9af642dd6ba267905e88803a74a`.
+- **Value on the seed-1 record:** `75962ffe5fca9eddee9b49ff377031c5075e2c16` (the last engine commit, `75962ffe`).
 - **Changes when:** an engine file changes. It does not change for evidence, scripts, tests or documents.
 
 ## rules_version
@@ -19,16 +20,23 @@ the only place their meaning is written down. The stage labels they replace are 
   Gridiron envelope already pins under `source.producer_file_sha256`.
 - **Why not the envelope file hash:** the envelope contains the record, so its hash would depend on the value it is meant to
   carry.
-- **Value on the seed-1 record:** `5e60ed7ddeb81e3164091b816a00e4cae5e33c76163e92dc26c4547c49c63628`.
+- **Value on the seed-1 record:** `7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167`.
 - **Changes when:** a file in `RULE_FILES` changes. That includes `shared_v1.py`, the v1 projection, which is in the scope the
   envelope already pins.
 
-## What this means for the 300-seed survey
+## What the two stamps mean for a record
 
-The survey ran at engine commit `c131fda2` (`legality-survey-300-summary.json`). The same rule scope hashed to
-`faecd1ba195288302e5a96fb19949f717ef463c08112876e8c4787eab10033f3` at that commit. Today's value differs only because
-`shared_v1.py` changed, and the survey never calls it. No `ENGINE_FILES` change has been committed since `c131fda2`, so the
-survey's game results still describe the current engine.
+- `complete_regulation` is true only for a game with no unmodelled transition and no block. A guarded game is never a
+  complete regulation game.
+- `regulation_end_reached` is the simulation fact: the game reached regulation end without a block.
+- `complete_game` is true only when the game is unblocked, untied and free of unmodelled transitions.
+- `status` is `regulation_end_guarded` for a game that reached regulation end but contains an unmodelled transition.
+- `valid_full_game` is false for every record, because the unsupported-rule list is never empty.
+
+## Which commit the survey ran at
+
+The survey and the enumeration were run at the engine commit in the record's `model_version`, `75962ffe`. The survey document
+(`SURVEY-300-SUCCESSOR-2026-10-24.md`) gives the counts from that run.
 
 ## Stage labels replaced
 
@@ -43,5 +51,7 @@ survey's game results still describe the current engine.
 - The record's `rules_version` must equal the `rules_version` recomputed from the envelope's `producer_file_sha256` map.
 - The record's `model_version` must be a commit in the producing repository, and the envelope's `source.base_commit` must be a
   commit at or after it.
+- Gridiron's viewer requires a complete regulation record. A guarded record is therefore refused by the viewer, and accepted by
+  structural validation with its findings reported (`gridiron-adapter-proof-*.json`, both modes).
 - Gridiron's cache key `(game_id, snapshot_hash, model_version, rules_version, seed)` changes only when an engine or rule file
   changes. A record regenerated after an evidence-only commit keeps its key.

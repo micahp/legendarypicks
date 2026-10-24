@@ -77,5 +77,14 @@
  "source": {
   "file": "docs/fixtures/e2/kick_results_2022_2025.csv",
   "sha256": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93"
+ },
+ "source_engine_difference": {
+  "consequence": "A missed field goal is awarded at the spot of the kick. On the engine convention the receivers start one yard closer to their own goal line than on the publisher convention (93 - snap against 92 - snap). Made-field-goal rates are keyed on the snap yardline and are not affected.",
+  "decision": "Engine stays at +17. The frozen survey, the frozen fixtures and the engine are not changed for this difference. It is recorded here and nowhere else.",
+  "difference_yards": 1,
+  "engine": "holder 7 + end line 10 = +17; kept, not changed",
+  "publisher_modal": "+18 on 3779 of 4325 field-goal rows (87.4%)",
+  "reasoning": "Seven is the rule minimum, so the engine value is legal. The publisher offset of +18 is the publisher's own measurement convention: its yardline_100 or its kick_distance definition, not a rule. The data cannot tell the two apart, so the engine does not adopt the publisher convention.",
+  "rule": "The holder and kicker stand seven or more yards behind the line of scrimmage. The printed 2026 rulebook states this at Rule 3, Section 17 (KICKS), Article 7(b). The citation \"Rule 1-6-2\" was given in review and was not used: Rule 1 of the printed rulebook ends at Section 5 and has no Section 6."
  }
 }

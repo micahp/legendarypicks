@@ -22,8 +22,8 @@
    "to_quarter": 4
   }
  ],
- "complete_game": true,
- "complete_regulation": true,
+ "complete_game": false,
+ "complete_regulation": false,
  "drives": [
   {
    "clock_start": 900,
@@ -15697,6 +15697,10 @@
    "enforced_by": "participants attribution label",
    "guard": "participants are labelled sampled_observed_play; no lineup or substitution is modelled"
   },
+  "missed_field_goal_return": {
+   "enforced_by": "unsupported_rules; valid_full_game is false",
+   "guard": "Rule 11-4-2 exceptions (1) and (2): when the receivers touch a missed field goal beyond the line of scrimmage, the general scrimmage-kick rules apply instead of the spot of the kick. The table records makes and misses, not touches, so every missed field goal here is awarded at missed_field_goal_spot"
+  },
   "onside_kicks": {
    "enforced_by": "kickoff pool; unsupported_rules",
    "guard": "every kickoff is drawn from the observed kickoff pool; no onside kick is drawn"
@@ -15723,11 +15727,13 @@
    "after_drive": 0,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "half_start",
    "quarter": 1,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2023-12-03",
@@ -15740,11 +15746,13 @@
    "after_drive": 2,
    "clock_before": 430,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "post_field_goal",
    "quarter": 1,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2025-01-05",
@@ -15757,11 +15765,13 @@
    "after_drive": 3,
    "clock_before": 48,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "A",
    "kind": "post_score",
    "quarter": 1,
    "receiving_team": "B",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2023-10-29",
@@ -15774,11 +15784,13 @@
    "after_drive": 4,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": "provisional_practice_rule",
    "kicking_team": "B",
    "kind": "post_score",
    "quarter": 2,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2024-11-17",
@@ -15791,11 +15803,13 @@
    "after_drive": 5,
    "clock_before": 683,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "A",
    "kind": "post_score",
    "quarter": 2,
    "receiving_team": "B",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2022-09-11",
@@ -15808,11 +15822,13 @@
    "after_drive": 6,
    "clock_before": 511,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "post_score",
    "quarter": 2,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2023-11-12",
@@ -15825,11 +15841,13 @@
    "after_drive": 9,
    "clock_before": 35,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "A",
    "kind": "post_field_goal",
    "quarter": 2,
    "receiving_team": "B",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2022-12-04",
@@ -15842,11 +15860,13 @@
    "after_drive": 10,
    "clock_before": 900,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "A",
    "kind": "half_start",
    "quarter": 3,
    "receiving_team": "B",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2024-09-22",
@@ -15859,11 +15879,13 @@
    "after_drive": 11,
    "clock_before": 660,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "post_field_goal",
    "quarter": 3,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 5,
    "source": {
     "game_date": "2022-09-25",
@@ -15876,11 +15898,13 @@
    "after_drive": 12,
    "clock_before": 186,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "A",
    "kind": "post_score",
    "quarter": 3,
    "receiving_team": "B",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2024-11-10",
@@ -15893,11 +15917,13 @@
    "after_drive": 15,
    "clock_before": 335,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "post_field_goal",
    "quarter": 4,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 0,
    "source": {
     "game_date": "2024-12-15",
@@ -15910,11 +15936,13 @@
    "after_drive": 17,
    "clock_before": 107,
    "clock_clamped_to_zero": false,
+   "clock_expired_during_kickoff": false,
    "clock_rule": null,
    "kicking_team": "B",
    "kind": "post_field_goal",
    "quarter": 4,
    "receiving_team": "A",
+   "runoff_overrun_seconds": 0,
    "runoff_seconds": 6,
    "source": {
     "game_date": "2025-11-02",
@@ -15935,7 +15963,7 @@
   "winner_deferred": false
  },
  "mode": "legal_game_state_first_piece",
- "model_version": "c131fda249dcf9af642dd6ba267905e88803a74a",
+ "model_version": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
  "points": {
   "A": 24,
   "B": 27
@@ -15971,8 +15999,18 @@
    "status": "pending_2026_rulebook"
   }
  ],
- "rules_version": "5e60ed7ddeb81e3164091b816a00e4cae5e33c76163e92dc26c4547c49c63628",
- "scope_out": [],
+ "regulation_end_reached": true,
+ "rules_version": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167",
+ "scope_out": [
+  {
+   "detail": "guard timeouts: no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook",
+   "reason": "unmodelled transition: timeout"
+  },
+  {
+   "detail": "guard two_minute_warning: no two-minute stoppage is modelled. The sampled runoff is used as recorded, and it is not checked for a warning stoppage: the warning is not identifiable in the play-by-play, so whether observed runoffs carry it is unverified",
+   "reason": "unmodelled transition: two_minute_warning"
+  }
+ ],
  "seed": 1,
  "simulation_id": "e2-e1-empirical-v0-seed1",
  "stats": {
@@ -17171,9 +17209,14 @@
    }
   }
  },
- "status": "complete_regulation",
+ "status": "regulation_end_guarded",
  "tied": false,
  "unmodelled_transitions": [
+  {
+   "drive_index": 7,
+   "kind": "timeout",
+   "sequence": 52
+  },
   {
    "drive_index": 9,
    "kind": "two_minute_warning",
@@ -17194,7 +17237,8 @@
   "onside_kicks",
   "overtime",
   "exception_coin_toss",
-  "lineups"
+  "lineups",
+  "missed_field_goal_return"
  ],
  "valid_full_game": false
 }

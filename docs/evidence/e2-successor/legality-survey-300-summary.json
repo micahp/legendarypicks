@@ -1,7 +1,10 @@
 {
+ "blocked_described_complete": 0,
  "blocked_never_complete": true,
- "complete_but_unmodelled": 288,
- "complete_regulation": 288,
+ "complete_but_unmodelled": 0,
+ "complete_game": 0,
+ "complete_regulation": 0,
+ "guarded_described_complete": 0,
  "legal_complete_game": 0,
  "legal_modelled": 300,
  "legal_modelled_illegal": [],
@@ -12,14 +15,17 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 9,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 4
    },
    "frozen": {
     "blocker": "thin_kick_cell:field_goal:50+",
@@ -33,14 +39,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 36,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -54,12 +63,15 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
     "seed": 48,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
     "unmodelled_transitions": 2
    },
@@ -75,10 +87,13 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: two_minute_warning",
     "seed": 55,
     "status": "blocked",
     "try_findings": 0,
@@ -96,14 +111,17 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 78,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 4
    },
    "frozen": {
     "blocker": "overtime_not_modelled",
@@ -117,14 +135,17 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 87,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "overtime_not_modelled",
@@ -138,14 +159,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 114,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -159,14 +183,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 163,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -180,14 +207,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 175,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 4
    },
    "frozen": {
     "blocker": "",
@@ -201,14 +231,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 185,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -222,14 +255,17 @@
    "engine_now": {
     "blocker": "thin_kick_cell:field_goal:50+",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "rare kick outcome;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 194,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 1
+    "unmodelled_transitions": 2
    },
    "frozen": {
     "blocker": "",
@@ -243,12 +279,15 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
     "seed": 216,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
     "unmodelled_transitions": 2
    },
@@ -264,14 +303,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 246,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -285,12 +327,15 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
     "seed": 267,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
     "unmodelled_transitions": 2
    },
@@ -306,14 +351,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 276,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -327,14 +375,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 279,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "",
@@ -348,14 +399,17 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
     "seed": 280,
     "status": "blocked",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 4
    },
    "frozen": {
     "blocker": "",
@@ -369,10 +423,13 @@
    "engine_now": {
     "blocker": "overtime_not_modelled",
     "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
     "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: two_minute_warning",
     "seed": 290,
     "status": "blocked",
     "try_findings": 0,
@@ -390,14 +447,17 @@
    "engine_now": {
     "blocker": "",
     "checker_failed_checks": "check_unmodelled",
-    "complete_regulation": true,
+    "complete_game": false,
+    "complete_regulation": false,
     "legal_complete_game": false,
     "legal_modelled": true,
     "matrix_fail": 0,
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
     "seed": 291,
-    "status": "complete_regulation",
+    "status": "regulation_end_guarded",
     "try_findings": 0,
-    "unmodelled_transitions": 2
+    "unmodelled_transitions": 3
    },
    "frozen": {
     "blocker": "overtime_not_modelled",
@@ -409,10 +469,21 @@
   }
  ],
  "records_with_unmodelled_transitions": 300,
+ "regulation_end_guarded": 288,
+ "regulation_end_reached": 288,
+ "scope_out_seeds": {
+  "drive limit": 0,
+  "other": 0,
+  "overtime": 11,
+  "penalty": 0,
+  "rare kick outcome": 1,
+  "thin E1 pool cell": 0
+ },
  "seeds": 300,
  "status": {
   "blocked": 12,
-  "complete_regulation": 288
+  "regulation_end_guarded": 288
  },
- "try_findings_total": 0
+ "try_findings_total": 0,
+ "validate_game_passed": 300
 }

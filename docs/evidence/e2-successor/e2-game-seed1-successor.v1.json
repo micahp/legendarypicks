@@ -6,8 +6,8 @@
  "scheduled_kickoff_utc": null,
  "as_of_utc": null,
  "snapshot_hash": null,
- "model_version": "c131fda249dcf9af642dd6ba267905e88803a74a",
- "rules_version": "5e60ed7ddeb81e3164091b816a00e4cae5e33c76163e92dc26c4547c49c63628",
+ "model_version": "75962ffe5fca9eddee9b49ff377031c5075e2c16",
+ "rules_version": "7f0578bf96dc05eb2c217e247aaac6a7cc3695ae5f975af3e4457263450bc167",
  "seed": 1,
  "teams": {
   "home": "A",
@@ -9266,9 +9266,9 @@
   "roster_snapshot_id": "no roster snapshot: lineups are not modelled"
  },
  "engine_status": {
-  "status": "complete_regulation",
+  "status": "regulation_end_guarded",
   "blocker": null,
-  "complete_game": true,
+  "complete_game": false,
   "unsupported_rules": [
    "timeouts",
    "two_minute_warning",
@@ -9276,7 +9276,8 @@
    "onside_kicks",
    "overtime",
    "exception_coin_toss",
-   "lineups"
+   "lineups",
+   "missed_field_goal_return"
   ]
  }
 }
