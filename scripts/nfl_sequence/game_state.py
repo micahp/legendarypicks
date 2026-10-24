@@ -56,7 +56,7 @@ HOLDER_OFFSET = 7
 KICK_DURATION_SECONDS = 5
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
-                     'exception_coin_toss', 'lineups')
+                     'exception_coin_toss', 'lineups', 'missed_field_goal_return')
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
@@ -78,6 +78,11 @@ GUARDS = {
                             'enforced_by': 'CoinTossLedger'},
     'lineups': {'guard': 'participants are labelled sampled_observed_play; no lineup or substitution is modelled',
                 'enforced_by': 'participants attribution label'},
+    'missed_field_goal_return': {'guard': 'Rule 11-4-2 exceptions (1) and (2): when the receivers touch a missed field goal beyond the '
+                                          'line of scrimmage, the general scrimmage-kick rules apply instead of the spot of the kick. '
+                                          'The table records makes and misses, not touches, so every missed field goal here is '
+                                          'awarded at missed_field_goal_spot',
+                                 'enforced_by': 'unsupported_rules; valid_full_game is false'},
 }
 SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
 PRACTICE_RULE = 'provisional_practice_rule'
@@ -667,6 +672,11 @@ def validate_game(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
     """
     checks = []
+    # Scope refusals first: a record may not call a blocked or tied game complete, whatever its other fields say.
+    if record.get('blocker') is not None and (record.get('complete_regulation') or record.get('complete_game')):
+        raise AssertionError(f"a blocked record ({record['blocker']}) is never described as a complete game")
+    if record.get('complete_regulation') and record['points']['A'] == record['points']['B']:
+        raise AssertionError('a tied regulation game is not a complete game: overtime is not modelled (scoped out)')
     simulation_id = record.get('simulation_id')
     if not isinstance(simulation_id, str) or not simulation_id:
         raise AssertionError('game record requires one non-empty simulation_id')

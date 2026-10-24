@@ -106,8 +106,8 @@ ROWS = [
          transition='game_state:scope_out_reasons',
          citations=[(GAME, 'overtime_not_modelled')],
          positive=['test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime'],
-         adversarial=[],
-         status='guard', note='GAP: no test that validate_game refuses a tied record marked complete. The guard is the block itself.'),
+         adversarial=['test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused'],
+         status='guard', note='validate_game refuses a tied game described as complete.'),
     dict(id='R08', rule='Touchdown is 6 points. The try after it is 1 point (kick) or 2 points (conversion). Scoring team kicks off.',
          rulebook=dict(article='Rule 11, Section 1, Article 2 (TYPES OF SCORING PLAYS)', status='verified',
                        quote='"(a) Touchdown: 6 points" and "(d) Try after touchdown: 1 point (field goal or safety) or 2 points (touchdown)"'),
@@ -141,14 +141,17 @@ ROWS = [
                        quote='"(a) If the spot of the kick was inside the receivers\' 20-yard line, it is the receivers\' ball at the 20-yard line; or (b) ... at the spot of the kick."'),
          lp_reference='Rules file section 4 and the review note cited by the engine',
          transition='game_state:missed_field_goal_spot',
-         citations=[(GAME, 'Review note, Rule 11-4-2'), ('rules_matrix.py', 'Rule 11-4-2'), (GAME, 'def missed_field_goal_spot')],
-         positive=['test_game_state.MissedFieldGoalSpot.test_the_spot_of_the_kick_when_it_is_outside_the_receivers_20',
+         citations=[(GAME, 'Review note, Rule 11-4-2'), ('rules_matrix.py', 'Rule 11-4-2'), (GAME, 'def missed_field_goal_spot'),
+                    (GAME, "'missed_field_goal_return': {'guard'")],
+         positive=['test_game_state.MissedFieldGoalBoundaries.test_one_yard_inside_the_receivers_20_gives_their_20',
+                   'test_game_state.MissedFieldGoalBoundaries.test_one_yard_outside_the_receivers_20_gives_the_spot_of_the_kick',
                    'test_game_state.MissedFieldGoalSpot.test_the_receivers_own_20_when_the_kick_spot_is_inside_its_20'],
          adversarial=['test_game_state.MissedFieldGoalSpot.test_the_matrix_rejects_the_snap_based_value_for_a_kick_from_the_21',
                       'test_game_state.MissedFieldGoalSpot.test_the_matrix_rejects_a_next_drive_at_the_kick_spot_inside_the_20'],
          status='modelled',
-         note='The engine docstring says the rulebook text is not in the repository; the text is now verified. Not modelled: '
-              '11-4-2 exceptions (1) and (2), where the receivers touch the ball beyond the line of scrimmage.'),
+         note='The engine docstring says the rulebook text is not in the repository; the text is now verified. The exceptions '
+              '(1) and (2), where the receivers touch the ball beyond the line of scrimmage, are guarded: missed_field_goal_return '
+              'is an unsupported rule, so valid_full_game is false.'),
     dict(id='R12', rule='The holder and kicker stand seven or more yards behind the line of scrimmage. The engine places the kick at the snap yardline plus HOLDER_OFFSET.',
          rulebook=dict(article='Section 17 KICKS, Article 7(b)', status='verified',
                        quote='"a potential holder and potential kicker seven or more yards behind the neutral zone"'),
@@ -159,8 +162,9 @@ ROWS = [
          adversarial=['test_game_state.MissedFieldGoalSpot.test_the_20_exception_applies_to_the_kick_spot_not_the_snap'],
          status='modelled',
          note='DISAGREEMENT, one place. The rule minimum is 7. The engine implies kick_distance = yardline_100 + 17 (holder 7 + end line 10, '
-              'Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows (see the '
-              'kick_distance_offset block below). The engine keeps 7, and the publisher offset is kept as the reference.'),
+              'Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows. Ruling: the '
+              'engine keeps +17; the publisher offset is its own measurement convention, not a rule. Full record in '
+              'kick-distance-offset.json, source_engine_difference.'),
     dict(id='R13', rule='A made field goal runs off at most five seconds of game clock.',
          rulebook=dict(article='11-4-2 Field Goal Attempt Notes (5)', status='verified',
                        quote='"For a successful field goal ... the maximum amount of time that can run off the game clock is five seconds."'),
@@ -238,6 +242,22 @@ ROWS = [
          positive=['test_game_state.Ledger.test_second_half_first_choice_follows_the_deferral'],
          adversarial=[],
          status='representation', note='GAP: no test isolates attacks_x100 directly. A representation convention, not a rulebook article.'),
+    dict(id='R21', rule='Rare kick outcomes: a published field-goal cell with fewer than MIN_KICK_N attempts blocks the game.',
+         rulebook=dict(article='not applicable: LP scoping floor (the E1 pool floor applied to kick cells)', status='not applicable', quote=''),
+         lp_reference='Rules file section 6 (sample selection)',
+         transition='game_state:_draw',
+         citations=[(GAME, 'MIN_KICK_N = 30')],
+         positive=['test_game_state.ScopedOut.test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome'],
+         adversarial=['test_game_state.ScopeRefusals.test_a_rare_kick_outcome_described_as_complete_is_refused'],
+         status='guard', note='A blocked record is never complete: validate_game refuses it.'),
+    dict(id='R22', rule='No blocked or tied game is described as a complete game.',
+         rulebook=dict(article='not applicable: LP scoping rule', status='not applicable', quote=''),
+         lp_reference='Rules file section 7 (overtime row)',
+         transition='game_state:validate_game',
+         citations=[(GAME, 'is never described as a complete game'), (GAME, 'a tied regulation game is not a complete game')],
+         positive=['test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime'],
+         adversarial=['test_game_state.ScopeRefusals.test_a_blocked_overtime_game_described_as_complete_is_refused'],
+         status='guard', note=''),
 ]
 
 

@@ -722,5 +722,65 @@ def _empty_e1_pool():
     return StaticPool('run', 0, 1)
 
 
+
+class MissedFieldGoalBoundaries(unittest.TestCase):
+    """Rule 11-4-2 (a) and (b), as printed: a missed field goal is the receivers' ball at their 20-yard line when the spot of the
+    kick is inside their 20, and at the spot of the kick when the spot is at or beyond their 20. In the receivers' yardline_100
+    their 20 is 80, so a kick spot of 19 is inside it and a kick spot of 21 is beyond it."""
+
+    def test_one_yard_inside_the_receivers_20_gives_their_20(self):
+        self.assertEqual(gs.missed_field_goal_spot(19), 80)
+
+    def test_exactly_on_the_receivers_20_gives_the_20_either_way(self):
+        self.assertEqual(gs.missed_field_goal_spot(20), 80)
+
+    def test_one_yard_outside_the_receivers_20_gives_the_spot_of_the_kick(self):
+        self.assertEqual(gs.missed_field_goal_spot(21), 79)
+
+    def test_a_snap_at_the_95_is_kicked_from_the_99_and_gives_the_receivers_the_1(self):
+        # The holder cap: the kick spot is at most the kicking team's own 1-yard line (99).
+        self.assertEqual(gs.kick_spot_yardline_100(95), 99)
+        self.assertEqual(gs.missed_field_goal_spot(gs.kick_spot_yardline_100(95)), 1)
+
+    def test_every_kick_spot_gives_a_spot_on_the_field_no_deeper_than_the_receivers_20(self):
+        for kick in range(1, 100):
+            self.assertTrue(1 <= gs.missed_field_goal_spot(kick) <= 80, kick)
+
+
+class MissedFieldGoalReturn(unittest.TestCase):
+    def test_the_return_exception_is_a_named_unsupported_rule_with_a_guard(self):
+        self.assertIn('missed_field_goal_return', gs.UNSUPPORTED_RULES)
+        guard = gs.GUARDS['missed_field_goal_return']['guard']
+        self.assertIn('touch', guard)
+        self.assertIn('line of scrimmage', guard)
+
+
+class ScopeRefusals(unittest.TestCase):
+    """Overtime and rare kick outcomes are scoped out, and the validator refuses any record that calls them complete."""
+
+    def test_a_tied_game_with_its_overtime_block_removed_is_refused(self):
+        # R07, adversarial: a tie that is described as a complete regulation game, with the block taken away.
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
+        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 regulation tie')
+        tampered = {**record, 'blocker': None, 'status': 'complete_regulation', 'complete_regulation': True,
+                    'complete_game': True, 'scope_out': []}
+        with self.assertRaisesRegex(AssertionError, 'tied regulation game'):
+            gs.validate_game(tampered)
+
+    def test_a_blocked_overtime_game_described_as_complete_is_refused(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
+        self.assertEqual(record['blocker'], 'overtime_not_modelled')
+        with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
+            gs.validate_game({**record, 'complete_regulation': True})
+
+    def test_a_rare_kick_outcome_described_as_complete_is_refused(self):
+        kicks = certain_kicks()
+        kicks['field_goal']['20-29'] = (5, 5)  # 10 attempts, below the floor
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
+                              winner_choice='receive')
+        self.assertEqual(record['blocker'], 'thin_kick_cell:field_goal:20-29')
+        with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
+            gs.validate_game({**record, 'complete_game': True})
+
 if __name__ == '__main__':
     unittest.main()

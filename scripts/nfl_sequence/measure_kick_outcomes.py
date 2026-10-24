@@ -21,9 +21,6 @@ FG_BY_BUCKET_SQL = f"""SELECT {BUCKET} AS bucket,
   SUM(series_result = '{FG_MADE}') AS made, SUM(series_result = '{FG_MISSED}') AS missed
 FROM nfl_pbp WHERE play_type = 'field_goal' AND {WINDOW} AND series_result IN ('{FG_MADE}', '{FG_MISSED}')
 GROUP BY bucket ORDER BY bucket"""
-EP_SQL = f"""SELECT SUM(success = 1), SUM(success = 0) FROM nfl_pbp
-WHERE play_type = 'extra_point' AND series_result IN ('Touchdown', 'Opp touchdown') AND {WINDOW}"""
-TWO_POINT_SQL = f"""SELECT SUM(success = 1), SUM(success = 0) FROM nfl_pbp WHERE two_point_attempt = 1 AND {WINDOW}"""
 
 
 def wilson(k, n, z=1.96):
@@ -187,39 +184,15 @@ GROUP BY 1, 2, 3 ORDER BY 1, 4 DESC"""
     for lab, nt, pos, n in rows(con, sql):
         print(f'  {str(lab):20s} next={str(nt):10s} next_possession={pos:13s} {n:6d}')
 
-    # 5. Extra points by season, all seasons (made = success 1; series_result Touchdown or Opp touchdown).
-    sql = f"""SELECT season, SUM(success = 1) AS made, SUM(success = 0) AS missed
-FROM nfl_pbp WHERE play_type = 'extra_point' AND series_result IN ('Touchdown', 'Opp touchdown')
-GROUP BY season ORDER BY season"""
-    section('5. extra_point per season, all seasons (made = success 1; series_result Touchdown or Opp touchdown)', sql)
-    print(f'  {"season":>6s} {"made":>6s} {"missed":>6s} {"rate":>6s}')
-    for season, m, x in rows(con, sql):
-        rate = m / (m + x) if m + x else float('nan')
-        print(f'  {season:>6d} {m:6d} {x:6d} {rate:6.3f}')
-    excl = rows(con, """SELECT series_result, success, COUNT(*) FROM nfl_pbp
-WHERE play_type = 'extra_point' AND series_result NOT IN ('Touchdown', 'Opp touchdown') GROUP BY 1, 2""")
-    print(f'  excluded extra_point rows (series_result not Touchdown or Opp touchdown): {excl}')
-    sql = f"""SELECT series_result, success, COUNT(*) FROM nfl_pbp
-WHERE play_type = 'extra_point' AND {WINDOW} GROUP BY 1, 2 ORDER BY 1, 2"""
-    section('5b. extra_point by series_result and success, 2022-2025 wk<=18', sql)
-    ep = rows(con, sql)
-    for lab, s, n in ep:
-        print(f'  {str(lab):14s} success={s!s:4s} {n:6d}')
-    m = sum(n for _, s, n in ep if s == 1)
-    x = sum(n for _, s, n in ep if s == 0)
-    print(f'  made={m} missed={x} rate {m / (m + x):.4f}  Wilson95 {wilson(m, m + x)}')
-
-    # 6. Two-point attempts, primary window. success is the only outcome field; the TD flags never mark one.
-    sql = f"""SELECT success, COUNT(*), ROUND(AVG(epa), 3),
-  SUM(COALESCE(touchdown, 0) + COALESCE(pass_touchdown, 0) + COALESCE(rush_touchdown, 0) > 0)
-FROM nfl_pbp WHERE two_point_attempt = 1 AND {WINDOW} GROUP BY success"""
-    section('6. two_point_attempt=1 by success, 2022-2025 wk<=18 (count, mean epa, rows with any TD flag)', sql)
-    tp = rows(con, sql)
-    for s, n, e, td in tp:
-        print(f'  success={s!s:4s} n={n:5d} mean_epa={e} any_td_flag={td}')
-    k = sum(n for s, n, _, _ in tp if s == 1)
-    t = sum(n for _, n, _, _ in tp)
-    print(f'  converted={k} of {t} rate {k / t:.4f}  Wilson95 {wilson(k, t)}')
+    # 5. Extra points and two-point tries from the publisher's result fields in the kick table. success is never read.
+    tries = load_try_results()
+    good, failed = tries['extra_point']
+    print('5. extra_point, publisher field extra_point_result (good / failed), 2022-2025 wk<=18')
+    print(f'  good={good} failed={failed} rate {good / (good + failed):.4f}  Wilson95 {wilson(good, good + failed)}')
+    print(f"  not counted: {tries['excluded']['extra_point']}")
+    ok, miss = tries['two_point']
+    print('6. two_point, publisher field two_point_conv_result (success / failure), 2022-2025 wk<=18')
+    print(f'  success={ok} failure={miss} rate {ok / (ok + miss):.4f}  Wilson95 {wilson(ok, ok + miss)}')
     con.close()
 
 

@@ -61,6 +61,23 @@ def main():
         'reading': ('The engine offset is not the publisher convention. At the modal offset the publisher implies a holder '
                     'modal_offset - ENDZONE_DEPTH yards behind the line of scrimmage, which the rule allows (7 or more). '
                     'The data cannot say whether the gap is the holder spot or the publisher yardline convention.'),
+        'source_engine_difference': {
+            'engine': f'holder {gs.HOLDER_OFFSET} + end line {ENDZONE_DEPTH} = +{engine_offset}; kept, not changed',
+            'publisher_modal': f'+{modal} on {counts[modal]} of {n} field-goal rows ({counts[modal] / n:.1%})',
+            'difference_yards': modal - engine_offset,
+            'rule': ('The holder and kicker stand seven or more yards behind the line of scrimmage. The printed 2026 rulebook '
+                     'states this at Rule 3, Section 17 (KICKS), Article 7(b). The citation "Rule 1-6-2" was given in review and '
+                     'was not used: Rule 1 of the printed rulebook ends at Section 5 and has no Section 6.'),
+            'reasoning': ('Seven is the rule minimum, so the engine value is legal. The publisher offset of +' + str(modal) +
+                          ' is the publisher\'s own measurement convention: its yardline_100 or its kick_distance definition, '
+                          'not a rule. The data cannot tell the two apart, so the engine does not adopt the publisher '
+                          'convention.'),
+            'decision': ('Engine stays at +17. The frozen survey, the frozen fixtures and the engine are not changed for this '
+                         'difference. It is recorded here and nowhere else.'),
+            'consequence': ('A missed field goal is awarded at the spot of the kick. On the engine convention the receivers start '
+                            'one yard closer to their own goal line than on the publisher convention (93 - snap against 92 - snap). '
+                            'Made-field-goal rates are keyed on the snap yardline and are not affected.'),
+        },
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
