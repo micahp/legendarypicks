@@ -1,0 +1,47 @@
+{
+ "fixtures_sha256_from_manifest": {
+  "e2-game-envelope-seed1.json": "b573713b10b2201c32a0827ab499a5b2b2a6d7de985ab05b7e4bfc51dce1f1a1",
+  "e2-game-seed1.json": "0a3ed1cb216fa3f23784b427d2bf6e68ac877ab1995fb86cd5998d35d5b47821",
+  "e2-game-seed1.v1.json": "c4a7c66418172b9101fbae2a6f1ac40d28c6461761db9c6a23116e7cd77a8b5c",
+  "kick_results_2022_2025.csv": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93",
+  "kick_results_2022_2025.csv.manifest.json": "b2ea2680df04538216fc2f5261881cb71dba0e8cea45c40920ed79a0379af5e5",
+  "play_extras_2022_2025.csv": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b",
+  "play_extras_2022_2025.csv.manifest.json": "d19a257612d571e4ad53d89b59572473072b139ed74ec4c424d8e0fc640e79f2",
+  "survey-300-summary.txt": "d40bffbee49da0cb811825db6791bac57d8851c369ad763f747835560941ac6d",
+  "survey-per-seed-300.csv": "ee99bcef65024339f09b07ced87290bd57f3d940d7d577ee89abaae63af3580a"
+ },
+ "gridiron_contract": {
+  "file": "docs/GRIDIRON-CONTRACT-v1.md",
+  "sha256": "ae7b8a304dda480c3708b2543172f3fdc5064b156bf1b25816855acf31bc21b7"
+ },
+ "gridiron_heads": {
+  "research/gridiron-e2-game-viewer-2026-10-24": "de64ae12 (remote de64ae1)",
+  "research/gridiron-e3-physical-timing-2026-10-24": "13b18faa (remote 13b18fa)"
+ },
+ "legality_survey_csv_sha256": "36fa29a2c1725790d0307875208c0a2034b8c7151128463ead2519970f88c73a",
+ "lp_branch": "feat/nfl-sequence-e2-kickoffs-2026-10-24",
+ "lp_envelope_base_commit": "1ca7560924fe7da3eb452b142176bf09d7aeb1f0",
+ "lp_parent_commit": "b2e3be4876d644d2ad8a5f94b7d25365ba7ba724",
+ "lp_repository": "micahp/legendarypicks",
+ "seed1_stats_sha256": "00ce2ee37e2802bd426a51eb414debd3cae90942925ff5b74e58a200b761d2e1",
+ "source_files_sha256": {
+  "scripts/nfl_sequence/build_kick_results.py": "832c89754306464dccedeee092917b1e2e2574d984bba58d94b50512e2e5cf1d",
+  "scripts/nfl_sequence/build_play_extras.py": "29086e65ec7870a40151291e78a1fd71abae27f2ea5c2f38afe8816eb4fa3e65",
+  "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+  "scripts/nfl_sequence/e1_drive.py": "b2a36750c6ed66d31297eaa317b9ab95367ae0a574d50f9ed06434a7f5ead95f",
+  "scripts/nfl_sequence/e2_reference.py": "0bfc3e1bfc8c6f7cc25b95ce223900b30ac983437bb29d1e5772baf8168dd904",
+  "scripts/nfl_sequence/evidence_e2/gridiron_adapter_proof.mjs": "1e7e6fa2bd70b1b6eb18ed109383bfe664379c11bae2b403ef75ae665cd5f949",
+  "scripts/nfl_sequence/evidence_e2/legality_check.py": "12d51c9b791b176431fb64d9edd0488c7d0fc97db739b83b5a0bc27e0ff36123",
+  "scripts/nfl_sequence/evidence_e2/seed1_stats_check.py": "7a28ee132cc59f0c4fd0117beb45fad2b589edcf086a0f7e9a073440d9237434",
+  "scripts/nfl_sequence/evidence_e2/survey_legality_300.py": "66eff2e921f9fe1cb4efb368a6949822df06b460b580041d02f51fc1f9f83a83",
+  "scripts/nfl_sequence/evidence_e2/test_legality.py": "08a1bb2d8015fc2f59f58b2091fde07f5d78786d142f8bcb440ef66c2ef324d8",
+  "scripts/nfl_sequence/game_state.py": "c615ad1ecc1bb6b7bbf7ffbf0270ba92f71c92d3101016b908d88d325b83ba2f",
+  "scripts/nfl_sequence/game_stats.py": "ce982153b9cb92fb8d395f1146a5e4385c971805033eaa44690f29b5a3d3abcf",
+  "scripts/nfl_sequence/game_survey.py": "691b5e5ce190a526b84b411c0ab63d11b023ac953dfcb8478e5be12a430bd34e",
+  "scripts/nfl_sequence/measure_kick_outcomes.py": "04a06c9e80ab99676b8ec76144386ad127c928eb534aa8776895a33418600988",
+  "scripts/nfl_sequence/reducer.py": "ba423ce95c3062f87f379cf2b9d522afc2fff8cbce8fa8621245bfe6d4b0e32b",
+  "scripts/nfl_sequence/rules_matrix.py": "ea66acfe926be63ff17e7b597677351474b7825c9f52d149614514f153f08e26",
+  "scripts/nfl_sequence/shared_v1.py": "54d79f68081b129d70db36917ecfcbb8015a47a63bdc1874705dfe451ef5d333"
+ },
+ "survey_per_seed_sha256": "ee99bcef65024339f09b07ced87290bd57f3d940d7d577ee89abaae63af3580a"
+}

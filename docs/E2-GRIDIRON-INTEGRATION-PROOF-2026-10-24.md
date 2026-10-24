@@ -6,7 +6,14 @@ read-only, from a `git archive` of its committed tree and from its working tree,
 ## Pins
 
 - LP base commit for the envelope: `1ca7560924fe` (full SHA in `docs/fixtures/e2/e2-game-envelope-seed1.json`).
-- Gridiron adapter: `/root/gridiron-e2-game-viewer` HEAD `854cea5` (committed tree, extracted with `git archive`).
+- Gridiron adapter: `/root/gridiron-e2-game-viewer` HEAD `854cea5` (committed tree, extracted with `git archive`). This is
+  the older pin, kept for the record.
+- Gridiron integration references, pushed and re-run on 2026-10-24: `research/gridiron-e2-game-viewer-2026-10-24` at
+  `de64ae12` (remote `de64ae1`), and `research/gridiron-e3-physical-timing-2026-10-24` at `13b18faa` (remote `13b18fa`). Both
+  heads ship `web/lp-game-record-adapter.js`. Results: `docs/evidence/e2/gridiron-adapter-proof-de64ae12.json` and
+  `...-13b18faa.json`, produced by `scripts/nfl_sequence/evidence_e2/gridiron_adapter_proof.mjs`. Both accept the envelope
+  (143 plays, 24 drives, A 14, B 10, 0 football-state findings), with the same 8 record-level and 6 v1-document violations as
+  above. At `de64ae12` the repository's own `test/lp-game-record-adapter.mjs` also passes.
 - Fixture manifest: `docs/fixtures/e2/MANIFEST.json`.
 
 ## Inputs

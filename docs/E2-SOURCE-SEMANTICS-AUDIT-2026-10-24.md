@@ -67,7 +67,27 @@ Consequences in the engine: extra-point rate 96.3% (4643 / 4821), excluding 38 b
 | --- | --- | --- | --- |
 | `drive` | a possession, numbered within a game | 2163 window rows have a null drive and are excluded | measured |
 | `series_result` (on the last play of a drive) | the drive's outcome | the next-play check on field goals agrees (3071 made field goals are followed by a kickoff by the other team; 464 misses by a run, pass or kneel by the other team); five rows disagree | measured |
-| `season_type`, `week` | regular season, weeks 1-18 | the build filters on `REG` and week <= 18 | verified (the filter is in the build) |
+| `season_type`, `week` | regular season, weeks 1-18 | the dev table has no `season_type` column; it holds weeks 1-18 only (no row above week 18 in 2022-2025), so `week <= 18` is the regular season. The parquet kick build filters `season_type` = `REG` | verified for the dev table (measured 2026-10-24); the `REG` filter is verified in the kick build |
+
+## Identifiers, flags and play type (measured 2026-10-24)
+
+Window: 2022-2025, week <= 18, the dev table read-only: 188,282 rows.
+
+| column | meaning taken | measured | verdict |
+| --- | --- | --- | --- |
+| `game_id`, `play_id` | identify one play | 0 duplicate pairs; 0 nulls | verified |
+| `game_date` | the game's date | 0 nulls | verified |
+| `qtr` | quarter; 5 is overtime | quarters 1-4: 41,528 / 52,565 / 40,915 / 52,060; overtime (5): 1,214 | **contradicted for regulation.** The E1 pool keys on down, distance and field, not quarter, so it takes overtime rows (1,214 of them: 470 pass, 348 run, 149 no-play, 78 kickoff, and others). The engine never reaches overtime, but its pool includes these outcomes. Disclosed here, not corrected: removing them would change the frozen survey. |
+| `ydstogo` | yards to go | 0 nulls | verified |
+| `play_type` | the play's kind | run 57,116; pass 77,022; punt 8,442; field_goal 4,325; kickoff 10,999; extra_point 4,870; qb_kneel 1,689; qb_spike 278; no_play 18,013; null 5,528 | measured. E1 takes run, pass, punt and field_goal only; kneels, spikes, kickoffs and extra points are outside its vocabulary |
+| `interception` | a pass was intercepted | 1,615, all on pass plays | verified |
+| `sack` | the passer was sacked | 5,308, all on pass plays | verified |
+| `complete_pass` | a pass was completed | 46,259 of 77,022 pass plays; no completion on any other play type | verified |
+| `fumble_lost` | the offense lost a fumble | 1,112: pass 599, run 378, punt 93, kickoff 41, field goal 1. E1 classifies a punt before it checks fumbles, so a punt fumble is a punt | measured |
+| `two_point_attempt` | a two-point try | 509: pass 360, run 142, no-play 7. E1 excludes these | verified |
+| `qb_scramble` | the QB scrambled | 4,380. E1 excludes these | verified |
+| `penalty` | a penalty was on the play | 13,095. E1 excludes these | verified |
+| `touchdown` | the play scored | 5,399 | measured |
 
 ## Not verified
 

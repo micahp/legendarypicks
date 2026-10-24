@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Play seeds 1-300 through the E2 engine, check every record with the independent legality checker, and compare the
+outcome with the frozen per-seed survey (docs/fixtures/e2/survey-per-seed-300.csv).
+
+The engine plays the games. The legality checker (legality_check.py) judges them and imports nothing from the engine. The
+matrix count is taken from rules_matrix as the frozen survey took it, so the two counts can be compared directly.
+
+Writes one row per seed and a summary. Usage: python3 survey_legality_300.py [--out-dir DIR]
+"""
+import argparse
+import csv
+import json
+import sys
+from collections import Counter
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))  # the engine (nfl_sequence)
+sys.path.insert(0, str(HERE))  # the independent checker
+import e2_reference as er  # noqa: E402
+import game_state as gs  # noqa: E402
+import legality_check as lc  # noqa: E402
+import rules_matrix as rm  # noqa: E402
+
+FROZEN = HERE.parents[2] / 'docs' / 'fixtures' / 'e2' / 'survey-per-seed-300.csv'
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--out-dir', default=str(HERE.parents[2] / 'docs' / 'evidence' / 'e2'))
+    args = ap.parse_args()
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ref, _ = er.load()
+    with open(FROZEN, newline='') as f:
+        frozen = {int(r['seed']): r for r in csv.DictReader(f)}
+
+    rows, mismatches = [], []
+    for seed in range(1, 301):
+        record = gs.play_game(seed, ref)
+        findings = lc.run(record)
+        failed = sorted(k for k, v in findings.items() if v)
+        matrix_fail = sum(1 for r in rm.check(record) if r['status'] == 'FAIL')
+        complete = bool(record['complete_regulation'])
+        row = {'seed': seed, 'status': record['status'], 'blocker': record.get('blocker') or '',
+               'complete_regulation': complete, 'checker_legal': not failed, 'checker_failed_checks': ';'.join(failed),
+               'matrix_fail': matrix_fail}
+        rows.append(row)
+        old = frozen[seed]
+        same = (record['status'] == old['status'] and (record.get('blocker') or '') == old['blocker']
+                and complete == (old['complete_game'] == 'True') and matrix_fail == int(old['matrix_fail']))
+        if not same:
+            mismatches.append({'seed': seed, 'engine_now': row, 'frozen': {k: old[k] for k in
+                                                                            ('status', 'blocker', 'complete_game',
+                                                                             'matrix_fail')}})
+        if seed % 50 == 0:
+            print(f'seed {seed}: {sum(1 for r in rows if r["checker_legal"])} legal so far', flush=True)
+
+    with open(out_dir / 'legality-survey-300.csv', 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    summary = {
+        'seeds': len(rows),
+        'status': dict(Counter(r['status'] for r in rows)),
+        'complete_regulation': sum(1 for r in rows if r['complete_regulation']),
+        'blocked_never_complete': all(not r['complete_regulation'] for r in rows if r['status'] == 'blocked'),
+        'checker_legal': sum(1 for r in rows if r['checker_legal']),
+        'checker_illegal': [r['seed'] for r in rows if not r['checker_legal']],
+        'matrix_fail_rows': sum(r['matrix_fail'] for r in rows),
+        'matches_frozen_survey': len(rows) - len(mismatches),
+        'mismatches_vs_frozen': mismatches,
+    }
+    (out_dir / 'legality-survey-300-summary.json').write_text(json.dumps(summary, indent=1, sort_keys=True) + '\n')
+    print(json.dumps({k: v for k, v in summary.items() if k != 'mismatches_vs_frozen'}, indent=1, sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()
