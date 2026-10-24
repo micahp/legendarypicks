@@ -90,9 +90,13 @@ def _change_of_ends(record, from_quarter):
     opened = [k for k in record['kickoffs'] if k['quarter'] == to_quarter and k['clock_before'] == gs.QUARTER_LENGTH
               and k['kind'] != 'half_start']
     for k in opened:
+        # The kickoff follows a score that either ran into this quarter (a score after a mid-drive change of ends) or
+        # expired the quarter it was scored in. A change of ends alone never triggers a kickoff.
         prev = drives[k['after_drive'] - 1]
-        if prev['terminal'] not in SCORING or not _ends_on_zero(prev) or prev['end_quarter'] != from_quarter:
-            return FAIL, f'a kickoff opened Q{to_quarter} without a score that expired Q{from_quarter}'
+        ran_into_new_quarter = prev['end_quarter'] == to_quarter
+        expired_old_quarter = prev['end_quarter'] == from_quarter and _ends_on_zero(prev)
+        if prev['terminal'] not in SCORING or not (ran_into_new_quarter or expired_old_quarter):
+            return FAIL, f'a kickoff opened Q{to_quarter} without a score that ended the quarter change'
     return PASS, (f'{len(mid)} mid-drive change(s) keep the drive; {len(expiry)} change(s) at a possession end keep the '
                   f'possession; {len(opened)} kickoff(s) open Q{to_quarter} after a score that expired Q{from_quarter}')
 
@@ -215,8 +219,9 @@ def _continuity(record):
     drives = record['drives']
     if drives[0]['offense_team'] != record['kickoffs'][0]['receiving_team']:
         return FAIL, 'the first drive does not start with the Q1 receiver'
+    halftime_after = {b['drive_index'] for b in record['boundaries'] if b['kind'] == 'halftime'}
     for prev, nxt in zip(drives, drives[1:]):
-        if prev['end_quarter'] == 2 and _ends_on_zero(prev):  # halftime: the second half is opened by its own kickoff
+        if prev['index'] in halftime_after:  # the second half is opened by its own kickoff, whichever event ran the clock
             continue
         if nxt['offense_team'] == prev['offense_team']:
             return FAIL, f'drives {prev["index"]} and {nxt["index"]} have the same offense with no halftime between them'

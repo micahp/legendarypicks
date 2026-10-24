@@ -12,10 +12,9 @@ Branch `feat/nfl-sequence-e2-kickoffs-2026-10-24`, on the E1 head `2248f7e1`. Mo
 
 This branch does not change the E1 generator, its fixtures, or the shared contract `GRIDIRON-CONTRACT-v1`.
 
-**Status: a complete regulation game, from the opening kickoff to the final whistle.** (the 300-game survey and the emitted payload are pending in this commit; the next commit fills them in.)
+**Status: a complete regulation game, from the opening kickoff to the final whistle.** In 300 seeded games, 289 reach the end of regulation untied, and 11 are blocked (9 ties, where overtime is not modelled, and 2 thin field-goal cells). The rules matrix has 0 FAIL rows across all 300. `valid_full_game` is 0, by the contract (decision 1 below).
 
-The emitted payload is `docs/fixtures/e2/e2-game-seed<seed>.json (not yet emitted in this commit)`. It carries the full record, every drive's plays, and
-the rules-matrix rows recomputed from the record.
+The emitted payload is `docs/fixtures/e2/e2-game-seed1.json` (seed 1: 24 drives, 144 plays, final score A 11, B 17). It carries the full record, every drive's plays with contiguous game-wide IDs, and the rules-matrix rows recomputed from the record. Reloading the file and re-running the matrix gives the same rows.
 
 ## Decisions taken without a check-in
 
@@ -100,11 +99,45 @@ Rows that are not modelled are named, not passed:
 Authored, not sourced, and labelled in every record. The goal-first-half team defends x=0 in Q1. Ends change after Q1 and
 after Q3, and halftime does not flip ends. The Q3 orientation uses the second-half goal choice.
 
-## Survey (300 seeded games, `scripts/nfl_sequence/game_survey.py --games 300`; pending)
+## Survey (300 seeded games, `scripts/nfl_sequence/game_survey.py --games 300`)
 
 ```
-(pending: the survey is still running)
+games=300 validated=300 complete_regulation=289 valid_full_game=0
+status {'complete_regulation': 289, 'blocked': 11}
+blocker {None: 289, 'thin_kick_cell:field_goal:50+': 2, 'overtime_not_modelled': 9}
+reached the Q3 half-start kickoff: 298 (99.3%)
+boundaries: {'change_of_ends_mid_drive': 567, 'halftime': 298, 'change_of_ends': 25, 'change_of_ends_during_return': 4}
+field goals drawn: {'made': 1122, 'missed': 266}
+tries drawn: {'extra_point made': 983, 'two_point made': 46, 'two_point missed': 73, 'extra_point missed': 46}
+points per game: mean 38.0; drives per game: mean 22.4, max 30
+kickoff pool: usable 10037, excluded {'kickoff without a clean receiving snap': 962}
+rules matrix, games per status:
+  Opening toss winner defers, opponent receives                          {'NOT_APPLICABLE': 153, 'PASS': 147}
+  Opening winner receives (normal policy)                                {'PASS': 153, 'NOT_APPLICABLE': 147}
+  Winner chooses kick (normal mode)                                      {'PASS': 300}
+  Winner chooses defended goal first (normal mode)                       {'PASS': 300}
+  Explicit exception coin-toss path                                      {'PASS': 300}
+  Q1->Q2 change of ends                                                  {'PASS': 298, 'NOT_APPLICABLE': 2}
+  Q3->Q4 change of ends                                                  {'PASS': 298, 'NOT_APPLICABLE': 2}
+  Q2->Q3 halftime: kickoff, clock reset, second-half choice              {'PASS': 298, 'NOT_APPLICABLE': 2}
+  Both half-opening kickoffs, one per team, verified against the ledger  {'PASS': 298, 'BLOCKED': 2}
+  Turnover on downs in Q2                                                {'NOT_APPLICABLE': 176, 'PASS': 124}
+  Touchdown: six points, a distinct try, post-score kickoff              {'PASS': 295, 'NOT_APPLICABLE': 5}
+  Made field goal (3) and safety (2), with the correct post-score kick   {'PASS': 297, 'BLOCKED': 2, 'NOT_APPLICABLE': 1}
+  Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a dr {'PASS': 300}
+  Continuity between drives and quarters                                 {'PASS': 300}
+  Points equal the points on the drives                                  {'PASS': 300}
+  Timeouts: three per team per half                                      {'UNSUPPORTED': 300}
+  Two-minute warning                                                     {'UNSUPPORTED': 300}
+  Penalties and untimed-down extensions                                  {'UNSUPPORTED': 300}
+  Onside kick                                                            {'UNSUPPORTED': 300}
+  Overtime after a tie                                                   {'NOT_APPLICABLE': 289, 'BLOCKED': 11}
+  Player lineups and physical motion                                     {'UNSUPPORTED': 300}
+  Fourth-down choices: punt, field goal or go for it                     {'PARTIAL': 300}
+matrix FAIL rows across all games: 0
 ```
+
+The first survey of this engine reported 6 matrix FAIL rows, in 6 seeds (76, 85, 88, 136, 162, 210). Each was a bug in the checker, not in the engine. Two conditions were too narrow. A kickoff opening Q2 or Q4 after a field goal or score that ran into the new quarter was refused, though the score was legitimate. A halftime reached by a kick running out the clock was not recognised as halftime. Both were corrected in `rules_matrix.py`. Each of the six seeds now passes, and the 300-game survey has 0 FAIL. No engine code changed for the fix.
 
 ## Tests
 
