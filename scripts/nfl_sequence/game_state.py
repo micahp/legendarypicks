@@ -50,6 +50,10 @@ FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
 # The offset is an authored placement value, not a number taken from the published data; the rules matrix carries its own
 # copy and checks against it.
 HOLDER_OFFSET = 7
+# The clock a made field goal takes is the kick itself. Measured on the published nfl_pbp, 2022-2025: the game clock from a
+# made kick's snap to the next snap (the kickoff) has a median of 4 s and is at most 5 s on 98.9% of 3,682 made kicks. The
+# charge is capped at this value, and the rest of the observed runoff is not charged to the kick.
+KICK_DURATION_SECONDS = 5
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('timeouts', 'two_minute_warning', 'penalties', 'onside_kicks', 'overtime',
                      'exception_coin_toss', 'lineups')
@@ -421,6 +425,26 @@ class _Game:
             after = (self.points['A'], self.points['B'])
             _stamp_scores(self._last_plays, before, after)
 
+    def _charge_made_kick(self, play, drive):
+        """A made field goal's clock charge is the kick itself, at most KICK_DURATION_SECONDS.
+
+        The sampled runoff runs on to the kickoff, and the kickoff subsystem starts from its own runoff. The charge replaces the
+        sampled runoff on the kick play, and the drive's end clock and the game clock follow it. If the observed runoff already
+        expires the clock, the kick is not separated: the quarter-end rules apply to that play as they did before.
+        """
+        before = play['state_before']['clock_seconds']
+        observed = play['outcome']['clock_runoff_seconds']
+        if observed >= before:
+            play['outcome']['kick_duration_seconds'] = None
+            return
+        charge = min(observed, KICK_DURATION_SECONDS)
+        play['outcome']['clock_runoff_seconds'] = charge
+        play['outcome']['kick_duration_seconds'] = charge
+        play['outcome']['ordinary_runoff_not_charged'] = observed - charge
+        play['state_after']['clock_seconds'] = before - charge
+        drive['end_clock'] = before - charge
+        self.clock = before - charge
+
     def _apply_timeouts(self, plays):
         """A timeout is a transition, not a value written into both sides of a play.
 
@@ -490,6 +514,7 @@ class _Game:
             drive['snap_yardline_100'] = snap_yl
             drive['kick_spot_yardline_100'] = kick_spot
             if made:
+                self._charge_made_kick(plays[-1], drive)
                 self.points[self.offense] += FG_POINTS
                 drive['points_scored_on_drive'] = {'team': self.offense, 'points': FG_POINTS, 'try': None}
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))

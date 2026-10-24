@@ -24,6 +24,7 @@ PASS, FAIL, PARTIAL, UNSUPPORTED, NOT_APPLICABLE, BLOCKED, PROVISIONAL = (
     'PASS', 'FAIL', 'PARTIAL', 'UNSUPPORTED', 'NOT_APPLICABLE', 'BLOCKED', 'PROVISIONAL')
 SCORING = ('touchdown', 'safety', 'field_goal_attempt')
 HOLDER_OFFSET = 7  # the holder's placement behind the snap; the same authored value as game_state.HOLDER_OFFSET, kept separate
+KICK_DURATION_MAX = 5  # the made-kick clock bound; the same value as game_state.KICK_DURATION_SECONDS, kept separate
 
 
 def _half_starts(record):
@@ -277,6 +278,25 @@ def _provisional(record):
                          f'expiry, {skipped} score(s) at the Q2 expiry with no post-score kickoff')
 
 
+def _kick_duration(record):
+    """A made field goal takes at most five seconds of clock: the kick itself, measured on the published nfl_pbp (see
+    game_state.KICK_DURATION_SECONDS). A kick whose separation was not applied (the clock expired on it) is not checked."""
+    checked = 0
+    for d in record['drives']:
+        if d['terminal'] != 'field_goal_attempt' or d['field_goal_made'] is not True:
+            continue
+        kick = d['plays'][-1]
+        if kick['outcome'].get('kick_duration_seconds') is None:
+            continue
+        checked += 1
+        if kick['outcome']['clock_runoff_seconds'] > KICK_DURATION_MAX:
+            return FAIL, (f'made field goal in drive {d["index"]} charged {kick["outcome"]["clock_runoff_seconds"]} s; '
+                          f'the maximum is {KICK_DURATION_MAX} s')
+    if not checked:
+        return NOT_APPLICABLE, 'no made field goal with a separated kick duration in this game'
+    return PASS, f'{checked} made field goal(s) charged at most {KICK_DURATION_MAX} s of clock'
+
+
 def _missed_fg_spot(record):
     """A missed field goal gives the receiving team the spot of the kick, or its own 20 when that spot is inside its 20.
 
@@ -395,6 +415,7 @@ def check(record):
     add('Turnover on downs in Q2', _turnover_on_downs_q2(record))
     add('Touchdown: six points, a distinct try, post-score kickoff', _touchdowns(record))
     add('Missed field goal: receiving team at the kick spot or its own 20 (Rule 11-4-2, as cited)', _missed_fg_spot(record))
+    add('Field goal made: the kick takes at most five seconds of clock', _kick_duration(record))
     add('Made field goal (3) and safety (2), with the correct post-score kick', _fg_safety(record))
     add('Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a drive terminal', _clock(record))
     add('Continuity between drives and quarters', _continuity(record))

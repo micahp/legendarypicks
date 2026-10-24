@@ -525,6 +525,46 @@ class TimeoutCharges(unittest.TestCase):
         self.assertIn(3, second_half, 'the count resets to three at halftime')
 
 
+class FiveSecondKick(unittest.TestCase):
+    """A made field goal takes at most KICK_DURATION_SECONDS of clock. The observed runoff beyond that is not charged to the
+    kick: the kickoff subsystem starts from its own runoff."""
+
+    def game(self, runoff, made):
+        return gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, runoff), kickoff_pool(spot=25),
+                                   certain_kicks(fg_made=made)), winner_choice='receive', max_drives=2)
+
+    def test_a_made_kick_with_a_long_observed_runoff_is_charged_five_seconds(self):
+        record = self.game(40, True)
+        kick = record['drives'][0]['plays'][-1]
+        self.assertEqual(kick['outcome']['clock_runoff_seconds'], gs.KICK_DURATION_SECONDS)
+        self.assertEqual(kick['outcome']['clock_runoff_seconds'], 5)
+        self.assertEqual(kick['state_after']['clock_seconds'], kick['state_before']['clock_seconds'] - 5)
+        self.assertEqual(kick['outcome']['ordinary_runoff_not_charged'], 35)
+
+    def test_a_made_kick_with_a_short_observed_runoff_keeps_it(self):
+        kick = self.game(3, True)['drives'][0]['plays'][-1]
+        self.assertEqual(kick['outcome']['clock_runoff_seconds'], 3)
+        self.assertEqual(kick['outcome']['ordinary_runoff_not_charged'], 0)
+
+    def test_the_kickoff_after_a_made_kick_starts_from_the_charged_clock(self):
+        record = self.game(40, True)
+        kick = record['drives'][0]['plays'][-1]
+        kickoff = next(k for k in record['kickoffs'] if k['kind'] == 'post_field_goal')
+        self.assertEqual(kickoff['clock_before'], kick['state_after']['clock_seconds'])
+        self.assertEqual(record['drives'][0]['end_clock'], kick['state_after']['clock_seconds'])
+        gs.validate_game(record)
+
+    def test_a_missed_kick_keeps_its_observed_runoff(self):
+        kick = self.game(40, False)['drives'][0]['plays'][-1]
+        self.assertEqual(kick['outcome']['clock_runoff_seconds'], 40)
+
+    def test_the_matrix_rejects_a_made_kick_charged_over_five_seconds(self):
+        record = self.game(40, True)
+        record['drives'][0]['plays'][-1]['outcome']['clock_runoff_seconds'] = 12  # negative fixture
+        row = next(r for r in rm.check(record) if r['case'].startswith('Field goal made'))
+        self.assertEqual(row['status'], 'FAIL')
+
+
 class TimeoutTransition(unittest.TestCase):
     """A timeout is a transition: the count is written once, in state_after; the clock stops for it and the next play
     restarts from the clock the flagged play leaves."""
