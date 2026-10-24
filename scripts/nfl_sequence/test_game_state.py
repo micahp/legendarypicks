@@ -184,7 +184,8 @@ class Scoring(unittest.TestCase):
         gs.validate_game(record)
 
     def test_a_missed_field_goal_gives_the_other_team_the_spot_of_the_kick(self):
-        # The kickoff lands at the 25 and the FG is kicked from there, so the other team starts at yardline_100 75.
+        # The kickoff lands at the 25, so the snap is at the 25 and the kick is from the holder's spot, the 32. The other team
+        # starts at yardline_100 68 (100 - 32), not 75, which would be the snap-based value.
         record, calls = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
@@ -192,7 +193,7 @@ class Scoring(unittest.TestCase):
         self.assertEqual(record['points'], {'A': 0, 'B': 0})
         self.assertEqual(calls[0]['start']['yl'], 25)
         self.assertEqual(calls[1]['start']['offense'], calls[0]['start']['defense'])
-        self.assertEqual(calls[1]['start']['yl'], 75)
+        self.assertEqual(calls[1]['start']['yl'], 68)
         gs.validate_game(record)
 
     def test_a_thin_published_cell_blocks_the_game_and_is_not_filled(self):
@@ -457,34 +458,45 @@ class MissedFieldGoalSpot(unittest.TestCase):
         self.assertEqual(gs.missed_field_goal_spot(20), 80)
         self.assertEqual(gs.missed_field_goal_spot(21), 79)
 
-    def test_the_engine_boundary_at_the_20_on_both_sides(self):
-        # A kick from the 20 leaves the receiver at its own 20 (80); a kick from the 21 leaves it at the 79.
-        for kick_yl, expected in ((20, 80), (21, 79)):
-            _, calls = spy_simulate(lambda: gs.play_game(
-                1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=kick_yl), certain_kicks(fg_made=False)),
-                winner_choice='receive', max_drives=2))
-            self.assertEqual(calls[1]['start']['yl'], expected, f'a missed kick from the {kick_yl}')
+    def test_the_20_exception_applies_to_the_kick_spot_not_the_snap(self):
+        # A snap at the 14 is kicked from the 21 (holder offset 7). The 21 is outside the receiver's 20, so the spot is the 79.
+        # The snap-based value, 80, is the wrong answer for this kick.
+        self.assertEqual(gs.kick_spot_yardline_100(14), 21)
+        self.assertEqual(gs.missed_field_goal_spot(gs.kick_spot_yardline_100(14)), 79)
+        self.assertEqual(gs.missed_field_goal_spot(14), 80)
 
-    def test_the_matrix_rejects_the_20_boundary_value_for_a_kick_from_the_21(self):
-        # Negative fixture: a kick from the 21 must leave the receiver at the 79. The 80 (the value for a kick from the 20)
-        # must fail.
+    def test_the_engine_boundary_at_the_20_on_the_kick_spot(self):
+        # A snap at the 13 is kicked from the 20: the receiver's own 20 (80). A snap at the 14 is kicked from the 21: the 79.
+        for snap, expected in ((13, 80), (14, 79)):
+            _, calls = spy_simulate(lambda: gs.play_game(
+                1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=snap), certain_kicks(fg_made=False)),
+                winner_choice='receive', max_drives=2))
+            self.assertEqual(calls[1]['start']['yl'], expected, f'a missed kick from a snap at the {snap}')
+
+    def test_the_matrix_rejects_the_snap_based_value_for_a_kick_from_the_21(self):
+        # Negative fixture: a snap at the 14 is kicked from the 21, so the receiver must start at the 79. The 80, which the
+        # snap-based rule would give, must fail.
         record, _ = spy_simulate(lambda: gs.play_game(
-            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=21), certain_kicks(fg_made=False)),
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=14), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
         self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 79)
         record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 80
         row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
         self.assertEqual(row['status'], 'FAIL')
 
-    def test_the_engine_starts_the_receiving_team_at_the_rule_spot(self):
+    def test_the_engine_snap_and_kick_spot_differ_and_the_receiver_starts_at_the_kick_spot_rule(self):
+        # The snap is the 15 and the kick is from the 22: the receiver's spot is 78. The snap is not the kick spot.
         record, calls = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
-        self.assertEqual(calls[1]['start']['yl'], 80, 'a kick from the 15 leaves the receiver at its own 20')
+        drive = record['drives'][0]
+        self.assertEqual((drive['snap_yardline_100'], drive['kick_spot_yardline_100']), (15, 22))
+        self.assertEqual(calls[1]['start']['yl'], 78, 'a snap at the 15 is kicked from the 22: the receiver starts at the 78')
         gs.validate_game(record)
 
     def test_the_matrix_rejects_a_next_drive_at_the_kick_spot_inside_the_20(self):
-        # Negative fixture: the kick is from the 15, so the receiver must start at its own 20. Starting at 85 must fail.
+        # Negative fixture: a snap at the 15 is kicked from the 22, so the receiver must start at the 78. Starting at 85 must
+        # fail.
         record, _ = spy_simulate(lambda: gs.play_game(
             1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
