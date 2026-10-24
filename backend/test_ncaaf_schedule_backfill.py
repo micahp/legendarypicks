@@ -40,6 +40,15 @@ def test_calendar_days_are_every_day_inside_each_published_window(db):
     assert len(days) == 8 + 3
 
 
+def test_the_calendar_is_asked_for_once_a_day(db):
+    with mock.patch.object(ingest.espn, "football_schedule_weeks", return_value=PHASES) as catalog:
+        ingest.ncaaf_calendar_days(today=TODAY)
+        ingest.ncaaf_calendar_days(today=TODAY)
+        ingest.ncaaf_calendar_days(today=TODAY + dt.timedelta(days=1))
+
+    assert catalog.call_count == 2
+
+
 def test_january_reads_the_season_that_started_the_year_before(db):
     with mock.patch.object(ingest.espn, "football_schedule_weeks", return_value=PHASES) as catalog:
         ingest.ncaaf_calendar_days(today=dt.date(2027, 1, 5))

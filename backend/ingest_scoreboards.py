@@ -44,6 +44,7 @@ import argparse
 from contextlib import closing
 import datetime as dt
 import fcntl
+import json
 import os
 import sys
 import time
@@ -507,11 +508,22 @@ NCAAF_SCHEDULE_DAYS_PER_RUN = 8
 def ncaaf_calendar_days(today=None):
     """Every day inside ESPN's published NCAAF week windows, as YYYY-MM-DD.
 
-    One catalog request. The season is the one that started last August, so a January
-    postseason day belongs to the season before it.
+    One catalog request per day. The answer is kept in a small file beside the store and
+    reused for the rest of the day, so the 10-minute timer does not ask ESPN every run.
+    The season is the one that started last August, so a January postseason day belongs
+    to the season before it.
     """
     today = today or dt.date.today()
     season = today.year if today.month >= 3 else today.year - 1
+    cache = os.path.join(os.path.dirname(os.path.abspath(scoreboard_store._db_path())),
+                         "ncaaf_calendar.json")
+    try:
+        with open(cache) as f:
+            kept = json.load(f)
+        if kept.get("date") == today.isoformat() and kept.get("season") == season:
+            return kept["days"]
+    except (OSError, ValueError, KeyError):
+        pass
     days = set()
     for phase in espn.football_schedule_weeks("ncaaf", season):
         for week in phase.get("weeks") or []:
@@ -520,7 +532,13 @@ def ncaaf_calendar_days(today=None):
             while day <= last:
                 days.add(day.isoformat())
                 day += dt.timedelta(days=1)
-    return sorted(days)
+    days = sorted(days)
+    try:
+        with open(cache, "w") as f:
+            json.dump({"date": today.isoformat(), "season": season, "days": days}, f)
+    except OSError as exc:
+        print(f"  note ncaaf calendar not cached: {exc}")
+    return days
 
 
 def backfill_ncaaf_schedule(today=None, limit=NCAAF_SCHEDULE_DAYS_PER_RUN, verbose=True):
