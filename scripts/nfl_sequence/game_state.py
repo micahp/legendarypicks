@@ -455,12 +455,15 @@ class _Game:
             status, blocker = 'blocked', 'overtime_not_modelled'
         complete = status == 'complete_regulation'
         points = {'A': self.points['A'], 'B': self.points['B']}
+        scope_out = scope_out_reasons(blocker, complete, tied)
         return {
             'mode': 'legal_game_state_first_piece', 'seed': self.seed, 'simulation_id': self.simulation_id,
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
             'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
+            'complete_game': bool(complete and blocker is None and not tied),
+            'scope_out': scope_out,
             'valid_full_game': bool(complete and blocker is None and not UNSUPPORTED_RULES),
             'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
             'gaps': GAPS,
@@ -473,6 +476,24 @@ class _Game:
                 'quarter_ends_during_kick_return': sum(1 for k in self.events if k['clock_rule'] == AUTHORED_RULE),
             },
         }
+
+
+def scope_out_reasons(blocker, complete, tied):
+    """Why a seed is not a complete game. Scoped out, not guessed: each reason is named and carried in the record."""
+    reasons = []
+    if blocker == 'overtime_not_modelled':
+        reasons.append({'reason': 'overtime', 'detail': 'tied after regulation; overtime is rule-version-sensitive and '
+                                                        'not modelled, so the tied game is not complete'})
+    elif blocker and blocker.startswith('thin_kick_cell'):
+        reasons.append({'reason': 'rare kick outcome', 'detail': f'{blocker}: fewer published attempts than '
+                                                                  f'MIN_KICK_N in that cell'})
+    elif blocker and blocker.startswith('thin pool cell'):
+        reasons.append({'reason': 'thin E1 pool cell', 'detail': blocker})
+    elif blocker == 'drive_limit':
+        reasons.append({'reason': 'drive limit', 'detail': 'the game ran past max_drives'})
+    elif blocker:
+        reasons.append({'reason': 'other', 'detail': blocker})
+    return reasons
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None):

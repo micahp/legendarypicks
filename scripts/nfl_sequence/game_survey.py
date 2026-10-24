@@ -18,16 +18,22 @@ import rules_matrix as rm  # noqa: E402
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--games', type=int, default=300)
+    ap.add_argument('--per-seed', default=None, help='write one row per seed to this CSV')
     args = ap.parse_args()
     ref, kex = er.load()
     status, blocker, boundaries = Counter(), Counter(), Counter()
     fg, tries, matrix = Counter(), Counter(), defaultdict(Counter)
     complete = valid = drives_total = points_total = drives_max = 0
     reached_q3 = 0
+    per_seed = []
     for seed in range(1, args.games + 1):
         record = gs.play_game(seed, ref)
         gs.validate_game(record)
         rows = rm.check(record)
+        per_seed.append({'seed': seed, 'status': record['status'], 'blocker': record['blocker'] or '',
+                         'complete_game': record['complete_game'], 'valid_full_game': record['valid_full_game'],
+                         'scope_out': ';'.join(x['reason'] for x in record['scope_out']),
+                         'matrix_fail': sum(1 for r in rows if r['status'] == 'FAIL')})
         status[record['status']] += 1
         blocker[record['blocker']] += 1
         complete += record['complete_regulation']
@@ -46,6 +52,13 @@ def main():
             p = d['points_scored_on_drive']
             if p and p['try']:
                 tries[f"{p['try']['kind']} {'made' if p['try']['made'] else 'missed'}"] += 1
+    if args.per_seed:
+        import csv
+        with open(args.per_seed, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=list(per_seed[0]))
+            writer.writeheader()
+            writer.writerows(per_seed)
+        print(f'per-seed status: {args.per_seed}')
     n = args.games
     print(f'games={n} validated={n} complete_regulation={complete} valid_full_game={valid}')
     print('status', dict(status))
