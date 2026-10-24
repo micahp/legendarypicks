@@ -27,12 +27,17 @@ class Gaps(unittest.TestCase):
     def test_exactly_the_pinned_rows_carry_a_gap(self):
         tb.build_checks()
         gapped = {row['id'] for row in tb.ROWS if row['gaps']}
-        self.assertEqual(gapped, {'R07', 'R10', 'R20'})
+        self.assertEqual(gapped, {'R10', 'R20'})
 
     def test_a_gap_is_written_not_skipped(self):
         tb.build_checks()
+        r10 = next(r for r in tb.ROWS if r['id'] == 'R10')
+        self.assertEqual(r10['gaps'], ['GAP: no positive test', 'GAP: no adversarial test'])
+
+    def test_the_overtime_row_has_its_adversarial_test(self):
         r07 = next(r for r in tb.ROWS if r['id'] == 'R07')
-        self.assertEqual(r07['gaps'], ['GAP: no adversarial test'])
+        self.assertIn('test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused',
+                      r07['adversarial'])
 
 
 class KickDisagreement(unittest.TestCase):

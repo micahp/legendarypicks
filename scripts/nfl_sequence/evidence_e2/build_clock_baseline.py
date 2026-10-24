@@ -40,8 +40,34 @@ B_BASELINE = {
                                'quarter-end runoffs (censored) excluded; no tracking.',
     'pool_key': ['outcome', 'stop', 'late'], 'fit_weeks': sorted(cc.FIT_WEEKS), 'min_pool': cc.MIN_POOL,
     'draws_per_play': cc.K, 'seed': cc.SEED,
-    'evaluated_in': 'three-model comparison (clock_compare.py at 108a1afe), tested on weeks 6-9; those weeks were examined earlier, '
-                    'so this is not a holdout test',
+    'evaluated_in': 'three-model comparison (clock_compare.py at 108a1afe), tested on weeks 6-9, which were burned before the test '
+                    '(see the holdout block)',
+}
+
+
+HOLDOUT = {
+    'status': 'burned: weeks 6-9 were examined before B was chosen. B is not holdout-validated, and the three-model comparison '
+              'cannot be claimed to generalise beyond the 2022 weeks 1-9 examined here.',
+    'reserved': {'commit': '4bb5add1', 'time': '2026-10-24 01:54:56 -0500',
+                 'text': 'weeks 6-9 are reserved for held-out confirmation (preregistration, snap-anchored benchmark; the '
+                         'builder refuses weeks 6-9)'},
+    'first_examined_before_reservation': {'commit': 'e7b2641b', 'time': '2026-10-24 00:08:18 -0500',
+                                          'what': 'profile of tackle labels per week, weeks 1-9 (not a clock statistic)'},
+    'first_clock_examination': {'commit': '6b7682da', 'time': '2026-10-24 07:25:48 -0500',
+                                'what': 'clock audit over 2022 weeks 1-9, 15,766 matched plays: the first clock statistic '
+                                        'computed on weeks 6-9',
+                                'why': 'six of the 13 games on 2026-10-25/26 repeat a 2022 pairing; the medians describe those '
+                                       '2022 meetings only'},
+    'first_test_use': {'commit': 'c38ec49b', 'time': '2026-10-24 07:33:00 -0500',
+                       'what': 'runoff model comparison, fit weeks 1-5, test weeks 6-9: quarter-end share and out-of-bounds '
+                               'results reported on the test weeks'},
+    'other_uses_of_weeks_6_9': [
+        {'commit': '2ebc3be5', 'time': '2026-10-24 07:17:18 -0500', 'what': 'clock audit, weeks 1-5 only (verified weeks [1, 5])'},
+        {'commit': 'e1f56b85', 'time': '2026-10-24 09:38:40 -0500', 'what': 'tracking join, identifiers and frame counts over weeks 1-9 (not clock)'},
+        {'commit': '4e18cb9f', 'time': '2026-10-24 10:10:10 -0500', 'what': 'clock decomposition over weeks 1-9'},
+        {'commit': '108a1afe', 'time': '2026-10-24 10:23:07 -0500', 'what': 'three-model comparison, test weeks 6-9 (this artifact\'s baseline was chosen from it)'},
+    ],
+    'consequence': 'Model B was adopted after its test-week results were reported. Its adoption is therefore not holdout-validated.',
 }
 
 
@@ -155,6 +181,7 @@ def main():
         'baseline': dict(B_BASELINE, pool_counts=dict(sorted((f'{k[0]}|{k[1]}|{k[2]}', n) for k, n in memory_pool.items())),
                          usable_keys=usable_keys, eligible_rows=b_eligible),
         'unresolvable_fields': unresolvable_list,
+        'holdout': HOLDOUT,
         'files': files,
         'checks': {
             'b_pool_file_equals_fit_in_memory': pool_match,

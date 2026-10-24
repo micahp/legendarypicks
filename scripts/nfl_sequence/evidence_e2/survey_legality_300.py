@@ -43,6 +43,7 @@ def main():
     rows, mismatches = [], []
     for seed in range(1, 301):
         record = gs.play_game(seed, ref)
+        gs.validate_game(record)  # fail closed: any refused invariant stops the survey
         failed = sorted(k for k, v in lc.run(record).items() if v)
         matrix_fail = sum(1 for r in rm.check(record) if r['status'] == 'FAIL')
         complete = bool(record['complete_regulation'])
@@ -53,6 +54,7 @@ def main():
                'checker_failed_checks': ';'.join(failed),
                'try_findings': len(lc.check_conversions(record)),
                'unmodelled_transitions': len(record.get('unmodelled_transitions') or []),
+               'scope_out': ';'.join(x['reason'] for x in record['scope_out']),
                'matrix_fail': matrix_fail}
         rows.append(row)
         old = frozen[seed]
@@ -74,6 +76,11 @@ def main():
         'status': dict(Counter(r['status'] for r in rows)),
         'complete_regulation': sum(1 for r in rows if r['complete_regulation']),
         'blocked_never_complete': all(not r['complete_regulation'] for r in rows if r['status'] == 'blocked'),
+        'blocked_described_complete': sum(1 for r in rows if r['status'] == 'blocked' and r['complete_regulation']),
+        'validate_game_passed': len(rows),
+        'scope_out_seeds': {reason: sum(1 for r in rows if reason in r['scope_out'].split(';'))
+                            for reason in ('overtime', 'rare kick outcome', 'thin E1 pool cell', 'penalty', 'drive limit',
+                                           'other')},
         'legal_modelled': sum(1 for r in rows if r['legal_modelled']),
         'legal_modelled_illegal': [r['seed'] for r in rows if not r['legal_modelled']],
         'legal_complete_game': sum(1 for r in rows if r['legal_complete_game']),

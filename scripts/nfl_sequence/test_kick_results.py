@@ -62,6 +62,12 @@ class PublisherFields(unittest.TestCase):
         self.assertEqual(out['two_point'], (240, 269))
         self.assertEqual(out['excluded']['extra_point'], {'blocked': 38, 'missing': 11})
 
+    def test_the_tool_contains_no_rate_built_on_the_success_flag(self):
+        # The success flag is EPA-positive, not a make result. The tool's source must not query it for a rate.
+        source = Path(mk.__file__).read_text()
+        for fragment in ('success = 1', 'success = 0', 'SUM(success', 'AVG(success', 'GROUP BY success'):
+            self.assertNotIn(fragment, source, f'the success flag is read for a rate: {fragment!r}')
+
 
 if __name__ == '__main__':
     unittest.main()

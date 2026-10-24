@@ -2,8 +2,14 @@
 
 Scope: 2022 weeks 1-9. The decomposition covers the 15,768 tracking-verified plays. The runoff rows B is evaluated on cover the
 16,701 LP plays with a modelled outcome and a runoff. The comparison was run at `108a1afe`
-(`scripts/nfl_sequence/clock_compare.py`), fit on weeks 1-5 and tested on weeks 6-9. Weeks 6-9 were examined when the comparison
-was run, so none of these results is a holdout test.
+(`scripts/nfl_sequence/clock_compare.py`), fit on weeks 1-5 and tested on weeks 6-9.
+
+**Weeks 6-9 are burned. This is not a holdout.** They were reserved on 2026-10-24 at 01:54:56 -0500 (`4bb5add1`, "refused" in the
+preregistration builder). They were first analysed for the clock at 07:25:48 -0500 (`6b7682da`, "clock audit over 2022 weeks
+1-9"), and first used as a test at 07:33:00 -0500 (`c38ec49b`, "test weeks 6-9"). Model B was adopted after those test-week results
+were reported. So adopting B as the E3 baseline is **not holdout-validated**, and the three-model comparison **cannot be claimed to
+generalise** beyond the 2022 weeks 1-9 examined here. The full timeline is in `docs/evidence/e3/clock-decomposition-v1/MANIFEST.json`
+under `holdout`.
 
 ## Finding: tracking does not improve clock duration on this sample
 
