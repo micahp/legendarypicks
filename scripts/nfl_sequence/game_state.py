@@ -386,15 +386,19 @@ class _Game:
         """
         sample = self.rng.choice(self.ref.kickoff_pool)
         clock_before = self.clock
-        self.clock = max(0, self.clock - sample['runoff'])
+        # The made-kick rule, applied to a kickoff: a runoff that fits is charged in full; a runoff that does not fit expires the
+        # quarter. The expiry sets the clock to zero explicitly, and the overrun is recorded, not clamped away.
+        expires = sample['runoff'] >= clock_before
+        self.clock = 0 if expires else clock_before - sample['runoff']
         self.events.append({'kind': kind, 'kicking_team': kicker, 'receiving_team': receiver, 'quarter': self.quarter,
                             'clock_before': clock_before, 'runoff_seconds': sample['runoff'],
-                            'clock_clamped_to_zero': clock_before - sample['runoff'] < 0,
+                            'clock_clamped_to_zero': False, 'clock_expired_during_kickoff': expires,
+                            'runoff_overrun_seconds': sample['runoff'] - clock_before if expires else 0,
                             'spot_yardline_100': sample['spot'], 'after_drive': len(self.drives),
                             'clock_rule': clock_rule,
                             'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
                                        'game_date': sample['game_date']}})
-        if self.clock > 0:
+        if not expires:
             self._take_possession(receiver, sample['spot'])
             return
         self.events[-1]['clock_rule'] = AUTHORED_RULE
@@ -696,6 +700,10 @@ def validate_game(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
     """
     checks = []
+    for d in record.get('drives', []):
+        for p in d['plays']:
+            if p['state_before']['clock_seconds'] < 0 or p['state_after']['clock_seconds'] < 0:
+                raise AssertionError(f"a negative game clock in drive {d['index']} play {p['sequence']}: nothing may clamp it")
     # Scope refusals first: a record may not call a blocked, tied or guarded game complete, whatever its other fields say.
     if record.get('blocker') is not None and (record.get('complete_regulation') or record.get('complete_game')):
         raise AssertionError(f"a blocked record ({record['blocker']}) is never described as a complete game")
