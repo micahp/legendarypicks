@@ -1,0 +1,122 @@
+{
+  "excluded_from_pool": {
+    "fumble_lost (E1)": 950,
+    "interception (E1)": 1555,
+    "penalty": 1962,
+    "qb_scramble (E1)": 3860
+  },
+  "game_id": "2025_05_LV_IND",
+  "gaps": [
+    "clock: runoff not modelled (E1)",
+    "score: not present in nfl_pbp (pregame score schema missing)",
+    "timeouts: not present in nfl_pbp",
+    "participants: no pregame roster; passer/receiver/rusher null",
+    "kickoff/PAT after touchdown: not modelled",
+    "interceptions, fumbles, penalties, scrambles excluded from E0 pool",
+    "special teams, two-point tries, overtime, end of period: not modelled"
+  ],
+  "mode": "single_play_statistical_demo",
+  "model_version": "e0-empirical-v0",
+  "outcome_pool": {
+    "cell": [
+      1,
+      "7-10",
+      "80-99"
+    ],
+    "cell_size": 5572,
+    "event_shares": {
+      "pass_complete": 1673,
+      "pass_incomplete": 690,
+      "run": 3110,
+      "sack": 99
+    },
+    "pool_sha256": "fe2ed7d0f3354959e4f316c2c501765e47c697f0b9dbcc2d305f47c5917beade",
+    "seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "start_game_excluded": "2025_05_LV_IND"
+  },
+  "plays": [
+    {
+      "decision": {
+        "concept": null,
+        "coverage": null,
+        "type": "run"
+      },
+      "event_type": "run",
+      "id": "e0-seed1042:1",
+      "outcome": {
+        "clock_runoff_seconds": null,
+        "passer_id": null,
+        "receiver_id": null,
+        "rusher_id": null,
+        "safety": false,
+        "sampled_from": {
+          "game_id": "2022_05_IND_DEN",
+          "play_id": 515
+        },
+        "touchdown": false,
+        "turnover": false,
+        "yards_gained": 0
+      },
+      "sequence": 1,
+      "state_after": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": null,
+        "defense_team": "LV",
+        "down": 2,
+        "drive_index": 7,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "IND",
+        "quarter": 2,
+        "yardline_100": 88,
+        "yards_to_go": 10
+      },
+      "state_before": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 233,
+        "defense_team": "LV",
+        "down": 1,
+        "drive_index": 7,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "IND",
+        "quarter": 2,
+        "yardline_100": 88,
+        "yards_to_go": 10
+      }
+    }
+  ],
+  "provenance": {
+    "as_of_utc": null,
+    "lineups": null,
+    "motion": null,
+    "outcomes": "sampled_empirical_nfl_pbp",
+    "routes": null,
+    "snapshot_hash": null,
+    "sources_as_of_verified": false
+  },
+  "rules_version": "e0-minimal-2026-10-24",
+  "schema_version": "1.0",
+  "seed": 1042,
+  "simulation_id": "e0-seed1042",
+  "start_state_source": "historical pre-play state: game 2025_05_LV_IND play 1638 (2025 REG); its recorded outcome is not used",
+  "summary": {
+    "away_score": null,
+    "home_score": null,
+    "player_stats": {},
+    "team_stats": {},
+    "valid_full_game": false
+  },
+  "teams": {
+    "away": "LV",
+    "home": "IND"
+  },
+  "valid_full_game": false
+}
