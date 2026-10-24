@@ -111,7 +111,7 @@ games=300 validated=300 complete_regulation=289 valid_full_game=0
 status {'complete_regulation': 289, 'blocked': 11}
 blocker {None: 289, 'thin_kick_cell:field_goal:50+': 2, 'overtime_not_modelled': 9}
 reached the Q3 half-start kickoff: 298 (99.3%)
-boundaries: {'change_of_ends_mid_drive': 567, 'halftime': 298, 'change_of_ends': 25, 'change_of_ends_during_return': 4}
+boundaries: {'change_of_ends_mid_drive': 567, 'halftime': 298, 'change_of_ends': 25, 'skipped_post_score_kick': 10, 'change_of_ends_during_return': 4}
 field goals drawn: {'made': 1122, 'missed': 266}
 tries drawn: {'extra_point made': 983, 'two_point made': 46, 'two_point missed': 73, 'extra_point missed': 46}
 points per game: mean 38.0; drives per game: mean 22.4, max 30
@@ -132,6 +132,7 @@ rules matrix, games per status:
   Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a dr {'PASS': 300}
   Continuity between drives and quarters                                 {'PASS': 300}
   Points equal the points on the drives                                  {'PASS': 300}
+  Provisional clock rules: practice-sourced, pending the 2026 rulebook   {'NOT_APPLICABLE': 277, 'PROVISIONAL': 23}
   Timeouts: three per team per half                                      {'UNSUPPORTED': 300}
   Two-minute warning                                                     {'UNSUPPORTED': 300}
   Penalties and untimed-down extensions                                  {'UNSUPPORTED': 300}
