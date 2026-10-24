@@ -97,7 +97,15 @@ Top level (all required): `schema_version` ("1.0"), `mode` (`single_play_statist
 Per play (E0 has one play): `sequence` (int), `id` (`<simulation_id>:<sequence>`), `event_type` (one of `run`,
 `pass_complete`, `pass_incomplete`, `sack`), `state_before` and `state_after`, `decision` {type, concept, coverage},
 `outcome` {passer_id, receiver_id, rusher_id, yards_gained, touchdown, turnover, safety, clock_runoff_seconds,
-sampled_from {game_id, play_id, game_date}}.
+sampled_from {game_id, play_id, game_date}}, `field` {assignment_version, source, before {dir, los}, after {dir, los}}.
+
+`field` (added in this revision): `assignment_version` is `e0-field-end-v1`, and `source` is
+`authored_demo_convention`. The convention is that the offense attacks x=100 (`dir` +1) in quarters 1–2 and x=0 (`dir` −1)
+in quarters 3–4. It is an authored presentation convention, not an observed fact, and it is not derived from home/away.
+`los` follows the contract formula: `dir` +1 gives `100 − yardline_100`, and `dir` −1 gives `yardline_100`. `after` is null
+when the play ends the drive. A turnover on downs flips `dir`. `yardline_100` is unchanged in the record. The seed-1042
+play is `dir` +1 and `los` 12 (yardline 88). The turnover and touchdown branches of this block are not exercised by
+seed 1042; the reducer legality check covers transitions, not this block.
 
 State fields: `quarter`, `clock_seconds`, `offense_team`, `defense_team`, `home_score`, `away_score`, `down`,
 `yards_to_go`, `yardline_100` (offense-relative), `home_timeouts`, `away_timeouts`, `drive_index`. `state_after` may also
@@ -120,7 +128,8 @@ carry `end_of_drive` ∈ {`touchdown`, `safety`} and then has null down, distanc
    E1/E2 fields.
 
 **Open for hermes2 to confirm or change:** the field names above, the `null` policy, the refusal rules, and the
-direction mapping (the contract says "from the versioned field/end-zone mapping" but no version is pinned yet).
+`field` block. The `field` block (`e0-field-end-v1`) is LP's proposal, and it is authored, not sourced. Gridiron should
+display it as authored, never as observed or as a real period's end assignment.
 
 ## Gaps against the v1 contract (explicit, not invented)
 
@@ -135,7 +144,8 @@ direction mapping (the contract says "from the versioned field/end-zone mapping"
   penalty, interception, safety (as sampled event), qb_scramble, period end, game end, overtime. Interceptions,
   fumbles, penalties, scrambles and two-point tries are excluded from the pool and counted.
 - **Pregame snapshot:** not built. The spec's M0 (schedule, as-of time, roster, availability) does not exist.
-- **Direction mapping:** no versioned field/end-zone mapping is pinned for the Gridiron conversion.
+- **Field-end assignment:** E0 uses the authored convention `e0-field-end-v1` (see `field`). That is not a sourced
+  coin-toss or end-of-period assignment, which a real simulated game would need.
 
 ## Gate E0 status (LP side)
 
