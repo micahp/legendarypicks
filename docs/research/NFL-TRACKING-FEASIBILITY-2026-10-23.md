@@ -29,6 +29,24 @@ Source directive: gridiron-physics `docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-
 
 These are usable as the observed play-outcome and drive/game baseline, owned by LP. They cannot supply player trajectories.
 
+## Supplement: independent LP DB check, 2026-10-23
+
+Source: gridiron-physics `research/m4d-str-contact-diagnosis` at `5790c8e992c0d01fc63e2068af2fa24a6e4b16b0`, file `research/physics-3d-evaluation/m4b/m4d/football-tracking-feasibility/LP-DB-SUPPLEMENT-2026-10-23.md`, sha256 `f74569bf86f9deff1616285e06eb24d55cb7e78ed755e88b5aa2cc20df1cb62c` (checked against the commit). Written by the 3D M4d agent. It does not repeat the Kaggle search.
+
+Re-verified here, read-only, from `/root/legendarypicks` at `cdc32344`:
+
+| Table | Rows (supplement = re-check) | Positional fields |
+| --- | --- | --- |
+| `nfl_pbp` | 753,668 = 753,668 | none: no x/y, frame or time, speed, orientation, or tackler ID |
+| `nfl_hist_participation` | 478,989 = 478,989 | none |
+| `nfl_hist_ftn_charting` | 185,215 = 185,215 | none |
+
+Column lists match the supplement.
+
+**Caveat, database hash.** The supplement records sha256 `54998d153e9d67a17821f8a5adfbf69b73adc7a9f138d7f1bb49b3ef5e288aa9` at 3,227,590,656 bytes. At this check `backend/data/picks.dev.db` was 3,227,607,040 bytes, mtime 23:09, sha256 `04d05e7eb22daff3a1b24a3e3f973860060f6023a42fe03fbf62c826fac7706c`. The file is live and was written after the supplement's inspection, so the recorded hash is stale. Row counts and columns are unchanged, so the conclusion stands. Future reproductions should record size and hash at the time they run.
+
+**Conclusion (unchanged).** None of the three tables carries frame-level trajectories or tackler IDs. They cannot ground a physical tackle replay.
+
 ## Rights
 
 The user stated on 2026-10-23 that the rights are already in place, and asked that the permitted-use assessment be set aside. Not verified against a licence text. Recorded as user-reported.
