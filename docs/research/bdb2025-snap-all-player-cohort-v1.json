@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "bdb2025-snap-all-player-cohort/v1",
+  "dataset": "unofficial b00nk3r/NFL-Big-Data-Bowl-2025 mirror; 2022 season",
+  "weeksScanned": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "weeksReserved": [
+    6,
+    7,
+    8,
+    9
+  ],
+  "eligibility": {
+    "selection": "ball_snap event; snap metadata and role from possession/defense teams; tracking-row presence only",
+    "players": "all 22 tracked players, with 11 offense and 11 defense at snap",
+    "inputFrames": "snapFrame-5 through snapFrame inclusive; input cutoff is snapFrame",
+    "labels": "all 22 player locations plus football at snapFrame through snapFrame+10",
+    "requiredPresence": "22 unique players and one football row at every frame from snapFrame-5 through snapFrame+10",
+    "prohibitedInputs": [
+      "eventual tackle frame",
+      "credited tackler",
+      "player_play outcome labels",
+      "post-snap coordinates"
+    ]
+  },
+  "sourceSha256FromStagedManifest": {
+    "code-data/plays.csv": "a103cbc3a1ddf7678cb6d77ea5f9919c4292b5d55c7876f7cad6cce3d62dca04",
+    "code-data/players.csv": "dc2b5f923e84a16d789d999e88aea670b5495436ab88c24aef7b97b07d723626",
+    "code-data/tracking_week_1.csv": "dc47c829ef917cb6533c6baedd01964823939a4e9cba807090d2784aa1fd149c",
+    "code-data/tracking_week_2.csv": "d735b37f04bdf324132b9cb0f084a4ca583fadbbf02653e1873dad39c36924aa",
+    "code-data/tracking_week_3.csv": "db2965ad61a5ad3895a8878a3754c3d3e4bf4b2dce75732c0b6b4d9d094887bb",
+    "code-data/tracking_week_4.csv": "2e931bc9cd7f6126d6cd1e7eb71a3c711b748a0cece9d04dcace870e7298774f",
+    "code-data/tracking_week_5.csv": "1c10136562b82f3e2d5405247540d890fc02f38804109bdaaba5e63bd816c3e9"
+  },
+  "includedTotal": 9388,
+  "includedByWeek": {
+    "1": 1938,
+    "2": 1798,
+    "3": 1946,
+    "4": 1817,
+    "5": 1889
+  },
+  "countsByWeek": {
+    "1": {
+      "excluded:ball_snap_missing_or_nonunique": 4,
+      "excluded:incomplete_frame_span": 10,
+      "included": 1938,
+      "plays_in_tracking": 1952,
+      "plays_with_ball_snap_event": 1948
+    },
+    "2": {
+      "excluded:ball_snap_missing_or_nonunique": 4,
+      "excluded:incomplete_frame_span": 7,
+      "included": 1798,
+      "plays_in_tracking": 1809,
+      "plays_with_ball_snap_event": 1805
+    },
+    "3": {
+      "excluded:ball_snap_missing_or_nonunique": 1,
+      "excluded:incomplete_frame_span": 12,
+      "included": 1946,
+      "plays_in_tracking": 1959,
+      "plays_with_ball_snap_event": 1958
+    },
+    "4": {
+      "excluded:ball_snap_missing_or_nonunique": 4,
+      "excluded:incomplete_frame_span": 9,
+      "included": 1817,
+      "plays_in_tracking": 1830,
+      "plays_with_ball_snap_event": 1826
+    },
+    "5": {
+      "excluded:ball_snap_missing_or_nonunique": 4,
+      "excluded:incomplete_frame_span": 13,
+      "included": 1889,
+      "plays_in_tracking": 1906,
+      "plays_with_ball_snap_event": 1902
+    }
+  },
+  "outputs": {
+    "manifest": "/root/lp-nfl-tracking/docs/research/bdb2025-snap-all-player-manifest-v1.csv",
+    "observations": "/root/nfl-tracking-data/bdb2025/audit/bdb2025-snap-all-player-observations-v1-combined.jsonl.gz"
+  },
+  "manifestSha256": "5d4abe0b6584c4ce0be6dc23ade410e13a4a63a9ab8282de05383d8403fd5193",
+  "observationsSha256": "36582f8883fee494420d9f76f280a4f4a6bbdf24eb094e2b3d020569fca3a7c3"
+}
