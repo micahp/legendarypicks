@@ -46,12 +46,24 @@ posteam, air_yards, receiving_yards FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall(
     return out
 
 
-def load(db=e1.DEFAULT_DB):
-    """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's."""
+def load(db=e1.DEFAULT_DB, regulation_only=True):
+    """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
+
+    `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
+    rows of 2022-2025 are excluded and counted on the reference as `pool_scope`. False reproduces the accepted E2 artifacts,
+    which sampled overtime rows. The published kick table is not filtered (its rates include the overtime kicks), and this is
+    disclosed on the reference too.
+    """
     rows = e1.load(db)
-    pool, _ = e1.build_pool(rows)
-    kpool, kex = gs.build_kickoff_pool(rows)
+    pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
+    kick_rows = [r for r in rows if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
+    kpool, kex = gs.build_kickoff_pool(kick_rows)
     kicks = mk.load_kick_table(db)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
-    return gs.Reference(pool, kpool, kicks, load_participants(db)), kex
+    reference = gs.Reference(pool, kpool, kicks, load_participants(db))
+    reference.pool_scope = {'regulation_only': regulation_only,
+                            'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
+                            'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
+                            'kick_table': 'not filtered: the published kick rates include overtime kicks'}
+    return reference, kex
