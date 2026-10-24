@@ -32,6 +32,8 @@ count with the kickoff-clock change. Per-seed table: `SURVEY-300-SUCCESSOR-2026-
 | version stamps | `VERSION-DEFINITIONS-2026-10-24.md` | `model_version` = the engine commit; `rules_version` = `7f0578bf…` (SHA-256 of the RULE_FILES producer map) |
 | seed-1 record | `seed1-game-successor.json` | regenerated from the committed engine: `regulation_end_guarded`, `complete_game` false, `valid_full_game` false |
 | seed-1 statistics | `seed1-stats-recomputed-successor.json` | team and player statistics recomputed from the plays, all matching the stored block |
+| gate review request | `GATE-REVIEW-REQUEST-E2-SUCCESSOR.md` | the request for the gate: phase, SHAs, counts, artifacts, open defects, the shared-v1 mapping, and the three asks |
+| drive index (blocker 3) | `drive_index_check.py`, `test_drive_index_corpus.py`, survey summary | 0 drives and 0 play states wrong on 300 seeds; a corrupted index fails the assertion |
 | survey | `legality-survey-300.csv`, `legality-survey-300-summary.json`, `SURVEY-300-SUCCESSOR-2026-10-24.md` | counts above, per-seed rows, blocked reasons |
 | unmodelled transitions (blocker 5) | `UNMODELLED-TRANSITIONS-300-2026-10-24.md`, `unmodelled-transitions-300.json` | every type, its count across the 300 seeds, its printed rule heading, its treatment, and 15 negative fixtures with test names |
 | shared-v1 residuals (blocker 7) | `shared-v1-residuals.json` | nine residuals, each traced to its source, with the guard test that fires for it |
@@ -54,7 +56,10 @@ count with the kickoff-clock change. Per-seed table: `SURVEY-300-SUCCESSOR-2026-
 - **Blocker 2 (missed field goal, Rule 11-4-2):** closed for the award. The spot is the spot of the kick, or the receivers' own 20
   when the kick spot is inside it, with boundary tests. The receivers' touch exception (1) and (2) is not modelled and is guarded:
   `missed_field_goal_return` makes the game guarded, so it is never a complete game.
-- **Blocker 3:** not located in the record this package was built from. No status is claimed for it.
+- **Blocker 3 (drive_index):** closed on the successor corpus. The 23 known findings are the drives 2 to 24 of the archived
+  record `5fcaa6bc` (280 play states). The assertion on 300 seeds finds 0 drives and 0 states wrong, of 87,740 states checked.
+  The archived fixture still carries the findings by design. Raw E1 output writes `drive_index` 1 on every play; the game engine
+  overwrites it. See `drive-index` in the gate review request.
 - **Blocker 4 (toss sampling):** closed. Both winners and both choices are sampled across the 300 seeds.
 - **Blocker 5 (penalties and two-minute warning):** guarded, not modelled. A penalty blocks the game. A two-minute crossing makes the
   game guarded. Each guard has negative fixtures, listed in `UNMODELLED-TRANSITIONS-300-2026-10-24.md`.
@@ -63,6 +68,13 @@ count with the kickoff-clock change. Per-seed table: `SURVEY-300-SUCCESSOR-2026-
 - **Blocker 7 (shared v1):** documented, not fixed. Nine residuals remain. Seven come from the LP contract check and two from
   Gridiron's audit only. Each has a guard test. None is cleared by an invented value, and the contract is unchanged.
   `pregame_full_game` conformance is not claimed.
+
+## Documented deviations
+
+- **Kickoff clock (uncapped).** A kickoff is charged its observed runoff, with no five-second cap. The cap is printed for field
+  goals only (Rule 11-4-2 note 5). Rule 4 Section 3 Article 1 starts the clock after a free kick only when the ball is legally
+  touched, so the observed runoff includes stopped time that no source records. Keeping the uncapped runoff overstates kickoff
+  time. This is recorded here and in the gate review request. It is not fitted to the data.
 
 ## Kickoff clock
 
@@ -76,7 +88,7 @@ includes time that no source records. Applying the cap would invent a value.
 ## Tests
 
 - Engine suite (`scripts/nfl_sequence`): 127 OK, including the three fixture tests.
-- Evidence suite (`scripts/nfl_sequence/evidence_e2`): 50 OK.
+- Evidence suite (`scripts/nfl_sequence/evidence_e2`): 55 OK, including the five drive-index tests.
 
 ## Known limits
 
