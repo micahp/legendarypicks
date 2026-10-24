@@ -8,6 +8,18 @@ section numbers unchanged). Read the matching section there when a rule touches 
 verify against ground truth: the whole population, the real data, an independent source. Assume a
 gap remains until you have measured it.
 
+## Current NFL simulation direction (2026-10-23; supersedes older next-task priorities)
+
+The active cross-repository brief is [Gridiron Physics Football-first Agent Directive](https://github.com/micahp/gridiron-physics/blob/main/docs/FOOTBALL-FIRST-AGENT-DIRECTIVE-2026-10-23.md). Read it before working on NFL simulation, tracking, movement, game-state modeling or Madden ratings. Its **priorities** supersede older “next experiment” advice; existing `AGENTS.md` safety, verification, identity, ops and commit rules still apply.
+
+**Optimize for observable NFL football, not self-generated synthetic physics benchmarks.** Prefer published tracking/models and existing Rapier/Jolt/movement systems. Stop broad new synthetic contact sweeps or 35/60-attribute Madden training until a specific real-play mismatch demonstrates the need. Keep past M4c/M4d/legacy failures and reports intact.
+
+**First handoff:** Audit actual NFL tracking access, rights, frame/event coverage, `gameId/playId/nflId` joins and decision-time input eligibility. Big Data Bowl 2026 prediction is **conditional throw-to-arrival movement** with target receiver and ball landing supplied; do not present it as free-running from the snap. Big Data Bowl 2025 includes pre-snap tracking; confirm full-play interval availability before creating a free-play benchmark. If no valid full-play data exist, narrow honestly to an available conditional movement benchmark.
+
+**LP owns** data/cutoff integrity, cheap kinematic + movement policy baselines, source-verified play outcomes and the NFL PBP sequence/drive evaluator. Gridiron owns execution and replay. Agree a stable research-only state/trajectory/play-result contract before touching shared files. Start with 5–10 correctly joined examples; expand to a preregistered 20–50-play development cohort *only when that ground truth exists*. Score trajectories, player spacing, play outcomes, drives and game distributions as distinct gates. Always include a cheaper statistical/hybrid baseline.
+
+No LP live forecast/lock/grading updates, production writes, shared engine changes or unapproved merges. Coordinate through committed, hashed research manifests and one integrator, not unverified cross-agent status messages.
+
 ## Before you start
 - Run `scripts/prior_art.py "<terms>"` before writing a new script or reporting a finding (0a).
 - Load the skills in `.claude/skills/` for your task: `published-first` (anything derived, incl.
