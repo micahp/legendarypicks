@@ -6,6 +6,21 @@
 
 **Why this exists:** The prior E0 demo assigned `dir=+1` to **every offense** in Q1–Q2 and `dir=-1` in Q3–Q4. That is **not** an NFL rule. The actual half starts with a **kickoff** determined by choices made around the opening coin toss and before the second half. Teams also change goals after Q1 and Q3 without changing possession or ending the drive. E1 must not infer a kickoff from "opposite of opening receiver," derive direction from home/away, or mark all quarter boundaries as drive terminals.
 
+## STRICT DEFAULT SIMULATION POLICY — NOT OPTIONAL
+
+**Normal NFL simulations MUST have two different teams kicking off to start the two halves: each team kicks exactly once for `kickoff.reason=half_start`.** This is a **product/prediction policy based on ordinary NFL choices**, not a claim that the NFL prohibits rare alternate declarations. Do not interpret the full legal coin-toss option set as permission to randomly create bizarre strategies.
+
+**Implement it as an invariant, not prose:**
+1. In `normal_nfl_game` mode, the coin toss winner may **receive** or **defer**. A winner choosing **kick** without deferral, **defend_goal** as the first privilege, or any first-choice choice that results in the same team kicking to start both halves is **not eligible to be sampled**. The team with first choice in either half chooses **receive**, consistent with the standard real-game strategy. Field-end selection remains explicit and is assigned by the team granted that privilege.
+2. The second-half kickoff is still a distinct, fully modeled `half_start` kickoff with a proper coin-toss/defer/choice ledger and derived receiving/kicking teams. Never infer possession from a `quarter` number or omit the kickoff. A team's half-start kicking obligation is not the same as kickoffs **after touchdowns or field goals**: the one-each invariant applies **only** to the two half-opening kickoffs.
+3. **Fail closed:** Validation requires exactly two `half_start` kickoff events (Q1 and Q3), one by each team, opposing first- and second-half receivers, a valid declared choice ledger, and no missing/unknown choice or result. A double-half-kickoff by the same team in normal mode is a **hard test failure**; no warning-only status, quiet fallback, or guessed second-half receiver.
+4. A `historical_reconstruction` may show a **source-verified actual exception** without calling it a sampled normal simulation. A separate `explicit_exception_scenario` test mode may reproduce a **user-requested, documented counterexample**, but it must require deliberate opt-in, preserve the explicit coin-toss/choice ledger and reason, be marked exceptional, and be excluded from normal simulations, prediction distributions, game realism benchmarks and release metrics. **Default rate of sampled exceptional choices in normal mode: exactly zero (0).** No `1%` or tiny nonzero probability is authorized.
+5. If an agent cannot implement this contract yet, mark the game **incomplete** or **unsupported**. Do not produce `valid_full_game=true` for a normal game that violates the half-opening kickoff invariant.
+
+**Engineering acceptance test:** run many normal seeded games (including both coin-toss outcomes, receive and defer cases). Assert `half_start_kickoffs.length === 2`; `Set(kicking_team).size === 2`; the Q3 kicker is the Q1 receiver and vice versa; the choice ledger explains both kickoffs. Include a negative fixture where the same team kicks twice and assert **normal mode rejects it**. A documented exceptional case must **fail in normal mode** and work only in the explicitly enabled exception/reconstruction context. This test is required **before E2 may be called a complete simulated game**.
+
+**Decision rationale:** The user explicitly wants the simulator to model **the game as normally played**, not inject a vanishingly rare legal technicality into forecast trials. Preserve unusual options as compliance knowledge and narrowly gated test cases, **not** as stochastic football behavior. This policy takes priority over any more permissive language later in this document.
+
 ## Authoritative references (versioned)
 
 - [2026 NFL Rulebook](https://operations.nfl.com/rules-officiating/2026-nfl-rulebook): Rule **4-1** periods/halftime; **4-2-1, 4-2-2, 4-2-3** kickoff of halves, coin-toss privileges, change of goals; **4-3/4-4/4-5/4-7/4-8** clock/timeouts/timing. Rule **6** kickoff/free kicks; **7** downs, spot, snap; **8** forward passes/fumbles; **9** punts/FG mechanics; **11** scoring, try and safety; **14** penalty enforcement; **16** overtime.
@@ -17,7 +32,7 @@
 
 1. Before the first half, identify home/away, visiting toss call, winner, loser, and the winner's actual **first choice**. Winner may **defer** the first-choice privilege to the second half. Otherwise winner chooses a privilege for the first half: **receive/kick** *or* **goal to defend**. Other team receives the remaining type of privilege. These are different rights; "defer" is not the same as "kick."
 2. Record both first-half declarations and resolve the **opening kicking and receiving teams** and the **defended goals**. The opening kickoff is its **own free-kick event**; the receiving team does not start at an invented fixed field position. Only the kick outcome (return, touchback, out-of-bounds, valid recovery, etc.) determines the next scrimmage state.
-3. The winner of the toss does **not** necessarily receive the opening kick and does **not** necessarily receive the second-half kick. The deferred choice gives **first selection rights in the second half**, not automatic receipt of the ball.
+3. Under the **normal simulation policy above**, the first-choice team elects to **receive**, and the team kicking to start Q1 **receives** the kickoff to start Q3. The deferred choice is still recorded as first-selection rights, not the same thing as choosing to kick. **Do not randomly sample the rare legal exception.**
 
 **Required game state:** `coin_toss.winner`, `loser`, `winner_deferred`, `first_half.first_choice_team`, `first_half.choice_type`, `first_half.choice_value`, `first_half.other_team_choice`, `first_half.kicking_team`, `receiving_team`, `first_half.defended_goal_by_team`, `rules_version`, `source` (`observed_and_verified` or `authored_simulation_choice`). Model loss of coin-toss privilege as an explicit exception; do not silently invent it.
 
@@ -30,13 +45,13 @@
 ## 3. End of Q2: *finish half, choose, kickoff* (Rule 4-2-1/2)
 
 - At halftime, the **first-half scrimmage possession ends** when all legally required plays/untimed extensions are complete. A first-half drive does **not** cross halftime. Record a `halftime`/end-of-half event, not a turnover on downs.
-- The team that **lost the opening coin toss** normally has **first choice for the second half**, **unless** the opening winner deferred, in which case the opening winner has that choice. The first-choice captain chooses **receive**, **kick** or **goal to defend**, with the other privilege allocated to the other team; both choices are confirmed immediately before the half. Exceptions for forfeited options require explicit flags.
+- The team that **lost the opening coin toss** normally has **first choice for the second half**, **unless** the opening winner deferred, in which case the opening winner has that choice. The **official rules** permit a choice of **receive**, **kick** or **goal to defend**, with the other privilege allocated to the other team. But in **normal simulation mode, first choice is ALWAYS receive**; other selections are reserved for source-verified historical reconstruction or explicit opt-in exception tests. Both halves' choices are recorded separately and confirmed before the second half; exceptions for forfeited privileges are explicitly unsupported in normal mode unless modeled and reviewed.
 - Resolve the second-half **kicking team, receiving team and defended goals** separately from first-half choices. Assign Q3 team directions from those second-half defending-goal choices, not from a universal Q3 sign and not from the first-half receiving team. Generate a **second-half kickoff event** and derive the ensuing scrimmage possession/spot from the actual sampled kickoff outcome.
 - Kickoff to begin Q3 occurs **even if a team possessed the ball as Q2 ended**, barring an explicitly modeled applicable exception. Preserve the two halves' kickoff rights in a persisted coin-toss choice ledger.
 
-**Counterexample that must pass:** A wins the toss and explicitly chooses **kick** (does **not** defer); B receives to open. Because A did not defer, B gets first second-half choice and **can choose receive again**. Hence A can kick to start **both** halves. Any code that always reverses opening possession at halftime is wrong.
+**Historical/legal counterexample, NEVER normal default:** A wins the toss and explicitly chooses **kick** (does **not** defer); B receives to open. B later has first second-half choice and could receive again, making A kick twice. **Normal simulations MUST reject this situation** rather than randomly generating it. Only a **source-verified historical reconstruction** or **deliberate opt-in exception scenario** may accept it. Do not write tests that require the normal game generator to pass a two-kickoffs-by-one-team sequence.
 
-**Typical defer example:** A wins and defers. B chooses to receive in the first half; A kicks. A has first second-half choice and selects receive; B kicks to begin Q3. But this common scenario is **not** the only legal scenario.
+**Required normal defer example:** A wins and defers. B chooses to receive in the first half; A kicks. A has first second-half choice and selects receive; B kicks to begin Q3. **Required normal receive example:** A wins and receives Q1; B has first second-half choice and receives Q3, so A kicks Q3. **Both normal paths have one half-start kickoff per team.**
 
 ## 4. Direction, possession and coordinate invariants
 
@@ -59,7 +74,7 @@ An NFL **game** has kickoff/half/quarter state distinct from a scrimmage **drive
 
 ```text
 game: year/rules_version, teams, seed, source/as_of
-coin_toss: winner, defer, 1H/2H choice ledger, forfeiture flags
+coin_toss: winner, defer, 1H/2H choice ledger, forfeiture flags, policy_mode=normal_nfl_game|historical_reconstruction|explicit_exception_scenario
 period: quarter, game_clock_seconds, running/stopped, extension_state
 orientation: defended_goal_by_team, dir_by_team[quarter], assignment_version
 play_state: possession, down, distance, yardline_100, ball_spot, drive_id
@@ -91,12 +106,12 @@ For future **as-of** predictive claims, LP must exclude all events/results unava
 | Case | Required check |
 | --- | --- |
 | Opening toss winner **defers**, opponent receives | Persist first-choice rights; kickoff to opponent; deferred team first choice for Q3 |
-| Opening winner explicitly chooses **kick** | Opponent may choose to receive **both** halves if entitled to second-half first choice |
-| Toss winner chooses **defended goal** | Other team has kickoff/receive privilege; resolve actual receiving/kicking teams rather than inventing them |
+| Opening winner explicitly chooses **kick** | **REJECT in normal mode**; allow only source-verified history or explicitly opted-in exceptional test mode |
+| Toss winner chooses **defended goal** as first privilege | **REJECT in normal mode**; allow only documented historical reconstruction or explicit exception test |
 | Q1→Q2 | No kickoff or new drive; preserve possession, down/distance and offense-relative spot; flip defended goals |
 | Q3→Q4 | Same change-of-ends continuation, not period-as-drive-ending |
 | Q2→Q3 | End existing half-drive; reset half timeouts/clock; apply second-half choice; **kickoff event**; first Q3 scrimmage spot comes from kick outcome |
-| Opening kickoff | Kicking/receiving teams correct; outcome spot from the free kick; no hardcoded immediate possession without a kick |
+| Both half-opening kickoffs | Normal mode **MUST** have exactly two `half_start` kickoffs, one Q1 and one Q3, **different kicking teams**, and a matching toss/choice ledger; test both receiver and defer opening paths |
 | Turnover on downs in Q2 | New offense is other team at same dead-ball spot; `dir` flips, `yardline_100` complements, `los` remains consistent |
 | Touchdown | Apply **six-point** score plus distinct try; after try proceed to kickoff as rules require; no fictional auto-PAT |
 | Made FG / safety | Score per Rule 11 (FG **3**, safety **2**); schedule correct post-score kick/restart |
@@ -107,7 +122,7 @@ For future **as-of** predictive claims, LP must exclude all events/results unava
 
 ## 8. Near-term work order, based on real current branches
 
-**LP sequence agent (critical path):** Keep [E1 `b58a19f1`](https://github.com/micahp/legendarypicks/commit/b58a19f1350897b0ded2841bcf441e70a36449af) and [E0 defect note `166bb84f`](https://github.com/micahp/legendarypicks/commit/166bb84fc20412c2122a2e12835dae16e2d19e73) as unchanged research evidence. First introduce a **unit-tested coin-toss/half kickoff + change-ends state machine** around (not a rewrite of) the existing reducer. Then fourth-down decision families and scoring/clock ledger. Do not equate the current 4,396 checker passes with official-rule conformance. Reconcile which E1 drive outcomes continue across Q1/Q3 and which actually terminate. Pin one **authored** two-half example to show kickoff rights and correct Q3 opening.
+**LP sequence agent (critical path):** Implement the **strict normal-simulation kickoff invariant first**: each team kicks off once to start a half, two half-start kickoffs total, abnormal legal choices impossible without explicit exceptional mode. In normal mode, a first-choice captain always chooses receive; the opening winner may receive or defer. Build a seeded invariant checker; separate post-score kickoffs. Keep [E1 `b58a19f1`](https://github.com/micahp/legendarypicks/commit/b58a19f1350897b0ded2841bcf441e70a36449af) and [E0 defect note `166bb84f`](https://github.com/micahp/legendarypicks/commit/166bb84fc20412c2122a2e12835dae16e2d19e73) as unchanged research evidence. First introduce a **unit-tested coin-toss/half kickoff + change-ends state machine** around (not a rewrite of) the existing reducer. Then fourth-down decision families and scoring/clock ledger. Do not equate the current 4,396 checker passes with official-rule conformance. Reconcile which E1 drive outcomes continue across Q1/Q3 and which actually terminate. Pin one **authored** two-half example to show kickoff rights and correct Q3 opening.
 
 **Gridiron viewer agent:** Build a read-only kickoff/half/quarter timeline and rule-state display without inventing 22-player physical kickoff choreography. Use LP `dir_by_team[quarter]` and verified `los` for 3D coordinates; do not validate a universal Q1–Q2 or Q3–Q4 direction for **every offense**. Preserve E0 retrospective, immutable, missing-value policies and versioned distinction between E0a record display and E0b player-specific 3D replay.
 
@@ -118,8 +133,8 @@ For future **as-of** predictive claims, LP must exclude all events/results unava
 | Rule family | E0 demo | E1 `b58a19f1` | Required E2 |
 | --- | --- | --- | --- |
 | Snap/line to gain/downs | Minimal legality | Limited reducer checked | Cross-quarter/full-game invariants |
-| Coin toss/deferral | Not modeled | Not modeled | Complete choice ledger |
-| First- and second-half kickoff | Not modeled | Not modeled | Distinct free-kick events |
+| Coin toss/deferral | Not modeled | Not modeled | Complete choice ledger **and strict normal receive/defer policy; no sampled exception** |
+| First- and second-half kickoff | Not modeled | Not modeled | Exactly two half-start kickoffs, **one by each team**, verified against toss ledger in normal mode |
 | Change goals Q1/Q3 | Demo shortcut, **not valid general rule** | Quarter transitions not implemented | Correct field-end mapping, preserve series |
 | Fourth-down choices | Scrimmage only | Go-for-it only | Punt/FG/go-for-it decisions |
 | Passing/rushing/turnovers | Four events | Six sampled families | Full legal variants and provenance |
