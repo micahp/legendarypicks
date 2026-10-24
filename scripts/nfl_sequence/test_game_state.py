@@ -763,7 +763,7 @@ class ScopeRefusals(unittest.TestCase):
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
         self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 regulation tie')
         tampered = {**record, 'blocker': None, 'status': 'complete_regulation', 'complete_regulation': True,
-                    'complete_game': True, 'scope_out': []}
+                    'complete_game': True, 'scope_out': [], 'unmodelled_transitions': []}  # isolate the tie refusal
         with self.assertRaisesRegex(AssertionError, 'tied regulation game'):
             gs.validate_game(tampered)
 
@@ -781,6 +781,47 @@ class ScopeRefusals(unittest.TestCase):
         self.assertEqual(record['blocker'], 'thin_kick_cell:field_goal:20-29')
         with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
             gs.validate_game({**record, 'complete_game': True})
+
+
+class UnmodelledKinds(unittest.TestCase):
+    """Each unmodelled transition type is a named kind in the record. A game that contains one is guarded, and is never a
+    complete game. A kickoff kind outside the engine's vocabulary (an onside kick) is refused."""
+
+    def kinds(self, record):
+        return {t['kind'] for t in record['unmodelled_transitions']}
+
+    def test_a_missed_field_goal_is_an_unmodelled_return(self):
+        record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25),
+                                     certain_kicks(fg_made=False)), winner_choice='receive', max_drives=2)
+        self.assertIn('missed_field_goal_return', self.kinds(record))
+        self.assertFalse(record['complete_game'])
+        gs.validate_game(record)
+
+    def test_a_timeout_flag_is_an_unmodelled_stoppage(self):
+        observed = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), {
+            ('G1', 1.0): {'timeout': True, 'timeout_team': 'A', 'posteam': 'A', 'passer_id': None, 'rusher_id': None,
+                          'receiver_id': None, 'air_yards': None, 'yards_after_catch': None, 'out_of_bounds': 0}})
+        record = gs.play_game(1, observed, winner_choice='receive', max_drives=2)
+        self.assertIn('timeout', self.kinds(record))
+        self.assertFalse(record['complete_game'])
+
+    def test_a_guarded_game_described_as_complete_is_refused(self):
+        # Adversarial: a two-minute crossing, with the record's status relabelled as a complete regulation game.
+        record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
+        self.assertIn('two_minute_warning', self.kinds(record))
+        with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
+            gs.validate_game({**record, 'status': 'complete_regulation'})
+
+    def test_a_guarded_game_with_its_complete_flag_set_is_refused(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
+        with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
+            gs.validate_game({**record, 'complete_game': True})
+
+    def test_an_onside_kickoff_kind_is_refused_because_it_is_not_modelled(self):
+        record = gs.play_game(1, ref(StaticPool('run', 10, 30), kickoff_pool()), winner_choice='receive', max_drives=2)
+        tampered = {**record, 'kickoffs': record['kickoffs'] + [{**record['kickoffs'][0], 'kind': 'onside'}]}
+        with self.assertRaisesRegex(AssertionError, 'onside kicks are not modelled'):
+            gs.validate_game(tampered)
 
 if __name__ == '__main__':
     unittest.main()
