@@ -80,6 +80,42 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(plays[-1]['state_after']['quarter'], 4)
         e1.check_drive(plays, terminal)
 
+    def test_a_turnover_at_the_q1_expiry_ends_the_drive_in_the_new_quarter(self):
+        # The interception runs out the clock. The quarter changes on that play, and the other team starts Q2 with a full clock.
+        pool = FakePool(('interception', 0, 300, 30), ('punt', 0, 10, 22))
+        plays, terminal = e1.simulate(start(1, 100), 1, pool, 'e1-test-seed1')
+        self.assertEqual(terminal, 'turnover')
+        last = plays[-1]['state_after']
+        self.assertEqual((last['quarter'], last['clock_seconds'], last['offense_team'], last['yardline_100']), (2, 900, 'DEF', 30))
+        self.assertTrue(plays[-1]['outcome']['quarter_change'])
+        self.assertEqual(last['end_of_drive'], 'turnover')
+        e1.check_drive(plays, terminal)
+
+    def test_a_turnover_at_the_q2_expiry_ends_the_half_and_not_the_drive(self):
+        # The same interception in Q2 ends the half. The terminal is halftime, not turnover: the half ends on the play, and
+        # the next snap is the half-start kickoff.
+        pool = FakePool(('interception', 0, 300, 30), ('punt', 0, 10, 22))
+        plays, terminal = e1.simulate(start(2, 100), 1, pool, 'e1-test-seed1')
+        self.assertEqual(terminal, 'halftime')
+        last = plays[-1]['state_after']
+        self.assertEqual((last['quarter'], last['clock_seconds'], last['end_of_drive']), (2, 0, 'halftime'))
+        self.assertTrue(plays[-1]['outcome']['turnover'])
+        e1.check_drive(plays, terminal)
+
+    def test_a_punt_at_the_q4_expiry_is_regulation_end_with_the_receiving_spot(self):
+        pool = FakePool(('punt', 0, 300, 22), ('punt', 0, 10, 22))
+        plays, terminal = e1.simulate(start(4, 100), 1, pool, 'e1-test-seed1')
+        self.assertEqual(terminal, 'end_of_regulation')
+        self.assertEqual(plays[-1]['state_after']['yardline_100'], 22)
+        e1.check_drive(plays, terminal)
+
+    def test_a_turnover_terminal_at_the_end_of_q2_is_refused_by_the_drive_check(self):
+        # The check fails loudly on the old behaviour: a possession change recorded as the drive's end at a Q2 expiry.
+        plays, terminal = e1.simulate(start(2, 100), 1, FakePool(('interception', 0, 300, 30), ('punt', 0, 10, 22)), 'e1-test-seed1')
+        plays[-1]['state_after']['end_of_drive'] = 'turnover'
+        with self.assertRaises(AssertionError):
+            e1.check_drive(plays, 'turnover')
+
     def test_no_drive_terminates_at_q1_or_q3_expiry(self):
         for q in (1, 3):
             pool = FakePool(('run', 4, 300, None), ('punt', 0, 10, 22))

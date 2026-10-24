@@ -279,7 +279,7 @@ class Clock(unittest.TestCase):
             1, ref(StaticPool('punt', 0, 890, spot=40), kickoff_pool(runoff=10)), winner_choice='receive',
             max_drives=2))
         self.assertEqual(record['drives'][0]['terminal'], 'punt')
-        self.assertEqual(record['drives'][0]['end_quarter'], 1)
+        self.assertEqual(record['drives'][0]['end_quarter'], 2, 'the quarter changes on the punt, which ends the drive')
         self.assertEqual(calls[1]['start']['quarter'], 2)
         self.assertEqual(calls[1]['start']['clock'], 900)
         self.assertEqual(calls[1]['start']['offense'], calls[0]['start']['defense'], 'the punt receiver keeps the ball')
