@@ -90,6 +90,18 @@ def fg_bucket(yardline_100):
     return '50+'
 
 
+def missed_field_goal_spot(kick_yardline_100):
+    """Yardline_100 of the receiving team after a missed field goal, from the spot of the kick.
+
+    Review note, Rule 11-4-2: the receiving team takes possession at the spot of the kick, or at its own 20 when the kick
+    spot is inside its 20. The rulebook text is not in the repository, so this rule is cited from the review and is marked
+    as such in the rules matrix. The receiving team's yardline_100 is 100 - kick_yl; when that is inside its own 20 (above
+    80), the spot is 80. Blocked kicks are not missed kicks and are never passed here (they are scoped out of the table).
+    """
+    spot = 100 - kick_yardline_100
+    return 80 if spot > 80 else spot
+
+
 def quarter_end_kind(quarter):
     """What an expired clock means at the end of `quarter` when no play is left (rules file, sections 2-3)."""
     if quarter in (1, 3):
@@ -383,7 +395,7 @@ class _Game:
                 drive['points_scored_on_drive'] = {'team': self.offense, 'points': FG_POINTS, 'try': None}
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
             else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
-                self._continue(('possession', self.defense, 100 - kick_yl))
+                self._continue(('possession', self.defense, missed_field_goal_spot(kick_yl)))
         elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
             self._continue(('possession', last['offense_team'], last['yardline_100']))
         elif terminal == 'touchdown':

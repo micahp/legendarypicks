@@ -331,6 +331,38 @@ class RulesMatrix(unittest.TestCase):
             self.assertEqual(row['status'], 'UNSUPPORTED', case)
 
 
+class MissedFieldGoalSpot(unittest.TestCase):
+    """Rule 11-4-2 as cited in the review: the spot of the kick, or the receiving team's own 20 when the spot is inside it."""
+
+    def test_the_spot_of_the_kick_when_it_is_outside_the_receivers_20(self):
+        self.assertEqual(gs.missed_field_goal_spot(35), 65)
+        self.assertEqual(gs.missed_field_goal_spot(25), 75)
+
+    def test_the_receivers_own_20_when_the_kick_spot_is_inside_its_20(self):
+        self.assertEqual(gs.missed_field_goal_spot(15), 80)
+        self.assertEqual(gs.missed_field_goal_spot(5), 80)
+
+    def test_the_boundary_at_the_20_gives_the_20_either_way(self):
+        self.assertEqual(gs.missed_field_goal_spot(20), 80)
+        self.assertEqual(gs.missed_field_goal_spot(21), 79)
+
+    def test_the_engine_starts_the_receiving_team_at_the_rule_spot(self):
+        record, calls = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
+            winner_choice='receive', max_drives=2))
+        self.assertEqual(calls[1]['start']['yl'], 80, 'a kick from the 15 leaves the receiver at its own 20')
+        gs.validate_game(record)
+
+    def test_the_matrix_rejects_a_next_drive_at_the_kick_spot_inside_the_20(self):
+        # Negative fixture: the kick is from the 15, so the receiver must start at its own 20. Starting at 85 must fail.
+        record, _ = spy_simulate(lambda: gs.play_game(
+            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
+            winner_choice='receive', max_drives=2))
+        record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 85
+        row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
+        self.assertEqual(row['status'], 'FAIL')
+
+
 def _empty_e1_pool():
     return StaticPool('run', 0, 1)
 

@@ -64,6 +64,47 @@ def load_try_results(path=KICK_RESULTS):
             'source': f'{path.name} (publisher fields extra_point_result, two_point_conv_result)'}
 
 
+def fg_bucket_of(yardline_100):
+    """The same bucket labels as the BUCKET SQL above."""
+    for limit, label in ((10, '1-9'), (20, '10-19'), (30, '20-29'), (40, '30-39'), (50, '40-49')):
+        if yardline_100 < limit:
+            return label
+    return '50+'
+
+
+def load_field_goal_results(path=KICK_RESULTS):
+    """Field-goal make and miss counts by yardline_100 bucket, from the publisher's field_goal_result.
+
+    A kick is made on `field_goal_result` == 'made' and missed on 'missed', and only when its series label is a kick
+    result ('Field goal' or 'Missed field goal'). A blocked kick is not a missed kick: its spot rule is different and the
+    engine does not model it, so it is returned under `excluded`. So is any row whose series label is not a kick
+    (a kneel, or a touchdown on the return).
+    """
+    import csv
+    field_goal = {}
+    excluded = {'blocked': 0, 'series label is not a kick result': 0, 'missing yardline or result': 0}
+    with open(path, newline='') as f:
+        for r in csv.DictReader(f):
+            if r['play_type'] != 'field_goal':
+                continue
+            if r['field_goal_result'] == 'blocked':
+                excluded['blocked'] += 1
+                continue
+            if r['series_result'] not in ('Field goal', 'Missed field goal'):
+                excluded['series label is not a kick result'] += 1
+                continue
+            if r['field_goal_result'] not in ('made', 'missed') or not r['yardline_100']:
+                excluded['missing yardline or result'] += 1
+                continue
+            made, missed = field_goal.get(fg_bucket_of(float(r['yardline_100'])), (0, 0))
+            if r['field_goal_result'] == 'made':
+                made += 1
+            else:
+                missed += 1
+            field_goal[fg_bucket_of(float(r['yardline_100']))] = (made, missed)
+    return {'field_goal': field_goal, 'excluded': excluded}
+
+
 def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
     """Published kick outcomes for the primary window, as (made, missed) pairs. Read-only.
 
@@ -72,15 +113,12 @@ def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
     {'field_goal': {bucket: (made, missed)}, 'extra_point': (made, missed), 'two_point': (made, missed),
      'excluded': {...}, 'source': str}
     """
-    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
-    try:
-        field_goal = {b: (m or 0, x or 0) for b, m, x in con.execute(FG_BY_BUCKET_SQL)}
-    finally:
-        con.close()
+    fg = load_field_goal_results(results)
     tries = load_try_results(results)
-    return {'field_goal': field_goal, 'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
-            'excluded': tries['excluded'],
-            'source': f"nfl_pbp {WINDOW} (field goals); {tries['source']} (tries)"}
+    return {'field_goal': fg['field_goal'], 'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
+            'excluded': {'field_goal': fg['excluded'], **tries['excluded']},
+            'source': f"{Path(results).name} (publisher fields field_goal_result, extra_point_result, "
+                      f"two_point_conv_result; window {WINDOW})"}
 
 
 def rows(con, sql):
