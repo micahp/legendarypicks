@@ -192,7 +192,7 @@ export default function GameCard(g: GameProps) {
             {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail, g.league) : getStatusLabel(g.status, g.statusDetail, g.league)}
           </span>
         ) : (
-          <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-zinc-400">{timeLabel}</span>
+          <span className="text-xs text-zinc-400">{timeLabel}</span>
         )}
       </div>
       )}
