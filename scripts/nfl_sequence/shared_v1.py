@@ -72,8 +72,12 @@ def project(record):
         kicks_by_drive.setdefault(k['after_drive'], []).append(k)
     drives = record['drives']
 
+    tracker = {'state': None}
+
     def emit(event):
         events.append(event)
+        if event.get('state_after') is not None:
+            tracker['state'] = event['state_after']
 
     def kickoff_event(k):
         nxt = drives[k['after_drive']] if k['after_drive'] < len(drives) else None
@@ -147,12 +151,14 @@ def project(record):
         running['timeouts'] = (last['home_timeouts'], last['away_timeouts'])
         for b in boundaries_by_drive.get(d['index'], []):
             if b['kind'] in ('change_of_ends', 'halftime'):
-                emit({'event_type': 'period_end', 'state_before': None, 'state_after': None,
+                held = dict(tracker['state'], clock_seconds=0)
+                emit({'event_type': 'period_end', 'state_before': held, 'state_after': held,
                       'decision': {'type': 'period_end', 'concept': None, 'coverage': None},
                       'outcome': {'from_quarter': b['from_quarter'], 'to_quarter': b['to_quarter'], 'kind': b['kind']}})
         for k in kicks_by_drive.get(d['index'], []):
             kickoff_event(k)
-    emit({'event_type': 'game_end', 'state_before': None, 'state_after': None,
+    final = dict(tracker['state'], clock_seconds=0)
+    emit({'event_type': 'game_end', 'state_before': final, 'state_after': final,
           'decision': {'type': 'game_end', 'concept': None, 'coverage': None},
           'outcome': {'final_home_score': record['points']['A'], 'final_away_score': record['points']['B']}})
     plays = []
