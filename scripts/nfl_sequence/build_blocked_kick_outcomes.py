@@ -284,13 +284,16 @@ def main():
         denom = 1 + z * z / attempts
         center = (p + z * z / (2 * attempts)) / denom
         half = z * math.sqrt(p * (1 - p) / attempts + z * z / (4 * attempts * attempts)) / denom
-        return [round(center - half, 5), round(center + half, 5)]
+        def json_number(value):
+            value = round(value, 5)
+            return 0 if value == 0 else value
+        return [json_number(center - half), json_number(center + half)]
 
     fg_rates = {}
     for bucket in ('1-9', '10-19', '20-29', '30-39', '40-49', '50+'):
         attempts, blocks = fg_attempts[bucket], fg_blocks[bucket]
         fg_rates[bucket] = {'blocked': blocks, 'attempts': attempts,
-                            'rate': blocks / attempts if attempts else None,
+                            'rate': (blocks / attempts if blocks else 0) if attempts else None,
                             'wilson_95': wilson(blocks, attempts)}
     manifest = {
         'generator': str(Path(__file__).relative_to(REPO)), 'generator_sha256': sha256(__file__),
