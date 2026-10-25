@@ -184,7 +184,8 @@ def _turnover_on_downs_q2(record):
 def _blocked_kicks(record):
     """Recompute blocked-kick attempts, provenance and possession outcomes from the emitted play records."""
     observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
-    observed = observed.get('blocked_kick_source_sha256')
+    fixture_hash = observed.get('blocked_kick_source_sha256')
+    input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
     found = 0
     supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
     for drive in record['drives']:
@@ -205,8 +206,10 @@ def _blocked_kicks(record):
                     or not blocked.get('source_file') or not blocked.get('game_id')
                     or not isinstance(blocked.get('play_id'), int)):
                 return FAIL, f'drive {drive["index"]} play {play["sequence"]}: source provenance is incomplete'
-            if observed and blocked['source_sha256'] != observed:
-                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: source is not pinned by the snapshot'
+            if fixture_hash and blocked.get('reference_fixture_sha256') != fixture_hash:
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: fixture is not pinned by the snapshot'
+            if input_hashes and input_hashes.get(blocked['source_file']) != blocked['source_sha256']:
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: raw source is not pinned by the snapshot'
             if kick_type == 'field_goal':
                 if not out.get('field_goal_attempt') or out.get('field_goal_result') != 'blocked':
                     return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked field-goal attempt is not recorded'
