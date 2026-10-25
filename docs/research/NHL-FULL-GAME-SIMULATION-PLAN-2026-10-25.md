@@ -5,6 +5,8 @@
 **Legendary Picks base:** `2c7c36ce2f77307a11a70c1ad3ec3cd2e27349e8` (`origin/dev`)  
 **Gridiron Physics references:** main `37b01a764e69669e457c70367ecf5ba26ec31825`; hockey movement research `c35d1ba7e395f2a0a93f493b441cfe40ed21ba1f`.
 
+> **Pre-fit source-quality correction (2026-10-25):** the initial 2018–2020 training window below is superseded. NHL `sortOrder`-ordered PBP clocks in start season 2018 fail chronology: 1,268/1,271 games contain 13,394 event-level clock reversals, with a maximum of 1,200 seconds. The same audit found no clock reversals in start seasons 2019–2021. Exclude 2018 from the model until its event ordering can be independently repaired. The statistical model now trains on eligible 2019–2020 games and develops on 2021. The first generated sample, created before this correction, is discarded and is not evaluation evidence.
+
 ## Objective
 
 Build the NHL counterpart to the three separate football systems documented in Gridiron Physics:
@@ -39,12 +41,13 @@ The hardened PBP manifest is `manifests/hardened-v1/pbp_verified_manifest.csv`, 
 
 The first model uses a time-separated development design:
 
-- **Training:** start seasons 2018–2020.
+- **Training:** start seasons 2019–2020, after source-quality quarantine.
 - **Development:** start season 2021.
+- **Source-quality quarantine:** start season 2018, pending resolution of the measured chronology failures above.
 - **2022:** excluded from fitting and selection. Earlier NHL V3 work exposed this slice; it is not a new holdout. Its 343 archived games are also partial-season coverage.
 - **Later-season/prospective evaluation:** not available in this archive. No adoption claim is allowed until an independent later-season or prospective population is acquired and frozen.
 
-Data-quality audit over 2018–2021 (4,533 games) found zero final-score/event-goal mismatches after applying the NHL shootout score convention: the shootout winner receives one goal in the official final score, while shootout attempts are not player goals. Event-derived SOG (`shot-on-goal` plus regulation/OT goal events) disagreed with the published game-level SOG in 60 games. The cause is not established. Quarantine those games from shot-volume training/evaluation; do not silently “correct” the source. Score, SOG and other event components retain separate eligibility flags.
+Data-quality audit over 2018–2021 (4,533 games) found zero final-score/event-goal mismatches after applying the NHL shootout score convention: the shootout winner receives one goal in the official final score, while shootout attempts are not player goals. Event-derived SOG (`shot-on-goal` plus regulation/OT goal events) disagreed with the published game-level SOG in 60 games. The cause is not established. Quarantine those games from the complete-event template pool; do not silently “correct” the source. Score, SOG, chronology and other event components retain separate eligibility flags. The `sortOrder`-ordered clock audit found 13,394 backward timestamp transitions in 1,268/1,271 start-season 2018 games (maximum 1,200 seconds), versus none in start seasons 2019–2021. The 2018 timeline is therefore ineligible for this model even where score and SOG reconcile.
 
 MoneyPuck is not used: commercial/model-training permission is unresolved in the existing NHL source notes. No ESPN requests or new provider acquisition are part of this work.
 
@@ -52,7 +55,7 @@ MoneyPuck is not used: commercial/model-training permission is unresolved in the
 
 ### Frozen model definition
 
-Implement an **empirical period-template bootstrap**. For a fixed seed, independently draw one complete regular-season event period for each of the three regulation periods from eligible 2018–2020 source periods. Do not reuse a donor game within a generated game. Map source home/away event ownership to the requested synthetic home/away labels, preserve event order and source game clock, strip source player identities and source coordinates, and derive the generated score only from generated goal events.
+Implement an **empirical period-template bootstrap**. For a fixed seed, independently draw one complete regular-season event period for each of the three regulation periods from eligible 2019–2020 source periods. Do not reuse a donor game within a generated game. Map source home/away event ownership to the requested synthetic home/away labels, preserve event order and source game clock, strip source player identities and source coordinates, and derive the generated score only from generated goal events.
 
 If regulation ends tied, sample a complete five-minute overtime period from the eligible training pool. An overtime goal ends the game immediately. If overtime expires tied, use that same donor game's shootout sequence and winner; represent shootout attempts as attempts, not player goals, then apply the NHL one-goal final-score convention to the winner. A generated record must not end tied.
 
