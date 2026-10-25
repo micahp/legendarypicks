@@ -35,7 +35,7 @@ MODEL_VERSION = 'e1-empirical-v0'
 RULES_VERSION = 'e1-drive-2026-10-24'
 EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
           'field_goal_attempt')
-KICK_EVENTS = ('punt', 'field_goal_attempt')
+KICK_EVENTS = ('punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
 POSSESSION_TERMINALS = ('turnover', 'turnover_on_downs', 'punt')  # a play that hands the ball over; a score or a field goal does not
 MIN_POOL = 50  # 4th-down cells hold fewer observed plays than the others; sizes are recorded in each play
 MAX_PLAYS = 60
@@ -156,7 +156,7 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id):
+def simulate(start, seed, pool, simulation_id, special_teams=None):
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -178,11 +178,24 @@ def simulate(start, seed, pool, simulation_id):
         if len(cell) < MIN_POOL:
             return None, f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback'
         shares = Counter(ev for ev, _, _, _ in cell)
-        event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
-        cands = sorted([x for x in cell if x[0] == event], key=lambda x: (x[1]['game_id'], x[1]['play_id']))
+        selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
+        cands = sorted([x for x in cell if x[0] == selected_event], key=lambda x: (x[1]['game_id'], x[1]['play_id']))
         _, row, runoff, spot = rng.choice(cands)
+        event = selected_event
+        kick_outcome = None
+        kick_metadata = None
+        if special_teams and selected_event in ('punt', 'field_goal_attempt'):
+            resolution = special_teams(selected_event, st, row, runoff, spot, rng)
+            if resolution and resolution.get('blocker'):
+                return None, resolution['blocker']
+            if resolution:
+                event = resolution.get('event', selected_event)
+                runoff = resolution.get('clock_runoff_seconds', runoff)
+                spot = resolution.get('spot', spot)
+                kick_outcome = resolution.get('kick_outcome')
+                kick_metadata = resolution.get('metadata')
         yards = 0 if event in KICK_EVENTS else int(row['yards_gained'])
-        after, play_terminal, flags = reducer.apply_play(st, event, yards, spot)
+        after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         clock_raw = st['clock'] - runoff
         clock_after = max(0, clock_raw)
         quarter_change = False
@@ -217,9 +230,9 @@ def simulate(start, seed, pool, simulation_id):
             state_after['down'] = None
             state_after['yards_to_go'] = None
             state_after['yardline_100'] = None
-        if event == 'punt':
+        if selected_event == 'punt':
             decision_type = 'punt'
-        elif event == 'field_goal_attempt':
+        elif selected_event == 'field_goal_attempt':
             decision_type = 'field_goal_attempt'
         else:
             decision_type = 'run' if row['play_type'] == 'run' else 'dropback'
@@ -239,8 +252,10 @@ def simulate(start, seed, pool, simulation_id):
                         'yards_gained': None if event in KICK_EVENTS else yards,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
-                        'punt': flags['punt'], 'field_goal_attempt': flags['field_goal_attempt'],
-                        'safety': flags['safety'], 'clock_runoff_seconds': runoff,
+                        'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
+                        'field_goal_attempt': flags['field_goal_attempt'],
+                        'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
+                        'first_down': flags.get('first_down', False), 'clock_runoff_seconds': runoff,
                         'dead_ball_position': (None if after is None else {'offense': after['offense'],
                             'defense': after['defense'], 'down': after['down'], 'togo': after['togo'], 'yl': after['yl']}),
                         'clock_clamped_to_zero': clock_raw < 0,
@@ -260,6 +275,10 @@ def simulate(start, seed, pool, simulation_id):
                       'after': {'dir': after_dir,
                                 'los': e0.los(after_dir, yl_after) if after_has_position else None}},
         }
+        if kick_metadata:
+            play['outcome'].update(kick_metadata)
+        if kick_outcome:
+            play['outcome']['blocked_kick'] = kick_outcome
         plays.append(play)
         st = {'quarter': next_quarter, 'offense': after['offense'], 'defense': after['defense'],
               'down': after['down'], 'togo': after['togo'], 'yl': yl_after, 'clock': state_clock_after}
@@ -314,20 +333,22 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
-        if o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
+        if p['event_type'] == 'field_goal_attempt' and o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
             raise AssertionError(f'play {i + 1}: field-goal flag and terminal disagree')
+        if p['event_type'] == 'blocked_field_goal' and not o['field_goal_attempt']:
+            raise AssertionError(f'play {i + 1}: blocked field goal is missing its attempt flag')
         if (sa['yardline_100'] is None) != (p['field']['after']['dir'] is None):
             raise AssertionError(f'play {i + 1}: field endpoint and scrimmage state disagree about a position')
-        if o['field_goal_attempt'] and sa['yardline_100'] is not None:
+        if o['field_goal_attempt'] and p['event_type'] == 'field_goal_attempt' and sa['yardline_100'] is not None:
             raise AssertionError(f'play {i + 1}: a field-goal attempt has no next field position')
         if o['punt'] and sa['yardline_100'] is None:
             raise AssertionError(f'play {i + 1}: a punt must give the receiving spot')
     first_downs = sum(
         1 for p in plays
-        if p['state_before']['offense_team'] == p['state_after']['offense_team']
+        if p['outcome'].get('first_down') or (p['state_before']['offense_team'] == p['state_after']['offense_team']
         and p['state_after'].get('end_of_drive') is None and p['state_after']['down'] == 1
         and p['outcome']['yards_gained'] is not None
-        and p['outcome']['yards_gained'] >= p['state_before']['yards_to_go'])
+        and p['outcome']['yards_gained'] >= p['state_before']['yards_to_go']))
     return {'plays': len(plays), 'yards': sum(p['outcome']['yards_gained'] or 0 for p in plays),
             'first_downs': first_downs, 'terminal': terminal, 'touchdown': plays[-1]['outcome']['touchdown'],
             'turnovers': sum(1 for p in plays if p['outcome']['turnover']),

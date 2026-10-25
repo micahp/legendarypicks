@@ -102,6 +102,23 @@ class QuarterTransitions(unittest.TestCase):
         self.assertTrue(plays[-1]['outcome']['turnover'])
         e1.check_drive(plays, terminal)
 
+    def test_blocked_punt_turnover_at_period_expiry_ends_at_halftime(self):
+        def block(event, st, row, runoff, spot, rng):
+            self.assertEqual(event, 'punt')
+            return {'event': 'blocked_punt', 'clock_runoff_seconds': 1,
+                    'kick_outcome': {'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                                     'recovery_role': 'receiving_team', 'recovery_spot_yardline_100': 45,
+                                     'return_endpoint_yardline_100': 30, 'crossed_line': 0}}
+
+        plays, terminal = e1.simulate(start(2, 1, yl=50, down=4, togo=5), 1,
+                                      FakePool(('punt', 0, 10, 22)), 'e1-blocked-punt-expiry',
+                                      special_teams=block)
+        self.assertEqual(terminal, 'halftime')
+        self.assertEqual(plays[-1]['event_type'], 'blocked_punt')
+        self.assertTrue(plays[-1]['outcome']['turnover'])
+        self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
+        e1.check_drive(plays, terminal)
+
     def test_a_punt_at_the_q4_expiry_is_regulation_end_with_the_receiving_spot(self):
         pool = FakePool(('punt', 0, 300, 22), ('punt', 0, 10, 22))
         plays, terminal = e1.simulate(start(4, 100), 1, pool, 'e1-test-seed1')
@@ -153,6 +170,58 @@ class Reducer(unittest.TestCase):
         self.assertIsNone(after)
         self.assertEqual(terminal, 'field_goal_attempt')
         self.assertTrue(flags['field_goal_attempt'])
+
+    def test_blocked_kick_receiving_team_recovery_can_be_returned(self):
+        after, terminal, flags = reducer.apply_play(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 8, 'yl': 55}, 'blocked_punt', 0,
+            kick_outcome={'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                          'recovery_role': 'receiving_team', 'recovery_spot_yardline_100': 72,
+                          'return_endpoint_yardline_100': 34, 'crossed_line': 0})
+        self.assertEqual((terminal, after['offense'], after['down'], after['yl']), ('turnover', 'B', 1, 34))
+        self.assertTrue(flags['turnover'])
+        self.assertTrue(flags['punt_attempt'])
+
+    def test_blocked_kick_kicking_team_recovery_behind_los_can_fail_on_fourth_down(self):
+        after, terminal, flags = reducer.apply_play(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 60}, 'blocked_field_goal', 0,
+            kick_outcome={'kick_type': 'field_goal', 'classification_status': 'classified_recovery',
+                          'recovery_role': 'kicking_team', 'recovery_spot_yardline_100': 70,
+                          'return_endpoint_yardline_100': 62, 'crossed_line': 0})
+        self.assertEqual((terminal, after['offense'], after['yl']), ('turnover_on_downs', 'B', 38))
+        self.assertTrue(flags['turnover_on_downs'])
+
+    def test_blocked_kick_kicking_team_recovery_behind_los_can_convert(self):
+        after, terminal, flags = reducer.apply_play(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 60}, 'blocked_punt', 0,
+            kick_outcome={'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                          'recovery_role': 'kicking_team', 'recovery_spot_yardline_100': 70,
+                          'return_endpoint_yardline_100': 54, 'crossed_line': 0})
+        self.assertIsNone(terminal)
+        self.assertEqual((after['offense'], after['down'], after['togo'], after['yl']), ('A', 1, 10, 54))
+
+    def test_kicking_team_recovery_beyond_los_requires_receiving_team_touch(self):
+        st = {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 55}
+        common = {'kick_type': 'field_goal', 'classification_status': 'classified_recovery',
+                  'recovery_role': 'kicking_team', 'recovery_spot_yardline_100': 40,
+                  'return_endpoint_yardline_100': 40, 'crossed_line': 1}
+        with self.assertRaisesRegex(ValueError, 'touch result'):
+            reducer.apply_play(st, 'blocked_field_goal', 0, kick_outcome=common)
+        no_touch = dict(common, receiving_team_touched_beyond_line=False)
+        after, terminal, flags = reducer.apply_play(st, 'blocked_field_goal', 0, kick_outcome=no_touch)
+        self.assertEqual((terminal, after['offense'], after['yl']), ('turnover', 'B', 60))
+        legal = dict(common, receiving_team_touched_beyond_line=True)
+        after, terminal, flags = reducer.apply_play(st, 'blocked_field_goal', 0, kick_outcome=legal)
+        self.assertIsNone(terminal)
+        self.assertEqual((after['offense'], after['down'], after['yl']), ('A', 1, 40))
+
+    def test_blocked_kick_return_touchdown_credits_the_recovery_side(self):
+        after, terminal, flags = reducer.apply_play(
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 60}, 'blocked_field_goal', 0,
+            kick_outcome={'kick_type': 'field_goal', 'classification_status': 'touchdown', 'touchdown': True,
+                          'scoring_role': 'receiving_team'})
+        self.assertIsNone(after)
+        self.assertEqual(terminal, 'touchdown')
+        self.assertEqual(flags['scoring_team'], 'B')
 
 
 FIXTURE_DIR = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e1'

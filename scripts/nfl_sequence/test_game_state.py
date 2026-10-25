@@ -38,9 +38,9 @@ def certain_kicks(fg_made=True, ep_made=True):
     return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
-def ref(pool, kpool, kicks=None):
+def ref(pool, kpool, kicks=None, blocked_kicks=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
-    return gs.Reference(pool, kpool, kicks or certain_kicks(), {})
+    return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks)
 
 
 def spy_simulate(run):
@@ -48,9 +48,9 @@ def spy_simulate(run):
     """
     calls, real = [], gs.e1.simulate
 
-    def spy(start, seed, pool, simulation_id):
+    def spy(start, seed, pool, simulation_id, **kwargs):
         calls.append({'start': dict(start), 'seed': seed, 'simulation_id': simulation_id})
-        return real(start, seed, pool, simulation_id)
+        return real(start, seed, pool, simulation_id, **kwargs)
 
     gs.e1.simulate = spy
     try:
@@ -189,6 +189,53 @@ class PregamePlayerUsage(unittest.TestCase):
         self.assertEqual(stats['team']['A']['rush_att'], 1)
         self.assertEqual(stats['team']['A']['pass_comp'], 1)
         self.assertEqual(stats['team']['A']['pass_tgt'], 1)
+
+
+class BlockedKickIntegration(unittest.TestCase):
+    def observed_block(self, kick_type):
+        return {
+            'kick_type': kick_type, 'game_id': '2025_01_TEST', 'play_id': 50,
+            'source_file': 'play_by_play_2025.parquet', 'source_sha256': 'a' * 64,
+            'classification_status': 'classified_recovery', 'posteam': 'KC', 'defteam': 'SEA',
+            'recovery_role': 'receiving_team', 'recovery_spot_yardline_100': 55,
+            'return_endpoint_yardline_100': 50, 'return_yards': 5, 'crossed_line': 0,
+            'clock_runoff_seconds': 1,
+        }
+
+    def test_blocked_punt_uses_the_shared_reducer_and_team_stats(self):
+        blocked = {'records': {'field_goal': [], 'punt': [self.observed_block('punt')]},
+                   'rates': {'punt_blocked': {'attempts': 1, 'blocked': 1}}, 'sha256': 'b' * 64}
+        record = gs.play_game(5, ref(StaticPool('punt', 0, 5, 25), kickoff_pool(), blocked_kicks=blocked),
+                              winner_choice='receive', max_drives=1)
+        play = record['drives'][0]['plays'][-1]
+        kicking_side = play['state_before']['offense_team']
+        receiving_side = play['state_before']['defense_team']
+        self.assertEqual(play['event_type'], 'blocked_punt')
+        self.assertTrue(play['outcome']['punt_attempt'])
+        self.assertEqual(play['state_after']['offense_team'], receiving_side)
+        self.assertEqual(record['stats']['team'][kicking_side]['blocked_punts'], 1)
+        self.assertEqual(record['stats']['team'][receiving_side]['blocked_kick_return_yards'], 5)
+        self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
+        gs.validate_game(record)
+
+    def test_blocked_field_goal_is_an_attempt_but_neither_a_make_nor_a_miss(self):
+        kicks = certain_kicks()
+        kicks['field_goal_outcomes'] = {bucket: (0, 0, 60) for bucket in gs.FG_BUCKETS}
+        blocked = {'records': {'field_goal': [self.observed_block('field_goal')], 'punt': []},
+                   'rates': {'punt_blocked': {'attempts': 1, 'blocked': 0}}, 'sha256': 'b' * 64}
+        record = gs.play_game(7, ref(StaticPool('field_goal_attempt', 0, 5), kickoff_pool(), kicks,
+                                     blocked_kicks=blocked), winner_choice='receive', max_drives=1)
+        play = record['drives'][0]['plays'][-1]
+        kicking_side = play['state_before']['offense_team']
+        self.assertEqual(play['event_type'], 'blocked_field_goal')
+        self.assertEqual(play['outcome']['field_goal_result'], 'blocked')
+        self.assertTrue(play['outcome']['field_goal_attempt'])
+        self.assertIsNone(record['drives'][0]['field_goal_made'])
+        self.assertEqual(record['stats']['team'][kicking_side]['fg_att'], 1)
+        self.assertEqual(record['stats']['team'][kicking_side]['fg_made'], 0)
+        self.assertEqual(record['stats']['team'][kicking_side]['blocked_field_goals'], 1)
+        self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
+        gs.validate_game(record)
 
 
 class KickoffPool(unittest.TestCase):
@@ -820,6 +867,13 @@ class TimeoutTransition(unittest.TestCase):
         self.assertLessEqual(sum(len(d['plays']) for d in flagged['drives']),
                              sum(len(d['plays']) for d in plain['drives']))
 
+    def test_a_defensive_timeout_uses_the_sampled_defensive_team(self):
+        facts = {('G1', 1): {'timeout': True, 'timeout_team': 'B', 'posteam': 'A', 'defteam': 'B'}}
+        record = self.game(facts)
+        play = next(p for d in record['drives'] for p in d['plays'] if p['participants']['timeout'])
+        self.assertTrue(play['participants']['timeout_applied'])
+        self.assertEqual(play['participants']['timeout_charged_to'], play['state_before']['defense_team'])
+
 
 class FirstDownClockTransition(unittest.TestCase):
     @staticmethod
@@ -927,7 +981,38 @@ class MissedFieldGoalReturn(unittest.TestCase):
         self.assertIn('missed_field_goal_return', gs.UNSUPPORTED_RULES)
         guard = gs.GUARDS['missed_field_goal_return']['guard']
         self.assertIn('touch', guard)
-        self.assertIn('line of scrimmage', guard)
+        self.assertIn('sampled', guard)
+        self.assertIn('return touchdown', guard)
+
+
+class MissedFieldGoalTransition(unittest.TestCase):
+    def game(self, pool, quarter=1, clock=500):
+        game = object.__new__(gs._Game)
+        sample = {'spot_adjustment_yards': -2, 'source': {'game_id': 'G1', 'play_id': 10,
+                                                           'next_drive_index': 4, 'next_play_id': 11}}
+        game.ref = gs.Reference({}, [], {}, {}, pool)
+        game.rng = random.Random(7)
+        game.quarter, game.clock = quarter, clock
+        game.blocker = None
+        game.block = lambda reason: setattr(game, 'blocker', reason)
+        return game, sample
+
+    def test_a_missed_kick_uses_the_historical_receiving_start_adjustment(self):
+        sample = {'spot_adjustment_yards': -2, 'source': {'game_id': 'G1', 'play_id': 10,
+                                                           'next_drive_index': 4, 'next_play_id': 11}}
+        game, _ = self.game({'30-39': [sample] * gs.MIN_KICK_N})
+        result = game._missed_field_goal_transition(35, 42)
+        self.assertEqual(result['baseline_yardline_100'], 58)
+        self.assertEqual(result['receiving_start_yardline_100'], 56)
+        self.assertEqual(result['spot_adjustment_yards'], -2)
+        self.assertEqual(result['pool_sample_count'], gs.MIN_KICK_N)
+        self.assertEqual(result['source']['next_play_id'], 11)
+
+    def test_a_missed_kick_at_halftime_records_period_expiry_without_a_next_drive_spot(self):
+        game, _ = self.game({}, quarter=2, clock=0)
+        result = game._missed_field_goal_transition(35, 42)
+        self.assertEqual(result['status'], 'period_expired')
+        self.assertIsNone(result['receiving_start_yardline_100'])
 
 
 class SafetyFreeKickRefusal(unittest.TestCase):

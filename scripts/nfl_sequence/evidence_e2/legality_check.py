@@ -250,6 +250,83 @@ def check_events(record):
     return findings
 
 
+def check_blocked_kicks(record):
+    """Independently verify blocked-kick classification, pinned source provenance and the resulting possession."""
+    findings = []
+    observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
+    observed = observed.get('blocked_kick_source_sha256')
+    supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
+    for drive, play in plays_of(record):
+        event = play['event_type']
+        outcome = play['outcome']
+        blocked = outcome.get('blocked_kick')
+        if event not in ('blocked_punt', 'blocked_field_goal'):
+            if blocked or outcome.get('field_goal_result') == 'blocked':
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked-kick result has no blocked event')
+            continue
+        kick_type = 'punt' if event == 'blocked_punt' else 'field_goal'
+        if not isinstance(blocked, dict) or blocked.get('kick_type') != kick_type:
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked event has no matching outcome record')
+            continue
+        if blocked.get('classification_status') not in supported:
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome is unresolved')
+        source = blocked.get('source_sha256')
+        if (not isinstance(source, str) or len(source) != 64 or not blocked.get('source_file')
+                or not blocked.get('game_id') or not isinstance(blocked.get('play_id'), int)):
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome lacks source provenance')
+        elif observed and source != observed:
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome source is not pinned by the snapshot')
+        if kick_type == 'field_goal':
+            if not outcome.get('field_goal_attempt') or outcome.get('field_goal_result') != 'blocked':
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked field goal is not counted as a blocked attempt')
+        elif not outcome.get('punt_attempt'):
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked punt is not counted as a punt attempt')
+
+        before, after = play['state_before'], play['state_after']
+        role = blocked.get('recovery_role')
+        if outcome.get('touchdown') or outcome.get('safety'):
+            scoring_role = blocked.get('scoring_role')
+            expected_scorer = before['offense_team'] if scoring_role == 'kicking_team' else before['defense_team']
+            if (scoring_role not in ('kicking_team', 'receiving_team')
+                    or outcome.get('scoring_team') != expected_scorer
+                    or (drive.get('points_scored_on_drive') or {}).get('team') != expected_scorer):
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked-kick score is credited to the wrong team')
+            continue
+        if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
+            continue  # the half/game ends on the kick; there is no next scrimmage state to compare
+        if role == 'receiving_team' or blocked.get('classification_status') == 'classified_dead_ball_award':
+            if (after.get('offense_team') != before['defense_team'] or not outcome.get('turnover')
+                    or after.get('yardline_100') != blocked.get('return_endpoint_yardline_100')):
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: receiving-team recovery has the wrong possession or spot')
+        elif role == 'kicking_team' and blocked.get('crossed_line') in (0, 1, False, True):
+            crossed = bool(blocked['crossed_line'])
+            if crossed:
+                touched = blocked.get('receiving_team_touched_beyond_line')
+                if touched not in (0, 1, False, True):
+                    findings.append(f'drive {drive["index"]} play {play["sequence"]}: beyond-line recovery has no receiver-touch classification')
+                elif bool(touched):
+                    if after.get('offense_team') != before['offense_team'] or after.get('down') != 1:
+                        findings.append(f'drive {drive["index"]} play {play["sequence"]}: legal beyond-line recovery did not award a new series')
+                elif after.get('offense_team') != before['defense_team'] or not outcome.get('turnover'):
+                    findings.append(f'drive {drive["index"]} play {play["sequence"]}: beyond-line recovery without a receiver touch has the wrong possession')
+            elif after.get('yardline_100') is not None:
+                endpoint = blocked.get('return_endpoint_yardline_100')
+                gained = before['yardline_100'] - endpoint if isinstance(endpoint, int) else None
+                if gained is None:
+                    findings.append(f'drive {drive["index"]} play {play["sequence"]}: kicking-team recovery has no return endpoint')
+                elif gained >= before['yards_to_go']:
+                    if after.get('offense_team') != before['offense_team'] or after.get('down') != 1:
+                        findings.append(f'drive {drive["index"]} play {play["sequence"]}: kicking-team recovery conversion is wrong')
+                elif before['down'] == 4:
+                    if after.get('offense_team') != before['defense_team'] or not outcome.get('turnover_on_downs'):
+                        findings.append(f'drive {drive["index"]} play {play["sequence"]}: fourth-down blocked-kick failure is wrong')
+                elif after.get('offense_team') != before['offense_team'] or after.get('down') != before['down'] + 1:
+                    findings.append(f'drive {drive["index"]} play {play["sequence"]}: kicking-team recovery did not continue its series')
+        elif blocked.get('classification_status') not in ('period_expired', 'touchdown', 'safety'):
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome has no recovery or award team')
+    return findings
+
+
 TRY_FIELDS = {'extra_point': ('extra_point_result', {'good': True, 'failed': False}),
               'two_point': ('two_point_conv_result', {'success': True, 'failure': False})}
 TWO_MINUTE_MARK = 120
@@ -287,8 +364,32 @@ def check_unmodelled(record):
     for d in record['drives']:
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
             returned = d['plays'][-1]['outcome'].get('field_goal_return')
-            if not isinstance(returned, dict):
+            if not isinstance(returned, dict) or returned.get('status') not in (
+                    'sampled_historical_next_drive_spot', 'period_expired'):
                 findings.append(f'missed field goal return not modelled: drive {d["index"]}')
+            else:
+                snap = d['plays'][-1]['state_before']['yardline_100']
+                kick_spot = min(99, snap + 7)
+                base_spot = 80 if 100 - kick_spot > 80 else 100 - kick_spot
+                if returned.get('baseline_yardline_100') != base_spot:
+                    findings.append(f'missed field goal baseline is wrong: drive {d["index"]}')
+                elif returned.get('status') == 'period_expired':
+                    if (d['end_clock'] != 0 or d['end_quarter'] not in (2, 4)
+                            or returned.get('receiving_start_yardline_100') is not None):
+                        findings.append(f'missed field goal period-expiry transition is invalid: drive {d["index"]}')
+                else:
+                    spot = returned.get('receiving_start_yardline_100')
+                    adjustment = returned.get('spot_adjustment_yards')
+                    if (not isinstance(spot, int) or not 1 <= spot <= 99 or not isinstance(adjustment, int)
+                            or spot != base_spot + adjustment or returned.get('pool_sample_count', 0) < 30
+                            or not isinstance(returned.get('source'), dict)):
+                        findings.append(f'missed field goal receiving spot is invalid: drive {d["index"]}')
+                    elif d['index'] < len(record['drives']) and not (
+                            d['end_clock'] == 0 and d['end_quarter'] in (2, 4)):
+                        nxt = record['drives'][d['index']]
+                        if (nxt['offense_team'] != d['plays'][-1]['state_after']['defense_team']
+                                or nxt['plays'][0]['state_before']['yardline_100'] != spot):
+                            findings.append(f'missed field goal next possession disagrees with sampled spot: drive {d["index"]}')
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
@@ -388,7 +489,7 @@ def check_half_end(record):
     return findings
 
 
-MODELLED_CHECKS = (check_blocked, check_clock_state_guard, check_completion, check_points, check_drives, check_clock_and_quarter, check_two_minute,
+MODELLED_CHECKS = (check_blocked, check_blocked_kicks, check_clock_state_guard, check_completion, check_points, check_drives, check_clock_and_quarter, check_two_minute,
                    check_half_end, check_state_continuity, check_downs_and_field, check_timeouts, check_possession, check_events,
                    check_conversions)
 UNMODELLED_CHECKS = (check_unmodelled,)
@@ -408,7 +509,8 @@ def legal_modelled(record):
 def legal_complete_game(record):
     """A legal complete game: consistent under the modelled rules, complete regulation, and with no unmodelled transition."""
     return (legal_modelled(record) and bool(record.get('complete_regulation'))
-            and not check_unmodelled(record))
+            and not check_unmodelled(record)
+            and (record.get('mode') != 'pregame_full_game' or record.get('valid_full_game') is True))
 
 
 def legal(record):

@@ -28,6 +28,8 @@ def team_stats(drives, points):
 
     for d in drives:
         t = team(d['offense_team'])
+        fg_attempt_recorded = False
+        fg_result_recorded = False
         t['drives'] += 1
         end = _elapsed(d['end_quarter'], d['end_clock'])
         t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
@@ -56,15 +58,37 @@ def team_stats(drives, points):
                 t['interceptions'] += 1
             if ev == 'fumble_lost':
                 t['fumbles_lost'] += 1
-            if out['punt']:
+            if out.get('punt_attempt', out['punt']):
                 t['punts'] += 1
+            if out.get('field_goal_attempt'):
+                t['fg_att'] += 1
+                fg_attempt_recorded = True
+                if out.get('field_goal_result') in ('made', 'missed', 'blocked'):
+                    t['fg_made'] += int(out['field_goal_result'] == 'made')
+                    fg_result_recorded = True
+            blocked = out.get('blocked_kick')
+            if blocked:
+                t['blocked_field_goals' if blocked.get('kick_type') == 'field_goal' else 'blocked_punts'] += 1
+                role = blocked.get('recovery_role')
+                if role in ('kicking_team', 'receiving_team') and blocked.get('return_yards') is not None:
+                    returning_side = d['offense_team'] if role == 'kicking_team' else ('B' if d['offense_team'] == 'A' else 'A')
+                    returned = team(returning_side)
+                    returned['blocked_kick_returns'] += 1
+                    returned['blocked_kick_return_yards'] += blocked['return_yards']
         if d['terminal'] == 'turnover_on_downs':
             t['turnovers_on_downs'] += 1
         if d['field_goal_made'] is not None:
-            t['fg_att'] += 1
-            t['fg_made'] += int(d['field_goal_made'])
+            if not fg_attempt_recorded:
+                # Compatibility with records that keep the kick result only on the drive.
+                t['fg_att'] += 1
+            if not fg_result_recorded:
+                t['fg_made'] += int(d['field_goal_made'])
         if d['terminal'] == 'touchdown':
-            t['touchdowns'] += 1
+            scorer = d.get('touchdown_scored_by') or d['offense_team']
+            scored = team(scorer)
+            scored['touchdowns'] += 1
+            if not d['plays'][-1]['outcome'].get('blocked_kick'):
+                scored['offensive_touchdowns'] += 1
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
@@ -187,7 +211,8 @@ def _verify_pregame_reconciliation(teams, players):
             'pass_att': team.get('pass_att', 0), 'pass_comp': team.get('pass_comp', 0),
             'pass_yds': team.get('pass_yds', 0), 'sacks_taken': team.get('sacks_taken', 0),
             'pass_int': team.get('interceptions', 0), 'fumbles_lost': team.get('fumbles_lost', 0),
-            'offensive_td': team.get('touchdowns', 0), 'offensive_turnovers': team.get('turnovers', 0),
+            'offensive_td': team.get('offensive_touchdowns', team.get('touchdowns', 0)),
+            'offensive_turnovers': team.get('turnovers', 0),
             'sack_yds': team.get('sack_yds', 0), 'pass_tgt': team.get('pass_tgt', 0),
             'pass_comp_receiving': team.get('pass_comp', 0),
             'pass_yds_receiving': team.get('pass_yds', 0),

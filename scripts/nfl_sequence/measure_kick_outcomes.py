@@ -79,11 +79,17 @@ def load_field_goal_results(path=KICK_RESULTS):
     """
     import csv
     field_goal = {}
+    outcomes = {}
     excluded = {'blocked': 0, 'series label is not a kick result': 0, 'missing yardline or result': 0}
     with open(path, newline='') as f:
         for r in csv.DictReader(f):
             if r['play_type'] != 'field_goal':
                 continue
+            if r['field_goal_result'] in ('made', 'missed', 'blocked') and r['yardline_100']:
+                bucket = fg_bucket_of(float(r['yardline_100']))
+                counts = list(outcomes.get(bucket, (0, 0, 0)))
+                counts[{'made': 0, 'missed': 1, 'blocked': 2}[r['field_goal_result']]] += 1
+                outcomes[bucket] = tuple(counts)
             if r['field_goal_result'] == 'blocked':
                 excluded['blocked'] += 1
                 continue
@@ -93,13 +99,14 @@ def load_field_goal_results(path=KICK_RESULTS):
             if r['field_goal_result'] not in ('made', 'missed') or not r['yardline_100']:
                 excluded['missing yardline or result'] += 1
                 continue
-            made, missed = field_goal.get(fg_bucket_of(float(r['yardline_100'])), (0, 0))
+            bucket = fg_bucket_of(float(r['yardline_100']))
+            made, missed = field_goal.get(bucket, (0, 0))
             if r['field_goal_result'] == 'made':
                 made += 1
             else:
                 missed += 1
-            field_goal[fg_bucket_of(float(r['yardline_100']))] = (made, missed)
-    return {'field_goal': field_goal, 'excluded': excluded}
+            field_goal[bucket] = (made, missed)
+    return {'field_goal': field_goal, 'field_goal_outcomes': outcomes, 'excluded': excluded}
 
 
 def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
@@ -112,7 +119,8 @@ def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
     """
     fg = load_field_goal_results(results)
     tries = load_try_results(results)
-    return {'field_goal': fg['field_goal'], 'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
+    return {'field_goal': fg['field_goal'], 'field_goal_outcomes': fg['field_goal_outcomes'],
+            'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
             'excluded': {'field_goal': fg['excluded'], **tries['excluded']},
             'source': f"{Path(results).name} (publisher fields field_goal_result, extra_point_result, "
                       f"two_point_conv_result; window {WINDOW})"}

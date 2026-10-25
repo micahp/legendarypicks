@@ -1,0 +1,137 @@
+{
+  "columns": [
+    "kick_type",
+    "game_id",
+    "play_id",
+    "season",
+    "week",
+    "posteam",
+    "defteam",
+    "down",
+    "ydstogo",
+    "yardline_100",
+    "quarter",
+    "clock_seconds_remaining",
+    "clock_runoff_seconds",
+    "blocked",
+    "crossed_line",
+    "recovery_team",
+    "recovery_role",
+    "recovery_spot_yardline_100",
+    "return_endpoint_yardline_100",
+    "return_yards",
+    "possession_after_role",
+    "next_snap_yardline_100",
+    "next_snap_down",
+    "next_snap_ydstogo",
+    "touchdown",
+    "scoring_team",
+    "safety",
+    "classification_status",
+    "classification_note",
+    "return_team_field",
+    "return_yards_field",
+    "return_touchdown_field",
+    "receiving_team_touched_beyond_line",
+    "series_result",
+    "desc",
+    "source_file",
+    "source_sha256"
+  ],
+  "generator": "scripts/nfl_sequence/build_blocked_kick_outcomes.py",
+  "generator_sha256": "c3828e3d1a1a430082cb4debbf5cf237021a7c14b3de3cee9ce161afd8678f17",
+  "observed_rates": {
+    "extra_point_blocked_deferred": 38,
+    "field_goal_blocked_by_snap_bucket": {
+      "1-9": {
+        "attempts": 716,
+        "blocked": 4,
+        "rate": 0.00558659217877095,
+        "wilson_95": [
+          0.00217,
+          0.01428
+        ]
+      },
+      "10-19": {
+        "attempts": 1181,
+        "blocked": 16,
+        "rate": 0.013547840812870448,
+        "wilson_95": [
+          0.00836,
+          0.02189
+        ]
+      },
+      "20-29": {
+        "attempts": 1187,
+        "blocked": 26,
+        "rate": 0.02190395956192081,
+        "wilson_95": [
+          0.01499,
+          0.0319
+        ]
+      },
+      "30-39": {
+        "attempts": 1115,
+        "blocked": 33,
+        "rate": 0.029596412556053813,
+        "wilson_95": [
+          0.02115,
+          0.04127
+        ]
+      },
+      "40-49": {
+        "attempts": 122,
+        "blocked": 7,
+        "rate": 0.05737704918032787,
+        "wilson_95": [
+          0.02807,
+          0.11371
+        ]
+      },
+      "50+": {
+        "attempts": 4,
+        "blocked": 0,
+        "rate": 0.0,
+        "wilson_95": [
+          0.0,
+          0.4899
+        ]
+      }
+    },
+    "punt_blocked": {
+      "attempts": 8442,
+      "blocked": 39,
+      "rate": 0.004619758351101635,
+      "wilson_95": [
+        0.00338,
+        0.00631
+      ]
+    }
+  },
+  "output": {
+    "path": "docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv",
+    "sha256": "5e2ee798e66fd8cbcf8b59e66dd07b4f43e2073f6f76173727301a7fc2f63a26"
+  },
+  "record_count": 125,
+  "source_dataset": "nflverse play_by_play parquet",
+  "sources": {
+    "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "status_counts": {
+    "field_goal|classified_dead_ball_award": 30,
+    "field_goal|classified_recovery": 29,
+    "field_goal|guarded_penalty_fumble_or_review": 3,
+    "field_goal|period_expired": 2,
+    "field_goal|period_expired_unresolved_spot": 14,
+    "field_goal|touchdown": 8,
+    "punt|classified_dead_ball_award": 4,
+    "punt|classified_recovery": 20,
+    "punt|guarded_penalty_fumble_or_review": 2,
+    "punt|safety": 3,
+    "punt|touchdown": 10
+  },
+  "window": "2022-2025 regular season, week <= 18"
+}

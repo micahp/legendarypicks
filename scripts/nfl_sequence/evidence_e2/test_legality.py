@@ -99,6 +99,40 @@ class ScopeGuard(unittest.TestCase):
         self.assertTrue(lc.check_two_minute(record))
 
 
+class BlockedKickChecks(unittest.TestCase):
+    def record(self):
+        source_hash = 'a' * 64
+        return {
+            'pregame_snapshot': {'model_reference': {'observed_reference': {
+                'blocked_kick_source_sha256': source_hash}}},
+            'drives': [{'index': 1, 'points_scored_on_drive': None, 'plays': [{
+                'sequence': 8, 'event_type': 'blocked_punt',
+                'state_before': {'offense_team': 'A', 'defense_team': 'B', 'down': 4,
+                                 'yards_to_go': 5, 'yardline_100': 60},
+                'state_after': {'offense_team': 'B', 'yardline_100': 50, 'end_of_drive': 'turnover'},
+                'outcome': {'punt_attempt': True, 'turnover': True, 'turnover_on_downs': False,
+                            'blocked_kick': {'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                                             'source_file': 'play_by_play_2025.parquet', 'source_sha256': source_hash,
+                                             'game_id': '2025_01_TEST', 'play_id': 50, 'recovery_role': 'receiving_team',
+                                             'recovery_spot_yardline_100': 55, 'return_endpoint_yardline_100': 50,
+                                             'return_yards': 5, 'crossed_line': 0}},
+            }]}],
+        }
+
+    def test_pinned_blocked_punt_recovery_and_return_pass(self):
+        self.assertEqual(lc.check_blocked_kicks(self.record()), [])
+
+    def test_wrong_return_spot_fails(self):
+        record = self.record()
+        record['drives'][0]['plays'][0]['state_after']['yardline_100'] = 49
+        self.assertTrue(lc.check_blocked_kicks(record))
+
+    def test_unpinned_source_fails(self):
+        record = self.record()
+        record['drives'][0]['plays'][0]['outcome']['blocked_kick']['source_sha256'] = 'b' * 64
+        self.assertTrue(lc.check_blocked_kicks(record))
+
+
 class Fails(unittest.TestCase):
     def assertFails(self, record, check):
         failed = failed_checks(record)

@@ -16,6 +16,7 @@ import measure_kick_outcomes as mk  # noqa: E402
 
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
+BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
 
@@ -73,18 +74,77 @@ def _reference_fingerprint(reference):
     for key in sorted(reference.participants):
         add(['participants', key, reference.participants[key]])
     add(['position-usage', reference.position_usage])
+    for bucket in sorted(reference.missed_field_goal_pool):
+        add(['missed-field-goal-return-bucket', bucket])
+        for sample in reference.missed_field_goal_pool[bucket]:
+            add(['missed-field-goal-return', bucket, sample])
+    for kick_type in sorted(reference.blocked_kicks.get('records', {})):
+        add(['blocked-kick-type', kick_type])
+        for sample in reference.blocked_kicks['records'][kick_type]:
+            add(['blocked-kick-outcome', kick_type, sample])
+    add(['blocked-kick-rates', reference.blocked_kicks.get('rates')])
+    add(['blocked-kick-source-sha256', reference.blocked_kicks.get('sha256')])
+    add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
     return {
-        'schema': 'lp-e2-observed-reference-1',
+        'schema': 'lp-e2-observed-reference-2',
         'sha256': digest.hexdigest(),
         **reference.position_usage,
         'play_cells': len(reference.pool),
         'play_samples': sum(len(cell) for cell in reference.pool.values()),
         'kickoff_samples': len(reference.kickoff_pool),
         'participant_rows': len(reference.participants),
+        'missed_field_goal_return_samples': sum(len(rows) for rows in reference.missed_field_goal_pool.values()),
+        'missed_field_goal_return_buckets': {bucket: len(rows)
+                                             for bucket, rows in sorted(reference.missed_field_goal_pool.items())},
+        'blocked_kick_outcome_samples': {
+            kick_type: len(rows) for kick_type, rows in sorted(reference.blocked_kicks.get('records', {}).items())},
+        'blocked_kick_rates': reference.blocked_kicks.get('rates'),
+        'blocked_kick_source_sha256': reference.blocked_kicks.get('sha256'),
+        'blocked_kick_manifest_sha256': reference.blocked_kicks.get('manifest_sha256'),
         'play_extras_sha256': extras_hash,
     }
+
+
+def load_blocked_kicks(path=BLOCKED_KICKS):
+    """Load every observed blocked kick, retaining unresolved rows so a sampled unknown outcome can fail closed."""
+    import csv
+    manifest_path = path.with_suffix(path.suffix + '.manifest.json')
+    manifest = json.loads(manifest_path.read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'blocked-kick fixture checksum mismatch: {path}')
+    pools = {'field_goal': [], 'punt': []}
+    integer_fields = ('play_id', 'season', 'week', 'down', 'ydstogo', 'yardline_100', 'quarter',
+                      'clock_seconds_remaining', 'clock_runoff_seconds', 'crossed_line',
+                      'recovery_spot_yardline_100', 'return_endpoint_yardline_100', 'return_yards',
+                      'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo', 'touchdown', 'safety',
+                      'return_yards_field', 'return_touchdown_field', 'receiving_team_touched_beyond_line')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != manifest['record_count']:
+        raise ValueError(f'blocked-kick fixture row count mismatch: {path}')
+    seen = set()
+    for row in rows:
+        for field in integer_fields:
+            value = row[field]
+            row[field] = int(float(value)) if value not in ('', None) else None
+        row['blocked'] = row['blocked'] == '1'
+        key = (row['game_id'], row['play_id'])
+        if key in seen:
+            raise ValueError(f'duplicate blocked-kick source row: {key}')
+        seen.add(key)
+        if row['kick_type'] not in pools:
+            raise ValueError(f'unknown blocked-kick type: {row["kick_type"]!r}')
+        if manifest['sources'].get(row['source_file']) != row['source_sha256']:
+            raise ValueError(f'blocked-kick source provenance mismatch: {key}')
+        if row['blocked'] is not True:
+            raise ValueError(f'non-blocked source event in blocked-kick fixture: {key}')
+        pools[row['kick_type']].append(row)
+    return {'records': pools, 'rates': manifest['observed_rates'], 'sha256': source_hash,
+            'manifest_sha256': hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+            'source': manifest['source_dataset'], 'window': manifest['window']}
 
 
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
@@ -99,7 +159,7 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         rows = con.execute(f"""SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,
-posteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall()
+        posteam, defteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall()
     finally:
         con.close()
     flags = {}
@@ -108,14 +168,50 @@ posteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}"""
             flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), r['timeout_team'],
                                                                 int(r['out_of_bounds']))
     out = {}
-    for g, p, pa, ru, re_, posteam, air, rec_yds, play_type in rows:
+    for g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type in rows:
         t, t_team, oob = flags.get((g, int(p)), (0, '', 0))
         yac = (rec_yds - air) if (rec_yds is not None and air is not None and re_) else None
         out[(g, int(p))] = {'passer_id': pa, 'rusher_id': ru, 'receiver_id': re_, 'posteam': posteam,
+                            'defteam': defteam,
                             'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
                             'timeout': t, 'timeout_team': t_team,
                             'out_of_bounds': oob}
     return out
+
+
+def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
+    """Historical defense start spots immediately following a missed kick, by E1 field-position bucket."""
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    try:
+        rows = con.execute("""SELECT fg.game_id, fg.play_id, fg.yardline_100, fg.qtr, fg.drive,
+                    next.play_id, next.yardline_100
+                FROM nfl_pbp fg
+                JOIN nfl_pbp next
+                  ON next.game_id=fg.game_id AND next.qtr=fg.qtr AND next.drive=fg.drive+1
+                 AND next.posteam=fg.defteam AND next.play_type IN ('run','pass')
+                 AND next.play_id=(
+                    SELECT MIN(n.play_id) FROM nfl_pbp n
+                     WHERE n.game_id=fg.game_id AND n.qtr=fg.qtr AND n.drive=fg.drive+1
+                       AND n.posteam=fg.defteam AND n.play_type IN ('run','pass'))
+               WHERE fg.season BETWEEN 2022 AND 2025 AND fg.week <= 18
+                 AND fg.play_type='field_goal' AND fg.series_result='Missed field goal'
+                 AND fg.yardline_100 IS NOT NULL AND fg.drive IS NOT NULL
+               ORDER BY fg.game_id, fg.play_id""").fetchall()
+    finally:
+        con.close()
+    pools = {bucket: [] for bucket in gs.FG_BUCKETS}
+    for game_id, play_id, snap_yardline, quarter, drive, next_play_id, next_yardline in rows:
+        snap = int(round(snap_yardline))
+        actual_spot = int(round(next_yardline))
+        if not 1 <= actual_spot <= 99:
+            continue
+        baseline = gs.missed_field_goal_spot(gs.kick_spot_yardline_100(snap))
+        pools[gs.fg_bucket(snap)].append({
+            'spot_adjustment_yards': actual_spot - baseline,
+            'source': {'game_id': game_id, 'play_id': int(play_id),
+                       'next_drive_index': int(drive) + 1, 'next_play_id': int(next_play_id)},
+        })
+    return pools
 
 
 def load(db=e1.DEFAULT_DB, regulation_only=True):
@@ -133,7 +229,18 @@ def load(db=e1.DEFAULT_DB, regulation_only=True):
     kicks = mk.load_kick_table(db)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
-    reference = gs.Reference(pool, kpool, kicks, load_participants(db))
+    blocked = load_blocked_kicks()
+    for bucket, expected in blocked['rates']['field_goal_blocked_by_snap_bucket'].items():
+        counts = kicks['field_goal_outcomes'].get(bucket)
+        if counts is None or sum(counts) != expected['attempts'] or counts[2] != expected['blocked']:
+            raise ValueError(f'blocked field-goal rate and publisher kick table disagree in bucket {bucket}')
+    punt_rate = blocked['rates']['punt_blocked']
+    if (len(blocked['records']['punt']) != punt_rate['blocked']
+            or len(blocked['records']['field_goal']) != sum(x['blocked'] for x in
+                                                             blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
+        raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
+    reference = gs.Reference(pool, kpool, kicks, load_participants(db),
+                             load_missed_field_goal_pool(db), blocked)
     reference.position_usage = load_position_usage(db)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
