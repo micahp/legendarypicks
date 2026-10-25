@@ -112,7 +112,8 @@ class Validators(unittest.TestCase):
         self.assertEqual(record['mode'], 'legal_game_state_first_piece')
         self.assertFalse(record['valid_full_game'])
         record['valid_full_game'] = True
-        record['unsupported_rules'] = []
+        record['unsupported_rules'] = gs.active_unsupported_rules(
+            record['unmodelled_transitions'], record['blocker'], record['tied'])
         with self.assertRaisesRegex(AssertionError, 'pregame_full_game'):
             gs.validate_game(record)
 
@@ -455,15 +456,17 @@ class RulesMatrix(unittest.TestCase):
         row = next(r for r in rm.check(record) if r['case'].startswith('Clock'))
         self.assertEqual(row['status'], 'FAIL')
 
-    def test_unsupported_rules_are_named_not_passed(self):
+    def test_rule_matrix_separates_taken_paths_from_capability_limits(self):
         rows = rm.check(self._halftime_record())
-        for case in ('Clock running/stopped', 'Timeouts', 'Penalties', 'Onside kick', 'Player lineups'):
+        expected = {'Clock running/stopped': rm.PASS, 'Timeouts': rm.PASS, 'Penalties': rm.PASS,
+                    'Onside kick': rm.NOT_APPLICABLE, 'Player lineups': rm.PARTIAL}
+        for case, status in expected.items():
             row = next(r for r in rows if r['case'].startswith(case))
-            self.assertEqual(row['status'], 'UNSUPPORTED', case)
+            self.assertEqual(row['status'], status, case)
         warning = next(r for r in rows if r['case'] == 'Two-minute warning crossing marker')
         self.assertIn(warning['status'], ('PASS', 'NOT_APPLICABLE'))
         clock_state = next(r for r in rows if r['case'] == 'Clock running/stopped and restart state')
-        self.assertEqual(clock_state['status'], 'UNSUPPORTED')
+        self.assertEqual(clock_state['status'], rm.PASS)
 
 
 class TossSymmetry(unittest.TestCase):
@@ -510,9 +513,10 @@ class Guards(unittest.TestCase):
     def test_every_unmodelled_rule_carries_a_guard_and_is_never_pass(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 450), kickoff_pool()), winner_choice='receive', max_drives=3)
         self.assertEqual(set(record['guards']), set(gs.UNSUPPORTED_RULES))
+        self.assertEqual(set(record['rule_capability_limitations']), set(gs.UNSUPPORTED_RULES))
         rows = {r['case']: r['status'] for r in rm.check(record)}
-        self.assertEqual(rows['Unmodelled rules: each carries a named guard'], 'UNSUPPORTED')
-        self.assertEqual(rows['Timeouts: three per team per half'], 'UNSUPPORTED')
+        self.assertIn(rows['Unmodelled rules: each carries a named guard'], (rm.PARTIAL, rm.UNSUPPORTED))
+        self.assertEqual(rows['Timeouts: three per team per half'], rm.PASS)
 
     def test_a_record_without_the_timeout_guard_is_rejected(self):
         # Negative fixture: removing a guard must fail the validator and the matrix.
@@ -641,25 +645,43 @@ class MissedFieldGoalSpot(unittest.TestCase):
 class TimeoutCharges(unittest.TestCase):
     """An observed timeout flag charges the side it names, at most three per half, and the count never goes negative."""
 
-    def test_flags_charge_at_most_three_per_half_and_reset_at_halftime(self):
-        # Every sampled play is flagged with a timeout called by the offense (A). The count must reach zero and stop there.
-        facts = {('G1', 1.0): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A'}}
-        reference = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), facts)
-        record = gs.play_game(3, reference, winner_choice='receive')  # the default drive cap, so the game reaches halftime
-        self.assertIn(3, {q for d in record['drives'] for p in d['plays'] for q in (p['state_before']['quarter'],)},
-                      'the game must reach the third quarter for the halftime reset to be checked')
-        states = [(state['quarter'], state['home_timeouts'], state['away_timeouts'])
-                  for d in record['drives'] for p in d['plays'] for state in (p['state_before'], p['state_after'])]
-        self.assertTrue(all(0 <= home <= 3 and 0 <= away <= 3 for _, home, away in states), 'counts stay in 0..3')
-        first_half = [home for quarter, home, _ in states if quarter in (1, 2)]
-        self.assertIn(0, first_half, 'a flagged side runs out of timeouts in the first half')
-        self.assertEqual(min(first_half), 0)
-        second_half = [home for quarter, home, _ in states if quarter in (3, 4)]
-        self.assertIn(3, second_half, 'the count resets to three at halftime')
+    def _game(self):
+        reference = ref(StaticPool('run', 10, 30), kickoff_pool())
+        ledger = gs.CoinTossLedger('A', 'B', 'receive')
+        game = gs._Game(1, reference, ledger, random.Random(1))
+        game.offense, game.defense = 'A', 'B'
+        return game
+
+    @staticmethod
+    def timeout_play():
+        return {'participants': {'timeout': True, 'sampled_play_context': {
+                    'timeout_team': 'HOME', 'posteam': 'HOME', 'defteam': 'AWAY'}},
+                'state_before': {'home_timeouts': None, 'away_timeouts': None},
+                'state_after': {'home_timeouts': None, 'away_timeouts': None, 'clock_seconds': 500},
+                'outcome': {}}
+
+    def test_a_fourth_timeout_attempt_blocks_after_three_charges(self):
+        game = self._game()
+        for _ in range(3):
+            play = self.timeout_play()
+            game._apply_timeouts([play])
+            self.assertTrue(play['participants']['timeout_applied'])
+        self.assertEqual(game.timeouts, {'A': 0, 'B': 3})
+        game._apply_timeouts([self.timeout_play()])
+        self.assertEqual(game.timeouts, {'A': 0, 'B': 3})
+        self.assertEqual(game.blocker, 'timeout_limit_exceeded')
+
+    def test_timeouts_reset_at_halftime(self):
+        game = self._game()
+        game.quarter, game.clock = 2, 0
+        game.timeouts = {'A': 0, 'B': 1}
+        game._half_start()
+        self.assertEqual(game.quarter, 3)
+        self.assertEqual(game.timeouts, {'A': 3, 'B': 3})
 
 
 class UnmodelledTransitions(unittest.TestCase):
-    """Penalties remain guarded; a two-minute crossing marker is checked, while clock lifecycle remains unsupported."""
+    """Penalties are guarded; two-minute warnings have explicit stop and restart transitions."""
 
     def test_a_sampled_penalty_blocks_the_game_and_is_not_completed(self):
         pool = StaticPool('run', 10, 30)
@@ -677,19 +699,24 @@ class UnmodelledTransitions(unittest.TestCase):
         self.assertTrue(stops, 'a 100-second runoff crosses 2:00 in a late half')
         self.assertTrue(all(0 < p['state_after']['clock_seconds'] < 120 for p in stops))
         self.assertTrue(all(p['state_before']['quarter'] in (2, 4) for p in stops))
-        self.assertTrue(any(t['kind'] == 'two_minute_warning' for t in record['unmodelled_transitions']))
-        self.assertIn('clock_start_stop', record['unsupported_rules'])
+        self.assertFalse(any(t['kind'] == 'two_minute_warning' for t in record['unmodelled_transitions']))
+        for play in stops:
+            self.assertIn({'kind': 'automatic_two_minute_warning', 'team': None},
+                          play['outcome']['clock_transition']['stoppages'])
+            self.assertEqual(play['outcome']['clock_transition']['restart_trigger'], 'next_snap')
+        self.assertNotIn('clock_start_stop', record['unsupported_rules'])
         self.assertIn('clock_start_stop', record['guards'])
         self.assertFalse(record['valid_full_game'])
-        self.assertFalse(record['complete_game'])
         gs.validate_game(record)
 
     def test_a_missing_two_minute_guard_event_is_refused(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
-        self.assertTrue(any(t['kind'] == 'two_minute_warning' for t in record['unmodelled_transitions']))
-        record['unmodelled_transitions'] = [t for t in record['unmodelled_transitions']
-                                            if t['kind'] != 'two_minute_warning']
-        with self.assertRaisesRegex(AssertionError, 'unmodelled transition list disagrees'):
+        play = next(p for d in record['drives'] for p in d['plays'] if p['outcome'].get('two_minute_warning'))
+        play['outcome']['two_minute_warning'] = False
+        play['outcome']['clock_transition']['stoppages'] = [
+            item for item in play['outcome']['clock_transition']['stoppages']
+            if item['kind'] != 'automatic_two_minute_warning']
+        with self.assertRaisesRegex(AssertionError, 'two-minute warning'):
             gs.validate_game(record)
 
 class FiveSecondKick(unittest.TestCase):
@@ -736,10 +763,13 @@ class TimeoutTransition(unittest.TestCase):
     """A timeout is a transition: the count is written once, in state_after; the clock stops for it and the next play
     restarts from the clock the flagged play leaves."""
 
-    FLAGGED = {('G1', 1.0): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A'}}
+    FLAGGED = {('G1', 1): {'timeout': 1, 'timeout_team': 'A', 'posteam': 'A', 'defteam': 'B'}}
 
     def game(self, facts):
-        reference = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), facts)
+        pool = StaticPool('run', 10, 30)
+        pool.entries = [(event, {**row, 'play_id': index + 1}, runoff, spot)
+                        for index, (event, row, runoff, spot) in enumerate(pool.entries)]
+        reference = gs.Reference(pool, kickoff_pool(), certain_kicks(), facts)
         return gs.play_game(3, reference, winner_choice='receive')
 
     @staticmethod
@@ -778,12 +808,53 @@ class TimeoutTransition(unittest.TestCase):
 
     def test_a_timeout_changes_the_counts_and_nothing_on_the_clock(self):
         flagged, plain = self.game(self.FLAGGED), self.game({})
-        clock = lambda rec: [(p['state_before']['quarter'], p['state_before']['clock_seconds'],
-                              p['outcome']['clock_runoff_seconds']) for p in self.plays(rec)]
-        self.assertEqual(clock(flagged), clock(plain))
-        self.assertEqual(flagged['points'], plain['points'])
-        self.assertNotEqual([p['state_after']['home_timeouts'] for p in self.plays(flagged)],
-                            [p['state_after']['home_timeouts'] for p in self.plays(plain)])
+        flagged_plays = self.plays(flagged)
+        applied = [p for p in flagged_plays if p['participants']['timeout_applied']]
+        self.assertTrue(applied)
+        for play in applied:
+            self.assertEqual(play['state_after']['clock_seconds'],
+                             play['state_before']['clock_seconds'] - play['outcome']['clock_runoff_seconds'])
+            self.assertIn({'kind': 'team_timeout', 'team': play['participants']['timeout_charged_to']},
+                          play['outcome']['clock_transition']['stoppages'])
+            self.assertEqual(play['outcome']['clock_transition']['restart_trigger'], 'next_snap')
+        self.assertLessEqual(sum(len(d['plays']) for d in flagged['drives']),
+                             sum(len(d['plays']) for d in plain['drives']))
+
+
+class FirstDownClockTransition(unittest.TestCase):
+    @staticmethod
+    def play(quarter, clock_before, clock_after, offense_after='A', down_before=2, turnover=False):
+        return {
+            'event_type': 'interception' if turnover else 'run',
+            'participants': {},
+            'state_before': {'quarter': quarter, 'clock_seconds': clock_before,
+                             'offense_team': 'A', 'down': down_before},
+            'state_after': {'quarter': quarter, 'clock_seconds': clock_after,
+                            'offense_team': offense_after, 'down': 1},
+            'outcome': {'clock_runoff_seconds': clock_before - clock_after, 'turnover': turnover},
+        }
+
+    def test_first_down_restarts_at_referee_signal_outside_late_game_windows(self):
+        game = object.__new__(gs._Game)
+        play = self.play(1, 700, 690)
+        game._record_clock_transitions([play])
+        transition = play['outcome']['clock_transition']
+        self.assertIn({'kind': 'first_down', 'team': None}, transition['stoppages'])
+        self.assertEqual(transition['restart_trigger'], 'referee_signal')
+
+    def test_first_down_restarts_at_snap_inside_late_game_windows(self):
+        game = object.__new__(gs._Game)
+        play = self.play(4, 310, 290)
+        game._record_clock_transitions([play])
+        self.assertEqual(play['outcome']['clock_transition']['restart_trigger'], 'next_snap')
+
+    def test_possession_change_is_not_misclassified_as_a_first_down(self):
+        game = object.__new__(gs._Game)
+        play = self.play(3, 500, 490, offense_after='B', turnover=True)
+        game._record_clock_transitions([play])
+        transition = play['outcome']['clock_transition']
+        self.assertNotIn({'kind': 'first_down', 'team': None}, transition['stoppages'])
+        self.assertIn({'kind': 'possession_change', 'team': None}, transition['stoppages'])
 
 
 class DriveIndexFindings(unittest.TestCase):
@@ -942,12 +1013,17 @@ class UnmodelledKinds(unittest.TestCase):
         self.assertFalse(record['complete_game'])
         gs.validate_game(record)
 
-    def test_a_timeout_flag_is_an_unmodelled_stoppage(self):
+    def test_a_timeout_flag_is_applied_and_recorded_as_a_clock_stoppage(self):
         observed = gs.Reference(StaticPool('run', 10, 30), kickoff_pool(), certain_kicks(), {
-            ('G1', 1.0): {'timeout': True, 'timeout_team': 'A', 'posteam': 'A', 'passer_id': None, 'rusher_id': None,
-                          'receiver_id': None, 'air_yards': None, 'yards_after_catch': None, 'out_of_bounds': 0}})
+            ('G1', 1): {'timeout': True, 'timeout_team': 'A', 'posteam': 'A', 'defteam': 'B', 'passer_id': None,
+                        'rusher_id': None, 'receiver_id': None, 'air_yards': None, 'yards_after_catch': None,
+                        'out_of_bounds': 0}})
         record = gs.play_game(1, observed, winner_choice='receive', max_drives=2)
-        self.assertIn('timeout', self.kinds(record))
+        play = next(p for d in record['drives'] for p in d['plays'] if p['participants']['timeout'])
+        self.assertTrue(play['participants']['timeout_applied'])
+        self.assertIn({'kind': 'team_timeout', 'team': play['participants']['timeout_charged_to']},
+                      play['outcome']['clock_transition']['stoppages'])
+        self.assertNotIn('timeout', self.kinds(record))
         self.assertFalse(record['complete_game'])
 
     def test_a_guarded_game_described_as_complete_is_refused(self):

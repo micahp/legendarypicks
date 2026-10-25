@@ -65,7 +65,7 @@ class Positive(unittest.TestCase):
 
 
 class ScopeGuard(unittest.TestCase):
-    """The warning marker is checked at its actual clock value; the full clock lifecycle remains guarded."""
+    """Legacy records stay scoped out; new full-game records must carry clock transitions."""
 
     def test_the_successor_seed_one_is_not_a_legal_complete_game_because_of_its_guarded_transitions(self):
         record = seed1()
@@ -75,7 +75,7 @@ class ScopeGuard(unittest.TestCase):
         self.assertIn('two_minute_warning', kinds, 'the warning marker exists but its clock lifecycle is unmodelled')
         self.assertTrue(kinds, 'seed one carries a guarded transition')
         self.assertFalse(lc.legal_complete_game(record))
-        self.assertTrue(any(x.startswith('two-minute warning clock lifecycle not modelled')
+        self.assertTrue(any(x.startswith('two-minute warning clock transition missing')
                             for x in lc.check_unmodelled(record)))
 
     def test_the_successor_seed_one_records_two_minute_stops_at_the_post_down_clock(self):
@@ -84,13 +84,10 @@ class ScopeGuard(unittest.TestCase):
         self.assertTrue(all(0 < w['clock_seconds'] <= 120 for w in record['two_minute_warnings']))
         self.assertEqual(lc.check_two_minute(record), [])
 
-    def test_clock_start_stop_lifecycle_remains_explicitly_unsupported(self):
+    def test_full_game_mode_requires_explicit_clock_transitions(self):
         record = seed1()
-        self.assertIn('clock_start_stop', record['unsupported_rules'])
-        self.assertIn('clock_start_stop', record['guards'])
         self.assertEqual(lc.check_clock_state_guard(record), [])
-        record['unsupported_rules'].remove('clock_start_stop')
-        record['guards'].pop('clock_start_stop')
+        record['mode'] = 'pregame_full_game'
         self.assertTrue(lc.check_clock_state_guard(record))
 
     def test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker(self):

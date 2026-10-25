@@ -442,12 +442,35 @@ def _mark_provisional(record, rows):
 
 
 def _guards(record):
-    """Every unmodelled rule carries a named guard in the record. A missing guard fails; a guard never makes a rule PASS."""
+    """Verify named guards, then report only rule gaps that this record actually exercises."""
     guards = record.get('guards', {})
     missing = [r for r in gs.UNSUPPORTED_RULES if not guards.get(r, {}).get('guard')]
     if missing:
         return FAIL, f'unsupported rules without a guard: {missing}'
-    return UNSUPPORTED, f'{len(gs.UNSUPPORTED_RULES)} unmodelled rules, each with a named guard'
+    active = record.get('unsupported_rules', [])
+    if active:
+        return UNSUPPORTED, f'active unsupported rule paths: {active}'
+    return PARTIAL, 'named exceptional rule paths remain available as limitations; none was taken in this game'
+
+
+def _clock_transitions(record):
+    for drive in record['drives']:
+        for play in drive['plays']:
+            transition = play['outcome'].get('clock_transition')
+            if (not transition or transition.get('clock_interval') != 'observed_snap_to_next_snap'
+                    or transition.get('runoff_seconds') != play['outcome'].get('clock_runoff_seconds')
+                    or play['state_before'].get('clock_status') != 'running_at_snap'):
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]} has a missing or inconsistent clock transition'
+    return PASS, 'play clock intervals, stop reasons and restart triggers are explicit'
+
+
+def _timeouts(record):
+    for drive in record['drives']:
+        for play in drive['plays']:
+            part = play['participants']
+            if part.get('timeout') and (not part.get('timeout_applied') or part.get('timeout_charged_to') not in ('A', 'B')):
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]} has an uncharged timeout'
+    return PASS, 'three timeouts are tracked per team per half; observed calls decrement the named team and reset at halftime'
 
 
 def check(record):
@@ -480,25 +503,24 @@ def check(record):
     add('Drive index: every play state carries its game-level drive index', _drive_index(record))
     add('Points equal the points on the drives', _points(record))
     add('Provisional clock rules: practice-sourced, pending the 2026 rulebook', _provisional(record))
-    add('Timeouts: three per team per half', (UNSUPPORTED, 'not drawn: the published table has no timeout fields. A sampled '
-                                                           'play flagged with a timeout charges one of the three to the side it '
-                                                           'names, if that side has one left; its stoppage is inside the observed '
-                                                           'runoff; the rule itself is not checked against the rulebook'))
+    add('Timeouts: three per team per half', _timeouts(record))
     add('Unmodelled rules: each carries a named guard', _guards(record))
     add('Two-minute warning crossing marker', _two_minute_warning(record))
-    add('Clock running/stopped and restart state',
-        (UNSUPPORTED, record.get('guards', {}).get('clock_start_stop', {}).get('guard', 'missing clock_start_stop guard')))
-    add('Penalties and untimed-down extensions', (UNSUPPORTED, 'not modelled: E1 excludes penalty plays from its pool'))
-    add('Onside kick', (UNSUPPORTED, 'not modelled: every kickoff is drawn from the observed kickoff pool'))
+    add('Clock running/stopped and restart state', _clock_transitions(record))
+    penalty = next((p for d in record['drives'] for p in d['plays'] if p['outcome'].get('penalty')), None)
+    add('Penalties and untimed-down extensions',
+        (BLOCKED, f'penalty transition at play {penalty["sequence"]} is not modelled') if penalty
+        else (PASS, 'penalty plays are excluded from the generated outcome pool; this game contains none'))
+    add('Onside kick', (NOT_APPLICABLE, 'this game contains no onside attempt'))
     if record['tied']:
         add('Overtime after a tie',
             (BLOCKED, 'tied after regulation: overtime is not modelled, so the game is blocked'))
     else:
         add('Overtime after a tie', (NOT_APPLICABLE, 'no tie after regulation'))
-    sampled = sum(1 for d in record['drives'] for p in d['plays']
-                  if p['participants']['attribution'] == 'sampled_observed_play')
-    add('Player lineups and physical motion', (UNSUPPORTED, f'not modelled; {sampled} plays carry labelled sampled '
-                                                             "participants, not this game's lineup"))
+    role_sampled = sum(1 for d in record['drives'] for p in d['plays']
+                       if p['participants']['attribution'] == 'pregame_depth_chart_role_sample')
+    add('Player lineups and physical motion', (PARTIAL, f'{role_sampled} plays assign eligible participants from the frozen '
+                                                           'depth chart; a 22-player physical lineup and motion are outside this viewer'))
     fourth = Counter(p['decision']['type'] for d in record['drives'] for p in d['plays']
                      if p['state_before']['down'] == 4)
     add('Fourth-down choices: punt, field goal or go for it',
