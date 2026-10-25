@@ -23,7 +23,7 @@
 
 ## Authoritative references (versioned)
 
-- [2026 NFL Rulebook](https://operations.nfl.com/rules-officiating/2026-nfl-rulebook): Rule **4-1** periods/halftime; **4-2-1, 4-2-2, 4-2-3** kickoff of halves, coin-toss privileges, change of goals; **4-3/4-4/4-5/4-7/4-8** clock/timeouts/timing. Rule **6** kickoff/free kicks; **7** downs, spot, snap; **8** forward passes/fumbles; **9** punts/FG mechanics; **11** scoring, try and safety; **14** penalty enforcement; **16** overtime.
+- [2026 NFL Rulebook](https://operations.nfl.com/rules-officiating/2026-nfl-rulebook) ([official 2026 PDF](https://static.www.nfl.com/image/upload/fl_attachment/league/tqivdkzt9mu6wdgsh1ku.pdf)): Rule **4-1** periods/halftime; **4-2-1, 4-2-2, 4-2-3** kickoff of halves, coin-toss privileges, change of goals; **4-3/4-4/4-5/4-7/4-8** clock/timeouts/timing. Rule **6-1-1/6-1-2/6-1-3** free kicks and safety-kick procedure; **7-2-1/7-3** dead ball and series of downs; **8** passes/fumbles; **9-2-1 through 9-2-5** touching of a scrimmage kick; **9-3-1 and 9-3-2** kicking-team recovery; **9-4** dead-ball/touchback variants; **11-4-2** missed-FG exceptions; **11-5-2** restart after safety; **14** penalty enforcement; **16** overtime.
 - [2026 rule changes listed by NFL Football Operations](https://operations.nfl.com/rules-officiating/2026-nfl-rulebook): kickoff receiving-team setup-zone changes (**6-1-3**), special 50-yard kick touchback spot (**6-1-5**), onside declaration now allowed **any time** (**6-1-6**). Never hardcode the 2025 kickoff/onside restrictions in a `rules_version=2026` simulator.
 - [NFL announcement of 2026 adopted changes](https://www.nfl.com/news/nfl-announces-new-playing-rules-bylaws-resolutions-for-2026). Use for change provenance, not a substitute for the full rule.
 - **Historical data:** Published `nfl_pbp` inputs and observed coin-toss/field-end facts must be source-verified separately. An authored default is allowed for a clearly labeled *hypothetical* game, but it is **not** a sourced fact about a real historical game.
@@ -87,11 +87,65 @@ terminal: drive_ending | change_ends | halftime | kickoff | period_end | game_en
 Every reducer action must have **exactly one rule version, input pre-state, output post-state and reason**. Legal transitions in scope:
 
 - `scrimmage_play` (run, pass completion/incompletion, sack, scramble, kneel, spike), first down/goal-to-go, turnover on downs, interception, fumble, safety, touchdown.
-- `punt`, `field_goal_attempt`, `try`, `kickoff`, `safety_free_kick`, blocked/returned variants, with distinct participants/clock/possession/spot rules or **explicit not-yet-supported refusal**.
+- `punt`, `field_goal_attempt`, `try`, `kickoff`, `safety_free_kick`, blocked/returned variants, with distinct participants/clock/possession/spot rules or **explicit not-yet-supported refusal**. Blocked scrimmage kicks require the Rule 9-2/9-3 recovery distinctions in section 5A; a safety free kick follows Rule 6 and 11-5-2, **not** the blocked-punt recovery rules.
 - `quarter_end_change_goals` Q1/Q3 (drive continues); `halftime` (half ends; resolve second-half choices and kickoff); `game_end`; `overtime` separately versioned/unsupported until tested.
 - `timeout`, `two_minute_warning`, `clock_runoff`, clock-start/stop, penalty enforcement and untimed-down extension as separate substates; do not infer these from a single sampled yards value.
 
 E1 may ship a **scoped research drive** with unsupported transitions clearly labeled as such; E2 cannot claim a **complete legal NFL game** until required restarts/score/clock/possession paths either work or the output is explicitly marked **partial/unverified**, not `valid_full_game=true`.
+
+## 5A. Blocked scrimmage-kick recovery and safety-kick transition (Rule 9-2, 9-3, 11-4-2, 11-5-2)
+
+**Source/edition:** [Official NFL 2026 playing rules (PDF)](https://static.www.nfl.com/image/upload/fl_attachment/league/tqivdkzt9mu6wdgsh1ku.pdf), Rule 9 Section 2 (touching), Rule 9 Section 3 Articles 1 and 2 (recovery), Rule 7-3 (series), Rule 7-2-1 (ball dead), Rule 9-4 (goal-line/dead-ball cases), Rule 11-4-2 (missed field goals), Rule 11-5-2 (ball in play after safety). **Correct citation is 9-3-1 / 9-3-2, not 2-3-1 / 2-3-2.** These are separate from free-kick rules in Rule 6.
+
+### 5A.1 Scrimmage-kick recovery decision table (punt or field-goal attempt)
+
+Here **kicking team** means the team that punted or attempted the field goal, **receivers** its opponent, and **line** the original line of scrimmage. Determine whether the receivers touched the ball **beyond the line** before awarding a new series. An attempted block or passive player blocked into the ball does not necessarily count as qualifying receiver touching (9-2-2 Note 2; 9-2-4). Touching **behind** the line is not a substitute for touching **beyond** it.
+
+| Recovery and touching facts | Ball status, possession and next series | 2026 authority |
+| --- | --- | --- |
+| Kicking team recovers **behind** original line; no receiver touch beyond it, including a kick that crossed the line and returned | Ball may be **advanced**. Same series continues if the kickers are short of the original line to gain at the dead-ball spot. Advance to the line to gain earns a new first down. If it was fourth down and the kickers remain short, receivers obtain possession on downs at the dead-ball spot, barring enforcement or another exception. | 9-3-1 Item 1; 7-3-1/2 |
+| Receivers touched the kick **beyond** original line; ball returns behind it; kicking team recovers | Ball may be **advanced**; award kicking team **a new series** because a rule-defined change of possession occurred, regardless of whether it advanced to the old line to gain. | 9-3-1 Item 2; 7-3-1(d) |
+| Kicking team catches or recovers **beyond** original line **after receivers touched beyond it** | Kick becomes **dead on recovery**; normally kickers receive **first-and-10** at recovery spot. If qualifying recovery is in receivers' end zone, apply the specific touchdown rule. Do **not** allow a post-recovery return. | 9-3-2 Item 1; 9-4-1(c) |
+| Kicking team catches or recovers **beyond** original line **without** receiver touching beyond it | Kick becomes **dead** and receivers are awarded the ball, generally first-and-10 at the catch/recovery spot. Apply first-touching options, goal-line/touchback treatment and missed-FG exceptions when applicable. Receiver touching *behind* the line alone does **not** validate kicking-team recovery beyond it. | 9-3-2 Item 2/3; 9-2-2; 9-4; 11-4-2 |
+| Receivers catch or recover a kick | Receivers may advance, subject to the fair-catch and goal-line exceptions; the ensuing spot depends on the actual dead-ball result. | 9-3-3; 10-2; 9-4 |
+
+**Important boundaries:**
+
+- The location of **the recovery** relative to the **original** scrimmage line is not the same as the final dead-ball spot after a permitted advance. Record both, and retain the original down, line to gain, and kick type. A behind-line recovery does not automatically end the play or force a new drive.
+- A receiver's touch in an attempted **block in the immediate vicinity of the line**, or passive contact caused by being **blocked into the kick**, does not automatically qualify as receiver touching for 9-3-1 Item 2 or 9-3-2 Item 1. Track the manner and location of first legal touching, not just a boolean `touched`.
+- A fourth-down blocked punt recovered and advanced by the punting team short of the line to gain is **turnover on downs** in the no-qualifying-touch case. A blocked punt recovered and advanced *to or past* the original line to gain is a first down. An intervening qualifying touch beyond the line changes the series ruling.
+- A blocked **field goal** remains a scrimmage-kick case, but do not apply the ordinary missed-FG spot rule blindly. Rule 11-4-2 has explicit exceptions when receivers touch the ball beyond the line or when the kick ends behind the line. End-zone, touching, fouls, and enforcement must be checked separately. A refused blocked FG stays refused until these facts are represented.
+- Illegal first touching and touching by an out-of-bounds kicking-team player can alter the receivers' award/options (9-2-2/9-2-3). Do not turn every kicking recovery beyond the line into a penalty or a legal new possession.
+
+**Minimal reducer evidence before permitting a result:** `kick_type` (punt/FG); `original_scrimmage_spot`; `original_down`; `original_line_to_gain`; `kick_crossed_line`; `receiver_touched_beyond_line` plus source/manner/timing; `recovery_team`; `recovery_spot`; `recovery_side_of_original_line`; `post_recovery_advance_end` if legal; `dead_ball_reason`; `resulting_possession`; `resulting_spot`; `resulting_down_and_distance`; `score_effect`; `clock_effect`; and any `foul`/`touchback`/`first_touching` or missed-FG exception. These are **engineering requirements**, not a claim the existing shared `GRIDIRON-CONTRACT-v1` already contains them. Add a separately versioned research/output extension if needed; leave shared v1 byte-identical until both projects explicitly approve a versioned contract change.
+
+**Fail closed:** If any fact required for the applicable branch is absent or cannot be legally derived, emit a named refusal (for example `blocked_punt_kicking_recovery_not_modelled` or `blocked_field_goal_not_modelled`). A refusal is **not** a turnover, final score, completed regulation game, or `valid_full_game=true` result. Do not repair refusal frequency by resampling a different play or relaxing the independent possession/score checker.
+
+### 5A.2 Safety free kick: separate restart, not a blocked scrimmage kick
+
+- A safety awards **two points** to the opponent; the **team scored upon** must next free kick from its own **20-yard line**, subject to applicable enforcement and period-extension rules. A safety kick may be a punt, drop kick, or place kick (11-5-2; 6-1-1(b), 6-1-2). It remains a **free kick**, not a scrimmage punt governed by the Rule 9-3 recovery table.
+- Close the drive that ended in the safety **before** appending the restart kick. Preserve distinct `kicking_team` (the team scored upon) and `receiving_team` (normally the team awarded the safety). The actual next scrimmage offense/spot must be resolved from the **legal free-kick outcome**; never infer it from the mere presence of a safety or a nominal receiving team.
+- **Gridiron research/viewer grouping convention:** if the generated safety-free-kick/refusal event is attached to a receiving-team-owned pending drive, open that **new** drive before recording the kick, set the generator's current pending offense to that receiving team, and keep the refusal/event in the same pending drive. This is an **internal event/drive representation rule**, not a claim the receiving team already possessed the live kicked ball. A legal kicking-team recovery would need explicit resolution and could override the expected receiver.
+- Missing safety-kick outcome distribution, receiver/recovery, legal spot or clock handling means **explicit `safety_free_kick_not_modelled` refusal**. No synthesized punt outcome, receiver at a fixed spot, inherited pre-safety kicking-team drive, or completed-game certification.
+
+### 5A.3 Mandatory deterministic fixtures and independent checks
+
+| Fixture | Expected independent assertion |
+| --- | --- |
+| Behind-line recovery on third down, no qualifying receiver touch, short of line to gain | Kickers can advance; fourth down at the actual dead-ball spot with remaining distance; same series |
+| Behind-line recovery on fourth down, no qualifying receiver touch, short of line to gain | Receivers get new first down by turnover on downs at dead-ball spot; no fictitious punter first down |
+| Behind-line recovery advances across line to gain | New first down for kickers, at real forward-progress spot |
+| Receivers touched **beyond** line before ball returned behind it | Kickers recover behind and receive new first down; separate from same-series branch |
+| Kickers recover **beyond** line after qualifying receiver touch | Immediate dead ball; kickers' first down at recovery spot, or correct end-zone scoring case; no run after recovery |
+| Kickers recover **beyond** line without qualifying receiver touch | Dead ball and receivers awarded possession, including missed-FG/touchback/first-touching applicable cases |
+| Receiver only touched behind line, or passive blocked-into-kick touch | No invented qualifying touch beyond line; apply corresponding behind/beyond rule |
+| Blocked FG with absent location/touch/outcome facts | Named refusal with no made-up score, spot or end-game completion |
+| Safety from scrimmage followed by safety free kick | Safety closes old drive; post-safety event opens distinct pending phase/drive; kicker and receiver correctly identified; any viewer receiver-owned pending drive remains consistent through refusal |
+| Unsupported free kick after safety | `safety_free_kick_not_modelled`, **no final result**; no wrong-team possession-continuity event |
+
+Add fixed-seed before/after comparisons of completed-game counts, refusal categories, score continuity, possession continuity and outcome distributions; an independent checker must flag deliberately mutated versions of these paths. Historical source PBP and a separately frozen cohort remain the football-outcome reference, not the generator's own output.
+
+**Implementation state as of this rules clarification:** the 600-seed safety-kick survey reported **505 complete regulation / 88 blocked-FG refusals / 4 blocked-punt kicking-recovery refusals / 3 safety-kick refusals**, with possession-continuity findings reportedly **6 → 0** after a two-line Gridiron repair. This is **agent-reported evidence**, not independently re-run here, and does **not** establish implementation of the blocked-kick recovery branches above. Keep these cases fail-closed pending code, deterministic fixtures, independent review and contract-compatible integration.
 
 ## 6. Rules for sample selection are not rules of football
 
@@ -114,10 +168,15 @@ For future **as-of** predictive claims, LP must exclude all events/results unava
 | Both half-opening kickoffs | Normal mode **MUST** have exactly two `half_start` kickoffs, one Q1 and one Q3, **different kicking teams**, and a matching toss/choice ledger; test both receiver and defer opening paths |
 | Turnover on downs in Q2 | New offense is other team at same dead-ball spot; `dir` flips, `yardline_100` complements, `los` remains consistent |
 | Touchdown | Apply **six-point** score plus distinct try; after try proceed to kickoff as rules require; no fictional auto-PAT |
-| Made FG / safety | Score per Rule 11 (FG **3**, safety **2**); schedule correct post-score kick/restart |
+| Made FG / safety | Score per Rule 11 (FG **3**, safety **2**); schedule correct post-score kick/restart; safety kick from the scored-upon team's 20 (11-5-2) |
 | Fourth down | Choose between punt, FG, and go-for-it conditional on field/time/score; do not use go-for-it data as all NFL fourth downs |
 | Clock/timeouts | 15-minute regulation quarters, **three timeouts per team per half**; no clock increase; end of Q1/Q3 is not drive terminal |
 | Unsupported rules | Reject with an explicit unsupported code or mark incomplete; never silently force a turnover on downs, normal run, or finished game |
+| Safety kick / pending possession | Close the pre-safety drive; create distinct post-safety free-kick phase; kicking team is the team scored upon. Any adapter that groups a pending/refused kick under its **expected receiver** must start a new drive and keep its refusal in that drive; this is an event-grouping convention, **not** proof of legal possession after the kick |
+| Blocked punt/FG, kickers recover **behind** original line | Apply 9-3-1: kicking team may advance; if no qualifying receiver touch **beyond** line, same series unless line to gain reached; on fourth down short of line to gain, turnover on downs at dead-ball spot, absent a separate rule/penalty |
+| Blocked punt/FG, receiver first touched **beyond** line, kickers recover behind | Apply 9-3-1 Item 2: a new series to kickers; do not treat as a same-series fourth down |
+| Kickers recover **beyond** line | Apply 9-3-2: dead immediately; qualifying receiver touch beyond line permits kickers' new series (or touchdown under the end-zone rule); absent such touch, award receivers with first-touching/touchback/missed-FG exceptions as applicable |
+| Blocked-kick missing context | No inferred touch, recovery side, spot, line-to-gain result, penalty or clock; preserve refusal and no full-game certification |
 | Overtime/untimed down/penalties | Explicit rule-version-sensitive guards and test cases before claiming full-game completeness |
 
 ## 8. Near-term work order, based on real current branches
@@ -142,5 +201,7 @@ For future **as-of** predictive claims, LP must exclude all events/results unava
 | Clock/timeout/quarter/halftime | Q2 static fixture | Within-quarter sampled runoff only | Legal transitions and start-stop |
 | Player lineup/3D physical motion | Not modeled | Not modeled | Separate honest replay status |
 | Overtime/penalty exception handling | None | None | Explicit tested coverage or blocked full-game claim |
+
+**2026-10-24 documentation amendment:** Added section 5A and the recovery/safety-kick acceptance matrix, verified against the official 2026 NFL rulebook PDF (9-2, 9-3-1, 9-3-2, 7-3, 11-4-2, 11-5-2). This is a **rules-only** change on LP `dev`; it does not implement previously refused blocked kicks or update shared contract-v1. Gridiron repair details and 600-run outcomes are labelled agent-reported, not independently verified or attributed to an unknown code SHA.
 
 **Change-control:** Amend this file in a dated section with updated official rule section/edition, exact LP/GP code commit, tests and status. If rules change in 2027, create a versioned successor rather than silently altering what `rules_version=2026` means.
