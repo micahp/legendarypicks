@@ -181,6 +181,83 @@ def _turnover_on_downs_q2(record):
     return PASS, f'{len(hits)} turnover(s) on downs in Q2: offense changes, spot and direction hold'
 
 
+def _blocked_kicks(record):
+    """Recompute blocked-kick attempts, provenance and possession outcomes from the emitted play records."""
+    observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
+    observed = observed.get('blocked_kick_source_sha256')
+    found = 0
+    supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
+    for drive in record['drives']:
+        for play in drive['plays']:
+            event, out = play['event_type'], play['outcome']
+            blocked = out.get('blocked_kick')
+            if event not in ('blocked_punt', 'blocked_field_goal'):
+                if blocked or out.get('field_goal_result') == 'blocked':
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked result has no blocked event'
+                continue
+            found += 1
+            kick_type = 'punt' if event == 'blocked_punt' else 'field_goal'
+            if not isinstance(blocked, dict) or blocked.get('kick_type') != kick_type:
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: missing matching blocked outcome'
+            if blocked.get('classification_status') not in supported:
+                return BLOCKED, f'drive {drive["index"]} play {play["sequence"]}: sampled block is unresolved'
+            if (not isinstance(blocked.get('source_sha256'), str) or len(blocked['source_sha256']) != 64
+                    or not blocked.get('source_file') or not blocked.get('game_id')
+                    or not isinstance(blocked.get('play_id'), int)):
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: source provenance is incomplete'
+            if observed and blocked['source_sha256'] != observed:
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: source is not pinned by the snapshot'
+            if kick_type == 'field_goal':
+                if not out.get('field_goal_attempt') or out.get('field_goal_result') != 'blocked':
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked field-goal attempt is not recorded'
+            elif not out.get('punt_attempt'):
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked punt attempt is not recorded'
+
+            before, after = play['state_before'], play['state_after']
+            if out.get('touchdown') or out.get('safety'):
+                role = blocked.get('scoring_role')
+                scorer = before['offense_team'] if role == 'kicking_team' else before['defense_team']
+                if (role not in ('kicking_team', 'receiving_team') or out.get('scoring_team') != scorer
+                        or (drive.get('points_scored_on_drive') or {}).get('team') != scorer):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: score belongs to the wrong team'
+                continue
+            if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
+                continue
+            role = blocked.get('recovery_role')
+            if role == 'receiving_team' or blocked['classification_status'] == 'classified_dead_ball_award':
+                if (after.get('offense_team') != before['defense_team'] or not out.get('turnover')
+                        or after.get('yardline_100') != blocked.get('return_endpoint_yardline_100')):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: receiving team has wrong possession or spot'
+            elif role == 'kicking_team':
+                if blocked.get('crossed_line') not in (0, 1, False, True):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: line-crossing classification is missing'
+                if blocked.get('crossed_line'):
+                    touched = blocked.get('receiving_team_touched_beyond_line')
+                    if touched not in (0, 1, False, True):
+                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: receiver touch beyond line is unknown'
+                    want = before['offense_team'] if touched else before['defense_team']
+                    if after.get('offense_team') != want:
+                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: beyond-line recovery possession is wrong'
+                else:
+                    endpoint = blocked.get('return_endpoint_yardline_100')
+                    if not isinstance(endpoint, int) or not 0 <= endpoint <= 100:
+                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: kicking-team return endpoint is missing'
+                    gained = before['yardline_100'] - endpoint
+                    if gained >= before['yards_to_go']:
+                        if after.get('offense_team') != before['offense_team'] or after.get('down') != 1:
+                            return FAIL, f'drive {drive["index"]} play {play["sequence"]}: line-to-gain conversion is wrong'
+                    elif before['down'] == 4:
+                        if after.get('offense_team') != before['defense_team'] or not out.get('turnover_on_downs'):
+                            return FAIL, f'drive {drive["index"]} play {play["sequence"]}: fourth-down failure is wrong'
+                    elif after.get('offense_team') != before['offense_team'] or after.get('down') != before['down'] + 1:
+                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: same-team recovery did not continue downs'
+            else:
+                return FAIL, f'drive {drive["index"]} play {play["sequence"]}: recovery team is missing'
+    if not found:
+        return NOT_APPLICABLE, 'no blocked punt or field goal in this game'
+    return PASS, f'{found} blocked kick(s): source, attempt, scoring and recovery transitions checked'
+
+
 def _two_minute_warning(record):
     """Derive the warning from down and kickoff clocks, then compare its recorded event markers."""
     expected_plays, expected_kicks = set(), set()
@@ -215,7 +292,7 @@ def _two_minute_warning(record):
     if not expected_plays and not expected_kicks:
         return NOT_APPLICABLE, 'no down or kickoff crossed 2:00 before the period ended'
     return PASS, (f'{len(expected_plays)} play warning marker(s) and {len(expected_kicks)} kickoff warning marker(s), at their '
-                  'observed post-down clocks; at most one per half. Clock state/restart lifecycle is separately unsupported.')
+                  'observed post-down clocks; at most one per half, with explicit stop and restart transitions.')
 
 
 def _touchdowns(record):
@@ -230,9 +307,12 @@ def _touchdowns(record):
         want = gs.TD_POINTS + (gs.TRY_POINTS[p['try']['kind']] if p['try']['made'] else 0)
         if p['points'] != want:
             return FAIL, f'touchdown drive {d["index"]}: {p["points"]} points, expected {want}'
+        scorer = p.get('team')
+        if scorer != d.get('touchdown_scored_by', d['offense_team']):
+            return FAIL, f'touchdown drive {d["index"]}: scoring team does not match its touchdown record'
         follow = [k for k in _kicks_after(record, d['index']) if k['kind'] == 'post_score']
         if _expected_kick_after(d):
-            if not follow or follow[0]['kicking_team'] != d['offense_team']:
+            if not follow or follow[0]['kicking_team'] != scorer:
                 return FAIL, f'touchdown drive {d["index"]}: no post-score kickoff by the scorer'
             kicked += 1
         elif follow:
@@ -356,23 +436,48 @@ def _kick_duration(record):
 
 
 def _missed_fg_spot(record):
-    """A missed field goal gives the receiving team the spot of the kick, or its own 20 when that spot is inside its 20.
+    """Check the rule spot or the recorded historical receiving-start adjustment after a missed field goal.
 
     The kick spot is the holder's spot: the snap position plus HOLDER_OFFSET, capped at 99. The published yardline_100 is the
     snap position, so the check takes the snap from the state and adds the offset itself, and does not read the engine's
     recorded kick spot. Source: the review note cites Rule 11-4-2. The rulebook text is not in the repository, so the rule is
-    marked as cited, not verified.
+    marked as cited, not verified. Pregame games sample the next defensive drive spot from historical missed-kick transitions.
     """
     checked = 0
     for i, d in enumerate(record['drives']):
         if d['terminal'] != 'field_goal_attempt' or d['field_goal_made'] is not False:
             continue
-        if i + 1 >= len(record['drives']):
-            continue  # the game ended on the miss: no next drive to check
         snap_yl = d['plays'][-1]['state_before']['yardline_100']
         kick_spot = min(99, snap_yl + HOLDER_OFFSET)
         spot = 100 - kick_spot
         expected = 80 if spot > 80 else spot
+        result = d['plays'][-1]['outcome'].get('field_goal_return')
+        if result is not None:
+            if result.get('baseline_yardline_100') != expected:
+                return FAIL, f'missed field goal in drive {d["index"]}: baseline {result.get("baseline_yardline_100")} != {expected}'
+            if result.get('status') == 'period_expired':
+                if (d['end_clock'] != 0 or d['end_quarter'] not in (2, 4)
+                        or result.get('receiving_start_yardline_100') is not None):
+                    return FAIL, f'missed field goal in drive {d["index"]}: invalid period-expiry transition'
+                checked += 1
+                continue
+            adjustment = result.get('spot_adjustment_yards')
+            got = result.get('receiving_start_yardline_100')
+            if (result.get('status') != 'sampled_historical_next_drive_spot'
+                    or not isinstance(adjustment, int) or not isinstance(got, int)
+                    or got != expected + adjustment or not 1 <= got <= 99
+                    or result.get('pool_sample_count', 0) < gs.MIN_KICK_N
+                    or not isinstance(result.get('source'), dict)):
+                return FAIL, f'missed field goal in drive {d["index"]}: invalid or thin sampled receiving spot'
+            if i + 1 < len(record['drives']) and not (d['end_clock'] == 0 and d['end_quarter'] in (2, 4)):
+                nxt = record['drives'][i + 1]
+                if (nxt['offense_team'] == d['offense_team']
+                        or nxt['plays'][0]['state_before']['yardline_100'] != got):
+                    return FAIL, f'missed field goal in drive {d["index"]}: next drive does not start at sampled spot {got}'
+            checked += 1
+            continue
+        if i + 1 >= len(record['drives']):
+            continue  # the game ended on the miss: no next drive to check
         nxt = record['drives'][i + 1]
         got = nxt['plays'][0]['state_before']['yardline_100']
         if nxt['offense_team'] == d['offense_team'] or got != expected:
@@ -381,7 +486,7 @@ def _missed_fg_spot(record):
         checked += 1
     if not checked:
         return NOT_APPLICABLE, 'no missed field goal followed by a drive in this game'
-    return PASS, f'{checked} missed field goal(s): receiving team at the kick spot (snap + {HOLDER_OFFSET}), or its own 20'
+    return PASS, f'{checked} missed field goal(s): rule baseline checked; sampled receiving spots match historical transitions'
 
 
 def _drive_index(record):
@@ -494,6 +599,7 @@ def check(record):
     add('Q2->Q3 halftime: kickoff, clock reset, second-half choice', _halftime(record, expected))
     add('Both half-opening kickoffs, one per team, verified against the ledger', _both_half_kickoffs(record))
     add('Turnover on downs in Q2', _turnover_on_downs_q2(record))
+    add('Blocked punts and field goals: attempts, observed source and recovery rules', _blocked_kicks(record))
     add('Touchdown: six points, a distinct try, post-score kickoff', _touchdowns(record))
     add('Missed field goal: receiving team at the kick spot or its own 20 (Rule 11-4-2, as cited)', _missed_fg_spot(record))
     add('Field goal made: the kick takes at most five seconds of clock', _kick_duration(record))

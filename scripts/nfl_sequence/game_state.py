@@ -65,7 +65,7 @@ HOLDER_OFFSET = 7
 KICK_DURATION_SECONDS = 5
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('clock_start_stop', 'timeouts', 'penalties', 'onside_kicks', 'overtime',
-                     'exception_coin_toss', 'lineups', 'missed_field_goal_return', 'safety_free_kick')
+                     'exception_coin_toss', 'lineups', 'missed_field_goal_return', 'safety_free_kick', 'blocked_kicks')
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
@@ -85,14 +85,16 @@ GUARDS = {
                             'enforced_by': 'CoinTossLedger'},
     'lineups': {'guard': 'participants are labelled sampled_observed_play; no lineup or substitution is modelled',
                 'enforced_by': 'participants attribution label'},
-    'missed_field_goal_return': {'guard': 'Rule 11-4-2 exceptions (1) and (2): when the receivers touch a missed field goal beyond the '
-                                          'line of scrimmage, the general scrimmage-kick rules apply instead of the spot of the kick. '
-                                          'The table records makes and misses, not touches, so every missed field goal here is '
-                                          'awarded at missed_field_goal_spot',
-                                 'enforced_by': 'unsupported_rules; valid_full_game is false'},
+    'missed_field_goal_return': {'guard': 'Rule 11-4-2 exceptions (1) and (2): the receiving start spot is sampled from observed '
+                                          'next-drive transitions after missed field goals; a returner, return touchdown and '
+                                          'physical return are not reconstructed',
+                                 'enforced_by': 'field_goal_return transition; rule_capability_limitations'},
     'safety_free_kick': {'guard': 'no observed safety-free-kick outcome table is available; a safety free kick blocks the game '
                                   'instead of sampling outcomes from the ordinary kickoff pool',
                          'enforced_by': 'record blocker; safety_free_kick events are rejected'},
+    'blocked_kicks': {'guard': 'blocked-kick rates and transitions are sampled from the pinned 2022-2025 nflverse fixture; '
+                               'a sampled penalty, fumble, review, missing recovery, or unresolved endpoint blocks the game',
+                      'enforced_by': 'blocked_kick_outcomes fixture classification_status; blocked-kick reducer'},
 }
 SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
 PRACTICE_RULE = 'provisional_practice_rule'
@@ -114,10 +116,13 @@ PROVISIONAL_RULES = (
      'effect': 'the quarter ends on the return; the receiver starts the next quarter at the kick spot',
      'source': 'authored modelling choice, matching E1 clamping a play runoff at 0:00; not in the rules file'},
 )
-GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw '
+GAPS = ['field-goal, blocked field-goal and blocked punt outcomes are sampled from published 2022-2025 nflverse rates; '
+        'the block rates are rare and carry wide confidence intervals, and unresolved sampled transitions block the game',
+        'blocked-kick returns are recorded in team totals; individual returner statistics are not assigned to the frozen roster',
+        'field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw '
         'is a '
         'labelled sample, not the result of a real game',
-        'blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick',
+        'missed-field-goal next-drive spots are sampled from observed transitions; returners and return touchdowns are not reconstructed',
         'safety points are recorded, but safety free kicks block because no separate observed safety-kick outcome table is available',
         'penalties, onside kicks, overtime and exception coin-toss paths remain capability limitations; a game that takes an '
         'unsupported path is blocked or marked incomplete',
@@ -205,16 +210,18 @@ class Reference:
     `participants` maps (game_id, play_id) of an observed play to (passer, rusher, receiver) ids.
     """
 
-    def __init__(self, pool, kickoff_pool, kicks, participants):
+    def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         self.kicks = kicks
         self.participants = participants
+        self.missed_field_goal_pool = missed_field_goal_pool or {}
+        self.blocked_kicks = blocked_kicks or {'records': {'field_goal': [], 'punt': []}, 'rates': {}, 'sha256': None}
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
         facts = self.participants.get((src['game_id'], src['play_id']), {})
-        keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'air_yards', 'yards_after_catch', 'timeout',
+        keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout',
                 'timeout_team', 'out_of_bounds')
         out = {k: facts.get(k) for k in keys}
         if snapshot is None:
@@ -229,13 +236,14 @@ class Reference:
         out.update(passer_id=None, rusher_id=None, receiver_id=None)
         out['sampled_play_context'] = {
             'posteam': facts.get('posteam'),
+            'defteam': facts.get('defteam'),
             'play_type': source_play_type,
             'air_yards': facts.get('air_yards'),
             'yards_after_catch': facts.get('yards_after_catch'),
             'timeout_team': facts.get('timeout_team'),
             'out_of_bounds': facts.get('out_of_bounds'),
         }
-        for key in ('posteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
+        for key in ('posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
             out[key] = None
 
         def choose(groups, role):
@@ -529,6 +537,33 @@ class _Game:
             _, kind, kicker, receiver = then
             self._kick(kind, kicker, receiver, clock_rule)
 
+    def _missed_field_goal_transition(self, snap_yardline_100, kick_spot_yardline_100):
+        """Sample the receiver's next-drive starting spot from historical missed-kick transitions."""
+        base_spot = missed_field_goal_spot(kick_spot_yardline_100)
+        if self.clock == 0 and self.quarter in (2, 4):
+            return {'status': 'period_expired', 'baseline_yardline_100': base_spot,
+                    'receiving_start_yardline_100': None, 'spot_adjustment_yards': 0,
+                    'source': None}
+        bucket = fg_bucket(snap_yardline_100)
+        bucket_pool = self.ref.missed_field_goal_pool.get(bucket, [])
+        pool_name = bucket
+        if len(bucket_pool) < MIN_KICK_N:
+            bucket_pool = [sample for samples in self.ref.missed_field_goal_pool.values() for sample in samples]
+            pool_name = 'all_kick_spots'
+        eligible = [sample for sample in bucket_pool
+                    if 1 <= base_spot + sample['spot_adjustment_yards'] <= 99]
+        if not eligible:
+            self.block('missed_field_goal_return_pool_unavailable')
+            return None
+        sample = self.rng.choice(eligible)
+        adjustment = sample['spot_adjustment_yards']
+        return {'status': 'sampled_historical_next_drive_spot',
+                'baseline_yardline_100': base_spot,
+                'receiving_start_yardline_100': base_spot + adjustment,
+                'spot_adjustment_yards': adjustment,
+                'pool_bucket': pool_name, 'pool_sample_count': len(eligible),
+                'source': dict(sample['source'])}
+
     def _continue(self, then):
         """The event that follows a play. An expired clock resolves the quarter first (rules file, sections 2-3).
         """
@@ -668,7 +703,7 @@ class _Game:
                           and before.get('down') != 1)
             if first_down and not (outcome.get('touchdown') or outcome.get('safety')):
                 reasons.append({'kind': 'first_down', 'team': None})
-            if outcome.get('touchdown') or outcome.get('field_goal_attempt') or outcome.get('safety'):
+            if outcome.get('touchdown') or play['event_type'] == 'field_goal_attempt' or outcome.get('safety'):
                 reasons.append({'kind': 'score_or_try_transition', 'team': None})
             if outcome.get('turnover') or outcome.get('punt'):
                 reasons.append({'kind': 'possession_change', 'team': None})
@@ -700,11 +735,74 @@ class _Game:
                 'restart_clock_seconds': after['clock_seconds'] if restart != 'continuous' else None,
             }
 
+    def _resolve_special_teams(self, event, state, source_row, runoff, spot, rng):
+        """Sample kick outcomes from the observed rate tables and resolve blocked kicks using audited source records."""
+        if event == 'field_goal_attempt':
+            bucket = fg_bucket(state['yl'])
+            outcomes = self.ref.kicks.get('field_goal_outcomes', {}).get(bucket)
+            if outcomes is None:
+                return {'blocker': f'field_goal_outcomes_missing:{bucket}'}
+            made, missed, blocked = outcomes
+            attempts = made + missed + blocked
+            if attempts < MIN_KICK_N:
+                return {'blocker': f'thin_kick_cell:field_goal:{bucket}'}
+            draw = rng.randrange(attempts)
+            result = 'made' if draw < made else 'missed' if draw < made + missed else 'blocked'
+            source = {'table': 'kick_results_2022_2025.csv', 'yardline_bucket': bucket,
+                      'counts': {'made': made, 'missed': missed, 'blocked': blocked},
+                      'attempts': attempts}
+            if result != 'blocked':
+                return {'metadata': {'field_goal_result': result, 'field_goal_result_source': source}}
+            kick_type, outcome = self._sample_blocked_kick('field_goal', rng)
+            if kick_type:
+                return {'blocker': kick_type}
+            return {'event': 'blocked_field_goal', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
+                    'kick_outcome': outcome,
+                    'metadata': {'field_goal_result': 'blocked', 'field_goal_result_source': source}}
+
+        rates = self.ref.blocked_kicks.get('rates', {}).get('punt_blocked', {})
+        attempts, blocked = rates.get('attempts', 0), rates.get('blocked', 0)
+        if attempts <= 0 or not 0 <= blocked <= attempts:
+            return {'blocker': 'blocked_punt_rate_unavailable'}
+        if rng.randrange(attempts) >= blocked:
+            return None
+        kick_type, outcome = self._sample_blocked_kick('punt', rng)
+        if kick_type:
+            return {'blocker': kick_type}
+        return {'event': 'blocked_punt', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
+                'kick_outcome': outcome}
+
+    def _sample_blocked_kick(self, kick_type, rng):
+        records = self.ref.blocked_kicks.get('records', {}).get(kick_type, [])
+        if not records:
+            return 'blocked_kick_outcome_pool_missing', None
+        sample = rng.choice(records)
+        status = sample.get('classification_status')
+        supported = ('classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired')
+        if status not in supported:
+            return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
+        runoff = sample.get('clock_runoff_seconds')
+        if not isinstance(runoff, int) or runoff < 0:
+            return f'blocked_kick_clock_unresolved:{kick_type}', None
+        outcome = dict(sample)
+        scoring_team = outcome.get('scoring_team')
+        if scoring_team:
+            if scoring_team == outcome.get('posteam'):
+                outcome['scoring_role'] = 'kicking_team'
+            elif scoring_team == outcome.get('defteam'):
+                outcome['scoring_role'] = 'receiving_team'
+            else:
+                return f'blocked_kick_scoring_team_unresolved:{kick_type}', None
+        return None, outcome
+
     def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
-        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id)
+        special_teams = (self._resolve_special_teams if self.ref.blocked_kicks.get('rates')
+                         or self.ref.kicks.get('field_goal_outcomes') else None)
+        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
+                                      self.simulation_id, special_teams=special_teams)
         if plays is None:
             self.block(terminal)
             return
@@ -749,10 +847,14 @@ class _Game:
             snap_yl = plays[-1]['state_before']['yardline_100']  # the published yardline_100 is the snap position
             kick_spot = kick_spot_yardline_100(snap_yl)  # the holder's spot: where the ball is actually kicked from
             bucket = fg_bucket(snap_yl)  # the published make-rate cells are keyed on the snap position, so the bucket is too
-            made, why = _draw(self.rng, self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
-            if why:
-                self.block(why)
-                return
+            result = plays[-1]['outcome'].get('field_goal_result')
+            if result not in ('made', 'missed'):
+                made, why = _draw(self.rng, self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
+                if why:
+                    self.block(why)
+                    return
+            else:
+                made = result == 'made'
             drive['field_goal_made'] = made
             drive['snap_yardline_100'] = snap_yl
             drive['kick_spot_yardline_100'] = kick_spot
@@ -764,11 +866,21 @@ class _Game:
                 self._continue(('kick', 'post_field_goal', self.offense, other(self.offense, self.ledger.teams)))
             else:  # the other team takes over at the spot of the kick, the same dead-ball spot (rules file, section 4)
                 self._mark_two_minute_warning(plays[-1])
-                self._continue(('possession', self.defense, missed_field_goal_spot(kick_spot)))
+                if self.pregame_snapshot:
+                    transition = self._missed_field_goal_transition(snap_yl, kick_spot)
+                    if transition is None:
+                        return
+                    plays[-1]['outcome']['field_goal_return'] = transition
+                    receiving_spot = transition['receiving_start_yardline_100']
+                    self._continue(('possession', self.defense,
+                                    missed_field_goal_spot(kick_spot) if receiving_spot is None else receiving_spot))
+                else:
+                    self._continue(('possession', self.defense, missed_field_goal_spot(kick_spot)))
         elif terminal in ('punt', 'turnover', 'turnover_on_downs'):
             self._continue(('possession', last['offense_team'], last['yardline_100']))
         elif terminal == 'touchdown':
-            scorer = self.offense
+            scorer = plays[-1]['outcome'].get('scoring_team') or self.offense
+            drive['touchdown_scored_by'] = scorer
             try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks)
             if why:
                 self.block(why)
@@ -889,7 +1001,10 @@ def unmodelled_transitions(drives, kickoffs):
     found = []
     for d in drives:
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
-            found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
+            result = d['plays'][-1]['outcome'].get('field_goal_return')
+            if not isinstance(result, dict) or result.get('status') not in (
+                    'sampled_historical_next_drive_spot', 'period_expired'):
+                found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
@@ -930,6 +1045,9 @@ def scope_out_reasons(blocker, complete, tied):
     elif blocker == 'safety_free_kick_not_modelled':
         reasons.append({'reason': 'safety free kick', 'detail': 'no separate observed safety-free-kick outcome table is available; '
                                                                 'the game is blocked before an ordinary kickoff outcome is sampled'})
+    elif blocker and blocker.startswith('blocked_kick'):
+        reasons.append({'reason': 'blocked-kick transition unresolved',
+                        'detail': f'{blocker}: the sampled blocked-kick record is not classifiable, so the game is blocked'})
     elif blocker:
         reasons.append({'reason': 'other', 'detail': blocker})
     return reasons
@@ -944,6 +1062,8 @@ def active_unsupported_rules(guarded, blocker, tied):
         active.add('safety_free_kick')
     if blocker == 'penalty_not_modelled':
         active.add('penalties')
+    if blocker and blocker.startswith('blocked_kick'):
+        active.add('blocked_kicks')
     return sorted(active)
 
 
@@ -995,6 +1115,71 @@ def validate_game(record):
     if record.get('unmodelled_transitions') and (record.get('complete_game') or record.get('status') == 'complete_regulation'):
         kinds = sorted({t['kind'] for t in record['unmodelled_transitions']})
         raise AssertionError(f'a guarded game is never described as a complete game; it contains {kinds}')
+    for index, drive in enumerate(record.get('drives', [])):
+        if drive.get('terminal') != 'field_goal_attempt' or drive.get('field_goal_made') is not False:
+            continue
+        play = drive['plays'][-1]
+        result = play['outcome'].get('field_goal_return')
+        if result is None:
+            if record.get('valid_full_game'):
+                raise AssertionError(f"missed field goal in drive {drive['index']} has no receiving-spot transition")
+            continue
+        snap = play['state_before']['yardline_100']
+        kick_spot = min(99, snap + HOLDER_OFFSET)
+        baseline = missed_field_goal_spot(kick_spot)
+        if result.get('baseline_yardline_100') != baseline:
+            raise AssertionError(f"missed field goal in drive {drive['index']} has the wrong no-return baseline")
+        if result.get('status') == 'period_expired':
+            if (drive['end_clock'] != 0 or drive['end_quarter'] not in (2, 4)
+                    or result.get('receiving_start_yardline_100') is not None):
+                raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid period-expiry transition")
+            continue
+        spot = result.get('receiving_start_yardline_100')
+        adjustment = result.get('spot_adjustment_yards')
+        source = result.get('source')
+        if (result.get('status') != 'sampled_historical_next_drive_spot'
+                or not isinstance(spot, int) or not 1 <= spot <= 99
+                or not isinstance(adjustment, int) or spot != baseline + adjustment
+                or not isinstance(source, dict) or not source.get('game_id')
+                or not isinstance(source.get('play_id'), int) or not isinstance(source.get('next_play_id'), int)):
+            raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid sampled spot")
+        if index + 1 < len(record['drives']) and not (
+                drive['end_clock'] == 0 and drive['end_quarter'] in (2, 4)):
+            next_drive = record['drives'][index + 1]
+            expected_offense = play['state_after']['defense_team']
+            got_spot = next_drive['plays'][0]['state_before']['yardline_100']
+            if next_drive['offense_team'] != expected_offense or got_spot != spot:
+                raise AssertionError(f"missed field goal in drive {drive['index']} disagrees with the next possession")
+    snapshot = record.get('pregame_snapshot') or {}
+    observed_reference = snapshot.get('model_reference', {}).get('observed_reference', {})
+    pinned_blocked_source = observed_reference.get('blocked_kick_source_sha256')
+    supported_blocked_statuses = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety',
+                                  'period_expired'}
+    for drive in record.get('drives', []):
+        for play in drive['plays']:
+            event, outcome = play['event_type'], play['outcome']
+            blocked = outcome.get('blocked_kick')
+            if event not in ('blocked_punt', 'blocked_field_goal'):
+                if blocked or outcome.get('field_goal_result') == 'blocked':
+                    raise AssertionError(f"drive {drive['index']} play {play['sequence']} has a blocked result without a blocked event")
+                continue
+            kick_type = 'punt' if event == 'blocked_punt' else 'field_goal'
+            if not isinstance(blocked, dict) or blocked.get('kick_type') != kick_type:
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} has no matching blocked-kick outcome")
+            if blocked.get('classification_status') not in supported_blocked_statuses:
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} has an unresolved blocked-kick outcome")
+            if (not isinstance(blocked.get('source_sha256'), str) or len(blocked['source_sha256']) != 64
+                    or not blocked.get('source_file') or not blocked.get('game_id')
+                    or not isinstance(blocked.get('play_id'), int)):
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} lacks blocked-kick provenance")
+            if pinned_blocked_source and blocked['source_sha256'] != pinned_blocked_source:
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} uses an unpinned blocked-kick source")
+            if kick_type == 'field_goal':
+                if not outcome.get('field_goal_attempt') or outcome.get('field_goal_result') != 'blocked':
+                    raise AssertionError(f"drive {drive['index']} play {play['sequence']} does not record its blocked field-goal attempt")
+            elif not outcome.get('punt_attempt'):
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} does not record its blocked punt attempt")
+    checks.append('blocked-kick event types, attempts, classifications and source provenance')
     for k in record.get('kickoffs', []):
         if k['kind'] == 'safety_free_kick':
             raise AssertionError('safety free kick requires a separate observed safety-kick outcome table')
