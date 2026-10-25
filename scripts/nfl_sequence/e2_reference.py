@@ -5,6 +5,8 @@ come from that window, so every draw in a game is from the same observed seasons
 """
 import sqlite3
 import sys
+import hashlib
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -14,6 +16,35 @@ import measure_kick_outcomes as mk  # noqa: E402
 
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
+
+
+def _reference_fingerprint(reference):
+    digest = hashlib.sha256()
+
+    def add(value):
+        digest.update(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode())
+        digest.update(b'\n')
+
+    for key in sorted(reference.pool):
+        add(['play-cell', key])
+        for event, row, runoff, spot in reference.pool[key]:
+            add([event, row, runoff, spot])
+    for kickoff in reference.kickoff_pool:
+        add(['kickoff', kickoff])
+    add(['kick-table', reference.kicks])
+    for key in sorted(reference.participants):
+        add(['participants', key, reference.participants[key]])
+    extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
+    add(['play-extras-file-sha256', extras_hash])
+    return {
+        'schema': 'lp-e2-observed-reference-1',
+        'sha256': digest.hexdigest(),
+        'play_cells': len(reference.pool),
+        'play_samples': sum(len(cell) for cell in reference.pool.values()),
+        'kickoff_samples': len(reference.kickoff_pool),
+        'participant_rows': len(reference.participants),
+        'play_extras_sha256': extras_hash,
+    }
 
 
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
@@ -28,7 +59,7 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         rows = con.execute(f"""SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,
-posteam, air_yards, receiving_yards FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall()
+posteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall()
     finally:
         con.close()
     flags = {}
@@ -37,11 +68,12 @@ posteam, air_yards, receiving_yards FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall(
             flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), r['timeout_team'],
                                                                 int(r['out_of_bounds']))
     out = {}
-    for g, p, pa, ru, re_, posteam, air, rec_yds in rows:
+    for g, p, pa, ru, re_, posteam, air, rec_yds, play_type in rows:
         t, t_team, oob = flags.get((g, int(p)), (0, '', 0))
         yac = (rec_yds - air) if (rec_yds is not None and air is not None and re_) else None
         out[(g, int(p))] = {'passer_id': pa, 'rusher_id': ru, 'receiver_id': re_, 'posteam': posteam,
-                            'air_yards': air, 'yards_after_catch': yac, 'timeout': t, 'timeout_team': t_team,
+                            'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
+                            'timeout': t, 'timeout_team': t_team,
                             'out_of_bounds': oob}
     return out
 
@@ -66,4 +98,5 @@ def load(db=e1.DEFAULT_DB, regulation_only=True):
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
                             'kick_table': 'not filtered: the published kick rates include overtime kicks'}
+    reference.model_inputs = _reference_fingerprint(reference)
     return reference, kex
