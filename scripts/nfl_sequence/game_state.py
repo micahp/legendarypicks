@@ -6,8 +6,9 @@ Scope:
 - the two half-start kickoffs, derived from the ledger and validated;
 - scoring: touchdowns (6, then a try: an extra point for 1, or a two-point try for 2), field goals (3, made or missed),
   and safeties (2);
-- restarts after scores (the scoring team kicks off; a safety is a free kick by the conceding team), after halftime (the
-  second-half kickoff), and after punts and turnovers (the receiving team starts at its published spot);
+- post-touchdown and made-field-goal restarts, after halftime (the second-half kickoff), and after punts and turnovers (the
+  receiving team starts at its published spot); safety scoring is recorded, but a safety free kick blocks pending a separate,
+  observed safety-kick outcome table;
 - clock management: quarters are 15 minutes, a quarter change keeps possession and the spot (no kickoff, rules section
   2), halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends
   regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires
@@ -22,8 +23,9 @@ game. A cell with fewer than MIN_KICK_N attempts blocks the game, and nothing is
 
 Explicitly not modelled. Each one is listed in every record's `unsupported_rules`, and the rules matrix marks it:
 clock start/stop substates (including the full two-minute-warning timeout and restart lifecycle), team timeouts, penalties
-(E1 excludes penalty plays), onside kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`),
-the exception coin-toss paths, and lineups (participants are players on sampled observed plays, not this game's roster).
+(E1 excludes penalty plays), onside kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`), safety
+free kicks (no separate observed outcome table), the exception coin-toss paths, and lineups (participants are players on sampled
+observed plays, not this game's roster).
 The two-minute-warning crossing is detected and marked at the actual post-down clock, but that marker alone is not a complete
 clock stoppage/restart state machine.
 
@@ -58,7 +60,7 @@ HOLDER_OFFSET = 7
 KICK_DURATION_SECONDS = 5
 MIN_KICK_N = 30  # a thinner published cell is refused, the same floor E1 applies to its pool cells
 UNSUPPORTED_RULES = ('clock_start_stop', 'timeouts', 'penalties', 'onside_kicks', 'overtime',
-                     'exception_coin_toss', 'lineups', 'missed_field_goal_return')
+                     'exception_coin_toss', 'lineups', 'missed_field_goal_return', 'safety_free_kick')
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
@@ -84,6 +86,9 @@ GUARDS = {
                                           'The table records makes and misses, not touches, so every missed field goal here is '
                                           'awarded at missed_field_goal_spot',
                                  'enforced_by': 'unsupported_rules; valid_full_game is false'},
+    'safety_free_kick': {'guard': 'no observed safety-free-kick outcome table is available; a safety free kick blocks the game '
+                                  'instead of sampling outcomes from the ordinary kickoff pool',
+                         'enforced_by': 'record blocker; safety_free_kick events are rejected'},
 }
 SCORING_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
 PRACTICE_RULE = 'provisional_practice_rule'
@@ -109,6 +114,7 @@ GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates 
         'is a '
         'labelled sample, not the result of a real game',
         'blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick',
+        'safety points are recorded, but safety free kicks block because no separate observed safety-kick outcome table is available',
         'timeouts, penalties, onside kicks, overtime and the exception coin-toss paths are not modelled, and each is '
         'listed in unsupported_rules',
         'two-minute warning crossings are marked at the actual post-down clock, but clock running/stopped state and explicit '
@@ -619,7 +625,12 @@ class _Game:
             scorer = self.defense
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
-            self._continue(('kick', 'safety_free_kick', self.offense, scorer))
+            if self.clock > 0 or quarter_end_kind(self.quarter) == 'quarter_change':
+                self.block('safety_free_kick_not_modelled')
+            else:
+                # At a Q2/Q4 boundary no safety kick is due before halftime or the end of regulation. Elsewhere the
+                # transition is unsupported until a separate, observed safety-free-kick outcome table is available.
+                self._continue(('kick', 'safety_free_kick', self.offense, scorer))
         else:
             self.block(f'unhandled_terminal:{terminal}')
 
@@ -748,6 +759,9 @@ def scope_out_reasons(blocker, complete, tied):
         reasons.append({'reason': 'thin E1 pool cell', 'detail': blocker})
     elif blocker == 'drive_limit':
         reasons.append({'reason': 'drive limit', 'detail': 'the game ran past max_drives'})
+    elif blocker == 'safety_free_kick_not_modelled':
+        reasons.append({'reason': 'safety free kick', 'detail': 'no separate observed safety-free-kick outcome table is available; '
+                                                                'the game is blocked before an ordinary kickoff outcome is sampled'})
     elif blocker:
         reasons.append({'reason': 'other', 'detail': blocker})
     return reasons
@@ -784,6 +798,8 @@ def validate_game(record):
         kinds = sorted({t['kind'] for t in record['unmodelled_transitions']})
         raise AssertionError(f'a guarded game is never described as a complete game; it contains {kinds}')
     for k in record.get('kickoffs', []):
+        if k['kind'] == 'safety_free_kick':
+            raise AssertionError('safety free kick requires a separate observed safety-kick outcome table')
         if k['kind'] not in KICKOFF_KINDS:
             raise AssertionError(f"kickoff kind outside the engine's vocabulary: {k['kind']!r} (onside kicks are not modelled)")
     if record.get('complete_regulation') and record['points']['A'] == record['points']['B']:
