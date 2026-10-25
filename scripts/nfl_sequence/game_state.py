@@ -13,21 +13,24 @@ Scope:
   2), halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends
   regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires
   in;
-- participants: each play carries the observed passer, rusher and receiver ids of the play it was sampled from, labelled
-  as such, and player and team lines are computed from the plays (game_stats.py).
+- participants: a pregame game fixes QB1 and assigns eligible backs and receivers from the frozen depth chart using
+  historical role shares and depth ranks; other research modes retain their observed-play participants. These are
+  statistical player-line allocations, not player-specific performance projections or complete on-field lineups.
 
 Kick outcomes are drawn from the published nfl_pbp rates (measure_kick_outcomes.py, 2022-2025, weeks 1-18): a field
 goal's make rate in its yardline_100 bucket, the extra-point rate, the two-point rate, and the share of post-touchdown
 attempts that were two-point tries. Each draw is a labelled sample from a published rate, not the outcome of a real
 game. A cell with fewer than MIN_KICK_N attempts blocks the game, and nothing is filled from a neighbouring cell.
 
-Explicitly not modelled. Each one is listed in every record's `unsupported_rules`, and the rules matrix marks it:
-clock start/stop substates (including the full two-minute-warning timeout and restart lifecycle), team timeouts, penalties
-(E1 excludes penalty plays), onside kicks, overtime (a tie after regulation blocks the game as `overtime_not_modelled`), safety
-free kicks (no separate observed outcome table), the exception coin-toss paths, and lineups (participants are players on sampled
-observed plays, not this game's roster).
-The two-minute-warning crossing is detected and marked at the actual post-down clock, but that marker alone is not a complete
-clock stoppage/restart state machine.
+Clock intervals carry observed snap-to-snap runoff, stoppage reasons and restart triggers; first-down and out-of-bounds
+restart rules are approximated and remain a capability limitation. Timeouts are charged to the named team, limited to
+three per half and represented as clock stops; an unresolved or exhausted call blocks the record. The record's
+`unsupported_rules` names only exceptional paths it actually takes. Other capability limitations remain in
+`rule_capability_limitations`: penalties are excluded from E1 and block if encountered; onside kicks and exception coin
+toss paths are not generated; ties block because overtime is not modelled; safety free kicks lack a separate outcome
+table; and a missed field goal is awarded at the rule-defined spot without modeling a return after a beyond-line touch.
+The pregame offense participants come from the frozen roster, but the engine does not build a complete 22-player lineup,
+defensive personnel or substitutions.
 
 Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
@@ -66,13 +69,12 @@ UNSUPPORTED_RULES = ('clock_start_stop', 'timeouts', 'penalties', 'onside_kicks'
 # Each unmodelled rule has a named guard. A record must carry every guard; the matrix checks it, and no guard lets a
 # record claim the rule is modelled.
 GUARDS = {
-    'clock_start_stop': {'guard': 'numeric runoff and two-minute crossing markers are recorded, but the rules-required '
-                                  'clock running/stopped state and explicit restart transitions are not modelled',
-                         'enforced_by': 'unsupported_rules; valid_full_game is false'},
-    'timeouts': {'guard': 'no timeout is drawn: the published table has no timeout fields. A sampled play flagged with a timeout '
-                          'charges one of the three per half to the side it names, if that side has one left (_apply_timeouts); '
-                          'the stoppage is inside the observed runoff, and the rule itself is not checked against the rulebook',
-                 'enforced_by': 'unsupported_rules; valid_full_game is false'},
+    'clock_start_stop': {'guard': 'the record carries observed snap-to-snap runoff, clock state, stoppage reasons and restart triggers; '
+                                  'restart-trigger semantics are a modeled approximation',
+                         'enforced_by': 'clock_transition; rule_capability_limitations'},
+    'timeouts': {'guard': 'observed timeouts decrement the named team within its three-per-half allowance and are recorded as clock stops; '
+                          'an unavailable caller or exhausted allowance blocks the game',
+                 'enforced_by': 'timeout state; clock_transition'},
     'penalties': {'guard': 'no penalty is drawn: E1 excludes penalty plays from its pool (classify: penalty, not modelled)',
                   'enforced_by': 'E1 pool exclusion, counted in the pool exclusions'},
     'onside_kicks': {'guard': 'every kickoff is drawn from the observed kickoff pool; no onside kick is drawn',
@@ -117,12 +119,12 @@ GAPS = ['field-goal and try outcomes are drawn from the published nfl_pbp rates 
         'labelled sample, not the result of a real game',
         'blocked kicks and returned misses are not modelled: a missed kick gives the other team the spot of the kick',
         'safety points are recorded, but safety free kicks block because no separate observed safety-kick outcome table is available',
-        'timeouts, penalties, onside kicks, overtime and the exception coin-toss paths are not modelled, and each is '
-        'listed in unsupported_rules',
-        'two-minute warning crossings are marked at the actual post-down clock, but clock running/stopped state and explicit '
-        'clock restart transitions remain unsupported and are listed in unsupported_rules',
-        'participants are the players on the observed plays each simulated play was sampled from: they are labelled as '
-        'sampled, and they are not this game\'s roster, lineup or substitutions']
+        'penalties, onside kicks, overtime and exception coin-toss paths remain capability limitations; a game that takes an '
+        'unsupported path is blocked or marked incomplete',
+        'clock transitions use observed snap-to-snap runoff and explicit stoppages/restart triggers; restart-trigger semantics '
+        'are an approximation and should be checked against the applicable season rulebook',
+        'offense participants are sampled by role and depth rank from each team\'s frozen pregame depth chart; this is a '
+        'statistical assignment and does not construct all 22 players, defensive personnel or substitutions']
 
 
 def two_minute_stop(quarter, before, after, warned_quarters):
@@ -495,6 +497,15 @@ class _Game:
                             'two_minute_warning': stopped,
                             'runoff_overrun_seconds': sample['runoff'] - clock_before if expires else 0,
                             'spot_yardline_100': sample['spot'], 'after_drive': len(self.drives),
+                            'clock_transition': {
+                                'clock_starts_on': 'legal_touch',
+                                'clock_interval': 'free_kick_to_next_snap',
+                                'runoff_seconds': sample['runoff'],
+                                'stoppages': ([{'kind': 'automatic_two_minute_warning', 'team': None}]
+                                              if stopped else []),
+                                'restart_trigger': 'period_restart' if expires else 'next_snap',
+                                'restart_clock_seconds': after_clock,
+                            },
                             'clock_rule': clock_rule,
                             'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
                                        'game_date': sample['game_date']}})
@@ -557,6 +568,7 @@ class _Game:
         observed = play['outcome']['clock_runoff_seconds']
         if observed >= before:
             play['outcome']['kick_duration_seconds'] = None
+            play['outcome']['clock_transition']['runoff_seconds'] = observed
             return
         charge = min(observed, KICK_DURATION_SECONDS)
         play['outcome']['clock_runoff_seconds'] = charge
@@ -565,6 +577,9 @@ class _Game:
         play['state_after']['clock_seconds'] = before - charge
         drive['end_clock'] = before - charge
         self.clock = before - charge
+        transition = play['outcome']['clock_transition']
+        transition['runoff_seconds'] = charge
+        transition['restart_clock_seconds'] = play['state_after']['clock_seconds']
 
     def _two_minute_stop_plays(self, plays, terminal):
         """Record the two-minute warning after the down that crosses 2:00 in a late quarter.
@@ -590,6 +605,12 @@ class _Game:
         self.warned_quarters.add(before['quarter'])
         play['outcome']['two_minute_warning'] = True
         after['clock_seconds'] = clock_after
+        after['clock_status'] = 'running_at_next_snap'
+        transition = play['outcome'].get('clock_transition')
+        if transition is not None:
+            transition['stoppages'].append({'kind': 'automatic_two_minute_warning', 'team': None})
+            transition['restart_trigger'] = 'next_snap'
+            transition['restart_clock_seconds'] = clock_after
         return True
 
     def _apply_timeouts(self, plays):
@@ -607,10 +628,17 @@ class _Game:
             play['state_before']['away_timeouts'] = self.timeouts['B']
             if part['timeout']:
                 sampled = part.get('sampled_play_context', part)
-                mapped = self.offense if sampled['timeout_team'] == sampled['posteam'] else self.defense
-                if self.timeouts[mapped] > 0:
+                caller = sampled.get('timeout_team')
+                if caller not in (sampled.get('posteam'), sampled.get('defteam')):
+                    self.block('timeout_team_unresolved')
+                    mapped = self.offense
+                else:
+                    mapped = self.offense if caller == sampled.get('posteam') else self.defense
+                if caller in (sampled.get('posteam'), sampled.get('defteam')) and self.timeouts[mapped] > 0:
                     self.timeouts[mapped] -= 1
                     part['timeout_applied'] = True
+                elif caller in (sampled.get('posteam'), sampled.get('defteam')):
+                    self.block('timeout_limit_exceeded')
                 part['timeout_charged_to'] = mapped
             play['state_after']['home_timeouts'] = self.timeouts['A']
             play['state_after']['away_timeouts'] = self.timeouts['B']
@@ -620,6 +648,57 @@ class _Game:
                     'counts_before': {'home': play['state_before']['home_timeouts'], 'away': play['state_before']['away_timeouts']},
                     'counts_after': {'home': play['state_after']['home_timeouts'], 'away': play['state_after']['away_timeouts']},
                     'clock_at_stop': play['state_after']['clock_seconds'], 'restart': 'the next snap, from clock_at_stop'}
+
+    def _record_clock_transitions(self, plays):
+        """Describe clock stops and restarts while retaining observed snap-to-next-snap intervals."""
+        for play in plays:
+            part, outcome = play['participants'], play['outcome']
+            before, after = play['state_before'], play['state_after']
+            reasons = []
+            if part.get('timeout'):
+                reasons.append({'kind': 'team_timeout' if part.get('timeout_applied') else 'illegal_team_timeout',
+                                'team': part.get('timeout_charged_to')})
+            if outcome.get('two_minute_warning'):
+                reasons.append({'kind': 'automatic_two_minute_warning', 'team': None})
+            if part.get('out_of_bounds'):
+                reasons.append({'kind': 'runner_out_of_bounds', 'team': None})
+            if play['event_type'] == 'pass_incomplete':
+                reasons.append({'kind': 'incomplete_pass', 'team': None})
+            first_down = (before.get('offense_team') == after.get('offense_team') and after.get('down') == 1
+                          and before.get('down') != 1)
+            if first_down and not (outcome.get('touchdown') or outcome.get('safety')):
+                reasons.append({'kind': 'first_down', 'team': None})
+            if outcome.get('touchdown') or outcome.get('field_goal_attempt') or outcome.get('safety'):
+                reasons.append({'kind': 'score_or_try_transition', 'team': None})
+            if outcome.get('turnover') or outcome.get('punt'):
+                reasons.append({'kind': 'possession_change', 'team': None})
+            if outcome.get('quarter_change') or after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
+                reasons.append({'kind': 'period_end', 'team': None})
+
+            late_window = ((before['quarter'] == 2 and after['clock_seconds'] <= TWO_MINUTE_MARK)
+                           or (before['quarter'] == 4 and after['clock_seconds'] <= 300))
+            if any(reason['kind'] in ('automatic_two_minute_warning', 'team_timeout', 'incomplete_pass')
+                   for reason in reasons):
+                restart = 'next_snap'
+            elif any(reason['kind'] == 'period_end' for reason in reasons):
+                restart = 'period_restart'
+            elif any(reason['kind'] in ('score_or_try_transition', 'possession_change') for reason in reasons):
+                restart = 'free_kick_or_next_snap'
+            elif any(reason['kind'] == 'first_down' for reason in reasons):
+                restart = 'next_snap' if late_window else 'referee_signal'
+            elif any(reason['kind'] == 'runner_out_of_bounds' for reason in reasons):
+                restart = 'next_snap' if late_window else 'referee_signal'
+            else:
+                restart = 'continuous'
+            play['state_before']['clock_status'] = 'running_at_snap'
+            play['state_after']['clock_status'] = ('period_ended' if restart == 'period_restart' else 'running_at_next_snap')
+            outcome['clock_transition'] = {
+                'clock_interval': 'observed_snap_to_next_snap',
+                'runoff_seconds': outcome['clock_runoff_seconds'],
+                'stoppages': reasons,
+                'restart_trigger': restart,
+                'restart_clock_seconds': after['clock_seconds'] if restart != 'continuous' else None,
+            }
 
     def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
@@ -647,6 +726,7 @@ class _Game:
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
         self._apply_timeouts(plays)
+        self._record_clock_transitions(plays)
         last = plays[-1]['state_after']
         drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
                  'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
@@ -659,6 +739,8 @@ class _Game:
                                         'to_quarter': play['state_after']['quarter'],
                                         'kind': 'change_of_ends_mid_drive', 'drive_index': drive['index']})
         self.quarter, self.clock = last['quarter'], last['clock_seconds']
+        if self.blocker:
+            return
         if terminal == 'halftime':
             self._half_start()
         elif terminal == 'end_of_regulation':
@@ -719,16 +801,18 @@ class _Game:
 
     def record(self):
         tied = self.points['A'] == self.points['B']
-        record_mode = 'pregame_statistical_game' if self.pregame_snapshot else 'legal_game_state_first_piece'
         status, blocker = self.status or 'blocked', self.blocker
         if status == 'complete_regulation' and tied:
             status, blocker = 'blocked', 'overtime_not_modelled'
         complete = status == 'complete_regulation'
         guarded = unmodelled_transitions(self.drives, self.events)
-        if complete and guarded:
+        unsupported = active_unsupported_rules(guarded, blocker, tied)
+        if complete and (guarded or unsupported):
             status = 'regulation_end_guarded'  # the simulation reached regulation end, but it is not a complete game
         points = {'A': self.points['A'], 'B': self.points['B']}
         snapshot = self.pregame_snapshot
+        valid_candidate = bool(snapshot and complete and blocker is None and not tied and not guarded and not unsupported)
+        record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete, tied) + guard_reasons(guarded)
         return {
             'mode': record_mode, 'seed': self.seed, 'simulation_id': self.simulation_id,
@@ -751,16 +835,18 @@ class _Game:
                               if snapshot else None),
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
-            'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete and not guarded,
+            'status': status, 'blocker': blocker, 'tied': tied,
+            'complete_regulation': complete and not guarded and not unsupported,
             'regulation_end_reached': complete,
             'final_quarter': self.quarter, 'final_clock_seconds': self.clock,
-            'complete_game': bool(complete and blocker is None and not tied and not guarded),
+            'complete_game': bool(complete and blocker is None and not tied and not guarded and not unsupported),
             'scope_out': scope_out,
             'unmodelled_transitions': guarded,
             'two_minute_warnings': two_minute_warnings(self.drives, self.events),
-            'valid_full_game': bool(record_mode == 'pregame_full_game' and complete and blocker is None and not tied
-                                    and not guarded and not UNSUPPORTED_RULES),
-            'unsupported_rules': list(UNSUPPORTED_RULES), 'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
+            'valid_full_game': valid_candidate,
+            'unsupported_rules': unsupported,
+            'rule_capability_limitations': list(UNSUPPORTED_RULES),
+            'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
             'gaps': GAPS,
             'provisional_rules': [dict(r) for r in PROVISIONAL_RULES],
             'provisional_counts': {
@@ -799,11 +885,7 @@ def two_minute_warnings(drives, kickoffs):
 
 
 def unmodelled_transitions(drives, kickoffs):
-    """Transitions whose complete legal state change is missing: a penalty; a timeout stoppage with sampled runoff; a missed
-    field goal without the receivers' touch exception; and a two-minute warning whose crossing is marked but whose explicit
-    stopped-clock/restart lifecycle is absent. Each occurrence is guarded, so a game that contains one is never complete. The
-    independent checker derives the same list from plays and kickoffs rather than trusting this one.
-    """
+    """Transitions whose legal state change is still missing, derived independently from sampled events."""
     found = []
     for d in drives:
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
@@ -811,17 +893,12 @@ def unmodelled_transitions(drives, kickoffs):
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
-            if p['participants'].get('timeout'):
+            if p['participants'].get('timeout') and not p['participants'].get('timeout_applied'):
                 found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})
-            if p['outcome'].get('two_minute_warning'):
-                found.append({'kind': 'two_minute_warning', 'drive_index': d['index'], 'sequence': p['sequence']})
-    for kick in kickoffs:
-        if kick.get('two_minute_warning'):
-            found.append({'kind': 'two_minute_warning', 'source': 'kickoff', 'quarter': kick['quarter']})
     return found
 
 
-UNMODELLED_GUARD = {'penalty': 'penalties', 'timeout': 'timeouts', 'two_minute_warning': 'clock_start_stop',
+UNMODELLED_GUARD = {'penalty': 'penalties', 'timeout': 'timeouts',
                     'missed_field_goal_return': 'missed_field_goal_return'}
 KICKOFF_KINDS = ('half_start', 'post_score', 'post_field_goal', 'safety_free_kick')
 
@@ -858,6 +935,18 @@ def scope_out_reasons(blocker, complete, tied):
     return reasons
 
 
+def active_unsupported_rules(guarded, blocker, tied):
+    """Return rule gaps exercised by this record; untaken paths remain capability limitations."""
+    active = {UNMODELLED_GUARD[item['kind']] for item in guarded}
+    if tied:
+        active.add('overtime')
+    if blocker == 'safety_free_kick_not_modelled':
+        active.add('safety_free_kick')
+    if blocker == 'penalty_not_modelled':
+        active.add('penalties')
+    return sorted(active)
+
+
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
@@ -885,6 +974,21 @@ def validate_game(record):
         for p in d['plays']:
             if p['state_before']['clock_seconds'] < 0 or p['state_after']['clock_seconds'] < 0:
                 raise AssertionError(f"a negative game clock in drive {d['index']} play {p['sequence']}: nothing may clamp it")
+            transition = p['outcome'].get('clock_transition')
+            if transition is None and not record.get('valid_full_game'):
+                continue  # older research records predate explicit clock-transition annotations
+            if not isinstance(transition, dict) or transition.get('clock_interval') != 'observed_snap_to_next_snap':
+                raise AssertionError(f"drive {d['index']} play {p['sequence']} has no explicit clock transition")
+            if transition.get('runoff_seconds') != p['outcome'].get('clock_runoff_seconds'):
+                raise AssertionError(f"drive {d['index']} play {p['sequence']} clock transition disagrees with its runoff")
+            if p['state_before'].get('clock_status') != 'running_at_snap':
+                raise AssertionError(f"drive {d['index']} play {p['sequence']} does not start with the game clock running")
+            expected_after = ('period_ended' if transition.get('restart_trigger') == 'period_restart'
+                              else 'running_at_next_snap')
+            if p['state_after'].get('clock_status') != expected_after:
+                raise AssertionError(f"drive {d['index']} play {p['sequence']} has an invalid post-play clock status")
+            if transition.get('restart_trigger') != 'continuous' and transition.get('restart_clock_seconds') != p['state_after']['clock_seconds']:
+                raise AssertionError(f"drive {d['index']} play {p['sequence']} clock restart spot disagrees with state_after")
     # Scope refusals first: a record may not call a blocked, tied or guarded game complete, whatever its other fields say.
     if record.get('blocker') is not None and (record.get('complete_regulation') or record.get('complete_game')):
         raise AssertionError(f"a blocked record ({record['blocker']}) is never described as a complete game")
@@ -896,6 +1000,14 @@ def validate_game(record):
             raise AssertionError('safety free kick requires a separate observed safety-kick outcome table')
         if k['kind'] not in KICKOFF_KINDS:
             raise AssertionError(f"kickoff kind outside the engine's vocabulary: {k['kind']!r} (onside kicks are not modelled)")
+        transition = k.get('clock_transition')
+        if transition is None and not record.get('valid_full_game'):
+            continue  # older research records predate explicit free-kick clock annotations
+        if (not isinstance(transition, dict) or transition.get('clock_starts_on') != 'legal_touch'
+                or transition.get('clock_interval') != 'free_kick_to_next_snap'
+                or transition.get('runoff_seconds') != k['runoff_seconds']
+                or transition.get('restart_clock_seconds') != k['clock_after']):
+            raise AssertionError(f"{k['kind']} does not record its free-kick clock transition")
     if record.get('complete_regulation') and record['points']['A'] == record['points']['B']:
         raise AssertionError('a tied regulation game is not a complete game: overtime is not modelled (scoped out)')
     simulation_id = record.get('simulation_id')
@@ -996,10 +1108,34 @@ def validate_game(record):
                     raise AssertionError(f"applied timeout at drive {d['index']} play {p['sequence']} does not drop its side by one")
     checks.append('timeout counts carry across plays and the halftime reset; clocks carry within a drive')
     checks.append('each explicit timeout stop agrees with the counts on its play')
+    for d in record.get('drives', []):
+        for p in d['plays']:
+            before, after = p['state_before'], p['state_after']
+            crossed = (before['quarter'] in LATE_QUARTERS and after['quarter'] == before['quarter']
+                       and before['clock_seconds'] > TWO_MINUTE_MARK >= after['clock_seconds'] > 0)
+            marked = bool(p['outcome'].get('two_minute_warning'))
+            has_stop = any(item.get('kind') == 'automatic_two_minute_warning'
+                           for item in p['outcome'].get('clock_transition', {}).get('stoppages', []))
+            if crossed != marked or marked != has_stop:
+                raise AssertionError(f"two-minute warning clock transition disagrees at drive {d['index']} play {p['sequence']}")
+    for i, kick in enumerate(record.get('kickoffs', [])):
+        after = kick['clock_after']
+        crossed = (kick['quarter'] in LATE_QUARTERS and not kick['clock_expired_during_kickoff']
+                   and kick['clock_before'] > TWO_MINUTE_MARK >= after > 0)
+        marked = bool(kick.get('two_minute_warning'))
+        has_stop = any(item.get('kind') == 'automatic_two_minute_warning'
+                       for item in kick.get('clock_transition', {}).get('stoppages', []))
+        if crossed != marked or marked != has_stop:
+            raise AssertionError(f'two-minute warning clock transition disagrees at kickoff {i}')
+    checks.append('two-minute warning events independently match clock crossings and restart transitions')
     expected_unmodelled = unmodelled_transitions(record.get('drives', []), record.get('kickoffs', []))
     if record.get('unmodelled_transitions') != expected_unmodelled:
         raise AssertionError('unmodelled transition list disagrees with the plays and kickoff events')
     checks.append('unmodelled transitions match the play and kickoff events')
+    expected_unsupported = active_unsupported_rules(expected_unmodelled, record.get('blocker'), record.get('tied', False))
+    if record.get('unsupported_rules') != expected_unsupported:
+        raise AssertionError('active unsupported rules disagree with the game events')
+    checks.append('active unsupported rules match the game events')
     if record['valid_full_game']:
         if (record.get('mode') != 'pregame_full_game' or not record['complete_regulation'] or record['blocker'] is not None or record['tied']
                 or record['unsupported_rules']):

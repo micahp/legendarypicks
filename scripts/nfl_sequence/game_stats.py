@@ -1,8 +1,8 @@
 """Team and player lines for one generated game, computed from its plays.
 
-Player lines use the participants each play carries. Those are the passer, rusher and receiver of the observed play the
-simulated play was sampled from. They are not this game's roster or lineup, and the lines are not evidence about those
-players. Every line says so with `attribution`.
+Pregame games assign the frozen QB1 and sample eligible backs and receivers from the frozen depth chart. Other research
+modes retain observed-play participants. Pregame player totals reconcile to the generated team totals, but they are role
+allocations rather than player-specific performance projections or a complete lineup. Every line carries `attribution`.
 
 Yards credited on a touchdown are capped at the distance to the goal line in the simulation. The observed yards describe
 the observed play, not the simulated spot, and a line that said otherwise would contradict the field.
@@ -78,7 +78,7 @@ def _credited(play, yards):
 
 
 def player_lines(drives):
-    """Per-player passing, rushing and receiving lines, each marked with the attribution label."""
+    """Per-player passing, rushing, receiving and miscellaneous lines with attribution metadata."""
     lines = {}
 
     def line(pid, part, role):

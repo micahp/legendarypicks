@@ -75,7 +75,7 @@ def main():
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-payload', 'version': '1.0.0'},
         'schema': 'lp-statistical-game-1',
-        'mode': 'pregame_statistical_game',
+        'mode': record['mode'],
         'seed': args.seed,
         'game_id': args.game_id,
         'model_version': record['model_version'],

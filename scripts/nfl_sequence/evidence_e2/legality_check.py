@@ -28,18 +28,41 @@ def check_blocked(record):
     findings = []
     if record.get('status') == 'blocked' and (record.get('complete_regulation') or record.get('complete_game')):
         findings.append(f'blocked record ({record.get("blocker")}) marked as a complete game')
-    if record.get('valid_full_game') is True:
-        findings.append('valid_full_game is true; E2 never claims a valid full game')
+    if record.get('valid_full_game') is True and (
+            record.get('mode') != 'pregame_full_game' or not record.get('complete_regulation')
+            or record.get('blocker') is not None or record.get('tied')
+            or record.get('unsupported_rules') or record.get('unmodelled_transitions')):
+        findings.append('valid_full_game is true while its full-game acceptance gate is not satisfied')
     return findings
 
 
 def check_clock_state_guard(record):
-    """The record must disclose that clock running/stopped and restart substates are not represented."""
+    """A full-game record carries the clock state and explicit transition that starts the next interval."""
     findings = []
-    if 'clock_start_stop' not in record.get('unsupported_rules', []):
-        findings.append('clock start/stop lifecycle is not listed as an unsupported rule')
-    if 'clock_start_stop' not in record.get('guards', {}):
-        findings.append('clock start/stop lifecycle has no named guard')
+    if record.get('mode') != 'pregame_full_game':
+        return findings
+    for d, p in plays_of(record):
+        transition = p.get('outcome', {}).get('clock_transition')
+        if not isinstance(transition, dict):
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: explicit clock transition is missing')
+            continue
+        if transition.get('clock_interval') != 'observed_snap_to_next_snap':
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: clock interval basis is missing')
+        if transition.get('runoff_seconds') != p['outcome'].get('clock_runoff_seconds'):
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: transition runoff disagrees with the outcome')
+        if p['state_before'].get('clock_status') != 'running_at_snap':
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: clock is not running at the snap')
+        if transition.get('restart_trigger') not in ('next_snap', 'period_restart', 'free_kick_or_next_snap',
+                                                       'referee_signal', 'continuous'):
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: unknown clock restart trigger')
+        if transition.get('restart_trigger') != 'continuous' and transition.get('restart_clock_seconds') != p['state_after']['clock_seconds']:
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: restart clock disagrees with state_after')
+    for i, kick in enumerate(record.get('kickoffs', [])):
+        transition = kick.get('clock_transition')
+        if (not isinstance(transition, dict) or transition.get('clock_starts_on') != 'legal_touch'
+                or transition.get('runoff_seconds') != kick.get('runoff_seconds')
+                or transition.get('restart_clock_seconds') != kick.get('clock_after')):
+            findings.append(f'kickoff {i}: free-kick clock transition is missing or inconsistent')
     return findings
 
 
@@ -158,6 +181,23 @@ def check_timeouts(record):
                 if s['home_timeouts'] > prev_home or s['away_timeouts'] > prev_away:
                     findings.append(f'drive {d["index"]} play {p["sequence"]}: a team gained timeouts inside a half')
         previous = (s['quarter'], s['home_timeouts'], s['away_timeouts'])
+        participants = p.get('participants', {})
+        if participants.get('timeout') and (
+                record.get('mode') == 'pregame_full_game' or 'timeout_applied' in participants):
+            team = participants.get('timeout_charged_to')
+            applied = participants.get('timeout_applied') is True
+            if not applied or team not in TEAMS:
+                findings.append(f'drive {d["index"]} play {p["sequence"]}: timeout is uncharged or unassigned')
+            else:
+                key = 'home_timeouts' if team == 'A' else 'away_timeouts'
+                before, after = p['state_before'][key], p['state_after'][key]
+                if before - after != 1:
+                    findings.append(f'drive {d["index"]} play {p["sequence"]}: timeout count did not drop for team {team}')
+                transition = p.get('outcome', {}).get('clock_transition')
+                if ((record.get('mode') == 'pregame_full_game' or transition is not None)
+                        and not any(item.get('kind') == 'team_timeout' and item.get('team') == team
+                                    for item in (transition or {}).get('stoppages', []))):
+                    findings.append(f'drive {d["index"]} play {p["sequence"]}: timeout clock stop is missing')
     return findings
 
 
@@ -242,27 +282,38 @@ def check_conversions(record):
 
 
 def check_unmodelled(record):
-    """Derive unmodelled events from the record, without trusting its transition list: penalties, sampled timeout stoppages,
-    missed-field-goal touch exceptions and two-minute crossings whose explicit clock-stop/restart lifecycle is unsupported."""
+    """Derive unmodelled events without trusting the record's transition list."""
     findings = []
     for d in record['drives']:
         if d['terminal'] == 'field_goal_attempt' and d.get('field_goal_made') is False:
-            findings.append(f'missed field goal return not modelled: drive {d["index"]}')
+            returned = d['plays'][-1]['outcome'].get('field_goal_return')
+            if not isinstance(returned, dict):
+                findings.append(f'missed field goal return not modelled: drive {d["index"]}')
         for p in d['plays']:
             if p['outcome'].get('penalty'):
                 findings.append(f'penalty transition not modelled: drive {d["index"]} play {p["sequence"]}')
-            if p['participants'].get('timeout'):
+            if p['participants'].get('timeout') and not p['participants'].get('timeout_applied'):
                 findings.append(f'timeout stoppage not modelled: drive {d["index"]} play {p["sequence"]}')
             before, after = p['state_before'], p['state_after']
             if (before['quarter'] in LATE_QUARTERS and after['quarter'] == before['quarter']
                     and before['clock_seconds'] > TWO_MINUTE_MARK >= after['clock_seconds'] > 0):
-                findings.append(f'two-minute warning clock lifecycle not modelled: drive {d["index"]} play {p["sequence"]}')
+                transition = p['outcome'].get('clock_transition') or {}
+                stoppages = transition.get('stoppages', [])
+                if (not p['outcome'].get('two_minute_warning')
+                        or not any(item.get('kind') == 'automatic_two_minute_warning' for item in stoppages)
+                        or transition.get('restart_trigger') != 'next_snap'):
+                    findings.append(f'two-minute warning clock transition missing: drive {d["index"]} play {p["sequence"]}')
     for i, kick in enumerate(record['kickoffs']):
         clock_after = kick.get('clock_after', max(0, kick['clock_before'] - kick['runoff_seconds']))
         expired = kick.get('clock_expired_during_kickoff', kick['runoff_seconds'] >= kick['clock_before'])
         if (kick['quarter'] in LATE_QUARTERS and not expired
                 and kick['clock_before'] > TWO_MINUTE_MARK >= clock_after > 0):
-            findings.append(f'two-minute warning clock lifecycle not modelled: kickoff {i}')
+            transition = kick.get('clock_transition') or {}
+            stoppages = transition.get('stoppages', [])
+            if (not kick.get('two_minute_warning')
+                    or not any(item.get('kind') == 'automatic_two_minute_warning' for item in stoppages)
+                    or transition.get('restart_trigger') != 'next_snap'):
+                findings.append(f'two-minute warning clock transition missing: kickoff {i}')
     return findings
 
 
@@ -298,6 +349,20 @@ def check_two_minute(record):
     if marked_kicks != expected_kicks:
         findings.append(f'kickoff warning markers disagree with derived crossings: {len(marked_kicks)} marked, '
                         f'{len(expected_kicks)} expected')
+    for d, p in plays_of(record):
+        marked = bool(p['outcome'].get('two_minute_warning'))
+        transition = p['outcome'].get('clock_transition')
+        has_stop = any(item.get('kind') == 'automatic_two_minute_warning'
+                       for item in (transition or {}).get('stoppages', []))
+        if (record.get('mode') == 'pregame_full_game' or transition is not None) and marked != has_stop:
+            findings.append(f'drive {d["index"]} play {p["sequence"]}: warning marker and clock stop disagree')
+    for i, k in enumerate(record['kickoffs']):
+        marked = bool(k.get('two_minute_warning'))
+        transition = k.get('clock_transition')
+        has_stop = any(item.get('kind') == 'automatic_two_minute_warning'
+                       for item in (transition or {}).get('stoppages', []))
+        if (record.get('mode') == 'pregame_full_game' or transition is not None) and marked != has_stop:
+            findings.append(f'kickoff {i}: warning marker and clock stop disagree')
     for q in LATE_QUARTERS:
         count = sum(1 for d in record['drives'] for p in d['plays']
                     if p['outcome'].get('two_minute_warning') and p['state_before']['quarter'] == q)
