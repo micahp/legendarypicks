@@ -262,6 +262,9 @@ def _fg_safety(record):
         if d['points_scored_on_drive']['points'] != gs.SAFETY_POINTS:
             return FAIL, f'safety drive {d["index"]} is not 2 points'
         follow = [k for k in _kicks_after(record, d['index']) if k['kind'] == 'safety_free_kick']
+        if (record.get('blocker') == 'safety_free_kick_not_modelled' and not follow
+                and d is record['drives'][-1]):
+            return BLOCKED, f'safety drive {d["index"]}: no separate observed safety-free-kick outcome table; game blocked'
         if _expected_kick_after(d) and (not follow or follow[0]['kicking_team'] != d['offense_team']):
             return FAIL, f'safety drive {d["index"]}: the free kick is not by the conceding team'
     return PASS, (f'{made} made field goal(s) (3 each, kicker kicks off), {missed} missed, '

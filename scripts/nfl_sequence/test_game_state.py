@@ -791,6 +791,47 @@ class MissedFieldGoalReturn(unittest.TestCase):
         self.assertIn('line of scrimmage', guard)
 
 
+class SafetyFreeKickRefusal(unittest.TestCase):
+    def safety_record(self):
+        return gs.play_game(23, ref(StaticPool('run', -30, 10), kickoff_pool(spot=75)),
+                            winner_choice='receive', max_drives=5)
+
+    def test_safety_is_recorded_then_blocked_without_sampling_the_ordinary_kickoff_pool(self):
+        record = self.safety_record()
+        self.assertEqual(record['drives'][0]['terminal'], 'safety')
+        self.assertEqual(record['drives'][0]['points_scored_on_drive'],
+                         {'team': record['drives'][0]['plays'][-1]['state_before']['defense_team'],
+                          'points': gs.SAFETY_POINTS, 'try': None})
+        self.assertEqual(record['status'], 'blocked')
+        self.assertEqual(record['blocker'], 'safety_free_kick_not_modelled')
+        self.assertFalse(record['complete_game'])
+        self.assertFalse(record['valid_full_game'])
+        self.assertFalse(any(k['kind'] == 'safety_free_kick' for k in record['kickoffs']))
+        self.assertTrue(any(reason['reason'] == 'safety free kick' for reason in record['scope_out']))
+        gs.validate_game(record)
+        matrix_row = next(row for row in rm.check(record)
+                          if row['case'] == 'Made field goal (3) and safety (2), with the correct post-score kick')
+        self.assertEqual(matrix_row['status'], rm.BLOCKED)
+
+    def test_a_safety_free_kick_fabricated_from_an_ordinary_kickoff_is_rejected(self):
+        record = self.safety_record()
+        record['kickoffs'].append({**record['kickoffs'][0], 'kind': 'safety_free_kick', 'after_drive': 1})
+        with self.assertRaisesRegex(AssertionError, 'separate observed safety-kick outcome table'):
+            gs.validate_game(record)
+
+    def test_a_safety_at_halftime_skips_the_free_kick_and_uses_the_q3_ledger_kick(self):
+        record = gs.play_game(23, ref(StaticPool('run', -30, 900), kickoff_pool(spot=75, runoff=900)),
+                              winner_choice='receive', max_drives=5)
+        self.assertEqual((record['drives'][0]['terminal'], record['drives'][0]['end_quarter'],
+                          record['drives'][0]['end_clock']), ('safety', 2, 0))
+        self.assertTrue(any(boundary['kind'] == 'skipped_post_score_kick'
+                            and boundary['skipped_kind'] == 'safety_free_kick'
+                            for boundary in record['boundaries']))
+        self.assertTrue(any(kick['kind'] == 'half_start' and kick['quarter'] == 3 for kick in record['kickoffs']))
+        self.assertFalse(any(kick['kind'] == 'safety_free_kick' for kick in record['kickoffs']))
+        gs.validate_game(record)
+
+
 class ScopeRefusals(unittest.TestCase):
     """Overtime and rare kick outcomes are scoped out, and the validator refuses any record that calls them complete."""
 
