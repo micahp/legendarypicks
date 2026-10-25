@@ -85,6 +85,7 @@ def _reference_fingerprint(reference):
     add(['blocked-kick-rates', reference.blocked_kicks.get('rates')])
     add(['blocked-kick-source-sha256', reference.blocked_kicks.get('sha256')])
     add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
+    add(['blocked-kick-input-source-sha256', reference.blocked_kicks.get('source_hashes')])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
     return {
@@ -103,6 +104,7 @@ def _reference_fingerprint(reference):
         'blocked_kick_rates': reference.blocked_kicks.get('rates'),
         'blocked_kick_source_sha256': reference.blocked_kicks.get('sha256'),
         'blocked_kick_manifest_sha256': reference.blocked_kicks.get('manifest_sha256'),
+        'blocked_kick_input_source_sha256': reference.blocked_kicks.get('source_hashes'),
         'play_extras_sha256': extras_hash,
     }
 
@@ -144,7 +146,7 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
         pools[row['kick_type']].append(row)
     return {'records': pools, 'rates': manifest['observed_rates'], 'sha256': source_hash,
             'manifest_sha256': hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-            'source': manifest['source_dataset'], 'window': manifest['window']}
+            'source_hashes': manifest['sources'], 'source': manifest['source_dataset'], 'window': manifest['window']}
 
 
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):

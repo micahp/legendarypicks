@@ -785,6 +785,7 @@ class _Game:
         if not isinstance(runoff, int) or runoff < 0:
             return f'blocked_kick_clock_unresolved:{kick_type}', None
         outcome = dict(sample)
+        outcome['reference_fixture_sha256'] = self.ref.blocked_kicks.get('sha256')
         scoring_team = outcome.get('scoring_team')
         if scoring_team:
             if scoring_team == outcome.get('posteam'):
@@ -1151,7 +1152,7 @@ def validate_game(record):
             if next_drive['offense_team'] != expected_offense or got_spot != spot:
                 raise AssertionError(f"missed field goal in drive {drive['index']} disagrees with the next possession")
     snapshot = record.get('pregame_snapshot') or {}
-    observed_reference = snapshot.get('model_reference', {}).get('observed_reference', {})
+    observed_reference = (snapshot.get('model_reference') or {}).get('observed_reference', {})
     pinned_blocked_source = observed_reference.get('blocked_kick_source_sha256')
     supported_blocked_statuses = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety',
                                   'period_expired'}
@@ -1172,8 +1173,12 @@ def validate_game(record):
                     or not blocked.get('source_file') or not blocked.get('game_id')
                     or not isinstance(blocked.get('play_id'), int)):
                 raise AssertionError(f"drive {drive['index']} play {play['sequence']} lacks blocked-kick provenance")
-            if pinned_blocked_source and blocked['source_sha256'] != pinned_blocked_source:
-                raise AssertionError(f"drive {drive['index']} play {play['sequence']} uses an unpinned blocked-kick source")
+            if (pinned_blocked_source
+                    and blocked.get('reference_fixture_sha256') != pinned_blocked_source):
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} uses an unpinned blocked-kick fixture")
+            pinned_inputs = observed_reference.get('blocked_kick_input_source_sha256') or {}
+            if pinned_inputs and pinned_inputs.get(blocked['source_file']) != blocked['source_sha256']:
+                raise AssertionError(f"drive {drive['index']} play {play['sequence']} uses an unpinned blocked-kick input file")
             if kick_type == 'field_goal':
                 if not outcome.get('field_goal_attempt') or outcome.get('field_goal_result') != 'blocked':
                     raise AssertionError(f"drive {drive['index']} play {play['sequence']} does not record its blocked field-goal attempt")

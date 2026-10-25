@@ -254,7 +254,8 @@ def check_blocked_kicks(record):
     """Independently verify blocked-kick classification, pinned source provenance and the resulting possession."""
     findings = []
     observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
-    observed = observed.get('blocked_kick_source_sha256')
+    fixture_hash = observed.get('blocked_kick_source_sha256')
+    input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
     supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
     for drive, play in plays_of(record):
         event = play['event_type']
@@ -274,8 +275,10 @@ def check_blocked_kicks(record):
         if (not isinstance(source, str) or len(source) != 64 or not blocked.get('source_file')
                 or not blocked.get('game_id') or not isinstance(blocked.get('play_id'), int)):
             findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome lacks source provenance')
-        elif observed and source != observed:
-            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked outcome source is not pinned by the snapshot')
+        elif fixture_hash and blocked.get('reference_fixture_sha256') != fixture_hash:
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked fixture is not pinned by the snapshot')
+        if input_hashes and input_hashes.get(blocked.get('source_file')) != source:
+            findings.append(f'drive {drive["index"]} play {play["sequence"]}: raw source file is not pinned by the snapshot')
         if kick_type == 'field_goal':
             if not outcome.get('field_goal_attempt') or outcome.get('field_goal_result') != 'blocked':
                 findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked field goal is not counted as a blocked attempt')
