@@ -1,0 +1,258 @@
+{
+  "count_calibration": {
+    "observed_2021_development": {
+      "away_official_final_score": {
+        "mean": 3.0108359133126936,
+        "n": 1292,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.7145002379570602,
+        "variance": 2.939511065954816
+      },
+      "away_reg_ot_goals": {
+        "mean": 2.9744582043343653,
+        "n": 1292,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.7141184631869122,
+        "variance": 2.9382021058382617
+      },
+      "away_sog": {
+        "mean": 30.956656346749227,
+        "n": 1292,
+        "p10": 22.0,
+        "p50": 31.0,
+        "p90": 40.0,
+        "sd": 6.893347892478093,
+        "variance": 47.518245166732164
+      },
+      "home_official_final_score": {
+        "mean": 3.2569659442724457,
+        "n": 1292,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 6.0,
+        "sd": 1.827017589210905,
+        "variance": 3.337993271286028
+      },
+      "home_reg_ot_goals": {
+        "mean": 3.219814241486068,
+        "n": 1292,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 6.0,
+        "sd": 1.831013514917234,
+        "variance": 3.352610491809564
+      },
+      "home_sog": {
+        "mean": 32.247678018575854,
+        "n": 1292,
+        "p10": 24.0,
+        "p50": 32.0,
+        "p90": 41.0,
+        "sd": 6.872610366241721,
+        "variance": 47.23277324617317
+      },
+      "nonboundary_pbp_events": {
+        "mean": 300.4295665634675,
+        "n": 1292,
+        "p10": 261.0,
+        "p50": 300.0,
+        "p90": 342.0,
+        "sd": 31.763963441238616,
+        "variance": 1008.9493734963434
+      },
+      "official_goal_margin_home_minus_away": {
+        "mean": 0.24613003095975233,
+        "n": 1292,
+        "p10": -3.0,
+        "p50": 1.0,
+        "p90": 4.0,
+        "sd": 2.6626255475791862,
+        "variance": 7.0895748066213615
+      }
+    },
+    "simulated_from_2019_2020": {
+      "away_official_final_score": {
+        "mean": 2.8065,
+        "n": 10000,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.6236556747044615,
+        "variance": 2.63625775
+      },
+      "away_reg_ot_goals": {
+        "mean": 2.775,
+        "n": 10000,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.61813936359017,
+        "variance": 2.618375
+      },
+      "away_sog": {
+        "mean": 30.0055,
+        "n": 10000,
+        "p10": 22.0,
+        "p50": 30.0,
+        "p90": 38.0,
+        "sd": 6.32125539351164,
+        "variance": 39.95826975
+      },
+      "home_official_final_score": {
+        "mean": 3.0973,
+        "n": 10000,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.7200676469255505,
+        "variance": 2.95863271
+      },
+      "home_reg_ot_goals": {
+        "mean": 3.069,
+        "n": 10000,
+        "p10": 1.0,
+        "p50": 3.0,
+        "p90": 5.0,
+        "sd": 1.719080859063936,
+        "variance": 2.955239
+      },
+      "home_sog": {
+        "mean": 31.2324,
+        "n": 10000,
+        "p10": 23.0,
+        "p50": 31.0,
+        "p90": 39.0,
+        "sd": 6.3204422503492586,
+        "variance": 39.94799024
+      },
+      "nonboundary_pbp_events": {
+        "mean": 295.9231,
+        "n": 10000,
+        "p10": 265.0,
+        "p50": 295.0,
+        "p90": 327.0,
+        "sd": 24.283837966639457,
+        "variance": 589.70478639
+      },
+      "official_goal_margin_home_minus_away": {
+        "mean": 0.2908,
+        "n": 10000,
+        "p10": -3.0,
+        "p50": 1.0,
+        "p90": 3.0,
+        "sd": 2.444593086793792,
+        "variance": 5.97603536
+      }
+    }
+  },
+  "development_data": {
+    "games_eligible": {
+      "2021": 1292
+    },
+    "games_listed": {
+      "2021": 1312
+    },
+    "quarantine_by_reason": {
+      "2021": {
+        "event_sog_vs_independent_boxscore_sog_mismatch": 20
+      }
+    }
+  },
+  "development_game_count": 1292,
+  "development_start_seasons": [
+    2021
+  ],
+  "energy_score_pair_draw_count": 200000,
+  "excluded_exposed_start_seasons": [
+    2022
+  ],
+  "forecast_scope": "one league-level home/away distribution reused for every eligible 2021 game; no team conditioning",
+  "independent_boxscore_manifest_games": 4876,
+  "independent_boxscore_manifest_sha256": "0ba44bcebefecb0a8eefbea995e8f5370583600eec77d0be12be574f308d71a2",
+  "independent_boxscore_source_counts": {
+    "official_gamecenter": 4576,
+    "prior_official_audit_cache": 300
+  },
+  "limitations": [
+    "This is a development diagnostic, not a fresh holdout or adoption test.",
+    "The 2022 start-season slice is excluded because earlier NHL work exposed it and the local archive is partial.",
+    "The model ignores requested team identities and therefore does not estimate a matchup-specific forecast.",
+    "Scores and team SOG are checked against the separate archived GameCenter boxscore manifest and bodies; PBP scoreboard fields must agree with that source, and event SOG must reconcile to the boxscore SOG.",
+    "Historical period blocks preserve event ordering but do not model causal possession, player choices, or physical motion."
+  ],
+  "metrics": {
+    "final_score_energy": {
+      "ci95_game_bootstrap": [
+        1.5418390217619955,
+        1.6226189501658907
+      ],
+      "mean": 1.5807383785592288
+    },
+    "official_final_score_crps_per_team": {
+      "ci95_game_bootstrap": [
+        0.9672588446439628,
+        1.0211497889164087
+      ],
+      "mean": 0.9926402687925696
+    },
+    "regulation_overtime_goal_crps_per_team": {
+      "ci95_game_bootstrap": [
+        0.96440266749226,
+        1.0195685343653251
+      ],
+      "mean": 0.992195546749226
+    },
+    "sog_crps_per_team": {
+      "ci95_game_bootstrap": [
+        3.794596284380805,
+        4.030229566114552
+      ],
+      "mean": 3.9111268571362228
+    },
+    "winner_brier": {
+      "ci95_game_bootstrap": [
+        0.2465788572136223,
+        0.2510865971517028
+      ],
+      "mean": 0.24870393461300308
+    }
+  },
+  "model_version": "empirical-period-bootstrap-v0.1",
+  "predicted_home_win_probability": 0.5416,
+  "runtime_seconds": 28.264,
+  "schema_version": "nhl-statistical-pbp-development-v0.1",
+  "simulation_draw_count": 10000,
+  "simulation_seed": 20211025,
+  "source_manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+  "source_quality_quarantined_start_seasons": [
+    2018
+  ],
+  "training_data": {
+    "games_eligible": {
+      "2019": 1064,
+      "2020": 857
+    },
+    "games_listed": {
+      "2019": 1082,
+      "2020": 868
+    },
+    "quarantine_by_reason": {
+      "2019": {
+        "event_sog_vs_independent_boxscore_sog_mismatch": 17,
+        "incomplete_or_unsupported_period_sequence": 1
+      },
+      "2020": {
+        "event_sog_vs_independent_boxscore_sog_mismatch": 11
+      }
+    }
+  },
+  "training_start_seasons": [
+    2019,
+    2020
+  ],
+  "uncertainty": "95% intervals resample eligible 2021 development games; simulator draws are fixed common random numbers across every game because this model is team-independent; energy score uses the recorded Monte Carlo pair draw count"
+}
