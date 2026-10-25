@@ -33,6 +33,7 @@ Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff 
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
 """
 import random
+import hashlib
 from collections import Counter
 from pathlib import Path
 import sys
@@ -207,13 +208,58 @@ class Reference:
         self.kicks = kicks
         self.participants = participants
 
-    def participants_for(self, play):
+    def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
         facts = self.participants.get((src['game_id'], src['play_id']), {})
         keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'air_yards', 'yards_after_catch', 'timeout',
                 'timeout_team', 'out_of_bounds')
         out = {k: facts.get(k) for k in keys}
-        out.update(attribution='sampled_observed_play', sampled_from=src)
+        if snapshot is None:
+            out.update(attribution='sampled_observed_play', sampled_from=src)
+            return out
+
+        side = 'home' if offense_team == 'A' else 'away'
+        team_roster = snapshot['rosters'][side]
+        players = team_roster['players']
+        event = play['event_type']
+        source_play_type = facts.get('play_type')
+        out.update(passer_id=None, rusher_id=None, receiver_id=None)
+        out['sampled_play_context'] = {
+            'posteam': facts.get('posteam'),
+            'play_type': source_play_type,
+            'air_yards': facts.get('air_yards'),
+            'yards_after_catch': facts.get('yards_after_catch'),
+            'timeout_team': facts.get('timeout_team'),
+            'out_of_bounds': facts.get('out_of_bounds'),
+        }
+        for key in ('posteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
+            out[key] = None
+
+        def choose(groups, role):
+            eligible = [p for p in players if p['pos_abb'] in groups]
+            if not eligible:
+                raise ValueError(f"pregame snapshot has no {role} for {team_roster['team']}")
+            eligible.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
+            role_seed = f"{snapshot['snapshot_sha256']}:{seed}:{play['sequence']}:{role}".encode()
+            draw = random.Random(int.from_bytes(hashlib.sha256(role_seed).digest()[:8], 'big'))
+            return draw.choices(eligible, weights=[1 / p['pos_rank'] for p in eligible], k=1)[0]
+
+        assigned = {}
+        if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack') or (
+                event == 'fumble_lost' and source_play_type == 'pass'):
+            assigned['passer'] = choose({'QB'}, 'passer')
+            if event in ('pass_complete', 'pass_incomplete', 'interception'):
+                assigned['receiver'] = choose({'WR', 'TE', 'FB'}, 'receiver')
+        if event == 'run' or (event == 'fumble_lost' and source_play_type == 'run'):
+            assigned['rusher'] = choose({'RB', 'FB'}, 'rusher')
+
+        for role, player in assigned.items():
+            out[f'{role}_id'] = player['gsis_id']
+            out[f'{role}_name'] = player['player_name']
+            out[f'{role}_position'] = player['pos_abb']
+            out[f'{role}_team'] = team_roster['team']
+        out['attribution'] = 'pregame_depth_chart_role_sample'
+        out['sampled_from'] = src
         return out
 
 
@@ -361,9 +407,12 @@ def _try_after_touchdown(rng, kicks):
 class _Game:
     """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
-    def __init__(self, seed, ref, ledger, rng):
+    def __init__(self, seed, ref, ledger, rng, pregame_snapshot=None, model_seed=None):
         self.seed = seed
-        self.simulation_id = f'e2-{e1.MODEL_VERSION}-seed{seed}'
+        self.pregame_snapshot = pregame_snapshot
+        snapshot_tag = f"-{pregame_snapshot['schedule']['game_id']}-{pregame_snapshot['snapshot_sha256'][:12]}" if pregame_snapshot else ''
+        self.simulation_id = f'e2-{e1.MODEL_VERSION}{snapshot_tag}-seed{seed}'
+        self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
         self.ledger = ledger
@@ -535,7 +584,8 @@ class _Game:
             play['state_before']['home_timeouts'] = self.timeouts['A']
             play['state_before']['away_timeouts'] = self.timeouts['B']
             if part['timeout']:
-                mapped = self.offense if part['timeout_team'] == part['posteam'] else self.defense
+                sampled = part.get('sampled_play_context', part)
+                mapped = self.offense if sampled['timeout_team'] == sampled['posteam'] else self.defense
                 if self.timeouts[mapped] > 0:
                     self.timeouts[mapped] -= 1
                     part['timeout_applied'] = True
@@ -553,7 +603,7 @@ class _Game:
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
-        plays, terminal = e1.simulate(start, self.seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id)
+        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool, self.simulation_id)
         if plays is None:
             self.block(terminal)
             return
@@ -570,7 +620,8 @@ class _Game:
             play['sequence'] = self.next_play_sequence
             play['id'] = f'{self.simulation_id}:{self.next_play_sequence}'
             self.next_play_sequence += 1
-            play['participants'] = self.ref.participants_for(play)
+            play['participants'] = self.ref.participants_for(
+                play, offense_team=self.offense, snapshot=self.pregame_snapshot, seed=self.seed)
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
         self._apply_timeouts(plays)
@@ -646,7 +697,7 @@ class _Game:
 
     def record(self):
         tied = self.points['A'] == self.points['B']
-        record_mode = 'legal_game_state_first_piece'
+        record_mode = 'pregame_statistical_game' if self.pregame_snapshot else 'legal_game_state_first_piece'
         status, blocker = self.status or 'blocked', self.blocker
         if status == 'complete_regulation' and tied:
             status, blocker = 'blocked', 'overtime_not_modelled'
@@ -655,9 +706,28 @@ class _Game:
         if complete and guarded:
             status = 'regulation_end_guarded'  # the simulation reached regulation end, but it is not a complete game
         points = {'A': self.points['A'], 'B': self.points['B']}
+        snapshot = self.pregame_snapshot
         scope_out = scope_out_reasons(blocker, complete, tied) + guard_reasons(guarded)
         return {
             'mode': record_mode, 'seed': self.seed, 'simulation_id': self.simulation_id,
+            'pregame_snapshot': snapshot,
+            'game_id': snapshot['schedule']['game_id'] if snapshot else None,
+            'as_of_utc': snapshot['as_of'] if snapshot else None,
+            'teams': ({'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']}
+                      if snapshot else None),
+            'scheduled_kickoff_local': ({'date': snapshot['schedule']['gameday'],
+                                         'time': snapshot['schedule']['gametime'],
+                                         'timezone': snapshot['schedule']['gametime_timezone']}
+                                        if snapshot else None),
+            'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
+            'roster_snapshot_id': ({'home': snapshot['rosters']['home']['snapshot_at'],
+                                    'away': snapshot['rosters']['away']['snapshot_at']}
+                                   if snapshot else None),
+            'model_version': e1.MODEL_VERSION,
+            'rules_version': 'nfl-2026-e2-successor',
+            'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},
+                               'B': {'team': snapshot['schedule']['away_team'], 'side': 'away'}}
+                              if snapshot else None),
             'ledger': self.ledger.ledger(), 'kickoffs': self.events, 'boundaries': self.boundaries,
             'drives': self.drives, 'points': points, 'stats': game_stats.compute(self.drives, points),
             'status': status, 'blocker': blocker, 'tied': tied, 'complete_regulation': complete and not guarded,
@@ -767,20 +837,23 @@ def scope_out_reasons(blocker, complete, tied):
     return reasons
 
 
-def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None):
+def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
     default. The toss winner (team 'A' or 'B') and the winner's choice (receive or defer) are both sampled from the seed,
     unless a caller fixes them for a test.
     """
-    rng = random.Random(seed)
+    snapshot_digest = pregame_snapshot['snapshot_sha256'] if pregame_snapshot else ''
+    material = f'{seed}:{snapshot_digest}'.encode()
+    model_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], 'big')
+    rng = random.Random(model_seed)
     toss_winner = winner or rng.choice(['A', 'B'])
     toss_loser = other(toss_winner, ('A', 'B'))
     choice = winner_choice or rng.choice(['receive', 'defer'])
     ledger = CoinTossLedger(toss_winner, toss_loser, choice)
     validate_half_start(ledger.half_start_kickoffs())
-    return _Game(seed, ref, ledger, rng).run(max_drives).record()
+    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed).run(max_drives).record()
 
 
 def validate_game(record):

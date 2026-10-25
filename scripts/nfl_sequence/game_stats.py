@@ -75,9 +75,14 @@ def player_lines(drives):
     """Per-player passing, rushing and receiving lines, each marked with the attribution label."""
     lines = {}
 
-    def line(pid):
-        return lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
-                                      'receiving': defaultdict(int)})
+    def line(pid, part, role):
+        entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
+                                       'receiving': defaultdict(int), 'attribution': part.get('attribution', ATTRIBUTION)})
+        for field in ('name', 'position', 'team'):
+            value = part.get(f'{role}_{field}')
+            if value is not None:
+                entry[f'player_{field}'] = value
+        return entry
 
     for d in drives:
         for play in d['plays']:
@@ -85,12 +90,12 @@ def player_lines(drives):
             yards = out['yards_gained'] or 0
             td = bool(out['touchdown'])
             if ev == 'run' and part['rusher_id']:
-                r = line(part['rusher_id'])['rushing']
+                r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1
                 r['yds'] += _credited(play, yards)
                 r['td'] += int(td)
             if ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack') and part['passer_id']:
-                p = line(part['passer_id'])['passing']
+                p = line(part['passer_id'], part, 'passer')['passing']
                 if ev == 'sack':
                     p['sacked'] += 1
                     p['sack_yds'] += yards
@@ -103,13 +108,16 @@ def player_lines(drives):
                     p['yds'] += _credited(play, yards)
                     p['td'] += int(td)
             if ev == 'pass_complete' and part['receiver_id']:
-                c = line(part['receiver_id'])['receiving']
+                c = line(part['receiver_id'], part, 'receiver')['receiving']
                 c['rec'] += 1
                 c['yds'] += _credited(play, yards)
                 c['td'] += int(td)
     out = []
     for pid in sorted(lines):
-        entry = {'player_id': pid, 'attribution': ATTRIBUTION}
+        entry = {'player_id': pid, 'attribution': lines[pid]['attribution']}
+        for field in ('player_name', 'player_position', 'player_team'):
+            if field in lines[pid]:
+                entry[field] = lines[pid][field]
         for cat in ('passing', 'rushing', 'receiving'):
             if lines[pid][cat]:
                 entry[cat] = dict(sorted(lines[pid][cat].items()))
@@ -119,11 +127,17 @@ def player_lines(drives):
 
 def compute(drives, points):
     """The game's stat block: team lines, player lines, and the label that says what the player lines are."""
+    players = player_lines(drives)
+    attributions = {row['attribution'] for row in players}
+    attribution = next(iter(attributions)) if len(attributions) == 1 else ATTRIBUTION
+    note = ('Team play outcomes come from historical E1 samples. Player IDs are assigned by deterministic rank-weighted '
+            'sampling from the frozen pregame depth chart; individual lines are allocations, not player-specific projections.'
+            if attribution == 'pregame_depth_chart_role_sample' else
+            'Players are the participants of the observed plays each simulated play was sampled from. They are not this '
+            'game\'s roster or lineup, and these lines are not evidence about those players.')
     return {
         'team': team_stats(drives, points),
-        'player': player_lines(drives),
-        'player_attribution': ATTRIBUTION,
-        'player_note': ('Players are the participants of the observed plays each simulated play was sampled from. '
-                        'They are '
-                        'not this game\'s roster or lineup, and these lines are not evidence about those players.'),
+        'player': players,
+        'player_attribution': attribution,
+        'player_note': note,
     }
