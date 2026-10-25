@@ -47,8 +47,14 @@ def reseal(snapshot: dict) -> dict:
     return snapshot
 
 
-def build(db: str, game_id: str, as_of: str) -> dict:
+def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
+          kickoff_source_url: str | None = None) -> dict:
     cutoff = parse_as_of(as_of)
+    scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
+    if bool(scheduled_start) != bool(kickoff_source_url):
+        raise ValueError('--kickoff-utc and --kickoff-source-url must be supplied together')
+    if scheduled_start and cutoff >= scheduled_start:
+        raise ValueError('--as-of must precede the verified scheduled kickoff')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     con.row_factory = sqlite3.Row
     try:
@@ -63,7 +69,7 @@ def build(db: str, game_id: str, as_of: str) -> dict:
             raise ValueError(f'{game_id}: unsupported game type {game["game_type"]!r}')
         if not game['gameday'] or not game['gametime']:
             raise ValueError(f'{game_id}: scheduled date and time are required')
-        if date.fromisoformat(game['gameday']) <= cutoff.date():
+        if scheduled_start is None and date.fromisoformat(game['gameday']) <= cutoff.date():
             raise ValueError(f'{game_id}: as-of date must precede scheduled game day')
         schedule_ingested = _utc(game['ingested_at'], 'schedule ingested_at')
         if schedule_ingested > cutoff:
@@ -93,11 +99,13 @@ def build(db: str, game_id: str, as_of: str) -> dict:
             selected = [dict(row) for row in eligible
                         if _utc(row['snapshot_at'], f'{team} snapshot_at') == latest_time]
             positions = {row['pos_abb'] for row in selected}
-            if not any(row['pos_abb'] == 'QB' and row['pos_rank'] == 1 for row in selected):
-                raise ValueError(f'{game_id}: {team} snapshot {latest} has no QB1')
-            if not any(row['pos_abb'] == 'RB' and row['pos_rank'] == 1 for row in selected):
-                raise ValueError(f'{game_id}: {team} snapshot {latest} has no RB1')
-            if not positions.intersection({'WR', 'TE', 'FB'}):
+            qb1 = [row for row in selected if row['pos_abb'] == 'QB' and row['pos_rank'] == 1]
+            if len(qb1) != 1:
+                raise ValueError(f'{game_id}: {team} snapshot {latest} must have exactly one QB1')
+            rb1 = [row for row in selected if row['pos_abb'] == 'RB' and row['pos_rank'] == 1]
+            if len(rb1) != 1:
+                raise ValueError(f'{game_id}: {team} snapshot {latest} must have exactly one RB1')
+            if not positions.intersection({'WR', 'TE', 'RB', 'FB'}):
                 raise ValueError(f'{game_id}: {team} snapshot {latest} has no receiving options')
             rosters[side] = {
                 'team': team,
@@ -111,16 +119,20 @@ def build(db: str, game_id: str, as_of: str) -> dict:
     snapshot = {
         'schema': SCHEMA,
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
+        'roster_snapshot_id': f"nfl-depth-chart:{_canonical_hash(rosters)}",
         'schedule': {
             'game_id': game['game_id'], 'season': game['season'], 'game_type': game['game_type'],
             'week': game['week'], 'gameday': game['gameday'], 'gametime': game['gametime'],
             'gametime_timezone': None, 'away_team': game['away_team'], 'home_team': game['home_team'],
             'source': game['source'], 'ingested_at': game['ingested_at'],
+            'scheduled_kickoff_utc': scheduled_start.isoformat().replace('+00:00', 'Z') if scheduled_start else None,
+            'kickoff_source_url': kickoff_source_url,
         },
         'rosters': rosters,
         'model_reference': {
             'play_pool': 'nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler',
             'rule_version': 'NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix',
+            'participant_assignment_version': 'pregame-role-usage-v1',
         },
     }
     return reseal(snapshot)

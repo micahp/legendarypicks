@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import game_state as gs  # noqa: E402
+import game_stats  # noqa: E402
 import rules_matrix as rm  # noqa: E402
 
 
@@ -120,6 +121,73 @@ class Validators(unittest.TestCase):
         record['drives'][0]['points_scored_on_drive']['points'] = 6  # the try was made, so the points must be 7
         with self.assertRaises(AssertionError):
             gs.validate_game(record)
+
+
+class PregamePlayerUsage(unittest.TestCase):
+    def snapshot(self):
+        players = [
+            {'gsis_id': 'QB1', 'player_name': 'Starter', 'pos_abb': 'QB', 'pos_rank': 1},
+            {'gsis_id': 'QB2', 'player_name': 'Backup', 'pos_abb': 'QB', 'pos_rank': 2},
+            {'gsis_id': 'RB1', 'player_name': 'Back', 'pos_abb': 'RB', 'pos_rank': 1},
+        ]
+        return {
+            'snapshot_sha256': 'a' * 64,
+            'rosters': {'home': {'team': 'HOM', 'players': players},
+                        'away': {'team': 'AWY', 'players': players}},
+            'model_reference': {'observed_reference': {
+                'receiver_position_usage': {'shares': {'RB': 1.0}},
+                'runner_position_usage': {'shares': {'RB': 1.0}},
+            }},
+        }
+
+    def test_passing_uses_qb1_and_historical_target_mix_can_select_a_running_back(self):
+        source = {'game_id': 'G1', 'play_id': 1}
+        facts = {'passer_id': 'OLD_QB', 'receiver_id': 'OLD_WR', 'rusher_id': None,
+                 'posteam': 'OLD', 'play_type': 'pass', 'timeout': 0, 'timeout_team': '',
+                 'out_of_bounds': 0, 'air_yards': 8, 'yards_after_catch': 3}
+        reference = gs.Reference({}, [], {}, {('G1', 1): facts})
+        play = {'sequence': 1, 'event_type': 'pass_complete', 'outcome': {'sampled_from': source}}
+        participants = reference.participants_for(play, 'A', self.snapshot(), seed=1)
+        self.assertEqual(participants['passer_id'], 'QB1')
+        self.assertEqual(participants['receiver_id'], 'RB1')
+        self.assertEqual(participants['passer_side'], 'A')
+        self.assertIsNone(participants['posteam'])
+        self.assertEqual(participants['sampled_play_context']['posteam'], 'OLD')
+
+    def test_non_scrimmage_play_drops_historical_participant_ids(self):
+        source = {'game_id': 'G1', 'play_id': 1}
+        facts = {'passer_id': 'OLD_QB', 'receiver_id': 'OLD_WR', 'rusher_id': 'OLD_RB',
+                 'posteam': 'OLD', 'play_type': 'kickoff'}
+        reference = gs.Reference({}, [], {}, {('G1', 1): facts})
+        participants = reference.participants_for(
+            {'sequence': 1, 'event_type': 'punt', 'outcome': {'sampled_from': source}},
+            'A', self.snapshot(), seed=1)
+        self.assertIsNone(participants['passer_id'])
+        self.assertIsNone(participants['receiver_id'])
+        self.assertIsNone(participants['rusher_id'])
+
+    def test_pregame_player_lines_reconcile_to_team_box_score(self):
+        def play(event, yards, participants):
+            return {'event_type': event,
+                    'outcome': {'yards_gained': yards, 'touchdown': False, 'turnover': False, 'punt': False},
+                    'state_before': {'yardline_100': 50}, 'participants': participants}
+
+        plays = [
+            play('run', 5, {'attribution': 'pregame_depth_chart_role_sample', 'rusher_id': 'RB1',
+                            'rusher_name': 'Back', 'rusher_position': 'RB', 'rusher_team': 'HOM',
+                            'rusher_side': 'A'}),
+            play('pass_complete', 10, {'attribution': 'pregame_depth_chart_role_sample', 'passer_id': 'QB1',
+                                       'passer_name': 'Starter', 'passer_position': 'QB', 'passer_team': 'HOM',
+                                       'passer_side': 'A', 'receiver_id': 'RB1', 'receiver_name': 'Back',
+                                       'receiver_position': 'RB', 'receiver_team': 'HOM', 'receiver_side': 'A'}),
+        ]
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 800, 'terminal': 'punt', 'field_goal_made': None,
+                 'plays': plays}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['team']['A']['rush_att'], 1)
+        self.assertEqual(stats['team']['A']['pass_comp'], 1)
+        self.assertEqual(stats['team']['A']['pass_tgt'], 1)
 
 
 class KickoffPool(unittest.TestCase):
