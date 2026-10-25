@@ -44,6 +44,7 @@ import game_stats  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
+PREGAME_USAGE_VERSION = 'pregame-role-usage-v1'
 QUARTER_LENGTH = 900
 TD_POINTS = 6
 FG_POINTS = 3
@@ -240,24 +241,44 @@ class Reference:
             if not eligible:
                 raise ValueError(f"pregame snapshot has no {role} for {team_roster['team']}")
             eligible.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
+            if role == 'passer':
+                starters = [p for p in eligible if p['pos_rank'] == 1]
+                if len(starters) != 1:
+                    raise ValueError(f"pregame snapshot must have exactly one QB1 for {team_roster['team']}")
+                return starters[0]
             role_seed = f"{snapshot['snapshot_sha256']}:{seed}:{play['sequence']}:{role}".encode()
             draw = random.Random(int.from_bytes(hashlib.sha256(role_seed).digest()[:8], 'big'))
             return draw.choices(eligible, weights=[1 / p['pos_rank'] for p in eligible], k=1)[0]
+
+        def choose_by_usage(usage_key, role):
+            usage = snapshot['model_reference']['observed_reference'][usage_key]
+            shares = usage['shares']
+            groups = [position for position, share in shares.items()
+                      if share > 0 and any(p['pos_abb'] == position for p in players)]
+            if not groups:
+                raise ValueError(f"pregame snapshot has no eligible {role} positions for {team_roster['team']}")
+            weights = [shares[position] for position in groups]
+            role_seed = f"{snapshot['snapshot_sha256']}:{seed}:{play['sequence']}:{role}:position".encode()
+            draw = random.Random(int.from_bytes(hashlib.sha256(role_seed).digest()[:8], 'big'))
+            position = draw.choices(groups, weights=weights, k=1)[0]
+            choice_role = 'passer' if position == 'QB' else f'{role}_{position}'
+            return choose({position}, choice_role)
 
         assigned = {}
         if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack') or (
                 event == 'fumble_lost' and source_play_type == 'pass'):
             assigned['passer'] = choose({'QB'}, 'passer')
-            if event in ('pass_complete', 'pass_incomplete', 'interception'):
-                assigned['receiver'] = choose({'WR', 'TE', 'FB'}, 'receiver')
+            if event == 'pass_complete' or (event in ('pass_incomplete', 'interception') and facts.get('receiver_id')):
+                assigned['receiver'] = choose_by_usage('receiver_position_usage', 'receiver')
         if event == 'run' or (event == 'fumble_lost' and source_play_type == 'run'):
-            assigned['rusher'] = choose({'RB', 'FB'}, 'rusher')
+            assigned['rusher'] = choose_by_usage('runner_position_usage', 'rusher')
 
         for role, player in assigned.items():
             out[f'{role}_id'] = player['gsis_id']
             out[f'{role}_name'] = player['player_name']
             out[f'{role}_position'] = player['pos_abb']
             out[f'{role}_team'] = team_roster['team']
+            out[f'{role}_side'] = offense_team
         out['attribution'] = 'pregame_depth_chart_role_sample'
         out['sampled_from'] = src
         return out
@@ -411,7 +432,8 @@ class _Game:
         self.seed = seed
         self.pregame_snapshot = pregame_snapshot
         snapshot_tag = f"-{pregame_snapshot['schedule']['game_id']}-{pregame_snapshot['snapshot_sha256'][:12]}" if pregame_snapshot else ''
-        self.simulation_id = f'e2-{e1.MODEL_VERSION}{snapshot_tag}-seed{seed}'
+        usage_tag = f'-{PREGAME_USAGE_VERSION}' if pregame_snapshot else ''
+        self.simulation_id = f'e2-{e1.MODEL_VERSION}{usage_tag}{snapshot_tag}-seed{seed}'
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
@@ -719,11 +741,10 @@ class _Game:
                                          'time': snapshot['schedule']['gametime'],
                                          'timezone': snapshot['schedule']['gametime_timezone']}
                                         if snapshot else None),
+            'scheduled_kickoff_utc': snapshot['schedule']['scheduled_kickoff_utc'] if snapshot else None,
             'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
-            'roster_snapshot_id': ({'home': snapshot['rosters']['home']['snapshot_at'],
-                                    'away': snapshot['rosters']['away']['snapshot_at']}
-                                   if snapshot else None),
-            'model_version': e1.MODEL_VERSION,
+            'roster_snapshot_id': snapshot['roster_snapshot_id'] if snapshot else None,
+            'model_version': (f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION),
             'rules_version': 'nfl-2026-e2-successor',
             'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},
                                'B': {'team': snapshot['schedule']['away_team'], 'side': 'away'}}
