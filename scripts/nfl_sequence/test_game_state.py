@@ -1333,5 +1333,14 @@ class MatrixRowsForScoringAndTimeouts(unittest.TestCase):
         record = {'drives': [{'index': 27, 'plays': [play]}], 'blocker': None}
         self.assertEqual(rm._timeouts(record)[0], rm.FAIL)
 
+
+class TimeoutTeamCodeMapping(unittest.TestCase):
+    def test_play_extras_team_codes_match_the_play_by_play_codes(self):
+        import e2_reference as er
+        self.assertEqual(er.extras_team('WAS'), 'WSH')
+        self.assertEqual(er.extras_team('LA'), 'LAR')
+        self.assertEqual(er.extras_team('KC'), 'KC')
+
+
 if __name__ == '__main__':
     unittest.main()
