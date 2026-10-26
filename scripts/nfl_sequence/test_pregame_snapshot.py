@@ -164,6 +164,47 @@ class ScheduleAsOf(unittest.TestCase):
                 'source', 'ingested_at')
         self.assertEqual({k: got[k] for k in keys}, {k: block[k] for k in keys})
 
+    def test_opt_in_current_schedule_fallback_is_explicitly_exploratory_and_never_backdated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / 'schedule.db'
+            con = sqlite3.connect(db)
+            con.executescript('''
+                CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, game_type TEXT, week INTEGER,
+                    gameday TEXT, gametime TEXT, away_team TEXT, home_team TEXT, location TEXT,
+                    source TEXT, ingested_at TEXT);
+                CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id INTEGER, gsis_id TEXT,
+                    player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT);
+            ''')
+            con.execute('INSERT INTO nfl_schedule VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                        ('2026_06_ARI_LA', 2026, 'REG', 6, '2026-10-18', '16:05', 'ARI', 'LAR',
+                         'Home', 'nflverse', '2026-10-26 15:00:01'))
+            for team, offset in (('ARI', 0), ('LAR', 10)):
+                for index, position in enumerate(('QB', 'RB', 'WR')):
+                    con.execute('INSERT INTO nfl_depth_chart VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                                (2026, team, offset + index + 1, f'{team}-{index}', f'{team} player {index}',
+                                 position, 1, '2026-10-12T12:00:00Z', 'nflverse'))
+            con.commit()
+            con.close()
+
+            kwargs = {'db': str(db), 'game_id': '2026_06_ARI_LA',
+                      'as_of': '2026-10-18T18:40:02Z', 'kickoff_utc': '2026-10-18T23:05:00Z',
+                      'kickoff_source_url': 'https://example.test/week-6-schedule'}
+            with self.assertRaisesRegex(ValueError, 'historical schedule versions are unavailable'):
+                snapshot_module.build(**kwargs)
+            exploratory = snapshot_module.build(**kwargs, allow_unverified_current_schedule_exploratory=True)
+            schedule = exploratory['schedule']
+            self.assertEqual(schedule['availability_classification'], 'current_row_unverified_exploratory')
+            self.assertEqual(schedule['ingested_at'], '2026-10-26 15:00:01')
+            loaded = snapshot_module.load_frozen_snapshot(
+                str(self._write_snapshot(Path(tmp), exploratory)))
+            self.assertEqual(loaded['schedule']['ingested_at'], '2026-10-26 15:00:01')
+
+    @staticmethod
+    def _write_snapshot(root, value):
+        path = root / 'exploratory-snapshot.json'
+        path.write_text(json.dumps(value))
+        return path
+
 
 class FrozenSnapshotFile(unittest.TestCase):
     def test_loads_hash_pinned_snapshot_and_game_payload(self):
