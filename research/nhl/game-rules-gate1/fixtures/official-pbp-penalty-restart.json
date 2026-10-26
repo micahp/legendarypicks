@@ -1,0 +1,40 @@
+{
+  "fixture_kind": "official_gamecenter_observed_penalty_restart",
+  "source": {
+    "provider": "NHL GameCenter play-by-play",
+    "url": "https://api-web.nhle.com/v1/gamecenter/2021020001/play-by-play",
+    "game_id": "2021020001",
+    "game_date": "2021-10-12",
+    "manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+    "compressed_body_sha256": "a06cd9d2dedcbdae814381a3a50aac9d2e9d2e411a234ee1564a4b7ce1a4e06b",
+    "compressed_bytes": 10613,
+    "manifest_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/manifests/hardened-v1/pbp_verified_manifest.csv",
+    "compressed_body_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/raw/pbp/2021020001.json.gz"
+  },
+  "observed_transition": {
+    "penalty": {
+      "plays_index_zero_based": 180,
+      "event_id": 250,
+      "period": 2,
+      "time_in_period": "12:56",
+      "type_code": "MIN",
+      "description": "tripping",
+      "duration_minutes": 2,
+      "committed_by_player_id": 8478046,
+      "event_owner_team_id": 5
+    },
+    "next_play": {
+      "plays_index_zero_based": 181,
+      "event_id": 295,
+      "type": "faceoff",
+      "period": 2,
+      "time_in_period": "12:56",
+      "xCoord": -69,
+      "yCoord": 22,
+      "zoneCode": "O",
+      "winning_player_id": 8474564,
+      "losing_player_id": 8476927
+    }
+  },
+  "scope_note": "Observed source evidence of a minor penalty followed by a faceoff at the same game-clock value. It does not independently establish penalty service, expiration, manpower, or the legal faceoff spot because the source sample omits sufficient rule-state context."
+}
