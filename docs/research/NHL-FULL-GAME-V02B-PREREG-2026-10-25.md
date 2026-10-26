@@ -238,59 +238,6 @@ comparators, or adoption boundary.
 
 This amendment does not authorize production selection, a gate change, forecast writes, or a push.
 
-## Amendment 5 — Historical adapter and Monte Carlo budget
-
-Date: 2026-10-25. Committed after the smallest real-game runtime smoke and before any paired
-2021 comparison metric is calculated or reviewed.
-
-- **Historical inputs:** Construct each 2021 pregame snapshot from the independently verified
-  2019/2020 and strictly earlier-date 2021 GameCenter boxscore/PBP archive. Build all target
-  snapshots for a calendar date before adding any result from that date. Same-day games are always
-  excluded. Team rates use the Amendment 4 ten-game league-mean shrinkage; projected player-team
-  membership uses each NHL ID's latest prior appearance. Target-game players, goalie starter flags,
-  shifts, and statistics remain label-only and are read after prediction. The 2026/27 LP database
-  and B3 ledger are not historical 2021 features.
-- **Development population:** All 1,292 frozen eligible 2021 games remain the denominator. Every
-  candidate reports its prediction coverage against 1,292. Any missing input or simulation is a
-  recorded candidate failure; no candidate is called complete if its predictions are missing.
-  Paired metrics may be shown on the shared covered games only when clearly labeled incomplete,
-  alongside full-population coverage and failure reasons.
-- **Monte Carlo count:** Use 12 generated games per target for B0 alpha2, B1, and B2. The smoke
-  measured 0.2266 s/game for B0, 0.3411 s/game for B1, and 0.3366 s/game for B2 on the first
-  supported 2021 matchup, after 49.317 s of combined source/model preparation. For 1,292 targets,
-  the measured-rate projection is 14,020.3 s (3 h 53 min 40 s) of candidate simulation plus
-  approximately 50 s startup. Twelve is the largest integer draw count under the four-hour
-  candidate-simulation budget implied by that smoke. Execute one process at reduced priority;
-  abort before metrics if available RAM falls below 1.5 GiB or another resource condition invalidates
-  the budget. Record actual elapsed time and memory.
-- **Seed mapping:** Sort eligible target keys by `(independent manifest game_date, NHL game_id)` and
-  assign zero-based `game_index` before any candidate runs. For B0/B1/B2, draw `j` uses
-  `202610250001 + 100 * game_index + j`, with `j=0..11`. All three candidates use the same seed
-  mapping; this is paired-seed comparison, not a claim of full common-random-number coupling. Failed
-  targets retain their assigned index. The v0.1 league-bootstrap reference uses 10,000 draws from
-  seed `202610250002` and is reused unchanged across target games. The historical-rate reference
-  uses 10,000 draws per target from seed `202610250003 + 100 * game_index`.
-- **Metrics and intervals:** Compute goal CRPS (regulation+OT and official final score, per team),
-  final-score energy, winner Brier, and SOG CRPS. Report per-game paired differences against v0.1,
-  alpha2/B0, and the historical-rate reference as applicable. The B0 result is alpha2 itself and
-  is not listed as its own independent comparator. Use 2,000 paired game-bootstrap resamples with
-  seed `202610250004`. For B0/B1/B2 and the historical-rate reference, calculate the empirical
-  energy pair term exactly from each game's sample; for v0.1 use 200,000 fixed-seed pair draws
-  (`202610250005`). Report split-half Monte Carlo sensitivity separately by comparing metrics from
-  the first and second six candidate draws (and corresponding 5,000-draw halves for references).
-- **Count calibration:** Compare observed and predicted pooled means, variances, and 10th/50th/90th
-  percentiles for regulation+OT goals, official final score, SOG, shot attempts, score margin,
-  penalties, OT, and shootouts. Include stratum coverage and every candidate failure. Runtime
-  distinguishes source preparation/model fitting from each candidate's generation time and total
-  execution wall time.
-- **Smoke boundary:** The recorded smoke used target `2021020001` (TBL home, PIT away), a frozen
-  pregame adapter built from 1,921 eligible prior games. It recorded generated event counts and
-  runtimes only; target goals, SOG, winner, and scoring metrics were not inspected. Smoke timings
-  are feasibility evidence, not evaluation results.
-
-This amendment freezes evaluation mechanics only. It does not authorize candidate selection,
-production use, a gate change, forecast writes, or a push.
-
 ## Amendment 3 — Ingested team SOG inputs
 
 Date: 2026-10-25. This amendment freezes the prospective team-shot input before further
@@ -368,3 +315,56 @@ Date: 2026-10-25. Freeze the archive-only adapter before candidate scores are pr
   game-seed mapping will be frozen in a subsequent dated amendment after measuring only the runtime
   of a smallest real historical-game smoke run; no candidate metric may be viewed before that
   amendment.
+
+## Amendment 5 — Historical adapter and Monte Carlo budget
+
+Date: 2026-10-25. Committed after the smallest real-game runtime smoke and before any paired
+2021 comparison metric is calculated or reviewed.
+
+- **Historical inputs:** Construct each 2021 pregame snapshot from the independently verified
+  2019/2020 and strictly earlier-date 2021 GameCenter boxscore/PBP archive. Build all target
+  snapshots for a calendar date before adding any result from that date. Same-day games are always
+  excluded. Team rates use the Amendment 4 ten-game league-mean shrinkage; projected player-team
+  membership uses each NHL ID's latest prior appearance. Target-game players, goalie starter flags,
+  shifts, and statistics remain label-only and are read after prediction. The 2026/27 LP database
+  and B3 ledger are not historical 2021 features.
+- **Development population:** All 1,292 frozen eligible 2021 games remain the denominator. Every
+  candidate reports its prediction coverage against 1,292. Any missing input or simulation is a
+  recorded candidate failure; no candidate is called complete if its predictions are missing.
+  Paired metrics may be shown on the shared covered games only when clearly labeled incomplete,
+  alongside full-population coverage and failure reasons.
+- **Monte Carlo count:** Use 12 generated games per target for B0 alpha2, B1, and B2. The smoke
+  measured 0.2266 s/game for B0, 0.3411 s/game for B1, and 0.3366 s/game for B2 on the first
+  supported 2021 matchup, after 49.317 s of combined source/model preparation. For 1,292 targets,
+  the measured-rate projection is 14,020.3 s (3 h 53 min 40 s) of candidate simulation plus
+  approximately 50 s startup. Twelve is the largest integer draw count under the four-hour
+  candidate-simulation budget implied by that smoke. Execute one process at reduced priority;
+  abort before metrics if available RAM falls below 1.5 GiB or another resource condition invalidates
+  the budget. Record actual elapsed time and memory.
+- **Seed mapping:** Sort eligible target keys by `(independent manifest game_date, NHL game_id)` and
+  assign zero-based `game_index` before any candidate runs. For B0/B1/B2, draw `j` uses
+  `202610250001 + 100 * game_index + j`, with `j=0..11`. All three candidates use the same seed
+  mapping; this is paired-seed comparison, not a claim of full common-random-number coupling. Failed
+  targets retain their assigned index. The v0.1 league-bootstrap reference uses 10,000 draws from
+  seed `202610250002` and is reused unchanged across target games. The historical-rate reference
+  uses 10,000 draws per target from seed `202610250003 + 100 * game_index`.
+- **Metrics and intervals:** Compute goal CRPS (regulation+OT and official final score, per team),
+  final-score energy, winner Brier, and SOG CRPS. Report per-game paired differences against v0.1,
+  alpha2/B0, and the historical-rate reference as applicable. The B0 result is alpha2 itself and
+  is not listed as its own independent comparator. Use 2,000 paired game-bootstrap resamples with
+  seed `202610250004`. For B0/B1/B2 and the historical-rate reference, calculate the empirical
+  energy pair term exactly from each game's sample; for v0.1 use 200,000 fixed-seed pair draws
+  (`202610250005`). Report split-half Monte Carlo sensitivity separately by comparing metrics from
+  the first and second six candidate draws (and corresponding 5,000-draw halves for references).
+- **Count calibration:** Compare observed and predicted pooled means, variances, and 10th/50th/90th
+  percentiles for regulation+OT goals, official final score, SOG, shot attempts, score margin,
+  penalties, OT, and shootouts. Include stratum coverage and every candidate failure. Runtime
+  distinguishes source preparation/model fitting from each candidate's generation time and total
+  execution wall time.
+- **Smoke boundary:** The recorded smoke used target `2021020001` (TBL home, PIT away), a frozen
+  pregame adapter built from 1,921 eligible prior games. It recorded generated event counts and
+  runtimes only; target goals, SOG, winner, and scoring metrics were not inspected. Smoke timings
+  are feasibility evidence, not evaluation results.
+
+This amendment freezes evaluation mechanics only. It does not authorize candidate selection,
+production use, a gate change, forecast writes, or a push.
