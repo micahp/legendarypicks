@@ -24,6 +24,16 @@ def _no_flags():
     return {flag: False for flag in FLAGS}
 
 
+class UnmodelledOutcome(ValueError):
+    """A sampled outcome that lands off the field, so no spot can be given without guessing (a safety, a touchback or a
+    touchdown is not in the observed record). The drive loop turns it into a named block. It is a ValueError, so a caller
+    that does not catch it still fails loudly."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason = reason
+
+
 def apply_play(st, event, yards, spot=None, kick_outcome=None):
     """Apply one sampled play. Returns (after, terminal, flags).
 
@@ -110,7 +120,7 @@ def apply_blocked_kick(st, event, outcome):
             raise ValueError('receiving-team recovery needs a kick-relative return endpoint')
         endpoint = 100 - st['yl'] + endpoint_delta
         if not 1 <= endpoint <= 99:
-            raise ValueError('receiving-team return endpoint projects outside the field of play')
+            raise UnmodelledOutcome('blocked_kick_receiving_return_outside_field')
         flags['turnover'] = True
         return {'offense': st['defense'], 'defense': st['offense'], 'down': 1,
                 'togo': min(10, endpoint), 'yl': endpoint}, 'turnover', flags
@@ -121,7 +131,7 @@ def apply_blocked_kick(st, event, outcome):
             raise ValueError('kicking-team recovery needs kick-relative recovery and return spots')
         recovery_spot = st['yl'] - recovery_delta
         if not 1 <= recovery_spot <= 99:
-            raise ValueError('kicking-team recovery projects outside the field of play')
+            raise UnmodelledOutcome('blocked_kick_kicking_recovery_outside_field')
         crossed_line = recovery_delta > 0
         if crossed_line:
             touched_beyond_line = outcome.get('receiving_team_touched_beyond_line')
@@ -139,7 +149,7 @@ def apply_blocked_kick(st, event, outcome):
 
         endpoint = st['yl'] - endpoint_delta
         if not 0 <= endpoint <= 100:
-            raise ValueError('kicking-team return endpoint projects outside the field')
+            raise UnmodelledOutcome('blocked_kick_kicking_return_outside_field')
         gained = endpoint_delta
         if endpoint == 0:
             flags['touchdown'] = True
@@ -168,7 +178,7 @@ def apply_blocked_kick(st, event, outcome):
             raise ValueError('described dead-ball spot needs receiving possession and a kick-relative spot')
         endpoint = 100 - st['yl'] + dead_delta
         if not 1 <= endpoint <= 99:
-            raise ValueError('described dead-ball spot projects outside the field of play')
+            raise UnmodelledOutcome('blocked_kick_dead_ball_outside_field')
         flags['turnover'] = True
         return {'offense': st['defense'], 'defense': st['offense'], 'down': 1,
                 'togo': min(10, endpoint), 'yl': endpoint}, 'turnover', flags
