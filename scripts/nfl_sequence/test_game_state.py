@@ -1309,5 +1309,29 @@ class FirstDriveBlock(unittest.TestCase):
         self.assertEqual(record['blocked_attempt']['blocker'], 'blocked_kick_outcome_unresolved:field_goal:unclassified')
         self.assertEqual(record['blocked_attempt']['plays_before_block'], [])
         self.assertEqual(next(r['status'] for r in rm.check(record) if r['case'].startswith('Continuity')), rm.BLOCKED)
+
+class MatrixRowsForScoringAndTimeouts(unittest.TestCase):
+    def test_a_defensive_touchdown_keeps_the_scored_upon_offence_on_the_field(self):
+        drives = [{'index': 1, 'offense_team': 'A', 'touchdown_scored_by': 'B', 'terminal': 'touchdown'},
+                  {'index': 2, 'offense_team': 'A', 'terminal': 'punt'}]
+        status, _ = rm._continuity({'drives': drives, 'kickoffs': [{'receiving_team': 'A'}], 'boundaries': []})
+        self.assertEqual(status, rm.PASS)
+
+    def test_an_offensive_touchdown_still_alternates_possession(self):
+        drives = [{'index': 1, 'offense_team': 'A', 'touchdown_scored_by': 'A', 'terminal': 'touchdown'},
+                  {'index': 2, 'offense_team': 'A', 'terminal': 'punt'}]
+        status, _ = rm._continuity({'drives': drives, 'kickoffs': [{'receiving_team': 'A'}], 'boundaries': []})
+        self.assertEqual(status, rm.FAIL)
+
+    def test_an_unchargeable_timeout_on_a_blocked_game_is_blocked_not_failed(self):
+        play = {'sequence': 143, 'participants': {'timeout': True, 'timeout_applied': False, 'timeout_charged_to': 'B'}}
+        record = {'drives': [{'index': 27, 'plays': [play]}], 'blocker': 'timeout_team_unresolved'}
+        self.assertEqual(rm._timeouts(record)[0], rm.BLOCKED)
+
+    def test_an_unchargeable_timeout_on_a_game_that_did_not_block_still_fails(self):
+        play = {'sequence': 143, 'participants': {'timeout': True, 'timeout_applied': False, 'timeout_charged_to': 'B'}}
+        record = {'drives': [{'index': 27, 'plays': [play]}], 'blocker': None}
+        self.assertEqual(rm._timeouts(record)[0], rm.FAIL)
+
 if __name__ == '__main__':
     unittest.main()
