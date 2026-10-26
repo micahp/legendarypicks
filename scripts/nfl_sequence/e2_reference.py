@@ -150,6 +150,15 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
             'source_hashes': manifest['sources'], 'source': manifest['source_dataset'], 'window': manifest['window']}
 
 
+# The play extras file spells two clubs as nflverse does (LA, WAS); the play-by-play table spells them LAR and WSH. A timeout
+# caller must match the play's own team codes, so the extras are mapped to the table's codes.
+EXTRAS_TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}
+
+
+def extras_team(code):
+    return EXTRAS_TEAM_CODES.get(code, code)
+
+
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     """Observed play facts keyed by (game_id, play_id), for the window.
 
@@ -168,7 +177,7 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     flags = {}
     with open(extras, newline='') as f:
         for r in csv.DictReader(f):
-            flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), r['timeout_team'],
+            flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), extras_team(r['timeout_team']),
                                                                 int(r['out_of_bounds']))
     out = {}
     for g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type in rows:
