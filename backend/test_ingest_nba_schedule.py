@@ -130,3 +130,73 @@ def test_walk_reads_past_gaps_inside_the_regular_season(monkeypatch):
     games, skipped, _ = sched.walk(2027, ("002",), fetch_game=pages.get, log=lambda *a, **k: None)
     assert [g["game_id"][-2:] for g in games] == ["01", "02", "11", "12"]
     assert sum(1 for s in skipped if s["skipped"] == "unpublished") == 8
+
+
+def _seed(path, games):
+    rows = [sched.parse_game(_game(gid, code, status=status, home_score=home, away_score=away), gid, 2027)
+            for gid, code, status, home, away in games]
+    for row in rows:
+        row.setdefault("espn", None)
+    connection = sqlite3.connect(path)
+    sched.publish(connection, rows, apply=True)
+    connection.close()
+
+
+def test_open_refresh_reads_only_games_that_can_still_move(tmp_path):
+    db = tmp_path / "picks.dev.db"
+    _seed(db, [
+        ("0022600001", "20261025/PHIDET", 1, None, None),   # open, inside the window: read
+        ("0022600002", "20261024/MINTOR", 3, 94, 117),      # final: never read again
+        ("0022600003", "20261001/SACMEM", 1, None, None),   # open but a week older than the window
+        ("0022600004", "20261029/BOSNYK", 1, None, None),   # open, three days ahead: read
+    ])
+    requested = []
+
+    def fetch(game_id):
+        requested.append(game_id)
+        if game_id == "0022600001":
+            return _game(game_id, "20261025/PHIDET", status=3, home_score=93, away_score=106)
+        return _game(game_id, "20261029/BOSNYK", status=1)
+
+    report = sched.refresh_open(str(db), apply=True, fetch_game=fetch, today="2026-10-26")
+    assert requested == ["0022600001", "0022600004"]
+    assert report["final_now"] == 1 and report["still_open"] == 1
+    assert report["stale_unfetched"] == 1 and report["failures"]
+    connection = sqlite3.connect(db)
+    assert connection.execute("SELECT status, away_score, home_score FROM nba_schedule "
+                              "WHERE game_id='0022600001'").fetchone() == (3, 106, 93)
+    connection.close()
+
+
+def test_open_refresh_stops_after_three_refusals(tmp_path):
+    db = tmp_path / "picks.dev.db"
+    _seed(db, [(f"00226000{n:02d}", f"20261025/PHIDET", 1, None, None) for n in range(1, 6)])
+    calls = []
+
+    def refused(game_id):
+        calls.append(game_id)
+        raise OSError("403 Forbidden")
+
+    with pytest.raises(sched.NBAScheduleError):
+        sched.refresh_open(str(db), apply=True, fetch_game=refused, today="2026-10-26")
+    assert len(calls) == 3
+
+
+def test_open_refresh_dry_run_writes_nothing(tmp_path):
+    db = tmp_path / "picks.dev.db"
+    _seed(db, [("0022600001", "20261025/PHIDET", 1, None, None)])
+    report = sched.refresh_open(str(db), apply=False,
+                                fetch_game=lambda gid: _game(gid, "20261025/PHIDET", status=3,
+                                                             home_score=93, away_score=106),
+                                today="2026-10-26")
+    assert report["status"] == "ready"
+    connection = sqlite3.connect(db)
+    assert connection.execute("SELECT status FROM nba_schedule").fetchone() == (1,)
+    connection.close()
+
+
+def test_open_refresh_refuses_an_empty_schedule(tmp_path):
+    db = tmp_path / "picks.dev.db"
+    sqlite3.connect(db).executescript(sched.SCHEMA)
+    with pytest.raises(sched.NBAScheduleError):
+        sched.refresh_open(str(db), apply=True, fetch_game=lambda gid: None, today="2026-10-26")
