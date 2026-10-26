@@ -131,3 +131,9 @@ def test_unknown_team_code_is_warned_not_raised(monkeypatch, tmp_path):
         warnings.simplefilter("always")
         assert stakes.for_matchup("nfl", "ZZZ", "A", 2026) == []
     assert any("nfl lookup failed" in str(w.message) for w in seen)
+
+
+def test_nfl_is_a_supported_league():
+    # A cached NFL story without stakes is regenerated once when certain stakes appear. Without this entry the
+    # cached story is final and no NFL story ever regenerates.
+    assert "nfl" in stakes.SUPPORTED
