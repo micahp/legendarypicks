@@ -124,6 +124,31 @@ def _nfl_standings_for_game(game_id):
     return table or {"season": season, "teams": []}
 
 
+def _nba_standings_for_season(season):
+    """The NBA standings for a season, read from our schedule (no ESPN request). Raises NBAStandingsError when the
+    table cannot be trusted, which the caller treats as no records."""
+    import nba_standings_store as _nbas
+    with closing(_db()) as con:
+        table = _nbas.read_standings(con, season=season)
+    return table or {"season": season, "teams": []}
+
+
+def _nba_facts_as_of(con):
+    """The newest regular-season NBA final our schedule holds, as the time it was ingested; None while there is none.
+
+    The NBA standings, and the stakes built on them, change only when a final lands. A story records the value it was
+    written from, so it is current while the value is unchanged. A final that lands later changes the value."""
+    from nba_standings_store import NOT_KNOCKOUT_SQL
+    row = con.execute("SELECT MAX(ingested_at) FROM nba_schedule WHERE season_type='REG' AND status=3 "
+                      f"AND {NOT_KNOCKOUT_SQL}").fetchone()
+    return row[0] if row else None
+
+
+def _nba_facts_as_of_now():
+    with closing(_db()) as con:
+        return _nba_facts_as_of(con)
+
+
 def _game_start_instant(lg: str, game_id: str):
     """The game's own UTC instant, for callers that did not pass start_time.
 
@@ -320,9 +345,13 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         if "form_suppressed" not in cols:
             con.execute("ALTER TABLE game_story ADD COLUMN form_suppressed INTEGER DEFAULT 0")
             con.commit()
+        # facts_as_of: for an NBA story, the newest regular-season final it was written from (see _nba_facts_as_of).
+        if "facts_as_of" not in cols:
+            con.execute("ALTER TABLE game_story ADD COLUMN facts_as_of TEXT")
+            con.commit()
         if not refresh:
             cached = con.execute(
-                "SELECT story, has_form, has_stakes, form_suppressed, generated_at FROM game_story "
+                "SELECT story, has_form, has_stakes, form_suppressed, generated_at, facts_as_of FROM game_story "
                 "WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
             stale_preview = cached and (
                 _story_is_stale_preview(cached["generated_at"], state, start_time)
@@ -336,6 +365,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                     return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
                 if lg == "nfl" and _nfl_stakes_now(con, game_id) == []:
                     # Nothing new since the story was written: no stakes are certain, the form is already in it.
+                    return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+                if lg == "nba" and cached["facts_as_of"] == _nba_facts_as_of(con):
+                    # No regular-season final has landed since this story was written, so the standings it was
+                    # written from still stand. Nothing new to say, and no ESPN request.
                     return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     try:
@@ -376,9 +409,13 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                      if finished_now and not preseason else {})
     # Records, streak, last-10 and rank are only facts about THIS game if the standings are
     # from this game's season. Before the first game they are last season's.
+    facts_as_of = None  # NBA only: read before the standings, so a final that lands during generation is not missed
     try:
         if lg == "nfl":
             standings = _nfl_standings_for_game(game_id)
+        elif lg == "nba":
+            facts_as_of = _nba_facts_as_of_now()
+            standings = _nba_standings_for_season(game_season)
         else:
             standings = espn.team_strength_standings(lg)
         standings_season = standings.get("season")
@@ -672,6 +709,12 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                     or (bool(form_lines) and cached["form_suppressed"]))
         new_stakes = bool(stakes_lines) and not cached["has_stakes"]
         if not new_form and not new_stakes and not stale_preview:
+            if lg == "nba":
+                # Record the facts this check was made from, so the next request is answered from the cache.
+                with closing(_db()) as wcon:
+                    wcon.execute("UPDATE game_story SET facts_as_of=? WHERE league=? AND game_id=?",
+                                 (facts_as_of, lg, game_id))
+                    wcon.commit()
             return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     # Nothing to write from. With no record, form or stakes (a preseason opener before any
@@ -712,10 +755,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     story = _deepseek_chat(system, grounding)
     if story:
         with closing(_db()) as con:
-            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes, form_suppressed) "
-                        "VALUES (?,?,?,datetime('now'),?,?,?)",
+            con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes, "
+                        "form_suppressed, facts_as_of) VALUES (?,?,?,datetime('now'),?,?,?,?)",
                         (lg, game_id, story, 1 if (form_lines or context_lines) else 0,
-                         1 if stakes_lines else 0, 1 if logs_stale else 0))
+                         1 if stakes_lines else 0, 1 if logs_stale else 0, facts_as_of))
             con.commit()
     elif cached:
         # generation failed this time — keep the previous story rather than blanking it
