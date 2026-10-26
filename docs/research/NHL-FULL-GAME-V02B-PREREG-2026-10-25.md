@@ -286,3 +286,32 @@ The local NHL tables use the NHL ending-year season key. The measured `team_game
 `2026`. For an October 2026 target, the eligible DB season keys are therefore `2026` and `2027`.
 The implementation derives this key from the NHL season boundary and records the selected keys.
 This correction is committed before loading or evaluating the amended candidate input.
+
+## Amendment 4 — Historical 2021 input adapter
+
+Date: 2026-10-25. Freeze the archive-only adapter before candidate scores are produced.
+
+- Build target inputs from verified 2019/2020 records and eligible 2021 records with a game date
+  strictly earlier than the target. Group target games by date and prepare every same-day matchup
+  before adding any result from that date. Source identities are NHL-native team IDs, game IDs, and
+  player IDs from the verified GameCenter bodies. Do not join the 2021 archive to Legendary Picks
+  team/player rows or use any 2026/27 feature ledger.
+- For each target, roster candidates are only players with a verified prior appearance for that
+  NHL team ID; a player's current team is the team in their latest prior appearance. Player rates,
+  goalie evidence, and usage are aggregated from prior game box scores only. These are projected
+  historical rosters; target-game participants, starter flags, shifts, and statistics remain labels.
+- Team goals-for, goals-against, SOG-for, and SOG-against rates use all prior eligible games in the
+  archive. Shrink each rate toward its same-side/league prior using 10 pseudo-games:
+  `(observed_total + 10 * league_rate) / (team_games + 10)`. Pregame goal means are the arithmetic
+  mean of the home team's shrunk home-goals-for rate and away team's shrunk away-goals-against rate,
+  and vice versa for the away team. Matchup SOG means use the arithmetic mean of each attacker's
+  all-venue SOG-for rate and its opponent's all-venue SOG-against rate. This is a fixed historical
+  rate adapter, not B3 and not an estimate of causal tactics.
+- B0 alpha2-compatible replay, B1, and B2 receive byte-identical pregame inputs for each target.
+  Their only differences are the frozen implementation blocks in this protocol. v0.1 uses its
+  frozen league-level 2019/2020 distribution. All 1,292 eligible 2021 games remain the denominator;
+  missing roster inputs or generation failures are reported as failures, not silently removed.
+- This amendment does not select a candidate or change the adoption boundary. Monte Carlo count and
+  game-seed mapping will be frozen in a subsequent dated amendment after measuring only the runtime
+  of a smallest real historical-game smoke run; no candidate metric may be viewed before that
+  amendment.
