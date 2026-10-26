@@ -44,12 +44,16 @@ def losses(policy, rows):
     return out
 
 
-def paired_interval(a, b):
-    """Mean of a - b with a 95% interval from the paired per-try differences."""
+def paired_interval(a, b, clusters):
+    """Mean of a - b over tries, with a 95% interval clustered by game. Tries from one game share its situation history, so
+    they are not independent. The interval is the cluster-robust standard error of the mean of the differences."""
     d = [x - y for x, y in zip(a, b)]
     mean = statistics.mean(d)
-    half = 1.96 * statistics.stdev(d) / math.sqrt(len(d))
-    return mean, mean - half, mean + half
+    by_game = Counter()
+    for game, x in zip(clusters, d):
+        by_game[game] += x - mean
+    se = math.sqrt(sum(v * v for v in by_game.values())) / len(d)
+    return mean, mean - 1.96 * se, mean + 1.96 * se
 
 
 def wilson(k, n, z=1.96):
@@ -97,6 +101,8 @@ def fold_report(rows):
               f'({len(test)} tries, {two} two-point, {100 * two / len(test):.2f}%)')
         policies = {name: tp.TryPolicy(train, structure=structure, k=k) for name, structure, k in MODELS}
         base = losses(policies[MODELS[0][0]], test)
+        games = [r['game_id'] for r in test]
+        print(f'  test tries {len(test)} in {len(set(games))} games; 95% intervals clustered by game')
         print(f'  {"model":34s} {"Brier":>8s} {"dBrier vs uncond [95% CI]":>30s} {"log loss":>9s} '
               f'{"dLL vs uncond [95% CI]":>30s} {"mean p":>7s} {"n open":>6s} {"Brier open":>10s}')
         open_idx = [i for i, r in enumerate(test) if r['opening_drive'] == 1]
@@ -106,8 +112,8 @@ def fold_report(rows):
             logloss = statistics.mean(x[2] for x in cur)
             mean_p = statistics.mean(x[0] for x in cur)
             brier_open = statistics.mean(cur[i][1] for i in open_idx) if open_idx else float('nan')
-            db, dbl, dbh = paired_interval([x[1] for x in cur], [x[1] for x in base])
-            dl, dll, dlh = paired_interval([x[2] for x in cur], [x[2] for x in base])
+            db, dbl, dbh = paired_interval([x[1] for x in cur], [x[1] for x in base], games)
+            dl, dll, dlh = paired_interval([x[2] for x in cur], [x[2] for x in base], games)
             print(f'  {name:34s} {brier:8.5f} {db:+9.5f} [{dbl:+.5f},{dbh:+.5f}] {logloss:9.5f} '
                   f'{dl:+9.5f} [{dll:+.5f},{dlh:+.5f}] {mean_p:7.4f} {len(open_idx):6d} {brier_open:10.5f}')
         sparse_report(train, test, policies)
