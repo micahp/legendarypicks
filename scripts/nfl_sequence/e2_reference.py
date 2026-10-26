@@ -217,13 +217,16 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
-def load(db=e1.DEFAULT_DB, regulation_only=True):
+def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
     rows of 2022-2025 are excluded and counted on the reference as `pool_scope`. False reproduces the accepted E2 artifacts,
     which sampled overtime rows. The published kick table is not filtered (its rates include the overtime kicks), and this is
     disclosed on the reference too.
+
+    `try_policy` (opt-in, None by default): a try_policy.TryPolicy that replaces the published two-point share after each
+    touchdown. None keeps the unconditional policy and every existing record unchanged.
     """
     rows = e1.load(db)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
@@ -243,7 +246,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True):
                                                              blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
-                             load_missed_field_goal_pool(db), blocked)
+                             load_missed_field_goal_pool(db), blocked, try_policy=try_policy)
     reference.position_usage = load_position_usage(db)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
