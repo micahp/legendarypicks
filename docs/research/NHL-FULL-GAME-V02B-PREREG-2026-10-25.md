@@ -43,6 +43,27 @@ v0.2b paths. Historical databases are read-only; raw archives stay outside Git.
 - Do not use the current 2026/27 roster database or 2026 B3 forecast ledger for 2021. The local
   NHL `player_game_logs` and `roster_snapshots` tables do not cover 2021. The historical adapter
   must be constructed from the independently hashed local GameCenter PBP/box-score archive.
+- Read-only inventory of every relevant NHL source table in both Legendary Picks databases was
+  completed before implementation. On `picks.dev.db`, the stored NHL rows include: 48,017 2026
+  regular-season player-game logs over 1,312 games (2025-10-07 through 2026-04-16); 3,126 2026
+  postseason rows over 82 games; 3,584 2027 player-game rows over 94 games (2026-09-29 through
+  2026-10-13); 2,624 2026 team-result rows over 1,312 games and 188 2027 team-result rows over 94
+  games; matching team-game-stat row counts; and NHL `player_stats` season aggregates for seasons
+  2026 and 2027 (1,038 and 790 player IDs). `player_game_logs_sportsdataverse` has no NHL rows.
+  `game_summaries` has 171 NHL rows fetched 2026-10-04 through 2026-10-25; these are not a 2021
+  historical corpus. NHL roster snapshot headers are season 2027 only. In `picks.db`, the same
+  2025/26 coverage is present; the current-season snapshot contains 96 games / 3,660 player rows,
+  192 team-result/stat rows, and 790 player aggregate IDs. These counts describe the two queried
+  local database snapshots, not all NHL data available elsewhere. Queries used read-only SQLite
+  connections; no database was changed.
+- For prospective 2026/27 snapshots, use the existing ingested NHL GameCenter player/team rows,
+  roster membership and forecast ledger only when their game date, ingest/publication timestamp,
+  and feature cutoff all precede the simulated puck drop. The 2026/27 rows stop at 2026-10-13 in the
+  measured DB snapshots; they do not include later target results. The 2026 season aggregates and
+  logs are prior-season evidence for these games.
+- These ingested DB records are not substituted for the 2019/2020 training pool or 2021 development
+  labels: they occur later in time and using them there would leak the future. The archive-backed
+  2021 historical adapter remains required for the preregistered paired development comparison.
 - Historical candidate roster eligibility is inferred only from prior team appearances. Any
   player absent from prior history is an explicit coverage limitation; no target-box-score roster
   repair is allowed.
