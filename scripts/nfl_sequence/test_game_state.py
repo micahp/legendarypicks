@@ -191,6 +191,17 @@ class PregamePlayerUsage(unittest.TestCase):
         self.assertEqual(stats['team']['A']['pass_tgt'], 1)
 
 
+class GameStatsReconciliation(unittest.TestCase):
+    def test_a_team_whose_only_touchdown_was_a_blocked_kick_return_reconciles_to_zero_offensive_touchdowns(self):
+        # The receiving team's blocked-punt return is a touchdown but not an offensive one: its team line has no
+        # offensive_touchdowns key, and the reconciliation must read that as zero, not as the total touchdown count.
+        game_stats._verify_pregame_reconciliation({'A': {'touchdowns': 1}}, [])
+
+    def test_an_offensive_touchdown_with_no_player_line_is_still_refused(self):
+        with self.assertRaisesRegex(AssertionError, 'offensive_td'):
+            game_stats._verify_pregame_reconciliation({'A': {'offensive_touchdowns': 1}}, [])
+
+
 class BlockedKickIntegration(unittest.TestCase):
     def observed_block(self, kick_type):
         return {
