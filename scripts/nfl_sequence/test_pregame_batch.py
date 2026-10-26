@@ -32,6 +32,16 @@ class BatchAggregation(unittest.TestCase):
         self.assertEqual(len(players['sea-rb1']['roster_roles']), 2)
         self.assertEqual(len(players), 2)
 
+    def test_player_template_labels_legacy_depth_chart_roles_without_inventing_a_group(self):
+        snapshot = {'rosters': {
+            'home': {'team': 'SF', 'players': [{'gsis_id': 'sf-qb', 'player_name': 'QB',
+                                                  'pos_abb': 'QB', 'pos_rank': 1}]},
+            'away': {'team': 'WSH', 'players': []},
+        }}
+        players = batch._player_template(snapshot)
+        self.assertEqual(players['sf-qb']['roster_roles'][0]['group'], 'unclassified')
+        self.assertTrue(players['sf-qb']['starter'])
+
     def test_all_seeds_are_retained_and_ties_are_in_regulation_distribution(self):
         rows = [
             {'seed': 1, 'status': 'complete_regulation', 'valid_full_game': True, 'complete_game': True,
