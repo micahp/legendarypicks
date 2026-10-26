@@ -39,6 +39,11 @@ READ_COLUMNS = (
 )
 
 
+# Yards between the receivers' first snap and the Rule 11-4-2 spot. Observed starts sat 0 to 2 yards from it in every
+# untouched blocked field goal in 2022-2025 with a receiving-team snap, so a start further off is refused, not used.
+RULE_11_4_2_TOLERANCE = 2
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -119,6 +124,31 @@ def _next_snap(rows, index, qtr):
                 return None
             return row
     return None
+
+
+def _rule_11_4_2_spot(kick_yardline_100):
+    """Where the receivers take over after an untouched field goal that crosses the line (Rule 11-4-2, Article 2).
+    The spot of the kick is the holder, seven yards behind the line; a kick inside the receivers' 20 gives them their 20."""
+    holder = kick_yardline_100 + 7
+    return 80 if holder < 20 else 100 - holder
+
+
+def _quarter_clock(row):
+    raw = row['game_seconds_remaining']
+    return None if raw is None or row['qtr'] is None else int(raw) - (4 - int(row['qtr'])) * 900
+
+
+def _quarter_ends_on_play(rows, index, qtr):
+    """The quarter ends on this play: no later play in it is a scrimmage or kick, and its last play shows zero clock.
+    A kneel only runs the clock out, so it does not stop the quarter from ending on the blocked kick."""
+    later = []
+    for row in rows[index + 1:]:
+        if row['qtr'] != qtr:
+            break
+        later.append(row)
+    if any(row['play_type'] in ('run', 'pass', 'punt', 'field_goal', 'kickoff') for row in later):
+        return False
+    return not later or _quarter_clock(later[-1]) == 0
 
 
 def build_record(row, rows, index, source_file, source_hash):
@@ -222,10 +252,22 @@ def build_record(row, rows, index, source_file, source_hash):
           and next_yardline is not None
           and _team_yardline(dead_ball_progress, 'receiving_team') == next_yardline):
         status = 'classified_dead_ball_spot'
-    elif nxt is None and qtr in (2, 4) and clock is not None:
-        status = 'period_expired_unresolved_spot' if endpoint is None else 'period_expired'
+    elif qtr in (2, 4) and clock is not None and _quarter_ends_on_play(rows, index, qtr):
+        status = 'period_expired'  # the kick ends the half or the game, so no receiving spot is needed
+    elif (kick_type == 'field_goal' and recovery_role is None and dead_ball_progress is None and nxt is not None
+          and nxt is rows[index + 1] and nxt['qtr'] == row['qtr'] and nxt['play_type'] in ('run', 'pass')
+          and possession_role == 'receiving_team' and next_yardline is not None and next_down is not None
+          and next_togo is not None and row['yardline_100'] is not None
+          and abs(next_yardline - _rule_11_4_2_spot(int(round(row['yardline_100'])))) <= RULE_11_4_2_TOLERANCE):
+        status = 'classified_next_snap'  # the receivers' first snap, as observed, is where Rule 11-4-2 puts them
     else:
         status = 'unclassified'
+        if (kick_type == 'field_goal' and recovery_role is None and nxt is not None and nxt is rows[index + 1]
+                and possession_role == 'receiving_team' and next_yardline is not None and row['yardline_100'] is not None
+                and abs(next_yardline - _rule_11_4_2_spot(int(round(row['yardline_100'])))) > RULE_11_4_2_TOLERANCE):
+            note.append('next_snap_spot_disagrees_with_rule_11_4_2')
+    if status == 'period_expired':
+        runoff = clock  # the rest of the quarter runs off on the kick
 
     if status == 'classified_recovery' and recovery_role == 'kicking_team' and crossed_line is None:
         status = 'unclassified'

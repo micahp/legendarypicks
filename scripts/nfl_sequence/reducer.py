@@ -24,6 +24,10 @@ def _no_flags():
     return {flag: False for flag in FLAGS}
 
 
+BLOCKED_KICK_STATUSES = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety', 'classified_next_snap',
+                         'period_expired')
+
+
 class UnmodelledOutcome(ValueError):
     """A sampled outcome that lands off the field, so no spot can be given without guessing (a safety, a touchback or a
     touchdown is not in the observed record). The drive loop turns it into a named block. It is a ValueError, so a caller
@@ -91,8 +95,7 @@ def apply_blocked_kick(st, event, outcome):
     """
     if event not in ('blocked_punt', 'blocked_field_goal'):
         raise ValueError(f'not a blocked-kick event: {event!r}')
-    if not isinstance(outcome, dict) or outcome.get('classification_status') not in (
-            'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'):
+    if not isinstance(outcome, dict) or outcome.get('classification_status') not in BLOCKED_KICK_STATUSES:
         raise ValueError('blocked kick needs a classified observed outcome')
     expected_type = 'punt' if event == 'blocked_punt' else 'field_goal'
     if outcome.get('kick_type') != expected_type:
@@ -101,6 +104,20 @@ def apply_blocked_kick(st, event, outcome):
     flags = _no_flags()
     flags['punt_attempt'] = event == 'blocked_punt'
     flags['field_goal_attempt'] = event == 'blocked_field_goal'
+    if outcome.get('classification_status') == 'period_expired':
+        # The kick uses the rest of the half or the game, so no possession carries over and no spot is needed.
+        return None, None, flags
+    if outcome.get('classification_status') == 'classified_next_snap':
+        # Rule 11-4-2: the receivers' first snap is the observed result of an untouched blocked field goal.
+        if outcome.get('possession_after_role') != 'receiving_team':
+            raise ValueError('next-snap blocked kick needs receiving-team possession')
+        yardline, down, togo = (outcome.get('next_snap_yardline_100'), outcome.get('next_snap_down'),
+                                outcome.get('next_snap_ydstogo'))
+        if not all(isinstance(v, int) for v in (yardline, down, togo)) or not 1 <= yardline <= 99 or not 1 <= down <= 4:
+            raise ValueError('next-snap blocked kick needs an observed start spot, down and distance')
+        flags['turnover'] = True
+        return {'offense': st['defense'], 'defense': st['offense'], 'down': down, 'togo': togo,
+                'yl': yardline}, 'turnover', flags
     if outcome.get('touchdown'):
         role = outcome.get('scoring_role')
         if role not in ('kicking_team', 'receiving_team'):

@@ -254,7 +254,7 @@ class BlockedKickIntegration(unittest.TestCase):
         self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
         gs.validate_game(record)
 
-    def test_blocked_kick_at_period_expiry_stays_guarded_until_its_transition_is_supported(self):
+    def test_blocked_kick_at_period_expiry_is_sampled_as_the_period_end(self):
         from types import SimpleNamespace
         import random
 
@@ -263,8 +263,8 @@ class BlockedKickIntegration(unittest.TestCase):
             'classification_status': 'period_expired', 'clock_runoff_seconds': 0,
         }]}})
         blocker, outcome = game._sample_blocked_kick('punt', random.Random(0))
-        self.assertEqual(blocker, 'blocked_kick_outcome_unresolved:punt:period_expired')
-        self.assertIsNone(outcome)
+        self.assertIsNone(blocker)
+        self.assertEqual(outcome['classification_status'], 'period_expired')
 
 
 class KickoffPool(unittest.TestCase):
