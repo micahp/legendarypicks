@@ -1,0 +1,74 @@
+{
+ "blocker_counts": {
+  "blocked_kick_kicking_recovery_outside_field": 1,
+  "blocked_kick_outcome_unresolved:field_goal:period_expired": 1,
+  "blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot": 2,
+  "blocked_kick_outcome_unresolved:field_goal:unclassified": 13,
+  "overtime_not_modelled": 13,
+  "safety_free_kick_not_modelled": 23,
+  "thin_kick_cell:field_goal:50+": 2
+ },
+ "failed_errors": [
+  {
+   "error": "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}",
+   "seed": 106
+  }
+ ],
+ "outcome_counts": {
+  "blocked_before_regulation_end": 42,
+  "failed": 1,
+  "regulation_end_not_valid": 0,
+  "tied_at_regulation_end": 13,
+  "valid": 244
+ },
+ "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+ "policy": "margin_period_opening K=1",
+ "reference_excluded_kickoffs": {
+  "kickoff without a clean receiving snap": 958
+ },
+ "reference_sha256": "0e4fb1b302f777aeb97a64a71a16ee06b8b8a205fc25c7cff03a6a318fb8ba5b",
+ "run_snapshot_sha256": "44a19b2d092585ea764accf592a0689682de94bbcd422ca0e4f2573399e5b28a",
+ "scope_out_counts": {
+  "blocked-kick transition unresolved": 17,
+  "overtime": 13,
+  "rare kick outcome": 2,
+  "safety free kick": 23
+ },
+ "seconds_reference_load": 11.0,
+ "seconds_total": 616.2,
+ "seeds": [
+  1,
+  300
+ ],
+ "source_files_sha256": {
+  "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+  "scripts/nfl_sequence/e1_drive.py": "356f80469d50e1381794254c72e69bf14dee462d05a395ef478eeb3df3366df8",
+  "scripts/nfl_sequence/e2_reference.py": "cc69d98186c0f4db5e27fff5f8d82bba796bc446524f99f357c0ffc1e10f4b9b",
+  "scripts/nfl_sequence/game_state.py": "c48492c4714ecc0a462b73083d3ae1eb99d26b40279823f94888d999eb540855",
+  "scripts/nfl_sequence/rules_matrix.py": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
+  "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
+  "scripts/nfl_sequence/try_policy.py": "3fb4faccd24b9761f470e99c4b2cf93ebeb115b5b83f2618f9e0deb2ac2d90fd"
+ },
+ "tied_at_regulation_end_seeds": [
+  59,
+  82,
+  103,
+  113,
+  117,
+  173,
+  181,
+  211,
+  218,
+  224,
+  225,
+  238,
+  292
+ ],
+ "try_policy": {
+  "fit_rows": 5368,
+  "k": 1,
+  "league_rate": 0.094821,
+  "source_sha256": "1ae11f0788508158cf822814157b5df09073fa6954f45e5829bacfa6cfd98864",
+  "structure": "margin_period_opening"
+ }
+}
