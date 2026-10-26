@@ -237,3 +237,44 @@ comparators, or adoption boundary.
   `nhl-game-state-v0.2b-b2` is the transition candidate. B3 goalie-pull policy is not part of B2.
 
 This amendment does not authorize production selection, a gate change, forecast writes, or a push.
+
+## Amendment 3 — Ingested team SOG inputs
+
+Date: 2026-10-25. This amendment freezes the prospective team-shot input before further
+candidate-performance evaluation. It does not change the 2021 evaluation protocol, select a
+candidate, or authorize an adoption/gate change.
+
+- The simulator's default read-only database is `backend/data/picks.dev.db`. Its `team_game_stats`
+  and `team_game_results` contain 1,312 completed 2025/26 games (2,624 paired team rows) and 94
+  completed 2026/27 games (188 paired team rows) as measured before the Oct. 25 cutoff. The 2025/26
+  team-stat coverage manifest is complete (1,312/1,312); 2026/27 coverage is 94/94 and marked
+  in-progress. The production DB snapshot has 96 current-season games; it is not pooled with the
+  development DB. Each run uses one explicitly pinned DB path.
+- `team_game_stats.shots` is populated from NHL GameCenter right-rail `sog` for 2026/27
+  (`nhle.com:gamecenter/right-rail+landing`). The legacy 2025/26 rows map ESPN `shotsTotal` to the
+  same `shots` column. The current NHL GameCenter population reconciles by native `game_id` and team
+  to ingested player `sog` in 186/188 team-game rows; two rows differ by one shot. The 2025/26 ESPN
+  and NHL-native player logs use different game-ID vocabularies. Do not join those rows by date/team;
+  no verified crosswalk is available.
+- For a prospective NHL season, eligible team-game rows must have a game date strictly before the
+  target date, completed status, a season equal to the target start-season or the immediately
+  previous start-season, and result/stat captures strictly before the frozen cutoff. Both team
+  result sides must be reciprocal on the same database `game_id`; the opponent's shot row is read
+  by that same ID and stable team abbreviation. Target-game and same-day results are ineligible.
+- Per-team attack rate is the arithmetic mean of its eligible team-game `shots`; suppression rate is
+  the arithmetic mean of opponents' `shots` in those same games. Each eligible game has equal
+  weight across the two included seasons. Matchup team SOG mean is the arithmetic mean of the
+  attacking team's attack rate and the opposing team's suppression rate. The existing player-based
+  SOG sum remains a separately reported diagnostic and continues to allocate generated shots among
+  eligible simulated players; it is not blended into the team total. Missing eligible paired data
+  for either team is a hard input-preparation error.
+- The prior/current-season DB rows are prospective inputs only. They must not enter the 2021
+  backtest. The historical adapter must derive prior team rates from the independently verified
+  GameCenter archive with strict forward-only cutoffs. The historical comparison stays not-run
+  until that adapter exists.
+- Team goals remain supplied by the cutoff-filtered B3 forecast model and player/goalie conversion
+  process in this block. DB team goal-result rates are available but remain diagnostic evidence for
+  a later, separately preregistered scoring-rate experiment; they are not blended into this team-SOG
+  input.
+
+This amendment does not authorize production selection, a gate change, forecast writes, or a push.
