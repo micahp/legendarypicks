@@ -211,7 +211,8 @@ def _verify_pregame_reconciliation(teams, players):
             'pass_att': team.get('pass_att', 0), 'pass_comp': team.get('pass_comp', 0),
             'pass_yds': team.get('pass_yds', 0), 'sacks_taken': team.get('sacks_taken', 0),
             'pass_int': team.get('interceptions', 0), 'fumbles_lost': team.get('fumbles_lost', 0),
-            'offensive_td': team.get('offensive_touchdowns', team.get('touchdowns', 0)),
+            # The team line has no offensive_touchdowns key when every touchdown was a blocked-kick return: that means zero.
+            'offensive_td': team.get('offensive_touchdowns', 0),
             'offensive_turnovers': team.get('turnovers', 0),
             'sack_yds': team.get('sack_yds', 0), 'pass_tgt': team.get('pass_tgt', 0),
             'pass_comp_receiving': team.get('pass_comp', 0),
