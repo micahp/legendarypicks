@@ -19,7 +19,7 @@ import team_codes
 # NFL is not listed on purpose: its stakes are rarely certain, so a listed league would leave
 # most NFL stories provisional and re-run their generation pipeline on every request (no LLM
 # call). NFL stories still get stakes lines whenever they are written.
-SUPPORTED = {"wc", "mlb"}
+SUPPORTED = {"wc", "mlb", "nfl"}
 
 # `site.web.api`, NOT `site.api`: the latter is walled from this box and 403s every time.
 # This pointed at the walled host and so `_mlb` raised on every call since it was written,
