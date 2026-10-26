@@ -373,7 +373,16 @@ Date: 2026-10-25. Committed after the smallest real-game runtime smoke and befor
 This amendment freezes evaluation mechanics only. It does not authorize candidate selection,
 production use, a gate change, forecast writes, or a push.
 
-## Amendment 6 — Candidate runtime budget
+### Amendment 5 correction — reference energy estimator and seed namespace
+
+Committed 2026-10-25 before any comparison metric. The first Amendment 5 draft called for an exact
+pairwise energy term on each 10,000-draw historical-rate reference. That requires quadratic work
+per target and conflicts with the measured runtime budget. The frozen replacement uses 20,000
+deterministic pair draws per target (and 20,000 per reference half); v0.1 retains its common 200,000
+pair-draw term. The separated seed ranges above replace the initial overlapping reference seeds.
+Candidate energy pair terms are calculated exactly over the complete candidate draw set.
+
+## Amendment 6 — Candidate runtime budget and balanced split halves
 
 Date: 2026-10-25. Committed before any score, probability, CRPS, energy, Brier, SOG, or count-
 calibration result from the partial evaluation was opened or reviewed.
@@ -385,26 +394,19 @@ calibration result from the partial evaluation was opened or reviewed.
   The pooled measured rate is 0.3247 seconds per generated candidate game. Extrapolated to three
   candidates × 12 draws × 1,292 targets, this is 15,103 seconds (4.195 hours), before startup and
   metric calculation.
-- Use **11 draws per target** for B0, B1, and B2 in the complete evaluation. At the same measured
-  rate, the projected candidate-generation time is 13,845 seconds (3.846 hours), within the frozen
-  four-hour budget. The estimate uses only runtime and completed-draw counts; no comparison metric
-  informed this change.
-- Keep the 1,292 eligible target population, target/game seed mapping, 10,000-draw v0.1 reference,
-  10,000-draw historical-rate reference, energy pair estimators, bootstrap repetitions and seed,
-  model definitions, and all success/failure accounting unchanged. Candidate draw indices are now
-  `j=0..10` under the existing `202610250001 + 100 * game_index + j` mapping.
+- Use **10 draws per target** for B0, B1, and B2. The measured-rate projection is 12,586 seconds
+  (3.496 hours) of candidate generation. Ten is the largest even draw count within the four-hour
+  budget; using 11 would create unequal five-versus-six split halves. Candidate Monte Carlo
+  sensitivity therefore compares draws `j=0..4` with `j=5..9`.
+- Keep the 1,292 eligible target population, target/game seed base and stride, 10,000-draw v0.1
+  reference, 10,000-draw historical-rate reference, energy pair estimators, bootstrap repetitions
+  and seed, model definitions, and all success/failure accounting unchanged. Candidate draw indices
+  use `j=0..9` under `202610250001 + 100 * game_index + j`; candidate energy pair terms are exact
+  over all 10 draws.
 - The partial 12-draw checkpoint is abandoned and must not be resumed, combined, or used for a
-  metric. The complete evaluation starts with a new empty checkpoint and hashes its final source
-  files as before.
+  metric. The prior 11-draw draft in commit `14ba1403` was superseded before launch. The complete
+  evaluation starts with a new empty checkpoint and hashes its final source files as before.
 
-This amendment changes only the feasible Monte Carlo count. It does not select a candidate, change
-the adoption boundary or gate, authorize production use, or authorize a push.
-
-### Amendment 5 correction — reference energy estimator and seed namespace
-
-Committed 2026-10-25 before any comparison metric. The first Amendment 5 draft called for an exact
-pairwise energy term on each 10,000-draw historical-rate reference. That requires quadratic work
-per target and conflicts with the measured runtime budget. The frozen replacement uses 20,000
-deterministic pair draws per target (and 20,000 per reference half); v0.1 retains its common 200,000
-pair-draw term. The separated seed ranges above replace the initial overlapping reference seeds.
-Candidate energy pair terms remain exact because each candidate has only 12 draws.
+This amendment changes only the feasible Monte Carlo count and equal-half sensitivity split. It
+does not select a candidate, change the adoption boundary or gate, authorize production use, or
+authorize a push.
