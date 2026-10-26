@@ -461,6 +461,7 @@ class _Game:
         self.offense = self.defense = None
         self.yl = self.down = self.togo = None
         self.events, self.drives, self.boundaries = [], [], []
+        self.blocked_attempt = None  # the drive a block stopped, with the plays made before the block
         self.timeouts = {'A': 3, 'B': 3}  # per half; A is the home side, B the away side (authored labels)
         self.warned_quarters = set()  # the late quarters whose two-minute warning has stopped the clock this half
         self.points = Counter()
@@ -820,9 +821,14 @@ class _Game:
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
         special_teams = (self._resolve_special_teams if self.ref.blocked_kicks.get('rates')
                          or self.ref.kicks.get('field_goal_outcomes') else None)
+        attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
-                                      self.simulation_id, special_teams=special_teams)
+                                      self.simulation_id, special_teams=special_teams, partial=attempt)
         if plays is None:
+            self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
+                                    'quarter_start': start['quarter'], 'clock_start': start['clock'],
+                                    'blocker': terminal, 'plays_before_block': attempt,
+                                    'note': 'raw E1 plays before the block; not part of drives or stats'}
             self.block(terminal)
             return
         if any(p['outcome'].get('penalty') for p in plays):
@@ -952,7 +958,7 @@ class _Game:
         valid_candidate = bool(snapshot and complete and blocker is None and not tied and not guarded and not unsupported)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete, tied) + guard_reasons(guarded)
-        return {
+        rec = {
             'mode': record_mode, 'seed': self.seed, 'simulation_id': self.simulation_id,
             'pregame_snapshot': snapshot,
             'game_id': snapshot['schedule']['game_id'] if snapshot else None,
@@ -995,6 +1001,9 @@ class _Game:
                 'quarter_ends_during_kick_return': sum(1 for k in self.events if k['clock_rule'] == AUTHORED_RULE),
             },
         }
+        if self.blocked_attempt is not None:
+            rec['blocked_attempt'] = self.blocked_attempt
+        return rec
 
 
 def _stamp_scores(plays, before, after):

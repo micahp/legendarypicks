@@ -156,7 +156,8 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id, special_teams=None):
+def simulate(start, seed, pool, simulation_id, special_teams=None, partial=None):
+    """`partial`, when given, receives plays made before a block, preserving failed-drive evidence."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -170,13 +171,17 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
     st = {'quarter': start_quarter, 'offense': start_offense, 'defense': start_defense, 'down': start['down'],
           'togo': start['togo'], 'yl': start['yl'], 'clock': start['clock']}
     plays, terminal = [], None
+    def halt(reason):
+        if partial is not None:
+            partial.extend(plays)
+        return None, reason
     while terminal is None:
         if len(plays) >= MAX_PLAYS:
-            return None, f'exceeded {MAX_PLAYS} plays without a terminal'
+            return halt(f'exceeded {MAX_PLAYS} plays without a terminal')
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         cell = pool.get(key, [])
         if len(cell) < MIN_POOL:
-            return None, f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback'
+            return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         shares = Counter(ev for ev, _, _, _ in cell)
         selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
         cands = sorted([x for x in cell if x[0] == selected_event], key=lambda x: (x[1]['game_id'], x[1]['play_id']))
@@ -187,7 +192,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
             resolution = special_teams(selected_event, st, row, runoff, spot, rng)
             if resolution and resolution.get('blocker'):
-                return None, resolution['blocker']
+                return halt(resolution['blocker'])
             if resolution:
                 event = resolution.get('event', selected_event)
                 runoff = resolution.get('clock_runoff_seconds', runoff)
