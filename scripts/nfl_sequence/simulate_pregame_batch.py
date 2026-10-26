@@ -56,6 +56,15 @@ def _canonical_sha(value):
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _utc_timestamp(value, label):
+    if not value:
+        raise ValueError(f'{label} is missing')
+    parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def _baseline_v1(db, snapshot):
     """Use an immutable pregame v1 lock, or fit v1 on inputs available at the frozen cutoff."""
     schedule = snapshot['schedule']
@@ -71,28 +80,43 @@ def _baseline_v1(db, snapshot):
             "AND r.model='nfl-ratings-v1' AND g.model_version LIKE 'nfl-v1 %' "
             "ORDER BY g.locked_at", (schedule['game_id'],)
         ).fetchall()
-        row = pregame_snapshot.schedule_at(con, schedule['game_id'], cutoff)
-        if row is None:
-            raise ValueError('v1 baseline schedule has no version observed by the frozen cutoff')
-        db_season, db_week, home, away, location, gameday = (
-            row[key] for key in ('season', 'week', 'home_team', 'away_team', 'location', 'gameday'))
-        if (int(db_season), int(db_week), home, away) != (
-                season, week, schedule['home_team'], schedule['away_team']):
-            raise ValueError('v1 baseline schedule identity disagrees with the frozen snapshot')
+        row = None
+        schedule_source = None
+        schedule_ingested_at = schedule.get('ingested_at')
+        if schedule_ingested_at and _utc_timestamp(schedule_ingested_at, 'snapshot schedule ingested_at') <= cutoff:
+            row = schedule
+            schedule_source = 'hash_pinned_snapshot_schedule_version'
+        else:
+            try:
+                row = pregame_snapshot.schedule_at(con, schedule['game_id'], cutoff)
+            except sqlite3.OperationalError as exc:
+                if 'nfl_schedule_versions' not in str(exc):
+                    raise
+            if row is not None:
+                schedule_source = 'nfl_schedule_versions'
+        schedule_verified = row is not None
+        if row is not None:
+            db_season, db_week, db_type, home, away, gameday = (
+                row[key] for key in ('season', 'week', 'game_type', 'home_team', 'away_team', 'gameday'))
+            location = row.get('location', schedule.get('location'))
+            if (int(db_season), int(db_week), db_type, home, away) != (
+                    season, week, schedule['game_type'], schedule['home_team'], schedule['away_team']):
+                raise ValueError('v1 baseline schedule identity disagrees with the frozen snapshot')
+        else:
+            db_season, db_week = season, week
+            home, away = schedule['home_team'], schedule['away_team']
+            gameday, location = schedule.get('gameday'), schedule.get('location')
         if gameday and datetime.fromisoformat(gameday).date() > cutoff.date():
             raise ValueError('v1 baseline target game date is after the frozen cutoff')
 
         kickoff = schedule.get('scheduled_kickoff_utc')
-        kickoff_time = datetime.fromisoformat(kickoff.replace('Z', '+00:00')) if kickoff else None
+        kickoff_time = _utc_timestamp(kickoff, 'snapshot scheduled kickoff') if kickoff else None
         if locked_rows:
             if kickoff_time is None:
                 raise ValueError('stored v1 lock cannot be classified without a verified kickoff timestamp')
             candidates = []
             for row in locked_rows:
-                lock_time = datetime.fromisoformat(row[7].replace('Z', '+00:00'))
-                if lock_time.tzinfo is None:
-                    lock_time = lock_time.replace(tzinfo=timezone.utc)
-                lock_time = lock_time.astimezone(timezone.utc)
+                lock_time = _utc_timestamp(row[7], 'stored v1 lock timestamp')
                 if lock_time >= kickoff_time.astimezone(timezone.utc):
                     continue
                 if (row[8], row[9], int(row[10]), int(row[11])) != (home, away, season, week):
@@ -109,16 +133,26 @@ def _baseline_v1(db, snapshot):
                 params = json.loads(params_json)
             except (TypeError, ValueError):
                 params = {}
-            lock_is_comparable = cutoff_delta <= 0
+            lock_is_comparable = cutoff_delta <= 0 and schedule_verified
+            if cutoff_delta > 0:
+                lock_status = 'exploratory_later_lock'
+                cutoff_note = 'v1 lock is later than the frozen simulation cutoff'
+            elif not schedule_verified:
+                lock_status = 'exploratory_schedule_unverified'
+                cutoff_note = 'v1 lock is within the cutoff, but schedule availability at the cutoff is unverified'
+            else:
+                lock_status = 'available'
+                cutoff_note = 'v1 lock and schedule version were recorded by the frozen simulation cutoff'
             return {
-                'status': 'available' if lock_is_comparable else 'exploratory_later_lock',
+                'status': lock_status,
                 'comparable_at_snapshot_cutoff': lock_is_comparable,
                 'source': 'immutable_locked_v1_projection',
                 'model': 'Legendary Picks NFL points model v1', 'model_version': model_version,
                 'run_id': run_id, 'locked_at': locked_at, 'run_started_at': run_started,
                 'snapshot_cutoff_offset_seconds': cutoff_delta,
-                'cutoff_note': ('lock is later than the frozen simulation cutoff; this value is exploratory'
-                                if cutoff_delta > 0 else 'lock was recorded by the frozen simulation cutoff'),
+                'cutoff_note': cutoff_note,
+                'schedule_provenance': {'verified': schedule_verified, 'source': schedule_source,
+                                        'snapshot_schedule_ingested_at': schedule_ingested_at},
                 'training': {'prior_season': season - 1, 'current_season': season,
                              'current_season_week_exclusive': week,
                              'fit_games': params.get('fit_games'), 'as_of': snapshot['as_of']},
@@ -127,6 +161,9 @@ def _baseline_v1(db, snapshot):
                 'home_win_probability': p_home,
                 'win_probability_sigma_points': params.get('sigma', V1_CONFIG['sigma']),
             }
+
+        if not schedule_verified:
+            raise ValueError('cannot reconstruct v1 without a schedule version observed by the frozen cutoff')
 
         import nfl_ratings as nr
         import nfl_ratings_data as nrd
@@ -295,6 +332,7 @@ def run_batch(args):
             raise ValueError('provide --snapshot-file or both --game-id and --as-of')
         snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc,
                                           args.kickoff_source_url)
+    source_snapshot_sha256 = snapshot['snapshot_sha256']
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
@@ -418,6 +456,13 @@ def run_batch(args):
         'contextual_pool_manifest': ref.contextual_pool_manifest,
         'data_sources': {
             'database': 'SQLite, opened read-only',
+            'source_snapshot_sha256': source_snapshot_sha256,
+            'input_availability': {
+                'classification': 'chronological_filter_only',
+                'historical_replay_fairness': 'exploratory_until_row_level_source_availability_is_verified',
+                'limitations': ['nfl_pbp has no row-level publication/ingestion timestamp',
+                                'historical schedule score revisions are not available in the current database'],
+            },
             'play_window': ('nfl_pbp seasons 2022-2025, weeks 1-18' if not cutoff_pool_mode else
                             f"nfl_pbp seasons 2022 through weeks before {snapshot['schedule']['season']} week "
                             f"{snapshot['schedule']['week']}"),
