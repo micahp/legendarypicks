@@ -1686,6 +1686,40 @@ def _faceoff_result(rng: random.Random, active: dict[str,list[str]],
                    "faceoff_loser_id":centers[loser].nhl_id}
 
 
+def _emit_rule_restart_faceoff(events: list[dict[str,Any]], score: dict[str,int],
+                               sog: dict[str,int], team_totals: dict[str,dict[str,int]],
+                               player_totals: dict[str,dict[str,Any]], inputs: PregameInputs,
+                               rng: random.Random, state: dict[str,Any], *,
+                               period_number: int, period_type: str, elapsed: int,
+                               duration: int, active: dict[str,list[str]], strength: str,
+                               goalie_pulled: dict[str,bool], causes: list[str]) -> None:
+    """Emit a required restart from the live simulated state, not a donor slot."""
+    side,participants=_faceoff_result(rng,active,inputs)
+    details={"restart_required":True,"restart_causes":sorted(set(causes)),
+             "restart_provenance":"generated_from_simulated_rule_state",
+             "goalie_pulled":dict(goalie_pulled),
+             "latent_possession_before":state["possession"]}
+    if "goal" in causes or "period-start" in causes:
+        details["faceoff_location"]="center-ice"
+    else:
+        details["faceoff_location_status"]="unassessed_without_zone_state"
+    _append_sim_event(events,score,sog,period_number=period_number,period_type=period_type,
+        event_type="faceoff",team_side=side,elapsed=elapsed,duration=duration,
+        details=details,on_ice=active,strength=strength,participants=participants)
+    winner=participants["faceoff_winner_id"]
+    loser=participants["faceoff_loser_id"]
+    for pid in (winner,loser):
+        if pid in player_totals:
+            player_totals[pid]["faceoffs_taken"]+=1
+    player_totals[winner]["faceoffs_won"]+=1
+    player_totals[loser]["faceoffs_lost"]+=1
+    team_totals[side]["faceoffs_won"]+=1
+    state["possession"]=side
+    state["last_transition_family"]="faceoff"
+    state["transition_family_counts"]["faceoff"]+=1
+    state["rule_forced_faceoffs"]+=1
+
+
 def _refresh_shot_participants(play: SimPlay, side: str, active: dict[str,list[str]],
                                inputs: PregameInputs, model: ShotQualityModel,
                                offsets: dict[str,Any], participants: dict[str,Any],
@@ -1915,9 +1949,29 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                            stop_after_goal: bool=False) -> bool:
     saw_goal=False
     penalties:PenaltyLedger=state["penalties"]
+    pending_restart:dict[str,Any]|None=None
+    if plays:
+        first=plays[0]
+        first_active,first_strength,first_pulled=_live_on_ice(
+            first.donor.active(0),inputs,penalties,first.donor.period_type)
+        pending_restart={"elapsed":0,"causes":["period-start"],"active":first_active,
+                         "strength":first_strength,"goalie_pulled":first_pulled}
     for play in plays:
         pn=play.donor.period_number; ptype=play.donor.period_type
         limit=REG_SECONDS if ptype=="REG" else OT_SECONDS
+        use_donor_restart_slot=bool(pending_restart
+            and play.elapsed==pending_restart["elapsed"] and play.event_type=="faceoff")
+        restart_causes=list(pending_restart["causes"]) if use_donor_restart_slot else []
+        if pending_restart and not use_donor_restart_slot:
+            restart_elapsed=int(pending_restart["elapsed"])
+            if restart_elapsed<limit:
+                _emit_rule_restart_faceoff(events,score,sog,team_totals,player_totals,inputs,rng,state,
+                    period_number=pn,period_type=ptype,elapsed=restart_elapsed,duration=limit,
+                    active=pending_restart["active"],strength=pending_restart["strength"],
+                    goalie_pulled=pending_restart["goalie_pulled"],causes=pending_restart["causes"])
+            pending_restart=None
+        elif use_donor_restart_slot:
+            pending_restart=None
         _advance_penalties(events,score,sog,penalties,play.donor,inputs,pn,play.elapsed)
         active,strength,goalie_pulled=_live_on_ice(play.active,inputs,penalties,ptype)
         side=play.team_side
@@ -1925,7 +1979,24 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
         participants=copy.deepcopy(play.participants)
         details=copy.deepcopy(play.details)
         transition_family=_transition_family(event_type) or "stoppage"
-        if transition_model is not None:
+        if use_donor_restart_slot:
+            # Use a source faceoff only when it occurs at the exact pending
+            # restart clock. The winner is still sampled against live players.
+            event_type="faceoff"
+            transition_family="faceoff"
+            participants={}
+            details["event_transition"]={"family":"faceoff",
+                "family_fallback_level":"rule_required_donor_slot",
+                "context_training_count":None}
+            details["restart_required"]=True
+            details["restart_causes"]=sorted(set(restart_causes))
+            details["restart_provenance"]="simulated_faceoff_at_donor_restart_slot"
+            if any(cause in {"goal","period-start"} for cause in restart_causes):
+                details["faceoff_location"]="center-ice"
+            else:
+                details["faceoff_location_status"]="unassessed_without_zone_state"
+            state["rule_forced_faceoffs"]+=1
+        elif transition_model is not None:
             trng=transition_rng or rng
             context=_transition_context(state.get("last_transition_family","start"),
                                         state.get("possession"),strength,score)
@@ -2085,18 +2156,30 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
             if pid in player_totals:
                 player_totals[pid]["hits"]+=1
             team_totals[side]["hits"]+=1
+        if event_type=="penalty":
+            details["coincidental"]=False
         details["goalie_pulled"]=goalie_pulled
         details["latent_possession_before"]=state["possession"]
-        _append_sim_event(events,score,sog,period_number=pn,period_type=ptype,event_type=event_type,
+        emitted_event=_append_sim_event(events,score,sog,period_number=pn,period_type=ptype,event_type=event_type,
             team_side=side,elapsed=play.elapsed,duration=limit,details=details,on_ice=active,
             strength=strength,participants=participants,
             score_goal=event_type=="goal",count_sog=event_type in SHOT_EVENTS)
         if event_type=="penalty":
             kind=str(details["penalty_kind"])
             duration=int(details["penalty_duration_seconds"])
-            penalties.start(side,str(participants["serving_player_id"]),kind,
-                            duration_seconds=duration,
-                            coincidental=bool(details.get("coincidental",False)))
+            active_penalty=penalties.start(side,str(participants["serving_player_id"]),kind,
+                            duration_seconds=duration,coincidental=False)
+            emitted_event["details"]["coincidental"]=active_penalty.coincidental
+            if active_penalty.coincidental:
+                for prior in reversed(events[:-1]):
+                    prior_details=prior.get("details") or {}
+                    if (prior.get("event_type")=="penalty"
+                            and prior.get("period_number")==pn
+                            and prior.get("clock_elapsed_seconds")==play.elapsed
+                            and prior.get("team_side")!=side
+                            and prior_details.get("penalty_kind")==kind
+                            and prior_details.get("penalty_duration_seconds")==duration):
+                        prior_details["coincidental"]=True
         if event_type=="goal":
             released=penalties.on_goal(side)
             if released is not None:
@@ -2121,9 +2204,23 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                 team_side=None,elapsed=play.elapsed,duration=limit,
                 details={"reason":"sudden_death_overtime_goal"})
             return True
+        if event_type=="faceoff":
+            pending_restart=None
+        elif event_type in {"goal","penalty","stoppage"} and play.elapsed<limit:
+            restart_active,restart_strength,restart_pulled=_live_on_ice(
+                play.active,inputs,penalties,ptype)
+            pending_restart={"elapsed":play.elapsed,"causes":[event_type],
+                "active":restart_active,"strength":restart_strength,
+                "goalie_pulled":restart_pulled}
     limit=REG_SECONDS if plays and plays[0].donor.period_type=="REG" else OT_SECONDS
     period=plays[0].donor.period_number if plays else 1
     if plays:
+        if pending_restart and int(pending_restart["elapsed"])<limit:
+            _emit_rule_restart_faceoff(events,score,sog,team_totals,player_totals,inputs,rng,state,
+                period_number=period,period_type=plays[0].donor.period_type,
+                elapsed=int(pending_restart["elapsed"]),duration=limit,
+                active=pending_restart["active"],strength=pending_restart["strength"],
+                goalie_pulled=pending_restart["goalie_pulled"],causes=pending_restart["causes"])
         _advance_penalties(events,score,sog,penalties,plays[-1].donor,inputs,period,limit)
     return saw_goal
 
@@ -2224,8 +2321,11 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
                     on_ice[side]=[pid for pid in on_ice[side] if player_totals[pid]["position"]!="G"]+[new]
                 counts={s:sum(player_totals[pid]["position"]!="G" for pid in ids)
                         for s,ids in on_ice.items()}
+                goalie_pulled={s:not any(player_totals[pid]["position"]=="G" for pid in ids)
+                               for s,ids in on_ice.items()}
                 details={"reason":"sampled_shift_template_goalie_transition",
-                         "transition_source":"verified shift-chart interval boundary"}
+                         "transition_source":"verified shift-chart interval boundary",
+                         "goalie_pulled":goalie_pulled}
                 additions.append({"period_number":period,"period_type":"REG" if period<4 else "OT",
                     "time_in_period":f"{elapsed//60:02d}:{elapsed%60:02d}",
                     "time_remaining":f"{(limit-elapsed)//60:02d}:{(limit-elapsed)%60:02d}",
@@ -2234,8 +2334,11 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
                     "participants":{"goalie_leaving_id":old,"goalie_entering_id":new},
                     "on_ice":on_ice,"strength":f"{counts['home']}v{counts['away']}"})
     combined=events+additions
+    # Expiry takes effect at its exact game-clock second; process it before a
+    # same-second goalie transition can put the returning player back on ice.
     combined.sort(key=lambda e:(e["period_number"],e["clock_elapsed_seconds"],
-                                0 if e["event_type"]=="goalie-substitution" else 1))
+                                0 if e["event_type"]=="penalty-expiration" else
+                                1 if e["event_type"]=="goalie-substitution" else 2))
     score={"home":0,"away":0}; sog={"home":0,"away":0}
     for sequence,event in enumerate(combined,1):
         event["sequence"]=sequence
@@ -2599,7 +2702,8 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
            "last_transition_family":"start",
            "transition_family_counts":collections.Counter(),
            "transition_fallback_counts":collections.Counter(),
-           "transition_owner_fallback_counts":collections.Counter()}
+           "transition_owner_fallback_counts":collections.Counter(),
+           "rule_forced_faceoffs":0}
     team_totals={s:{"goals":0,"shots_on_goal":0,"shot_attempts":0,"faceoffs_won":0,
                     "penalties":0,"hits":0} for s in ("home","away")}
     goalie_totals={pid:{"team_side":side,"saves":0,"shots_against":0,"goals_against":0}
@@ -2683,7 +2787,8 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
                                              for e in events),
         "event_transition_diagnostics":{"sampled_family_counts":dict(sorted(state["transition_family_counts"].items())),
             "family_fallback_levels":dict(sorted(state["transition_fallback_counts"].items())),
-            "owner_fallback_levels":dict(sorted(state["transition_owner_fallback_counts"].items()))},
+            "owner_fallback_levels":dict(sorted(state["transition_owner_fallback_counts"].items())),
+            "rule_forced_faceoffs":state["rule_forced_faceoffs"]},
         "shot_conversion_calibration":offsets}
     model_version=TRANSITION_MODEL_VERSION if transition_model is not None else MODEL_VERSION
     clock_limitation=(

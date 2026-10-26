@@ -4,6 +4,7 @@ import sys
 import unittest
 from collections import Counter
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import nhl_game_state_sim as sim
@@ -114,6 +115,74 @@ class ShootoutValidationTests(unittest.TestCase):
         events.append({"event_type":"shootout-decision","team_side":"home"})
         with self.assertRaisesRegex(ValueError,"continued after"):
             sim._validate_shootout_sequence(events,{"shootout_winner":"home"})
+
+
+class RestartGenerationTests(unittest.TestCase):
+    def test_required_restart_is_accounted_and_updates_live_possession(self):
+        home_center=SimpleNamespace(nhl_id="HC",position="C",faceoff_pct=.65,usage_minutes=18)
+        away_center=SimpleNamespace(nhl_id="AC",position="C",faceoff_pct=.45,usage_minutes=18)
+        inputs=SimpleNamespace(
+            home_roster=SimpleNamespace(players={"HC":home_center}),
+            away_roster=SimpleNamespace(players={"AC":away_center}))
+        players={pid:{"faceoffs_taken":0,"faceoffs_won":0,"faceoffs_lost":0}
+                 for pid in ("HC","AC")}
+        teams={side:{"faceoffs_won":0} for side in ("home","away")}
+        events=[]; score={"home":1,"away":0}; sog={"home":4,"away":2}
+        state={"possession":None,"last_transition_family":"goal",
+               "transition_family_counts":Counter(),"rule_forced_faceoffs":0}
+        active={"home":["HC"],"away":["AC"]}
+
+        sim._emit_rule_restart_faceoff(events,score,sog,teams,players,inputs,
+            sim.random.Random(19),state,period_number=1,period_type="REG",elapsed=300,
+            duration=1200,active=active,strength="1v1",
+            goalie_pulled={"home":False,"away":False},causes=["goal"])
+
+        self.assertEqual(len(events),1)
+        faceoff=events[0]
+        self.assertEqual(faceoff["event_type"],"faceoff")
+        self.assertEqual(faceoff["details"]["faceoff_location"],"center-ice")
+        self.assertEqual(faceoff["participants"]["faceoff_winner_id"],"HC")
+        self.assertEqual(state["possession"],"home")
+        self.assertEqual(players["HC"]["faceoffs_won"],1)
+        self.assertEqual(players["AC"]["faceoffs_lost"],1)
+        self.assertEqual(teams["home"]["faceoffs_won"],1)
+        self.assertEqual(state["rule_forced_faceoffs"],1)
+
+
+class ExactClockEventOrderTests(unittest.TestCase):
+    def test_penalty_expiration_precedes_same_second_goalie_change(self):
+        players={}
+        shift=[]
+        for side,prefix,goalie_ids in (
+            ("home","H",("HG1","HG2")),("away","A",("AG",))):
+            for number in range(1,6):
+                pid=f"{prefix}{number}"
+                players[pid]={"team_side":side,"position":"F"}
+                shift.append({"period_number":1,"team_side":side,"player_id":pid,
+                              "position":"F","start_seconds":0,"end_seconds":1200,
+                              "duration_seconds":1200})
+            for index,pid in enumerate(goalie_ids):
+                players[pid]={"team_side":side,"position":"G"}
+                if side=="home":
+                    start,end=(0,100) if index==0 else (100,1200)
+                else:
+                    start,end=0,1200
+                shift.append({"period_number":1,"team_side":side,"player_id":pid,
+                              "position":"G","start_seconds":start,"end_seconds":end,
+                              "duration_seconds":end-start})
+        expiry={"period_number":1,"period_type":"REG","clock_elapsed_seconds":100,
+                "event_type":"penalty-expiration","team_side":"home","details":{},
+                "participants":{"player_id":"H1"},"on_ice":{"home":[],"away":[]},
+                "strength":"5v5"}
+
+        events=sim._insert_goalie_substitutions([expiry],shift,players)
+
+        expiration_index=next(i for i,e in enumerate(events) if e["event_type"]=="penalty-expiration")
+        change_index=next(i for i,e in enumerate(events) if e["event_type"]=="goalie-substitution")
+        self.assertLess(expiration_index,change_index)
+        substitution=events[change_index]
+        self.assertEqual(substitution["details"]["goalie_pulled"],
+                         {"home":False,"away":False})
 
 
 if __name__=="__main__":
