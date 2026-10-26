@@ -168,6 +168,18 @@ def test_open_refresh_reads_only_games_that_can_still_move(tmp_path):
     connection.close()
 
 
+def test_a_stale_preseason_row_is_reported_not_failed(tmp_path):
+    db = tmp_path / "picks.dev.db"
+    _seed(db, [("0012600001", "20261005/PHIDET", 1, None, None)])
+    connection = sqlite3.connect(db)
+    connection.execute("UPDATE nba_schedule SET season_type='PRE'")
+    connection.commit()
+    connection.close()
+    report = sched.refresh_open(str(db), apply=True, fetch_game=lambda gid: None, today="2026-10-26")
+    assert report["preseason_unread"] == 1
+    assert report["stale_unfetched"] == 0 and report["failures"] == []
+
+
 def test_open_refresh_stops_after_three_refusals(tmp_path):
     db = tmp_path / "picks.dev.db"
     _seed(db, [(f"00226000{n:02d}", f"20261025/PHIDET", 1, None, None) for n in range(1, 6)])
