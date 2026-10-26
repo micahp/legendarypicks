@@ -7,12 +7,18 @@ data-derived fact — no speculation, so the story prompt's no-invention rule ho
 
 Fail-soft by contract: any error → [] and the story simply gets no stakes lines this pass.
 """
+import datetime as dt
 import warnings
+from contextlib import closing
 
 import espn_client as espn
+import team_codes
 
 # Leagues with a stakes model. generate_game_story uses this to decide whether a cached
 # pre-stakes story is final (league unsupported) or provisional (regenerate once, with stakes).
+# NFL is not listed on purpose: its stakes are rarely certain, so a listed league would leave
+# most NFL stories provisional and re-run their generation pipeline on every request (no LLM
+# call). NFL stories still get stakes lines whenever they are written.
 SUPPORTED = {"wc", "mlb"}
 
 # `site.web.api`, NOT `site.api`: the latter is walled from this box and 403s every time.
@@ -23,15 +29,18 @@ SUPPORTED = {"wc", "mlb"}
 _MLB_STANDINGS = "https://site.web.api.espn.com/apis/v2/sports/baseball/mlb/standings?level=3"
 
 
-def for_matchup(league, ab_a, ab_b):
+def for_matchup(league, ab_a, ab_b, season=None):
     """-> list of stakes strings for the two teams (either order). Empty when the league has
-    no stakes model yet or data is unavailable."""
+    no stakes model yet or data is unavailable. `season` is the regular-season year; NFL needs
+    it, and a postseason game passes None because the NFL model describes the regular season."""
     league = (league or "").lower()
     try:
         if league == "wc":
             return _wc(ab_a, ab_b)
         if league == "mlb":
             return _mlb(ab_a, ab_b)
+        if league == "nfl":
+            return _nfl(ab_a, ab_b, season)
     except Exception as e:
         # Still fail-soft: a story without stakes beats no story. But it is no longer
         # SILENT. The whole point of this module is that stories were starving without it,
@@ -115,3 +124,80 @@ def _mlb(ab_a, ab_b):
                 else:
                     lines.append(f"{ab} are {_ord(i + 1)} in the {div_name}, {gb} games back{seed_txt}.")
     return lines
+
+
+# ── NFL ──────────────────────────────────────────────────────────────────────────────────
+# Certain facts only, from the published schedule (nfl_schedule, nflverse) and the division
+# map (nfl_teams). Seven seeds per conference: four division winners, then three wild cards,
+# the best teams that did not win their division. Every claim is a strict inequality between
+# what a team has already won and the most another team can still reach, so no tiebreaker can
+# reverse it. A tie is half a win.
+
+def _nfl(ab_a, ab_b, season):
+    if season is None:
+        return []
+    from _core import _db
+    with closing(_db()) as con:
+        games = [dict(r) for r in con.execute(
+            "SELECT home_team, away_team, home_score, away_score, gameday FROM nfl_schedule "
+            "WHERE season=? AND game_type='REG'", (season,)).fetchall()]
+        teams = {r["team"]: dict(r) for r in con.execute(
+            "SELECT team, conference, division, team_name FROM nfl_teams WHERE season=?",
+            (season,)).fetchall()}
+    # A schedule that has not caught up with the calendar makes every "games left" count wrong,
+    # so nothing is stated from it. Past games with no score are the symptom.
+    today = str(espn._ny_date(dt.datetime.now(dt.timezone.utc)))
+    behind = [g for g in games if not _nfl_scored(g) and g["gameday"] < today]
+    if behind:
+        warnings.warn(f"stakes: nfl {season} schedule has {len(behind)} past game(s) with no "
+                      f"score, no NFL stakes this pass", stacklevel=2)
+        return []
+    lo, hi = _nfl_bounds(games, teams)
+    lines = (_nfl_stake(team_codes.normalize("nfl", ab), teams, lo, hi) for ab in (ab_a, ab_b))
+    return [line for line in lines if line]
+
+
+def _nfl_scored(game):
+    return game["home_score"] is not None and game["away_score"] is not None
+
+
+def _nfl_bounds(games, teams):
+    """-> (lo, hi): per team, the points it already has and the most it can still reach.
+    A win is one point, a tie half a point; an unplayed game is worth up to one point."""
+    lo = {t: 0.0 for t in teams}
+    hi = {t: 0.0 for t in teams}
+    for g in games:
+        if not _nfl_scored(g):
+            for team in (g["home_team"], g["away_team"]):
+                hi[team] += 1
+            continue
+        home, away = g["home_score"], g["away_score"]
+        for team, mine, theirs in ((g["home_team"], home, away), (g["away_team"], away, home)):
+            points = 1.0 if mine > theirs else 0.5 if mine == theirs else 0.0
+            lo[team] += points
+            hi[team] += points
+    return lo, hi
+
+
+def _nfl_stake(team, teams, lo, hi):
+    """-> one certain stake line for `team`, or None while the standings leave it open."""
+    me = teams[team]
+    name = me["team_name"] or team
+    div = me["division"]
+    rivals = [t for t in teams if t != team and teams[t]["division"] == div]
+    if all(lo[team] > hi[r] for r in rivals):
+        return f"{name} have clinched the {div} and a playoff spot."
+    if not any(lo[r] > hi[team] for r in rivals):
+        return None
+    # No division title is possible now. Out of the playoffs if three teams are certain to
+    # finish ahead of this one and certain not to win their own division: those three take the
+    # wild cards before it can.
+    def sure_non_winner(o):
+        return any(lo[p] > hi[o] for p in teams
+                   if p != o and teams[p]["division"] == teams[o]["division"])
+    ahead = [o for o in teams
+             if o != team and teams[o]["conference"] == me["conference"]
+             and lo[o] > hi[team] and sure_non_winner(o)]
+    if len(ahead) >= 3:
+        return f"{name} are eliminated from the playoffs."
+    return f"{name} can no longer win the {div}."

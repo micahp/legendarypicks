@@ -477,7 +477,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     try:
         import stakes as _stakes
         stakes_lines = ([] if (preseason or records_stale)
-                        else _stakes.for_matchup(lg, teams[0], teams[1]))
+                        else _stakes.for_matchup(lg, teams[0], teams[1],
+                                                 game_season if season_type == 2 else None))
     except Exception:
         stakes_lines = []
     if stakes_lines:
