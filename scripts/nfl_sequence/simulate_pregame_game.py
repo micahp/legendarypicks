@@ -64,7 +64,7 @@ def main():
     ap.add_argument('--kickoff-source-url', help='official schedule page supporting --kickoff-utc')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
-    ap.add_argument('--roster-snapshot', help='optional pinned full-starter JSON from build_nfl_starters_snapshot.py')
+    ap.add_argument('--roster-snapshot', help='optional pinned full-depth roster JSON with starter flags and jersey numbers')
     ap.add_argument('--roster-provenance', help='source and checksum manifest for --roster-snapshot')
     ap.add_argument('--out', required=True, help='output JSON path')
     args = ap.parse_args()
@@ -76,7 +76,7 @@ def main():
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise SystemExit('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
-        pregame_snapshot.apply_starters_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
+        pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
     ref, excluded_kickoffs = er.load(args.db)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     pregame_snapshot.reseal(snapshot)

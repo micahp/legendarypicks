@@ -9,6 +9,27 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_player_template_keeps_full_depth_backup_roles(self):
+        snapshot = {
+            'rosters': {
+                'home': {'team': 'SEA', 'players': [
+                    {'gsis_id': 'sea-rb1', 'player_name': 'RB One', 'pos_abb': 'RB', 'pos_rank': 1,
+                     'group': '3WR 1TE', 'starter': True},
+                    {'gsis_id': 'sea-rb2', 'player_name': 'RB Two', 'pos_abb': 'RB', 'pos_rank': 2,
+                     'group': '3WR 1TE', 'starter': False},
+                    {'gsis_id': 'sea-rb1', 'player_name': 'RB One', 'pos_abb': 'KR', 'pos_rank': 1,
+                     'group': 'Special Teams', 'starter': False},
+                ]},
+                'away': {'team': 'KC', 'players': []},
+            },
+        }
+        players = batch._player_template(snapshot)
+        self.assertFalse(players['sea-rb2']['starter'])
+        self.assertEqual(players['sea-rb2']['position'], 'RB')
+        self.assertEqual(players['sea-rb1']['position'], 'RB')
+        self.assertEqual(len(players['sea-rb1']['roster_roles']), 2)
+        self.assertEqual(len(players), 2)
+
     def test_all_seeds_are_retained_and_ties_are_in_regulation_distribution(self):
         rows = [
             {'seed': 1, 'status': 'complete_regulation', 'valid_full_game': True, 'complete_game': True,
