@@ -71,6 +71,10 @@ def arm_report(name, records):
     for label, group in (('opening drive', lambda t: t['opening_drive']), ('first TD', lambda t: t['first_td'])):
         yes = [t for t in tries if group(t)]
         print(f'  {label}: two-point {sum(t["kind"] == "two_point" for t in yes)}/{len(yes)}')
+    predicted = [t['recorded']['p_two'] for t in tries if t.get('recorded')]
+    if predicted:
+        print(f'  mean predicted two-point probability {statistics.mean(predicted):.4f} over {len(predicted)} tries, '
+              f'realized {len(two) / len(tries):.4f}')
     print('  by period: ' + '; '.join(
         f'{p} {sum(t["kind"] == "two_point" for t in tries if tp.period_of(t["quarter"], t["clock"]) == p)}'
         f'/{sum(1 for t in tries if tp.period_of(t["quarter"], t["clock"]) == p)}' for p in PERIODS))
