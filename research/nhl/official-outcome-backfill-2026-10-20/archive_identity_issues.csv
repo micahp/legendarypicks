@@ -1,0 +1,6 @@
+game_id,season,player_id,source,issue,detail
+,2022,8475825,official_vs_archive_display_name,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT,official=J. Hakanpää; archive=Jani Hakanp; SOG_shared_rows=22; SAVES_shared_rows=0
+,2020,8480053,official_vs_archive_display_name,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT,official=S. Chmelevski; archive=Alexander Chmelevski; SOG_shared_rows=5; SAVES_shared_rows=0
+,2022,8482109,official_vs_archive_display_name,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT,official=A. Lafrenière; archive=Alexis Lafrenire; SOG_shared_rows=22; SAVES_shared_rows=0
+,2022,8482116,official_vs_archive_display_name,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT,official=T. Stützle; archive=Tim Sttzle; SOG_shared_rows=21; SAVES_shared_rows=0
+,2021;2022,8482475,official_vs_archive_display_name,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT,official=E. Chinakhov; archive=Yegor Chinakhov; SOG_shared_rows=81; SAVES_shared_rows=0

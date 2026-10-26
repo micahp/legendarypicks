@@ -1,0 +1,27 @@
+{
+  "approved_label_purpose": "audit; comparisons require VERIFIED/ADJUDICATED and eligible_grading=true",
+  "approved_label_reader": "official-outcome-backfill-2026-10-20/nhl_research_data.py",
+  "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+  "event_body_verification": {
+    "compressed_bytes": 7566065,
+    "expected_body_count": 600,
+    "uncompressed_bytes": 119607096,
+    "verified_body_count": 600
+  },
+  "event_manifest_sha256": "559b67ce1ccb5a7796ee9d7db7bde9319339469339a3ae5df16f0ac00d99ee07",
+  "frame_games": 4876,
+  "official_game_sides_sha256": "782c9f44a113c2857947a6a7f178ddf3d6e26a59544bf3973685135d809a5f33",
+  "official_goalie_outcomes_sha256": "7e5d0cca6783839dca938ba04e15ee2b686873170e319f816060271555a2ca66",
+  "official_skater_outcomes_sha256": "b1249d74e0f38c599e7a88a67f438ceedb187e35a6ba6b66908b77e04208094d",
+  "research_label_quality_sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c",
+  "research_label_summary_sha256": "89d88064b2b01582ca2b21fe3e5d6324875042a74cd206833dd039283e282f74",
+  "sample_games": 300,
+  "sample_games_by_season": {
+    "2018": 60,
+    "2019": 60,
+    "2020": 60,
+    "2021": 60,
+    "2022": 60
+  },
+  "sample_games_sha256": "5ea249cf070eea5bfc0552a55959080207ed67c2a0b971fc9f2fe6d90a4b537f"
+}
