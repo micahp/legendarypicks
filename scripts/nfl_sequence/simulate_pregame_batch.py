@@ -102,6 +102,9 @@ def _baseline_v1(db, snapshot):
             if (int(db_season), int(db_week), db_type, home, away) != (
                     season, week, schedule['game_type'], schedule['home_team'], schedule['away_team']):
                 raise ValueError('v1 baseline schedule identity disagrees with the frozen snapshot')
+            for key in ('gameday', 'gametime', 'location', 'source'):
+                if schedule.get(key) is not None and row.get(key) != schedule[key]:
+                    raise ValueError(f'v1 baseline schedule {key} disagrees with the frozen snapshot')
         else:
             db_season, db_week = season, week
             home, away = schedule['home_team'], schedule['away_team']
