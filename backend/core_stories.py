@@ -87,6 +87,43 @@ def _short_day(game_date):
         return ""
 
 
+def _nfl_schedule_row(con, game_id):
+    """The schedule row for an NFL game, found by its ESPN event id. None when the schedule does not know the game."""
+    return con.execute(
+        "SELECT home_team, away_team, season, game_type FROM nfl_schedule WHERE CAST(espn AS TEXT)=?",
+        (str(game_id),)).fetchone()
+
+
+def _nfl_stakes_now(con, game_id):
+    """The NFL stakes lines for a game, from our schedule and standings alone: [] when nothing is certain yet, None
+    when the schedule does not know the game (the caller then takes the full path, as it always did)."""
+    row = _nfl_schedule_row(con, game_id)
+    if row is None:
+        return None
+    if row["game_type"] != "REG":
+        return []
+    import nfl_standings_store as _nss
+    try:
+        table = _nss.read_standings(con, season=row["season"])
+    except _nss.NFLStandingsError:
+        return None
+    if not table or all(r["games_played"] == 0 for r in table["teams"]):
+        return []  # no games played: no record to state, so no stakes, as the full path would decide
+    import stakes as _stakes
+    return _stakes.for_matchup("nfl", row["home_team"], row["away_team"], row["season"])
+
+
+def _nfl_standings_for_game(game_id):
+    """The NFL standings for the game's season, read from our schedule (no ESPN request). Raises NFLStandingsError
+    when the table cannot be trusted, which the caller treats as no records."""
+    import nfl_standings_store as _nss
+    with closing(_db()) as con:
+        row = _nfl_schedule_row(con, game_id)
+        season = row["season"] if row is not None else None
+        table = _nss.read_standings(con, season=season)
+    return table or {"season": season, "teams": []}
+
+
 def _game_start_instant(lg: str, game_id: str):
     """The game's own UTC instant, for callers that did not pass start_time.
 
@@ -297,6 +334,9 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 # that one case regenerates once (below) and becomes final with has_stakes=1.
                 if cached["has_stakes"] or lg not in _stakes_mod.SUPPORTED:
                     return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+                if lg == "nfl" and _nfl_stakes_now(con, game_id) == []:
+                    # Nothing new since the story was written: no stakes are certain, the form is already in it.
+                    return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     try:
         gr = espn.game_result(lg, game_id)
@@ -337,7 +377,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # Records, streak, last-10 and rank are only facts about THIS game if the standings are
     # from this game's season. Before the first game they are last season's.
     try:
-        standings = espn.team_strength_standings(lg)
+        if lg == "nfl":
+            standings = _nfl_standings_for_game(game_id)
+        else:
+            standings = espn.team_strength_standings(lg)
         standings_season = standings.get("season")
         strength_rows = standings.get("teams") or []
     except Exception:
