@@ -471,8 +471,8 @@ def main() -> int:
     if _available_ram() < MEMORY_FLOOR_BYTES:
         raise RuntimeError("available RAM is below the preregistered 1.5 GiB floor")
 
+    global _SIM, _V01
     _SIM = _load("nhl_eval_v02b", HERE / "nhl_game_state_sim.py")
-    global _V01
     _V01 = _SIM.v01
     _B0 = _load("nhl_eval_alpha2", ROOT / "research/nhl/statistical-full-game-v0.2/nhl_team_player_sim.py")
     adapter = _load("nhl_eval_historical_adapter", HERE / "historical_adapter.py")
