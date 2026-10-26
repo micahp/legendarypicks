@@ -24,6 +24,10 @@ class EvaluationHelperTests(unittest.TestCase):
     def test_frozen_bootstrap_seed_matches_amendment_five(self):
         self.assertEqual(evaluation.BOOTSTRAP_SEED, 202610250004)
 
+    def test_candidate_draw_count_matches_balanced_split_amendment(self):
+        self.assertEqual(evaluation.MC_DRAWS, 10)
+        self.assertEqual(evaluation.MC_DRAWS // 2, 5)
+
     def test_checkpoint_rejects_changed_source_hash_metadata(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "checkpoint.jsonl"

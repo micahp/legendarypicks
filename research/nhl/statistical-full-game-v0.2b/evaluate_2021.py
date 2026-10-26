@@ -28,8 +28,8 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 OUTPUT_VERSION = "nhl-statistical-full-game-v0.2b-2021-development-v1"
-PREREG_COMMIT = "c9e38b4d"
-MC_DRAWS = 12
+PREREG_COMMIT = "32869e40"
+MC_DRAWS = 10
 BOOTSTRAP_REPETITIONS = 2000
 BOOTSTRAP_SEED = 202610250004
 V01_DRAWS = 10_000
@@ -468,7 +468,7 @@ def _append_checkpoint(path: Path, row: dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path,
-                        default=Path("/tmp/nhl-v02b-2021-eval-12draws.jsonl"))
+                        default=Path("/tmp/nhl-v02b-2021-eval-10draws.jsonl"))
     parser.add_argument("--output", type=Path,
                         default=HERE / "results/2021-paired-evaluation-v1.json")
     parser.add_argument("--progress-every", type=int, default=4)
