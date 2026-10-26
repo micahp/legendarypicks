@@ -90,6 +90,8 @@ def main():
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: keep the safety free-kick block instead of sampling the observed table')
+    ap.add_argument('--no-overtime-table', action='store_true',
+                    help='leave out the observed overtime drive table: a regulation tie is then overtime_not_modelled')
     ap.add_argument('--out', required=True)
     ap.add_argument('--summary', required=True)
     args = ap.parse_args()
@@ -105,8 +107,9 @@ def main():
     snapshot = load_pinned(args.snapshot)
     pinned_sha = snapshot['snapshot_sha256']
     table = not args.no_safety_table
-    ref, excluded = er.load(args.db, safety_kick_table=table) if policy is None else er.load(
-        args.db, try_policy=policy, safety_kick_table=table)
+    ot_table = not args.no_overtime_table
+    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table) if policy is None else er.load(
+        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     ps.reseal(snapshot)
     load_seconds = time.monotonic() - started

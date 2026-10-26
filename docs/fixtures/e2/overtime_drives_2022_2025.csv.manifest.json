@@ -1,0 +1,62 @@
+{
+  "columns": [
+    "game_id",
+    "game_date",
+    "season",
+    "week",
+    "drive",
+    "offense",
+    "defense",
+    "start_yardline_100",
+    "start_clock_seconds",
+    "end_clock_seconds",
+    "duration_seconds",
+    "plays",
+    "fixed_drive_result",
+    "outcome",
+    "points_offense",
+    "points_defense",
+    "try_kind",
+    "try_made",
+    "try_team",
+    "next_offense",
+    "next_start_yardline_100",
+    "next_start_clock_seconds",
+    "status",
+    "status_note",
+    "source_file",
+    "source_sha256"
+  ],
+  "drive_count": 150,
+  "games_with_overtime": 63,
+  "generator": "scripts/nfl_sequence/build_overtime_drives.py",
+  "generator_sha256": "8aaef12178c3abe9ea972a0bc0b45a0b8d56ca94fada23e976fc183feb943712",
+  "output": {
+    "path": "docs/fixtures/e2/overtime_drives_2022_2025.csv",
+    "sha256": "7908b8e2ea031dbb16b844dd08997e842578b242db1967cf46716602f0f08b28"
+  },
+  "rule": "Rule 16, Article 3 (regular season)",
+  "source_dataset": "nflverse play_by_play parquet",
+  "sources": {
+    "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "status_counts": {
+    "no_next_start": 10,
+    "usable": 140
+  },
+  "usable_count": 140,
+  "usable_outcome_counts": {
+    "defense_touchdown": 4,
+    "field_goal_made": 37,
+    "field_goal_missed": 8,
+    "period_end": 1,
+    "punt": 48,
+    "touchdown": 26,
+    "turnover": 9,
+    "turnover_on_downs": 7
+  },
+  "window": "2022-2025 regular season, week <= 18, overtime quarter"
+}
