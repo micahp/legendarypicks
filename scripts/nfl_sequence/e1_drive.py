@@ -236,6 +236,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, partial=None,
             return None, blocked.reason
         clock_raw = st['clock'] - runoff
         clock_after = max(0, clock_raw)
+        if kick_outcome and kick_outcome.get('classification_status') == 'period_expired' and clock_after != 0:
+            # The observed block ended its period; this state's clock has time left, so the no-possession outcome does not fit.
+            return halt('blocked_kick_period_end_not_reached')
         quarter_change = False
         terminal = play_terminal
         # The clock runs out on this play. A play that also hands the ball over still ends at the expiry. In Q1 or Q3 the quarter
