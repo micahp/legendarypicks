@@ -119,6 +119,18 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
         e1.check_drive(plays, terminal)
 
+    def test_a_block_keeps_the_plays_made_before_it(self):
+        def block(event, st, row, runoff, spot, rng):
+            return {'blocker': 'blocked_kick_outcome_unresolved:punt:unclassified'}
+
+        partial = []
+        plays, terminal = e1.simulate(start(1, 600, yl=75, down=1, togo=10), 1,
+                                      FakePool(('run', 5, 10, None), then=('punt', 0, 10, 22)), 'e1-keep-partial',
+                                      special_teams=block, partial=partial)
+        self.assertIsNone(plays)
+        self.assertEqual(terminal, 'blocked_kick_outcome_unresolved:punt:unclassified')
+        self.assertEqual([p['event_type'] for p in partial], ['run'])
+
     def test_blocked_punt_off_the_field_is_a_named_block_not_a_crash(self):
         def block(event, st, row, runoff, spot, rng):
             return {'event': 'blocked_punt', 'clock_runoff_seconds': 1,

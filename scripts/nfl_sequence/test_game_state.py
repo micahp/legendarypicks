@@ -1269,5 +1269,34 @@ class TimeoutStop(unittest.TestCase):
 
 
 
+class FirstDriveBlock(unittest.TestCase):
+    def test_a_game_blocked_on_its_first_drive_is_blocked_not_a_checker_crash(self):
+        # Seed 11: the first drive is blocked before any drive completes. The opening kickoff exists, the drive list is empty.
+        record = {'drives': [], 'kickoffs': [{'kind': 'half_start', 'kicking_team': 'A', 'receiving_team': 'B'}],
+                  'boundaries': []}
+        status, evidence = rm._continuity(record)
+        self.assertEqual(status, rm.BLOCKED)
+        self.assertIn('no completed drive', evidence)
+
+
+    def test_a_game_blocked_on_its_first_drive_keeps_the_attempt(self):
+        unclassified = {'kick_type': 'field_goal', 'game_id': '2025_01_TEST', 'play_id': 50,
+                        'source_file': 'play_by_play_2025.parquet', 'source_sha256': 'a' * 64,
+                        'classification_status': 'unclassified', 'posteam': 'KC', 'defteam': 'SEA',
+                        'clock_runoff_seconds': 1}
+        kicks = certain_kicks()
+        kicks['field_goal_outcomes'] = {bucket: (0, 0, 60) for bucket in gs.FG_BUCKETS}
+        blocked = {'records': {'field_goal': [unclassified], 'punt': []},
+                   'rates': {'punt_blocked': {'attempts': 1, 'blocked': 0}}, 'sha256': 'b' * 64}
+        record = gs.play_game(7, ref(StaticPool('field_goal_attempt', 0, 5), kickoff_pool(), kicks,
+                                     blocked_kicks=blocked), winner_choice='receive', max_drives=1)
+        self.assertEqual(record['status'], 'blocked')
+        self.assertEqual(record['drives'], [])
+        self.assertEqual(record['blocked_attempt']['drive_index'], 1)
+        self.assertEqual(record['blocked_attempt']['blocker'], 'blocked_kick_outcome_unresolved:field_goal:unclassified')
+        self.assertEqual(record['blocked_attempt']['plays_before_block'], [])
+        self.assertEqual(next(r['status'] for r in rm.check(record) if r['case'].startswith('Continuity')), rm.BLOCKED)
+
+
 if __name__ == '__main__':
     unittest.main()
