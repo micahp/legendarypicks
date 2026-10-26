@@ -379,9 +379,14 @@ def refresh_open(db_path: str, *, apply: bool = False, fetch_game=_game_page,
         open_ids = [row[0] for row in connection.execute(
             "SELECT game_id FROM nba_schedule WHERE season=? AND COALESCE(status,0) != ? "
             "AND game_date BETWEEN ? AND ? ORDER BY game_id", (season, FINAL, start, end))]
+        # Regular-season and Cup games are the ones a record or a stake depends on. A preseason
+        # row nobody re-reads changes no standing, so it is reported, not failed.
         stale = connection.execute(
             "SELECT COUNT(*) FROM nba_schedule WHERE season=? AND COALESCE(status,0) != ? "
-            "AND game_date < ?", (season, FINAL, start)).fetchone()[0]
+            "AND game_date < ? AND season_type IN ('REG','CUP')", (season, FINAL, start)).fetchone()[0]
+        preseason_unread = connection.execute(
+            "SELECT COUNT(*) FROM nba_schedule WHERE season=? AND COALESCE(status,0) != ? "
+            "AND game_date < ? AND season_type = 'PRE'", (season, FINAL, start)).fetchone()[0]
     finally:
         connection.close()
     games, skipped, spent, refused, consecutive = [], [], 0, 0, 0
@@ -412,13 +417,14 @@ def refresh_open(db_path: str, *, apply: bool = False, fetch_game=_game_page,
         publish(connection, games, apply=apply)
     finally:
         connection.close()
-    failures =([f"{stale} game(s) dated before {start} are not final and are not re-read"]
+    failures = ([f"{stale} game(s) dated before {start} are not final and are not re-read"]
                 if stale else [])
     return {"status": "published" if apply else "ready", "season": season, "window": [start, end],
             "open": len(open_ids), "fetched": len(games),
             "final_now": sum(1 for g in games if g["status"] == FINAL),
             "still_open": sum(1 for g in games if g["status"] != FINAL),
-            "stale_unfetched": stale, "skipped": skipped, "failures": failures,
+            "stale_unfetched": stale, "preseason_unread": preseason_unread,
+            "skipped": skipped, "failures": failures,
             "spend": [{"host": "www.nba.com", "requests": spent, "refused": refused}]}
 
 
