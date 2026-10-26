@@ -22,9 +22,12 @@ def _open(lo_default=0, hi_default=82):
     return lo, hi
 
 
-def test_nba_is_held_out_of_supported_and_its_stakes_are_not_shipped():
-    assert "nba" not in stakes.SUPPORTED
-    assert stakes.for_matchup("nba", "BOS", "NY", 2027) == []
+def test_nba_is_supported_and_for_matchup_reads_the_nba_lines(monkeypatch):
+    assert "nba" in stakes.SUPPORTED
+    seen = []
+    monkeypatch.setattr(stakes, "_nba", lambda a, b, season: seen.append((a, b, season)) or ["line"])
+    assert stakes.for_matchup("nba", "BOS", "NY", 2027) == ["line"]
+    assert seen == [("BOS", "NY", 2027)]
 
 
 def test_ten_conference_clubs_certain_ahead_and_no_division_title_is_elimination():

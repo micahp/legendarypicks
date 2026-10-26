@@ -17,10 +17,10 @@ import team_codes
 
 # Leagues with a stakes model. generate_game_story uses this to decide whether a cached
 # pre-stakes story is final (league unsupported) or provisional (regenerate once, with stakes).
-# NFL is listed. Its stakes are rarely certain, so most NFL stories have no stakes lines. A cached
-# NFL story with nothing new to say returns before any ESPN request: core_stories checks the
+# NFL and NBA are listed. Their stakes are rarely certain, so most of their stories have no stakes lines. A cached
+# NFL or NBA story with nothing new to say returns before any ESPN request: core_stories checks the
 # database schedule and standings first.
-SUPPORTED = {"wc", "mlb", "nfl"}
+SUPPORTED = {"wc", "mlb", "nfl", "nba"}
 
 # `site.web.api`, NOT `site.api`: the latter is walled from this box and 403s every time.
 # This pointed at the walled host and so `_mlb` raised on every call since it was written,
@@ -43,9 +43,7 @@ def for_matchup(league, ab_a, ab_b, season=None):
         if league == "nfl":
             return _nfl(ab_a, ab_b, season)
         if league == "nba":
-            # Held. The one NBA line depends on the division alignment, which is hand-entered and has no published
-            # source, so it is not shipped. _nba stays here, ready for when a published division source exists.
-            return []
+            return _nba(ab_a, ab_b, season)
     except Exception as e:
         # Still fail-soft: a story without stakes beats no story. But it is no longer
         # SILENT. The whole point of this module is that stories were starving without it,
