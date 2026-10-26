@@ -124,6 +124,29 @@ def _nfl_standings_for_game(game_id):
     return table or {"season": season, "teams": []}
 
 
+def _nba_standings_for_season(season):
+    """The NBA standings for a season, read from our schedule (no ESPN request). Raises NBAStandingsError when the
+    table cannot be trusted, which the caller treats as no records."""
+    import nba_standings_store as _nbas
+    with closing(_db()) as con:
+        table = _nbas.read_standings(con, season=season)
+    return table or {"season": season, "teams": []}
+
+
+def _nba_finals_since(con, generated_at):
+    """True when a regular-season NBA final reached our schedule after the cached story was written. The NBA standings,
+    and the stakes built on them, change only when a final lands, so a story written after the last final was written
+    from the same facts and needs no ESPN request. An unreadable generated_at counts as changed."""
+    from nba_standings_store import NOT_KNOCKOUT_SQL
+    row = con.execute("SELECT MAX(ingested_at) FROM nba_schedule WHERE season_type='REG' AND status=3 "
+                      f"AND {NOT_KNOCKOUT_SQL}").fetchone()
+    last = _parse_instant(row[0]) if row and row[0] else None
+    if last is None:
+        return False
+    written = _parse_instant(generated_at)
+    return written is None or last > written
+
+
 def _game_start_instant(lg: str, game_id: str):
     """The game's own UTC instant, for callers that did not pass start_time.
 
@@ -337,6 +360,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 if lg == "nfl" and _nfl_stakes_now(con, game_id) == []:
                     # Nothing new since the story was written: no stakes are certain, the form is already in it.
                     return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
+                if lg == "nba" and not _nba_finals_since(con, cached["generated_at"]):
+                    # No regular-season final has landed since this story was written, so the standings it was
+                    # written from still stand. Nothing new to say, and no ESPN request.
+                    return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
 
     try:
         gr = espn.game_result(lg, game_id)
@@ -379,6 +406,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     try:
         if lg == "nfl":
             standings = _nfl_standings_for_game(game_id)
+        elif lg == "nba":
+            standings = _nba_standings_for_season(game_season)
         else:
             standings = espn.team_strength_standings(lg)
         standings_season = standings.get("season")

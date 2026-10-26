@@ -73,10 +73,14 @@ def harness(tmp_path, monkeypatch):
         "lastFiveGames": [{"team": {"displayName": "Miami Heat"},
                            "events": [{"gameResult": "W", "score": "110-100", "gameDate": "2026-04-12T23:00Z",
                                        "opponent": {"abbreviation": "ORL"}}]}]})
-    monkeypatch.setattr(espn, "team_strength_standings", lambda lg, season=None: {
-        "season": seen.get("standings_season", 2026),
-        "teams": [{"abbrev": "MIA", "name": "Miami Heat", "wins": 37, "losses": 45, "win_pct": 0.451,
-                   "streak": "W1", "last10": "5-5", "differential": -1.2}]})
+    def table(*args, **kwargs):
+        return {"season": seen.get("standings_season", 2026),
+                "teams": [{"abbrev": "MIA", "name": "Miami Heat", "wins": 37, "losses": 45, "win_pct": 0.451,
+                           "streak": "W1", "last10": "5-5", "differential": -1.2}]}
+
+    # NBA standings come from our schedule now, so the table is served there; ESPN stays stubbed for the other leagues.
+    monkeypatch.setattr(espn, "team_strength_standings", table)
+    monkeypatch.setattr(cs, "_nba_standings_for_season", lambda season: table())
     monkeypatch.setattr(stakes, "for_matchup",
                         lambda *a: seen.__setitem__("stakes", seen["stakes"] + 1) or ["race line"])
     return path, seen
@@ -119,10 +123,9 @@ def test_preseason_grounding_drops_last_season_but_keeps_current_form(harness, m
 
 
 def test_rolled_over_table_of_zeros_is_no_record(harness, monkeypatch):
-    import espn_client as espn
     path, seen = harness
     seen["standings_season"] = 2027
-    monkeypatch.setattr(espn, "team_strength_standings", lambda lg, season=None: {
+    monkeypatch.setattr(cs, "_nba_standings_for_season", lambda season: {
         "season": 2027, "teams": [{"abbrev": ab, "name": ab, "wins": 0, "losses": 0, "win_pct": 0}
                                   for ab in ("ATL", "BOS", "MIA", "TOR")]})
     out = _gen(_soon())

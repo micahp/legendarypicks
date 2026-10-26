@@ -12,6 +12,7 @@ import warnings
 from contextlib import closing
 
 import espn_client as espn
+import nba_standings_store
 import team_codes
 
 # Leagues with a stakes model. generate_game_story uses this to decide whether a cached
@@ -41,6 +42,8 @@ def for_matchup(league, ab_a, ab_b, season=None):
             return _mlb(ab_a, ab_b)
         if league == "nfl":
             return _nfl(ab_a, ab_b, season)
+        if league == "nba":
+            return _nba(ab_a, ab_b, season)
     except Exception as e:
         # Still fail-soft: a story without stakes beats no story. But it is no longer
         # SILENT. The whole point of this module is that stories were starving without it,
@@ -201,3 +204,68 @@ def _nfl_stake(team, teams, lo, hi):
     if len(ahead) >= 3:
         return f"{name} are eliminated from the playoffs."
     return f"{name} can no longer win the {div}."
+
+
+# ── NBA ──────────────────────────────────────────────────────────────────────────────────
+# Certain facts only, from the regular-season schedule through nba_standings_store. Six clubs per conference go straight
+# to the playoffs, seven to ten play in, and eleven and below are out. One fact is stated, and it needs no seeding rule,
+# which the sources disagree on: a club that cannot win its division is not a division winner under any rule, so it is
+# seeded by record, and a division winner only ever moves up. So a club with ten conference clubs certain to finish ahead
+# of it, and no division title left, is out of both the playoffs and the play-in.
+
+def _nba(ab_a, ab_b, season):
+    if season is None:
+        return []
+    from _core import _db
+    with closing(_db()) as con:
+        table = nba_standings_store.read_standings(con, season=season)
+        games = [dict(r) for r in con.execute(
+            "SELECT home_team, away_team, home_score, away_score, game_date FROM nba_schedule "
+            f"WHERE season=? AND season_type='REG' AND {nba_standings_store.NOT_KNOCKOUT_SQL}",
+            (season,)).fetchall()]
+    if table is None:
+        return []
+    # The same gate as NFL: a past game with no score means the schedule is behind, and every "games left" count is wrong.
+    today = str(espn._ny_date(dt.datetime.now(dt.timezone.utc)))
+    behind = [g for g in games if not _scored(g) and g["game_date"] < today]
+    if behind:
+        warnings.warn(f"stakes: nba {season} schedule has {len(behind)} past game(s) with no score, "
+                      f"no NBA stakes this pass", stacklevel=2)
+        return []
+    teams = nba_standings_store.TEAMS
+    lo, hi = _nba_bounds(games, teams)
+    lines = (_nba_stake(team_codes.normalize("nba", ab), teams, lo, hi) for ab in (ab_a, ab_b))
+    return [line for line in lines if line]
+
+
+def _scored(game):
+    return game["home_score"] is not None and game["away_score"] is not None
+
+
+def _nba_bounds(games, teams):
+    """-> (lo, hi): per club, the wins it already has and the most it can still reach. A win is one point; an
+    unplayed game is worth up to one. NBA games cannot tie, and read_standings has already refused any that did."""
+    lo = {t: 0 for t in teams}
+    hi = {t: 0 for t in teams}
+    for g in games:
+        if not _scored(g):
+            for team in (g["home_team"], g["away_team"]):
+                hi[team] += 1
+            continue
+        winner = g["home_team"] if g["home_score"] > g["away_score"] else g["away_team"]
+        lo[winner] += 1
+        hi[winner] += 1
+    return lo, hi
+
+
+def _nba_stake(team, teams, lo, hi):
+    """-> one certain stake line for `team`, or None while the standings leave it open."""
+    me = teams[team]
+    rivals = [t for t in teams if t != team and teams[t]["division"] == me["division"]]
+    if not any(lo[r] > hi[team] for r in rivals):
+        return None  # still able to win the division, so a division-seeding rule could still lift it
+    ahead = [o for o in teams
+             if o != team and teams[o]["conference"] == me["conference"] and lo[o] > hi[team]]
+    if len(ahead) >= 10:
+        return f"{me['name']} are eliminated from the playoffs and the play-in."
+    return None
