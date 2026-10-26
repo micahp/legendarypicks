@@ -211,7 +211,7 @@ class Reference:
     """
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
-                 try_policy=None):
+                 try_policy=None, contextual_sampler=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         self.kicks = kicks
@@ -221,6 +221,8 @@ class Reference:
         # None keeps the published unconditional share. A try_policy.TryPolicy conditions the two-point decision on the
         # situation.
         self.try_policy = try_policy
+        self.contextual_sampler = contextual_sampler
+        self.contextual_pool_manifest = {}
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
@@ -823,7 +825,8 @@ class _Game:
                          or self.ref.kicks.get('field_goal_outcomes') else None)
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
-                                      self.simulation_id, special_teams=special_teams, partial=attempt)
+                                      self.simulation_id, special_teams=special_teams, partial=attempt,
+                                      sampling_policy=self.ref.contextual_sampler)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],

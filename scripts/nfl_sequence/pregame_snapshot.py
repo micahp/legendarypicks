@@ -66,6 +66,40 @@ def reseal(snapshot: dict) -> dict:
     return snapshot
 
 
+def load_frozen_snapshot(path: str) -> dict:
+    """Load a hash-verified snapshot file or game payload containing one."""
+    try:
+        payload = json.loads(Path(path).read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f'cannot read frozen snapshot JSON: {exc}') from exc
+    snapshot = payload.get('pregame_snapshot', payload) if isinstance(payload, dict) else None
+    if not isinstance(snapshot, dict) or snapshot.get('schema') != SCHEMA:
+        raise ValueError('frozen input must contain a supported pregame snapshot')
+    expected = snapshot.get('snapshot_sha256')
+    body = {key: value for key, value in snapshot.items() if key != 'snapshot_sha256'}
+    if not isinstance(expected, str) or expected != _canonical_hash(body):
+        raise ValueError('frozen pregame snapshot hash does not match its content')
+    schedule = snapshot.get('schedule')
+    required = ('game_id', 'season', 'week', 'game_type', 'home_team', 'away_team', 'scheduled_kickoff_utc')
+    if not isinstance(schedule, dict) or any(schedule.get(key) is None for key in required):
+        raise ValueError('frozen pregame snapshot has incomplete game identity')
+    if not isinstance(snapshot.get('model_reference'), dict):
+        raise ValueError('frozen pregame snapshot has no model reference block')
+    rosters = snapshot.get('rosters')
+    if not isinstance(rosters, dict):
+        raise ValueError('frozen pregame snapshot has no roster block')
+    for side in ('home', 'away'):
+        roster = rosters.get(side)
+        if (not isinstance(roster, dict) or roster.get('team') != schedule[f'{side}_team']
+                or not isinstance(roster.get('players'), list)):
+            raise ValueError(f'frozen pregame snapshot has an invalid {side} roster')
+    cutoff = parse_as_of(snapshot.get('as_of'))
+    kickoff = schedule.get('scheduled_kickoff_utc')
+    if kickoff and cutoff >= parse_as_of(kickoff):
+        raise ValueError('frozen pregame snapshot cutoff is not before scheduled kickoff')
+    return snapshot
+
+
 def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenance_path: str) -> dict:
     """Replace partial rosters with the hash-pinned full depth chart, including backups and starter flags."""
     raw = Path(roster_path).read_bytes()

@@ -6,7 +6,9 @@ The generator is driven by a fake pool that always returns one observed play, so
 and the derived clock runoff. These tests cover transition legality, not the football distribution.
 """
 import json
+import sqlite3
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -40,6 +42,20 @@ def start(quarter, clock, yl=75, down=1, togo=10, dir_=1):
 
 
 class QuarterTransitions(unittest.TestCase):
+    def test_contextual_sampler_receives_the_current_offense_and_defense(self):
+        class Sampler:
+            def __init__(self):
+                self.seen = None
+
+            def sample(self, rng, cell, offense, defense):
+                self.seen = (offense, defense)
+                return cell[0]
+
+        sampler = Sampler()
+        e1.simulate(start(4, 10), 1, FakePool(('run', 4, 10, None)), 'e1-context-sampler',
+                    sampling_policy=sampler)
+        self.assertEqual(sampler.seen, ('OFF', 'DEF'))
+
     def test_q1_expiry_continues_the_series_without_a_kickoff(self):
         # The first run outlasts the 100 seconds left, so Q1 expires on it. The drive goes on in Q2 and ends on a punt.
         pool = FakePool(('run', 4, 300, None), ('punt', 0, 10, 22))
@@ -354,6 +370,28 @@ class Vocabulary(unittest.TestCase):
                 [f"{record['simulation_id']}:{i}" for i in range(1, len(record['plays']) + 1)],
                 path.name,
             )
+
+
+class HistoricalPoolCutoff(unittest.TestCase):
+    def test_dynamic_pool_includes_prior_weeks_but_excludes_target_week_and_later(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / 'pbp.db'
+            con = sqlite3.connect(db)
+            con.execute('CREATE TABLE nfl_pbp (' + ', '.join(f'"{name}"' for name in e1.COLUMNS) + ')')
+            for season, week in ((2022, 1), (2025, 18), (2026, 1), (2026, 2), (2027, 1)):
+                row = {name: None for name in e1.COLUMNS}
+                row.update({'game_id': f'{season}_{week}_TEST', 'play_id': 1, 'season': season, 'week': week,
+                            'qtr': 1, 'game_seconds_remaining': 800})
+                con.execute('INSERT INTO nfl_pbp VALUES (' + ','.join('?' * len(e1.COLUMNS)) + ')',
+                            [row[name] for name in e1.COLUMNS])
+            con.commit()
+            con.close()
+
+            pinned = e1.load(str(db))
+            dynamic = e1.load(str(db), eligible_before=(2026, 2))
+            self.assertEqual([r['game_id'] for r in pinned], ['2022_1_TEST', '2025_18_TEST'])
+            self.assertEqual([r['game_id'] for r in dynamic],
+                             ['2022_1_TEST', '2025_18_TEST', '2026_1_TEST'])
 
 
 if __name__ == '__main__':
