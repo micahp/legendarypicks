@@ -253,6 +253,10 @@ def _replay_examples(outcomes):
 def run_batch(args):
     snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc,
                                       args.kickoff_source_url)
+    if bool(args.roster_snapshot) != bool(args.roster_provenance):
+        raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
+    if args.roster_snapshot:
+        pregame_snapshot.apply_starters_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
     ref, excluded_kickoffs = er.load(args.db)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     pregame_snapshot.reseal(snapshot)
@@ -355,6 +359,8 @@ def main(argv=None):
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
+    ap.add_argument('--roster-snapshot', help='optional pinned full-starter JSON from build_nfl_starters_snapshot.py')
+    ap.add_argument('--roster-provenance', help='source and checksum manifest for --roster-snapshot')
     ap.add_argument('--home-market-margin', type=float,
                     help='optional home-team expected-margin line; positive means the home team is favored')
     ap.add_argument('--market-total', type=float, help='optional over/under total line')
