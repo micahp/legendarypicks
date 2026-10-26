@@ -11,6 +11,7 @@ import hashlib
 import json
 import sqlite3
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
@@ -45,6 +46,93 @@ def reseal(snapshot: dict) -> dict:
     snapshot.pop('snapshot_sha256', None)
     snapshot['snapshot_sha256'] = _canonical_hash(snapshot)
     return snapshot
+
+
+def apply_starters_snapshot(snapshot: dict, starters_path: str, provenance_path: str) -> dict:
+    """Replace the partial DB depth chart with a hash-pinned full starting-unit snapshot."""
+    raw = Path(starters_path).read_bytes()
+    starter_sha = hashlib.sha256(raw).hexdigest()
+    starters = json.loads(raw)
+    provenance = json.loads(Path(provenance_path).read_text())
+    output = provenance.get('output', {})
+    if output.get('file') != Path(starters_path).name or output.get('sha256') != starter_sha:
+        raise ValueError('starter snapshot file does not match its provenance pin')
+    if starters.get('schema') != 'lp-nfl-starters-snapshot-1':
+        raise ValueError('unsupported full starter snapshot schema')
+    if provenance.get('schema') != 'lp-nfl-starter-roster-provenance-1':
+        raise ValueError('unsupported starter roster provenance schema')
+    builder = provenance.get('builder', {})
+    if (builder.get('repository') != 'micahp/legendarypicks'
+            or builder.get('branch') != 'feat/nfl-roster-full-depth-2026-10-26'
+            or builder.get('commit') != '4ee931a4379567978d87491b3c0e4ae55055b8b9'
+            or builder.get('file') != 'backend/build_nfl_starters_snapshot.py'
+            or builder.get('file_sha256') != '7fe1923608c5bd72396fe3dff52020a9df9697d97935959a8f32cd727060738e'):
+        raise ValueError('starter snapshot was not built by the pinned roster builder')
+
+    cutoff = _utc(snapshot['as_of'], 'snapshot as_of')
+    source_artifacts = provenance.get('source_artifacts', [])
+    if len(source_artifacts) != 2:
+        raise ValueError('starter provenance must pin both nflverse input artifacts')
+    for artifact in source_artifacts:
+        if not artifact.get('sha256') or len(artifact['sha256']) != 64:
+            raise ValueError('starter source artifact is missing a SHA-256 pin')
+        if _utc(artifact.get('last_modified_utc'), 'source last_modified_utc') > cutoff:
+            raise ValueError('starter source artifact was published after the frozen pregame cutoff')
+
+    sides = {'away': snapshot['schedule']['away_team'], 'home': snapshot['schedule']['home_team']}
+    frozen_rosters = {}
+    for side, team in sides.items():
+        entry = starters.get('rosters', {}).get(side)
+        if not entry or entry.get('team') != team:
+            raise ValueError(f'{side} starter snapshot team does not match the frozen schedule')
+        if _utc(entry.get('depth_chart_dt'), f'{team} depth_chart_dt') > cutoff:
+            raise ValueError(f'{team} depth chart was published after the frozen pregame cutoff')
+        if entry.get('jersey_week') != snapshot['schedule']['week']:
+            raise ValueError(f'{team} jersey numbers are not pinned to the frozen game week')
+        if entry.get('missing'):
+            raise ValueError(f'{team} full starter snapshot contains unfilled slots')
+        players = entry.get('players', [])
+        if len(players) != 28:
+            raise ValueError(f'{team} full starter snapshot must contain 28 players')
+        role_keys = set()
+        player_identity = {}
+        for player in players:
+            gsis_id = player.get('gsis_id')
+            player_id = player.get('player_id')
+            role_key = (player.get('pos_abb'), player.get('pos_rank'))
+            if not gsis_id:
+                raise ValueError(f'{team} starter snapshot has a missing GSIS id')
+            if player_id is None:
+                raise ValueError(f'{team} starter snapshot has a missing LP player id')
+            if player.get('jersey_number') is None:
+                raise ValueError(f'{team} starter snapshot has a missing jersey number')
+            if not player.get('pos_abb') or not player.get('pos_rank'):
+                raise ValueError(f'{team} starter snapshot has an incomplete position')
+            if role_key in role_keys:
+                raise ValueError(f'{team} starter snapshot has a duplicate starting role')
+            identity = (player_id, player.get('player_name'), player['jersey_number'])
+            if gsis_id in player_identity and player_identity[gsis_id] != identity:
+                raise ValueError(f'{team} starter snapshot has conflicting rows for one GSIS id')
+            role_keys.add(role_key)
+            player_identity[gsis_id] = identity
+        frozen_rosters[side] = {
+            'team': team,
+            'snapshot_at': entry['depth_chart_dt'],
+            'source': starters['source'],
+            'depth_chart_dt': entry['depth_chart_dt'],
+            'defense_group': entry['defense_group'],
+            'jersey_week': entry['jersey_week'],
+            'missing': [],
+            'players': players,
+        }
+
+    snapshot['rosters'] = frozen_rosters
+    snapshot['roster_snapshot_id'] = f"nflverse-starting-units:{_canonical_hash(frozen_rosters)}"
+    snapshot['roster_snapshot_source'] = {
+        'provenance': provenance,
+        'starter_snapshot_sha256': starter_sha,
+    }
+    return reseal(snapshot)
 
 
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
