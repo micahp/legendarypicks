@@ -260,6 +260,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, partial=None)
                         'yards_gained': None if event in KICK_EVENTS else yards,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
+                        'turnover_on_downs': flags['turnover_on_downs'],
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
