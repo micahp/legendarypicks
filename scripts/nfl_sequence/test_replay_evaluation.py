@@ -18,6 +18,7 @@ def batch(mode, home, away, p_home, *, valid=100, requested=100, fairness='fair'
         'baseline_v1': {'source': 'immutable_locked_v1_projection', 'status': 'available',
                         'comparable_at_snapshot_cutoff': True,
                         'schedule_provenance': {'verified': True},
+                        'snapshot_cutoff_offset_seconds': -60,
                         'projected_home_points': 20.0, 'projected_away_points': 17.0,
                         'home_win_probability': 0.6, 'run_id': 'v1-lock', 'locked_at': '2026-10-01T00:00:00Z'},
         'summary': {
@@ -47,6 +48,18 @@ class ReplayEvaluation(unittest.TestCase):
         baseline = batch('unconditioned', 20, 17, .6)['baseline_v1']
         self.assertEqual(evaluation.forecast_from_v1(baseline)['home_points'], 20.0)
         baseline['status'] = 'exploratory_later_lock'
+        self.assertIsNone(evaluation.forecast_from_v1(baseline))
+
+    def test_unverified_schedule_keeps_only_a_pre_cutoff_v1_lock_in_exploratory_metrics(self):
+        baseline = batch('unconditioned', 20, 17, .6)['baseline_v1']
+        baseline.update({'status': 'exploratory_schedule_unverified',
+                         'comparable_at_snapshot_cutoff': False,
+                         'snapshot_cutoff_offset_seconds': -60,
+                         'schedule_provenance': {'verified': False}})
+        forecast = evaluation.forecast_from_v1(baseline)
+        self.assertEqual(forecast['home_points'], 20.0)
+        self.assertFalse(forecast['cutoff_comparable'])
+        baseline['snapshot_cutoff_offset_seconds'] = 1
         self.assertIsNone(evaluation.forecast_from_v1(baseline))
 
     def test_replay_record_will_not_attach_actuals_before_forecasts_freeze(self):

@@ -72,10 +72,16 @@ def forecast_from_batch(payload: dict) -> dict | None:
 
 
 def forecast_from_v1(baseline: dict) -> dict | None:
-    """Extract v1 only when an immutable projection is actually available by the snapshot cutoff."""
-    if (baseline.get('source') != 'immutable_locked_v1_projection'
-            or baseline.get('status') != 'available'
-            or baseline.get('comparable_at_snapshot_cutoff') is not True):
+    """Extract an immutable lock at/before cutoff; schedule-uncertain locks remain exploratory."""
+    if baseline.get('source') != 'immutable_locked_v1_projection':
+        return None
+    status = baseline.get('status')
+    cutoff_comparable = status == 'available' and baseline.get('comparable_at_snapshot_cutoff') is True
+    if status == 'exploratory_schedule_unverified':
+        offset = baseline.get('snapshot_cutoff_offset_seconds')
+        if offset is None or _number(offset, 'v1 snapshot cutoff offset') > 0:
+            return None
+    elif not cutoff_comparable:
         return None
     return {
         'home_points': _number(baseline.get('projected_home_points'), 'v1 projected home points'),
@@ -83,6 +89,7 @@ def forecast_from_v1(baseline: dict) -> dict | None:
         'home_win_probability': _number(baseline.get('home_win_probability'), 'v1 home-win probability',
                                         probability=True),
         'run_id': baseline.get('run_id'), 'locked_at': baseline.get('locked_at'),
+        'cutoff_comparable': cutoff_comparable,
     }
 
 
@@ -289,9 +296,11 @@ def _model_report(group, model, resamples, seed):
               for row, forecast in scored]
     metric = _metrics(shaped)
     metric['bootstrap_ci95_by_game'] = _bootstrap_ci(shaped, resamples, seed)
+    has_seed_coverage = any('requested_games' in forecast or 'valid_games' in forecast
+                            for _, forecast in available)
     valid = sum(int(forecast.get('valid_games', 0)) for _, forecast in available)
     requested = sum(int(forecast.get('requested_games', 0)) for _, forecast in available)
-    coverage_ci = _wilson(valid, requested)
+    coverage_ci = _wilson(valid, requested) if has_seed_coverage else None
     selection = []
     for _, forecast in available:
         valid_home = forecast.get('home_points')
@@ -309,10 +318,13 @@ def _model_report(group, model, resamples, seed):
         'no_valid_score_forecast_game_ids': [row['game_id'] for row, forecast in available
                                              if forecast.get('home_points') is None
                                              or forecast.get('away_points') is None],
-        'valid_seed_coverage': {'valid': valid, 'requested': requested, 'rate': valid / requested if requested else None,
-                                'wilson_ci95': coverage_ci},
-        'blockers': {'before_regulation_end': sum(int(f.get('blocked_before_regulation_end', 0)) for _, f in available),
-                     'regulation_ties': sum(int(f.get('tied_at_regulation_end', 0)) for _, f in available)},
+        'valid_seed_coverage': ({'valid': valid, 'requested': requested,
+                                 'rate': valid / requested if requested else None,
+                                 'wilson_ci95': coverage_ci} if has_seed_coverage else None),
+        'blockers': ({'before_regulation_end': sum(int(f.get('blocked_before_regulation_end', 0))
+                                                    for _, f in available),
+                      'regulation_ties': sum(int(f.get('tied_at_regulation_end', 0))
+                                             for _, f in available)} if has_seed_coverage else None),
         'valid_minus_regulation_end_means': ({
             key: round(sum(item[key] for item in selection) / len(selection), 6)
             for key in ('home', 'away', 'total')
