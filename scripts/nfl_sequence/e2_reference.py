@@ -17,6 +17,7 @@ import measure_kick_outcomes as mk  # noqa: E402
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
+OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -92,6 +93,11 @@ def _reference_fingerprint(reference):
         for sample in reference.safety_kick_pool:
             add(['safety-kick-sample', sample])
         add(['safety-kick-source-sha256', reference.safety_kick_sha256])
+    if reference.overtime_pool is not None:
+        # Absent table: the fingerprint and every seed's draws stay as they were before the overtime table existed.
+        for drive in reference.overtime_pool:
+            add(['overtime-drive', drive])
+        add(['overtime-source-sha256', reference.overtime_sha256])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
     summary = {
@@ -117,6 +123,9 @@ def _reference_fingerprint(reference):
         # Added only with the table: the summary is resealed into every snapshot, so an absent table must leave it unchanged.
         summary['safety_kick_samples'] = len(reference.safety_kick_pool)
         summary['safety_kick_source_sha256'] = reference.safety_kick_sha256
+    if reference.overtime_pool is not None:
+        summary['overtime_drive_samples'] = len(reference.overtime_pool)
+        summary['overtime_source_sha256'] = reference.overtime_sha256
     return summary
 
 
@@ -202,6 +211,33 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     return out
 
 
+def load_overtime_drive_pool(path=OVERTIME_DRIVES):
+    """Usable observed regular-season overtime drives (Rule 16): how each ended, the points each side scored on it, the clock
+    it used, and the other team's next start. Returns (pool, file sha256). The fixture is checked against its manifest before
+    any row is read; refused rows stay in the file for audit and are never drawn."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'overtime fixture checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != manifest['drive_count']:
+        raise ValueError(f'overtime fixture row count mismatch: {path}')
+    pool = []
+    for row in rows:
+        if row['status'] != 'usable':
+            continue
+        pool.append({'outcome': row['outcome'], 'duration': int(row['duration_seconds']),
+                     'points_offense': int(row['points_offense']), 'points_defense': int(row['points_defense']),
+                     'next_offense': row['next_offense'] or None,
+                     'next_yardline': int(row['next_start_yardline_100']) if row['next_start_yardline_100'] else None,
+                     'game_id': row['game_id'], 'drive': int(float(row['drive']))})
+    if len(pool) != manifest['usable_count']:
+        raise ValueError('overtime usable rows disagree with the manifest')
+    return pool, source_hash
+
+
 def load_safety_kick_pool(path=SAFETY_KICKS):
     """Usable observed safety free kicks: the receiving team's first snap and the clock it took. Returns (pool, file sha256).
 
@@ -268,7 +304,7 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
-def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True):
+def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -300,10 +336,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                                                              blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
     safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
+    overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
                              load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
-                             safety_kick_pool=safety_pool)
+                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool)
     reference.safety_kick_sha256 = safety_sha
+    reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
