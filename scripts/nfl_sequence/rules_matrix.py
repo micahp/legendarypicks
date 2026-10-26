@@ -376,6 +376,9 @@ def _clock(record):
 
 def _continuity(record):
     drives = record['drives']
+    if not drives or not record['kickoffs']:
+        # A game blocked on its first drive has an opening kickoff and no completed drive: there is no chain to check.
+        return BLOCKED, 'the game has no completed drive to chain from, so the continuity check cannot apply'
     if drives[0]['offense_team'] != record['kickoffs'][0]['receiving_team']:
         return FAIL, 'the first drive does not start with the Q1 receiver'
     halftime_after = {b['drive_index'] for b in record['boundaries'] if b['kind'] == 'halftime'}
