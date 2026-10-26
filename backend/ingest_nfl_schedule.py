@@ -64,6 +64,7 @@ import argparse
 import csv
 import hashlib
 import io
+import json
 import os
 import sqlite3
 import sys
@@ -154,7 +155,22 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     con.execute(
         "CREATE TABLE IF NOT EXISTS nfl_schedule (\n            {},\n"
         "            source TEXT,\n"
-        "            ingested_at TEXT DEFAULT (datetime('now'))\n        )".format(cols))
+        "            ingested_at TEXT DEFAULT (datetime('now')),\n"
+        "            first_observed TEXT\n        )".format(cols))
+    # One row per game per observed change. nfl_schedule above is the latest
+    # version only; this table is what a snapshot is rebuilt from as of a time.
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS nfl_schedule_versions (\n            {},\n"
+        "            observed_at TEXT NOT NULL,\n"
+        "            content_sha256 TEXT NOT NULL,\n"
+        "            source TEXT,\n"
+        "            PRIMARY KEY (game_id, observed_at)\n        )".format(
+            ",\n            ".join("{} {}".format(name, kind) for name, kind in COLUMNS)))
+    existing_schedule = {r[1] for r in con.execute("PRAGMA table_info(nfl_schedule)")}
+    if "first_observed" not in existing_schedule:
+        # Rows that predate this column have no known first sighting. They stay
+        # NULL: ingested_at is the last refresh, so it cannot stand in for one.
+        con.execute("ALTER TABLE nfl_schedule ADD COLUMN first_observed TEXT")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_schedule_season_week "
                 "ON nfl_schedule(season, week)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nfl_schedule_gameday "
@@ -205,9 +221,37 @@ def read_games(path: str, seasons: set[int] | None):
     return rows
 
 
+def _content_sha256(row: dict, names: list[str]) -> str:
+    """Digest of the schedule fields, so a refresh that changes nothing adds no version."""
+    return hashlib.sha256(
+        json.dumps([row[n] for n in names], separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def version_at(con: sqlite3.Connection, game_id: str, as_of: str) -> dict | None:
+    """The schedule row as it stood at ``as_of`` (UTC, 'YYYY-MM-DD HH:MM:SS').
+
+    None when no version had been observed by then. The caller must refuse in
+    that case, not fall back to the latest row: the latest row is later than
+    ``as_of`` by definition whenever it has changed since.
+    """
+    cur = con.execute(
+        "SELECT * FROM nfl_schedule_versions WHERE game_id=? AND observed_at<=? "
+        "ORDER BY observed_at DESC LIMIT 1", (game_id, as_of))
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return dict(zip([d[0] for d in cur.description], row))
+
+
 def write(con: sqlite3.Connection, rows: list[dict],
           schedule_only: bool = False) -> tuple[int, int]:
     """Write nfl_schedule, and team_game_results unless schedule_only.
+
+    Each run stamps one ``observed`` instant. A game new to nfl_schedule gets it
+    as first_observed, every run sets it as ingested_at (the last refresh), and a
+    game whose schedule fields differ from its latest version gets a new row in
+    nfl_schedule_versions. first_observed is never updated after insert.
 
     schedule_only exists for seasons another ingest already owns in
     team_game_results. 2025 is the case: 544 rows are there under ESPN game ids
@@ -218,14 +262,26 @@ def write(con: sqlite3.Connection, rows: list[dict],
     takes the copy safely.
     """
     names = [name for name, _ in COLUMNS]
-    placeholders = ",".join("?" * (len(names) + 1))
+    observed = con.execute("SELECT datetime('now')").fetchone()[0]
+    latest = dict(con.execute(
+        "SELECT game_id, content_sha256 FROM nfl_schedule_versions AS v "
+        "WHERE observed_at = (SELECT MAX(observed_at) FROM nfl_schedule_versions "
+        "WHERE game_id = v.game_id)").fetchall())
+    digests = [_content_sha256(r, names) for r in rows]
+    changed = [(r, d) for r, d in zip(rows, digests) if latest.get(r["game_id"]) != d]
+    con.executemany(
+        "INSERT INTO nfl_schedule_versions (observed_at,content_sha256,{},source) "
+        "VALUES ({})".format(",".join(names), ",".join("?" * (len(names) + 3))),
+        [[observed, d] + [r[n] for n in names] + [SOURCE] for r, d in changed])
+
+    placeholders = ",".join("?" * (len(names) + 3))
     updates = ",".join(
         "{0}=excluded.{0}".format(n) for n in names if n != "game_id")
     con.executemany(
-        "INSERT INTO nfl_schedule ({},source) VALUES ({}) "
+        "INSERT INTO nfl_schedule ({},source,ingested_at,first_observed) VALUES ({}) "
         "ON CONFLICT(game_id) DO UPDATE SET {},source=excluded.source,"
-        "ingested_at=datetime('now')".format(",".join(names), placeholders, updates),
-        [[r[n] for n in names] + [SOURCE] for r in rows])
+        "ingested_at=excluded.ingested_at".format(",".join(names), placeholders, updates),
+        [[r[n] for n in names] + [SOURCE, observed, observed] for r in rows])
 
     # Reciprocal per-team rows, so "who does this team play in week N" is one
     # query and future fixtures sit in the same table as finished ones.
