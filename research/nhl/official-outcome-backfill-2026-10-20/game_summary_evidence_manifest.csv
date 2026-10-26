@@ -1,0 +1,3 @@
+game_id,source_url,retrieved_at_utc,http_status,content_type,bytes,sha256,cache_file,confirmed_goalie,confirmed_goalie_line,normalized_report_sha256
+2022020158,https://www.nhl.com/scores/htmlreports/20222023/GS020158.HTM,2026-10-21T02:47:12+00:00,200,text/html; charset=UTF-8,43843,cb8343d126dfd66fbf4ea7c673522acf8c175ee5bc118bffc120661872f72865,2022020158.html,STOLARZ,5-44,ae740526592b6c03f1536b474ecf732af8678b1fc1ea915f9de62c7669ad111f
+2022020276,https://www.nhl.com/scores/htmlreports/20222023/GS020276.HTM,2026-10-21T02:47:13+00:00,200,text/html; charset=UTF-8,37080,4c4861678187f65c70f9fe34798063c30fdb7e3eab916dcfd4fa70312a0c66ab,2022020276.html,LUUKKONEN,5-23,81117fe1f63c8033995b23a64ed2897e540276cd68827b97c0e9584caff563c3
