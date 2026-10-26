@@ -121,4 +121,3 @@ def test_source_hash_check_fails_loudly_on_changed_input(tmp_path):
     changed.write_text("different\n", encoding="utf-8")
     with pytest.raises(ValueError, match="SOURCE_HASH_MISMATCH"):
         detail.pinned_hash("canonical_frame_sha256", changed)
-
