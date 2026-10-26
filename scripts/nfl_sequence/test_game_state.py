@@ -197,8 +197,8 @@ class BlockedKickIntegration(unittest.TestCase):
             'kick_type': kick_type, 'game_id': '2025_01_TEST', 'play_id': 50,
             'source_file': 'play_by_play_2025.parquet', 'source_sha256': 'a' * 64,
             'classification_status': 'classified_recovery', 'posteam': 'KC', 'defteam': 'SEA',
-            'recovery_role': 'receiving_team', 'recovery_spot_yardline_100': 55,
-            'return_endpoint_yardline_100': 50, 'return_yards': 5, 'crossed_line': 0,
+            'recovery_role': 'receiving_team', 'recovery_yards_from_los': 5,
+            'return_endpoint_yards_from_los': 0, 'return_yards': 5,
             'clock_runoff_seconds': 1,
         }
 
@@ -236,6 +236,18 @@ class BlockedKickIntegration(unittest.TestCase):
         self.assertEqual(record['stats']['team'][kicking_side]['blocked_field_goals'], 1)
         self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
         gs.validate_game(record)
+
+    def test_blocked_kick_at_period_expiry_stays_guarded_until_its_transition_is_supported(self):
+        from types import SimpleNamespace
+        import random
+
+        game = object.__new__(gs._Game)
+        game.ref = SimpleNamespace(blocked_kicks={'records': {'punt': [{
+            'classification_status': 'period_expired', 'clock_runoff_seconds': 0,
+        }]}})
+        blocker, outcome = game._sample_blocked_kick('punt', random.Random(0))
+        self.assertEqual(blocker, 'blocked_kick_outcome_unresolved:punt:period_expired')
+        self.assertIsNone(outcome)
 
 
 class KickoffPool(unittest.TestCase):

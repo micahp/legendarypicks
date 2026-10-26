@@ -778,7 +778,7 @@ class _Game:
             return 'blocked_kick_outcome_pool_missing', None
         sample = rng.choice(records)
         status = sample.get('classification_status')
-        supported = ('classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired')
+        supported = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety')
         if status not in supported:
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
         runoff = sample.get('clock_runoff_seconds')
@@ -1154,8 +1154,7 @@ def validate_game(record):
     snapshot = record.get('pregame_snapshot') or {}
     observed_reference = (snapshot.get('model_reference') or {}).get('observed_reference', {})
     pinned_blocked_source = observed_reference.get('blocked_kick_source_sha256')
-    supported_blocked_statuses = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety',
-                                  'period_expired'}
+    supported_blocked_statuses = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
     for drive in record.get('drives', []):
         for play in drive['plays']:
             event, outcome = play['event_type'], play['outcome']

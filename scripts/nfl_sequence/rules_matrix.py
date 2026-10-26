@@ -187,7 +187,7 @@ def _blocked_kicks(record):
     fixture_hash = observed.get('blocked_kick_source_sha256')
     input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
     found = 0
-    supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
+    supported = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
     for drive in record['drives']:
         for play in drive['plays']:
             event, out = play['event_type'], play['outcome']
@@ -227,14 +227,18 @@ def _blocked_kicks(record):
             if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
                 continue
             role = blocked.get('recovery_role')
-            if role == 'receiving_team' or blocked['classification_status'] == 'classified_dead_ball_award':
+            if role == 'receiving_team' or blocked['classification_status'] == 'classified_dead_ball_spot':
+                delta = (blocked.get('return_endpoint_yards_from_los') if role == 'receiving_team'
+                         else blocked.get('dead_ball_yards_from_los'))
+                expected_spot = 100 - before['yardline_100'] + delta if isinstance(delta, int) else None
                 if (after.get('offense_team') != before['defense_team'] or not out.get('turnover')
-                        or after.get('yardline_100') != blocked.get('return_endpoint_yardline_100')):
+                        or after.get('yardline_100') != expected_spot):
                     return FAIL, f'drive {drive["index"]} play {play["sequence"]}: receiving team has wrong possession or spot'
             elif role == 'kicking_team':
-                if blocked.get('crossed_line') not in (0, 1, False, True):
-                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: line-crossing classification is missing'
-                if blocked.get('crossed_line'):
+                recovery_delta = blocked.get('recovery_yards_from_los')
+                if not isinstance(recovery_delta, int):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: relative recovery spot is missing'
+                if recovery_delta > 0:
                     touched = blocked.get('receiving_team_touched_beyond_line')
                     if touched not in (0, 1, False, True):
                         return FAIL, f'drive {drive["index"]} play {play["sequence"]}: receiver touch beyond line is unknown'
@@ -242,10 +246,11 @@ def _blocked_kicks(record):
                     if after.get('offense_team') != want:
                         return FAIL, f'drive {drive["index"]} play {play["sequence"]}: beyond-line recovery possession is wrong'
                 else:
-                    endpoint = blocked.get('return_endpoint_yardline_100')
-                    if not isinstance(endpoint, int) or not 0 <= endpoint <= 100:
-                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: kicking-team return endpoint is missing'
-                    gained = before['yardline_100'] - endpoint
+                    endpoint_delta = blocked.get('return_endpoint_yards_from_los')
+                    endpoint = before['yardline_100'] - endpoint_delta if isinstance(endpoint_delta, int) else None
+                    if endpoint is None or not 0 <= endpoint <= 100:
+                        return FAIL, f'drive {drive["index"]} play {play["sequence"]}: relative kicking-team return endpoint is missing'
+                    gained = endpoint_delta
                     if gained >= before['yards_to_go']:
                         if after.get('offense_team') != before['offense_team'] or after.get('down') != 1:
                             return FAIL, f'drive {drive["index"]} play {play["sequence"]}: line-to-gain conversion is wrong'

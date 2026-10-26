@@ -82,7 +82,7 @@ def apply_blocked_kick(st, event, outcome):
     if event not in ('blocked_punt', 'blocked_field_goal'):
         raise ValueError(f'not a blocked-kick event: {event!r}')
     if not isinstance(outcome, dict) or outcome.get('classification_status') not in (
-            'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'):
+            'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'):
         raise ValueError('blocked kick needs a classified observed outcome')
     expected_type = 'punt' if event == 'blocked_punt' else 'field_goal'
     if outcome.get('kick_type') != expected_type:
@@ -104,20 +104,25 @@ def apply_blocked_kick(st, event, outcome):
         return None, 'safety', flags
 
     recovery_role = outcome.get('recovery_role')
-    endpoint = outcome.get('return_endpoint_yardline_100')
+    endpoint_delta = outcome.get('return_endpoint_yards_from_los')
     if recovery_role == 'receiving_team':
-        if not isinstance(endpoint, int) or not 1 <= endpoint <= 99:
-            raise ValueError('receiving-team recovery needs a field-of-play return endpoint')
+        if not isinstance(endpoint_delta, int):
+            raise ValueError('receiving-team recovery needs a kick-relative return endpoint')
+        endpoint = 100 - st['yl'] + endpoint_delta
+        if not 1 <= endpoint <= 99:
+            raise ValueError('receiving-team return endpoint projects outside the field of play')
         flags['turnover'] = True
         return {'offense': st['defense'], 'defense': st['offense'], 'down': 1,
                 'togo': min(10, endpoint), 'yl': endpoint}, 'turnover', flags
 
     if recovery_role == 'kicking_team':
-        recovery_spot = outcome.get('recovery_spot_yardline_100')
-        crossed_line = outcome.get('crossed_line')
-        if not isinstance(recovery_spot, int) or not 1 <= recovery_spot <= 99 or crossed_line not in (0, 1, False, True):
-            raise ValueError('kicking-team recovery needs a spot and a known line-crossing classification')
-        crossed_line = bool(crossed_line)
+        recovery_delta = outcome.get('recovery_yards_from_los')
+        if not isinstance(recovery_delta, int) or not isinstance(endpoint_delta, int):
+            raise ValueError('kicking-team recovery needs kick-relative recovery and return spots')
+        recovery_spot = st['yl'] - recovery_delta
+        if not 1 <= recovery_spot <= 99:
+            raise ValueError('kicking-team recovery projects outside the field of play')
+        crossed_line = recovery_delta > 0
         if crossed_line:
             touched_beyond_line = outcome.get('receiving_team_touched_beyond_line')
             if touched_beyond_line not in (0, 1, False, True):
@@ -132,11 +137,10 @@ def apply_blocked_kick(st, event, outcome):
             return {'offense': st['offense'], 'defense': st['defense'], 'down': 1,
                     'togo': min(10, recovery_spot), 'yl': recovery_spot}, None, flags
 
-        if recovery_spot < st['yl']:
-            raise ValueError('recovery marked behind the line is beyond the kicking team’s line of scrimmage')
-        if not isinstance(endpoint, int) or not 0 <= endpoint <= 100:
-            raise ValueError('kicking-team recovery needs the return endpoint')
-        gained = st['yl'] - endpoint
+        endpoint = st['yl'] - endpoint_delta
+        if not 0 <= endpoint <= 100:
+            raise ValueError('kicking-team return endpoint projects outside the field')
+        gained = endpoint_delta
         if endpoint == 0:
             flags['touchdown'] = True
             flags['scoring_team'] = st['offense']
@@ -158,9 +162,13 @@ def apply_blocked_kick(st, event, outcome):
         return {'offense': st['offense'], 'defense': st['defense'], 'down': st['down'] + 1,
                 'togo': st['togo'] - gained, 'yl': endpoint}, None, flags
 
-    if outcome.get('classification_status') == 'classified_dead_ball_award':
-        if outcome.get('possession_after_role') != 'receiving_team' or not isinstance(endpoint, int) or not 1 <= endpoint <= 99:
-            raise ValueError('dead-ball award needs the receiving team and its observed next spot')
+    if outcome.get('classification_status') == 'classified_dead_ball_spot':
+        dead_delta = outcome.get('dead_ball_yards_from_los')
+        if (outcome.get('possession_after_role') != 'receiving_team' or not isinstance(dead_delta, int)):
+            raise ValueError('described dead-ball spot needs receiving possession and a kick-relative spot')
+        endpoint = 100 - st['yl'] + dead_delta
+        if not 1 <= endpoint <= 99:
+            raise ValueError('described dead-ball spot projects outside the field of play')
         flags['turnover'] = True
         return {'offense': st['defense'], 'defense': st['offense'], 'down': 1,
                 'togo': min(10, endpoint), 'yl': endpoint}, 'turnover', flags

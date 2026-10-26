@@ -116,8 +116,8 @@ class BlockedKickChecks(unittest.TestCase):
                                              'source_file': 'play_by_play_2025.parquet', 'source_sha256': source_hash,
                                              'reference_fixture_sha256': source_hash,
                                              'game_id': '2025_01_TEST', 'play_id': 50, 'recovery_role': 'receiving_team',
-                                             'recovery_spot_yardline_100': 55, 'return_endpoint_yardline_100': 50,
-                                             'return_yards': 5, 'crossed_line': 0}},
+                                             'recovery_yards_from_los': 15,
+                                             'return_endpoint_yards_from_los': 10, 'return_yards': 5}},
             }]}],
         }
 
