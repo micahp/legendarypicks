@@ -5,7 +5,9 @@ shrunk toward the level above it, and the top level toward the league rate:
 
     p = (two_point_attempts + K * parent_rate) / (eligible_tries + K)
 
-The first candidate is margin_period_opening with K = 25. Its levels are the opening-drive flag, then the flag within the
+The leading research candidate is margin_period_opening with K = 1, chosen on the 2023 fold and confirmed on the 2024 and 2025
+folds. K = 25 is the predeclared comparison, kept for every report. Neither is a production default: the engine's unconditional
+share stays the default until a policy is adopted. The candidate's levels are the opening-drive flag, then the flag within the
 period (first half, Q3, Q4 above or at or below 5:00), then the exact post-touchdown margin within both. Opening drives only
 happen in the first half in this window, so a period cell with no opening-drive tries takes the flag's own rate, not the
 league's. A cell with no tries takes its parent's rate exactly. Only try selection is modelled here; the conversion-success
@@ -20,7 +22,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 FIXTURE = HERE.parents[1] / 'docs' / 'fixtures' / 'e2' / 'try_situation_2022_2025.csv'
 CANDIDATE = 'margin_period_opening'
-K = 25
+CANDIDATE_K = 1  # the leading research candidate
+PREDECLARED_K = 25  # the comparison declared before the historical evaluation
+K = CANDIDATE_K  # the default for research callers that do not name a K
 LEVELS = {
     'constant': [],
     'margin_period': [('period',), ('margin', 'period')],
