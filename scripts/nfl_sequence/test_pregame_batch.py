@@ -118,7 +118,8 @@ class BatchAggregation(unittest.TestCase):
             con.close()
 
             snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'home_team': 'A', 'away_team': 'B',
+                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
+                'home_team': 'A', 'away_team': 'B',
                 'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
             later = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(later['status'], 'exploratory_later_lock')
@@ -159,12 +160,42 @@ class BatchAggregation(unittest.TestCase):
             con.close()
 
             snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'home_team': 'A', 'away_team': 'B',
+                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
+                'home_team': 'A', 'away_team': 'B',
                 'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
             result = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(result['status'], 'available')
             self.assertEqual(result['run_id'], 'r-before')
             self.assertEqual(result['projected_home_points'], 21.0)
+
+    def test_hash_pinned_schedule_timestamp_allows_exploratory_later_lock_report_without_history_table(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / 'locks.db'
+            con = sqlite3.connect(db)
+            con.executescript('''
+                CREATE TABLE game_projections (run_id TEXT, model_version TEXT, proj_home REAL, proj_away REAL,
+                    proj_margin REAL, proj_total REAL, p_home_win REAL, locked_at TEXT, home TEXT, away TEXT,
+                    season INTEGER, week INTEGER, league TEXT, game_id TEXT, locked INTEGER);
+                CREATE TABLE model_runs (run_id TEXT, status TEXT, model TEXT, started_at TEXT, params_json TEXT);
+            ''')
+            con.execute('INSERT INTO game_projections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                        ('r1', 'nfl-v1 frozen', 21.0, 17.0, 4.0, 38.0, 0.61,
+                         '2026-10-11T12:00:00Z', 'A', 'B', 2026, 5, 'nfl', '2026_05_A_B', 1))
+            con.execute('INSERT INTO model_runs VALUES (?, ?, ?, ?, ?)',
+                        ('r1', 'ok', 'nfl-ratings-v1', '2026-10-11T12:00:00Z', '{}'))
+            con.commit()
+            con.close()
+
+            snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
+                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
+                'home_team': 'A', 'away_team': 'B', 'location': 'Home', 'gameday': '2026-10-11',
+                'ingested_at': '2026-10-10 10:00:00', 'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
+            result = batch._baseline_v1(str(db), snapshot)
+            self.assertEqual(result['status'], 'exploratory_later_lock')
+            self.assertEqual(result['run_id'], 'r1')
+            self.assertFalse(result['comparable_at_snapshot_cutoff'])
+            self.assertTrue(result['schedule_provenance']['verified'])
+            self.assertEqual(result['schedule_provenance']['source'], 'hash_pinned_snapshot_schedule_version')
 
 
 if __name__ == '__main__':
