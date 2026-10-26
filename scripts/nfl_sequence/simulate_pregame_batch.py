@@ -301,6 +301,7 @@ def run_batch(args):
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
     snapshot_seconds = time.monotonic() - snapshot_started
     contextual = None
+    cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     reference_started = time.monotonic()
     if args.context_mode == 'unconditioned':
@@ -308,11 +309,15 @@ def run_batch(args):
     else:
         contextual = pregame_context.build(args.db, snapshot['schedule'], snapshot['as_of'], snapshot)
         eligible_before = (int(snapshot['schedule']['season']), int(snapshot['schedule']['week']))
-        ref, excluded_kickoffs = er.load(
-            args.db, try_policy=try_policy, eligible_before=eligible_before,
-            contextual_context=contextual, contextual_mode=args.context_mode,
-            contextual_bandwidth=args.context_bandwidth,
-            contextual_min_effective_games=args.context_min_source_games)
+        if args.context_mode == 'cutoff_unconditioned':
+            ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
+                                             eligible_before=eligible_before)
+        else:
+            ref, excluded_kickoffs = er.load(
+                args.db, try_policy=try_policy, eligible_before=eligible_before,
+                contextual_context=contextual, contextual_mode=args.context_mode,
+                contextual_bandwidth=args.context_bandwidth,
+                contextual_min_effective_games=args.context_min_source_games)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -393,7 +398,11 @@ def run_batch(args):
             'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
                                    'seeds remain in outcomes and coverage counts'),
             'context_mode': args.context_mode,
-            'context_bandwidth_in_source_rating_sd': args.context_bandwidth if contextual else None,
+            'context_bandwidth_in_source_rating_sd': (args.context_bandwidth
+                                                       if args.context_mode in ('offense', 'defense', 'both')
+                                                       else None),
+            'pool_control': ('legacy_unconditioned_2022_2025' if args.context_mode == 'unconditioned'
+                             else 'cutoff_eligible_uniform_pool'),
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
         },
         'runtime_seconds': {
@@ -409,7 +418,7 @@ def run_batch(args):
         'contextual_pool_manifest': ref.contextual_pool_manifest,
         'data_sources': {
             'database': 'SQLite, opened read-only',
-            'play_window': ('nfl_pbp seasons 2022-2025, weeks 1-18' if contextual is None else
+            'play_window': ('nfl_pbp seasons 2022-2025, weeks 1-18' if not cutoff_pool_mode else
                             f"nfl_pbp seasons 2022 through weeks before {snapshot['schedule']['season']} week "
                             f"{snapshot['schedule']['week']}"),
             'observed_reference_sha256': ref.model_inputs['sha256'],
@@ -447,8 +456,10 @@ def main(argv=None):
     ap.add_argument('--home-market-margin', type=float,
                     help='optional home-team expected-margin line; positive means the home team is favored')
     ap.add_argument('--market-total', type=float, help='optional over/under total line')
-    ap.add_argument('--context-mode', choices=('unconditioned', 'offense', 'defense', 'both'),
-                    default='unconditioned', help='research-only contextual pool ablation; default keeps S0')
+    ap.add_argument('--context-mode', choices=('unconditioned', 'cutoff_unconditioned', 'offense', 'defense', 'both'),
+                    default='unconditioned',
+                    help=('legacy S0, cutoff-matched uniform control, or research-only offense/defense kernel '
+                          'ablation'))
     ap.add_argument('--context-bandwidth', type=float, default=1.0,
                     help='Gaussian kernel bandwidth in source team-rating standard deviations')
     ap.add_argument('--context-min-source-games', type=float, default=10.0,

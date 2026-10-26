@@ -34,6 +34,7 @@ PRODUCER_FILES = (
     'scripts/nfl_sequence/game_state.py',
     'scripts/nfl_sequence/game_stats.py',
     'scripts/nfl_sequence/measure_kick_outcomes.py',
+    'scripts/nfl_sequence/pregame_batch.py',
     'scripts/nfl_sequence/pregame_context.py',
     'scripts/nfl_sequence/pregame_snapshot.py',
     'scripts/nfl_sequence/reducer.py',
