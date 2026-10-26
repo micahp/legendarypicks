@@ -6,6 +6,8 @@ its division and has ten conference clubs certain to finish ahead of it is out o
 import sqlite3
 import warnings
 
+import pytest
+
 import _core
 import nba_standings_store as store
 import stakes
@@ -20,8 +22,9 @@ def _open(lo_default=0, hi_default=82):
     return lo, hi
 
 
-def test_nba_is_a_supported_league():
-    assert "nba" in stakes.SUPPORTED
+def test_nba_is_held_out_of_supported_and_its_stakes_are_not_shipped():
+    assert "nba" not in stakes.SUPPORTED
+    assert stakes.for_matchup("nba", "BOS", "NY", 2027) == []
 
 
 def test_ten_conference_clubs_certain_ahead_and_no_division_title_is_elimination():
@@ -85,7 +88,7 @@ def test_a_past_game_without_a_score_means_the_schedule_is_behind(monkeypatch, t
     ])
     with warnings.catch_warnings(record=True) as seen:
         warnings.simplefilter("always")
-        assert stakes.for_matchup("nba", "BOS", "NY", 2027) == []
+        assert stakes._nba("BOS", "NY", 2027) == []
     assert any("no NBA stakes" in str(w.message) for w in seen)
 
 
@@ -93,12 +96,11 @@ def test_no_season_means_no_nba_lines_and_no_database_read(monkeypatch):
     def fail():
         raise AssertionError("an NBA game with no season must not read the DB")
     monkeypatch.setattr(_core, "_db", fail)
-    assert stakes.for_matchup("nba", "BOS", "NY", None) == []
+    assert stakes._nba("BOS", "NY", None) == []
 
 
-def test_an_unknown_club_code_is_warned_not_raised(monkeypatch, tmp_path):
+def test_an_unknown_club_code_is_refused_by_the_club_lookup(monkeypatch, tmp_path):
+    import team_codes
     _db(monkeypatch, tmp_path, [("2026-10-21", "BOS", "NY", 110, 102)])
-    with warnings.catch_warnings(record=True) as seen:
-        warnings.simplefilter("always")
-        assert stakes.for_matchup("nba", "ZZZ", "BOS", 2027) == []
-    assert any("nba lookup failed" in str(w.message) for w in seen)
+    with pytest.raises(team_codes.UnknownTeamCode):
+        stakes._nba("ZZZ", "BOS", 2027)

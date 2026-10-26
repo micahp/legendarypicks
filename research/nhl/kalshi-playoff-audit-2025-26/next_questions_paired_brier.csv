@@ -1,0 +1,7 @@
+sample,model,metric,delta_a_minus_b,ci95_low,ci95_high,n_games
+exploratory previously-seen 2022-2024,xG score dist.,moneyline_brier_minus_Elo,0.005504012372385029,0.002025025349831996,0.008908435587003953,4193
+exploratory previously-seen 2022-2024,goals+xG score dist.,moneyline_brier_minus_Elo,0.004630054201761775,0.0014251202613183328,0.007786861318822703,4193
+exploratory previously-seen 2022-2024,Elo+xG Poisson,moneyline_brier_minus_Elo,-0.001643569626773541,-0.003273029161261284,-7.305575124251837e-05,4193
+diagnostic only 2025-2026,xG score dist.,moneyline_brier_minus_Elo,-0.005034986852708387,-0.010019022360934193,-9.613863580439673e-05,1394
+diagnostic only 2025-2026,goals+xG score dist.,moneyline_brier_minus_Elo,-0.005163664236898743,-0.00994775400800635,-0.00048273124703521625,1394
+diagnostic only 2025-2026,Elo+xG Poisson,moneyline_brier_minus_Elo,-0.005291393214090953,-0.007785124802735938,-0.0028044887347163146,1394

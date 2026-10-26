@@ -399,9 +399,27 @@ def _fixture_schedule(path: Path) -> None:
       espn TEXT)""")
     connection.execute("""INSERT INTO nba_schedule VALUES(
       '0022600001',2027,'REG','2026-10-20','2026-10-20T23:00:00Z',
-      'BOS','DET',1,NULL,NULL,'401909088')""")
+      'BOS','DET',3,102,109,'401909088')""")
     connection.commit()
     connection.close()
+
+
+def _no_espn(*_args, **_kwargs):
+    raise AssertionError("ESPN was asked about a game that nba.com has not called final or that is already stored")
+
+
+def test_a_game_nba_com_has_not_called_final_costs_espn_nothing(tmp_path: Path):
+    picks = tmp_path / "picks.dev.db"
+    _fixture_schedule(picks)
+    connection = sqlite3.connect(picks)
+    connection.execute("UPDATE nba_schedule SET status=1, away_score=NULL, home_score=NULL")
+    connection.commit()
+    connection.close()
+    now = dt.datetime(2026, 10, 21, 1, 0, tzinfo=UTC)
+    report = refresh_completed_games(str(picks), str(tmp_path / "model.sqlite3"), now,
+                                     games_by_day=_no_espn, summary_fetch=_no_espn)
+    assert report["pending"] == 0
+    assert report["stored"] == 0
 
 
 def test_live_ingest_requires_scoreboard_summary_schedule_and_box_agreement(tmp_path: Path):
@@ -442,6 +460,9 @@ def test_live_ingest_requires_scoreboard_summary_schedule_and_box_agreement(tmp_
                                      games_by_day=scoreboard,
                                      summary_fetch=lambda _league, _event_id: summary)
     assert report["stored"] == 1
+    settled = refresh_completed_games(str(picks), str(model_path), now,
+                                      games_by_day=_no_espn, summary_fetch=_no_espn)
+    assert settled["pending"] == 0
     model = open_db(str(model_path), readonly=True)
     try:
         row = model.execute("select * from nba_model_live_game_observations").fetchone()

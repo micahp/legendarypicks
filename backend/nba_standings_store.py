@@ -13,7 +13,7 @@ preseason, play-in and Cup-final games sit beside the regular season in it.
 
 The clubs are read from nba_teams, which seed_nba_teams.py fills. TEAMS is that seed: each club's ESPN display name and
 its conference and division. The repo has no published alignment table, so the six-division alignment in TEAMS is
-hand-entered and was checked against the 2025-26 schedule in the model history: every club plays 16 or 17 games against
+hand-entered (UNVERIFIED) and was checked against the 2025-26 schedule in the model history: every club plays 16 or 17 games against
 its division, which a wrong grouping could not do. The table's source column says so.
 
 A season with no scored regular-season game has no standings: read_standings returns None.
@@ -62,7 +62,7 @@ TEAMS = {
 }
 
 
-SEED_SOURCE = "alignment: hand-entered six-division alignment, checked against nba_model_history 2026"
+SEED_SOURCE = ("UNVERIFIED: hand-entered six-division alignment, checked against nba_model_history 2026; no published division source")
 
 
 def ensure_table(connection) -> None:

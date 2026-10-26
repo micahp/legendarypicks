@@ -22,6 +22,7 @@ from team_stats_contract import extract_espn_team_stats
 
 UTC = dt.timezone.utc
 CURRENT_NBA_SEASON = 2027
+NBA_FINAL = 3  # nba.com gameStatus: 1 scheduled, 2 live, 3 final
 NBA_MODEL_DB = os.environ.get("NBA_MODEL_DB_PATH", DEFAULT_DB)
 
 
@@ -197,11 +198,21 @@ def _games_by_day_single(league, start, end):
     return by_day, raw
 
 
+def _settled(stored: dict[str, set], game_id: Any, home_score: Any, away_score: Any) -> bool:
+    """True when a stored final observation already carries this game's nba.com score."""
+    return (home_score, away_score) in stored.get(str(game_id), set())
+
+
 def refresh_completed_games(lp_db_path: str | None = None, model_db_path: str = NBA_MODEL_DB,
                             now: dt.datetime | None = None, *,
                             games_by_day=_games_by_day_single,
                             summary_fetch=espn_client.summary) -> dict[str, Any]:
-    """Append completed games after matching the dev NBA schedule and ESPN summary."""
+    """Append completed games after matching the dev NBA schedule and ESPN summary.
+
+    nba.com decides WHEN a game needs ESPN: `ingest_nba_schedule.py --open` keeps nba_schedule
+    current, and only a game nba.com calls final with a score no stored observation already has
+    is asked of ESPN. A quiet run makes no ESPN request at all. A game whose nba.com score
+    changes is read again, so a corrected final still lands."""
     now = now or dt.datetime.now(UTC)
     source = open_dev_source(lp_db_path)
     try:
@@ -220,20 +231,33 @@ def refresh_completed_games(lp_db_path: str | None = None, model_db_path: str = 
             key = (row["game_date"], _team_side(row["home_team"], "scheduled home"),
                    _team_side(row["away_team"], "scheduled away"))
             schedule_by_teams.setdefault(key, []).append(row)
+    finally:
+        source.close()
+
+    model = open_db(model_db_path)
+    report = {"season": CURRENT_NBA_SEASON, "scheduled_candidates": 0, "stored": 0,
+              "already_present": 0, "awaiting_nba_final": 0, "rejected": []}
+    try:
+        stored: dict[str, set] = {}
+        for row in model.execute(
+                "SELECT nba_game_id, home_score, away_score FROM nba_model_live_game_observations "
+                "WHERE final_confirmed=1"):
+            stored.setdefault(str(row["nba_game_id"]), set()).add((row["home_score"], row["away_score"]))
+        pending = [row for row in schedules
+                   if int(row["status"] or 0) == NBA_FINAL
+                   and not _settled(stored, row["game_id"], row["home_score"], row["away_score"])]
+        report["pending"] = len(pending)
+        if not pending:
+            report["scoreboard_events"] = 0
+            report["raw_scoreboard_events"] = 0
+            return report
         with espn_client.batch_pacing():
             by_day, raw_events = _scoreboard_window(
                 games_by_day, today - dt.timedelta(days=6), today + dt.timedelta(days=1)
             )
-    finally:
-        source.close()
-
-    events = {str(event.get("game_id")): event
-              for day_events in by_day.values() for event in day_events if event.get("game_id")}
-    model = open_db(model_db_path)
-    report = {"season": CURRENT_NBA_SEASON, "scoreboard_events": len(events),
-              "scheduled_candidates": 0, "stored": 0, "already_present": 0,
-              "rejected": []}
-    try:
+        events = {str(event.get("game_id")): event
+                  for day_events in by_day.values() for event in day_events if event.get("game_id")}
+        report["scoreboard_events"] = len(events)
         with espn_client.batch_pacing():
             for event_id, event in events.items():
                 if event.get("completed") is not True:
@@ -256,6 +280,12 @@ def refresh_completed_games(lp_db_path: str | None = None, model_db_path: str = 
                         report["rejected"].append({"event_id": event_id, "reason": str(exc)})
                         continue
                 if schedule is None:
+                    continue
+                if int(schedule["status"] or 0) != NBA_FINAL:
+                    report["awaiting_nba_final"] += 1
+                    continue
+                if _settled(stored, schedule["game_id"], schedule["home_score"], schedule["away_score"]):
+                    report["already_present"] += 1
                     continue
                 report["scheduled_candidates"] += 1
                 try:
