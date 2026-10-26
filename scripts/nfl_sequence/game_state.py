@@ -211,7 +211,7 @@ class Reference:
     """
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
-                 try_policy=None):
+                 try_policy=None, clock_model=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         self.kicks = kicks
@@ -221,6 +221,7 @@ class Reference:
         # None keeps the published unconditional share. A try_policy.TryPolicy conditions the two-point decision on the
         # situation.
         self.try_policy = try_policy
+        self.clock_model = clock_model  # None is the E2 default; a fitted clock_d.Model selects the research clock
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
@@ -454,6 +455,7 @@ class _Game:
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
+        self.clock_draws = ref.clock_model.for_game(seed) if ref.clock_model is not None else None
         self.ledger = ledger
         self.rng = rng
         self.kickoffs = ledger.half_start_kickoffs()
@@ -820,8 +822,9 @@ class _Game:
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}
         special_teams = (self._resolve_special_teams if self.ref.blocked_kicks.get('rates')
                          or self.ref.kicks.get('field_goal_outcomes') else None)
+        research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
-                                      self.simulation_id, special_teams=special_teams)
+                                      self.simulation_id, special_teams=special_teams, **research)
         if plays is None:
             self.block(terminal)
             return
