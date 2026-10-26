@@ -1295,6 +1295,8 @@ class FirstDriveBlock(unittest.TestCase):
         self.assertEqual(record['blocked_attempt']['drive_index'], 1)
         self.assertEqual(record['blocked_attempt']['blocker'], 'blocked_kick_outcome_unresolved:field_goal:unclassified')
         self.assertEqual(record['blocked_attempt']['plays_before_block'], [])
+        self.assertFalse(record['tied'])
+        self.assertNotIn('overtime', record['unsupported_rules'])
         self.assertEqual(next(r['status'] for r in rm.check(record) if r['case'].startswith('Continuity')), rm.BLOCKED)
 
 

@@ -946,7 +946,8 @@ class _Game:
         return self
 
     def record(self):
-        tied = self.points['A'] == self.points['B']
+        # A tie is a regulation end with equal scores. A game stopped before regulation end is not tied, whatever its score.
+        tied = self.status == 'complete_regulation' and self.points['A'] == self.points['B']
         status, blocker = self.status or 'blocked', self.blocker
         if status == 'complete_regulation' and tied:
             status, blocker = 'blocked', 'overtime_not_modelled'
