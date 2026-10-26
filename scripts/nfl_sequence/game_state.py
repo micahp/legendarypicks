@@ -52,6 +52,7 @@ QUARTER_LENGTH = 900
 TD_POINTS = 6
 FG_POINTS = 3
 SAFETY_POINTS = 2
+SAFETY_KICK_POOL = 'safety_kick_outcomes_2022_2025'  # the source label a sampled safety free kick must carry
 TRY_POINTS = {'extra_point': 1, 'two_point': 2}
 FG_BUCKETS = ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
 # The kick spot is the holder's position, not the snap. The published yardline_100 of a field goal is the snap position, the
@@ -89,9 +90,11 @@ GUARDS = {
                                           'next-drive transitions after missed field goals; a returner, return touchdown and '
                                           'physical return are not reconstructed',
                                  'enforced_by': 'field_goal_return transition; rule_capability_limitations'},
-    'safety_free_kick': {'guard': 'no observed safety-free-kick outcome table is available; a safety free kick blocks the game '
-                                  'instead of sampling outcomes from the ordinary kickoff pool',
-                         'enforced_by': 'record blocker; safety_free_kick events are rejected'},
+    'safety_free_kick': {'guard': 'a safety free kick is drawn only from the observed 2022-2025 safety-kick table (receiving '
+                                  'spot and clock; a kick with no receiving snap before the quarter ends is excluded). Without '
+                                  'that table, or at a Q1/Q3 end with no clock left, the game blocks; the ordinary kickoff pool '
+                                  'is never used',
+                         'enforced_by': 'safety-kick source label in validate_game; record blocker when the table is absent'},
     'blocked_kicks': {'guard': 'blocked-kick rates and transitions are sampled from the pinned 2022-2025 nflverse fixture; '
                                'a sampled penalty, fumble, review, missing recovery, or unresolved endpoint blocks the game',
                       'enforced_by': 'blocked_kick_outcomes fixture classification_status; blocked-kick reducer'},
@@ -123,7 +126,8 @@ GAPS = ['field-goal, blocked field-goal and blocked punt outcomes are sampled fr
         'is a '
         'labelled sample, not the result of a real game',
         'missed-field-goal next-drive spots are sampled from observed transitions; returners and return touchdowns are not reconstructed',
-        'safety points are recorded, but safety free kicks block because no separate observed safety-kick outcome table is available',
+        'safety free kicks are sampled from the observed 2022-2025 safety-kick table (spot and clock only); a safety at a Q1/Q3 '
+        'end with no clock left still blocks',
         'penalties, onside kicks, overtime and exception coin-toss paths remain capability limitations; a game that takes an '
         'unsupported path is blocked or marked incomplete',
         'clock transitions use observed snap-to-snap runoff and explicit stoppages/restart triggers; restart-trigger semantics '
@@ -211,9 +215,11 @@ class Reference:
     """
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
-                 try_policy=None, contextual_sampler=None):
+                 try_policy=None, contextual_sampler=None, safety_kick_pool=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
+        # None keeps a safety free kick blocked. A list is the observed safety-kick table, sampled only for a safety kick.
+        self.safety_kick_pool = safety_kick_pool
         self.kicks = kicks
         self.participants = participants
         self.missed_field_goal_pool = missed_field_goal_pool or {}
@@ -494,10 +500,15 @@ class _Game:
         self._kick('half_start', k['kicking_team'], k['receiving_team'])
 
     def _kick(self, kind, kicker, receiver, clock_rule=None):
-        """A kickoff, sampled from the observed kickoff pool. A kick that runs the clock out ends the quarter on
-        the return.
+        """A kickoff, sampled from the observed kickoff pool, or a safety free kick sampled from the observed safety-kick
+        table. A kick that runs the clock out ends the quarter on the return.
         """
-        sample = self.rng.choice(self.ref.kickoff_pool)
+        pool = self.ref.safety_kick_pool if kind == 'safety_free_kick' else self.ref.kickoff_pool
+        sample = self.rng.choice(pool)
+        source = {'game_id': sample['game_id'], 'play_id': sample['play_id'], 'game_date': sample['game_date']}
+        if kind == 'safety_free_kick':
+            source.update(pool=SAFETY_KICK_POOL, safety_play_id=sample['safety_play_id'],
+                          kick_play_id=sample['kick_play_id'])
         clock_before = self.clock
         # The made-kick rule, applied to a kickoff: a runoff that fits is charged in full; a runoff that does not fit expires the
         # quarter. The expiry sets the clock to zero explicitly, and the overrun is recorded, not clamped away.
@@ -525,8 +536,7 @@ class _Game:
                                 'restart_clock_seconds': after_clock,
                             },
                             'clock_rule': clock_rule,
-                            'source': {'game_id': sample['game_id'], 'play_id': sample['play_id'],
-                                       'game_date': sample['game_date']}})
+                            'source': source})
         if not expires:
             self._take_possession(receiver, sample['spot'])
             return
@@ -926,11 +936,13 @@ class _Game:
             scorer = self.defense
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
-            if self.clock > 0 or quarter_end_kind(self.quarter) == 'quarter_change':
+            if self.clock == 0 and quarter_end_kind(self.quarter) == 'quarter_change':
+                self.block('safety_free_kick_not_modelled')
+            elif self.clock > 0 and self.ref.safety_kick_pool is None:
                 self.block('safety_free_kick_not_modelled')
             else:
-                # At a Q2/Q4 boundary no safety kick is due before halftime or the end of regulation. Elsewhere the
-                # transition is unsupported until a separate, observed safety-free-kick outcome table is available.
+                # Time left on the clock means the free kick is due now, sampled from the observed safety-kick table. At a
+                # Q2/Q4 boundary no safety kick is due before halftime or the end of regulation; the post-score rule skips it.
                 self._continue(('kick', 'safety_free_kick', self.offense, scorer))
         else:
             self.block(f'unhandled_terminal:{terminal}')
@@ -1222,7 +1234,7 @@ def validate_game(record):
                 raise AssertionError(f"drive {drive['index']} play {play['sequence']} does not record its blocked punt attempt")
     checks.append('blocked-kick event types, attempts, classifications and source provenance')
     for k in record.get('kickoffs', []):
-        if k['kind'] == 'safety_free_kick':
+        if k['kind'] == 'safety_free_kick' and k.get('source', {}).get('pool') != SAFETY_KICK_POOL:
             raise AssertionError('safety free kick requires a separate observed safety-kick outcome table')
         if k['kind'] not in KICKOFF_KINDS:
             raise AssertionError(f"kickoff kind outside the engine's vocabulary: {k['kind']!r} (onside kicks are not modelled)")
