@@ -17,10 +17,9 @@ import team_codes
 
 # Leagues with a stakes model. generate_game_story uses this to decide whether a cached
 # pre-stakes story is final (league unsupported) or provisional (regenerate once, with stakes).
-# NFL is not listed on purpose: its stakes are rarely certain, so a listed league would leave
-# most NFL stories provisional and re-run their generation pipeline on every request (no LLM
-# call). NFL stories still get stakes lines whenever they are written.
-SUPPORTED = {"wc", "mlb", "nfl"}
+# A cached story in a listed league with no new facts is answered from the cache with no ESPN
+# request (core_stories checks the league's own standings first), so listing costs no ESPN call.
+SUPPORTED = {"wc", "mlb", "nfl", "nba"}
 
 # `site.web.api`, NOT `site.api`: the latter is walled from this box and 403s every time.
 # This pointed at the walled host and so `_mlb` raised on every call since it was written,

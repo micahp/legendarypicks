@@ -20,6 +20,10 @@ def _open(lo_default=0, hi_default=82):
     return lo, hi
 
 
+def test_nba_is_a_supported_league():
+    assert "nba" in stakes.SUPPORTED
+
+
 def test_ten_conference_clubs_certain_ahead_and_no_division_title_is_elimination():
     lo, hi = _open()
     hi["BOS"] = 30

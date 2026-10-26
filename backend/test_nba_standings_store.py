@@ -109,20 +109,19 @@ def test_the_alignment_is_six_divisions_of_five_in_two_conferences():
     assert sorted(Counter(r["division"] for r in store.TEAMS.values()).values()) == [5] * 6
 
 
-def test_a_final_landed_after_the_story_was_written_is_detected(tmp_path):
+def test_the_facts_marker_is_the_newest_regular_season_final_and_ignores_knockouts(tmp_path):
     import core_stories
-    path = tmp_path / "story.db"
-    con = sqlite3.connect(path)
+    con = sqlite3.connect(tmp_path / "story.db")
     con.row_factory = sqlite3.Row
     con.execute("CREATE TABLE nba_schedule(game_id TEXT, season INT, season_type TEXT, game_date TEXT,"
                 " home_team TEXT, away_team TEXT, home_score INT, away_score INT, status INT, sub_label TEXT,"
                 " ingested_at TEXT)")
+    assert core_stories._nba_facts_as_of(con) is None
     con.execute("INSERT INTO nba_schedule VALUES('0022600001', 2027, 'REG', '2026-10-24', 'BOS', 'NY', 110, 102, 3,"
                 " NULL, '2026-10-25T02:00:00+00:00')")
-    con.commit()
-    assert core_stories._nba_finals_since(con, "2026-10-25 01:00:00") is True
-    assert core_stories._nba_finals_since(con, "2026-10-25 03:00:00") is False
-    assert core_stories._nba_finals_since(con, None) is True
+    con.execute("INSERT INTO nba_schedule VALUES('0022601201', 2027, 'REG', '2026-10-30', 'BOS', 'NY', 120, 100, 3,"
+                " 'Quarterfinal', '2026-10-31T02:00:00+00:00')")
+    assert core_stories._nba_facts_as_of(con) == "2026-10-25T02:00:00+00:00"
 
 
 def test_a_cached_nba_story_with_no_new_final_makes_no_espn_request(tmp_path, monkeypatch):
@@ -136,8 +135,9 @@ def test_a_cached_nba_story_with_no_new_final_makes_no_espn_request(tmp_path, mo
     con = _sqlite3.connect(path)
     con.row_factory = _sqlite3.Row
     con.execute("CREATE TABLE game_story(league TEXT, game_id TEXT, story TEXT, generated_at TEXT, has_form INTEGER,"
-                " has_stakes INTEGER, form_suppressed INTEGER, PRIMARY KEY(league, game_id))")
-    con.execute("INSERT INTO game_story VALUES('nba', '401', 'CACHED', '2026-10-25 05:00:00', 1, 0, 0)")
+                " has_stakes INTEGER, form_suppressed INTEGER, facts_as_of TEXT, PRIMARY KEY(league, game_id))")
+    con.execute("INSERT INTO game_story VALUES('nba', '401', 'CACHED', '2026-10-25 05:00:00', 1, 0, 0,"
+                " '2026-10-24T23:00:00+00:00')")
     con.execute("CREATE TABLE nba_schedule(game_id TEXT, season INT, season_type TEXT, game_date TEXT,"
                 " home_team TEXT, away_team TEXT, home_score INT, away_score INT, status INT, sub_label TEXT,"
                 " ingested_at TEXT)")
@@ -164,3 +164,44 @@ def test_a_cached_nba_story_with_no_new_final_makes_no_espn_request(tmp_path, mo
 
     result = core_stories.generate_game_story("nba", "401")
     assert result == {"league": "nba", "game_id": "401", "story": "CACHED", "cached": True}
+
+
+def test_a_cached_nba_story_written_before_a_new_final_goes_to_the_full_path(tmp_path, monkeypatch):
+    import sqlite3 as _sqlite3
+    import core_stories
+    import _core
+    import espn_client as espn
+    import stakes
+
+    path = tmp_path / "story.db"
+    con = _sqlite3.connect(path)
+    con.row_factory = _sqlite3.Row
+    con.execute("CREATE TABLE game_story(league TEXT, game_id TEXT, story TEXT, generated_at TEXT, has_form INTEGER,"
+                " has_stakes INTEGER, form_suppressed INTEGER, facts_as_of TEXT, PRIMARY KEY(league, game_id))")
+    con.execute("INSERT INTO game_story VALUES('nba', '401', 'CACHED', '2026-10-25 05:00:00', 1, 0, 0,"
+                " '2026-10-20T23:00:00+00:00')")
+    con.execute("CREATE TABLE nba_schedule(game_id TEXT, season INT, season_type TEXT, game_date TEXT,"
+                " home_team TEXT, away_team TEXT, home_score INT, away_score INT, status INT, sub_label TEXT,"
+                " ingested_at TEXT)")
+    con.execute("INSERT INTO nba_schedule VALUES('0022600001', 2027, 'REG', '2026-10-24', 'BOS', 'NY', 110, 102, 3,"
+                " NULL, '2026-10-24T23:00:00+00:00')")
+    con.commit()
+    con.close()
+
+    def _open():
+        c = _sqlite3.connect(path)
+        c.row_factory = _sqlite3.Row
+        return c
+
+    monkeypatch.setattr(core_stories, "_db", _open)
+    monkeypatch.setattr(_core, "_db", _open)
+    monkeypatch.setattr(stakes, "SUPPORTED", {"wc", "mlb", "nfl", "nba"})
+    asked = []
+
+    def record(*args, **kwargs):
+        asked.append(args)
+        raise RuntimeError("stop after the ESPN request")
+
+    monkeypatch.setattr(espn, "game_result", record)
+    core_stories.generate_game_story("nba", "401")
+    assert asked, "a cached NBA story written before the newest final must take the full path"

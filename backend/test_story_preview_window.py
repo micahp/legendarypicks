@@ -81,6 +81,7 @@ def harness(tmp_path, monkeypatch):
     # NBA standings come from our schedule now, so the table is served there; ESPN stays stubbed for the other leagues.
     monkeypatch.setattr(espn, "team_strength_standings", table)
     monkeypatch.setattr(cs, "_nba_standings_for_season", lambda season: table())
+    monkeypatch.setattr(cs, "_nba_facts_as_of_now", lambda: None)
     monkeypatch.setattr(stakes, "for_matchup",
                         lambda *a: seen.__setitem__("stakes", seen["stakes"] + 1) or ["race line"])
     return path, seen
