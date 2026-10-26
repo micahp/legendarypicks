@@ -62,6 +62,11 @@ REGULAR_SEASON_GAMES = 1230
 CUP_BLOCK_FIRST = 1201
 MISS_STREAK = 5
 MAX_SERIAL = 1400
+# The scheduled refresh (--open) reads only games whose score can still move: not yet final,
+# dated this many days back or ahead. A quiet night is a handful of pages, not the season.
+OPEN_BACK_DAYS = 7
+OPEN_AHEAD_DAYS = 3
+FINAL = 3  # gameStatus 3 is final
 _NEXT_DATA = re.compile(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
 _GAME_CODE = re.compile(r"(\d{8})/([A-Z]{3})([A-Z]{3})")
 
@@ -354,10 +359,80 @@ def refresh(db_path: str, season: int, *, apply: bool = False, types=DEFAULT_TYP
             "spend": [spend], "seconds": round(time.time() - started)}
 
 
+def refresh_open(db_path: str, *, apply: bool = False, fetch_game=_game_page,
+                 today: str | None = None) -> dict:
+    """Re-read the stored games whose score can still move, one nba.com page each.
+
+    The scheduled path. The full walk is ~1,300 requests and stays a manual run; this asks
+    only for games nba.com has not called final and that fall inside the window, so a quiet
+    night costs nothing. A stored game outside the window that is still not final is counted
+    and reported, never silently dropped."""
+    today = today or _ny_today()
+    today_date = dt.date.fromisoformat(today)
+    start = (today_date - dt.timedelta(days=OPEN_BACK_DAYS)).isoformat()
+    end = (today_date + dt.timedelta(days=OPEN_AHEAD_DAYS)).isoformat()
+    connection = sqlite3.connect(db_path, timeout=60)
+    try:
+        season = connection.execute("SELECT MAX(season) FROM nba_schedule").fetchone()[0]
+        if season is None:
+            raise NBAScheduleError("nba_schedule is empty: run the full walk before --open")
+        open_ids = [row[0] for row in connection.execute(
+            "SELECT game_id FROM nba_schedule WHERE season=? AND COALESCE(status,0) != ? "
+            "AND game_date BETWEEN ? AND ? ORDER BY game_id", (season, FINAL, start, end))]
+        stale = connection.execute(
+            "SELECT COUNT(*) FROM nba_schedule WHERE season=? AND COALESCE(status,0) != ? "
+            "AND game_date < ?", (season, FINAL, start)).fetchone()[0]
+    finally:
+        connection.close()
+    games, skipped, spent, refused, consecutive = [], [], 0, 0, 0
+    for game_id in open_ids:
+        try:
+            page = fetch_game(game_id)
+            spent += 1
+            consecutive = 0
+        except Exception as exc:  # noqa: BLE001 -- counted; the third in a row stops the refresh
+            spent += 1
+            refused += 1
+            consecutive += 1
+            skipped.append({"game_id": game_id, "skipped": f"refused: {exc}"})
+            if consecutive >= 3:
+                raise NBAScheduleError(
+                    f"three consecutive refusals from www.nba.com (last: {game_id}: {exc}); "
+                    f"stopped after {spent} requests") from exc
+            continue
+        if page is None:
+            skipped.append({"game_id": game_id, "skipped": "miss"})
+            continue
+        row = parse_game(page, game_id, season)
+        (skipped if "skipped" in row else games).append(row)
+    for row in games:
+        row.setdefault("espn", None)  # publish() keeps the stored crosswalk id on a None
+    connection = sqlite3.connect(db_path, timeout=60)
+    try:
+        publish(connection, games, apply=apply)
+    finally:
+        connection.close()
+    failures =([f"{stale} game(s) dated before {start} are not final and are not re-read"]
+                if stale else [])
+    return {"status": "published" if apply else "ready", "season": season, "window": [start, end],
+            "open": len(open_ids), "fetched": len(games),
+            "final_now": sum(1 for g in games if g["status"] == FINAL),
+            "still_open": sum(1 for g in games if g["status"] != FINAL),
+            "stale_unfetched": stale, "skipped": skipped, "failures": failures,
+            "spend": [{"host": "www.nba.com", "requests": spent, "refused": refused}]}
+
+
+def _ny_today() -> str:
+    from espn_client.scoreboard import _ny_date
+    return _ny_date(dt.datetime.now(dt.timezone.utc)).isoformat()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--db", default=DB)
-    parser.add_argument("--season", type=int, required=True, help="end year: 2027 is 2026-27")
+    parser.add_argument("--season", type=int, help="end year: 2027 is 2026-27 (the full walk needs it)")
+    parser.add_argument("--open", action="store_true",
+                        help="scheduled path: re-read only stored games not yet final, one page each")
     parser.add_argument("--types", default=",".join(DEFAULT_TYPES),
                         help="id prefixes to walk: 001 pre, 002 regular, 006 Cup final")
     parser.add_argument("--save", help="write the walked games to this JSON file")
@@ -365,9 +440,14 @@ def main(argv=None) -> int:
     parser.add_argument("--checkpoint", help="JSONL of answered ids; a rerun resumes from it")
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args(argv)
-    result = refresh(os.path.abspath(args.db), args.season, apply=args.apply,
-                     types=tuple(t.strip() for t in args.types.split(",") if t.strip()),
-                     save=args.save, load=args.load, checkpoint=args.checkpoint)
+    if args.open:
+        result = refresh_open(os.path.abspath(args.db), apply=args.apply)
+    else:
+        if args.season is None:
+            parser.error("--season is required unless --open")
+        result = refresh(os.path.abspath(args.db), args.season, apply=args.apply,
+                         types=tuple(t.strip() for t in args.types.split(",") if t.strip()),
+                         save=args.save, load=args.load, checkpoint=args.checkpoint)
     print(json.dumps(result, indent=2, sort_keys=True, default=str))
     if not args.apply:
         print("DRY RUN -- nothing written. Re-run with --apply.")

@@ -113,6 +113,27 @@ JOBS: List[Dict[str, object]] = [
         }],
     },
     {
+        "id": "nba_schedule",
+        "databases": ["dev"],
+        # nba.com's own game pages carry the score the moment a game is final, and they cost no
+        # ESPN request. This re-reads only the stored games that are not final yet and fall
+        # within a week back or three days ahead: one page each, a few a night. The full season
+        # walk (~1,300 pages) is a manual run, and the new-ids check (Cup knockouts appear in
+        # December) belongs to that walk, not this job.
+        "cadence_min": 30,
+        "timeout_sec": 900,
+        "host_lock": "nba_com",
+        "steps": [["ingest_nba_schedule.py", "--open", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_schedule' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "nba.com schedule refresh",
+        }],
+    },
+    {
         "id": "nba_player_logs",
         "databases": ["dev"],
         # Recent ESPN boxscores are re-read with a 14-day overlap so late stat
