@@ -292,8 +292,9 @@ JOBS: List[Dict[str, object]] = [
         "id": "nfl_schedule",
         # nfl_schedule stopped 2026-08-05 and the season started 2026-08-29, so the
         # schedule went stale three weeks before it mattered most. ingest_nfl_schedule was
-        # in no unit, no cron and no runner script.
-        "cadence_min": 720,
+        # in no unit, no cron and no runner script. Four hours, not twelve: the NFL stakes gate stays
+        # silent while a finished game's score is missing, so the schedule must catch up soon after games end.
+        "cadence_min": 240,
         "timeout_sec": 1200,
         # nflverse publishes as files on github, its own host, so this costs no ESPN
         # budget. With no --season the ingest selects the newest season published
