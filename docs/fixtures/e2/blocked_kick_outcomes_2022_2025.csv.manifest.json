@@ -44,7 +44,7 @@
     "source_sha256"
   ],
   "generator": "scripts/nfl_sequence/build_blocked_kick_outcomes.py",
-  "generator_sha256": "2b2d3605b8ba1bf483e5ea061869d89476267171e027d618cad26f6c073c2bc1",
+  "generator_sha256": "a4946c3f776329c4facb0a560e8d6cb70fcc946bca917330031904efb00b6afe",
   "observed_rates": {
     "extra_point_blocked_deferred": 38,
     "field_goal_blocked_by_snap_bucket": {
@@ -115,7 +115,7 @@
   },
   "output": {
     "path": "docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv",
-    "sha256": "e98557916fce9685d12248f8eb9246f8ee405b283d51c37e18b4462c0ffe6bc5"
+    "sha256": "0099fce63802f62f4ee028ca58a5f7d08196523f1a3e73494eb475af82ecfd83"
   },
   "record_count": 125,
   "source_dataset": "nflverse play_by_play parquet",
@@ -126,12 +126,11 @@
     "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
   },
   "status_counts": {
+    "field_goal|classified_next_snap": 30,
     "field_goal|classified_recovery": 29,
     "field_goal|guarded_penalty_fumble_or_review": 3,
-    "field_goal|period_expired": 2,
-    "field_goal|period_expired_unresolved_spot": 14,
+    "field_goal|period_expired": 16,
     "field_goal|touchdown": 8,
-    "field_goal|unclassified": 30,
     "punt|classified_dead_ball_spot": 4,
     "punt|classified_recovery": 20,
     "punt|guarded_penalty_fumble_or_review": 2,

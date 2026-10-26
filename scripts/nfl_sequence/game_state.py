@@ -44,6 +44,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
 import game_stats  # noqa: E402
+import reducer  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
@@ -798,7 +799,7 @@ class _Game:
             return 'blocked_kick_outcome_pool_missing', None
         sample = rng.choice(records)
         status = sample.get('classification_status')
-        supported = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety')
+        supported = reducer.BLOCKED_KICK_STATUSES
         if status not in supported:
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
         runoff = sample.get('clock_runoff_seconds')
@@ -1203,7 +1204,7 @@ def validate_game(record):
     snapshot = record.get('pregame_snapshot') or {}
     observed_reference = (snapshot.get('model_reference') or {}).get('observed_reference', {})
     pinned_blocked_source = observed_reference.get('blocked_kick_source_sha256')
-    supported_blocked_statuses = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
+    supported_blocked_statuses = set(reducer.BLOCKED_KICK_STATUSES)
     for drive in record.get('drives', []):
         for play in drive['plays']:
             event, outcome = play['event_type'], play['outcome']
