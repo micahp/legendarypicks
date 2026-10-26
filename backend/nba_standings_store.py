@@ -11,13 +11,16 @@ nba_schedule.season is ESPN's end year (2027 is 2026-27), the key the story path
 source because it covers the season in play: team_game_results stops at 2026-04-13, and it has no game type, so
 preseason, play-in and Cup-final games sit beside the regular season in it.
 
-TEAMS carries each club's ESPN display name and its conference and division. The repo has no published alignment table,
-so the six-division alignment is written here and checked against the 2025-26 schedule in the model history: every club
-plays 16 or 17 games against its division, which a wrong grouping could not do.
+The clubs are read from nba_teams, which seed_nba_teams.py fills. TEAMS is that seed: each club's ESPN display name and
+its conference and division. The repo has no published alignment table, so the six-division alignment in TEAMS is
+hand-entered and was checked against the 2025-26 schedule in the model history: every club plays 16 or 17 games against
+its division, which a wrong grouping could not do. The table's source column says so.
 
 A season with no scored regular-season game has no standings: read_standings returns None.
 """
 from __future__ import annotations
+
+import sqlite3
 
 EXPECTED_CLUBS = 30
 
@@ -57,6 +60,37 @@ TEAMS = {
     "UTAH": {"name": "Utah Jazz", "conference": "West", "division": "Northwest"},
     "WSH": {"name": "Washington Wizards", "conference": "East", "division": "Southeast"},
 }
+
+
+SEED_SOURCE = "alignment: hand-entered six-division alignment, checked against nba_model_history 2026"
+
+
+def ensure_table(connection) -> None:
+    connection.execute("""CREATE TABLE IF NOT EXISTS nba_teams(
+        season INTEGER NOT NULL, team TEXT NOT NULL, team_name TEXT, conference TEXT, division TEXT,
+        source TEXT, PRIMARY KEY(season, team))""")
+
+
+def seed(connection, season: int, source: str = SEED_SOURCE) -> None:
+    """Write the thirty clubs of TEAMS as the season's clubs. Re-running it rewrites the same rows."""
+    ensure_table(connection)
+    with connection:
+        connection.executemany(
+            "INSERT INTO nba_teams(season, team, team_name, conference, division, source) VALUES(?,?,?,?,?,?) "
+            "ON CONFLICT(season, team) DO UPDATE SET team_name=excluded.team_name, conference=excluded.conference, "
+            "division=excluded.division, source=excluded.source",
+            [(int(season), code, row["name"], row["conference"], row["division"], source)
+             for code, row in TEAMS.items()])
+
+
+def load_teams(connection, season: int) -> dict:
+    """The season's clubs from nba_teams: {code: {"name", "conference", "division"}}. Empty when none are seeded."""
+    try:
+        rows = connection.execute(
+            "SELECT team, team_name, conference, division FROM nba_teams WHERE season=?", (int(season),)).fetchall()
+    except sqlite3.OperationalError:  # no nba_teams table yet: the caller refuses the season, it is not a silent empty
+        return {}
+    return {row[0]: {"name": row[1] or row[0], "conference": row[2], "division": row[3]} for row in rows}
 
 
 class NBAStandingsError(RuntimeError):
@@ -110,9 +144,11 @@ def read_standings(connection, season: int | None = None, as_of: str | None = No
     games = connection.execute(sql + " ORDER BY game_date, game_id", params).fetchall()
     if not games:
         return None
-    if len(TEAMS) != expected_clubs:
-        raise NBAStandingsError(f"TEAMS lists {len(TEAMS)} clubs, expected {expected_clubs}")
-    table = {code: {"wins": 0, "losses": 0, "for": 0, "against": 0, "results": []} for code in TEAMS}
+    clubs = load_teams(connection, season)
+    if len(clubs) != expected_clubs:
+        raise NBAStandingsError(f"nba_teams lists {len(clubs)} clubs for {season}, expected {expected_clubs}; "
+                                f"run seed_nba_teams.py")
+    table = {code: {"wins": 0, "losses": 0, "for": 0, "against": 0, "results": []} for code in clubs}
     for game in games:
         home, away = game["home_team"], game["away_team"]
         home_score, away_score = int(game["home_score"]), int(game["away_score"])
@@ -120,7 +156,7 @@ def read_standings(connection, season: int | None = None, as_of: str | None = No
             raise NBAStandingsError(f"{season}: {home} and {away} tied, which an NBA game cannot do")
         for team, mine, theirs in ((home, home_score, away_score), (away, away_score, home_score)):
             if team not in table:
-                raise NBAStandingsError(f"{team} played in {season} but is not one of the NBA clubs")
+                raise NBAStandingsError(f"{team} played in {season} but is not one of its clubs")
             record = table[team]
             record["for"] += mine
             record["against"] += theirs
@@ -141,7 +177,7 @@ def read_standings(connection, season: int | None = None, as_of: str | None = No
         differential = round((record["for"] - record["against"]) / played, 2) if played else None
         teams.append({
             "abbrev": code,
-            "name": TEAMS[code]["name"],
+            "name": clubs[code]["name"],
             "wins": record["wins"],
             "losses": record["losses"],
             "win_pct": win_pct,

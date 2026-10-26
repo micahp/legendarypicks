@@ -18,6 +18,7 @@ def _db(tmp_path, games):
     con.execute("CREATE TABLE nba_schedule(game_id TEXT PRIMARY KEY, season INT, season_type TEXT, game_date TEXT,"
                 " home_team TEXT, away_team TEXT, home_score INT, away_score INT, status INT, sub_label TEXT,"
                 " ingested_at TEXT)")
+    store.seed(con, 2027)
     for n, game in enumerate(games, start=1):
         day, home, away, hs, as_ = game[:5]
         sub_label = game[5] if len(game) > 5 else None
@@ -75,6 +76,23 @@ def test_a_cup_knockout_game_is_not_a_standings_game(tmp_path):
     ])
     rows = {r["abbrev"]: r for r in store.read_standings(con, season=2027)["teams"]}
     assert rows["BOS"]["games_played"] == 1 and rows["MIA"]["games_played"] == 0
+
+
+def test_the_club_table_is_seeded_and_re_seeding_changes_nothing(tmp_path):
+    con = sqlite3.connect(tmp_path / "teams.db")
+    store.seed(con, 2026)
+    store.seed(con, 2027)
+    store.seed(con, 2027)
+    assert store.load_teams(con, 2027).keys() == store.TEAMS.keys()
+    assert con.execute("SELECT COUNT(*) FROM nba_teams").fetchone()[0] == 60
+    assert store.load_teams(con, 2026)["BOS"]["conference"] == "East"
+
+
+def test_a_season_with_no_seeded_clubs_is_refused(tmp_path):
+    con = _db(tmp_path, [("2026-10-21", "BOS", "NY", 110, 102)])
+    con.execute("DELETE FROM nba_teams WHERE season=2027")
+    with pytest.raises(store.NBAStandingsError):
+        store.read_standings(con, season=2027)
 
 
 def test_a_season_with_no_scored_game_has_no_standings(tmp_path):

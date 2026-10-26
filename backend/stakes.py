@@ -218,6 +218,7 @@ def _nba(ab_a, ab_b, season):
     from _core import _db
     with closing(_db()) as con:
         table = nba_standings_store.read_standings(con, season=season)
+        teams = nba_standings_store.load_teams(con, season)
         games = [dict(r) for r in con.execute(
             "SELECT home_team, away_team, home_score, away_score, game_date FROM nba_schedule "
             f"WHERE season=? AND season_type='REG' AND {nba_standings_store.NOT_KNOCKOUT_SQL}",
@@ -231,7 +232,6 @@ def _nba(ab_a, ab_b, season):
         warnings.warn(f"stakes: nba {season} schedule has {len(behind)} past game(s) with no score, "
                       f"no NBA stakes this pass", stacklevel=2)
         return []
-    teams = nba_standings_store.TEAMS
     lo, hi = _nba_bounds(games, teams)
     lines = (_nba_stake(team_codes.normalize("nba", ab), teams, lo, hi) for ab in (ab_a, ab_b))
     return [line for line in lines if line]

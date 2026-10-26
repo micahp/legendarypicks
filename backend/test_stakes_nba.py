@@ -61,6 +61,7 @@ def _db(monkeypatch, tmp_path, games):
     con = sqlite3.connect(path)
     con.execute("CREATE TABLE nba_schedule(game_id TEXT, season INT, season_type TEXT, game_date TEXT,"
                 " home_team TEXT, away_team TEXT, home_score INT, away_score INT, sub_label TEXT)")
+    store.seed(con, 2027)
     for n, (day, home, away, hs, as_) in enumerate(games, start=1):
         con.execute("INSERT INTO nba_schedule VALUES(?, 2027, 'REG', ?, ?, ?, ?, ?, NULL)",
                     (f"00226{n:05d}", day, home, away, hs, as_))
