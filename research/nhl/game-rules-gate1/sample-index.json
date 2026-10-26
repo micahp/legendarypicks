@@ -1,0 +1,3020 @@
+[
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260001,
+    "simulation_record_sha256": "ab0c05b8bfefb11444ea6434b4f9e68156b7934f2dac45149193dd03fad45874",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260002,
+    "simulation_record_sha256": "6c3d29306ae5ea80cd1837f95361f0c419581ccd427f5f14ac2ec249662084eb",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260003,
+    "simulation_record_sha256": "3e490b76777e362471d2b2d6984c2d1a391c7a1198a3cbfa0180132bb5602530",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610260004,
+    "simulation_record_sha256": "57f4b48e5f485b7cd8d323d354c78aaf66849d87beb4152731c70d1ef51e58ef",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610260005,
+    "simulation_record_sha256": "2137db47d2540defaecb7e1906776a13c57c98663de00c40c297c5409406e34c",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260006,
+    "simulation_record_sha256": "1116318c18260dbeff134e9b5d009c92fbfbdbe1bbf6360f591f6aa889e2cd05",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260007,
+    "simulation_record_sha256": "86b29e3ab2700d95563e9fdc1d3cab38a1055704ad9f6726f1e9005ad136317b",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260008,
+    "simulation_record_sha256": "cde38e9842400fe104865b4fe81d4535b4caa469c9d97f8133f109656443e8c1",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260009,
+    "simulation_record_sha256": "e8964a78abe3fffc76c6412de8409f12fc81b34e500075991d47df6ed336ddbf",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260010,
+    "simulation_record_sha256": "6d39d9c6fff298609a4638937a7219060836dcbc3e88bf3d6936280ffe4f54a3",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260011,
+    "simulation_record_sha256": "8c70168c6aedba7c9cbe2048a77f6d31d6809eefca594d67350b0624c82ce893",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260012,
+    "simulation_record_sha256": "76c02367e968254d6b9873191000e07fc435543ee1a4fc3b2c868627ac3aebed",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260013,
+    "simulation_record_sha256": "f65d35fdcca08c05535480ad403f11ae740b0bfec042080469e78d31c06a1cc1",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260014,
+    "simulation_record_sha256": "ab140213b4831fd710efd5f83d11e315c2c8130250554215fb47f2d8a30aefe4",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260015,
+    "simulation_record_sha256": "00e62cee5951d270fded7a88db44fe94d13d3a52780258a79237941ef9db21d6",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260016,
+    "simulation_record_sha256": "7f723f98a5849018fea5dc988c0265f76c73ac5da7926fe31c7c4b2edaaf53a8",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260017,
+    "simulation_record_sha256": "623b51491019019f377a4821cd9a3b7ff5f9b4d1821b69974bedc26268e71497",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610260018,
+    "simulation_record_sha256": "4db008c1096c81d26bf6baf406d69930391f3ad78c71a1b65e40d71cd8eee0e7",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610260019,
+    "simulation_record_sha256": "6c80bd401490f784ff85eaedbe7ff92c4ac83bc39bb65f4b33c18ad2e2abe6f9",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-10-12",
+    "game_id": "2021020001",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "e3574590170c78f572c60058a005ae0b5971119104fb99dd250cffe4520a804e",
+    "quarantined_check_codes": [],
+    "seed": 202610260020,
+    "simulation_record_sha256": "d63d81ab4f845ffe5c8cf0d4773f8593844f980155f8f71d164bd71af4964fd7",
+    "structural_valid": false,
+    "target_index": 0
+  },
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285801,
+    "simulation_record_sha256": "faa5af1ea3aab42b02570081ff1bf1dbc606b994e5b2711d7f820419a086d7fb",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285802,
+    "simulation_record_sha256": "ff27538dbc3370c0464ced5d27c9236c4289a94c336f9c970ffdadaef0de0b79",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285803,
+    "simulation_record_sha256": "71e4dceef428c7428d7a2676e3129a6e2eb94afa8906681f4a24fc58c51b40bc",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285804,
+    "simulation_record_sha256": "e38e7e3396c196f1f149fed96b2d62d74c3b9202905716c5064f5f64b541b1e7",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285805,
+    "simulation_record_sha256": "1021a37e486dd60c5b37afb91e940facf0ac5c462d5dfa7365e7821335964f01",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285806,
+    "simulation_record_sha256": "26d3874541447b123c947936e9ad38a4761f0bf9de57e5cae3a32152f3cf0b5a",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285807,
+    "simulation_record_sha256": "0c15d8d54a87ccaaba78df9c8bab6194d2f4deaf09976496ab2b2ea77d3722bb",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285808,
+    "simulation_record_sha256": "2469792aabed4d2aaae94f21e7b7f730ccd7d8ba75d33dab47670e6e37fd8990",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285809,
+    "simulation_record_sha256": "8c569293ebbc1bebf515b672c248e4e840de009eb1191edd39263e20461c02a2",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610285810,
+    "simulation_record_sha256": "dd1d444b15ef16419d89974b9890aa86613469611ee11c56763bf90c7346831d",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610285811,
+    "simulation_record_sha256": "8ac20c364787598613d3bbed569b2b9be57f095c0f7ad6e5b5cfd38594ab0cd5",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610285812,
+    "simulation_record_sha256": "aefb2290d262065367baa0d723553af8286af5370190d42aa9a3fda8fe0a2a6a",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285813,
+    "simulation_record_sha256": "3501a76b2506443d913fcfb33cdf7de01814a35c0d35c29aca78e38209b24955",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285814,
+    "simulation_record_sha256": "9c0289d4e2282c75994dc6b15c6fd2319c6ffe3d2c1c50485c682f3816e5bcf6",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285815,
+    "simulation_record_sha256": "f0a691a50033cfcbfe4c7b3563a2508d1554813f5d2f742435cc8d4b3797561f",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610285816,
+    "simulation_record_sha256": "3e71e4d5be4e962c9f22be6fdf0433ead1d65c4bea1d3074be7d93b069bdfa47",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285817,
+    "simulation_record_sha256": "98df1aff8935edc0148de9f9aae66fbae369e4504d0ba64e88f4b0442f2b6c1c",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285818,
+    "simulation_record_sha256": "fb00ba7155592cd18db3f18990409d6420f3714a7698a207045d28ad81ce345d",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610285819,
+    "simulation_record_sha256": "c82e0299c029f9c528ad3b1de9cc188d8ee930de3348140c6375c8f7c995aa7b",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2021-11-20",
+    "game_id": "2021020262",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "15dfcfcc41e865aeb4b8119ce9aef411cd5684063d2f3ddd6d46898ab2269448",
+    "quarantined_check_codes": [],
+    "seed": 202610285820,
+    "simulation_record_sha256": "7fe350989f4a0a3da7c5bfdd528ec286c044c23676480dc243700d46576f9981",
+    "structural_valid": false,
+    "target_index": 258
+  },
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311601,
+    "simulation_record_sha256": "cd2fae95713357edd2fffc0f37dba6149443acee1022d668b8bd68772d0a24f5",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610311602,
+    "simulation_record_sha256": "d3e5cdf1033f4cda84c6cca37b2f7039b1c3b16bdc100a090e4ac961a19c0387",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311603,
+    "simulation_record_sha256": "b1a3ad5df4a638644f510e8a13be058a6f5fe455dde0ef7dceefb01ddc48fc4d",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311604,
+    "simulation_record_sha256": "783482634791538a1e4ce386842508bd1bebe5ef35673887fac021aba2a4ab87",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311605,
+    "simulation_record_sha256": "03ef55c7133c221d40921565af2f738efa5dffe174fb77ad014d10398e1ce130",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311606,
+    "simulation_record_sha256": "b3daf2a8b2efe7a9c3c8c67f796cf678e1bfb25f44228ff28de3322de4ca3546",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311607,
+    "simulation_record_sha256": "70647a040506303ad667dee89e0cca8a0c3abd7a2d56007605edc36562f7dc30",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311608,
+    "simulation_record_sha256": "ee64b9c23d3bcc9c2c1c8ccb5bae80a0d9debb190c4b82226111ea368f98b3b4",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311609,
+    "simulation_record_sha256": "2adf27f256b5d3eb0cd7b6368ba279d5ff902e14c7692d2d59ffecbed92aa611",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311610,
+    "simulation_record_sha256": "a90643412d9ecb2637c98d79b5fff34279ce51519e02baa1f938540a7472430f",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610311611,
+    "simulation_record_sha256": "d557b3144ac1019a30f5ece6c2857f616b52e7bea9def447e1d559bb9528051b",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311612,
+    "simulation_record_sha256": "a5f9fa5e26a0f71456a91132af57b391220702a84cee3582c84e2c2ee4cc7a59",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610311613,
+    "simulation_record_sha256": "990a6123d8a5a122587ba0c940d866d9a4340cb431c4ea2ae6e7165b6d69350d",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311614,
+    "simulation_record_sha256": "1141a72e406081446740995795d1aaeac206bcc4db13a5f831d7ce7eabe7f52f",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311615,
+    "simulation_record_sha256": "5b4aac6d93bec5608600e550a3889d42fa1b0f6f9ad80026cf6cddaa73e97da1",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311616,
+    "simulation_record_sha256": "69b68182a1d19bcf661aaa719ff364a0447329860111e35f0fe3eb3ae7a8423e",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311617,
+    "simulation_record_sha256": "e959226b52390f3793940bfacf7a8de216c97983c020fb4c05f8b53fd6649270",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311618,
+    "simulation_record_sha256": "c63d9f817ba89f9382cfa7df6077af4b1b32d326b544bcc77d0d666b0f0e40d6",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311619,
+    "simulation_record_sha256": "f4d2eafd15e6bc4d8a72bc09a44ed905862e344f3cce70f7b4f0853116dac730",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-01-06",
+    "game_id": "2021020599",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "7107727857884f9cc1db678184739def112c4d221216654f033248ce6faab2d2",
+    "quarantined_check_codes": [],
+    "seed": 202610311620,
+    "simulation_record_sha256": "8b413bb533e5ee0af8f4cf1e649fbe89d08830d7d89489835c18b2cd2cd4c59b",
+    "structural_valid": false,
+    "target_index": 516
+  },
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337501,
+    "simulation_record_sha256": "e63299bf75c66d6979516a993d86c5fc586528cbf95256cf51d8db1685f34f26",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337502,
+    "simulation_record_sha256": "37ebeb1b6e9f95960e43e6c4a4d68b61347f75c7ebf02f18ab60ac7d69a7590d",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337503,
+    "simulation_record_sha256": "4de106b24301849786ff8d00a08c66a555f3da689d69221e35272788eb725ff6",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337504,
+    "simulation_record_sha256": "5e4b7afa7da89cf9139340e90804aca1a9fd290976f2c76d427f1c84a7dcef89",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337505,
+    "simulation_record_sha256": "22c6c0ef094f97e94cf33a1a218c5e3109059ac1c35b3b99ee2240331879eddd",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337506,
+    "simulation_record_sha256": "6411cee998c2a67a92fc637f2f2193c8f4f49d203a8b7fa429b0f6ccdae183b5",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337507,
+    "simulation_record_sha256": "f0a126c7bbca56bea41065f0131a3a5c59c99d1cedb1b5ea1eb7a782aeb7cecf",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337508,
+    "simulation_record_sha256": "5c197282071bfbc0013c9807f9c7763b85c4144ac122686c9c6cae517ad87b2c",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610337509,
+    "simulation_record_sha256": "0c8b91e7db4777be65992ecda37b151a477ce950359b50eab1e2c3fa18ec8710",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337510,
+    "simulation_record_sha256": "30807dab868959e3b47ac8b05e43ee0a1f6110be4c141745576ac67f67317e22",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337511,
+    "simulation_record_sha256": "93a6c9c0dd1ad76f0be0ac44bef77d6044ba59dc24f419f10bd2fbc3360badc5",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337512,
+    "simulation_record_sha256": "8362ffcb3582349c15500e3f2a779a18087767af0563fec222518fbd988efc75",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610337513,
+    "simulation_record_sha256": "218be4aad18cd49130a26f256eabaa0e863916b5271ac9148b0c9273c7762917",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610337514,
+    "simulation_record_sha256": "1c04dd1540a6834e7bf37ae647ae778a68790a3f8536c9a836bf230b4e4418d3",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337515,
+    "simulation_record_sha256": "9cf2911b1d5c76824470b0d462146e8620a7bdd5df8ac772adc09eae1058c1d2",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337516,
+    "simulation_record_sha256": "0590fd3aa5133ccd83143745d565603a6c97c8b17de8247aa3693886b80c5df3",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "FAIL",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337517,
+    "simulation_record_sha256": "e106a34fd4f1ab5a46498c94ee4eae04e23704fe9224bbd5f629f9e72194b31d",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610337518,
+    "simulation_record_sha256": "fb0a7f736224a9e74d0b73d896eb065aba3db14f1d32a8b271b89cb4e6e28578",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337519,
+    "simulation_record_sha256": "86e7a2751c59e7a9852a8bd33906dd1018311f8b3cb6eb557093dd4a746f0dd7",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-02-19",
+    "game_id": "2021020533",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "5c9b33f5c42cb285c886a27ab1ec01ed019bf2c53e8dc6df05ec4fe375180499",
+    "quarantined_check_codes": [],
+    "seed": 202610337520,
+    "simulation_record_sha256": "44ce5534b9ed80fc44e60900c290d81a0d1c0ce800315dca6eb16de6a7b58662",
+    "structural_valid": false,
+    "target_index": 775
+  },
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363301,
+    "simulation_record_sha256": "bbe79f33edbf5d81c7056ee2ae52fc6d686315a36d94aa45c4483894b7461afc",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363302,
+    "simulation_record_sha256": "d2faf34bb3c5847c5d7ae402db68dd3e9d2658360b3b95b670d5d75a6a6d35b6",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363303,
+    "simulation_record_sha256": "0b874a0de3aba82fdc32064e675ae270bee7e570695d471a2b59dfcceef9f857",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363304,
+    "simulation_record_sha256": "5616b980fed67f0e40f65922095fbd97da39bf6726baa0612f110b5bfcf7b328",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363305,
+    "simulation_record_sha256": "d28b86ce30aa1c81d7987ca2c4f8ffd11c1f7055edee0a4f480696b3b792433f",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363306,
+    "simulation_record_sha256": "2d165cd381685cd29d443932f1f4538c450b94904d44ea34e0aa077ef1d041cb",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363307,
+    "simulation_record_sha256": "564a5c7e4f25cb7f556aa4e820102debb95944063ef41c6864b2fce0755b7ac5",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363308,
+    "simulation_record_sha256": "a9640c173383fa6d8162e88fbfe8337bfd26cecd7a95e9b6a4e51bc53a6d3060",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363309,
+    "simulation_record_sha256": "2988262aa47446e898a994e970f182e8c166665c2acbb61ec362e94fcce5b804",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363310,
+    "simulation_record_sha256": "6efca4b2a14d7574d7c21efb4f3088213778b21d4280f194960fc8f08b8d4d89",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363311,
+    "simulation_record_sha256": "fdc56369b5bdb5962407d147ec42a55b175df172a164481d381a7160bfda30f7",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363312,
+    "simulation_record_sha256": "45ba33a09d38e06f2858ea8063bc0c262ee19adc844cc3e3e5c5e9aa2a84d6c8",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363313,
+    "simulation_record_sha256": "394de04b4d19a116c6b1ff25e80fe42a049c161eed705d92556efa71e64ec358",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363314,
+    "simulation_record_sha256": "85d083751bee07c7c73f7e077e79c474e410236b71aeda125250b3f65eff9a62",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363315,
+    "simulation_record_sha256": "2abad5b39455d9d70213c9e551d883ed41ce3a9698f5589333de2b5e80642927",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363316,
+    "simulation_record_sha256": "8efcff4bcae84d2e6d12cf293baae73f4b6425c13ba50a4ce38fa7705eef6c46",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363317,
+    "simulation_record_sha256": "eb4a654f1ac6e38018a63b2f825d5917f6c5d24b067ec01fb7b2d0ab969af521",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363318,
+    "simulation_record_sha256": "af65d4d288c18341f12f87cce9943c8a300f9183ef006bebfb9f8b83d481c21b",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [],
+    "seed": 202610363319,
+    "simulation_record_sha256": "b32b1782442f1f74619ae668ba0c19d99f961fb912566ae4c9141022ee2097a6",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-03-27",
+    "game_id": "2021021050",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "83aaba7adc7c7a3d1eedd657ef915855d57e10ad052806d9b34687290f0bb934",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610363320,
+    "simulation_record_sha256": "335abdf5aa794b4ce356ee0fc8abffd880d22c18668f72c6076f60fdb7591ca9",
+    "structural_valid": false,
+    "target_index": 1033
+  },
+  {
+    "draw_index": 0,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389101,
+    "simulation_record_sha256": "438a0ae6570b5469d17a6330e1140836ad5811776b141c62121b992c22b7d320",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 1,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389102,
+    "simulation_record_sha256": "fc2c50a89ef8aa0240ee28cc817245fc7aa2499c677402512148c461414c8223",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 2,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389103,
+    "simulation_record_sha256": "97551f98a66251d662726462eedb6fe9e9eec298e3355f2d65cc8754991f5421",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 3,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610389104,
+    "simulation_record_sha256": "58d245c20a45879cbc50c65480a20872569f1814945cdcdde346b39129c06026",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 4,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389105,
+    "simulation_record_sha256": "0ec373f4026723216855f65394fcd7da024a1acacf17f668347f276647fd9f5a",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 5,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389106,
+    "simulation_record_sha256": "fa73f4ed1df33f91d0e83c8926ae0c81191fda385fc227468c329ea7bd82caea",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 6,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "overtime_and_shootout",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389107,
+    "simulation_record_sha256": "2c499e7de6416de9178525311567c2ca779e2db2c403227232e1d15706af18c6",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 7,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610389108,
+    "simulation_record_sha256": "2f4d777034edf0e7d96baef91c49792800884267f33677f3b12b78e9f751a179",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 8,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389109,
+    "simulation_record_sha256": "e83f580a0c8fdb76598927901aa6592e24e31530090666a034e594a78f4c55cf",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 9,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389110,
+    "simulation_record_sha256": "48c7ea8b37344fe5331e762295aedc84feebda73453445005a6c7456c28e70d9",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 10,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389111,
+    "simulation_record_sha256": "007c55f4c7d10a8d12ccd5fb78b40d4f1ebeb53d91789bf2b0fe80baf722f94b",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 11,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610389112,
+    "simulation_record_sha256": "236e32ec17ddd18b55b7cd75de7f6e878b7167f07a6421c8180199f25d51dd19",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 12,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389113,
+    "simulation_record_sha256": "12e854bde73639a787df3b40e0d12c48d5f37cc5a06fa2e259542b666c3701ea",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 13,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389114,
+    "simulation_record_sha256": "0d87f52283986e9ce95b558b33cfbd6171fb39e018fd86385cceb94f02fdc6d2",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 14,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389115,
+    "simulation_record_sha256": "2cd6f5a786001375f1d355967026702a9f203fe4ad4c2a13a1907a0f0cf00c61",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 15,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389116,
+    "simulation_record_sha256": "4fe28eb5754e873acc0df50c440a6c49dac7a57446dc1125d72d80333bb0dc49",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 16,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [
+      "penalty_and_manpower"
+    ],
+    "seed": 202610389117,
+    "simulation_record_sha256": "e8b8c62821ce8de5593a361dc30542a16782cfb81a96a6ce21874d84a65d3618",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 17,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389118,
+    "simulation_record_sha256": "fba51caa11f70e68b9f6d6c0408e2f34f3e40015614541254965a7c4868a6f5a",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 18,
+    "failed_check_codes": [
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "on_ice_personnel",
+      "penalty_and_manpower",
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389119,
+    "simulation_record_sha256": "4385db5ea4ced73bd44995a518bd466bbd0cbb479ce1503408e434f55130a254",
+    "structural_valid": false,
+    "target_index": 1291
+  },
+  {
+    "draw_index": 19,
+    "failed_check_codes": [
+      "penalty_and_manpower",
+      "restart_sequence"
+    ],
+    "full_rule_assessed": false,
+    "game_date": "2022-05-01",
+    "game_id": "2021021179",
+    "native_validation": "PASS",
+    "not_assessed_check_codes": [
+      "restart_location",
+      "line_change_legality",
+      "goalie_transition_state",
+      "geometry_and_officiating",
+      "game_lineup_eligibility"
+    ],
+    "pregame_snapshot_sha256": "85554203b57e1e5859d2934987854540312e1d411732991354eb2818d8a61aac",
+    "quarantined_check_codes": [],
+    "seed": 202610389120,
+    "simulation_record_sha256": "5867573e8cd6be41ac8fe7fc0109ad64d82bba57298cf54f4f6f84b5eeafbed9",
+    "structural_valid": false,
+    "target_index": 1291
+  }
+]
