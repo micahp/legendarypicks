@@ -36,6 +36,7 @@ PRODUCER_FILES = (
     'scripts/nfl_sequence/pregame_snapshot.py',
     'scripts/nfl_sequence/reducer.py',
     'scripts/nfl_sequence/simulate_pregame_game.py',
+    'scripts/nfl_sequence/simulate_pregame_batch.py',
 )
 
 
