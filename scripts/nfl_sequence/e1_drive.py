@@ -44,6 +44,10 @@ COLUMNS = ('game_id', 'play_id', 'season', 'week', 'game_date', 'posteam', 'deft
            'yardline_100', 'game_seconds_remaining', 'play_type', 'yards_gained', 'touchdown', 'interception',
            'fumble_lost', 'sack', 'complete_pass', 'qb_scramble', 'penalty', 'two_point_attempt')
 
+
+class SamplingUnavailable(Exception):
+    """A contextual sampling cell lacks enough supported historical evidence."""
+
 # Authored demonstration starts. These are not pregame states taken from a real game.
 STARTS = {
     'own25_q1_900': {'quarter': 1, 'clock': 900, 'offense': 'OFF', 'defense': 'DEF', 'yl': 75, 'down': 1, 'togo': 10, 'dir': 1},
@@ -62,8 +66,25 @@ QUARTER_LENGTH = 900
 FLIP_AFTER = (1, 3)  # both teams change goals after Q1 and Q3 (rules file, section 2); not at halftime
 
 
-def load(db):
-    return load_seasons(db, POOL_SEASONS)
+def load(db, eligible_before=None):
+    """Read the pinned S0 window by default, or rebuild through weeks before one matchup.
+
+    The dynamic window starts at 2022 and excludes every play in the target week, including earlier games on the same day.
+    """
+    if eligible_before is None:
+        return load_seasons(db, POOL_SEASONS)
+    season, week = (int(value) for value in eligible_before)
+    if season < min(POOL_SEASONS) or week < 1 or week > 18:
+        raise ValueError('dynamic pool cutoff must be week 1-18 of 2022 or later')
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    try:
+        columns = ', '.join(COLUMNS)
+        query = (f"SELECT {columns} FROM nfl_pbp WHERE season >= ? AND week <= 18 "
+                 "AND (season < ? OR (season = ? AND week < ?)) ORDER BY game_id, play_id")
+        rows = [dict(zip(COLUMNS, r)) for r in con.execute(query, (min(POOL_SEASONS), season, season, week))]
+    finally:
+        con.close()
+    return rows
 
 
 def load_seasons(db, seasons):
@@ -162,9 +183,10 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None):
+def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
-    `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence."""
+    `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
+    `sampling_policy`, when given, samples events and source plays using the current simulated teams' context."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -189,10 +211,18 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         cell = pool.get(key, [])
         if len(cell) < MIN_POOL:
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
-        shares = Counter(ev for ev, _, _, _ in cell)
-        selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
-        cands = sorted([x for x in cell if x[0] == selected_event], key=lambda x: (x[1]['game_id'], x[1]['play_id']))
-        _, row, runoff, spot = rng.choice(cands)
+        if sampling_policy is None:
+            shares = Counter(ev for ev, _, _, _ in cell)
+            selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
+            cands = sorted([x for x in cell if x[0] == selected_event],
+                           key=lambda x: (x[1]['game_id'], x[1]['play_id']))
+            _, row, runoff, spot = rng.choice(cands)
+        else:
+            try:
+                selected_event, row, runoff, spot = sampling_policy.sample(
+                    rng, cell, offense=st['offense'], defense=st['defense'])
+            except SamplingUnavailable as unavailable:
+                return halt(str(unavailable))
         event = selected_event
         kick_outcome = None
         kick_metadata = None

@@ -115,6 +115,9 @@ def _reference_fingerprint(reference):
         add(['overtime-toss-override', reference.overtime_toss])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
+    if getattr(reference, 'contextual_sampler', None) is not None:
+        add(['contextual-sampler', reference.contextual_sampler.describe()])
+        add(['contextual-pool-manifest', reference.contextual_pool_manifest])
     summary = {
         'schema': 'lp-e2-observed-reference-3',
         'sha256': digest.hexdigest(),
@@ -380,7 +383,9 @@ def regime_kickoffs(kpool, target_season, kickoff_before):
 
 
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
-         overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None):
+         overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
+         eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
+         contextual_min_effective_games=10.0):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -396,9 +401,27 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
 
     `kickoff_regime_season` (opt-in, None by default): draw kickoffs only from the seasons whose registered kickoff rules match
     that season, before `kickoff_before` (required then). None keeps the 2022-2025 kickoff pool that every earlier run used.
+
+    `eligible_before` (opt-in): rebuild the E1 scrimmage and kickoff pool from 2022 through the weeks before the target.
+    Kick-result, blocked-kick, missed-field-goal-return, participant-position, and timeout-extras inputs remain their
+    separately pinned 2022-2025 artifacts and are identified as such in `pool_scope`.
+
+    `contextual_mode` (opt-in): `offense`, `defense`, or `both`. Requires a target context and eligible-before cutoff.
     """
-    rows = e1.load(db)
+    rows = e1.load(db, eligible_before=eligible_before)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
+    contextual_sampler = None
+    contextual_pool_manifest = {}
+    if contextual_mode is not None:
+        if contextual_mode not in ('offense', 'defense', 'both'):
+            raise ValueError(f'unknown contextual mode {contextual_mode!r}')
+        if eligible_before is None or contextual_context is None:
+            raise ValueError('contextual sampling requires both target context and eligible_before cutoff')
+        import contextual_pool as cp
+        pool_rows = [row for cell in pool.values() for _event, row, _runoff, _spot in cell]
+        contextual_sampler, contextual_pool_manifest = cp.build(
+            db, pool_rows, contextual_context, mode=contextual_mode, bandwidth=contextual_bandwidth,
+            min_effective_games=contextual_min_effective_games)
     kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
     kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
     kpool, kex = gs.build_kickoff_pool(kick_rows, include_season=kickoff_regime_season is not None)
@@ -425,7 +448,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
                              load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
-                             overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice)
+                             overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice,
+                             contextual_sampler=contextual_sampler)
     reference.overtime_try_sha256 = try_fallback_sha
     reference.kickoff_regime = kickoff_regime
     reference.overtime_choice_sha256 = choice_sha
@@ -436,6 +460,11 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
                             'kick_table': 'not filtered: the published kick rates include overtime kicks',
+                            'eligible_before': list(eligible_before) if eligible_before is not None else None,
+                            'eligible_play_seasons': sorted({int(row['season']) for row in rows}),
+                            'special_teams_artifact_window': '2022-2025',
                             'safety_kick_table': 'observed 2022-2025 regular-season safety free kicks, usable rows only'}
+    if contextual_sampler is not None:
+        reference.contextual_pool_manifest = contextual_pool_manifest
     reference.model_inputs = _reference_fingerprint(reference)
     return reference, kex

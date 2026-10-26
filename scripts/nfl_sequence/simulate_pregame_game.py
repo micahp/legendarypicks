@@ -28,15 +28,18 @@ import pregame_snapshot  # noqa: E402
 REPO = HERE.parents[1]
 PRODUCER_FILES = (
     'scripts/nfl_sequence/build_blocked_kick_outcomes.py',
+    'scripts/nfl_sequence/contextual_pool.py',
     'scripts/nfl_sequence/e1_drive.py',
     'scripts/nfl_sequence/e2_reference.py',
     'scripts/nfl_sequence/game_state.py',
     'scripts/nfl_sequence/game_stats.py',
     'scripts/nfl_sequence/measure_kick_outcomes.py',
+    'scripts/nfl_sequence/pregame_context.py',
     'scripts/nfl_sequence/pregame_snapshot.py',
     'scripts/nfl_sequence/reducer.py',
     'scripts/nfl_sequence/simulate_pregame_game.py',
     'scripts/nfl_sequence/simulate_pregame_batch.py',
+    'scripts/nfl_sequence/try_policy.py',
 )
 
 
