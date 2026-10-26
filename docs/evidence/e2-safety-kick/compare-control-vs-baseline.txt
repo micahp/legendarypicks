@@ -1,0 +1,9 @@
+seeds: baseline 300, new 300; changed rows: 0
+baseline outcomes: {'valid': 245, 'blocked_before_regulation_end': 42, 'tied_at_regulation_end': 13}
+new outcomes:      {'valid': 245, 'blocked_before_regulation_end': 42, 'tied_at_regulation_end': 13}
+transitions of changed seeds (baseline -> new): {}
+changed seeds NOT baseline-blocked on a safety: []
+baseline blockers of changed seeds: {}
+new blockers of changed seeds:      {}
+changed seeds: []
+fields that differ on changed seeds: {}
