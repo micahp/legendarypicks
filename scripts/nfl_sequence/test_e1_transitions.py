@@ -119,6 +119,19 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
         e1.check_drive(plays, terminal)
 
+    def test_blocked_punt_off_the_field_is_a_named_block_not_a_crash(self):
+        def block(event, st, row, runoff, spot, rng):
+            return {'event': 'blocked_punt', 'clock_runoff_seconds': 1,
+                    'kick_outcome': {'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                                     'recovery_role': 'receiving_team', 'recovery_yards_from_los': -16,
+                                     'return_endpoint_yards_from_los': -21}}
+
+        plays, terminal = e1.simulate(start(1, 600, yl=90, down=4, togo=10), 1,
+                                      FakePool(('punt', 0, 10, 22)), 'e1-blocked-punt-off-field',
+                                      special_teams=block)
+        self.assertIsNone(plays)
+        self.assertEqual(terminal, 'blocked_kick_receiving_return_outside_field')
+
     def test_a_punt_at_the_q4_expiry_is_regulation_end_with_the_receiving_spot(self):
         pool = FakePool(('punt', 0, 300, 22), ('punt', 0, 10, 22))
         plays, terminal = e1.simulate(start(4, 100), 1, pool, 'e1-test-seed1')
@@ -180,6 +193,24 @@ class Reducer(unittest.TestCase):
         self.assertEqual((terminal, after['offense'], after['down'], after['yl']), ('turnover', 'B', 1, 34))
         self.assertTrue(flags['turnover'])
         self.assertTrue(flags['punt_attempt'])
+
+    def test_blocked_kick_return_off_the_field_is_a_named_block(self):
+        # Seed 245: a blocked punt at the own 10 whose observed return ends 21 yards behind the line projects past the goal line.
+        with self.assertRaises(reducer.UnmodelledOutcome) as caught:
+            reducer.apply_play({'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 8, 'yl': 90}, 'blocked_punt', 0,
+                               kick_outcome={'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                                             'recovery_role': 'receiving_team', 'recovery_yards_from_los': -16,
+                                             'return_endpoint_yards_from_los': -21})
+        self.assertEqual(caught.exception.reason, 'blocked_kick_receiving_return_outside_field')
+        self.assertIsInstance(caught.exception, ValueError)
+
+    def test_blocked_kick_kicking_team_return_off_the_field_is_a_named_block(self):
+        with self.assertRaises(reducer.UnmodelledOutcome) as caught:
+            reducer.apply_play({'offense': 'A', 'defense': 'B', 'down': 1, 'togo': 10, 'yl': 3}, 'blocked_punt', 0,
+                               kick_outcome={'kick_type': 'punt', 'classification_status': 'classified_recovery',
+                                             'recovery_role': 'kicking_team', 'recovery_yards_from_los': 0,
+                                             'return_endpoint_yards_from_los': 5})
+        self.assertEqual(caught.exception.reason, 'blocked_kick_kicking_return_outside_field')
 
     def test_blocked_kick_kicking_team_recovery_behind_los_can_fail_on_fourth_down(self):
         after, terminal, flags = reducer.apply_play(
