@@ -14,6 +14,7 @@ import collections
 import csv
 import copy
 import datetime as dt
+import functools
 import gzip
 import hashlib
 import importlib.util
@@ -238,17 +239,29 @@ def read_verified_shift_game(game_id: str, manifest: dict[str, dict[str, str]]) 
     row = manifest.get(game_id)
     if row is None:
         raise ValueError(f"no verified shift manifest row for donor game {game_id}")
-    path = SHIFT_RAW / f"{game_id}.json.gz"
-    if path.stat().st_size != int(row["bytes_gz"]):
-        raise ValueError(f"{game_id}: shift body compressed size differs from manifest")
-    digest = sha256_file(path)
-    if digest != row["sha256_gz"]:
-        raise ValueError(f"{game_id}: shift body hash differs from manifest")
-    with gzip.open(path, "rt", encoding="utf-8") as f:
-        doc = json.load(f)
+    doc = _read_verified_gzip_cached(str(SHIFT_RAW / f"{game_id}.json.gz"),
+                                    int(row["bytes_gz"]),str(row["sha256_gz"]))
     if int(doc.get("total", -1)) != len(doc.get("data", [])):
         raise ValueError(f"{game_id}: shift response total does not reconcile")
     return doc
+
+
+@functools.lru_cache(maxsize=512)
+def _read_verified_gzip_cached(path_text: str, expected_bytes: int | None,
+                               expected_sha256: str) -> dict[str, Any]:
+    """Cache immutable, hash-verified source JSON to avoid repeated Monte Carlo decompression."""
+    path=Path(path_text)
+    if expected_bytes is not None and path.stat().st_size!=expected_bytes:
+        raise ValueError(f"{path.name}: compressed body size differs from manifest")
+    if sha256_file(path)!=expected_sha256:
+        raise ValueError(f"{path.name}: compressed body hash differs from manifest")
+    with gzip.open(path,"rt",encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def read_verified_pbp_game(game: Any, raw_dir: Path) -> dict[str, Any]:
+    return _read_verified_gzip_cached(str(raw_dir / f"{game.game_id}.json.gz"),
+                                     None,game.compressed_sha256)
 
 
 def load_roster(db_path: Path, team: str, game_date: str, cutoff: dt.datetime) -> TeamRoster:
@@ -854,7 +867,7 @@ class DonorPeriod:
 def prepare_donor_period(game: Any, period_type: str, period_number: int,
                          data_root: Path, shift_manifest: dict[str,dict[str,str]],
                          inputs: PregameInputs, selected_goalies: dict[str,list[str]]) -> DonorPeriod:
-    pbp=v01._read_verified_source_game(game,data_root/"raw"/"pbp")
+    pbp=read_verified_pbp_game(game,data_root/"raw"/"pbp")
     shifts=read_verified_shift_game(game.game_id,shift_manifest)
     source_period_events=v01._source_period_events(pbp,period_type,period_number)
     terminal_elapsed=None
