@@ -156,7 +156,8 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id, special_teams=None):
+def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None):
+    """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -199,6 +200,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
             after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
             return None, blocked.reason
+        if clock is not None:
+            runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'])
+            if refusal:
+                return None, f'clock model refused: {refusal}'
         clock_raw = st['clock'] - runoff
         clock_after = max(0, clock_raw)
         quarter_change = False
