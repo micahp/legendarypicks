@@ -46,6 +46,8 @@ FEATURES = [
     ("team game results", "team_game_results", ""),
     ("team stats",   "team_game_stats",     ""),
     ("coverage row", "team_stats_coverage", ""),
+    ("rosters", "roster_snapshots", ""),
+    ("standings", "league_standings_snapshots", ""),
     ("scoring plays", "scoring_plays",      ""),
     ("game context", "game_context",        ""),
     ("stories",      "game_story",          ""),
@@ -56,13 +58,15 @@ FEATURES = [
 # Surfaces a league does not have by design, so an empty cell is not a gap.
 # Stated per league rather than inferred: "we never built it" and "it broke" look
 # identical in a count, and only one of them is a defect.
+# Tennis and MMA rankings and standings are incidental to the product, so an empty rosters or standings row there is not a gap.
 NOT_APPLICABLE = {
-    "ufc":   {"team game results", "team stats", "coverage row", "scoring plays", "game context"},
+    "ufc":   {"team game results", "team stats", "coverage row", "scoring plays", "game context",
+              "rosters", "standings"},
     "wc":    {"team stats"},
     "atp":   {"team game results", "team stats", "coverage row", "scoring plays",
-              "game context", "player stats"},
+              "game context", "player stats", "rosters", "standings"},
     "wta":   {"team game results", "team stats", "coverage row", "scoring plays",
-              "game context", "player stats"},
+              "game context", "player stats", "rosters", "standings"},
     "lcup":  {"team stats", "coverage row"},
 }
 
@@ -350,8 +354,8 @@ LIFECYCLE_SQL = {
 }
 
 # Surfaces we cannot measure without an ESPN request. Never render these as a
-# pass or a fail: "evidence unavailable" is neither.
-UNPROBED = ("standings", "scoreboard / scores freshness")
+# pass or a fail: "evidence unavailable" is neither. Stored standings are probed above.
+UNPROBED = ("live ESPN standings", "scoreboard / scores freshness")
 
 
 def _live_snapshot(con, league: str, tables: set[str]):

@@ -30,7 +30,12 @@ MANIFEST_LEAGUES = {"mlb", "mls", "nba", "ncaaf", "nfl", "nhl"}
 PLAYER_STATS_LEAGUES = MANIFEST_LEAGUES
 GAME_LOG_LEAGUES = MANIFEST_LEAGUES | {"lcup", "ligamx", "ufc", "wc"}
 TEAM_SCHEDULE_LEAGUES = MANIFEST_LEAGUES
-ROSTER_FRESH_DAYS = {"nhl": 7}
+# NBA shares NHL's seven-day window. That is a policy choice, not a measured limit.
+ROSTER_FRESH_DAYS = {"nhl": 7, "nba": 7}
+# The club list a league's standings and divisions depend on: the table, and the club count it must have.
+ALIGNMENT_TABLES = {"nba": ("nba_teams", 30)}
+# Scored regular-season games per league, where standings are derived from a schedule rather than team_game_results.
+STANDINGS_GAME_SOURCES = {"nba": "nba_schedule"}
 
 # ESPN keys NBA/NHL by the year the season ends and the other leagues here by
 # the year it starts (or by the sole calendar year).  See season_keys.py.
@@ -209,6 +214,50 @@ def _availability(count: int | None, phase: str, *, regular_only: bool = False) 
 
 def _not_applicable() -> dict:
     return {"status": "not_applicable", "count": None}
+
+
+def _alignment_check(con: sqlite3.Connection, tables: set[str], league: str, season: int) -> dict:
+    """The season's club list: its size, its conferences and divisions, and where they came from."""
+    if league not in ALIGNMENT_TABLES:
+        return _not_applicable()
+    table, expected = ALIGNMENT_TABLES[league]
+    if table not in tables:
+        return {"status": "missing", "season": season, "reason": f"{table} is not in this database"}
+    rows = con.execute(
+        f"SELECT team, conference, division, source FROM {table} WHERE season=?", (season,)).fetchall()
+    if not rows:
+        return {"status": "missing", "season": season, "clubs": 0,
+                "reason": f"{table} has no clubs for season {season}"}
+    sources = sorted({row["source"] or "" for row in rows})
+    check = {"status": "available", "season": season, "clubs": len(rows),
+             "expected_clubs": expected, "sources": sources}
+    if len(rows) != expected:
+        check.update(status="incomplete",
+                     reason=f"{table} lists {len(rows)} clubs for season {season}; expected {expected}")
+    elif any(not row["conference"] or not row["division"] for row in rows):
+        check.update(status="incomplete", reason=f"{table} has clubs with no conference or division")
+    elif any("hand-entered" in source for source in sources):
+        check.update(status="unverified",
+                     reason="division alignment is hand-entered, not from a published source")
+    return check
+
+
+def _standings_games_check(con: sqlite3.Connection, tables: set[str], league: str,
+                           season: int, phase: str) -> dict:
+    """Scored regular-season games for the season: the rows a standings table would be derived from."""
+    table = STANDINGS_GAME_SOURCES.get(league)
+    if table is None:
+        return _not_applicable()
+    if table not in tables:
+        return {"status": "unverified", "count": None, "season": season,
+                "reason": f"{table} is not in this database"}
+    count = _count(
+        con, tables, table,
+        f"SELECT COUNT(*) FROM {table} WHERE season=? AND season_type='REG'"
+        " AND home_score IS NOT NULL AND away_score IS NOT NULL",
+        (season,),
+    )
+    return {**_availability(count, phase, regular_only=True), "season": season, "source": table}
 
 
 def _roster_snapshot_check(con: sqlite3.Connection, tables: set[str],
@@ -398,6 +447,8 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
             "roster_snapshot": _roster_snapshot_check(
                 con, tables, league, season, as_of
             ),
+            "division_alignment": _alignment_check(con, tables, league, season),
+            "standings_games": _standings_games_check(con, tables, league, season, phase),
             # Named for what the rows ARE. The former key `schedule` invited
             # the preseason-zero reading "the publisher has no schedule",
             # which the source contradicts.
@@ -438,6 +489,13 @@ def build_readiness(con: sqlite3.Connection, as_of: dt.date | None = None) -> di
         roster = checks["roster_snapshot"]
         if active and roster["status"] in {"missing", "stale", "unverified"}:
             reasons.append(roster.get("reason") or "current roster snapshot is not ready")
+        alignment = checks["division_alignment"]
+        if active and alignment["status"] in {"missing", "incomplete", "unverified"}:
+            reasons.append(alignment.get("reason") or "club alignment is not ready")
+        standings = checks["standings_games"]
+        if active and standings["status"] == "missing":
+            reasons.append(f"no scored regular-season games are stored for season {season}; "
+                           "standings cannot be derived")
         season_end = _day(end)
         has_future_static = any(
             (_day(candidate["season_start"]) or dt.date.min) > as_of
