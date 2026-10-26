@@ -1269,5 +1269,20 @@ class TimeoutStop(unittest.TestCase):
 
 
 
+class FirstDriveBlock(unittest.TestCase):
+    def test_a_game_blocked_at_zero_zero_is_not_reported_as_a_tie(self):
+        unclassified = {'kick_type': 'field_goal', 'game_id': '2025_01_TEST', 'play_id': 50,
+                        'source_file': 'play_by_play_2025.parquet', 'source_sha256': 'a' * 64,
+                        'classification_status': 'unclassified', 'posteam': 'KC', 'defteam': 'SEA',
+                        'clock_runoff_seconds': 1}
+        kicks = certain_kicks()
+        kicks['field_goal_outcomes'] = {bucket: (0, 0, 60) for bucket in gs.FG_BUCKETS}
+        blocked = {'records': {'field_goal': [unclassified], 'punt': []},
+                   'rates': {'punt_blocked': {'attempts': 1, 'blocked': 0}}, 'sha256': 'b' * 64}
+        record = gs.play_game(7, ref(StaticPool('field_goal_attempt', 0, 5), kickoff_pool(), kicks,
+                                     blocked_kicks=blocked), winner_choice='receive', max_drives=1)
+        self.assertEqual(record['status'], 'blocked')
+        self.assertFalse(record['tied'])
+        self.assertNotIn('overtime', record['unsupported_rules'])
 if __name__ == '__main__':
     unittest.main()
