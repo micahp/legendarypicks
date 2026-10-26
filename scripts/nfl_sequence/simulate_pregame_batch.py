@@ -35,6 +35,8 @@ import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
 import pregame_batch as aggregation  # noqa: E402
 import pregame_snapshot  # noqa: E402
+import pregame_context  # noqa: E402
+import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
@@ -61,14 +63,14 @@ def _baseline_v1(db, snapshot):
     cutoff = datetime.fromisoformat(snapshot['as_of'].replace('Z', '+00:00')).astimezone(timezone.utc)
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
     try:
-        locked = con.execute(
+        locked_rows = con.execute(
             "SELECT g.run_id, g.model_version, g.proj_home, g.proj_away, g.proj_margin, g.proj_total, "
             "g.p_home_win, g.locked_at, g.home, g.away, g.season, g.week, r.started_at, r.params_json "
             "FROM game_projections g JOIN model_runs r ON r.run_id=g.run_id "
             "WHERE g.league='nfl' AND g.game_id=? AND g.locked=1 AND r.status='ok' "
             "AND r.model='nfl-ratings-v1' AND g.model_version LIKE 'nfl-v1 %' "
-            "ORDER BY g.locked_at DESC LIMIT 1", (schedule['game_id'],)
-        ).fetchone()
+            "ORDER BY g.locked_at", (schedule['game_id'],)
+        ).fetchall()
         row = pregame_snapshot.schedule_at(con, schedule['game_id'], cutoff)
         if row is None:
             raise ValueError('v1 baseline schedule has no version observed by the frozen cutoff')
@@ -80,37 +82,51 @@ def _baseline_v1(db, snapshot):
         if gameday and datetime.fromisoformat(gameday).date() > cutoff.date():
             raise ValueError('v1 baseline target game date is after the frozen cutoff')
 
-        if locked:
+        kickoff = schedule.get('scheduled_kickoff_utc')
+        kickoff_time = datetime.fromisoformat(kickoff.replace('Z', '+00:00')) if kickoff else None
+        if locked_rows:
+            if kickoff_time is None:
+                raise ValueError('stored v1 lock cannot be classified without a verified kickoff timestamp')
+            candidates = []
+            for row in locked_rows:
+                lock_time = datetime.fromisoformat(row[7].replace('Z', '+00:00'))
+                if lock_time.tzinfo is None:
+                    lock_time = lock_time.replace(tzinfo=timezone.utc)
+                lock_time = lock_time.astimezone(timezone.utc)
+                if lock_time >= kickoff_time.astimezone(timezone.utc):
+                    continue
+                if (row[8], row[9], int(row[10]), int(row[11])) != (home, away, season, week):
+                    continue
+                candidates.append((lock_time, row))
+            if not candidates:
+                raise ValueError('no stored v1 lock matches the cutoff schedule identity before kickoff')
+            eligible_locks = [item for item in candidates if item[0] <= cutoff]
+            locked_time, locked = max(eligible_locks or candidates, key=lambda item: item[0])
             (run_id, model_version, home_points, away_points, margin, total, p_home, locked_at,
              locked_home, locked_away, locked_season, locked_week, run_started, params_json) = locked
-            if (locked_home, locked_away, int(locked_season), int(locked_week)) != (home, away, season, week):
-                raise ValueError('stored v1 baseline projection identity disagrees with the frozen snapshot')
-            locked_time = datetime.fromisoformat(locked_at.replace('Z', '+00:00'))
-            if locked_time.tzinfo is None:
-                locked_time = locked_time.replace(tzinfo=timezone.utc)
-            kickoff = schedule.get('scheduled_kickoff_utc')
-            kickoff_time = datetime.fromisoformat(kickoff.replace('Z', '+00:00')) if kickoff else None
-            if kickoff_time is None or locked_time.astimezone(timezone.utc) < kickoff_time.astimezone(timezone.utc):
-                cutoff_delta = (locked_time.astimezone(timezone.utc) - cutoff).total_seconds()
-                try:
-                    params = json.loads(params_json)
-                except (TypeError, ValueError):
-                    params = {}
-                return {
-                    'status': 'available', 'source': 'immutable_locked_v1_projection',
-                    'model': 'Legendary Picks NFL points model v1', 'model_version': model_version,
-                    'run_id': run_id, 'locked_at': locked_at, 'run_started_at': run_started,
-                    'snapshot_cutoff_offset_seconds': cutoff_delta,
-                    'cutoff_note': ('locked after the frozen snapshot cutoff but before kickoff'
-                                    if cutoff_delta > 0 else 'locked by the frozen snapshot cutoff'),
-                    'training': {'prior_season': season - 1, 'current_season': season,
-                                 'current_season_week_exclusive': week,
-                                 'fit_games': params.get('fit_games'), 'as_of': snapshot['as_of']},
-                    'projected_home_points': home_points, 'projected_away_points': away_points,
-                    'projected_home_minus_away': margin, 'projected_total': total,
-                    'home_win_probability': p_home,
-                    'win_probability_sigma_points': params.get('sigma', V1_CONFIG['sigma']),
-                }
+            cutoff_delta = (locked_time - cutoff).total_seconds()
+            try:
+                params = json.loads(params_json)
+            except (TypeError, ValueError):
+                params = {}
+            lock_is_comparable = cutoff_delta <= 0
+            return {
+                'status': 'available' if lock_is_comparable else 'exploratory_later_lock',
+                'comparable_at_snapshot_cutoff': lock_is_comparable,
+                'source': 'immutable_locked_v1_projection',
+                'model': 'Legendary Picks NFL points model v1', 'model_version': model_version,
+                'run_id': run_id, 'locked_at': locked_at, 'run_started_at': run_started,
+                'snapshot_cutoff_offset_seconds': cutoff_delta,
+                'cutoff_note': ('lock is later than the frozen simulation cutoff; this value is exploratory'
+                                if cutoff_delta > 0 else 'lock was recorded by the frozen simulation cutoff'),
+                'training': {'prior_season': season - 1, 'current_season': season,
+                             'current_season_week_exclusive': week,
+                             'fit_games': params.get('fit_games'), 'as_of': snapshot['as_of']},
+                'projected_home_points': home_points, 'projected_away_points': away_points,
+                'projected_home_minus_away': margin, 'projected_total': total,
+                'home_win_probability': p_home,
+                'win_probability_sigma_points': params.get('sigma', V1_CONFIG['sigma']),
+            }
 
         import nfl_ratings as nr
         import nfl_ratings_data as nrd
@@ -148,7 +164,8 @@ def _baseline_v1(db, snapshot):
         fit_sha = _canonical_sha({'mu': fit.mu, 'h': fit.h, 'offense': fit.o, 'defense': fit.d,
                                   'games_used': games_used})
         baseline = {
-            'status': 'available', 'source': 'frozen_v1_fit',
+            'status': 'exploratory_reconstructed_fit', 'comparable_at_snapshot_cutoff': False,
+            'source': 'frozen_v1_fit_from_current_chronologically_filtered_rows',
             'model': 'Legendary Picks NFL points model v1',
             'model_version': model_version, 'fit_sha256': fit_sha,
             'training': {'prior_season': season - 1, 'current_season': season,
@@ -252,26 +269,62 @@ def _replay_examples(outcomes):
         'high_total': {'seed': highest['seed'], 'total': highest['home_points'] + highest['away_points']},
         'low_total': {'seed': lowest['seed'], 'total': lowest['home_points'] + lowest['away_points']},
         'closest_to_mean_margin': {'seed': closest['seed'], 'home_minus_away': closest['home_points'] - closest['away_points']},
-        'reproduction': 'Run simulate_pregame_game.py with the same snapshot, reference inputs, and listed seed.',
+        'reproduction': ('Save the payload pregame_snapshot as JSON, then run simulate_pregame_batch.py with the same '
+                         'database and model options, --snapshot-file PATH, --games 1, and the listed --seed-start.'),
     }
 
 
 def run_batch(args):
-    snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc,
-                                      args.kickoff_source_url)
+    batch_started = time.monotonic()
+    snapshot_started = batch_started
+    if args.snapshot_file:
+        snapshot = pregame_snapshot.load_frozen_snapshot(args.snapshot_file)
+        if args.game_id and args.game_id != snapshot['schedule']['game_id']:
+            raise ValueError('--game-id does not match the frozen snapshot')
+        if args.as_of and pregame_snapshot.parse_as_of(args.as_of) != pregame_snapshot.parse_as_of(snapshot['as_of']):
+            raise ValueError('--as-of does not match the frozen snapshot')
+        if bool(args.kickoff_utc) != bool(args.kickoff_source_url):
+            raise ValueError('--kickoff-utc and --kickoff-source-url must be supplied together')
+        if args.kickoff_utc and pregame_snapshot.parse_as_of(args.kickoff_utc) != pregame_snapshot.parse_as_of(
+                snapshot['schedule'].get('scheduled_kickoff_utc')):
+            raise ValueError('--kickoff-utc does not match the frozen snapshot')
+        args.game_id = snapshot['schedule']['game_id']
+        args.as_of = snapshot['as_of']
+    else:
+        if not args.game_id or not args.as_of:
+            raise ValueError('provide --snapshot-file or both --game-id and --as-of')
+        snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc,
+                                          args.kickoff_source_url)
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
-    ref, excluded_kickoffs = er.load(args.db)
+    snapshot_seconds = time.monotonic() - snapshot_started
+    contextual = None
+    try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
+    reference_started = time.monotonic()
+    if args.context_mode == 'unconditioned':
+        ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy)
+    else:
+        contextual = pregame_context.build(args.db, snapshot['schedule'], snapshot['as_of'], snapshot)
+        eligible_before = (int(snapshot['schedule']['season']), int(snapshot['schedule']['week']))
+        ref, excluded_kickoffs = er.load(
+            args.db, try_policy=try_policy, eligible_before=eligible_before,
+            contextual_context=contextual, contextual_mode=args.context_mode,
+            contextual_bandwidth=args.context_bandwidth,
+            contextual_min_effective_games=args.context_min_source_games)
+    reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
+    snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
+    baseline_started = time.monotonic()
     try:
         baseline = _baseline_v1(args.db, snapshot)
     except Exception as exc:  # remain explicit while retaining the statistical batch if the comparison is unavailable
         baseline = {'status': 'unavailable', 'reason': f'{type(exc).__name__}: {str(exc)}'}
+    baseline_seconds = time.monotonic() - baseline_started
 
     outcomes = []
     player_totals = defaultdict(lambda: defaultdict(float))
@@ -306,6 +359,7 @@ def run_batch(args):
             print(f'progress {completed}/{args.games}; elapsed {elapsed:.0f}s; ETA {remaining:.0f}s',
                   file=sys.stderr, flush=True)
 
+    simulation_seconds = time.monotonic() - started
     summary = aggregation.summarize_outcomes(outcomes, args.games,
                                              home_market_margin=args.home_market_margin,
                                              market_total=args.market_total)
@@ -318,6 +372,13 @@ def run_batch(args):
             'home_minus_away_mean_minus_v1': round(projected['home_minus_away']['mean'] - baseline['projected_home_minus_away'], 4),
             'total_mean_minus_v1': round(projected['total']['mean'] - baseline['projected_total'], 4),
         })
+    replay_examples = _replay_examples(outcomes)
+    if replay_examples:
+        replay_examples['reproduction_command'] = (
+            'python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file SNAPSHOT.json '
+            f'--db {args.db} --games 1 --seed-start SEED --context-mode {args.context_mode} '
+            f'--context-bandwidth {args.context_bandwidth} --context-min-source-games {args.context_min_source_games} '
+            f'--try-policy {args.try_policy} --out REPLAY.json')
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
@@ -331,20 +392,35 @@ def run_batch(args):
                                         'guarded regulation-end outcomes; descriptive, not validated finals'),
             'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
                                    'seeds remain in outcomes and coverage counts'),
+            'context_mode': args.context_mode,
+            'context_bandwidth_in_source_rating_sd': args.context_bandwidth if contextual else None,
+            'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
+        },
+        'runtime_seconds': {
+            'snapshot_load': round(snapshot_seconds, 4),
+            'context_and_reference_build': round(reference_seconds, 4),
+            'v1_baseline_lookup_or_fit': round(baseline_seconds, 4),
+            'game_generation': round(simulation_seconds, 4),
+            'total_before_report_write': round(time.monotonic() - batch_started, 4),
         },
         'source': {**game_cli.producer_source(), 'v1_model_file_sha256': baseline_files},
         'pregame_snapshot': snapshot,
+        'pregame_context': contextual,
+        'contextual_pool_manifest': ref.contextual_pool_manifest,
         'data_sources': {
             'database': 'SQLite, opened read-only',
-            'play_window': 'nfl_pbp seasons 2022-2025, weeks 1-18',
+            'play_window': ('nfl_pbp seasons 2022-2025, weeks 1-18' if contextual is None else
+                            f"nfl_pbp seasons 2022 through weeks before {snapshot['schedule']['season']} week "
+                            f"{snapshot['schedule']['week']}"),
             'observed_reference_sha256': ref.model_inputs['sha256'],
+            'reference_pool_scope': ref.pool_scope,
             'kickoff_pool_excluded_rows': sum(excluded_kickoffs.values()),
         },
         'baseline_v1': baseline,
         'comparison_to_v1': comparison,
         'summary': summary,
         'player_projections': _player_projections(snapshot, player_totals, games_with_player_stats),
-        'replay_examples': _replay_examples(outcomes),
+        'replay_examples': replay_examples,
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -358,10 +434,11 @@ def run_batch(args):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--game-id', required=True)
-    ap.add_argument('--as-of', required=True)
+    ap.add_argument('--game-id', help='published nfl_schedule game_id; required unless --snapshot-file is used')
+    ap.add_argument('--as-of', help='timezone-qualified ISO-8601 cutoff; required unless --snapshot-file is used')
     ap.add_argument('--kickoff-utc')
     ap.add_argument('--kickoff-source-url')
+    ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
@@ -370,6 +447,14 @@ def main(argv=None):
     ap.add_argument('--home-market-margin', type=float,
                     help='optional home-team expected-margin line; positive means the home team is favored')
     ap.add_argument('--market-total', type=float, help='optional over/under total line')
+    ap.add_argument('--context-mode', choices=('unconditioned', 'offense', 'defense', 'both'),
+                    default='unconditioned', help='research-only contextual pool ablation; default keeps S0')
+    ap.add_argument('--context-bandwidth', type=float, default=1.0,
+                    help='Gaussian kernel bandwidth in source team-rating standard deviations')
+    ap.add_argument('--context-min-source-games', type=float, default=10.0,
+                    help='minimum effective source games in a sampled contextual pool cell')
+    ap.add_argument('--try-policy', choices=('unconditional', 'k1'), default='unconditional',
+                    help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--out', required=True)

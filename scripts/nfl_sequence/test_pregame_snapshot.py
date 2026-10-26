@@ -165,5 +165,45 @@ class ScheduleAsOf(unittest.TestCase):
         self.assertEqual({k: got[k] for k in keys}, {k: block[k] for k in keys})
 
 
+class FrozenSnapshotFile(unittest.TestCase):
+    def test_loads_hash_pinned_snapshot_and_game_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'snapshot.json'
+            frozen = snapshot_module.reseal({
+                'schema': snapshot_module.SCHEMA,
+                'as_of': '2026-10-25T22:47:49Z',
+                'schedule': {'game_id': GAME, 'season': 2026, 'week': 7, 'game_type': 'REG',
+                             'home_team': 'SEA', 'away_team': 'KC',
+                             'scheduled_kickoff_utc': '2026-10-26T00:20:00Z'},
+                'model_reference': {},
+                'rosters': {'home': {'team': 'SEA', 'players': []}, 'away': {'team': 'KC', 'players': []}},
+            })
+            path.write_text(json.dumps({'pregame_snapshot': frozen, 'record': {}}))
+            loaded = snapshot_module.load_frozen_snapshot(str(path))
+            self.assertEqual(loaded['snapshot_sha256'], frozen['snapshot_sha256'])
+            self.assertEqual(loaded['schedule']['game_id'], GAME)
+
+    def test_rejects_modified_or_post_kickoff_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'snapshot.json'
+            frozen = snapshot_module.reseal({
+                'schema': snapshot_module.SCHEMA,
+                'as_of': '2026-10-26T00:20:00Z',
+                'schedule': {'game_id': GAME, 'season': 2026, 'week': 7, 'game_type': 'REG',
+                             'home_team': 'SEA', 'away_team': 'KC',
+                             'scheduled_kickoff_utc': '2026-10-26T00:20:00Z'},
+                'model_reference': {},
+                'rosters': {'home': {'team': 'SEA', 'players': []}, 'away': {'team': 'KC', 'players': []}},
+            })
+            path.write_text(json.dumps(frozen))
+            with self.assertRaisesRegex(ValueError, 'not before scheduled kickoff'):
+                snapshot_module.load_frozen_snapshot(str(path))
+
+            frozen['as_of'] = '2026-10-25T22:47:49Z'
+            path.write_text(json.dumps(frozen))
+            with self.assertRaisesRegex(ValueError, 'hash does not match'):
+                snapshot_module.load_frozen_snapshot(str(path))
+
+
 if __name__ == '__main__':
     unittest.main()

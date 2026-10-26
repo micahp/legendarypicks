@@ -227,7 +227,7 @@ class Reference:
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
                  try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None, overtime_toss=None,
-                 overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None):
+                 overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None, contextual_sampler=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         # None keeps a safety free kick blocked. A list is the observed safety-kick table, sampled only for a safety kick.
@@ -250,6 +250,8 @@ class Reference:
         # situation.
         self.try_policy = try_policy
         self.clock_model = clock_model  # None is the E2 default; a fitted clock_d.Model selects the research clock
+        self.contextual_sampler = contextual_sampler
+        self.contextual_pool_manifest = {}
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
@@ -1050,7 +1052,8 @@ class _Game:
         research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
-                                      self.simulation_id, special_teams=special_teams, partial=attempt, **research)
+                                      self.simulation_id, special_teams=special_teams, partial=attempt,
+                                      sampling_policy=self.ref.contextual_sampler, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
