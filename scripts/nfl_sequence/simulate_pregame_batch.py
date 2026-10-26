@@ -239,16 +239,18 @@ def _player_template(snapshot):
         roster = snapshot['rosters'][side]
         primary = min(roles, key=lambda player: (
             position_priority.get(player['pos_abb'], 5), not player.get('starter', False),
-            player['pos_rank'], player['group'],
+            player['pos_rank'], player.get('group', 'unclassified'),
         ))
         players[player_id] = {
             'player_id': player_id, 'player_name': primary['player_name'],
             'position': primary['pos_abb'], 'team': roster['team'], 'side': side,
-            'starter': any(player.get('starter', False) for player in roles),
+            'starter': any(player.get('starter', player['pos_rank'] == 1) for player in roles),
             'roster_roles': [
-                {'group': player['group'], 'position': player['pos_abb'], 'depth_rank': player['pos_rank'],
-                 'starter': player['starter']}
-                for player in sorted(roles, key=lambda item: (item['group'], item['pos_abb'], item['pos_rank']))
+                {'group': player.get('group', 'unclassified'), 'position': player['pos_abb'],
+                 'depth_rank': player['pos_rank'],
+                 'starter': player.get('starter', player['pos_rank'] == 1)}
+                for player in sorted(roles, key=lambda item: (item.get('group', 'unclassified'),
+                                                               item['pos_abb'], item['pos_rank']))
             ],
         }
     return players
