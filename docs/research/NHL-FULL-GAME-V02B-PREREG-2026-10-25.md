@@ -196,3 +196,44 @@ This is a development comparison, not a gate change. Regardless of the 2021 scor
 2A/v0.1 and alpha2 as frozen research references. Recommend further work only if a candidate
 improves the relevant paired outcomes without materially damaging SOG calibration or invariants;
 adoption requires a genuinely unseen later-season or prospective evaluation.
+
+## Amendment 2 — B2 transition specification
+
+Date: 2026-10-25. This amendment is committed before any B2 matchup or development metric is
+reviewed. It refines the preregistered B2 implementation without changing the evaluation population,
+comparators, or adoption boundary.
+
+- **Training population:** eligible 2019 and 2020 GameCenter PBP only, verified against the
+  frozen PBP manifest. No 2021 or later target result contributes to transition fitting.
+- **State key:** previous event family; whether latent possession is known; strength relation to
+  possession (`EVEN`, `PP`, `PK`, `SPECIAL`, `UNKNOWN`); and score state (`TIED`, `HOME_LEADS`,
+  `AWAY_LEADS`). Families are faceoff, shot attempt, giveaway, takeaway, penalty, hit, and
+  stoppage. Unsupported penalty classes are represented as stoppages in the fitted transition pool.
+- **Family backoff:** use the exact state cell when it has at least 25 transitions; otherwise back
+  off to previous family plus possession-known status, then previous family, then the global
+  training distribution. Record the selected level and cell count per event.
+- **Event owner:** a shot follows known simulated possession. Other owned families sample the
+  training owner relation (`same` or `opposite` latent possession, or home/away when possession is
+  unknown), using the exact state/family cell at 10 or more observations and a family/known-status
+  pool otherwise. A donor owner is only the final recorded fallback. A faceoff winner is sampled
+  from simulated on-ice faceoff strengths and sets possession.
+- **Clock and lineup boundary:** B2 changes the event family and acting side at each available
+  donor event slot, but retains donor event count, clock slots, and shift intervals. It does not
+  estimate event-arrival times or event intensity; those remain donor scaffolding and are excluded
+  from any claim of a complete state-conditioned clock process.
+- **Shot process:** B2 samples shot type/distance bin from the verified 2019/2020 shot-quality
+  population. Generated attempts then pass through the candidate's SOG and conditional-goal
+  outcomes, current simulated goalie, and team conversion offsets. Shot coordinates are not
+  invented when the selected event slot has no observed shot coordinates.
+- **Unsupported penalty states:** simultaneous newly sampled penalties that cannot be paired
+  explicitly, and a third concurrent manpower penalty requiring queued serving, are emitted as
+  stoppages with a structured omission reason and counted. They do not alter manpower. The rate is
+  reported; no implicit penalty approximation is permitted.
+- **Randomness:** B2 uses a separate deterministic transition RNG initialized from the game seed
+  XOR `0x9E3779B9`. Same candidate/input/seed must remain byte-identical. B1/B2 comparisons are
+  seed-paired; they are not described as full common-random-number coupling because a changed event
+  family changes downstream draws.
+- **Candidate identity:** B1 remains donor-family state-integrity control;
+  `nhl-game-state-v0.2b-b2` is the transition candidate. B3 goalie-pull policy is not part of B2.
+
+This amendment does not authorize production selection, a gate change, forecast writes, or a push.
