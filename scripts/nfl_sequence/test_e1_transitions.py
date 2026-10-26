@@ -119,6 +119,13 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
         e1.check_drive(plays, terminal)
 
+    def test_a_fourth_down_turnover_keeps_turnover_on_downs_in_the_outcome(self):
+        plays, terminal = e1.simulate(start(1, 600, yl=50, down=4, togo=10), 1,
+                                      FakePool(('run', 0, 10, None)), 'e1-turnover-on-downs')
+        self.assertEqual(terminal, 'turnover_on_downs')
+        self.assertTrue(plays[-1]['outcome']['turnover_on_downs'])
+        self.assertTrue(plays[-1]['outcome']['turnover'])
+
     def test_a_block_keeps_the_plays_made_before_it(self):
         def block(event, st, row, runoff, spot, rng):
             return {'blocker': 'blocked_kick_outcome_unresolved:punt:unclassified'}
