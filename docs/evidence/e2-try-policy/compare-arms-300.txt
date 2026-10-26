@@ -1,0 +1,116 @@
+unconditional: policy unconditional; reference 0e4fb1b302f7; snapshot run 44a19b2d0925; pinned 53f5aafb9ce5
+k1: policy margin_period_opening K=1; reference 0e4fb1b302f7; snapshot run 44a19b2d0925; pinned 53f5aafb9ce5
+k25: policy margin_period_opening K=25; reference 0e4fb1b302f7; snapshot run 44a19b2d0925; pinned 53f5aafb9ce5
+pre_tie: policy unconditional; reference 0e4fb1b302f7; snapshot run 44a19b2d0925; pinned 53f5aafb9ce5
+
+input fingerprints identical across all four arms (reference, run snapshot, pinned snapshot)
+
+1. Outcomes by arm (exclusive; every seed appears once)
+   arm                                 valid   regulation_end_not_valid     tied_at_regulation_end blocked_before_regulation_end                     failed  seeds
+   unconditional                         244                          0                         13                         42                          1    300
+   k1                                    244                          0                         13                         42                          1    300
+   k25                                   244                          0                         13                         42                          1    300
+   pre_tie                               244                          0                         15                         40                          1    300
+   unconditional blocked by named reason: {'safety_free_kick_not_modelled': 23, 'blocked_kick_kicking_recovery_outside_field': 1, 'blocked_kick_outcome_unresolved:field_goal:unclassified': 13, 'thin_kick_cell:field_goal:50+': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired': 1}
+   unconditional scope_out reasons (all seeds): {'safety free kick': 23, 'blocked-kick transition unresolved': 17, 'rare kick outcome': 2, 'overtime': 13}
+   unconditional tied at regulation end: [82, 103, 113, 150, 173, 181, 211, 218, 224, 225, 238, 278, 292]
+   unconditional failed: [(106, "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}")]
+   k1 blocked by named reason: {'safety_free_kick_not_modelled': 23, 'blocked_kick_kicking_recovery_outside_field': 1, 'blocked_kick_outcome_unresolved:field_goal:unclassified': 13, 'thin_kick_cell:field_goal:50+': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired': 1}
+   k1 scope_out reasons (all seeds): {'safety free kick': 23, 'blocked-kick transition unresolved': 17, 'overtime': 13, 'rare kick outcome': 2}
+   k1 tied at regulation end: [59, 82, 103, 113, 117, 173, 181, 211, 218, 224, 225, 238, 292]
+   k1 failed: [(106, "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}")]
+   k25 blocked by named reason: {'safety_free_kick_not_modelled': 23, 'blocked_kick_kicking_recovery_outside_field': 1, 'blocked_kick_outcome_unresolved:field_goal:unclassified': 13, 'thin_kick_cell:field_goal:50+': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired': 1}
+   k25 scope_out reasons (all seeds): {'safety free kick': 23, 'blocked-kick transition unresolved': 17, 'overtime': 13, 'rare kick outcome': 2}
+   k25 tied at regulation end: [59, 82, 103, 113, 117, 173, 181, 211, 218, 224, 225, 238, 292]
+   k25 failed: [(106, "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}")]
+   pre_tie blocked by named reason: {'safety_free_kick_not_modelled': 23, 'blocked_kick_kicking_recovery_outside_field': 1, 'blocked_kick_outcome_unresolved:field_goal:unclassified': 12, 'thin_kick_cell:field_goal:50+': 2, 'blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot': 1, 'blocked_kick_outcome_unresolved:field_goal:period_expired': 1}
+   pre_tie scope_out reasons (all seeds): {'safety free kick': 23, 'blocked-kick transition unresolved': 17, 'rare kick outcome': 2, 'overtime': 13}
+   pre_tie tied at regulation end: [82, 103, 113, 150, 173, 180, 181, 182, 211, 218, 224, 225, 238, 278, 292]
+   pre_tie failed: [(106, "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}")]
+
+2. Tie fix: the parent commit (pre_tie) against the fixed code (unconditional), same seeds
+   reference sha256 equal: True (0e4fb1b302f7); snapshot sha256 equal: True
+   seeds whose status, blocker, points or tries change: 0 of 300 []
+   seeds whose outcome label changes: 2 [180, 182]
+     seed 180: tied_at_regulation_end (pre-fix tied=True, scope 'blocked-kick transition unresolved') -> blocked_before_regulation_end (tied=False); blocker 'blocked_kick_outcome_unresolved:field_goal:period_expired_unresolved_spot' in both; points 10-10 in both
+     seed 182: tied_at_regulation_end (pre-fix tied=True, scope 'blocked-kick transition unresolved') -> blocked_before_regulation_end (tied=False); blocker 'blocked_kick_outcome_unresolved:field_goal:unclassified' in both; points 0-0 in both
+   tied at regulation end: pre-fix 15, fixed 13
+
+3. Paired policy comparisons on identical seeds (difference = first minus second; 95% interval)
+   k1 minus unconditional: seeds 300, valid in both 242, valid only in k1 2, valid only in unconditional 2, exact McNemar p 1.000
+     valid only in k1: [(150, 'tied_at_regulation_end'), (278, 'tied_at_regulation_end')]; valid only in unconditional: [(59, 'tied_at_regulation_end'), (117, 'tied_at_regulation_end')]
+     winner changes among valid in both: 0 of 242 []
+     valid in both           n=242 home points         -0.054  [  -0.111,   +0.004]
+     valid in both           n=242 away points         +0.070  [  +0.006,   +0.134]
+     valid in both           n=242 total               +0.017  [  -0.071,   +0.104]
+     valid in both           n=242 home minus away     -0.124  [  -0.208,   -0.040]
+     valid in both           n=242 home win            +0.000  [  +0.000,   +0.000]
+     valid in both           n=242 two-point tries     -0.050  [  -0.143,   +0.043]
+     valid in both           n=242 two-point made      -0.012  [  -0.069,   +0.044]
+     regulation end in both  n=257 home points         -0.054  [  -0.109,   +0.000]
+     regulation end in both  n=257 away points         +0.070  [  +0.009,   +0.132]
+     regulation end in both  n=257 total               +0.016  [  -0.068,   +0.099]
+     regulation end in both  n=257 home minus away     -0.125  [  -0.205,   -0.044]
+     regulation end in both  n=257 home win            -0.004  [  -0.017,   +0.009]
+     regulation end in both  n=257 two-point tries     -0.047  [  -0.136,   +0.042]
+     regulation end in both  n=257 two-point made      -0.012  [  -0.065,   +0.042]
+     valid in both           n=242 absolute margin     +0.099  [  +0.014,   +0.184]
+   k25 minus unconditional: seeds 300, valid in both 242, valid only in k25 2, valid only in unconditional 2, exact McNemar p 1.000
+     valid only in k25: [(150, 'tied_at_regulation_end'), (278, 'tied_at_regulation_end')]; valid only in unconditional: [(59, 'tied_at_regulation_end'), (117, 'tied_at_regulation_end')]
+     winner changes among valid in both: 0 of 242 []
+     valid in both           n=242 home points         -0.029  [  -0.075,   +0.018]
+     valid in both           n=242 away points         +0.050  [  -0.003,   +0.102]
+     valid in both           n=242 total               +0.021  [  -0.051,   +0.092]
+     valid in both           n=242 home minus away     -0.079  [  -0.147,   -0.010]
+     valid in both           n=242 home win            +0.000  [  +0.000,   +0.000]
+     valid in both           n=242 two-point tries     -0.066  [  -0.142,   +0.010]
+     valid in both           n=242 two-point made      -0.025  [  -0.071,   +0.021]
+     regulation end in both  n=257 home points         -0.031  [  -0.076,   +0.013]
+     regulation end in both  n=257 away points         +0.051  [  -0.000,   +0.101]
+     regulation end in both  n=257 total               +0.019  [  -0.049,   +0.088]
+     regulation end in both  n=257 home minus away     -0.082  [  -0.148,   -0.015]
+     regulation end in both  n=257 home win            -0.004  [  -0.017,   +0.009]
+     regulation end in both  n=257 two-point tries     -0.062  [  -0.135,   +0.011]
+     regulation end in both  n=257 two-point made      -0.023  [  -0.066,   +0.020]
+     valid in both           n=242 absolute margin     +0.062  [  -0.007,   +0.131]
+   k1 minus k25: seeds 300, valid in both 244, valid only in k1 0, valid only in k25 0, exact McNemar p 1.000
+     valid only in k1: []; valid only in k25: []
+     winner changes among valid in both: 0 of 244 []
+     valid in both           n=244 home points         -0.025  [  -0.062,   +0.013]
+     valid in both           n=244 away points         +0.020  [  -0.020,   +0.061]
+     valid in both           n=244 total               -0.004  [  -0.060,   +0.052]
+     valid in both           n=244 home minus away     -0.045  [  -0.099,   +0.009]
+     valid in both           n=244 home win            +0.000  [  +0.000,   +0.000]
+     valid in both           n=244 two-point tries     +0.016  [  -0.048,   +0.081]
+     valid in both           n=244 two-point made      +0.012  [  -0.025,   +0.049]
+     regulation end in both  n=257 home points         -0.023  [  -0.059,   +0.012]
+     regulation end in both  n=257 away points         +0.019  [  -0.019,   +0.058]
+     regulation end in both  n=257 total               -0.004  [  -0.057,   +0.050]
+     regulation end in both  n=257 home minus away     -0.043  [  -0.094,   +0.008]
+     regulation end in both  n=257 home win            +0.000  [  +0.000,   +0.000]
+     regulation end in both  n=257 two-point tries     +0.016  [  -0.046,   +0.077]
+     regulation end in both  n=257 two-point made      +0.012  [  -0.023,   +0.047]
+     valid in both           n=244 absolute margin     +0.037  [  -0.017,   +0.091]
+
+4. Two-point tries by arm, and against the historical populations (regular season 2022-2025)
+   historical first touchdown: 12/1079 = 1.11% (95% Wilson 0.64-1.93%)
+   historical opening drive: 4/510 = 0.78% (95% Wilson 0.31-2.00%)
+   unconditional: tries 1150, two-point 111 (9.65%), made 52
+     first touchdown: 30/290 = 10.34% (95% Wilson 7.34-14.38%)
+     opening drive: 11/103 = 10.68% (95% Wilson 6.07-18.12%)
+     by period: H1 67/588; Q3 21/260; Q4_gt5 16/190; Q4_le5 7/112; OT 0/0
+   k1: tries 1150, two-point 92 (8.00%), made 43
+     first touchdown: 5/290 = 1.72% (95% Wilson 0.74-3.97%)
+     opening drive: 3/103 = 2.91% (95% Wilson 1.00-8.22%)
+     by period: H1 10/588; Q3 25/260; Q4_gt5 32/190; Q4_le5 25/112; OT 0/0
+     mean predicted p_two 0.0802 over 1150 tries; realized 0.0800
+   k25: tries 1150, two-point 86 (7.48%), made 39
+     first touchdown: 5/290 = 1.72% (95% Wilson 0.74-3.97%)
+     opening drive: 3/103 = 2.91% (95% Wilson 1.00-8.22%)
+     by period: H1 10/588; Q3 20/260; Q4_gt5 29/190; Q4_le5 27/112; OT 0/0
+     mean predicted p_two 0.0784 over 1150 tries; realized 0.0748
+   pre_tie: tries 1150, two-point 111 (9.65%), made 52
+     first touchdown: 30/290 = 10.34% (95% Wilson 7.34-14.38%)
+     opening drive: 11/103 = 10.68% (95% Wilson 6.07-18.12%)
+     by period: H1 67/588; Q3 21/260; Q4_gt5 16/190; Q4_le5 7/112; OT 0/0
+
