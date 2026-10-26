@@ -8,18 +8,13 @@
   "safety_free_kick_not_modelled": 23,
   "thin_kick_cell:field_goal:50+": 2
  },
- "failed_errors": [
-  {
-   "error": "AssertionError: pregame player/team stats do not reconcile for A: {'offensive_td': (0, 1)}",
-   "seed": 106
-  }
- ],
+ "failed_errors": [],
  "outcome_counts": {
   "blocked_before_regulation_end": 40,
-  "failed": 1,
+  "failed": 0,
   "regulation_end_not_valid": 0,
   "tied_at_regulation_end": 15,
-  "valid": 244
+  "valid": 245
  },
  "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
  "policy": "unconditional",
@@ -34,8 +29,8 @@
   "rare kick outcome": 2,
   "safety free kick": 23
  },
- "seconds_reference_load": 11.0,
- "seconds_total": 623.7,
+ "seconds_reference_load": 13.9,
+ "seconds_total": 662.0,
  "seeds": [
   1,
   300
@@ -47,7 +42,7 @@
   "scripts/nfl_sequence/game_state.py": "b4bcf8420c1118c011f03372a7028d1542a194801917045df6c4f60fea15aedf",
   "scripts/nfl_sequence/rules_matrix.py": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
-  "scripts/nfl_sequence/try_policy.py": "3fb4faccd24b9761f470e99c4b2cf93ebeb115b5b83f2618f9e0deb2ac2d90fd"
+  "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef"
  },
  "tied_at_regulation_end_seeds": [
   82,
