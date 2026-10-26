@@ -346,16 +346,20 @@ Date: 2026-10-25. Committed after the smallest real-game runtime smoke and befor
   `202610250001 + 100 * game_index + j`, with `j=0..11`. All three candidates use the same seed
   mapping; this is paired-seed comparison, not a claim of full common-random-number coupling. Failed
   targets retain their assigned index. The v0.1 league-bootstrap reference uses 10,000 draws from
-  seed `202610250002` and is reused unchanged across target games. The historical-rate reference
-  uses 10,000 draws per target from seed `202610250003 + 100 * game_index`.
+  seed `202611000001` and is reused unchanged across target games. The historical-rate reference
+  uses 10,000 draws per target from seed `202612000001 + 100 * game_index`.
 - **Metrics and intervals:** Compute goal CRPS (regulation+OT and official final score, per team),
   final-score energy, winner Brier, and SOG CRPS. Report per-game paired differences against v0.1,
   alpha2/B0, and the historical-rate reference as applicable. The B0 result is alpha2 itself and
   is not listed as its own independent comparator. Use 2,000 paired game-bootstrap resamples with
   seed `202610250004`. For B0/B1/B2 and the historical-rate reference, calculate the empirical
-  energy pair term exactly from each game's sample; for v0.1 use 200,000 fixed-seed pair draws
-  (`202610250005`). Report split-half Monte Carlo sensitivity separately by comparing metrics from
-  the first and second six candidate draws (and corresponding 5,000-draw halves for references).
+  energy pair term exactly from each game's 12 draws. For the v0.1 global sample, use 200,000
+  fixed-seed pair draws (`202614000001`). For each historical-rate target distribution, use 20,000
+  fixed-seed pair draws (`202615000001 + 100 * game_index`) to estimate the energy pair term. Report
+  split-half Monte Carlo sensitivity separately by comparing metrics from the first and second six
+  candidate draws. For each 5,000-draw reference half, use 100,000 pair draws for v0.1 (seeds
+  `202616000001` and `202617000001`) and 20,000 pair draws per historical-rate half (seeds
+  `202618000001 + 100 * game_index` and `202619000001 + 100 * game_index`).
 - **Count calibration:** Compare observed and predicted pooled means, variances, and 10th/50th/90th
   percentiles for regulation+OT goals, official final score, SOG, shot attempts, score margin,
   penalties, OT, and shootouts. Include stratum coverage and every candidate failure. Runtime
@@ -368,3 +372,12 @@ Date: 2026-10-25. Committed after the smallest real-game runtime smoke and befor
 
 This amendment freezes evaluation mechanics only. It does not authorize candidate selection,
 production use, a gate change, forecast writes, or a push.
+
+### Amendment 5 correction — reference energy estimator and seed namespace
+
+Committed 2026-10-25 before any comparison metric. The first Amendment 5 draft called for an exact
+pairwise energy term on each 10,000-draw historical-rate reference. That requires quadratic work
+per target and conflicts with the measured runtime budget. The frozen replacement uses 20,000
+deterministic pair draws per target (and 20,000 per reference half); v0.1 retains its common 200,000
+pair-draw term. The separated seed ranges above replace the initial overlapping reference seeds.
+Candidate energy pair terms remain exact because each candidate has only 12 draws.
