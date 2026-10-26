@@ -45,6 +45,10 @@ class EvaluationHelperTests(unittest.TestCase):
         cdf = evaluation._poisson_cdf(4.25)
         self.assertEqual(cdf[-1], 1.0)
         self.assertEqual(list(cdf), sorted(cdf))
+        large_mean_cdf = evaluation._poisson_cdf(30.77108495121278)
+        self.assertEqual(large_mean_cdf[-1], 1.0)
+        self.assertLess(len(large_mean_cdf), 1_000)
+        self.assertEqual(list(large_mean_cdf), sorted(large_mean_cdf))
 
     def test_histogram_retains_zero_event_and_manpower_cells(self):
         sample = {"reg_home": 3, "reg_away": 2, "final_home": 3, "final_away": 2,

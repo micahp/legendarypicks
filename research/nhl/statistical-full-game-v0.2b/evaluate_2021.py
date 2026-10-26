@@ -83,7 +83,14 @@ def _poisson_cdf(mean: float) -> tuple[float, ...]:
     while cumulative < 1.0 - 1e-15:
         count += 1
         probability *= mean / count
-        cumulative = min(1.0, cumulative + probability)
+        next_cumulative = min(1.0, cumulative + probability)
+        if next_cumulative <= cumulative:
+            # The remaining tail is below double-precision resolution at this
+            # cumulative mass. Close the final interval instead of looping on
+            # additions that can no longer change the represented float.
+            values.append(1.0)
+            break
+        cumulative = next_cumulative
         values.append(cumulative)
         if count > 10_000:
             raise ValueError(f"Poisson CDF did not converge for mean {mean}")
