@@ -428,6 +428,7 @@ def run_batch(args):
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
+        'forecast_frozen_at_utc': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         'game_id': args.game_id,
         'teams': {'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']},
         'simulation': {
