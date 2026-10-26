@@ -210,13 +210,17 @@ class Reference:
     `participants` maps (game_id, play_id) of an observed play to (passer, rusher, receiver) ids.
     """
 
-    def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None):
+    def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
+                 try_policy=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         self.kicks = kicks
         self.participants = participants
         self.missed_field_goal_pool = missed_field_goal_pool or {}
         self.blocked_kicks = blocked_kicks or {'records': {'field_goal': [], 'punt': []}, 'rates': {}, 'sha256': None}
+        # None keeps the published unconditional share. A try_policy.TryPolicy conditions the two-point decision on the
+        # situation.
+        self.try_policy = try_policy
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
@@ -420,15 +424,18 @@ def try_record(kind, made):
     return {'kind': kind, 'made': made, TRY_PUBLISHER_FIELD[kind]: TRY_PUBLISHER_VALUE[kind][made]}
 
 
-def _try_after_touchdown(rng, kicks):
-    """The try after a touchdown: a two-point try at the published share of post-touchdown attempts, else an extra
-    point.
+def _try_after_touchdown(rng, kicks, p_two=None):
+    """The try after a touchdown: a two-point try at `p_two` (a try policy's probability for this situation), else at the
+    published share of post-touchdown attempts. One draw picks the kind either way, so a seed's stream is the same under both
+    policies. Otherwise an extra point.
 
     Returns (points, record, None), or (None, None, reason) when the cell it needs is too thin.
     """
-    two_tries = sum(kicks['two_point'])
-    total = two_tries + sum(kicks['extra_point'])
-    kind = 'two_point' if rng.random() < (two_tries / total if total else 0) else 'extra_point'
+    if p_two is None:
+        two_tries = sum(kicks['two_point'])
+        total = two_tries + sum(kicks['extra_point'])
+        p_two = two_tries / total if total else 0
+    kind = 'two_point' if rng.random() < p_two else 'extra_point'
     made, why = _draw(rng, kicks[kind], kind)
     if why:
         return None, None, why
@@ -796,6 +803,17 @@ class _Game:
                 return f'blocked_kick_scoring_team_unresolved:{kick_type}', None
         return None, outcome
 
+    def _try_situation(self, scorer):
+        """What a try policy conditions on, read before the try is drawn: the scorer's margin after the six points, the
+        quarter and clock, whether this is the scorer's first offensive drive, and whether it is the game's first touchdown.
+        The drive being scored is already in self.drives, so it counts toward both drive tallies."""
+        opponent = other(scorer, self.ledger.teams)
+        return {
+            'margin': self.points[scorer] + TD_POINTS - self.points[opponent], 'quarter': self.quarter, 'clock': self.clock,
+            'opening_drive': scorer == self.offense and sum(1 for d in self.drives if d['offense_team'] == scorer) == 1,
+            'first_td': sum(1 for d in self.drives if d.get('touchdown_scored_by')) == 1,
+        }
+
     def _drive_body(self):
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
@@ -882,10 +900,16 @@ class _Game:
         elif terminal == 'touchdown':
             scorer = plays[-1]['outcome'].get('scoring_team') or self.offense
             drive['touchdown_scored_by'] = scorer
-            try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks)
+            situation = p_two = None
+            if self.ref.try_policy is not None:
+                situation = self._try_situation(scorer)
+                p_two = self.ref.try_policy.p_two(**situation)
+            try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks, p_two)
             if why:
                 self.block(why)
                 return
+            if situation is not None:
+                drive['try_policy'] = {**situation, 'p_two': p_two, 'kind': try_record['kind']}
             self.points[scorer] += TD_POINTS + try_points
             drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
             self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
