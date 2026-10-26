@@ -256,7 +256,7 @@ def check_blocked_kicks(record):
     observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
     fixture_hash = observed.get('blocked_kick_source_sha256')
     input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
-    supported = {'classified_recovery', 'classified_dead_ball_award', 'touchdown', 'safety', 'period_expired'}
+    supported = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
     for drive, play in plays_of(record):
         event = play['event_type']
         outcome = play['outcome']
@@ -297,12 +297,15 @@ def check_blocked_kicks(record):
             continue
         if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
             continue  # the half/game ends on the kick; there is no next scrimmage state to compare
-        if role == 'receiving_team' or blocked.get('classification_status') == 'classified_dead_ball_award':
+        if role == 'receiving_team' or blocked.get('classification_status') == 'classified_dead_ball_spot':
+            delta = (blocked.get('return_endpoint_yards_from_los') if role == 'receiving_team'
+                     else blocked.get('dead_ball_yards_from_los'))
+            expected_spot = 100 - before['yardline_100'] + delta if isinstance(delta, int) else None
             if (after.get('offense_team') != before['defense_team'] or not outcome.get('turnover')
-                    or after.get('yardline_100') != blocked.get('return_endpoint_yardline_100')):
+                    or after.get('yardline_100') != expected_spot):
                 findings.append(f'drive {drive["index"]} play {play["sequence"]}: receiving-team recovery has the wrong possession or spot')
-        elif role == 'kicking_team' and blocked.get('crossed_line') in (0, 1, False, True):
-            crossed = bool(blocked['crossed_line'])
+        elif role == 'kicking_team' and isinstance(blocked.get('recovery_yards_from_los'), int):
+            crossed = blocked['recovery_yards_from_los'] > 0
             if crossed:
                 touched = blocked.get('receiving_team_touched_beyond_line')
                 if touched not in (0, 1, False, True):
@@ -313,8 +316,9 @@ def check_blocked_kicks(record):
                 elif after.get('offense_team') != before['defense_team'] or not outcome.get('turnover'):
                     findings.append(f'drive {drive["index"]} play {play["sequence"]}: beyond-line recovery without a receiver touch has the wrong possession')
             elif after.get('yardline_100') is not None:
-                endpoint = blocked.get('return_endpoint_yardline_100')
-                gained = before['yardline_100'] - endpoint if isinstance(endpoint, int) else None
+                endpoint_delta = blocked.get('return_endpoint_yards_from_los')
+                endpoint = before['yardline_100'] - endpoint_delta if isinstance(endpoint_delta, int) else None
+                gained = endpoint_delta if isinstance(endpoint_delta, int) else None
                 if gained is None:
                     findings.append(f'drive {drive["index"]} play {play["sequence"]}: kicking-team recovery has no return endpoint')
                 elif gained >= before['yards_to_go']:

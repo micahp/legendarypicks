@@ -25,6 +25,8 @@ COLUMNS = (
     'kick_type', 'game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'down', 'ydstogo', 'yardline_100',
     'quarter', 'clock_seconds_remaining', 'clock_runoff_seconds', 'blocked', 'crossed_line', 'recovery_team',
     'recovery_role', 'recovery_spot_yardline_100', 'return_endpoint_yardline_100', 'return_yards',
+    'recovery_yards_from_los', 'return_endpoint_yards_from_los', 'dead_ball_yards_from_los',
+    'return_endpoint_source', 'dead_ball_spot_source',
     'possession_after_role', 'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo',
     'touchdown', 'scoring_team', 'safety', 'classification_status', 'classification_note', 'return_team_field',
     'return_yards_field', 'return_touchdown_field', 'receiving_team_touched_beyond_line', 'series_result', 'desc',
@@ -80,7 +82,7 @@ def _return_endpoint(desc, scoring_role, recovery_progress, recovery_role, kicki
         progress = 100 if scoring_role == 'kicking_team' else 0
         return _team_yardline(progress, scoring_role), progress
     match = re.search(
-        r'(?:\bto|pushed\s+ob\s+at|ran\s+ob\s+at)\s+(?:(ATL|BUF|CAR|CHI|CIN|CLE|DAL|DEN|DET|GB|HOU|IND|JAX|'
+        r'(?:\bto|pushed\s+ob\s+at|ran\s+ob\s+at)\s+(?:(ARI|ATL|BUF|CAR|CHI|CIN|CLE|DAL|DEN|DET|GB|HOU|IND|JAX|'
         r'KC|LA|LAC|LV|MIA|MIN|NE|NO|NYG|NYJ|PHI|PIT|SEA|SF|TB|TEN|WAS)\s+)?(\d{1,2})\s+for\s+(-?\d+)\s+yards?\b',
         desc, re.I)
     if match:
@@ -93,6 +95,20 @@ def _return_endpoint(desc, scoring_role, recovery_progress, recovery_role, kicki
     if recovery_progress is not None:
         return _team_yardline(recovery_progress, recovery_role), recovery_progress
     return None, None
+
+
+def _described_dead_ball_progress(desc, kicking, receiving):
+    """Return a dead-ball spot only when nflverse's description states it explicitly."""
+    teams = ('ARI|ATL|BUF|CAR|CHI|CIN|CLE|DAL|DEN|DET|GB|HOU|IND|JAX|KC|LA|LAC|LV|MIA|MIN|NE|NO|NYG|NYJ|'
+             'PHI|PIT|SEA|SF|TB|TEN|WAS')
+    match = re.search(rf'\bball out of bounds at (?:(?P<team>{teams})\s+)?(?P<yard>50|\d{{1,2}})\b',
+                      desc, re.I)
+    if not match:
+        return None
+    if match.group('team') is None and int(match.group('yard')) != 50:
+        return None
+    progress = _progress((match.group('team') or '50').upper(), int(match.group('yard')), kicking, receiving)
+    return progress
 
 
 def _next_snap(rows, index, qtr):
@@ -124,6 +140,20 @@ def build_record(row, rows, index, source_file, source_hash):
 
     endpoint, endpoint_progress = _return_endpoint(desc, score_role if touchdown else None,
                                                    recovery_progress, recovery_role, kicking, receiving)
+    dead_ball_progress = _described_dead_ball_progress(desc, kicking, receiving)
+    dead_ball_source = 'description_out_of_bounds' if dead_ball_progress is not None else ''
+    if endpoint_progress is None and dead_ball_progress is not None:
+        endpoint, endpoint_progress = _team_yardline(dead_ball_progress, 'receiving_team'), dead_ball_progress
+    if dead_ball_progress is not None:
+        endpoint_source = 'description_out_of_bounds'
+    elif touchdown and endpoint_progress is not None:
+        endpoint_source = 'touchdown'
+    elif recovery_progress is not None and endpoint_progress == recovery_progress:
+        endpoint_source = 'recovery_spot_no_advance_described'
+    elif endpoint_progress is not None:
+        endpoint_source = 'description_return_endpoint'
+    else:
+        endpoint_source = ''
     nxt = _next_snap(rows, index, row['qtr'])
     possession_role = None
     next_yardline = next_down = next_togo = None
@@ -133,18 +163,19 @@ def build_record(row, rows, index, source_file, source_hash):
         next_yardline = int(round(nxt['yardline_100'])) if nxt['yardline_100'] is not None else None
         next_down = int(nxt['down']) if nxt['down'] is not None else None
         next_togo = int(round(nxt['ydstogo'])) if nxt['ydstogo'] is not None else None
-        if endpoint_progress is None and next_yardline is not None and possession_role:
-            endpoint_progress = (100 - next_yardline if possession_role == 'kicking_team' else next_yardline)
-            endpoint_role = recovery_role or possession_role
-            endpoint = _team_yardline(endpoint_progress, endpoint_role)
-
+    los_progress = 100 - int(round(row['yardline_100'])) if row['yardline_100'] is not None else None
     if recovery_role and recovery_progress is not None:
-        los_progress = 100 - int(round(row['yardline_100'])) if row['yardline_100'] is not None else None
-        crossed_line = (int(recovery_progress > los_progress) if los_progress is not None else None)
+        recovery_yards_from_los = recovery_progress - los_progress if los_progress is not None else None
+        crossed_line = int(recovery_yards_from_los > 0) if recovery_yards_from_los is not None else None
         recovery_spot = _team_yardline(recovery_progress, recovery_role)
     else:
+        recovery_yards_from_los = None
         crossed_line = None
         recovery_spot = None
+    return_endpoint_yards_from_los = (endpoint_progress - los_progress
+                                      if endpoint_progress is not None and los_progress is not None else None)
+    dead_ball_yards_from_los = (dead_ball_progress - los_progress
+                                if dead_ball_progress is not None and los_progress is not None else None)
     if recovery_progress is not None and endpoint_progress is not None and recovery_role:
         return_yards = (endpoint_progress - recovery_progress if recovery_role == 'kicking_team'
                         else recovery_progress - endpoint_progress)
@@ -187,8 +218,10 @@ def build_record(row, rows, index, source_file, source_hash):
         status = 'safety'
     elif recovery_role and recovery_progress is not None and endpoint is not None and possession_role:
         status = 'classified_recovery'
-    elif recovery_role is None and possession_role == 'receiving_team' and next_yardline is not None:
-        status = 'classified_dead_ball_award'
+    elif (recovery_role is None and dead_ball_progress is not None and possession_role == 'receiving_team'
+          and next_yardline is not None
+          and _team_yardline(dead_ball_progress, 'receiving_team') == next_yardline):
+        status = 'classified_dead_ball_spot'
     elif nxt is None and qtr in (2, 4) and clock is not None:
         status = 'period_expired_unresolved_spot' if endpoint is None else 'period_expired'
     else:
@@ -212,6 +245,10 @@ def build_record(row, rows, index, source_file, source_hash):
         'blocked': 1, 'crossed_line': crossed_line, 'recovery_team': recovery_team or '',
         'recovery_role': recovery_role or '', 'recovery_spot_yardline_100': recovery_spot,
         'return_endpoint_yardline_100': endpoint, 'return_yards': return_yards,
+        'recovery_yards_from_los': recovery_yards_from_los,
+        'return_endpoint_yards_from_los': return_endpoint_yards_from_los,
+        'dead_ball_yards_from_los': dead_ball_yards_from_los, 'return_endpoint_source': endpoint_source,
+        'dead_ball_spot_source': dead_ball_source,
         'possession_after_role': possession_role or '', 'next_snap_yardline_100': next_yardline,
         'next_snap_down': next_down, 'next_snap_ydstogo': next_togo, 'touchdown': int(touchdown),
         'scoring_team': scoring_team or '', 'safety': int(safety), 'classification_status': status,

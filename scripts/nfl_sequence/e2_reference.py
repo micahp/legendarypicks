@@ -89,7 +89,7 @@ def _reference_fingerprint(reference):
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
     return {
-        'schema': 'lp-e2-observed-reference-2',
+        'schema': 'lp-e2-observed-reference-3',
         'sha256': digest.hexdigest(),
         **reference.position_usage,
         'play_cells': len(reference.pool),
@@ -121,6 +121,7 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
     integer_fields = ('play_id', 'season', 'week', 'down', 'ydstogo', 'yardline_100', 'quarter',
                       'clock_seconds_remaining', 'clock_runoff_seconds', 'crossed_line',
                       'recovery_spot_yardline_100', 'return_endpoint_yardline_100', 'return_yards',
+                      'recovery_yards_from_los', 'return_endpoint_yards_from_los', 'dead_ball_yards_from_los',
                       'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo', 'touchdown', 'safety',
                       'return_yards_field', 'return_touchdown_field', 'receiving_team_touched_beyond_line')
     with open(path, newline='') as f:
