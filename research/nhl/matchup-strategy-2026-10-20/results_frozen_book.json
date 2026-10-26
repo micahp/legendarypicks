@@ -1,0 +1,609 @@
+{
+  "generated_by": "backtest_matchup_strategy.py (revision 2)",
+  "mode": "frozen/book",
+  "folds": {
+    "all": {
+      "intercept": 0.687150268033442,
+      "coef": [
+        0.08897401632046502,
+        0.24344687368282716,
+        0.2520066456975916,
+        0.2975227438944925
+      ],
+      "tie_home": 0.49178017848755284,
+      "n_games": 23116,
+      "n_team_rows": 46232,
+      "train_seasons": [
+        2008,
+        2025
+      ]
+    }
+  },
+  "thresholds": {
+    "points": {
+      "lo": 0.536,
+      "hi": 0.579
+    },
+    "goals": {
+      "lo": -0.3879331361590603,
+      "hi": 0.42677282295628294
+    },
+    "goals_xg": {
+      "lo": -0.33022510454504284,
+      "hi": 0.3810699194042822
+    },
+    "moments": {
+      "pct": [
+        0.5655388950246529,
+        0.1018092315600062
+      ],
+      "gd": [
+        0.03182582136346937,
+        0.5382551478836369
+      ],
+      "xgd": [
+        0.007496480787161022,
+        0.3387125568497179
+      ]
+    },
+    "frozen_on": "seasons <= 2017"
+  },
+  "reconciliation": {
+    "sbr_rows": 5132,
+    "orientation_mismatch": 1,
+    "no_features": 5,
+    "graded": 5126,
+    "team_unmapped": 0,
+    "no_canonical_match": 0,
+    "no_walkforward_forecast": 0,
+    "no_pick:no_puck_line": 0,
+    "no_pick:puck_line_not_1.5": 0,
+    "no_pick:no_puck_price": 0,
+    "no_pick:no_ml_price": 0,
+    "no_pick:no_total_price": 0
+  },
+  "rule_branches": {
+    "ml_branch": 2268,
+    "spread_branch": 2858,
+    "total_branch": 0
+  },
+  "tables": {
+    "market": {
+      "ml": {
+        "n": 2268,
+        "w": 1465,
+        "l": 803,
+        "push": 0,
+        "units": -45.53,
+        "roi": -0.0201
+      },
+      "spread": {
+        "n": 2858,
+        "w": 1892,
+        "l": 966,
+        "push": 0,
+        "units": -79.78,
+        "roi": -0.0279
+      }
+    },
+    "points:market_regime": {
+      "ml / early": {
+        "n": 356,
+        "w": 237,
+        "l": 119,
+        "push": 0,
+        "units": 13.58,
+        "roi": 0.0382
+      },
+      "ml / mid-mid": {
+        "n": 16,
+        "w": 8,
+        "l": 8,
+        "push": 0,
+        "units": -3.21,
+        "roi": -0.2007
+      },
+      "ml / mid-weak": {
+        "n": 191,
+        "w": 121,
+        "l": 70,
+        "push": 0,
+        "units": -5.07,
+        "roi": -0.0265
+      },
+      "ml / strong-mid": {
+        "n": 221,
+        "w": 155,
+        "l": 66,
+        "push": 0,
+        "units": 21.82,
+        "roi": 0.0987
+      },
+      "ml / strong-strong": {
+        "n": 297,
+        "w": 178,
+        "l": 119,
+        "push": 0,
+        "units": -10.94,
+        "roi": -0.0368
+      },
+      "ml / strong-weak": {
+        "n": 978,
+        "w": 646,
+        "l": 332,
+        "push": 0,
+        "units": -42.62,
+        "roi": -0.0436
+      },
+      "ml / weak-weak": {
+        "n": 209,
+        "w": 120,
+        "l": 89,
+        "push": 0,
+        "units": -19.1,
+        "roi": -0.0914
+      },
+      "spread / early": {
+        "n": 473,
+        "w": 319,
+        "l": 154,
+        "push": 0,
+        "units": -7.83,
+        "roi": -0.0166
+      },
+      "spread / mid-mid": {
+        "n": 62,
+        "w": 40,
+        "l": 22,
+        "push": 0,
+        "units": -4.07,
+        "roi": -0.0656
+      },
+      "spread / mid-weak": {
+        "n": 258,
+        "w": 170,
+        "l": 88,
+        "push": 0,
+        "units": -7.06,
+        "roi": -0.0274
+      },
+      "spread / strong-mid": {
+        "n": 333,
+        "w": 229,
+        "l": 104,
+        "push": 0,
+        "units": 1.9,
+        "roi": 0.0057
+      },
+      "spread / strong-strong": {
+        "n": 675,
+        "w": 448,
+        "l": 227,
+        "push": 0,
+        "units": -18.18,
+        "roi": -0.0269
+      },
+      "spread / strong-weak": {
+        "n": 613,
+        "w": 386,
+        "l": 227,
+        "push": 0,
+        "units": -39.63,
+        "roi": -0.0646
+      },
+      "spread / weak-weak": {
+        "n": 444,
+        "w": 300,
+        "l": 144,
+        "push": 0,
+        "units": -4.93,
+        "roi": -0.0111
+      }
+    },
+    "goals:market_regime": {
+      "ml / early": {
+        "n": 356,
+        "w": 237,
+        "l": 119,
+        "push": 0,
+        "units": 13.58,
+        "roi": 0.0382
+      },
+      "ml / mid-mid": {
+        "n": 98,
+        "w": 57,
+        "l": 41,
+        "push": 0,
+        "units": -6.94,
+        "roi": -0.0709
+      },
+      "ml / mid-weak": {
+        "n": 352,
+        "w": 230,
+        "l": 122,
+        "push": 0,
+        "units": -4.63,
+        "roi": -0.0132
+      },
+      "ml / strong-mid": {
+        "n": 338,
+        "w": 221,
+        "l": 117,
+        "push": 0,
+        "units": 9.41,
+        "roi": 0.0278
+      },
+      "ml / strong-strong": {
+        "n": 193,
+        "w": 110,
+        "l": 83,
+        "push": 0,
+        "units": -14.63,
+        "roi": -0.0758
+      },
+      "ml / strong-weak": {
+        "n": 765,
+        "w": 518,
+        "l": 247,
+        "push": 0,
+        "units": -23.89,
+        "roi": -0.0312
+      },
+      "ml / weak-weak": {
+        "n": 166,
+        "w": 92,
+        "l": 74,
+        "push": 0,
+        "units": -18.43,
+        "roi": -0.111
+      },
+      "spread / early": {
+        "n": 473,
+        "w": 319,
+        "l": 154,
+        "push": 0,
+        "units": -7.83,
+        "roi": -0.0166
+      },
+      "spread / mid-mid": {
+        "n": 211,
+        "w": 140,
+        "l": 71,
+        "push": 0,
+        "units": -8.51,
+        "roi": -0.0403
+      },
+      "spread / mid-weak": {
+        "n": 449,
+        "w": 301,
+        "l": 148,
+        "push": 0,
+        "units": -2.9,
+        "roi": -0.0065
+      },
+      "spread / strong-mid": {
+        "n": 499,
+        "w": 350,
+        "l": 149,
+        "push": 0,
+        "units": 15.16,
+        "roi": 0.0304
+      },
+      "spread / strong-strong": {
+        "n": 467,
+        "w": 299,
+        "l": 168,
+        "push": 0,
+        "units": -31.21,
+        "roi": -0.0668
+      },
+      "spread / strong-weak": {
+        "n": 374,
+        "w": 226,
+        "l": 148,
+        "push": 0,
+        "units": -33.91,
+        "roi": -0.0907
+      },
+      "spread / weak-weak": {
+        "n": 385,
+        "w": 257,
+        "l": 128,
+        "push": 0,
+        "units": -10.59,
+        "roi": -0.0275
+      }
+    },
+    "goals_xg:market_regime": {
+      "ml / early": {
+        "n": 356,
+        "w": 237,
+        "l": 119,
+        "push": 0,
+        "units": 13.58,
+        "roi": 0.0382
+      },
+      "ml / mid-mid": {
+        "n": 71,
+        "w": 44,
+        "l": 27,
+        "push": 0,
+        "units": -0.54,
+        "roi": -0.0076
+      },
+      "ml / mid-weak": {
+        "n": 325,
+        "w": 208,
+        "l": 117,
+        "push": 0,
+        "units": -11.88,
+        "roi": -0.0365
+      },
+      "ml / strong-mid": {
+        "n": 329,
+        "w": 188,
+        "l": 141,
+        "push": 0,
+        "units": -34.09,
+        "roi": -0.1036
+      },
+      "ml / strong-strong": {
+        "n": 153,
+        "w": 96,
+        "l": 57,
+        "push": 0,
+        "units": 3.86,
+        "roi": 0.0252
+      },
+      "ml / strong-weak": {
+        "n": 875,
+        "w": 601,
+        "l": 274,
+        "push": 0,
+        "units": -3.27,
+        "roi": -0.0037
+      },
+      "ml / weak-weak": {
+        "n": 159,
+        "w": 91,
+        "l": 68,
+        "push": 0,
+        "units": -13.2,
+        "roi": -0.083
+      },
+      "spread / early": {
+        "n": 473,
+        "w": 319,
+        "l": 154,
+        "push": 0,
+        "units": -7.83,
+        "roi": -0.0166
+      },
+      "spread / mid-mid": {
+        "n": 233,
+        "w": 146,
+        "l": 87,
+        "push": 0,
+        "units": -22.2,
+        "roi": -0.0953
+      },
+      "spread / mid-weak": {
+        "n": 449,
+        "w": 297,
+        "l": 152,
+        "push": 0,
+        "units": -5.73,
+        "roi": -0.0128
+      },
+      "spread / strong-mid": {
+        "n": 478,
+        "w": 339,
+        "l": 139,
+        "push": 0,
+        "units": 18.15,
+        "roi": 0.038
+      },
+      "spread / strong-strong": {
+        "n": 468,
+        "w": 310,
+        "l": 158,
+        "push": 0,
+        "units": -12.57,
+        "roi": -0.0269
+      },
+      "spread / strong-weak": {
+        "n": 357,
+        "w": 211,
+        "l": 146,
+        "push": 0,
+        "units": -43.19,
+        "roi": -0.121
+      },
+      "spread / weak-weak": {
+        "n": 400,
+        "w": 270,
+        "l": 130,
+        "push": 0,
+        "units": -6.41,
+        "roi": -0.016
+      }
+    },
+    "market_season": {
+      "ml / 2018-19": {
+        "n": 544,
+        "w": 335,
+        "l": 209,
+        "push": 0,
+        "units": -31.05,
+        "roi": -0.0571
+      },
+      "ml / 2019-20": {
+        "n": 413,
+        "w": 257,
+        "l": 156,
+        "push": 0,
+        "units": -14.82,
+        "roi": -0.0359
+      },
+      "ml / 2020-21": {
+        "n": 439,
+        "w": 290,
+        "l": 149,
+        "push": 0,
+        "units": 0.62,
+        "roi": 0.0014
+      },
+      "ml / 2021-22": {
+        "n": 702,
+        "w": 475,
+        "l": 227,
+        "push": 0,
+        "units": 6.56,
+        "roi": 0.0093
+      },
+      "ml / 2022-23": {
+        "n": 170,
+        "w": 108,
+        "l": 62,
+        "push": 0,
+        "units": -6.85,
+        "roi": -0.0403
+      },
+      "spread / 2018-19": {
+        "n": 814,
+        "w": 551,
+        "l": 263,
+        "push": 0,
+        "units": -21.89,
+        "roi": -0.0269
+      },
+      "spread / 2019-20": {
+        "n": 668,
+        "w": 460,
+        "l": 208,
+        "push": 0,
+        "units": 10.23,
+        "roi": 0.0153
+      },
+      "spread / 2020-21": {
+        "n": 513,
+        "w": 337,
+        "l": 176,
+        "push": 0,
+        "units": -15.68,
+        "roi": -0.0306
+      },
+      "spread / 2021-22": {
+        "n": 694,
+        "w": 433,
+        "l": 261,
+        "push": 0,
+        "units": -47.75,
+        "roi": -0.0688
+      },
+      "spread / 2022-23": {
+        "n": 169,
+        "w": 111,
+        "l": 58,
+        "push": 0,
+        "units": -4.7,
+        "roi": -0.0278
+      }
+    },
+    "early_ml_by_season": {
+      "2018-19": {
+        "n": 76,
+        "w": 47,
+        "l": 29,
+        "push": 0,
+        "units": -2.52,
+        "roi": -0.0332
+      },
+      "2019-20": {
+        "n": 48,
+        "w": 31,
+        "l": 17,
+        "push": 0,
+        "units": 1.67,
+        "roi": 0.0349
+      },
+      "2020-21": {
+        "n": 73,
+        "w": 54,
+        "l": 19,
+        "push": 0,
+        "units": 11.73,
+        "roi": 0.1607
+      },
+      "2021-22": {
+        "n": 68,
+        "w": 46,
+        "l": 22,
+        "push": 0,
+        "units": 3.59,
+        "roi": 0.0528
+      },
+      "2022-23": {
+        "n": 91,
+        "w": 59,
+        "l": 32,
+        "push": 0,
+        "units": -0.89,
+        "roi": -0.0097
+      }
+    },
+    "ml_closing": {
+      "ml": {
+        "n": 2268,
+        "w": 1465,
+        "l": 803,
+        "push": 0,
+        "units": -40.39,
+        "roi": -0.0178
+      }
+    }
+  },
+  "clustered_ci": {
+    "all": [
+      -0.034,
+      -0.013
+    ],
+    "points/ml/strong-mid": [
+      -0.058,
+      0.243
+    ],
+    "points/ml/early": [
+      -0.008,
+      0.1
+    ],
+    "points/spread/strong-mid": [
+      -0.063,
+      0.062
+    ],
+    "goals/ml/strong-mid": [
+      -0.039,
+      0.083
+    ],
+    "goals/ml/early": [
+      -0.008,
+      0.1
+    ],
+    "goals/spread/strong-mid": [
+      -0.004,
+      0.066
+    ],
+    "goals_xg/ml/strong-strong": [
+      -0.014,
+      0.06
+    ],
+    "goals_xg/ml/early": [
+      -0.008,
+      0.1
+    ],
+    "goals_xg/spread/strong-mid": [
+      -0.027,
+      0.114
+    ]
+  },
+  "rows": 5126
+}
