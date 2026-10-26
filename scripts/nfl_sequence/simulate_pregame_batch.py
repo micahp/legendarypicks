@@ -176,15 +176,30 @@ def _baseline_v1(db, snapshot):
 
 
 def _player_template(snapshot):
-    players = {}
+    roles_by_player = defaultdict(list)
     for side in ('home', 'away'):
         roster = snapshot['rosters'][side]
         for player in roster['players']:
             player_id = str(player['gsis_id'])
-            players[player_id] = {
-                'player_id': player_id, 'player_name': player['player_name'],
-                'position': player['pos_abb'], 'team': roster['team'], 'side': side,
-            }
+            roles_by_player[(side, player_id)].append(player)
+    players = {}
+    position_priority = {'QB': 0, 'RB': 1, 'FB': 2, 'WR': 3, 'TE': 4}
+    for (side, player_id), roles in roles_by_player.items():
+        roster = snapshot['rosters'][side]
+        primary = min(roles, key=lambda player: (
+            position_priority.get(player['pos_abb'], 5), not player.get('starter', False),
+            player['pos_rank'], player['group'],
+        ))
+        players[player_id] = {
+            'player_id': player_id, 'player_name': primary['player_name'],
+            'position': primary['pos_abb'], 'team': roster['team'], 'side': side,
+            'starter': any(player.get('starter', False) for player in roles),
+            'roster_roles': [
+                {'group': player['group'], 'position': player['pos_abb'], 'depth_rank': player['pos_rank'],
+                 'starter': player['starter']}
+                for player in sorted(roles, key=lambda item: (item['group'], item['pos_abb'], item['pos_rank']))
+            ],
+        }
     return players
 
 
@@ -256,7 +271,7 @@ def run_batch(args):
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
-        pregame_snapshot.apply_starters_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
+        pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
     ref, excluded_kickoffs = er.load(args.db)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     pregame_snapshot.reseal(snapshot)
@@ -359,7 +374,7 @@ def main(argv=None):
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
-    ap.add_argument('--roster-snapshot', help='optional pinned full-starter JSON from build_nfl_starters_snapshot.py')
+    ap.add_argument('--roster-snapshot', help='optional pinned full-depth roster JSON with starter flags and jersey numbers')
     ap.add_argument('--roster-provenance', help='source and checksum manifest for --roster-snapshot')
     ap.add_argument('--home-market-margin', type=float,
                     help='optional home-team expected-margin line; positive means the home team is favored')
