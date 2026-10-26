@@ -257,8 +257,8 @@ candidate, or authorize an adoption/gate change.
   and NHL-native player logs use different game-ID vocabularies. Do not join those rows by date/team;
   no verified crosswalk is available.
 - For a prospective NHL season, eligible team-game rows must have a game date strictly before the
-  target date, completed status, a season equal to the target start-season or the immediately
-  previous start-season, and result/stat captures strictly before the frozen cutoff. Both team
+  target date, completed status, a season equal to the target NHL database season key or its
+  immediately previous key, and result/stat captures strictly before the frozen cutoff. Both team
   result sides must be reciprocal on the same database `game_id`; the opponent's shot row is read
   by that same ID and stable team abbreviation. Target-game and same-day results are ineligible.
 - Per-team attack rate is the arithmetic mean of its eligible team-game `shots`; suppression rate is
@@ -278,3 +278,11 @@ candidate, or authorize an adoption/gate change.
   input.
 
 This amendment does not authorize production selection, a gate change, forecast writes, or a push.
+
+### Amendment 3 correction — NHL database season key
+
+The local NHL tables use the NHL ending-year season key. The measured `team_game_results.season`,
+`player_stats.season`, and roster snapshot for 2026/27 are `2027`; the preceding 2025/26 season is
+`2026`. For an October 2026 target, the eligible DB season keys are therefore `2026` and `2027`.
+The implementation derives this key from the NHL season boundary and records the selected keys.
+This correction is committed before loading or evaluating the amended candidate input.
