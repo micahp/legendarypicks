@@ -16,7 +16,7 @@ DOWN_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')
 EVENT_VOCABULARY = DOWN_EVENTS + TURNOVER_EVENTS + (
     'punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
 TERMINALS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt',
-             'halftime', 'end_of_regulation')
+             'halftime', 'end_of_regulation', 'end_of_overtime')
 FLAGS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'punt_attempt', 'field_goal_attempt')
 
 

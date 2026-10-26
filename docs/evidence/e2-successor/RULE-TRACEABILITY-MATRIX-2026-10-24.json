@@ -1,9 +1,13 @@
 {
  "checks": {
-  "problems": [],
+  "problems": [
+   "R14: test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage is not a test method",
+   "R14: test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime is not a test method",
+   "R14: citation 'no timeout is drawn' not found in game_state.py"
+  ],
   "resolved": {
-   "citations": 38,
-   "tests": 81,
+   "citations": 37,
+   "tests": 80,
    "transitions": 25
   }
  },
@@ -20,8 +24,8 @@
   "share_at_engine_offset": 0.0104
  },
  "lp_reference": {
-  "blob": "142f0002f74871933f82aef5b53481fc9d7f00d7",
-  "origin_dev_head": "d4194afbe2bdaa1d51e2c3012e5a679ec726be93",
+  "blob": "06b43451275006b3fd20dec2f95ae0b4976410cf",
+  "origin_dev_head": "28f521f33a574bfb8f720cc9f972a5f9919d3883",
   "path": "docs/rules/NFL-2026-GAME-STATE-RULES.md on origin/dev (LP engineering reference, not the official rulebook)"
  },
  "rows": [
@@ -42,7 +46,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      230
+      329
      ],
      "snippet": "only receive or defer"
     }
@@ -79,7 +83,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      236
+      335
      ],
      "snippet": "self.first_chooser = loser if self.deferred else winner"
     }
@@ -115,7 +119,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      390
+      503
      ],
      "snippet": "Halftime: the first half is over"
     }
@@ -155,7 +159,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      577
+      937
      ],
      "snippet": "a quarter change inside a drive: the drive goes on"
     },
@@ -203,14 +207,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      188
+      210
      ],
      "snippet": "return 'halftime'"
     },
     {
      "file": "game_state.py",
      "lines": [
-      183
+      205
      ],
      "snippet": "def quarter_end_kind"
     }
@@ -234,7 +238,7 @@
   },
   {
    "adversarial": [
-    "test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime"
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
    ],
    "citations": [
     [
@@ -248,7 +252,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      189
+      213
      ],
      "snippet": "return 'regulation_end'"
     }
@@ -269,12 +273,12 @@
   },
   {
    "adversarial": [
-    "test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused"
+    "test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused"
    ],
    "citations": [
     [
      "game_state.py",
-     "overtime_not_modelled"
+     "_begin_overtime"
     ]
    ],
    "gaps": [],
@@ -283,26 +287,24 @@
     {
      "file": "game_state.py",
      "lines": [
-      25,
-      76,
-      641,
-      741
+      568,
+      572
      ],
-     "snippet": "overtime_not_modelled"
+     "snippet": "_begin_overtime"
     }
    ],
    "lp_reference": "Rules file section 7 (overtime row, Rule 16)",
-   "note": "validate_game refuses a tied game described as complete.",
+   "note": "The toss winner receives (assumed). The two-minute warning and Article 5(a) are not modelled in overtime.",
    "positive": [
-    "test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime"
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
    ],
-   "rule": "A regulation tie goes to overtime, a 10-minute extra period. The engine blocks the game as overtime_not_modelled.",
+   "rule": "A regulation tie goes to overtime, a 10-minute extra period. Both teams possess once; a leader then wins; a tie is sudden death until the period ends.",
    "rulebook": {
     "article": "Overtime procedures, Section 1, Article 3 (rule number not printed in the extraction)",
     "quote": "\"an extra period of 10 minutes shall commence\"",
     "status": "verified"
    },
-   "status": "guard",
+   "status": "modelled",
    "transition": "game_state:scope_out_reasons"
   },
   {
@@ -326,14 +328,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      340
+      439
      ],
      "snippet": "def _try_after_touchdown"
     },
     {
      "file": "game_state.py",
      "lines": [
-      334
+      433
      ],
      "snippet": "def try_record"
     }
@@ -370,7 +372,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      587
+      949
      ],
      "snippet": "elif terminal == 'field_goal_attempt':"
     }
@@ -406,7 +408,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      47
+      55
      ],
      "snippet": "SAFETY_POINTS = 2"
     }
@@ -452,29 +454,29 @@
     {
      "file": "game_state.py",
      "lines": [
-      173
+      195
      ],
      "snippet": "Review note, Rule 11-4-2"
     },
     {
      "file": "rules_matrix.py",
      "lines": [
-      360,
-      472
+      457,
+      625
      ],
      "snippet": "Rule 11-4-2"
     },
     {
      "file": "game_state.py",
      "lines": [
-      170
+      192
      ],
      "snippet": "def missed_field_goal_spot"
     },
     {
      "file": "game_state.py",
      "lines": [
-      82
+      90
      ],
      "snippet": "'missed_field_goal_return': {'guard'"
     }
@@ -516,14 +518,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      54
+      65
      ],
      "snippet": "HOLDER_OFFSET = 7"
     },
     {
      "file": "game_state.py",
      "lines": [
-      162
+      184
      ],
      "snippet": "def kick_spot_yardline_100"
     }
@@ -568,21 +570,21 @@
     {
      "file": "game_state.py",
      "lines": [
-      472
+      680
      ],
      "snippet": "def _charge_made_kick"
     },
     {
      "file": "game_state.py",
      "lines": [
-      58
+      69
      ],
      "snippet": "KICK_DURATION_SECONDS = 5"
     },
     {
      "file": "rules_matrix.py",
      "lines": [
-      473
+      626
      ],
      "snippet": "Field goal made: the kick takes at most five seconds of clock"
     }
@@ -619,7 +621,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      472
+      680
      ],
      "snippet": "def _charge_made_kick"
     }
@@ -660,15 +662,13 @@
     {
      "file": "game_state.py",
      "lines": [
-      518
+      736
      ],
      "snippet": "def _apply_timeouts"
     },
     {
      "file": "game_state.py",
-     "lines": [
-      68
-     ],
+     "lines": [],
      "snippet": "no timeout is drawn"
     }
    ],
@@ -697,7 +697,8 @@
     "test_game_state.TwoMinuteWarning.test_a_second_dead_ball_in_the_same_half_does_not_stop_again",
     "test_legality.UnmodelledNegatives.test_a_crossing_without_a_warning_marker_cannot_pass_as_legal",
     "test_legality.ScopeGuard.test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker",
-    "test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal"
+    "test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal",
+    "test_game_state.UnmodelledTransitions.test_a_missing_two_minute_guard_event_is_refused"
    ],
    "citations": [
     [
@@ -715,14 +716,14 @@
     {
      "file": "game_state.py",
      "lines": [
-      120
+      142
      ],
      "snippet": "def two_minute_stop"
     },
     {
      "file": "game_state.py",
      "lines": [
-      492
+      704
      ],
      "snippet": "def _two_minute_stop_plays"
     }
@@ -760,8 +761,9 @@
     {
      "file": "game_state.py",
      "lines": [
-      557,
-      739
+      915,
+      1146,
+      1171
      ],
      "snippet": "penalty_not_modelled"
     }
@@ -870,16 +872,16 @@
     {
      "file": "game_state.py",
      "lines": [
-      92,
-      98,
-      102
+      107,
+      113,
+      117
      ],
      "snippet": "PRACTICE_SOURCE"
     },
     {
      "file": "game_state.py",
      "lines": [
-      91
+      106
      ],
      "snippet": "PENDING_2026 = 'pending_2026_rulebook'"
     }
@@ -914,7 +916,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      260
+      359
      ],
      "snippet": "def attacks_x100"
     }
@@ -949,7 +951,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      59
+      70
      ],
      "snippet": "MIN_KICK_N = 30"
     }
@@ -970,7 +972,7 @@
   },
   {
    "adversarial": [
-    "test_game_state.ScopeRefusals.test_a_blocked_overtime_game_described_as_complete_is_refused",
+    "test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused",
     "test_game_state.UnmodelledKinds.test_a_guarded_game_with_its_complete_flag_set_is_refused"
    ],
    "citations": [
@@ -989,15 +991,15 @@
     {
      "file": "game_state.py",
      "lines": [
-      782,
-      785
+      1222,
+      1225
      ],
      "snippet": "is never described as a complete game"
     },
     {
      "file": "game_state.py",
      "lines": [
-      790
+      1308
      ],
      "snippet": "a tied regulation game is not a complete game"
     }
@@ -1005,7 +1007,7 @@
    "lp_reference": "Rules file section 7 (overtime row)",
    "note": "",
    "positive": [
-    "test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime"
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
    ],
    "rule": "No blocked or tied game is described as a complete game.",
    "rulebook": {
@@ -1033,7 +1035,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      408
+      526
      ],
      "snippet": "after_clock = 0 if expires else clock_be"
     }
@@ -1068,7 +1070,7 @@
     {
      "file": "game_state.py",
      "lines": [
-      74
+      84
      ],
      "snippet": "'onside_kicks': {'guard'"
     }

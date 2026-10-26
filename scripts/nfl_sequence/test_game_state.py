@@ -38,10 +38,15 @@ def certain_kicks(fg_made=True, ep_made=True):
     return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
-def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None):
+def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
     return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks,
-                        safety_kick_pool=safety_kick_pool)
+                        safety_kick_pool=safety_kick_pool, overtime_pool=overtime_pool)
+
+
+# An observed overtime drive that runs the period out with no score: a 0-0 regulation game ends as a tie.
+PERIOD_END_OVERTIME = {'outcome': 'period_end', 'duration': 600, 'points_offense': 0, 'points_defense': 0,
+                       'next_offense': None, 'next_yardline': None, 'game_id': 'fixture', 'drive': 1}
 
 
 def safety_pool(spot=40, runoff=6):
@@ -118,8 +123,7 @@ class Validators(unittest.TestCase):
         self.assertEqual(record['mode'], 'legal_game_state_first_piece')
         self.assertFalse(record['valid_full_game'])
         record['valid_full_game'] = True
-        record['unsupported_rules'] = gs.active_unsupported_rules(
-            record['unmodelled_transitions'], record['blocker'], record['tied'])
+        record['unsupported_rules'] = gs.active_unsupported_rules(record['unmodelled_transitions'], record['blocker'])
         with self.assertRaisesRegex(AssertionError, 'pregame_full_game'):
             gs.validate_game(record)
 
@@ -650,13 +654,99 @@ class ProvisionalIsNeverPass(unittest.TestCase):
         self.assertIn('provisional practice rule', rows['Q1->Q2 change of ends']['evidence'])
 
 
+class OvertimeRule16(unittest.TestCase):
+    """Rule 16, Article 3 (regular season): both teams possess once; a leader then wins; a tie is sudden death until the
+    10-minute period ends. The decisions are checked on the state they read, not through a sampled game."""
+
+    def game(self, points, possessions, kicking_team='B'):
+        game = object.__new__(gs._Game)
+        game.status, game.points = None, dict(points)
+        game.overtime = {'kicking_team': kicking_team, 'possessions': list(possessions), 'winner': None, 'result': None}
+        return game
+
+    def test_a_leader_after_both_possessions_wins(self):
+        game = self.game({'A': 7, 'B': 0}, ['A'])
+        game._overtime_possession('B')  # B's first possession; the game is not decided until both have possessed
+        self.assertIsNone(game.status)
+        game._overtime_possession('A')  # A's second possession: A leads, so A wins
+        self.assertEqual((game.status, game.overtime['winner'], game.overtime['result']), ('complete_overtime', 'A', 'winner'))
+
+    def test_a_tie_after_both_possessions_is_sudden_death(self):
+        game = self.game({'A': 3, 'B': 3}, ['A', 'B'])
+        game._overtime_possession('A')
+        self.assertIsNone(game.status)
+        self.assertEqual(game.overtime['possessions'], ['A', 'B', 'A'])
+
+    def test_a_score_in_sudden_death_wins(self):
+        game = self.game({'A': 10, 'B': 7}, ['A', 'B', 'A'])
+        self.assertTrue(game._overtime_after_score(('kick', 'post_field_goal', 'A', 'B')))
+        self.assertEqual(game.overtime['winner'], 'A')
+
+    def test_a_score_on_the_first_possession_leaves_the_second_possession_to_be_played(self):
+        game = self.game({'A': 7, 'B': 0}, ['A'])
+        self.assertFalse(game._overtime_after_score(('kick', 'post_score', 'A', 'B')))
+        self.assertIsNone(game.status)
+
+    def test_a_safety_on_the_receivers_first_possession_wins_for_the_kicking_team(self):
+        game = self.game({'A': 0, 'B': 2}, ['A'], kicking_team='B')
+        self.assertTrue(game._overtime_after_score(('kick', 'safety_free_kick', 'A', 'B')))
+        self.assertEqual(game.overtime['winner'], 'B')
+
+    def test_a_period_that_ends_with_one_team_ahead_goes_to_that_team(self):
+        game = self.game({'A': 3, 'B': 0}, ['A'])  # B never possessed; the period ends first (Article 3(d))
+        game.quarter, game.clock = 5, 0
+        game._regulation_over()
+        self.assertEqual((game.status, game.overtime['winner']), ('complete_overtime', 'A'))
+
+    def test_a_tie_when_the_period_ends_is_a_tie(self):
+        game = self.game({'A': 3, 'B': 3}, ['A', 'B'])
+        game.quarter, game.clock = 5, 0
+        game._regulation_over()
+        self.assertEqual((game.status, game.overtime['result']), ('complete_overtime', 'tie'))
+
+
+class OvertimeObservedDrives(unittest.TestCase):
+    """Overtime drives are drawn from the observed regular-season table and checked by Rule 16 (rules file, Rule 16)."""
+
+    def test_observed_scores_decide_overtime_by_the_sudden_death_rule(self):
+        touchdown = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0,
+                     'next_offense': None, 'next_yardline': None, 'game_id': 'fixture', 'drive': 1}
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[touchdown]),
+                              winner_choice='receive', max_drives=80)
+        self.assertEqual(record['status'], 'complete_overtime')
+        self.assertIn(record['overtime']['winner'], ('A', 'B'))
+        self.assertEqual(record['overtime']['possessions'][:2], [record['overtime']['toss_winner'],
+                                                                 record['overtime']['kicking_team']])
+        self.assertTrue(all(d['plays'] == [] for d in record['drives'] if d['quarter_start'] == 5))
+        gs.validate_game(record)
+
+    def test_an_observed_drive_longer_than_the_clock_is_refused_by_name(self):
+        from types import SimpleNamespace
+        import random
+        long_drive = {'outcome': 'punt', 'duration': 300, 'points_offense': 0, 'points_defense': 0,
+                      'next_offense': 'B', 'next_yardline': 40, 'game_id': 'fixture', 'drive': 1}
+        game = object.__new__(gs._Game)
+        game.status, game.blocker = None, None
+        game.offense, game.defense, game.clock = 'A', 'B', 200
+        game.ref, game.rng, game.drives = SimpleNamespace(overtime_pool=[long_drive]), random.Random(0), []
+        game.points = {'A': 0, 'B': 0}
+        game._observed_overtime_drive()
+        self.assertEqual((game.status, game.blocker), ('blocked', 'overtime_drive_not_observed_for_clock'))
+        self.assertEqual(game.drives, [])
+
+
 class ScopedOut(unittest.TestCase):
-    def test_a_tied_regulation_game_is_scoped_out_as_overtime(self):
-        # A zero-yard run game ends regulation 0-0: overtime is not modelled, so the game is not complete.
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
-        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 regulation tie')
-        self.assertFalse(record['complete_game'])
-        self.assertEqual(record['scope_out'][0]['reason'], 'overtime')
+    def test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete(self):
+        # A zero-yard run game ends regulation 0-0. Rule 16 plays one 10-minute overtime; with no score in it, the game is a tie.
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[PERIOD_END_OVERTIME]),
+                              winner_choice='receive', max_drives=80)
+        self.assertEqual(record['status'], 'complete_overtime')
+        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 tie after its overtime period')
+        self.assertEqual(record['overtime']['result'], 'tie')
+        self.assertEqual(record['final_quarter'], 5)
+        self.assertEqual(record['final_clock_seconds'], 0)
+        self.assertTrue(record['complete_game'])
+        self.assertEqual(record['scope_out'], [])
         gs.validate_game(record)
 
     def test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome(self):
@@ -1146,20 +1236,14 @@ class SafetyFreeKickSampled(unittest.TestCase):
 class ScopeRefusals(unittest.TestCase):
     """Overtime and rare kick outcomes are scoped out, and the validator refuses any record that calls them complete."""
 
-    def test_a_tied_game_with_its_overtime_block_removed_is_refused(self):
-        # R07, adversarial: a tie that is described as a complete regulation game, with the block taken away.
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
-        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 regulation tie')
-        tampered = {**record, 'blocker': None, 'status': 'complete_regulation', 'complete_regulation': True,
-                    'complete_game': True, 'scope_out': [], 'unmodelled_transitions': []}  # isolate the tie refusal
-        with self.assertRaisesRegex(AssertionError, 'tied regulation game'):
+    def test_a_tie_described_as_complete_without_its_overtime_period_is_refused(self):
+        # R07, adversarial: a 0-0 tie described as a complete regulation game, with its overtime period taken away.
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[PERIOD_END_OVERTIME]),
+                              winner_choice='receive', max_drives=80)
+        self.assertTrue(record['tied'], 'seed 1 of this fixture is a 0-0 tie after its overtime period')
+        tampered = {**record, 'overtime': None, 'status': 'complete_regulation', 'complete_regulation': True}
+        with self.assertRaisesRegex(AssertionError, 'without its overtime period'):
             gs.validate_game(tampered)
-
-    def test_a_blocked_overtime_game_described_as_complete_is_refused(self):
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool()), winner_choice='receive', max_drives=80)
-        self.assertEqual(record['blocker'], 'overtime_not_modelled')
-        with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
-            gs.validate_game({**record, 'complete_regulation': True})
 
     def test_a_rare_kick_outcome_described_as_complete_is_refused(self):
         kicks = certain_kicks()
@@ -1209,8 +1293,10 @@ class UnmodelledKinds(unittest.TestCase):
 
     def test_a_guarded_game_with_its_complete_flag_set_is_refused(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 100), kickoff_pool()), winner_choice='receive')
+        self.assertEqual(record['unmodelled_transitions'], [])
+        guarded = {**record, 'complete_game': True, 'unmodelled_transitions': [{'kind': 'penalty'}]}
         with self.assertRaisesRegex(AssertionError, 'never described as a complete game'):
-            gs.validate_game({**record, 'complete_game': True})
+            gs.validate_game(guarded)
 
     def test_an_onside_kickoff_kind_is_refused_because_it_is_not_modelled(self):
         record = gs.play_game(1, ref(StaticPool('run', 10, 30), kickoff_pool()), winner_choice='receive', max_drives=2)

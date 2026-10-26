@@ -224,8 +224,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             quarter_change = True  # change of ends; the drive and series continue, no kickoff; a turnover here still ends the drive
         elif clock_expired and st['quarter'] == 2:
             terminal = 'halftime'  # the first-half drive ends; second-half choices and kickoff are not modelled
+        elif clock_expired and st['quarter'] == 5:
+            terminal = 'end_of_overtime'  # the 10-minute overtime period ends; Rule 16 decides the game
         elif clock_expired:
-            terminal = 'end_of_regulation'  # Q4 expiry; overtime and tie-breaking are not modelled
+            terminal = 'end_of_regulation'  # Q4 expiry; a tie goes to overtime (game_state)
         if after is None:  # touchdown, safety, field-goal attempt, halftime, end of regulation: no scrimmage spot
             after = {'offense': st['offense'], 'defense': st['defense'], 'down': None, 'togo': None, 'yl': None}
         ended_by_clock_only = clock_expired and not quarter_change and play_terminal is None  # a possession change keeps its spot
@@ -333,6 +335,8 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: halftime terminal outside the end of Q2')
         if sa.get('end_of_drive') == 'end_of_regulation' and (sa['quarter'] != 4 or sa['clock_seconds'] != 0):
             raise AssertionError(f'play {i + 1}: regulation terminal outside the end of Q4')
+        if sa.get('end_of_drive') == 'end_of_overtime' and (sa['quarter'] != 5 or sa['clock_seconds'] != 0):
+            raise AssertionError(f'play {i + 1}: overtime terminal outside the end of overtime')
         if i < len(plays) - 1:
             if sa['down'] is None or not 1 <= sa['down'] <= 4 or sa['yardline_100'] is None:
                 raise AssertionError(f'play {i + 1}: non-terminal play has no legal down or field')

@@ -32,7 +32,8 @@ def tries_of(record):
         scorer = d.get('touchdown_scored_by')
         if scorer:
             opponent = 'B' if scorer == 'A' else 'A'
-            last = d['plays'][-1]['state_after']
+            # an observed overtime drive has no plays; its situation is read from where the drive ends
+            last = d['plays'][-1]['state_after'] if d['plays'] else {'quarter': d['end_quarter'], 'clock_seconds': d['end_clock']}
             situation = {'margin': points[scorer] + gs.TD_POINTS - points[opponent], 'quarter': last['quarter'],
                          'clock': last['clock_seconds'], 'opening_drive': scorer == d['offense_team'] and offense[scorer] == 1,
                          'first_td': not seen_td}

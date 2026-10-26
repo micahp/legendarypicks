@@ -329,7 +329,7 @@ class Vocabulary(unittest.TestCase):
         self.assertEqual(
             reducer.TERMINALS,
             ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'field_goal_attempt',
-             'halftime', 'end_of_regulation'))
+             'halftime', 'end_of_regulation', 'end_of_overtime'))
         self.assertNotIn('end_of_period', reducer.TERMINALS)
 
     def test_pinned_records_use_exactly_the_terminals_in_the_constant(self):
@@ -341,7 +341,8 @@ class Vocabulary(unittest.TestCase):
             used.add(terminal)
             for play in record['plays'][:-1]:
                 self.assertNotIn('end_of_drive', play['state_after'], path.name)
-        self.assertEqual(used, set(reducer.TERMINALS))
+        # end_of_overtime is not in any pinned fixture, which are regulation games; the overtime tests cover it.
+        self.assertEqual(used, set(reducer.TERMINALS) - {'end_of_overtime'})
         self.assertNotIn('end_of_period', used)
 
     def test_generated_and_pinned_play_ids_follow_the_simulation_id_contract(self):
