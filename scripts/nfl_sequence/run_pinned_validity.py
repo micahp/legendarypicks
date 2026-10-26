@@ -88,6 +88,8 @@ def main():
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--snapshot', default=str(PINNED))
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
+    ap.add_argument('--no-safety-table', action='store_true',
+                    help='control arm: keep the safety free-kick block instead of sampling the observed table')
     ap.add_argument('--out', required=True)
     ap.add_argument('--summary', required=True)
     args = ap.parse_args()
@@ -102,7 +104,9 @@ def main():
     started = time.monotonic()
     snapshot = load_pinned(args.snapshot)
     pinned_sha = snapshot['snapshot_sha256']
-    ref, excluded = er.load(args.db) if policy is None else er.load(args.db, try_policy=policy)
+    table = not args.no_safety_table
+    ref, excluded = er.load(args.db, safety_kick_table=table) if policy is None else er.load(
+        args.db, try_policy=policy, safety_kick_table=table)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     ps.reseal(snapshot)
     load_seconds = time.monotonic() - started

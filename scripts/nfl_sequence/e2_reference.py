@@ -17,6 +17,7 @@ import measure_kick_outcomes as mk  # noqa: E402
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
+SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
 
@@ -86,9 +87,14 @@ def _reference_fingerprint(reference):
     add(['blocked-kick-source-sha256', reference.blocked_kicks.get('sha256')])
     add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
     add(['blocked-kick-input-source-sha256', reference.blocked_kicks.get('source_hashes')])
+    if reference.safety_kick_pool is not None:
+        # Absent table: the fingerprint, and so every seed's draws, stay as they were before the table existed.
+        for sample in reference.safety_kick_pool:
+            add(['safety-kick-sample', sample])
+        add(['safety-kick-source-sha256', reference.safety_kick_sha256])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
-    return {
+    summary = {
         'schema': 'lp-e2-observed-reference-3',
         'sha256': digest.hexdigest(),
         **reference.position_usage,
@@ -107,6 +113,11 @@ def _reference_fingerprint(reference):
         'blocked_kick_input_source_sha256': reference.blocked_kicks.get('source_hashes'),
         'play_extras_sha256': extras_hash,
     }
+    if reference.safety_kick_pool is not None:
+        # Added only with the table: the summary is resealed into every snapshot, so an absent table must leave it unchanged.
+        summary['safety_kick_samples'] = len(reference.safety_kick_pool)
+        summary['safety_kick_source_sha256'] = reference.safety_kick_sha256
+    return summary
 
 
 def load_blocked_kicks(path=BLOCKED_KICKS):
@@ -191,6 +202,37 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     return out
 
 
+def load_safety_kick_pool(path=SAFETY_KICKS):
+    """Usable observed safety free kicks: the receiving team's first snap and the clock it took. Returns (pool, file sha256).
+
+    The fixture is checked against its manifest's checksum and row count before any row is read. Refused rows stay in the
+    file for audit and are never drawn.
+    """
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'safety-kick fixture checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != manifest['record_count']:
+        raise ValueError(f'safety-kick fixture row count mismatch: {path}')
+    pool = []
+    for row in rows:
+        if row['status'] != 'usable':
+            continue
+        spot, runoff = int(row['receiving_snap_yardline_100']), int(row['clock_runoff_seconds'])
+        if not 1 <= spot <= 99 or runoff < 0:
+            raise ValueError(f"safety-kick row {row['safety_play_id']} has an impossible spot or runoff")
+        pool.append({'spot': spot, 'runoff': runoff, 'game_id': row['game_id'], 'game_date': row['game_date'],
+                     'play_id': int(float(row['receiving_snap_play_id'])),
+                     'safety_play_id': int(float(row['safety_play_id'])), 'kick_play_id': int(float(row['kick_play_id'])),
+                     'kick_type': row['kick_type'], 'season': int(row['season'])})
+    if len(pool) != manifest['usable_count']:
+        raise ValueError('safety-kick usable rows disagree with the manifest')
+    return pool, source_hash
+
+
 def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     """Historical defense start spots immediately following a missed kick, by E1 field-position bucket."""
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
@@ -226,7 +268,7 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
-def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None):
+def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -236,6 +278,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None):
 
     `try_policy` (opt-in, None by default): a try_policy.TryPolicy that replaces the published two-point share after each
     touchdown. None keeps the unconditional policy and every existing record unchanged.
+
+    `safety_kick_table` (True by default): sample safety free kicks from the observed 2022-2025 table. False keeps the
+    block, the control arm for the safety correction.
     """
     rows = e1.load(db)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
@@ -254,12 +299,16 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None):
             or len(blocked['records']['field_goal']) != sum(x['blocked'] for x in
                                                              blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
+    safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
-                             load_missed_field_goal_pool(db), blocked, try_policy=try_policy)
+                             load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
+                             safety_kick_pool=safety_pool)
+    reference.safety_kick_sha256 = safety_sha
     reference.position_usage = load_position_usage(db)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
-                            'kick_table': 'not filtered: the published kick rates include overtime kicks'}
+                            'kick_table': 'not filtered: the published kick rates include overtime kicks',
+                            'safety_kick_table': 'observed 2022-2025 regular-season safety free kicks, usable rows only'}
     reference.model_inputs = _reference_fingerprint(reference)
     return reference, kex

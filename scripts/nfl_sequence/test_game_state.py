@@ -38,9 +38,15 @@ def certain_kicks(fg_made=True, ep_made=True):
     return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
-def ref(pool, kpool, kicks=None, blocked_kicks=None):
+def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
-    return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks)
+    return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks,
+                        safety_kick_pool=safety_kick_pool)
+
+
+def safety_pool(spot=40, runoff=6):
+    return [{'spot': spot, 'runoff': runoff, 'game_id': 'S', 'play_id': 2, 'game_date': '2025-01-01', 'safety_play_id': 1,
+             'kick_play_id': 2, 'kick_type': 'kickoff', 'season': 2025}]
 
 
 def spy_simulate(run):
@@ -1077,6 +1083,29 @@ class SafetyFreeKickRefusal(unittest.TestCase):
         self.assertTrue(any(kick['kind'] == 'half_start' and kick['quarter'] == 3 for kick in record['kickoffs']))
         self.assertFalse(any(kick['kind'] == 'safety_free_kick' for kick in record['kickoffs']))
         gs.validate_game(record)
+
+
+class SafetyFreeKickSampled(unittest.TestCase):
+    """A safety with time left is a free kick drawn from the observed safety-kick table, never from the kickoff pool."""
+
+    def test_the_free_kick_is_drawn_from_the_safety_table_and_names_its_source(self):
+        record = gs.play_game(23, ref(StaticPool('run', -30, 10), kickoff_pool(spot=75),
+                                      safety_kick_pool=safety_pool(spot=40, runoff=6)),
+                              winner_choice='receive', max_drives=5)
+        kick = next(k for k in record['kickoffs'] if k['kind'] == 'safety_free_kick')
+        self.assertEqual((kick['spot_yardline_100'], kick['runoff_seconds']), (40, 6))
+        self.assertEqual(kick['source']['pool'], gs.SAFETY_KICK_POOL)
+        self.assertEqual((kick['source']['safety_play_id'], kick['source']['kick_play_id']), (1, 2))
+        self.assertNotEqual(record.get('blocker'), 'safety_free_kick_not_modelled')
+        gs.validate_game(record)
+
+    def test_a_free_kick_without_the_safety_table_label_is_rejected(self):
+        record = gs.play_game(23, ref(StaticPool('run', -30, 10), kickoff_pool(spot=75),
+                                      safety_kick_pool=safety_pool()), winner_choice='receive', max_drives=5)
+        kick = next(k for k in record['kickoffs'] if k['kind'] == 'safety_free_kick')
+        kick['source'] = {k: v for k, v in kick['source'].items() if k != 'pool'}
+        with self.assertRaisesRegex(AssertionError, 'separate observed safety-kick outcome table'):
+            gs.validate_game(record)
 
 
 class ScopeRefusals(unittest.TestCase):
