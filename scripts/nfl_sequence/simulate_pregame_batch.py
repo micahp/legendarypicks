@@ -83,10 +83,13 @@ def _baseline_v1(db, snapshot):
         row = None
         schedule_source = None
         schedule_ingested_at = schedule.get('ingested_at')
-        if schedule_ingested_at and _utc_timestamp(schedule_ingested_at, 'snapshot schedule ingested_at') <= cutoff:
+        explicitly_unverified = (schedule.get('availability_classification')
+                                 == 'current_row_unverified_exploratory')
+        if (not explicitly_unverified and schedule_ingested_at
+                and _utc_timestamp(schedule_ingested_at, 'snapshot schedule ingested_at') <= cutoff):
             row = schedule
             schedule_source = 'hash_pinned_snapshot_schedule_version'
-        else:
+        elif not explicitly_unverified:
             try:
                 row = pregame_snapshot.schedule_at(con, schedule['game_id'], cutoff)
             except sqlite3.OperationalError as exc:
@@ -318,6 +321,8 @@ def run_batch(args):
     batch_started = time.monotonic()
     snapshot_started = batch_started
     if args.snapshot_file:
+        if args.allow_unverified_current_schedule_exploratory:
+            raise ValueError('--allow-unverified-current-schedule-exploratory cannot be used with --snapshot-file')
         snapshot = pregame_snapshot.load_frozen_snapshot(args.snapshot_file)
         if args.game_id and args.game_id != snapshot['schedule']['game_id']:
             raise ValueError('--game-id does not match the frozen snapshot')
@@ -333,8 +338,9 @@ def run_batch(args):
     else:
         if not args.game_id or not args.as_of:
             raise ValueError('provide --snapshot-file or both --game-id and --as-of')
-        snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc,
-                                          args.kickoff_source_url)
+        snapshot = pregame_snapshot.build(
+            args.db, args.game_id, args.as_of, args.kickoff_utc, args.kickoff_source_url,
+            allow_unverified_current_schedule_exploratory=args.allow_unverified_current_schedule_exploratory)
     source_snapshot_sha256 = snapshot['snapshot_sha256']
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
@@ -496,6 +502,9 @@ def main(argv=None):
     ap.add_argument('--as-of', help='timezone-qualified ISO-8601 cutoff; required unless --snapshot-file is used')
     ap.add_argument('--kickoff-utc')
     ap.add_argument('--kickoff-source-url')
+    ap.add_argument('--allow-unverified-current-schedule-exploratory', action='store_true',
+                    help=('explicitly use the current schedule row when no as-of version exists; preserves its real '
+                          'ingestion timestamp and classifies the v1 comparison as exploratory'))
     ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)

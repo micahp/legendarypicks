@@ -204,7 +204,8 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
 
 
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
-          kickoff_source_url: str | None = None) -> dict:
+          kickoff_source_url: str | None = None,
+          allow_unverified_current_schedule_exploratory: bool = False) -> dict:
     cutoff = parse_as_of(as_of)
     scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
     if bool(scheduled_start) != bool(kickoff_source_url):
@@ -214,7 +215,24 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     con.row_factory = sqlite3.Row
     try:
-        game = schedule_at(con, game_id, cutoff)
+        try:
+            game = schedule_at(con, game_id, cutoff)
+        except sqlite3.OperationalError as exc:
+            if 'nfl_schedule_versions' not in str(exc):
+                raise
+            if not allow_unverified_current_schedule_exploratory:
+                raise ValueError('historical schedule versions are unavailable; refusing to backdate the current row') from exc
+            game = None
+        if game is None and allow_unverified_current_schedule_exploratory:
+            row = con.execute(
+                """SELECT game_id, season, game_type, week, gameday, gametime, away_team, home_team,
+                          location, source, ingested_at
+                     FROM nfl_schedule WHERE game_id=?""",
+                (game_id,),
+            ).fetchone()
+            if row is not None:
+                game = dict(row)
+                game['availability_classification'] = 'current_row_unverified_exploratory'
         if game is None:
             raise ValueError(f'{game_id}: no schedule version was observed on or before --as-of')
         if game['game_type'] not in ('REG', 'POST'):
@@ -273,6 +291,7 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             'week': game['week'], 'gameday': game['gameday'], 'gametime': game['gametime'],
             'gametime_timezone': None, 'away_team': game['away_team'], 'home_team': game['home_team'],
             'source': game['source'], 'ingested_at': game['ingested_at'],
+            'availability_classification': game.get('availability_classification', 'versioned_as_of'),
             'scheduled_kickoff_utc': scheduled_start.isoformat().replace('+00:00', 'Z') if scheduled_start else None,
             'kickoff_source_url': kickoff_source_url,
         },
