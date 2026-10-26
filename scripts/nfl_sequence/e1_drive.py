@@ -200,7 +200,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, partial=None)
                 kick_outcome = resolution.get('kick_outcome')
                 kick_metadata = resolution.get('metadata')
         yards = 0 if event in KICK_EVENTS else int(row['yards_gained'])
-        after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+        try:
+            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+        except reducer.UnmodelledOutcome as blocked:
+            return None, blocked.reason
         clock_raw = st['clock'] - runoff
         clock_after = max(0, clock_raw)
         quarter_change = False
