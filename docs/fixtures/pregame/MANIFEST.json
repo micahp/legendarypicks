@@ -56,10 +56,10 @@
   ],
   "label": "Kansas City at Seattle \u00b7 2026-10-25",
   "roster_snapshot": {
-    "file": "docs/fixtures/rosters/kc-sea-2026-10-25-starters.json",
-    "provenance_file": "docs/fixtures/rosters/kc-sea-2026-10-25-starters-provenance.json",
-    "provenance_sha256": "a7827028c37648cedbf2c7009a45d8d53f5fe9fce6278392cac87bf3de3b3268",
-    "sha256": "576539fbde25c670be1f00d858f761548e36e66a982c717827fbb4f3f4a00f51"
+    "file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth.json",
+    "provenance_file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth-provenance.json",
+    "provenance_sha256": "a46a031daf1e54ac7774e68a7c731ad6c5529b71c323406e446d9cf50a4f54f7",
+    "sha256": "10739efdc9cf59f1b1997497dc2602b80848e8d5519eca7c951f5871e3e515b1"
   },
   "schema": "lp-statistical-pregame-fixture-manifest-1"
 }
