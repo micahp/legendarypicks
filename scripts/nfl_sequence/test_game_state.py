@@ -262,9 +262,44 @@ class BlockedKickIntegration(unittest.TestCase):
         game.ref = SimpleNamespace(blocked_kicks={'records': {'punt': [{
             'classification_status': 'period_expired', 'clock_runoff_seconds': 0,
         }]}})
-        blocker, outcome = game._sample_blocked_kick('punt', random.Random(0))
+        blocker, outcome = game._sample_blocked_kick('punt', random.Random(0), 0)
         self.assertIsNone(blocker)
         self.assertEqual(outcome['classification_status'], 'period_expired')
+
+
+class BlockedKickFitsTheState(unittest.TestCase):
+    """A blocked kick that used up its period fits only a state whose clock runs out on the kick (rules file 5A)."""
+
+    def sampler(self, records):
+        from types import SimpleNamespace
+        game = object.__new__(gs._Game)
+        game.ref = SimpleNamespace(blocked_kicks={'records': {'punt': records}, 'sha256': 'c' * 64})
+        return game
+
+    def test_a_period_end_record_is_not_drawn_for_a_state_with_time_left(self):
+        import random
+        period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
+        recovery = {'classification_status': 'classified_dead_ball_spot', 'clock_runoff_seconds': 4,
+                    'kick_type': 'punt', 'posteam': 'A', 'defteam': 'B'}
+        game = self.sampler([period_end, recovery])
+        for seed in range(20):
+            blocker, outcome = game._sample_blocked_kick('punt', random.Random(seed), 30)
+            self.assertIsNone(blocker)
+            self.assertEqual(outcome['classification_status'], 'classified_dead_ball_spot')
+
+    def test_a_period_end_record_fits_a_state_whose_clock_it_covers(self):
+        import random
+        period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
+        blocker, outcome = self.sampler([period_end])._sample_blocked_kick('punt', random.Random(0), 9)
+        self.assertIsNone(blocker)
+        self.assertEqual(outcome['classification_status'], 'period_expired')
+
+    def test_only_period_end_records_for_a_state_with_time_left_refuse_by_name(self):
+        import random
+        period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
+        blocker, outcome = self.sampler([period_end])._sample_blocked_kick('punt', random.Random(0), 30)
+        self.assertEqual(blocker, 'blocked_kick_period_end_not_reached:punt')
+        self.assertIsNone(outcome)
 
 
 class KickoffPool(unittest.TestCase):
