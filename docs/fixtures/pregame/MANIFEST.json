@@ -1,5 +1,5 @@
 {
-  "default_fixture": "game-kc-sea-seed1-full-starters.json",
+  "default_fixture": "game-kc-sea-seed1-full-depth.json",
   "fixtures": [
     {
       "drives": 27,
@@ -47,6 +47,40 @@
           "scripts/nfl_sequence/reducer.py": "531b6b78462e6fbcadcb4410634ed1b0a2cd02bba6cb8c22ad96a1be6e5731a0",
           "scripts/nfl_sequence/simulate_pregame_batch.py": "11a2d814b5d358634e911fa29a29f843854d4cacac4c5f4cb0e8a29fdf68a122",
           "scripts/nfl_sequence/simulate_pregame_game.py": "23d0bf5062398df043044bffee74197d8eca17014ba2a61d44e5e0c2f3bdb611"
+        },
+        "producer_worktree_dirty": false,
+        "repository": "micahp/legendarypicks"
+      },
+      "valid_full_game": true
+    },
+    {
+      "drives": 24,
+      "file": "game-kc-sea-seed1-full-depth.json",
+      "game_id": "2026_07_KC_SEA",
+      "plays": 150,
+      "roster_snapshot": {
+        "file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth.json",
+        "provenance_file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth-provenance.json",
+        "provenance_sha256": "a46a031daf1e54ac7774e68a7c731ad6c5529b71c323406e446d9cf50a4f54f7",
+        "sha256": "10739efdc9cf59f1b1997497dc2602b80848e8d5519eca7c951f5871e3e515b1"
+      },
+      "seed": 1,
+      "sha256": "f6723658752addd247cdf8b5fde0dbd2d43dd0b7f10c450b4707546efa7c0ef8",
+      "snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+      "source": {
+        "base_commit": "428fbef0d61d00ccf3cce1c8dbcd81253f6ee6f6",
+        "branch": "feat/statistical-full-game-e2-2026-10-25",
+        "producer_file_sha256": {
+          "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "2b2d3605b8ba1bf483e5ea061869d89476267171e027d618cad26f6c073c2bc1",
+          "scripts/nfl_sequence/e1_drive.py": "ad675e5ced37aa1569d513d8dffc7d3904f68e421bf8c2251bdd9f40bb779a98",
+          "scripts/nfl_sequence/e2_reference.py": "cc804230e186af1457e967de1be56bc6415759915cd7a2ed557332466e4def0d",
+          "scripts/nfl_sequence/game_state.py": "bb877343e107e7f2da84645f070e85382e84f5903df98837328a2a71ce47bb71",
+          "scripts/nfl_sequence/game_stats.py": "2eba6bbc2ccbe186944a0418c828fd37dd9084922031a9d3a4229fb7da7a8ac7",
+          "scripts/nfl_sequence/measure_kick_outcomes.py": "09aa04bc3c0741222f9b1138b0aa14a1628fd21fda4f730188cd1a8ee6226cf3",
+          "scripts/nfl_sequence/pregame_snapshot.py": "83803b008906a9cb3c51dd2aea13a8cb32bb871ba230e2c31acf18aeb39f8976",
+          "scripts/nfl_sequence/reducer.py": "531b6b78462e6fbcadcb4410634ed1b0a2cd02bba6cb8c22ad96a1be6e5731a0",
+          "scripts/nfl_sequence/simulate_pregame_batch.py": "eb714cea096f09960ffea33688362fe2355c5df5e456bf571aff8ea44c32bf94",
+          "scripts/nfl_sequence/simulate_pregame_game.py": "410263aa6b212e013776ece13273d28d510844f7c5fa7d0f284de7a4b92f3a94"
         },
         "producer_worktree_dirty": false,
         "repository": "micahp/legendarypicks"
