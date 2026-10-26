@@ -1,0 +1,23 @@
+{
+  "schema": "nhl-pregame-slate-v0.1",
+  "game_date": "2026-10-25",
+  "as_of_utc": "2026-10-25T23:25:19Z",
+  "schedule_source": "https://www.nhl.com/schedule/2026-10-23",
+  "schedule_source_note": "Official NHL schedule page listing the Sunday, October 25 slate; only games scheduled after the frozen cutoff are included.",
+  "games": [
+    {
+      "game_key": "COL-NSH-20261025",
+      "away_team": "COL",
+      "home_team": "NSH",
+      "scheduled_start_utc": "2026-10-26T00:00:00Z",
+      "scheduled_start_local": "2026-10-25T19:00:00-05:00"
+    },
+    {
+      "game_key": "MIN-VAN-20261025",
+      "away_team": "MIN",
+      "home_team": "VAN",
+      "scheduled_start_utc": "2026-10-26T02:00:00Z",
+      "scheduled_start_local": "2026-10-25T21:00:00-05:00"
+    }
+  ]
+}
