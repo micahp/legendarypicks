@@ -102,6 +102,18 @@ class AvailabilityAdapter(unittest.TestCase):
         self.assertEqual(block['counts']['removed_players'], 1)
         self.assertEqual(block['teams']['GB']['starter_roles'], 28)
 
+    def test_promoted_qb_is_found_as_the_passer(self):
+        # QB1 (gb-000) is removed; the QB2 backup (gb-028) must take rank 1 so the simulator finds one passer.
+        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-000': ('exclude_roster_status', None, [],
+                                                                             False)}) + _avail_players('CAR', 'car'))
+        snapshot = _snapshot()
+        block = adapter.apply(snapshot, path)
+        passers = [p for p in snapshot['rosters']['home']['players'] if p['pos_abb'] == 'QB' and p['pos_rank'] == 1
+                   and p['starter']]
+        self.assertEqual([p['gsis_id'] for p in passers], ['gb-028'])
+        promoted = next(p for p in block['promoted'] if p['replaces'] == 'gb-000')
+        self.assertEqual((promoted['pos_rank'], promoted['rank_before_promotion']), (1, 2))
+
     def test_questionable_player_is_kept_and_flagged(self):
         path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-000': ('include_questionable', 'Questionable',
                                                                               ['questionable'], True)})

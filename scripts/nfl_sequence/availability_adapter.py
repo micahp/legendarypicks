@@ -134,10 +134,15 @@ def apply(snapshot: dict, availability_path: str) -> dict:
                                      f"after {gone['player_name']} was removed")
                 chosen = backups[0]
                 chosen['starter'] = True
+                # The simulator identifies the starting passer, and other starters, by pos_rank == 1 or by role rank.
+                # A promoted backup takes the removed starter's rank so that its role is found where the simulator looks.
+                chosen['rank_before_promotion'] = chosen['pos_rank']
+                chosen['pos_rank'] = role['pos_rank']
                 chosen['promoted_for'] = {'gsis_id': gone['gsis_id'], 'player_name': gone['player_name'],
                                           'decision': gone['decision'], 'role': role}
                 promoted.append({'team': team, 'gsis_id': chosen['gsis_id'], 'player_name': chosen.get('player_name'),
                                  'pos_abb': role['pos_abb'], 'pos_rank': chosen['pos_rank'],
+                                 'rank_before_promotion': chosen['rank_before_promotion'],
                                  'replaces': gone['gsis_id']})
                 team_promotions += 1
         roster['players'] = kept

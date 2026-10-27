@@ -39,8 +39,8 @@ def exploratory_reasons(payload: dict) -> list[str]:
     availability = snapshot.get('availability')
     if availability is None:
         reasons.append('no availability snapshot applied')
-    elif availability.get('classification') == 'unverifiable':
-        reasons.append('availability is unverifiable (no injury designations)')
+    elif availability.get('classification') != 'verified':
+        reasons.append(f"availability is {availability.get('classification')}, not verified: publication time is unverified")
     return reasons
 
 
@@ -67,6 +67,8 @@ def _entry(payload: dict, data: bytes, path: Path, run_id: str, created: str) ->
         'availability_snapshot_id': availability['snapshot_id'] if availability else None,
         'availability_snapshot_sha256': availability['content_sha256'] if availability else None,
         'availability_classification': availability['classification'] if availability else None,
+        'player_outputs': 'role allocations from sampled historical plays, not calibrated player projections',
+        'player_outputs_calibrated': False,
         'game_info_snapshot_id': (payload.get('game_info') or {}).get('snapshot_id'),
         'game_info_snapshot_sha256': (payload.get('game_info') or {}).get('content_sha256'),
         'exploratory': bool(reasons), 'exploratory_reasons': reasons,
