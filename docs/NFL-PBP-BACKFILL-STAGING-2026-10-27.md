@@ -85,7 +85,19 @@ Not changed in this pass:
 - No effect on S1 or S2 (`NFL-S1-S2-RESULTS-2026-10-27.md`), which use only final scores, dates, kickoff, rest, travel and division.
 - Accepted and declined penalty status is still unavailable from any source checked. First downs therefore keep their unresolved status (`NFL-RECONCILIATION-2026-10-27.md`).
 
-## 6. Next steps
+## 6. Full nflverse parquet download (2026-10-27)
+
+Every parquet asset of every nflverse-data release was downloaded, raw and pinned, outside the production databases.
+
+- **Script.** `scripts/nfl_sequence/splits/download_nflverse_raw.py`. Resumable. Each file is checked against the size GitHub reports, hashed (sha256), and recorded.
+- **Manifest.** `/root/lp-snapshots/nfl-backfill-2026-10-27/raw_manifest.json`. The release list as fetched is saved beside the files at `raw/releases.json`.
+- **Result.** 878 parquet files across 25 releases: 878 fetched, 0 failed, 0 size mismatches, 0 partial files left. Total 0.73 GB.
+- **Scope.** Parquet only. The csv, rds, qs and zip copies of the same data were not downloaded. Play-by-play runs from 1999 to 2026 (28 files), and 1999 to 2009 is downloaded but not ingested, as the reviewer asked. FTN charting is 2022 to 2026 (5 files).
+- **Largest releases by files:** player_stats 365, stats_team 111, stats_player 111, rosters 107, pfr_advstats 40, pbp 28, depth_charts 26, weekly_rosters 25.
+
+Nothing from this download has been ingested into any database, and no model or box score uses it yet.
+
+## 7. Next steps
 
 1. Build a team box score rev3 that reads penalty fields from the extract for 2010 to 2014 and 2026 (and keeps the dev database for 2015 to 2025, which matches exactly), then check the first-down and derived-points reconciliations.
 2. Validate the return fields against the derived special-teams points on 2015 to 2025, and classify the remaining 180 derived-point mismatches.
