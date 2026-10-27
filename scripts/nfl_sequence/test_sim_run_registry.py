@@ -9,9 +9,10 @@ sys.path.insert(0, str(HERE))
 import sim_run_registry as registry  # noqa: E402
 
 
-def _payload(game_id='2026_08_CAR_GB', availability=True, classification='versioned_as_of', dirty=False, games=100):
+def _payload(game_id='2026_08_CAR_GB', availability=True, classification='versioned_as_of', dirty=False, games=100,
+             avail_class='timestamp-proxy'):
     availability_block = {'snapshot_id': 'nfl-2026-w08-20261027T171516Z-8cd6219195', 'content_sha256': 'a' * 64,
-                          'classification': 'timestamp-proxy'} if availability else None
+                          'classification': avail_class} if availability else None
     snapshot = {'schedule': {'game_id': game_id, 'season': 2026, 'week': 8,
                              'availability_classification': classification},
                 'snapshot_sha256': 'b' * 64, 'roster_snapshot_id': 'nflverse-full-depth:c',
@@ -77,10 +78,16 @@ class SimRunRegistry(unittest.TestCase):
         self.assertIn('producer worktree was dirty', entry['exploratory_reasons'])
         self.assertIn('no availability snapshot applied', entry['exploratory_reasons'])
 
-    def test_clean_versioned_run_is_not_exploratory(self):
-        entry = registry.register(_payload(), self.store)
+    def test_clean_versioned_run_with_verified_availability_is_not_exploratory(self):
+        entry = registry.register(_payload(avail_class='verified'), self.store)
         self.assertFalse(entry['exploratory'])
         self.assertEqual(entry['exploratory_reasons'], [])
+        self.assertFalse(entry['player_outputs_calibrated'])
+
+    def test_timestamp_proxy_availability_stays_exploratory(self):
+        entry = registry.register(_payload(avail_class='timestamp-proxy'), self.store)
+        self.assertTrue(entry['exploratory'])
+        self.assertTrue(any('not verified' in r for r in entry['exploratory_reasons']))
 
     def test_game_id_mismatch_is_refused(self):
         payload = _payload()
