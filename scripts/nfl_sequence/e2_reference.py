@@ -357,8 +357,30 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
+def regime_kickoffs(kpool, target_season, kickoff_before):
+    """Research variant (opt-in): kickoffs only from the seasons whose registered kickoff rules match the target season.
+
+    Seasons are not pooled across a registered kickoff change, because their spot distributions differ (KS tests in the
+    evidence note). Kickoffs on or after `kickoff_before` are dropped, so the validity game is not its own sample.
+    """
+    if kickoff_before is None:
+        raise ValueError('a regime kickoff pool needs kickoff_before')
+    kpool = [k for k in kpool if k['game_date'] < kickoff_before]
+    registry, registry_sha = rr.load_registry()
+    rules = rr.active_rules(registry, target_season, 'REG', 'kickoff')
+    pool_seasons = sorted({k['season'] for k in kpool})
+    seasons = rr.seasons_with_same_rules(registry, target_season, pool_seasons, 'REG', 'kickoff')
+    if not seasons:
+        raise SystemExit(f'no kickoff season in the pool has the {target_season} kickoff rules {rules}')
+    record = {'target_season': target_season, 'rule_ids': rules, 'seasons': seasons, 'kickoff_before': kickoff_before,
+              'samples': sum(1 for k in kpool if k['season'] in seasons),
+              'samples_by_season': {s: sum(1 for k in kpool if k['season'] == s) for s in pool_seasons},
+              'registry_sha256': registry_sha}
+    return [k for k in kpool if k['season'] in seasons], record
+
+
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
-         overtime_toss=None, overtime_choice=None, target_season=2026, kickoff_before='2026-10-25'):
+         overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -371,25 +393,18 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
 
     `safety_kick_table` (True by default): sample safety free kicks from the observed 2022-2025 table. False keeps the
     block, the control arm for the safety correction.
+
+    `kickoff_regime_season` (opt-in, None by default): draw kickoffs only from the seasons whose registered kickoff rules match
+    that season, before `kickoff_before` (required then). None keeps the 2022-2025 kickoff pool that every earlier run used.
     """
     rows = e1.load(db)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
-    kick_rows = [r for r in e1.load_seasons(db, KICKOFF_SEASONS)
-                 if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
-    kpool, kex = gs.build_kickoff_pool(kick_rows)
-    if kickoff_before is not None:
-        # The validity cohort's own game is not a kickoff sample: nothing on or after the cutoff date is drawn.
-        kpool = [k for k in kpool if k['game_date'] < kickoff_before]
-    # Kickoffs are drawn only from seasons whose kickoff rules match the target season (rule-regime registry). Seasons are
-    # never pooled across a registered kickoff change, because their spot distributions differ (KS tests in the evidence note).
-    registry, registry_sha = rr.load_registry()
-    target_rules = rr.active_rules(registry, target_season, 'REG', 'kickoff')
-    pool_seasons = sorted({k['season'] for k in kpool})
-    target_seasons = rr.seasons_with_same_rules(registry, target_season, pool_seasons, 'REG', 'kickoff')
-    if not target_seasons:
-        raise SystemExit(f'no kickoff season in the pool has the {target_season} kickoff rules {target_rules}')
-    kickoff_counts = {s: sum(1 for k in kpool if k['season'] == s) for s in pool_seasons}
-    kpool = [k for k in kpool if k['season'] in target_seasons]
+    kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
+    kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
+    kpool, kex = gs.build_kickoff_pool(kick_rows, include_season=kickoff_regime_season is not None)
+    kickoff_regime = None
+    if kickoff_regime_season is not None:
+        kpool, kickoff_regime = regime_kickoffs(kpool, kickoff_regime_season, kickoff_before)
     kicks = mk.load_kick_table(db)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
@@ -412,9 +427,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
                              overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice)
     reference.overtime_try_sha256 = try_fallback_sha
-    reference.kickoff_regime = {'target_season': target_season, 'rule_ids': target_rules, 'seasons': target_seasons,
-                                'samples': len(kpool), 'samples_by_season': kickoff_counts,
-                                'registry_sha256': registry_sha}
+    reference.kickoff_regime = kickoff_regime
     reference.overtime_choice_sha256 = choice_sha
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha

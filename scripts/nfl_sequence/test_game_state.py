@@ -334,6 +334,19 @@ class KickoffPool(unittest.TestCase):
         self.assertEqual(pool, [])
         self.assertEqual(excluded['kickoff without a clean receiving snap'], 1)
 
+    def test_the_season_is_carried_only_when_asked_for(self):
+        # The reference fingerprint hashes every sample, so the default pool must keep exactly its earlier fields.
+        rows = [
+            {'season': 2025, 'game_id': 'g', 'play_id': 1.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 35.0,
+             'game_seconds_remaining': 3600.0, 'play_type': 'kickoff', 'game_date': '2025-09-01'},
+            {'game_id': 'g', 'play_id': 2.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 75.0,
+             'game_seconds_remaining': 3596.0, 'play_type': 'pass', 'game_date': '2025-09-01'},
+        ]
+        default, _ = gs.build_kickoff_pool(rows)
+        self.assertNotIn('season', default[0])
+        with_season, _ = gs.build_kickoff_pool(rows, include_season=True)
+        self.assertEqual(with_season[0]['season'], 2025)
+
 
 class FieldGoalBuckets(unittest.TestCase):
     def test_buckets_match_the_published_labels(self):
