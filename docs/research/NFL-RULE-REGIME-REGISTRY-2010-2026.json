@@ -38,7 +38,8 @@
       "annual_rulebook_line_diff_complete": false,
       "unverified_inseason_interpretations": true,
       "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
-      "supplemental_source_url": "https://www.patriots.com/news/nfl-moves-kickoffs-to-35-yard-line-touchbacks-unchanged-170806"
+      "supplemental_source_url": "https://www.patriots.com/news/nfl-moves-kickoffs-to-35-yard-line-touchbacks-unchanged-170806",
+      "edition_url": "https://nyc3.digitaloceanspaces.com/sportsarchive-documents/prod/60ea28a02dac3/NFL%20-%202011%20-%20Rulebook.pdf"
     },
     {
       "season": 2012,
@@ -60,7 +61,8 @@
       "annual_rulebook_line_diff_complete": false,
       "unverified_inseason_interpretations": true,
       "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
-      "supplemental_source_url": "https://www.philadelphiaeagles.com/news/rule-changes-focus-on-player-safety-9754576"
+      "supplemental_source_url": "https://www.philadelphiaeagles.com/news/rule-changes-focus-on-player-safety-9754576",
+      "edition_url": "https://www.nfl.info/download/2012MediaGuides/2013%20NFL%20Rule%20Book.pdf"
     },
     {
       "season": 2014,
@@ -82,7 +84,8 @@
       "annual_rulebook_line_diff_complete": false,
       "unverified_inseason_interpretations": true,
       "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
-      "supplemental_source_url": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347"
+      "supplemental_source_url": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
+      "edition_url": "https://operations.nfl.com/media/1807/2015_nfl_rule_book_final.pdf"
     },
     {
       "season": 2016,
@@ -217,7 +220,8 @@
       "kind": "Contemporaneous NFL club reports (March and May)",
       "url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
       "supplement": "https://www.patriots.com/news/nfl-moves-kickoffs-to-35-yard-line-touchbacks-unchanged-170806",
-      "status": "contemporaneous_summary_not_exhaustive_proposal_reconciliation"
+      "status": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "edition_url": "https://nyc3.digitaloceanspaces.com/sportsarchive-documents/prod/60ea28a02dac3/NFL%20-%202011%20-%20Rulebook.pdf"
     },
     "Y2012": {
       "kind": "Contemporaneous owners' adopted-change listing",
@@ -229,7 +233,8 @@
       "kind": "Contemporaneous officiating review + club report",
       "url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
       "supplement": "https://www.philadelphiaeagles.com/news/rule-changes-focus-on-player-safety-9754576",
-      "status": "contemporaneous_summary_not_full_annual_amendment_diff"
+      "status": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "edition_url": "https://www.nfl.info/download/2012MediaGuides/2013%20NFL%20Rule%20Book.pdf"
     },
     "Y2014": {
       "kind": "Official NFL rulebook: 2014 Rules Changes",
@@ -241,7 +246,8 @@
       "kind": "Adopted meeting rules and separate May 2015 rule vote",
       "url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
       "supplement": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
-      "status": "adopted_proposals_and_May_vote_not_full_amendment_diff"
+      "status": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "edition_url": "https://operations.nfl.com/media/1807/2015_nfl_rule_book_final.pdf"
     },
     "Y2016": {
       "kind": "Official NFL rulebook 2016 Rules Changes",
