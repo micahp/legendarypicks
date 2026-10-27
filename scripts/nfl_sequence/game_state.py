@@ -227,7 +227,7 @@ class Reference:
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
                  try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None, overtime_toss=None,
-                 overtime_try_p_two=None):
+                 overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         # None keeps a safety free kick blocked. A list is the observed safety-kick table, sampled only for a safety kick.
@@ -238,6 +238,10 @@ class Reference:
         self.overtime_toss = overtime_toss
         # Overtime try fallback: a two-point probability for each margin bucket, from the try-decision table (2022-2025).
         self.overtime_try_p_two = overtime_try_p_two
+        # The winning coach's kick-or-receive decision. overtime_p_kick is the observed rate (a seeded draw each game);
+        # overtime_choice forces 'kick' or 'receive' for the labelled controls. Both None: always receive, the control.
+        self.overtime_p_kick = overtime_p_kick
+        self.overtime_choice = overtime_choice
         self.kicks = kicks
         self.participants = participants
         self.missed_field_goal_pool = missed_field_goal_pool or {}
@@ -594,17 +598,29 @@ class _Game:
             self.status = 'complete_regulation'
 
     def _begin_overtime(self):
-        """Rule 16, Articles 2-3: a coin toss, then one 10-minute period. The toss winner receives. The option to defer or
-        kick is not modelled, so the receiving team is always the toss winner (see GUARDS['overtime'])."""
+        """Rule 16, Articles 2-3: a seeded fair coin toss, then the toss winner's kick-or-receive decision, then one
+        10-minute period. A forced first possession (sensitivity) gives the toss winner the receive."""
         winner = self.ref.overtime_toss or self.rng.choice(sorted(self.ledger.teams))
         loser = other(winner, self.ledger.teams)
-        self.overtime = {'toss_winner': winner, 'receiving_team': winner, 'kicking_team': loser,
+        if self.ref.overtime_toss is not None:
+            choice, source = 'receive', 'forced first possession (sensitivity)'
+        elif self.ref.overtime_choice is not None:
+            choice, source = self.ref.overtime_choice, 'forced decision (labelled control)'
+        elif self.ref.overtime_p_kick is not None:
+            choice = 'kick' if self.rng.random() < self.ref.overtime_p_kick else 'receive'
+            source = 'observed kick-or-receive model (2025 regular season)'
+        else:
+            choice, source = 'receive', 'always receive (labelled control)'
+        kicker, receiver = (winner, loser) if choice == 'kick' else (loser, winner)
+        self.overtime = {'toss_winner': winner, 'receiving_team': receiver, 'kicking_team': kicker,
+                         'first_possession_choice': choice, 'choice_source': source,
+                         'choice_p_kick': self.ref.overtime_p_kick,
                          'regulation_points': dict(self.points), 'possessions': [], 'winner': None, 'result': None}
         self.boundaries.append({'from_quarter': 4, 'to_quarter': 5, 'kind': 'overtime', 'clock_before': 0,
                                 'drive_index': len(self.drives)})
         self.quarter, self.clock = 5, OVERTIME_LENGTH
         self.timeouts = {'A': OVERTIME_TIMEOUTS, 'B': OVERTIME_TIMEOUTS}
-        self._kick('overtime_start', loser, winner)
+        self._kick('overtime_start', kicker, receiver)
 
     def _points_leader(self):
         if self.points['A'] == self.points['B']:

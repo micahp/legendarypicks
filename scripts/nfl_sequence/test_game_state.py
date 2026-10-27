@@ -40,11 +40,12 @@ def certain_kicks(fg_made=True, ep_made=True):
 
 
 def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None,
-        overtime_try_p_two=None):
+        overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
     return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks,
                         safety_kick_pool=safety_kick_pool, overtime_pool=overtime_pool,
-                        overtime_try_p_two=overtime_try_p_two)
+                        overtime_try_p_two=overtime_try_p_two, overtime_p_kick=overtime_p_kick,
+                        overtime_choice=overtime_choice)
 
 
 # An observed overtime drive that runs the period out with no score: a 0-0 regulation game ends as a tie.
@@ -854,6 +855,38 @@ class OvertimeConditionalTry(unittest.TestCase):
         self.assertEqual(first['try_source'], 'conditional_try_fallback')
         self.assertEqual(first['points_scored_on_drive']['try']['kind'], 'two_point')
         gs.validate_game(record)
+
+
+class OvertimeChoice(unittest.TestCase):
+    """The toss winner's kick-or-receive decision: the coin is seeded, the choice is modelled, and a kick hands the first
+    possession to the other team (rules file, Rule 16; the decision is the observed 2025 regular-season rate)."""
+
+    TD = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0, 'next_offense': None,
+          'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
+
+    def test_a_receive_gives_the_first_possession_to_the_toss_winner(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
+                                     overtime_choice='receive'), winner_choice='receive', max_drives=80)
+        ot = record['overtime']
+        self.assertEqual(ot['first_possession_choice'], 'receive')
+        self.assertEqual(ot['possessions'][0], ot['toss_winner'])
+
+    def test_a_kick_gives_the_first_possession_to_the_other_team(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
+                                     overtime_choice='kick'), winner_choice='receive', max_drives=80)
+        ot = record['overtime']
+        self.assertEqual(ot['first_possession_choice'], 'kick')
+        self.assertNotEqual(ot['possessions'][0], ot['toss_winner'])
+        self.assertEqual(ot['choice_source'], 'forced decision (labelled control)')
+
+    def test_the_observed_rate_draws_the_choice_from_a_seeded_bernoulli(self):
+        record_a = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
+                                       overtime_p_kick=1.0), winner_choice='receive', max_drives=80)
+        record_b = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
+                                       overtime_p_kick=0.0), winner_choice='receive', max_drives=80)
+        self.assertEqual(record_a['overtime']['first_possession_choice'], 'kick')
+        self.assertEqual(record_b['overtime']['first_possession_choice'], 'receive')
+        self.assertEqual(record_a['overtime']['choice_source'], 'observed kick-or-receive model (2025 regular season)')
 
 
 class ScopedOut(unittest.TestCase):
