@@ -77,17 +77,31 @@ therefore are not untouched confirmation samples for any situational variant. S0
 results and fitted only on 2010 to 2017, so its numbers are independent of that exploration, but a situational variant
 tested on 2021 to 2025 is not.
 
-## 2. S0a: replay of the existing model (not started)
+## 2. S0a: replay of the existing model (LP v1 points, feasible and run)
 
-What exists: the Legendary Picks NFL model code is in `backend/nfl_sim.py`, `backend/nfl_epa_model.py`,
-`backend/nfl_sim_scores.py`, `backend/nfl_sim_backtest.py`, `backend/nfl_sim_margin_source.py`, `backend/routers/nfl_model.py`
-and `backend/backtest_nfl_sim_scores.py`. None of them was read in this pass.
+The existing model with a historical replay is the frozen v1 walk-forward: `backend/nfl_backtest.py` with
+`nfl_ratings.py` and `nfl_ratings_data.py` (read-only). `backtest_season` projects each week 2 onward using only scored
+regular-season games of earlier weeks in the same season, plus a prior from the final fit of the previous season
+(`prior_for_season`). Audit results:
 
-What S0a needs before a result: the inputs each model reads, and for each input its publication or observation time. Any
-input that cannot be shown to be available before the cutoff makes the replay a historical replay, not an authentic
-forecast. Until that audit is done, no S0a number is reported, and no comparison with S0b is made.
+- **Training.** `training_games(scored, before_week)` keeps only rows with week below the target week. Same-week games are
+  excluded.
+- **Prior.** `prior_for_season(season)` fits season minus one in full. That season is past, so no future results enter.
+- **Team list.** `teams_in_season` reads the season's schedule to list team codes. It is identity, not results.
+- **Market.** The de-vigged moneyline is attached to each row for evaluation only. It is not a model input.
+- **Caveats.** Stored schedule scores are assumed not revised after kickoff (not verifiable here). v1's parameters (half-life
+  6, cap 14, sigma 13.295) were set earlier on this 2010 to 2020 history, so its score there is not fully independent.
+  The first week with a forecast is week 2, and 2010 has no prior.
 
-## 3. Data licensing for the nflverse backfill (blocked)
+The replay was run in this pass with `s1_s2_models.py`. On the 2010 to 2020 ladder cohort it reproduces the existing
+benchmark numbers exactly (LP v1 0.2217, closing market 0.2104, 538 Elo 0.2193, home only 0.2467). Results are in
+`NFL-S1-S2-RESULTS-2026-10-27.md`.
+
+Not audited in this pass: `backend/nfl_epa_model.py` (LP v2 EPA, which needs play-level EPA with its own time basis) and
+`backend/nfl_sim.py` and related simulator files (the season simulator, which is not a single-game winner model). A replay
+of v2 needs its inputs listed and dated first. Until then, no v2 number is reported as a historical replay.
+
+## 3. Data licensing for the nflverse backfill (staged, research only)
 
 The reviewer's note said most nflverse datasets are CC BY 4.0 and FTN data is separately licensed. A search in this pass
 found a different picture, so the claim was not used:
@@ -100,20 +114,20 @@ found a different picture, so the claim was not used:
 - The R code and the Python package are MIT licensed. The league data they access remains under the rights holders' terms.
 - No search result gave a license for the play-by-play dataset itself.
 
-Status: blocked. The backfill is not staged. The next check is the license file and README of the nflverse-data repository
-for the specific release, then the attribution text to keep with the data. Nothing from the backfill goes into a production
-database.
+Status: staged for research. The user has found the licence and confirmed that FTN data may proceed. The extract covers
+penalty and return fields for 2010 to 2026, with hashes pinned in `NFL-PBP-BACKFILL-STAGING-2026-10-27.md`. Nothing from the
+backfill goes into a production database, and no team box score has been rebuilt from it yet.
 
 ## 4. What these numbers do not answer
 
-- Whether situational conditions lower the Legendary Picks game-winner Brier score. That needs S1 to S3 on the same splits,
-  and the S0a replay, neither of which exists yet.
-- Margin distribution scores (CRPS). Not computed in this pass.
-- Any comparison with a published market or with the LP model. Market prices are not model inputs.
+- Whether situational conditions lower the Legendary Picks game-winner Brier score on the identical games. The
+  answer for the first situational groups is in `NFL-S1-S2-RESULTS-2026-10-27.md`: none of them improved out of sample.
+- Margin distribution scores (CRPS). Computed for S0b, S1, S2 and the LP v1 replay on the same games (same document).
+- A comparison with the market as an input. Market prices are evaluation benchmarks, never model inputs.
 
 ## 5. Next steps
 
 1. Calibrate S0b on the validation window only (for example a recalibration map fitted on 2010 to 2017 and checked on 2018 to 2020), then re-run the test window once with the fixed recalibration.
-2. Audit S0a: the input list and time basis for the LP NFL model, and the replay design.
-3. Add S1 (opponent-adjusted strength) and S2 (calendar, rest, travel) to the same harness, with the same splits and metrics.
-4. Check the nflverse-data license before any backfill.
+2. Audit the LP v2 EPA model (`backend/nfl_epa_model.py`) for historical replay: its inputs and their time basis.
+3. Done in this pass: S1 (opponent-adjusted strength) and S2 (calendar, rest, travel, division) on the same splits and metrics, see `NFL-S1-S2-RESULTS-2026-10-27.md`.
+4. Validate the staged penalty fields against the team box score rebuild (done for penalties, `NFL-PBP-BACKFILL-STAGING-2026-10-27.md`), then rebuild as a new store version.

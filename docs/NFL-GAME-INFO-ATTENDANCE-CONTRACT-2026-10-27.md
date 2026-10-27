@@ -48,8 +48,13 @@ than people who entered. `pct_reported_capacity` is therefore reported occupancy
 
 ## Expected attendance: what would have to be true before it is used
 
-- It is a backtest-only estimator until it is fitted on one window and scored on later seasons, with the same metrics as the
-  team-strength plan (Brier, log loss, calibration). The 2026 season is not used to choose it.
+- It is a backtest-only estimator until it is fitted on one window and scored on later seasons. Its evaluation contract:
+  - A count (attendance itself) is a numeric forecast. Score it with MAE and CRPS of its predictive distribution. Brier does
+    not apply to a count.
+  - A defined binary event (for example attendance at or above 95% of the dated capacity, or any other threshold fixed
+    before the run) is scored as a probability of that event, with Brier, log loss and calibration. Each event is named in
+    advance, and the threshold is not tuned on the evaluation seasons.
+  - Every score is reported with its window, its sample size and an interval. The 2026 season is not used to choose it.
 - Its baseline is the building's own recent reported attendance before the cutoff (for example the mean of the last eight
   home games before the cutoff, with a minimum count). It must beat the constant league-wide baseline.
 - It cannot be used for a building whose capacity status is `contradicted` or `unresolved` unless the question is explicitly
