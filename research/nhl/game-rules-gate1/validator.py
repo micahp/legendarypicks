@@ -16,7 +16,7 @@ from typing import Any
 REG_SECONDS = 1_200
 OT_SECONDS = 300
 SIDES = ("home", "away")
-VALIDATOR_VERSION = "nhl-independent-gate1-v0.3"
+VALIDATOR_VERSION = "nhl-independent-gate1-v0.4"
 RULEBOOKS = {
     "2021-22": {
         "source": "https://media.nhl.com/site/asset/public/ext/2021-22/2021-22Rules.pdf",
@@ -32,7 +32,7 @@ SUPPORTED_EVENT_TYPES = {
     "period-start", "period-end", "game-end", "faceoff", "goal",
     "shot-on-goal", "missed-shot", "blocked-shot", "failed-shot-attempt",
     "giveaway", "takeaway", "hit", "stoppage", "penalty",
-    "penalty-expiration", "penalty-release", "penalty-segment-end",
+    "penalty-expiration", "penalty-service-start", "penalty-release", "penalty-segment-end",
     "goalie-substitution", "line-change", "shootout-attempt",
     "shootout-decision",
 }
@@ -103,7 +103,7 @@ def _player_map(game: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _next_non_admin(events: list[dict[str, Any]], index: int) -> dict[str, Any] | None:
     administrative = {"goalie-substitution", "penalty-release", "penalty-segment-end",
-                      "penalty-expiration", "stoppage", "line-change"}
+                      "penalty-expiration", "penalty-service-start", "stoppage", "line-change"}
     for event in events[index + 1:]:
         if event.get("event_type") in administrative:
             continue
@@ -115,7 +115,7 @@ def _next_restart_candidate(events: list[dict[str, Any]], index: int,
                             *, allow_penalties: bool = False) -> dict[str, Any] | None:
     """Skip annotations/admin records that can occur during one whistle sequence."""
     administrative = {"goalie-substitution", "penalty-release", "penalty-segment-end",
-                       "penalty-expiration", "stoppage", "line-change"}
+                       "penalty-expiration", "penalty-service-start", "stoppage", "line-change"}
     if allow_penalties:
         administrative.add("penalty")
     for event in events[index + 1:]:
@@ -132,7 +132,8 @@ def _period_boundary_restart_follows(events: list[dict[str, Any]], event: dict[s
         return False
     for following in events[index + 1:]:
         if following.get("event_type") in {"penalty", "stoppage", "penalty-release",
-                "penalty-segment-end", "penalty-expiration", "goalie-substitution", "line-change"}:
+                "penalty-segment-end", "penalty-expiration", "penalty-service-start",
+                "goalie-substitution", "line-change"}:
             continue
         if (following.get("event_type") == "period-start"
                 and following.get("period_type") == "SO"):
@@ -710,12 +711,16 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
         return _check("penalty_and_manpower", ("Rules 15-27, 84"),
                       [_issue(None, "cannot audit penalties without a player ledger", detail=str(exc))])
     active: list[dict[str, Any]] = []
+    queued: list[dict[str, Any]] = []
+    waiting_release: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
     quarantine: list[dict[str, Any]] = []
     unassessed: list[dict[str, Any]] = []
     expected_goal_action: tuple[int, str, str] | None = None
     pending_expiries: set[tuple[str, str]] = set()
     expiry_second: int | None = None
+    pending_service_starts: dict[tuple[str, str], dict[str, Any]] = {}
+    last_stoppage_second: int | None = None
     supported_kind_durations = {"MIN": {120, 240}, "MAJ": {300}, "MIS": {600}}
     skip_personnel = {"period-start", "period-end", "game-end", "shootout-attempt", "shootout-decision"}
 
@@ -751,18 +756,72 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
             else:
                 pending_expiries = due_keys - {key}
                 expiry_second = now if pending_expiries else None
+                due_by_side = {candidate_side: [p for p in due if p["side"] == candidate_side]
+                               for candidate_side in SIDES}
+                deferred_keys: set[tuple[str, str]] = set()
+                starts_to_validate: list[dict[str, Any]] = []
+                for candidate_side in SIDES:
+                    side_queue = [p for p in queued if p["side"] == candidate_side]
+                    manpower_due = [p for p in due_by_side[candidate_side]
+                                    if p["kind"] in {"MIN", "MAJ"} and not p["coincidental"]]
+                    if not side_queue or not manpower_due:
+                        continue
+                    if len(side_queue) != 1 or len(manpower_due) != 1:
+                        quarantine.append(_issue(seq,
+                            "queued service cannot resolve simultaneous or multiple penalty ordering",
+                            status="QUARANTINED"))
+                        continue
+                    old = manpower_due[0]
+                    waiting_release.append(old)
+                    deferred_keys.add((old["side"], old["player_id"]))
+                    queued_penalty = side_queue[0]
+                    queued.remove(queued_penalty)
+                    starts_to_validate.append({**queued_penalty,
+                        "assessed_at": queued_penalty["start"],
+                        "triggered_by_player_id": old["player_id"],"start": now})
                 active = [p for p in active if (p["side"], p["player_id"]) not in due_keys]
+                # Queue service is live at the expiration second and therefore
+                # participates in the same event's manpower check.
+                for start in starts_to_validate:
+                    active.append({"side": start["side"],"player_id": start["player_id"],
+                                   "kind": start["kind"],"duration": start["duration"],
+                                   "start": now,"end": now + start["duration"],
+                                   "coincidental": False})
+                    service_key = (start["side"], start["player_id"])
+                    pending_service_starts[service_key] = start
+                reported_deferred = bool(details.get("return_deferred_under_rule_26_2", False))
+                if (key in deferred_keys) != reported_deferred:
+                    findings.append(_issue(seq,
+                        "penalty expiration does not match Rule 26.2 deferred-return state"))
         elif any(p["end"] <= now for p in active):
             due = [p for p in active if p["end"] <= now]
             findings.append(_issue(seq, "active penalty reached expiry without an explicit exact-time expiration",
                 detail={"due": [{"side": p["side"], "player_id": p["player_id"],
                                   "expiry": p["end"]} for p in due], "event_time": now}))
 
+        if pending_service_starts and event_type not in {"penalty-expiration", "penalty-service-start"}:
+            findings.append(_issue(seq, "queued penalty service start event is missing or out of order",
+                detail={"pending": sorted(pending_service_starts)}))
+            pending_service_starts.clear()
+
         active_for_event = [dict(p) for p in active]
+        barred_for_event = (active_for_event + [dict(p) for p in queued]
+                            + [dict(p) for p in waiting_release])
+
+        on_ice = event.get("on_ice") or {}
+        for ice_side in SIDES:
+            ids = {str(pid) for pid in on_ice.get(ice_side, [])}
+            serving = {p["player_id"] for p in barred_for_event if p["side"] == ice_side}
+            if ids & serving:
+                findings.append(_issue(seq, "player serving or awaiting release from a penalty remains on ice",
+                    detail={"side": ice_side, "players": sorted(ids & serving)}))
 
         if expected_goal_action is not None:
             expected_time, expected_side, expected_type = expected_goal_action
-            if now != expected_time or event_type != expected_type or side != expected_side:
+            if (event_type == "penalty-service-start" and now == expected_time
+                    and side == expected_side):
+                pass
+            elif now != expected_time or event_type != expected_type or side != expected_side:
                 findings.append(_issue(seq,
                     "qualifying power-play goal lacks its required immediate minor release/segment transition",
                     detail={"expected": {"time": expected_time, "side": expected_side,
@@ -791,7 +850,8 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
                 findings.append(_issue(seq, "penalty server is not an eligible skater on the assessed team"))
             if actor not in {str(pid) for pid in (event.get("on_ice") or {}).get(side, [])}:
                 findings.append(_issue(seq, "penalized skater was not on ice when assessed"))
-            if any(p["side"] == side and p["player_id"] == actor for p in active):
+            if any(p["side"] == side and p["player_id"] == actor
+                   for p in active + queued + waiting_release):
                 findings.append(_issue(seq, "player receives a second overlapping penalty in this supported model"))
             coincidental_raw = details.get("coincidental")
             if kind in {"MIN", "MAJ"} and not isinstance(coincidental_raw, bool):
@@ -801,22 +861,78 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
                     status="NOT_ASSESSED"))
             else:
                 coincidental = coincidental_raw if isinstance(coincidental_raw, bool) else False
-            active.append({"side": side, "player_id": actor, "kind": kind,
-                           "duration": int(duration), "start": now,
-                           "end": now + int(duration), "coincidental": coincidental})
             side_penalties = [p for p in active if p["side"] == side
                               and p["kind"] in {"MIN", "MAJ"}]
             count_is_assessable = all(p["coincidental"] is not None for p in side_penalties)
             count = sum(not p["coincidental"] for p in side_penalties
                         if p["coincidental"] is not None)
-            if count_is_assessable and count > 2:
-                quarantine.append(_issue(seq, "third concurrent manpower penalty requires unsupported queued service",
-                    status="QUARANTINED"))
+            should_queue = (kind in {"MIN", "MAJ"} and coincidental is False
+                            and count_is_assessable and count >= 2)
+            reported_service_state = details.get("penalty_service_state")
+            expected_service_state = "queued" if should_queue else "active"
+            if reported_service_state is not None and reported_service_state != expected_service_state:
+                findings.append(_issue(seq, "penalty service state disagrees with prior manpower state",
+                    detail={"reported": reported_service_state,"expected": expected_service_state}))
+            record = {"side": side,"player_id": actor,"kind": kind,
+                      "duration": int(duration),"start": now,"end": now + int(duration),
+                      "coincidental": coincidental}
+            if should_queue:
+                if queued or waiting_release:
+                    quarantine.append(_issue(seq,
+                        "additional queued manpower penalty is outside the supported subset",
+                        status="QUARANTINED"))
+                else:
+                    record["assessment_event_sequence"] = seq
+                    queued.append(record)
+            else:
+                active.append(record)
+
+        elif event_type == "penalty-service-start":
+            pid = str(participants.get("player_id") or "")
+            service_key = (str(side), pid)
+            expected = pending_service_starts.pop(service_key, None)
+            if expected is None:
+                findings.append(_issue(seq, "penalty-service-start has no exact prior queued trigger"))
+            else:
+                expected_fields = {
+                    "penalty_kind": expected["kind"],
+                    "penalty_duration_seconds": expected["duration"],
+                    "penalty_assessment_event_sequence": expected["assessment_event_sequence"],
+                    "assessed_at_absolute_second": expected["assessed_at"],
+                    "service_started_at_absolute_second": now,
+                    "triggered_by_expired_player_id": expected["triggered_by_player_id"],
+                }
+                actual_fields = {key: details.get(key) for key in expected_fields}
+                if now != expected["start"] or actual_fields != expected_fields:
+                    findings.append(_issue(seq, "penalty-service-start does not match queued assessment/trigger",
+                        detail={"expected": expected_fields,"actual": actual_fields,"time": now}))
 
         elif event_type in {"penalty-release", "penalty-segment-end"}:
             pid = str(participants.get("player_id") or "")
+            release_reason = details.get("release_reason")
+            waiting_matches = [p for p in waiting_release
+                               if p["side"] == side and p["player_id"] == pid]
             matches = [p for p in active if p["side"] == side and p["player_id"] == pid]
-            if not matches:
+            if release_reason in {"penalty_expiration_stoppage",
+                                  "penalty_expiration_entitled_during_play"}:
+                if len(waiting_matches) != 1 or event_type != "penalty-release":
+                    findings.append(_issue(seq, "Rule 26.2 release has no expired waiting player"))
+                elif release_reason == "penalty_expiration_stoppage" and last_stoppage_second != now:
+                    findings.append(_issue(seq, "deferred penalty return was not recorded at a stoppage"))
+                elif release_reason == "penalty_expiration_entitled_during_play":
+                    counts, unsupported = _expected_manpower(active_for_event,
+                        str(event.get("period_type")),
+                        {s: not any(players.get(str(x), {}).get("position") == "G"
+                                    for x in on_ice.get(s, [])) for s in SIDES})
+                    if unsupported or counts is None or counts.get(str(side), 0) <= 4:
+                        findings.append(_issue(seq,
+                            "during-play Rule 26.2 release occurred while team was not entitled to more than four players"))
+                    waiting_release.remove(waiting_matches[0])
+                else:
+                    waiting_release.remove(waiting_matches[0])
+            elif release_reason == "power_play_goal" and waiting_matches and event_type == "penalty-release":
+                waiting_release.remove(waiting_matches[0])
+            elif not matches:
                 findings.append(_issue(seq, "penalty resolution has no active matching penalty"))
             else:
                 penalty = matches[0]
@@ -831,14 +947,6 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
                         findings.append(_issue(seq, "double-minor segment ended without a qualifying goal"))
                     else:
                         penalty["end"] = now + 120
-
-        on_ice = event.get("on_ice") or {}
-        for ice_side in SIDES:
-            ids = {str(pid) for pid in on_ice.get(ice_side, [])}
-            serving = {p["player_id"] for p in active_for_event if p["side"] == ice_side}
-            if ids & serving:
-                findings.append(_issue(seq, "player serving an active penalty remains on ice",
-                    detail={"side": ice_side, "players": sorted(ids & serving)}))
 
         if event_type == "goal" and side in SIDES:
             opposing = "away" if side == "home" else "home"
@@ -859,13 +967,34 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
                     penalty = min(candidates, key=lambda p: (p["end"], p["start"], p["player_id"]))
                     action = "penalty-segment-end" if penalty["duration"] == 240 and penalty["end"] - now > 120 else "penalty-release"
                     expected_goal_action = (now, opposing, action)
+                    if action == "penalty-release":
+                        queued_matches = [p for p in queued if p["side"] == opposing]
+                        if queued_matches:
+                            if len(queued_matches) != 1:
+                                quarantine.append(_issue(seq,
+                                    "power-play goal cannot order multiple queued penalties",
+                                    status="QUARANTINED"))
+                            else:
+                                active.remove(penalty)
+                                waiting_release.append(penalty)
+                                queued_penalty = queued_matches[0]
+                                queued.remove(queued_penalty)
+                                service = {"side": opposing,"player_id": queued_penalty["player_id"],
+                                    "kind": queued_penalty["kind"],"duration": queued_penalty["duration"],
+                                    "assessment_event_sequence": queued_penalty["assessment_event_sequence"],
+                                    "assessed_at": queued_penalty["start"],
+                                    "triggered_by_player_id": penalty["player_id"],"start": now}
+                                active.append({"side": opposing,"player_id": service["player_id"],
+                                    "kind": service["kind"],"duration": service["duration"],
+                                    "start": now,"end": now + service["duration"],
+                                    "coincidental": False})
+                                pending_service_starts[(opposing, service["player_id"])] = service
                 else:
                     # A major cannot be washed out by a goal; no release is expected.
                     expected_goal_action = None
 
-        if event_type == "penalty-release" and details.get("release_reason") == "power_play_goal":
-            # The previous-event assertion is handled by expected_goal_action.
-            pass
+        if event_type in {"goal", "penalty", "stoppage"}:
+            last_stoppage_second = now
 
         if event_type in {"delayed-penalty"} or details.get("unsupported_penalty_omitted"):
             quarantine.append(_issue(seq, "penalty transition is explicitly outside the supported rules subset",
@@ -896,6 +1025,9 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
     if pending_expiries:
         findings.append(_issue(None, "game ended before all simultaneous penalty expirations were recorded",
             detail={"pending": sorted(pending_expiries)}))
+    if pending_service_starts:
+        findings.append(_issue(None, "game ended before queued penalty service-start events were recorded",
+            detail={"pending": sorted(pending_service_starts)}))
     if findings:
         return _check("penalty_and_manpower", ("Rules 15-27, 84"), findings)
     if quarantine:

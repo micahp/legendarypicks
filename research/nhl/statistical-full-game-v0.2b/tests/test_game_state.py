@@ -120,6 +120,93 @@ class PenaltyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "third concurrent"):
             ledger.start("home", "H14", "MIN")
 
+    def test_assessed_third_penalty_queues_until_first_clock_expiry(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 0)
+        ledger.start("home", "H12", "MIN")
+        ledger.advance_to(1, 10)
+        ledger.start("home", "H13", "MAJ")
+        ledger.advance_to(1, 20)
+        queued, state = ledger.assess("home", "H14", "MIN")
+
+        self.assertEqual(state, "queued")
+        self.assertEqual(queued.assessed_at_absolute_second, 20)
+        self.assertEqual(ledger.manpower("REG")["home"], 3)
+        self.assertEqual(ledger.penalized_players("home"), {"H12", "H13", "H14"})
+
+        expired = ledger.advance_to(1, 120)
+        started = ledger.resolve_expirations(expired)
+        self.assertEqual([p.player_id for p in started], ["H14"])
+        self.assertEqual(started[0].started_at_absolute_second, 120)
+        self.assertEqual(started[0].remaining_seconds, 120)
+        self.assertEqual(ledger.manpower("REG")["home"], 3)
+        self.assertEqual([p.player_id for p in ledger.waiting_release_candidates(
+            "REG", at_stoppage=True)], ["H12"])
+        self.assertEqual(ledger.waiting_release_candidates("REG"), [])
+        ledger.release_waiting_player("H12")
+        self.assertEqual(ledger.penalized_players("home"), {"H13", "H14"})
+
+    def test_expired_queued_predecessor_returns_during_play_only_above_four(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 0)
+        ledger.start("home", "H12", "MIN")
+        ledger.advance_to(1, 10)
+        ledger.start("home", "H13", "MIN")
+        ledger.advance_to(1, 20)
+        ledger.assess("home", "H14", "MIN")
+        ledger.resolve_expirations(ledger.advance_to(1, 120))
+        self.assertEqual(ledger.waiting_release_candidates("REG"), [])
+        ledger.resolve_expirations(ledger.advance_to(1, 130))
+        self.assertEqual(ledger.manpower("REG")["home"], 4)
+        self.assertEqual(ledger.waiting_release_candidates("REG"), [])
+        ledger.resolve_expirations(ledger.advance_to(1, 250))
+        self.assertEqual(ledger.manpower("REG")["home"], 5)
+        self.assertEqual([p.player_id for p in ledger.waiting_release_candidates("REG")], ["H12"])
+
+    def test_power_play_goal_can_start_queued_service_and_release_at_stoppage(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 0)
+        ledger.start("home", "H12", "MIN")
+        ledger.advance_to(1, 10)
+        ledger.start("home", "H13", "MIN")
+        ledger.advance_to(1, 20)
+        ledger.assess("home", "H14", "MIN")
+
+        released, started = ledger.on_goal_transition("away")
+        self.assertEqual(released.player_id, "H12")
+        self.assertEqual([p.player_id for p in started], ["H14"])
+        self.assertEqual(started[0].started_at_absolute_second, 20)
+        self.assertEqual(ledger.penalized_players("home"), {"H12", "H13", "H14"})
+        ledger.release_waiting_player("H12")
+        self.assertEqual(ledger.penalized_players("home"), {"H13", "H14"})
+
+    def test_double_minor_first_segment_does_not_start_queued_service(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 0)
+        ledger.start("home", "H12", "MAJ")
+        ledger.advance_to(1, 10)
+        ledger.start("home", "H13", "MIN", duration_seconds=240)
+        ledger.advance_to(1, 20)
+        ledger.assess("home", "H14", "MIN")
+
+        released, started = ledger.on_goal_transition("away")
+        self.assertEqual(released.player_id, "H13")
+        self.assertEqual(released.remaining_seconds, 120)
+        self.assertEqual(started, [])
+        self.assertEqual([p.player_id for p in ledger.queued], ["H14"])
+
+    def test_ambiguous_simultaneous_expiry_and_second_queue_fail_closed(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 0)
+        ledger.start("home", "H12", "MIN")
+        ledger.start("home", "H13", "MIN")
+        ledger.advance_to(1, 1)
+        ledger.assess("home", "H14", "MIN")
+        with self.assertRaisesRegex(ValueError, "additional queued"):
+            ledger.assess("home", "H15", "MAJ")
+        with self.assertRaisesRegex(ValueError, "simultaneous expiry"):
+            ledger.resolve_expirations(ledger.advance_to(1, 120))
+
     def test_unsupported_penalty_class_is_not_silently_approximated(self):
         ledger = PenaltyLedger()
         ledger.advance_to(1, 0)

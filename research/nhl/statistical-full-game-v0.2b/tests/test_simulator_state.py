@@ -236,6 +236,216 @@ class ExactClockEventOrderTests(unittest.TestCase):
                          {"home":False,"away":False})
         self.assertIn("H1",substitution["on_ice"]["home"])
 
+    def test_goalie_reconciliation_replays_queued_penalty_clock_and_remaps_reference(self):
+        players,inputs=shift_transition_fixture()
+        full_away=["A1","A2","A3","A4","A5","AG"]
+        one_short=["A2","A3","A4","A5","AG"]
+        two_short=["A3","A4","A5","AG"]
+        queued_substitute=["A4","A5","A6","AG"]
+        home=["H1","H2","H3","H4","H5","HG1"]
+        events=[]
+
+        def append(row):
+            row["sequence"]=len(events)+1
+            events.append(row)
+            return row
+
+        append(event("penalty",10,home=home,away=full_away,strength="5v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="away",participants={"penalized_player_id":"A1","serving_player_id":"A1"}))
+        append(event("faceoff",10,home=home,away=one_short,strength="5v4",details={},side="home"))
+        append(event("penalty",20,home=home,away=one_short,strength="5v4",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="away",participants={"penalized_player_id":"A2","serving_player_id":"A2"}))
+        append(event("faceoff",20,home=home,away=two_short,strength="5v3",details={},side="home"))
+        queued_assessment=append(event("penalty",30,home=home,away=two_short,strength="5v3",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"queued"},
+            side="away",participants={"penalized_player_id":"A3","serving_player_id":"A3"}))
+        queued_assessment["details"]["penalty_assessment_event_sequence"]=queued_assessment["sequence"]
+        original_assessment_sequence=queued_assessment["sequence"]
+        append(event("faceoff",30,home=home,away=queued_substitute,strength="5v3",details={},side="home"))
+        append(event("penalty-expiration",130,home=home,away=queued_substitute,strength="5v3",
+            details={"return_deferred_under_rule_26_2":True},side="away",
+            participants={"player_id":"A1"}))
+        append(event("penalty-service-start",130,home=home,away=queued_substitute,strength="5v3",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                "penalty_assessment_event_sequence":queued_assessment["sequence"],
+                "assessed_at_absolute_second":30,"service_started_at_absolute_second":130,
+                "triggered_by_expired_player_id":"A1"},side="away",
+            participants={"player_id":"A3"}))
+        append(event("stoppage",131,home=home,away=queued_substitute,strength="5v3",details={}))
+        append(event("penalty-release",131,home=home,away=queued_substitute,strength="5v3",
+            details={"release_reason":"penalty_expiration_stoppage"},side="away",
+            participants={"player_id":"A1"}))
+        append(event("penalty-expiration",140,home=home,
+            away=["A1","A4","A5","A6","AG"],strength="5v4",
+            details={"return_deferred_under_rule_26_2":False},side="away",
+            participants={"player_id":"A2"}))
+        append(event("penalty-expiration",250,home=home,away=full_away,strength="5v5",
+            details={"return_deferred_under_rule_26_2":False},side="away",
+            participants={"player_id":"A3"}))
+
+        shifts=[]
+        for pid in ("H1","H2","H3","H4","H5"):
+            shifts.append({"period_number":1,"team_side":"home","player_id":pid,
+                "position":"F","start_seconds":0,"end_seconds":300,"duration_seconds":300})
+        for pid,start,end in (("HG1",0,25),("HG2",25,300)):
+            shifts.append({"period_number":1,"team_side":"home","player_id":pid,
+                "position":"G","start_seconds":start,"end_seconds":end,
+                "duration_seconds":end-start})
+        for pid in ("A1","A2","A3","A4","A5","A6","AG"):
+            shifts.append({"period_number":1,"team_side":"away","player_id":pid,
+                "position":"G" if pid=="AG" else "F","start_seconds":0,
+                "end_seconds":300,"duration_seconds":300})
+
+        reconciled=sim._insert_goalie_substitutions(events,shifts,players,inputs)
+        service=next(e for e in reconciled if e["event_type"]=="penalty-service-start")
+        assessment=next(e for e in reconciled if e["event_type"]=="penalty"
+                        and e["participants"].get("penalized_player_id")=="A3")
+        self.assertNotEqual(assessment["sequence"],original_assessment_sequence)
+        self.assertEqual(service["details"]["penalty_assessment_event_sequence"],
+                         assessment["sequence"])
+        sim._validate_live_game_state(reconciled,players)
+
+    def test_shift_reconstruction_replays_queued_service_and_delayed_return(self):
+        players,inputs=shift_transition_fixture()
+        home=["H1","H2","H3","H4","H5","HG1"]
+        away=["A1","A2","A3","A4","A5","AG"]
+        one_short=["A2","A3","A4","A5","AG"]
+        two_short=["A3","A4","A5","AG"]
+        queued_substitute=["A4","A5","A6","AG"]
+        events=[]
+
+        def append(row):
+            row["sequence"]=len(events)+1
+            events.append(row)
+            return row
+
+        append(event("penalty",10,home=home,away=away,strength="5v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="away",participants={"penalized_player_id":"A1","serving_player_id":"A1"}))
+        append(event("faceoff",10,home=home,away=one_short,strength="5v4",details={},side="home"))
+        append(event("penalty",20,home=home,away=one_short,strength="5v4",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="away",participants={"penalized_player_id":"A2","serving_player_id":"A2"}))
+        append(event("faceoff",20,home=home,away=two_short,strength="5v3",details={},side="home"))
+        queued=append(event("penalty",30,home=home,away=two_short,strength="5v3",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"queued"},
+            side="away",participants={"penalized_player_id":"A3","serving_player_id":"A3"}))
+        queued["details"]["penalty_assessment_event_sequence"]=queued["sequence"]
+        append(event("faceoff",30,home=home,away=queued_substitute,strength="5v3",details={},side="home"))
+        append(event("penalty-expiration",130,home=home,away=queued_substitute,strength="5v3",
+            details={"return_deferred_under_rule_26_2":True},side="away",
+            participants={"player_id":"A1"}))
+        append(event("penalty-service-start",130,home=home,away=queued_substitute,strength="5v3",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                "penalty_assessment_event_sequence":queued["sequence"],
+                "assessed_at_absolute_second":30,"service_started_at_absolute_second":130,
+                "triggered_by_expired_player_id":"A1"},side="away",
+            participants={"player_id":"A3"}))
+        append(event("stoppage",131,home=home,away=queued_substitute,strength="5v3",details={}))
+        append(event("penalty-release",131,home=home,away=queued_substitute,strength="5v3",
+            details={"release_reason":"penalty_expiration_stoppage"},side="away",
+            participants={"player_id":"A1"}))
+        append(event("penalty-expiration",140,home=home,
+            away=["A1","A4","A5","A6","AG"],strength="5v4",
+            details={"return_deferred_under_rule_26_2":False},side="away",
+            participants={"player_id":"A2"}))
+        append(event("penalty-expiration",250,home=home,away=away,strength="5v5",
+            details={"return_deferred_under_rule_26_2":False},side="away",
+            participants={"player_id":"A3"}))
+
+        shifts=[]
+        for side,prefix,goalie_id in (("home","H","HG1"),("away","A","AG")):
+            for number in range(1,6):
+                shifts.append({"period_number":1,"team_side":side,
+                    "player_id":f"{prefix}{number}","position":"F",
+                    "start_seconds":0,"end_seconds":1200,"duration_seconds":1200})
+            shifts.append({"period_number":1,"team_side":side,"player_id":goalie_id,
+                "position":"G","start_seconds":0,"end_seconds":1200,"duration_seconds":1200})
+        donor=SimpleNamespace(period_number=1,period_type="REG",shift_ledger=shifts,
+            terminal_elapsed=None,active=lambda elapsed:{"home":list(home),"away":list(away)})
+
+        rows=sim._state_reconciled_shift_ledger(donor,events,inputs,sim.PenaltyLedger())
+        a1_intervals=[row for row in rows if row["player_id"]=="A1"]
+        self.assertTrue(any(row["start_seconds"]>=131 for row in a1_intervals),a1_intervals)
+        self.assertTrue(all(row["end_seconds"]<=130 or row["start_seconds"]>=131
+                            for row in a1_intervals),a1_intervals)
+
+    def test_goal_triggered_queue_start_remains_after_goal_during_reconciliation(self):
+        players,inputs=shift_transition_fixture()
+        home=["H1","H2","H3","H4","H5","HG1"]
+        home_one_short=["H2","H3","H4","H5","HG1"]
+        home_two_short=["H3","H4","H5","HG1"]
+        home_substitute=["H4","H5","H6","HG1"]
+        away=["A1","A2","A3","A4","A5","AG"]
+        events=[]
+
+        def append(row):
+            row["sequence"]=len(events)+1
+            events.append(row)
+            return row
+
+        append(event("penalty",10,home=home,away=away,strength="5v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="home",participants={"penalized_player_id":"H1","serving_player_id":"H1"}))
+        append(event("faceoff",10,home=home_one_short,away=away,strength="4v5",details={},side="away"))
+        append(event("penalty",20,home=home_one_short,away=away,strength="4v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"active"},
+            side="home",participants={"penalized_player_id":"H2","serving_player_id":"H2"}))
+        append(event("faceoff",20,home=home_two_short,away=away,strength="3v5",details={},side="away"))
+        queued=append(event("penalty",30,home=home_two_short,away=away,strength="3v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"penalty_service_state":"queued"},
+            side="home",participants={"penalized_player_id":"H3","serving_player_id":"H3"}))
+        queued["details"]["penalty_assessment_event_sequence"]=queued["sequence"]
+        append(event("faceoff",30,home=home_substitute,away=away,strength="3v5",details={},side="away"))
+        append(event("goal",100,home=home_substitute,away=away,strength="3v5",
+            details={},side="away",participants={"shooter_id":"A1","goalie_id":"HG1"}))
+        append(event("penalty-service-start",100,home=home_substitute,away=away,strength="3v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                "penalty_assessment_event_sequence":queued["sequence"],
+                "assessed_at_absolute_second":30,"service_started_at_absolute_second":100,
+                "triggered_by_expired_player_id":"H1"},side="home",
+            participants={"player_id":"H3"}))
+        append(event("penalty-release",100,home=home_substitute,away=away,strength="3v5",
+            details={"penalty_kind":"MIN","release_reason":"power_play_goal"},side="home",
+            participants={"player_id":"H1"}))
+        append(event("faceoff",100,home=home_substitute,away=away,strength="3v5",details={},side="away"))
+        append(event("penalty-expiration",140,
+            home=["H1","H4","H5","H6","HG1"],away=away,strength="4v5",
+            details={"return_deferred_under_rule_26_2":False},side="home",
+            participants={"player_id":"H2"}))
+        append(event("penalty-expiration",220,home=home,away=away,strength="5v5",
+            details={"return_deferred_under_rule_26_2":False},side="home",
+            participants={"player_id":"H3"}))
+
+        shifts=[]
+        for pid in ("H1","H2","H3","H4","H5","H6"):
+            shifts.append({"period_number":1,"team_side":"home","player_id":pid,
+                "position":"F","start_seconds":0,"end_seconds":1200,"duration_seconds":1200})
+        shifts.append({"period_number":1,"team_side":"home","player_id":"HG1",
+            "position":"G","start_seconds":0,"end_seconds":1200,"duration_seconds":1200})
+        for pid in ("A1","A2","A3","A4","A5","AG"):
+            shifts.append({"period_number":1,"team_side":"away","player_id":pid,
+                "position":"G" if pid=="AG" else "F","start_seconds":0,
+                "end_seconds":1200,"duration_seconds":1200})
+
+        reconciled=sim._insert_goalie_substitutions(events,shifts,players,inputs)
+        at_goal=[e["event_type"] for e in reconciled
+                 if e["period_number"]==1 and e["clock_elapsed_seconds"]==100
+                 and e["event_type"] in {"goal","penalty-service-start","penalty-release"}]
+        self.assertEqual(at_goal,["goal","penalty-service-start","penalty-release"])
+        sim._validate_live_game_state(reconciled,players)
+
 
 if __name__=="__main__":
     unittest.main()

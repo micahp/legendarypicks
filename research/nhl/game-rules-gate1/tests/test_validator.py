@@ -315,6 +315,66 @@ def penalty_game(kind="MIN", duration=120, *, goal_time=None, expiry_time=None,
     return builder.finish(shifts=shifts)
 
 
+def queued_penalty_game():
+    """Synthetic Rule 26.1/26.2 path with a single queued third minor."""
+    builder = GameBuilder().base_regulation(p1_goal=False)
+    builder.events.pop()  # Replace the period 3 end with the queue sequence.
+    one_short = ["A2", "A3", "A4", "A5", "AG"]
+    two_short = ["A3", "A4", "A5", "AG"]
+    queued_substitute = ["A4", "A5", "A6", "AG"]
+
+    for elapsed, player_id, on_ice, next_ice, expected_state in (
+        (10, "A1", BASE_AWAY, one_short, "active"),
+        (20, "A2", one_short, two_short, "active"),
+        (30, "A3", two_short, queued_substitute, "queued"),
+    ):
+        penalty = builder.emit("penalty", 3, elapsed, side="away", home=BASE_HOME,
+            away=on_ice, details={"penalty_kind": "MIN",
+                "penalty_duration_seconds": 120, "coincidental": False,
+                "penalty_service_state": expected_state},
+            participants={"penalized_player_id": player_id,
+                          "serving_player_id": player_id})
+        if expected_state == "queued":
+            penalty["details"]["penalty_assessment_event_sequence"] = penalty["sequence"]
+        builder.faceoff(3, elapsed, away=next_ice)
+
+    builder.emit("penalty-expiration", 3, 130, side="away",
+        home=BASE_HOME, away=queued_substitute,
+        details={"penalty_kind": "MIN", "return_deferred_under_rule_26_2": True,
+                 "clock_expired_at_absolute_second": 2530},
+        participants={"player_id": "A1"})
+    queued_assessment = next(e for e in builder.events
+                             if e["event_type"] == "penalty" and
+                             e["participants"].get("penalized_player_id") == "A3")
+    builder.emit("penalty-service-start", 3, 130, side="away", home=BASE_HOME,
+        away=queued_substitute,
+        details={"penalty_kind": "MIN", "penalty_duration_seconds": 120,
+                 "penalty_assessment_event_sequence": queued_assessment["sequence"],
+                 "assessed_at_absolute_second": 2430,
+                 "service_started_at_absolute_second": 2530,
+                 "triggered_by_expired_player_id": "A1"},
+        participants={"player_id": "A3"})
+    builder.emit("stoppage", 3, 131, home=BASE_HOME, away=queued_substitute)
+    builder.emit("penalty-release", 3, 131, side="away", home=BASE_HOME,
+        away=queued_substitute,
+        details={"penalty_kind": "MIN", "release_reason": "penalty_expiration_stoppage",
+                 "player_returned_id": "A1"},
+        participants={"player_id": "A1"})
+    builder.emit("penalty-expiration", 3, 140, side="away", home=BASE_HOME,
+        away=["A1", "A4", "A5", "A6", "AG"],
+        details={"penalty_kind": "MIN", "return_deferred_under_rule_26_2": False,
+                 "clock_expired_at_absolute_second": 2540},
+        participants={"player_id": "A2"})
+    builder.emit("penalty-expiration", 3, 250, side="away", home=BASE_HOME,
+        away=BASE_AWAY,
+        details={"penalty_kind": "MIN", "return_deferred_under_rule_26_2": False,
+                 "clock_expired_at_absolute_second": 2650},
+        participants={"player_id": "A3"})
+    builder.emit("period-end", 3, 1200, home=[], away=[])
+    builder.emit("game-end", 3, 1200, home=[], away=[])
+    return builder.finish()
+
+
 def misconduct_game(expiry_time=700):
     builder = GameBuilder().base_regulation(p1_goal=False)
     builder.events.pop()  # Replace period 3 end with the misconduct interval.
@@ -497,6 +557,29 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
         result = self.get_check(invalid, "penalty_and_manpower")
         self.assertEqual(result["status"], "FAIL")
         self.assertIn("early", " ".join(x["message"] for x in result["findings"]))
+
+    def test_third_penalty_queue_service_expiry_and_deferred_release(self):
+        result = validator._check_penalties(queued_penalty_game())
+        self.assertEqual(result["status"], "PASS", result["findings"])
+
+        wrong_trigger = queued_penalty_game()
+        service = next(e for e in wrong_trigger["events"]
+                       if e["event_type"] == "penalty-service-start")
+        service["details"]["triggered_by_expired_player_id"] = "A2"
+        result = validator._check_penalties(wrong_trigger)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(any("does not match queued" in row["message"]
+                            for row in result["findings"]))
+
+        missing_service = queued_penalty_game()
+        missing_service["events"] = [e for e in missing_service["events"]
+                                      if e["event_type"] != "penalty-service-start"]
+        for sequence, event in enumerate(missing_service["events"], 1):
+            event["sequence"] = sequence
+        result = validator._check_penalties(missing_service)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(any("service start event is missing" in row["message"]
+                            for row in result["findings"]))
 
     def test_misconduct_runs_ten_minutes_without_reducing_manpower(self):
         game = misconduct_game()
@@ -710,7 +793,7 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
         self.assertNotIn("nhl_game_state_sim", source)
         self.assertNotIn("game_state", source)
         self.assertEqual(validator.audit_game(regular_game(), ruleset="2021-22")["validator"],
-                         "nhl-independent-gate1-v0.3")
+                         "nhl-independent-gate1-v0.4")
 
     def test_official_source_fixture_records_a_real_goal_center_faceoff(self):
         fixture_path = HERE / "fixtures/official-pbp-goal-center-faceoff.json"

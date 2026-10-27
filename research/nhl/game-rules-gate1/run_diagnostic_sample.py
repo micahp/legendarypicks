@@ -279,7 +279,8 @@ def main() -> int:
     ruleset_hash = validator.RULEBOOKS["2021-22"]["sha256"]
     metadata = {
         "report_kind": "independent_gate1_diagnostic_sample",
-        "branch_base": "a23d08b54bf1bb1939a4842d0e6c9f94acd785ec",
+        "branch_base": "eee7b84d669d6e46f54c608b39c19971d9c6de88",
+        "preregistration_commit": "c2edec5f32a27c0f8eeb85db72c5739770603d60",
         "ruleset": "2021-22", "rulebook_sha256": ruleset_hash,
         "training_start_seasons": list(sim.v01.TRAIN_SEASONS),
         "development_target_season": 2021,

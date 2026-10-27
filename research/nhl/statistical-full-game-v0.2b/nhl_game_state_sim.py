@@ -1864,10 +1864,15 @@ def _state_reconciled_shift_ledger(donor: DonorPeriod, game_events: list[dict[st
                 breakpoints.add(elapsed)
             if event["event_type"]=="penalty":
                 duration=int(event["details"]["penalty_duration_seconds"])
-                if elapsed+duration<terminal:
+                if ((event.get("details") or {}).get("penalty_service_state")!="queued"
+                        and elapsed+duration<terminal):
                     breakpoints.add(elapsed+duration)
             if event["event_type"]=="goal" and elapsed+120<terminal:
                 breakpoints.add(elapsed+120)
+            if event["event_type"]=="penalty-service-start":
+                duration=int(event["details"]["penalty_duration_seconds"])
+                if elapsed+duration<terminal:
+                    breakpoints.add(elapsed+duration)
     for penalty in initial_penalties.active:
         expiry=initial_penalties._last_absolute_second+penalty.remaining_seconds
         period_abs=PenaltyLedger.absolute_second(period,0)
@@ -1880,20 +1885,38 @@ def _state_reconciled_shift_ledger(donor: DonorPeriod, game_events: list[dict[st
         ledger.advance_to(period,0)
     rows_by_player:dict[tuple[str,str],list[dict[str,Any]]]=collections.defaultdict(list)
     for index,elapsed in enumerate(ordered[:-1]):
-        ledger.advance_to(period,elapsed)
+        expired=ledger.advance_to(period,elapsed)
         at_time=sorted(event_groups.get(elapsed,[]),key=lambda e:int(e["sequence"]))
+        expiration_events=[e for e in at_time if e["event_type"]=="penalty-expiration"]
+        if expired and not expiration_events:
+            raise ValueError("shift reconstruction reached a penalty expiry without its explicit event")
+        expirations_resolved=False
         for event in at_time:
             event_type=event["event_type"]
             side=event.get("team_side")
             if event_type=="penalty":
                 participants=event.get("participants") or {}
                 details=event.get("details") or {}
-                ledger.start(str(side),str(participants["serving_player_id"]),
-                             str(details["penalty_kind"]),
-                             duration_seconds=int(details["penalty_duration_seconds"]),
-                             coincidental=bool(details.get("coincidental",False)))
+                queued,service_state=ledger.assess(str(side),
+                    str(participants["serving_player_id"]),str(details["penalty_kind"]),
+                    duration_seconds=int(details["penalty_duration_seconds"]))
+                if details.get("penalty_service_state") not in {None,service_state}:
+                    raise ValueError("shift reconstruction disagrees with penalty service state")
+                if service_state=="queued":
+                    ledger.set_assessment_event_sequence(
+                        str(participants["serving_player_id"]),int(event["sequence"]))
+            elif event_type=="penalty-expiration" and not expirations_resolved:
+                expired_id=str((event.get("participants") or {}).get("player_id") or "")
+                if not any(p.player_id==expired_id for p in expired):
+                    raise ValueError("shift reconstruction expiration does not match its ledger")
+                ledger.resolve_expirations(expired)
+                expirations_resolved=True
             elif event_type=="goal" and side in {"home","away"}:
-                ledger.on_goal(str(side))
+                ledger.on_goal_transition(str(side))
+            elif event_type=="penalty-release":
+                released_id=str((event.get("participants") or {}).get("player_id") or "")
+                if any(p.player_id==released_id for p in ledger.expired_waiting_release):
+                    ledger.release_waiting_player(released_id)
         next_elapsed=ordered[index+1]
         if next_elapsed<=elapsed:
             raise ValueError("state-reconciled shift interval is not positive")
@@ -1930,7 +1953,9 @@ def _add_reconciled_shift_totals(player_totals: dict[str,dict[str,Any]],
 
 def _emit_penalty_clock_events(events: list[dict[str,Any]], score: dict[str,int], sog: dict[str,int],
                                expired: list[Any], donor: DonorPeriod,
-                               inputs: PregameInputs, penalties: PenaltyLedger) -> None:
+                               inputs: PregameInputs, penalties: PenaltyLedger,
+                               service_started: list[Any]) -> None:
+    deferred_ids={p.player_id for p in penalties.expired_waiting_release}
     for penalty in sorted(expired,key=lambda p:(p.expired_at_absolute_second or 0,p.player_id)):
         if penalty.expired_at_absolute_second is None:
             raise ValueError("expired penalty lacks its exact game-clock second")
@@ -1942,10 +1967,71 @@ def _emit_penalty_clock_events(events: list[dict[str,Any]], score: dict[str,int]
         _append_sim_event(events,score,sog,period_number=number,period_type=ptype,
             event_type="penalty-expiration",team_side=penalty.team_side,elapsed=elapsed,
             duration=REG_SECONDS if ptype=="REG" else OT_SECONDS,
-            details={"penalty_kind":penalty.kind,"player_returned_id":penalty.player_id,
+            details={"penalty_kind":penalty.kind,
+                     "player_returned_id":None if penalty.player_id in deferred_ids else penalty.player_id,
+                     "return_deferred_under_rule_26_2":penalty.player_id in deferred_ids,
                      "clock_expired_at_absolute_second":penalty.expired_at_absolute_second,
                      "goalie_pulled":pulled},on_ice=active,strength=strength,
             participants={"player_id":penalty.player_id})
+    for service in service_started:
+        _emit_penalty_service_start(events,score,sog,service,donor,inputs,penalties)
+
+
+def _emit_penalty_service_start(events: list[dict[str,Any]], score: dict[str,int],
+                                sog: dict[str,int], service: Any,
+                                donor: DonorPeriod, inputs: PregameInputs,
+                                penalties: PenaltyLedger,
+                                *, base_active: dict[str,list[str]] | None=None) -> None:
+    if service.started_at_absolute_second is None or service.queue_assessment_event_sequence is None:
+        raise ValueError("queued service start lacks exact clock or assessment-event provenance")
+    number,elapsed,ptype=_period_clock_from_absolute(service.started_at_absolute_second)
+    if number!=donor.period_number:
+        raise ValueError("queued service start was emitted into the wrong donor period")
+    base=base_active if base_active is not None else donor.active(elapsed)
+    active,strength,pulled=_live_on_ice(base,inputs,penalties,ptype)
+    _append_sim_event(events,score,sog,period_number=number,period_type=ptype,
+        event_type="penalty-service-start",team_side=service.team_side,elapsed=elapsed,
+        duration=REG_SECONDS if ptype=="REG" else OT_SECONDS,
+        details={"penalty_kind":service.kind,"penalty_duration_seconds":service.remaining_seconds,
+                 "penalty_assessment_event_sequence":service.queue_assessment_event_sequence,
+                 "assessed_at_absolute_second":service.queue_assessed_at_absolute_second,
+                 "service_started_at_absolute_second":service.started_at_absolute_second,
+                 "triggered_by_expired_player_id":service.queue_triggered_by_player_id,
+                 "goalie_pulled":pulled},on_ice=active,strength=strength,
+        participants={"player_id":service.player_id})
+
+
+def _emit_waiting_penalty_releases(events: list[dict[str,Any]], score: dict[str,int],
+                                   sog: dict[str,int], donor: DonorPeriod,
+                                   inputs: PregameInputs, penalties: PenaltyLedger,
+                                   *, period_type: str, elapsed: int,
+                                   base_active: dict[str,list[str]], at_stoppage: bool,
+                                   exclude_player_ids: set[str] | None = None) -> list[str]:
+    excluded=exclude_player_ids or set()
+    released=[]
+    candidates=penalties.waiting_release_candidates(period_type,at_stoppage=at_stoppage)
+    for penalty in candidates:
+        if penalty.player_id in excluded:
+            continue
+        active,strength,pulled=_live_on_ice(base_active,inputs,penalties,period_type)
+        number,clock_elapsed,_=_period_clock_from_absolute(
+            penalties._last_absolute_second if penalties._last_absolute_second is not None
+            else PenaltyLedger.absolute_second(donor.period_number,elapsed))
+        if number!=donor.period_number or clock_elapsed!=elapsed:
+            raise ValueError("delayed penalty release is not aligned to the live game clock")
+        _append_sim_event(events,score,sog,period_number=number,period_type=period_type,
+            event_type="penalty-release",team_side=penalty.team_side,elapsed=elapsed,
+            duration=REG_SECONDS if period_type=="REG" else OT_SECONDS,
+            details={"penalty_kind":penalty.kind,
+                     "release_reason":"penalty_expiration_stoppage" if at_stoppage
+                                     else "penalty_expiration_entitled_during_play",
+                     "player_returned_id":penalty.player_id,
+                     "clock_expired_at_absolute_second":penalty.expired_at_absolute_second,
+                     "goalie_pulled":pulled},on_ice=active,strength=strength,
+            participants={"player_id":penalty.player_id})
+        penalties.release_waiting_player(penalty.player_id)
+        released.append(penalty.player_id)
+    return released
 
 
 def _advance_penalties(events: list[dict[str,Any]], score: dict[str,int], sog: dict[str,int],
@@ -1961,13 +2047,18 @@ def _advance_penalties(events: list[dict[str,Any]], score: dict[str,int], sog: d
         deadlines=[now+p.remaining_seconds for p in penalties.active]
         next_expiry=min(deadlines) if deadlines else None
         if next_expiry is not None and next_expiry<=target:
-            exp_period,exp_elapsed,_=_period_clock_from_absolute(next_expiry)
+            exp_period,exp_elapsed,exp_period_type=_period_clock_from_absolute(next_expiry)
             if exp_period!=donor.period_number:
                 raise ValueError("penalty expiry crossed a period without its period transition")
             expired=penalties.advance_to(exp_period,exp_elapsed)
             if not expired:
                 raise ValueError("penalty expiry deadline did not expire a penalty")
-            _emit_penalty_clock_events(events,score,sog,expired,donor,inputs,penalties)
+            service_started=penalties.resolve_expirations(expired)
+            _emit_penalty_clock_events(events,score,sog,expired,donor,inputs,
+                                       penalties,service_started)
+            _emit_waiting_penalty_releases(events,score,sog,donor,inputs,penalties,
+                period_type=exp_period_type,elapsed=exp_elapsed,base_active=donor.active(exp_elapsed),
+                at_stoppage=False)
         else:
             penalties.advance_to(period,elapsed)
 
@@ -2012,6 +2103,8 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
         participants=copy.deepcopy(play.participants)
         details=copy.deepcopy(play.details)
         transition_family=_transition_family(event_type) or "stoppage"
+        penalty_assessment=None
+        penalty_service_state=None
         if use_donor_restart_slot:
             # Use a source faceoff only when it occurs at the exact pending
             # restart clock. The winner is still sampled against live players.
@@ -2081,8 +2174,9 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                              and not p.coincidental for p in penalties.active)
             penalty_kind=str(details.get("penalty_kind") or "")
             if (omit_reason is None and penalty_kind in {"MIN","MAJ"}
-                    and active_units>=2 and not bool(details.get("coincidental",False))):
-                omit_reason="third_concurrent_manpower_penalty_requires_queued_serving"
+                    and active_units>=2 and not bool(details.get("coincidental",False))
+                    and (penalties.queued or penalties.expired_waiting_release)):
+                omit_reason="additional_queued_manpower_penalty_outside_supported_subset"
             if omit_reason is not None:
                 active_penalty_state = [{
                     "team_side": penalty.team_side,
@@ -2132,6 +2226,16 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                 roster=inputs.home_roster if side=="home" else inputs.away_roster
                 participants["penalized_player_name"]=roster.players[penalty_actor].name
                 details["penalty_server_id"]=penalty_actor
+                penalty_assessment,penalty_service_state=penalties.assess(
+                    side,str(penalty_actor),penalty_kind,
+                    duration_seconds=int(details["penalty_duration_seconds"]))
+                details["penalty_service_state"]=penalty_service_state
+                details["service_started_at_absolute_second"]=(
+                    penalty_assessment.started_at_absolute_second
+                    if penalty_service_state=="active" else None)
+                details["coincidental"]=(
+                    bool(penalty_assessment.coincidental)
+                    if penalty_service_state=="active" else False)
         if event_type=="faceoff":
             side,participants=_faceoff_result(rng,active,inputs)
         elif event_type in ATTEMPT_EVENTS and side in {"home","away"}:
@@ -2211,8 +2315,6 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
             if pid in player_totals:
                 player_totals[pid]["hits"]+=1
             team_totals[side]["hits"]+=1
-        if event_type=="penalty":
-            details["coincidental"]=False
         details["goalie_pulled"]=goalie_pulled
         details["latent_possession_before"]=state["possession"]
         emitted_event=_append_sim_event(events,score,sog,period_number=pn,period_type=ptype,event_type=event_type,
@@ -2220,12 +2322,15 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
             strength=strength,participants=participants,
             score_goal=event_type=="goal",count_sog=event_type in SHOT_EVENTS)
         if event_type=="penalty":
-            kind=str(details["penalty_kind"])
-            duration=int(details["penalty_duration_seconds"])
-            active_penalty=penalties.start(side,str(participants["serving_player_id"]),kind,
-                            duration_seconds=duration,coincidental=False)
-            emitted_event["details"]["coincidental"]=active_penalty.coincidental
-            if active_penalty.coincidental:
+            if penalty_assessment is None or penalty_service_state is None:
+                raise ValueError("generated penalty lacks an explicit ledger assessment")
+            if penalty_service_state=="queued":
+                penalties.set_assessment_event_sequence(
+                    str(participants["serving_player_id"]),int(emitted_event["sequence"]))
+                emitted_event["details"]["penalty_assessment_event_sequence"]=int(
+                    emitted_event["sequence"])
+            active_penalty=penalty_assessment
+            if penalty_service_state=="active" and active_penalty.coincidental:
                 for prior in reversed(events[:-1]):
                     prior_details=prior.get("details") or {}
                     if (prior.get("event_type")=="penalty"
@@ -2236,7 +2341,10 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                             and prior_details.get("penalty_duration_seconds")==duration):
                         prior_details["coincidental"]=True
         if event_type=="goal":
-            released=penalties.on_goal(side)
+            released,service_started=penalties.on_goal_transition(side)
+            for service in service_started:
+                _emit_penalty_service_start(events,score,sog,service,play.donor,inputs,
+                                            penalties,base_active=play.active)
             if released is not None:
                 released_now=released not in penalties.active
                 _append_sim_event(events,score,sog,period_number=pn,period_type=ptype,
@@ -2246,6 +2354,13 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                              "player_returned_id":released.player_id,"goalie_pulled":goalie_pulled,
                              "penalty_fully_released":released_now},on_ice=active,
                     strength=strength,participants={"player_id":released.player_id})
+                if any(p.player_id==released.player_id
+                       for p in penalties.expired_waiting_release):
+                    penalties.release_waiting_player(released.player_id)
+        if event_type in {"goal","penalty","stoppage"}:
+            _emit_waiting_penalty_releases(events,score,sog,play.donor,inputs,penalties,
+                period_type=ptype,elapsed=play.elapsed,base_active=play.active,
+                at_stoppage=True)
         state["possession"]=possession_after_event(state["possession"],event_type,side)
         if transition_model is not None:
             state["last_transition_family"]=transition_family
@@ -2391,17 +2506,51 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
                     "participants":{"goalie_leaving_id":old,"goalie_entering_id":new},
                     "on_ice":on_ice,"strength":None})
     combined=events+additions
-    # Expiry takes effect at its exact game-clock second; process it before a
-    # same-second goalie transition can put the returning player back on ice.
+    # Expiry and its queue-start annotation precede a same-second goalie shift.
+    # A service start caused by a power-play goal stays in the original event
+    # order after that goal; moving it ahead would apply a future state change.
+    expiration_triggers = {
+        (int(event["period_number"]), int(event["clock_elapsed_seconds"]),
+         str(event.get("team_side")), str((event.get("participants") or {}).get("player_id") or ""))
+        for event in events if event.get("event_type") == "penalty-expiration"
+    }
+
+    def same_second_rank(event: dict[str, Any]) -> tuple[int, int]:
+        event_type = event.get("event_type")
+        if event_type == "penalty-expiration":
+            rank = 0
+        elif event_type == "penalty-service-start":
+            trigger = (int(event["period_number"]), int(event["clock_elapsed_seconds"]),
+                       str(event.get("team_side")),
+                       str((event.get("details") or {}).get("triggered_by_expired_player_id") or ""))
+            rank = 1 if trigger in expiration_triggers else 3
+        elif event_type == "goalie-substitution":
+            rank = 2
+        else:
+            rank = 3
+        return rank, int(event.get("sequence", 2**31 - 1))
+
     combined.sort(key=lambda e:(e["period_number"],e["clock_elapsed_seconds"],
-                                0 if e["event_type"]=="penalty-expiration" else
-                                1 if e["event_type"]=="goalie-substitution" else 2))
+                                *same_second_rank(e)))
+    sequence_remap={}
+    for new_sequence,event in enumerate(combined,1):
+        old_sequence=event.get("sequence")
+        if old_sequence is not None:
+            sequence_remap[int(old_sequence)]=new_sequence
+        event["sequence"]=new_sequence
+    for event in combined:
+        details=event.get("details") or {}
+        reference=details.get("penalty_assessment_event_sequence")
+        if reference is not None:
+            if int(reference) not in sequence_remap:
+                raise ValueError("queued penalty assessment reference is absent after event insertion")
+            details["penalty_assessment_event_sequence"]=sequence_remap[int(reference)]
     score={"home":0,"away":0}; sog={"home":0,"away":0}
     penalties=PenaltyLedger()
-    for sequence,event in enumerate(combined,1):
+    for event in combined:
         if event["period_type"] in {"REG","OT"}:
-            penalties.advance_to(int(event["period_number"]),
-                                 int(event["clock_elapsed_seconds"]))
+            expired=penalties.advance_to(int(event["period_number"]),
+                                         int(event["clock_elapsed_seconds"]))
             if event["event_type"]=="goalie-substitution":
                 active,strength,pulled=_live_on_ice(
                     event["on_ice"],inputs,penalties,event["period_type"])
@@ -2411,14 +2560,27 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
             elif event["event_type"]=="penalty":
                 details=event.get("details") or {}
                 participants=event.get("participants") or {}
-                penalties.start(str(event["team_side"]),
+                assessed,service_state=penalties.assess(str(event["team_side"]),
                     str(participants["penalized_player_id"]),
                     str(details["penalty_kind"]),
                     duration_seconds=int(details["penalty_duration_seconds"]),
-                    coincidental=bool(details.get("coincidental",False)))
+                    )
+                if details.get("penalty_service_state") not in {None,service_state}:
+                    raise ValueError("penalty service state changed during goalie substitution reconciliation")
+                if service_state=="queued":
+                    penalties.set_assessment_event_sequence(
+                        str(participants["penalized_player_id"]),int(event["sequence"]))
+            elif event["event_type"]=="penalty-expiration":
+                expired_player=str((event.get("participants") or {}).get("player_id") or "")
+                if not any(p.player_id==expired_player for p in expired):
+                    raise ValueError("penalty-expiration event does not match the reconciliation ledger")
+                penalties.resolve_expirations(expired)
             elif event["event_type"]=="goal":
-                penalties.on_goal(str(event["team_side"]))
-        event["sequence"]=sequence
+                penalties.on_goal_transition(str(event["team_side"]))
+            elif event["event_type"]=="penalty-release":
+                released_id=str((event.get("participants") or {}).get("player_id") or "")
+                if any(p.player_id==released_id for p in penalties.expired_waiting_release):
+                    penalties.release_waiting_player(released_id)
         event["state_before"]=_score_state(score,sog)
         if event["event_type"]=="goal" and event["period_type"]!="SO":
             score[event["team_side"]]+=1; sog[event["team_side"]]+=1
@@ -2444,13 +2606,18 @@ def _validate_live_game_state(events: list[dict[str,Any]],
                               player_totals: dict[str,dict[str,Any]]) -> None:
     """Independently verify penalty clocks, manpower, and on-ice eligibility."""
     active: list[dict[str,Any]]=[]
+    queued: list[dict[str,Any]]=[]
+    waiting_release: list[dict[str,Any]]=[]
     pending_expirations: set[tuple[str,str]]=set()
     pending_expiration_second: int|None=None
+    pending_service_starts: dict[tuple[str,str],dict[str,Any]]={}
+    last_stoppage_second: int|None=None
 
-    def manpower(period_type: str, goalie_pulled: dict[str,bool]) -> dict[str,int]:
+    def manpower(period_type: str, goalie_pulled: dict[str,bool],
+                 active_rows: list[dict[str,Any]]) -> dict[str,int]:
         base=3 if period_type=="OT" else 5
         units={side:sum(p["side"]==side and p["kind"] in {"MIN","MAJ"}
-                        and not p["coincidental"] for p in active)
+                        and not p["coincidental"] for p in active_rows)
                for side in ("home","away")}
         counts={"home":base,"away":base}
         if period_type=="REG":
@@ -2474,8 +2641,11 @@ def _validate_live_game_state(events: list[dict[str,Any]],
         if period_type=="SO":
             continue
         now=_event_absolute_second(event)
-        returned_id=str((event.get("participants") or {}).get("player_id") or "")
-        returned_side=str(event.get("team_side") or "")
+        side=event.get("team_side")
+        details=event.get("details") or {}
+        participants=event.get("participants") or {}
+        returned_id=str(participants.get("player_id") or "")
+        returned_side=str(side or "")
 
         if pending_expirations:
             if event_type!="penalty-expiration" or now!=pending_expiration_second:
@@ -2494,29 +2664,55 @@ def _validate_live_game_state(events: list[dict[str,Any]],
                 raise ValueError("penalty expiration was emitted after its exact clock")
             pending_expirations=due_keys-{key}
             pending_expiration_second=now if pending_expirations else None
+            deferred_keys=set()
+            starts=[]
+            for candidate_side in ("home","away"):
+                side_queue=[p for p in queued if p["side"]==candidate_side]
+                manpower_due=[p for p in due if p["side"]==candidate_side
+                              and p["kind"] in {"MIN","MAJ"} and not p["coincidental"]]
+                if not side_queue or not manpower_due:
+                    continue
+                if len(side_queue)!=1 or len(manpower_due)!=1:
+                    raise ValueError("queued service expiry has ambiguous player return order")
+                expired=manpower_due[0]
+                waiting_release.append(expired)
+                deferred_keys.add((expired["side"],expired["player_id"]))
+                queued_penalty=side_queue[0]
+                queued.remove(queued_penalty)
+                starts.append({**queued_penalty,"assessed_at":queued_penalty["start"],
+                    "triggered_by_player_id":expired["player_id"],"start":now})
             active=[p for p in active if (p["side"],p["player_id"]) not in due_keys]
+            for service in starts:
+                active.append({"side":service["side"],"player_id":service["player_id"],
+                    "kind":service["kind"],"duration":service["duration"],
+                    "start":now,"end":now+service["duration"],"coincidental":False})
+                pending_service_starts[(service["side"],service["player_id"])]=service
+            if bool(details.get("return_deferred_under_rule_26_2",False)) != (key in deferred_keys):
+                raise ValueError("penalty expiration deferred-return marker disagrees with ledger")
         elif any(p["end"]<=now for p in active):
             raise ValueError("active penalty reached expiry without a preceding expiration event")
 
+        if pending_service_starts and event_type not in {"penalty-expiration","penalty-service-start"}:
+            raise ValueError("queued penalty service-start event is missing or out of order")
         if pending_expirations and event_type!="penalty-expiration":
             raise ValueError("simultaneous penalty expiration sequence was interrupted")
 
-        side=event.get("team_side")
+        active_for_event=[dict(p) for p in active]
+        barred=active_for_event+[dict(p) for p in queued]+[dict(p) for p in waiting_release]
         on_ice=event.get("on_ice") or {}
         for ice_side,ids in on_ice.items():
             for pid in ids:
-                if player_totals[str(pid)]["team_side"]!=ice_side:
+                player=player_totals[str(pid)]
+                if player["team_side"]!=ice_side:
                     raise ValueError(f"on-ice player {pid} belongs to the wrong team at event {event['sequence']}")
-                if any(p["side"]==ice_side and p["player_id"]==str(pid) and p["end"]>now
-                       for p in active):
-                    raise ValueError(f"penalized player {pid} remains on ice at event {event['sequence']}")
+                if any(p["side"]==ice_side and p["player_id"]==str(pid) for p in barred):
+                    raise ValueError(f"penalized or unreleased player {pid} remains on ice at event {event['sequence']}")
 
-        details=event.get("details") or {}
         if event_type not in {"period-start","period-end","game-end","shootout-attempt",
                               "shootout-decision"}:
             goalie_pulled=details.get("goalie_pulled")
             if period_type in {"REG","OT"} and isinstance(goalie_pulled,dict):
-                expected=manpower(period_type,goalie_pulled)
+                expected=manpower(period_type,goalie_pulled,active_for_event)
                 actual={}
                 for ice_side in ("home","away"):
                     ids=on_ice.get(ice_side,[])
@@ -2531,7 +2727,6 @@ def _validate_live_game_state(events: list[dict[str,Any]],
                 if event.get("strength")!=f"{actual['home']}v{actual['away']}":
                     raise ValueError(f"strength label disagrees with on-ice skaters at event {event['sequence']}")
 
-        participants=event.get("participants") or {}
         if event_type=="penalty":
             player_id=str(participants.get("penalized_player_id") or "")
             server_id=str(participants.get("serving_player_id") or "")
@@ -2551,25 +2746,109 @@ def _validate_live_game_state(events: list[dict[str,Any]],
                 if prior["start"]==now and prior["side"]!=side:
                     if (prior["kind"],prior["duration"],prior["coincidental"])!=(kind,duration,coincidental):
                         raise ValueError("opposing same-clock penalties have inconsistent coincidental state")
-            active.append({"side":side,"player_id":player_id,"kind":kind,
-                           "duration":duration,"start":now,"end":now+duration,
-                           "coincidental":coincidental})
+            active_units=sum(p["side"]==side and p["kind"] in {"MIN","MAJ"}
+                             and not p["coincidental"] for p in active)
+            should_queue=kind in {"MIN","MAJ"} and not coincidental and active_units>=2
+            record={"side":side,"player_id":player_id,"kind":kind,"duration":duration,
+                    "start":now,"end":now+duration,"coincidental":coincidental}
+            if should_queue:
+                if queued or waiting_release:
+                    raise ValueError("additional queued penalty is outside native validator subset")
+                record["assessment_event_sequence"]=event["sequence"]
+                queued.append(record)
+                if details.get("penalty_service_state") not in {None,"queued"}:
+                    raise ValueError("third penalty did not record queued service state")
+            else:
+                active.append(record)
+                if details.get("penalty_service_state") not in {None,"active"}:
+                    raise ValueError("penalty incorrectly recorded queued service state")
+
+        elif event_type=="penalty-service-start":
+            player_id=str(participants.get("player_id") or "")
+            service_key=(str(side),player_id)
+            expected=pending_service_starts.pop(service_key,None)
+            if expected is None:
+                raise ValueError("penalty-service-start has no exact queued trigger")
+            expected_fields={"penalty_kind":expected["kind"],
+                "penalty_duration_seconds":expected["duration"],
+                "penalty_assessment_event_sequence":expected["assessment_event_sequence"],
+                "assessed_at_absolute_second":expected["assessed_at"],
+                "service_started_at_absolute_second":now,
+                "triggered_by_expired_player_id":expected["triggered_by_player_id"]}
+            if now!=expected["start"] or any(details.get(k)!=v for k,v in expected_fields.items()):
+                raise ValueError("penalty-service-start mismatches queue, clock, or trigger")
 
         elif event_type in {"penalty-release","penalty-segment-end"}:
             player_id=str(participants.get("player_id") or "")
+            reason=details.get("release_reason")
+            waiting=[p for p in waiting_release if p["side"]==side and p["player_id"]==player_id]
             matches=[p for p in active if p["side"]==side and p["player_id"]==player_id]
-            if not matches:
+            if reason in {"penalty_expiration_stoppage","penalty_expiration_entitled_during_play"}:
+                if len(waiting)!=1 or event_type!="penalty-release":
+                    raise ValueError("Rule 26.2 release has no expired waiting player")
+                if reason=="penalty_expiration_stoppage" and last_stoppage_second!=now:
+                    raise ValueError("deferred penalty return did not occur at a stoppage")
+                if reason=="penalty_expiration_entitled_during_play":
+                    pulled=details.get("goalie_pulled") or {"home":False,"away":False}
+                    if manpower(period_type,pulled,active_for_event).get(str(side),0)<=4:
+                        raise ValueError("during-play return occurred without more than four players permitted")
+                waiting_release.remove(waiting[0])
+            elif reason=="power_play_goal" and waiting and event_type=="penalty-release":
+                waiting_release.remove(waiting[0])
+            elif not matches:
                 raise ValueError(f"penalty resolution has no active penalty at event {event['sequence']}")
-            penalty=matches[0]
-            if event_type=="penalty-release":
-                active.remove(penalty)
             else:
-                if penalty["kind"]!="MIN" or penalty["duration"]!=240:
-                    raise ValueError("only an active double minor can end a segment early")
-                penalty["end"]=now+120
+                penalty=matches[0]
+                if event_type=="penalty-release":
+                    if penalty["kind"]!="MIN" or reason!="power_play_goal":
+                        raise ValueError("unsupported early penalty release")
+                    active.remove(penalty)
+                else:
+                    if penalty["kind"]!="MIN" or penalty["duration"]!=240:
+                        raise ValueError("only an active double minor can end a segment early")
+                    if reason!="power_play_goal":
+                        raise ValueError("double-minor segment ended without a power-play goal")
+                    penalty["end"]=now+120
+
+        if event_type=="goal" and side in {"home","away"}:
+            opposing="away" if side=="home" else "home"
+            units=sum(p["side"]==opposing and p["kind"] in {"MIN","MAJ"}
+                      and not p["coincidental"] for p in active_for_event)
+            opposing_units=sum(p["side"]==opposing and p["kind"] in {"MIN","MAJ"}
+                               and not p["coincidental"] for p in active_for_event)
+            scoring_units=sum(p["side"]==side and p["kind"] in {"MIN","MAJ"}
+                              and not p["coincidental"] for p in active_for_event)
+            if opposing_units>scoring_units:
+                candidates=[p for p in active_for_event if p["side"]==opposing
+                            and p["kind"]=="MIN" and not p["coincidental"]]
+                if candidates:
+                    penalty=min(candidates,key=lambda p:(p["end"],p["start"],p["player_id"]))
+                    first_double_segment=(penalty["duration"]==240 and penalty["end"]-now>120)
+                    if not first_double_segment:
+                        side_queue=[p for p in queued if p["side"]==opposing]
+                        if side_queue:
+                            active_match=next((p for p in active if p["side"]==opposing
+                                               and p["player_id"]==penalty["player_id"]),None)
+                            if active_match:
+                                active.remove(active_match)
+                                waiting_release.append(active_match)
+                                queued_penalty=side_queue[0]
+                                queued.remove(queued_penalty)
+                                service={**queued_penalty,"assessed_at":queued_penalty["start"],
+                                    "triggered_by_player_id":penalty["player_id"],"start":now}
+                                active.append({"side":opposing,"player_id":service["player_id"],
+                                    "kind":service["kind"],"duration":service["duration"],
+                                    "start":now,"end":now+service["duration"],
+                                    "coincidental":False})
+                                pending_service_starts[(opposing,service["player_id"])]=service
+
+        if event_type in {"goal","penalty","stoppage"}:
+            last_stoppage_second=now
 
     if pending_expirations:
         raise ValueError("game ended before all simultaneous penalty expirations were recorded")
+    if pending_service_starts:
+        raise ValueError("game ended before queued penalty service-start events were recorded")
 
 
 def _validate_shootout_sequence(events: list[dict[str,Any]],

@@ -51,6 +51,19 @@ class ActivePenalty:
     started_at_absolute_second: int
     coincidental: bool = False
     expired_at_absolute_second: int | None = None
+    queue_assessed_at_absolute_second: int | None = None
+    queue_assessment_event_sequence: int | None = None
+    queue_triggered_by_player_id: str | None = None
+
+
+@dataclass
+class QueuedPenalty:
+    team_side: str
+    player_id: str
+    kind: str
+    duration_seconds: int
+    assessed_at_absolute_second: int
+    assessment_event_sequence: int | None = None
 
 
 class PenaltyLedger:
@@ -63,14 +76,30 @@ class PenaltyLedger:
 
     def __init__(self) -> None:
         self.active: list[ActivePenalty] = []
+        self.queued: list[QueuedPenalty] = []
+        self.expired_waiting_release: list[ActivePenalty] = []
         self._last_absolute_second: int | None = None
 
     def clone(self) -> "PenaltyLedger":
         duplicate = PenaltyLedger()
         duplicate.active = [ActivePenalty(p.team_side, p.player_id, p.kind, p.remaining_seconds,
                                           p.started_at_absolute_second, p.coincidental,
-                                          p.expired_at_absolute_second)
+                                          p.expired_at_absolute_second,
+                                          p.queue_assessed_at_absolute_second,
+                                          p.queue_assessment_event_sequence,
+                                          p.queue_triggered_by_player_id)
                            for p in self.active]
+        duplicate.queued = [QueuedPenalty(p.team_side, p.player_id, p.kind, p.duration_seconds,
+                                         p.assessed_at_absolute_second, p.assessment_event_sequence)
+                            for p in self.queued]
+        duplicate.expired_waiting_release = [
+            ActivePenalty(p.team_side, p.player_id, p.kind, p.remaining_seconds,
+                          p.started_at_absolute_second, p.coincidental,
+                          p.expired_at_absolute_second,
+                          p.queue_assessed_at_absolute_second,
+                          p.queue_assessment_event_sequence,
+                          p.queue_triggered_by_player_id)
+            for p in self.expired_waiting_release]
         duplicate._last_absolute_second = self._last_absolute_second
         return duplicate
 
@@ -116,10 +145,10 @@ class PenaltyLedger:
             raise ValueError(f"unsupported {kind} duration {duration} seconds")
         if self._last_absolute_second is None:
             raise ValueError("advance the game clock before starting a penalty")
+        if self.is_penalized(player_id):
+            raise ValueError("player already has an assessed penalty in this model")
         penalty = ActivePenalty(team_side, str(player_id), kind, duration,
                                 self._last_absolute_second, coincidental)
-        if any(p.player_id == penalty.player_id for p in self.active):
-            raise ValueError("player already has an active penalty in this model")
         for prior in self.active:
             if (prior.team_side != team_side
                     and prior.started_at_absolute_second == penalty.started_at_absolute_second
@@ -134,17 +163,130 @@ class PenaltyLedger:
         self.active.append(penalty)
         return penalty
 
-    def on_goal(self, scoring_side: str) -> ActivePenalty | None:
-        """Release the earliest releasable minor on the shorthanded team."""
+    def assess(self, team_side: str, player_id: str, kind: str, *,
+               duration_seconds: int | None = None) -> tuple[ActivePenalty | QueuedPenalty, str]:
+        """Assess a supported penalty, queueing one third manpower penalty.
+
+        Same-clock penalty pairing remains the caller's explicit responsibility;
+        matching penalties still pass through ``start`` for coincidence marking.
+        """
+        if team_side not in SIDES or not player_id:
+            raise ValueError("penalty requires a valid side and player")
+        allowed = {"MIN": {120, 240}, "MAJ": {300}, "MIS": {600}}
+        if kind not in allowed:
+            raise ValueError(f"unsupported penalty type {kind!r}")
+        default_duration = {"MIN": 120, "MAJ": 300, "MIS": 600}[kind]
+        duration = default_duration if duration_seconds is None else int(duration_seconds)
+        if duration not in allowed[kind]:
+            raise ValueError(f"unsupported {kind} duration {duration} seconds")
+        if self._last_absolute_second is None:
+            raise ValueError("advance the game clock before assessing a penalty")
+        if self.is_penalized(player_id):
+            raise ValueError("player already has an assessed penalty in this model")
+
+        coincidental_pair = any(
+            prior.team_side != team_side
+            and prior.started_at_absolute_second == self._last_absolute_second
+            and prior.kind == kind
+            and prior.remaining_seconds == duration
+            for prior in self.active)
+        active_units = sum(p.team_side == team_side and p.kind in {"MIN", "MAJ"}
+                           and not p.coincidental for p in self.active)
+        if kind in {"MIN", "MAJ"} and not coincidental_pair and active_units >= 2:
+            if self.queued or self.expired_waiting_release:
+                raise ValueError("additional queued manpower penalty is outside the supported subset")
+            queued = QueuedPenalty(team_side, str(player_id), kind, duration,
+                                   self._last_absolute_second)
+            self.queued.append(queued)
+            return queued, "queued"
+
+        return self.start(team_side, player_id, kind,
+                          duration_seconds=duration), "active"
+
+    def is_penalized(self, player_id: str) -> bool:
+        player_id = str(player_id)
+        return (any(p.player_id == player_id for p in self.active)
+                or any(p.player_id == player_id for p in self.queued)
+                or any(p.player_id == player_id for p in self.expired_waiting_release))
+
+    def set_assessment_event_sequence(self, player_id: str, sequence: int) -> None:
+        queued = next((p for p in self.queued if p.player_id == str(player_id)), None)
+        if queued is not None:
+            if queued.assessment_event_sequence is not None:
+                raise ValueError("queued penalty assessment sequence was already recorded")
+            queued.assessment_event_sequence = int(sequence)
+
+    def resolve_expirations(self, expired: list[ActivePenalty]) -> list[ActivePenalty]:
+        """Start queued service at an exact earlier penalty expiry.
+
+        A Rule 26.2 player whose clock expired while three players were in the
+        penalty box remains barred until an eligible return transition.
+        """
+        started: list[ActivePenalty] = []
+        for side in SIDES:
+            queued = [p for p in self.queued if p.team_side == side]
+            if not queued:
+                continue
+            manpower_expired = [p for p in expired
+                                if p.team_side == side and p.kind in {"MIN", "MAJ"}
+                                and not p.coincidental]
+            if len(queued) != 1:
+                raise ValueError("multiple queued penalties for one side are unsupported")
+            if len(manpower_expired) != 1:
+                raise ValueError("simultaneous expiry with queued service requires unresolved return order")
+            if self._last_absolute_second is None:
+                raise ValueError("queued service cannot start without a game-clock second")
+            expired_penalty = manpower_expired[0]
+            if expired_penalty.expired_at_absolute_second != self._last_absolute_second:
+                raise ValueError("queued service trigger does not match exact penalty expiry")
+            self.expired_waiting_release.append(expired_penalty)
+            queued_penalty = queued[0]
+            self.queued.remove(queued_penalty)
+            service = ActivePenalty(queued_penalty.team_side, queued_penalty.player_id,
+                                    queued_penalty.kind, queued_penalty.duration_seconds,
+                                    self._last_absolute_second, False, None,
+                                    queued_penalty.assessed_at_absolute_second,
+                                    queued_penalty.assessment_event_sequence,
+                                    expired_penalty.player_id)
+            self.active.append(service)
+            started.append(service)
+        return started
+
+    def waiting_release_candidates(self, period_type: str, *,
+                                   at_stoppage: bool = False) -> list[ActivePenalty]:
+        """Return Rule 26.2 eligible returns in penalty-expiration order."""
+        eligible: list[ActivePenalty] = []
+        for side in SIDES:
+            side_waiting = [p for p in self.expired_waiting_release if p.team_side == side]
+            if not side_waiting:
+                continue
+            if not at_stoppage and self.manpower(period_type)[side] <= 4:
+                continue
+            side_waiting.sort(key=lambda p: (p.expired_at_absolute_second or 0, p.player_id))
+            expiry_seconds = [p.expired_at_absolute_second for p in side_waiting]
+            if len(expiry_seconds) != len(set(expiry_seconds)):
+                raise ValueError("same-time penalty return order requires captain designation")
+            eligible.extend(side_waiting)
+        return eligible
+
+    def release_waiting_player(self, player_id: str) -> ActivePenalty:
+        matches = [p for p in self.expired_waiting_release if p.player_id == str(player_id)]
+        if len(matches) != 1:
+            raise ValueError("penalty release does not match one expired player awaiting release")
+        self.expired_waiting_release.remove(matches[0])
+        return matches[0]
+
+    def on_goal_transition(self, scoring_side: str) -> tuple[ActivePenalty | None, list[ActivePenalty]]:
+        """Apply a power-play goal and start queued service if a minor ends."""
         if scoring_side not in SIDES:
             raise ValueError("goal must have a scoring side")
         short_side = self.shorthanded_side()
         if short_side is None or short_side == scoring_side:
-            return None
+            return None, []
         releasable = [p for p in self.active if p.team_side == short_side
                       and p.kind == "MIN" and not p.coincidental]
         if not releasable:
-            return None
+            return None, []
         penalty = min(releasable, key=lambda p:(p.remaining_seconds,p.started_at_absolute_second))
         # A double minor is two consecutive minor segments. A power-play goal
         # in segment one cancels that segment and starts a fresh two-minute
@@ -154,8 +296,31 @@ class PenaltyLedger:
             penalty.remaining_seconds = 120
         else:
             penalty.remaining_seconds = 0
+        started: list[ActivePenalty] = []
         if penalty.remaining_seconds <= 0:
             self.active.remove(penalty)
+            queued = [p for p in self.queued if p.team_side == short_side]
+            if queued:
+                if len(queued) != 1 or self._last_absolute_second is None:
+                    raise ValueError("power-play goal cannot resolve queued penalty ordering")
+                # The goal stoppage is also the eligible return point for the
+                # earlier minor; retain it as waiting until its release event.
+                self.expired_waiting_release.append(penalty)
+                queued_penalty = queued[0]
+                self.queued.remove(queued_penalty)
+                service = ActivePenalty(queued_penalty.team_side, queued_penalty.player_id,
+                                        queued_penalty.kind, queued_penalty.duration_seconds,
+                                        self._last_absolute_second, False, None,
+                                        queued_penalty.assessed_at_absolute_second,
+                                        queued_penalty.assessment_event_sequence,
+                                        penalty.player_id)
+                self.active.append(service)
+                started.append(service)
+        return penalty, started
+
+    def on_goal(self, scoring_side: str) -> ActivePenalty | None:
+        """Compatibility wrapper returning only the affected penalty."""
+        penalty, _ = self.on_goal_transition(scoring_side)
         return penalty
 
     def shorthanded_side(self) -> str | None:
@@ -200,7 +365,9 @@ class PenaltyLedger:
     def penalized_players(self, side: str) -> set[str]:
         if side not in SIDES:
             raise ValueError(f"unknown team side: {side!r}")
-        return {p.player_id for p in self.active if p.team_side == side}
+        return ({p.player_id for p in self.active if p.team_side == side}
+                | {p.player_id for p in self.queued if p.team_side == side}
+                | {p.player_id for p in self.expired_waiting_release if p.team_side == side})
 
 
 def shootout_decided(goals: dict[str, int], attempts: dict[str, int],
