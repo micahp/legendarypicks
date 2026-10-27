@@ -55,6 +55,12 @@
     "data_rows": 3604
    },
    {
+    "file": "official_inactives_2025_full_v2.jsonl",
+    "sha256": "cb326297258f513b2097110f30c3a8398536fe064989ef626ee8cbf4eb05995a",
+    "bytes": 3591827,
+    "data_rows": 3600
+   },
+   {
     "file": "official_inactives_2025_full_report.md",
     "sha256": "211bf5d035826ec6abbfb3c73cf7dd664cc10de2793588c8cc216ed9c42f7893",
     "bytes": 4066,
