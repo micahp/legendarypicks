@@ -1,0 +1,83 @@
+{
+ "frozen_at_utc": "2026-10-27T08:20:13.794955Z",
+ "label_status": "retrospective",
+ "rule": "Frozen files are not edited. Any correction is a new version with a new file name and a new entry here.",
+ "seasons": {
+  "2024": [
+   {
+    "file": "official_inactives_2024_full.jsonl",
+    "sha256": "040e5af6d704820e32fdfe97b205401ae546e5ada221601fa13c1aa396c8a1be",
+    "bytes": 3554521,
+    "data_rows": 3586
+   },
+   {
+    "file": "official_inactives_2024_full_report.md",
+    "sha256": "9c4628b719c73c0de5ce0c624ef82df5318f3753ac14f6d12ba5f6b5400a050c",
+    "bytes": 19285,
+    "data_rows": null
+   },
+   {
+    "file": "official_inactive_designation_rates_2024.md",
+    "sha256": "aca00897b427e7c951279719f44e5779cf76ad1c0ad8130c33579cdc8d399943",
+    "bytes": 11413,
+    "data_rows": null
+   },
+   {
+    "file": "roster_ina_adjudication_2024.md",
+    "sha256": "94872ffd779e6e5c428f7de3eea630eede04abd52f6e8c8f24c4e47cda4e7dd2",
+    "bytes": 11025,
+    "data_rows": null
+   },
+   {
+    "file": "official_inactives_without_exact_injury_row_2024_reg_w1_18.csv",
+    "sha256": "d9a404a315240bcff0efc71817f2bfc4aee4e0b5968029ceb915414beb178a58",
+    "bytes": 136595,
+    "data_rows": 1889
+   },
+   {
+    "file": "official_inactive_validation_decision_2024.md",
+    "sha256": "dee2fe5cdc32c09a96973de5993cdbedc65546af6e2ffc0012e46a8c995e0189",
+    "bytes": 1181,
+    "data_rows": null
+   },
+   {
+    "file": "independent_gsis_resolution_report.md",
+    "sha256": "5defac70de2951f514d5ba0a25e7ff29e6c269a62558c1e8bb8ce80e508f8677",
+    "bytes": 4816,
+    "data_rows": null
+   }
+  ],
+  "2025": [
+   {
+    "file": "official_inactives_2025_full.jsonl",
+    "sha256": "f9b9a905542f2aeb23d1abef987c0888fb6e2618ff374f36b1ffad1f0db8bdc6",
+    "bytes": 3595950,
+    "data_rows": 3604
+   },
+   {
+    "file": "official_inactives_2025_full_report.md",
+    "sha256": "211bf5d035826ec6abbfb3c73cf7dd664cc10de2793588c8cc216ed9c42f7893",
+    "bytes": 4066,
+    "data_rows": null
+   },
+   {
+    "file": "official_inactive_designation_rates_2025.md",
+    "sha256": "1bcbfec22cdfb1c9a6d87ba4b7dd117f2a354c75e3b29e9aa9ce8769790cc700",
+    "bytes": 9757,
+    "data_rows": null
+   },
+   {
+    "file": "official_inactives_unresolved_2025.csv",
+    "sha256": "a3bbeba96b36c2c0ea789d86914496ca4457f11b05ce20b538a5fe000c905284",
+    "bytes": 3560,
+    "data_rows": 11
+   },
+   {
+    "file": "official_inactives_without_exact_injury_row_2025.csv",
+    "sha256": "9ab998e6abbd275eda4b1276dba4cdf66563739e828b7c32b22ee38d0773e7f7",
+    "bytes": 318152,
+    "data_rows": 2057
+   }
+  ]
+ }
+}
