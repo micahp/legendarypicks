@@ -1,0 +1,85 @@
+{
+  "analysis_script_sha256": "ebdc0abc223ad7fed415989efdcb7b09e119e758be497d63e125a1abd51890f3",
+  "date": "2026-10-27",
+  "elapsed_seconds": 28.63,
+  "population": {
+    "eligible_2021_games": 1292,
+    "games_reaching_shootout_by_independent_game_summary": 95,
+    "games_with_a_pbp_shootout_period": 95,
+    "games_with_at_least_one_shootout_complete_marker": 95,
+    "shootout_attempt_events": 702,
+    "shootout_complete_marker_event_rows": 96,
+    "shootout_goal_events": 210
+  },
+  "reconciliation": {
+    "anomaly_records": [
+      {
+        "game_id": "2021020336",
+        "marker_count": 2,
+        "marker_events": [
+          {
+            "details_present": false,
+            "event_id": 816,
+            "event_type": "shootout-complete",
+            "period_number": 5,
+            "period_type": "SO",
+            "sort_order": 695,
+            "time_in_period": "00:00"
+          },
+          {
+            "details_present": false,
+            "event_id": 817,
+            "event_type": "shootout-complete",
+            "period_number": 5,
+            "period_type": "SO",
+            "sort_order": 696,
+            "time_in_period": "00:00"
+          }
+        ],
+        "marker_sequence_context": {
+          "next_event_after_last_marker": {
+            "details_present": false,
+            "event_id": 818,
+            "event_type": "period-end",
+            "period_number": 5,
+            "period_type": "SO",
+            "sort_order": 697,
+            "time_in_period": "00:00"
+          },
+          "previous_event_before_first_marker": {
+            "details_present": true,
+            "event_id": 810,
+            "event_type": "shot-on-goal",
+            "period_number": 5,
+            "period_type": "SO",
+            "sort_order": 692,
+            "time_in_period": "00:00"
+          }
+        },
+        "pbp_compressed_bytes": 10407,
+        "pbp_compressed_sha256": "33b48d86bebd00ae6cc5222ad00f5f0ae232f47d49bd0e25765a8e1ec298e21d",
+        "pbp_has_shootout_period": true,
+        "shootout_attempt_events": 14,
+        "shootout_goal_events": 3,
+        "source_last_period_type": "SO"
+      }
+    ],
+    "denominator_guidance": "Use distinct eligible game IDs (95) for shootout game frequency. The marker event-row count is 96 because one game has two marker records.",
+    "duplicate_marker_game_ids": [
+      "2021020336"
+    ],
+    "games_missing_completion_marker": [],
+    "marker_games_not_ending_in_shootout": [],
+    "period_vs_game_summary_mismatch_ids": [],
+    "summary_and_marker_game_sets_match": true,
+    "summary_and_pbp_shootout_game_sets_match": true
+  },
+  "report_kind": "nhl_2021_shootout_completion_marker_reconciliation",
+  "source": {
+    "access": "local verified archive only; no network or database access",
+    "archive_pbp_games": 4876,
+    "boxscore_manifest_sha256": "0ba44bcebefecb0a8eefbea995e8f5370583600eec77d0be12be574f308d71a2",
+    "pbp_manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+    "verified_eligible_pbp_bodies": 1292
+  }
+}
