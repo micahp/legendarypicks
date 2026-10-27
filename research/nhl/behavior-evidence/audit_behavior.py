@@ -1949,7 +1949,7 @@ def _render_markdown(result: dict[str, Any]) -> str:
         "",
         "## Penalty/manpower correction",
         "",
-        "The simulator’s regulation manpower calculation now counts active noncoincidental penalties per team. Equal opposing counts do not cancel merely because the net difference is zero. Matching penalties classified coincidental remain excluded. Overtime retains its separate manpower table. The independent Gate 1 validator remains separate and unchanged.",
+        "The simulator’s regulation manpower calculation now counts active noncoincidental penalties per team. Equal opposing counts do not cancel merely because the net difference is zero. Matching penalties classified coincidental remain excluded. Overtime retains its separate manpower table. The independent Gate 1 validator remains a separate checker; its follow-up v0.3 extends the exact penalty subset to validate the 600-second misconduct exclusion without changing manpower or the gate threshold.",
         "",
         f"This bounded correction is grounded in the [2021–22 NHL Official Rules]("
         f"{result['rulebook']['url']}) (pinned SHA-256 `{result['rulebook']['sha256']}`). "

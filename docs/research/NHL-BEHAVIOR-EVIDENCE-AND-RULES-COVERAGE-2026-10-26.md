@@ -180,7 +180,7 @@ The simple pregame rate comparator uses 2019/20 team goals/SOG for and against, 
 
 ## Penalty/manpower correction
 
-The simulator’s regulation manpower calculation now counts active noncoincidental penalties per team. Equal opposing counts do not cancel merely because the net difference is zero. Matching penalties classified coincidental remain excluded. Overtime retains its separate manpower table. The independent Gate 1 validator remains separate and unchanged.
+The simulator’s regulation manpower calculation now counts active noncoincidental penalties per team. Equal opposing counts do not cancel merely because the net difference is zero. Matching penalties classified coincidental remain excluded. Overtime retains its separate manpower table. The independent Gate 1 validator remains a separate checker; its follow-up v0.3 extends the exact penalty subset to validate the 600-second misconduct exclusion without changing manpower or the gate threshold.
 
 This bounded correction is grounded in the [2021–22 NHL Official Rules](https://media.nhl.com/site/asset/public/ext/2021-22/2021-22Rules.pdf) (pinned SHA-256 `17ef416dcb556f510df51efd45451e8d37da80da9e69488f78e3d8771228caa7`). It is a direct reference for 2021 development rules; do not transfer edition-sensitive details to earlier training seasons without checking those editions.
 
