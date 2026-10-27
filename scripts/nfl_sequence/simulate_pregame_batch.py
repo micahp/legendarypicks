@@ -352,21 +352,25 @@ def run_batch(args):
     contextual = None
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
+    safety_kick_table = not args.no_safety_table
     reference_started = time.monotonic()
     if args.context_mode == 'unconditioned':
-        ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy)
+        ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
+                                         safety_kick_table=safety_kick_table)
     else:
         contextual = pregame_context.build(args.db, snapshot['schedule'], snapshot['as_of'], snapshot)
         eligible_before = (int(snapshot['schedule']['season']), int(snapshot['schedule']['week']))
         if args.context_mode == 'cutoff_unconditioned':
             ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
-                                             eligible_before=eligible_before)
+                                             eligible_before=eligible_before,
+                                             safety_kick_table=safety_kick_table)
         else:
             ref, excluded_kickoffs = er.load(
                 args.db, try_policy=try_policy, eligible_before=eligible_before,
                 contextual_context=contextual, contextual_mode=args.context_mode,
                 contextual_bandwidth=args.context_bandwidth,
-                contextual_min_effective_games=args.context_min_source_games)
+                contextual_min_effective_games=args.context_min_source_games,
+                safety_kick_table=safety_kick_table)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -433,6 +437,8 @@ def run_batch(args):
             f'--db {args.db} --games 1 --seed-start SEED --context-mode {args.context_mode} '
             f'--context-bandwidth {args.context_bandwidth} --context-min-source-games {args.context_min_source_games} '
             f'--try-policy {args.try_policy} --out REPLAY.json')
+        if args.no_safety_table:
+            replay_examples['reproduction_command'] += ' --no-safety-table'
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
@@ -453,6 +459,7 @@ def run_batch(args):
                                                        else None),
             'pool_control': ('legacy_unconditioned_2022_2025' if args.context_mode == 'unconditioned'
                              else 'cutoff_eligible_uniform_pool'),
+            'safety_kick_table': ('observed_2022_2025' if safety_kick_table else 'disabled_control'),
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
         },
         'runtime_seconds': {
@@ -526,6 +533,8 @@ def main(argv=None):
                     help='minimum effective source games in a sampled contextual pool cell')
     ap.add_argument('--try-policy', choices=('unconditional', 'k1'), default='unconditional',
                     help='research try-policy ablation; unconditional remains the control/default')
+    ap.add_argument('--no-safety-table', action='store_true',
+                    help='control arm: disable observed safety free kicks and retain the old safety blocker')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--out', required=True)
