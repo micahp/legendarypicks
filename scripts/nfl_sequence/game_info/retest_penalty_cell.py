@@ -21,14 +21,13 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-REPO_BT = Path('/tmp/claude-0/-root/4a715766-ff4b-4980-99e5-dc209eaac7d4/scratchpad/sim-run-index/'
-               'scripts/nfl_sequence/game_info/backtest_splits.py')
+REPO_BT = HERE / 'backtest_splits.py'
 spec = importlib.util.spec_from_file_location('bt', REPO_BT)
 bt = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bt)
 
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
-OUT = HERE / 'experiments_retest'
+OUT = Path('/root/lp-snapshots/nfl-game-info/experiments/penalty-cell-retest')
 PENALTY_TEAM_TO_SCHEDULE = {'LA': 'LAR', 'WAS': 'WSH'}
 CELL = '50-69F | 10-14 mph'
 SEASONS = [2022, 2023, 2024, 2025]
