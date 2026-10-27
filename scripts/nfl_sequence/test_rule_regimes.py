@@ -57,6 +57,26 @@ class RegistryBoundaries(unittest.TestCase):
         self.assertIn('2022-POST-OT-BOTH', ids(2022, 'POST'))
         self.assertNotIn('2022-POST-OT-BOTH', ids(2022, 'REG'))
 
+    def test_each_contract_boundary_switches_its_rule_on_one_side_only(self):
+        """Registry guide, contract item 7: the rule is present in the first season of its regime and absent before it."""
+        ids = lambda s, domain, t='REG': rr.active_rules(self.registry, s, t, domain)
+        self.assertIn('2010-REG-OT', ids(2011, 'overtime'))
+        self.assertNotIn('2010-REG-OT', ids(2012, 'overtime'))
+        self.assertIn('2012-REG-OT', ids(2012, 'overtime'))
+        self.assertIn('2012-REG-OT', ids(2016, 'overtime'))
+        self.assertNotIn('2012-REG-OT', ids(2017, 'overtime'))
+        self.assertIn('2017-REG-OT-10', ids(2017, 'overtime'))
+        self.assertIn('2015-PAT-SPOT', ids(2015, 'extra_point'))
+        self.assertNotIn('2015-PAT-SPOT', ids(2014, 'extra_point'))
+        self.assertIn('2016-KO-TB25', ids(2016, 'kickoff'))
+        self.assertNotIn('2016-KO-TB25', ids(2015, 'kickoff'))
+        self.assertIn('2018-WALKOFF-TRY', ids(2018, 'try_scoring'))
+        self.assertNotIn('2018-WALKOFF-TRY', ids(2017, 'try_scoring'))
+        self.assertIn('2022-POST-OT-BOTH', ids(2022, 'overtime', 'POST'))
+        self.assertNotIn('2022-POST-OT-BOTH', ids(2021, 'overtime', 'POST'))
+        self.assertIn('2026-KO-50-TB', ids(2026, 'kickoff'))
+        self.assertNotIn('2026-KO-50-TB', ids(2025, 'kickoff'))
+
     def test_postseason_rules_are_not_applied_to_the_regular_season(self):
         self.assertNotIn('2022-POST-OT-BOTH', rr.active_rules(self.registry, 2023, 'REG', 'overtime'))
         self.assertNotIn('2021-PRESEASON-OT-REMOVED', rr.active_rules(self.registry, 2021, 'REG', 'overtime'))
