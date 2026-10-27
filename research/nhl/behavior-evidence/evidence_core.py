@@ -43,6 +43,85 @@ def decode_situation_code(value: object) -> dict[str, int] | None:
     }
 
 
+def reconcile_event_state(source_state: dict[str, int] | None,
+                          shift_pre_state: dict[str, int] | None,
+                          shift_post_state: dict[str, int] | None,
+                          *, at_shift_boundary: bool) -> dict[str, object]:
+    """Reconcile a PBP event snapshot with second-resolution shift intervals.
+
+    Shift snapshots are the left and right limits around the event clock, not
+    claims about subsecond ordering. A source situation code is eligible for
+    conditional event-rate work only when it agrees with an available shift
+    snapshot. Without a code, a shift fallback is allowed only when the state
+    is stable across the clock; a boundary with no resolving evidence remains
+    explicitly ambiguous.
+    """
+    keys = ("away_goalie", "away_skaters", "home_skaters", "home_goalie")
+
+    def complete(state: dict[str, int] | None) -> bool:
+        return state is not None and all(key in state for key in keys)
+
+    def same(left: dict[str, int] | None, right: dict[str, int] | None) -> bool:
+        return complete(left) and complete(right) and all(left[key] == right[key] for key in keys)
+
+    pre_match = same(source_state, shift_pre_state)
+    post_match = same(source_state, shift_post_state)
+    shift_stable = same(shift_pre_state, shift_post_state)
+
+    if complete(source_state):
+        if at_shift_boundary:
+            if pre_match and post_match:
+                status, alignment, eligible = "source_matches_both_boundary_states", "both", True
+            elif pre_match:
+                status, alignment, eligible = "source_matches_left_limit", "left_limit", True
+            elif post_match:
+                status, alignment, eligible = "source_matches_right_limit", "right_limit", True
+            else:
+                status, alignment, eligible = "source_shift_conflict", "conflict", False
+        elif same(source_state, shift_pre_state):
+            status, alignment, eligible = "source_matches_stable_shift_state", "stable", True
+        elif shift_pre_state is None and shift_post_state is None:
+            status, alignment, eligible = "source_only_no_shift_comparison", "uncompared", True
+        else:
+            status, alignment, eligible = "source_shift_conflict", "conflict", False
+        state = source_state if eligible else None
+        state_source = "situation_code" if eligible else "unresolved"
+    elif not at_shift_boundary and shift_stable and complete(shift_pre_state):
+        status, alignment, eligible = "stable_shift_fallback", "stable", True
+        state = shift_pre_state
+        state_source = "shift_interval_fallback"
+    elif at_shift_boundary:
+        status, alignment, eligible = "missing_source_at_shift_boundary", "ambiguous", False
+        state = None
+        state_source = "unresolved"
+    else:
+        status, alignment, eligible = "missing_or_incomplete_state", "unresolved", False
+        state = None
+        state_source = "unresolved"
+
+    return {
+        "status": status,
+        "temporal_alignment": alignment,
+        "eligible_for_conditional_fit": eligible,
+        "state_source": state_source,
+        "state": state,
+        "source_matches_shift_left_limit": pre_match,
+        "source_matches_shift_right_limit": post_match,
+    }
+
+
+def goalie_identity_status(goalie_id_present: bool, state_resolved: bool,
+                           defending_goalie_present: bool | None) -> str:
+    """Classify a missing shot-event goalie ID without treating it as a skill value."""
+    if goalie_id_present:
+        return "goalie_id_present"
+    if not state_resolved or defending_goalie_present is None:
+        return "missing_id_state_unresolved"
+    if not defending_goalie_present:
+        return "expected_empty_net"
+    return "missing_id_with_goalie_present"
+
+
 def strength_for_side(home_skaters: int, away_skaters: int, side: str) -> str:
     if side == "home":
         return f"{home_skaters}v{away_skaters}"

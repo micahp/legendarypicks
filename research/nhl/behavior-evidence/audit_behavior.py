@@ -23,8 +23,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from evidence_core import (binary_scores, decode_situation_code, parse_clock,
-                           score_state, shrink_binary_rate, strength_for_side,
+from evidence_core import (binary_scores, decode_situation_code, goalie_identity_status, parse_clock,
+                           reconcile_event_state, score_state, shrink_binary_rate, strength_for_side,
                            time_remaining_bucket)
 
 
@@ -33,7 +33,9 @@ RESEARCH_DIR = ROOT / "research/nhl/behavior-evidence"
 DEFAULT_DATA_ROOT = Path("/root/lp-data/nhl-fullframe-event-audit-2026-10-21")
 DEFAULT_BOXSCORE_ROOT = Path("/root/lp-data/nhl-official-outcome-backfill-2026-10-20")
 DEFAULT_DB = Path("/root/legendarypicks/backend/data/picks.dev.db")
-DEFAULT_OUTPUT = RESEARCH_DIR / "results/nhl-behavior-evidence-2026-10-26.json"
+PRIOR_ARTIFACT = RESEARCH_DIR / "results/nhl-behavior-evidence-2026-10-26.json"
+DEFAULT_OUTPUT = RESEARCH_DIR / "results/nhl-behavior-evidence-event-state-v2-2026-10-26.json"
+DEFAULT_REPORT = ROOT / "docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V2-2026-10-26.md"
 PBP_MANIFEST_SHA256 = "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990"
 SHIFT_MANIFEST_SHA256 = "deba1a38d9f9c969139dc15ac57e7085988c05bcab36db43bd87fe5805f1c6f5"
 TRAIN_SEASONS = (2019, 2020)
@@ -238,6 +240,10 @@ def _new_season_stats(season: int) -> dict[str, Any]:
         "shift_start_context": collections.Counter(),
         "shift_anomalies": collections.Counter(),
         "situation_reconciliation": collections.Counter(),
+        "event_state_attribution": collections.Counter(),
+        "event_state_examples": [],
+        "shot_goalie_identity": collections.Counter(),
+        "shot_goalie_identity_examples": [],
         "observed_strength_exposure_minutes": collections.Counter(),
         "event_rates": collections.Counter(),
         "goalie_presence": collections.Counter(),
@@ -351,6 +357,40 @@ def _normalize_shift_rows(document: dict[str, Any], game_id: str,
 def _event_owner_side(event: dict[str, Any], team_sides: dict[str, str]) -> str | None:
     owner = (event.get("details") or {}).get("eventOwnerTeamId")
     return team_sides.get(str(owner)) if owner is not None else None
+
+
+def _lineup_from_active_rows(active_rows: dict[int, dict[str, Any]]) -> tuple[
+        dict[str, dict[str, int]], set[str]]:
+    lineup = {side: {"skaters": 0, "goalies": 0, "unknown": 0}
+              for side in ("home", "away")}
+    by_player: dict[str, tuple[str, str]] = {}
+    duplicates: set[str] = set()
+    for row in active_rows.values():
+        player_id = row["player_id"]
+        if player_id in by_player:
+            duplicates.add(player_id)
+        else:
+            by_player[player_id] = (row["side"], row["position"])
+    for side, position in by_player.values():
+        if position == "G":
+            lineup[side]["goalies"] += 1
+        elif position in {"C", "L", "R", "D", "F"}:
+            lineup[side]["skaters"] += 1
+        else:
+            lineup[side]["unknown"] += 1
+    return lineup, duplicates
+
+
+def _situation_from_lineup(lineup: dict[str, dict[str, int]],
+                           duplicates: set[str]) -> dict[str, int] | None:
+    if duplicates or any(lineup[side]["unknown"] for side in ("home", "away")):
+        return None
+    return {
+        "away_goalie": int(lineup["away"]["goalies"] > 0),
+        "away_skaters": lineup["away"]["skaters"],
+        "home_skaters": lineup["home"]["skaters"],
+        "home_goalie": int(lineup["home"]["goalies"] > 0),
+    }
 
 
 def _next_faceoff(events: list[dict[str, Any]], start: int) -> int | None:
@@ -494,38 +534,94 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
         active_rows: dict[int, dict[str, Any]] = {}
 
         for time_index, now in enumerate(times):
+            pre_boundary_rows = dict(active_rows)
+            for shift in starts.get(now, []):
+                pre_boundary_rows.pop(shift["row_index"], None)
+            for shift in ends.get(now, []):
+                pre_boundary_rows[shift["row_index"]] = shift
             for shift in ends.get(now, []):
                 active_rows.pop(shift["row_index"], None)
             for shift in starts.get(now, []):
                 active_rows[shift["row_index"]] = shift
             next_time = times[time_index + 1] if time_index + 1 < len(times) else now
-            by_player: dict[str, tuple[str, str]] = {}
-            duplicate_players = set()
-            for row in active_rows.values():
-                pid = row["player_id"]
-                prior = by_player.get(pid)
-                if prior is not None:
-                    duplicate_players.add(pid)
-                else:
-                    by_player[pid] = (row["side"], row["position"])
+            lineup, duplicate_players = _lineup_from_active_rows(active_rows)
+            pre_lineup, pre_duplicate_players = _lineup_from_active_rows(pre_boundary_rows)
             if duplicate_players:
                 season_stats["situation_reconciliation"][
                     "duplicate_active_player_track_ids_at_event_snapshot"] += len(duplicate_players)
-            lineup = {side: {"skaters": 0, "goalies": 0, "unknown": 0}
-                      for side in ("home", "away")}
-            for side, position in by_player.values():
-                if position == "G":
-                    lineup[side]["goalies"] += 1
-                elif position in {"C", "L", "R", "D", "F"}:
-                    lineup[side]["skaters"] += 1
-                else:
-                    lineup[side]["unknown"] += 1
+            shift_boundary = bool(starts.get(now) or ends.get(now))
+            pre_shift_state = _situation_from_lineup(pre_lineup, pre_duplicate_players)
+            post_shift_state = _situation_from_lineup(lineup, duplicate_players)
 
-            for event in by_time.get(now, []):
+            clock_events = by_time.get(now, [])
+            for event_index, event in enumerate(clock_events):
                 event_type = str(event.get("typeDescKey") or "<missing>")
                 details = event.get("details") or {}
                 owner_side = _event_owner_side(event, team_sides)
                 code = decode_situation_code(event.get("situationCode"))
+                post_event_code = next((candidate for candidate in (
+                    decode_situation_code(later.get("situationCode"))
+                    for later in clock_events[event_index + 1:]) if candidate is not None), None)
+                state_attribution = reconcile_event_state(
+                    code, pre_shift_state, post_shift_state,
+                    at_shift_boundary=shift_boundary)
+                attributed_state = state_attribution["state"]
+                event_state_strength = (
+                    strength_for_side(attributed_state["home_skaters"],
+                                      attributed_state["away_skaters"], owner_side)
+                    if attributed_state is not None and owner_side else "unknown")
+                attribution_status = str(state_attribution["status"])
+                if event_type in SOG_EVENTS:
+                    goalie_id_present = (details.get("goalieInNetId") is not None)
+                    if owner_side and attributed_state is not None:
+                        defending_side = "away" if owner_side == "home" else "home"
+                        defending_goalie_present = bool(attributed_state[defending_side + "_goalie"])
+                    else:
+                        defending_goalie_present = None
+                    goalie_status = goalie_identity_status(
+                        goalie_id_present,
+                        bool(attributed_state is not None
+                             and state_attribution["eligible_for_conditional_fit"]),
+                        defending_goalie_present)
+                    season_stats["shot_goalie_identity"][
+                        f"{event_type}:{goalie_status}"] += 1
+                    if (not goalie_id_present and
+                            len(season_stats["shot_goalie_identity_examples"]) < 20):
+                        season_stats["shot_goalie_identity_examples"].append({
+                            "game_id": game_id, "event_id": event.get("eventId"),
+                            "event_type": event_type, "period_type": period_type,
+                            "period": period_number, "clock": event.get("timeInPeriod"),
+                            "situation_code": event.get("situationCode"),
+                            "status": goalie_status,
+                            "state_attribution": attribution_status,
+                        })
+                season_stats["event_state_attribution"][
+                    f"{event_type}:{attribution_status}"] += 1
+                if shift_boundary:
+                    season_stats["event_state_attribution"][f"{event_type}:at_shift_boundary"] += 1
+                    season_stats["event_state_attribution"][
+                        f"{event_type}:boundary_status:{attribution_status}"] += 1
+                if not state_attribution["eligible_for_conditional_fit"]:
+                    season_stats["event_state_attribution"][
+                        f"{event_type}:excluded_from_conditional_fit"] += 1
+                if (shift_boundary and event_type in {
+                        "goal", "penalty", "faceoff", "shot-on-goal", "missed-shot", "blocked-shot"}
+                        and sum(row["event_type"] == event_type
+                                for row in season_stats["event_state_examples"]) < 4):
+                    season_stats["event_state_examples"].append({
+                        "game_id": game_id, "event_id": event.get("eventId"),
+                        "sort_order": event.get("sortOrder"), "event_type": event_type,
+                        "period_type": period_type, "period": period_number,
+                        "clock": event.get("timeInPeriod"),
+                        "situation_code": event.get("situationCode"),
+                        "post_event_situation_code": (
+                            next((later.get("situationCode") for later in clock_events[event_index+1:]
+                                  if decode_situation_code(later.get("situationCode")) is not None), None)),
+                        "attribution": attribution_status,
+                        "shift_left_limit": pre_shift_state,
+                        "shift_right_limit": post_shift_state,
+                        "event_owner_team_id": details.get("eventOwnerTeamId"),
+                    })
                 goalie_event_transitions = []
                 if event_type not in {"period-start", "period-end", "game-end"}:
                     season_stats["events"][event_type] += 1
@@ -579,10 +675,6 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                         f"{transition_side}:{transition}:{state}:{when}"] += 1
                 side_strength = (strength_for_side(home_skaters, away_skaters, owner_side)
                                  if code is not None and owner_side else "unknown")
-                shift_strength = (
-                    strength_for_side(lineup["home"]["skaters"], lineup["away"]["skaters"], owner_side)
-                    if owner_side and not lineup["home"]["unknown"] and not lineup["away"]["unknown"]
-                    else "unknown")
                 annotated = {
                     "event_id": event.get("eventId"), "sort_order": event.get("sortOrder"),
                     "type": event_type, "period_type": period_type,
@@ -592,7 +684,17 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                         roster.get(str(details.get("committedByPlayerId") or ""),
                                    (str(details.get("eventOwnerTeamId") or ""), "?"))[0]
                         if event_type == "penalty" else None),
-                    "shift_lineup": lineup, "strength": side_strength,
+                    "shift_lineup": lineup, "strength": event_state_strength,
+                    "situation_code_strength": side_strength,
+                    "event_state_strength": event_state_strength,
+                    "event_state_attribution": {
+                        **state_attribution,
+                        "source_situation_state": code,
+                        "next_same_clock_situation_state": post_event_code,
+                        "next_same_clock_state_source": (
+                            "next_same_clock_pbp_event" if post_event_code is not None else "not_observed"),
+                    },
+                    "shift_boundary_at_event_clock": shift_boundary,
                     "active_duplicate_player_ids": len(duplicate_players),
                     "shift_positions_complete": not any(
                         lineup[side]["unknown"] for side in ("home", "away")),
@@ -621,12 +723,11 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                     else:
                         season_stats["penalty_team_identity"]["committed_player_team_unresolved"] += 1
                     penalty_side = committed_side or owner_side
-                    if penalty_side:
+                    if penalty_side and attributed_state is not None \
+                            and state_attribution["eligible_for_conditional_fit"]:
                         penalty_strength = (
-                            strength_for_side(lineup["home"]["skaters"],
-                                              lineup["away"]["skaters"], penalty_side)
-                            if not lineup["home"]["unknown"] and not lineup["away"]["unknown"]
-                            else "unknown")
+                            strength_for_side(attributed_state["home_skaters"],
+                                              attributed_state["away_skaters"], penalty_side))
                         penalty_state = score_state(
                             pre_score[penalty_side], pre_score["away" if penalty_side == "home" else "home"])
                         _record_event_rate(local, "penalty", penalty_side, penalty_strength,
@@ -645,15 +746,15 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                         season_stats["team_faceoffs"][winner_team]["won"] += 1
                         season_stats["team_faceoffs"][winner_team]["total"] += 1
                         local["team_rows"][winner_team]["faceoff_wins"] += 1
-                        winner_strength = (
-                            strength_for_side(lineup["home"]["skaters"],
-                                              lineup["away"]["skaters"], winner_side)
-                            if not lineup["home"]["unknown"] and not lineup["away"]["unknown"]
-                            else "unknown")
                         winner_state = score_state(
                             pre_score[winner_side], pre_score["away" if winner_side == "home" else "home"])
-                        _record_event_rate(local, "faceoff_win", winner_side, winner_strength,
-                                           period_type, winner_state, when)
+                        if attributed_state is not None \
+                                and state_attribution["eligible_for_conditional_fit"]:
+                            winner_strength = strength_for_side(
+                                attributed_state["home_skaters"],
+                                attributed_state["away_skaters"], winner_side)
+                            _record_event_rate(local, "faceoff_win", winner_side, winner_strength,
+                                               period_type, winner_state, when)
                         season_stats["player_events"][winner_id]["faceoffs_won"] += 1
                         season_stats["player_events"][winner_id]["faceoff_participations"] += 1
                     if loser_team in team_sides:
@@ -682,8 +783,9 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                     season_stats["stoppages"][str(details.get("reason") or "<missing>")] += 1
 
                 if event_type in ATTEMPTS:
-                    if owner_side:
-                        _record_event_rate(local, "attempt", owner_side, shift_strength,
+                    if owner_side and attributed_state is not None \
+                            and state_attribution["eligible_for_conditional_fit"]:
+                        _record_event_rate(local, "attempt", owner_side, event_state_strength,
                                            period_type, score_state(
                                                pre_score[owner_side],
                                                pre_score["away" if owner_side == "home" else "home"]), when)
@@ -703,26 +805,47 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                     shot_type = str(details.get("shotType") or "<missing>")
                     zone = str(details.get("zoneCode") or "<missing>")
                     goalie_id = str(details.get("goalieInNetId") or "<missing>")
-                    _add_binary(local["metric_counts"]["sog_by_strength"], side_strength, is_sog)
-                    _add_binary(local["metric_counts"]["sog_by_shot_type"],
-                                shot_type, is_sog)
-                    _add_binary(local["metric_counts"]["sog_by_zone"],
-                                str(details.get("zoneCode") or "<missing>"), is_sog)
                     _add_binary(local["metric_counts"]["sog_all"], "all", is_sog)
+                    if attributed_state is not None \
+                            and state_attribution["eligible_for_conditional_fit"] and owner_side:
+                        _add_binary(local["metric_counts"]["sog_state_valid_all"], "all", is_sog)
+                        _add_binary(local["metric_counts"]["sog_by_strength"],
+                                    event_state_strength, is_sog)
+                    if shot_type != "<missing>":
+                        _add_binary(local["metric_counts"]["sog_type_complete_all"], "all", is_sog)
+                        _add_binary(local["metric_counts"]["sog_by_shot_type_complete"],
+                                    shot_type, is_sog)
+                    if zone != "<missing>":
+                        _add_binary(local["metric_counts"]["sog_zone_complete_all"], "all", is_sog)
+                        _add_binary(local["metric_counts"]["sog_by_zone_complete"], zone, is_sog)
                     if is_sog:
-                        if owner_side:
-                            _record_event_rate(local, "sog", owner_side, shift_strength,
+                        if owner_side and attributed_state is not None \
+                                and state_attribution["eligible_for_conditional_fit"]:
+                            _record_event_rate(local, "sog", owner_side, event_state_strength,
                                                period_type, score_state(
                                                    pre_score[owner_side],
                                                    pre_score["away" if owner_side == "home" else "home"]), when)
                         season_stats["sog_outcomes"]["all"] += 1
                         season_stats["sog_outcomes"][f"event:{event_type}"] += 1
                         is_goal = int(event_type == "goal")
-                        _add_binary(local["metric_counts"]["goal_by_strength"], side_strength, is_goal)
-                        _add_binary(local["metric_counts"]["goal_by_shot_type"], shot_type, is_goal)
-                        _add_binary(local["metric_counts"]["goal_by_zone"], zone, is_goal)
-                        _add_binary(local["metric_counts"]["goal_by_goalie"], goalie_id, is_goal)
                         _add_binary(local["metric_counts"]["goal_all"], "all", is_goal)
+                        if attributed_state is not None \
+                                and state_attribution["eligible_for_conditional_fit"] and owner_side:
+                            _add_binary(local["metric_counts"]["goal_state_valid_all"], "all", is_goal)
+                            _add_binary(local["metric_counts"]["goal_by_strength"],
+                                        event_state_strength, is_goal)
+                        if shot_type != "<missing>":
+                            _add_binary(local["metric_counts"]["goal_type_complete_all"], "all", is_goal)
+                            _add_binary(local["metric_counts"]["goal_by_shot_type_complete"],
+                                        shot_type, is_goal)
+                        if zone != "<missing>":
+                            _add_binary(local["metric_counts"]["goal_zone_complete_all"], "all", is_goal)
+                            _add_binary(local["metric_counts"]["goal_by_zone_complete"], zone, is_goal)
+                        if goalie_id != "<missing>":
+                            _add_binary(local["metric_counts"]["goal_goalie_present_all"],
+                                        "all", is_goal)
+                            _add_binary(local["metric_counts"]["goal_by_goalie_present"],
+                                        goalie_id, is_goal)
                         if goalie_id != "<missing>":
                             season_stats["goalie_shots"][goalie_id]["shots_against"] += 1
                             season_stats["goalie_shots"][goalie_id]["goals_against"] += is_goal
@@ -736,12 +859,14 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                     if not training and shot_models is not None:
                         # These are conditional conversion diagnostics given an observed
                         # target-shot description; they are not pregame inputs or a full-game forecast.
-                        metrics = ("sog_all", "sog_by_strength", "sog_by_shot_type",
-                                   "sog_by_zone")
+                        metrics = ["sog_all"]
+                        if attributed_state is not None \
+                                and state_attribution["eligible_for_conditional_fit"] and owner_side:
+                            metrics.extend(("sog_state_valid_all", "sog_by_strength"))
                         for metric in metrics:
-                            group_key = ("all" if metric.endswith("_all") else side_strength
-                                         if metric.endswith("_strength") else shot_type
-                                         if metric.endswith("_shot_type") else zone)
+                            group_key = "all" if metric in {"sog_all", "sog_state_valid_all"} else zone
+                            if metric == "sog_by_strength":
+                                group_key = event_state_strength
                             p = shot_models[metric].get(group_key, shot_models["sog_all"]["all"])
                             y = is_sog
                             local["score_losses"][f"{metric}:brier"][0] += (p-y)**2
@@ -749,13 +874,37 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                                 max(1e-12, p if y else 1.0-p))
                             local["score_losses"][f"{metric}:brier"][1] += 1
                             local["score_losses"][f"{metric}:log_loss"][1] += 1
+                        if shot_type != "<missing>":
+                            for metric in ("sog_type_complete_all", "sog_by_shot_type_complete"):
+                                group_key = "all" if metric == "sog_type_complete_all" else shot_type
+                                p = shot_models[metric].get(
+                                    group_key, shot_models["sog_type_complete_all"]["all"])
+                                y = is_sog
+                                local["score_losses"][f"{metric}:brier"][0] += (p-y)**2
+                                local["score_losses"][f"{metric}:log_loss"][0] += -math.log(
+                                    max(1e-12, p if y else 1.0-p))
+                                local["score_losses"][f"{metric}:brier"][1] += 1
+                                local["score_losses"][f"{metric}:log_loss"][1] += 1
+                        if zone != "<missing>":
+                            for metric in ("sog_zone_complete_all", "sog_by_zone_complete"):
+                                group_key = "all" if metric == "sog_zone_complete_all" else zone
+                                p = shot_models[metric].get(
+                                    group_key, shot_models["sog_zone_complete_all"]["all"])
+                                y = is_sog
+                                local["score_losses"][f"{metric}:brier"][0] += (p-y)**2
+                                local["score_losses"][f"{metric}:log_loss"][0] += -math.log(
+                                    max(1e-12, p if y else 1.0-p))
+                                local["score_losses"][f"{metric}:brier"][1] += 1
+                                local["score_losses"][f"{metric}:log_loss"][1] += 1
                         if is_sog:
-                            for metric in ("goal_all", "goal_by_strength", "goal_by_shot_type",
-                                           "goal_by_zone", "goal_by_goalie"):
-                                group_key = ("all" if metric.endswith("_all") else side_strength
-                                             if metric.endswith("_strength") else shot_type
-                                             if metric.endswith("_shot_type") else zone
-                                             if metric.endswith("_zone") else goalie_id)
+                            metrics = ["goal_all"]
+                            if attributed_state is not None \
+                                    and state_attribution["eligible_for_conditional_fit"] and owner_side:
+                                metrics.extend(("goal_state_valid_all", "goal_by_strength"))
+                            for metric in metrics:
+                                group_key = "all"
+                                if metric == "goal_by_strength":
+                                    group_key = event_state_strength
                                 p = shot_models[metric].get(group_key, shot_models["goal_all"]["all"])
                                 y = int(event_type == "goal")
                                 local["score_losses"][f"{metric}:brier"][0] += (p-y)**2
@@ -763,6 +912,40 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                                     max(1e-12, p if y else 1.0-p))
                                 local["score_losses"][f"{metric}:brier"][1] += 1
                                 local["score_losses"][f"{metric}:log_loss"][1] += 1
+                            is_goal = int(event_type == "goal")
+                            if shot_type != "<missing>":
+                                for metric in ("goal_type_complete_all",
+                                               "goal_by_shot_type_complete"):
+                                    group_key = "all" if metric == "goal_type_complete_all" else shot_type
+                                    p = shot_models[metric].get(
+                                        group_key, shot_models["goal_type_complete_all"]["all"])
+                                    local["score_losses"][f"{metric}:brier"][0] += (p-is_goal)**2
+                                    local["score_losses"][f"{metric}:log_loss"][0] += -math.log(
+                                        max(1e-12, p if is_goal else 1.0-p))
+                                    local["score_losses"][f"{metric}:brier"][1] += 1
+                                    local["score_losses"][f"{metric}:log_loss"][1] += 1
+                            if zone != "<missing>":
+                                for metric in ("goal_zone_complete_all", "goal_by_zone_complete"):
+                                    group_key = "all" if metric == "goal_zone_complete_all" else zone
+                                    p = shot_models[metric].get(
+                                        group_key, shot_models["goal_zone_complete_all"]["all"])
+                                    y = int(event_type == "goal")
+                                    local["score_losses"][f"{metric}:brier"][0] += (p-y)**2
+                                    local["score_losses"][f"{metric}:log_loss"][0] += -math.log(
+                                        max(1e-12, p if y else 1.0-p))
+                                    local["score_losses"][f"{metric}:brier"][1] += 1
+                                    local["score_losses"][f"{metric}:log_loss"][1] += 1
+                            if goalie_id != "<missing>":
+                                for metric in ("goal_goalie_present_all",
+                                               "goal_by_goalie_present"):
+                                    group_key = "all" if metric == "goal_goalie_present_all" else goalie_id
+                                    p = shot_models[metric].get(
+                                        group_key, shot_models["goal_goalie_present_all"]["all"])
+                                    local["score_losses"][f"{metric}:brier"][0] += (p-is_goal)**2
+                                    local["score_losses"][f"{metric}:log_loss"][0] += -math.log(
+                                        max(1e-12, p if is_goal else 1.0-p))
+                                    local["score_losses"][f"{metric}:brier"][1] += 1
+                                    local["score_losses"][f"{metric}:log_loss"][1] += 1
 
                 if event_type in {"goal", "shot-on-goal", "missed-shot", "blocked-shot"}:
                     shooter = str(details.get("shootingPlayerId") or details.get("scoringPlayerId") or "")
@@ -770,10 +953,12 @@ def _analyze_game(pbp: dict[str, Any], shifts_doc: dict[str, Any], summary: Any,
                         season_stats["player_events"][shooter]["shot_events"] += 1
                     if event_type == "goal" and period_type in {"REG", "OT"} and owner_side:
                         scores[owner_side] += 1
-                        _record_event_rate(local, "goal", owner_side, shift_strength,
-                                           period_type, score_state(
-                                               pre_score[owner_side],
-                                               pre_score["away" if owner_side == "home" else "home"]), when)
+                        if (attributed_state is not None
+                                and state_attribution["eligible_for_conditional_fit"]):
+                            _record_event_rate(local, "goal", owner_side, event_state_strength,
+                                               period_type, score_state(
+                                                   pre_score[owner_side],
+                                                   pre_score["away" if owner_side == "home" else "home"]), when)
                     if event_type in {"goal", "shot-on-goal"} and owner_side:
                         season_stats["event_rates"][f"sog:{side_strength}"] += 1
                 if owner_side and event_type in {"goal", "shot-on-goal", "missed-shot", "blocked-shot",
@@ -1212,11 +1397,20 @@ def _fit_shot_models(training_games: list[dict[str, Any]]) -> tuple[dict[str, di
     models: dict[str, dict[str, float]] = {}
     tables: dict[str, Any] = {}
     specs = (
-        ("sog_all", None), ("sog_by_strength", "sog_all"),
-        ("sog_by_shot_type", "sog_all"), ("sog_by_zone", "sog_all"),
-        ("goal_all", None), ("goal_by_strength", "goal_all"),
-        ("goal_by_shot_type", "goal_all"), ("goal_by_zone", "goal_all"),
-        ("goal_by_goalie", "goal_all"),
+        ("sog_all", None), ("sog_state_valid_all", None),
+        ("sog_by_strength", "sog_state_valid_all"),
+        ("sog_type_complete_all", None),
+        ("sog_by_shot_type_complete", "sog_type_complete_all"),
+        ("sog_zone_complete_all", None),
+        ("sog_by_zone_complete", "sog_zone_complete_all"),
+        ("goal_all", None), ("goal_state_valid_all", None),
+        ("goal_by_strength", "goal_state_valid_all"),
+        ("goal_type_complete_all", None),
+        ("goal_by_shot_type_complete", "goal_type_complete_all"),
+        ("goal_zone_complete_all", None),
+        ("goal_by_zone_complete", "goal_zone_complete_all"),
+        ("goal_goalie_present_all", None),
+        ("goal_by_goalie_present", "goal_goalie_present_all"),
     )
     for metric, parent_metric in specs:
         models[metric], tables[metric] = _fit_binary_model(
@@ -1416,7 +1610,7 @@ def _event_rate_diagnostics(training_games: list[dict[str, Any]],
         development[family] = dev_rows
     return {
         "exposure_definition": "shift-derived team minutes; each side contributes its own team exposure",
-        "contexts": "one axis at a time: all, side, shift-derived strength, period, pre-event score state, time remaining",
+        "contexts": "one axis at a time: all, side, event-time strength from PBP situationCode reconciled to left/right shift-interval limits, period, pre-event score state, time remaining; ambiguous/conflicting strength labels excluded",
         "rate_shrinkage": "Gamma-Poisson mean with prior exposure equal to 20 times mean exposure per contributing training game; groups below 100 training events use the unconditioned parent rate",
         "training_2019_2020": training,
         "development_2021": development,
@@ -1564,6 +1758,64 @@ def _counter_rows(counter: collections.Counter, limit: int | None = None) -> lis
     return rows if limit is None else rows[:limit]
 
 
+def _field_coverage_summary(event_fields: dict[str, collections.Counter]) -> dict[str, Any]:
+    output = {}
+    for event_type, counts in sorted(event_fields.items()):
+        total = int(counts["events"])
+        names = {key[:-8] for key in counts if key.endswith("_present")}
+        names |= {key[:-8] for key in counts if key.endswith("_missing")}
+        fields = {}
+        for base in sorted(names):
+            present = int(counts.get(base + "_present", 0))
+            missing = int(counts.get(base + "_missing", 0))
+            fields[base] = {"present": present, "missing": missing,
+                            "coverage": present/total if total else None}
+        output[event_type] = {"events": total, "fields": fields}
+    return output
+
+
+def _shot_field_availability(field_coverage: dict[str, Any]) -> dict[str, Any]:
+    output = {}
+    for event_type in sorted(ATTEMPTS):
+        row = field_coverage.get(event_type, {"events": 0, "fields": {}})
+        fields = row.get("fields", {})
+        output[event_type] = {
+            "events": row.get("events", 0),
+            **{
+                name: fields.get(name, {"present": 0, "missing": row.get("events", 0),
+                                        "coverage": 0.0 if row.get("events", 0) else None})
+                for name in ("shot_type", "zone_code", "x_and_y", "shooter_id", "goalie_id",
+                             "situation_code")
+            },
+        }
+    blocked = output.get("blocked-shot", {}).get("shot_type", {})
+    other_rows = [output.get(event_type, {}) for event_type in ATTEMPTS
+                  if event_type != "blocked-shot"]
+    other_events = sum(int(row.get("events", 0)) for row in other_rows)
+    other_present = sum(int(row.get("shot_type", {}).get("present", 0)) for row in other_rows)
+    other_missing = sum(int(row.get("shot_type", {}).get("missing", 0)) for row in other_rows)
+    blocked_events = int(output.get("blocked-shot", {}).get("events", 0))
+    blocked_missing = int(blocked.get("missing", 0))
+    blocked_missing_rate = blocked_missing/blocked_events if blocked_events else None
+    other_missing_rate = other_missing/other_events if other_events else None
+    return {
+        "by_event_type": output,
+        "shot_type_missingness_comparison": {
+            "blocked_attempts": {"events": blocked_events,
+                                 "present": int(blocked.get("present", 0)),
+                                 "missing": blocked_missing,
+                                 "missing_rate": blocked_missing_rate},
+            "other_attempt_outcomes": {"events": other_events,
+                                       "present": other_present,
+                                       "missing": other_missing,
+                                       "missing_rate": other_missing_rate},
+            "missingness_differs_by_recorded_outcome": (
+                blocked_missing_rate is not None and other_missing_rate is not None
+                and blocked_missing_rate != other_missing_rate),
+        },
+    }
+
+
 def _event_frequency_table(games: list[dict[str, Any]], *, seed: int) -> list[dict[str, Any]]:
     names = sorted({name for game in games for name in game["game_event_counts"]})
     rows = []
@@ -1623,18 +1875,7 @@ def _season_summary(stats: dict[str, Any], eligible: int) -> dict[str, Any]:
     goalie_save_rates = [1-row["goals_against"]/row["shots_against"]
                          for row in stats["goalie_shots"].values()
                          if row["shots_against"] >= 100]
-    field_coverage = {}
-    for event_type, counts in sorted(stats["event_fields"].items()):
-        total = int(counts["events"])
-        fields = {}
-        for key, value in sorted(counts.items()):
-            if key == "events" or not key.endswith("_present"):
-                continue
-            base = key[:-8]
-            missing = int(counts.get(base + "_missing", 0))
-            fields[base] = {"present": int(value), "missing": missing,
-                            "coverage": value/total if total else None}
-        field_coverage[event_type] = {"events": total, "fields": fields}
+    field_coverage = _field_coverage_summary(stats["event_fields"])
     players_with_shifts = [row for row in stats["player_events"].values()
                            if row["shift_seconds"] > 0]
     players_with_faceoffs = [row for row in stats["player_events"].values()
@@ -1645,6 +1886,7 @@ def _season_summary(stats: dict[str, Any], eligible: int) -> dict[str, Any]:
         "event_frequency_per_eligible_game": _event_frequency_table(
             stats["per_game"], seed=BOOTSTRAP_SEED + stats["season"]),
         "event_field_coverage": field_coverage,
+        "shot_field_availability_by_outcome": _shot_field_availability(field_coverage),
         "penalty_classes": _counter_rows(stats["penalty_classes"]),
         "penalty_reasons": _counter_rows(stats["penalty_reasons"], 20),
         "penalty_overlap_examples_found": int(stats["penalty_classes"][
@@ -1668,7 +1910,12 @@ def _season_summary(stats: dict[str, Any], eligible: int) -> dict[str, Any]:
         "shift_start_context_nearest_preceding_pbp": _counter_rows(stats["shift_start_context"]),
         "shift_duration_by_nearest_pbp_context_seconds": context_durations,
         "shift_anomalies": _counter_rows(stats["shift_anomalies"]),
-        "situation_code_shift_reconciliation": _counter_rows(stats["situation_reconciliation"]),
+        "legacy_right_limit_situation_code_comparison": _counter_rows(
+            stats["situation_reconciliation"]),
+        "event_state_attribution": _counter_rows(stats["event_state_attribution"]),
+        "event_state_boundary_examples": stats["event_state_examples"],
+        "on_target_goalie_identity": _counter_rows(stats["shot_goalie_identity"]),
+        "on_target_missing_goalie_examples": stats["shot_goalie_identity_examples"],
         "observed_strength_exposure_team_minutes": _counter_rows(
             collections.Counter({k:v for k,v in stats["observed_strength_exposure_minutes"].items()
                                  if k.count(":") == 1})),
@@ -1723,13 +1970,13 @@ def _model_tables(training_stats: dict[str, Any],
     eval_summary = _loss_summary(dev_games)
     comparisons = {}
     baseline_keys = {
-        "sog_by_strength": "sog_all:brier",
-        "sog_by_shot_type": "sog_all:brier",
-        "sog_by_zone": "sog_all:brier",
-        "goal_by_strength": "goal_all:brier",
-        "goal_by_shot_type": "goal_all:brier",
-        "goal_by_zone": "goal_all:brier",
-        "goal_by_goalie": "goal_all:brier",
+        "sog_by_strength": "sog_state_valid_all:brier",
+        "sog_by_shot_type_complete": "sog_type_complete_all:brier",
+        "sog_by_zone_complete": "sog_zone_complete_all:brier",
+        "goal_by_strength": "goal_state_valid_all:brier",
+        "goal_by_shot_type_complete": "goal_type_complete_all:brier",
+        "goal_by_zone_complete": "goal_zone_complete_all:brier",
+        "goal_by_goalie_present": "goal_goalie_present_all:brier",
     }
     for metric, baseline_key in baseline_keys.items():
         base_name = baseline_key.split(":")[0]
@@ -1761,9 +2008,12 @@ def _model_tables(training_stats: dict[str, Any],
               "team_faceoff_rates": faceoff_table,
               "development_proper_scores": eval_summary,
               "development_paired_uncertainty": comparisons,
-              "development_scope": (
-                  "2021 observed shot location/type and on-ice goalie are conditional diagnostic labels; "
-                  "they were not pregame inputs or fed into a simulation")}
+        "development_scope": (
+            "2021 observed shot location/type and on-ice goalie are conditional diagnostic labels; "
+            "they were not pregame inputs or fed into a simulation. Shot-type and zone comparisons use "
+            "complete-case cohorts with matched parent losses. Blocked-shot events do not carry shotType, "
+            "making that cohort outcome-selected. These scores are retrospective selected-cohort diagnostics, "
+            "not prospective skill estimates.")}
     return models, faceoff_rates, report, fitted
 
 
@@ -1781,6 +2031,28 @@ def _manifest_inventory(rows: list[dict[str, str]], asset: str) -> dict[str, Any
             "all_rows_http_200": len(rows) > 0 and status == {"200": len(rows)}}
 
 
+def _prior_artifact_comparison() -> dict[str, Any]:
+    if not PRIOR_ARTIFACT.is_file():
+        raise FileNotFoundError(f"required preserved prior artifact missing: {PRIOR_ARTIFACT}")
+    prior = json.loads(PRIOR_ARTIFACT.read_text(encoding="utf-8"))
+    scores = prior.get("model_diagnostics", {}).get("development_proper_scores", {})
+    return {
+        "path": str(PRIOR_ARTIFACT.relative_to(ROOT)),
+        "sha256": sha256_file(PRIOR_ARTIFACT),
+        "prior_all_attempt_shot_type_brier": scores.get("sog_by_shot_type:brier"),
+        "prior_all_attempt_baseline_brier": scores.get("sog_all:brier"),
+        "prior_goalie_id_brier": scores.get("goal_by_goalie:brier"),
+        "interpretation": (
+            "Prior metrics are preserved for comparison. The prior all-attempt shotType result is not a "
+            "valid prospective predictor: blocked-shot events have outcome-dependent missing shotType. "
+            "This version emits shotType and zone comparisons only on the identical feature-present cohort, "
+            "with a baseline scored on that cohort. Because cohort eligibility may itself depend on the "
+            "recorded outcome, these are retrospective selected-cohort diagnostics, not prospective skill "
+            "estimates. Goalie-ID comparisons likewise exclude missing IDs and use a same-cohort baseline; "
+            "they remain retrospective conditional diagnostics.")
+    }
+
+
 def _render_markdown(result: dict[str, Any]) -> str:
     pop = result["population"]
     source = result["source_inventory"]
@@ -1789,12 +2061,13 @@ def _render_markdown(result: dict[str, Any]) -> str:
     models = result["model_diagnostics"]
     db = result["legendarypicks_database"]
     lines = [
-        "# NHL Behavior Evidence and Rules Coverage Audit",
+        "# NHL Behavior Evidence Audit: Event-State Attribution v2",
         "",
         f"- **Date:** {result['metadata']['date']}",
         f"- **Branch:** `{result['metadata']['branch']}`",
         f"- **Base:** `{result['metadata']['base_commit']}`",
-        "- **Purpose:** research-only source audit and conditional behavior diagnostics; no adoption or gate decision.",
+        "- **Purpose:** research-only corrected source audit and conditional behavior diagnostics; no adoption or gate decision.",
+        f"- **Preserved prior audit:** `{result['prior_artifact_comparison']['path']}` (SHA-256 `{result['prior_artifact_comparison']['sha256']}`).",
         "",
         "## Population and provenance",
         "",
@@ -1842,10 +2115,19 @@ def _render_markdown(result: dict[str, Any]) -> str:
     ]
     def count(rows, key):
         return next((row["count"] for row in rows if row["key"] == key), 0)
-    def situation_match(rows):
-        matched = count(rows, "codes_match_shift_lineup")
-        compared = count(rows, "codes_compared_with_unambiguous_shift_lineup")
-        return f"{matched}/{compared} ({matched/compared:.1%})" if compared else "—"
+    def attribution_count(rows, suffix):
+        return sum(row["count"] for row in rows if row["key"].endswith(":" + suffix))
+    def state_text(state):
+        if state is None:
+            return "unknown"
+        return (f"H{state['home_skaters']}vA{state['away_skaters']} "
+                f"(goalies {state['home_goalie']}/{state['away_goalie']})")
+    def coverage_text(population, event_type, field):
+        row = population["shot_field_availability_by_outcome"]["by_event_type"].get(event_type, {})
+        value = row.get(field)
+        if not value:
+            return "—"
+        return f"{value['present']}/{row['events']} ({value['coverage']:.1%})"
     lines.extend([
         f"| Eligible games | {train['eligible_games_processed']} | {dev['eligible_games_processed']} |",
         f"| Faceoffs | {count(train['faceoffs'], 'total')} | {count(dev['faceoffs'], 'total')} |",
@@ -1853,22 +2135,108 @@ def _render_markdown(result: dict[str, Any]) -> str:
         f"| SOG events | {count(train['sog_events'], 'all')} | {count(dev['sog_events'], 'all')} |",
         f"| Penalty events | {sum(row['count'] for row in train['penalty_classes'] if ':' in row['key'])} | {sum(row['count'] for row in dev['penalty_classes'] if ':' in row['key'])} |",
         f"| Stoppages | {sum(row['count'] for row in train['stoppages'])} | {sum(row['count'] for row in dev['stoppages'])} |",
-        f"| Situation-code/shift matches among unambiguous decodable rows | {situation_match(train['situation_code_shift_reconciliation'])} | {situation_match(dev['situation_code_shift_reconciliation'])} |",
-        f"| Situation-code rows excluded (unknown positions / duplicate active tracks) | {count(train['situation_code_shift_reconciliation'], 'code_comparison_excluded_unknown_shift_positions')} / {count(train['situation_code_shift_reconciliation'], 'code_comparison_excluded_duplicate_active_tracks')} | {count(dev['situation_code_shift_reconciliation'], 'code_comparison_excluded_unknown_shift_positions')} / {count(dev['situation_code_shift_reconciliation'], 'code_comparison_excluded_duplicate_active_tracks')} |",
+        "",
+        "### Event-to-shift timestamp attribution",
+        "",
+        "PBP events are ordered by `sortOrder`; both PBP clocks and shift start/end values resolve only to whole seconds. The event's situation code is retained as the source-reported state snapshot, not presumed to mean pre-event for every event type. When a later event record has the same clock second, its situation code is recorded separately as the next same-clock observation; otherwise a post-event state is not inferred. Independently, the extractor constructs the shift left-limit state (ending intervals still active, starting intervals not yet active) and right-limit state (the reverse), then reconciles the source snapshot against both. A source code matching neither state, or a missing code at a changed boundary, is marked uncertain and excluded from conditional event-rate fitting. The next-record state is evidence, not an inferred continuous transition, and this does not claim subsecond timing.",
+        "",
+        "| Population | Events at a shift boundary | Matches left limit | Matches right limit | Matches both | Conflicts at boundary | Missing source at boundary | Excluded from conditional fitting (all events) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        f"| 2019/20 training | {attribution_count(train['event_state_attribution'], 'at_shift_boundary')} | {attribution_count(train['event_state_attribution'], 'boundary_status:source_matches_left_limit')} | {attribution_count(train['event_state_attribution'], 'boundary_status:source_matches_right_limit')} | {attribution_count(train['event_state_attribution'], 'boundary_status:source_matches_both_boundary_states')} | {attribution_count(train['event_state_attribution'], 'boundary_status:source_shift_conflict')} | {attribution_count(train['event_state_attribution'], 'boundary_status:missing_source_at_shift_boundary')} | {attribution_count(train['event_state_attribution'], 'excluded_from_conditional_fit')} |",
+        f"| 2021 development | {attribution_count(dev['event_state_attribution'], 'at_shift_boundary')} | {attribution_count(dev['event_state_attribution'], 'boundary_status:source_matches_left_limit')} | {attribution_count(dev['event_state_attribution'], 'boundary_status:source_matches_right_limit')} | {attribution_count(dev['event_state_attribution'], 'boundary_status:source_matches_both_boundary_states')} | {attribution_count(dev['event_state_attribution'], 'boundary_status:source_shift_conflict')} | {attribution_count(dev['event_state_attribution'], 'boundary_status:missing_source_at_shift_boundary')} | {attribution_count(dev['event_state_attribution'], 'excluded_from_conditional_fit')} |",
+        "",
+        "Selected same-second event fixtures from the source archive:",
+        "",
+        "| Population | Game | PBP event | Clock | PBP situation code | Next same-clock code | Shift left limit | Shift right limit | Attribution |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ])
+    for season_name, season_summary in (("2019/20", train), ("2021", dev)):
+        selected = [row for row in season_summary["event_state_boundary_examples"]
+                    if row["event_type"] in {"penalty", "goal", "faceoff"}][:8]
+        for row in selected:
+            lines.append(
+                f"| {season_name} | `{row['game_id']}` | {row['event_type']} `{row['event_id']}` "
+                f"(sort {row['sort_order']}) | {row['period_type']} {row['period']} {row['clock']} | "
+                f"`{row['situation_code']}` | `{row['post_event_situation_code']}` | "
+                f"{state_text(row['shift_left_limit'])} | "
+                f"{state_text(row['shift_right_limit'])} | {row['attribution']} |")
+    lines += [
         "",
         "### Evidence coverage and limits by mechanic",
         "",
         "| Mechanic | Exact observed fields | Deterministic rule work | Empirical behavior supported | Remaining unobserved |",
         "|---|---|---|---|---|",
-    ])
+    ]
     for row in result["coverage_matrix"]:
         lines.append("| " + " | ".join(row[key] for key in (
             "mechanic", "observed_fields", "deterministic", "estimable", "unobserved")) + " |")
     lines += [
         "",
+        "### Shot-field availability by recorded outcome",
+        "",
+        "| Population | PBP outcome | Events | shotType present | zoneCode present | x/y present | goalieInNetId present |",
+        "|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for population_name, population in (("2019/20 training", train), ("2021 development", dev)):
+        for event_type in sorted(ATTEMPTS):
+            coverage = population["shot_field_availability_by_outcome"]["by_event_type"].get(event_type, {})
+            lines.append(
+                f"| {population_name} | `{event_type}` | {coverage.get('events', 0)} | "
+                f"{coverage_text(population, event_type, 'shot_type')} | "
+                f"{coverage_text(population, event_type, 'zone_code')} | "
+                f"{coverage_text(population, event_type, 'x_and_y')} | "
+                f"{coverage_text(population, event_type, 'goalie_id')} |")
+    lines += [
+        "",
+        "### Missing goalie identity versus empty-net state",
+        "",
+        "This classification uses the source goalie ID and the event-state reconciliation above. `Expected empty net` means the reconciled situation code indicates no defending goalie; `missing ID with goalie present` is a source identity gap, not a goalie-performance observation. Unresolved states remain separate.",
+        "",
+        "| Population | On-target event | Events | Goalie ID present | Expected empty net | Missing ID, goalie present | State unresolved |",
+        "|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for population_name, population in (("2019/20 training", train), ("2021 development", dev)):
+        goalie_rows = population["on_target_goalie_identity"]
+        for event_type in ("goal", "shot-on-goal"):
+            status_counts = {
+                status: count(goalie_rows, f"{event_type}:{status}")
+                for status in ("goalie_id_present", "expected_empty_net",
+                               "missing_id_with_goalie_present", "missing_id_state_unresolved")
+            }
+            lines.append(
+                f"| {population_name} | `{event_type}` | {sum(status_counts.values())} | "
+                f"{status_counts['goalie_id_present']} | {status_counts['expected_empty_net']} | "
+                f"{status_counts['missing_id_with_goalie_present']} | "
+                f"{status_counts['missing_id_state_unresolved']} |")
+    prior = result["prior_artifact_comparison"]
+    prior_type = prior.get("prior_all_attempt_shot_type_brier") or {}
+    prior_all = prior.get("prior_all_attempt_baseline_brier") or {}
+    prior_goalie = prior.get("prior_goalie_id_brier") or {}
+    type_missingness = [
+        population["shot_field_availability_by_outcome"]["shot_type_missingness_comparison"]
+        for population in (train, dev)]
+    blocked_type_missing = all(row["blocked_attempts"]["missing_rate"] == 1.0
+                               for row in type_missingness)
+    type_missing_varies = any(row["missingness_differs_by_recorded_outcome"]
+                              for row in type_missingness)
+    lines += [
+        "",
+        f"The preserved prior artifact reported all-attempt shotType Brier `{prior_type.get('mean_loss')}` "
+        f"(n={prior_type.get('n')}) against all-attempt parent `{prior_all.get('mean_loss')}` "
+        f"(n={prior_all.get('n')}). That apparent gain is invalid as a prospective shot-conversion comparison: "
+        f"shotType missingness differs by recorded outcome: `{type_missing_varies}`; blocked-shot events "
+        f"have 100% shotType missingness in both populations: `{blocked_type_missing}`. Blocked attempts are "
+        "negative SOG outcomes, so the missing-value category reveals the target. This version excludes missing shotType or zoneCode and "
+        "compares each grouped diagnostic with a parent on the same feature-present attempts. Because the complete-case cohort can "
+        "still be selected by target-dependent recording, these scores are retrospective conditional diagnostics, not prospective "
+        "predictive evidence. Likewise, goalie-ID "
+        f"analysis excludes missing goalie IDs rather than treating missing as a goalie skill group; the old "
+        f"goalie-ID Brier `{prior_goalie.get('mean_loss')}` (n={prior_goalie.get('n')}) is preserved only as "
+        "a retrospective reference. The new output also reports goalie presence separately from goalie identity.",
+        "",
         "### Conditional scoring diagnostics",
         "",
-        "Parameters were fit on 2019/20 only, with 20 parent-equivalent observations for shrinkage and a parent fallback below 100 training opportunities. The 2021 score table is a once-scored development diagnostic. Shot-type/location/goalie scores condition on recorded target events and are not full-game simulation inputs.",
+        "Parameters were fit on 2019/20 only, with 20 parent-equivalent observations for shrinkage and a parent fallback below 100 training opportunities. The 2021 score table is a once-scored development diagnostic. Shot-type/zone/goalie scores condition on recorded event attributes; complete-case cohorts may be selected by outcome-dependent recording and are not prospective skill estimates or full-game forecasts. A grouped attribute can be used prospectively only after it is generated or known before its conditional outcome; actual target-game goalie identities remain retrospective.",
         "",
         "| 2021 event model | N | Mean Brier / log loss | Paired 95% CI of loss difference vs parent |",
         "|---|---:|---|---|",
@@ -1887,7 +2255,7 @@ def _render_markdown(result: dict[str, Any]) -> str:
         "",
         "### Event rates by observed game state",
         "",
-        "Train-only rates use shift-derived team-minute exposure. The listed conditional rates use one context axis at a time; groups under 100 training events fall back to the unconditioned parent. The 2021 comparison conditions on the observed shift exposure and in-game state, so it is a diagnostic and not a pregame game forecast. Full support, sparse cells, and cluster intervals are in the JSON.",
+        "Train-only rates use shift-derived team-minute exposure. Event conditioning uses the PBP situation code only when reconciled against the shift left/right limits; ambiguous/conflicting event states are excluded. The listed conditional rates use one context axis at a time; groups under 100 training events fall back to the unconditioned parent. The 2021 comparison conditions on observed shift exposure and in-game state, so it is a diagnostic and not a pregame game forecast. Full support, sparse cells, state exclusions, and cluster intervals are in the JSON.",
         "",
         "| Event family | Context | Train events / team-minutes | Frozen train rate / 60 team-min | 2021 observed / expected | Observed/expected | 2021 mean game Poisson deviance delta vs parent |",
         "|---|---|---:|---:|---:|---:|---|",
@@ -2002,8 +2370,8 @@ def _render_markdown(result: dict[str, Any]) -> str:
         "  --data-root /root/lp-data/nhl-fullframe-event-audit-2026-10-21 \\",
         "  --boxscore-root /root/lp-data/nhl-official-outcome-backfill-2026-10-20 \\",
         "  --db /root/legendarypicks/backend/data/picks.dev.db \\",
-        "  --output research/nhl/behavior-evidence/results/nhl-behavior-evidence-2026-10-26.json \\",
-        "  --report docs/research/NHL-BEHAVIOR-EVIDENCE-AND-RULES-COVERAGE-2026-10-26.md",
+        "  --output research/nhl/behavior-evidence/results/nhl-behavior-evidence-event-state-v2-2026-10-26.json \\",
+        "  --report docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V2-2026-10-26.md",
         "```",
         "",
         f"Elapsed audit time: {result['metadata']['elapsed_seconds']:.1f} seconds. JSON and report content are emitted by the script; raw data are not copied into Git.",
@@ -2084,11 +2452,13 @@ def run_audit(data_root: Path, boxscore_root: Path, db_path: Path,
                                 capture_output=True, text=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         head, branch = "unavailable", "unavailable"
+    previous = _prior_artifact_comparison()
     script_path = Path(__file__).resolve()
     result = {
         "metadata": {
-            "title": "NHL behavior evidence and rules coverage audit",
+            "title": "NHL behavior evidence audit: event-state attribution v2",
             "date": dt.date.today().isoformat(),
+            "analysis_version": "event-state-and-outcome-availability-v2",
             "branch": branch,
             "base_commit": "9501768f1410484d8be235fe0700f710f5ec189e",
             "code_commit_at_run": head,
@@ -2098,7 +2468,9 @@ def run_audit(data_root: Path, boxscore_root: Path, db_path: Path,
             "bootstrap_seed": BOOTSTRAP_SEED,
             "analysis_method_corrections": [
                 "Source review found the initial clock-only penalty-pair prototype could select a same-second faceoff as if it preceded a penalty and could skip an immediate restart. Final overlap evidence uses sequence order and faceoff-delimited state transitions, requires clean shift-count agreement and no intervening goal, and reports penalty groups when service identity is ambiguous.",
-                "Situation-code reconciliation excludes rows with unknown shift positions or duplicate active player tracks; all exclusions and remaining disagreements are counted separately.",
+        "The legacy one-sided situation-code/shift comparison is retained in the JSON with its right-limit scope. Current conditional fitting uses two-sided event-state reconciliation and excludes unresolved or conflicting state labels.",
+                "Event-rate condition labels are now reconciled against both left-limit and right-limit shift interval states. The former single right-continuous shift snapshot is retained only as a comparison; boundary conflicts and unresolved labels are excluded from conditional-rate fitting.",
+                "ShotType, zoneCode, and goalie-ID conditional scores use observed-field complete cases and a baseline scored on the same events; because field availability can depend on recorded outcomes, these are retrospective selected-cohort diagnostics, not prospective skill claims. Missing values are not treated as predictive categories.",
                 "The final event-rate report retains the preregistered 2,000 game-cluster intervals for rates; descriptive Poisson-deviance differences are point estimates and are not separately bootstrapped.",
             ],
             "training_seasons": list(TRAIN_SEASONS),
@@ -2137,6 +2509,7 @@ def run_audit(data_root: Path, boxscore_root: Path, db_path: Path,
             "development_2021": _season_summary(development_stats, len(development_ids)),
         },
         "model_diagnostics": model_report,
+        "prior_artifact_comparison": previous,
         "event_rate_diagnostics": _event_rate_diagnostics(
             training_stats["per_game"], development_stats["per_game"]),
         "team_rate_evaluation": team_evaluation,
@@ -2172,8 +2545,7 @@ def main() -> None:
     parser.add_argument("--boxscore-root", type=Path, default=DEFAULT_BOXSCORE_ROOT)
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--report", type=Path,
-                        default=ROOT / "docs/research/NHL-BEHAVIOR-EVIDENCE-AND-RULES-COVERAGE-2026-10-26.md")
+    parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     args = parser.parse_args()
     result = run_audit(args.data_root, args.boxscore_root, args.db, args.output, args.report)
     print(json.dumps({"eligible_train": result["population"]["train_games"],
