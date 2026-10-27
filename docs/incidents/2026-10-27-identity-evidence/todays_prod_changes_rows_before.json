@@ -1,0 +1,68 @@
+{
+ "rebind_540256_before": {
+  "backup": "picks.db.bak-pre-rebind-540256-20261027",
+  "player_source_ids": [],
+  "published_roster": [
+   {
+    "league": "mls",
+    "source": "mlssoccer",
+    "source_player_key": "540256",
+    "name": "Marcos Zambrano",
+    "name_folded": "marcoszambrano",
+    "team": "New England Revolution",
+    "position": "F",
+    "position_group": "Forward",
+    "updated_at": "2026-10-27T18:49:41.086155+00:00",
+    "team_code": "NE",
+    "player_id": null
+   }
+  ]
+ },
+ "unbind_315191673_before": {
+  "backup": "picks.db.bak-pre-unbind-315191673-20261027",
+  "player_source_ids": [
+   {
+    "id": 4202,
+    "source": "mlssoccer",
+    "league": "mls",
+    "source_player_key": "315191673",
+    "player_id": 32334,
+    "first_seen": "2026-09-07T07:19:49.258649+00:00",
+    "last_seen": "2026-09-10T16:53:51.997613+00:00"
+   }
+  ],
+  "published_roster": [
+   {
+    "league": "mls",
+    "source": "mlssoccer",
+    "source_player_key": "315191673",
+    "name": "Marcos Zambrano",
+    "name_folded": "marcoszambrano",
+    "team": "New England Revolution",
+    "position": "F",
+    "position_group": "Forward",
+    "updated_at": "2026-09-10T16:53:51.997613+00:00",
+    "team_code": "NE",
+    "player_id": 32334
+   }
+  ]
+ },
+ "delete_roster_315191673_before": {
+  "backup": "picks.db.bak-pre-delete-roster-315191673-20261027",
+  "published_roster": [
+   {
+    "league": "mls",
+    "source": "mlssoccer",
+    "source_player_key": "315191673",
+    "name": "Marcos Zambrano",
+    "name_folded": "marcoszambrano",
+    "team": "New England Revolution",
+    "position": "F",
+    "position_group": "Forward",
+    "updated_at": "2026-09-10T16:53:51.997613+00:00",
+    "team_code": "NE",
+    "player_id": null
+   }
+  ]
+ }
+}
