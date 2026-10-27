@@ -64,7 +64,7 @@ Needs: archived NWS forecasts issued at a fixed lead (for example 24 hours befor
 DB yet. Without it, E1 cannot be scored. Blocked on the archive; the week 8 forecasts are the first capture of this
 (snapshot date 2026-10-27).
 
-### E2. Outdoor interaction: temperature by wind (done, one cell passes the rule, not promoted)
+### E2. Outdoor interaction: temperature by wind (done; the cell re-tested with team-adjusted penalties, see below)
 
 Question: is the outdoor total effect concentrated in cold, windy games?
 
@@ -138,3 +138,31 @@ E2 candidate, not promoted:
 - Next step before any further work: adjust penalties for team, then re-test this cell on the full 2022 to 2025 sample.
 
 Still blocked: E1 (needs archived forecasts) and E6 (needs historical capacity by season).
+
+## Re-test of the E2 penalty cell, team-adjusted, all four seasons (2026-10-27)
+
+Script: `scripts/nfl_sequence/game_info/retest_penalty_cell.py`. Penalties and yards are adjusted for team tendency: each
+team's leave-one-out season average of flagged penalties committed per game, summed over the two teams. The cell is
+outdoor or retractable-open games at 50-69F with 10-14 mph wind: 42 games across 2022 to 2025.
+
+| Outcome | Effect per game | 95% CI | p | q within family (10 tests) | q across all 970 tests run |
+|---|---:|---|---:|---:|---:|
+| Flagged penalties, team-adjusted | +2.38 | [0.95, 3.69] | 0.001 | 0.010 | 0.230 |
+| Penalty yards, team-adjusted | +17.4 | [5.4, 29.7] | 0.008 | 0.038 | 0.230 |
+
+Season by season (team-adjusted penalties; the cell against the other games that season):
+
+| Season | Cell games | Effect | 95% CI |
+|---|---:|---:|---|
+| 2022 | 6 | +2.04 | [0.00, 4.17] |
+| 2023 | 15 | +1.67 | [-0.58, 3.98] |
+| 2024 | 13 | +2.15 | [-0.70, 5.16] |
+| 2025 | 8 | +3.06 | [0.33, 5.49] |
+
+Reading:
+- The sign is positive in all four seasons, and the team adjustment changes almost nothing (raw +2.14 against +2.38).
+- Within its own family the cell passes. Across every test in this guide, the q-value is 0.23, so it does not survive
+  the full search. The cell was picked from data, which is the selection problem the wider control is there to catch.
+- Per-season intervals are wide and only 2022 and 2025 exclude zero, narrowly.
+- A confirmatory test needs games that have not been used. The only unused season is 2026, which is reserved as the
+  holdout, so any confirmation needs a decision on that reservation.
