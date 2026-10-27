@@ -1,0 +1,54 @@
+# 2024 roster INA adjudication
+
+Adjudicated 34 roster `INA` occurrences that lacked a same-week, same-team, same-GSIS-ID row in the completed NFL.com inactive-list JSONL. Counts are by occurrence, so Cordarrelle Patterson is counted in Weeks 5, 6, and 7. Evidence is from official team/NFL sources. “Inactive” means an official game-day inactive listing, official gamebook `Not Active`, or a documented pregame ruling out. “Not on game roster” means a team transaction removed the player before that game. “On IR” means the team placed the player on injured reserve before kickoff. The unresolved case is retained because the source says `Did Not Play`, which is distinct from `Not Active` and from being off the game roster.
+
+## Results
+
+| Week | Team / player | GSIS ID | Adjudication | Published primary-source evidence |
+|---|---|---|---|---|
+| 1 | DET: Trevor Nowaske | `00-0038660` | Inactive | NFL gamebook lists him under Detroit `Not Active` for Rams–Lions (Sep 8). [NFL gamebook](https://static.www.nfl.com/gamecenter/7d403ecc-1312-11ef-afd1-646009f18b2e.pdf) |
+| 1 | GB: Alex McGough | `00-0034732` | Not on game roster | Packers waived/injured him Jul 19, before the regular season (announcement 3:00 p.m.). [Packers transaction announcement](https://www.packers.com/news/packers-announce-roster-moves-july-19-2024) |
+| 1 | GB: Jack Podlesny | `00-0038808` | Not on game roster | Packers released him Jun 19 (announcement 3:00 p.m.). [Packers release announcement](https://www.packers.com/news/packers-release-k-jack-podlesny-2024) |
+| 1 | NE: Jontrey Hunter | `00-0039690` | Not on game roster | Patriots announced his release Jul 22. [Patriots transaction announcement](https://www.patriots.com/news/transaction-patriots-release-rookie-lb-jontrey-hunter) |
+| 1 | NO: Nouredin Nouili | `00-0039619` | Not on game roster | Saints waived him Jul 27 (announcement 3:44 p.m.). [Saints transaction announcement](https://www.neworleanssaints.com/news/chandler-brewer-new-orleans-saints-tackle-roster-moves-waive-guard-nouri-nouili) |
+| 1 | NYG: Stantley Thomas-Oliver | `00-0036315` | Not on game roster | Giants released him with a non-football injury designation Jul 31. [Giants transaction announcement](https://www.giants.com/news/giants-claim-cornerback-mario-goodrich-off-waivers-philadelphia-eagles-clemson-stantley-thomas-oliver) |
+| 1 | PHI: Jalyx Hunt | `00-0039740` | Inactive | Eagles’ Sep 6 game-day report (6:50 p.m.) lists Hunt among seven inactive players against Green Bay. [Eagles inactives](https://www.philadelphiaeagles.com/news/packers-vs-eagles-inactives-week-1-2024) |
+| 2 | JAX: Evan Engram | `00-0033881` | Inactive | Jaguars reported he injured his hamstring in pregame warmups and was ruled out before kickoff (Sep 15). [Jaguars game report](https://www.jaguars.com/news/game-report-2024-week-2-browns-18-jaguars-13) |
+| 5 | PIT: Cordarrelle Patterson | `00-0030578` | Inactive | Steelers reported he was injured and inactive against Dallas (Oct 6, 6:50 p.m.). [Steelers Week 5 inactives](https://www.steelers.com/news/steelers-inactives-for-week-5-vs-cowboys) |
+| 6 | PIT: Cordarrelle Patterson | `00-0030578` | Inactive | Steelers reported he had been ruled out Friday and was inactive against Las Vegas (Oct 13, 2:35 p.m.). [Steelers Week 6 inactives](https://www.steelers.com/news/steelers-inactives-for-week-6-vs-raiders) |
+| 7 | PIT: Cordarrelle Patterson | `00-0030578` | Inactive | Steelers reported he was inactive after being ruled out Friday against the Jets (Oct 20, 6:50 p.m.). [Steelers Week 7 inactives](https://www.steelers.com/news/steelers-inactives-for-week-7-vs-jets) |
+| 6 | NE: Joe Milton III | `00-0039398` | Inactive | Patriots’ Oct 13 game-day report (11:32 a.m.) lists Milton among the inactives against Houston. [Patriots Week 6 inactives](https://www.patriots.com/news/week-6-inactives-texans-at-patriots) |
+| 6 | NO: Cesar Ruiz | `00-0036408` | Inactive | Saints’ Oct 13 game-day report (10:30 a.m.) lists Ruiz inactive against Tampa Bay. [Saints Week 6 inactives](https://www.neworleanssaints.com/news/new-orleans-saints-inactives-2024-nfl-week-6-tampa-bay-buccaneers-gameday) |
+| 6 | NYJ: Jalyn Holmes | `00-0034264` | Not on game roster | Jets’ transaction record says Holmes was released Oct 14, the Bills game day; he is absent from the NFL gamebook’s active and inactive lists. [Jets transactions](https://www.newyorkjets.com/team/transactions/2024) · [NFL gamebook](https://static.www.nfl.com/image/upload/v1728991843/gamecenter/7d410013-1312-11ef-afd1-646009f18b2e.pdf) |
+| 8 | PIT: Aaron Shampklin | `00-0037609` | Not on game roster | Steelers released him from the 53-player roster before the Giants game on Oct 28 (announcement 4:03 p.m.). [Steelers roster moves](https://www.steelers.com/news/steelers-make-roster-moves-ahead-of-giants-game) |
+| 8 | PIT: Roman Wilson | `00-0039739` | On IR | Steelers placed him on Reserve/Injured before the Giants game on Oct 28 (announcement 4:03 p.m.). [Steelers roster moves](https://www.steelers.com/news/steelers-make-roster-moves-ahead-of-giants-game) |
+| 9 | JAX: Gabe Davis | `00-0036196` | Inactive | Jaguars’ Nov 3 game-day report (2:35 p.m.) says he was deactivated and lists him among the inactives against Philadelphia. [Jaguars Week 9 inactives](https://www.jaguars.com/news/k000058-in-and-out-2024-week-9-brian-thomas-jr-active-gabe-davis-and-4-others-inactive) |
+| 9 | NYJ: Alijah Vera-Tucker | `00-0036979` | Inactive | Jets list him among seven inactives against Houston (Oct 31, 6:45 p.m.), after reporting he was out with an ankle injury. [Jets Week 9 inactives](https://www.newyorkjets.com/news/jets-vs-texans-game-inactives-week-9-2024) |
+| 10 | BAL: Yannick Ngakoue | `00-0033123` | Not on game roster | Ravens released him Nov 7, before Baltimore’s Week 10 game; New England claimed him Nov 8. The Patriots listed the same GSIS identity inactive Nov 10, but that is a different team-week key and is recorded as a trade-week attribution note, not an identity error. [Ravens release](https://www.baltimoreravens.com/news/keaton-mitchell-yannick-ngakoue-ravens-transactions-bengals) · [Patriots claim](https://www.patriots.com/team/transactions/2024) · [Patriots inactives](https://www.patriots.com/news/week-10-inactives-patriots-at-bears) |
+| 10 | CIN: Kendall Milton | `00-0039266` | Inactive | Bengals’ Nov 7 game-day report (6:45 p.m.) lists Milton inactive against Baltimore. [Bengals Week 10 inactives](https://www.bengals.com/news/six-bengals-inactive-for-thursday-night-football-week-10-against-ravens) |
+| 10 | NO: Lucas Patrick | `00-0033082` | Inactive | NFL gamebook for Falcons–Saints lists Patrick under New Orleans `Not Active` (game Nov 10). [NFL gamebook](https://static.www.nfl.com/image/upload/v1731324633/gamecenter/ae9d2e7e-1312-11ef-afd1-646009f18b2e.pdf) |
+| 11 | TEN: Mike Edwards | `00-0035681` | Not on game roster | Titans released him Nov 13 (5:10 p.m.), before the Nov 17 Vikings game. [Titans release report](https://www.tennesseetitans.com/news/titans-release-safety-mike-edwards) |
+| 12 | DAL: Caelen Carson | `00-0039387` | Inactive | Cowboys’ Nov 24 updates (11:30 a.m.) identify Carson among the remaining inactives against Washington. [Cowboys updates](https://www.dallascowboys.com/news/updates-november-2024) |
+| 12 | LAR: Dylan McMahon | `00-0039830` | Inactive | Rams’ Nov 24 game-day report (4:00 p.m.) lists him inactive against Philadelphia. [Rams Week 12 inactives](https://www.therams.com/news/rams-eagles-inactives-week-12-2024-sunday-night-football-rob-havenstein) |
+| 12 | TEN: Amani Hooker | `00-0035632` | Unresolved / ambiguous | NFL gamebook lists Hooker under `Did Not Play`, separate from the Titans’ `Not Active` list (game Nov 24; Titans’ inactives report was published at 10:30 a.m.). That establishes he was not formally inactive but does not fit the three requested outcome categories. [NFL gamebook](https://static.www.nfl.com/gamecenter/ae9d93ca-1312-11ef-afd1-646009f18b2e.pdf) · [Titans inactives](https://www.tennesseetitans.com/news/game-inactives-week-12-titans-at-texans) |
+| 13 | NYG: Tre Hawkins III | `00-0038403` | Inactive | Giants’ Thanksgiving game recap (Nov 28, 9:07 p.m.) lists Hawkins among the inactives against Dallas. [Giants game recap](https://www.giants.com/news/new-york-giants-vs-dallas-cowboys-recap-stats-dexter-lawrence-malik-nabers-thanksgiving) |
+| 13 | TB: Michael Pratt | `00-0039238` | Inactive | Buccaneers’ Dec 1 game-day report (2:35 p.m.) lists Pratt inactive against Carolina. [Buccaneers inactives](https://www.buccaneers.com/news/bucs-panthers-inactives-tristan-wirfs-among-nine-active-linemen) |
+| 14 | BUF: Will Clapp | `00-0034436` | Inactive | Bills’ Dec 8 report (2:54 p.m.) lists Clapp among seven inactives against the Rams. [Bills Week 14 inactives](https://www.buffalobills.com/news/bills-list-seven-players-as-inactive-at-rams-week-14) |
+| 15 | ATL: Brandon Parker | `00-0034763` | Inactive | Falcons’ Dec 16 report (6:58 p.m.) lists Parker inactive against Las Vegas. [Falcons Week 15 inactives](https://www.atlantafalcons.com/news/atlanta-falcons-inactives-for-week-15-matchup-with-las-vegas-raiders) |
+| 16 | DET: Colby Sorsdal | `00-0038592` | Inactive | NFL gamebook for Lions–Bears lists Sorsdal under Detroit `Not Active` (game Dec 22). [NFL gamebook](https://static.www.nfl.com/image/upload/v1734952107/gamecenter/45c1cfae-1313-11ef-afd1-646009f18b2e.pdf) |
+| 17 | BAL: Justice Hill | `00-0034975` | Inactive | Ravens reported Hill ruled out due to concussion and inactive against Houston (Dec 25, 3:30 p.m.). [Ravens Week 17 inactives](https://www.baltimoreravens.com/news/zay-flowers-active-keaton-mitchell-steven-sims-diontae-johnson-ravens-texans-inactives-week-17) |
+| 17 | DAL: Matt Waletzko | `00-0037266` | Inactive | Cowboys’ Dec 29 updates (11:30 a.m.) list Waletzko among the inactives against Philadelphia. [Cowboys updates](https://www.dallascowboys.com/news/updates-december-2024) |
+| 19 (Wild Card) | BUF: Brandon Codrington | `00-0039333` | Inactive | Bills’ Jan 12 report (11:29 a.m.) lists Codrington inactive against Denver. [Bills Wild Card inactives](https://www.buffalobills.com/news/buffalo-bills-list-7-players-as-inactive-vs-broncos-wild-card-weekend) |
+| 20 (Divisional) | HOU: Kendrick Green | `00-0036983` | Inactive | Texans’ Jan 18 Divisional game-day report (2:00 p.m.) lists Green inactive against Kansas City. [Texans Divisional inactives](https://www.houstontexans.com/news/inactives-no-big-surprises-for-texans-in-divisional-playoff-at-kansas-city) |
+
+## Counts
+
+| Adjudication | Occurrences |
+|---|---:|
+| Inactive | 23 |
+| Not on game roster | 9 |
+| On IR | 1 |
+| Unresolved / ambiguous | 1 |
+| **Total** | **34** |
+
+The roster snapshot has 34 occurrences across 32 unique GSIS IDs. No repository files were changed; no commit, push, or probability fitting was performed.
