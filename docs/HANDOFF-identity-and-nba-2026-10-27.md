@@ -1,6 +1,6 @@
 # Handoff: identity duplicates, NBA stakes and box scores (2026-10-27)
 
-Update, later on 2026-10-27: the Leagues Cup bind (fotmob 1738398 to 62527) was applied on dev. `spine_merge` was then run on prod with a backup first (`backend/data/picks.db.pre-spine-merge-20261027.bak`, 2.9 GB, still on disk). Prod result: 7 merges, 89 references moved, 4 keys bound. Verified: dropped IDs gone, no references left, ESPN IDs carried, `quick_check` ok, re-plan empty. The four roster-layer conflicts are unchanged on both DBs. Sections 2 and 3 below describe the state before this update.
+Update, later on 2026-10-27: the Leagues Cup bind (fotmob 1738398 to 62527) was applied on dev. `spine_merge` was then run on prod with a backup first (backup since deleted, as requested). Prod result: 7 merges, 89 references moved, 4 keys bound. Verified: dropped IDs gone, no references left, ESPN IDs carried, `quick_check` ok, re-plan empty. The four roster-layer conflicts are unchanged on both DBs. Sections 2 and 3 below describe the state before this update.
 
 Scope: the changes above were made to dev and prod. Earlier in the session, prod was read-only.
 Everything below is committed on dev. Nothing new has been pushed in this session.
@@ -28,7 +28,7 @@ Earlier in the session: `a12df86a` was pushed to `origin/feat/nba-standings-stak
 - `nba_player_boxes_nbacom`: 43 final regular-season games, 1,489 player rows. Team totals match the schedule score for all 43.
 - Seven MLS merges applied from `spine_merge`. The backup from that apply has been deleted, as requested.
 - One roster merge applied: 32596 (Miami David Ruiz) into 62630 (Red Bull New York). Two binds applied: mlssoccer 540256 to 33169 (Zambrano), and fotmob 1738398 to 62527 (Thayllon, MLS).
-- Backup still on disk: `backend/data/picks.dev.db.pre-spine-merge-roster-20261026.bak` (3.3 GB). Delete it when OK.
+- The roster-merge backup (`picks.dev.db.pre-spine-merge-roster-20261026.bak`) has been deleted, as requested.
 
 ## 3. Identity state
 
@@ -68,7 +68,6 @@ Options:
 ## 5. Other open items
 
 - Apply the planned dev bind: Leagues Cup fotmob 1738398 to 62527. One reversible write.
-- Delete the leftover backup in section 2 when OK.
 - **NBA box scores:** not scheduled, which needs a scheduler OK. Not yet wired into prop settlement, so 2026-27 props still won't settle from these rows. The SportsDataverse 2026-27 box score file still returns 404 (last checked 2026-10-26).
 - **Grade correction for game 0022600092:** the grade row stores PHX 82. nba.com has 83. The winner is right. The point, spread and total errors on G2 and G3 are off by one. Grades are meant to be immutable, so this needs a decision: a correction record is the usual choice.
 - **NFL 4-hour cadence:** this also applies to the prod run. Confirm it's wanted for prod.
