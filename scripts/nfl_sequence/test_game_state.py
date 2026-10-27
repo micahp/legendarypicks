@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import game_state as gs  # noqa: E402
+import e2_reference as er  # noqa: E402
 import game_stats  # noqa: E402
 import rules_matrix as rm  # noqa: E402
 
@@ -38,10 +39,12 @@ def certain_kicks(fg_made=True, ep_made=True):
     return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
-def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None):
+def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None,
+        overtime_try_p_two=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
     return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks,
-                        safety_kick_pool=safety_kick_pool, overtime_pool=overtime_pool)
+                        safety_kick_pool=safety_kick_pool, overtime_pool=overtime_pool,
+                        overtime_try_p_two=overtime_try_p_two)
 
 
 # An observed overtime drive that runs the period out with no score: a 0-0 regulation game ends as a tie.
@@ -821,6 +824,36 @@ class OvertimeCompletedRules(unittest.TestCase):
         self.assertFalse(game._article_5a_applies('B', 'turnover', 'other'))
         game.overtime['first_possession_scored'] = False
         self.assertFalse(game._article_5a_applies('B', 'turnover', 'interception'))
+
+
+class OvertimeConditionalTry(unittest.TestCase):
+    """The overtime try fallback is conditional on the margin the try is taken from, and is labelled as such."""
+
+    TD = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0, 'next_offense': None,
+          'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
+
+    def test_margin_buckets_match_the_fitted_table(self):
+        self.assertEqual(gs.try_margin_bucket(-2), '-4..-1')
+        self.assertEqual(gs.try_margin_bucket(0), '0')
+        self.assertEqual(gs.try_margin_bucket(7), '5..8')
+        self.assertEqual(gs.try_margin_bucket(-12), '<=-9')
+
+    def test_the_fallback_table_is_loaded_and_checked(self):
+        table, sha = er.load_overtime_try_fallback()
+        self.assertEqual(set(table), {'<=-9', '-8..-5', '-4..-1', '0', '1..4', '5..8', '>=9'})
+        self.assertTrue(all(0.0 <= p <= 1.0 for p in table.values()))
+        self.assertEqual(len(sha), 64)
+
+    def test_a_fallback_try_takes_the_probability_of_its_margin(self):
+        always_two = {bucket: 1.0 for bucket in ('<=-9', '-8..-5', '-4..-1', '0', '1..4', '5..8', '>=9')}
+        kicks = certain_kicks()
+        kicks['two_point'] = (40, 0)  # a populated two-point cell: the table, not a thin cell, decides the try
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), kicks=kicks, overtime_pool=[self.TD],
+                                     overtime_try_p_two=always_two), winner_choice='receive', max_drives=80)
+        first = next(d for d in record['drives'] if d['quarter_start'] == 5)
+        self.assertEqual(first['try_source'], 'conditional_try_fallback')
+        self.assertEqual(first['points_scored_on_drive']['try']['kind'], 'two_point')
+        gs.validate_game(record)
 
 
 class ScopedOut(unittest.TestCase):

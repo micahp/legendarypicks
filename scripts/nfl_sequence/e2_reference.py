@@ -18,6 +18,7 @@ import measure_kick_outcomes as mk  # noqa: E402
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
 OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
+TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -98,6 +99,10 @@ def _reference_fingerprint(reference):
         for drive in reference.overtime_pool:
             add(['overtime-drive', drive])
         add(['overtime-source-sha256', reference.overtime_sha256])
+    if getattr(reference, 'overtime_try_p_two', None) is not None:
+        for bucket in sorted(reference.overtime_try_p_two):
+            add(['overtime-try-fallback', bucket, reference.overtime_try_p_two[bucket]])
+        add(['overtime-try-fallback-sha256', reference.overtime_try_sha256])
     if getattr(reference, 'overtime_toss', None) is not None:
         add(['overtime-toss-override', reference.overtime_toss])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
@@ -211,6 +216,24 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
                             'timeout': t, 'timeout_team': t_team,
                             'out_of_bounds': oob}
     return out
+
+
+def load_overtime_try_fallback(path=TRY_FALLBACK):
+    """The conditional overtime try table: the two-point probability for each margin bucket (overtime cells of the fitted
+    table). The file is checked against its manifest before any row is read."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'try fallback checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    table = {r['margin_bucket']: float(r['p_two']) for r in rows if r['group'] == 'ot'}
+    if len(table) != len([b for b in rows if b['group'] == 'ot']):
+        raise ValueError('duplicate overtime margin bucket in the try fallback')
+    if not all(0.0 <= p <= 1.0 for p in table.values()):
+        raise ValueError('try fallback probability outside [0, 1]')
+    return table, source_hash
 
 
 def load_overtime_drive_pool(path=OVERTIME_DRIVES):
@@ -343,9 +366,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
     safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
     overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
+    try_fallback, try_fallback_sha = load_overtime_try_fallback() if overtime_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
                              load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
-                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss)
+                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
+                             overtime_try_p_two=try_fallback)
+    reference.overtime_try_sha256 = try_fallback_sha
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db)

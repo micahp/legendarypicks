@@ -226,7 +226,8 @@ class Reference:
     """
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
-                 try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None, overtime_toss=None):
+                 try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None, overtime_toss=None,
+                 overtime_try_p_two=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         # None keeps a safety free kick blocked. A list is the observed safety-kick table, sampled only for a safety kick.
@@ -235,6 +236,8 @@ class Reference:
         self.overtime_pool = overtime_pool
         # None is the seeded uniform first possession; 'A' or 'B' forces it, for the sensitivity runs.
         self.overtime_toss = overtime_toss
+        # Overtime try fallback: a two-point probability for each margin bucket, from the try-decision table (2022-2025).
+        self.overtime_try_p_two = overtime_try_p_two
         self.kicks = kicks
         self.participants = participants
         self.missed_field_goal_pool = missed_field_goal_pool or {}
@@ -444,6 +447,17 @@ def try_record(kind, made):
     """A try record: the kind, the made flag, and the publisher field for the kind (`extra_point_result` or
     `two_point_conv_result`), carrying the publisher value that matches the made flag."""
     return {'kind': kind, 'made': made, TRY_PUBLISHER_FIELD[kind]: TRY_PUBLISHER_VALUE[kind][made]}
+
+
+TRY_MARGIN_BUCKETS = ((-999, -9, '<=-9'), (-8, -5, '-8..-5'), (-4, -1, '-4..-1'), (0, 0, '0'), (1, 4, '1..4'),
+                      (5, 8, '5..8'), (9, 999, '>=9'))  # the same buckets as build_try_fallback.py
+
+
+def try_margin_bucket(margin):
+    for low, high, label in TRY_MARGIN_BUCKETS:
+        if low <= margin <= high:
+            return label
+    raise ValueError(margin)
 
 
 def _try_after_touchdown(rng, kicks, p_two=None):
@@ -960,15 +974,21 @@ class _Game:
                                    'try': try_record(sample['try_kind'], sample['try_made'])}
                 try_source = 'observed_point_after'
             else:
-                # No point after was observed: the old rule ended the game without one. The try is drawn from the regulation
-                # rates and labelled as that fallback.
-                try_points, try_rec, why = _try_after_touchdown(self.rng, self.ref.kicks)
+                # No point after was observed: the old rule ended the game without one. The try is drawn from the conditional
+                # try table for the margin it is taken from; without that table it falls back to the regulation rates.
+                if self.ref.overtime_try_p_two is not None:
+                    margin = self.points[scorer] - self.points[other(scorer, self.ledger.teams)]
+                    p_two = self.ref.overtime_try_p_two[try_margin_bucket(margin)]
+                    source = 'conditional_try_fallback'
+                else:
+                    p_two, source = None, 'regulation_try_rates_fallback'
+                try_points, try_rec, why = _try_after_touchdown(self.rng, self.ref.kicks, p_two)
                 if why:
                     self.block(why)
                     return
                 self.points[scorer] += try_points
                 points_on_drive = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_rec}
-                try_source = 'regulation_try_rates_fallback'
+                try_source = source
         drive = {'index': len(self.drives) + 1, 'offense_team': offense, 'quarter_start': 5, 'clock_start': clock,
                  'plays': [], 'terminal': OVERTIME_TERMINAL[outcome], 'end_quarter': 5, 'end_clock': self.clock,
                  'points_scored_on_drive': points_on_drive, 'try_source': try_source,
