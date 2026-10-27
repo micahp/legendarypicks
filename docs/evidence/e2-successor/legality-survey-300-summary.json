@@ -1,0 +1,554 @@
+{
+ "blocked_described_complete": 0,
+ "blocked_never_complete": true,
+ "complete_but_unmodelled": 0,
+ "complete_game": 0,
+ "complete_regulation": 0,
+ "drive_index_mismatch_drives": 0,
+ "drive_index_mismatch_states": 0,
+ "drive_index_states_checked": 87740,
+ "guarded_described_complete": 0,
+ "legal_complete_game": 0,
+ "legal_modelled": 300,
+ "legal_modelled_illegal": [],
+ "matches_frozen_survey": 281,
+ "matrix_fail_rows": 0,
+ "mismatches_vs_frozen": [
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 9,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 4,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 9
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 36,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 36
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
+    "seed": 48,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 48
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: two_minute_warning",
+    "seed": 55,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 55
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 78,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 4,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 78
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 87,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 87
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 114,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 114
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 163,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 163
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 175,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 4,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 175
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 185,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 185
+  },
+  {
+   "engine_now": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "rare kick outcome;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 194,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 194
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
+    "seed": 216,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 216
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 246,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 246
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: two_minute_warning",
+    "seed": 267,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 267
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 276,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 276
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 279,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 279
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: missed_field_goal_return;unmodelled transition: timeout;unmodelled transition: two_minute_warning",
+    "seed": 280,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 4,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 280
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": false,
+    "scope_out": "overtime;unmodelled transition: two_minute_warning",
+    "seed": 290,
+    "status": "blocked",
+    "try_findings": 0,
+    "unmodelled_transitions": 2,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 290
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "check_unmodelled",
+    "complete_game": false,
+    "complete_regulation": false,
+    "legal_complete_game": false,
+    "legal_modelled": true,
+    "matrix_fail": 0,
+    "record_mode": "legal_game_state_first_piece",
+    "regulation_end_reached": true,
+    "scope_out": "unmodelled transition: missed_field_goal_return;unmodelled transition: two_minute_warning",
+    "seed": 291,
+    "status": "regulation_end_guarded",
+    "try_findings": 0,
+    "unmodelled_transitions": 3,
+    "valid_full_game": false
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 291
+  }
+ ],
+ "record_mode": {
+  "legal_game_state_first_piece": 300
+ },
+ "records_with_unmodelled_transitions": 300,
+ "regulation_end_guarded": 288,
+ "regulation_end_reached": 288,
+ "scope_out_seeds": {
+  "drive limit": 0,
+  "other": 0,
+  "overtime": 11,
+  "penalty": 0,
+  "rare kick outcome": 1,
+  "thin E1 pool cell": 0
+ },
+ "seeds": 300,
+ "source": {
+  "base_model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "producer_file_sha256": {
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "producer_worktree_dirty": true,
+  "source_file_sha256": {
+   "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+   "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+   "scripts/nfl_sequence/e2_reference.py": "4b60136a0f27b981c75ad61588d0a1922882d181c1c33d80022463cd0ac1ea1d",
+   "scripts/nfl_sequence/game_state.py": "1aecd89deb8df8eab1405298c05def40de3d215b1b75c3b969e6f2d28b54d09b",
+   "scripts/nfl_sequence/rules_matrix.py": "9cff1e00cb3d7d8895cdfb94e104d88ca3fd38c527f201b3aedb6fb8e9e1bb4d",
+   "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0"
+  },
+  "source_tree_sha256": "79a65db640e587798f2a067853a3ba8f723aadfbb10e3021cddb3c92ec08c117"
+ },
+ "status": {
+  "blocked": 12,
+  "regulation_end_guarded": 288
+ },
+ "try_findings_total": 0,
+ "valid_full_game": 0,
+ "valid_full_game_definition": "Shared-v1 pregame_full_game claim; it requires independently passing applicable game-state checks plus scheduled game identity, pregame as-of and kickoff, roster/snapshot provenance, and no unsupported transition. It is distinct from a complete model-scoped regulation record.",
+ "validate_game_passed": 300
+}

@@ -1,0 +1,2457 @@
+{
+  "schema": "lp-nfl-rule-regime-registry-2",
+  "created_date": "2026-10-26",
+  "updated_date": "2026-10-26",
+  "dataset_seasons": [
+    2010,
+    2026
+  ],
+  "scope": "Adopted NFL on-field playing-rule amendments, expiry of temporary playing rules, and explicitly classified football competition-format changes. League bylaws/transaction resolutions are separate and not part of this on-field registry.",
+  "completeness_claim": "annual_adopted_change_list_substantially_reconstructed_not_exhaustive_line_by_line_rulebook_diff",
+  "critical_limitations": [
+    "2010-2013 and 2015 are reconstructed from contemporaneous adopted-rule reporting and official NFL safety chronology; original year-specific final rulebook amendment matrices and every supplemental in-season ruling have not all been checked.",
+    "2014 and 2016-2026 entries are anchored to published NFL rulebook change tables or approved-proposal listings. Full line-by-line edition diffs and later in-season interpretations are not proved complete.",
+    "2019 permanent replay/2020 transition may be described in both enactment and permanency/expiry records; count registry records, not unique legal amendments.",
+    "2026 work-stoppage replay rule is a contingent approval, NOT an unconditionally activated on-field rule.",
+    "Official rules sometimes use changed section numbering across years; exact old-text/new-text paragraphs must be extracted before automated legality enforcement.",
+    "Rulebook PDFs indexed by search were not all available for direct page-by-page retrieval during this audit. Links should be revalidated and document hashes pinned before claiming completed full-document verification.",
+    "Proposals voted down, tabled, or withdrawn are not treated as adopted."
+  ],
+  "year_audit": [
+    {
+      "season": 2010,
+      "source_id": "Y2010",
+      "record_count": 8,
+      "source_quality": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "supplemental_source_url": "https://www.nfl.com/news/owners-approve-new-player-safety-rules-weigh-expanding-ot-rule-09000d5d8171f72f"
+    },
+    {
+      "season": 2011,
+      "source_id": "Y2011",
+      "record_count": 7,
+      "source_quality": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "supplemental_source_url": "https://www.patriots.com/news/nfl-moves-kickoffs-to-35-yard-line-touchbacks-unchanged-170806",
+      "edition_url": "https://nyc3.digitaloceanspaces.com/sportsarchive-documents/prod/60ea28a02dac3/NFL%20-%202011%20-%20Rulebook.pdf"
+    },
+    {
+      "season": 2012,
+      "source_id": "Y2012",
+      "record_count": 5,
+      "source_quality": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "supplemental_source_url": "https://www.nbcsports.com/nfl/profootballtalk/rumor-mill/news/nfl-rule-changes-for-2012"
+    },
+    {
+      "season": 2013,
+      "source_id": "Y2013",
+      "record_count": 9,
+      "source_quality": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "supplemental_source_url": "https://www.philadelphiaeagles.com/news/rule-changes-focus-on-player-safety-9754576",
+      "edition_url": "https://www.nfl.info/download/2012MediaGuides/2013%20NFL%20Rule%20Book.pdf"
+    },
+    {
+      "season": 2014,
+      "source_id": "Y2014",
+      "record_count": 6,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "supplemental_source_url": "https://www.steelers.com/news/nfl-owners-pass-rules-others-voted-down-12811203"
+    },
+    {
+      "season": 2015,
+      "source_id": "Y2015",
+      "record_count": 10,
+      "source_quality": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "supplemental_source_url": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
+      "edition_url": "https://operations.nfl.com/media/1807/2015_nfl_rule_book_final.pdf"
+    },
+    {
+      "season": 2016,
+      "source_id": "Y2016",
+      "record_count": 9,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "supplemental_source_url": "https://www.buccaneers.com/news/complete-list-of-nfl-rule-changes-for-2016-16956863"
+    },
+    {
+      "season": 2017,
+      "source_id": "Y2017",
+      "record_count": 9,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "supplemental_source_url": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2017-season-18691046"
+    },
+    {
+      "season": 2018,
+      "source_id": "Y2018",
+      "record_count": 8,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "supplemental_source_url": "https://www.nfl.com/news/owners-approve-changes-to-kickoff-use-of-helmet-0ap3000000933891"
+    },
+    {
+      "season": 2019,
+      "source_id": "Y2019",
+      "record_count": 9,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "supplemental_source_url": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2019-season"
+    },
+    {
+      "season": 2020,
+      "source_id": "Y2020",
+      "record_count": 7,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "supplemental_source_url": "https://www.neworleanssaints.com/news/nfl-owners-approve-three-rule-changes-for-2020-season"
+    },
+    {
+      "season": 2021,
+      "source_id": "Y2021",
+      "record_count": 8,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "supplemental_source_url": "https://www.chargers.com/news/approved-2021-nfl-rule-changes-bylaws"
+    },
+    {
+      "season": 2022,
+      "source_id": "Y2022",
+      "record_count": 2,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/5kvgzyss/2022-nfl-rulebook-final.pdf",
+      "supplemental_source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/"
+    },
+    {
+      "season": 2023,
+      "source_id": "Y2023",
+      "record_count": 10,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "supplemental_source_url": "https://www.tennesseetitans.com/news/from-the-nfl-owners-meetings-approved-2023-playing-rules-bylaws-and-resolutions"
+    },
+    {
+      "season": 2024,
+      "source_id": "Y2024",
+      "record_count": 6,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "supplemental_source_url": "https://www.giants.com/news/nfl-announces-rule-changes-for-2024-hip-drop-tackle-challenge-kickoff"
+    },
+    {
+      "season": 2025,
+      "source_id": "Y2025",
+      "record_count": 6,
+      "source_quality": "published_rulebook_changes_table_audited",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "supplemental_source_url": "https://operations.nfl.com/rules-officiating/featured-rules"
+    },
+    {
+      "season": 2026,
+      "source_id": "Y2026",
+      "record_count": 5,
+      "source_quality": "official_approved_listing_with_conditional_rule_separated",
+      "adopted_summary_reviewed": true,
+      "annual_rulebook_line_diff_complete": false,
+      "unverified_inseason_interpretations": true,
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "supplemental_source_url": "https://www.nfl.com/news/nfl-announces-new-playing-rules-bylaws-resolutions-for-2026"
+    }
+  ],
+  "source_registry": {
+    "Y2010": {
+      "kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "supplement": "https://www.nfl.com/news/owners-approve-new-player-safety-rules-weigh-expanding-ot-rule-09000d5d8171f72f",
+      "status": "contemporaneous_summary_not_exhaustive_proposal_reconciliation"
+    },
+    "Y2011": {
+      "kind": "Contemporaneous NFL club reports (March and May)",
+      "url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "supplement": "https://www.patriots.com/news/nfl-moves-kickoffs-to-35-yard-line-touchbacks-unchanged-170806",
+      "status": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "edition_url": "https://nyc3.digitaloceanspaces.com/sportsarchive-documents/prod/60ea28a02dac3/NFL%20-%202011%20-%20Rulebook.pdf"
+    },
+    "Y2012": {
+      "kind": "Contemporaneous owners' adopted-change listing",
+      "url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "supplement": "https://www.nbcsports.com/nfl/profootballtalk/rumor-mill/news/nfl-rule-changes-for-2012",
+      "status": "adopted_proposals_reconciled_to_contemporaneous_summary"
+    },
+    "Y2013": {
+      "kind": "Contemporaneous officiating review + club report",
+      "url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "supplement": "https://www.philadelphiaeagles.com/news/rule-changes-focus-on-player-safety-9754576",
+      "status": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "edition_url": "https://www.nfl.info/download/2012MediaGuides/2013%20NFL%20Rule%20Book.pdf"
+    },
+    "Y2014": {
+      "kind": "Official NFL rulebook: 2014 Rules Changes",
+      "url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "supplement": "https://www.steelers.com/news/nfl-owners-pass-rules-others-voted-down-12811203",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2015": {
+      "kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "supplement": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
+      "status": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "edition_url": "https://operations.nfl.com/media/1807/2015_nfl_rule_book_final.pdf"
+    },
+    "Y2016": {
+      "kind": "Official NFL rulebook 2016 Rules Changes",
+      "url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "supplement": "https://www.buccaneers.com/news/complete-list-of-nfl-rule-changes-for-2016-16956863",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2017": {
+      "kind": "Official NFL 2017 playing-rules change sheet",
+      "url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "supplement": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2017-season-18691046",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2018": {
+      "kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "supplement": "https://www.nfl.com/news/owners-approve-changes-to-kickoff-use-of-helmet-0ap3000000933891",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2019": {
+      "kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "supplement": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2019-season",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2020": {
+      "kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "supplement": "https://www.neworleanssaints.com/news/nfl-owners-approve-three-rule-changes-for-2020-season",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2021": {
+      "kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "supplement": "https://www.chargers.com/news/approved-2021-nfl-rule-changes-bylaws",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2022": {
+      "kind": "Official NFL 2022 rulebook changes",
+      "url": "https://operations.nfl.com/media/5kvgzyss/2022-nfl-rulebook-final.pdf",
+      "supplement": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2023": {
+      "kind": "Official NFL 2023 rulebook changes",
+      "url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "supplement": "https://www.tennesseetitans.com/news/from-the-nfl-owners-meetings-approved-2023-playing-rules-bylaws-and-resolutions",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2024": {
+      "kind": "Official NFL 2024 rulebook changes",
+      "url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "supplement": "https://www.giants.com/news/nfl-announces-rule-changes-for-2024-hip-drop-tackle-challenge-kickoff",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2025": {
+      "kind": "Official NFL 2025 rulebook changes",
+      "url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "supplement": "https://operations.nfl.com/rules-officiating/featured-rules",
+      "status": "published_rulebook_changes_table_audited"
+    },
+    "Y2026": {
+      "kind": "Official NFL 2026 rulebook and approved proposals",
+      "url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "supplement": "https://www.nfl.com/news/nfl-announces-new-playing-rules-bylaws-resolutions-for-2026",
+      "status": "official_approved_listing_with_conditional_rule_separated"
+    }
+  },
+  "changes": [
+    {
+      "rule_ref": "16 OT",
+      "domain": "overtime",
+      "description": "Postseason-only modified-sudden-death overtime: an opening field goal permits reply; opening touchdown can end game",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-01"
+    },
+    {
+      "rule_ref": "9 / 12",
+      "domain": "special_teams",
+      "description": "Defensive alignment restrictions protect the long snapper on kicks",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-02"
+    },
+    {
+      "rule_ref": "4 / 14",
+      "domain": "penalty_enforcement",
+      "description": "Dead-ball personal fouls after an expired half enforced on the following kickoff",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-03"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Stronger head-and-neck protection for players who have just made a catch",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-04"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Prohibits specified blows to head/neck of all defenseless players",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-05"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Expands protections for kickers and punters during kick/return and quarterbacks following a turnover",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-06"
+    },
+    {
+      "rule_ref": "7",
+      "domain": "ball_dead",
+      "description": "Running play becomes dead at the point where the ballcarrier loses helmet",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-07"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "safety",
+      "description": "Clarifies expanded launching/forcible hits against defenseless players (confirm distinct adopted text against 2010 book)",
+      "source_id": "Y2010",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_kind": "NFL contemporaneous league chronology + approved-meeting reporting",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2010,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2010-08"
+    },
+    {
+      "rule_ref": "6-1",
+      "domain": "kickoff",
+      "description": "Kickoff line from own 30 to own 35",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-01"
+    },
+    {
+      "rule_ref": "6-1",
+      "domain": "kickoff",
+      "description": "Limits kicking team run-up to five yards before free kick",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-02"
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "Scoring plays are automatically reviewable by booth; retains third coach challenge if first two succeed",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-03"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Expands post-catch defenseless window until receiver can ward off impending contact",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-04"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Expands protection to kickers/punters on returns and quarterbacks following possession change",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-05"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "unnecessary_roughness",
+      "description": "Explicit launching prohibition in relevant forcible contact",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-06"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "roughing_passer",
+      "description": "Qualifies quarterback head-contact prohibition as forcible blows rather than incidental brush",
+      "source_id": "Y2011",
+      "source_url": "https://www.philadelphiaeagles.com/news/three-rule-changes-approved-at-meetings-5054336",
+      "source_kind": "Contemporaneous NFL club reports (March and May)",
+      "verification": "contemporaneous_summary_not_exhaustive_proposal_reconciliation",
+      "adoption_status": "adopted",
+      "effective_from_season": 2011,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2011-07"
+    },
+    {
+      "rule_ref": "16",
+      "domain": "overtime",
+      "description": "Modified sudden-death overtime applies to regular season as well as postseason",
+      "source_id": "Y2012",
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "source_kind": "Contemporaneous owners' adopted-change listing",
+      "verification": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adoption_status": "adopted",
+      "effective_from_season": 2012,
+      "season_types": [
+        "REG"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2012-01"
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "Replay official can automatically review turnovers",
+      "source_id": "Y2012",
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "source_kind": "Contemporaneous owners' adopted-change listing",
+      "verification": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adoption_status": "adopted",
+      "effective_from_season": 2012,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2012-02"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Defenders receiving crackback blocks gain defenseless protections against hits to head/neck",
+      "source_id": "Y2012",
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "source_kind": "Contemporaneous owners' adopted-change listing",
+      "verification": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adoption_status": "adopted",
+      "effective_from_season": 2012,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2012-03"
+    },
+    {
+      "rule_ref": "7 / 5",
+      "domain": "substitution",
+      "description": "Twelve or more players at snap-imminent formation becomes dead-ball foul under specified conditions",
+      "source_id": "Y2012",
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "source_kind": "Contemporaneous owners' adopted-change listing",
+      "verification": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adoption_status": "adopted",
+      "effective_from_season": 2012,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2012-04"
+    },
+    {
+      "rule_ref": "12 / 8",
+      "domain": "penalty_enforcement",
+      "description": "Illegally kicking loose ball incurs loss of down",
+      "source_id": "Y2012",
+      "source_url": "https://www.panthers.com/news/rule-changes-adopted-7111040",
+      "source_kind": "Contemporaneous owners' adopted-change listing",
+      "verification": "adopted_proposals_reconciled_to_contemporaneous_summary",
+      "adoption_status": "adopted",
+      "effective_from_season": 2012,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2012-05"
+    },
+    {
+      "rule_ref": "8",
+      "domain": "fumble",
+      "description": "Eliminates tuck rule; passer losing ball during tuck can be ruled a fumble",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-01"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "unnecessary_roughness",
+      "description": "Open-field runners or tacklers may not initiate forcible contact with crown of helmet",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-02"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "blocking",
+      "description": "Peel-back blocks below waist prohibited across tackle box and elsewhere",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-03"
+    },
+    {
+      "rule_ref": "9 / 12",
+      "domain": "special_teams",
+      "description": "FG/PAT kick formations restrict defense to at most six players per side of snapper",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-04"
+    },
+    {
+      "rule_ref": "9 / 12",
+      "domain": "special_teams",
+      "description": "Prohibits pushing a teammate into kick blockers and protects long snapper",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-05"
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "Erroneous coach challenge of automatically reviewable play no longer suppresses actual booth review; timeout/penalty applies",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-06"
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "Changes replay handling of a dropped catch potentially ruled catch-fumble-recovery",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-07"
+    },
+    {
+      "rule_ref": "5",
+      "domain": "equipment",
+      "description": "Mandatory thigh and knee pads for specified field players",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-08"
+    },
+    {
+      "rule_ref": "5",
+      "domain": "player_numbers",
+      "description": "Expands eligible numbers for tight ends and H-backs",
+      "source_id": "Y2013",
+      "source_url": "https://www.footballzebras.com/2013/09/summary-of-2013-rules-changes/",
+      "source_kind": "Contemporaneous officiating review + club report",
+      "verification": "contemporaneous_summary_not_full_annual_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2013,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2013-09"
+    },
+    {
+      "rule_ref": "1-3",
+      "domain": "field_equipment",
+      "description": "Uprights raised five feet above the crossbar",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-01"
+    },
+    {
+      "rule_ref": "4-3-2,4-4",
+      "domain": "clock",
+      "description": "Game clock remains running after QB sack outside the final two minutes of each half",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-02"
+    },
+    {
+      "rule_ref": "12-2-1,12-2-6,3-5",
+      "domain": "blocking",
+      "description": "Expands prohibition on rolling up the side of defender legs",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-03"
+    },
+    {
+      "rule_ref": "14-3-5,14-4-2/3",
+      "domain": "penalty_enforcement",
+      "description": "Certain defensive fouls behind line and post-possession punt fouls receive revised enforcement spot",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-04"
+    },
+    {
+      "rule_ref": "15-2-3",
+      "domain": "replay",
+      "description": "Referee can consult NFL officiating department during replay",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-05"
+    },
+    {
+      "rule_ref": "15-2-4",
+      "domain": "replay",
+      "description": "Loose-ball recovery in field of play becomes reviewable",
+      "source_id": "Y2014",
+      "source_url": "https://operations.nfl.com/images/content/rules/2014rulebook.pdf",
+      "source_kind": "Official NFL rulebook: 2014 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2014,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2014-06"
+    },
+    {
+      "rule_ref": "11-3",
+      "domain": "extra_point",
+      "description": "One-point try kick snap moved to defensive 15 for a one-year experiment (made permanent 2016)",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-01",
+      "trial_until": 2015
+    },
+    {
+      "rule_ref": "11-3",
+      "domain": "try_scoring",
+      "description": "Defense may return blocked/missed try or failed two-point attempt for two points (initial 2015 experiment)",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-02",
+      "trial_until": 2015
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "End-of-half/game clock errors are reviewable and eligible clock time can be restored",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-03"
+    },
+    {
+      "rule_ref": "9 / 12",
+      "domain": "special_teams",
+      "description": "Defensive players barred from pushing teammates into punt, FG or try kick formations",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-04"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "blocking",
+      "description": "Peel-back blocking prohibition expands to all offensive players",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-05"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "defenseless_player",
+      "description": "Intended receiver in immediate continuing action after interception receives protection",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-06"
+    },
+    {
+      "rule_ref": "14",
+      "domain": "penalty_enforcement",
+      "description": "Dead-ball unsportsmanlike and taunting at end of first half carried to next kickoff",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-07"
+    },
+    {
+      "rule_ref": "12",
+      "domain": "blocking",
+      "description": "H-back/backfield chop-block exception outside tackle box eliminated",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-08"
+    },
+    {
+      "rule_ref": "5",
+      "domain": "player_numbers",
+      "description": "Linebackers permitted numbers 40-49",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-09"
+    },
+    {
+      "rule_ref": "5",
+      "domain": "legal_formation",
+      "description": "Ineligible-reported offensive player with eligible jersey number must line up inside core/tackle box",
+      "source_id": "Y2015",
+      "source_url": "https://www.vikings.com/news/15-notes-about-2015-nfl-meetings-15076924",
+      "source_kind": "Adopted meeting rules and separate May 2015 rule vote",
+      "verification": "adopted_proposals_and_May_vote_not_full_amendment_diff",
+      "adoption_status": "adopted",
+      "effective_from_season": 2015,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2015-10"
+    },
+    {
+      "rule_ref": "4-5-1,4-6-5",
+      "domain": "clock",
+      "description": "Invalid extra timeout request penalized for delay of game",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-01"
+    },
+    {
+      "rule_ref": "5-3-3",
+      "domain": "communications",
+      "description": "Sideline or booth-based play caller may use coach-to-player system",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-02"
+    },
+    {
+      "rule_ref": "8-1-8",
+      "domain": "illegal_pass",
+      "description": "Player out of bounds first touching forward pass changes enforcement to loss of down",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-03"
+    },
+    {
+      "rule_ref": "11-3-1/2",
+      "domain": "extra_point",
+      "description": "15-yard try kick and defensive try return made permanent",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-04"
+    },
+    {
+      "rule_ref": "11-6-3",
+      "domain": "kickoff",
+      "description": "Free-kick touchback moved to 25 (one-year trial)",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-05",
+      "trial_until": 2017
+    },
+    {
+      "rule_ref": "12-2-3",
+      "domain": "blocking",
+      "description": "All chop blocks prohibited",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-06"
+    },
+    {
+      "rule_ref": "12-2-15",
+      "domain": "unnecessary_roughness",
+      "description": "Horse-collar expands to jersey nameplate area",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-07"
+    },
+    {
+      "rule_ref": "12-4-1",
+      "domain": "disqualification",
+      "description": "Two specified unsportsmanlike fouls trigger ejection (one-year trial)",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-08",
+      "trial_until": 2016
+    },
+    {
+      "rule_ref": "14-5-2",
+      "domain": "penalty_enforcement",
+      "description": "Eliminates multiple spots for double-foul enforcement after possession changes",
+      "source_id": "Y2016",
+      "source_url": "https://operations.nfl.com/media/2224/2016-nfl-rulebook.pdf",
+      "source_kind": "Official NFL rulebook 2016 Rules Changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2016,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2016-09"
+    },
+    {
+      "rule_ref": "4-7-1/2/4",
+      "domain": "clock",
+      "description": "Actions to illegally conserve time apply after two-minute warning",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-01"
+    },
+    {
+      "rule_ref": "11-6-3",
+      "domain": "kickoff",
+      "description": "Free-kick touchback to 25 extended for one year",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-02",
+      "trial_until": 2017
+    },
+    {
+      "rule_ref": "12-2-2",
+      "domain": "blocking",
+      "description": "Expands crackback rule to moving backfield blockers",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-03"
+    },
+    {
+      "rule_ref": "12-2-7",
+      "domain": "defenseless_player",
+      "description": "Receiver running a route designated defenseless",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-04"
+    },
+    {
+      "rule_ref": "12-3-1",
+      "domain": "special_teams",
+      "description": "Prohibits leaping over line to block field goal or try",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-05"
+    },
+    {
+      "rule_ref": "12-3-3",
+      "domain": "clock",
+      "description": "Deliberate simultaneous multiple fouls to manipulate game clock prohibited",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-06"
+    },
+    {
+      "rule_ref": "12-4-1",
+      "domain": "disqualification",
+      "description": "Two-unsportsmanlike-fouls automatic ejection made permanent",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-07"
+    },
+    {
+      "rule_ref": "15-2-3",
+      "domain": "replay",
+      "description": "Handheld replay and designated centralized officiating decision authority",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-08"
+    },
+    {
+      "rule_ref": "16-1-4",
+      "domain": "overtime",
+      "description": "Regular-season and preseason overtime cut from 15 to 10 minutes",
+      "source_id": "Y2017",
+      "source_url": "https://operations.nfl.com/media/2646/2017-playing-rules.pdf",
+      "source_kind": "Official NFL 2017 playing-rules change sheet",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2017,
+      "season_types": [
+        "REG",
+        "PRE"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2017-09"
+    },
+    {
+      "rule_ref": "4-8-2",
+      "domain": "extra_point",
+      "description": "Meaningless try after touchdown on last down of regulation no longer required",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-01"
+    },
+    {
+      "rule_ref": "6-1-3,6-2-1",
+      "domain": "kickoff",
+      "description": "Kickoff formation, blocking, touchback and run-up rules extensively revised for one-year test",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-02",
+      "trial_until": 2018
+    },
+    {
+      "rule_ref": "8-1-3",
+      "domain": "pass_completion",
+      "description": "Changes legal catch standard and removes going-to-ground requirement",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-03"
+    },
+    {
+      "rule_ref": "11-6-3",
+      "domain": "kickoff",
+      "description": "25-yard free-kick touchback made permanent",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-04",
+      "effective_through_season": 2023
+    },
+    {
+      "rule_ref": "12-2-8",
+      "domain": "unnecessary_roughness",
+      "description": "Lowering head to initiate contact with helmet prohibited",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-05"
+    },
+    {
+      "rule_ref": "12-5-1",
+      "domain": "penalty_enforcement",
+      "description": "Illegal batting and illegal kicking penalties standardized",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-06"
+    },
+    {
+      "rule_ref": "15-2-2",
+      "domain": "disqualification",
+      "description": "New York officiating can order disqualification for flagrant nonfootball act called on field",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-07"
+    },
+    {
+      "rule_ref": "16-1-3",
+      "domain": "overtime",
+      "description": "Second possession turnover down after opening FG runs to conclusion including scoring",
+      "source_id": "Y2018",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_kind": "Official NFL 2018 rulebook changes table + later kickoff vote",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2018,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2018-08"
+    },
+    {
+      "rule_ref": "6-1-3,6-2-1",
+      "domain": "kickoff",
+      "description": "2018 kickoff alignment and blocking changes made permanent",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-01",
+      "effective_through_season": 2023
+    },
+    {
+      "rule_ref": "11-4-2",
+      "domain": "special_teams",
+      "description": "Adjusts missed field-goal special handling",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-02"
+    },
+    {
+      "rule_ref": "12-2-7",
+      "domain": "blocking",
+      "description": "Expands blindside block prohibition",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-03"
+    },
+    {
+      "rule_ref": "12-3-1(r)",
+      "domain": "special_teams",
+      "description": "Modifies leaping over line requirements on scrimmage kicks",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-04"
+    },
+    {
+      "rule_ref": "14-2-3",
+      "domain": "penalty_enforcement",
+      "description": "Revises enforcement for opponent foul during touchdown and next try/kick",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-05"
+    },
+    {
+      "rule_ref": "14-5-2",
+      "domain": "penalty_enforcement",
+      "description": "Revises double-foul enforcement following possession change",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-06"
+    },
+    {
+      "rule_ref": "15-1-2",
+      "domain": "replay",
+      "description": "Expands automatic review of overturned scores and turnovers negated by foul and all tries",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-07"
+    },
+    {
+      "rule_ref": "15-3-10",
+      "domain": "replay",
+      "description": "For 2019 only makes pass interference calls and noncalls reviewable",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-08",
+      "trial_until": 2019
+    },
+    {
+      "rule_ref": "15-1-5",
+      "domain": "disqualification",
+      "description": "Central league personnel may disqualify for flagrant football or nonfootball acts under specified terms",
+      "source_id": "Y2019",
+      "source_url": "https://operations.nfl.com/media/3831/2019-playing-rules.pdf",
+      "source_kind": "Official NFL 2019 playing-rules changes + adopted NFL club listing",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2019,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2019-09"
+    },
+    {
+      "rule_ref": "4-3-2",
+      "domain": "clock",
+      "description": "Modifies fouls that start clock on snap",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-01"
+    },
+    {
+      "rule_ref": "12-2-9",
+      "domain": "defenseless_player",
+      "description": "Extends kick returner protection after possession until able to protect self",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-02"
+    },
+    {
+      "rule_ref": "14-4-8",
+      "domain": "penalty_enforcement",
+      "description": "Allows specified penalties to be enforced following missed field goals",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-03"
+    },
+    {
+      "rule_ref": "15-2-4,15-3-2",
+      "domain": "replay",
+      "description": "Revises award-of-ball provisions after replay",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-04"
+    },
+    {
+      "rule_ref": "15-1-2",
+      "domain": "replay",
+      "description": "Makes review of negated scoring/turnover plays and tries permanent (2019 trial)",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-05"
+    },
+    {
+      "rule_ref": "4",
+      "domain": "clock",
+      "description": "Multiple running-clock dead-ball fouls to manipulate game clock prohibited",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-06"
+    },
+    {
+      "rule_ref": "15",
+      "domain": "replay",
+      "description": "2019 one-year pass-interference-review authority expires and is not renewed (expiry, not new proposal)",
+      "source_id": "Y2020",
+      "source_url": "https://operations.nfl.com/media/4693/2020-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2020 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "expiry_of_temporary_provision",
+      "effective_from_season": 2020,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2020-07"
+    },
+    {
+      "rule_ref": "5-1-2",
+      "domain": "player_numbers",
+      "description": "Expands allowed jersey numbers by position",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-01"
+    },
+    {
+      "rule_ref": "6-1-3",
+      "domain": "kickoff",
+      "description": "One-year maximum setup-zone personnel on onside kicks",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-02",
+      "trial_until": 2021
+    },
+    {
+      "rule_ref": "8-1-2",
+      "domain": "illegal_pass",
+      "description": "Adds loss of down for second forward pass thrown from behind line or after ball returns behind line",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-03"
+    },
+    {
+      "rule_ref": "11-3-3",
+      "domain": "penalty_enforcement",
+      "description": "Adjusts enforcement of accepted successive try penalties",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-04"
+    },
+    {
+      "rule_ref": "12-2-4",
+      "domain": "blocking",
+      "description": "Expands prohibition of blocks below waist",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-05"
+    },
+    {
+      "rule_ref": "15-3-9,19-2",
+      "domain": "replay",
+      "description": "Allows replay official and central officiating specified objective assistance",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-06"
+    },
+    {
+      "rule_ref": "16-1-1",
+      "domain": "overtime",
+      "description": "Eliminates preseason overtime",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2021,
+      "season_types": [
+        "PRE"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-07"
+    },
+    {
+      "rule_ref": "season_format",
+      "domain": "season_structure",
+      "description": "Regular-season schedule moves to 17 games across 18 weeks (league competition format not playing-rule amendment)",
+      "source_id": "Y2021",
+      "source_url": "https://operations.nfl.com/media/5427/2021-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2021 rulebook changes + approved owners list",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "competition_format_change",
+      "effective_from_season": 2021,
+      "season_types": [
+        "REG"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2021-08"
+    },
+    {
+      "rule_ref": "6-1-3",
+      "domain": "kickoff",
+      "description": "2021 one-year setup-zone restriction made permanent",
+      "source_id": "Y2022",
+      "source_url": "https://operations.nfl.com/media/5kvgzyss/2022-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2022 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2022,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2022-01"
+    },
+    {
+      "rule_ref": "16-1-4",
+      "domain": "overtime",
+      "description": "Postseason overtime gives each team possession opportunity regardless of opening possession touchdown",
+      "source_id": "Y2022",
+      "source_url": "https://operations.nfl.com/media/5kvgzyss/2022-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2022 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2022,
+      "season_types": [
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2022-02"
+    },
+    {
+      "rule_ref": "5-1-2",
+      "domain": "player_numbers",
+      "description": "Allows jersey number zero for specified players and expands kicker and punter number ranges",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-01"
+    },
+    {
+      "rule_ref": "4-6-3,4-7-4",
+      "domain": "clock",
+      "description": "Aligns play-clock timing following replay reversal with other clock provisions",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-02"
+    },
+    {
+      "rule_ref": "4-8-2",
+      "domain": "penalty_enforcement",
+      "description": "Offense cannot benefit from half extension caused by own foul",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-03"
+    },
+    {
+      "rule_ref": "8-7-4",
+      "domain": "penalty_enforcement",
+      "description": "Illegal forward handoff to ineligible receiver behind line results in five yards plus loss of down",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-04"
+    },
+    {
+      "rule_ref": "9-1-1",
+      "domain": "special_teams",
+      "description": "Illegal punts dropkicks and placekicks result in five yards plus loss of down",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-05"
+    },
+    {
+      "rule_ref": "10-2-4",
+      "domain": "kickoff",
+      "description": "Fair catch on free kick behind own 25 puts ball on 25 (one-year rule)",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-06",
+      "trial_until": 2023
+    },
+    {
+      "rule_ref": "12-2-14",
+      "domain": "unnecessary_roughness",
+      "description": "Tripping becomes 15-yard personal foul",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-07"
+    },
+    {
+      "rule_ref": "12-2-6,12-2-9",
+      "domain": "unnecessary_roughness",
+      "description": "Launch definition changes from both feet to one or both feet leaving ground",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-08"
+    },
+    {
+      "rule_ref": "12-2-8,12-2-10",
+      "domain": "unnecessary_roughness",
+      "description": "Consolidates and clarifies impermissible use of helmet",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-09"
+    },
+    {
+      "rule_ref": "15-1-2",
+      "domain": "replay",
+      "description": "Automatic review of turnover on downs following failed fourth-down attempt",
+      "source_id": "Y2023",
+      "source_url": "https://operations.nfl.com/media/rwnj5upg/2023-rulebook_final.pdf",
+      "source_kind": "Official NFL 2023 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2023,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2023-10"
+    },
+    {
+      "rule_ref": "Rule 6",
+      "domain": "kickoff",
+      "description": "Dynamic kickoff replaces 2018–23 formation; new landing/setup zones, legal returns, touchbacks and onside procedure",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-01",
+      "trial_until": 2024
+    },
+    {
+      "rule_ref": "12-2-18",
+      "domain": "unnecessary_roughness",
+      "description": "Swivel hip-drop tackling technique prohibited",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-02"
+    },
+    {
+      "rule_ref": "14-5-2",
+      "domain": "penalty_enforcement",
+      "description": "Major offense foul before change of possession can be enforced in specific double-foul context",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-03"
+    },
+    {
+      "rule_ref": "15-1-1",
+      "domain": "replay",
+      "description": "Third coach challenge earned with at least one earlier successful challenge",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-04"
+    },
+    {
+      "rule_ref": "15-3-3",
+      "domain": "replay",
+      "description": "Passer ruled down or out of bounds before pass becomes reviewable",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-05"
+    },
+    {
+      "rule_ref": "15-3-9",
+      "domain": "replay",
+      "description": "Expired play clock before snap may be corrected when clear and obvious",
+      "source_id": "Y2024",
+      "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
+      "source_kind": "Official NFL 2024 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2024,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2024-06"
+    },
+    {
+      "rule_ref": "Rule 6",
+      "domain": "kickoff",
+      "description": "Makes 2024 dynamic kickoff permanent",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-01"
+    },
+    {
+      "rule_ref": "6-1-3",
+      "domain": "kickoff",
+      "description": "Adjusts receiving team setup-zone alignment",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-02"
+    },
+    {
+      "rule_ref": "6-1-5",
+      "domain": "kickoff",
+      "description": "Changes specified end-zone touchback spot to receiving 35",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-03"
+    },
+    {
+      "rule_ref": "6-1-6",
+      "domain": "onside_kick",
+      "description": "Trailing team may declare onside kick at any point rather than only fourth quarter; kick alignment revised",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-04"
+    },
+    {
+      "rule_ref": "15-9",
+      "domain": "replay",
+      "description": "Expands replay assist for objective corrections and game administration",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-05"
+    },
+    {
+      "rule_ref": "16-1-3",
+      "domain": "overtime",
+      "description": "Regular-season overtime gives both teams opportunity to possess even after opening touchdown (10-minute period)",
+      "source_id": "Y2025",
+      "source_url": "https://operations.nfl.com/media/ntif5hxb/2025-nfl-rulebook-final.pdf",
+      "source_kind": "Official NFL 2025 rulebook changes",
+      "verification": "published_rulebook_changes_table_audited",
+      "adoption_status": "adopted",
+      "effective_from_season": 2025,
+      "season_types": [
+        "REG"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2025-06"
+    },
+    {
+      "rule_ref": "6-1-3",
+      "domain": "kickoff",
+      "description": "Modifies receiving team setup-zone alignment on kickoff/safety kicks",
+      "source_id": "Y2026",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_kind": "Official NFL 2026 rulebook and approved proposals",
+      "verification": "official_approved_listing_with_conditional_rule_separated",
+      "adoption_status": "adopted",
+      "effective_from_season": 2026,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2026-01"
+    },
+    {
+      "rule_ref": "6-1-5",
+      "domain": "kickoff",
+      "description": "Changes dead-ball spot for kickoff taken from midfield to remove incentive to intentionally kick out of bounds",
+      "source_id": "Y2026",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_kind": "Official NFL 2026 rulebook and approved proposals",
+      "verification": "official_approved_listing_with_conditional_rule_separated",
+      "adoption_status": "adopted",
+      "effective_from_season": 2026,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2026-02"
+    },
+    {
+      "rule_ref": "6-1-6",
+      "domain": "onside_kick",
+      "description": "Allows kicking team to declare onside kick any time even when not trailing, unlike 2025 rule",
+      "source_id": "Y2026",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_kind": "Official NFL 2026 rulebook and approved proposals",
+      "verification": "official_approved_listing_with_conditional_rule_separated",
+      "adoption_status": "adopted",
+      "effective_from_season": 2026,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2026-03"
+    },
+    {
+      "rule_ref": "19-2",
+      "domain": "disqualification",
+      "description": "League personnel can consult on flagrant football and nonfootball acts without on-field flag",
+      "source_id": "Y2026",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_kind": "Official NFL 2026 rulebook and approved proposals",
+      "verification": "official_approved_listing_with_conditional_rule_separated",
+      "adoption_status": "adopted",
+      "effective_from_season": 2026,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": true,
+      "id": "NFL-2026-04"
+    },
+    {
+      "rule_ref": "conditional",
+      "domain": "replay",
+      "description": "Conditional one-year officiating department authority to correct clear obvious mistakes if game-officials work stoppage (approved but activate ONLY if qualifying contingency occurs)",
+      "source_id": "Y2026",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_kind": "Official NFL 2026 rulebook and approved proposals",
+      "verification": "official_approved_listing_with_conditional_rule_separated",
+      "adoption_status": "approved_contingent_not_automatically_active",
+      "effective_from_season": 2026,
+      "season_types": [
+        "REG",
+        "POST"
+      ],
+      "requires_contextual_regime_check": false,
+      "id": "NFL-2026-05",
+      "activation_condition": "work_stoppage_involving_NFLRA_game_officials"
+    }
+  ],
+  "implementation_contract": {
+    "lookups": [
+      "season",
+      "season_type",
+      "rule_ref",
+      "rule_id",
+      "activation_condition"
+    ],
+    "historical_sampling": "Each historical event retains source_rule_ids; target simulated event uses target_rule_ids and must pass source/target regime compatibility check.",
+    "activation": "Do not consider an approved-contingent provision active without documented activation.",
+    "effective_coverage": "A record beginning in a season does not imply perpetual unchanged effect: resolve supersession/expiries by explicit changes.",
+    "data_policy": "No source-year legality translation without rule-aware tests and explicit return/scoring/clock/possession reconciliation.",
+    "manifest": [
+      "registry_sha256",
+      "active_rule_ids",
+      "event_source_rule_ids",
+      "source_data_sha256",
+      "game_cutoff",
+      "rulebook_revision"
+    ]
+  }
+}

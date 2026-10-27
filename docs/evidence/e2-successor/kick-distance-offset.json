@@ -1,0 +1,90 @@
+{
+ "by_field_goal_result": {
+  "blocked": {
+   "18": 78,
+   "19": 8
+  },
+  "made": {
+   "10": 1,
+   "17": 35,
+   "18": 3211,
+   "19": 434,
+   "23": 1
+  },
+  "missed": {
+   "17": 10,
+   "18": 490,
+   "19": 57
+  }
+ },
+ "by_season": {
+  "2022": {
+   "17": 17,
+   "18": 935,
+   "19": 110
+  },
+  "2023": {
+   "17": 11,
+   "18": 916,
+   "19": 133
+  },
+  "2024": {
+   "10": 1,
+   "17": 7,
+   "18": 972,
+   "19": 135
+  },
+  "2025": {
+   "17": 10,
+   "18": 956,
+   "19": 121,
+   "23": 1
+  }
+ },
+ "engine": {
+  "endzone_depth": 10,
+  "holder_offset": 7,
+  "implied_kick_distance_offset": 17
+ },
+ "field_goal_rows": 4325,
+ "field_goal_rows_missing_a_field": 0,
+ "field_goal_rows_with_both_fields": 4325,
+ "holder_offset_implied_by_modal": 8,
+ "modal_offset": 18,
+ "offset_counts": {
+  "10": 1,
+  "17": 45,
+  "18": 3779,
+  "19": 499,
+  "23": 1
+ },
+ "outliers_outside_17_to_19": [
+  {
+   "game_id": "2024_16_DEN_LAC",
+   "offset": 10,
+   "play_id": "2115.0"
+  },
+  {
+   "game_id": "2025_13_DEN_WAS",
+   "offset": 23,
+   "play_id": "1339.0"
+  }
+ ],
+ "reading": "The engine offset is not the publisher convention. At the modal offset the publisher implies a holder modal_offset - ENDZONE_DEPTH yards behind the line of scrimmage, which the rule allows (7 or more). The data cannot say whether the gap is the holder spot or the publisher yardline convention.",
+ "rule_minimum_holder_offset": 7,
+ "share_at_engine_offset": 0.0104,
+ "share_at_modal_offset": 0.8738,
+ "source": {
+  "file": "docs/fixtures/e2/kick_results_2022_2025.csv",
+  "sha256": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93"
+ },
+ "source_engine_difference": {
+  "consequence": "A missed field goal is awarded at the spot of the kick. On the engine convention the receivers start one yard closer to their own goal line than on the publisher convention (93 - snap against 92 - snap). Made-field-goal rates are keyed on the snap yardline and are not affected.",
+  "decision": "Engine stays at +17. The frozen survey, the frozen fixtures and the engine are not changed for this difference. It is recorded here and nowhere else.",
+  "difference_yards": 1,
+  "engine": "holder 7 + end line 10 = +17; kept, not changed",
+  "publisher_modal": "+18 on 3779 of 4325 field-goal rows (87.4%)",
+  "reasoning": "Seven is the rule minimum, so the engine value is legal. The publisher offset of +18 is the publisher's own measurement convention: its yardline_100 or its kick_distance definition, not a rule. The data cannot tell the two apart, so the engine does not adopt the publisher convention.",
+  "rule": "The holder and kicker stand seven or more yards behind the line of scrimmage. The printed 2026 rulebook states this at Rule 3, Section 17 (KICKS), Article 7(b). The citation \"Rule 1-6-2\" was given in review and was not used: Rule 1 of the printed rulebook ends at Section 5 and has no Section 6."
+ }
+}

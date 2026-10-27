@@ -1,0 +1,17 @@
+{
+ "columns": [
+  "game_id",
+  "play_id",
+  "week",
+  "season_type",
+  "out_of_bounds",
+  "timeout",
+  "timeout_team"
+ ],
+ "filter": "season_type == REG and week in 1..9",
+ "generator": "scripts/bdb/e3_extract_nflverse_flags.py",
+ "output_sha256": "00f38a10efd773b0a9585a74e3ff77055ebc8cfba6963f7196ee3583d5db1484",
+ "rows": 23673,
+ "source": "/root/nflverse-raw/play_by_play_2022.parquet",
+ "source_sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09"
+}

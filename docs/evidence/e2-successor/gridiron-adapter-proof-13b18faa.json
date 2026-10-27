@@ -1,0 +1,36 @@
+{
+ "gridiron_root": "/tmp/claude-0/-root-lp-nfl-props/a5372ef5-13c9-489b-ab2d-00e9af6e68e3/scratchpad/gridiron_13b18faa",
+ "envelope": "docs/evidence/e2-successor/e2-game-envelope-seed1-successor.json",
+ "adapter": {
+  "accepted": false,
+  "error": "viewer requires a complete regulation record"
+ },
+ "adapterValidationOnly": {
+  "accepted": true,
+  "sourcePlayCount": 145,
+  "validationPassed": true,
+  "validationFindings": 0,
+  "validationFindingTexts": [],
+  "footballStateFindings": 0,
+  "footballStateFindingTexts": [],
+  "sharedV1Violations": [
+   "mode is not pregame_full_game",
+   "missing stable game_id",
+   "missing or invalid top-level as_of_utc before scheduled_kickoff_utc",
+   "missing real home/away team identities",
+   "missing eligible roster snapshot",
+   "record.valid_full_game is not true"
+  ]
+ },
+ "v1Document": {
+  "file": "docs/evidence/e2-successor/e2-game-seed1-successor.v1.json",
+  "violations": [
+   "mode is not pregame_full_game",
+   "missing stable game_id",
+   "missing or invalid top-level as_of_utc before scheduled_kickoff_utc",
+   "missing real home/away team identities",
+   "missing eligible roster snapshot",
+   "record.valid_full_game is not true"
+  ]
+ }
+}
