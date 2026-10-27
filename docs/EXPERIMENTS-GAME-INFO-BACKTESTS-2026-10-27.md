@@ -61,7 +61,7 @@ unshrunk (R6), and observed weather used as an input-like split (R1) are the mai
 | E6 | none in matrix (proposed MISC-02) | Attendance above listed capacity | insufficient_data | No historical capacity. Attendance is class (c) as an input. | Obtain capacity per season. Ask the matrix owner to register MISC-02. |
 | E7 | CAL-02, CAL-04 | Rest and time-zone travel | null | Travel uses standard offsets and no distance. Single holdout. Penalty outcomes raw. | Geographic fixture with distance. Rolling-origin rerun. |
 
-Pool-wide: 970 tests run. Smallest q is 0.23, from the penalty cell after team adjustment. Nothing reaches `supported`.
+Pool-wide: 848 team-adjusted tests (see the team-adjusted section below). Smallest pooled q is 0.21. Nothing reaches `supported`.
 
 ## 4. Experiment records
 
@@ -137,10 +137,10 @@ Each record follows the matrix's required outputs. Fields not listed here are in
 
 ## 6. Next actions, in order
 
-1. Team-adjust penalty outcomes in E0, E4, E5 and E7 (R5, and the matrix team-level controls).
-2. Replace the single 2025 holdout with rolling-origin folds, 2023 then 2024 then 2025, in the E0 family (R2).
-3. Shrink the E2 cells over the cell hierarchy and record effective sample sizes (R6).
-4. Add team clustering to the bootstrap (R5).
+1. Done 2026-10-27: team-adjusted penalty outcomes in E0, E2, E4, E5 and E7 (see below).
+2. Done 2026-10-27: rolling-origin folds for every E0 factor (descriptive, see below). A formal chronological model is still open.
+3. Done 2026-10-27: empirical-Bayes shrinkage across the outdoor weather cells (see below).
+4. Done 2026-10-27 as season-week cluster bootstrap (weather is correlated within a week). Team clustering is still open.
 5. Archive NWS forecasts at a fixed lead for every upcoming game, starting with week 9 (E1, R1).
 6. Obtain listed capacity per season for 2022 to 2025 (E6).
 7. Pre-register the penalty cell on a season not yet used. The 2026 reservation (R9) must be decided first.
@@ -163,3 +163,46 @@ at its issue time, and no game-information effect has passed the adoption gates)
 - Outputs: E0 and E2 to E7 under the scratchpad (`gameinfo2026/`). The penalty-cell re-test under
   `/root/lp-snapshots/nfl-game-info/experiments/penalty-cell-retest/`. Venue and forecast snapshots under
   `/root/lp-snapshots/nfl-game-info/2026/week08/`.
+
+## Team-adjusted families and robustness checks (2026-10-27)
+
+Script: `scripts/nfl_sequence/game_info/run_team_adjusted_families.py`. Output:
+`/root/lp-snapshots/nfl-game-info/experiments/team-adjusted-v2/results.json` (SHA-256 starts `ac07f7082d09ee03`). The repository run
+reproduces the scratch run exactly: families, clustering, rolling-origin folds and shrinkage all match.
+
+**Team adjustment.** Each team's expectation uses its full-season leave-one-out average of points for and against, and of
+flagged penalties and yards committed. That uses games played later in the same season, so these results are descriptive.
+They are not a pregame forecast input. A strictly chronological version is still open (see next actions).
+
+| Family | Tests | Candidates | Smallest q |
+|---|---:|---:|---:|
+| E0 split screen | 292 | 0 | 0.146 |
+| E2 outdoor temperature by wind | 20 | 2 | 0.030 |
+| E4 official crews | 464 | 0 | 0.214 |
+| E5 slot by broadcast | 28 | 0 | 0.784 |
+| E7 rest and travel | 44 | 0 | 0.667 |
+
+Pooled across the 848 team-adjusted tests: smallest pooled q is 0.21. The penalty cell has pooled q 0.24 for penalties
+and 0.24 for yards. The earlier 970-test pool mixed raw and adjusted outcomes and is superseded.
+
+**Penalty cell (E2).** Outdoor games at 50 to 69F with a 10 to 14 mph wind, 42 games, 2022 to 2025.
+- Flagged penalties: +2.39 per game, family q 0.03. 2025 holdout +3.03, interval [0.30, 5.68], n = 8.
+- Penalty yards: +17.5, family q 0.04. 2025 holdout +18.9, interval [1.5, 35.2], n = 8.
+- Status: `hypothesis`. The cell was chosen from the data, so it is not pre-registered. The 2025 holdout has 8 games.
+  The weather is observed, so it is hindsight. Shrinkage below lowers the estimate.
+
+**Shrinkage (empirical Bayes, outdoor weather cells).** The penalty cell's mean of 1.97 shrinks to 1.39, with weight 0.75.
+Measured against the average of the outdoor cells (-0.33), its effect falls from about 2.30 to about 1.73.
+
+**Cluster bootstrap by season and week.** Penalty cell: [0.90, 3.56] by week cluster, [0.74, 3.44] at game level.
+Outdoor versus all other roof groups, total residual: -3.11 points, [-4.83, -1.45] by week cluster, [-4.87, -1.45] at game
+level. Outdoor versus other roofs, penalties: -0.15, [-0.66, 0.36] at game level, a null result.
+
+**Rolling-origin folds.** 3 of 180 factor-level-outcome combinations keep one direction from the earlier seasons to the
+next season: temperature under 32F (penalty yards), referee Brad Allen (penalty yards), and referee Alan Eck (penalties).
+Their family-level q values are 0.24, 0.21 and 0.23, so none survives multiplicity control.
+
+**Correction.** An earlier cluster row compared outdoor games only against retractable-open games and reported -8.0. That
+row is replaced by the outdoor-versus-all-roofs value above.
+
+**Status after this run.** No result is `supported`. The penalty cell remains a `hypothesis`. No simulator input changes.
