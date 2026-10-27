@@ -69,8 +69,13 @@ class ForwardOnlyHistoryTests(unittest.TestCase):
         self.assertAlmostEqual(inputs.snapshot["team_expected_sog"]["away"], 27.7272727273)
         self.assertTrue(inputs.snapshot["same_day_results_excluded"])
         self.assertEqual(len(inputs.home_roster.players), 19)
-        self.assertEqual(inputs.home_roster.coverage["projection"],
-                         "latest prior appearance by NHL player ID; not target lineup")
+        self.assertEqual(len(inputs.home_roster.game_roster_ids), 19)
+        self.assertEqual(inputs.home_roster.coverage["projected_game_roster_position_counts"],
+                         {"C": 4, "D": 6, "G": 1, "L": 8})
+        self.assertEqual(inputs.snapshot["projected_game_roster"]["status"],
+                         "pregame_projection_only")
+        self.assertFalse(inputs.snapshot["projected_game_roster"]["actual_target_game_lineup_used"])
+        self.assertEqual(len(inputs.snapshot["projected_game_roster"]["players_by_side"]["home"]), 19)
 
     def test_history_must_be_added_chronologically(self):
         self.history.add_game(self.game, self.manifest, self.boxscore)

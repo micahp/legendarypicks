@@ -1,0 +1,1166 @@
+{
+  "branch_base": "a23d08b54bf1bb1939a4842d0e6c9f94acd785ec",
+  "check_status_counts": {
+    "event_order_and_clock": {
+      "PASS": 120
+    },
+    "event_schema": {
+      "PASS": 120
+    },
+    "game_lineup_eligibility": {
+      "NOT_ASSESSED": 120
+    },
+    "geometry_and_officiating": {
+      "NOT_ASSESSED": 120
+    },
+    "goalie_transition_state": {
+      "NOT_ASSESSED": 120
+    },
+    "line_change_legality": {
+      "NOT_ASSESSED": 120
+    },
+    "on_ice_personnel": {
+      "PASS": 120
+    },
+    "overtime_and_shootout": {
+      "PASS": 120
+    },
+    "penalty_and_manpower": {
+      "PASS": 115,
+      "QUARANTINED": 5
+    },
+    "restart_location": {
+      "PASS": 120
+    },
+    "restart_sequence": {
+      "PASS": 120
+    },
+    "roster_membership": {
+      "PASS": 120
+    },
+    "ruleset_binding": {
+      "PASS": 120
+    },
+    "score_and_terminal_state": {
+      "PASS": 120
+    },
+    "shift_interval_integrity": {
+      "PASS": 120
+    },
+    "simulation_roster_consistency": {
+      "PASS": 120
+    }
+  },
+  "fresh_independent_audit_mismatches": 0,
+  "full_rule_assessed_games": 0,
+  "generated_games": 120,
+  "generation_errors": 0,
+  "official_target_lineup_check_statuses": {
+    "NOT_ASSESSED": 120
+  },
+  "projected_team_roster_size_counts": {
+    "20": 240
+  },
+  "report_kind": "projected_game_roster_gate1_reaudit",
+  "ruleset": "2021-22",
+  "run_directory": "/root/lp-data/nhl-game-rules-gate1-2026-10-26-projected-roster-v1-final-120",
+  "run_kind": "independent_gate1_diagnostic_sample",
+  "runtime_seconds": {
+    "fit": 48.914,
+    "generation_wall": 59.968,
+    "per_game_median": 0.47
+  },
+  "sampled_games_and_seeds": [
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "9496585d340a207b94bfd5b55bca76a85251c30084530d2d3b84ca4ab9a3d60e",
+      "seed": 202610260001,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260001",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "9a80e904371f2bfd9bd588b737702c232d3241105a47b67935e304a56613ca22",
+      "seed": 202610260002,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260002",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "4bedec30f67c1e4c89c4ddcca4c203c0eefdffec5f75730679435ebc9979aeb5",
+      "seed": 202610260003,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260003",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "eb289c06ee2043ab2a372ee0f9aea7c60bb10a6374be02430257f9982726e77c",
+      "seed": 202610260004,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260004",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "54926d8ad05be3d9bf5305235edea0dc2486d06cfc0641b5a32848a89b7fc038",
+      "seed": 202610260005,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260005",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "b3d566e0be9b76d25a300a60ed3f9e62a54b09773e3d466395b54775efb3f227",
+      "seed": 202610260006,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260006",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "1d7de70636f9d3e6ae0eb4e003f3145dea099fcfa9e8ae087a7c137c2d3f24fb",
+      "seed": 202610260007,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260007",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "0a6df2cc3096264c634e32186cd0153e12d5db5c5671cd521d88d00677ad6a49",
+      "seed": 202610260008,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260008",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "2a48f15a6c16c053eb2ba29d0995d6cc78da307003875b5c824893322601ba53",
+      "seed": 202610260009,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260009",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "838c36ce31f28fd6cf439a5853dda408539f263ded2013dbecbde21277cf807b",
+      "seed": 202610260010,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260010",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "96f318e6cf1c4c26a38807100abe72db17236bbd9f03bd9dbe6eb7c653dc392e",
+      "seed": 202610260011,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260011",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "ea146c8a4fb0775e2cda61ff3064261b9a1c86a642273df55e39998c239f3fec",
+      "seed": 202610260012,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260012",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "84d3b7d3de96bdba2baa30b89f6dc873b83ec0c9b0970da507bc398b619e4227",
+      "seed": 202610260013,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260013",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "a99b7b5fd2016ad2f13e577940783d0aadcf8782ad8ef6f64351e61cea4f6a34",
+      "seed": 202610260014,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260014",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "6ce83ea4da56e721f9e4d94190e7c54776f50e15f02a502e321436ae1093f771",
+      "seed": 202610260015,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260015",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "6c89ced862cb0252b9c566c78ffbd012de2c135f41cb7f9d5e05a6525ec6d9c0",
+      "seed": 202610260016,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260016",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "3df5598ac7d3717de1dd5555f8777441da56ca676ee1ef2f4ca0c8c68e8e9b1a",
+      "seed": 202610260017,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260017",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "80be0e2a35e5637a3fa8cc1542ed3169a04119c5b5670b478af9e540fb58178d",
+      "seed": 202610260018,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260018",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "d618634ceca6f552b80e7e510689380c2196ffd2e51fc1b465c8f0c03d6bf8ef",
+      "seed": 202610260019,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260019",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-10-12",
+      "game_id": "2021020001",
+      "record_hash": "bb0ffd51bf94aa895ebb6c653ee6fb67c60b823c1159fed2f43058f2f83c0310",
+      "seed": 202610260020,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020001-seed-202610260020",
+      "target_index": 0
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "041628df919628c0276f40bab4368b6c4c5c9737f98bc0720303a794981de688",
+      "seed": 202610285801,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285801",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "f3f6ddd5c56dd95e695031110d32afddff8396cf748ec7f8e9c10e9c0f8d115d",
+      "seed": 202610285802,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285802",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "a9ec6904ccdbf2e08aba0c8ada24e93056168a8cd0a4e0d52f058d65975bd36f",
+      "seed": 202610285803,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285803",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "c135f1a99436ae4cfdca9cdcf0828951a3ec09275feeb724f2249066af8233b8",
+      "seed": 202610285804,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285804",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "71b61000220fdde4d525d957331eb313ff25758af1301d38354ba86cec5e135a",
+      "seed": 202610285805,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285805",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "f89a96ac922dfe2dc2ad8275cb44cff3fd70b9ea31ddd595afed59438afb0564",
+      "seed": 202610285806,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285806",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "0abe2f3f94b84b567db7c8a256bdc8ea71d6b0f8a39588f69c626cfcb4d1989a",
+      "seed": 202610285807,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285807",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "881376c338eba6c978b76ca61cb94bf1818961fe1d15ae09312fe0d714a1783d",
+      "seed": 202610285808,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285808",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "d4c1fb4770bdd910303a9fdb1d9060064c7ccea503f930cf60ac48c230f02213",
+      "seed": 202610285809,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285809",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "9f2a6b4820613d7841a18a1a37c01104d56e746e2821e9560da631b87d89d4fe",
+      "seed": 202610285810,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285810",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "27e302d31f2d657f5faf85fd11f69ecfbffc97ff72407663c79f2bded3ecdb90",
+      "seed": 202610285811,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285811",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "42df59ea3f9951e80eefb5fa6d49380869764d29bbb8e23ae679b202e3cf349b",
+      "seed": 202610285812,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285812",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "31b6dbd065e09829afff0a2349a648f5819403178cd925e385dc85dece7a357f",
+      "seed": 202610285813,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285813",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "5a9c812ae9fdcb8612f38eeb1512443b81be1e32b8d770aeb741e207b16668bc",
+      "seed": 202610285814,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285814",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "a96ae6cd06533ec3719fad13673d79720b3c299b954ef491fa76080b41e67752",
+      "seed": 202610285815,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285815",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "75d0bdc36fe89e9ee11bbb546626269ed18c90ced5dc572ac6799087734551ae",
+      "seed": 202610285816,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285816",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "9408e18a733c5f8330c1399a61b44c248b56ab437e51852fd71364e5a5e37375",
+      "seed": 202610285817,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285817",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "9592e8c18a1a656aaad43c63a97a525de38491b22d5e12dfa301a759ac3246eb",
+      "seed": 202610285818,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285818",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "c9f90234bb786e013f175ec2dfffd747b66173e0be7176d6d2da83acfd9e7a96",
+      "seed": 202610285819,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285819",
+      "target_index": 258
+    },
+    {
+      "game_date": "2021-11-20",
+      "game_id": "2021020262",
+      "record_hash": "a9d10f1d4bdbc61a79fb73120775825f7d026bb1df402597fcc945a24a104626",
+      "seed": 202610285820,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020262-seed-202610285820",
+      "target_index": 258
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "dffa441e02e776293ad1f30e85727646b48128b01c3bc18185c52cab51cc7f12",
+      "seed": 202610311601,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311601",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "bfd2f514222c062ee7cd69f5b694ff1fb7b4cb0a7478ea459debdf836aa61705",
+      "seed": 202610311602,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311602",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "1674b4745a9892f0137379bd137259182a0a8f015f09688cf680570de07812fe",
+      "seed": 202610311603,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311603",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "42f57e1b7157caf955eb173b137169dd749af9de0c84bdfe94766378383709b2",
+      "seed": 202610311604,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311604",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "a8b96f25d7bc3af045c12756fa5b6b3ef7a95ba87a6b64f7fa6db89565702cf7",
+      "seed": 202610311605,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311605",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "743487b5325cec6bac68a90c7ff94e53da3326a0b160b70e1422419695e67f49",
+      "seed": 202610311606,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311606",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "40aeb0dbb2e60df2e4b0d128939265db85085c7caf3e05129a3dd86a08207b5e",
+      "seed": 202610311607,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311607",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "d04431e19ef29ab528db5d86aafb90ff7c508abb135fe55231afddf0103b96b2",
+      "seed": 202610311608,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311608",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "1534f3c32142f055d95b57b5f698efc8269ad11006218276bd3816aec2a32db8",
+      "seed": 202610311609,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311609",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "1b59dd674a75918e95c3fc28ae95f31445028c94422cc952e826c68d1c386a4e",
+      "seed": 202610311610,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311610",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "57ef841656ce1e7ed2db95ad7ea25f336b363644479f08120b578fa1954ca6c9",
+      "seed": 202610311611,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311611",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "ec19a918038442f3c9aee83e7404bfed975f3661edb1341e8ab675f3f6668964",
+      "seed": 202610311612,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311612",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "2fe9739cfec22c2b4094fb3713311f327bc6a789b8c092f8e466ccae839cc48e",
+      "seed": 202610311613,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311613",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "09e4c03f73b377182e7bbe677972b039257dfc0135c8f9e019eaba9540756b11",
+      "seed": 202610311614,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311614",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "b772bf8d482596ac20222c9178eeac3187ab29eb3c38f927ece798af44d1d0da",
+      "seed": 202610311615,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311615",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "986cebfd6e6d8fa5843e45c6a0078c2556a8bf2baace7eebfe5a9310cb6b9cfd",
+      "seed": 202610311616,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311616",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "3551bfabb5f4dc658e944b8b48a7d3b80a13b47c67e24bed4bba2b7bb6808bb2",
+      "seed": 202610311617,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311617",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "8dc7a4658213be3dd94e56aefc8698df5610e9497e5ce2c3dc5c683ee374dcaf",
+      "seed": 202610311618,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311618",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "144585f76acbba384e58f8ef390909557665b4a4620623c4a4ef1d4b311538f5",
+      "seed": 202610311619,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311619",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-01-06",
+      "game_id": "2021020599",
+      "record_hash": "618d9a8bbf4eb705bf8988dea2c8114e781316ad804f33f763b67e91b198680a",
+      "seed": 202610311620,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020599-seed-202610311620",
+      "target_index": 516
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "df8fb8b9409caf075a3470a72286ce4cb25576e24b7abed891c914bd7aad9698",
+      "seed": 202610337501,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337501",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "8e0086d54ce5817c76ed0f18055c2394122cd982b567ae551ca1d410887105b7",
+      "seed": 202610337502,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337502",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "805d2b5a615309d16a1a887e49966279d78ee478c266fedb8047c930ab14b4f3",
+      "seed": 202610337503,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337503",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "107877627cfc4988ed6d99c383e9d2d89fcfae96f351c719d1572a22be61b2e8",
+      "seed": 202610337504,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337504",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "1949e99f08ad621d508ebd30f3c6a5ace02c54b34191a6921dee61d316df3d31",
+      "seed": 202610337505,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337505",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "556ead17b3530abe976b121f9f9cd71841153ddf640fdf9dd0834a428dd476b9",
+      "seed": 202610337506,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337506",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "54bd355a6044dd7fbcf943c254c0fdad21c27dfabb2daf5b20ec4380a920c034",
+      "seed": 202610337507,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337507",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "594bdb1f767768c8b66748911f5e487d0ea5658451fbd6044be387336dc929dc",
+      "seed": 202610337508,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337508",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "e476ed13f63e65edcb5fc3251d412d6114f76523b3405c0053235ee1510e5e66",
+      "seed": 202610337509,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337509",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "7994dd8a068e1edc4b729f842a6988eea9810fc1b0ed7ab55157515b4a277a3b",
+      "seed": 202610337510,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337510",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "d959ebed5435c16a422dba5aad8224df9c968b5e2b924eedba7215ed93812f3c",
+      "seed": 202610337511,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337511",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "7e44fd002e4f3d0345fb6c5b103fee937d701f2197077fa549ff67995f00b109",
+      "seed": 202610337512,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337512",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "d8551dad3136db2bb1900f6f968fcc3021cccce5ac852b738ba59560c86618c7",
+      "seed": 202610337513,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337513",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "fefdf73694f3dd26775bcca85b717cea60025bc8d24d6f268c972201195fa9fb",
+      "seed": 202610337514,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337514",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "03b1ba6628187cbfc320adad07a0a78afe1607a2b50d803f26eb7162efd8c33d",
+      "seed": 202610337515,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337515",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "c3b87e8993fb1ced1e26021b40c91d5ae92cc620d042b7077be3afba24fd0542",
+      "seed": 202610337516,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337516",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "c4a40d3759baa18272269d4ae409896e5ca94513824f8c7c98cb9274a61a65b4",
+      "seed": 202610337517,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337517",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "4e581289fce455c112297a54c8e086555b29944e33d29e84a5ffc583c848ac4b",
+      "seed": 202610337518,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337518",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "e7b759b3cef66f754673e74ad60f521983b695dded0c2216c2c53993c6648a29",
+      "seed": 202610337519,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337519",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-02-19",
+      "game_id": "2021020533",
+      "record_hash": "ec7ae6044fba228c18839441fbf2b63eb50a56088c047b6b2cf9c7a24d4d4518",
+      "seed": 202610337520,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021020533-seed-202610337520",
+      "target_index": 775
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "618088e167aa0b984d1f5e7f1e0fcd4ee390fdb0c0316e24f86b46235648202e",
+      "seed": 202610363301,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363301",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "e36beb1af3d124949af81b222e1e74406ea84af5a6945fa59d6f7b6e0d10d58e",
+      "seed": 202610363302,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363302",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "4cf390f351bda21f27edeaceddc652dfc6a95ee9883af556ab47d91a16c0b9cc",
+      "seed": 202610363303,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363303",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "0fac7aec0111dc97c54c1be9172107dfd9d288d3d1ca29ef0adbeffff57068ec",
+      "seed": 202610363304,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363304",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "09caf083a67917f68ff39aa73ed2b4e1456610ffe7b66cc9af7a16f06e5ddc77",
+      "seed": 202610363305,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363305",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "df1fcd01d97e5b54b1be95bc88d9583906f54a2cac7ff5a1b59d23d106decf54",
+      "seed": 202610363306,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363306",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "0cd5ae6e9876695d59a2c095a97db18f845cb53cf4c9225120f0a0fd214307e8",
+      "seed": 202610363307,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363307",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "e4b3551355608e12869046be100052d1418d93f4342565aa618579275bc79f5a",
+      "seed": 202610363308,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363308",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "e058b1e2b794b4e24c522788c81135825dddc663d5b8082e6348a0c3e6f50e07",
+      "seed": 202610363309,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363309",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "e8fe227230da6b8a3de68eb4dc1efbd637a0f9ae8d49b9169154499c0ebe2d8d",
+      "seed": 202610363310,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363310",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "a0daa9d112380cda9ad7d976bec26df2cdf1a3a3154dd4b4b92fdf4986f26689",
+      "seed": 202610363311,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363311",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "8d265560a755931797a4036167f79645283aa919b40775674cabac0359e7b7c2",
+      "seed": 202610363312,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363312",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "2a0546ebed6d1927ad004f098e13ad6617c8d7460e0cd39a324ffa883bcc9c66",
+      "seed": 202610363313,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363313",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "14d5445d1eba606c29f754d3226635c4d8aadf8e7d8458de2765ca99855f1e2a",
+      "seed": 202610363314,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363314",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "baad4f8c66538d06ab4b829d9f906e5f8391c464dbf61fed89ff53711089a843",
+      "seed": 202610363315,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363315",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "b4acad3b1534ce07849ec4c58f23c8d486dfddcc67ac70af8210b27d008b7520",
+      "seed": 202610363316,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363316",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "d2819220b7b97c3de274ca05f72af71eb3a0795b5c6bf8c30947ed454c36efab",
+      "seed": 202610363317,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363317",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "5beeeb45e3f5c714464ff25609b0de2fda287284ae04964abe5f3ebe0ac3e35e",
+      "seed": 202610363318,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363318",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "ed686627bb77967e817bb6281a1c1d95e0702e282fd26a09b4548bc35f7f89f7",
+      "seed": 202610363319,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363319",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-03-27",
+      "game_id": "2021021050",
+      "record_hash": "81062358249c85dafb62f37c09ea537877a26ae8f5f4d3f5d0a9b9421fae9fcf",
+      "seed": 202610363320,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021050-seed-202610363320",
+      "target_index": 1033
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "b3c34aa4cf0693556e13fd058b9980aeb3075101a4d2d46fd80bd9c197aaabb2",
+      "seed": 202610389101,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389101",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "c15b46bd62eb59c3e71fe5253cd2d10b3a0d32c350db25f876cb4eb364c870fb",
+      "seed": 202610389102,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389102",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "fcf6e81aab9bbea3f82cdfb4c56a742027d89a8494af2629a12ec5aae624ccb3",
+      "seed": 202610389103,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389103",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "cfdad99509121ebb44efbb21505599aaa2ce4621719e8b7b66b08cfaacf290e5",
+      "seed": 202610389104,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389104",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "81024f31478d9e039ab5efc7d0e3cdf9fb4188b880aee69c49d6813d1a91cf93",
+      "seed": 202610389105,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389105",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "d8bb308e0f26f9fd544562d2e57a6391d6fe5a296ba24e305625bf0dc7744fee",
+      "seed": 202610389106,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389106",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "b96f5f87715638d128be342c317344368e30bc70b49f103dd52475ea4a640519",
+      "seed": 202610389107,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389107",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "7fa6fee3152eebb237985085184d1ae228f4a2ffb89d5529b01c88430dafe650",
+      "seed": 202610389108,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389108",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "466cc9e2c9d0f6db1eb36972a81465d9413dab5b8fa733dfdb5f460bf1491f15",
+      "seed": 202610389109,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389109",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "55fdcaef4f1a614fcb9fccffafbb7a94f8da6cf990d68e69459cee861127d77b",
+      "seed": 202610389110,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389110",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "f74c36d10f90f50ef5913b5c95faba9152675dd0b35c40f1b5331a7cedeac298",
+      "seed": 202610389111,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389111",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "19b6052255da4967fa7ee18938662c885eae69156788c117cdb4a691c2279100",
+      "seed": 202610389112,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389112",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "39e7e89741158846dae6193965bc5acad5debdbec2a0782e7097b1182c7d5765",
+      "seed": 202610389113,
+      "shootout": true,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389113",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "9959e1ff66ae4888bb652ef6eab9475a31de5f7134cfc969d103d37f76f35d4a",
+      "seed": 202610389114,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389114",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "60a5480ce2c491db6d865b6fb0f87c323cc875941ce58e2bd0de8be0f8e258d7",
+      "seed": 202610389115,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389115",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "4762d0077e060627d3f412e9c3308bacb5e092048102b2de838c008a43d8078f",
+      "seed": 202610389116,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389116",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "be5c3b1014c4bc9086f1269334d5b9c99992f75cd11ee426907be9f88ea59612",
+      "seed": 202610389117,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389117",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "931ce5104a1f51389fdc5ec0c237dc52a8735de0a72a887b231dc78e80c113f9",
+      "seed": 202610389118,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389118",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "ca575ad41a0386a66150f8cc6a4bea8eb68d0f88577af1961316b9384b151e56",
+      "seed": 202610389119,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389119",
+      "target_index": 1291
+    },
+    {
+      "game_date": "2022-05-01",
+      "game_id": "2021021179",
+      "record_hash": "e5e0b3d1c209ae8f67541fa287b7e99879ddee21b770af70ccff7b1c24ec3d4c",
+      "seed": 202610389120,
+      "shootout": false,
+      "simulation_id": "nhlstat-v0.2b-2021021179-seed-202610389120",
+      "target_index": 1291
+    }
+  ],
+  "shooters_outside_projected_roster": 0,
+  "shootout_attempts": 108,
+  "shootout_games": 13,
+  "source_artifact_sha256": {
+    "runner_summary": "1a8f660207ff490df792e95c2802554ac66d3f098fb337bdc74d8b5b1ca9c30f",
+    "saved_game_records": "a10e79819367e096d445a836e308625b97a9ff177a88e53efbac6a6a800dfc7b"
+  },
+  "structural_valid_games": 115,
+  "target_game_lineup_used_flags": {
+    "False": 120
+  }
+}

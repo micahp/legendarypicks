@@ -43,8 +43,8 @@ v01 = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = v01
 spec.loader.exec_module(v01)
 
-MODEL_VERSION = "nhl-game-state-v0.2b-b1"
-TRANSITION_MODEL_VERSION = "nhl-game-state-v0.2b-b2"
+MODEL_VERSION = "nhl-game-state-v0.2b-projected-roster-v1-b1"
+TRANSITION_MODEL_VERSION = "nhl-game-state-v0.2b-projected-roster-v1-b2"
 SHIFT_ROOT = Path("/root/lp-data/nhl-fullframe-event-audit-2026-10-21")
 SHIFT_MANIFEST_SHA256 = "deba1a38d9f9c969139dc15ac57e7085988c05bcab36db43bd87fe5805f1c6f5"
 SHIFT_MANIFEST = SHIFT_ROOT / "manifests/hardened-v1/shifts_verified_manifest.csv"
@@ -108,12 +108,16 @@ class TeamRoster:
     goalie_weights: list[float]
     profile_hash: str
     coverage: dict[str, Any]
+    game_roster_ids: list[str]
 
     def role_players(self, group: str) -> list[Player]:
+        projected = set(self.game_roster_ids)
         if group == "F":
-            values = [p for p in self.players.values() if p.position in {"C", "L", "R", "LW", "RW", "F"}]
+            values = [p for p in self.players.values() if p.nhl_id in projected
+                      and p.position in {"C", "L", "R", "LW", "RW", "F"}]
         else:
-            values = [p for p in self.players.values() if p.position == group]
+            values = [p for p in self.players.values() if p.nhl_id in projected
+                      and p.position == group]
         return sorted(values, key=lambda p: (-p.usage_minutes, -p.shots, p.nhl_id))
 
 
@@ -383,17 +387,22 @@ def load_roster(db_path: Path, team: str, game_date: str, cutoff: dt.datetime) -
         if not players:
             raise ValueError(f"no NHL-native player IDs resolved for {team}")
         skaters = [p for p in players.values() if p.position != "G"]
-        if sum(p.position in {"C", "L", "R", "LW", "RW", "F"} for p in skaters) < 9:
-            raise ValueError(f"{team}: insufficient identified forward pool for projected lines")
-        if sum(p.position == "D" for p in skaters) < 4:
-            raise ValueError(f"{team}: insufficient identified defense pool for projected pairs")
-        goalies = [p for p in players.values() if p.position == "G"]
-        if not goalies:
+        if sum(p.position in {"C", "L", "R", "LW", "RW", "F"} for p in skaters) < 12:
+            raise ValueError(f"{team}: fewer than 12 identified forwards for projected game roster")
+        if sum(p.position == "D" for p in skaters) < 6:
+            raise ValueError(f"{team}: fewer than 6 identified defensemen for projected game roster")
+        goalie_candidates = [p for p in players.values() if p.position == "G"]
+        if not goalie_candidates:
             raise ValueError(f"{team}: no goalie in the frozen roster snapshot")
+        forwards = sorted((p for p in skaters if p.position in {"C", "L", "R", "LW", "RW", "F"}),
+                          key=lambda p: (-p.usage_minutes, -p.shots, p.nhl_id))[:12]
+        defense = sorted((p for p in skaters if p.position == "D"),
+                         key=lambda p: (-p.usage_minutes, -p.shots, p.nhl_id))[:6]
+        goalies = sorted(goalie_candidates,
+                         key=lambda p: (-p.games_started, -p.shots_against, p.nhl_id))[:2]
+        game_roster_ids = [p.nhl_id for p in forwards + defense + goalies]
         goalie_ids = [p.nhl_id for p in goalies]
         goalie_weights = [max(0.5, p.games_started) for p in goalies]
-        forwards = sorted([p for p in skaters if p.position in {"C", "L", "R", "LW", "RW", "F"}], key=lambda p: -p.usage_minutes)[:12]
-        defense = sorted([p for p in skaters if p.position == "D"], key=lambda p: -p.usage_minutes)[:6]
         expected_sog = sum(p.shots / max(1.0, p.games_played) for p in forwards + defense)
         expected_sog = min(42.0, max(20.0, expected_sog))
         weighted_goalie_starts=sum(max(0.5,p.games_started) for p in goalies)
@@ -409,16 +418,24 @@ def load_roster(db_path: Path, team: str, game_date: str, cutoff: dt.datetime) -
             [p.nhl_id,p.name,p.position,round(p.usage_minutes,4),round(p.shots,4),round(p.goals,4),round(p.save_pct,6)]
             for p in sorted(players.values(), key=lambda x: x.nhl_id)
         ]
-        profile_hash = hashlib.sha256(json.dumps(p_hash_payload,separators=(",",":"),sort_keys=True).encode()).hexdigest()
+        profile_hash = hashlib.sha256(json.dumps(
+            {"players": p_hash_payload, "game_roster_ids": game_roster_ids},
+            separators=(",",":"),sort_keys=True).encode()).hexdigest()
         return TeamRoster(
             team=team, players=players, expected_sog=expected_sog,
             expected_sog_against=expected_sog_against, goalie_ids=goalie_ids,
             goalie_weights=goalie_weights, profile_hash=profile_hash,
             coverage={"snapshot_id": sid, "snapshot_captured_at_utc":snapshot["captured_at"],
                       "snapshot_checksum":snapshot["source_checksum"], "active_players": len(players), "with_prior_stats": sum(not p.stats_missing for p in players.values()),
-                      "goalies": len(goalies), "pregame_log_rows_league": len(log_rows),
+                      "goalie_candidates": len(goalie_candidates), "goalies": len(goalies),
+                      "pregame_log_rows_league": len(log_rows),
                       "pregame_log_max_date": max(log_dates) if log_dates else None,
-                      "position_groups": dict(collections.Counter(p.position for p in players.values()))},
+                      "position_groups": dict(collections.Counter(p.position for p in players.values())),
+                      "projected_game_roster_size": len(game_roster_ids),
+                      "projected_game_roster_position_counts": dict(collections.Counter(
+                          players[pid].position for pid in game_roster_ids)),
+                      "projection_source": "active NHL roster snapshot plus prior-season statistics and cutoff-valid player game logs"},
+            game_roster_ids=game_roster_ids,
         )
     finally:
         con.close()
@@ -642,6 +659,21 @@ def prepare_pregame(db_path: Path, *, game_key: str, game_date: str, start_utc: 
             "goalie_rate_sog_against":away_roster.expected_sog_against}},
         "starting_goalie_status":"uncertain; sampled from active-roster prior-season starts; no confirmed starter input",
         "actual_target_game_stats_or_lineups_used":False}
+    snapshot["projected_game_roster"] = {
+        "status": "pregame_projection_only",
+        "selection_policy": "12 highest-prior-usage forwards, 6 highest-prior-usage defensemen, and up to 2 goalies ranked by prior starts; ties resolve by prior shots then NHL ID",
+        "actual_target_game_lineup_used": False,
+        "capture_cutoff_utc": cutoff.isoformat().replace("+00:00", "Z"),
+        "source_by_side": {
+            "home": home_roster.coverage["projection_source"],
+            "away": away_roster.coverage["projection_source"],
+        },
+        "players_by_side": {
+            side: [{"player_id": pid, "position": roster.players[pid].position}
+                   for pid in roster.game_roster_ids]
+            for side, roster in (("home", home_roster), ("away", away_roster))
+        },
+    }
     return PregameInputs(game_key,game_date,start_utc,as_of_utc,home,away,home_roster,away_roster,
                          mu_home,mu_away,team_model,snapshot)
 
@@ -1628,7 +1660,8 @@ def _append_sim_event(events: list[dict[str,Any]], score: dict[str,int], sog: di
 def _empty_player_totals(inputs: PregameInputs) -> dict[str,dict[str,Any]]:
     totals={}
     for side,roster in (("home",inputs.home_roster),("away",inputs.away_roster)):
-        for p in roster.players.values():
+        for pid in roster.game_roster_ids:
+            p=roster.players[pid]
             totals[p.nhl_id]={"player_id":p.nhl_id,"canonical_player_id":p.canonical_id,
                 "name":p.name,"team_side":side,"position":p.position,"goals":0,"assists":0,
                 "shot_attempts":0,"shots_on_goal":0,"faceoffs_taken":0,"faceoffs_won":0,
@@ -2228,14 +2261,20 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
 def _shootout(events: list[dict[str,Any]], score: dict[str,int], sog: dict[str,int],
               player_totals: dict[str,dict[str,Any]], goalie_totals: dict[str,dict[str,int]],
               inputs: PregameInputs, model: ShotQualityModel, goalie_plan: dict[str,list[str]],
-              rng: random.Random) -> str:
+              penalties: PenaltyLedger, rng: random.Random) -> str:
     attempts_by_side={"home":0,"away":0}; goals_by_side={"home":0,"away":0}
     first_side="home" if rng.random()<model.shootout_first_home_probability else "away"
     order=(first_side,"away" if first_side=="home" else "home")
-    available_shooters={
-        side:[p.nhl_id for p in roster.players.values()]
-        for side,roster in (("home",inputs.home_roster),("away",inputs.away_roster))
-    }
+    rosters={"home":inputs.home_roster,"away":inputs.away_roster}
+    misconduct_exclusions={side:{penalty.player_id for penalty in penalties.active
+                                 if penalty.team_side==side and penalty.kind=="MIS"}
+                           for side in ("home","away")}
+    eligible_shooters={side:[pid for pid in roster.game_roster_ids
+                              if pid not in misconduct_exclusions[side]]
+                       for side,roster in rosters.items()}
+    if any(not eligible_shooters[side] for side in ("home","away")):
+        raise ValueError("shootout has no eligible projected-roster shooter for one or both teams")
+    available_shooters={side:list(ids) for side,ids in eligible_shooters.items()}
     _append_sim_event(events,score,sog,period_number=5,period_type="SO",event_type="period-start",
                       team_side=None,elapsed=0,duration=0,
                       details={"first_shooting_side":first_side,
@@ -2243,9 +2282,9 @@ def _shootout(events: list[dict[str,Any]], score: dict[str,int], sog: dict[str,i
     winner=None
     for round_number in range(1,1001):
         for side in order:
-            roster=inputs.home_roster if side=="home" else inputs.away_roster
+            roster=rosters[side]
             if not available_shooters[side]:
-                available_shooters[side]=[p.nhl_id for p in roster.players.values()]
+                available_shooters[side]=list(eligible_shooters[side])
             shooter=_choose_weighted(rng,
                 [roster.players[pid] for pid in available_shooters[side]],
                 [max(.01,roster.players[pid].shot_rate) for pid in available_shooters[side]])
@@ -2788,7 +2827,7 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
             _append_sim_event(events,score,sog,period_number=4,period_type="OT",event_type="period-end",
                               team_side=None,elapsed=OT_SECONDS,duration=OT_SECONDS)
             shootout_winner=_shootout(events,score,sog,player_totals,goalie_totals,inputs,
-                                      quality_model,goalie_plan,rng)
+                                      quality_model,goalie_plan,state["penalties"],rng)
     else:
         _append_sim_event(events,score,sog,period_number=3,period_type="REG",event_type="game-end",
                           team_side=None,elapsed=REG_SECONDS,duration=REG_SECONDS)
@@ -2814,7 +2853,7 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
         if transition_model is not None else
         "B1 retains donor event families, event clocks, and shift intervals; only selected team, possession, penalty, goalie, and shot-outcome state is changed."
     )
-    result={"schema_version":"nhl-statistical-pbp-v0.2b",
+    result={"schema_version":"nhl-statistical-pbp-v0.2b-projected-roster-v1",
         "mode":"hypothetical_team_and_player_conditioned_statistical_simulation",
         "candidate_block":"B2" if transition_model is not None else "B1",
         "simulation_id":f"nhlstat-v0.2b-{inputs.game_key}-seed-{seed}","model_version":model_version,

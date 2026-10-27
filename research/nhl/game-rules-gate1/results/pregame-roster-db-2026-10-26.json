@@ -1,0 +1,376 @@
+{
+  "capture_cutoff_utc": "2026-10-26T23:00:00Z",
+  "database_access": "SQLite mode=ro and PRAGMA query_only=ON; roster loader uses mode=ro",
+  "database_path": "/root/legendarypicks/backend/data/picks.dev.db",
+  "projection_failures": 0,
+  "report_kind": "read_only_pregame_roster_projection_coverage",
+  "roster_sizes": {
+    "20": 32
+  },
+  "snapshot": {
+    "captured_at": "2026-10-26T22:58:18.879156+00:00",
+    "id": 815,
+    "published_at": "2026-10-26T22:58:18.879156+00:00",
+    "season": 2027,
+    "source": "nhle.com:roster",
+    "source_checksum": "2f9de2cf8bb56e878bb11f7cf55dd50b9b8587112f4f6a8f3345ab40a28ce66c"
+  },
+  "target_game_date": "2026-10-27",
+  "target_game_lineup_or_outcome_used": false,
+  "teams": [
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "ANA"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "BOS"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "BUF"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "CAR"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "CBJ"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "CGY"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "CHI"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "COL"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "DAL"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "DET"
+    },
+    {
+      "goalie_candidates": 4,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "EDM"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "FLA"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "LA"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "MIN"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "MTL"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "NJ"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "NSH"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "NYI"
+    },
+    {
+      "goalie_candidates": 4,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "NYR"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "OTT"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "PHI"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "PIT"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "SEA"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "SJ"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "STL"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "TB"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "TOR"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "UTAH"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "VAN"
+    },
+    {
+      "goalie_candidates": 2,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "VGK"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "WPG"
+    },
+    {
+      "goalie_candidates": 3,
+      "goalies_selected": 2,
+      "position_counts": {
+        "D": 6,
+        "F": 12,
+        "G": 2
+      },
+      "projected_roster_size": 20,
+      "team": "WSH"
+    }
+  ],
+  "teams_attempted": 32,
+  "teams_projected": 32
+}

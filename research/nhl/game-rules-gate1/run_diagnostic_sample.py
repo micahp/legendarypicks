@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Forward-only B2 whole-game sample for the independent NHL Gate 1 audit.
 
-Full game records are written outside Git. The simulator is left unchanged;
-native validation exceptions are captured so the independent validator can
-audit the returned record and preserve its seed.
+Full game records are written outside Git. Native validation exceptions are
+captured so the independent validator can audit the returned record and
+preserve its seed.
 """
 
 from __future__ import annotations
@@ -279,7 +279,7 @@ def main() -> int:
     ruleset_hash = validator.RULEBOOKS["2021-22"]["sha256"]
     metadata = {
         "report_kind": "independent_gate1_diagnostic_sample",
-        "branch_base": "bd40781306ae40d7fb33c33b986b7ee0e9c5be52",
+        "branch_base": "a23d08b54bf1bb1939a4842d0e6c9f94acd785ec",
         "ruleset": "2021-22", "rulebook_sha256": ruleset_hash,
         "training_start_seasons": list(sim.v01.TRAIN_SEASONS),
         "development_target_season": 2021,

@@ -22,6 +22,7 @@ SHORT_AWAY = ["A2", "A3", "A4", "A5", "AG"]
 class GameBuilder:
     def __init__(self) -> None:
         self.players = {}
+        self.projected_players = {"home": [], "away": []}
         for side, prefix in (("home", "H"), ("away", "A")):
             for n in range(1, 7):
                 self.players[f"{prefix}{n}"] = {
@@ -30,12 +31,40 @@ class GameBuilder:
                     "shootout_attempts": 0, "shootout_goals": 0,
                     "time_on_ice_seconds": 0,
                 }
+                self.projected_players[side].append({"player_id": f"{prefix}{n}", "position": "F"})
             self.players[f"{prefix}G"] = {
                 "team_side": side, "position": "G", "goals": 0,
                 "assists": 0, "shot_attempts": 0, "shots_on_goal": 0,
                 "shootout_attempts": 0, "shootout_goals": 0,
                 "time_on_ice_seconds": 0,
             }
+            self.projected_players[side].append({"player_id": f"{prefix}G", "position": "G"})
+            for n in range(7, 13):
+                player_id = f"{prefix}{n}"
+                self.players[player_id] = {
+                    "team_side": side, "position": "F", "goals": 0,
+                    "assists": 0, "shot_attempts": 0, "shots_on_goal": 0,
+                    "shootout_attempts": 0, "shootout_goals": 0,
+                    "time_on_ice_seconds": 0,
+                }
+                self.projected_players[side].append({"player_id": player_id, "position": "F"})
+            for n in range(1, 7):
+                player_id = f"{prefix}D{n}"
+                self.players[player_id] = {
+                    "team_side": side, "position": "D", "goals": 0,
+                    "assists": 0, "shot_attempts": 0, "shots_on_goal": 0,
+                    "shootout_attempts": 0, "shootout_goals": 0,
+                    "time_on_ice_seconds": 0,
+                }
+                self.projected_players[side].append({"player_id": player_id, "position": "D"})
+            goalie_id = f"{prefix}G2"
+            self.players[goalie_id] = {
+                "team_side": side, "position": "G", "goals": 0,
+                "assists": 0, "shot_attempts": 0, "shots_on_goal": 0,
+                "shootout_attempts": 0, "shootout_goals": 0,
+                "time_on_ice_seconds": 0,
+            }
+            self.projected_players[side].append({"player_id": goalie_id, "position": "G"})
         self.events = []
         self.score = {"home": 0, "away": 0}
         self.sog = {"home": 0, "away": 0}
@@ -177,8 +206,17 @@ class GameBuilder:
             "schema_version": "nhl-statistical-pbp-v0.2b",
             "simulation_id": "test-game", "seed": 7,
             "teams": {"home": "HOM", "away": "AWY"},
-            "pregame_snapshot": {"game_date": "2021-11-01", "home_roster_coverage": {"active_players": 7},
-                                 "away_roster_coverage": {"active_players": 7}},
+            "pregame_snapshot": {"game_date": "2021-11-01",
+                "actual_target_game_stats_or_lineups_used": False,
+                "projected_game_roster": {
+                    "status": "pregame_projection_only",
+                    "selection_policy": "synthetic test roster",
+                    "actual_target_game_lineup_used": False,
+                    "source_by_side": {"home": "synthetic", "away": "synthetic"},
+                    "players_by_side": self.projected_players,
+                },
+                "home_roster_coverage": {"active_players": 20},
+                "away_roster_coverage": {"active_players": 20}},
             "rules_profile": {"competition": "regular_season", "regulation_periods": 3,
                 "regulation_period_seconds": 1200, "overtime_period_seconds": 300,
                 "three_on_three_overtime": True, "shootout_after_tied_overtime": True},
@@ -409,8 +447,17 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
         self.assertFalse(result["full_rule_assessed"])
         self.assertEqual(self.get_check(game, "restart_sequence")["status"], "PASS")
         self.assertEqual(self.get_check(game, "restart_location")["status"], "PASS")
+        self.assertEqual(self.get_check(game, "simulation_roster_consistency")["status"], "PASS")
         self.assertEqual(self.get_check(game, "geometry_and_officiating")["status"], "NOT_ASSESSED")
         self.assertEqual(self.get_check(game, "game_lineup_eligibility")["status"], "NOT_ASSESSED")
+
+    def test_simulation_roster_rejects_target_lineup_leakage_and_extra_player_totals(self):
+        game = regular_game()
+        game["pregame_snapshot"]["projected_game_roster"]["actual_target_game_lineup_used"] = True
+        self.assertEqual(self.get_check(game, "simulation_roster_consistency")["status"], "FAIL")
+        game = regular_game()
+        game["summary"]["player_totals"]["H99"] = {"team_side": "home", "position": "F"}
+        self.assertEqual(self.get_check(game, "simulation_roster_consistency")["status"], "FAIL")
 
     def test_goal_requires_center_faceoff_before_play_resumes(self):
         game = regular_game()
@@ -575,12 +622,43 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
     def test_regulation_overtime_shootout_and_early_decision(self):
         game = shootout_game()
         result = self.get_check(game, "overtime_and_shootout")
-        self.assertEqual(result["status"], "NOT_ASSESSED")
+        self.assertEqual(result["status"], "PASS")
         self.assertFalse(validator.audit_game(game, ruleset="2021-22")["full_rule_assessed"])
         bad = shootout_game(add_attempt_after_clinch=True)
         result = self.get_check(bad, "overtime_and_shootout")
         self.assertEqual(result["status"], "FAIL")
         self.assertIn("continued after", " ".join(x["message"] for x in result["findings"]))
+
+    def test_shootout_rejects_player_before_projected_roster_has_all_shot(self):
+        game = shootout_game()
+        home_attempts = [event for event in game["events"] if event["event_type"] == "shootout-attempt"
+                         and event["team_side"] == "home"]
+        home_attempts[1]["participants"]["shooter_id"] = home_attempts[0]["participants"]["shooter_id"]
+        result = self.get_check(game, "overtime_and_shootout")
+        self.assertEqual(result["status"], "FAIL")
+        self.assertIn("before every eligible", " ".join(row["message"] for row in result["findings"]))
+
+    def test_shootout_excludes_active_misconduct_player(self):
+        game = shootout_game()
+        start_index = next(i for i, event in enumerate(game["events"])
+                           if event["event_type"] == "period-start" and event["period_type"] == "SO")
+        game["events"].insert(start_index, {
+            "sequence": 0, "period_number": 3, "period_type": "REG",
+            "event_type": "penalty", "team_side": "home",
+            "details": {"penalty_kind": "MIS", "penalty_duration_seconds": 600},
+            "participants": {"penalized_player_id": "H3", "serving_player_id": "H3"},
+            "on_ice": {"home": [], "away": []},
+        })
+        for sequence, event in enumerate(game["events"], 1):
+            event["sequence"] = sequence
+        result = self.get_check(game, "overtime_and_shootout")
+        self.assertEqual(result["status"], "FAIL")
+        self.assertIn("not eligible", " ".join(row["message"] for row in result["findings"]))
+
+    def test_shootout_without_projected_roster_remains_unassessed(self):
+        game = shootout_game()
+        del game["pregame_snapshot"]["projected_game_roster"]
+        self.assertEqual(self.get_check(game, "overtime_and_shootout")["status"], "NOT_ASSESSED")
 
     def test_overtime_goal_ends_immediately(self):
         builder = GameBuilder().base_regulation(p1_goal=False)

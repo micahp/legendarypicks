@@ -237,7 +237,12 @@ class ForwardOnlyHistory:
                          key=lambda p: (-p.games_started, -p.shots_against, p.nhl_id))
         if len(forwards) < 12 or len(defense) < 6 or not goalies:
             raise ValueError(f"{team}: prior appearance pool too small: F={len(forwards)}, D={len(defense)}, G={len(goalies)}")
-        player_sog = sum(p.shots / max(1.0, p.games_played) for p in forwards[:12] + defense[:6])
+        selected_forwards = forwards[:12]
+        selected_defense = defense[:6]
+        selected_goalies = goalies[:2]
+        game_roster_ids = [p.nhl_id for p in selected_forwards + selected_defense + selected_goalies]
+        player_sog = sum(p.shots / max(1.0, p.games_played)
+                         for p in selected_forwards + selected_defense)
         goalie_starts = [p for p in goalies if p.games_started > 0]
         if goalie_starts:
             sog_against = sum(p.shots_against for p in goalie_starts) / sum(p.games_started for p in goalie_starts)
@@ -246,24 +251,30 @@ class ForwardOnlyHistory:
         payload = [[p.nhl_id, p.name, p.position, round(p.usage_minutes, 5),
                     round(p.shots, 5), round(p.goals, 5), round(p.save_pct, 7)]
                    for p in sorted(players.values(), key=lambda x: x.nhl_id)]
-        profile_hash = hashlib.sha256(json.dumps(payload, separators=(",", ":"),
+        profile_hash = hashlib.sha256(json.dumps(
+            {"players": payload, "game_roster_ids": game_roster_ids}, separators=(",", ":"),
                                                    sort_keys=True).encode()).hexdigest()
         position_counts = collections.Counter(p.position for p in players.values())
+        selected_position_counts = collections.Counter(players[pid].position for pid in game_roster_ids)
         latest = max(p.last_date for p in histories)
         return sim.TeamRoster(
             team=team, players=players, expected_sog=min(42.0, max(20.0, player_sog)),
             expected_sog_against=min(42.0, max(20.0, sog_against)),
-            goalie_ids=[p.nhl_id for p in goalies],
-            goalie_weights=[max(.5, p.games_started) for p in goalies],
+            goalie_ids=[p.nhl_id for p in selected_goalies],
+            goalie_weights=[max(.5, p.games_started) for p in selected_goalies],
             profile_hash=profile_hash,
-            coverage={"projection": "latest prior appearance by NHL player ID; not target lineup",
+            coverage={"projection": "12 highest-prior-usage forwards, 6 highest-prior-usage defensemen, and up to 2 goalies ranked by prior starts; not target lineup",
                       "source": "verified GameCenter boxscore manifest and bodies",
+                      "projection_source": "prior eligible GameCenter boxscores only",
                       "prior_player_count": len(players), "forward_count": len(forwards),
                       "defense_count": len(defense), "goalie_count": len(goalies),
+                      "projected_game_roster_size": len(game_roster_ids),
+                      "projected_game_roster_position_counts": dict(sorted(selected_position_counts.items())),
                       "players_with_prior_appearances": len(players),
                       "latest_prior_appearance_date": latest,
                       "prior_history_games": len(self.games_added),
                       "position_counts": dict(sorted(position_counts.items()))},
+            game_roster_ids=game_roster_ids,
         )
 
     def make_inputs(self, *, sim: Any, game_key: str, game_date: str,
@@ -313,6 +324,21 @@ class ForwardOnlyHistory:
             },
             "home_roster_hash": home_roster.profile_hash,
             "away_roster_hash": away_roster.profile_hash,
+            "projected_game_roster": {
+                "status": "pregame_projection_only",
+                "selection_policy": "12 highest-prior-usage forwards, 6 highest-prior-usage defensemen, and up to 2 goalies ranked by prior starts; ties resolve by prior shots then NHL ID",
+                "actual_target_game_lineup_used": False,
+                "history_cutoff_game_date_exclusive": game_date,
+                "source_by_side": {
+                    "home": home_roster.coverage["projection_source"],
+                    "away": away_roster.coverage["projection_source"],
+                },
+                "players_by_side": {
+                    side: [{"player_id": pid, "position": roster.players[pid].position}
+                           for pid in roster.game_roster_ids]
+                    for side, roster in (("home", home_roster), ("away", away_roster))
+                },
+            },
             "home_roster_coverage": home_roster.coverage,
             "away_roster_coverage": away_roster.coverage,
             "team_model": {"model_version": "historical-forward-rates-v1",

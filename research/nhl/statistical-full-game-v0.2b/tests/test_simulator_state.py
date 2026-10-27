@@ -35,8 +35,9 @@ def shift_transition_fixture():
         for goalie_id in goalie_ids:
             players[goalie_id]=sim.Player(goalie_id,None,goalie_id,team,"G")
             totals[goalie_id]={"team_side":side,"position":"G"}
+        game_roster_ids = [pid for pid in players if players[pid].position != "G"] + list(goalie_ids)
         rosters[side]=sim.TeamRoster(team,players,30.0,30.0,list(goalie_ids),
-            [1.0]*len(goalie_ids),"fixture",{})
+            [1.0]*len(goalie_ids),"fixture",{},game_roster_ids)
     return totals,SimpleNamespace(home_roster=rosters["home"],away_roster=rosters["away"])
 
 

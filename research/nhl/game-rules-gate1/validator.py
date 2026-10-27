@@ -416,6 +416,115 @@ def _check_roster_membership(game: dict[str, Any]) -> dict[str, Any]:
                   "IDs reconcile to the supplied pregame roster snapshot; this does not prove the official dressed lineup.")
 
 
+def _projected_game_roster(game: dict[str, Any]) -> dict[str, dict[str, str]] | None:
+    snapshot = game.get("pregame_snapshot")
+    projection = snapshot.get("projected_game_roster") if isinstance(snapshot, dict) else None
+    players_by_side = projection.get("players_by_side") if isinstance(projection, dict) else None
+    if not isinstance(players_by_side, dict):
+        return None
+    result: dict[str, dict[str, str]] = {}
+    for side in SIDES:
+        rows = players_by_side.get(side)
+        if not isinstance(rows, list):
+            return None
+        player_map: dict[str, str] = {}
+        for row in rows:
+            if not isinstance(row, dict) or row.get("player_id") is None or row.get("position") is None:
+                return None
+            player_id = str(row["player_id"])
+            if player_id in player_map:
+                return None
+            player_map[player_id] = str(row["position"])
+        result[side] = player_map
+    return result
+
+
+def _check_simulation_roster_consistency(game: dict[str, Any]) -> dict[str, Any]:
+    snapshot = game.get("pregame_snapshot")
+    projection = snapshot.get("projected_game_roster") if isinstance(snapshot, dict) else None
+    projected = _projected_game_roster(game)
+    if not isinstance(projection, dict):
+        return _check("simulation_roster_consistency", ("Rules 5, 7, 24, 84"),
+            [_issue(None, "pregame projected game roster is absent",
+                    status="NOT_ASSESSED")], status="NOT_ASSESSED")
+    if projected is None:
+        return _check("simulation_roster_consistency", ("Rules 5, 7, 24, 84"),
+            [_issue(None, "pregame projected game roster is malformed")])
+    findings: list[dict[str, Any]] = []
+    if projection.get("status") != "pregame_projection_only":
+        findings.append(_issue(None, "roster status must identify a pregame projection"))
+    if projection.get("actual_target_game_lineup_used") is not False:
+        findings.append(_issue(None, "projected roster must attest that target-game lineup was not used"))
+    if snapshot.get("actual_target_game_stats_or_lineups_used") is not False:
+        findings.append(_issue(None, "pregame snapshot must attest that target-game lineups and stats were not used"))
+    if not isinstance(projection.get("selection_policy"), str) or not projection["selection_policy"]:
+        findings.append(_issue(None, "projected roster selection policy is missing"))
+    sources = projection.get("source_by_side")
+    if not isinstance(sources, dict) or any(not isinstance(sources.get(side), str) or not sources[side]
+                                            for side in SIDES):
+        findings.append(_issue(None, "projected roster source provenance is missing by team"))
+    try:
+        players = _player_map(game)
+    except (TypeError, ValueError) as exc:
+        return _check("simulation_roster_consistency", ("Rules 5, 7, 24, 84"),
+                      [_issue(None, "simulated player totals cannot be read", detail=str(exc))])
+    all_projected: set[str] = set()
+    forward_positions = {"F", "C", "L", "R", "LW", "RW"}
+    for side in SIDES:
+        side_roster = projected[side]
+        overlap = all_projected.intersection(side_roster)
+        if overlap:
+            findings.append(_issue(None, "projected player ID appears on both teams",
+                                   detail={"player_ids": sorted(overlap)}))
+        all_projected.update(side_roster)
+        groups = {player_id: "F" if position in forward_positions else position
+                  for player_id, position in side_roster.items()}
+        counts = Counter(groups.values())
+        if counts["F"] != 12 or counts["D"] != 6 or counts["G"] not in {1, 2}:
+            findings.append(_issue(None, "projected roster must contain 12 forwards, 6 defensemen, and 1 or 2 goalies",
+                detail={"side": side, "position_counts": dict(sorted(counts.items()))}))
+        if len(side_roster) not in {19, 20} or any(position not in forward_positions | {"D", "G"}
+                                                   for position in side_roster.values()):
+            findings.append(_issue(None, "projected roster contains an unsupported size or position",
+                detail={"side": side, "size": len(side_roster), "position_counts": dict(sorted(counts.items()))}))
+        for player_id, position in side_roster.items():
+            player = players.get(player_id)
+            if player is None:
+                findings.append(_issue(None, "projected player is absent from simulated player totals",
+                    detail={"side": side, "player_id": player_id}))
+            elif player.get("team_side") != side or player.get("position") != position:
+                findings.append(_issue(None, "projected player identity disagrees with simulated totals",
+                    detail={"side": side, "player_id": player_id,
+                            "roster_position": position, "totals": player}))
+    if set(players) != all_projected:
+        findings.append(_issue(None, "simulated player totals do not equal the projected game roster",
+            detail={"projected_only": sorted(all_projected - set(players)),
+                    "totals_only": sorted(set(players) - all_projected)}))
+    for event in game.get("events", []):
+        if not isinstance(event, dict):
+            continue
+        seq = event.get("sequence")
+        for side in SIDES:
+            for player_id in event.get("on_ice", {}).get(side, []) if isinstance(event.get("on_ice"), dict) else []:
+                if str(player_id) not in projected[side]:
+                    findings.append(_issue(seq, "on-ice player is outside the projected game roster",
+                        detail={"side": side, "player_id": player_id}))
+        participants = event.get("participants") or {}
+        for key, value in participants.items():
+            if key.endswith("_id") and value is not None and str(value) not in all_projected:
+                findings.append(_issue(seq, "event participant is outside the projected game roster",
+                    detail={"field": key, "player_id": value}))
+            elif key.endswith("_ids") and isinstance(value, list):
+                for player_id in value:
+                    if str(player_id) not in all_projected:
+                        findings.append(_issue(seq, "event participant is outside the projected game roster",
+                            detail={"field": key, "player_id": player_id}))
+    if findings:
+        return _check("simulation_roster_consistency", ("Rules 5, 7, 24, 84"), findings)
+    return _check("simulation_roster_consistency", ("Rules 5, 7, 24, 84"), evidence=
+                  "Simulated events and totals reconcile to a cutoff-safe projected roster; official dressed-lineup eligibility remains unassessed.")
+
+
 def _check_personnel(game: dict[str, Any]) -> dict[str, Any]:
     findings: list[dict[str, Any]] = []
     unassessed: list[dict[str, Any]] = []
@@ -1046,6 +1155,70 @@ def _shootout_winner(events: list[dict[str, Any]]) -> tuple[str | None, list[dic
     return winner, findings
 
 
+def _shootout_roster_findings(game: dict[str, Any], events: list[dict[str, Any]],
+                              shootout_start_index: int) -> list[dict[str, Any]]:
+    snapshot = game.get("pregame_snapshot")
+    projection = snapshot.get("projected_game_roster") if isinstance(snapshot, dict) else None
+    if not isinstance(projection, dict):
+        return [_issue(None, "projected game roster is absent; shooter eligibility cannot be checked",
+                       status="NOT_ASSESSED")]
+    projected = _projected_game_roster(game)
+    if projected is None:
+        return [_issue(None, "projected game roster is malformed; shooter eligibility cannot be checked")]
+    start = events[shootout_start_index]
+    sequence = start.get("sequence")
+    eligible = {side: set(projected[side]) for side in SIDES}
+    active_misconduct = {side: set() for side in SIDES}
+    for event in events[:shootout_start_index]:
+        if not isinstance(event, dict):
+            continue
+        event_type = event.get("event_type")
+        side = event.get("team_side")
+        details = event.get("details") or {}
+        participants = event.get("participants") or {}
+        kind = str(details.get("penalty_kind") or "").upper()
+        if event_type == "penalty" and kind == "MIS" and side in SIDES:
+            for field in ("penalized_player_id", "serving_player_id"):
+                player_id = participants.get(field)
+                if player_id is not None:
+                    active_misconduct[side].add(str(player_id))
+        elif event_type in {"penalty-expiration", "penalty-release", "penalty-segment-end"} and kind == "MIS":
+            player_id = participants.get("player_id") or details.get("player_returned_id")
+            if player_id is not None and side in SIDES:
+                active_misconduct[side].discard(str(player_id))
+    findings: list[dict[str, Any]] = []
+    for side in SIDES:
+        eligible[side].difference_update(active_misconduct[side])
+        if not eligible[side]:
+            findings.append(_issue(sequence, "team has no eligible projected-roster shootout participant",
+                                   detail={"side": side}))
+    attempts_seen = {side: set() for side in SIDES}
+    for event in events[shootout_start_index + 1:]:
+        if not isinstance(event, dict) or event.get("event_type") != "shootout-attempt":
+            continue
+        side = event.get("team_side")
+        seq = event.get("sequence")
+        shooter = str((event.get("participants") or {}).get("shooter_id") or "")
+        if side not in SIDES:
+            findings.append(_issue(seq, "shootout attempt lacks a valid shooting side"))
+            continue
+        if shooter not in eligible[side]:
+            findings.append(_issue(seq, "shootout shooter is not eligible from the projected roster",
+                detail={"side": side, "shooter_id": shooter,
+                        "active_misconduct_exclusions": sorted(active_misconduct[side])}))
+            continue
+        if shooter in attempts_seen[side]:
+            if len(attempts_seen[side]) < len(eligible[side]):
+                findings.append(_issue(seq, "player repeated before every eligible projected-roster player had shot",
+                    detail={"side": side, "shooter_id": shooter,
+                            "unique_shooters": len(attempts_seen[side]),
+                            "eligible_shooters": len(eligible[side])}))
+            else:
+                attempts_seen[side].clear()
+        attempts_seen[side].add(shooter)
+    return findings
+
+
 def _check_overtime_shootout(game: dict[str, Any]) -> dict[str, Any]:
     events = game.get("events", [])
     findings: list[dict[str, Any]] = []
@@ -1125,6 +1298,11 @@ def _check_overtime_shootout(game: dict[str, Any]) -> dict[str, Any]:
             findings.append(_issue(shootout_start.get("sequence"), "shootout occurs without a tied score after overtime"))
         winner, shootout_findings = _shootout_winner(events)
         findings.extend(shootout_findings)
+        shootout_start_index = next(i for i, event in enumerate(events) if event is shootout_start)
+        eligibility_findings = _shootout_roster_findings(game, events, shootout_start_index)
+        findings.extend(row for row in eligibility_findings if row.get("status") != "NOT_ASSESSED")
+        unassessed_eligibility = next((row for row in eligibility_findings
+                                       if row.get("status") == "NOT_ASSESSED"), None)
         declared = summary.get("shootout_winner")
         decisions = [e.get("team_side") for e in events if isinstance(e, dict)
                      and e.get("event_type") == "shootout-decision"]
@@ -1161,9 +1339,9 @@ def _check_overtime_shootout(game: dict[str, Any]) -> dict[str, Any]:
                 findings.append(_issue(shootout_start.get("sequence"),
                     "official shootout final score must add one team goal only to the winner",
                     detail={"side": side, "actual": official.get(side), "expected": expected}))
-        unassessed_eligibility = _issue(shootout_start.get("sequence"),
-            "submitted game lineup and Rule 84.4 exclusions are absent from this record",
-            status="NOT_ASSESSED")
+        if unassessed_eligibility is not None:
+            unassessed_eligibility["message"] = (
+                "official dressed lineup is unavailable; shooter checks use the modeled projected roster only")
     else:
         unassessed_eligibility = None
         if so_events:
@@ -1192,6 +1370,7 @@ def audit_game(game: dict[str, Any], *, ruleset: str | None = None) -> dict[str,
         _check_order_and_clock(game),
         _check_score_and_terminal(game),
         _check_roster_membership(game),
+        _check_simulation_roster_consistency(game),
         _check_personnel(game),
         _check_penalties(game),
         _check_restarts(game),
@@ -1213,7 +1392,7 @@ def audit_game(game: dict[str, Any], *, ruleset: str | None = None) -> dict[str,
         [_issue(None, "puck/player trajectories and declared official decisions are not present",
                 status="NOT_ASSESSED")], status="NOT_ASSESSED"))
     checks.append(_check("game_lineup_eligibility", ("Rules 5, 7, 24, 84"),
-        [_issue(None, "record contains a pregame roster pool, not the submitted dressed lineup",
+        [_issue(None, "record contains a pregame projected roster, not the submitted dressed lineup",
                 status="NOT_ASSESSED")], status="NOT_ASSESSED"))
 
     required = [row for row in checks if row["code"] in STRUCTURAL_CHECKS]
