@@ -6,9 +6,9 @@
 
 ## Scope
 
-Two complete 10,000-seed batches are available: the original unconditional S0 run and a contextual S1 run with offense and defense conditioning. A corrected S1 rerun using the later rules-engine integration is currently in progress and is not included in the completed-run results below. A separate serial attempt on the corrected code stopped at seed 1,000; it did not produce a 10,000-run result.
+Three complete 10,000-seed batches are available: the original unconditional S0 run, the first contextual S1 run with offense and defense conditioning, and the later integrated S1 rerun with blocked-kick and overtime support. A separate serial attempt on the corrected code stopped at seed 1,000; it did not produce a 10,000-run result.
 
-Both completed batches retained all 10,000 seed outcomes. Score and win summaries use only complete, untied games that passed that run's validity gate. They are therefore conditional on simulator coverage.
+Score and win summaries use only complete, untied games that passed that run's validity gate. They are therefore conditional on simulator coverage. For the integrated S1 run, the manifest verifies 10,000 unique seed rows, but the archived JSON artifacts do not include a per-seed outcome ledger.
 
 ## Results at a glance
 
@@ -16,8 +16,9 @@ Both completed batches retained all 10,000 seed outcomes. Score and win summarie
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | S0 | Unconditional historical play pool; dirty producer based on `90c74641` | 7,993 (79.93%) | 1,948 | 59 | 20.4146 / 20.4886 | 40.9032 | 49.87% |
 | S1 | Context mode `both`; clean producer `15e5eb20` | 8,825 (88.25%) | 1,175 | 0 | 19.8774 / 20.5467 | 40.4241 | 48.56% |
+| S1 integrated | Context mode `both`; clean producer `709fb759` with integrated blocked-kick and overtime rules | 9,820 (98.20%) | 173 | 1 | 19.9695 / 20.8081 | 40.7776 | 47.54% |
 
-S1 produced 832 more valid games, an 8.32 percentage-point coverage increase. This is not an isolated estimate of contextual conditioning: S1 also uses a different producer revision, the safety free-kick reference input, and a different run snapshot/reference digest. The two batches are not a paired ablation, even though both use seeds 1–10,000.
+The first S1 produced 832 more valid games than S0, an 8.32 percentage-point coverage increase. The integrated S1 produced 995 more valid games than the first S1, a 9.95 percentage-point increase. Neither is an isolated estimate of contextual conditioning or a single rules fix: producer revisions, special-teams references, and snapshot/reference digests changed. The batches are not paired ablations, even though they use seeds 1–10,000.
 
 ## S0: unconditional baseline batch
 
@@ -43,15 +44,18 @@ The S1 run's recorded v1 reference projected PHI 23.1840 and DAL 23.1421 points,
 
 The completed S1 result is retained on the faster host at `/root/nfl-dal-phi-s1-contextual-2026-10-26/results-s1.json` (SHA-256 `496dd36da2f2f070fc4d2edd6d7caa0919164aa1c2d8a7976192c2d12bfa8db5`). Its input manifest is `manifest-s1.json` (SHA-256 `cea4142c6faf06803802459d239c262b5ec701bba593e8a08e46ca23a6653cce`); `run-manifest.json` (SHA-256 `05935c89116addb023cfecd2700454e0efbe22ab768baffc0047bdd84bd6906a`) records the six shard checksums and verifies exact, unique seed coverage.
 
+## S1 integrated: corrected rules-engine rerun
+
+The integrated S1 result completed all seeds 1–10,000. Of these, 9,820 were valid complete, untied games (98.20%); 9,449 completed in regulation, 377 completed in overtime, 173 were blocked, and one ended in a simulation or validation error. The valid-game means were PHI 19.9695 and DAL 20.8081, with a 40.7776 mean total and a 47.54% PHI win rate. DAL won 5,152 valid games (52.46%). The full report, including guarded-transition counts and provenance limitations, is [Dallas–Philadelphia S1 integrated 10,000-run report](nfl-dal-phi-s1-integrated-10k-2026-10-27.md).
+
+The input cutoff was 2026-10-26 22:45:01.400 UTC, before the 2026-10-27 00:15 UTC scheduled kickoff, but the merged batch output was frozen at 03:04:50.891 UTC, after kickoff. This run was not available as a pre-kickoff forecast. Its v1 reference is also marked `exploratory_schedule_unverified`; it is not a fair accuracy comparison.
+
+**Provenance:** branch `research/nfl-contextual-batch-run-2026-10-26`, clean producer commit `709fb75959c16adc74baf42e986d4fb85974e0cc`; run manifest SHA-256 `20963de4e8be84e4adc95e985f2fe6a3f0d39b4bd9d0a9a6d5e96e82e8248e4d`; merged result SHA-256 `a8772289b9d1378ae5ca7fde79decdc6e8ca9bff561db691fd9a42f07fea8efa`. The six shard outputs and merged result remain on the faster host under `/root/nfl-dal-phi-s1-integrated-2026-10-26/`.
+
 ## Comparison limits
 
 - The 8.32-point coverage increase from S0 to S1 is descriptive. It cannot be attributed to the context kernel alone because code, reference inputs, and run digests differ.
-- Valid-game score and win summaries omit blocked runs. Both batches' coverage losses can bias their distributions; preserve the blocked outcomes when evaluating model quality.
+- Valid-game score and win summaries omit blocked runs. Coverage losses can bias each distribution; preserve blocked outcomes when evaluating model quality.
 - An identical integer seed does not establish common random numbers when the reference or snapshot digest changes. Treat S0-versus-S1 differences as independent Monte Carlo results.
-- Both runs are research simulations. More seeded games reduce Monte Carlo noise; they do not establish calibration or better real-world prediction.
+- All three runs are research simulations. More seeded games reduce Monte Carlo noise; they do not establish calibration or better real-world prediction.
 - The roster snapshot used for these runs had 18 Dallas and 23 Philadelphia skill-position rows, without jersey numbers or starter flags. Player totals are role allocations, not player-specific forecasts.
-
-## Corrected rerun in progress
-
-The current rerun uses the later integrated rules-engine commit `709fb75959c16adc74baf42e986d4fb85974e0cc`, including the subsequent blocked-kick and overtime fixes. It is split into six workers over seeds 1–10,000, with merge-on-completion enabled. Its final summaries must replace this status once all shards merge; no results from that rerun are reported here as completed.
-
