@@ -101,8 +101,15 @@ The movement policy decision of 2026-10-24 in the physics repo found that the cu
 at one second over a constant-acceleration predictor (about 97% of the benefit comes from the predictor). So a change
 to AI movement counts only if it beats that baseline.
 
-Validation sources on this box: the tracking folders `bdb2025` and `bdb2026-prediction`. Their seasons and fields are
-not yet inventoried. That inventory is the first step of this part.
+Validation sources on this box (inventoried 2026-10-27, read-only, `/root/nfl-tracking-data`):
+
+- `bdb2025`: **2022 season**, Weeks 1 to 9 (game IDs begin `2022`). Tackle-event plays, each with a frame-level trace (before
+  snap, snap, after snap), ball rows, and events (tackle, first contact, out of bounds). Week 1 holds 16 games and 1,952 plays.
+  The folder name is the competition year, not the season.
+- `bdb2026-prediction`: **2023 season**, Weeks 1 to 7, the `train` split only. Pre-throw input frames with player positions,
+  roles and sides, and the post-throw positions of the player to predict. The hidden test split is not on disk.
+
+No 2024, 2025 or 2026 season tracking is on disk.
 
 Gates:
 
@@ -112,6 +119,25 @@ Gates:
    plays, with intervals. A change counts as material only if it beats the constant-acceleration predictor by more than the
    controller's current margin.
 3. A null result is reported as null. The movement policy keeps the current controller until a change is material.
+
+### 8A. Protocol for the movement work (decided 2026-10-27)
+
+The user's order was: 2025 first, train on 2025, check the match against 2026, then tune. The data does not allow that
+order, and the holdout rule does not allow tuning on 2026. The protocol is:
+
+1. **Playbook priors are fit on 2025.** Built from the 2025 participation and charting data, with the 2025 playbooks as the
+   training description. These priors are the only thing fitted on 2025.
+2. **Movement calibration is fit on 2022 tracking** (`bdb2025` folder, Weeks 1 to 9), with a within-season split. Fit the
+   constant-acceleration predictor and the physics controller on the same plays.
+3. **Movement validation is run on 2023 tracking** (`bdb2026-prediction` train, Weeks 1 to 7). Compare predicted and
+   observed positions at the throw and after it, with intervals, against the constant-acceleration predictor.
+4. **Tuning happens only on steps 1 to 3.** No setting is chosen using 2026.
+5. **The 2026 holdout is one test, run once, after steps 1 to 4 are frozen.** There is no 2026 tracking, so it can test only
+   play outcomes: whether the generated play's result distribution matches the charted 2026 outcomes for Weeks 1 to 7. It
+   cannot test movement. The target and the metric are written down before the run and are not changed afterwards.
+6. **2025 and 2026 tracking are needed for a movement check on the holdout season.** Acquiring them is a separate decision.
+
+Items 2 and 3 use 2022 and 2023 data. They are not 2025 or 2026 results and are not holdout evidence.
 
 ## 9. Execution
 
@@ -130,7 +156,9 @@ Gates:
    prompt when the text was typed. See the status note in section 9.
 2. Decided 2026-10-27: the 2026 playbook stays frozen at Weeks 1 to 7 for the holdout. It is not rebuilt when Week 8
    completes.
-3. Still open: which tracking season is the first validation target for movement?
+3. Decided 2026-10-27 by the user: train on 2025 first, then tune. The inventory shows no 2025 tracking on disk, so the
+   protocol in section 8A applies. The user also asked to check the 2026 result and tune on it. That conflicts with the
+   holdout rule, so 2026 is used once, at the end, against a target fixed before any 2026 result is seen (section 8A).
 
 ## Appendix A. Handoff text for hermes2
 
