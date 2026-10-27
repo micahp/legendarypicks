@@ -1979,7 +1979,8 @@ def _render_markdown(result: dict[str, Any]) -> str:
             shift_text = (f"{before['shift_skaters_home_away']} → "
                           f"{after['shift_skaters_home_away']}")
             lines.append(
-                f"| {season_name} `{example['game_id']}` | {example['period_type']} {example['period']} | "
+                f"| {season_name} | `{example['game_id']}` | "
+                f"{example['period_type']} {example['period']} | "
                 f"{prior_text} | {new_text} | `{before['situation_code']}` → `{after['situation_code']}` | "
                 f"{shift_text} |")
     lines += [
