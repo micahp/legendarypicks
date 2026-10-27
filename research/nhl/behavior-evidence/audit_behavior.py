@@ -34,8 +34,8 @@ DEFAULT_DATA_ROOT = Path("/root/lp-data/nhl-fullframe-event-audit-2026-10-21")
 DEFAULT_BOXSCORE_ROOT = Path("/root/lp-data/nhl-official-outcome-backfill-2026-10-20")
 DEFAULT_DB = Path("/root/legendarypicks/backend/data/picks.dev.db")
 PRIOR_ARTIFACT = RESEARCH_DIR / "results/nhl-behavior-evidence-2026-10-26.json"
-DEFAULT_OUTPUT = RESEARCH_DIR / "results/nhl-behavior-evidence-event-state-v2-2026-10-26.json"
-DEFAULT_REPORT = ROOT / "docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V2-2026-10-26.md"
+DEFAULT_OUTPUT = RESEARCH_DIR / "results/nhl-behavior-evidence-event-state-v3-2026-10-27.json"
+DEFAULT_REPORT = ROOT / "docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V3-2026-10-27.md"
 PBP_MANIFEST_SHA256 = "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990"
 SHIFT_MANIFEST_SHA256 = "deba1a38d9f9c969139dc15ac57e7085988c05bcab36db43bd87fe5805f1c6f5"
 TRAIN_SEASONS = (2019, 2020)
@@ -429,7 +429,7 @@ def _store_field_coverage(stats: dict[str, Any], event: dict[str, Any]) -> None:
 
 
 def _cluster_interval(game_values: list[tuple[int, int]], *, reps: int,
-                      seed: int) -> list[float] | None:
+                      seed: int, scale: float = 1.0) -> list[float] | None:
     if not game_values or sum(den for _, den in game_values) < 100:
         return None
     rng = random.Random(seed)
@@ -444,8 +444,8 @@ def _cluster_interval(game_values: list[tuple[int, int]], *, reps: int,
         if den:
             rates.append(num / den)
     rates.sort()
-    return [rates[int(0.025 * (len(rates) - 1))],
-            rates[int(0.975 * (len(rates) - 1))]] if rates else None
+    return [rates[int(0.025 * (len(rates) - 1))] * scale,
+            rates[int(0.975 * (len(rates) - 1))] * scale] if rates else None
 
 
 def _load_game_source(data_root: Path, pbp_rows: dict[str, dict[str, str]],
@@ -1486,9 +1486,10 @@ def _event_rate_diagnostics(training_games: list[dict[str, Any]],
     """Fit event rates on training exposure, then score conditional 2021 counts.
 
     Exposure is shift-derived team-minutes. Contexts are one-axis-at-a-time;
-    the event state is read from the pre-event record and never used as a
-    pregame feature. 2021 values are therefore conditional diagnostics, not a
-    prospective full-game forecast.
+    event state uses the source situation code reconciled against both shift
+    interval limits. It is not assumed to be pre-event when the code matches
+    only the right limit, and is never used as a pregame feature. 2021 values
+    are conditional diagnostics, not a prospective full-game forecast.
     """
     training: dict[str, Any] = {}
     development: dict[str, Any] = {}
@@ -1523,7 +1524,8 @@ def _event_rate_diagnostics(training_games: list[dict[str, Any]],
             "cluster_95_ci_observed_per_60": _cluster_interval(
                 [(g["event_rate_counts"].get(f"{family}|all=all", 0),
                   g["event_exposure_minutes"].get("all=all", 0)) for g in training_games],
-                reps=BOOTSTRAP_REPLICATES, seed=BOOTSTRAP_SEED + 1300 + family_index),
+                reps=BOOTSTRAP_REPLICATES, seed=BOOTSTRAP_SEED + 1300 + family_index,
+                scale=60.0),
             "status": "parent",
         }]
         for context_index, context in enumerate(sorted(contexts - {"all=all"})):
@@ -1554,7 +1556,8 @@ def _event_rate_diagnostics(training_games: list[dict[str, Any]],
                 "shrunk_per_60_team_minutes": rate * 60,
                 "cluster_95_ci_observed_per_60": _cluster_interval(
                     values, reps=BOOTSTRAP_REPLICATES,
-                    seed=BOOTSTRAP_SEED + 1400 + family_index * 100 + context_index),
+                    seed=BOOTSTRAP_SEED + 1400 + family_index * 100 + context_index,
+                    scale=60.0),
                 "status": status,
             })
 
@@ -1599,7 +1602,8 @@ def _event_rate_diagnostics(training_games: list[dict[str, Any]],
                 "observed_to_expected_ratio": events / expected if expected else None,
                 "cluster_95_ci_observed_per_60": _cluster_interval(
                     dev_values, reps=BOOTSTRAP_REPLICATES,
-                    seed=BOOTSTRAP_SEED + 1700 + family_index * 100 + context_index),
+                    seed=BOOTSTRAP_SEED + 1700 + family_index * 100 + context_index,
+                    scale=60.0),
                 "mean_game_poisson_deviance_difference_vs_parent": (
                     statistics.fmean(a - b for a, b in game_deltas) if game_deltas else None),
                 "deviance_difference_uncertainty": (
@@ -2061,7 +2065,7 @@ def _render_markdown(result: dict[str, Any]) -> str:
     models = result["model_diagnostics"]
     db = result["legendarypicks_database"]
     lines = [
-        "# NHL Behavior Evidence Audit: Event-State Attribution v2",
+        "# NHL Behavior Evidence Audit: Event-State Attribution v3",
         "",
         f"- **Date:** {result['metadata']['date']}",
         f"- **Branch:** `{result['metadata']['branch']}`",
@@ -2370,8 +2374,8 @@ def _render_markdown(result: dict[str, Any]) -> str:
         "  --data-root /root/lp-data/nhl-fullframe-event-audit-2026-10-21 \\",
         "  --boxscore-root /root/lp-data/nhl-official-outcome-backfill-2026-10-20 \\",
         "  --db /root/legendarypicks/backend/data/picks.dev.db \\",
-        "  --output research/nhl/behavior-evidence/results/nhl-behavior-evidence-event-state-v2-2026-10-26.json \\",
-        "  --report docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V2-2026-10-26.md",
+        "  --output research/nhl/behavior-evidence/results/nhl-behavior-evidence-event-state-v3-2026-10-27.json \\",
+        "  --report docs/research/NHL-BEHAVIOR-EVIDENCE-EVENT-STATE-V3-2026-10-27.md",
         "```",
         "",
         f"Elapsed audit time: {result['metadata']['elapsed_seconds']:.1f} seconds. JSON and report content are emitted by the script; raw data are not copied into Git.",
@@ -2456,9 +2460,9 @@ def run_audit(data_root: Path, boxscore_root: Path, db_path: Path,
     script_path = Path(__file__).resolve()
     result = {
         "metadata": {
-            "title": "NHL behavior evidence audit: event-state attribution v2",
+            "title": "NHL behavior evidence audit: event-state attribution v3",
             "date": dt.date.today().isoformat(),
-            "analysis_version": "event-state-and-outcome-availability-v2",
+            "analysis_version": "event-state-and-outcome-availability-v3",
             "branch": branch,
             "base_commit": "9501768f1410484d8be235fe0700f710f5ec189e",
             "code_commit_at_run": head,
@@ -2472,6 +2476,7 @@ def run_audit(data_root: Path, boxscore_root: Path, db_path: Path,
                 "Event-rate condition labels are now reconciled against both left-limit and right-limit shift interval states. The former single right-continuous shift snapshot is retained only as a comparison; boundary conflicts and unresolved labels are excluded from conditional-rate fitting.",
                 "ShotType, zoneCode, and goalie-ID conditional scores use observed-field complete cases and a baseline scored on the same events; because field availability can depend on recorded outcomes, these are retrospective selected-cohort diagnostics, not prospective skill claims. Missing values are not treated as predictive categories.",
                 "The final event-rate report retains the preregistered 2,000 game-cluster intervals for rates; descriptive Poisson-deviance differences are point estimates and are not separately bootstrapped.",
+                "Event-rate bootstrap intervals are expressed per 60 team-minutes, matching the reported point estimates; binary probability intervals remain on the probability scale.",
             ],
             "training_seasons": list(TRAIN_SEASONS),
             "development_seasons": list(DEV_SEASONS),

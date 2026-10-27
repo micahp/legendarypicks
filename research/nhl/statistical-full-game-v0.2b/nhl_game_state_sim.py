@@ -2084,9 +2084,31 @@ def _emit_simulated_period(events: list[dict[str,Any]], score: dict[str,int], so
                     and active_units>=2 and not bool(details.get("coincidental",False))):
                 omit_reason="third_concurrent_manpower_penalty_requires_queued_serving"
             if omit_reason is not None:
+                active_penalty_state = [{
+                    "team_side": penalty.team_side,
+                    "player_id": penalty.player_id,
+                    "kind": penalty.kind,
+                    "remaining_seconds": penalty.remaining_seconds,
+                    "coincidental": penalty.coincidental,
+                    "started_at_absolute_second": penalty.started_at_absolute_second,
+                } for penalty in penalties.active]
+                active_units_by_side = {
+                    candidate_side: sum(
+                        penalty.team_side == candidate_side
+                        and penalty.kind in {"MIN", "MAJ"}
+                        and not penalty.coincidental
+                        for penalty in penalties.active
+                    )
+                    for candidate_side in ("home", "away")
+                }
                 details["unsupported_penalty_omitted"]={
                     "reason":omit_reason,"penalty_kind":penalty_kind,
-                    "duration_seconds":details.get("penalty_duration_seconds")}
+                    "duration_seconds":details.get("penalty_duration_seconds"),
+                    "candidate_coincidental": bool(details.get("coincidental", False)),
+                    "candidate_team_side": side,
+                    "active_manpower_units_by_side": active_units_by_side,
+                    "active_penalty_state_before": active_penalty_state,
+                }
                 if transition_model is not None:
                     details["event_transition"]["emitted_family"]="stoppage"
                 transition_family="stoppage"
@@ -2853,7 +2875,7 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
         if transition_model is not None else
         "B1 retains donor event families, event clocks, and shift intervals; only selected team, possession, penalty, goalie, and shot-outcome state is changed."
     )
-    result={"schema_version":"nhl-statistical-pbp-v0.2b-projected-roster-v1",
+    result={"schema_version":"nhl-statistical-pbp-v0.2b-projected-roster-v2",
         "mode":"hypothetical_team_and_player_conditioned_statistical_simulation",
         "candidate_block":"B2" if transition_model is not None else "B1",
         "simulation_id":f"nhlstat-v0.2b-{inputs.game_key}-seed-{seed}","model_version":model_version,

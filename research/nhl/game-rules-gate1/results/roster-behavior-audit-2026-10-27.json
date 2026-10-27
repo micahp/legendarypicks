@@ -1,0 +1,1643 @@
+{
+  "comparability": {
+    "paired_seed_population_comparison_only": true,
+    "pre_roster_vs_projected_stable_fields_match": {
+      "development_target_season": true,
+      "draws_requested_per_game": true,
+      "eligible_2021_target_games": true,
+      "input_sources": true,
+      "seed_mapping": true,
+      "selected_target_games": true,
+      "training_start_seasons": true
+    },
+    "pregame_snapshots_same_pre_roster_vs_projected": false,
+    "pregame_snapshots_same_projected_v1_vs_telemetry": true,
+    "projected_v1_vs_telemetry_stable_fields_match": {
+      "development_target_season": true,
+      "draws_requested_per_game": true,
+      "eligible_2021_target_games": true,
+      "input_sources": true,
+      "seed_mapping": true,
+      "selected_target_games": true,
+      "training_start_seasons": true
+    },
+    "same_exact_seed_set_all_three_runs": true,
+    "snapshot_mismatch_seed_examples": [],
+    "telemetry_gameplay_mismatch_seeds": [],
+    "telemetry_rerun_gameplay_unchanged_after_metadata_removal": true
+  },
+  "conditional_behavior_rate_correction": {
+    "corrected_audit": {
+      "analysis_version": "event-state-and-outcome-availability-v3",
+      "conditional_event_rates": {
+        "development_2021": {
+          "attempt": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                15.140602815588151,
+                16.334887889070238
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 2819.042507090672,
+              "expected_events_from_parent_rate": 10464.703804852406,
+              "frozen_training_rate_per_60_team_minutes": 14.317733984461876,
+              "mean_game_poisson_deviance_difference_vs_parent": -5.5460380057717025,
+              "observed_events": 3104,
+              "observed_per_60_team_minutes": 15.765014601938464,
+              "observed_to_expected_ratio": 1.101083077744511,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 53.14955163932319
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                93.97925259201776,
+                96.9990220672648
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 17296.45027910407,
+              "expected_events_from_parent_rate": 10464.703804852406,
+              "frozen_training_rate_per_60_team_minutes": 87.84754871513475,
+              "mean_game_poisson_deviance_difference_vs_parent": -4.062283069338218,
+              "observed_events": 18806,
+              "observed_per_60_team_minutes": 95.5144538028527,
+              "observed_to_expected_ratio": 1.0872751169481074,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 53.14955163932319
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                54.88265993261547,
+                55.61156016734561
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 111625.81495176376,
+              "expected_events_from_parent_rate": 111354.86579575042,
+              "frozen_training_rate_per_60_team_minutes": 53.27887536537911,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.0160814561630079,
+              "observed_events": 115765,
+              "observed_per_60_team_minutes": 55.25450371258997,
+              "observed_to_expected_ratio": 1.037080894325608,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 53.14955163932319
+            }
+          },
+          "goal": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.8524219909181476,
+                1.1362163319825755
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 173.83661156453996,
+              "expected_events_from_parent_rate": 551.2188218641177,
+              "frozen_training_rate_per_60_team_minutes": 0.8829048710265714,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.23459281608166177,
+              "observed_events": 196,
+              "observed_per_60_team_minutes": 0.9954712828543619,
+              "observed_to_expected_ratio": 1.1274955156798572,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 2.7996046312986897
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                6.652880716275679,
+                7.38085090380324
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 1250.6685946068585,
+              "expected_events_from_parent_rate": 551.2188218641177,
+              "frozen_training_rate_per_60_team_minutes": 6.352064644382405,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.6741098147884362,
+              "observed_events": 1384,
+              "observed_per_60_team_minutes": 7.029246201379779,
+              "observed_to_expected_ratio": 1.106608102232753,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 2.7996046312986897
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                2.471865941961808,
+                2.610743220795529
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 5044.492139115854,
+              "expected_events_from_parent_rate": 5865.51698714192,
+              "frozen_training_rate_per_60_team_minutes": 2.4077303989021543,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.027005451612021728,
+              "observed_events": 5329,
+              "observed_per_60_team_minutes": 2.5435256794747287,
+              "observed_to_expected_ratio": 1.05639970348611,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 2.7996046312986897
+            }
+          },
+          "penalty": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                1.612683723462168,
+                2.0262522314396736
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 345.09732348872177,
+              "expected_events_from_parent_rate": 601.6379555381613,
+              "frozen_training_rate_per_60_team_minutes": 1.7527269149128806,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.08843736540480039,
+              "observed_events": 359,
+              "observed_per_60_team_minutes": 1.8233377068607954,
+              "observed_to_expected_ratio": 1.0402862484435715,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 3.0556801398645352
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                2.317530695770804,
+                2.7570304275903537
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 413.0056467436428,
+              "expected_events_from_parent_rate": 601.6379555381613,
+              "frozen_training_rate_per_60_team_minutes": 2.097628882601987,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.0019975172314256927,
+              "observed_events": 498,
+              "observed_per_60_team_minutes": 2.529309688068736,
+              "observed_to_expected_ratio": 1.205794651783815,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 3.0556801398645352
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                2.9257200125592018,
+                3.0908060252586584
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 6191.7125375214055,
+              "expected_events_from_parent_rate": 6402.026760233421,
+              "frozen_training_rate_per_60_team_minutes": 2.9552973989700377,
+              "mean_game_poisson_deviance_difference_vs_parent": -6.640427149389221e-05,
+              "observed_events": 6295,
+              "observed_per_60_team_minutes": 3.0045963881203637,
+              "observed_to_expected_ratio": 1.016681566182648,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 3.0556801398645352
+            }
+          },
+          "sog": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                11.067763657666706,
+                12.086374980336478
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 2073.025428698841,
+              "expected_events_from_parent_rate": 5791.417075414293,
+              "frozen_training_rate_per_60_team_minutes": 10.528761647431372,
+              "mean_game_poisson_deviance_difference_vs_parent": -2.1317891125221067,
+              "observed_events": 2282,
+              "observed_per_60_team_minutes": 11.59012993609007,
+              "observed_to_expected_ratio": 1.1008065643615015,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 29.414231559221037
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                52.48771390621016,
+                54.7370211318508
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 9592.093677857998,
+              "expected_events_from_parent_rate": 5791.417075414293,
+              "frozen_training_rate_per_60_team_minutes": 48.71762142222712,
+              "mean_game_poisson_deviance_difference_vs_parent": -2.3661399153111016,
+              "observed_events": 10555,
+              "observed_per_60_team_minutes": 53.60816015575403,
+              "observed_to_expected_ratio": 1.1003854168318576,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 29.414231559221037
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                30.246709209510165,
+                30.74507682789435
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 61188.749776962904,
+              "expected_events_from_parent_rate": 61626.44287179341,
+              "frozen_training_rate_per_60_team_minutes": 29.205321139549397,
+              "mean_game_poisson_deviance_difference_vs_parent": 0.02726029454440587,
+              "observed_events": 63878,
+              "observed_per_60_team_minutes": 30.4888972327804,
+              "observed_to_expected_ratio": 1.043950076326769,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 29.414231559221037
+            }
+          }
+        },
+        "training_2019_2020": {
+          "attempt": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                13.449325394457205,
+                14.387416793029894
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 4192,
+              "observed_per_60_team_minutes": 13.913235883890403,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 14.317733984461876,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                86.8341808406009,
+                89.59365306895148
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 26577,
+              "observed_per_60_team_minutes": 88.20898618467444,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 87.84754871513475,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                52.952167693509224,
+                53.63840563500681
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 165472,
+              "observed_per_60_team_minutes": 53.28022178626465,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 53.27887536537911,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "goal": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.755468230592377,
+                0.9653982956752691
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 260,
+              "observed_per_60_team_minutes": 0.8629392485237368,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 0.8829048710265714,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                6.09936217438301,
+                6.670121793210689
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 1925,
+              "observed_per_60_team_minutes": 6.38906943618536,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 6.352064644382405,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                2.3497642247035486,
+                2.4579857670673766
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 7465,
+              "observed_per_60_team_minutes": 2.403650500595059,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 2.4077303989021543,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "penalty": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                1.5786142174355768,
+                1.8955471125872578
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 524,
+              "observed_per_60_team_minutes": 1.7391544854863004,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 1.7527269149128806,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                1.9300889821351903,
+                2.250503533519889
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 629,
+              "observed_per_60_team_minutes": 2.087649182005502,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 2.097628882601987,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                2.8860924264650034,
+                3.0237590298638533
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 9175,
+              "observed_per_60_team_minutes": 2.9542522897467736,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 2.9552973989700377,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "sog": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                9.941525825940833,
+                10.739483860784487
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 3113,
+              "observed_per_60_team_minutes": 10.332038002516896,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 10.528761647431372,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                47.91394065602428,
+                49.92176406715483
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 14739,
+              "observed_per_60_team_minutes": 48.91869839996676,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 48.71762142222712,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                28.979346021308633,
+                29.428773411842666
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 90696,
+              "observed_per_60_team_minutes": 29.20314612216604,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 29.205321139549397,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          }
+        }
+      },
+      "development_seasons": [
+        2021
+      ],
+      "legacy_event_counts_by_reported_strength": {
+        "0v1": 1,
+        "1v0": 1,
+        "3v3": 75,
+        "3v4": 30,
+        "3v5": 35,
+        "3v6": 3,
+        "4v3": 22,
+        "4v4": 248,
+        "4v5": 618,
+        "4v6": 42,
+        "5v3": 100,
+        "5v4": 1325,
+        "5v5": 9750,
+        "5v6": 1269,
+        "6v3": 2,
+        "6v4": 23,
+        "6v5": 74,
+        "unknown": 12
+      },
+      "overtime_shootout_evidence": {
+        "development_2021": {
+          "overtime": {
+            "games": 1292,
+            "games_reaching_ot": 278,
+            "games_reaching_shootout": 95,
+            "last_period:OT": 183,
+            "last_period:REG": 1014,
+            "last_period:SO": 95,
+            "ot_events": 4241,
+            "ot_goals": 183
+          },
+          "shootout": {
+            "attempts": 702,
+            "attempts_away": 344,
+            "attempts_home": 358,
+            "complete_markers": 96,
+            "goals": 210,
+            "goals_away": 101,
+            "goals_home": 109
+          }
+        },
+        "training_2019_2020": {
+          "overtime": {
+            "games": 1921,
+            "games_reaching_ot": 440,
+            "games_reaching_shootout": 150,
+            "last_period:OT": 290,
+            "last_period:REG": 1481,
+            "last_period:SO": 150,
+            "ot_events": 6731,
+            "ot_goals": 290
+          },
+          "shootout": {
+            "attempts": 1063,
+            "attempts_away": 519,
+            "attempts_home": 544,
+            "complete_markers": 160,
+            "goals": 342,
+            "goals_away": 181,
+            "goals_home": 161
+          }
+        }
+      },
+      "path": "/root/lp-nhl-roster-behavior-audit-2026-10-26/research/nhl/behavior-evidence/results/nhl-behavior-evidence-event-state-v3-2026-10-27.json",
+      "sha256": "1029c286cc3e20907338fea3f5f5bc612c6bb0bec793661f558ab57edd934f75",
+      "source_attribution_counts": {
+        "blocked-shot:at_shift_boundary": 4023,
+        "blocked-shot:boundary_status:source_matches_both_boundary_states": 3521,
+        "blocked-shot:boundary_status:source_matches_left_limit": 276,
+        "blocked-shot:boundary_status:source_matches_right_limit": 76,
+        "blocked-shot:boundary_status:source_shift_conflict": 150,
+        "blocked-shot:excluded_from_conditional_fit": 1532,
+        "blocked-shot:source_matches_both_boundary_states": 3521,
+        "blocked-shot:source_matches_left_limit": 276,
+        "blocked-shot:source_matches_right_limit": 76,
+        "blocked-shot:source_matches_stable_shift_state": 45579,
+        "blocked-shot:source_only_no_shift_comparison": 425,
+        "blocked-shot:source_shift_conflict": 1532,
+        "delayed-penalty:at_shift_boundary": 467,
+        "delayed-penalty:boundary_status:source_matches_both_boundary_states": 132,
+        "delayed-penalty:boundary_status:source_matches_left_limit": 235,
+        "delayed-penalty:boundary_status:source_matches_right_limit": 85,
+        "delayed-penalty:boundary_status:source_shift_conflict": 15,
+        "delayed-penalty:excluded_from_conditional_fit": 98,
+        "delayed-penalty:source_matches_both_boundary_states": 132,
+        "delayed-penalty:source_matches_left_limit": 235,
+        "delayed-penalty:source_matches_right_limit": 85,
+        "delayed-penalty:source_matches_stable_shift_state": 2608,
+        "delayed-penalty:source_only_no_shift_comparison": 20,
+        "delayed-penalty:source_shift_conflict": 98,
+        "faceoff:at_shift_boundary": 95079,
+        "faceoff:boundary_status:missing_source_at_shift_boundary": 6,
+        "faceoff:boundary_status:source_matches_both_boundary_states": 70933,
+        "faceoff:boundary_status:source_matches_left_limit": 604,
+        "faceoff:boundary_status:source_matches_right_limit": 20122,
+        "faceoff:boundary_status:source_shift_conflict": 3414,
+        "faceoff:excluded_from_conditional_fit": 3769,
+        "faceoff:missing_source_at_shift_boundary": 6,
+        "faceoff:source_matches_both_boundary_states": 70933,
+        "faceoff:source_matches_left_limit": 604,
+        "faceoff:source_matches_right_limit": 20122,
+        "faceoff:source_matches_stable_shift_state": 13103,
+        "faceoff:source_only_no_shift_comparison": 129,
+        "faceoff:source_shift_conflict": 3763,
+        "game-end:at_shift_boundary": 1771,
+        "game-end:boundary_status:missing_source_at_shift_boundary": 1674,
+        "game-end:boundary_status:source_matches_left_limit": 51,
+        "game-end:boundary_status:source_shift_conflict": 46,
+        "game-end:excluded_from_conditional_fit": 1720,
+        "game-end:missing_source_at_shift_boundary": 1674,
+        "game-end:source_matches_left_limit": 51,
+        "game-end:source_shift_conflict": 46,
+        "giveaway:at_shift_boundary": 1702,
+        "giveaway:boundary_status:missing_source_at_shift_boundary": 1,
+        "giveaway:boundary_status:source_matches_both_boundary_states": 1573,
+        "giveaway:boundary_status:source_matches_left_limit": 60,
+        "giveaway:boundary_status:source_matches_right_limit": 24,
+        "giveaway:boundary_status:source_shift_conflict": 44,
+        "giveaway:excluded_from_conditional_fit": 1003,
+        "giveaway:missing_source_at_shift_boundary": 1,
+        "giveaway:source_matches_both_boundary_states": 1573,
+        "giveaway:source_matches_left_limit": 60,
+        "giveaway:source_matches_right_limit": 24,
+        "giveaway:source_matches_stable_shift_state": 33369,
+        "giveaway:source_only_no_shift_comparison": 230,
+        "giveaway:source_shift_conflict": 1002,
+        "giveaway:stable_shift_fallback": 4,
+        "goal:at_shift_boundary": 11036,
+        "goal:boundary_status:source_matches_both_boundary_states": 7429,
+        "goal:boundary_status:source_matches_left_limit": 3098,
+        "goal:boundary_status:source_matches_right_limit": 107,
+        "goal:boundary_status:source_shift_conflict": 402,
+        "goal:excluded_from_conditional_fit": 407,
+        "goal:source_matches_both_boundary_states": 7429,
+        "goal:source_matches_left_limit": 3098,
+        "goal:source_matches_right_limit": 107,
+        "goal:source_matches_stable_shift_state": 250,
+        "goal:source_only_no_shift_comparison": 5,
+        "goal:source_shift_conflict": 407,
+        "hit:at_shift_boundary": 4753,
+        "hit:boundary_status:source_matches_both_boundary_states": 4378,
+        "hit:boundary_status:source_matches_left_limit": 166,
+        "hit:boundary_status:source_matches_right_limit": 43,
+        "hit:boundary_status:source_shift_conflict": 166,
+        "hit:excluded_from_conditional_fit": 1994,
+        "hit:source_matches_both_boundary_states": 4378,
+        "hit:source_matches_left_limit": 166,
+        "hit:source_matches_right_limit": 43,
+        "hit:source_matches_stable_shift_state": 76728,
+        "hit:source_only_no_shift_comparison": 689,
+        "hit:source_shift_conflict": 1994,
+        "hit:stable_shift_fallback": 1,
+        "missed-shot:at_shift_boundary": 2454,
+        "missed-shot:boundary_status:source_matches_both_boundary_states": 2117,
+        "missed-shot:boundary_status:source_matches_left_limit": 170,
+        "missed-shot:boundary_status:source_matches_right_limit": 48,
+        "missed-shot:boundary_status:source_shift_conflict": 119,
+        "missed-shot:excluded_from_conditional_fit": 1343,
+        "missed-shot:source_matches_both_boundary_states": 2117,
+        "missed-shot:source_matches_left_limit": 170,
+        "missed-shot:source_matches_right_limit": 48,
+        "missed-shot:source_matches_stable_shift_state": 39785,
+        "missed-shot:source_only_no_shift_comparison": 321,
+        "missed-shot:source_shift_conflict": 1343,
+        "penalty:at_shift_boundary": 13630,
+        "penalty:boundary_status:missing_source_at_shift_boundary": 12,
+        "penalty:boundary_status:source_matches_both_boundary_states": 528,
+        "penalty:boundary_status:source_matches_left_limit": 11057,
+        "penalty:boundary_status:source_matches_right_limit": 300,
+        "penalty:boundary_status:source_shift_conflict": 1733,
+        "penalty:excluded_from_conditional_fit": 1745,
+        "penalty:missing_source_at_shift_boundary": 12,
+        "penalty:source_matches_both_boundary_states": 528,
+        "penalty:source_matches_left_limit": 11057,
+        "penalty:source_matches_right_limit": 300,
+        "penalty:source_shift_conflict": 1733,
+        "period-end:at_shift_boundary": 6203,
+        "period-end:boundary_status:missing_source_at_shift_boundary": 1496,
+        "period-end:boundary_status:source_matches_left_limit": 4117,
+        "period-end:boundary_status:source_shift_conflict": 590,
+        "period-end:excluded_from_conditional_fit": 2086,
+        "period-end:missing_source_at_shift_boundary": 1496,
+        "period-end:source_matches_left_limit": 4117,
+        "period-end:source_shift_conflict": 590,
+        "period-start:at_shift_boundary": 6205,
+        "period-start:boundary_status:missing_source_at_shift_boundary": 1532,
+        "period-start:boundary_status:source_matches_right_limit": 4456,
+        "period-start:boundary_status:source_shift_conflict": 217,
+        "period-start:excluded_from_conditional_fit": 1749,
+        "period-start:missing_source_at_shift_boundary": 1532,
+        "period-start:source_matches_right_limit": 4456,
+        "period-start:source_shift_conflict": 217,
+        "shot-on-goal:at_shift_boundary": 15591,
+        "shot-on-goal:boundary_status:source_matches_both_boundary_states": 14022,
+        "shot-on-goal:boundary_status:source_matches_left_limit": 767,
+        "shot-on-goal:boundary_status:source_matches_right_limit": 203,
+        "shot-on-goal:boundary_status:source_shift_conflict": 599,
+        "shot-on-goal:excluded_from_conditional_fit": 3390,
+        "shot-on-goal:source_matches_both_boundary_states": 14022,
+        "shot-on-goal:source_matches_left_limit": 767,
+        "shot-on-goal:source_matches_right_limit": 203,
+        "shot-on-goal:source_matches_stable_shift_state": 87779,
+        "shot-on-goal:source_only_no_shift_comparison": 746,
+        "shot-on-goal:source_shift_conflict": 3390,
+        "stoppage:at_shift_boundary": 70749,
+        "stoppage:boundary_status:missing_source_at_shift_boundary": 15,
+        "stoppage:boundary_status:source_matches_both_boundary_states": 63848,
+        "stoppage:boundary_status:source_matches_left_limit": 1484,
+        "stoppage:boundary_status:source_matches_right_limit": 2969,
+        "stoppage:boundary_status:source_shift_conflict": 2433,
+        "stoppage:excluded_from_conditional_fit": 2809,
+        "stoppage:missing_source_at_shift_boundary": 15,
+        "stoppage:source_matches_both_boundary_states": 63848,
+        "stoppage:source_matches_left_limit": 1484,
+        "stoppage:source_matches_right_limit": 2969,
+        "stoppage:source_matches_stable_shift_state": 12896,
+        "stoppage:source_only_no_shift_comparison": 126,
+        "stoppage:source_shift_conflict": 2794,
+        "takeaway:at_shift_boundary": 1371,
+        "takeaway:boundary_status:source_matches_both_boundary_states": 1254,
+        "takeaway:boundary_status:source_matches_left_limit": 48,
+        "takeaway:boundary_status:source_matches_right_limit": 18,
+        "takeaway:boundary_status:source_shift_conflict": 51,
+        "takeaway:excluded_from_conditional_fit": 783,
+        "takeaway:source_matches_both_boundary_states": 1254,
+        "takeaway:source_matches_left_limit": 48,
+        "takeaway:source_matches_right_limit": 18,
+        "takeaway:source_matches_stable_shift_state": 23580,
+        "takeaway:source_only_no_shift_comparison": 189,
+        "takeaway:source_shift_conflict": 783
+      },
+      "training_penalty_event_counts_by_strength": {
+        "0v0": 0,
+        "0v1": 0,
+        "0v3": 0,
+        "0v4": 0,
+        "0v5": 0,
+        "0v6": 0,
+        "10v5": 0,
+        "10v8": 0,
+        "1v0": 0,
+        "1v1": 0,
+        "1v3": 0,
+        "1v4": 0,
+        "1v5": 0,
+        "1v6": 0,
+        "2v3": 0,
+        "2v4": 0,
+        "2v5": 0,
+        "2v6": 0,
+        "3v0": 0,
+        "3v1": 0,
+        "3v2": 0,
+        "3v3": 60,
+        "3v4": 20,
+        "3v5": 11,
+        "3v6": 2,
+        "4v0": 0,
+        "4v1": 0,
+        "4v2": 0,
+        "4v3": 4,
+        "4v4": 114,
+        "4v5": 524,
+        "4v6": 27,
+        "4v7": 0,
+        "4v8": 0,
+        "4v9": 0,
+        "5v0": 0,
+        "5v1": 0,
+        "5v10": 0,
+        "5v2": 0,
+        "5v3": 17,
+        "5v4": 629,
+        "5v5": 9175,
+        "5v6": 1224,
+        "5v7": 0,
+        "5v8": 0,
+        "5v9": 0,
+        "6v0": 0,
+        "6v1": 0,
+        "6v2": 0,
+        "6v3": 0,
+        "6v4": 9,
+        "6v5": 69,
+        "6v6": 0,
+        "6v7": 0,
+        "6v8": 0,
+        "7v4": 0,
+        "7v5": 0,
+        "7v6": 0,
+        "7v8": 0,
+        "7v9": 0,
+        "8v10": 0,
+        "8v4": 0,
+        "8v5": 0,
+        "8v6": 0,
+        "8v7": 0,
+        "8v9": 0,
+        "9v4": 0,
+        "9v5": 0,
+        "9v7": 0,
+        "9v8": 0
+      },
+      "training_seasons": [
+        2019,
+        2020
+      ]
+    },
+    "interpretation": "The prior single-state event-rate labels placed many penalty events in the wrong manpower context. The corrected rates reconcile the source situation code against shift left/right limits and exclude conflicts or missing labels. Counts do not represent a one-for-one move because ambiguous boundary events are excluded.",
+    "prior_audit": {
+      "analysis_version": null,
+      "conditional_event_rates": {
+        "development_2021": {
+          "attempt": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.25897844999978503,
+                0.27898741101697927
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 3077.989084187172,
+              "expected_events_from_parent_rate": 10802.451254524312,
+              "frozen_training_rate_per_60_team_minutes": 15.632906848201666,
+              "mean_game_poisson_deviance_difference_vs_parent": -5.7827168908182545,
+              "observed_events": 3184,
+              "observed_per_60_team_minutes": 16.171329411266775,
+              "observed_to_expected_ratio": 1.0344416152602514,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 54.86494902200525
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                1.4874072297618486,
+                1.5352041425331535
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 17312.220384354372,
+              "expected_events_from_parent_rate": 10802.451254524312,
+              "frozen_training_rate_per_60_team_minutes": 87.92764405648306,
+              "mean_game_poisson_deviance_difference_vs_parent": -2.96783563595207,
+              "observed_events": 17858,
+              "observed_per_60_team_minutes": 90.69962331231221,
+              "observed_to_expected_ratio": 1.0315256855289843,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 54.86494902200525
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.929670421895131,
+                0.9419311866982828
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 115600.01610692286,
+              "expected_events_from_parent_rate": 114948.83487814649,
+              "frozen_training_rate_per_60_team_minutes": 55.175757086817526,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.020802248021648467,
+              "observed_events": 117653,
+              "observed_per_60_team_minutes": 56.15564397959097,
+              "observed_to_expected_ratio": 1.0177593737632205,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 54.86494902200525
+            }
+          },
+          "goal": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.015371484622145968,
+                0.02012213015105573
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 216.08749944471535,
+              "expected_events_from_parent_rate": 571.8218212670652,
+              "frozen_training_rate_per_60_team_minutes": 1.0974943891888878,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.23487056072132176,
+              "observed_events": 210,
+              "observed_per_60_team_minutes": 1.0665763744868162,
+              "observed_to_expected_ratio": 0.9718285441760466,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 2.9042459284736886
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.01170767863685561,
+                0.01601699244171115
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 152.70639774012244,
+              "expected_events_from_parent_rate": 571.8218212670652,
+              "frozen_training_rate_per_60_team_minutes": 0.7755858860123883,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.31637678709713546,
+              "observed_events": 163,
+              "observed_per_60_team_minutes": 0.8278664240064335,
+              "observed_to_expected_ratio": 1.0674077996220914,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 2.9042459284736886
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.056538563978954015,
+                0.05912358171754862
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 6872.791038754562,
+              "expected_events_from_parent_rate": 6084.753410483528,
+              "frozen_training_rate_per_60_team_minutes": 3.2803753981490007,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.15142387098008783,
+              "observed_events": 7274,
+              "observed_per_60_team_minutes": 3.471871982079035,
+              "observed_to_expected_ratio": 1.0583764236367854,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 2.9042459284736886
+            }
+          },
+          "penalty": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.5694214990767872,
+                0.5823767510766382
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 6574.17135215903,
+              "expected_events_from_parent_rate": 689.9726827080469,
+              "frozen_training_rate_per_60_team_minutes": 33.38978974305176,
+              "mean_game_poisson_deviance_difference_vs_parent": -14.657824526383633,
+              "observed_events": 6801,
+              "observed_per_60_team_minutes": 34.54183772802304,
+              "observed_to_expected_ratio": 1.0345030020804793,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 3.504326487703291
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.020614475377154422,
+                0.026402827657671765
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 194.02269587526214,
+              "expected_events_from_parent_rate": 689.9726827080469,
+              "frozen_training_rate_per_60_team_minutes": 0.985428683499025,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.22424591955854944,
+              "observed_events": 277,
+              "observed_per_60_team_minutes": 1.4068650272992769,
+              "observed_to_expected_ratio": 1.4276680300230662,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 3.504326487703291
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.004875605666537271,
+                0.006294658362451006
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 603.1001389115816,
+              "expected_events_from_parent_rate": 7341.996192005176,
+              "frozen_training_rate_per_60_team_minutes": 0.2878590149402109,
+              "mean_game_poisson_deviance_difference_vs_parent": -7.735133042181816,
+              "observed_events": 697,
+              "observed_per_60_team_minutes": 0.33267731255280275,
+              "observed_to_expected_ratio": 1.1556953066830329,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 3.504326487703291
+            }
+          },
+          "sog": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.18897998611148464,
+                0.20595253045334724
+              ],
+              "context": "strength=4v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 2254.1556023039307,
+              "expected_events_from_parent_rate": 5983.627367141546,
+              "frozen_training_rate_per_60_team_minutes": 11.448710046830818,
+              "mean_game_poisson_deviance_difference_vs_parent": -2.2512035948743843,
+              "observed_events": 2334,
+              "observed_per_60_team_minutes": 11.854234562153472,
+              "observed_to_expected_ratio": 1.0354209787534019,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 30.390455159647257
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.7885693922398808,
+                0.8235186423969303
+              ],
+              "context": "strength=5v4",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 9081.852446134415,
+              "expected_events_from_parent_rate": 5983.627367141546,
+              "frozen_training_rate_per_60_team_minutes": 46.12613931248699,
+              "mean_game_poisson_deviance_difference_vs_parent": -1.3535104984128437,
+              "observed_events": 9516,
+              "observed_per_60_team_minutes": 48.33114656960259,
+              "observed_to_expected_ratio": 1.0478038546035149,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 11813.499999999996,
+              "training_parent_rate_per_60_team_minutes": 30.390455159647257
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.519153185856842,
+                0.5273713649944125
+              ],
+              "context": "strength=5v5",
+              "deviance_difference_uncertainty": "not bootstrapped; game-cluster intervals are reported for observed event rates",
+              "expected_events_from_frozen_rate": 64164.20356063229,
+              "expected_events_from_parent_rate": 63671.751715597056,
+              "frozen_training_rate_per_60_team_minutes": 30.625501868927014,
+              "mean_game_poisson_deviance_difference_vs_parent": -0.022139487017677886,
+              "observed_events": 65774,
+              "observed_per_60_team_minutes": 31.393855890743257,
+              "observed_to_expected_ratio": 1.0250886997739561,
+              "scoring_label": "conditional on observed shift-derived exposure and in-game state",
+              "team_exposure_minutes": 125707.3999999994,
+              "training_parent_rate_per_60_team_minutes": 30.390455159647257
+            }
+          }
+        },
+        "training_2019_2020": {
+          "attempt": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.24607949319011277,
+                0.2612262541360371
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 4587,
+              "observed_per_60_team_minutes": 15.22423974222454,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 15.632906848201666,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                1.4526500177707495,
+                1.4911665519266664
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 26596,
+              "observed_per_60_team_minutes": 88.27204712975887,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 87.92764405648306,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.9150328203214456,
+                0.9248725423020236
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 171369,
+              "observed_per_60_team_minutes": 55.17899298546211,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 55.175757086817526,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "goal": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.015946577108112377,
+                0.019913652646650643
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 325,
+              "observed_per_60_team_minutes": 1.0786740606546712,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 1.0974943891888878,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.010922839938384,
+                0.014152956563640118
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 227,
+              "observed_per_60_team_minutes": 0.7534123439034165,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 0.7755858860123883,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.05371003784633641,
+                0.055733852377407446
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 10200,
+              "observed_per_60_team_minutes": 3.2842913738874215,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 3.2803753981490007,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "penalty": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.5567877995851669,
+                0.5664730598463887
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 10154,
+              "observed_per_60_team_minutes": 33.701096651961635,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 33.38978974305176,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.013744996278546865,
+                0.01829705152934695
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 289,
+              "observed_per_60_team_minutes": 0.9591901647052306,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 0.985428683499025,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.003783080428397542,
+                0.004746128598097304
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 790,
+              "observed_per_60_team_minutes": 0.2543715868010846,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 0.2878590149402109,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          },
+          "sog": {
+            "4v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.18087488394953885,
+                0.19405396627039295
+              ],
+              "context": "strength=4v5",
+              "contributing_games": 1920,
+              "events": 3390,
+              "observed_per_60_team_minutes": 11.251400201905646,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 11.448710046830818,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v4": {
+              "cluster_95_ci_observed_per_60": [
+                0.7569797323708217,
+                0.7858359707158742
+              ],
+              "context": "strength=5v4",
+              "contributing_games": 1920,
+              "events": 13947,
+              "observed_per_60_team_minutes": 46.29005268907907,
+              "prior_exposure_minutes_for_20_game_equivalents": 188.30989583333334,
+              "shrunk_per_60_team_minutes": 46.12613931248699,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 18077.75000000002
+            },
+            "5v5": {
+              "cluster_95_ci_observed_per_60": [
+                0.5072140193523746,
+                0.5138409406853043
+              ],
+              "context": "strength=5v5",
+              "contributing_games": 1921,
+              "events": 95121,
+              "observed_per_60_team_minutes": 30.62794899760249,
+              "prior_exposure_minutes_for_20_game_equivalents": 1940.0475446815833,
+              "shrunk_per_60_team_minutes": 30.625501868927014,
+              "status": "shrunk_group",
+              "team_exposure_minutes": 186341.5666666663
+            }
+          }
+        }
+      },
+      "development_seasons": [
+        2021
+      ],
+      "legacy_event_counts_by_reported_strength": {
+        "0v1": 1,
+        "1v0": 1,
+        "3v3": 75,
+        "3v4": 30,
+        "3v5": 35,
+        "3v6": 3,
+        "4v3": 22,
+        "4v4": 248,
+        "4v5": 618,
+        "4v6": 42,
+        "5v3": 100,
+        "5v4": 1325,
+        "5v5": 9750,
+        "5v6": 1269,
+        "6v3": 2,
+        "6v4": 23,
+        "6v5": 74,
+        "unknown": 12
+      },
+      "overtime_shootout_evidence": {
+        "development_2021": {
+          "overtime": {
+            "games": 1292,
+            "games_reaching_ot": 278,
+            "games_reaching_shootout": 95,
+            "last_period:OT": 183,
+            "last_period:REG": 1014,
+            "last_period:SO": 95,
+            "ot_events": 4241,
+            "ot_goals": 183
+          },
+          "shootout": {
+            "attempts": 702,
+            "attempts_away": 344,
+            "attempts_home": 358,
+            "complete_markers": 96,
+            "goals": 210,
+            "goals_away": 101,
+            "goals_home": 109
+          }
+        },
+        "training_2019_2020": {
+          "overtime": {
+            "games": 1921,
+            "games_reaching_ot": 440,
+            "games_reaching_shootout": 150,
+            "last_period:OT": 290,
+            "last_period:REG": 1481,
+            "last_period:SO": 150,
+            "ot_events": 6731,
+            "ot_goals": 290
+          },
+          "shootout": {
+            "attempts": 1063,
+            "attempts_away": 519,
+            "attempts_home": 544,
+            "complete_markers": 160,
+            "goals": 342,
+            "goals_away": 181,
+            "goals_home": 161
+          }
+        }
+      },
+      "path": "/root/lp-nhl-roster-behavior-audit-2026-10-26/research/nhl/behavior-evidence/results/nhl-behavior-evidence-2026-10-26.json",
+      "sha256": "fcd045826d2b1770fb19471bd83fd0a4672d79953a1c323127738ab8bff42f4f",
+      "source_attribution_counts": {},
+      "training_penalty_event_counts_by_strength": {
+        "0v0": 140,
+        "0v1": 0,
+        "0v3": 0,
+        "0v4": 0,
+        "0v5": 0,
+        "0v6": 0,
+        "10v5": 0,
+        "10v8": 0,
+        "1v0": 0,
+        "1v1": 0,
+        "1v3": 0,
+        "1v4": 0,
+        "1v5": 1,
+        "1v6": 0,
+        "2v3": 0,
+        "2v4": 2,
+        "2v5": 1,
+        "2v6": 0,
+        "3v0": 0,
+        "3v1": 0,
+        "3v2": 0,
+        "3v3": 13,
+        "3v4": 188,
+        "3v5": 376,
+        "3v6": 7,
+        "4v0": 0,
+        "4v1": 0,
+        "4v2": 2,
+        "4v3": 15,
+        "4v4": 1480,
+        "4v5": 10154,
+        "4v6": 117,
+        "4v7": 0,
+        "4v8": 1,
+        "4v9": 0,
+        "5v0": 0,
+        "5v1": 0,
+        "5v10": 0,
+        "5v2": 1,
+        "5v3": 10,
+        "5v4": 289,
+        "5v5": 790,
+        "5v6": 12,
+        "5v7": 1,
+        "5v8": 0,
+        "5v9": 0,
+        "6v0": 0,
+        "6v1": 0,
+        "6v2": 0,
+        "6v3": 0,
+        "6v4": 7,
+        "6v5": 18,
+        "6v6": 0,
+        "6v7": 0,
+        "6v8": 0,
+        "7v4": 0,
+        "7v5": 3,
+        "7v6": 1,
+        "7v8": 0,
+        "7v9": 0,
+        "8v10": 0,
+        "8v4": 0,
+        "8v5": 0,
+        "8v6": 0,
+        "8v7": 0,
+        "8v9": 0,
+        "9v4": 0,
+        "9v5": 1,
+        "9v7": 0,
+        "9v8": 0
+      },
+      "training_seasons": [
+        2019,
+        2020
+      ]
+    }
+  },
+  "projected_roster_event_accounting": {
+    "failing_game_examples": [],
+    "games_checked": 120,
+    "games_with_any_independent_accounting_findings": 0,
+    "goalie_substitution_events": 366,
+    "goalie_transition_legality": "Identity/on-ice consistency is audited; legal stoppage and bench windows remain NOT_ASSESSED.",
+    "official_target_lineup_match": "NOT_ASSESSED: the snapshots are prospective projections, not the submitted dressed lineups.",
+    "shootout_attempts": 108,
+    "shootout_attempts_outside_projected_team_roster": 0,
+    "shootout_projected_team_roster_membership": "PASS",
+    "shootout_rule_84_4_full_exclusion_audit": "NOT_ASSESSED: the generator and independent validator exclude active ten-minute misconduct only; game-misconduct, match-penalty and designated-server exclusions are not represented as a complete checked set."
+  },
+  "quarantine_audit": {
+    "candidate_team_side_counts": {
+      "away": 2,
+      "home": 3
+    },
+    "events": [
+      {
+        "active_manpower_units_by_side": {
+          "away": 2,
+          "home": 0
+        },
+        "active_penalty_state_before": [
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8470604",
+            "remaining_seconds": 55,
+            "started_at_absolute_second": 3257,
+            "team_side": "away"
+          },
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8471215",
+            "remaining_seconds": 114,
+            "started_at_absolute_second": 3316,
+            "team_side": "away"
+          }
+        ],
+        "candidate_coincidental": false,
+        "candidate_team_side": "away",
+        "game_id": "2021020001",
+        "penalty_kind": "MIN",
+        "period_number": 3,
+        "period_type": "REG",
+        "reason": "third_concurrent_manpower_penalty_requires_queued_serving",
+        "seed": 202610260017,
+        "sequence": 352,
+        "time_in_period": "15:22"
+      },
+      {
+        "active_manpower_units_by_side": {
+          "away": 0,
+          "home": 1
+        },
+        "active_penalty_state_before": [
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8480018",
+            "remaining_seconds": 120,
+            "started_at_absolute_second": 1861,
+            "team_side": "home"
+          }
+        ],
+        "candidate_coincidental": false,
+        "candidate_team_side": "home",
+        "game_id": "2021020262",
+        "penalty_kind": "MIN",
+        "period_number": 2,
+        "period_type": "REG",
+        "reason": "simultaneous_penalty_transition_requires_explicit_pairing",
+        "seed": 202610285818,
+        "sequence": 197,
+        "time_in_period": "11:01"
+      },
+      {
+        "active_manpower_units_by_side": {
+          "away": 0,
+          "home": 2
+        },
+        "active_penalty_state_before": [
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8470642",
+            "remaining_seconds": 64,
+            "started_at_absolute_second": 1432,
+            "team_side": "home"
+          },
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8481555",
+            "remaining_seconds": 111,
+            "started_at_absolute_second": 1479,
+            "team_side": "home"
+          }
+        ],
+        "candidate_coincidental": false,
+        "candidate_team_side": "home",
+        "game_id": "2021020262",
+        "penalty_kind": "MIN",
+        "period_number": 2,
+        "period_type": "REG",
+        "reason": "third_concurrent_manpower_penalty_requires_queued_serving",
+        "seed": 202610285820,
+        "sequence": 158,
+        "time_in_period": "04:48"
+      },
+      {
+        "active_manpower_units_by_side": {
+          "away": 0,
+          "home": 2
+        },
+        "active_penalty_state_before": [
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8478507",
+            "remaining_seconds": 12,
+            "started_at_absolute_second": 883,
+            "team_side": "home"
+          },
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8475208",
+            "remaining_seconds": 101,
+            "started_at_absolute_second": 972,
+            "team_side": "home"
+          }
+        ],
+        "candidate_coincidental": false,
+        "candidate_team_side": "home",
+        "game_id": "2021021050",
+        "penalty_kind": "MIN",
+        "period_number": 1,
+        "period_type": "REG",
+        "reason": "third_concurrent_manpower_penalty_requires_queued_serving",
+        "seed": 202610363311,
+        "sequence": 121,
+        "time_in_period": "16:31"
+      },
+      {
+        "active_manpower_units_by_side": {
+          "away": 2,
+          "home": 0
+        },
+        "active_penalty_state_before": [
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8476826",
+            "remaining_seconds": 18,
+            "started_at_absolute_second": 15,
+            "team_side": "away"
+          },
+          {
+            "coincidental": false,
+            "kind": "MIN",
+            "player_id": "8478466",
+            "remaining_seconds": 67,
+            "started_at_absolute_second": 64,
+            "team_side": "away"
+          }
+        ],
+        "candidate_coincidental": false,
+        "candidate_team_side": "away",
+        "game_id": "2021021179",
+        "penalty_kind": "MIN",
+        "period_number": 1,
+        "period_type": "REG",
+        "reason": "third_concurrent_manpower_penalty_requires_queued_serving",
+        "seed": 202610389108,
+        "sequence": 14,
+        "time_in_period": "01:57"
+      }
+    ],
+    "pre_roster_penalty_quarantined_seeds": [
+      202610285818,
+      202610285820,
+      202610389108
+    ],
+    "projected_roster_overtime_shootout_not_assessed_seeds": [],
+    "projected_roster_penalty_quarantined_seeds": [
+      202610260017,
+      202610285818,
+      202610285820,
+      202610363311,
+      202610389108
+    ],
+    "reason_counts": {
+      "simultaneous_penalty_transition_requires_explicit_pairing": 1,
+      "third_concurrent_manpower_penalty_requires_queued_serving": 4
+    },
+    "total_omitted_penalty_transitions": 5
+  },
+  "report_kind": "nhl_projected_roster_paired_run_and_behavior_audit",
+  "runs": {
+    "pre_roster": {
+      "directory": "/root/lp-data/nhl-game-rules-gate1-2026-10-26-post-da62d47b",
+      "games": 120,
+      "games_jsonl_sha256": "296762f6bc87a8f8efcab17178aea6fc4d873d7a798675b8e496898fe645f9bf",
+      "model_versions": [
+        "nhl-game-state-v0.2b-b2"
+      ],
+      "overtime_shootout_not_assessed_seeds": [
+        202610260003,
+        202610260006,
+        202610285801,
+        202610311608,
+        202610311613,
+        202610337506,
+        202610389106,
+        202610389112
+      ],
+      "penalty_quarantined_seeds": [
+        202610285818,
+        202610285820,
+        202610389108
+      ],
+      "schema_versions": [
+        "nhl-statistical-pbp-v0.2b"
+      ],
+      "structurally_nonpassing_seeds": [
+        202610260003,
+        202610260006,
+        202610285801,
+        202610285818,
+        202610285820,
+        202610311608,
+        202610311613,
+        202610337506,
+        202610389106,
+        202610389108,
+        202610389112
+      ],
+      "structurally_valid": 109,
+      "summary_sha256": "d934e85e205c38ee520544ba42ce5ead52e6886be7075f6d0c04ddd459283480"
+    },
+    "projected_roster_quarantine_telemetry": {
+      "directory": "/root/lp-data/nhl-game-rules-gate1-2026-10-26-projected-roster-v1-penalty-audit-120",
+      "games": 120,
+      "games_jsonl_sha256": "e7ba7846901387df3c2adf65e88eaf06a597f1e7bca7722d45044f8bdbbcfb59",
+      "model_versions": [
+        "nhl-game-state-v0.2b-projected-roster-v1-b2"
+      ],
+      "overtime_shootout_not_assessed_seeds": [],
+      "penalty_quarantined_seeds": [
+        202610260017,
+        202610285818,
+        202610285820,
+        202610363311,
+        202610389108
+      ],
+      "schema_versions": [
+        "nhl-statistical-pbp-v0.2b-projected-roster-v2"
+      ],
+      "structurally_nonpassing_seeds": [
+        202610260017,
+        202610285818,
+        202610285820,
+        202610363311,
+        202610389108
+      ],
+      "structurally_valid": 115,
+      "summary_sha256": "bd187c0f84229146822ccebba8f0f159519f7af7a4b613248803a50aabee7136"
+    },
+    "projected_roster_v1": {
+      "directory": "/root/lp-data/nhl-game-rules-gate1-2026-10-26-projected-roster-v1-final-120",
+      "games": 120,
+      "games_jsonl_sha256": "a10e79819367e096d445a836e308625b97a9ff177a88e53efbac6a6a800dfc7b",
+      "model_versions": [
+        "nhl-game-state-v0.2b-projected-roster-v1-b2"
+      ],
+      "overtime_shootout_not_assessed_seeds": [],
+      "penalty_quarantined_seeds": [
+        202610260017,
+        202610285818,
+        202610285820,
+        202610363311,
+        202610389108
+      ],
+      "schema_versions": [
+        "nhl-statistical-pbp-v0.2b-projected-roster-v1"
+      ],
+      "structurally_nonpassing_seeds": [
+        202610260017,
+        202610285818,
+        202610285820,
+        202610363311,
+        202610389108
+      ],
+      "structurally_valid": 115,
+      "summary_sha256": "10e75e881b700fb892b77e1fa569b946fdad18e5cb83866414ec54f5fb35311a"
+    }
+  },
+  "structural_delta_pre_roster_to_projected": {
+    "interpretation": "The eight old-only structural nonpasses are all overtime/shootout NOT_ASSESSED outcomes from the missing projected-roster eligibility evidence, not quarantines. The projected-roster run moves those checks to PASS within its projected-roster and active-ten-minute-misconduct scope; complete Rule 84.4 exclusions remain NOT_ASSESSED. It also has two new penalty quarantines. Thus the net structural-pass increase is 8 formerly NOT_ASSESSED outcomes minus 2 newly exposed unsupported penalty transitions. Snapshots and generated gameplay differ, so this is a paired-seed population comparison, not an identical-input counterfactual.",
+    "new_only_penalty_quarantine_seeds": [
+      202610260017,
+      202610363311
+    ],
+    "old_only_penalty_quarantine_seeds": [],
+    "old_only_shootout_not_assessed_seeds": [
+      202610260003,
+      202610260006,
+      202610285801,
+      202610311608,
+      202610311613,
+      202610337506,
+      202610389106,
+      202610389112
+    ],
+    "old_only_structurally_nonpassing_seeds": [
+      202610260003,
+      202610260006,
+      202610285801,
+      202610311608,
+      202610311613,
+      202610337506,
+      202610389106,
+      202610389112
+    ],
+    "shared_penalty_quarantine_seeds": [
+      202610285818,
+      202610285820,
+      202610389108
+    ],
+    "valid_after": 115,
+    "valid_before": 109,
+    "valid_delta": 6
+  }
+}
