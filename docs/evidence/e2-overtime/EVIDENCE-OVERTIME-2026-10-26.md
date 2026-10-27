@@ -90,3 +90,56 @@ the difference as independent Monte Carlo.
 - `validity-300-control-r2.csv` and `.json`, `validity-300-observed-overtime-r2.csv` and `.json`: superseded by the
   team-label fix. Kept for the record.
 - `docs/fixtures/e2/overtime_drives_2022_2025.csv` and `.manifest.json`: the observed drive pool.
+
+## Completed overtime rules (`70d26aad`)
+
+This round implements the rules Micah and Hermes2 approved, and reruns the pinned cohort.
+
+**Engine changes.** A touchdown takes a try only where the game goes on. Sudden death from a tie is decided by the touchdown
+(`not_attempted_game_ends`), so it takes none. An answering touchdown that leaves the score level takes one. The try is the
+observed point after when the drive shows one (`observed_point_after`), otherwise a labelled draw from the regulation try
+rates (`regulation_try_rates_fallback`). Article 5(a): after the first team scores, an interception or fumble by the second
+team ends the game on the down, and a return touchdown on that down still takes its try. The overtime record names the turnover
+kind and the leader before the down. `--overtime-toss A|B` forces the first possession for the sensitivity arms.
+
+**Results (300 pinned seeds, unconditional policy, overtime table on unless stated).**
+
+| arm | valid | blocked | failed | overtime games | ties | home wins | away wins |
+|---|---|---|---|---|---|---|---|
+| treatment (seeded toss) | 297 | 3 | 0 | 12 | 0 | 4 | 8 |
+| sensitivity: first possession forced to A | 295 | 5 | 0 | 13 | 0 | 8 | 5 |
+| sensitivity: first possession forced to B | 295 | 5 | 0 | 8 | 0 | 6 | 2 |
+| control (table off) | 285 | 12 tied, 3 blocked | 0 | - | - | - | - |
+
+The control matches the blocked-kick arm on all 300 rows, with the same reference and snapshot digests. The forced-possession
+arms show that the first possession changes overtime results (13 against 8 overtime games, and home against away wins), so the
+seeded baseline is a sensitivity, not a neutral fact.
+
+**Paired rules-only comparison.** The overtime table is part of the reference fingerprint, so the completed-rules treatment is
+re-keyed against the team-label-fix run. To attribute changes, the completed rules were rerun with the team-label-fix
+fingerprint pinned (`teamfix-model-inputs.json`, verified to reproduce `5b0fcd07...`; driver `run_paired_rules_check.py`).
+Under identical inputs, 3 of 300 seeds change: 65, 98 and 99. All remain valid, and each cause is the same. The decisive
+overtime touchdown no longer takes a try (for example 27-20 becomes 26-20), so the margin changes by one point and the winner
+does not. Changed seeds: 65, 98, 99.
+
+**Labels on the 12 overtime games of the treatment.** Overtime touchdowns: observed point after 4, labelled regulation fallback 5,
+no try because the touchdown decided the game 6. Article 5(a) resolved once (seed 16, fumble, no return touchdown). No
+touchdown skipped its try while the game went on.
+
+**Overtime try data.** The play-by-play holds 7 overtime try attempts in 2022-2025: 4 extra points made, 3 two-point tries
+with 1 success, all in 2025 regular season. No postseason overtime try is recorded. A seven-attempt sample cannot estimate a
+decision, so the overtime try policy has no overtime-specific estimate yet. The fallback above is the regulation try rate, and
+it is labelled as such. A conditional fallback from score-conditioned regulation tries, with shrinkage, is not built yet.
+
+**Long field goals: audit.** Observed 2022-2025 regular-season field-goal attempts from 67 or more yards (yardline_100 of 50 or
+more): 4 in total, 3 on second down and 1 on third. None on fourth down, where the decision is made. Fourth-down plays at that
+distance: 2,464 (punt 1,823, go for it 460, other 181, field goal 0). The engine reaches these attempts by sampling observed
+events from sparse state cells, not from a decision model. The three thin-cell seeds stay blocked by name. Attempt-decision and
+distance-based outcome models are not built yet.
+
+**Toss.** The first possession is a seeded uniform draw, and the toss winner receives. Play-by-play does not record the toss or
+the kick-or-receive choice, so the choice cannot be estimated from it. The external figure (10 kick, 4 receive, 2025
+overtime) is not used as a probability in the engine.
+
+**Files.** `validity-300-overtime-rules.{csv,json}` (treatment), `validity-300-sensitivity-forced-{A,B}.{csv,json}`,
+`validity-300-control-rules.{csv,json}`, `validity-300-paired-rules-on-teamfix-inputs.{csv,json}`, `teamfix-model-inputs.json`.
