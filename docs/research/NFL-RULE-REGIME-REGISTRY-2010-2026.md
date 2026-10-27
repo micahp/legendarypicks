@@ -241,7 +241,7 @@ Each year's section below lists individual adopted playing-rule changes or disti
 
 ### 2024 (6)
 
-[Primary source](https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf) · [Additional source](https://www.nfl.com/2024-nfl-season-playing-rules-bylaws-and-resolutions)
+[Primary source](https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf) · [Additional source](https://www.giants.com/news/nfl-announces-rule-changes-for-2024-hip-drop-tackle-challenge-kickoff)
 
 | Rule/article | Area | What changed |
 |---|---|---|
