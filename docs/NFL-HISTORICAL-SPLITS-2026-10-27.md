@@ -128,6 +128,8 @@ Known limits of this identification:
 
 - The depth chart is a prior, not a verified starter. CAR 2024 week 8 lists Andy Dalton as QB1, and his report says
   Doubtful. The layer records him as `injured`, which is what happened.
+- Measured against ESPN's published starts for Josh Allen (section 7): the depth chart named the wrong QB1 in one game
+  (2018 week 2 at LAC), and week 1 of 2025 has no prior usage, so the layer leaves that role unidentified.
 - Usage-based identity can name the wrong player for a game. Josh Allen's "QB1 not played" universe contains one game
   where he logged a line, which means the QB1 was misidentified there. Role statuses are research labels, not facts.
 - The layer does not classify roster eligibility, because no stored table records it.
@@ -251,12 +253,53 @@ Missing data, with what each gap blocks:
     missed games without a reason.
 14. WR2, tight end and other role identities. Blocks the example the request asks for.
 
-ESPN: this session did not call ESPN. The request asked for an evaluation of the athlete splits endpoint before any
-ingest. That needs a probe under the ESPN request-budget rules: the limit is a per-host burst rate, so the probe must be
-paced and counted, and it needs your go-ahead first. Fields worth testing for acquisition, if the probe
-confirms coverage: athlete splits by day, month, home and away, surface, outdoor conditions, weather and starter status,
-for 2010 to 2026 where it exists; kickoff and primetime flags; and official crew, if published. Each would be compared
-with the stored data before any ingest. Nothing is ingested.
+**ESPN probe (2026-10-27).** The probe was approved. It spent 5 requests on `site.web.api.espn.com`. All returned 200,
+none came from cache, and they were spaced 5 seconds apart under a cap of 8. The spend log in
+`backend/data/http-spend.jsonl` records them. No Core API or `site.api` request was made. The raw payloads are in
+`/root/lp-snapshots/nfl-splits/espn-probe/2026-10-27/`, outside the repo.
+
+Routes:
+
+- Athlete splits: `https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/{id}/splits`, with
+  `?season=YYYY`. The season filter lists 2018 to 2026, and earlier seasons were not probed. One athlete per request.
+- Athlete game log: `.../athletes/{id}/gamelog?season=YYYY`. Events are keyed by ESPN event ID. All six 2026 event IDs
+  (weeks 1 to 6) resolve through `nfl_game_xwalk.espn`, and 285 of 285 games in 2025 have an ESPN ID.
+- Team splits: none in the public endpoint catalogue (the Public ESPN API project), and no bulk splits route is listed.
+  `statistics/byathlete` is a leaderboard and is not documented as returning splits.
+
+What the athlete splits contain (Josh Allen, 2025): outcome, victory margin, close games, season-game bins, month, day of
+week (Sunday, Monday, Other), location (outdoors, indoors), temperature bins (below 40 F, 81 F and up), depth chart (As
+Starter, As Sub), conference and division, opponent, half, quarter, down, point difference and field position. Not present
+in any season probed: wind, kickoff window, officials, attempt-count bins, down and distance, formations, and teammate
+availability. The temperature bins were empty for 2026.
+
+Agreement with the stored data, Josh Allen passing totals (attempts, completions, yards, TDs, INTs):
+
+- 2026, six games: exact. The Monday split (one game) is exact too.
+- 2025, 16 games: exact (319 of 460, 3,668 yards, 25 TDs, 10 INTs).
+- 2018, 12 games: 11 of 12 exact. The one difference is week 2 at LAC: ESPN 33 of 18 for 245 yards, stored 32 of 17 for
+  215. The play-by-play for that game gives 32 attempts, 17 completions and 215 yards once five sacks are removed, so the
+  stored values match the play-by-play. The cause of ESPN's extra attempt and 30 yards is not determined.
+
+Role identity, checked against ESPN's published starts. This is the most useful result of the probe.
+
+- 2025: ESPN's "As Starter" covers all 16 games (460 attempts). The layer identifies Allen as QB1 in 15. The missing game
+  is week 1 at BAL, where there is no prior usage, so the layer leaves the role unidentified rather than guessing. ESPN
+  resolves it.
+- 2018: the "As Sub" line (15 attempts, 74 yards) matches week 1 at BAL exactly. The layer names Peterman as QB1 in week 2
+  at LAC, because the depth chart listed him. ESPN's starter total includes Allen's 33 attempts in that game. That is the
+  depth-chart error section 3 warns about, now measured.
+
+What ESPN adds: published starts and substitutions per season, a cross-check on roles; temperature bins for some seasons;
+and month, quarter, half, down and outcome splits, which play-by-play can also compute. What it does not supply: team
+splits, kickoff windows, wind, officials, Thursday and Saturday separately (both fall in "Other"), per-game starter flags,
+and teammate availability.
+
+Ingest: not done, and it needs your approval. Athlete splits cost one request per athlete-season. The layer has 1,586
+role player-seasons for 2018 to 2026, so a full pull is about 1,586 requests. That exceeds the client's 100-request
+per-process host budget and needs cooldowns. At the 5-second spacing used here it is about 2.2 hours before cooldowns,
+and the request budget is shared with the live serving path. The narrower option is QB1 starter counts only: 450 QB
+player-seasons, about 450 requests. There is no ESPN route for team splits, so the team layer stays on our own data.
 
 ## 8. Proposal: how validated splits could condition the simulator
 
@@ -290,8 +333,10 @@ rolling-origin test. Failing any gate keeps the split descriptive.
 - Yards: Buffalo's 2025 week 1 game (`2025_01_BAL_BUF`) has 502 yards and 77 plays, matching the play-by-play.
 - Passing: Josh Allen's 2025 passing yards are 3,668 from the raw stat JSON and from the layer.
 - Role identity: CAR 2024 week 8 matches the depth-chart query (Andy Dalton, depth 1).
-- Not verified: a live ESPN probe, any archived forecast, and whether the usage-based identity is right for 2025 and 2026
-  beyond the cases above.
+- ESPN probe: 5 requests, all 200 (section 7). Stored totals match exactly for 2025 and 2026, and for 11 of 12 games in
+  2018.
+- Not verified: any archived forecast, and whether the usage-based identity is right for 2025 and 2026 beyond the cases
+  above.
 
 ## 10. Open items
 
@@ -300,3 +345,5 @@ rolling-origin test. Failing any gate keeps the split descriptive.
 - WR2 and tight end identities for the PHI example: not built.
 - Absence reasons for non-role players: not built.
 - E1 (archived forecasts) and E6 (capacity history): not started. E1 is the next research item the request names.
+- ESPN ingest: waiting on your decision between no ingest, QB1 starter counts (about 450 requests), or all role
+  player-seasons (about 1,586 requests). The probe payloads are archived under `/root/lp-snapshots/nfl-splits/espn-probe/`.
