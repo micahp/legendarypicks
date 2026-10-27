@@ -2376,12 +2376,14 @@ def _validate_live_game_state(events: list[dict[str,Any]],
                         and not p["coincidental"] for p in active)
                for side in ("home","away")}
         counts={"home":base,"away":base}
-        difference=units["home"]-units["away"]
-        if difference:
-            short="home" if difference>0 else "away"
-            number=min(2,abs(difference))
-            counts[short]=max(3,base-number)
-            if period_type=="OT":
+        if period_type=="REG":
+            counts={side:max(3,base-min(2,units[side])) for side in ("home","away")}
+        else:
+            difference=units["home"]-units["away"]
+            if difference:
+                short="home" if difference>0 else "away"
+                number=min(2,abs(difference))
+                counts[short]=max(3,base-number)
                 other="away" if short=="home" else "home"
                 counts[other]=min(5,base+number)
         for side,pulled in goalie_pulled.items():

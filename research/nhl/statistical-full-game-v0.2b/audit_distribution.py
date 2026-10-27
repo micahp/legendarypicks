@@ -32,12 +32,15 @@ def _audit_live_state(events: list[dict[str, Any]], players: dict[str, Any]) -> 
                                and not p["coincidental"] for p in active)
                      for side in ("home", "away")}
         counts = {"home": base, "away": base}
-        diff = penalties["home"] - penalties["away"]
-        if diff:
-            short = "home" if diff > 0 else "away"
-            units = min(2, abs(diff))
-            counts[short] = max(3, base - units)
-            if period_type == "OT":
+        if period_type == "REG":
+            counts = {side: max(3, base - min(2, penalties[side]))
+                      for side in ("home", "away")}
+        else:
+            diff = penalties["home"] - penalties["away"]
+            if diff:
+                short = "home" if diff > 0 else "away"
+                units = min(2, abs(diff))
+                counts[short] = max(3, base - units)
                 other = "away" if short == "home" else "home"
                 counts[other] = min(5, base + units)
         for side, is_pulled in pulled.items():

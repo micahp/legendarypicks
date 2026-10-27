@@ -169,17 +169,26 @@ class PenaltyLedger:
         base = 3 if period_type == "OT" else 5 if period_type == "REG" else None
         if base is None:
             raise ValueError(f"unsupported manpower period type {period_type!r}")
-        counts = {side: base for side in SIDES}
         penalties = {side: sum(p.kind in {"MIN", "MAJ"} and not p.coincidental
                                for p in self.active if p.team_side == side)
                      for side in SIDES}
-        diff = penalties["home"] - penalties["away"]
-        if diff:
-            short = "home" if diff > 0 else "away"
-            units = min(2, abs(diff))
-            counts[short] = max(3 if period_type == "REG" else 3, base - units)
-            other = opposing(short)
-            if period_type == "OT":
+        if period_type == "REG":
+            # In regulation, simultaneous equal penalties are marked
+            # coincidental and excluded above. Distinct active penalties on
+            # both teams reduce each team's skaters independently (for example,
+            # two overlapping noncoincidental minors produce 4-on-4).
+            counts = {side: max(3, base - min(2, penalties[side])) for side in SIDES}
+        else:
+            # Regular-season overtime uses its own manpower table: an unmatched
+            # penalty gives the other team an extra skater. Do not apply the
+            # regulation per-side subtraction formula to overtime.
+            counts = {side: base for side in SIDES}
+            diff = penalties["home"] - penalties["away"]
+            if diff:
+                short = "home" if diff > 0 else "away"
+                units = min(2, abs(diff))
+                counts[short] = max(3, base - units)
+                other = opposing(short)
                 counts[other] = min(5, base + units)
         for side, pulled in (goalie_pulled or {}).items():
             if side not in SIDES:

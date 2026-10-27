@@ -56,6 +56,30 @@ class PenaltyTests(unittest.TestCase):
         self.assertIsNone(major.on_goal("away"))
         self.assertEqual(major.manpower("REG"), {"home": 4, "away": 5})
 
+    def test_overlapping_noncoincidental_opposing_minors_make_regulation_four_on_four(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 100)
+        ledger.start("home", "H12", "MIN")
+        ledger.advance_to(1, 101)
+        ledger.start("away", "A12", "MIN")
+        self.assertEqual(ledger.manpower("REG"), {"home": 4, "away": 4})
+
+    def test_matching_coincidental_minors_do_not_reduce_regulation_manpower(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(1, 100)
+        ledger.start("home", "H12", "MIN")
+        ledger.start("away", "A12", "MIN")
+        self.assertTrue(all(p.coincidental for p in ledger.active))
+        self.assertEqual(ledger.manpower("REG"), {"home": 5, "away": 5})
+
+    def test_overlapping_opposing_minors_use_overtime_manpower_table(self):
+        ledger = PenaltyLedger()
+        ledger.advance_to(4, 100)
+        ledger.start("home", "H12", "MIN")
+        ledger.advance_to(4, 101)
+        ledger.start("away", "A12", "MIN")
+        self.assertEqual(ledger.manpower("OT"), {"home": 3, "away": 3})
+
     def test_goal_in_first_double_minor_segment_starts_second_segment(self):
         ledger = PenaltyLedger()
         ledger.advance_to(1, 100)
