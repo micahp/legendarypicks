@@ -42,8 +42,12 @@ class Stamps(unittest.TestCase):
         self.assertEqual((doc['model_version'], doc['rules_version']), ('test-model', 'test-rules'))
 
     def test_a_record_without_its_version_stamps_is_refused(self):
+        # The engine stamps every record it writes, so the refusal is tested on a record with the stamps taken off.
+        rec = played()
+        rec.pop('model_version', None)
+        rec.pop('rules_version', None)
         with self.assertRaises(KeyError):
-            sv.build_document(played())
+            sv.build_document(rec)
 
 
 class Projection(unittest.TestCase):

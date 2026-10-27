@@ -69,23 +69,14 @@ def _baseline_v1(db, snapshot):
             "AND r.model='nfl-ratings-v1' AND g.model_version LIKE 'nfl-v1 %' "
             "ORDER BY g.locked_at DESC LIMIT 1", (schedule['game_id'],)
         ).fetchone()
-        row = con.execute(
-            "SELECT season, week, home_team, away_team, location, gameday, ingested_at "
-            "FROM nfl_schedule WHERE game_id=?", (schedule['game_id'],)
-        ).fetchone()
+        row = pregame_snapshot.schedule_at(con, schedule['game_id'], cutoff)
         if row is None:
-            raise ValueError('v1 baseline schedule row is missing')
-        db_season, db_week, home, away, location, gameday, ingested_at = row
+            raise ValueError('v1 baseline schedule has no version observed by the frozen cutoff')
+        db_season, db_week, home, away, location, gameday = (
+            row[key] for key in ('season', 'week', 'home_team', 'away_team', 'location', 'gameday'))
         if (int(db_season), int(db_week), home, away) != (
                 season, week, schedule['home_team'], schedule['away_team']):
             raise ValueError('v1 baseline schedule identity disagrees with the frozen snapshot')
-        if not ingested_at:
-            raise ValueError('v1 baseline schedule provenance has no ingestion timestamp')
-        ingested = datetime.fromisoformat(ingested_at.replace('Z', '+00:00'))
-        if ingested.tzinfo is None:
-            ingested = ingested.replace(tzinfo=timezone.utc)
-        if ingested.astimezone(timezone.utc) > cutoff:
-            raise ValueError('v1 baseline schedule row was ingested after the frozen cutoff')
         if gameday and datetime.fromisoformat(gameday).date() > cutoff.date():
             raise ValueError('v1 baseline target game date is after the frozen cutoff')
 

@@ -1,0 +1,9 @@
+metric,numerator,denominator,rate,note
+pass_attempts_with_passer_id,77308,77308,1.0,nfl_pbp pass_attempt rows
+dropbacks_with_passer_id,77022,81113,0.949564188231233,nfl_pbp qb_dropback rows; missing IDs are excluded from player-game passing lines
+pass_attempts_with_receiver_id,68751,77308,0.889312878356703,Rows without receiver_player_id are excluded from receiver player-games
+rush_attempts_with_rusher_id,58807,58807,1.0,nfl_pbp rush_attempt rows
+rushing_player_games_with_complete_yards,8942,9082,0.9845848931953314,Yard histogram excludes a player-game if any rush has null rushing_yards
+rush_attempt_yards_with_source_value,58664,58807,0.9975683166969919,nfl_pbp rushing_yards on rush_attempt rows
+completed_passes_with_passing_yards,46259,46259,1.0,nfl_pbp passing_yards on completed passes
+completed_passes_with_receiving_yards,46259,46259,1.0,nfl_pbp receiving_yards on completed passes

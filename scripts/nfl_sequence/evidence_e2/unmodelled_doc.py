@@ -50,11 +50,12 @@ INVENTORY = {
                 'observed runoff, so the clock effect is guarded.',
     },
     'overtime_block': {
-        'treatment': 'blocked',
-        'fails_loudly': 'a tied regulation game is blocked as overtime_not_modelled; validate_game refuses it described as complete',
-        'tests': ['test_game_state.ScopedOut.test_a_tied_regulation_game_is_scoped_out_as_overtime',
-                  'test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused'],
-        'note': 'Overtime rows are excluded from the sampling pool (see overtime-rows-evaluation.json).',
+        'treatment': 'implemented with a guard',
+        'fails_loudly': 'validate_game refuses a regulation tie described as complete without its overtime period',
+        'tests': ['test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete',
+                  'test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused'],
+        'note': 'Rule 16, regular season: one 10-minute period, the toss winner receives (assumed), no two-minute warning or Article 5(a) in '
+                'overtime. Overtime plays are drawn from the regulation pool, which has no overtime rows.',
     },
     'missed_field_goal_return': {
         'treatment': 'implemented with a guard',

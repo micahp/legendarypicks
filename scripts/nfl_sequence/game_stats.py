@@ -87,8 +87,10 @@ def team_stats(drives, points):
             scorer = d.get('touchdown_scored_by') or d['offense_team']
             scored = team(scorer)
             scored['touchdowns'] += 1
-            if not d['plays'][-1]['outcome'].get('blocked_kick'):
+            if not (d['plays'] and d['plays'][-1]['outcome'].get('blocked_kick')):  # an observed overtime drive has no plays
                 scored['offensive_touchdowns'] += 1
+            if d.get('observed_overtime_drive'):
+                scored['observed_overtime_touchdowns'] += 1  # counted on the team line, with no play to attribute it to
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
@@ -211,7 +213,8 @@ def _verify_pregame_reconciliation(teams, players):
             'pass_att': team.get('pass_att', 0), 'pass_comp': team.get('pass_comp', 0),
             'pass_yds': team.get('pass_yds', 0), 'sacks_taken': team.get('sacks_taken', 0),
             'pass_int': team.get('interceptions', 0), 'fumbles_lost': team.get('fumbles_lost', 0),
-            'offensive_td': team.get('offensive_touchdowns', team.get('touchdowns', 0)),
+            # The team line has no offensive_touchdowns key when every touchdown was a blocked-kick return: that means zero.
+            'offensive_td': team.get('offensive_touchdowns', 0) - team.get('observed_overtime_touchdowns', 0),
             'offensive_turnovers': team.get('turnovers', 0),
             'sack_yds': team.get('sack_yds', 0), 'pass_tgt': team.get('pass_tgt', 0),
             'pass_comp_receiving': team.get('pass_comp', 0),

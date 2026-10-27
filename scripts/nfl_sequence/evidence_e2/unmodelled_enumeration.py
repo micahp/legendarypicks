@@ -125,7 +125,7 @@ def main():
             'two_minute_warning': len(stops),
             'penalty': len(pen),
             'timeout': sum(1 for p in plays if p['participants'].get('timeout')),
-            'overtime_block': 1 if record['blocker'] == 'overtime_not_modelled' else 0,
+            'overtime_block': 1 if (record.get('overtime') or {}).get('result') is None and record.get('overtime') else 0,
             'missed_field_goal_return': sum(1 for d in record['drives']
                                             if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is False),
             'onside_kick': sum(1 for k in record['kickoffs'] if 'onside' in str(k.get('kind', '')) + str(k.get('reason', ''))),

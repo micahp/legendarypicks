@@ -58,7 +58,7 @@ class Positive(unittest.TestCase):
 
     def test_a_blocked_record_that_is_not_complete_is_legal_under_the_modelled_rules(self):
         record = seed1()
-        record['status'], record['blocker'] = 'blocked', 'overtime_not_modelled'
+        record['status'], record['blocker'] = 'blocked', 'drive_limit'
         record['complete_regulation'] = record['complete_game'] = False
         self.assertTrue(lc.legal_modelled(record))
         self.assertEqual(failed_checks(record) - UNMODELLED, set())
@@ -187,7 +187,7 @@ class NegativeFixtures(Fails):
 
     def test_a_blocked_record_marked_as_a_complete_game(self):
         record = seed1()
-        record['status'], record['blocker'] = 'blocked', 'overtime_not_modelled'
+        record['status'], record['blocker'] = 'blocked', 'drive_limit'
         record['complete_regulation'] = True  # the negative fixture: a blocked game marked complete
         self.assertFails(record, 'check_blocked')
 
