@@ -8,6 +8,11 @@ Example:
     --kickoff-source-url https://www.chiefs.com/news/how-to-watch-and-listen-week-7-chiefs-vs-seahawks \
     --games 10000 --seed-start 1 --out batch.json
 
+Registered, availability-aware run (opt-in; needs the pinned full-depth roster):
+  python3 scripts/nfl_sequence/simulate_pregame_batch.py ... \
+    --roster-snapshot ROSTER.json --roster-provenance PROVENANCE.json \
+    --availability-store /root/lp-snapshots/nfl --register-dir /root/lp-snapshots/nfl-sim-runs
+
 All seeds are retained. Score forecasts and win rates use only valid, untied complete games, with that sample size and
 coverage reported. A separate regulation-end distribution includes ties and guarded games that reached the clock end;
 partial-game points are recorded per seed but never presented as final scores.
@@ -36,6 +41,8 @@ import game_state as gs  # noqa: E402
 import pregame_batch as aggregation  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import pregame_context  # noqa: E402
+import availability_adapter  # noqa: E402
+import sim_run_registry  # noqa: E402
 import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
 
@@ -348,27 +355,33 @@ def run_batch(args):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
+    if args.availability_snapshot or args.availability_store:
+        availability_path = args.availability_snapshot or availability_adapter.select(
+            args.availability_store, snapshot['schedule']['season'], snapshot['schedule']['week'], snapshot['as_of'])
+        availability_adapter.apply(snapshot, availability_path)
     snapshot_seconds = time.monotonic() - snapshot_started
     contextual = None
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
-    overtime_table = not args.no_overtime_table
+    safety_kick_table = not args.no_safety_table
     reference_started = time.monotonic()
     if args.context_mode == 'unconditioned':
-        ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy, overtime_table=overtime_table)
+        ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
+                                         safety_kick_table=safety_kick_table)
     else:
         contextual = pregame_context.build(args.db, snapshot['schedule'], snapshot['as_of'], snapshot)
         eligible_before = (int(snapshot['schedule']['season']), int(snapshot['schedule']['week']))
         if args.context_mode == 'cutoff_unconditioned':
             ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
-                                             eligible_before=eligible_before, overtime_table=overtime_table)
+                                             eligible_before=eligible_before,
+                                             safety_kick_table=safety_kick_table)
         else:
             ref, excluded_kickoffs = er.load(
                 args.db, try_policy=try_policy, eligible_before=eligible_before,
                 contextual_context=contextual, contextual_mode=args.context_mode,
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
-                overtime_table=overtime_table)
+                safety_kick_table=safety_kick_table)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -435,8 +448,8 @@ def run_batch(args):
             f'--db {args.db} --games 1 --seed-start SEED --context-mode {args.context_mode} '
             f'--context-bandwidth {args.context_bandwidth} --context-min-source-games {args.context_min_source_games} '
             f'--try-policy {args.try_policy} --out REPLAY.json')
-        if args.no_overtime_table:
-            replay_examples['reproduction_command'] += ' --no-overtime-table'
+        if args.no_safety_table:
+            replay_examples['reproduction_command'] += ' --no-safety-table'
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
@@ -457,7 +470,7 @@ def run_batch(args):
                                                        else None),
             'pool_control': ('legacy_unconditioned_2022_2025' if args.context_mode == 'unconditioned'
                              else 'cutoff_eligible_uniform_pool'),
-            'overtime_table': ('observed_2022_2025' if overtime_table else 'disabled_control'),
+            'safety_kick_table': ('observed_2022_2025' if safety_kick_table else 'disabled_control'),
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
         },
         'runtime_seconds': {
@@ -493,12 +506,17 @@ def run_batch(args):
         'player_projections': _player_projections(snapshot, player_totals, games_with_player_stats),
         'replay_examples': replay_examples,
     }
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, indent=1, sort_keys=True) + '\n')
-    print(f'wrote {out}: {summary["valid_full_games"]}/{args.games} valid games, '
-          f'{summary["tied_at_regulation_end"]} regulation ties, '
-          f'{summary["blocked_before_regulation_end"]} blocked before regulation')
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=1, sort_keys=True) + '\n')
+        print(f'wrote {out}: {summary["valid_full_games"]}/{args.games} valid games, '
+              f'{summary["tied_at_regulation_end"]} regulation ties, '
+              f'{summary["blocked_before_regulation_end"]} blocked before regulation')
+    if args.register_dir:
+        entry = sim_run_registry.register(payload, args.register_dir)
+        print(f"registered {entry['run_id']} at {entry['path']}; exploratory={entry['exploratory']}"
+              + (f" ({'; '.join(entry['exploratory_reasons'])})" if entry['exploratory_reasons'] else ''))
     print(f"baseline_v1={baseline['status']} reference_sha256={ref.model_inputs['sha256']}")
     return payload
 
@@ -531,12 +549,24 @@ def main(argv=None):
                     help='minimum effective source games in a sampled contextual pool cell')
     ap.add_argument('--try-policy', choices=('unconditional', 'k1'), default='unconditional',
                     help='research try-policy ablation; unconditional remains the control/default')
-    ap.add_argument('--no-overtime-table', action='store_true',
-                    help='control arm: disable observed overtime drives and retain the old overtime tie blocker')
+    ap.add_argument('--no-safety-table', action='store_true',
+                    help='control arm: disable observed safety free kicks and retain the old safety blocker')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
-    ap.add_argument('--out', required=True)
+    ap.add_argument('--out', help='also write the payload to this path')
+    ap.add_argument('--availability-store', help=('opt-in: directory of weekly availability snapshots; applies the newest '
+                                                  'one frozen by --as-of (needs --roster-snapshot)'))
+    ap.add_argument('--availability-snapshot', help=('opt-in: apply this availability snapshot file instead of '
+                                                     'selecting from --availability-store'))
+    ap.add_argument('--register-dir', help=('write the run read-only under this store and append its index line, '
+                                            'so downstream code can find it'))
     args = ap.parse_args(argv)
+    if not args.out and not args.register_dir:
+        ap.error('pass --out, --register-dir, or both')
+    if args.availability_snapshot and not args.roster_snapshot:
+        ap.error('--availability-snapshot needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
+    if args.availability_store and not args.roster_snapshot:
+        ap.error('--availability-store needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
     if args.games < 1:
         ap.error('--games must be positive')
     if args.seed_start < 0:
