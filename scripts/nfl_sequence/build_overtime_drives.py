@@ -33,7 +33,7 @@ RESULT_OUTCOME = {
 COLUMNS = (
     'game_id', 'game_date', 'season', 'week', 'drive', 'offense', 'defense', 'start_yardline_100', 'start_clock_seconds',
     'end_clock_seconds', 'duration_seconds', 'plays', 'fixed_drive_result', 'outcome', 'points_offense', 'points_defense',
-    'try_kind', 'try_made', 'try_team',
+    'try_kind', 'try_made', 'try_team', 'turnover_kind',
     'next_offense', 'next_start_yardline_100', 'next_start_clock_seconds', 'status', 'status_note', 'source_file',
     'source_sha256',
 )
@@ -59,6 +59,15 @@ def score_change(first_row, last_row, team):
 
 def try_points(kind, made):
     return ({'extra_point': 1, 'two_point': 2}[kind] if made else 0)
+
+
+def turnover_kind(rows):
+    """How the ball changed hands on a drive, from the play rows: an interception, a lost fumble, or neither."""
+    if any(r['interception'] == 1 for r in rows):
+        return 'interception'
+    if any(r['fumble_lost'] == 1 for r in rows):
+        return 'fumble'
+    return 'other'
 
 
 def _int(value):
@@ -178,7 +187,7 @@ def build_drives(game_rows, season, source_file, source_hash):
             'next_start_yardline_100': _int(nxt['plays'][0]['yardline_100']) if nxt else '',
             'next_start_clock_seconds': _int(nxt['plays'][0]['game_seconds_remaining']) if nxt else '',
             'try_kind': try_kind or '', 'try_made': '' if try_made is None else int(try_made),
-            'try_team': try_team or '',
+            'try_team': try_team or '', 'turnover_kind': turnover_kind(drive['rows']),
             'status': status, 'status_note': status_note, 'source_file': source_file, 'source_sha256': source_hash,
         })
     return records
@@ -216,6 +225,14 @@ def main():
     manifest = {
         'generator': str(Path(__file__).relative_to(REPO)), 'generator_sha256': sha256(__file__),
         'window': '2022-2025 regular season, week <= 18, overtime quarter', 'rule': 'Rule 16, Article 3 (regular season)',
+        'engine_assumptions': [
+            'first possession: seeded uniform draw, the toss winner receives; the toss and the kick-or-receive choice are not in play-by-play, so the choice is not modelled',
+            'touchdowns are recorded at six points; a point after shown in the drive rows is used, otherwise a labelled draw from the regulation try rates',
+            'a touchdown that decides the game (sudden death from a tie) takes no try; a touchdown that leaves the game going takes one',
+            'current (2025+) overtime rules: a first-possession touchdown does not end the game; 2022-2024 walk-off endings are used for their drive outcome only',
+            'Article 5(a) is modelled for an interception or fumble after the first team has scored: the down runs out, and a return touchdown counts with its try',
+            'the two-minute warning does not apply in overtime (rules file Section 41 names the second and fourth periods only)',
+            'the last drive of each game is never drawn: no next start is observed for it'],
         'source_dataset': 'nflverse play_by_play parquet', 'sources': hashes, 'columns': list(COLUMNS),
         'games_with_overtime': len({r['game_id'] for r in records}), 'drive_count': len(records),
         'usable_count': len(usable), 'status_counts': dict(sorted(Counter(r['status'] for r in records).items())),

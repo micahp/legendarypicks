@@ -46,7 +46,8 @@ def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, over
 
 # An observed overtime drive that runs the period out with no score: a 0-0 regulation game ends as a tie.
 PERIOD_END_OVERTIME = {'outcome': 'period_end', 'duration': 600, 'points_offense': 0, 'points_defense': 0,
-                       'next_offense': None, 'next_yardline': None, 'game_id': 'fixture', 'drive': 1}
+                       'next_offense': None, 'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other',
+                       'game_id': 'fixture', 'drive': 1}
 
 
 def safety_pool(spot=40, runoff=6):
@@ -712,7 +713,8 @@ class OvertimeObservedDrives(unittest.TestCase):
         from types import SimpleNamespace
 
         punt = {'outcome': 'punt', 'duration': 100, 'points_offense': 0, 'points_defense': 0,
-                'next_offense': 'SEA', 'next_yardline': 55, 'game_id': 'fixture', 'drive': 4}
+                'next_offense': 'SEA', 'next_yardline': 55, 'try_kind': None, 'try_made': None,
+                'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 4}
         game = object.__new__(gs._Game)
         game.status, game.blocker = None, None
         game.offense, game.defense, game.clock, game.quarter = 'A', 'B', 500, 5
@@ -729,7 +731,8 @@ class OvertimeObservedDrives(unittest.TestCase):
 
     def test_observed_scores_decide_overtime_by_the_sudden_death_rule(self):
         touchdown = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0,
-                     'next_offense': None, 'next_yardline': None, 'game_id': 'fixture', 'drive': 1}
+                     'next_offense': None, 'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other',
+                       'game_id': 'fixture', 'drive': 1}
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[touchdown]),
                               winner_choice='receive', max_drives=80)
         self.assertEqual(record['status'], 'complete_overtime')
@@ -743,7 +746,8 @@ class OvertimeObservedDrives(unittest.TestCase):
         from types import SimpleNamespace
         import random
         long_drive = {'outcome': 'punt', 'duration': 300, 'points_offense': 0, 'points_defense': 0,
-                      'next_offense': 'B', 'next_yardline': 40, 'game_id': 'fixture', 'drive': 1}
+                      'next_offense': 'B', 'next_yardline': 40, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other',
+                      'game_id': 'fixture', 'drive': 1}
         game = object.__new__(gs._Game)
         game.status, game.blocker = None, None
         game.offense, game.defense, game.clock = 'A', 'B', 200
@@ -752,6 +756,71 @@ class OvertimeObservedDrives(unittest.TestCase):
         game._observed_overtime_drive()
         self.assertEqual((game.status, game.blocker), ('blocked', 'overtime_drive_not_observed_for_clock'))
         self.assertEqual(game.drives, [])
+
+
+class OvertimeCompletedRules(unittest.TestCase):
+    """The completed overtime rules: a try only where the game goes on, and Article 5(a) for an interception or fumble
+    after the first team has scored (rules file, Rule 16, Article 5(a))."""
+
+    TD = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0, 'next_offense': None,
+          'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
+
+    def test_a_first_possession_touchdown_carries_a_try_and_the_game_goes_on(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
+                              winner_choice='receive', max_drives=80)
+        first = next(d for d in record['drives'] if d['quarter_start'] == 5)
+        self.assertEqual(first['try_source'], 'regulation_try_rates_fallback')
+        self.assertIsNotNone(first['points_scored_on_drive']['try'])
+        self.assertGreaterEqual(len(record['overtime']['possessions']), 2)
+
+    def test_an_answering_touchdown_that_ties_carries_its_try(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
+                              winner_choice='receive', max_drives=80)
+        answer = [d for d in record['drives'] if d['quarter_start'] == 5][1]
+        self.assertEqual(answer['offense_team'], record['overtime']['possessions'][1])
+        self.assertEqual(answer['try_source'], 'regulation_try_rates_fallback')
+        try_rec = answer['points_scored_on_drive']['try']
+        self.assertEqual(answer['points_scored_on_drive']['points'],
+                         gs.TD_POINTS + (gs.TRY_POINTS[try_rec['kind']] if try_rec['made'] else 0))
+
+    def test_a_winning_touchdown_from_a_tie_takes_no_try(self):
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
+                              winner_choice='receive', max_drives=80)
+        last = record['drives'][-1]
+        self.assertEqual(last['try_source'], 'not_attempted_game_ends')
+        self.assertIsNone(last['points_scored_on_drive']['try'])
+        self.assertEqual(last['points_scored_on_drive']['points'], gs.TD_POINTS)
+        self.assertEqual(record['overtime']['winner'], last['offense_team'])
+        gs.validate_game(record)
+
+    def test_an_interception_after_a_first_possession_score_ends_the_game_on_the_down(self):
+        from types import SimpleNamespace
+        import random
+        turnover = {**self.TD, 'outcome': 'turnover', 'turnover_kind': 'interception', 'points_offense': 0}
+        game = object.__new__(gs._Game)
+        game.status, game.blocker, game.drives = None, None, []
+        game.offense, game.defense, game.clock = 'B', 'A', 400
+        game.ref = SimpleNamespace(overtime_pool=[turnover])
+        game.rng = random.Random(0)
+        game.points = gs.Counter({'A': 3})
+        game.ledger = SimpleNamespace(teams=('A', 'B'))
+        game.overtime = {'possessions': ['A', 'B'], 'first_possession_scored': True, 'kicking_team': 'B',
+                         'winner': None, 'result': None}
+        game._observed_overtime_drive()
+        self.assertEqual((game.status, game.overtime['winner']), ('complete_overtime', 'A'))
+        self.assertEqual(game.overtime['article_5a']['turnover_kind'], 'interception')
+        self.assertEqual(len(game.drives), 1)
+
+    def test_article_5a_covers_a_returned_interception_but_not_a_punt_return(self):
+        from types import SimpleNamespace
+        game = object.__new__(gs._Game)
+        game.overtime = {'possessions': ['A', 'B'], 'first_possession_scored': True}
+        self.assertTrue(game._article_5a_applies('B', 'defense_touchdown', 'interception'))
+        self.assertTrue(game._article_5a_applies('B', 'defense_touchdown', 'fumble'))
+        self.assertFalse(game._article_5a_applies('B', 'defense_touchdown', 'other'))
+        self.assertFalse(game._article_5a_applies('B', 'turnover', 'other'))
+        game.overtime['first_possession_scored'] = False
+        self.assertFalse(game._article_5a_applies('B', 'turnover', 'interception'))
 
 
 class ScopedOut(unittest.TestCase):
