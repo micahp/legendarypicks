@@ -1,0 +1,246 @@
+{
+ "artifact": "e3-clock-decomposition",
+ "baseline": {
+  "definition": "PBP-conditional runoff: draw from the pool keyed by (outcome, stoppage context, late half); quarter-end runoffs (censored) excluded; no tracking.",
+  "draws_per_play": 100,
+  "eligible_rows": 9669,
+  "evaluated_in": "three-model comparison (clock_compare.py at 108a1afe), tested on weeks 6-9, which were burned before the test (see the holdout block)",
+  "fit_weeks": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "min_pool": 50,
+  "name": "B",
+  "pool_counts": {
+   "fumble|out_of_bounds|0": 4,
+   "fumble|penalty|0": 1,
+   "fumble|turnover|0": 59,
+   "fumble|turnover|1": 13,
+   "interception|out_of_bounds|0": 11,
+   "interception|out_of_bounds|1": 3,
+   "interception|penalty|0": 3,
+   "interception|penalty|1": 1,
+   "interception|turnover|0": 75,
+   "interception|turnover|1": 19,
+   "pass_complete|none_observed|0": 2169,
+   "pass_complete|none_observed|1": 282,
+   "pass_complete|out_of_bounds|0": 561,
+   "pass_complete|out_of_bounds|1": 108,
+   "pass_complete|penalty|0": 29,
+   "pass_complete|penalty|1": 11,
+   "pass_complete|timeout|0": 9,
+   "pass_incomplete|incomplete_pass|0": 1476,
+   "pass_incomplete|incomplete_pass|1": 306,
+   "pass_incomplete|out_of_bounds|0": 2,
+   "pass_incomplete|out_of_bounds|1": 1,
+   "pass_incomplete|penalty|0": 15,
+   "pass_incomplete|penalty|1": 3,
+   "pass_incomplete|timeout|0": 5,
+   "run|none_observed|0": 3210,
+   "run|none_observed|1": 247,
+   "run|out_of_bounds|0": 234,
+   "run|out_of_bounds|1": 21,
+   "run|penalty|0": 70,
+   "run|penalty|1": 4,
+   "run|timeout|0": 5,
+   "sack|out_of_bounds|0": 13,
+   "sack|out_of_bounds|1": 1,
+   "sack|penalty|0": 4,
+   "sack|sack|0": 268,
+   "sack|sack|1": 44,
+   "touchdown|penalty|0": 5,
+   "touchdown|touchdown|0": 326,
+   "touchdown|touchdown|1": 51
+  },
+  "pool_key": [
+   "outcome",
+   "stop",
+   "late"
+  ],
+  "seed": 20261025,
+  "usable_keys": 15
+ },
+ "checks": {
+  "b_pool_file_equals_fit_in_memory": true,
+  "decomposition_runoff_agrees_with_lp": {
+   "agree": 15377,
+   "disagree": 0,
+   "missing_in_lp": 0
+  }
+ },
+ "consumer_rules": [
+  "Verify the sha256 of each file before reading it. A mismatch means the artifact is not this version.",
+  "Never fill an unresolvable value. A null stays null, and the reason is in unresolvable_fields.",
+  "Sample the baseline B pool only from rows with b_pool_eligible = 1, keyed on (outcome, stop, late).",
+  "Do not read weeks 6-9 as a holdout: they were examined when the comparison was run."
+ ],
+ "files": {
+  "clock-baseline-B-runoffs.csv": {
+   "bytes": 1200709,
+   "sha256": "0e684846fb8e009cb5f1d4907175d44ec71ee01498f5b1598c9434dd7743ad04"
+  },
+  "clock-baseline-B.schema.json": {
+   "bytes": 1349,
+   "sha256": "d785ec3494001d6953b13e56332966a2ce02ec11b79153c111450a22069366d4"
+  },
+  "clock-decomposition.csv": {
+   "bytes": 11153380,
+   "sha256": "11f8dc2bf056d34cdbbf7ad5a5121ea6134aae9d9e932f920276db6f6417df46"
+  },
+  "clock-decomposition.schema.json": {
+   "bytes": 4942,
+   "sha256": "14eeed1898cbecd87e11b611cffb595289beec77ae9ea4b2224c1c035643eade"
+  }
+ },
+ "holdout": {
+  "consequence": "Model B was adopted after its test-week results were reported. Its adoption is therefore not holdout-validated.",
+  "first_clock_examination": {
+   "commit": "6b7682da",
+   "time": "2026-10-24 07:25:48 -0500",
+   "what": "clock audit over 2022 weeks 1-9, 15,766 matched plays: the first clock statistic computed on weeks 6-9",
+   "why": "six of the 13 games on 2026-10-25/26 repeat a 2022 pairing; the medians describe those 2022 meetings only"
+  },
+  "first_examined_before_reservation": {
+   "commit": "e7b2641b",
+   "time": "2026-10-24 00:08:18 -0500",
+   "what": "profile of tackle labels per week, weeks 1-9 (not a clock statistic)"
+  },
+  "first_test_use": {
+   "commit": "c38ec49b",
+   "time": "2026-10-24 07:33:00 -0500",
+   "what": "runoff model comparison, fit weeks 1-5, test weeks 6-9: quarter-end share and out-of-bounds results reported on the test weeks"
+  },
+  "other_uses_of_weeks_6_9": [
+   {
+    "commit": "2ebc3be5",
+    "time": "2026-10-24 07:17:18 -0500",
+    "what": "clock audit, weeks 1-5 only (verified weeks [1, 5])"
+   },
+   {
+    "commit": "e1f56b85",
+    "time": "2026-10-24 09:38:40 -0500",
+    "what": "tracking join, identifiers and frame counts over weeks 1-9 (not clock)"
+   },
+   {
+    "commit": "4e18cb9f",
+    "time": "2026-10-24 10:10:10 -0500",
+    "what": "clock decomposition over weeks 1-9"
+   },
+   {
+    "commit": "108a1afe",
+    "time": "2026-10-24 10:23:07 -0500",
+    "what": "three-model comparison, test weeks 6-9 (this artifact's baseline was chosen from it)"
+   }
+  ],
+  "reserved": {
+   "commit": "4bb5add1",
+   "text": "weeks 6-9 are reserved for held-out confirmation (preregistration, snap-anchored benchmark; the builder refuses weeks 6-9)",
+   "time": "2026-10-24 01:54:56 -0500"
+  },
+  "status": "burned: weeks 6-9 were examined before B was chosen. B is not holdout-validated, and the three-model comparison cannot be claimed to generalise beyond the 2022 weeks 1-9 examined here."
+ },
+ "provenance": {
+  "bdb_tracking": {
+   "checked_against": "SHA256SUMS.txt (13 files, all matched, per the coverage report)",
+   "directory": "/root/nfl-tracking-data/bdb2025/code-data"
+  },
+  "builder": "scripts/nfl_sequence/evidence_e2/build_clock_baseline.py",
+  "comparison": {
+   "commit": "108a1afe",
+   "result": "docs/evidence/e3/three-model-clock-comparison-2026-10-24.json",
+   "result_sha256": "3c86566a2d98332ee8bc281119baf7c6d9fed30786e904c52d72fe3fed757c85",
+   "script": "scripts/nfl_sequence/clock_compare.py"
+  },
+  "decomposition": {
+   "generator": "scripts/bdb/e3_clock_decomposition.py",
+   "generator_blob": "afe1378c88c569ef59395a2866d682da0c17d255",
+   "generator_commit": "4e18cb9f9e5b29ae9e105cbed37f90dc915c83da",
+   "source_commit": "4e18cb9f9e5b29ae9e105cbed37f90dc915c83da",
+   "source_path": "docs/evidence/e3/e3-clock-decomposition-2026-10-24.csv"
+  },
+  "lp_play_by_play": {
+   "database": "backend/data/picks.dev.db",
+   "mode": "read-only",
+   "query": "nfl_pbp WHERE season = 2022 AND week BETWEEN 1 AND 9 (clock_compare.load_lp)",
+   "rows_read": 22922
+  },
+  "nflverse_flags": {
+   "file": "inputs/nflverse-2022-w1-9-flags.csv",
+   "sha256_prefix": "00f38a10",
+   "source": "/root/nflverse-raw/play_by_play_2022.parquet, sha256 931121d8 (SHA256SUMS checked)"
+  },
+  "tracking_join_pairs": {
+   "commit": "e1f56b85",
+   "file": "docs/research/e3-tracking-join-pairs-2026-10-24.csv",
+   "sha256_prefix": "80d89116"
+  }
+ },
+ "schema_versions": [
+  "clock-decomposition.schema.json",
+  "clock-baseline-B.schema.json"
+ ],
+ "unresolvable_fields": [
+  {
+   "B_treatment": "censored (R4u2) excluded from the pool; R4u1 and R4u3 have no runoff row",
+   "field": "game_clock_delta_s",
+   "rules": {
+    "R4u1": 6,
+    "R4u2": 374,
+    "R4u3": 11
+   },
+   "used_by_B": true
+  },
+  {
+   "B_treatment": "not used",
+   "field": "in_play_s",
+   "rules": {
+    "R2u": 62
+   },
+   "used_by_B": false
+  },
+  {
+   "B_treatment": "not used",
+   "field": "residual_s",
+   "rules": {
+    "R5u": 453
+   },
+   "used_by_B": false
+  },
+  {
+   "B_treatment": "not used",
+   "field": "real_snap_to_next_snap_s",
+   "rules": {
+    "R6u": 4587
+   },
+   "used_by_B": false
+  },
+  {
+   "B_treatment": "the penalty flag is a stoppage context; its clock duration is unresolvable, so B cannot model it",
+   "field": "penalty_clock_stop",
+   "rules": {
+    "R11u": 15768
+   },
+   "used_by_B": false
+  },
+  {
+   "B_treatment": "not used: no per-play remaining count in either source",
+   "field": "timeouts_remaining",
+   "rules": {
+    "R10u": 15768
+   },
+   "used_by_B": false
+  },
+  {
+   "B_treatment": "not used: the late-half state is observed, the warning event is not identifiable",
+   "field": "two_minute_warning_event",
+   "rules": {
+    "R12u": 15768
+   },
+   "used_by_B": false
+  }
+ ],
+ "version": "1.0.0"
+}

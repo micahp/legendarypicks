@@ -1,0 +1,99 @@
+{
+  "default_fixture": "game-kc-sea-seed1-full-depth.json",
+  "fixtures": [
+    {
+      "drives": 27,
+      "file": "game-seed1.json",
+      "game_id": "2026_07_KC_SEA",
+      "plays": 157,
+      "seed": 1,
+      "sha256": "88ab1919cf9dff2e25ad6abf3b4382a08e4c625debefd41f63f9fef8420a77b4",
+      "snapshot_sha256": "8f10ea73f02ddc66fac685eabbcca2ac23cb30cc774321971710056f3491f4db",
+      "source": {
+        "base_commit": "9813fcc7f6706d8396806b6cbb1bcb8b36c6b52b",
+        "branch": "feat/statistical-full-game-e2-2026-10-25",
+        "producer_file_sha256": {
+          "scripts/nfl_sequence/e1_drive.py": "95e2ea34153c7c85a1166898b08cec5c6f45a02f74a5fe0b5ea38c0af9fd78fd",
+          "scripts/nfl_sequence/e2_reference.py": "e32fce9724ce6d1ad1715706a80b82a4d58f40bbcc90858dd9adee6e675b3895",
+          "scripts/nfl_sequence/game_state.py": "8d31b68d9fc8845b59c78810ce80eb6bc419fa31e90b03d8691b1257dbf046ca",
+          "scripts/nfl_sequence/game_stats.py": "98c6c43d560a7c103f8de99b3bb53f035c54eb21cc42c4a04c6a4c29d7e0e20d",
+          "scripts/nfl_sequence/pregame_snapshot.py": "3bcacaa444cbed066f06f011eb0891d33156a775cbaf57cdf12b1a084facc11d",
+          "scripts/nfl_sequence/simulate_pregame_game.py": "bf7cf8e09c7b506619164afdc3f241dcf96a674f1cb5e33712e83fdadab9280a"
+        },
+        "producer_worktree_dirty": false,
+        "repository": "micahp/legendarypicks"
+      },
+      "valid_full_game": false
+    },
+    {
+      "drives": 24,
+      "file": "game-kc-sea-seed1-full-starters.json",
+      "game_id": "2026_07_KC_SEA",
+      "plays": 152,
+      "seed": 1,
+      "sha256": "dfcf69eaf352f036e9441c83b7f8d711f131aecc22ad8b20396494f76199fef1",
+      "snapshot_sha256": "6fbd2b85bf8e2421b8330d4f0a5570dc66146ee3981addac1c53520194e84039",
+      "source": {
+        "base_commit": "dc9fd397680943e4c170c74bbc6612a863958cff",
+        "branch": "feat/statistical-full-game-e2-2026-10-25",
+        "producer_file_sha256": {
+          "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "2b2d3605b8ba1bf483e5ea061869d89476267171e027d618cad26f6c073c2bc1",
+          "scripts/nfl_sequence/e1_drive.py": "ad675e5ced37aa1569d513d8dffc7d3904f68e421bf8c2251bdd9f40bb779a98",
+          "scripts/nfl_sequence/e2_reference.py": "cc804230e186af1457e967de1be56bc6415759915cd7a2ed557332466e4def0d",
+          "scripts/nfl_sequence/game_state.py": "bb877343e107e7f2da84645f070e85382e84f5903df98837328a2a71ce47bb71",
+          "scripts/nfl_sequence/game_stats.py": "2eba6bbc2ccbe186944a0418c828fd37dd9084922031a9d3a4229fb7da7a8ac7",
+          "scripts/nfl_sequence/measure_kick_outcomes.py": "09aa04bc3c0741222f9b1138b0aa14a1628fd21fda4f730188cd1a8ee6226cf3",
+          "scripts/nfl_sequence/pregame_snapshot.py": "31bbe733e001022a4af7257dcd7ffeae39217a98cc46c88f8780d60fa7f550a0",
+          "scripts/nfl_sequence/reducer.py": "531b6b78462e6fbcadcb4410634ed1b0a2cd02bba6cb8c22ad96a1be6e5731a0",
+          "scripts/nfl_sequence/simulate_pregame_batch.py": "11a2d814b5d358634e911fa29a29f843854d4cacac4c5f4cb0e8a29fdf68a122",
+          "scripts/nfl_sequence/simulate_pregame_game.py": "23d0bf5062398df043044bffee74197d8eca17014ba2a61d44e5e0c2f3bdb611"
+        },
+        "producer_worktree_dirty": false,
+        "repository": "micahp/legendarypicks"
+      },
+      "valid_full_game": true
+    },
+    {
+      "drives": 24,
+      "file": "game-kc-sea-seed1-full-depth.json",
+      "game_id": "2026_07_KC_SEA",
+      "plays": 150,
+      "roster_snapshot": {
+        "file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth.json",
+        "provenance_file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth-provenance.json",
+        "provenance_sha256": "a46a031daf1e54ac7774e68a7c731ad6c5529b71c323406e446d9cf50a4f54f7",
+        "sha256": "10739efdc9cf59f1b1997497dc2602b80848e8d5519eca7c951f5871e3e515b1"
+      },
+      "seed": 1,
+      "sha256": "f6723658752addd247cdf8b5fde0dbd2d43dd0b7f10c450b4707546efa7c0ef8",
+      "snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+      "source": {
+        "base_commit": "428fbef0d61d00ccf3cce1c8dbcd81253f6ee6f6",
+        "branch": "feat/statistical-full-game-e2-2026-10-25",
+        "producer_file_sha256": {
+          "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "2b2d3605b8ba1bf483e5ea061869d89476267171e027d618cad26f6c073c2bc1",
+          "scripts/nfl_sequence/e1_drive.py": "ad675e5ced37aa1569d513d8dffc7d3904f68e421bf8c2251bdd9f40bb779a98",
+          "scripts/nfl_sequence/e2_reference.py": "cc804230e186af1457e967de1be56bc6415759915cd7a2ed557332466e4def0d",
+          "scripts/nfl_sequence/game_state.py": "bb877343e107e7f2da84645f070e85382e84f5903df98837328a2a71ce47bb71",
+          "scripts/nfl_sequence/game_stats.py": "2eba6bbc2ccbe186944a0418c828fd37dd9084922031a9d3a4229fb7da7a8ac7",
+          "scripts/nfl_sequence/measure_kick_outcomes.py": "09aa04bc3c0741222f9b1138b0aa14a1628fd21fda4f730188cd1a8ee6226cf3",
+          "scripts/nfl_sequence/pregame_snapshot.py": "83803b008906a9cb3c51dd2aea13a8cb32bb871ba230e2c31acf18aeb39f8976",
+          "scripts/nfl_sequence/reducer.py": "531b6b78462e6fbcadcb4410634ed1b0a2cd02bba6cb8c22ad96a1be6e5731a0",
+          "scripts/nfl_sequence/simulate_pregame_batch.py": "eb714cea096f09960ffea33688362fe2355c5df5e456bf571aff8ea44c32bf94",
+          "scripts/nfl_sequence/simulate_pregame_game.py": "410263aa6b212e013776ece13273d28d510844f7c5fa7d0f284de7a4b92f3a94"
+        },
+        "producer_worktree_dirty": false,
+        "repository": "micahp/legendarypicks"
+      },
+      "valid_full_game": true
+    }
+  ],
+  "label": "Kansas City at Seattle \u00b7 2026-10-25",
+  "roster_snapshot": {
+    "file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth.json",
+    "provenance_file": "docs/fixtures/rosters/kc-sea-2026-10-25-full-depth-provenance.json",
+    "provenance_sha256": "a46a031daf1e54ac7774e68a7c731ad6c5529b71c323406e446d9cf50a4f54f7",
+    "sha256": "10739efdc9cf59f1b1997497dc2602b80848e8d5519eca7c951f5871e3e515b1"
+  },
+  "schema": "lp-statistical-pregame-fixture-manifest-1"
+}

@@ -1,0 +1,54 @@
+{
+ "columns": [
+  "game_id",
+  "play_id",
+  "season",
+  "week",
+  "season_type",
+  "play_type",
+  "posteam",
+  "defteam",
+  "yardline_100",
+  "two_point_attempt",
+  "extra_point_result",
+  "two_point_conv_result",
+  "field_goal_result",
+  "kick_distance",
+  "success",
+  "series_result"
+ ],
+ "generator": "scripts/nfl_sequence/build_kick_results.py",
+ "generator_sha256": "7ee82f24b46e16389bd2ad44e3b64273519a6c300560bad59e40357a739bce6f",
+ "output": {
+  "path": "docs/fixtures/e2/kick_results_2022_2025.csv",
+  "rows": 9704,
+  "sha256": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93"
+ },
+ "rows": {
+  "2022|extra_point": 1187,
+  "2022|field_goal": 1062,
+  "2022|no_play": 1,
+  "2022|pass": 88,
+  "2022|run": 30,
+  "2023|extra_point": 1169,
+  "2023|field_goal": 1060,
+  "2023|no_play": 6,
+  "2023|pass": 77,
+  "2023|run": 44,
+  "2024|extra_point": 1246,
+  "2024|field_goal": 1115,
+  "2024|pass": 99,
+  "2024|run": 36,
+  "2025|extra_point": 1268,
+  "2025|field_goal": 1088,
+  "2025|pass": 96,
+  "2025|run": 32
+ },
+ "sources": {
+  "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+  "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+  "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+  "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+ },
+ "window": "season 2022-2025, season_type REG, week <= 18"
+}
