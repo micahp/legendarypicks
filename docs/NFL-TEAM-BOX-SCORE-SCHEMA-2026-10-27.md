@@ -8,6 +8,24 @@ frozen Week 8 runs and existing snapshots are untouched. The 2026 season is not 
 This document is deliverables 1 to 5 of the expansion request in `NFL-TEAM-BOX-SCORE-SPEC-2026-10-27.md`: the schema,
 the coverage audit, the reconciliation report, the query examples and the source-gap list.
 
+## Revision 2026-10-27 (rev2): what changed in this document
+
+The revised store is `/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev2/team_box.sqlite` (schema
+`lp-nfl-team-box-2`). The reconciliation status and the metric list are in `NFL-RECONCILIATION-2026-10-27.md`, which
+supersedes the figures below where they differ. Changes:
+
+- `pts_derived` and `pts_residual`: a safety is counted once per drive. Derived points now match the schedule in 97.8% of
+  comparable team-games (previously 95.7%).
+- `points_per_drive` is offensive points per drive: the schedule's final score less the points that derived events credit to
+  defense and special teams, divided by drives. Null where that split is negative: 2 team-games in rev2 (2012 ARI and 2016 NYJ), where derived defense and special-teams points exceed the final score.
+- `pen_yards` and `pen_flagged` are null where the source has no rows for the season (2026). `pen_yards` is zero only where the
+  penalty table covers the season.
+- `first_downs` is null in seasons without the penalty first-down table (2010 to 2014 and 2026).
+- The 2025 mismatches for total plays (81.3%) and first downs (67.3%) are unresolved. The rushing attempt check is 95.1%
+  and provisional. See the reconciliation report, section 4.
+- The stated definition of `first_downs` above (penalty first downs "not counted") is out of date: penalty first downs are
+  counted where the penalty table covers the season.
+
 ## 1. Grain and scope
 
 - One row per team per completed game in `team_box_score` (primary key `game_id, team`): 8,940 rows, 4,470 games.

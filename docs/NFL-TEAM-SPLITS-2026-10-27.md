@@ -6,6 +6,22 @@ shrinkage and no team-strength adjustment. Read every difference as a correlatio
 
 Scope: team splits first. Player splits (a play-by-play job, starting with 2026) wait for the next direction.
 
+## Revision 2026-10-27 (rev2): figures in this document that changed
+
+The revised store is `/root/lp-snapshots/nfl-splits/team-splits-2026-10-27-rev2/team_splits.sqlite` (schema
+`lp-nfl-team-splits-2`). The earlier store is kept for comparison. Where this document and the revised store disagree,
+the revised store and `NFL-RECONCILIATION-2026-10-27.md` win. Changes:
+
+- **Stadium capacity** is now a set of reconciled stadium-season pieces with a status. Lookups use `ok` and `flagged` only.
+  Dated capacity for tier A team-games, 2015 to 2026, falls from 3,510 to 2,470. The Arrowhead constant (76,416 for 2010 to
+  2026) is split: 2010 to 2018, 2022, and unknown for the rest. The 2026 event capacity for EverBank is excluded from lookups.
+- **Attendance zero** is kept as 0 (`reported_zero`, all 2020, 306 team-games). Missing and suspect rows are separate statuses.
+  Pre-2015 and 2026 rows are `not_collected`, not missing. Attendance bins use reported counts only.
+- **Capacity definition** on the statements above: "the seating capacity a building's Wikipedia page states" is replaced by the
+  reconciled figure and its status. Sources are listed per piece in the capacity CSV.
+- Coverage numbers and the attendance-share results in section 3 come from the previous store, and must be re-read from the
+  revised store before they are quoted.
+
 ## 1. What was built
 
 | Piece | Where | What it does |

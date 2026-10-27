@@ -6,6 +6,25 @@ The 2026 season is the sealed holdout. It is not used to choose, tune or confirm
 Depends on: `NFL-TEAM-BOX-SCORE-SCHEMA-2026-10-27.md` (the box score) and `NFL-SITUATIONAL-STATE-CONTRACT-2026-10-27.md`
 (the pregame layer and the cutoff rule).
 
+## Revision 2026-10-27 (status after the S0b build)
+
+- **S0b is built and evaluated once** on the fixed splits (fit 2010 to 2017, validation 2018 to 2020, test 2021 to 2025).
+  Results and the audit are in `NFL-S0-BASELINE-AUDIT-2026-10-27.md`. Test Brier 0.2259, against 0.2480 for home-only and
+  0.2500 for a constant 0.5. The gap to home-only is -0.0222 with a week-block interval of [-0.0310, -0.0132].
+- **S0b fails the calibration gate** (section 6, rule 3) on the test window: slope 0.862, and the 0.2 to 0.3 bin misses by
+  0.115. S1 onward must be compared against S0b as it stands, and the calibration problem is recorded as a baseline
+  property, not fixed by refitting on the test seasons.
+- **S0a is not started.** The existing model code is listed in the audit, and its input time basis has not been audited.
+  Until it is, no historical replay is called a forecast.
+- **The test window is not a confirmation sample.** The situational exploration of 2022 to 2025 happened before this
+  plan's results. Section 4 is unchanged, but any situational result on 2021 to 2025 must say so.
+- **Box-score inputs changed** (see `NFL-RECONCILIATION-2026-10-27.md`): derived points now match the schedule in 97.8% of
+  comparable team-games, first downs are null for 2010 to 2014 and 2026, and penalty yards are null outside 2015 to 2025.
+  No S1 to S3 result exists yet on the revised store.
+- **Decision thresholds (section 6) are unchanged.** The 0.003 threshold is still to be checked against validation Brier
+  differences, which has not been done.
+- **Attendance** is retrospective only in this plan. The game-info attendance contract (`NFL-GAME-INFO-ATTENDANCE-CONTRACT-2026-10-27.md`) is a proposal. `attendance.expected` stays out of every model until validated.
+
 ## 1. Question
 
 Does each addition of situational information improve forecasts on games that were not used to select it?
