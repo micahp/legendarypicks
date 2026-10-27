@@ -1,0 +1,38 @@
+per-seed status: /tmp/claude-0/-root-lp-nfl-props/a5372ef5-13c9-489b-ab2d-00e9af6e68e3/scratchpad/per_seed_final.csv
+games=300 validated=300 complete_regulation=293 valid_full_game=0
+status {'complete_regulation': 293, 'blocked': 7}
+blocker {None: 293, 'thin_kick_cell:field_goal:50+': 2, 'overtime_not_modelled': 5}
+reached the Q3 half-start kickoff: 298 (99.3%)
+boundaries: {'change_of_ends': 33, 'halftime': 298, 'change_of_ends_mid_drive': 559, 'change_of_ends_during_return': 4, 'skipped_post_score_kick': 9}
+field goals drawn: {'made': 1187, 'missed': 236}
+tries drawn: {'extra_point made': 1020, 'two_point made': 42, 'two_point missed': 72, 'extra_point missed': 42}
+points per game: mean 39.3; drives per game: mean 22.6, max 32
+kickoff pool: usable 10037, excluded {'kickoff without a clean receiving snap': 962}
+rules matrix, games per status:
+  Opening toss winner defers, opponent receives                          {'NOT_APPLICABLE': 155, 'PASS': 145}
+  Opening winner receives (normal policy)                                {'PASS': 155, 'NOT_APPLICABLE': 145}
+  Winner chooses kick (normal mode)                                      {'PASS': 300}
+  Winner chooses defended goal first (normal mode)                       {'PASS': 300}
+  Explicit exception coin-toss path                                      {'PASS': 300}
+  Q1->Q2 change of ends                                                  {'PASS': 292, 'PROVISIONAL': 6, 'NOT_APPLICABLE': 2}
+  Q3->Q4 change of ends                                                  {'PASS': 289, 'NOT_APPLICABLE': 2, 'PROVISIONAL': 9}
+  Q2->Q3 halftime: kickoff, clock reset, second-half choice              {'PASS': 289, 'NOT_APPLICABLE': 2, 'PROVISIONAL': 9}
+  Both half-opening kickoffs, one per team, verified against the ledger  {'PASS': 298, 'BLOCKED': 2}
+  Turnover on downs in Q2                                                {'NOT_APPLICABLE': 175, 'PASS': 125}
+  Touchdown: six points, a distinct try, post-score kickoff              {'PASS': 287, 'NOT_APPLICABLE': 6, 'PROVISIONAL': 7}
+  Missed field goal: receiving team at the kick spot or its own 20 (Rule {'NOT_APPLICABLE': 132, 'PASS': 168}
+  Made field goal (3) and safety (2), with the correct post-score kick   {'PASS': 294, 'BLOCKED': 2, 'NOT_APPLICABLE': 2, 'PROVISIONAL': 2}
+  Clock: 15-minute quarters, no clock increase, end of Q1/Q3 is not a dr {'PASS': 300}
+  Continuity between drives and quarters                                 {'PASS': 300}
+  Drive index: every play state carries its game-level drive index       {'PASS': 300}
+  Points equal the points on the drives                                  {'PASS': 300}
+  Provisional clock rules: practice-sourced, pending the 2026 rulebook   {'NOT_APPLICABLE': 282, 'PROVISIONAL': 18}
+  Timeouts: three per team per half                                      {'UNSUPPORTED': 300}
+  Unmodelled rules: each carries a named guard                           {'UNSUPPORTED': 300}
+  Two-minute warning                                                     {'UNSUPPORTED': 300}
+  Penalties and untimed-down extensions                                  {'UNSUPPORTED': 300}
+  Onside kick                                                            {'UNSUPPORTED': 300}
+  Overtime after a tie                                                   {'NOT_APPLICABLE': 293, 'BLOCKED': 7}
+  Player lineups and physical motion                                     {'UNSUPPORTED': 300}
+  Fourth-down choices: punt, field goal or go for it                     {'PARTIAL': 300}
+matrix FAIL rows across all games: 0
