@@ -128,8 +128,8 @@ touchdown skipped its try while the game went on.
 
 **Overtime try data.** The play-by-play holds 7 overtime try attempts in 2022-2025: 4 extra points made, 3 two-point tries
 with 1 success, all in 2025 regular season. No postseason overtime try is recorded. A seven-attempt sample cannot estimate a
-decision, so the overtime try policy has no overtime-specific estimate yet. The fallback above is the regulation try rate, and
-it is labelled as such. A conditional fallback from score-conditioned regulation tries, with shrinkage, is not built yet.
+decision, so overtime tries use the conditional fallback table built from observed regulation tries (section "Conditional try
+fallback" below). The regulation try rate is used only when a reference is loaded without that table.
 
 **Long field goals: audit.** Observed 2022-2025 regular-season field-goal attempts from 67 or more yards (yardline_100 of 50 or
 more): 4 in total, 3 on second down and 1 on third. None on fourth down, where the decision is made. Fourth-down plays at that
@@ -137,9 +137,89 @@ distance: 2,464 (punt 1,823, go for it 460, other 181, field goal 0). The engine
 events from sparse state cells, not from a decision model. The three thin-cell seeds stay blocked by name. Attempt-decision and
 distance-based outcome models are not built yet.
 
-**Toss.** The first possession is a seeded uniform draw, and the toss winner receives. Play-by-play does not record the toss or
-the kick-or-receive choice, so the choice cannot be estimated from it. The external figure (10 kick, 4 receive, 2025
-overtime) is not used as a probability in the engine.
+**Toss and first possession (superseded for the choice; see "Overtime kick-or-receive decision" below).** The toss winner is a
+seeded uniform draw. Play-by-play does not record the toss or the choice, so the choice is taken from the observed coin-toss
+table instead, and the external figure is not used as a probability.
 
 **Files.** `validity-300-overtime-rules.{csv,json}` (treatment), `validity-300-sensitivity-forced-{A,B}.{csv,json}`,
 `validity-300-control-rules.{csv,json}`, `validity-300-paired-rules-on-teamfix-inputs.{csv,json}`, `teamfix-model-inputs.json`.
+
+## Later on 2026-10-26: research variants, kept separate from the default
+
+Nothing in the sections above is changed by this section. The default engine, its reference fingerprint (`e3032125`) and
+its published inputs are the same as before this round. The variants below are opt-in research runs, and none of the findings
+was used to change a default.
+
+**Decisions, explicit.**
+
+1. Default unchanged: the 2022-2025 kickoff pool, the observed overtime table, the observed kick-or-receive model (p_kick
+   0.6875) and the conditional overtime try table.
+2. The 2026 kickoff regime is a research variant (`--kickoff-regime --kickoff-before 2026-10-25`), not a default.
+3. The 2022-2024 and 2025 overtime drive difference is reported, not applied. The drive pool stays pooled 2022-2025 until
+   Micah decides on a 2025-only sensitivity run.
+4. The 2026 two-point holdout is not read.
+
+**Default fingerprint, verified.** With no flags, `e2_reference.load()` reproduces `e3032125`. Commit `3f6fbe2b` had made the
+2026 kickoff regime the default and changed the fingerprint to `87334592`, because the reference hashes every kickoff sample
+and the season field was on each sample. Commit `704c67f9` restored the default and made the regime pool opt-in. The runs
+labelled `kickoff-2026-*` were made with the regime pool on, under `3f6fbe2b`. They reproduce from the flags (fingerprint
+`76e46e0e`, 874 kickoffs).
+
+**Conditional try fallback.** Table `docs/fixtures/e2/try_fallback_2022_2025.csv` (manifest alongside), from
+`build_try_fallback.py`. The shrinkage strength k was chosen from {0, 2, 5, 10, 20, 50, 100} by 2025 log-loss after fitting on
+2022-2024: k = 50, log-loss 0.2562, against 0.3015 for one unconditional rate. The 2026 tries are not read.
+
+- `validity-300-conditional-try` (table on, fingerprint `ae3bbb2c`): 291 valid, 9 blocked. Its 9 overtime games recorded no
+  overtime try, so the table is not exercised in that run.
+- `validity-300-paired-conditional-try-on-rules-baseline` (fingerprint `46b4797e` pinned): 297 valid, 3 blocked. Against the
+  rules baseline, 0 of the 297 seeds valid in both change. The unpinned treatment shows 9 blocked against 3 for the baseline.
+  That difference comes from re-keyed seeds, not from the table. The paired check is the attribution.
+- The working notes said five fallback tries were all extra points. The saved records carry no source field, so that count
+  cannot be reproduced from them, and it is not cited. The paired run's 9 overtime tries are 8 extra points and 1 two-point
+  try made, with no source label.
+
+**Overtime kick-or-receive decision.** Table `overtime_choice_model_2025.csv`: 2025 regular season, 10 kicks in 14 games,
+posterior mean 0.6875 (Beta(1,1)). The 2026 check (4 kicks in 6 games) scores 0.638 log-loss, against 0.693 for 50/50. The
+2026 rows are not used to fit.
+
+- Model arm `validity-300-overtime-choice-model`: 292 valid, 8 blocked, 17 overtime games.
+- Forced arms, paired on the model fingerprint (`e3032125`): `validity-300-paired-decision-receive-on-prekickoff-inputs` and
+  `validity-300-paired-decision-kick-on-prekickoff-inputs`, 292 valid each. Outside overtime, all 283 seeds that finished
+  regulation in all three arms are identical, so the decision does not reach regulation. The arms differ on 12 seeds (model
+  against receive), 15 (model against kick) and 15 (receive against kick), all inside the 17 overtime games.
+- Overtime winners: model B 11, A 5, tie 1; receive B 11, A 4, tie 2; kick A 11, B 4, tie 2. Team A wins overall: model 146,
+  receive 145, kick 152.
+- The earlier unpaired controls (`validity-300-control-choice-receive` and `-kick`, fingerprints `d3a192c2` and `408512ce`)
+  showed team A 165 against 128. That is not a decision effect. Their fingerprints differ from the model's, so their seeds are
+  re-keyed; 259 of 259 non-overtime seeds differ between the two. Compare decisions only through the paired files.
+- Reading: under a seeded fair toss the winner's first-possession probability is 0.5 for any kick rate, so the marginal is
+  unchanged by design. The decision matters for joint or team-specific models, and those are not built.
+
+**Overtime drive pool by era.** Script `scripts/nfl_sequence/overtime_era_test.py`, output
+`docs/evidence/e2-overtime/overtime-drive-era-test.json`. The eras come from the registry: 2022-2024 (`2017-REG-OT-10`,
+`2018-OT-RETURN-CONT`) and 2025 (`2025-REG-OT-BOTH`). The 63 regular-season overtime games split 49 and 14. Drives: 119 (113
+usable) and 31 (27 usable).
+
+- Outcome categories (touchdown, field goal made or missed, punt, turnover, other): chi-square 7.27, permutation p 0.209.
+  No evidence of a difference.
+- Points per drive: 1.56 and 2.61. The difference is +1.05 points, two-sided permutation p 0.026.
+- Decision: the pool is not changed. The points difference is an open question. A 2025-only sensitivity run would rest on 27
+  usable drives, so it would have little power. It needs a decision from Micah before it is run.
+
+**2026 kickoff regime (research variant).** The pool holds the 874 kickoffs from 2026 before the cutoff. The registry gives
+2025 and 2026 different kickoff rules (`2025-KO-PERM-TB35` against `2026-KO-50-TB` and `2026-KO-SETUP`). Disclosure: the
+Kolmogorov-Smirnov test on kickoff spot does not separate 2025 from 2026 (D = 0.0385, p = 0.24). The split is a rule argument
+from the registry, not a measured one, and the test does not reject pooling the two seasons.
+
+- `validity-300-kickoff-2026-treatment` (regime pool on, new fingerprint): 295 valid, 5 blocked.
+- `validity-300-kickoff-2026-control-no-overtime-table`: 290 valid, 3 blocked, and 7 ties blocked as `overtime_not_modelled`.
+- `validity-300-paired-kickoff-2026-on-prekickoff-inputs` (pinned to the pre-kickoff fingerprint, so seeds match the model
+  arm): 292 valid. The pool changes the score in 284 of the 289 seeds valid in both, because every game draws kickoffs. The
+  mean total moves by -0.67 points (paired standard error 0.68), which is not distinguishable from zero.
+
+**Not committed.** `validity-300-observed-overtime.*` and `validity-300-control-no-overtime-table.*` are superseded (see the
+section above) and stay out of the repository.
+
+**The 2026 registry on the hermes2 branch.** The 124-record inventory reported at commit `634757e7` is not in this clone. The
+code reads the 39-record registry from `dev` (`1239e3ca`). It is not integrated here. A rule-regime resolver that uses it is a
+separate phase.
