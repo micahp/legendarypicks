@@ -8,6 +8,8 @@
 
 Each year's section below lists individual adopted playing-rule changes or distinct source-backed enforcement/eligibility transitions. The data separately flags **temporary expiries**, **competition-format changes**, and **conditional 2026 provisions**. It does **not** conflate rejected proposals, operating bylaws, or NFL statistical-provider data changes with on-field playing-rule amendments.
 
+For regime lookup, `season_types` defines applicability, `trial_until` is the inclusive final season for temporary rules, and `effective_through_season` records a verified supersession. Expiry records and contingent approvals are not active rules. Entries without an explicit end remain open-ended pending verified supersession; their active status should be treated as unresolved where a later amendment may replace them.
+
 **Important limits:** Contemporary approved-rule releases and official printed summary-of-changes tables are not the same as a machine-verified textual difference of all old and new Rulebook articles. The earliest years (2010–2013 and 2015) rely partly on contemporary club/league reporting rather than a retrieved full amendment matrix. This document should not be used to assert that every incidental in-season approved ruling, correction, roster bylaw, or rulebook editorial change has been enumerated.
 
 ## Annual verification status
