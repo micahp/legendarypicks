@@ -529,3 +529,61 @@ class ATransferIsNotAFailure(unittest.TestCase):
         stats = self._publish("Twin Name", "San Diego FC")
         self.assertEqual(stats["ambiguous"], 1)
         self.assertIsNone(self._bound_to())
+
+
+class AStaleRowDoesNotBlockTheCurrentPlayer(unittest.TestCase):
+    """A roster row the latest fetch did not refresh keeps its history and stops counting.
+
+    The 2026-10-27 prod refusals: Thayllon (1259117) was filed under LAFC from September and
+    FotMob now lists him at Paysandu. The same name and old club made the job refuse the
+    current LAFC Thayllon as a conflict. Only rows refreshed this run may join a component.
+    """
+
+    def setUp(self):
+        import ingest_published_rosters as ipr
+        self.ipr = ipr
+        self.con = sqlite3.connect(":memory:")
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript("""
+            CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT,
+                position TEXT, position_group TEXT, active INT, updated_at TEXT,
+                espn_id TEXT);
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY, source TEXT, league TEXT,
+                source_player_key TEXT, player_id INT, first_seen TEXT, last_seen TEXT,
+                UNIQUE(source, league, source_player_key));
+            CREATE TABLE player_game_logs(id INTEGER PRIMARY KEY, player_id INT,
+                league TEXT, team TEXT, game_date TEXT);
+        """)
+        pr.ensure(self.con)
+
+    def test_an_old_row_with_the_same_name_and_club_is_ignored(self):
+        player = self.con.execute(
+            "INSERT INTO players(name,team,league,position,position_group,active,updated_at) "
+            "VALUES('Thayllon','LAFC','mls','F','Forward',1,'old')").lastrowid
+        self.con.execute(
+            "INSERT INTO player_source_ids(source, league, source_player_key, player_id, first_seen, last_seen) "
+            "VALUES('fotmob','mls','1738398',?,'now','now')", (player,))
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, name_folded, team, "
+            "team_code, position, position_group, updated_at, player_id) "
+            "VALUES('mls','fotmob','1259117','Thayllon',?,'Los Angeles FC','LAFC','F','Forward','old',NULL)",
+            (pr.fold("Thayllon"),))
+        self.con.commit()
+        # The MLS row is what joins the stale FotMob row to the current LAFC player.
+        members = [
+            {"source": "fotmob", "source_player_key": "1738398", "name": "Thayllon",
+             "names": ["Thayllon"], "team": "Los Angeles FC", "team_code": "LAFC",
+             "position": "F", "position_group": "Forward"},
+            {"source": "mlssoccer", "source_player_key": "315209968", "name": "Thayllon",
+             "names": ["Thayllon"], "team": "Los Angeles FC", "team_code": "LAFC",
+             "position": "F", "position_group": "Forward"},
+        ]
+        self.ipr._write(self.con, "mls", members, "now")
+        stats = pr.publish_identities(self.con, "mls", "now",
+                                      [("fotmob", "1738398"), ("mlssoccer", "315209968")])
+        self.assertEqual(stats.get("conflicts", 0), 0, "the stale row must not refuse the current player")
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE source_player_key='315209968'").fetchone()[0], player)
+        self.assertIsNone(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE source_player_key='1259117'").fetchone()[0],
+            "and the stale row is not bound to anyone")
