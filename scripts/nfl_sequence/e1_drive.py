@@ -211,8 +211,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         cell = pool.get(key, [])
         if len(cell) < MIN_POOL:
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
+        shares = Counter(ev for ev, _, _, _ in cell)
         if sampling_policy is None:
-            shares = Counter(ev for ev, _, _, _ in cell)
             selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
             cands = sorted([x for x in cell if x[0] == selected_event],
                            key=lambda x: (x[1]['game_id'], x[1]['play_id']))
