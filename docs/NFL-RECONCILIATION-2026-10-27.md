@@ -49,6 +49,8 @@ The play data flags a penalty but does not record acceptance or decline (checked
 | 4 | Points per drive divided the team's total points by drives, so defensive and return touchdowns counted as offense | Points per drive = (schedule final score less points the derived events credit to defense and special teams) / drives. Null when that split is negative | 1,523 team-games changed. Mean among changed rows 2.53 to 1.86. 2 rows are null (inconsistent split) |
 | 5 | A safety was counted on every play of its drive, because the series result repeats | Counted once per drive | Derived points now match the schedule in 8,170 of 8,350 comparable team-games (97.8%), up from 7,995 (95.7%). This is the only change to derived points |
 
+Revision 3 (store `team-box-2026-10-27-rev3`) restores the penalty fields for 2010 to 2014 and 2026 from the validated nflverse extract. Fixes 1 to 3 above are therefore superseded for those seasons: penalty yards, flagged penalties and penalty first downs are populated there, and the nulls apply only where neither source covers a season (none now). Rev3 changes no value for 2015 to 2025 and leaves the reconciliation table unchanged.
+
 Points per drive is now offensive points per drive. A defensive touchdown with its extra point no longer appears in the
 offense's rate. Tests: `test_team_box.py` (penalty nulls, defensive and extra point, safety counted once).
 

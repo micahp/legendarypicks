@@ -1,3 +1,4 @@
+import sqlite3
 import sys
 import unittest
 from pathlib import Path
@@ -35,6 +36,21 @@ class PenaltyNulls(unittest.TestCase):
     def test_flag_count_is_null_without_play_penalty_flags(self):
         self.assertIsNone(tbb.penalty_flags_for(2026, {2015}, 0))
         self.assertEqual(tbb.penalty_flags_for(2015, {2015}, 2), 2)
+
+
+class PenaltyTotals(unittest.TestCase):
+    def test_dev_table_and_extract_are_summed_per_team_without_overlap(self):
+        dev = sqlite3.connect(':memory:')
+        dev.execute('create table nfl_pbp_penalty (game_id, penalty, penalty_team, penalty_yards, first_down_penalty)')
+        dev.execute("insert into nfl_pbp_penalty values ('2015_01_X_Y', 1, 'LA', 10, 1)")
+        # Extract plays for seasons the dev table lacks. Only flagged plays count, and WAS maps to WSH.
+        extract = {('2014_01_X_Y', 5): (1, 'WAS', 7, 0), ('2014_01_X_Y', 6): (0, None, None, None),
+                   ('2014_01_X_Y', 7): (1, 'WAS', 3, 1)}
+        yards, first = tbb.load_pen_totals(dev, extract)
+        self.assertEqual(yards[('2015_01_X_Y', 'LAR')], 10)
+        self.assertEqual(yards[('2014_01_X_Y', 'WSH')], 10)
+        self.assertEqual(first[('2014_01_X_Y', 'WSH')], 1)
+        self.assertNotIn(('2014_01_X_Y', 'LAR'), yards)
 
 
 class OffensivePointsPerDrive(unittest.TestCase):

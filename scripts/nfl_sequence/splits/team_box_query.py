@@ -20,7 +20,7 @@ sys.path.insert(0, HERE)
 import team_splits_build as tb  # noqa: E402
 import team_splits_query as tq  # noqa: E402
 
-BOX = '/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev2/team_box.sqlite'
+BOX = '/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev3/team_box.sqlite'
 STORE = tq.DEFAULT_STORE
 DEFAULT_FIELDS = ('plays_off', 'pass_att', 'pass_yds', 'rush_att', 'rush_yds', 'total_yards', 'first_downs',
                   'third_conv', 'turnovers', 'drives', 'pts_derived', 'pen_flagged')

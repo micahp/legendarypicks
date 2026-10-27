@@ -21,8 +21,11 @@ from collections import defaultdict
 
 DEV_DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 LAYER = '/root/lp-snapshots/nfl-splits/layer-2026-10-27/splits_layer.sqlite'
-DEFAULT_OUT = '/root/lp-snapshots/nfl-splits/team-box-2026-10-27/team_box.sqlite'
-SCHEMA_VERSION = 'lp-nfl-team-box-2'
+DEFAULT_OUT = '/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev3/team_box.sqlite'
+SCHEMA_VERSION = 'lp-nfl-team-box-3'
+# The validated nflverse extract (stage_nflverse_pbp.py). Used only where the dev database lacks penalty fields.
+EXTRACT_DIR = '/root/lp-snapshots/nfl-backfill-2026-10-27/extract'
+EXTRACT_SEASONS = range(2010, 2027)
 SEASONS = range(2010, 2027)
 PENALTY_TEAM = {'LA': 'LAR', 'WAS': 'WSH'}
 SCRIM = ('pass', 'run')
@@ -37,8 +40,9 @@ FIELD_NOTES = {
     'plays_off': 'Pass and run plays with the team in possession, sacks included, kneels and spikes excluded.',
     'total_yards': 'Sum of yards gained on pass and run plays (net of sacks), as ESPN defines it.',
     'sack_yards': 'Yards lost on sacks, reported as a positive number.',
-    'first_downs': 'Pass and run plays whose gain reached the distance, or a touchdown, plus penalty first downs from '
-                   'nfl_pbp_penalty. Null in seasons without that table (2010 to 2014 and 2026).',
+    'first_downs': 'Pass and run plays whose gain reached the distance, or a touchdown, plus penalty first downs. Penalty '
+                   'first downs come from nfl_pbp_penalty (2015 to 2025) and the nflverse extract (2010 to 2014 and 2026). '
+                   'Null only where neither source covers the season.',
     'third_att': 'Pass and run plays on third down.',
     'third_conv': 'Third-down plays that gained the distance or scored.',
     'fourth_att': 'Pass and run plays on fourth down (fourth-down punts and field goals are excluded).',
@@ -53,9 +57,10 @@ FIELD_NOTES = {
     'pen_accepted': 'Not stored: the play data flags penalties but not accept or decline.',
     'turnovers': 'Interceptions thrown plus fumbles lost on offense. Null for seasons where the fumble-lost column is null.',
     'fumbles_lost': 'Offensive fumbles lost on scrimmage plays. Null for seasons where the column is null.',
-    'pen_yards': 'Yards from flagged penalties on the team, from nfl_pbp_penalty (2015 to 2025). Zero when the table covers '
-                 'the season and the team has no flagged penalty. Null otherwise.',
-    'pen_flagged': 'Flagged penalties on the team, from the play data. Null where the play data has no penalty flags (2026).',
+    'pen_yards': 'Yards from flagged penalties on the team: nfl_pbp_penalty for 2015 to 2025, the nflverse extract for 2010 to '
+                 '2014 and 2026. Zero when a source covers the season and the team has no flagged penalty. Null otherwise.',
+    'pen_flagged': 'Flagged penalties on the team, from the play data. For 2026 the flags come from the nflverse extract, '
+                   'matched play by play (the dev play table has none for 2026).',
     'points_per_drive': 'Schedule final score less the points that derived events credit to defense and special teams, '
                         'divided by drives. Offensive points only.',
 }
@@ -318,23 +323,48 @@ def finish(name, t, base, fumble_lost_available, pen_yards):
     return row
 
 
-def load_pen_first(dev):
-    """(game, penalty team) -> penalties on that team that the play data marks as giving a first down."""
+def extract_penalty_plays(seasons):
+    """(game_id, play_id) -> (penalty, penalty_team, penalty_yards, first_down_penalty) from the validated nflverse extract.
+
+    Used only for seasons the dev database does not carry: the penalty table for 2010 to 2014 and 2026, and the play
+    penalty flags for 2026. On 2015 to 2025 the extract matches the dev database exactly (validate_nflverse_penalty.py).
+    """
+    import pyarrow.parquet as pq
     out = {}
-    for gid, team, n in dev.execute("""select game_id, penalty_team, sum(first_down_penalty) from nfl_pbp_penalty
-            where penalty = 1 and penalty_team is not null group by game_id, penalty_team"""):
-        out[(gid, PENALTY_TEAM.get(team, team))] = n or 0
+    for season in seasons:
+        table = pq.read_table(f'{EXTRACT_DIR}/penalty_return_{season}.parquet',
+                              columns=['game_id', 'play_id', 'penalty', 'penalty_team', 'penalty_yards',
+                                       'first_down_penalty']).to_pylist()
+        for r in table:
+            out[(r['game_id'], int(r['play_id']))] = (r['penalty'], r['penalty_team'], r['penalty_yards'],
+                                                      r['first_down_penalty'])
     return out
 
 
-def load_pen_yards(dev):
-    out = {}
-    for season, gid, team, yards in dev.execute("""select p.season, p.game_id, p.penalty_team, sum(p.penalty_yards)
-            from nfl_pbp_penalty p where p.penalty = 1 and p.penalty_team is not null
-            group by p.game_id, p.penalty_team"""):
+def penalty_sources(dev):
+    """The seasons each source supplies. The dev database is used where it carries the field; the extract elsewhere."""
+    dev_pen = {s for (s,) in dev.execute('select distinct season from nfl_pbp_penalty')}
+    dev_flag = {s for (s,) in dev.execute('select distinct season from nfl_pbp where penalty is not null')}
+    ext_pen = sorted(s for s in EXTRACT_SEASONS if s not in dev_pen)
+    ext_flag = sorted(s for s in EXTRACT_SEASONS if s not in dev_flag)
+    return dev_pen, dev_flag, ext_pen, ext_flag
+
+
+def load_pen_totals(dev, extract_plays):
+    """(game, penalty team) -> penalty yards and penalty first downs. The dev penalty table for its seasons, and the
+    extract's flagged plays for the seasons it supplies (extract_plays holds only those seasons)."""
+    yards, first = {}, {}
+    for gid, team, y, f in dev.execute("""select game_id, penalty_team, sum(penalty_yards), sum(first_down_penalty)
+            from nfl_pbp_penalty where penalty = 1 and penalty_team is not null group by game_id, penalty_team"""):
         key = (gid, PENALTY_TEAM.get(team, team))
-        out[key] = yards or 0
-    return out
+        yards[key] = y or 0
+        first[key] = f or 0
+    for (gid, _), (pen, team, y, f) in extract_plays.items():
+        if pen == 1 and team is not None:
+            key = (gid, PENALTY_TEAM.get(team, team))
+            yards[key] = yards.get(key, 0) + (y or 0)
+            first[key] = first.get(key, 0) + (f or 0)
+    return yards, first
 
 
 def build_rows(dev, layer):
@@ -342,10 +372,13 @@ def build_rows(dev, layer):
     base = {}
     for r in layer.execute(f"select {', '.join(BASE_COLS)} from team_game"):
         base[(r[0], r[4])] = dict(zip(BASE_COLS, r))
-    pen_yards = load_pen_yards(dev)
-    pen_seasons = {s for (s,) in dev.execute('select distinct season from nfl_pbp_penalty')}
-    flag_seasons = {s for (s,) in dev.execute('select distinct season from nfl_pbp where penalty is not null')}
+    dev_pen, dev_flag, ext_pen, ext_flag = penalty_sources(dev)
+    extract_plays = extract_penalty_plays(sorted(set(ext_pen) | set(ext_flag)))
+    pen_yards, pen_first = load_pen_totals(dev, extract_plays)
+    pen_seasons = set(dev_pen) | set(ext_pen)
+    flag_seasons = set(dev_flag) | set(ext_flag)
     rows, st_unassigned = [], 0
+    overlay_missing = 0
     for season in SEASONS:
         cur = dev.execute("""select game_id, play_id, posteam, defteam, qtr, down, ydstogo, yardline_100,
             game_seconds_remaining, play_type, epa, success, yards_gained, complete_pass, touchdown, pass_attempt,
@@ -359,7 +392,16 @@ def build_rows(dev, layer):
         games = defaultdict(list)
         for values in cur:
             p = dict(zip(names, values))
+            if season in ext_flag:
+                # The dev play table has no penalty flags for this season: take them from the extract, play by play.
+                hit = extract_plays.get((p['game_id'], int(p['play_id'])))
+                if hit is None:
+                    overlay_missing += 1
+                    continue
+                p['penalty'], p['penalty_team'] = hit[0], hit[1]
             games[p['game_id']].append(p)
+        if overlay_missing:
+            raise SystemExit(f'{overlay_missing} plays in {season} have no row in the penalty extract')
         for gid, game_plays in games.items():
             teams, unassigned = process_game(game_plays, fumble_lost_available)
             st_unassigned += unassigned
@@ -373,7 +415,6 @@ def build_rows(dev, layer):
                 rows.append(row)
     # Penalty first downs: a defensive foul that gives the offense the first down counts toward the team that
     # gained it, which is the other team in the game.
-    pen_first = load_pen_first(dev)
     by_game = defaultdict(dict)
     for r in rows:
         by_game[r['game_id']][r['team']] = r

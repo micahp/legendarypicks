@@ -8,6 +8,20 @@ frozen Week 8 runs and existing snapshots are untouched. The 2026 season is not 
 This document is deliverables 1 to 5 of the expansion request in `NFL-TEAM-BOX-SCORE-SPEC-2026-10-27.md`: the schema,
 the coverage audit, the reconciliation report, the query examples and the source-gap list.
 
+## Revision 2026-10-27 (rev3): penalty fields restored from the nflverse extract
+
+The current store is `/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev3/team_box.sqlite` (schema `lp-nfl-team-box-3`).
+The box builder reads penalty fields from the dev database where it carries them (penalty table 2015 to 2025, play
+flags 2010 to 2025) and from the validated nflverse extract elsewhere (penalty table 2010 to 2014 and 2026, play flags
+2026). The two sources agree exactly on 2015 to 2025.
+
+- `pen_yards` is now populated for 2010 to 2014 and 2026 (2,774 team-games were null in rev2).
+- `first_downs` includes penalty first downs for 2010 to 2014 and 2026 (2,774 team-games were null in rev2). The season
+  means for 2010 to 2014 (19.3 to 20.4) sit inside the 2015 to 2025 range (19.7 to 22.1).
+- `pen_flagged` is populated for 2026 (214 team-games were null in rev2). The 2026 totals equal the 1,570 flagged plays
+  in the extract.
+- Nothing else changed. Rev2 and rev3 agree on every column for 2015 to 2025, and on the reconciliation table.
+
 ## Revision 2026-10-27 (rev2): what changed in this document
 
 The revised store is `/root/lp-snapshots/nfl-splits/team-box-2026-10-27-rev2/team_box.sqlite` (schema
