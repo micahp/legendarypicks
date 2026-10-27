@@ -1,0 +1,1017 @@
+{
+  "behavior_changed_seeds": [
+    14,
+    65,
+    70,
+    98,
+    99,
+    112,
+    168,
+    215
+  ],
+  "final_score_changed_seeds": [
+    14,
+    65,
+    70,
+    98,
+    99,
+    168,
+    215
+  ],
+  "fix": "map historical next_offense abbreviations to the simulated opponent side A/B; preserve the source club in the drive record",
+  "input_provenance": {
+    "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+    "reference_sha256": "5b0fcd076e78793dce3d3dc159a01f2700f163640efd0caca7039725988a0a3a",
+    "run_snapshot_sha256": "83d258f3b8b490fdc78d85b50c4152613d385b5e678a9eab4bd6d67863e49357"
+  },
+  "seed_range": [
+    1,
+    300
+  ],
+  "seeds": [
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_missed",
+          "source_drive": 25,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 34,
+          "source_game_id": "2023_08_NYJ_NYG"
+        }
+      ],
+      "new_points": {
+        "A": 20,
+        "B": 23
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_missed",
+          "source_drive": 25,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "SEA",
+          "outcome": "field_goal_made",
+          "source_drive": 34,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_missed",
+          "source_drive": 27,
+          "source_game_id": "2022_01_PIT_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "punt",
+          "source_drive": 26,
+          "source_game_id": "2022_13_WAS_NYG"
+        },
+        {
+          "offense_team": "NYG",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "defense_touchdown",
+          "source_drive": 22,
+          "source_game_id": "2023_01_BUF_NYJ"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "defense_touchdown",
+          "source_drive": 22,
+          "source_game_id": "2023_01_BUF_NYJ"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "turnover",
+          "source_drive": 25,
+          "source_game_id": "2024_10_NYG_CAR"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        }
+      ],
+      "old_points": {
+        "A": 34,
+        "B": 28
+      },
+      "old_status": "complete_overtime",
+      "seed": 14
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 24,
+          "source_game_id": "2022_18_LA_SEA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2025_16_LA_SEA"
+        }
+      ],
+      "new_points": {
+        "A": 27,
+        "B": 20
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 24,
+          "source_game_id": "2022_18_LA_SEA"
+        },
+        {
+          "offense_team": "SEA",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2025_16_LA_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2022_06_DEN_LAC"
+        },
+        {
+          "offense_team": "LAC",
+          "outcome": "punt",
+          "source_drive": 33,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "NYJ",
+          "outcome": "turnover",
+          "source_drive": 24,
+          "source_game_id": "2022_08_CAR_ATL"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "field_goal_made",
+          "source_drive": 34,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        }
+      ],
+      "old_points": {
+        "A": 20,
+        "B": 27
+      },
+      "old_status": "complete_overtime",
+      "seed": 65
+    },
+    {
+      "behavior_changed": false,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 20,
+          "source_game_id": "2025_05_SF_LA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 28,
+          "source_game_id": "2023_13_IND_TEN"
+        }
+      ],
+      "new_points": {
+        "A": 24,
+        "B": 20
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 20,
+          "source_game_id": "2025_05_SF_LA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 28,
+          "source_game_id": "2023_13_IND_TEN"
+        }
+      ],
+      "old_points": {
+        "A": 24,
+        "B": 20
+      },
+      "old_status": "complete_overtime",
+      "seed": 69
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 19,
+          "source_game_id": "2023_04_WAS_PHI"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 31,
+          "source_game_id": "2023_03_IND_BAL"
+        }
+      ],
+      "new_points": {
+        "A": 23,
+        "B": 26
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 19,
+          "source_game_id": "2023_04_WAS_PHI"
+        },
+        {
+          "offense_team": "PHI",
+          "outcome": "field_goal_made",
+          "source_drive": 31,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 20,
+          "source_game_id": "2024_14_NYJ_MIA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_11_CAR_ATL"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2022_06_DEN_LAC"
+        },
+        {
+          "offense_team": "DEN",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 16,
+          "source_game_id": "2025_11_WAS_MIA"
+        },
+        {
+          "offense_team": "MIA",
+          "outcome": "turnover",
+          "source_drive": 23,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "KC",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2022_18_LA_SEA"
+        },
+        {
+          "offense_team": "LA",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        }
+      ],
+      "old_points": {
+        "A": 30,
+        "B": 37
+      },
+      "old_status": "complete_overtime",
+      "seed": 70
+    },
+    {
+      "behavior_changed": false,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 23,
+          "source_game_id": "2022_17_SF_LV"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 23,
+          "source_game_id": "2022_06_DEN_LAC"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 35,
+          "source_game_id": "2022_15_IND_MIN"
+        }
+      ],
+      "new_points": {
+        "A": 20,
+        "B": 23
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 23,
+          "source_game_id": "2022_17_SF_LV"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 23,
+          "source_game_id": "2022_06_DEN_LAC"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 35,
+          "source_game_id": "2022_15_IND_MIN"
+        }
+      ],
+      "old_points": {
+        "A": 20,
+        "B": 23
+      },
+      "old_status": "complete_overtime",
+      "seed": 74
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 16,
+          "source_game_id": "2025_11_WAS_MIA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "turnover_on_downs",
+          "source_drive": 29,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2023_13_CIN_JAX"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 22,
+          "source_game_id": "2022_17_SF_LV"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 23,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        }
+      ],
+      "new_points": {
+        "A": 27,
+        "B": 20
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 16,
+          "source_game_id": "2025_11_WAS_MIA"
+        },
+        {
+          "offense_team": "MIA",
+          "outcome": "turnover_on_downs",
+          "source_drive": 29,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "BAL",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2023_13_CIN_JAX"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "turnover",
+          "source_drive": 22,
+          "source_game_id": "2022_17_SF_LV"
+        },
+        {
+          "offense_team": "SF",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "turnover",
+          "source_drive": 23,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "KC",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        }
+      ],
+      "old_points": {
+        "A": 20,
+        "B": 27
+      },
+      "old_status": "complete_overtime",
+      "seed": 98
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "turnover_on_downs",
+          "source_drive": 30,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 24,
+          "source_game_id": "2022_04_NE_GB"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 20,
+          "source_game_id": "2024_14_NYJ_MIA"
+        }
+      ],
+      "new_points": {
+        "A": 20,
+        "B": 27
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "turnover_on_downs",
+          "source_drive": 30,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "IND",
+          "outcome": "punt",
+          "source_drive": 24,
+          "source_game_id": "2022_04_NE_GB"
+        },
+        {
+          "offense_team": "GB",
+          "outcome": "touchdown",
+          "source_drive": 20,
+          "source_game_id": "2024_14_NYJ_MIA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 21,
+          "source_game_id": "2023_15_HOU_TEN"
+        },
+        {
+          "offense_team": "HOU",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "punt",
+          "source_drive": 20,
+          "source_game_id": "2024_17_DEN_CIN"
+        },
+        {
+          "offense_team": "CIN",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "turnover",
+          "source_drive": 23,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "KC",
+          "outcome": "period_end",
+          "source_drive": 27,
+          "source_game_id": "2022_01_IND_HOU"
+        }
+      ],
+      "old_points": {
+        "A": 27,
+        "B": 35
+      },
+      "old_status": "complete_overtime",
+      "seed": 99
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_11_CAR_ATL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 27,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 27,
+          "source_game_id": "2024_13_TB_CAR"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "period_end",
+          "source_drive": 27,
+          "source_game_id": "2022_01_IND_HOU"
+        }
+      ],
+      "new_points": {
+        "A": 23,
+        "B": 23
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_11_CAR_ATL"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "punt",
+          "source_drive": 27,
+          "source_game_id": "2023_03_IND_BAL"
+        },
+        {
+          "offense_team": "BAL",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "NYG",
+          "outcome": "turnover",
+          "source_drive": 27,
+          "source_game_id": "2024_13_TB_CAR"
+        },
+        {
+          "offense_team": "TB",
+          "outcome": "punt",
+          "source_drive": 22,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "NYG",
+          "outcome": "period_end",
+          "source_drive": 27,
+          "source_game_id": "2022_01_IND_HOU"
+        }
+      ],
+      "old_points": {
+        "A": 23,
+        "B": 23
+      },
+      "old_status": "complete_overtime",
+      "seed": 112
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 24,
+          "source_game_id": "2024_12_MIN_CHI"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 21,
+          "source_game_id": "2025_12_IND_KC"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 25,
+          "source_game_id": "2024_05_BAL_CIN"
+        }
+      ],
+      "new_points": {
+        "A": 19,
+        "B": 16
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "DAL",
+          "outcome": "punt",
+          "source_drive": 24,
+          "source_game_id": "2024_12_MIN_CHI"
+        },
+        {
+          "offense_team": "MIN",
+          "outcome": "punt",
+          "source_drive": 21,
+          "source_game_id": "2025_12_IND_KC"
+        },
+        {
+          "offense_team": "KC",
+          "outcome": "field_goal_made",
+          "source_drive": 25,
+          "source_game_id": "2024_05_BAL_CIN"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "punt",
+          "source_drive": 33,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "NYJ",
+          "outcome": "field_goal_made",
+          "source_drive": 25,
+          "source_game_id": "2024_05_BAL_CIN"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 25,
+          "source_game_id": "2025_02_NYG_DAL"
+        },
+        {
+          "offense_team": "DAL",
+          "outcome": "punt",
+          "source_drive": 21,
+          "source_game_id": "2023_02_LAC_TEN"
+        },
+        {
+          "offense_team": "TEN",
+          "outcome": "turnover",
+          "source_drive": 16,
+          "source_game_id": "2025_11_WAS_MIA"
+        },
+        {
+          "offense_team": "MIA",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "period_end",
+          "source_drive": 27,
+          "source_game_id": "2022_01_IND_HOU"
+        }
+      ],
+      "old_points": {
+        "A": 23,
+        "B": 16
+      },
+      "old_status": "complete_overtime",
+      "seed": 168
+    },
+    {
+      "behavior_changed": false,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 34,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        }
+      ],
+      "new_points": {
+        "A": 26,
+        "B": 22
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_made",
+          "source_drive": 34,
+          "source_game_id": "2023_08_NYJ_NYG"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        }
+      ],
+      "old_points": {
+        "A": 26,
+        "B": 22
+      },
+      "old_status": "complete_overtime",
+      "seed": 213
+    },
+    {
+      "behavior_changed": true,
+      "new_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_missed",
+          "source_drive": 24,
+          "source_game_id": "2024_05_BAL_CIN"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 25,
+          "source_game_id": "2022_04_NE_GB"
+        }
+      ],
+      "new_points": {
+        "A": 26,
+        "B": 23
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "B",
+          "outcome": "field_goal_missed",
+          "source_drive": 24,
+          "source_game_id": "2024_05_BAL_CIN"
+        },
+        {
+          "offense_team": "BAL",
+          "outcome": "field_goal_made",
+          "source_drive": 25,
+          "source_game_id": "2022_04_NE_GB"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 23,
+          "source_game_id": "2025_11_CAR_ATL"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 23,
+          "source_game_id": "2025_12_NYG_DET"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 16,
+          "source_game_id": "2025_11_WAS_MIA"
+        },
+        {
+          "offense_team": "MIA",
+          "outcome": "touchdown",
+          "source_drive": 27,
+          "source_game_id": "2022_12_LV_SEA"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "touchdown",
+          "source_drive": 24,
+          "source_game_id": "2022_15_KC_HOU"
+        },
+        {
+          "offense_team": "A",
+          "outcome": "turnover",
+          "source_drive": 25,
+          "source_game_id": "2024_10_NYG_CAR"
+        },
+        {
+          "offense_team": "CAR",
+          "outcome": "period_end",
+          "source_drive": 27,
+          "source_game_id": "2022_01_IND_HOU"
+        }
+      ],
+      "old_points": {
+        "A": 23,
+        "B": 36
+      },
+      "old_status": "complete_overtime",
+      "seed": 215
+    },
+    {
+      "behavior_changed": false,
+      "new_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 26,
+          "source_game_id": "2022_05_IND_DEN"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 33,
+          "source_game_id": "2023_08_NYJ_NYG"
+        }
+      ],
+      "new_points": {
+        "A": 41,
+        "B": 38
+      },
+      "new_status": "complete_overtime",
+      "old_overtime_drives": [
+        {
+          "offense_team": "A",
+          "outcome": "field_goal_made",
+          "source_drive": 26,
+          "source_game_id": "2022_05_IND_DEN"
+        },
+        {
+          "offense_team": "B",
+          "outcome": "punt",
+          "source_drive": 33,
+          "source_game_id": "2023_08_NYJ_NYG"
+        }
+      ],
+      "old_points": {
+        "A": 41,
+        "B": 38
+      },
+      "old_status": "complete_overtime",
+      "seed": 287
+    }
+  ]
+}

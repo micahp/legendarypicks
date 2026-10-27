@@ -1,0 +1,79 @@
+{
+  "baseline_csv_sha256": "81a0c80a1271bd5aae89abfa3c7e4d7c1e748ae2de3e55c39a83934315cb8bd4",
+  "baseline_evidence_commit": "db2c4d87",
+  "behavior_changed_seeds": [
+    14,
+    65,
+    70,
+    98,
+    99,
+    112,
+    168,
+    215
+  ],
+  "final_score_changed_seeds": [
+    14,
+    65,
+    70,
+    98,
+    99,
+    168,
+    215
+  ],
+  "input_provenance": {
+    "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+    "reference_sha256": "5b0fcd076e78793dce3d3dc159a01f2700f163640efd0caca7039725988a0a3a",
+    "run_snapshot_sha256": "83d258f3b8b490fdc78d85b50c4152613d385b5e678a9eab4bd6d67863e49357"
+  },
+  "method": "For the 288 seeds that never entered overtime, reuse the frozen rows unchanged. Replay every one of the 12 overtime seeds on the exact same snapshot/reference and replace those rows. The only code change is the historical-to-A/B possession mapping.",
+  "outcome_counts": {
+    "blocked_before_regulation_end": 7,
+    "failed": 0,
+    "regulation_end_not_valid": 0,
+    "tied_at_regulation_end": 0,
+    "valid": 293
+  },
+  "output_csv_sha256": "85e7cb0ffdb0b21cdab2043dc16e9a97584e1a6d036046ee587979af799d0d34",
+  "replayed_seeds": [
+    14,
+    65,
+    69,
+    70,
+    74,
+    98,
+    99,
+    112,
+    168,
+    213,
+    215,
+    287
+  ],
+  "seed_range": [
+    1,
+    300
+  ],
+  "simulation_errors": 0,
+  "source_files_sha256": {
+    "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+    "scripts/nfl_sequence/e1_drive.py": "e09611f646dd33a6dff4e1f04410e29aa8e134018682edcd0321c92e11b8b9c2",
+    "scripts/nfl_sequence/e2_reference.py": "19229d7236b70e977720cbc4e2d4fe7274c9a7784ba567bf32c8e01f9d25f7d4",
+    "scripts/nfl_sequence/game_state.py": "e7b7c89c334e6b656cfd17c146fbd49a330bc492f1573d78168c9b5d98be115f",
+    "scripts/nfl_sequence/rules_matrix.py": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
+    "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
+    "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef"
+  },
+  "unchanged_seed_rows": 288,
+  "update": "targeted deterministic replay of every overtime seed in the frozen 300-seed treatment",
+  "valid_game_mean_points": {
+    "away": 19.675767918088738,
+    "home": 20.89419795221843,
+    "total": 40.569965870307165
+  },
+  "valid_game_win_counts": {
+    "A": 159,
+    "B": 133,
+    "tie": 1
+  },
+  "valid_games": 293,
+  "valid_rate": 0.9766666666666667
+}
