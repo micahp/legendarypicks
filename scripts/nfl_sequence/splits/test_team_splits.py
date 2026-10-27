@@ -66,15 +66,28 @@ class Capacity(unittest.TestCase):
         self.assertEqual(self.lookup('Highmark Stadium', 2026), (60108, 'opening_statement'))
 
     def test_later_start_wins_where_ranges_overlap(self):
+        rows = [dict(building='X', valid_from=2000, valid_to=2030, capacity=1, basis='dated_table', reconciliation='ok'),
+                dict(building='X', valid_from=2010, valid_to=2030, capacity=2, basis='dated_table', reconciliation='ok')]
+        self.assertEqual(b.capacity_lookup(rows, 'X', 2015), (2, 'dated_table'))
         self.assertEqual(self.lookup('FedExField', 2013)[0], 79000)
-        self.assertEqual(self.lookup('FedExField', 2015)[0], 67617)
+
+    def test_contradicted_and_unresolved_rows_are_not_used(self):
+        self.assertEqual(self.lookup('FedExField', 2015), (None, None))
+        self.assertEqual(self.lookup('Hard Rock Stadium', 2019), (None, None))
+        self.assertEqual(self.lookup('Arrowhead Stadium', 2020), (None, None))
+        self.assertEqual(self.lookup('Arrowhead Stadium', 2022), (72936, 'dated_text'))
+
+    def test_row_without_a_reconciled_status_is_never_used(self):
+        rows = [dict(building='X', valid_from=2000, valid_to=2030, capacity=1, basis='dated_table', reconciliation='')]
+        self.assertEqual(b.capacity_lookup(rows, 'X', 2010), (None, None))
 
     def test_undated_figures_are_never_used_as_history(self):
         self.assertEqual(self.lookup('MetLife Stadium', 2015), (None, None))
         self.assertEqual(b.undated_capacity(self.rows, self.names['MetLife Stadium']), 82500)
 
-    def test_bracketed_span_covers_each_season_it_states(self):
-        self.assertEqual(self.lookup('State Farm Stadium', 2019), (63400, 'bracketed'))
+    def test_bracketed_span_is_used_only_where_attendance_does_not_contradict_it(self):
+        self.assertEqual(self.lookup('State Farm Stadium', 2010), (63400, 'bracketed'))
+        self.assertEqual(self.lookup('State Farm Stadium', 2019), (None, None))
 
     def test_a_gap_between_dated_rows_stays_unknown(self):
         self.assertEqual(self.lookup('Bank of America Stadium', 2022), (None, None))
@@ -83,6 +96,19 @@ class Capacity(unittest.TestCase):
     def test_building_with_no_nfl_figure_has_no_dated_rows(self):
         self.assertIn('Los Angeles Memorial Coliseum', self.names)
         self.assertEqual(self.lookup('Los Angeles Memorial Coliseum', 2017), (None, None))
+
+
+class AttendanceStatus(unittest.TestCase):
+    def test_reported_zero_is_kept_as_zero(self):
+        self.assertEqual(b.attendance_status(0, False, True), (0, 'reported_zero'))
+
+    def test_suspect_count_is_dropped_and_missing_stays_null(self):
+        self.assertEqual(b.attendance_status(61000, True, True), (None, 'suspect'))
+        self.assertEqual(b.attendance_status(None, False, True), (None, 'missing'))
+
+    def test_seasons_without_a_source_row_are_not_collected(self):
+        self.assertEqual(b.attendance_status(None, False, False), (None, 'not_collected'))
+        self.assertEqual(b.attendance_status(65000, False, True), (65000, 'reported'))
 
 
 class ShareBins(unittest.TestCase):

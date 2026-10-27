@@ -31,7 +31,7 @@ LAYER = '/root/lp-snapshots/nfl-splits/layer-2026-10-27/splits_layer.sqlite'
 DEV_DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 VENUES = '/root/lp-snapshots/nfl-game-info/2026/week08/2026-10-27T1900Z/venues.json'
 DEFAULT_OUT = '/root/lp-snapshots/nfl-splits/team-splits-2026-10-27/team_splits.sqlite'
-SCHEMA_VERSION = 'lp-nfl-team-splits-1'
+SCHEMA_VERSION = 'lp-nfl-team-splits-2'
 TIER_A_FIRST = 2010
 TIER_B_LAST = 2009
 THIN_N = 8
@@ -46,6 +46,9 @@ CAPACITY_HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dat
 # Bases that state a year or a span. Undated figures are kept for reference and never used in a historical bin.
 DATED_BASES = ('dated_table', 'table_point', 'dated_infobox_former', 'dated_infobox_current', 'dated_text',
                'opening_statement', 'bracketed', 'implied_start')
+# Reconciliation statuses that a lookup may use. Anything else (contradicted, excluded_text, undated, no_figure, or a
+# blank status) is left out, so an unreconciled row cannot feed a bin. See capacity_reconcile.py.
+LOOKUP_STATUSES = ('ok', 'flagged')
 DIMENSIONS = ('all', 'season', 'weekday', 'kickoff_et', 'window_et', 'window_venue', 'window_body', 'home_away',
               'opponent', 'division', 'game_type', 'international', 'roof', 'surface', 'temp_bin', 'wind_bin',
               'stadium', 'capacity_bin', 'capacity_source', 'attendance_bin', 'attendance_share_bin', 'referee',
@@ -75,6 +78,24 @@ def attendance_share_bin(attendance, capacity):
     if share < 1.0:
         return '95_to_99pct'
     return '100pct_plus'
+
+
+# Attendance is collected for these seasons (nfl_game_context). Other seasons have no source row, which is not a missing value.
+ATTENDANCE_SEASONS = range(2015, 2026)
+
+
+def attendance_status(raw, suspect, collected):
+    """(attendance, status). Only a reported count reaches the bins. A reported zero is kept as 0, a suspect count is
+    dropped from the value but kept raw, and a missing count stays null."""
+    if not collected:
+        return None, 'not_collected'
+    if raw is None:
+        return None, 'missing'
+    if suspect:
+        return None, 'suspect'
+    if raw == 0:
+        return 0, 'reported_zero'
+    return raw, 'reported'
 
 
 def attendance_bin(attendance):
@@ -136,16 +157,18 @@ def load_capacity_history(path=CAPACITY_HISTORY):
                 'valid_from': int(row['valid_from']) if row['valid_from'] else None,
                 'valid_to': int(row['valid_to']) if row['valid_to'] else None,
                 'capacity': int(row['seating_capacity']), 'basis': row['basis'], 'source': row['source_url'],
+                'reconciliation': row.get('reconciliation', ''),
             })
     return rows, name_to_building
 
 
 def capacity_lookup(rows, building, season):
-    """(capacity, basis) from the dated rows that cover the season. Where two rows cover it, the later start wins.
+    """(capacity, basis) from the reconciled dated rows that cover the season. Where two rows cover it, the later start wins.
 
-    (None, None) when no dated row covers the season. Undated figures never count here.
+    (None, None) when no such row covers the season. Undated figures never count here.
     """
     covering = [r for r in rows if r['building'] == building and r['basis'] in DATED_BASES
+                and r.get('reconciliation') in LOOKUP_STATUSES
                 and r['valid_from'] is not None and r['valid_from'] <= season <= r['valid_to']]
     if not covering:
         return None, None
@@ -212,8 +235,8 @@ def layer_rows(layer, history, name_to_building, snapshot, suspect_games, stats)
             source = 'undated_only'
         else:
             source = 'none'
-        attendance = r['attendance']
-        clean = attendance if attendance and attendance > 0 and r['game_id'] not in suspect_games else None
+        clean, state = attendance_status(r['attendance'], r['game_id'] in suspect_games,
+                                         r['season'] in ATTENDANCE_SEASONS)
         schedule_ref = norm_name(r['referee'])
         crew_ref = referee_crew.get(r['game_id'])
         if crew_ref and schedule_ref and crew_ref != schedule_ref:
@@ -232,13 +255,14 @@ def layer_rows(layer, history, name_to_building, snapshot, suspect_games, stats)
             'capacity_historical': capacity, 'capacity_basis': basis, 'capacity_source': source,
             'capacity_snapshot_2026': snapshot.get(building) if building else None,
             'roof': r['roof'] or 'unknown', 'surface': r['surface'] or 'unknown', 'temp': r['temp'],
-            'wind': r['wind'], 'referee': referee, 'attendance': clean,
+            'wind': r['wind'], 'referee': referee, 'attendance': clean, 'attendance_raw': r['attendance'],
+            'attendance_status': state,
             'points_for': r['points_for'], 'points_against': r['points_against'], 'result': r['result'],
             'officials': sorted(official.get(r['game_id'], set())),
             'temp_bin': temp_bin(r['temp'], r['roof']), 'wind_bin': wind_bin(r['wind'], r['roof']),
             'capacity_bin': capacity_bin(capacity) if capacity is not None else 'no_dated_capacity',
-            'attendance_bin': attendance_bin(clean),
-            'attendance_share_bin': attendance_share_bin(clean, capacity),
+            'attendance_bin': attendance_bin(clean) if state == 'reported' else None,
+            'attendance_share_bin': attendance_share_bin(clean, capacity) if state == 'reported' else None,
         })
     return rows
 
@@ -267,7 +291,8 @@ def elo_rows(dev):
                 'international': None, 'playoff': playoff == '1', 'stadium': None, 'stadium_canonical': None,
                 'capacity_historical': None, 'capacity_basis': None, 'capacity_source': None,
                 'capacity_snapshot_2026': None, 'roof': None, 'surface': None, 'temp': None, 'wind': None,
-                'referee': None, 'attendance': None, 'points_for': pf, 'points_against': pa, 'result': result,
+                'referee': None, 'attendance': None, 'attendance_raw': None, 'attendance_status': 'not_collected',
+                'points_for': pf, 'points_against': pa, 'result': result,
                 'officials': [], 'temp_bin': None, 'wind_bin': None, 'capacity_bin': None,
                 'attendance_bin': None, 'attendance_share_bin': None,
             })
@@ -386,7 +411,8 @@ create table team_game_row (
     team text not null, opponent text, home_away text, division text, international text, playoff integer,
     stadium text, stadium_canonical text, capacity_historical integer, capacity_basis text, capacity_source text,
     capacity_snapshot_2026 integer, roof text, surface text, temp real, wind real,
-    temp_bin text, wind_bin text, referee text, attendance integer, attendance_bin text, attendance_share_bin text,
+    temp_bin text, wind_bin text, referee text, attendance integer, attendance_raw integer, attendance_status text,
+    attendance_bin text, attendance_share_bin text,
     capacity_bin text,
     points_for integer, points_against integer, result text,
     primary key (game_id, team));
@@ -440,7 +466,8 @@ def build(out, layer_path=LAYER, dev_uri=DEV_DB, venues_path=VENUES, history_pat
                 'window_venue', 'window_body', 'team', 'opponent', 'home_away', 'division', 'international',
                 'playoff', 'stadium', 'stadium_canonical', 'capacity_historical', 'capacity_basis', 'capacity_source',
                 'capacity_snapshot_2026', 'roof', 'surface', 'temp', 'wind', 'temp_bin', 'wind_bin', 'referee',
-                'attendance', 'attendance_bin', 'attendance_share_bin', 'capacity_bin', 'points_for', 'points_against',
+                'attendance', 'attendance_raw', 'attendance_status', 'attendance_bin', 'attendance_share_bin', 'capacity_bin',
+                'points_for', 'points_against',
                 'result')
     db.executemany(f'insert into team_game_row ({",".join(row_cols)}) values ({",".join("?" * len(row_cols))})',
                    [tuple(r[c] for c in row_cols) for r in team_rows])

@@ -17,7 +17,7 @@ import sqlite3
 
 import team_splits_build as build
 
-DEFAULT_STORE = '/root/lp-snapshots/nfl-splits/team-splits-2026-10-27/team_splits.sqlite'
+DEFAULT_STORE = '/root/lp-snapshots/nfl-splits/team-splits-2026-10-27-rev2/team_splits.sqlite'
 SCOPES = ('all', 'tier_a', 'tier_b')
 
 
