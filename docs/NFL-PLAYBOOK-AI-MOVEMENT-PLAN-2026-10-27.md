@@ -120,12 +120,17 @@ Gates:
   interrupting them.
 - **Branch.** A new research branch in the Gridiron repo. The playbook files are committed there, never to `main`.
 - **Handoff message.** Appendix A.
+- **Status (2026-10-27).** The text was typed into the hermes2 codex pane (`hermes2:0.0`, pane `%13`) and not confirmed
+  as submitted. The pane showed a Codex CLI update prompt ("Updating Codex CLI from 0.162.1 to 0.1... now?") and the
+  Week 8 runs were reported active. The message must be confirmed in the pane before Part A is treated as started.
 
 ## 10. Open questions
 
-1. Send the handoff to hermes2 now (queued behind the runs) or after the runs finish?
-2. Should the 2026 playbook be rebuilt when Week 8 completes, or stay frozen at Weeks 1 to 7 for the holdout?
-3. Which tracking season is the first validation target for movement?
+1. Decided 2026-10-27: send the handoff now. Delivery was not confirmed: the hermes2 pane showed an open Codex update
+   prompt when the text was typed. See the status note in section 9.
+2. Decided 2026-10-27: the 2026 playbook stays frozen at Weeks 1 to 7 for the holdout. It is not rebuilt when Week 8
+   completes.
+3. Still open: which tracking season is the first validation target for movement?
 
 ## Appendix A. Handoff text for hermes2
 
