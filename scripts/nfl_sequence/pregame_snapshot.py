@@ -20,6 +20,8 @@ SCHEMA = 'lp-nfl-pregame-snapshot-1'
 REVIEWED_FULL_BUILDER_SHA256 = {
     'f24f6d58b03de47f2e28786d9a835bf034be9211dd90e1f97d18c8728857d649',
     '90256ed7050aee920b4af299de7c8a529a311602c19daf733c57ba8031fe616b',
+    # same builder, dropping depth players who are not on the jersey-week roster and promoting rostered backups
+    '3e1721a644a987e0e9d75522b990a44bceecc7eb2416e7236dda8af30ad5eb97',
 }
 
 
