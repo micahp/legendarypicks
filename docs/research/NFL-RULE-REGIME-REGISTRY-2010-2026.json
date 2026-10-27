@@ -1,0 +1,703 @@
+{
+  "schema": "lp-nfl-rule-regime-registry-1",
+  "created_date": "2026-10-26",
+  "seasons_covered": [
+    2010,
+    2026
+  ],
+  "scope": "NFL regular season and postseason; preseason entries explicitly scoped",
+  "not_exhaustive": true,
+  "notice": "Initial verified high-impact rule change registry; NOT exhaustive. Must audit every annual official rulebook and competition notices before describing as every rule change. Effective-through null means no superseding change has been registered, not proof that rule never changed.",
+  "year_audit": [
+    {
+      "season": 2010,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2011,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2012,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2013,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2014,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2015,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2016,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2017,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2018,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2019,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2020,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2021,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2022,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2023,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2024,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2025,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    },
+    {
+      "season": 2026,
+      "inventory": "partial_verified_high_impact_changes",
+      "full_annual_rulebook_audit_complete": false,
+      "notes": "This does not assert all annual playing-rule changes have been enumerated."
+    }
+  ],
+  "changes": [
+    {
+      "id": "2010-POST-OT",
+      "effective_from_season": 2010,
+      "effective_through_season": 2011,
+      "applies_to": [
+        "POST"
+      ],
+      "domain": "overtime",
+      "change": "Modified sudden death postseason: opening TD can end game; opening FG allows response.",
+      "simulator_implication": "Select 2010-2011 postseason regime; do not apply to 2010-2011 REG.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2010-REG-OT",
+      "effective_from_season": 2010,
+      "effective_through_season": 2011,
+      "applies_to": [
+        "REG"
+      ],
+      "domain": "overtime",
+      "change": "Regular season continues pre-2012 sudden-death overtime.",
+      "simulator_implication": "Do not apply modified-sudden-death REG rules to this era.",
+      "source_url": "https://operations.nfl.com/media/3823/2019-nfl-record-and-fact-book.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2010-SNAPPER",
+      "effective_from_season": 2010,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "special_teams_penalties",
+      "change": "Defensive alignment protection near snapper on field goals, punts, try kicks.",
+      "simulator_implication": "Penalty/blocked kick defense cannot sample pre-rule illegal formation as legal.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2011-KO-LINE",
+      "effective_from_season": 2011,
+      "effective_through_season": 2023,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Kickoff line moved from own 30 to own 35; coverage team running start reduced.",
+      "simulator_implication": "Separate return/touchback pools for 2010 and 2011 onward; dynamic kickoff supersedes in 2024.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2012-REG-OT",
+      "effective_from_season": 2012,
+      "effective_through_season": 2016,
+      "applies_to": [
+        "REG"
+      ],
+      "domain": "overtime",
+      "change": "Regular-season overtime switches to modified sudden death, 15-minute maximum.",
+      "simulator_implication": "First-possession FG grants an answering opportunity, opening TD can end game.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2013-TUCK",
+      "effective_from_season": 2013,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "turnover",
+      "change": "Tuck rule eliminated: certain QB loses ball while returning it to body are fumbles.",
+      "simulator_implication": "Do not back-label 2010-2012 borderline QB incidents using new regime.",
+      "source_url": "https://www.nfl.com/_amp/tuck-rule-eliminated-by-wide-margin-at-nfl-annual-meeting-0ap1000000152253",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2013-KICK-D-BUNCH",
+      "effective_from_season": 2013,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "special_teams_penalties",
+      "change": "Limits overload defense on field-goal and try kick formations.",
+      "simulator_implication": "Change legality for historical blocked-kick and kicking-formation samples.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2014-SACK-CLOCK",
+      "effective_from_season": 2014,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "clock",
+      "change": "Outside final two minutes of each half, clock stays running after a quarterback sack.",
+      "simulator_implication": "Calibrate sack runoff with clock rules by era; audit later amendments.",
+      "source_url": "https://www.nfl.info/download/2012MediaGuides/2014%20NFL%20Rule%20Book.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2014-LOOSE-REC",
+      "effective_from_season": 2014,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "Recovery of a loose ball in field of play becomes reviewable.",
+      "simulator_implication": "Affects overturned recovery sequences; don't treat review changes as raw fumble rate.",
+      "source_url": "https://www.nfl.info/download/2012MediaGuides/2014%20NFL%20Rule%20Book.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2015-PAT-SPOT",
+      "effective_from_season": 2015,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "extra_point",
+      "change": "One-point kick moved to 15-yard-line snap; two-point try remains at 2-yard line.",
+      "simulator_implication": "Segment extra-point make rate and post-TD choice before/after 2015.",
+      "source_url": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2015-TRY-DEF-RETURN",
+      "effective_from_season": 2015,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "try_scoring",
+      "change": "Defense may score two points by returning a failed try.",
+      "simulator_implication": "Support defensive conversion return transitions only in eras where legal.",
+      "source_url": "https://www.nfl.com/news/nfl-moves-extra-point-to-15-yard-line-for-2015-season-0ap3000000493347",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2016-KO-TB25",
+      "effective_from_season": 2016,
+      "effective_through_season": 2023,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Kickoff touchback moves from 20 to 25-yard line (trial then retained).",
+      "simulator_implication": "Use kickoff touchback start spot per season; not uniform for 2010–2026.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2016-CHOP",
+      "effective_from_season": 2016,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "penalties",
+      "change": "Chop blocks prohibited across the board.",
+      "simulator_implication": "Era-dependent penalty legality, player safety distributions.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2017-REG-OT-10",
+      "effective_from_season": 2017,
+      "effective_through_season": 2024,
+      "applies_to": [
+        "REG"
+      ],
+      "domain": "overtime",
+      "change": "Regular-season overtime maximum shortened to 10 minutes.",
+      "simulator_implication": "Do not borrow 15-minute overtime runoff/end-of-game logic.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2017-LEAPER",
+      "effective_from_season": 2017,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "special_teams_penalties",
+      "change": "Leaping blocks on field goals and PATs prohibited.",
+      "simulator_implication": "Blocked-kick model historical stratification/control for rule changes.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2018-CATCH",
+      "effective_from_season": 2018,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "pass_completion",
+      "change": "Updated legal catch standard.",
+      "simulator_implication": "Flag catch/interception/replay labels as era-sensitive.",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2018-KO-FORMATION",
+      "effective_from_season": 2018,
+      "effective_through_season": 2023,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Kickoff formation and blocking changed for 2018, later made permanent in 2019.",
+      "simulator_implication": "Separate 2011–2017 kickoff mechanics from 2018–2023.",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2018-WALKOFF-TRY",
+      "effective_from_season": 2018,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "try_scoring",
+      "change": "A meaningless try after a touchdown at end of regulation is no longer required.",
+      "simulator_implication": "Do not impute observed missing try as missed; determine whether try can affect result.",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2018-OT-RETURN-CONT",
+      "effective_from_season": 2018,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "overtime",
+      "change": "Second-team turnover down after first-team opening FG runs to completion, including return points.",
+      "simulator_implication": "Apply Article 5(a) continuations, accounting for subsequent OT regime.",
+      "source_url": "https://operations.nfl.com/media/3277/2018-nfl-rulebook_final-version.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2019-PI-REVIEW",
+      "effective_from_season": 2019,
+      "effective_through_season": 2019,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "Pass interference calls and noncalls were reviewable for 2019 season only.",
+      "simulator_implication": "Isolate 2019 challenge outcome/penalty enforcement; don't pool with nonreview years.",
+      "source_url": "https://www.nfl.com/news/nfl-finalizes-pass-interference-replay-for-2019-season-0ap3000001034228",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2019-KO-PERM",
+      "effective_from_season": 2019,
+      "effective_through_season": 2023,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "2018 kickoff blocking/formation trial made permanent.",
+      "simulator_implication": "Same family of pre-dynamic kickoffs; preserve 2018 trial metadata.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2020-PI-REVIEW-ENDED",
+      "effective_from_season": 2020,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "2019 pass-interference replay provision expired and was not renewed.",
+      "simulator_implication": "Don't simulate pass interference review as available after 2019.",
+      "source_url": "https://www.nfl.com/_amp/nfl-owners-reject-proposal-to-make-roughing-the-passer-penalties-reviewable",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2020-RET-PROTECT",
+      "effective_from_season": 2020,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "penalties",
+      "change": "Expanded defenseless-player protections for kick and punt returners.",
+      "simulator_implication": "Era-dependent kick return penalties and possession consequences.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2021-SEASON-17G",
+      "effective_from_season": 2021,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG"
+      ],
+      "domain": "season_structure",
+      "change": "Schedule moved to 17 games over 18 weeks, from 16 games in 17 weeks.",
+      "simulator_implication": "Normalize per-game and per-week statistics and remaining-games/stakes calculations.",
+      "source_url": "https://operations.nfl.com/media/5668/2021-nfl-kickoff-guide.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2021-PRESEASON-OT-REMOVED",
+      "effective_from_season": 2021,
+      "effective_through_season": null,
+      "applies_to": [
+        "PRE"
+      ],
+      "domain": "overtime",
+      "change": "No overtime in preseason.",
+      "simulator_implication": "Exclude PRE from REG/POST OT pool and treat preseason separately.",
+      "source_url": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2021-season",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2021-REPLAY-ASSIST",
+      "effective_from_season": 2021,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "Expanded officials' provision of certain objective information.",
+      "simulator_implication": "Track changing replay capabilities instead of treating all interventions as same.",
+      "source_url": "https://www.detroitlions.com/news/nfl-adopts-rule-changes-for-2021-season",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2022-POST-OT-BOTH",
+      "effective_from_season": 2022,
+      "effective_through_season": null,
+      "applies_to": [
+        "POST"
+      ],
+      "domain": "overtime",
+      "change": "Each team gets opportunity to possess ball in postseason overtime even after first-possession TD.",
+      "simulator_implication": "Separate 2022+ POST from REG; retain postseason multi-period rules.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2023-FAIR-CATCH25",
+      "effective_from_season": 2023,
+      "effective_through_season": 2023,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "One-year provision: fair catch of free kick behind receiving 25 placed at 25.",
+      "simulator_implication": "Use 2023-specific kickoff and safety-kick fair-catch transitions.",
+      "source_url": "https://operations.nfl.com/updates/the-rules/adopted-playing-rules-change-proposal-putting-ball-in-play-after-fair-catch/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2024-DYNAMIC-KO",
+      "effective_from_season": 2024,
+      "effective_through_season": 2024,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Dynamic kickoff introduced with landing/setup zones and altered movement.",
+      "simulator_implication": "Use era-specific kick pool and legal spatial/return outcomes; 2024 TB can be 20 or 30 per kick path.",
+      "source_url": "https://operations.nfl.com/media/2c1hiep0/2024-kickoff-guide.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2024-HIP-DROP",
+      "effective_from_season": 2024,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "penalties",
+      "change": "Swivel hip-drop tackle prohibited.",
+      "simulator_implication": "Era-sensitive tackles, penalties, potential participation injuries.",
+      "source_url": "https://www.nfl.com/news/nfl-health-and-safety-related-rules-changes-since-2002",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2024-ONSIDE-TRAILING-Q4",
+      "effective_from_season": 2024,
+      "effective_through_season": 2024,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "onside_kick",
+      "change": "Dynamic kickoff era onside declaration limited to trailing team in fourth quarter.",
+      "simulator_implication": "Do not use pre-2024 or post-2024 onside eligibility rules blindly.",
+      "source_url": "https://operations.nfl.com/media/2c1hiep0/2024-kickoff-guide.pdf",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2025-KO-PERM-TB35",
+      "effective_from_season": 2025,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Dynamic kickoff retained, modified setup alignment and touchback to 35 for specified end-zone touchbacks.",
+      "simulator_implication": "Use 2025+ touchback rules by kick path; no generic 2022–2025 kickoff sampling.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2025-REG-OT-BOTH",
+      "effective_from_season": 2025,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG"
+      ],
+      "domain": "overtime",
+      "change": "Regular-season OT gives both clubs possession opportunity even after opening TD, still one 10-minute period.",
+      "simulator_implication": "Cannot treat historical REG 2022–24 first-possession walk-off TD as ending 2025+ OT.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules/overtime-rules/",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2025-ONSIDE-TRAILING-ANY",
+      "effective_from_season": 2025,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "onside_kick",
+      "change": "Trailing clubs allowed to declare onside kick at any time during game under dynamic rules.",
+      "simulator_implication": "Separate from 2024 fourth-quarter-only declaration.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2025-REPLAY-ASSIST",
+      "effective_from_season": 2025,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "Replay assist expands for objective clear-and-obvious errors and administration.",
+      "simulator_implication": "Version replay corrections independently of core on-field events.",
+      "source_url": "https://operations.nfl.com/rules-officiating/featured-rules",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2026-KO-50-TB",
+      "effective_from_season": 2026,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Special touchback spot rule when kicking off from the 50-yard line.",
+      "simulator_implication": "Apply source-specific kickoff-from-50 field-position rule; verify text before implementing exact spot.",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "high"
+    },
+    {
+      "id": "2026-KO-SETUP",
+      "effective_from_season": 2026,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "kickoff",
+      "change": "Receiving team setup-zone alignment modified.",
+      "simulator_implication": "Update legal kick alignment for 2026.",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2026-ONSIDE-LANGUAGE",
+      "effective_from_season": 2026,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "onside_kick",
+      "change": "2026 official Rule 6-1-6 explicitly allows trailing team to declare onside at any time.",
+      "simulator_implication": "Consistent with 2025 summary; audit for actual semantic delta instead of double-counting intervention.",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    },
+    {
+      "id": "2026-DISQUALIFY",
+      "effective_from_season": 2026,
+      "effective_through_season": null,
+      "applies_to": [
+        "REG",
+        "POST"
+      ],
+      "domain": "instant_replay",
+      "change": "League personnel consultation expanded for possible disqualification for flagrant acts.",
+      "simulator_implication": "Rule-era discipline/in-game available-player state; audit implementation scope.",
+      "source_url": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+      "source_status": "verified_summary_not_full_annual_audit",
+      "priority": "medium"
+    }
+  ],
+  "required_extensions": [
+    "annual_rulebook_pdf_sha256",
+    "section_article_exact",
+    "decision_affects",
+    "dataset_field_mapping",
+    "rule_model_gate_tests",
+    "superseded_by",
+    "publication_time_verified"
+  ]
+}
