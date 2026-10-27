@@ -943,7 +943,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2015-02"
+      "id": "NFL-2015-02",
+      "trial_until": 2015
     },
     {
       "rule_ref": "15",
@@ -1216,7 +1217,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2016-08"
+      "id": "NFL-2016-08",
+      "trial_until": 2016
     },
     {
       "rule_ref": "14-5-2",
@@ -1267,7 +1269,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2017-02"
+      "id": "NFL-2017-02",
+      "trial_until": 2017
     },
     {
       "rule_ref": "12-2-2",
@@ -1420,7 +1423,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2018-02"
+      "id": "NFL-2018-02",
+      "trial_until": 2018
     },
     {
       "rule_ref": "8-1-3",
@@ -1454,7 +1458,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2018-04"
+      "id": "NFL-2018-04",
+      "effective_through_season": 2023
     },
     {
       "rule_ref": "12-2-8",
@@ -1539,7 +1544,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2019-01"
+      "id": "NFL-2019-01",
+      "effective_through_season": 2023
     },
     {
       "rule_ref": "11-4-2",
@@ -1658,7 +1664,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2019-08"
+      "id": "NFL-2019-08",
+      "trial_until": 2019
     },
     {
       "rule_ref": "15-1-5",
@@ -1828,7 +1835,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2021-02"
+      "id": "NFL-2021-02",
+      "trial_until": 2021
     },
     {
       "rule_ref": "8-1-2",
@@ -2063,7 +2071,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2023-06"
+      "id": "NFL-2023-06",
+      "trial_until": 2023
     },
     {
       "rule_ref": "12-2-14",
@@ -2148,7 +2157,8 @@
         "POST"
       ],
       "requires_contextual_regime_check": true,
-      "id": "NFL-2024-01"
+      "id": "NFL-2024-01",
+      "trial_until": 2024
     },
     {
       "rule_ref": "12-2-18",

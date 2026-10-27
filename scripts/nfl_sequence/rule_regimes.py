@@ -21,13 +21,20 @@ def active_rules(registry, season, season_type='REG', domain=None):
     """Return matching rule IDs from either registry schema.
 
     Schema 1 calls applicability ``applies_to``; the expanded annual inventory
-    (schema 2) calls it ``season_types``. Missing end seasons remain open-ended,
-    matching the schema 1 contract. For schema 2, that is a conservative
-    fallback until a verified supersession or expiry is recorded.
+    (schema 2) calls it ``season_types``. Schema 2's ``trial_until`` is its
+    explicit inclusive end-season field for temporary rules. Expiry markers and
+    contingent approvals are not active rules. Other records without an end
+    field remain open-ended until a verified supersession or expiry is recorded.
     """
     out = []
     for change in registry['changes']:
-        start, end = change.get('effective_from_season'), change.get('effective_through_season')
+        if change.get('adoption_status') in {
+            'expiry_of_temporary_provision',
+            'approved_contingent_not_automatically_active',
+        }:
+            continue
+        start = change.get('effective_from_season')
+        end = change.get('effective_through_season', change.get('trial_until'))
         if start is not None and season < start:
             continue
         if end is not None and season > end:
