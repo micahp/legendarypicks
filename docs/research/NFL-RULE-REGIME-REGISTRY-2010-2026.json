@@ -181,7 +181,7 @@
       "annual_rulebook_line_diff_complete": false,
       "unverified_inseason_interpretations": true,
       "source_url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
-      "supplemental_source_url": "https://www.nfl.com/2024-nfl-season-playing-rules-bylaws-and-resolutions"
+      "supplemental_source_url": "https://www.giants.com/news/nfl-announces-rule-changes-for-2024-hip-drop-tackle-challenge-kickoff"
     },
     {
       "season": 2025,
@@ -294,7 +294,7 @@
     "Y2024": {
       "kind": "Official NFL 2024 rulebook changes",
       "url": "https://operations.nfl.com/media/24emxacq/2024-nfl-rulebook.pdf",
-      "supplement": "https://www.nfl.com/2024-nfl-season-playing-rules-bylaws-and-resolutions",
+      "supplement": "https://www.giants.com/news/nfl-announces-rule-changes-for-2024-hip-drop-tackle-challenge-kickoff",
       "status": "published_rulebook_changes_table_audited"
     },
     "Y2025": {
