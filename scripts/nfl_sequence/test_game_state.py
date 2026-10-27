@@ -314,7 +314,7 @@ class BlockedKickFitsTheState(unittest.TestCase):
 class KickoffPool(unittest.TestCase):
     def test_receiving_team_is_posteam_and_its_next_snap_gives_the_spot(self):
         rows = [
-            {'game_id': 'g', 'play_id': 1.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 35.0,
+            {'season': 2025, 'game_id': 'g', 'play_id': 1.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 35.0,
              'game_seconds_remaining': 3600.0, 'play_type': 'kickoff', 'game_date': '2025-09-01'},
             {'game_id': 'g', 'play_id': 2.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 75.0,
              'game_seconds_remaining': 3596.0, 'play_type': 'pass', 'game_date': '2025-09-01'},
@@ -325,7 +325,7 @@ class KickoffPool(unittest.TestCase):
 
     def test_a_kickoff_followed_by_the_kicking_team_is_excluded(self):
         rows = [
-            {'game_id': 'g', 'play_id': 1.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 35.0,
+            {'season': 2025, 'game_id': 'g', 'play_id': 1.0, 'posteam': 'R', 'defteam': 'K', 'qtr': 1.0, 'yardline_100': 35.0,
              'game_seconds_remaining': 3600.0, 'play_type': 'kickoff', 'game_date': '2025-09-01'},
             {'game_id': 'g', 'play_id': 2.0, 'posteam': 'K', 'defteam': 'R', 'qtr': 1.0, 'yardline_100': 60.0,
              'game_seconds_remaining': 3596.0, 'play_type': 'run', 'game_date': '2025-09-01'},

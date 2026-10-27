@@ -426,7 +426,7 @@ def build_kickoff_pool(rows):
                 excluded['kickoff with an impossible runoff or spot'] += 1
                 continue
             pool.append({'spot': spot, 'runoff': runoff, 'game_id': row['game_id'], 'play_id': int(row['play_id']),
-                         'game_date': row['game_date']})
+                         'game_date': row['game_date'], 'season': int(row['season'])})
     return pool, excluded
 
 

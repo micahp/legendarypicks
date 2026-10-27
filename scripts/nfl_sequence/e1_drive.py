@@ -63,12 +63,18 @@ FLIP_AFTER = (1, 3)  # both teams change goals after Q1 and Q3 (rules file, sect
 
 
 def load(db):
+    return load_seasons(db, POOL_SEASONS)
+
+
+def load_seasons(db, seasons):
+    """Regular-season plays for the given seasons, in game order. Used for kickoffs, which the 2026 season needs beyond the pool."""
+    seasons = sorted(seasons)
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     rows = [dict(zip(COLUMNS, r)) for r in con.execute(
         f"SELECT {', '.join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 "
-        "ORDER BY game_id, play_id", (min(POOL_SEASONS), max(POOL_SEASONS)))]
+        "ORDER BY game_id, play_id", (seasons[0], seasons[-1]))]
     con.close()
-    return rows
+    return [r for r in rows if r['season'] in seasons]
 
 
 def classify(row, nxt, excluded):
