@@ -22,7 +22,7 @@ from collections import defaultdict
 DEV_DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 LAYER = '/root/lp-snapshots/nfl-splits/layer-2026-10-27/splits_layer.sqlite'
 DEFAULT_OUT = '/root/lp-snapshots/nfl-splits/team-box-2026-10-27/team_box.sqlite'
-SCHEMA_VERSION = 'lp-nfl-team-box-1'
+SCHEMA_VERSION = 'lp-nfl-team-box-2'
 SEASONS = range(2010, 2027)
 PENALTY_TEAM = {'LA': 'LAR', 'WAS': 'WSH'}
 SCRIM = ('pass', 'run')
@@ -37,8 +37,8 @@ FIELD_NOTES = {
     'plays_off': 'Pass and run plays with the team in possession, sacks included, kneels and spikes excluded.',
     'total_yards': 'Sum of yards gained on pass and run plays (net of sacks), as ESPN defines it.',
     'sack_yards': 'Yards lost on sacks, reported as a positive number.',
-    'first_downs': 'Pass and run plays whose gain reached the distance, or a touchdown. Penalty first downs are not '
-                   'in the play data and are not counted.',
+    'first_downs': 'Pass and run plays whose gain reached the distance, or a touchdown, plus penalty first downs from '
+                   'nfl_pbp_penalty. Null in seasons without that table (2010 to 2014 and 2026).',
     'third_att': 'Pass and run plays on third down.',
     'third_conv': 'Third-down plays that gained the distance or scored.',
     'fourth_att': 'Pass and run plays on fourth down (fourth-down punts and field goals are excluded).',
@@ -53,6 +53,11 @@ FIELD_NOTES = {
     'pen_accepted': 'Not stored: the play data flags penalties but not accept or decline.',
     'turnovers': 'Interceptions thrown plus fumbles lost on offense. Null for seasons where the fumble-lost column is null.',
     'fumbles_lost': 'Offensive fumbles lost on scrimmage plays. Null for seasons where the column is null.',
+    'pen_yards': 'Yards from flagged penalties on the team, from nfl_pbp_penalty (2015 to 2025). Zero when the table covers '
+                 'the season and the team has no flagged penalty. Null otherwise.',
+    'pen_flagged': 'Flagged penalties on the team, from the play data. Null where the play data has no penalty flags (2026).',
+    'points_per_drive': 'Schedule final score less the points that derived events credit to defense and special teams, '
+                        'divided by drives. Offensive points only.',
 }
 
 BASE_COLS = ('game_id', 'season', 'week', 'game_type', 'team', 'opponent', 'home_away', 'points_for', 'points_against',
@@ -76,6 +81,18 @@ def new_team():
     return t
 
 
+def penalty_yards_for(season, key, pen_yards, pen_seasons):
+    """Penalty yards for one team-game: zero where the penalty table covers the season, null where it does not."""
+    if season not in pen_seasons:
+        return None
+    return pen_yards.get(key, 0)
+
+
+def penalty_flags_for(season, flag_seasons, count):
+    """Flagged penalties for one team-game: null where the play data has no penalty flags for the season."""
+    return count if season in flag_seasons else None
+
+
 def qkey(qtr):
     if qtr is None:
         return None
@@ -93,14 +110,19 @@ def process_game(plays, fumble_lost_available):
             teams[name] = new_team()
         return teams[name]
 
-    def add_pts(name, q, n):
+    def add_pts(name, q, n, offense=True):
         if name is None or q is None or n == 0:
             return
         t = team(name)
         t['pts'] = t.get('pts', 0) + n
         t['pts_q'][q] += n
+        if not offense:
+            t['st_pts'] += n
 
     drives = {}
+    # Extra points still to come after a defensive or return touchdown. The team that scored kicks them.
+    owed_pat = defaultdict(int)
+    safety_drives = set()
     unassigned_st_td = 0
     for p in plays:
         pt, dt = p['posteam'], p['defteam']
@@ -184,19 +206,28 @@ def process_game(plays, fumble_lost_available):
             add_pts(pt, q, 2)
         if ptype in SCRIM and pt and p['touchdown'] == 1 and p['two_point_attempt'] != 1:
             if p['interception'] == 1 or p['fumble_lost'] == 1:
-                add_pts(dt, q, 6)
+                add_pts(dt, q, 6, offense=False)
+                owed_pat[dt] += 1
             elif p['pass_touchdown'] == 1 or p['rush_touchdown'] == 1:
                 add_pts(pt, q, 6)
         if ptype == 'field_goal' and pt and p['series_result'] == 'Field goal':
             add_pts(pt, q, 3)
-        if ptype == 'extra_point' and pt and p['success'] == 1:
-            add_pts(pt, q, 1)
-        if p['series_result'] == 'Safety' and dt:
-            add_pts(dt, q, 2)
+        if ptype == 'extra_point' and pt:
+            owed = owed_pat[pt] > 0
+            if owed:
+                owed_pat[pt] -= 1
+            if p['success'] == 1:
+                add_pts(pt, q, 1, offense=not owed)
+        if p['series_result'] == 'Safety' and dt and (pt, p['drive']) not in safety_drives:
+            # The series result repeats on each play of the drive, so a safety is counted once per drive.
+            safety_drives.add((pt, p['drive']))
+            add_pts(dt, q, 2, offense=False)
         if ptype == 'kickoff' and pt and p['touchdown'] == 1:
-            add_pts(pt, q, 6)
+            add_pts(pt, q, 6, offense=False)
+            owed_pat[pt] += 1
         if ptype == 'punt' and dt and p['touchdown'] == 1:
-            add_pts(dt, q, 6)
+            add_pts(dt, q, 6, offense=False)
+            owed_pat[dt] += 1
         if ptype in ('kickoff', 'punt') and p['touchdown'] == 1 and not (pt or dt):
             unassigned_st_td += 1
         # Drives.
@@ -266,7 +297,12 @@ def finish(name, t, base, fumble_lost_available, pen_yards):
     row['yards_per_play'] = round(row['total_yards'] / plays, 3) if plays else None
     row['epa_per_play'] = round(t['epa_sum'] / t['epa_n'], 4) if t['epa_n'] else None
     row['success_rate'] = round(t['succ_sum'] / t['succ_n'], 4) if t['succ_n'] else None
-    row['points_per_drive'] = round(pts_for / row['drives'], 3) if pts_for is not None and row['drives'] else None
+    # The final score stays authoritative. Only the derived defense and special-teams points are subtracted from it.
+    off_pts = None if pts_for is None else pts_for - int(t['st_pts'])
+    if off_pts is not None and off_pts < 0:
+        # The derived defense and special-teams points exceed the final score, so the offensive share is unknown.
+        off_pts = None
+    row['points_per_drive'] = round(off_pts / row['drives'], 3) if off_pts is not None and row['drives'] else None
     row['fumbles'] = int(t['fumbles'])
     row['fumbles_lost'] = int(t['fumbles_lost']) if fumble_lost_available else None
     row['turnovers'] = (row['pass_int'] + row['fumbles_lost']) if fumble_lost_available else None
@@ -307,6 +343,8 @@ def build_rows(dev, layer):
     for r in layer.execute(f"select {', '.join(BASE_COLS)} from team_game"):
         base[(r[0], r[4])] = dict(zip(BASE_COLS, r))
     pen_yards = load_pen_yards(dev)
+    pen_seasons = {s for (s,) in dev.execute('select distinct season from nfl_pbp_penalty')}
+    flag_seasons = {s for (s,) in dev.execute('select distinct season from nfl_pbp where penalty is not null')}
     rows, st_unassigned = [], 0
     for season in SEASONS:
         cur = dev.execute("""select game_id, play_id, posteam, defteam, qtr, down, ydstogo, yardline_100,
@@ -329,9 +367,10 @@ def build_rows(dev, layer):
                 key = (gid, name)
                 if key not in base:
                     continue
-                # Penalty yards exist from 2015 on. A team with no flagged penalty that season is zero, not unknown.
-                penalty_yards = pen_yards.get(key, 0) if season >= 2015 else None
-                rows.append(finish(name, t, base[key], fumble_lost_available, penalty_yards))
+                penalty_yards = penalty_yards_for(season, key, pen_yards, pen_seasons)
+                row = finish(name, t, base[key], fumble_lost_available, penalty_yards)
+                row['pen_flagged'] = penalty_flags_for(season, flag_seasons, row['pen_flagged'])
+                rows.append(row)
     # Penalty first downs: a defensive foul that gives the offense the first down counts toward the team that
     # gained it, which is the other team in the game.
     pen_first = load_pen_first(dev)
@@ -342,7 +381,8 @@ def build_rows(dev, layer):
         for name, r in teams_in_game.items():
             gained = sum(pen_first.get((r['game_id'], other), 0) for other in teams_in_game if other != name)
             if r['first_downs'] is not None:
-                r['first_downs'] += gained
+                # Null where the penalty table does not cover the season: the penalty first downs are then unknown.
+                r['first_downs'] = r['first_downs'] + gained if r['season'] in pen_seasons else None
     # Turnover differential needs the opponent's turnovers in the same game.
     for teams_in_game in by_game.values():
         for r in teams_in_game.values():
