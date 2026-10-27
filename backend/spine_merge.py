@@ -64,6 +64,8 @@ try:
 except ImportError:  # a database or checkout without it simply has no published rosters
     published_roster = None
 
+_NO_MINT_LEAGUES = frozenset(getattr(published_roster, "NO_MINT_LEAGUES", ()))
+
 
 def referencing_columns(con) -> List[Tuple[str, str]]:
     """Every (table, column) that holds a players.id, discovered from the schema.
@@ -292,7 +294,7 @@ def _unbound_binds(con, league: Optional[str], merged_away) -> Tuple[List[Bind],
     except sqlite3.Error:
         return [], []
     refused: List[Tuple[str, str, str]] = []
-    per_owner: Dict[Tuple[int, str], List[Bind]] = {}
+    per_owner: Dict[Tuple[str, int, str], List[Bind]] = {}
     for lg, source, key, name, folded, team in unbound:
         owners = sorted(pid for pid, pairs in claims.items() if (folded, team) in pairs)
         if not owners:
@@ -305,18 +307,30 @@ def _unbound_binds(con, league: Optional[str], merged_away) -> Tuple[List[Bind],
         if owner in merged_away:
             continue
         owner_league = con.execute("SELECT league FROM players WHERE id=?", (owner,)).fetchone()
-        if owner_league is None or owner_league[0] != lg:
+        if owner_league is None:
             continue
-        held = con.execute(
-            "SELECT 1 FROM published_roster WHERE league=? AND source=? AND player_id=?",
-            (lg, source, owner)).fetchone()
+        # A competition borrows its people from their home league (published_roster.NO_MINT_LEAGUES),
+        # so its keys bind to the home-league player. Anywhere else the league must match, and a
+        # mismatch is reported rather than skipped quietly.
+        borrows = lg in _NO_MINT_LEAGUES
+        if owner_league[0] != lg and not borrows:
+            refused.append((lg, name, "{}={} matches player {} by name and club, but that player is in {}; "
+                            "not bound across leagues".format(source, key, owner, owner_league[0])))
+            continue
+        if borrows:
+            held = con.execute(
+                "SELECT 1 FROM published_roster WHERE source=? AND player_id=?", (source, owner)).fetchone()
+        else:
+            held = con.execute(
+                "SELECT 1 FROM published_roster WHERE league=? AND source=? AND player_id=?",
+                (lg, source, owner)).fetchone()
         if not held:
             refused.append((lg, name, "{}={} matches player {} by name and club, but {} lists no key for "
                             "them yet; not bound".format(source, key, owner, source)))
             continue
-        per_owner.setdefault((owner, source), []).append(Bind(lg, source, key, owner, name))
+        per_owner.setdefault((lg, owner, source), []).append(Bind(lg, source, key, owner, name))
     binds: List[Bind] = []
-    for (owner, source), found in sorted(per_owner.items()):
+    for (lg, owner, source), found in sorted(per_owner.items()):
         if len(found) > 1:
             refused.append((found[0].league, found[0].name,
                             "{} has {} unbound keys for player {}; which is the duplicate is a guess"
