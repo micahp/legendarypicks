@@ -306,6 +306,28 @@ def _finished_scoreboard_records(lg: str, game_id: str):
     return records
 
 
+def _result_sentence(scores: dict, winner, names: dict):
+    """One plain sentence stating a two-sided result, from the scores and winner the writer is handed.
+
+    None unless the winner is one of the two sides: a result nobody reported is not written down.
+    `names` maps abbrev to the club's name; a side without one is written as its abbrev.
+    """
+    if len(scores) != 2 or any(v is None for v in scores.values()):
+        return None
+    show = lambda ab: names.get(ab) or ab
+    fmt = lambda v: str(int(v)) if float(v).is_integer() else str(v)
+    a, b = scores
+    if not winner:
+        return f"{show(a)} and {show(b)} drew {fmt(scores[a])}-{fmt(scores[b])}."
+    if winner not in (a, b):
+        return None
+    if scores[a] == scores[b]:
+        # A tie with a winner was decided another way (a shootout). The score alone does not say how.
+        return None
+    won, lost = (a, b) if winner == a else (b, a)
+    return f"{show(won)} beat {show(lost)} {fmt(scores[won])}-{fmt(scores[lost])}."
+
+
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                         home: str = None, away: str = None,
                         state: str = None, start_time: str = None) -> dict:
@@ -349,10 +371,18 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
         if "facts_as_of" not in cols:
             con.execute("ALTER TABLE game_story ADD COLUMN facts_as_of TEXT")
             con.commit()
+        # deterministic: the recap was written without a model (see _result_sentence). Final once written.
+        if "deterministic" not in cols:
+            con.execute("ALTER TABLE game_story ADD COLUMN deterministic INTEGER DEFAULT 0")
+            con.commit()
         if not refresh:
             cached = con.execute(
-                "SELECT story, has_form, has_stakes, form_suppressed, generated_at, facts_as_of FROM game_story "
-                "WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
+                "SELECT story, has_form, has_stakes, form_suppressed, generated_at, facts_as_of, deterministic "
+                "FROM game_story WHERE league=? AND game_id=?", (lg, game_id)).fetchone()
+            if cached and cached["deterministic"]:
+                # Final: the result cannot change, and fetching the game again on every sweep is the
+                # ESPN spend the fallback exists to stop.
+                return {"league": lg, "game_id": game_id, "story": cached["story"], "cached": True}
             stale_preview = cached and (
                 _story_is_stale_preview(cached["generated_at"], state, start_time)
                 or ((state or "").lower() != "post"
@@ -503,12 +533,14 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     # MLB has no such line, so the Reds-Nationals recap opened on a prop and never said the
     # Nationals won 7-1. A recap that omits the score is not a recap.
     scores = gr.get("scores") or {}
+    result = None  # the plain result sentence, the fallback recap when no model answers
     if scores and (gr.get("state") or "").lower() == "post":
         line = ", ".join(f"{ab} {int(v) if float(v).is_integer() else v}"
                          for ab, v in scores.items())
         winner = gr.get("winner")
         grounding += (f"\nFINAL SCORE: {line}."
                       + (f" {winner} won." if winner else " The game was drawn."))
+        result = _result_sentence(scores, winner, {ab: rec["name"] for ab, rec in final_records.items()})
     # A finished game with NO score (UFC, tennis walkover) must still be grounded on
     # who won. `gr` carries no winner for these (UFC's summary endpoint 404s), so read
     # the scoreboard snapshot — the same payload the board already serves. Never leave
@@ -521,6 +553,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                 winner_name = snap.get("winner_name") or snap.get("winner_abbrev")
                 if snap.get("is_draw"):
                     grounding += "\nRESULT: The match was drawn."
+                    result = "The match was drawn."
                 elif winner_name:
                     detail = []
                     if snap.get("outcome_method"):
@@ -544,6 +577,7 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                             detail.append(f"({sets_line})")
                     suffix = f" ({', '.join(detail)})" if detail else ""
                     grounding += f"\nRESULT: {winner_name} won{suffix}."
+                    result = f"{winner_name} won{suffix}."
                 elif snap.get("sets", {}).get("home") is not None:
                     # Sets present but no winner derivable (e.g. abandoned mid-match) —
                     # state the sets, not a guess.
@@ -753,12 +787,20 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
               "given) says who is playing at home; never assume it from a team's usual city. "
               "No clichés, no hype, plain confident tone.")
     story = _deepseek_chat(system, grounding)
+    deterministic = False
+    if not story and finished and result and (not cached or stale_preview):
+        # No model answered. A finished game with no story gets the result sentence rather than
+        # nothing, and a preview that now predates the final is replaced by it. A stored recap
+        # is never overwritten by this: when the model fails it is kept, as before.
+        story = result
+        deterministic = True
     if story:
         with closing(_db()) as con:
             con.execute("INSERT OR REPLACE INTO game_story(league, game_id, story, generated_at, has_form, has_stakes, "
-                        "form_suppressed, facts_as_of) VALUES (?,?,?,datetime('now'),?,?,?,?)",
+                        "form_suppressed, facts_as_of, deterministic) VALUES (?,?,?,datetime('now'),?,?,?,?,?)",
                         (lg, game_id, story, 1 if (form_lines or context_lines) else 0,
-                         1 if stakes_lines else 0, 1 if logs_stale else 0, facts_as_of))
+                         1 if stakes_lines else 0, 1 if logs_stale else 0, facts_as_of,
+                         1 if deterministic else 0))
             con.commit()
     elif cached:
         # generation failed this time — keep the previous story rather than blanking it
