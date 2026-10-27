@@ -8,9 +8,6 @@ sys.path.insert(0, str(HERE))
 import team_splits_build as b  # noqa: E402
 import team_splits_query as q  # noqa: E402
 
-CURRENT = {'Highmark Stadium': 60108, 'Lambeau Field': 81441, 'Paycor Stadium': 65515}
-
-
 class Bins(unittest.TestCase):
     def test_capacity_boundaries(self):
         self.assertEqual(b.capacity_bin(64999), 'under_65k')
@@ -38,22 +35,64 @@ class Bins(unittest.TestCase):
 
 
 class Buildings(unittest.TestCase):
-    def test_rename_of_the_same_building_maps_to_current(self):
-        self.assertEqual(b.canonical_building('Heinz Field', dict(CURRENT, **{'Acrisure Stadium': 68984})),
-                         'Acrisure Stadium')
+    @classmethod
+    def setUpClass(cls):
+        cls.rows, cls.names = b.load_capacity_history()
 
-    def test_rebuilt_stadium_is_not_mapped_to_the_new_listing(self):
-        # Buffalo's 2016 to 2025 building is not the 2026 Highmark Stadium listed at 60,108.
-        self.assertIsNone(b.canonical_building('New Era Field', CURRENT))
-        self.assertIsNone(b.canonical_building('Ralph Wilson Stadium', CURRENT))
-        self.assertEqual(b.canonical_building('Highmark Stadium', CURRENT), 'Highmark Stadium')
+    def test_renamed_building_is_one_building(self):
+        self.assertEqual(self.names['Heinz Field'], self.names['Acrisure Stadium'])
+        self.assertEqual(self.names['New Meadowlands Stadium'], 'MetLife Stadium')
 
-    def test_moves_to_another_building_stay_unmapped(self):
-        self.assertIsNone(b.canonical_building('Qualcomm Stadium', CURRENT))
-        self.assertIsNone(b.canonical_building('Georgia Dome', CURRENT))
+    def test_buffalo_old_and_new_stadiums_are_different_buildings(self):
+        self.assertEqual(self.names['New Era Field'], self.names['Ralph Wilson Stadium'])
+        self.assertNotEqual(self.names['New Era Field'], self.names['Highmark Stadium'])
 
-    def test_alias_target_must_be_a_current_listing(self):
-        self.assertIsNone(b.canonical_building('Paul Brown Stadium', {'Lambeau Field': 81441}))
+    def test_moves_to_another_building_stay_separate(self):
+        self.assertNotEqual(self.names['Qualcomm Stadium'], self.names['SoFi Stadium'])
+        self.assertNotEqual(self.names['Georgia Dome'], self.names['Mercedes-Benz Stadium'])
+
+
+class Capacity(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.rows, cls.names = b.load_capacity_history()
+
+    def lookup(self, name, season):
+        return b.capacity_lookup(self.rows, self.names[name], season)
+
+    def test_buffalo_old_and_new_stadiums(self):
+        self.assertEqual(self.lookup('New Era Field', 2025), (71608, 'dated_table'))
+        self.assertEqual(self.lookup('Ralph Wilson Stadium', 2010), (73079, 'dated_table'))
+        self.assertEqual(self.lookup('Highmark Stadium', 2026), (60108, 'opening_statement'))
+
+    def test_later_start_wins_where_ranges_overlap(self):
+        self.assertEqual(self.lookup('FedExField', 2013)[0], 79000)
+        self.assertEqual(self.lookup('FedExField', 2015)[0], 67617)
+
+    def test_undated_figures_are_never_used_as_history(self):
+        self.assertEqual(self.lookup('MetLife Stadium', 2015), (None, None))
+        self.assertEqual(b.undated_capacity(self.rows, self.names['MetLife Stadium']), 82500)
+
+    def test_bracketed_span_covers_each_season_it_states(self):
+        self.assertEqual(self.lookup('State Farm Stadium', 2019), (63400, 'bracketed'))
+
+    def test_a_gap_between_dated_rows_stays_unknown(self):
+        self.assertEqual(self.lookup('Bank of America Stadium', 2022), (None, None))
+        self.assertEqual(self.lookup('Bank of America Stadium', 2025)[0], 75037)
+
+    def test_building_with_no_nfl_figure_has_no_dated_rows(self):
+        self.assertIn('Los Angeles Memorial Coliseum', self.names)
+        self.assertEqual(self.lookup('Los Angeles Memorial Coliseum', 2017), (None, None))
+
+
+class ShareBins(unittest.TestCase):
+    def test_attendance_share_boundaries(self):
+        self.assertEqual(b.attendance_share_bin(84999, 100000), 'under_85pct')
+        self.assertEqual(b.attendance_share_bin(85000, 100000), '85_to_94pct')
+        self.assertEqual(b.attendance_share_bin(99999, 100000), '95_to_99pct')
+        self.assertEqual(b.attendance_share_bin(100000, 100000), '100pct_plus')
+        self.assertIsNone(b.attendance_share_bin(None, 100000))
+        self.assertIsNone(b.attendance_share_bin(70000, None))
 
 
 def row(team='BUF', season=2024, result='W', pf=24, pa=20, **extra):

@@ -17,6 +17,7 @@ Tables:
 Usage: python3 team_splits_build.py [--out PATH]
 """
 import argparse
+import csv
 import hashlib
 import json
 import math
@@ -38,47 +39,42 @@ VERY_THIN_N = 3
 OUTDOOR_ROOFS = ('outdoors', 'open')
 # Elo uses OAK for the Raiders through 2020. The current franchise code is LV.
 ELO_TEAM = {'OAK': 'LV'}
-# Renamed buildings: the same stadium under an older name. Only renames of the same building are listed here. Moves to a
-# different building (Qualcomm to SoFi, Edward Jones Dome, Georgia Dome, the Oakland Coliseum, Candlestick) stay unmapped.
-# Buffalo is deliberately absent. "New Era Field" (2016 to 2025) and "Ralph Wilson Stadium" are not the building now
-# listed as Highmark Stadium (60,108, the 2026 name). Mapping them to that listing would give old games a capacity that
-# was not theirs, so those games stay "no current capacity".
-ALIASES = {
-    'University of Phoenix Stadium': 'State Farm Stadium',
-    'Cowboys Stadium': 'AT&T Stadium',
-    'Invesco Field at Mile High': 'Empower Field at Mile High',
-    'Sports Authority Field at Mile High': 'Empower Field at Mile High',
-    'Paul Brown Stadium': 'Paycor Stadium',
-    'Cleveland Browns Stadium': 'Huntington Bank Field',
-    'FirstEnergy Stadium': 'Huntington Bank Field',
-    'NRG Stadium': 'Reliant Stadium',
-    'EverBank Field': 'EverBank Stadium',
-    'TIAA Bank Stadium': 'EverBank Stadium',
-    'GEHA Field at Arrowhead Stadium': 'Arrowhead Stadium',
-    'Sun Life Stadium': 'Hard Rock Stadium',
-    'Louisiana Superdome': 'Caesars Superdome',
-    'Mercedes-Benz Superdome': 'Caesars Superdome',
-    'New Meadowlands Stadium': 'MetLife Stadium',
-    'Heinz Field': 'Acrisure Stadium',
-    'Qwest Field': 'Lumen Field',
-    'CenturyLink Field': 'Lumen Field',
-    'LP Field': 'Nissan Stadium',
-    'FedExField': 'Northwest Stadium',
-}
+# Stadium capacity history: one row per period a page states, with its basis and source. Names and buildings come from
+# the same file, so a recorded stadium name maps to exactly one building. Buildings are not merged across a rebuild: the
+# 2016-2025 Buffalo stadium (New Era Field) is a different row from the 2026 Highmark Stadium.
+CAPACITY_HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'stadium_capacity_history.csv')
+# Bases that state a year or a span. Undated figures are kept for reference and never used in a historical bin.
+DATED_BASES = ('dated_table', 'table_point', 'dated_infobox_former', 'dated_infobox_current', 'dated_text',
+               'opening_statement', 'bracketed', 'implied_start')
 DIMENSIONS = ('all', 'season', 'weekday', 'kickoff_et', 'window_et', 'window_venue', 'window_body', 'home_away',
               'opponent', 'division', 'game_type', 'international', 'roof', 'surface', 'temp_bin', 'wind_bin',
-              'stadium', 'capacity_bin', 'attendance_bin', 'referee', 'official')
+              'stadium', 'capacity_bin', 'capacity_source', 'attendance_bin', 'attendance_share_bin', 'referee',
+              'official')
 SCOPES = ('all', 'tier_a', 'tier_b')
 
 
-def capacity_bin(listed):
-    if listed is None:
+def capacity_bin(capacity):
+    if capacity is None:
         return None
-    if listed < 65000:
+    if capacity < 65000:
         return 'under_65k'
-    if listed < 70000:
+    if capacity < 70000:
         return '65k_to_69k'
     return '70k_plus'
+
+
+def attendance_share_bin(attendance, capacity):
+    """Recorded attendance as a share of the building's dated capacity for that season."""
+    if attendance is None or capacity is None:
+        return None
+    share = attendance / capacity
+    if share < 0.85:
+        return 'under_85pct'
+    if share < 0.95:
+        return '85_to_94pct'
+    if share < 1.0:
+        return '95_to_99pct'
+    return '100pct_plus'
 
 
 def attendance_bin(attendance):
@@ -123,14 +119,54 @@ def wind_bin(wind, roof):
     return '20mph_plus'
 
 
-def canonical_building(stadium, current_names):
-    """The current venue name for a stadium, following a rename. None when the building has no current listing."""
-    if not stadium:
-        return None
-    if stadium in current_names:
-        return stadium
-    alias = ALIASES.get(stadium)
-    return alias if alias in current_names else None
+def load_capacity_history(path=CAPACITY_HISTORY):
+    """(rows, recorded name -> building). A name that maps to two buildings stops the load."""
+    rows, name_to_building = [], {}
+    with open(path, newline='') as handle:
+        for row in csv.DictReader(handle):
+            for name in row['recorded_names'].split(';'):
+                existing = name_to_building.setdefault(name, row['building'])
+                if existing != row['building']:
+                    raise ValueError(f'{name!r} maps to two buildings: {existing!r} and {row["building"]!r}')
+            if not row['seating_capacity']:
+                # A building whose page states no NFL capacity: its names are registered, and it has no figure to use.
+                continue
+            rows.append({
+                'building': row['building'],
+                'valid_from': int(row['valid_from']) if row['valid_from'] else None,
+                'valid_to': int(row['valid_to']) if row['valid_to'] else None,
+                'capacity': int(row['seating_capacity']), 'basis': row['basis'], 'source': row['source_url'],
+            })
+    return rows, name_to_building
+
+
+def capacity_lookup(rows, building, season):
+    """(capacity, basis) from the dated rows that cover the season. Where two rows cover it, the later start wins.
+
+    (None, None) when no dated row covers the season. Undated figures never count here.
+    """
+    covering = [r for r in rows if r['building'] == building and r['basis'] in DATED_BASES
+                and r['valid_from'] is not None and r['valid_from'] <= season <= r['valid_to']]
+    if not covering:
+        return None, None
+    chosen = max(covering, key=lambda r: r['valid_from'])
+    return chosen['capacity'], chosen['basis']
+
+
+def undated_capacity(rows, building):
+    undated = [r['capacity'] for r in rows if r['building'] == building and r['basis'] == 'undated']
+    return undated[0] if undated else None
+
+
+def load_snapshot(path, name_to_building):
+    """2026 listed capacity by building. Kept as a reference column; no bin uses it."""
+    out = {}
+    for venue in json.load(open(path))['venues'].values():
+        building = name_to_building.get(venue['stadium'])
+        if building is None:
+            raise ValueError(f"snapshot venue {venue['stadium']!r} has no capacity-history building")
+        out[building] = venue['listed_capacity']
+    return out
 
 
 # One referee, two spellings. The schedule says "Ron Torbert" for 151 games. The crew list says "Ronald Torbert".
@@ -146,12 +182,7 @@ def norm_name(name):
     return OFFICIAL_ALIASES.get(collapsed, collapsed)
 
 
-def load_venues(path):
-    venues = json.load(open(path))['venues']
-    return {v['stadium']: v['listed_capacity'] for v in venues.values()}
-
-
-def layer_rows(layer, current, suspect_games, stats):
+def layer_rows(layer, history, name_to_building, snapshot, suspect_games, stats):
     """Tier A team rows from the splits layer.
 
     The referee is the crew list's Referee row where one exists (2015 onward), and the schedule's referee otherwise.
@@ -171,8 +202,16 @@ def layer_rows(layer, current, suspect_games, stats):
     names = [c[0] for c in cur.description]
     for values in cur.fetchall():
         r = dict(zip(names, values))
-        canon = canonical_building(r['stadium'], current)
-        listed = current.get(canon) if canon else None
+        building = name_to_building.get(r['stadium'])
+        capacity, basis = capacity_lookup(history, building, r['season']) if building else (None, None)
+        if building is None:
+            source = 'no_building_match'
+        elif capacity is not None:
+            source = 'dated'
+        elif undated_capacity(history, building) is not None:
+            source = 'undated_only'
+        else:
+            source = 'none'
         attendance = r['attendance']
         clean = attendance if attendance and attendance > 0 and r['game_id'] not in suspect_games else None
         schedule_ref = norm_name(r['referee'])
@@ -189,14 +228,17 @@ def layer_rows(layer, current, suspect_games, stats):
             'division': None if r['division'] is None else ('division' if r['division'] else 'non_division'),
             'international': None if r['international'] is None else
             ('international' if r['international'] else 'domestic'),
-            'playoff': None, 'stadium': r['stadium'], 'stadium_canonical': canon, 'capacity_listed': listed,
+            'playoff': None, 'stadium': r['stadium'], 'stadium_canonical': building,
+            'capacity_historical': capacity, 'capacity_basis': basis, 'capacity_source': source,
+            'capacity_snapshot_2026': snapshot.get(building) if building else None,
             'roof': r['roof'] or 'unknown', 'surface': r['surface'] or 'unknown', 'temp': r['temp'],
             'wind': r['wind'], 'referee': referee, 'attendance': clean,
             'points_for': r['points_for'], 'points_against': r['points_against'], 'result': r['result'],
             'officials': sorted(official.get(r['game_id'], set())),
             'temp_bin': temp_bin(r['temp'], r['roof']), 'wind_bin': wind_bin(r['wind'], r['roof']),
-            'capacity_bin': capacity_bin(listed) if canon else 'no_current_capacity',
+            'capacity_bin': capacity_bin(capacity) if capacity is not None else 'no_dated_capacity',
             'attendance_bin': attendance_bin(clean),
+            'attendance_share_bin': attendance_share_bin(clean, capacity),
         })
     return rows
 
@@ -223,10 +265,11 @@ def elo_rows(dev):
                 'gameday': date, 'weekday': weekday, 'kickoff_et': None, 'window_et': None, 'window_venue': None,
                 'window_body': None, 'team': team, 'opponent': opp, 'home_away': side, 'division': None,
                 'international': None, 'playoff': playoff == '1', 'stadium': None, 'stadium_canonical': None,
-                'capacity_listed': None, 'roof': None, 'surface': None, 'temp': None, 'wind': None,
+                'capacity_historical': None, 'capacity_basis': None, 'capacity_source': None,
+                'capacity_snapshot_2026': None, 'roof': None, 'surface': None, 'temp': None, 'wind': None,
                 'referee': None, 'attendance': None, 'points_for': pf, 'points_against': pa, 'result': result,
                 'officials': [], 'temp_bin': None, 'wind_bin': None, 'capacity_bin': None,
-                'attendance_bin': None,
+                'attendance_bin': None, 'attendance_share_bin': None,
             })
     return rows
 
@@ -341,8 +384,10 @@ create table team_game_row (
     game_id text not null, tier text not null, season integer not null, week integer, game_type text,
     gameday text, weekday text, kickoff_et text, window_et text, window_venue text, window_body text,
     team text not null, opponent text, home_away text, division text, international text, playoff integer,
-    stadium text, stadium_canonical text, capacity_listed integer, roof text, surface text, temp real, wind real,
-    temp_bin text, wind_bin text, referee text, attendance integer, attendance_bin text, capacity_bin text,
+    stadium text, stadium_canonical text, capacity_historical integer, capacity_basis text, capacity_source text,
+    capacity_snapshot_2026 integer, roof text, surface text, temp real, wind real,
+    temp_bin text, wind_bin text, referee text, attendance integer, attendance_bin text, attendance_share_bin text,
+    capacity_bin text,
     points_for integer, points_against integer, result text,
     primary key (game_id, team));
 create index team_game_row_team on team_game_row (team, season);
@@ -374,16 +419,17 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def build(out, layer_path=LAYER, dev_uri=DEV_DB, venues_path=VENUES):
+def build(out, layer_path=LAYER, dev_uri=DEV_DB, venues_path=VENUES, history_path=CAPACITY_HISTORY):
     if os.path.exists(out):
         raise SystemExit(f'refusing to overwrite {out}')
     os.makedirs(os.path.dirname(out), exist_ok=True)
     layer = sqlite3.connect(f'file:{layer_path}?mode=ro', uri=True)
     dev = sqlite3.connect(dev_uri, uri=True)
-    current = load_venues(venues_path)
+    history, name_to_building = load_capacity_history(history_path)
+    snapshot = load_snapshot(venues_path, name_to_building)
     suspect = {gid for (gid,) in dev.execute('select game_id from nfl_game_context where attendance_suspect = 1')}
     stats = Counter()
-    tier_a = layer_rows(layer, current, suspect, stats)
+    tier_a = layer_rows(layer, history, name_to_building, snapshot, suspect, stats)
     tier_b = elo_rows(dev)
     team_rows = tier_a + tier_b
     splits, coverage = build_splits(team_rows)
@@ -392,9 +438,10 @@ def build(out, layer_path=LAYER, dev_uri=DEV_DB, venues_path=VENUES):
     db.executescript(SCHEMA)
     row_cols = ('game_id', 'tier', 'season', 'week', 'game_type', 'gameday', 'weekday', 'kickoff_et', 'window_et',
                 'window_venue', 'window_body', 'team', 'opponent', 'home_away', 'division', 'international',
-                'playoff', 'stadium', 'stadium_canonical', 'capacity_listed', 'roof', 'surface', 'temp', 'wind',
-                'temp_bin', 'wind_bin', 'referee', 'attendance', 'attendance_bin', 'capacity_bin', 'points_for',
-                'points_against', 'result')
+                'playoff', 'stadium', 'stadium_canonical', 'capacity_historical', 'capacity_basis', 'capacity_source',
+                'capacity_snapshot_2026', 'roof', 'surface', 'temp', 'wind', 'temp_bin', 'wind_bin', 'referee',
+                'attendance', 'attendance_bin', 'attendance_share_bin', 'capacity_bin', 'points_for', 'points_against',
+                'result')
     db.executemany(f'insert into team_game_row ({",".join(row_cols)}) values ({",".join("?" * len(row_cols))})',
                    [tuple(r[c] for c in row_cols) for r in team_rows])
     db.executemany('insert into team_game_official values (?,?,?)',
@@ -407,9 +454,11 @@ def build(out, layer_path=LAYER, dev_uri=DEV_DB, venues_path=VENUES):
     meta = {
         'schema': SCHEMA_VERSION, 'layer': layer_path, 'layer_sha256': file_sha256(layer_path),
         'venues': venues_path, 'venues_sha256': file_sha256(venues_path),
+        'capacity_history': history_path, 'capacity_history_sha256': file_sha256(history_path),
+        'capacity_history_rows': len(history), 'recorded_stadium_names': len(name_to_building),
         'tier_a_rows': len(tier_a), 'tier_b_rows': len(tier_b), 'split_rows': len(splits),
         'coverage_rows': len(coverage), 'suspect_attendance_games_excluded': len(suspect),
-        'capacity_venues': len(current), 'aliases': len(ALIASES), 'official_aliases': len(OFFICIAL_ALIASES),
+        'official_aliases': len(OFFICIAL_ALIASES),
         'referee_sources_disagree_team_games': stats['referee_sources_disagree'],
     }
     for key, value in meta.items():
