@@ -25,6 +25,7 @@ import e1_drive as e1  # noqa: E402
 import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
 import pregame_snapshot as ps  # noqa: E402
+import rule_regimes as rr  # noqa: E402
 import try_policy as tp  # noqa: E402
 import versions  # noqa: E402
 
@@ -96,6 +97,8 @@ def main():
                     help='sensitivity: force the overtime first possession instead of the seeded uniform draw')
     ap.add_argument('--overtime-choice', choices=('kick', 'receive'), default=None,
                     help='labelled control: force the toss winner\'s decision instead of the observed rate')
+    ap.add_argument('--target-season', type=int, default=2026,
+                    help='season whose rules the simulated games follow; kickoffs come from the seasons with the same rules')
     ap.add_argument('--out', required=True)
     ap.add_argument('--summary', required=True)
     args = ap.parse_args()
@@ -112,8 +115,9 @@ def main():
     pinned_sha = snapshot['snapshot_sha256']
     table = not args.no_safety_table
     ot_table = not args.no_overtime_table
-    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice) if policy is None else er.load(
-        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice)
+    registry, _ = rr.load_registry()
+    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, target_season=args.target_season) if policy is None else er.load(
+        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, target_season=args.target_season)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     ps.reseal(snapshot)
     load_seconds = time.monotonic() - started
@@ -147,6 +151,9 @@ def main():
         'failed_errors': [{'seed': r['seed'], 'error': r['error']} for r in rows if r['outcome'] == 'failed'],
         'pinned_snapshot_sha256': pinned_sha,
         'run_snapshot_sha256': snapshot['snapshot_sha256'],
+        'rule_registry_sha256': ref.kickoff_regime['registry_sha256'],
+        'active_rule_ids': rr.active_rules(registry, args.target_season, 'REG'),
+        'kickoff_regime': ref.kickoff_regime,
         'reference_sha256': ref.model_inputs['sha256'],
         'reference_excluded_kickoffs': dict(excluded),
         'try_policy': policy.describe() if policy else None,

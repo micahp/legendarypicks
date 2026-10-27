@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
 import game_state as gs  # noqa: E402
 import measure_kick_outcomes as mk  # noqa: E402
+import rule_regimes as rr  # noqa: E402
 
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
@@ -20,6 +21,7 @@ BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2'
 OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
 TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
 CHOICE_MODEL = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_choice_model_2025.csv'
+KICKOFF_SEASONS = (2022, 2023, 2024, 2025, 2026)  # every season whose kickoffs can be drawn; each is kept by regime
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -356,7 +358,7 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
 
 
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
-         overtime_toss=None, overtime_choice=None):
+         overtime_toss=None, overtime_choice=None, target_season=2026, kickoff_before='2026-10-25'):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -372,8 +374,22 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     """
     rows = e1.load(db)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
-    kick_rows = [r for r in rows if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
+    kick_rows = [r for r in e1.load_seasons(db, KICKOFF_SEASONS)
+                 if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
     kpool, kex = gs.build_kickoff_pool(kick_rows)
+    if kickoff_before is not None:
+        # The validity cohort's own game is not a kickoff sample: nothing on or after the cutoff date is drawn.
+        kpool = [k for k in kpool if k['game_date'] < kickoff_before]
+    # Kickoffs are drawn only from seasons whose kickoff rules match the target season (rule-regime registry). Seasons are
+    # never pooled across a registered kickoff change, because their spot distributions differ (KS tests in the evidence note).
+    registry, registry_sha = rr.load_registry()
+    target_rules = rr.active_rules(registry, target_season, 'REG', 'kickoff')
+    pool_seasons = sorted({k['season'] for k in kpool})
+    target_seasons = rr.seasons_with_same_rules(registry, target_season, pool_seasons, 'REG', 'kickoff')
+    if not target_seasons:
+        raise SystemExit(f'no kickoff season in the pool has the {target_season} kickoff rules {target_rules}')
+    kickoff_counts = {s: sum(1 for k in kpool if k['season'] == s) for s in pool_seasons}
+    kpool = [k for k in kpool if k['season'] in target_seasons]
     kicks = mk.load_kick_table(db)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
@@ -396,6 +412,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
                              overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice)
     reference.overtime_try_sha256 = try_fallback_sha
+    reference.kickoff_regime = {'target_season': target_season, 'rule_ids': target_rules, 'seasons': target_seasons,
+                                'samples': len(kpool), 'samples_by_season': kickoff_counts,
+                                'registry_sha256': registry_sha}
     reference.overtime_choice_sha256 = choice_sha
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha
