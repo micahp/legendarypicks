@@ -1,0 +1,61 @@
+{
+  "full_depth_builder": {
+    "branch": "feat/statistical-full-game-e2-2026-10-25",
+    "commit": "45aadecc893353b7435151c3234f010a94558049",
+    "file": "scripts/nfl_sequence/build_full_depth_roster_snapshot.py",
+    "file_sha256": "f24f6d58b03de47f2e28786d9a835bf034be9211dd90e1f97d18c8728857d649",
+    "repository": "micahp/legendarypicks",
+    "worktree_dirty": false
+  },
+  "identity_lookup": {
+    "join": "players.league = nfl AND players.nfl_gsis_id = depth_chart.gsis_id",
+    "mode": "read-only",
+    "resolved_unique_players": 126,
+    "source": "Legendary Picks canonical players table",
+    "unresolved_unique_players": 0
+  },
+  "output": {
+    "file": "kc-sea-2026-10-25-full-depth.json",
+    "generated_at": "2026-10-26T04:15:31Z",
+    "missing_jersey_numbers": 0,
+    "role_row_counts": {
+      "KC": 74,
+      "SEA": 70
+    },
+    "sha256": "10739efdc9cf59f1b1997497dc2602b80848e8d5519eca7c951f5871e3e515b1",
+    "starter_role_counts": {
+      "KC": 28,
+      "SEA": 28
+    },
+    "unique_player_counts": {
+      "KC": 63,
+      "SEA": 63
+    }
+  },
+  "schema": "lp-nfl-full-depth-roster-provenance-1",
+  "source_artifacts": [
+    {
+      "last_modified_utc": "2026-10-25T12:30:59Z",
+      "name": "depth_charts_2026.parquet",
+      "sha256": "9a26512f012539cd1cbe6bb6d9fd2299834d7585caefc7ba4b16952eb6683a1d",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+    },
+    {
+      "last_modified_utc": "2026-10-25T12:34:28Z",
+      "name": "roster_2026.parquet",
+      "sha256": "fd3f40c499c7aca781a1204eb320de390c938a4b7971a6c2dffbae279fff6856",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/rosters/roster_2026.parquet"
+    }
+  ],
+  "starter_builder": {
+    "branch": "feat/nfl-roster-full-depth-2026-10-26",
+    "commit": "4ee931a4379567978d87491b3c0e4ae55055b8b9",
+    "file": "backend/build_nfl_starters_snapshot.py",
+    "file_sha256": "7fe1923608c5bd72396fe3dff52020a9df9697d97935959a8f32cd727060738e",
+    "repository": "micahp/legendarypicks"
+  },
+  "starter_snapshot": {
+    "file": "kc-sea-2026-10-25-starters.json",
+    "sha256": "576539fbde25c670be1f00d858f761548e36e66a982c717827fbb4f3f4a00f51"
+  }
+}
