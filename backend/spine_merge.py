@@ -66,6 +66,11 @@ except ImportError:  # a database or checkout without it simply has no published
 
 _NO_MINT_LEAGUES = frozenset(getattr(published_roster, "NO_MINT_LEAGUES", ()))
 
+# A key binds only on its own evidence. Name and club, even with the same publisher already on that
+# player, bound the wrong people in the 2026-10-27 incident (a namesake and a transfer). Until the
+# evidence check exists these binds are reported for review and left unbound.
+BIND_BY_NAME_AND_CLUB = False
+
 
 def referencing_columns(con) -> List[Tuple[str, str]]:
     """Every (table, column) that holds a players.id, discovered from the schema.
@@ -327,6 +332,10 @@ def _unbound_binds(con, league: Optional[str], merged_away) -> Tuple[List[Bind],
         if not held:
             refused.append((lg, name, "{}={} matches player {} by name and club, but {} lists no key for "
                             "them yet; not bound".format(source, key, owner, source)))
+            continue
+        if not BIND_BY_NAME_AND_CLUB:
+            refused.append((lg, name, "{}={} matches player {} by name and club only; not bound for review"
+                            .format(source, key, owner)))
             continue
         per_owner.setdefault((lg, owner, source), []).append(Bind(lg, source, key, owner, name))
     binds: List[Bind] = []
