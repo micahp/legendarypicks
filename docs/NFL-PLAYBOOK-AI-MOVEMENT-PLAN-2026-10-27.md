@@ -139,6 +139,30 @@ order, and the holdout rule does not allow tuning on 2026. The protocol is:
 
 Items 2 and 3 use 2022 and 2023 data. They are not 2025 or 2026 results and are not holdout evidence.
 
+### 8B. Revised direction (2026-10-27): match what the AI does, not the outcome
+
+The user's direction: take the existing movement AI (trained on 2022 tracking), train it further on 2025 data, test it
+once on 2026 as a holdout, and then let 2026 join training after that test. The goal is to match behaviour. It is not
+to predict outcomes.
+
+What this needs and what exists:
+
+1. **Movement matching needs frame-level tracking for 2025 and 2026.** Neither is on disk (section 8). So the movement
+   version of this direction cannot run yet. This is a data blocker, not a method choice.
+2. **Decision matching can run now.** The AI's decisions per play are: formation, personnel, run or pass, run gap,
+   pass depth and location, routes, coverage shell, man or zone, pressure and rusher count. Those are observed in 2025
+   participation and charting, and in 2026 play-by-play and charting (weeks 1 to 7). Participation for 2026 is not on
+   disk, so 2026 is tested only on the decisions it has.
+3. **Training.** Playbook priors fitted on 2025 (section 8A, step 1). Nothing else is fitted on 2025 until a 2025 tracking
+   source exists.
+4. **Metric.** For each decision category, the total-variation distance between the AI's generated distribution and the
+   observed distribution, with a bootstrap interval over games. It is a behaviour metric. It scores no outcome.
+5. **Holdout.** One test on 2026 weeks 1 to 7, the weeks the playbook is frozen to. The test set and the metric are fixed
+   before the run. After the run, 2026 weeks can join training for a later version. That version can no longer use those
+   weeks as a holdout, and the first result is kept in the record.
+6. **Movement check on 2026 later.** Once a 2025 or 2026 tracking source is named, step 2 of section 8A is repeated on it,
+   and positional matching is added to the decision matching.
+
 ## 9. Execution
 
 - **Owner.** hermes2, on the Gridiron repo. The LP side reviews the outputs.
