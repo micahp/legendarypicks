@@ -36,7 +36,7 @@ class Gaps(unittest.TestCase):
 
     def test_the_overtime_row_has_its_adversarial_test(self):
         r07 = next(r for r in tb.ROWS if r['id'] == 'R07')
-        self.assertIn('test_game_state.ScopeRefusals.test_a_tied_game_with_its_overtime_block_removed_is_refused',
+        self.assertIn('test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused',
                       r07['adversarial'])
 
 

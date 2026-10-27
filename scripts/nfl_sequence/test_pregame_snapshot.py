@@ -1,14 +1,18 @@
 import hashlib
 import json
+import sqlite3
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import pregame_snapshot as snapshot_module  # noqa: E402
+
+GAME = '2026_07_KC_SEA'
 
 
 class FullDepthRosterSnapshot(unittest.TestCase):
@@ -113,6 +117,52 @@ class FullDepthRosterSnapshot(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'published after the frozen pregame cutoff'):
             snapshot_module.apply_full_depth_roster_snapshot(
                 self.snapshot, str(self.roster_path), str(self.provenance_path))
+
+
+class ScheduleAsOf(unittest.TestCase):
+    """The schedule block in force at a cutoff. The pinned fixture holds the only surviving copy of
+    the 2026-10-25 version, so it is the reference a rebuild from the versions table must reproduce."""
+
+    COLUMNS = ('game_id', 'observed_at', 'season', 'game_type', 'week', 'gameday', 'gametime',
+               'away_team', 'home_team', 'location', 'source')
+
+    def setUp(self):
+        self.con = sqlite3.connect(':memory:')
+        self.con.row_factory = sqlite3.Row
+        self.con.execute('CREATE TABLE nfl_schedule_versions (game_id TEXT, observed_at TEXT, season INTEGER, '
+                         'game_type TEXT, week INTEGER, gameday TEXT, gametime TEXT, away_team TEXT, '
+                         'home_team TEXT, location TEXT, source TEXT, PRIMARY KEY (game_id, observed_at))')
+
+    def _version(self, observed_at, **fields):
+        row = {'game_id': GAME, 'season': 2026, 'game_type': 'REG', 'week': 7, 'gameday': '2026-10-25',
+               'gametime': '20:20', 'away_team': 'KC', 'home_team': 'SEA', 'location': 'Home',
+               'source': 'nflverse_games', **fields}
+        self.con.execute('INSERT INTO nfl_schedule_versions (observed_at, {}) VALUES ({})'.format(
+            ', '.join(row), ', '.join('?' * (len(row) + 1))), [observed_at, *row.values()])
+
+    def test_returns_the_version_in_force_and_never_a_later_one(self):
+        self._version('2026-10-25 21:31:39', gametime='20:20')
+        self._version('2026-10-26 10:00:01', gametime='21:00')
+        before = datetime(2026, 10, 26, 9, 59, 59, tzinfo=timezone.utc)
+        after = datetime(2026, 10, 26, 10, 0, 1, tzinfo=timezone.utc)
+        self.assertEqual(snapshot_module.schedule_at(self.con, GAME, before)['gametime'], '20:20')
+        self.assertEqual(snapshot_module.schedule_at(self.con, GAME, after)['gametime'], '21:00')
+
+    def test_none_before_the_first_version(self):
+        self._version('2026-10-25 21:31:39')
+        cutoff = datetime(2026, 10, 25, 21, 31, 38, tzinfo=timezone.utc)
+        self.assertIsNone(snapshot_module.schedule_at(self.con, GAME, cutoff))
+
+    def test_pinned_fixture_schedule_block_is_recovered_at_its_as_of(self):
+        fixture = json.loads((REPO / 'docs/fixtures/pregame/game-kc-sea-seed1-full-depth.json').read_text())
+        block = fixture['pregame_snapshot']['schedule']
+        self._version(block['ingested_at'], **{k: block[k] for k in self.COLUMNS
+                                               if k in block and k not in ('observed_at', 'location')})
+        cutoff = snapshot_module.parse_as_of(fixture['pregame_snapshot']['as_of'])
+        got = snapshot_module.schedule_at(self.con, GAME, cutoff)
+        keys = ('game_id', 'season', 'game_type', 'week', 'gameday', 'gametime', 'away_team', 'home_team',
+                'source', 'ingested_at')
+        self.assertEqual({k: got[k] for k in keys}, {k: block[k] for k in keys})
 
 
 if __name__ == '__main__':
