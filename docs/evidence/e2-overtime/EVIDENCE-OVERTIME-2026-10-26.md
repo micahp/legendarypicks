@@ -57,7 +57,9 @@ Result (300 pinned seeds, unconditional try policy):
 | blocked before regulation end | 7 |
 | failed | 0 |
 
-- Overtime games: 12. Eleven were decided (home 5, away 6). One ended in a tie after the period.
+- Overtime games: 12. Eleven were decided (home 7, away 4). One ended in a tie after the period.
+- These are the results of the team-label fix (`1260efd8`, cherry-picked from `6a372169`). The earlier run had
+  overtime handoffs carrying club codes instead of simulated team labels, so its overtime paths were wrong.
 - Blocked, by name: `thin_kick_cell:field_goal:50+` 3, `blocked_kick_receiving_return_outside_field` 2,
   `blocked_kick_kicking_return_outside_field` 1, `blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review` 1.
 
@@ -69,6 +71,11 @@ the difference as independent Monte Carlo.
 
 ## Development history
 
+- **Team-label correction.** Overtime handoffs used the historical club code as the team label. `other()` then mapped
+  every label other than `A` to `A`, so drives after a non-scoring overtime ending were attributed to the wrong team.
+  The fix hands the ball to the other simulated team and keeps the club code as source provenance. The corrected runs
+  are `validity-300-observed-overtime-teamfix` and `validity-300-control-teamfix`. The earlier `-r2` files are superseded.
+
 - The first treatment run ended with 11 failed seeds. Causes: observed drives have no plays, so the stats reconciliation,
   the missed-field-goal return check, and the field-goal points check all failed on them; and the try tally indexed the
   last play of every drive. Each was fixed by treating observed drives explicitly. An earlier try-tally crash also lost a
@@ -78,6 +85,8 @@ the difference as independent Monte Carlo.
 
 ## Files
 
-- `validity-300-control-r2.csv` and `.json`: table off. Identical to the blocked-kick arm.
-- `validity-300-observed-overtime-r2.csv` and `.json`: table on.
+- `validity-300-control-teamfix.csv` and `.json`: table off, after the team-label fix. Identical to the blocked-kick arm.
+- `validity-300-observed-overtime-teamfix.csv` and `.json`: table on, after the team-label fix. The current result.
+- `validity-300-control-r2.csv` and `.json`, `validity-300-observed-overtime-r2.csv` and `.json`: superseded by the
+  team-label fix. Kept for the record.
 - `docs/fixtures/e2/overtime_drives_2022_2025.csv` and `.manifest.json`: the observed drive pool.
