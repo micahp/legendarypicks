@@ -67,6 +67,8 @@ def _entry(payload: dict, data: bytes, path: Path, run_id: str, created: str) ->
         'availability_snapshot_id': availability['snapshot_id'] if availability else None,
         'availability_snapshot_sha256': availability['content_sha256'] if availability else None,
         'availability_classification': availability['classification'] if availability else None,
+        'game_info_snapshot_id': (payload.get('game_info') or {}).get('snapshot_id'),
+        'game_info_snapshot_sha256': (payload.get('game_info') or {}).get('content_sha256'),
         'exploratory': bool(reasons), 'exploratory_reasons': reasons,
     }
 
