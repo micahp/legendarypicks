@@ -42,6 +42,7 @@ import pregame_batch as aggregation  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import pregame_context  # noqa: E402
 import availability_adapter  # noqa: E402
+import game_info_snapshot  # noqa: E402
 import sim_run_registry  # noqa: E402
 import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
@@ -359,6 +360,9 @@ def run_batch(args):
         availability_path = args.availability_snapshot or availability_adapter.select(
             args.availability_store, snapshot['schedule']['season'], snapshot['schedule']['week'], snapshot['as_of'])
         availability_adapter.apply(snapshot, availability_path)
+    game_info = None
+    if args.game_info_snapshot:
+        game_info = game_info_snapshot.attach(args.game_info_snapshot, snapshot['schedule']['game_id'])
     snapshot_seconds = time.monotonic() - snapshot_started
     contextual = None
     cutoff_pool_mode = args.context_mode != 'unconditioned'
@@ -505,6 +509,7 @@ def run_batch(args):
         'summary': summary,
         'player_projections': _player_projections(snapshot, player_totals, games_with_player_stats),
         'replay_examples': replay_examples,
+        'game_info': game_info,
     }
     if args.out:
         out = Path(args.out)
@@ -560,6 +565,9 @@ def main(argv=None):
                                                      'selecting from --availability-store'))
     ap.add_argument('--register-dir', help=('write the run read-only under this store and append its index line, '
                                             'so downstream code can find it'))
+    ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
+                                                  'context: venue capacity, kickoff, forecast, referee status and '
+                                                  'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
     if not args.out and not args.register_dir:
         ap.error('pass --out, --register-dir, or both')

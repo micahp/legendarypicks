@@ -25,7 +25,7 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
-VENUES = HERE / 'venues.json'
+VENUES = Path('/root/lp-snapshots/nfl-game-info/2026/week08/2026-10-27T1900Z/venues.json')
 SEASONS = [2022, 2023, 2024, 2025]
 TRAIN = [2022, 2023, 2024]
 TEST = [2025]
