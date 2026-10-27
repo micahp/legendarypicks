@@ -1,0 +1,29 @@
+[
+  {
+    "league": "mls",
+    "source": "fotmob",
+    "key": "1259117",
+    "team": "Los Angeles FC",
+    "team_code": "LAFC",
+    "player_id": null,
+    "updated_at": "2026-09-27T16:12:27.079151+00:00"
+  },
+  {
+    "league": "lcup",
+    "source": "fotmob",
+    "key": "1259117",
+    "team": "Los Angeles FC",
+    "team_code": "LAFC",
+    "player_id": null,
+    "updated_at": "2026-09-27T16:12:27.079151+00:00"
+  },
+  {
+    "league": "mls",
+    "source": "fotmob",
+    "key": "1787871",
+    "team": "Red Bull New York",
+    "team_code": "RBNY",
+    "player_id": null,
+    "updated_at": "2026-09-07T03:36:24.492938+00:00"
+  }
+]
