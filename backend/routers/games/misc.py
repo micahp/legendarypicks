@@ -13,6 +13,7 @@ from _core import *
 from provenance import publishers_for
 from sport_navigation import league_directory_navigation, prop_navigation
 import scoreboard_store
+import identity_status
 import league_readiness
 from . import router
 from .contexts import _LCUP_RADIO
@@ -276,9 +277,13 @@ def health():
     this gets polled. Failures degrade to null rather than 500ing: a health
     endpoint that raises when one table is missing tells you less than one that
     answers with the fields it could read.
+
+    `identity_blockers` is the count the last published-rosters run recorded, and
+    `identity_checked_at` is when that run finished: a count is only as current as its check.
     """
     info = {"status": "ok", "db_path": DB, "db_mtime": None,
-            "newest_prop_captured": None, "newest_game_date": None}
+            "newest_prop_captured": None, "newest_game_date": None,
+            "identity_blockers": None, "identity_checked_at": None}
     try:
         con = _db()
     except Exception as exc:
@@ -296,6 +301,10 @@ def health():
             info[key] = con.execute(sql).fetchone()[0]
         except Exception:
             pass
+    try:
+        info["identity_blockers"], info["identity_checked_at"] = identity_status.last_run(con)
+    except Exception:
+        pass
     return info
 
 
