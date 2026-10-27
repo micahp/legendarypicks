@@ -1,0 +1,441 @@
+{
+  "drive": {
+    "clock_clamped_plays": 0,
+    "clock_runoff_total_seconds": 88,
+    "field_goal_attempts": 0,
+    "first_downs": 0,
+    "plays": 4,
+    "plays_with_negative_yards": 2,
+    "punts": 0,
+    "quarter_changes": 0,
+    "terminal": "turnover_on_downs",
+    "touchdown": false,
+    "turnovers": 1,
+    "yards": -9
+  },
+  "gaps": [
+    "field-goal result (made or missed) is not in the published columns: an attempt ends the drive with no points and no next possession. The kickoff after a made kick and the change of possession after a missed kick are not modelled",
+    "clock runoff is the interval between consecutive published snaps in the same quarter, sampled from observed plays. It is not a game-clock model: no clock-stop rules, timeouts or two-minute warning. A runoff longer than the remaining quarter time is clamped to zero and flagged per play, so the clock shows bookkeeping, not realistic clock behaviour",
+    "extra points, kickoffs, two-point tries: not modelled",
+    "not modelled: kickoff after a score, second-half choices and kickoff, real clock-stop rules (timeouts, two-minute warning, out-of-bounds stoppage), penalties",
+    "score, points and player stats: null; touchdown points are not computed",
+    "participants: null; no pregame roster",
+    "punt yardage is not recorded: a punt gives the receiving spot only",
+    "punt pool excludes return touchdowns, penalties and plays with no following snap",
+    "turnovers that are touchdowns excluded from the pool",
+    "personnel is not conditioned; game time is conditioned only through the derived clock",
+    "halftime: the second-half choices and kickoff are not modelled. Normal simulations give each team one half-opening kickoff; that is an authored simulation default for E2, not a rule that the opposite of the opening receiver kicks",
+    "modelled: change of ends at 0:00 of Q1 and Q3 as bookkeeping (direction flips, the same drive and series continue, the period clock resets to 15:00, no kickoff)",
+    "overtime and tie-breaking: not modelled"
+  ],
+  "mode": "drive_statistical_demo",
+  "model_version": "e1-empirical-v0",
+  "outcome_pool": {
+    "excluded_from_pool": {
+      "negative derived clock runoff": 53,
+      "no same-quarter next snap for clock runoff": 27,
+      "penalty (not modelled)": 2666,
+      "punt without a clean receiving-team snap": 969,
+      "qb_scramble (not in E1 vocabulary)": 3883,
+      "turnover that is a touchdown (not modelled)": 204,
+      "turnover without a clean new-offense snap": 366
+    },
+    "pool_sha256": "cf2872733890820801822cdfb914256e3f8adcc3398c5895bad40e747092cfd4",
+    "seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "temporal_eligibility": {
+      "as_of_date": null,
+      "note": "pool spans 2022-2025 with no as-of cutoff; not an as-of simulation",
+      "status": "retrospective"
+    },
+    "usable_plays": 138235
+  },
+  "plays": [
+    {
+      "decision": {
+        "concept": null,
+        "coverage": null,
+        "note": null,
+        "type": "dropback"
+      },
+      "event_type": "sack",
+      "field": {
+        "after": {
+          "dir": 1,
+          "los": 20
+        },
+        "assignment_version": "e1-field-end-v2",
+        "before": {
+          "dir": 1,
+          "los": 25
+        },
+        "source": "authored_demo_orientation"
+      },
+      "id": "e1-own25_q2_120-seed15:1",
+      "outcome": {
+        "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
+        "clock_runoff_seconds": 39,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
+        "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
+        "receiver_id": null,
+        "rusher_id": null,
+        "safety": false,
+        "sampled_from": {
+          "game_date": "2022-09-11",
+          "game_id": "2022_01_PIT_CIN",
+          "play_id": 176
+        },
+        "sampled_touchdown_flag": false,
+        "touchdown": false,
+        "turnover": false,
+        "yards_gained": -5
+      },
+      "sampling": {
+        "cell": [
+          1,
+          "7-10",
+          "50-79"
+        ],
+        "cell_event_counts": {
+          "fumble_lost": 136,
+          "interception": 186,
+          "pass_complete": 8447,
+          "pass_incomplete": 3634,
+          "run": 12125,
+          "sack": 710
+        },
+        "cell_size": 25238
+      },
+      "sequence": 1,
+      "state_after": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 81,
+        "defense_team": "DEF",
+        "down": 2,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 80,
+        "yards_to_go": 15
+      },
+      "state_before": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 120,
+        "defense_team": "DEF",
+        "down": 1,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 75,
+        "yards_to_go": 10
+      }
+    },
+    {
+      "decision": {
+        "concept": null,
+        "coverage": null,
+        "note": null,
+        "type": "dropback"
+      },
+      "event_type": "pass_complete",
+      "field": {
+        "after": {
+          "dir": 1,
+          "los": 22
+        },
+        "assignment_version": "e1-field-end-v2",
+        "before": {
+          "dir": 1,
+          "los": 20
+        },
+        "source": "authored_demo_orientation"
+      },
+      "id": "e1-own25_q2_120-seed15:2",
+      "outcome": {
+        "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
+        "clock_runoff_seconds": 29,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
+        "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
+        "receiver_id": null,
+        "rusher_id": null,
+        "safety": false,
+        "sampled_from": {
+          "game_date": "2022-10-03",
+          "game_id": "2022_04_LA_SF",
+          "play_id": 2921
+        },
+        "sampled_touchdown_flag": false,
+        "touchdown": false,
+        "turnover": false,
+        "yards_gained": 2
+      },
+      "sampling": {
+        "cell": [
+          2,
+          "11+",
+          "80-99"
+        ],
+        "cell_event_counts": {
+          "fumble_lost": 1,
+          "interception": 15,
+          "pass_complete": 518,
+          "pass_incomplete": 234,
+          "run": 244,
+          "sack": 26
+        },
+        "cell_size": 1038
+      },
+      "sequence": 2,
+      "state_after": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 52,
+        "defense_team": "DEF",
+        "down": 3,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 78,
+        "yards_to_go": 13
+      },
+      "state_before": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 81,
+        "defense_team": "DEF",
+        "down": 2,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 80,
+        "yards_to_go": 15
+      }
+    },
+    {
+      "decision": {
+        "concept": null,
+        "coverage": null,
+        "note": null,
+        "type": "dropback"
+      },
+      "event_type": "pass_complete",
+      "field": {
+        "after": {
+          "dir": 1,
+          "los": 16
+        },
+        "assignment_version": "e1-field-end-v2",
+        "before": {
+          "dir": 1,
+          "los": 22
+        },
+        "source": "authored_demo_orientation"
+      },
+      "id": "e1-own25_q2_120-seed15:3",
+      "outcome": {
+        "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
+        "clock_runoff_seconds": 20,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
+        "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
+        "receiver_id": null,
+        "rusher_id": null,
+        "safety": false,
+        "sampled_from": {
+          "game_date": "2023-12-03",
+          "game_id": "2023_13_MIA_WAS",
+          "play_id": 1663
+        },
+        "sampled_touchdown_flag": false,
+        "touchdown": false,
+        "turnover": false,
+        "yards_gained": -6
+      },
+      "sampling": {
+        "cell": [
+          3,
+          "11+",
+          "50-79"
+        ],
+        "cell_event_counts": {
+          "fumble_lost": 17,
+          "interception": 39,
+          "pass_complete": 1129,
+          "pass_incomplete": 529,
+          "run": 177,
+          "sack": 225
+        },
+        "cell_size": 2116
+      },
+      "sequence": 3,
+      "state_after": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 32,
+        "defense_team": "DEF",
+        "down": 4,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 84,
+        "yards_to_go": 19
+      },
+      "state_before": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 52,
+        "defense_team": "DEF",
+        "down": 3,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 78,
+        "yards_to_go": 13
+      }
+    },
+    {
+      "decision": {
+        "concept": null,
+        "coverage": null,
+        "note": "4th-down choice sampled from observed plays in the cell (go-for-it, punt or field-goal attempt)",
+        "type": "dropback"
+      },
+      "event_type": "pass_incomplete",
+      "field": {
+        "after": {
+          "dir": -1,
+          "los": 16
+        },
+        "assignment_version": "e1-field-end-v2",
+        "before": {
+          "dir": 1,
+          "los": 16
+        },
+        "source": "authored_demo_orientation"
+      },
+      "id": "e1-own25_q2_120-seed15:4",
+      "outcome": {
+        "clock_clamped_to_zero": false,
+        "clock_only_terminal": false,
+        "clock_runoff_seconds": 0,
+        "field_goal_attempt": false,
+        "final_play_yardline_100": null,
+        "passer_id": null,
+        "punt": false,
+        "quarter_change": false,
+        "receiver_id": null,
+        "rusher_id": null,
+        "safety": false,
+        "sampled_from": {
+          "game_date": "2022-11-06",
+          "game_id": "2022_09_TEN_KC",
+          "play_id": 4640
+        },
+        "sampled_touchdown_flag": false,
+        "touchdown": false,
+        "turnover": true,
+        "yards_gained": 0
+      },
+      "sampling": {
+        "cell": [
+          4,
+          "11+",
+          "80-99"
+        ],
+        "cell_event_counts": {
+          "interception": 3,
+          "pass_complete": 6,
+          "pass_incomplete": 10,
+          "punt": 547,
+          "run": 1,
+          "sack": 1
+        },
+        "cell_size": 568
+      },
+      "sequence": 4,
+      "state_after": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 32,
+        "defense_team": "OFF",
+        "down": 1,
+        "drive_index": 1,
+        "end_of_drive": "turnover_on_downs",
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "DEF",
+        "quarter": 2,
+        "yardline_100": 16,
+        "yards_to_go": 10
+      },
+      "state_before": {
+        "away_score": null,
+        "away_timeouts": null,
+        "clock_seconds": 32,
+        "defense_team": "DEF",
+        "down": 4,
+        "drive_index": 1,
+        "home_score": null,
+        "home_timeouts": null,
+        "offense_team": "OFF",
+        "quarter": 2,
+        "yardline_100": 84,
+        "yards_to_go": 19
+      }
+    }
+  ],
+  "provenance": {
+    "as_of_utc": null,
+    "lineups": null,
+    "motion": null,
+    "outcomes": "sampled_empirical_nfl_pbp",
+    "routes": null,
+    "snapshot_hash": null,
+    "sources_as_of_verified": false
+  },
+  "rules_version": "e1-drive-2026-10-24",
+  "schema_version": "1.1",
+  "seed": 15,
+  "simulation_id": "e1-own25_q2_120-seed15",
+  "start_state": {
+    "clock": 120,
+    "defense": "DEF",
+    "dir": 1,
+    "down": 1,
+    "offense": "OFF",
+    "quarter": 2,
+    "source": "authored demonstration state, not a pregame state",
+    "togo": 10,
+    "yl": 75
+  },
+  "valid_full_game": false
+}

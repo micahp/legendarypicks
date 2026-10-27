@@ -1,0 +1,37 @@
+{
+ "extra_point": {
+  "cross_tab": {
+   "blocked x success 0.0": 38,
+   "failed x success 0.0": 178,
+   "good x success 1.0": 4643,
+   "missing x success 0.0": 10,
+   "missing x success 1.0": 1
+  },
+  "publisher_failed": 178,
+  "publisher_good": 4643,
+  "publisher_rate": 0.9631,
+  "success_flag_on_publisher_failed_rows": {
+   "success_0": 178,
+   "success_1": 0
+  },
+  "success_rate_all_rows_naive": 0.9536,
+  "success_rate_on_the_same_rows": 0.9631
+ },
+ "reading": "The success flag is EPA-positive and is not a make result, so no rate is built on it. In this window it happens to agree with the publisher on every good and failed extra point and on every two-point try. It does not agree on blocked extra points, which it records as misses, and on rows with no result. A success-based rate would therefore differ from the publisher rate by the blocked rows. The engine reads only the publisher fields (measure_kick_outcomes.load_try_results), and the tool prints no success-based rate (test_kick_results.test_the_tool_contains_no_rate_built_on_the_success_flag).",
+ "source": {
+  "database": "backend/data/picks.dev.db (read-only)",
+  "sha256": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93",
+  "table": "docs/fixtures/e2/kick_results_2022_2025.csv",
+  "window": "season BETWEEN 2022 AND 2025 AND week <= 18"
+ },
+ "two_point": {
+  "cross_tab": {
+   "failure x success 0.0": 269,
+   "success x success 1.0": 240
+  },
+  "publisher_failure": 269,
+  "publisher_rate": 0.4715,
+  "publisher_success": 240,
+  "success_rate_on_the_same_rows": 0.4715
+ }
+}

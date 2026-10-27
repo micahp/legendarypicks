@@ -1,0 +1,37 @@
+{
+ "e1_unrestricted_pool_overtime_entries": 862,
+ "excluded_kickoffs_reported_by_loader": 1,
+ "overtime_rows_in_regulation_only_kickoff_pool": 0,
+ "overtime_rows_in_regulation_only_play_pool": 0,
+ "overtime_rows_in_window": 1214,
+ "pool_scope_reported_by_reference": {
+  "kick_table": "not filtered: the published kick rates include overtime kicks",
+  "overtime_rows_excluded_from_pool": 1214,
+  "overtime_rows_removed_before_kickoff_pool": 1214,
+  "regulation_only": true
+ },
+ "reading": "These rows are reported for information only. The successor is regulation only, so no simulated game draws from them. The E1 standalone pool (e1_drive.build_pool with regulation_only=False) still carries them, and that behaviour is unchanged: the frozen E1 fixtures depend on it.",
+ "separate_evaluation": {
+  "fumbles_lost": 6,
+  "interceptions": 9,
+  "play_type_mix": {
+   "extra_point": 4,
+   "field_goal": 46,
+   "kickoff": 78,
+   "no_play": 149,
+   "none": 63,
+   "pass": 470,
+   "punt": 50,
+   "qb_kneel": 4,
+   "qb_spike": 2,
+   "run": 348
+  },
+  "touchdowns": 30,
+  "used_for_sampling": false
+ },
+ "source": {
+  "database": "backend/data/picks.dev.db (read-only)",
+  "engine_reference": "e2_reference.load(regulation_only=True)",
+  "window": "2022-2025, weeks <= 18"
+ }
+}

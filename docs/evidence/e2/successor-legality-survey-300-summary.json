@@ -1,0 +1,357 @@
+{
+ "blocked_never_complete": true,
+ "checker_illegal": [],
+ "checker_legal": 300,
+ "complete_regulation": 288,
+ "matches_frozen_survey": 281,
+ "matrix_fail_rows": 0,
+ "mismatches_vs_frozen": [
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 9,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 9
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 36,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 36
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 48,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 48
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 55,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 55
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 78,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 78
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 87,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 87
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 114,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 114
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 163,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 163
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 175,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 175
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 185,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 185
+  },
+  {
+   "engine_now": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 194,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 194
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 216,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "thin_kick_cell:field_goal:50+",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 216
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 246,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 246
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 267,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 267
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 276,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 276
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 279,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 279
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 280,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 280
+  },
+  {
+   "engine_now": {
+    "blocker": "overtime_not_modelled",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": false,
+    "matrix_fail": 0,
+    "seed": 290,
+    "status": "blocked"
+   },
+   "frozen": {
+    "blocker": "",
+    "complete_game": "True",
+    "matrix_fail": "0",
+    "status": "complete_regulation"
+   },
+   "seed": 290
+  },
+  {
+   "engine_now": {
+    "blocker": "",
+    "checker_failed_checks": "",
+    "checker_legal": true,
+    "complete_regulation": true,
+    "matrix_fail": 0,
+    "seed": 291,
+    "status": "complete_regulation"
+   },
+   "frozen": {
+    "blocker": "overtime_not_modelled",
+    "complete_game": "False",
+    "matrix_fail": "0",
+    "status": "blocked"
+   },
+   "seed": 291
+  }
+ ],
+ "seeds": 300,
+ "status": {
+  "blocked": 12,
+  "complete_regulation": 288
+ }
+}

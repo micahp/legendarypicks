@@ -1,0 +1,48 @@
+{
+ "contract": {
+  "copies_identical_on_box": 122,
+  "file": "docs/GRIDIRON-CONTRACT-v1.md (Gridiron repo)",
+  "name": "GRIDIRON-CONTRACT-v1",
+  "sha256": "ae7b8a304dda480c3708b2543172f3fdc5064b156bf1b25816855acf31bc21b7"
+ },
+ "fixtures": {
+  "e2-game-envelope-seed1.json": {
+   "base_commit": "1ca7560924fe",
+   "bytes": 410858,
+   "sha256": "b573713b10b2201c32a0827ab499a5b2b2a6d7de985ab05b7e4bfc51dce1f1a1"
+  },
+  "e2-game-seed1.json": {
+   "bytes": 415555,
+   "sha256": "0a3ed1cb216fa3f23784b427d2bf6e68ac877ab1995fb86cd5998d35d5b47821"
+  },
+  "e2-game-seed1.v1.json": {
+   "bytes": 186469,
+   "sha256": "c4a7c66418172b9101fbae2a6f1ac40d28c6461761db9c6a23116e7cd77a8b5c"
+  },
+  "kick_results_2022_2025.csv": {
+   "bytes": 868572,
+   "sha256": "193f2d2390c36a968b42da1e851eba9c0b0c79bb2822fbcaff4aa3d6d0ce0a93"
+  },
+  "kick_results_2022_2025.csv.manifest.json": {
+   "bytes": 1507,
+   "sha256": "b2ea2680df04538216fc2f5261881cb71dba0e8cea45c40920ed79a0379af5e5"
+  },
+  "play_extras_2022_2025.csv": {
+   "bytes": 1042053,
+   "sha256": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b"
+  },
+  "play_extras_2022_2025.csv.manifest.json": {
+   "bytes": 1164,
+   "sha256": "d19a257612d571e4ad53d89b59572473072b139ed74ec4c424d8e0fc640e79f2"
+  },
+  "survey-300-summary.txt": {
+   "bytes": 3567,
+   "sha256": "d40bffbee49da0cb811825db6791bac57d8851c369ad763f747835560941ac6d"
+  },
+  "survey-per-seed-300.csv": {
+   "bytes": 61339,
+   "sha256": "ee99bcef65024339f09b07ced87290bd57f3d940d7d577ee89abaae63af3580a"
+  }
+ },
+ "raw_source_sha256_file": "/root/nflverse-raw/SHA256SUMS"
+}

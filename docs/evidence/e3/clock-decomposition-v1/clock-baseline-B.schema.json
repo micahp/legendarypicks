@@ -1,0 +1,82 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "additionalProperties": false,
+ "description": "b_pool_eligible = 1 selects the rows B draws from: fit weeks, not censored. censored = 1 is a quarter-end runoff.",
+ "properties": {
+  "b_pool_eligible": {
+   "type": "string"
+  },
+  "censored": {
+   "type": "string"
+  },
+  "drive": {
+   "type": "string"
+  },
+  "fit_week": {
+   "type": "string"
+  },
+  "game_id": {
+   "type": "string"
+  },
+  "late": {
+   "type": "string"
+  },
+  "outcome": {
+   "enum": [
+    "fumble",
+    "interception",
+    "pass_complete",
+    "pass_incomplete",
+    "run",
+    "sack",
+    "touchdown"
+   ],
+   "type": "string"
+  },
+  "play_id": {
+   "type": "string"
+  },
+  "qsr_s": {
+   "type": "string"
+  },
+  "qtr": {
+   "type": "string"
+  },
+  "runoff_s": {
+   "type": "string"
+  },
+  "stop": {
+   "enum": [
+    "incomplete_pass",
+    "none_observed",
+    "out_of_bounds",
+    "penalty",
+    "sack",
+    "timeout",
+    "touchdown",
+    "turnover"
+   ],
+   "type": "string"
+  },
+  "week": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "game_id",
+  "play_id",
+  "week",
+  "qtr",
+  "drive",
+  "outcome",
+  "stop",
+  "late",
+  "qsr_s",
+  "runoff_s",
+  "censored",
+  "fit_week",
+  "b_pool_eligible"
+ ],
+ "title": "Baseline B runoff rows, one row per LP play in weeks 1-9 with a modelled runoff",
+ "type": "object"
+}
