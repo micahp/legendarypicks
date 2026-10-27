@@ -1,0 +1,73 @@
+{
+ "active_rule_ids": [
+  "2010-SNAPPER",
+  "2013-KICK-D-BUNCH",
+  "2013-TUCK",
+  "2014-LOOSE-REC",
+  "2014-SACK-CLOCK",
+  "2015-PAT-SPOT",
+  "2015-TRY-DEF-RETURN",
+  "2016-CHOP",
+  "2017-LEAPER",
+  "2018-CATCH",
+  "2018-OT-RETURN-CONT",
+  "2018-WALKOFF-TRY",
+  "2020-PI-REVIEW-ENDED",
+  "2020-RET-PROTECT",
+  "2021-REPLAY-ASSIST",
+  "2021-SEASON-17G",
+  "2024-HIP-DROP",
+  "2025-KO-PERM-TB35",
+  "2025-ONSIDE-TRAILING-ANY",
+  "2025-REG-OT-BOTH",
+  "2025-REPLAY-ASSIST",
+  "2026-DISQUALIFY",
+  "2026-KO-50-TB",
+  "2026-KO-SETUP",
+  "2026-ONSIDE-LANGUAGE"
+ ],
+ "blocker_counts": {
+  "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review": 3,
+  "blocked_kick_outcome_unresolved:punt:guarded_penalty_fumble_or_review": 1,
+  "blocked_kick_receiving_return_outside_field": 1,
+  "thin_kick_cell:field_goal:50+": 3
+ },
+ "failed_errors": [],
+ "kickoff_regime": null,
+ "outcome_counts": {
+  "blocked_before_regulation_end": 8,
+  "failed": 0,
+  "regulation_end_not_valid": 0,
+  "tied_at_regulation_end": 0,
+  "valid": 292
+ },
+ "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+ "policy": "unconditional",
+ "reference_excluded_kickoffs": {
+  "kickoff without a clean receiving snap": 958
+ },
+ "reference_sha256": "e30321253fe172025e81fea19e3f867472a73b22e7a19bd8ea3bf1cf65c31e18",
+ "rule_registry_sha256": "719983ba19818b3a28b5a68269b8c2fd64ce038ca072bc3e9346de7cafcc26f8",
+ "run_snapshot_sha256": "ddca50091943ee2447afa13c987244fc0d15daa48bad7b9810b34fd92d1b207e",
+ "scope_out_counts": {
+  "blocked-kick transition unresolved": 5,
+  "rare kick outcome": 3
+ },
+ "seconds_reference_load": 11.2,
+ "seconds_total": 707.0,
+ "seeds": [
+  1,
+  300
+ ],
+ "source_files_sha256": {
+  "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+  "scripts/nfl_sequence/e1_drive.py": "e386c93bed15be006dfd99313c92cb76d73ed23dc1da391cbfd84da9e3eb8101",
+  "scripts/nfl_sequence/e2_reference.py": "fa708342c05c651709496514b2d739c1860ad5544ad98687ceada0e3cade38d7",
+  "scripts/nfl_sequence/game_state.py": "a213e81075b1f367adc209ae959b8d87588ed95a393b6b8b8740b7234094106c",
+  "scripts/nfl_sequence/rules_matrix.py": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
+  "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
+  "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef"
+ },
+ "tied_at_regulation_end_seeds": [],
+ "try_policy": null
+}

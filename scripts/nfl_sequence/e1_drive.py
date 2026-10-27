@@ -63,12 +63,18 @@ FLIP_AFTER = (1, 3)  # both teams change goals after Q1 and Q3 (rules file, sect
 
 
 def load(db):
+    return load_seasons(db, POOL_SEASONS)
+
+
+def load_seasons(db, seasons):
+    """Regular-season plays for the given seasons, in game order. Used for kickoffs, which the 2026 season needs beyond the pool."""
+    seasons = sorted(seasons)
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     rows = [dict(zip(COLUMNS, r)) for r in con.execute(
         f"SELECT {', '.join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 "
-        "ORDER BY game_id, play_id", (min(POOL_SEASONS), max(POOL_SEASONS)))]
+        "ORDER BY game_id, play_id", (seasons[0], seasons[-1]))]
     con.close()
-    return rows
+    return [r for r in rows if r['season'] in seasons]
 
 
 def classify(row, nxt, excluded):
@@ -156,7 +162,9 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id, special_teams=None):
+def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None):
+    """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
+    `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -170,13 +178,17 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
     st = {'quarter': start_quarter, 'offense': start_offense, 'defense': start_defense, 'down': start['down'],
           'togo': start['togo'], 'yl': start['yl'], 'clock': start['clock']}
     plays, terminal = [], None
+    def halt(reason):
+        if partial is not None:
+            partial.extend(plays)
+        return None, reason
     while terminal is None:
         if len(plays) >= MAX_PLAYS:
-            return None, f'exceeded {MAX_PLAYS} plays without a terminal'
+            return halt(f'exceeded {MAX_PLAYS} plays without a terminal')
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         cell = pool.get(key, [])
         if len(cell) < MIN_POOL:
-            return None, f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback'
+            return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         shares = Counter(ev for ev, _, _, _ in cell)
         selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
         cands = sorted([x for x in cell if x[0] == selected_event], key=lambda x: (x[1]['game_id'], x[1]['play_id']))
@@ -187,7 +199,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
             resolution = special_teams(selected_event, st, row, runoff, spot, rng)
             if resolution and resolution.get('blocker'):
-                return None, resolution['blocker']
+                return halt(resolution['blocker'])
             if resolution:
                 event = resolution.get('event', selected_event)
                 runoff = resolution.get('clock_runoff_seconds', runoff)
@@ -195,9 +207,19 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
                 kick_outcome = resolution.get('kick_outcome')
                 kick_metadata = resolution.get('metadata')
         yards = 0 if event in KICK_EVENTS else int(row['yards_gained'])
-        after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+        try:
+            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+        except reducer.UnmodelledOutcome as blocked:
+            return halt(blocked.reason)
+        if clock is not None:
+            runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'])
+            if refusal:
+                return halt(f'clock model refused: {refusal}')
         clock_raw = st['clock'] - runoff
         clock_after = max(0, clock_raw)
+        if kick_outcome and kick_outcome.get('classification_status') == 'period_expired' and clock_after != 0:
+            # The observed block ended its period; this state's clock has time left, so the no-possession outcome does not fit.
+            return halt('blocked_kick_period_end_not_reached')
         quarter_change = False
         terminal = play_terminal
         # The clock runs out on this play. A play that also hands the ball over still ends at the expiry. In Q1 or Q3 the quarter
@@ -208,8 +230,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
             quarter_change = True  # change of ends; the drive and series continue, no kickoff; a turnover here still ends the drive
         elif clock_expired and st['quarter'] == 2:
             terminal = 'halftime'  # the first-half drive ends; second-half choices and kickoff are not modelled
+        elif clock_expired and st['quarter'] == 5:
+            terminal = 'end_of_overtime'  # the 10-minute overtime period ends; Rule 16 decides the game
         elif clock_expired:
-            terminal = 'end_of_regulation'  # Q4 expiry; overtime and tie-breaking are not modelled
+            terminal = 'end_of_regulation'  # Q4 expiry; a tie goes to overtime (game_state)
         if after is None:  # touchdown, safety, field-goal attempt, halftime, end of regulation: no scrimmage spot
             after = {'offense': st['offense'], 'defense': st['defense'], 'down': None, 'togo': None, 'yl': None}
         ended_by_clock_only = clock_expired and not quarter_change and play_terminal is None  # a possession change keeps its spot
@@ -252,6 +276,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None):
                         'yards_gained': None if event in KICK_EVENTS else yards,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
+                        'turnover_on_downs': flags['turnover_on_downs'],
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
@@ -316,6 +341,8 @@ def check_drive(plays, terminal):
             raise AssertionError(f'play {i + 1}: halftime terminal outside the end of Q2')
         if sa.get('end_of_drive') == 'end_of_regulation' and (sa['quarter'] != 4 or sa['clock_seconds'] != 0):
             raise AssertionError(f'play {i + 1}: regulation terminal outside the end of Q4')
+        if sa.get('end_of_drive') == 'end_of_overtime' and (sa['quarter'] != 5 or sa['clock_seconds'] != 0):
+            raise AssertionError(f'play {i + 1}: overtime terminal outside the end of overtime')
         if i < len(plays) - 1:
             if sa['down'] is None or not 1 <= sa['down'] <= 4 or sa['yardline_100'] is None:
                 raise AssertionError(f'play {i + 1}: non-terminal play has no legal down or field')

@@ -13,10 +13,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
 import game_state as gs  # noqa: E402
 import measure_kick_outcomes as mk  # noqa: E402
+import rule_regimes as rr  # noqa: E402
 
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
+OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
+TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
+CHOICE_MODEL = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_choice_model_2025.csv'
+KICKOFF_SEASONS = (2022, 2023, 2024, 2025, 2026)  # every season whose kickoffs can be drawn; each is kept by regime
+SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
 
@@ -86,9 +92,30 @@ def _reference_fingerprint(reference):
     add(['blocked-kick-source-sha256', reference.blocked_kicks.get('sha256')])
     add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
     add(['blocked-kick-input-source-sha256', reference.blocked_kicks.get('source_hashes')])
+    if reference.safety_kick_pool is not None:
+        # Absent table: the fingerprint, and so every seed's draws, stay as they were before the table existed.
+        for sample in reference.safety_kick_pool:
+            add(['safety-kick-sample', sample])
+        add(['safety-kick-source-sha256', reference.safety_kick_sha256])
+    if reference.overtime_pool is not None:
+        # Absent table: the fingerprint and every seed's draws stay as they were before the overtime table existed.
+        for drive in reference.overtime_pool:
+            add(['overtime-drive', drive])
+        add(['overtime-source-sha256', reference.overtime_sha256])
+    if getattr(reference, 'overtime_try_p_two', None) is not None:
+        for bucket in sorted(reference.overtime_try_p_two):
+            add(['overtime-try-fallback', bucket, reference.overtime_try_p_two[bucket]])
+        add(['overtime-try-fallback-sha256', reference.overtime_try_sha256])
+    if getattr(reference, 'overtime_p_kick', None) is not None:
+        add(['overtime-choice-p-kick', reference.overtime_p_kick])
+        add(['overtime-choice-sha256', reference.overtime_choice_sha256])
+    if getattr(reference, 'overtime_choice', None) is not None:
+        add(['overtime-choice-forced', reference.overtime_choice])
+    if getattr(reference, 'overtime_toss', None) is not None:
+        add(['overtime-toss-override', reference.overtime_toss])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
-    return {
+    summary = {
         'schema': 'lp-e2-observed-reference-3',
         'sha256': digest.hexdigest(),
         **reference.position_usage,
@@ -107,6 +134,14 @@ def _reference_fingerprint(reference):
         'blocked_kick_input_source_sha256': reference.blocked_kicks.get('source_hashes'),
         'play_extras_sha256': extras_hash,
     }
+    if reference.safety_kick_pool is not None:
+        # Added only with the table: the summary is resealed into every snapshot, so an absent table must leave it unchanged.
+        summary['safety_kick_samples'] = len(reference.safety_kick_pool)
+        summary['safety_kick_source_sha256'] = reference.safety_kick_sha256
+    if reference.overtime_pool is not None:
+        summary['overtime_drive_samples'] = len(reference.overtime_pool)
+        summary['overtime_source_sha256'] = reference.overtime_sha256
+    return summary
 
 
 def load_blocked_kicks(path=BLOCKED_KICKS):
@@ -150,6 +185,15 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
             'source_hashes': manifest['sources'], 'source': manifest['source_dataset'], 'window': manifest['window']}
 
 
+# The play extras file spells two clubs as nflverse does (LA, WAS); the play-by-play table spells them LAR and WSH. A timeout
+# caller must match the play's own team codes, so the extras are mapped to the table's codes.
+EXTRAS_TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}
+
+
+def extras_team(code):
+    return EXTRAS_TEAM_CODES.get(code, code)
+
+
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     """Observed play facts keyed by (game_id, play_id), for the window.
 
@@ -168,7 +212,7 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     flags = {}
     with open(extras, newline='') as f:
         for r in csv.DictReader(f):
-            flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), r['timeout_team'],
+            flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), extras_team(r['timeout_team']),
                                                                 int(r['out_of_bounds']))
     out = {}
     for g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type in rows:
@@ -180,6 +224,102 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
                             'timeout': t, 'timeout_team': t_team,
                             'out_of_bounds': oob}
     return out
+
+
+def load_overtime_choice_model(path=CHOICE_MODEL):
+    """The observed kick rate for the winning coach's overtime decision (2025 regular season). Checked against its manifest."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'overtime choice model checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != 1:
+        raise ValueError('the overtime choice model has one fitted row')
+    p = float(rows[0]['p_kick'])
+    if not 0.0 <= p <= 1.0:
+        raise ValueError('overtime p_kick outside [0, 1]')
+    return p, source_hash
+
+
+def load_overtime_try_fallback(path=TRY_FALLBACK):
+    """The conditional overtime try table: the two-point probability for each margin bucket (overtime cells of the fitted
+    table). The file is checked against its manifest before any row is read."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'try fallback checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    table = {r['margin_bucket']: float(r['p_two']) for r in rows if r['group'] == 'ot'}
+    if len(table) != len([b for b in rows if b['group'] == 'ot']):
+        raise ValueError('duplicate overtime margin bucket in the try fallback')
+    if not all(0.0 <= p <= 1.0 for p in table.values()):
+        raise ValueError('try fallback probability outside [0, 1]')
+    return table, source_hash
+
+
+def load_overtime_drive_pool(path=OVERTIME_DRIVES):
+    """Usable observed regular-season overtime drives (Rule 16): how each ended, the points each side scored on it, the clock
+    it used, and the other team's next start. Returns (pool, file sha256). The fixture is checked against its manifest before
+    any row is read; refused rows stay in the file for audit and are never drawn."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'overtime fixture checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != manifest['drive_count']:
+        raise ValueError(f'overtime fixture row count mismatch: {path}')
+    pool = []
+    for row in rows:
+        if row['status'] != 'usable':
+            continue
+        pool.append({'outcome': row['outcome'], 'duration': int(row['duration_seconds']),
+                     'points_offense': int(row['points_offense']), 'points_defense': int(row['points_defense']),
+                     'next_offense': row['next_offense'] or None,
+                     'next_yardline': int(row['next_start_yardline_100']) if row['next_start_yardline_100'] else None,
+                     'try_kind': row['try_kind'] or None,
+                     'try_made': None if row['try_made'] == '' else bool(int(row['try_made'])),
+                     'turnover_kind': row['turnover_kind'],
+                     'game_id': row['game_id'], 'drive': int(float(row['drive']))})
+    if len(pool) != manifest['usable_count']:
+        raise ValueError('overtime usable rows disagree with the manifest')
+    return pool, source_hash
+
+
+def load_safety_kick_pool(path=SAFETY_KICKS):
+    """Usable observed safety free kicks: the receiving team's first snap and the clock it took. Returns (pool, file sha256).
+
+    The fixture is checked against its manifest's checksum and row count before any row is read. Refused rows stay in the
+    file for audit and are never drawn.
+    """
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'safety-kick fixture checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != manifest['record_count']:
+        raise ValueError(f'safety-kick fixture row count mismatch: {path}')
+    pool = []
+    for row in rows:
+        if row['status'] != 'usable':
+            continue
+        spot, runoff = int(row['receiving_snap_yardline_100']), int(row['clock_runoff_seconds'])
+        if not 1 <= spot <= 99 or runoff < 0:
+            raise ValueError(f"safety-kick row {row['safety_play_id']} has an impossible spot or runoff")
+        pool.append({'spot': spot, 'runoff': runoff, 'game_id': row['game_id'], 'game_date': row['game_date'],
+                     'play_id': int(float(row['receiving_snap_play_id'])),
+                     'safety_play_id': int(float(row['safety_play_id'])), 'kick_play_id': int(float(row['kick_play_id'])),
+                     'kick_type': row['kick_type'], 'season': int(row['season'])})
+    if len(pool) != manifest['usable_count']:
+        raise ValueError('safety-kick usable rows disagree with the manifest')
+    return pool, source_hash
 
 
 def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
@@ -217,18 +357,54 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
-def load(db=e1.DEFAULT_DB, regulation_only=True):
+def regime_kickoffs(kpool, target_season, kickoff_before):
+    """Research variant (opt-in): kickoffs only from the seasons whose registered kickoff rules match the target season.
+
+    Seasons are not pooled across a registered kickoff change, because their spot distributions differ (KS tests in the
+    evidence note). Kickoffs on or after `kickoff_before` are dropped, so the validity game is not its own sample.
+    """
+    if kickoff_before is None:
+        raise ValueError('a regime kickoff pool needs kickoff_before')
+    kpool = [k for k in kpool if k['game_date'] < kickoff_before]
+    registry, registry_sha = rr.load_registry()
+    rules = rr.active_rules(registry, target_season, 'REG', 'kickoff')
+    pool_seasons = sorted({k['season'] for k in kpool})
+    seasons = rr.seasons_with_same_rules(registry, target_season, pool_seasons, 'REG', 'kickoff')
+    if not seasons:
+        raise SystemExit(f'no kickoff season in the pool has the {target_season} kickoff rules {rules}')
+    record = {'target_season': target_season, 'rule_ids': rules, 'seasons': seasons, 'kickoff_before': kickoff_before,
+              'samples': sum(1 for k in kpool if k['season'] in seasons),
+              'samples_by_season': {s: sum(1 for k in kpool if k['season'] == s) for s in pool_seasons},
+              'registry_sha256': registry_sha}
+    return [k for k in kpool if k['season'] in seasons], record
+
+
+def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
+         overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
     rows of 2022-2025 are excluded and counted on the reference as `pool_scope`. False reproduces the accepted E2 artifacts,
     which sampled overtime rows. The published kick table is not filtered (its rates include the overtime kicks), and this is
     disclosed on the reference too.
+
+    `try_policy` (opt-in, None by default): a try_policy.TryPolicy that replaces the published two-point share after each
+    touchdown. None keeps the unconditional policy and every existing record unchanged.
+
+    `safety_kick_table` (True by default): sample safety free kicks from the observed 2022-2025 table. False keeps the
+    block, the control arm for the safety correction.
+
+    `kickoff_regime_season` (opt-in, None by default): draw kickoffs only from the seasons whose registered kickoff rules match
+    that season, before `kickoff_before` (required then). None keeps the 2022-2025 kickoff pool that every earlier run used.
     """
     rows = e1.load(db)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
-    kick_rows = [r for r in rows if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
-    kpool, kex = gs.build_kickoff_pool(kick_rows)
+    kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
+    kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
+    kpool, kex = gs.build_kickoff_pool(kick_rows, include_season=kickoff_regime_season is not None)
+    kickoff_regime = None
+    if kickoff_regime_season is not None:
+        kpool, kickoff_regime = regime_kickoffs(kpool, kickoff_regime_season, kickoff_before)
     kicks = mk.load_kick_table(db)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
@@ -242,12 +418,24 @@ def load(db=e1.DEFAULT_DB, regulation_only=True):
             or len(blocked['records']['field_goal']) != sum(x['blocked'] for x in
                                                              blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
+    safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
+    overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
+    try_fallback, try_fallback_sha = load_overtime_try_fallback() if overtime_table else (None, None)
+    choice_p, choice_sha = load_overtime_choice_model() if overtime_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
-                             load_missed_field_goal_pool(db), blocked)
+                             load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
+                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
+                             overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice)
+    reference.overtime_try_sha256 = try_fallback_sha
+    reference.kickoff_regime = kickoff_regime
+    reference.overtime_choice_sha256 = choice_sha
+    reference.safety_kick_sha256 = safety_sha
+    reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
-                            'kick_table': 'not filtered: the published kick rates include overtime kicks'}
+                            'kick_table': 'not filtered: the published kick rates include overtime kicks',
+                            'safety_kick_table': 'observed 2022-2025 regular-season safety free kicks, usable rows only'}
     reference.model_inputs = _reference_fingerprint(reference)
     return reference, kex

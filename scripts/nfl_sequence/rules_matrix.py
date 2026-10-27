@@ -376,6 +376,9 @@ def _clock(record):
 
 def _continuity(record):
     drives = record['drives']
+    if not drives or not record['kickoffs']:
+        # A game blocked on its first drive has an opening kickoff and no completed drive: there is no chain to check.
+        return BLOCKED, 'the game has no completed drive to chain from, so the continuity check cannot apply'
     if drives[0]['offense_team'] != record['kickoffs'][0]['receiving_team']:
         return FAIL, 'the first drive does not start with the Q1 receiver'
     halftime_after = {b['drive_index'] for b in record['boundaries'] if b['kind'] == 'halftime'}
@@ -383,7 +386,10 @@ def _continuity(record):
         # The second half is opened by its own kickoff, whichever event ran the clock.
         if prev['index'] in halftime_after:
             continue
-        if nxt['offense_team'] == prev['offense_team']:
+        # A touchdown by the defence leaves the team scored upon on offence: the scorer kicks off, so the same team gets the
+        # ball back. Every other possession change alternates.
+        defensive_score = prev.get('touchdown_scored_by') not in (None, prev['offense_team'])
+        if nxt['offense_team'] == prev['offense_team'] and not defensive_score:
             return FAIL, (f'drives {prev["index"]} and {nxt["index"]} have the same offense with no halftime '
                           f'between them')
     return PASS, f'{len(drives)} drives chain: each new drive starts with the team the previous event gave the ball to'
@@ -577,10 +583,17 @@ def _clock_transitions(record):
     return PASS, 'play clock intervals, stop reasons and restart triggers are explicit'
 
 
+UNRESOLVED_TIMEOUT_BLOCKS = ('timeout_team_unresolved', 'timeout_limit_exceeded')
+
+
 def _timeouts(record):
     for drive in record['drives']:
         for play in drive['plays']:
             part = play['participants']
+            if part.get('timeout') and not part.get('timeout_applied') and record.get('blocker') in UNRESOLVED_TIMEOUT_BLOCKS:
+                # The engine refused the stop and blocked the game. The check cannot apply to a game that did not finish.
+                return BLOCKED, (f'drive {drive["index"]} play {play["sequence"]}: the observed timeout could not be charged '
+                                 f'({record["blocker"]}); the game is blocked')
             if part.get('timeout') and (not part.get('timeout_applied') or part.get('timeout_charged_to') not in ('A', 'B')):
                 return FAIL, f'drive {drive["index"]} play {play["sequence"]} has an uncharged timeout'
     return PASS, 'three timeouts are tracked per team per half; observed calls decrement the named team and reset at halftime'

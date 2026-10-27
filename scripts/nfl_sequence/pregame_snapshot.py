@@ -1,7 +1,7 @@
 """Build a reproducible, read-only NFL matchup and depth-chart snapshot.
 
-The schedule is accepted only when it was ingested before the requested cutoff,
-and player rows are selected from each team's latest depth-chart artifact at or
+The schedule is the version in force at the requested cutoff, the newest one observed on or
+before it, and player rows are selected from each team's latest depth-chart artifact at or
 before that cutoff. The raw scheduled date/time strings are preserved because
 the source does not declare a timezone for ``gametime``.
 """
@@ -34,6 +34,24 @@ def _utc(value: str | None, label: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def schedule_at(con: sqlite3.Connection, game_id: str, cutoff: datetime) -> dict | None:
+    """The schedule row in force at ``cutoff``: the newest version observed on or before it.
+
+    None when no version was observed by then. The caller must refuse. A later refresh
+    must not be used instead, because it was not visible at the cutoff.
+    """
+    cur = con.execute(
+        """SELECT game_id, season, game_type, week, gameday, gametime, away_team, home_team,
+                  location, source, observed_at AS ingested_at
+             FROM nfl_schedule_versions WHERE game_id=? AND observed_at<=?
+            ORDER BY observed_at DESC LIMIT 1""",
+        (game_id, cutoff.strftime('%Y-%m-%d %H:%M:%S')))
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return dict(zip([d[0] for d in cur.description], row))
 
 
 def _canonical_hash(value: dict) -> str:
@@ -162,24 +180,16 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     con.row_factory = sqlite3.Row
     try:
-        game = con.execute(
-            """SELECT game_id, season, game_type, week, gameday, gametime, away_team,
-                      home_team, source, ingested_at
-                 FROM nfl_schedule WHERE game_id=?""", (game_id,)
-        ).fetchone()
+        game = schedule_at(con, game_id, cutoff)
         if game is None:
-            raise ValueError(f'schedule has no game_id {game_id!r}')
+            raise ValueError(f'{game_id}: no schedule version was observed on or before --as-of')
         if game['game_type'] not in ('REG', 'POST'):
             raise ValueError(f'{game_id}: unsupported game type {game["game_type"]!r}')
         if not game['gameday'] or not game['gametime']:
             raise ValueError(f'{game_id}: scheduled date and time are required')
         if scheduled_start is None and date.fromisoformat(game['gameday']) <= cutoff.date():
             raise ValueError(f'{game_id}: as-of date must precede scheduled game day')
-        schedule_ingested = _utc(game['ingested_at'], 'schedule ingested_at')
-        if schedule_ingested > cutoff:
-            raise ValueError(f'{game_id}: schedule row was ingested after --as-of')
-
-        teams = {'away': game['away_team'], 'home': game['home_team']}
+        teams ={'away': game['away_team'], 'home': game['home_team']}
         if not all(teams.values()) or teams['away'] == teams['home']:
             raise ValueError(f'{game_id}: schedule must contain two distinct team abbreviations')
         rosters = {}
