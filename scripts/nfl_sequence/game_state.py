@@ -938,7 +938,9 @@ class _Game:
                  'observed_overtime_drive': {'outcome': outcome, 'source_game_id': sample['game_id'],
                                              'source_drive': sample['drive'], 'duration_seconds': sample['duration'],
                                              'points_offense': sample['points_offense'],
-                                             'points_defense': sample['points_defense']}}
+                                             'points_defense': sample['points_defense'],
+                                             'source_next_offense': sample['next_offense'],
+                                             'source_next_yardline': sample['next_yardline']}}
         if scorer is not None:
             drive['touchdown_scored_by'] = scorer if outcome != 'field_goal_made' else None
         self.drives.append(drive)
@@ -948,7 +950,9 @@ class _Game:
             receiver = other(scorer, self.ledger.teams)
             self._continue(('kick', 'post_field_goal' if outcome == 'field_goal_made' else 'post_score', scorer, receiver))
         else:
-            self._continue(('possession', sample['next_offense'], sample['next_yardline']))
+            # The pool's next_offense is a historical club abbreviation. The simulated game uses A/B labels;
+            # non-scoring OT outcomes transfer possession to the other simulated team.
+            self._continue(('possession', other(offense, self.ledger.teams), sample['next_yardline']))
 
     def _drive_body(self):
         if self.quarter == 5:

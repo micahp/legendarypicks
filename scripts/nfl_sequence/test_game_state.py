@@ -708,6 +708,25 @@ class OvertimeRule16(unittest.TestCase):
 class OvertimeObservedDrives(unittest.TestCase):
     """Overtime drives are drawn from the observed regular-season table and checked by Rule 16 (rules file, Rule 16)."""
 
+    def test_observed_next_offense_uses_simulated_team_identity(self):
+        from types import SimpleNamespace
+
+        punt = {'outcome': 'punt', 'duration': 100, 'points_offense': 0, 'points_defense': 0,
+                'next_offense': 'SEA', 'next_yardline': 55, 'game_id': 'fixture', 'drive': 4}
+        game = object.__new__(gs._Game)
+        game.status, game.blocker = None, None
+        game.offense, game.defense, game.clock, game.quarter = 'A', 'B', 500, 5
+        game.ref, game.rng, game.drives = SimpleNamespace(overtime_pool=[punt]), random.Random(0), []
+        game.points = {'A': 3, 'B': 3}
+        game.ledger = SimpleNamespace(teams=('A', 'B'))
+        game.overtime = {'possessions': ['A', 'B'], 'winner': None, 'result': None}
+
+        game._observed_overtime_drive()
+
+        self.assertEqual((game.offense, game.defense), ('B', 'A'))
+        self.assertEqual(game.overtime['possessions'], ['A', 'B', 'B'])
+        self.assertEqual(game.drives[-1]['observed_overtime_drive']['source_next_offense'], 'SEA')
+
     def test_observed_scores_decide_overtime_by_the_sudden_death_rule(self):
         touchdown = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0,
                      'next_offense': None, 'next_yardline': None, 'game_id': 'fixture', 'drive': 1}
