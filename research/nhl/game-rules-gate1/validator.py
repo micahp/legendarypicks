@@ -16,7 +16,7 @@ from typing import Any
 REG_SECONDS = 1_200
 OT_SECONDS = 300
 SIDES = ("home", "away")
-VALIDATOR_VERSION = "nhl-independent-gate1-v0.2"
+VALIDATOR_VERSION = "nhl-independent-gate1-v0.3"
 RULEBOOKS = {
     "2021-22": {
         "source": "https://media.nhl.com/site/asset/public/ext/2021-22/2021-22Rules.pdf",
@@ -159,9 +159,10 @@ def _expected_manpower(active: list[dict[str, Any]], period_type: str,
                        pulled: dict[str, bool]) -> tuple[dict[str, int] | None, str | None]:
     """Resolve only common penalty combinations; refuse unsupported tables."""
     base = 3 if period_type == "OT" else 5
-    if any(p["coincidental"] is None for p in active):
+    manpower_penalties = [p for p in active if p["kind"] in {"MIN", "MAJ"}]
+    if any(p["coincidental"] is None for p in manpower_penalties):
         return None, "active penalty has no explicit coincidental classification"
-    coincidental = [p for p in active if p["coincidental"] and p["kind"] in {"MIN", "MAJ"}]
+    coincidental = [p for p in manpower_penalties if p["coincidental"]]
     if coincidental:
         signatures = Counter((p["side"], p["kind"], p["duration"], p["start"]) for p in coincidental)
         for (side, kind, duration, start), count in list(signatures.items()):
@@ -606,7 +607,7 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
     expected_goal_action: tuple[int, str, str] | None = None
     pending_expiries: set[tuple[str, str]] = set()
     expiry_second: int | None = None
-    supported_kind_durations = {"MIN": {120, 240}, "MAJ": {300}}
+    supported_kind_durations = {"MIN": {120, 240}, "MAJ": {300}, "MIS": {600}}
     skip_personnel = {"period-start", "period-end", "game-end", "shootout-attempt", "shootout-decision"}
 
     for index, event in enumerate(events, 1):
@@ -684,13 +685,13 @@ def _check_penalties(game: dict[str, Any]) -> dict[str, Any]:
             if any(p["side"] == side and p["player_id"] == actor for p in active):
                 findings.append(_issue(seq, "player receives a second overlapping penalty in this supported model"))
             coincidental_raw = details.get("coincidental")
-            if not isinstance(coincidental_raw, bool):
+            if kind in {"MIN", "MAJ"} and not isinstance(coincidental_raw, bool):
                 coincidental = None
                 unassessed.append(_issue(seq,
                     "penalty omits the explicit coincidental classification required to derive manpower",
                     status="NOT_ASSESSED"))
             else:
-                coincidental = coincidental_raw
+                coincidental = coincidental_raw if isinstance(coincidental_raw, bool) else False
             active.append({"side": side, "player_id": actor, "kind": kind,
                            "duration": int(duration), "start": now,
                            "end": now + int(duration), "coincidental": coincidental})

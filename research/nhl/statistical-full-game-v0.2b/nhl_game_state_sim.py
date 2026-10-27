@@ -2285,7 +2285,8 @@ def _shootout(events: list[dict[str,Any]], score: dict[str,int], sog: dict[str,i
 
 
 def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list[dict[str,Any]],
-                                player_totals: dict[str,dict[str,Any]]) -> list[dict[str,Any]]:
+                                player_totals: dict[str,dict[str,Any]],
+                                inputs: PregameInputs) -> list[dict[str,Any]]:
     """Materialize goalie changes from the sampled shift template as personnel events."""
     limits={1:REG_SECONDS,2:REG_SECONDS,3:REG_SECONDS,4:OT_SECONDS}
     additions=[]
@@ -2319,20 +2320,15 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
                 # On overlapping goalie intervals, the later-starting goalie is the selected active keeper.
                 if new:
                     on_ice[side]=[pid for pid in on_ice[side] if player_totals[pid]["position"]!="G"]+[new]
-                counts={s:sum(player_totals[pid]["position"]!="G" for pid in ids)
-                        for s,ids in on_ice.items()}
-                goalie_pulled={s:not any(player_totals[pid]["position"]=="G" for pid in ids)
-                               for s,ids in on_ice.items()}
                 details={"reason":"sampled_shift_template_goalie_transition",
-                         "transition_source":"verified shift-chart interval boundary",
-                         "goalie_pulled":goalie_pulled}
+                         "transition_source":"verified shift-chart interval boundary"}
                 additions.append({"period_number":period,"period_type":"REG" if period<4 else "OT",
                     "time_in_period":f"{elapsed//60:02d}:{elapsed%60:02d}",
                     "time_remaining":f"{(limit-elapsed)//60:02d}:{(limit-elapsed)%60:02d}",
                     "clock_elapsed_seconds":elapsed,"clock_remaining_seconds":limit-elapsed,
                     "event_type":"goalie-substitution","team_side":side,"details":details,
                     "participants":{"goalie_leaving_id":old,"goalie_entering_id":new},
-                    "on_ice":on_ice,"strength":f"{counts['home']}v{counts['away']}"})
+                    "on_ice":on_ice,"strength":None})
     combined=events+additions
     # Expiry takes effect at its exact game-clock second; process it before a
     # same-second goalie transition can put the returning player back on ice.
@@ -2340,7 +2336,27 @@ def _insert_goalie_substitutions(events: list[dict[str,Any]], shift_ledger: list
                                 0 if e["event_type"]=="penalty-expiration" else
                                 1 if e["event_type"]=="goalie-substitution" else 2))
     score={"home":0,"away":0}; sog={"home":0,"away":0}
+    penalties=PenaltyLedger()
     for sequence,event in enumerate(combined,1):
+        if event["period_type"] in {"REG","OT"}:
+            penalties.advance_to(int(event["period_number"]),
+                                 int(event["clock_elapsed_seconds"]))
+            if event["event_type"]=="goalie-substitution":
+                active,strength,pulled=_live_on_ice(
+                    event["on_ice"],inputs,penalties,event["period_type"])
+                event["on_ice"]=active
+                event["strength"]=strength
+                event["details"]["goalie_pulled"]=pulled
+            elif event["event_type"]=="penalty":
+                details=event.get("details") or {}
+                participants=event.get("participants") or {}
+                penalties.start(str(event["team_side"]),
+                    str(participants["penalized_player_id"]),
+                    str(details["penalty_kind"]),
+                    duration_seconds=int(details["penalty_duration_seconds"]),
+                    coincidental=bool(details.get("coincidental",False)))
+            elif event["event_type"]=="goal":
+                penalties.on_goal(str(event["team_side"]))
         event["sequence"]=sequence
         event["state_before"]=_score_state(score,sog)
         if event["event_type"]=="goal" and event["period_type"]!="SO":
@@ -2776,7 +2792,7 @@ def generate_game(corpus: Any, inputs: PregameInputs, seed: int,
     else:
         _append_sim_event(events,score,sog,period_number=3,period_type="REG",event_type="game-end",
                           team_side=None,elapsed=REG_SECONDS,duration=REG_SECONDS)
-    events=_insert_goalie_substitutions(events,shift_ledger,player_totals)
+    events=_insert_goalie_substitutions(events,shift_ledger,player_totals,inputs)
     reg_ot_score={side:score[side]-(1 if shootout_winner==side else 0) for side in ("home","away")}
     event_counts=collections.Counter(e["event_type"] for e in events)
     summary={"regulation_overtime_score":reg_ot_score,"official_final_score":dict(score),

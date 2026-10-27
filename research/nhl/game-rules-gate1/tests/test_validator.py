@@ -277,6 +277,43 @@ def penalty_game(kind="MIN", duration=120, *, goal_time=None, expiry_time=None,
     return builder.finish(shifts=shifts)
 
 
+def misconduct_game(expiry_time=700):
+    builder = GameBuilder().base_regulation(p1_goal=False)
+    builder.events.pop()  # Replace period 3 end with the misconduct interval.
+    full_away = ["A1", "A2", "A3", "A4", "A5", "AG"]
+    replacement_away = ["A2", "A3", "A4", "A5", "A6", "AG"]
+    builder.emit("penalty", 3, 100, side="away", home=BASE_HOME, away=full_away,
+        details={"penalty_kind": "MIS", "penalty_duration_seconds": 600,
+                 "coincidental": False},
+        participants={"penalized_player_id": "A1", "serving_player_id": "A1"})
+    builder.faceoff(3, 100, away=replacement_away)
+    builder.emit("penalty-expiration", 3, expiry_time, side="away", home=BASE_HOME,
+        away=full_away, details={"penalty_kind": "MIS"},
+        participants={"player_id": "A1"})
+    builder.emit("period-end", 3, 1200, home=[], away=[])
+    builder.emit("game-end", 3, 1200, home=[], away=[])
+    shifts = []
+    for period in (1, 2):
+        for side, ids in (("home", BASE_HOME), ("away", BASE_AWAY)):
+            for pid in ids:
+                shifts.append({"period_number": period, "team_side": side, "player_id": pid,
+                    "position": builder.players[pid]["position"], "start_seconds": 0,
+                    "end_seconds": 1200, "duration_seconds": 1200})
+    for pid in BASE_HOME:
+        shifts.append({"period_number": 3, "team_side": "home", "player_id": pid,
+            "position": builder.players[pid]["position"], "start_seconds": 0,
+            "end_seconds": 1200, "duration_seconds": 1200})
+    for pid in ("A2", "A3", "A4", "A5", "AG"):
+        shifts.append({"period_number": 3, "team_side": "away", "player_id": pid,
+            "position": builder.players[pid]["position"], "start_seconds": 0,
+            "end_seconds": 1200, "duration_seconds": 1200})
+    for pid, start, end in (("A1", 0, 100), ("A1", 700, 1200), ("A6", 100, 700)):
+        shifts.append({"period_number": 3, "team_side": "away", "player_id": pid,
+            "position": "F", "start_seconds": start, "end_seconds": end,
+            "duration_seconds": end-start})
+    return builder.finish(shifts=shifts)
+
+
 def shootout_game(*, add_attempt_after_clinch=False):
     builder = GameBuilder().base_regulation(p1_goal=False)
     builder.emit("period-start", 4, 0, home=[], away=[])
@@ -413,6 +450,26 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
         result = self.get_check(invalid, "penalty_and_manpower")
         self.assertEqual(result["status"], "FAIL")
         self.assertIn("early", " ".join(x["message"] for x in result["findings"]))
+
+    def test_misconduct_runs_ten_minutes_without_reducing_manpower(self):
+        game = misconduct_game()
+        result = self.get_check(game, "penalty_and_manpower")
+        self.assertEqual(result["status"], "PASS", result["findings"])
+        after_assessment = next(e for e in game["events"]
+                                if e["event_type"] == "faceoff" and e["period_number"] == 3
+                                and e["clock_elapsed_seconds"] == 100)
+        self.assertEqual(after_assessment["strength"], "5v5")
+        self.assertNotIn("A1", after_assessment["on_ice"]["away"])
+        expiration = next(e for e in game["events"] if e["event_type"] == "penalty-expiration")
+        self.assertEqual(expiration["clock_elapsed_seconds"], 700)
+        self.assertIn("A1", expiration["on_ice"]["away"])
+
+    def test_misconduct_early_expiry_fails(self):
+        game = misconduct_game(expiry_time=650)
+        result = self.get_check(game, "penalty_and_manpower")
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(any("early" in row["message"] or "active penalty" in row["message"]
+                            for row in result["findings"]))
 
     def test_missing_coincidental_state_is_unassessed_not_noncoincidental(self):
         game = penalty_game("MIN", 120)
@@ -575,7 +632,7 @@ class IndependentGate1ValidatorTests(unittest.TestCase):
         self.assertNotIn("nhl_game_state_sim", source)
         self.assertNotIn("game_state", source)
         self.assertEqual(validator.audit_game(regular_game(), ruleset="2021-22")["validator"],
-                         "nhl-independent-gate1-v0.2")
+                         "nhl-independent-gate1-v0.3")
 
     def test_official_source_fixture_records_a_real_goal_center_faceoff(self):
         fixture_path = HERE / "fixtures/official-pbp-goal-center-faceoff.json"

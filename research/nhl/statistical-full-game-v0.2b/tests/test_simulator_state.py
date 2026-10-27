@@ -20,6 +20,26 @@ def player_totals():
     return result
 
 
+def shift_transition_fixture():
+    totals={}
+    rosters={}
+    for side,prefix,goalie_ids,team in (
+        ("home","H",("HG1","HG2"),"HOME"),
+        ("away","A",("AG",),"AWAY")):
+        players={}
+        for number in range(1,7):
+            pid=f"{prefix}{number}"
+            player=sim.Player(pid,None,pid,team,"F")
+            players[pid]=player
+            totals[pid]={"team_side":side,"position":"F"}
+        for goalie_id in goalie_ids:
+            players[goalie_id]=sim.Player(goalie_id,None,goalie_id,team,"G")
+            totals[goalie_id]={"team_side":side,"position":"G"}
+        rosters[side]=sim.TeamRoster(team,players,30.0,30.0,list(goalie_ids),
+            [1.0]*len(goalie_ids),"fixture",{})
+    return totals,SimpleNamespace(home_roster=rosters["home"],away_roster=rosters["away"])
+
+
 def event(event_type, elapsed, *, home, away, strength, details, side=None, participants=None):
     return {"event_type":event_type,"period_number":1,"period_type":"REG",
             "clock_elapsed_seconds":elapsed,"team_side":side,"strength":strength,"sequence":1,
@@ -150,32 +170,62 @@ class RestartGenerationTests(unittest.TestCase):
 
 
 class ExactClockEventOrderTests(unittest.TestCase):
-    def test_penalty_expiration_precedes_same_second_goalie_change(self):
-        players={}
+    def test_goalie_transition_reconciles_short_donor_shift_to_legal_manpower(self):
+        players,inputs=shift_transition_fixture()
         shift=[]
-        for side,prefix,goalie_ids in (
-            ("home","H",("HG1","HG2")),("away","A",("AG",))):
+        for pid in ("H1","H2","H3","H4"):
+            shift.append({"period_number":1,"team_side":"home","player_id":pid,
+                "position":"F","start_seconds":0,"end_seconds":1200,
+                "duration_seconds":1200})
+        for pid,start,end in (("HG1",0,100),("HG2",100,1200)):
+            shift.append({"period_number":1,"team_side":"home","player_id":pid,
+                "position":"G","start_seconds":start,"end_seconds":end,
+                "duration_seconds":end-start})
+        for pid in ("A1","A2","A3","A4","A5","AG"):
+            position="G" if pid=="AG" else "F"
+            shift.append({"period_number":1,"team_side":"away","player_id":pid,
+                "position":position,"start_seconds":0,"end_seconds":1200,
+                "duration_seconds":1200})
+
+        events=sim._insert_goalie_substitutions([],shift,players,inputs)
+        substitution=next(e for e in events if e["event_type"]=="goalie-substitution")
+        home_skaters=[pid for pid in substitution["on_ice"]["home"]
+                      if players[pid]["position"]!="G"]
+        self.assertEqual(len(home_skaters),5)
+        self.assertEqual(substitution["strength"],"5v5")
+        self.assertEqual(substitution["details"]["goalie_pulled"],
+                         {"home":False,"away":False})
+
+    def test_penalty_expiration_precedes_same_second_goalie_change(self):
+        players,inputs=shift_transition_fixture()
+        shift=[]
+        for side,prefix,goalie_id in (("home","H",None),("away","A","AG")):
             for number in range(1,6):
                 pid=f"{prefix}{number}"
-                players[pid]={"team_side":side,"position":"F"}
                 shift.append({"period_number":1,"team_side":side,"player_id":pid,
-                              "position":"F","start_seconds":0,"end_seconds":1200,
-                              "duration_seconds":1200})
-            for index,pid in enumerate(goalie_ids):
-                players[pid]={"team_side":side,"position":"G"}
-                if side=="home":
-                    start,end=(0,100) if index==0 else (100,1200)
-                else:
-                    start,end=0,1200
-                shift.append({"period_number":1,"team_side":side,"player_id":pid,
-                              "position":"G","start_seconds":start,"end_seconds":end,
-                              "duration_seconds":end-start})
-        expiry={"period_number":1,"period_type":"REG","clock_elapsed_seconds":100,
-                "event_type":"penalty-expiration","team_side":"home","details":{},
-                "participants":{"player_id":"H1"},"on_ice":{"home":[],"away":[]},
-                "strength":"5v5"}
+                    "position":"F","start_seconds":0,"end_seconds":1200,
+                    "duration_seconds":1200})
+            if side=="away":
+                shift.append({"period_number":1,"team_side":side,"player_id":goalie_id,
+                    "position":"G","start_seconds":0,"end_seconds":1200,
+                    "duration_seconds":1200})
+        shift.extend([
+            {"period_number":1,"team_side":"home","player_id":"HG1","position":"G",
+             "start_seconds":0,"end_seconds":140,"duration_seconds":140},
+            {"period_number":1,"team_side":"home","player_id":"HG2","position":"G",
+             "start_seconds":140,"end_seconds":1200,"duration_seconds":1060},
+        ])
+        full_home=["H1","H2","H3","H4","H5","HG1"]
+        away=["A1","A2","A3","A4","A5","AG"]
+        penalty=event("penalty",20,home=full_home,away=away,strength="5v5",
+            details={"penalty_kind":"MIN","penalty_duration_seconds":120,
+                     "coincidental":False,"goalie_pulled":{"home":False,"away":False}},
+            side="home",participants={"penalized_player_id":"H1","serving_player_id":"H1"})
+        expiry=event("penalty-expiration",140,home=["H1","H2","H3","H4","H5","HG2"],
+            away=away,strength="5v5",details={"goalie_pulled":{"home":False,"away":False}},
+            side="home",participants={"player_id":"H1"})
 
-        events=sim._insert_goalie_substitutions([expiry],shift,players)
+        events=sim._insert_goalie_substitutions([penalty,expiry],shift,players,inputs)
 
         expiration_index=next(i for i,e in enumerate(events) if e["event_type"]=="penalty-expiration")
         change_index=next(i for i,e in enumerate(events) if e["event_type"]=="goalie-substitution")
@@ -183,6 +233,7 @@ class ExactClockEventOrderTests(unittest.TestCase):
         substitution=events[change_index]
         self.assertEqual(substitution["details"]["goalie_pulled"],
                          {"home":False,"away":False})
+        self.assertIn("H1",substitution["on_ice"]["home"])
 
 
 if __name__=="__main__":
