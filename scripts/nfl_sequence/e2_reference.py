@@ -98,6 +98,8 @@ def _reference_fingerprint(reference):
         for drive in reference.overtime_pool:
             add(['overtime-drive', drive])
         add(['overtime-source-sha256', reference.overtime_sha256])
+    if getattr(reference, 'overtime_toss', None) is not None:
+        add(['overtime-toss-override', reference.overtime_toss])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
     add(['play-extras-file-sha256', extras_hash])
     summary = {
@@ -232,6 +234,9 @@ def load_overtime_drive_pool(path=OVERTIME_DRIVES):
                      'points_offense': int(row['points_offense']), 'points_defense': int(row['points_defense']),
                      'next_offense': row['next_offense'] or None,
                      'next_yardline': int(row['next_start_yardline_100']) if row['next_start_yardline_100'] else None,
+                     'try_kind': row['try_kind'] or None,
+                     'try_made': None if row['try_made'] == '' else bool(int(row['try_made'])),
+                     'turnover_kind': row['turnover_kind'],
                      'game_id': row['game_id'], 'drive': int(float(row['drive']))})
     if len(pool) != manifest['usable_count']:
         raise ValueError('overtime usable rows disagree with the manifest')
@@ -304,7 +309,8 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
     return pools
 
 
-def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True):
+def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
+         overtime_toss=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -339,7 +345,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
                              load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
-                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool)
+                             safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss)
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db)

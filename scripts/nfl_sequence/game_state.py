@@ -226,13 +226,15 @@ class Reference:
     """
 
     def __init__(self, pool, kickoff_pool, kicks, participants, missed_field_goal_pool=None, blocked_kicks=None,
-                 try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None):
+                 try_policy=None, clock_model=None, safety_kick_pool=None, overtime_pool=None, overtime_toss=None):
         self.pool = pool
         self.kickoff_pool = kickoff_pool
         # None keeps a safety free kick blocked. A list is the observed safety-kick table, sampled only for a safety kick.
         self.safety_kick_pool = safety_kick_pool
         # None keeps a regulation tie as overtime_not_modelled. A list is the observed regular-season overtime drive table.
         self.overtime_pool = overtime_pool
+        # None is the seeded uniform first possession; 'A' or 'B' forces it, for the sensitivity runs.
+        self.overtime_toss = overtime_toss
         self.kicks = kicks
         self.participants = participants
         self.missed_field_goal_pool = missed_field_goal_pool or {}
@@ -580,7 +582,7 @@ class _Game:
     def _begin_overtime(self):
         """Rule 16, Articles 2-3: a coin toss, then one 10-minute period. The toss winner receives. The option to defer or
         kick is not modelled, so the receiving team is always the toss winner (see GUARDS['overtime'])."""
-        winner = self.rng.choice(sorted(self.ledger.teams))
+        winner = self.ref.overtime_toss or self.rng.choice(sorted(self.ledger.teams))
         loser = other(winner, self.ledger.teams)
         self.overtime = {'toss_winner': winner, 'receiving_team': winner, 'kicking_team': loser,
                          'regulation_points': dict(self.points), 'possessions': [], 'winner': None, 'result': None}
@@ -906,6 +908,18 @@ class _Game:
             'first_td': sum(1 for d in self.drives if d.get('touchdown_scored_by')) == 1,
         }
 
+    def _overtime_decided(self):
+        """Rule 16, Article 3(b)-(c): both teams have possessed and one leads, or the score is level and the game is sudden
+        death. Called after a score is on the board, so a touchdown that decides the game is recognised before its try."""
+        return len(set(self.overtime['possessions'])) == 2 and self._points_leader() is not None
+
+    def _article_5a_applies(self, offense, outcome, turnover_kind):
+        """Article 5(a): the first team to possess scored, then the second team loses the ball on an interception or a fumble.
+        The down runs to its conclusion, so a return touchdown counts and its try is still attempted (rules file, Rule 16)."""
+        possessions = self.overtime['possessions']
+        return (len(possessions) == 2 and offense == possessions[1] and bool(self.overtime.get('first_possession_scored'))
+                and turnover_kind in ('interception', 'fumble') and outcome in ('turnover', 'defense_touchdown'))
+
     def _observed_overtime_drive(self):
         """Rule 16 with an observed drive, drawn the way the blocked kicks are: one observed regular-season overtime drive
         ends the possession, scores, or runs the period out. A drive fits the state when its observed time is within the
@@ -918,27 +932,52 @@ class _Game:
             return
         sample = self.rng.choice(fits)
         self.clock = clock - min(sample['duration'], clock)
+        points_before = {team: self.points[team] for team in self.ledger.teams}  # a Counter: an absent team is zero
         self.points[offense] += sample['points_offense']
         self.points[defense] += sample['points_defense']
         outcome = sample['outcome']
         scorer = offense if outcome in ('touchdown', 'field_goal_made') else defense if outcome == 'defense_touchdown' else None
+        article_5a = self._article_5a_applies(offense, outcome, sample['turnover_kind'])
+        if article_5a:
+            self.overtime['article_5a'] = {'turnover_kind': sample['turnover_kind'], 'drive_index': len(self.drives) + 1,
+                                           'return_touchdown': outcome == 'defense_touchdown',
+                                           'leader_before_down': self._points_leader()}
+        if len(self.overtime['possessions']) == 1 and scorer == offense:
+            self.overtime['first_possession_scored'] = True
         points_on_drive = {'team': offense, 'points': FG_POINTS, 'try': None} if outcome == 'field_goal_made' else None
+        try_source = None
         if outcome in ('touchdown', 'defense_touchdown'):
-            # The observed six, then the point after from the regulation try rates, as after any touchdown in the engine.
-            try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks)
-            if why:
-                self.block(why)
-                return
-            self.points[scorer] += try_points
-            points_on_drive = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
+            tied_before = points_before['A'] == points_before['B']
+            if tied_before and len(set(self.overtime['possessions'])) == 2 and not article_5a:
+                # Sudden death: a touchdown from a tie is the team next scoring, so the game ends and no try is attempted.
+                try_source = 'not_attempted_game_ends'
+                points_on_drive = {'team': scorer, 'points': TD_POINTS, 'try': None}
+            elif sample['try_kind']:
+                # The point after the drive shows in the observed rows: the outcome is observed, not drawn.
+                try_points = TRY_POINTS[sample['try_kind']] if sample['try_made'] else 0
+                self.points[scorer] += try_points
+                points_on_drive = {'team': scorer, 'points': TD_POINTS + try_points,
+                                   'try': try_record(sample['try_kind'], sample['try_made'])}
+                try_source = 'observed_point_after'
+            else:
+                # No point after was observed: the old rule ended the game without one. The try is drawn from the regulation
+                # rates and labelled as that fallback.
+                try_points, try_rec, why = _try_after_touchdown(self.rng, self.ref.kicks)
+                if why:
+                    self.block(why)
+                    return
+                self.points[scorer] += try_points
+                points_on_drive = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_rec}
+                try_source = 'regulation_try_rates_fallback'
         drive = {'index': len(self.drives) + 1, 'offense_team': offense, 'quarter_start': 5, 'clock_start': clock,
                  'plays': [], 'terminal': OVERTIME_TERMINAL[outcome], 'end_quarter': 5, 'end_clock': self.clock,
-                 'points_scored_on_drive': points_on_drive,
+                 'points_scored_on_drive': points_on_drive, 'try_source': try_source,
                  'field_goal_made': (outcome == 'field_goal_made') if outcome.startswith('field_goal') else None,
                  'observed_overtime_drive': {'outcome': outcome, 'source_game_id': sample['game_id'],
                                              'source_drive': sample['drive'], 'duration_seconds': sample['duration'],
                                              'points_offense': sample['points_offense'],
                                              'points_defense': sample['points_defense'],
+                                             'turnover_kind': sample['turnover_kind'],
                                              'source_next_offense': sample['next_offense'],
                                              'source_next_yardline': sample['next_yardline']}}
         if scorer is not None:
@@ -949,6 +988,9 @@ class _Game:
         elif scorer is not None:
             receiver = other(scorer, self.ledger.teams)
             self._continue(('kick', 'post_field_goal' if outcome == 'field_goal_made' else 'post_score', scorer, receiver))
+        elif article_5a:
+            # The down completes with no score: the first team's lead stands and the game ends (Article 5(a)).
+            self._end_overtime(self._points_leader())
         else:
             # The pool's next_offense is a historical club abbreviation. The simulated game uses A/B labels;
             # non-scoring OT outcomes transfer possession to the other simulated team.
@@ -1425,14 +1467,19 @@ def validate_game(record):
                     raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
             else:
                 t = p['try']
-                if t is None or t['kind'] not in TRY_POINTS:
-                    raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
-                if p['points'] != TD_POINTS + (TRY_POINTS[t['kind']] if t['made'] else 0):
-                    raise AssertionError(f'touchdown points disagree with the try: {d["index"]}')
-                field = TRY_PUBLISHER_FIELD[t['kind']]
-                if field not in t or t[field] != TRY_PUBLISHER_VALUE[t['kind']][t['made']] or 'success' in t:
-                    raise AssertionError(f'try lacks its publisher result field {field}, or carries an EPA-style success '
-                                         f'flag: {d["index"]}')
+                if t is None and d.get('try_source') == 'not_attempted_game_ends':
+                    # Rule 16: a touchdown that decides the game is the last scoring play, so no try is attempted.
+                    if not (d is record['drives'][-1] and record['status'] == 'complete_overtime' and p['points'] == TD_POINTS):
+                        raise AssertionError(f'a touchdown with no try must decide the overtime game: {d["index"]}')
+                else:
+                    if t is None or t['kind'] not in TRY_POINTS:
+                        raise AssertionError(f'touchdown drive without a recorded try: {d["index"]}')
+                    if p['points'] != TD_POINTS + (TRY_POINTS[t['kind']] if t['made'] else 0):
+                        raise AssertionError(f'touchdown points disagree with the try: {d["index"]}')
+                    field = TRY_PUBLISHER_FIELD[t['kind']]
+                    if field not in t or t[field] != TRY_PUBLISHER_VALUE[t['kind']][t['made']] or 'success' in t:
+                        raise AssertionError(f'try lacks its publisher result field {field}, or carries an EPA-style success '
+                                             f'flag: {d["index"]}')
         if d['terminal'] == 'field_goal_attempt' and d['field_goal_made'] is not None:
             if d['field_goal_made'] != bool(p):
                 raise AssertionError(f'field goal result disagrees with its points: {d["index"]}')
