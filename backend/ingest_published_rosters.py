@@ -380,6 +380,9 @@ def main(argv=None):
               "either club".format(identity.get("ambiguous", 0),
                                    identity.get("conflicts", 0),
                                    identity.get("unverified_team", 0)))
+    if args.apply:
+        # Read back by the API health check (routers/games/misc.py) from this job's stored output.
+        print("  identity_blockers={}".format(blockers))
     return 2 if blockers else 0
 
 
