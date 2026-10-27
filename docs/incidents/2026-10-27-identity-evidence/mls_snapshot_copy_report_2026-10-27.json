@@ -1,0 +1,87 @@
+{
+ "copy": "/root/mls-snapshot-check/copy.db",
+ "snapshot_id": 757,
+ "memberships": 1040,
+ "blockers": 0,
+ "carried": 0,
+ "unchanged": {
+  "players": true,
+  "player_source_ids": true,
+  "player_game_logs": true,
+  "props": true,
+  "prop_results": true,
+  "settlement_attempts": true,
+  "team_game_results": true,
+  "published_roster": true
+ },
+ "before": {
+  "players": {
+   "rows": 57429,
+   "sha256": "b3e67bf501024a1395ebec88ce554bf51b932092e513b6735ffa858b38a19dad"
+  },
+  "player_source_ids": {
+   "rows": 10404,
+   "sha256": "f49ad49f349f0f7a8895682f0b2ce9b9bc3c3f74d111d6e10cb3b075d7765e7c"
+  },
+  "player_game_logs": {
+   "rows": 556428,
+   "sha256": "f20988edff4deaca05867328cddbaf3534be5c374c1bf23313be476e3d8d005d"
+  },
+  "props": {
+   "rows": 866889,
+   "sha256": "bf46ce6f47b08ca5a7f910dc0a9aab2596740184a144742d39747f9670dd44a2"
+  },
+  "prop_results": {
+   "rows": 702797,
+   "sha256": "3b07f3a8ed0c8ba4c1176083f6aa0aa81e2ef18780637d51f6e50cf1aed3dd40"
+  },
+  "settlement_attempts": {
+   "rows": 179972,
+   "sha256": "c9ad7823f3fe9b282e1b8333cabfe4f512fe599b76a24cee8edbe7db43c5cbfa"
+  },
+  "team_game_results": {
+   "rows": 13122,
+   "sha256": "dca409594c5d2dcdee4787a011eb318a7d5f2a31270d7f97c77177a8880c4c2a"
+  },
+  "published_roster": {
+   "rows": 3432,
+   "sha256": "184a6a23a8c33625111c0236613929e30c2524b3798f733b7ec1d63982d5826e"
+  }
+ },
+ "after": {
+  "players": {
+   "rows": 57429,
+   "sha256": "b3e67bf501024a1395ebec88ce554bf51b932092e513b6735ffa858b38a19dad"
+  },
+  "player_source_ids": {
+   "rows": 10404,
+   "sha256": "f49ad49f349f0f7a8895682f0b2ce9b9bc3c3f74d111d6e10cb3b075d7765e7c"
+  },
+  "player_game_logs": {
+   "rows": 556428,
+   "sha256": "f20988edff4deaca05867328cddbaf3534be5c374c1bf23313be476e3d8d005d"
+  },
+  "props": {
+   "rows": 866889,
+   "sha256": "bf46ce6f47b08ca5a7f910dc0a9aab2596740184a144742d39747f9670dd44a2"
+  },
+  "prop_results": {
+   "rows": 702797,
+   "sha256": "3b07f3a8ed0c8ba4c1176083f6aa0aa81e2ef18780637d51f6e50cf1aed3dd40"
+  },
+  "settlement_attempts": {
+   "rows": 179972,
+   "sha256": "c9ad7823f3fe9b282e1b8333cabfe4f512fe599b76a24cee8edbe7db43c5cbfa"
+  },
+  "team_game_results": {
+   "rows": 13122,
+   "sha256": "dca409594c5d2dcdee4787a011eb318a7d5f2a31270d7f97c77177a8880c4c2a"
+  },
+  "published_roster": {
+   "rows": 3432,
+   "sha256": "184a6a23a8c33625111c0236613929e30c2524b3798f733b7ec1d63982d5826e"
+  }
+ },
+ "roster_memberships_for_snapshot": 1040,
+ "published_mls_snapshots": 1
+}
