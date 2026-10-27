@@ -18,7 +18,13 @@ def load_registry(path=REGISTRY):
 
 
 def active_rules(registry, season, season_type='REG', domain=None):
-    """The registry IDs active for a season and season type, optionally restricted to one domain, sorted."""
+    """Return matching rule IDs from either registry schema.
+
+    Schema 1 calls applicability ``applies_to``; the expanded annual inventory
+    (schema 2) calls it ``season_types``. Missing end seasons remain open-ended,
+    matching the schema 1 contract. For schema 2, that is a conservative
+    fallback until a verified supersession or expiry is recorded.
+    """
     out = []
     for change in registry['changes']:
         start, end = change.get('effective_from_season'), change.get('effective_through_season')
@@ -26,7 +32,8 @@ def active_rules(registry, season, season_type='REG', domain=None):
             continue
         if end is not None and season > end:
             continue
-        if season_type not in change.get('applies_to', []):
+        applicability = change.get('applies_to', change.get('season_types', []))
+        if season_type not in applicability:
             continue
         if domain is not None and change.get('domain') != domain:
             continue
