@@ -345,13 +345,23 @@ def lookup_player(con: sqlite3.Connection, league: str, name: str,
 
 
 def _identity_components(con: sqlite3.Connection, league: str,
-                         touched: Optional[Iterable[Tuple[str, str]]] = None):
-    """Connected publisher rows, joined only by shared spelling and published club."""
+                         touched: Optional[Iterable[Tuple[str, str]]] = None,
+                         now: Optional[str] = None):
+    """Connected publisher rows, joined only by shared spelling and published club.
+
+    Only rows this run refreshed (updated_at == now) take part. A row the publisher has stopped
+    listing keeps its history, but it must not block or confirm a match: a transfer's old club
+    would otherwise refuse the player's new one (the 2026-10-27 Thayllon and Ruiz refusals).
+    """
     columns = ("source", "source_player_key", "name", "name_folded", "team",
                "team_code", "position", "position_group", "player_id")
+    where, args = "league=?", [league]
+    if now is not None:
+        where += " AND updated_at=?"
+        args.append(now)
     raw = con.execute(
-        "SELECT {} FROM published_roster WHERE league=?".format(",".join(columns)),
-        (league,)).fetchall()
+        "SELECT {} FROM published_roster WHERE {}".format(",".join(columns), where),
+        args).fetchall()
     rows = [dict(zip(columns, row)) for row in raw]
     names = collections.defaultdict(set)
     for row in rows:
@@ -405,7 +415,7 @@ def publish_identities(con: sqlite3.Connection, league: str, now: str,
     published team narrows ambiguity. Every refusal is counted; safe components remain
     additive so one namesake does not discard the rest of a league's identities.
     """
-    components, names = _identity_components(con, league, touched)
+    components, names = _identity_components(con, league, touched, now)
     players = [dict(zip(("id", "name", "team"), row)) for row in con.execute(
         "SELECT id,name,team FROM players WHERE league=?", (league,)).fetchall()]
     players_by_name = collections.defaultdict(list)
