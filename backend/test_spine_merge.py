@@ -687,3 +687,52 @@ class RosterFilesOneNameTwice(unittest.TestCase):
         self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True, code="RBNY")
         plan = sm.build_plan(self.con, "mls")
         self.assertEqual([(m.keep_id, m.drop_id) for m in plan.merges], [(new, old)])
+
+
+class LeaguesCupBorrowsItsOwner(unittest.TestCase):
+    """Leagues Cup has no players of its own. Its keys bind to the MLS or Liga MX player they name."""
+
+    def setUp(self):
+        self.con = _fixture(":memory:")
+        self.con.executescript("""
+            ALTER TABLE players ADD COLUMN active INTEGER DEFAULT 1;
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT,
+              league TEXT, source_player_key TEXT, player_id INTEGER, first_seen TEXT, last_seen TEXT,
+              UNIQUE(source, league, source_player_key));
+        """)
+        import published_roster
+        published_roster.ensure(self.con)
+        self.fold = published_roster.fold
+
+    def _player(self, name, team, league):
+        return self.con.execute(
+            "INSERT INTO players(name, team, league, active) VALUES(?,?,?,1)", (name, team, league)).lastrowid
+
+    def _key(self, league, source, key, name, team, player_id):
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, name_folded, team, "
+            "position, position_group, updated_at, player_id) VALUES(?,?,?,?,?,?,'F','Forward','now',?)",
+            (league, source, key, name, self.fold(name), team, player_id))
+        self.con.commit()
+
+    def test_a_leagues_cup_key_binds_to_the_mls_player_who_holds_the_same_publisher_key(self):
+        owner = self._player("Thayllon", "LAFC", "mls")
+        self._key("mls", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
+        self._key("lcup", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
+        self._key("lcup", "fotmob", "1738398", "Thayllon", "Los Angeles FC", None)
+        plan = sm.build_plan(self.con)
+        self.assertEqual([(b.league, b.source, b.key, b.player_id) for b in plan.binds],
+                         [("lcup", "fotmob", "1738398", owner)])
+        with self.con:
+            sm.apply_plan(self.con, plan)
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE league='lcup' AND source_player_key='1738398'"
+        ).fetchone()[0], owner)
+
+    def test_a_key_that_names_a_player_in_another_league_is_reported_not_skipped(self):
+        owner = self._player("Hugo Rodriguez", "Club Leon", "ligamx")
+        self._key("ligamx", "fotmob", "900", "Hugo Rodriguez", "Club Leon", owner)
+        self._key("mls", "fotmob", "901", "Hugo Rodriguez", "Club Leon", None)
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("not bound across leagues" in why for _, _, why in plan.refused))
