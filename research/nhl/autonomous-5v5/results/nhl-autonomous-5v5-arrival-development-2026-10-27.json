@@ -1,0 +1,772 @@
+{
+  "base": "da2475f1ea70648a1aeba805006776028368e8d5",
+  "branch": "research/nhl-autonomous-5v5-2026-10-27",
+  "candidate_manifests": {
+    "A0": {
+      "context_hierarchy": [
+        "exact",
+        "family_possession",
+        "family",
+        "pooled"
+      ],
+      "dirichlet_alpha": 0.5,
+      "max_training_bundle_size": 8,
+      "minimum_context_bundles": 100,
+      "model_version": "nhl-5v5-autonomous-renewal-v1",
+      "name": "A0",
+      "training_transitions": 329667
+    },
+    "A1": {
+      "context_hierarchy": [
+        "exact",
+        "family_possession",
+        "family",
+        "pooled"
+      ],
+      "dirichlet_alpha": 0.5,
+      "max_training_bundle_size": 8,
+      "minimum_context_bundles": 100,
+      "model_version": "nhl-5v5-autonomous-renewal-v1",
+      "name": "A1",
+      "training_transitions": 329667
+    }
+  },
+  "d0_b2_donor_slot_reference": {
+    "reason": "No frozen event-level B2 donor-slot output was present in the pinned evaluation artifacts; aggregate score summaries cannot recover a matched clock-slot likelihood or event trace.",
+    "status": "NOT_AVAILABLE"
+  },
+  "date": "2026-10-27",
+  "decision_rule": {
+    "a1_bundle_count_crps_not_worse": false,
+    "a1_nll_ci_entirely_better": false,
+    "decision": "A0_SIMPLER_REFERENCE_OR_NEITHER",
+    "development_only": true
+  },
+  "development_exposure": {
+    "bundle_exclusions": {
+      "ambiguous_event_state": 2642,
+      "non5v5_event_state": 44495,
+      "penalty_bundle": 6663
+    },
+    "development_transitions_excluded_above_training_bundle_size": 0,
+    "eligible_5v5_source_bundle_count": 242973,
+    "eligible_5v5_source_bundles_without_qualifying_predecessor": 13131,
+    "eligible_5v5_source_event_family_counts": {
+      "blocked-shot": 28158,
+      "faceoff": 53444,
+      "giveaway": 19243,
+      "goal": 5247,
+      "hit": 54952,
+      "missed-shot": 23594,
+      "other": 1254,
+      "shot-on-goal": 58234,
+      "stoppage": 45351,
+      "takeaway": 15160
+    },
+    "eligible_development_game_periods": 3876,
+    "eligible_development_games": 1292,
+    "eligible_events_omitted_without_qualifying_predecessor": {
+      "blocked-shot": 1297,
+      "faceoff": 4727,
+      "giveaway": 823,
+      "goal": 193,
+      "hit": 2206,
+      "missed-shot": 1104,
+      "other": 46,
+      "shot-on-goal": 2641,
+      "stoppage": 1292,
+      "takeaway": 713
+    },
+    "eligible_interarrival_gap_exposure_minutes": 57645.73333333333,
+    "eligible_interarrival_gap_exposure_seconds": 3458744,
+    "full_regulation_clock_seconds": 4651200,
+    "gap_exclusions": {
+      "adjacent_bundle_not_eligible": 60870,
+      "interval_not_5v5": 249,
+      "shift_state_ambiguous": 1936
+    },
+    "other_source_types": {
+      "delayed-penalty": 1707
+    },
+    "periods_with_eligible_gap_exposure": 3843,
+    "periods_without_eligible_gap_exposure": 33,
+    "shift_5v5_seconds": 3718639,
+    "shift_ambiguous_seconds": 60574,
+    "shift_non5v5_seconds": 871987,
+    "shift_source_anomalies": {
+      "declared_duration_mismatch": 62,
+      "invalid_interval": 9,
+      "zero_duration_annotation": 8041
+    },
+    "state_ambiguity_fraction_of_regulation_clock": 0.013404282765737874,
+    "state_ambiguous_seconds_union": 62346,
+    "transition_destination_event_family_counts": {
+      "blocked-shot": 26861,
+      "faceoff": 48717,
+      "giveaway": 18420,
+      "goal": 5054,
+      "hit": 52746,
+      "missed-shot": 22490,
+      "other": 1208,
+      "shot-on-goal": 55593,
+      "stoppage": 44059,
+      "takeaway": 14447
+    }
+  },
+  "development_nll": {
+    "A0": {
+      "eligible_gap_exposure_seconds": 3458744,
+      "fallback_counts": {
+        "pooled": 229842
+      },
+      "gap_nll_nats": 843973.554101371,
+      "mark_nll_nats": 768636.7518823297,
+      "nll_nats_per_5v5_minute": 27.97449546974915,
+      "total_nll_nats": 1612610.3059837008,
+      "transition_gaps": 229842
+    },
+    "A1": {
+      "eligible_gap_exposure_seconds": 3458744,
+      "fallback_counts": {
+        "exact": 229681,
+        "family_possession": 161
+      },
+      "gap_nll_nats": 865750.3664970126,
+      "mark_nll_nats": 765200.8479733414,
+      "nll_nats_per_5v5_minute": 28.292661402006406,
+      "total_nll_nats": 1630951.214470354,
+      "transition_gaps": 229842
+    }
+  },
+  "event_state_v3_eligible_reference": {
+    "populations": {
+      "development_2021": {
+        "attempt": 115765,
+        "goal": 5329,
+        "sog": 63878
+      },
+      "training_2019_2020": {
+        "attempt": 165472,
+        "goal": 7465,
+        "sog": 90696
+      }
+    },
+    "sha256": "1029c286cc3e20907338fea3f5f5bc612c6bb0bec793661f558ab57edd934f75"
+  },
+  "extraction_correction": {
+    "development_zero_duration_annotations": 8041,
+    "positive_interval_without_parseable_duration": "Fails closed by making that period shift state ambiguous.",
+    "preliminary_run": "Invalidated; it treated zero-duration event annotations as unparseable active intervals and its scores are not used.",
+    "status": "ZERO_DURATION_ANNOTATION_FIX_APPLIED_BEFORE_ACCEPTED_RESULTS",
+    "zero_duration_policy": "Rows with equal parseable start/end or explicit 00:00 duration and a missing endpoint are counted as zero-duration annotations and contribute no interval."
+  },
+  "frozen_gap_smoothing_diagnostic": {
+    "a0_generated_gap_p95_seconds": 43.0,
+    "a1_generated_gap_p95_seconds": 230.0,
+    "dirichlet_alpha_per_gap_value": 0.5,
+    "gap_support_seconds": 1200,
+    "interpretation": "The wide symmetric gap prior places substantial mass on long unseen gaps in low-count contexts; this is consistent with A1's long generated tail and low event counts. This diagnosis does not alter the frozen model.",
+    "minimum_context_bundle_count": 100,
+    "observed_gap_p95_seconds": 43.0,
+    "posthoc_diagnostic_only_no_retuning": true,
+    "prior_mass_share_at_minimum_context_count": 0.8571428571428571,
+    "symmetric_pseudo_count_mass_per_context": 600.0
+  },
+  "limitations": [
+    "PBP whole-second clocks and sortOrder are not subsecond timing.",
+    "Possession is a binary PBP-derived proxy, not continuous puck control.",
+    "Every trace is conditional on uninterrupted 5v5 for a full 20-minute horizon.",
+    "Penalties, stoppages affecting game legality, substitutions, teams, players, tactics, overtime, and physics are not simulated as a valid game.",
+    "2021 was development-only and cannot support adoption or production claims."
+  ],
+  "operational_addendum_commit": "70da7619783eb26a2ed6b90bf20bd97a03a004a0",
+  "original_preregistration_commit": "d97357c522a35b69a7f8c4d865217f2c90e420dc",
+  "paired_nll_delta_a1_minus_a0": {
+    "ci95_high": 0.3348301259792663,
+    "ci95_low": 0.3000341834598572,
+    "mean_delta_b_minus_a": 0.3181339639311933,
+    "replicates": 2000,
+    "seed": 20261027
+  },
+  "report": "nhl_autonomous_5v5_arrival_development",
+  "runtime_seconds": {
+    "cache_load_or_build": 3.0570188750280067,
+    "model_fit": 7.028268901980482,
+    "simulation_and_metrics": 78.94884139695205,
+    "total": 108.01745951699559
+  },
+  "scope": "conditional fixed-strength 5v5 event-arrival research traces; not a valid full period/game",
+  "sequence_cache_sha256": "9cfba618ded78ed92ad2cb6e15be64b493ef768fc8d094669f2a9138ec5275b2",
+  "simulation_comparison": {
+    "generated_interarrival_gap_seconds": {
+      "A0": {
+        "n": 2908975,
+        "p50_seconds": 11.0,
+        "p90_seconds": 33.0,
+        "p95_seconds": 43.0
+      },
+      "A1": {
+        "n": 707290,
+        "p50_seconds": 12.0,
+        "p90_seconds": 46.0,
+        "p95_seconds": 230.0
+      }
+    },
+    "metrics": {
+      "bundle_count": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.5555555555555556,
+            "crps": 8.621088157227327,
+            "forecast_mean_20m": 75.05199063231849,
+            "forecast_period_mean_variance": 18.897911077716046,
+            "mean_trace_variance": 175.14107207910487,
+            "observed_mean_20m_equivalent": 80.04267459267601,
+            "observed_period_variance": 179.41227743748362,
+            "observed_to_forecast_mean_ratio": 1.0664963569694905,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.0,
+            "crps": 56.31157404896915,
+            "forecast_mean_20m": 18.244184231069475,
+            "forecast_period_mean_variance": 12.27756896111486,
+            "mean_trace_variance": 111.74576112412178,
+            "observed_mean_20m_equivalent": 80.04267459267601,
+            "observed_period_variance": 179.41227743748362,
+            "observed_to_forecast_mean_ratio": 4.387298087922449,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 48.17917767148316,
+          "ci95_low": 47.20851849539498,
+          "mean_delta_b_minus_a": 47.697012234426644,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:blocked-shot": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.6094197241738225,
+            "crps": 2.338778973673598,
+            "forecast_mean_20m": 9.72112932604736,
+            "forecast_period_mean_variance": 1.181333411065562,
+            "mean_trace_variance": 10.534834764506895,
+            "observed_mean_20m_equivalent": 9.336706770709755,
+            "observed_period_variance": 14.480329767066294,
+            "observed_to_forecast_mean_ratio": 0.9604549489628165,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.10460577673692428,
+            "crps": 6.222740032707414,
+            "forecast_mean_20m": 2.3043455633619567,
+            "forecast_period_mean_variance": 0.39988483713032924,
+            "mean_trace_variance": 3.5582825917252148,
+            "observed_mean_20m_equivalent": 9.336706770709755,
+            "observed_period_variance": 14.480329767066294,
+            "observed_to_forecast_mean_ratio": 4.051782388526761,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 4.017132780635747,
+          "ci95_low": 3.754002185060292,
+          "mean_delta_b_minus_a": 3.885487265024668,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:faceoff": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.009107468123861567,
+            "crps": 11.334294090982437,
+            "forecast_mean_20m": 4.537158469945355,
+            "forecast_period_mean_variance": 0.4970215379890199,
+            "mean_trace_variance": 4.646627634660422,
+            "observed_mean_20m_equivalent": 16.99674127588656,
+            "observed_period_variance": 23.320205782482567,
+            "observed_to_forecast_mean_ratio": 3.7461202619381435,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.0,
+            "crps": 15.195426981822255,
+            "forecast_mean_20m": 1.1985948477751756,
+            "forecast_period_mean_variance": 0.16351090610928595,
+            "mean_trace_variance": 1.51784022898777,
+            "observed_mean_20m_equivalent": 16.99674127588656,
+            "observed_period_variance": 23.320205782482567,
+            "observed_to_forecast_mean_ratio": 14.180555929666982,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 3.889061075744811,
+          "ci95_low": 3.8338637790244388,
+          "mean_delta_b_minus_a": 3.861533630218151,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:giveaway": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.5066354410616706,
+            "crps": 2.4293189739095977,
+            "forecast_mean_20m": 6.860213374967473,
+            "forecast_period_mean_variance": 0.7777899102348496,
+            "mean_trace_variance": 7.159942753057507,
+            "observed_mean_20m_equivalent": 6.353230328726993,
+            "observed_period_variance": 15.217788126899013,
+            "observed_to_forecast_mean_ratio": 0.926098064516414,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.23627374447046579,
+            "crps": 4.224864438669912,
+            "forecast_mean_20m": 1.7354670830080665,
+            "forecast_period_mean_variance": 0.26085762076138447,
+            "mean_trace_variance": 2.3282331511839707,
+            "observed_mean_20m_equivalent": 6.353230328726993,
+            "observed_period_variance": 15.217788126899013,
+            "observed_to_forecast_mean_ratio": 3.6608186873328687,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 1.93770523090215,
+          "ci95_low": 1.6514633062934276,
+          "mean_delta_b_minus_a": 1.7960630544210179,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:goal": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.687743950039032,
+            "crps": 0.9499481945803886,
+            "forecast_mean_20m": 1.8889929742388758,
+            "forecast_period_mean_variance": 0.1921374974786116,
+            "mean_trace_variance": 1.7726411657559198,
+            "observed_mean_20m_equivalent": 1.7677517831514353,
+            "observed_period_variance": 2.4423622676428622,
+            "observed_to_forecast_mean_ratio": 0.9358170238106409,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.39734582357533177,
+            "crps": 1.2591957993828988,
+            "forecast_mean_20m": 0.5394483476450689,
+            "forecast_period_mean_variance": 0.06060359888030381,
+            "mean_trace_variance": 0.5788888888888889,
+            "observed_mean_20m_equivalent": 1.7677517831514353,
+            "observed_period_variance": 2.4423622676428622,
+            "observed_to_forecast_mean_ratio": 3.2769620870440246,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 0.33991662995636807,
+          "ci95_low": 0.27866439403159526,
+          "mean_delta_b_minus_a": 0.30877670930381934,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:hit": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.4985688264376789,
+            "crps": 4.564801516296336,
+            "forecast_mean_20m": 17.570595888628677,
+            "forecast_period_mean_variance": 2.532692515070268,
+            "mean_trace_variance": 22.300926359614884,
+            "observed_mean_20m_equivalent": 18.37335536577263,
+            "observed_period_variance": 55.44059931289034,
+            "observed_to_forecast_mean_ratio": 1.045687663766912,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.06895654436638043,
+            "crps": 12.662094797571635,
+            "forecast_mean_20m": 4.309237574811346,
+            "forecast_period_mean_variance": 1.0249081618772307,
+            "mean_trace_variance": 9.121098100442362,
+            "observed_mean_20m_equivalent": 18.37335536577263,
+            "observed_period_variance": 55.44059931289034,
+            "observed_to_forecast_mean_ratio": 4.2637137189116325,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 8.371140511277265,
+          "ci95_low": 7.8368748801269605,
+          "mean_delta_b_minus_a": 8.103293286711317,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:missed-shot": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.615144418423107,
+            "crps": 2.163188982752211,
+            "forecast_mean_20m": 8.208170699973978,
+            "forecast_period_mean_variance": 0.9676043299559763,
+            "mean_trace_variance": 8.821691386937289,
+            "observed_mean_20m_equivalent": 7.81225323331946,
+            "observed_period_variance": 12.027359141893704,
+            "observed_to_forecast_mean_ratio": 0.9517654443205265,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.1345303148581837,
+            "crps": 5.142290906187647,
+            "forecast_mean_20m": 1.9985948477751758,
+            "forecast_period_mean_variance": 0.30670632635388656,
+            "mean_trace_variance": 2.864199843871975,
+            "observed_mean_20m_equivalent": 7.81225323331946,
+            "observed_period_variance": 12.027359141893704,
+            "observed_to_forecast_mean_ratio": 3.908872897383887,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 3.095292642778712,
+          "ci95_low": 2.8701973639057825,
+          "mean_delta_b_minus_a": 2.9799433545319296,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:other": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.8373666406453292,
+            "crps": 0.48732203469292584,
+            "forecast_mean_20m": 0.6826177465521728,
+            "forecast_period_mean_variance": 0.07159481276858838,
+            "mean_trace_variance": 0.6398776997137653,
+            "observed_mean_20m_equivalent": 0.47311234055172413,
+            "observed_period_variance": 0.9778681392796279,
+            "observed_to_forecast_mean_ratio": 0.6930853218237624,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.7543585740307052,
+            "crps": 0.4250142088704069,
+            "forecast_mean_20m": 0.2338537600832683,
+            "forecast_period_mean_variance": 0.024747755871237783,
+            "mean_trace_variance": 0.21608899297423886,
+            "observed_mean_20m_equivalent": 0.47311234055172413,
+            "observed_period_variance": 0.9778681392796279,
+            "observed_to_forecast_mean_ratio": 2.02311196699708,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": -0.04807181310342612,
+          "ci95_low": -0.07609357788607735,
+          "mean_delta_b_minus_a": -0.062375846085841576,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:shot-on-goal": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.6362217017954723,
+            "crps": 3.340869253491643,
+            "forecast_mean_20m": 19.96297163674213,
+            "forecast_period_mean_variance": 2.7781527098382526,
+            "mean_trace_variance": 25.776994535519126,
+            "observed_mean_20m_equivalent": 19.39815273900265,
+            "observed_period_variance": 28.55820837026565,
+            "observed_to_forecast_mean_ratio": 0.9717066723322934,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.0273224043715847,
+            "crps": 12.928522782097776,
+            "forecast_mean_20m": 4.785532136351808,
+            "forecast_period_mean_variance": 1.324922088675816,
+            "mean_trace_variance": 11.712818110850897,
+            "observed_mean_20m_equivalent": 19.39815273900265,
+            "observed_period_variance": 28.55820837026565,
+            "observed_to_forecast_mean_ratio": 4.053499628944211,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 9.781441045992214,
+          "ci95_low": 9.397146836200161,
+          "mean_delta_b_minus_a": 9.585614661707297,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:stoppage": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.47879260994015094,
+            "crps": 4.508893430807086,
+            "forecast_mean_20m": 20.447567004944055,
+            "forecast_period_mean_variance": 2.840896370412757,
+            "mean_trace_variance": 26.4647983346344,
+            "observed_mean_20m_equivalent": 15.369940980210908,
+            "observed_period_variance": 21.681602862182466,
+            "observed_to_forecast_mean_ratio": 0.7516757850210043,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.1053864168618267,
+            "crps": 8.961171614057667,
+            "forecast_mean_20m": 4.820947176684882,
+            "forecast_period_mean_variance": 1.4064959022318155,
+            "mean_trace_variance": 12.807580015612803,
+            "observed_mean_20m_equivalent": 15.369940980210908,
+            "observed_period_variance": 21.681602862182466,
+            "observed_to_forecast_mean_ratio": 3.188157931815388,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 4.676535314670212,
+          "ci95_low": 4.218871455166101,
+          "mean_delta_b_minus_a": 4.456296034458942,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "family:takeaway": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.561800676554775,
+            "crps": 1.8798600646560124,
+            "forecast_mean_20m": 4.817252146760343,
+            "forecast_period_mean_variance": 0.5384143072260706,
+            "mean_trace_variance": 4.853091334894613,
+            "observed_mean_20m_equivalent": 5.007354540580537,
+            "observed_period_variance": 9.619167235902546,
+            "observed_to_forecast_mean_ratio": 1.039462828190972,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.22560499609679938,
+            "crps": 3.463286642944444,
+            "forecast_mean_20m": 1.226073380171741,
+            "forecast_period_mean_variance": 0.16315051972594108,
+            "mean_trace_variance": 1.4567265157429092,
+            "observed_mean_20m_equivalent": 5.007354540580537,
+            "observed_period_variance": 9.619167235902546,
+            "observed_to_forecast_mean_ratio": 4.084057790961205,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 1.674824319915417,
+          "ci95_low": 1.4982026224599128,
+          "mean_delta_b_minus_a": 1.5853251984778687,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "goals": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.687743950039032,
+            "crps": 0.9499481945803886,
+            "forecast_mean_20m": 1.8889929742388758,
+            "forecast_period_mean_variance": 0.1921374974786116,
+            "mean_trace_variance": 1.7726411657559198,
+            "observed_mean_20m_equivalent": 1.7677517831514353,
+            "observed_period_variance": 2.4423622676428622,
+            "observed_to_forecast_mean_ratio": 0.9358170238106409,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.39734582357533177,
+            "crps": 1.2591957993828988,
+            "forecast_mean_20m": 0.5394483476450689,
+            "forecast_period_mean_variance": 0.06060359888030381,
+            "mean_trace_variance": 0.5788888888888889,
+            "observed_mean_20m_equivalent": 1.7677517831514353,
+            "observed_period_variance": 2.4423622676428622,
+            "observed_to_forecast_mean_ratio": 3.2769620870440246,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 0.33991662995636807,
+          "ci95_low": 0.27866439403159526,
+          "mean_delta_b_minus_a": 0.30877670930381934,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "shot_attempts": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.643767889669529,
+            "crps": 4.875915836963698,
+            "forecast_mean_20m": 39.78126463700234,
+            "forecast_period_mean_variance": 7.378967227130931,
+            "mean_trace_variance": 66.79645068956545,
+            "observed_mean_20m_equivalent": 38.31486452618331,
+            "observed_period_variance": 56.2007280068734,
+            "observed_to_forecast_mean_ratio": 0.9631384239742076,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.004163413999479573,
+            "crps": 25.611015153839173,
+            "forecast_mean_20m": 9.62792089513401,
+            "forecast_period_mean_variance": 3.98174709548585,
+            "mean_trace_variance": 36.12011709601874,
+            "observed_mean_20m_equivalent": 38.31486452618331,
+            "observed_period_variance": 56.2007280068734,
+            "observed_to_forecast_mean_ratio": 3.979557470766902,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 21.05211407026713,
+          "ci95_low": 20.42200762061301,
+          "mean_delta_b_minus_a": 20.73476334294905,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      },
+      "sog": {
+        "candidates": {
+          "A0": {
+            "central_80pct_interval_coverage": 0.6419463960447567,
+            "crps": 3.4745049923374602,
+            "forecast_mean_20m": 21.851964610981007,
+            "forecast_period_mean_variance": 3.1566049094944297,
+            "mean_trace_variance": 29.160772833723655,
+            "observed_mean_20m_equivalent": 21.165904522154086,
+            "observed_period_variance": 30.68955470703317,
+            "observed_to_forecast_mean_ratio": 0.9686041918408488,
+            "periods_scored": 3843
+          },
+          "A1": {
+            "central_80pct_interval_coverage": 0.026281550871714805,
+            "crps": 13.994385580420255,
+            "forecast_mean_20m": 5.324980483996878,
+            "forecast_period_mean_variance": 1.5599588533792088,
+            "mean_trace_variance": 13.966773354150403,
+            "observed_mean_20m_equivalent": 21.165904522154086,
+            "observed_period_variance": 30.68955470703317,
+            "observed_to_forecast_mean_ratio": 3.974832318308736,
+            "periods_scored": 3843
+          }
+        },
+        "paired_crps_delta_a1_minus_a0": {
+          "ci95_high": 10.715844303950988,
+          "ci95_low": 10.311610224923637,
+          "mean_delta_b_minus_a": 10.51730977771577,
+          "replicates": 2000,
+          "seed": 20261027
+        }
+      }
+    },
+    "observed_interarrival_gap_seconds": {
+      "n": 229842,
+      "p50_seconds": 11.0,
+      "p90_seconds": 33.0,
+      "p95_seconds": 43.0
+    },
+    "trace_count": 77520,
+    "trace_replicates_per_game_period": 10,
+    "trace_reproducibility_check": {
+      "byte_identical": true,
+      "candidate": "A0",
+      "game_id": "2021020001",
+      "period": 1,
+      "replicate": 0
+    }
+  },
+  "source_hashes": {
+    "analysis_runner_code_sha256": "a120a1a0b21987853faa9e145b3c4631d99347b2322e40fd5c7150eef60fa7a6",
+    "arrival_kernel_code_sha256": "ea54dc59dd6df7a4372b506cc6a9105eda023abdf2de0017eece805722788773",
+    "event_state_audit_sha256": "5b03df12a6e1dfd2bf546192c59c35b26c6bf2b75b04b338b14b57f85cc145a9",
+    "event_state_core_sha256": "cdcccbb1b4f5185df96178fccad4450a1bb3d8c9e5c4124389439c2281fc3490",
+    "event_state_result_sha256": "1029c286cc3e20907338fea3f5f5bc612c6bb0bec793661f558ab57edd934f75",
+    "pbp_manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+    "sequence_extractor_code_sha256": "dd19648ffbb3c5b3a74b98490e62f71dfd6c990a2d4093c42b22c583ce7280bb",
+    "shift_manifest_sha256": "deba1a38d9f9c969139dc15ac57e7085988c05bcab36db43bd87fe5805f1c6f5",
+    "v01_loader_sha256": "b6afea41c21660c564ea13ea75c5c17a6088e95cec1f590fb11426c95016e9fc"
+  },
+  "source_reconciliation": {
+    "development_2021": {
+      "bundle_extractor_minus_event_state_v3": {
+        "attempt": -532,
+        "goal": -82,
+        "sog": -397
+      },
+      "eligible_bundle_events_omitted_without_qualifying_predecessor": {
+        "attempt": 5235,
+        "goal": 193,
+        "sog": 2834
+      },
+      "eligible_bundle_extractor_event_counts": {
+        "attempt": 115233,
+        "goal": 5247,
+        "sog": 63481
+      },
+      "event_state_v3_eligible_individual_event_counts": {
+        "attempt": 115765,
+        "goal": 5329,
+        "sog": 63878
+      },
+      "transition_destination_event_counts": {
+        "attempt": 109998,
+        "goal": 5054,
+        "sog": 60647
+      }
+    },
+    "training_2019_2020": {
+      "bundle_extractor_minus_event_state_v3": {
+        "attempt": -873,
+        "goal": -146,
+        "sog": -619
+      },
+      "eligible_bundle_events_omitted_without_qualifying_predecessor": {
+        "attempt": 7756,
+        "goal": 351,
+        "sog": 4247
+      },
+      "eligible_bundle_extractor_event_counts": {
+        "attempt": 164599,
+        "goal": 7319,
+        "sog": 90077
+      },
+      "event_state_v3_eligible_individual_event_counts": {
+        "attempt": 165472,
+        "goal": 7465,
+        "sog": 90696
+      },
+      "transition_destination_event_counts": {
+        "attempt": 156843,
+        "goal": 6968,
+        "sog": 85830
+      }
+    }
+  },
+  "training_population": {
+    "development_transition_gaps": 229842,
+    "eligible_games_by_start_season": {
+      "2019": 1064,
+      "2020": 857,
+      "2021": 1292
+    },
+    "periods": 9639,
+    "training_transition_gaps": 329667
+  }
+}
