@@ -1,0 +1,44 @@
+{
+ "blocker_counts": {
+  "blocked_kick_kicking_return_outside_field": 1,
+  "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review": 3,
+  "blocked_kick_receiving_return_outside_field": 1,
+  "thin_kick_cell:field_goal:50+": 1
+ },
+ "failed_errors": [],
+ "outcome_counts": {
+  "blocked_before_regulation_end": 6,
+  "failed": 0,
+  "regulation_end_not_valid": 0,
+  "tied_at_regulation_end": 0,
+  "valid": 294
+ },
+ "pinned_snapshot_sha256": "53f5aafb9ce5a6142ac5c78d39ce3b3643272900be30d53faca83273896ed9a3",
+ "policy": "unconditional",
+ "reference_excluded_kickoffs": {
+  "kickoff without a clean receiving snap": 958
+ },
+ "reference_sha256": "d3a192c2f659044359f03cf7cdea1de085fd59bdef25a48afd813f32a72ab83d",
+ "run_snapshot_sha256": "376e5de60a20317382a859e50a351c6cdf4210f20d2608bec873a671f3131128",
+ "scope_out_counts": {
+  "blocked-kick transition unresolved": 5,
+  "rare kick outcome": 1
+ },
+ "seconds_reference_load": 16.6,
+ "seconds_total": 802.1,
+ "seeds": [
+  1,
+  300
+ ],
+ "source_files_sha256": {
+  "scripts/nfl_sequence/e0_single_play.py": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+  "scripts/nfl_sequence/e1_drive.py": "e386c93bed15be006dfd99313c92cb76d73ed23dc1da391cbfd84da9e3eb8101",
+  "scripts/nfl_sequence/e2_reference.py": "69811e23fc2c96a0c8de73e124899ad5e374d9b2f9e7a0bb805052eaf28ebafe",
+  "scripts/nfl_sequence/game_state.py": "2d75e219bc4bb4cd553f89914af0e43b448b333ccf6c9a0b27e833441b61d8f4",
+  "scripts/nfl_sequence/rules_matrix.py": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
+  "scripts/nfl_sequence/shared_v1.py": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
+  "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef"
+ },
+ "tied_at_regulation_end_seeds": [],
+ "try_policy": null
+}
