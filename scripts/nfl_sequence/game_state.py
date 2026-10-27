@@ -404,8 +404,12 @@ def validate_half_start(kickoffs):
         raise AssertionError('Q3 kickoff must reverse the Q1 kickoff teams in a normal game')
 
 
-def build_kickoff_pool(rows):
-    """Starting spots and time after kickoffs, from published kickoff rows (receiving team = posteam)."""
+def build_kickoff_pool(rows, include_season=False):
+    """Starting spots and time after kickoffs, from published kickoff rows (receiving team = posteam).
+
+    `include_season` adds the season to each sample for the research regime pool. It is off by default because the reference
+    fingerprint hashes every sample, so the default pool's fingerprint must not change.
+    """
     by_game = {}
     for r in rows:
         by_game.setdefault(r['game_id'], []).append(r)
@@ -425,8 +429,11 @@ def build_kickoff_pool(rows):
             if runoff < 0 or not 1 <= spot <= 99:
                 excluded['kickoff with an impossible runoff or spot'] += 1
                 continue
-            pool.append({'spot': spot, 'runoff': runoff, 'game_id': row['game_id'], 'play_id': int(row['play_id']),
-                         'game_date': row['game_date'], 'season': int(row['season'])})
+            sample = {'spot': spot, 'runoff': runoff, 'game_id': row['game_id'], 'play_id': int(row['play_id']),
+                      'game_date': row['game_date']}
+            if include_season:
+                sample['season'] = int(row['season'])
+            pool.append(sample)
     return pool, excluded
 
 

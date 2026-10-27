@@ -98,10 +98,16 @@ def main():
     ap.add_argument('--overtime-choice', choices=('kick', 'receive'), default=None,
                     help='labelled control: force the toss winner\'s decision instead of the observed rate')
     ap.add_argument('--target-season', type=int, default=2026,
-                    help='season whose rules the simulated games follow; kickoffs come from the seasons with the same rules')
+                    help='season whose rules the simulated games follow (and the kickoff regime with --kickoff-regime)')
+    ap.add_argument('--kickoff-regime', action='store_true',
+                    help='research variant: draw kickoffs only from seasons with the target season\'s kickoff rules')
+    ap.add_argument('--kickoff-before', default=None,
+                    help='with --kickoff-regime: no kickoff on or after this date (YYYY-MM-DD)')
     ap.add_argument('--out', required=True)
     ap.add_argument('--summary', required=True)
     args = ap.parse_args()
+    if args.kickoff_regime and args.kickoff_before is None:
+        ap.error('--kickoff-regime needs --kickoff-before')
     if args.policy == 'unconditional':
         policy, label = None, 'unconditional'
     elif args.policy.startswith('K='):
@@ -115,9 +121,10 @@ def main():
     pinned_sha = snapshot['snapshot_sha256']
     table = not args.no_safety_table
     ot_table = not args.no_overtime_table
-    registry, _ = rr.load_registry()
-    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, target_season=args.target_season) if policy is None else er.load(
-        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, target_season=args.target_season)
+    registry, registry_sha = rr.load_registry()
+    regime = dict(kickoff_regime_season=args.target_season, kickoff_before=args.kickoff_before) if args.kickoff_regime else {}
+    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, **regime) if policy is None else er.load(
+        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, **regime)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     ps.reseal(snapshot)
     load_seconds = time.monotonic() - started
@@ -151,7 +158,7 @@ def main():
         'failed_errors': [{'seed': r['seed'], 'error': r['error']} for r in rows if r['outcome'] == 'failed'],
         'pinned_snapshot_sha256': pinned_sha,
         'run_snapshot_sha256': snapshot['snapshot_sha256'],
-        'rule_registry_sha256': ref.kickoff_regime['registry_sha256'],
+        'rule_registry_sha256': registry_sha,
         'active_rule_ids': rr.active_rules(registry, args.target_season, 'REG'),
         'kickoff_regime': ref.kickoff_regime,
         'reference_sha256': ref.model_inputs['sha256'],
