@@ -64,26 +64,26 @@ Needs: archived NWS forecasts issued at a fixed lead (for example 24 hours befor
 DB yet. Without it, E1 cannot be scored. Blocked on the archive; the week 8 forecasts are the first capture of this
 (snapshot date 2026-10-27).
 
-### E2. Outdoor interaction: temperature by wind (planned)
+### E2. Outdoor interaction: temperature by wind (done, one cell passes the rule, not promoted)
 
 Question: is the outdoor total effect concentrated in cold, windy games?
 
 Method: cells of temperature (under 32F, 32 to 49F, 50 to 69F, 70F and up) crossed with wind (under 10, 10 to 14, 15
 mph and up), outdoor games only, centred on team strength. Same decision rule, with cell minimum 40.
 
-### E3. Venue altitude and home-field advantage (planned)
+### E3. Venue altitude and home-field advantage (done, no candidates)
 
 Question: does Denver show a home margin or total effect beyond team strength? Use the home-venue effect with a
 shrinkage prior, because each venue has about 34 games in four seasons.
 
-### E4. Referee crews (planned)
+### E4. Referee crews (done, no candidates)
 
 Question: do full crews (seven officials) move penalties, penalty yards or totals after team strength is removed?
 
 Method: crew-level effects from `nfl_game_officials`, shrunk toward the league mean. Penalties residualised for team.
 Target: crews with at least 30 games. Currently only the head official is tested (E0).
 
-### E5. Kickoff slot by broadcast (planned)
+### E5. Kickoff slot by broadcast (done, no candidates)
 
 Question: does the national-window effect (primetime, international early slot) survive once team strength is removed,
 and is it different by network?
@@ -96,7 +96,7 @@ time.
 Question: is the attendance effect real or a capacity artefact? Compare attendance against the capacity recorded for
 each season, not today's listed figure. Needs historical capacity (blocked on a source per season).
 
-### E7. Rest and travel (planned, not game information)
+### E7. Rest and travel (done, no candidates; not game information)
 
 Question: how much of the day-of-week and slot effect is rest and time-zone travel? Uses `away_rest` and `home_rest`
 from the schedule and the venue time zones in `venues.json`.
@@ -116,3 +116,25 @@ until a variant experiment passes the decision rule.
 - `scripts/nfl_sequence/game_info/fetch_forecasts.py`: NWS forecast per game.
 - `scripts/nfl_sequence/game_info/backtest_splits.py`: E0 split screen with team-strength residuals.
 - Outputs are written under the scratchpad, not the repository.
+
+## First run of E2, E3, E4, E5 and E7 (2026-10-27)
+
+Script: `scratchpad/gameinfo2026/run_experiments.py`. Outputs: `scratchpad/gameinfo2026/experiments/`. Each family is
+controlled for multiple comparisons on its own. Same rules as E0. Team-strength residuals for total and margin;
+penalties are raw (not yet adjusted for team tendency).
+
+| Family | Tests | Candidates (q < 0.05 and holdout sign agrees) | Smallest q | Note |
+|---|---:|---:|---:|---|
+| E2 temperature by wind (outdoor) | 20 | 1 | 0.030 | penalties, 50-69F with 10-14 mph wind, see below |
+| E3 venue, shrinkage in JSON | 120 | 0 | 0.060 | Detroit total residual +8.1 (weak, not promoted) |
+| E4 officials | 464 | 0 | 0.249 | no official passes control |
+| E5 slot by broadcast | 28 | 0 | 0.854 | no cell passes control |
+| E7 rest and travel | 44 | 0 | 0.198 | none passes control |
+
+E2 candidate, not promoted:
+- Outdoor games at 50-69F with 10-14 mph wind: +2.18 flagged penalties, n = 42, q = 0.030.
+- 2025 holdout: +2.65 penalties, interval [-0.32, +5.51], n = 8. The interval includes zero.
+- Penalties are not yet adjusted for team tendency, so this may be team behaviour rather than weather.
+- Next step before any further work: adjust penalties for team, then re-test this cell on the full 2022 to 2025 sample.
+
+Still blocked: E1 (needs archived forecasts) and E6 (needs historical capacity by season).
