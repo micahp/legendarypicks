@@ -19,6 +19,7 @@ PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' /
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
 OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
 TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
+CHOICE_MODEL = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_choice_model_2025.csv'
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -103,6 +104,11 @@ def _reference_fingerprint(reference):
         for bucket in sorted(reference.overtime_try_p_two):
             add(['overtime-try-fallback', bucket, reference.overtime_try_p_two[bucket]])
         add(['overtime-try-fallback-sha256', reference.overtime_try_sha256])
+    if getattr(reference, 'overtime_p_kick', None) is not None:
+        add(['overtime-choice-p-kick', reference.overtime_p_kick])
+        add(['overtime-choice-sha256', reference.overtime_choice_sha256])
+    if getattr(reference, 'overtime_choice', None) is not None:
+        add(['overtime-choice-forced', reference.overtime_choice])
     if getattr(reference, 'overtime_toss', None) is not None:
         add(['overtime-toss-override', reference.overtime_toss])
     extras_hash = hashlib.sha256(PLAY_EXTRAS.read_bytes()).hexdigest()
@@ -216,6 +222,23 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
                             'timeout': t, 'timeout_team': t_team,
                             'out_of_bounds': oob}
     return out
+
+
+def load_overtime_choice_model(path=CHOICE_MODEL):
+    """The observed kick rate for the winning coach's overtime decision (2025 regular season). Checked against its manifest."""
+    import csv
+    manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if manifest['output']['sha256'] != source_hash:
+        raise ValueError(f'overtime choice model checksum mismatch: {path}')
+    with open(path, newline='') as f:
+        rows = list(csv.DictReader(f))
+    if len(rows) != 1:
+        raise ValueError('the overtime choice model has one fitted row')
+    p = float(rows[0]['p_kick'])
+    if not 0.0 <= p <= 1.0:
+        raise ValueError('overtime p_kick outside [0, 1]')
+    return p, source_hash
 
 
 def load_overtime_try_fallback(path=TRY_FALLBACK):
@@ -333,7 +356,7 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
 
 
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
-         overtime_toss=None):
+         overtime_toss=None, overtime_choice=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -367,11 +390,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
     overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
     try_fallback, try_fallback_sha = load_overtime_try_fallback() if overtime_table else (None, None)
+    choice_p, choice_sha = load_overtime_choice_model() if overtime_table else (None, None)
     reference = gs.Reference(pool, kpool, kicks, load_participants(db),
                              load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
-                             overtime_try_p_two=try_fallback)
+                             overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice)
     reference.overtime_try_sha256 = try_fallback_sha
+    reference.overtime_choice_sha256 = choice_sha
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db)

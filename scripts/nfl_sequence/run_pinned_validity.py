@@ -94,6 +94,8 @@ def main():
                     help='leave out the observed overtime drive table: a regulation tie is then overtime_not_modelled')
     ap.add_argument('--overtime-toss', choices=('A', 'B'), default=None,
                     help='sensitivity: force the overtime first possession instead of the seeded uniform draw')
+    ap.add_argument('--overtime-choice', choices=('kick', 'receive'), default=None,
+                    help='labelled control: force the toss winner\'s decision instead of the observed rate')
     ap.add_argument('--out', required=True)
     ap.add_argument('--summary', required=True)
     args = ap.parse_args()
@@ -110,8 +112,8 @@ def main():
     pinned_sha = snapshot['snapshot_sha256']
     table = not args.no_safety_table
     ot_table = not args.no_overtime_table
-    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss) if policy is None else er.load(
-        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss)
+    ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice) if policy is None else er.load(
+        args.db, try_policy=policy, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     ps.reseal(snapshot)
     load_seconds = time.monotonic() - started
