@@ -1,6 +1,8 @@
 # Handoff: identity duplicates, NBA stakes and box scores (2026-10-27)
 
-Scope: dev only. Nothing on prod was written. Prod was read through `mode=ro` connections only.
+Update, later on 2026-10-27: the Leagues Cup bind (fotmob 1738398 to 62527) was applied on dev. `spine_merge` was then run on prod with a backup first (`backend/data/picks.db.pre-spine-merge-20261027.bak`, 2.9 GB, still on disk). Prod result: 7 merges, 89 references moved, 4 keys bound. Verified: dropped IDs gone, no references left, ESPN IDs carried, `quick_check` ok, re-plan empty. The four roster-layer conflicts are unchanged on both DBs. Sections 2 and 3 below describe the state before this update.
+
+Scope: the changes above were made to dev and prod. Earlier in the session, prod was read-only.
 Everything below is committed on dev. Nothing new has been pushed in this session.
 
 Read first: section 4. One decision is pending, and it changes prod's behaviour at the daily roster run.
