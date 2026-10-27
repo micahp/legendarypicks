@@ -2,13 +2,16 @@
 
 **Document ID:** LP-GRANULAR-MODELS-2026-10-26  
 **Status:** Research strategy and architecture; not an authorization to deploy  
-**Date:** October 26, 2026  
+**Date:** October 26, 2026; **evidence/roadmap update:** October 27, 2026  
 **Applies to:** Legendary Picks across leagues, with NFL statistical full-game simulation and Gridiron Physics as current testbeds
 
 **Related documents:**
 - [Prediction Modeling Platform](SPEC-modeling-platform-2026-07-16.md)
 - [Contextual NFL Full-Game Simulation](SPEC-NFL-CONTEXTUAL-FULL-GAME-SIMULATION-2026-10-25.md)
 - [Forecasting North Star](STRATEGY-forecasting-north-star-2026-10-10.md)
+- [Proprietary Modeling Phases (updated roadmap)](SPEC-proprietary-prediction-system-phases.md)
+- [Situational Research Matrix](research/NFL-SITUATIONAL-RESEARCH-MATRIX-2010-2026.md)
+- [Historical NFL Rule Regimes](research/NFL-RULE-REGIME-REGISTRY-2010-2026.md)
 
 ---
 
@@ -451,3 +454,88 @@ This strategy is operational when Legendary Picks can:
 **North star:** Legendary Picks should know not merely *which team is likely to win*, but *which predictive mechanisms earned that forecast*, at which level of granularity, and whether each one survives contact with unseen games.
 
 **A collection of locally good models becomes an advantage only when the resulting forecasts are coherent and measurably better.**
+
+---
+
+## 16. Evidence update and model roadmap, 2026-10-27
+
+This dated section **updates the execution order in §§12–13**; earlier methodological principles and experiments remain part of the research record. Cross-sport architecture is unchanged: distinct target-specific models, a shared frozen state, and separate local-predictive, global-predictive and legal/physical-validity gates. The [phased modeling roadmap](SPEC-proprietary-prediction-system-phases.md) should be read with this update rather than its July 22 "not started" labels.
+
+### 16.1 Independent football-data forecast policy
+
+**Official team/player/game data and verified pregame context are model inputs. Sportsbook moneylines, spreads, totals, player lines, implied probabilities and market-projected stats are NOT training, calibration, feature-engineering, prior-selection or inference inputs for the independent model.** Do not use bookmaker consensus to patch underpredicted games. Captured market information is allowed in a sealed **external evaluation and product-comparison layer after our forecast is frozen**, with its timestamp and de-vig procedure recorded. Reporting a wager/lean is a separate consumer policy, not permission for price leakage into forecasts. ESPN/publisher projection benchmarks must likewise stay outside independent-model features unless separately and explicitly classified as an external benchmark.
+
+The 2026 Week 7 Dallas–Philadelphia game finished **DAL 38, PHI 21 (59 total)**, whereas the integrated contextual S1 mean was DAL 20.8081, PHI 19.9695 (40.7776 total); the recorded v1 reference was DAL 23.1421, PHI 23.1840 (46.3261 total). This is a **single observed tail outcome and diagnostic case, not a tunable target**. Examine the full score, drive, quarter, player-opportunity and turnover distributions over many held-out games before claiming systematic underprediction.
+
+### 16.2 Audited full-game simulator status, not a promotion claim
+
+The completed DAL–PHI research batches are documented in [the run ledger](reports/nfl-dal-phi-10k-run-ledger-2026-10-26.md) and [the integrated report](reports/nfl-dal-phi-s1-integrated-10k-2026-10-27.md). These reports were pushed on another research branch; links describe evidence, **not files newly introduced by this update**.
+
+| Batch | Valid complete, untied / attempts | Limits |
+|---|---:|---|
+| Unconditional S0 | 7,993 / 10,000 (79.93%) | Dirty producer and different observed references |
+| First contextual S1 | 8,825 / 10,000 (88.25%) | Different producer/reference hash; incomplete overtime/blocked-kick transitions |
+| Integrated contextual S1 | 9,820 / 10,000 (98.20%) | 173 blocked, one error, six additional complete games that appear tied and require status verification |
+
+The integrated producer was `709fb75959c16adc74baf42e986d4fb85974e0cc`; its **input cutoff preceded kickoff** but its **merged output was frozen after kickoff**. Its recorded v1 lock has unverified schedule provenance. All three runs are **engineering/exploratory**, not a fair prospective performance improvement or a same-engine paired ablation. The reported 2026 matchup included the correct depth-rank QB1s, Dak Prescott and Tanner McKee, but only **41 offensive skill-position depth-chart rows** (18 DAL, 23 PHI), without verified active/inactive game-day flags or full line and defense. Correct QB ID does not validate the rest of the roster.
+
+**Release gates:** preserve an immutable per-seed ledger (score, status, blocker/trace, overtime/tie state, rules, input hashes), correctly retain final regular-season ties as third outcome, identify/resolve every error, implement or explicitly quarantine legal kick/return/penalty states, and compare matched S0/S1 under one engine and one cutoff. Current blocking categories include blocked kicks/recoveries (105), thin extremely long FG cells (45; `yardline_100 >= 50` means roughly 67+ yard kicks, not ordinary 50-yard kicks), and safety free kicks (23). Report coverage and conditional-on-valid score forecasts separately. A high completion rate alone is not predictive skill.
+
+### 16.3 Next core model: projected game-day personnel, not a static 53-man list
+
+**Distinguish these states:** roster membership/transaction eligibility; official practice participation (DNP/limited/full); official game-status designation (Out, Doubtful, Questionable, no designation); expected game-day dressing; verified published inactive list (~90 minutes pre-kickoff); emergency third-QB conditional eligibility; and **actual play/snap workload**. A player who dresses but receives zero snaps is NOT inactive. `ACT` in nflverse weekly rosters is NOT guaranteed to mean on the final game-day dressed list. `INA` may include stale/disconnected roster records. Do not map `RES` as a complete, error-free IR indicator. `INA` is absent in 2016–2018 weekly files; it becomes a candidate label from 2019 onward only after verification.
+
+**2024 validation already in progress:** 64 games (weeks 1–4), 806 official list entries, 812 nflverse `INA` rows. An initial name-based reconciliation matched 783 exactly plus 21 aliases, with 25 emergency-QB entries; it still had two reported `ACT` conflicts and eight `INA`-only rows before third-source adjudication. Manual aliases, late announcement amendments (e.g., Evan Engram), former-team players, trades/waivers/IR, and incorrect team-code mapping (`LA`/`LAR`, `WAS`/`WSH`) make an unverified 99% headline insufficient. **Do not mark any final precision/recall, GSIS coverage or fitted questionable/doubtful rate as established yet.** Preserve official `game_id`, team, source URL, publication/observation version, timestamp, GSIS ID or unresolved ID, inactive/emergency status, dated transaction evidence and adjudication reason. Work on official inactive collection was delegated to a separate agent; its still-pending revised output is not a shipped artifact.
+
+**Current archived support:** `nfl_hist_injuries` 90,752 rows (2009–2025), `nfl_hist_snap_counts` 324,612 (2013–2025), `nfl_hist_depth_charts` 552,514 (2010–2024), `nfl_hist_participation` 478,989 play keys (2016–2025), `nfl_hist_ftn_charting` 185,215 play keys (2022–2025). These are **development snapshot measurements**, not assured complete sources. Historical injuries contain missing `date_modified` and `report_status`; 2025 injury rows lack `date_modified`. The 2023 injury table has incomplete playoff coverage. Some historical depth charts lack publication times and 2025 changed schema. `nfl_hist_participation` in the measured local copy has no individual player IDs; inspect newer/raw releases before declaring player-level coverage absent globally.
+
+**Models, each separately graded:**
+1. `P(dressed | information available at cutoff)`: historical official inactive outcome; do not substitute "had a snap."
+2. `P(position-group/role | dressed, team, opponent, game plan)`: replacement and formation assignments; projected full offensive/defensive/special-teams units and bench.
+3. `P(snap/routes/targets/carries | dressed, role, game context)`: workload distribution, including active-but-limited players.
+4. `P(stat outcome | opportunity, ability, opponent, venue, in-game state)`: player props, with uncertainty and player-team stat conservation.
+
+Do not hardcode "Questionable = 50%" or "Doubtful = 25%" for the current designation regime. The NFL removed `Probable` in 2016; later status labels are qualitative. Estimate empirically with hierarchical smoothing and report subgroup coverage and out-of-sample calibration. The prior `QBI` and `AVAIL` features were **not adopted** in earlier evaluation; this opportunity-based model is a distinct challenger, not a claim those failures never happened.
+
+**Product horizon:** issue and grade independent forecasts **early week, during practice reporting, at final game-status report, and after official inactives**. Freeze each cutoff and publication evidence. User forecasts must not depend on waiting until 90 minutes before kickoff. Publish scenario-mixture uncertainty early, then narrow it when statuses resolve. Store both `P(dressed)` and `P(performance | dressed)`; keep an unconditional DNP-inclusive distribution separate from conditional-on-dressed prop projections and settlement rules.
+
+### 16.4 Complete situational/context factor research without empty Cartesian cells
+
+The [NFL situational matrix](research/NFL-SITUATIONAL-RESEARCH-MATRIX-2010-2026.md) enumerates day of week, kickoff slot, rest/bye/travel/time zones, team records and form (including 2–4 vs 2–4), coach, divisional stakes, Q1 vs Q4, score/clock and fatigue, down/distance/field, quarterback replacement, offensive line and defensive absences, venue surface/roof, weather/elevation, passing/rushing styles, fourth-down/try/kick/timeout decisions and player exposure. Investigate interaction hypotheses, **not an exhaustive unshrunk decision tree**. Use opportunity denominators, as-of features, opponent/era controls, shrinkage, matched same-engine ablations and game-clustered uncertainty. Publish null results, including previously unsuccessful pressure/coverage/FTN and availability features.
+
+**Available supporting context:** nflverse schedule includes date/weekday, kickoff, rest, stadium/roof/surface, referee, temperature/wind and prior scores; NFL `load_officials()` has historical multi-person crew data (coverage beginning 2015, subject to checks). **Attendance and TV broadcast are not standard schedule fields** and need separately timestamped external sources if studied. Stadium geolocation is an enrichment. Observed game-time weather, final attendance or roof state cannot be imported as a future kickoff forecast without a separately recorded pregame estimate.
+
+### 16.5 Rule history is part of the data model
+
+The expanded [2010–2026 rule registry](research/NFL-RULE-REGIME-REGISTRY-2010-2026.json) has **124 itemized change records across 17 seasons**, with an [annual guide](research/NFL-RULE-REGIME-REGISTRY-2010-2026.md). It is **not certified a complete 17-edition article-by-article audit**. A separate experimental branch may still be reading the earlier 39-record registry; reconcile current schema and source hashes before merging.
+
+Every historical record and simulated action needs **source and target season / season type / active rules**, plus legality/compatibility tests for PAT and two-point attempts, 2024–26 kickoff/onside/touchback, 2010–12 and 2022/2025 overtime, penalties, blocked kicks, missed-FG restarts and clock. Rules determine permitted actions; historical evidence estimates probabilities. A KS test failing to reject an era difference does not authorize executing an illegal action. The 2026 contingency provision on replacement-official reviews must not be treated as automatically active.
+
+### 16.6 Historical source and full-game evidence contracts
+
+`nfl_schedule_versions` and `first_observed` exist on an isolated research feature branch, but the measured development DB lacked schedule versions. Overwritten schedule `ingested_at`, retrospectively inferred QB starters, final injury statuses, and published-after-lock depth charts cannot satisfy strict historical replay. Keep all inputs in one of three classes: **observed by cutoff**, **retrospective date-filtered but publication unverified**, or **unavailable**. An input can be useful for exploratory modeling without qualifying for equal-information accuracy evaluation.
+
+Define an immutable per-game `forecast_snapshot` with source URL/hash, source publication and LP observation times, UTC cutoff, exact roster scenario mix, target rule regime, model and engine commits, team/player projection versions, seed set and independent baseline reference. All model outputs for a given cutoff are fixed **before** the game's actual result becomes available. Do not backdate a late 10,000-run result. For paired comparisons, identical seed integers are insufficient when the model fingerprints re-key random draws; use verified common-random-number streams or report independent MC uncertainty.
+
+Score independently:
+- **Labels / exposures:** inactive precision/recall, active-status Brier and calibration, snap/route/target/carry distributional scores, team-player reconciliation.
+- **Situational choice / play outcomes:** log loss/Brier with correct opportunity denominator, yards/success CRPS and drive/quarter/endgame distributions.
+- **Whole games:** legal transitions and tie/coverage, points/total/margin error and CRPS, three-outcome winner scoring, calibration and independent-market benchmark comparisons on identical games.
+- **Replay / physics:** video fidelity, explicit possession/catch/goal-line score synchrony, 22-player movement trajectories, contact and football tracking displacement against constant-velocity and historical Big Data Bowl controls. An outcome-conditioned animation is a visualization of a sampled result, not evidence that a 3D physical process predicted it.
+
+### 16.7 Revised execution order and explicit acceptance gates
+
+| Order | Deliverable | Exit criterion |
+|---|---|---|
+| **R0** | Preserve reference/control models | Frozen v1, S0, contextual S1, and existing prop-baseline versions; no silent default/fingerprint changes; documentation, evidence and hash manifests |
+| **R1** | Historical label correctness | GSIS-joined official inactive lists, dated transactions, roster-status confusion matrix by year, missing/alias/emergency-QB exclusions, holdout labels |
+| **R2** | Early-week availability and workload models | Multi-horizon `P(dressed)`, `P(workload | dressed)`, and replacement opportunities, with chronological calibration and explicit unknown status |
+| **R3** | Legal full-game completion and rule regimes | 2010–2026 season-specific rule resolver with source-target mapping, per-seed ledger, valid overtime ties, no untracked blockers/errors; first two arms on same engine |
+| **R4** | End-to-end predictive comparison | Cohesive player stats and final score outputs; same-cutoff v1/S0/S1 ablations vs observed outcomes, untouched chronological holdout, measured tail behavior |
+| **R5** | Situational ablation program | Registered day/rest/record/venue/officials/QB/injury/quarter interactions; coverage and measured incremental global benefit, nulls retained |
+| **R6** | Optional physically grounded playback | Movement and contact accuracy vs tracking/constant velocity, frame-level ball and score consistency; no claim of forecast uplift without independent evidence |
+| **R7** | Consumer and multi-league rollout | Early forecasts and confidence updates, publicly graded player/game/playoff outputs, independent odds comparisons and cross-sport contracts after league-specific validation |
+
+**Merge gate:** a Phase 1 consolidation branch can merge to `dev` only when its tests, source hashes, configuration defaults, frozen forecast semantics, and old/new behavior differences are documented. `dev` integration is **not** automatic production deployment. The original statistical prediction, an outcome-conditioned 3D replay, and a physics-generated game must stay labeled as different products/claims.
+
+**Do not overfit Dallas 38–21.** Use that game as an untuned postmortem and evaluate whether any proposed fix improves a broad later or out-of-sample set. This roadmap is not evidence that the listed work is already implemented or promoted.

@@ -1,0 +1,78 @@
+{
+ "drive_contents": {
+  "contains a non-scrimmage play": 2802
+ },
+ "drive_coverage": {
+  "all_plays": {
+   "complete": 106,
+   "none": 77,
+   "partial": 2772
+  },
+  "scrimmage_plays": {
+   "complete": 2059,
+   "no scrimmage plays": 10,
+   "none": 67,
+   "partial": 819
+  }
+ },
+ "drives_total": 2955,
+ "failing_field_counts (not exclusive)": {
+  "overtime_unverified": 134,
+  "spot_unverifiable": 222
+ },
+ "game_coverage": {
+  "all_plays": {
+   "partial": 136
+  },
+  "scrimmage_plays": {
+   "complete": 1,
+   "partial": 135
+  }
+ },
+ "game_identifier": {
+  "mapped": 136,
+  "unmapped": {}
+ },
+ "games_total": 136,
+ "lp_scrimmage_no_bdb_play_by_type": {
+  "pass": 549,
+  "qb_kneel": 54,
+  "qb_spike": 4,
+  "run": 412
+ },
+ "lp_scrimmage_plays_tracking": {
+  "BDB play with this identifier failed verification": 356,
+  "no BDB play with this identifier": 1019,
+  "tracked": 15768
+ },
+ "play_identifier": {
+  "lp_duplicate_game_play_pairs": 0
+ },
+ "scope": {
+  "bdb_games": 136,
+  "bdb_tracked_plays": 16124,
+  "bdb_weeks": [
+   1,
+   9
+  ],
+  "lp_rows_weeks_1_9": 23673,
+  "lp_scrimmage_plays_with_drive": 17143
+ },
+ "status_counts": {
+  "overtime (not checked)": 134,
+  "unmatched": 0,
+  "unverified (spot side NA)": 222,
+  "verified": 15768
+ },
+ "tracking": {
+  "bdb_plays_with_ball_snap_event": 16062,
+  "bdb_plays_with_frames": 16124,
+  "bdb_plays_with_snap_frame": 16124,
+  "snap_frame_and_event_disagree": 62,
+  "verified_and_tracked": 15768
+ },
+ "unmatched_by_first_reason": {
+  "overtime_unverified": 134,
+  "spot_unverifiable": 222
+ }
+}

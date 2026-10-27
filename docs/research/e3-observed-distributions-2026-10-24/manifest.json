@@ -1,0 +1,90 @@
+{
+  "database": "Legendary Picks dev SQLite database, opened with mode=ro and PRAGMA query_only=ON",
+  "definitions": {
+    "distance_buckets": [
+      "0-3",
+      "4-6",
+      "7-10",
+      "11+"
+    ],
+    "drive_clock_span": "max minus min game_seconds_remaining among retained rows in a drive; snap-clock span, not exact possession time",
+    "drive_terminal": "series_result on the last retained play_id in each non-null (game_id, drive)",
+    "epa_success": "The source success flag is EPA-positive; it is not a first-down or scoring flag.",
+    "field_zones": [
+      "red_zone_0-20",
+      "opponent_half_21-50",
+      "own_half_51-80",
+      "backed_up_81-99"
+    ],
+    "first_down_series_terminal": "series_result='First down' counted only on the last play_id within (game_id, series); result consistency is validated",
+    "game_scores": "official retained nfl_schedule home_score and away_score; never reconstructed from PBP flags",
+    "histogram_nulls": "Source nulls are represented as a literal NULL value in distribution tables unless the metric explicitly requires complete source coverage.",
+    "play_condition_population": "play_type in pass/run/no_play, down 1-4, nonnegative ydstogo, yardline_100 0-99",
+    "player_games": "role-specific non-null nfl_pbp player IDs grouped by game_id; no names or IDs exported",
+    "player_targets": "receiver player-games include only pass_attempt rows with receiver_player_id; missing receiver IDs are counted in coverage",
+    "rushing_yards": "yard histogram includes only player-games with non-null rushing_yards on every rush_attempt; exclusions are listed in player_stat_coverage.csv"
+  },
+  "generated_at_utc": "2026-10-24T11:15:54Z",
+  "producer_base_commit": "702f41db569de04a962b6f1336460d5273b66ce0",
+  "producer_script_sha256": "b1b8427197b99ecf8284a3dc30f111d2bbafbf9c12a3acf5a17f6b35dc073594",
+  "schema": "lp.nfl.e3-observed-distributions.v1",
+  "source_measurements": {
+    "by_season": [
+      {
+        "drives": 5942,
+        "games": 271,
+        "pbp_rows": 47157,
+        "season": 2022
+      },
+      {
+        "drives": 6042,
+        "games": 272,
+        "pbp_rows": 47399,
+        "season": 2023
+      },
+      {
+        "drives": 5862,
+        "games": 272,
+        "pbp_rows": 47274,
+        "season": 2024
+      },
+      {
+        "drives": 5733,
+        "games": 272,
+        "pbp_rows": 46452,
+        "season": 2025
+      }
+    ],
+    "game_series_result_conflicts": 0,
+    "nfl_pbp_games": 1087,
+    "nfl_pbp_nonnull_drive_groups": 23579,
+    "nfl_pbp_rows": 188282,
+    "nfl_pbp_rows_without_drive": 2163,
+    "nfl_pbp_sha256": "745c49c8e0ab18b66c4af77c724e0cbdc7016abca3dbb7be00ccae563eb0cddc",
+    "nfl_schedule_reg_games": 1087,
+    "nfl_schedule_sha256": "388611dd20814f67cd44c3eb1f656785b3a3c4fe8ee38fda6dcbb86150e527ed",
+    "pbp_only_game_keys": 0,
+    "schedule_only_game_keys": 0
+  },
+  "sources": {
+    "final_scores": "nfl_schedule joined by (season, game_id), game_type=REG",
+    "lp_game_payload_used": false,
+    "plays_drives_player_stats": "nfl_pbp; retained nflverse play-by-play fields"
+  },
+  "table_sha256": {
+    "drive_distribution.csv": "4e401f42666bd8fdaea341d00a4dc95f382255bbf72cb8d088545ec044ecdf58",
+    "game_distribution.csv": "bdd89eb6a971b2fd32704793261ff05a0265135ce58e797134f9669578c1fd55",
+    "play_condition_rates.csv": "a35c1aafd2d44a0ad4ed75e59570f17234c2d0b5fcbe4d256657ec3e2e95ba05",
+    "play_distribution.csv": "b5d2e07347c26674552ae70bdeedf9f47e54233afe9a003662f2cf19d2ffc57d",
+    "play_yards_by_state.csv": "7dcd8483cd627886c50c325fa39c55b4f06f9775625d97ddd46a316320ae9c58",
+    "player_stat_coverage.csv": "f3249c9e0baa85f116302ca7d797c1e3f35d1a3792ef1a2fd89816e6ea30022b",
+    "player_stat_distribution.csv": "9dfad0ccccf4371d870d843ffb90ad896de838c048c68a19aa9b9defc7d271d5"
+  },
+  "window": {
+    "season_max": 2025,
+    "season_min": 2022,
+    "season_type": "regular season, verified by exact game-key parity with nfl_schedule REG",
+    "week_max": 18,
+    "week_min": 1
+  }
+}

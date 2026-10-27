@@ -1,0 +1,1102 @@
+{
+ "checks": {
+  "problems": [
+   "R14: test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage is not a test method",
+   "R14: test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime is not a test method",
+   "R14: citation 'no timeout is drawn' not found in game_state.py"
+  ],
+  "resolved": {
+   "citations": 37,
+   "tests": 80,
+   "transitions": 25
+  }
+ },
+ "kick_distance": {
+  "file": "kick-distance-offset.json",
+  "modal_offset": 18,
+  "offset_counts": {
+   "10": 1,
+   "17": 45,
+   "18": 3779,
+   "19": 499,
+   "23": 1
+  },
+  "share_at_engine_offset": 0.0104
+ },
+ "lp_reference": {
+  "blob": "06b43451275006b3fd20dec2f95ae0b4976410cf",
+  "origin_dev_head": "28f521f33a574bfb8f720cc9f972a5f9919d3883",
+  "path": "docs/rules/NFL-2026-GAME-STATE-RULES.md on origin/dev (LP engineering reference, not the official rulebook)"
+ },
+ "rows": [
+  {
+   "adversarial": [
+    "test_game_state.Ledger.test_normal_mode_refuses_kick_and_defend_goal",
+    "test_game_state.Ledger.test_exception_mode_is_not_implemented"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "only receive or defer"
+    ]
+   ],
+   "gaps": [],
+   "id": "R01",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      329
+     ],
+     "snippet": "only receive or defer"
+    }
+   ],
+   "lp_reference": "Rules file, STRICT DEFAULT SIMULATION POLICY (LP policy, not rulebook text: the rulebook permits kick and goal choices)",
+   "note": "The engine restricts the rulebook's permitted choices to LP normal-mode policy.",
+   "positive": [
+    "test_game_state.Ledger.test_receive_path_gives_one_kickoff_per_team",
+    "test_game_state.Ledger.test_defer_path_gives_one_kickoff_per_team"
+   ],
+   "rule": "Toss winner chooses receive or defer. Normal mode refuses kick and goal-to-defend as first choice.",
+   "rulebook": {
+    "article": "4-2-2 Article 2",
+    "quote": "\"Unless the winner of the toss defers his choice to the second half, he must choose one of two privileges\"",
+    "status": "verified"
+   },
+   "status": "policy",
+   "transition": "game_state:CoinTossLedger.__init__"
+  },
+  {
+   "adversarial": [
+    "test_game_state.Validators.test_recorded_kickoffs_must_match_the_ledger",
+    "test_game_state.TossSymmetry.test_a_ledger_that_disagrees_with_the_kickoffs_is_rejected"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "self.first_chooser = loser if self.deferred else winner"
+    ]
+   ],
+   "gaps": [],
+   "id": "R02",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      335
+     ],
+     "snippet": "self.first_chooser = loser if self.deferred else winner"
+    }
+   ],
+   "lp_reference": "Rules file section 1",
+   "note": "",
+   "positive": [
+    "test_game_state.Ledger.test_second_half_first_choice_follows_the_deferral"
+   ],
+   "rule": "The pregame toss loser has first choice for the second half, unless the winner deferred.",
+   "rulebook": {
+    "article": "4-2-2 Article 2",
+    "quote": "\"the captain who lost the pregame toss is to have the first choice ... unless the winner of the pregame toss deferred\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:CoinTossLedger.__init__"
+  },
+  {
+   "adversarial": [
+    "test_game_state.Validators.test_same_team_kicking_twice_is_a_hard_failure",
+    "test_game_state.RulesMatrix.test_the_same_team_kicking_both_half_openers_is_a_failure"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "Halftime: the first half is over"
+    ]
+   ],
+   "gaps": [],
+   "id": "R03",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      503
+     ],
+     "snippet": "Halftime: the first half is over"
+    }
+   ],
+   "lp_reference": "Rules file, STRICT DEFAULT SIMULATION POLICY and section 3",
+   "note": "The validator is game_state:validate_half_start.",
+   "positive": [
+    "test_game_state.HalfStart.test_halftime_ends_the_first_half_and_the_second_half_kickoff_is_generated",
+    "test_game_state.TossSymmetry.test_every_winner_and_choice_gives_the_matrix_kickoffs"
+   ],
+   "rule": "A kickoff starts each half. Normal mode: exactly two half-start kickoffs, one by each team.",
+   "rulebook": {
+    "article": "4-2-1 Article 1",
+    "quote": "\"Both teams must be on the field to kick off ... for the start of each half\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_Game._half_start"
+  },
+  {
+   "adversarial": [
+    "test_e1_transitions.QuarterTransitions.test_no_drive_terminates_at_q1_or_q3_expiry"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "a quarter change inside a drive: the drive goes on"
+    ],
+    [
+     "e1_drive.py",
+     "FLIP_AFTER = (1, 3)"
+    ]
+   ],
+   "gaps": [],
+   "id": "R04",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      937
+     ],
+     "snippet": "a quarter change inside a drive: the drive goes on"
+    },
+    {
+     "file": "e1_drive.py",
+     "lines": [
+      62
+     ],
+     "snippet": "FLIP_AFTER = (1, 3)"
+    }
+   ],
+   "lp_reference": "Rules file section 2",
+   "note": "The flip itself is e1_drive:flips_between; game_state carries the orientation.",
+   "positive": [
+    "test_e1_transitions.QuarterTransitions.test_q1_expiry_continues_the_series_without_a_kickoff",
+    "test_game_state.Clock.test_a_punt_that_expires_q1_keeps_the_receiving_team_and_its_spot"
+   ],
+   "rule": "Teams change goals after Q1 and Q3. Possession, down, spot and line to gain persist: no kickoff, no drive end.",
+   "rulebook": {
+    "article": "4-2-3 Article 3",
+    "quote": "\"At the end of the first and third periods, the teams must change goals. Team possession, the number of the succeeding down ... remain the same.\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_Game._new_quarter"
+  },
+  {
+   "adversarial": [
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_terminal_at_the_end_of_q2_is_refused_by_the_drive_check",
+    "test_legality.NegativeFixtures.test_a_turnover_that_ends_the_half_cannot_pass_as_a_drive_end"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "return 'halftime'"
+    ],
+    [
+     "game_state.py",
+     "def quarter_end_kind"
+    ]
+   ],
+   "gaps": [],
+   "id": "R05",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      210
+     ],
+     "snippet": "return 'halftime'"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      205
+     ],
+     "snippet": "def quarter_end_kind"
+    }
+   ],
+   "lp_reference": "Rules file section 3",
+   "note": "A possession change on the play that runs out the Q2 or Q4 clock ends the half, not the drive: the next snap is the half-start kickoff, which Rule 4 Section 2 Article 1 prints as \"kick off ... for the start of each half\". The half-end clock case is checked by check_half_end in the legality checker.",
+   "positive": [
+    "test_e1_transitions.QuarterTransitions.test_q2_expiry_is_halftime_and_not_a_turnover_on_downs",
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_at_the_q2_expiry_ends_the_half_and_not_the_drive",
+    "test_e1_transitions.QuarterTransitions.test_a_turnover_at_the_q1_expiry_ends_the_drive_in_the_new_quarter",
+    "test_game_state.HalfStart.test_halftime_ends_the_first_half_and_the_second_half_kickoff_is_generated"
+   ],
+   "rule": "The second-quarter expiry is the halftime: the first half ends, with no turnover on downs.",
+   "rulebook": {
+    "article": "4-1-3 Article 3",
+    "quote": "\"Between the second and third periods, there shall be an intermission of 13 minutes.\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:quarter_end_kind"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "return 'regulation_end'"
+    ]
+   ],
+   "gaps": [],
+   "id": "R06",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      213
+     ],
+     "snippet": "return 'regulation_end'"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (clock row)",
+   "note": "",
+   "positive": [
+    "test_e1_transitions.QuarterTransitions.test_q4_expiry_is_regulation_end"
+   ],
+   "rule": "Four 15-minute periods. The fourth-quarter expiry ends regulation.",
+   "rulebook": {
+    "article": "4-1-1 Article 1",
+    "quote": "\"divided into four periods of 15 minutes each\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:quarter_end_kind"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "_begin_overtime"
+    ]
+   ],
+   "gaps": [],
+   "id": "R07",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      568,
+      572
+     ],
+     "snippet": "_begin_overtime"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (overtime row, Rule 16)",
+   "note": "The toss winner receives (assumed). The two-minute warning and Article 5(a) are not modelled in overtime.",
+   "positive": [
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
+   ],
+   "rule": "A regulation tie goes to overtime, a 10-minute extra period. Both teams possess once; a leader then wins; a tie is sudden death until the period ends.",
+   "rulebook": {
+    "article": "Overtime procedures, Section 1, Article 3 (rule number not printed in the extraction)",
+    "quote": "\"an extra period of 10 minutes shall commence\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:scope_out_reasons"
+  },
+  {
+   "adversarial": [
+    "test_game_state.Scoring.test_a_missed_extra_point_scores_six",
+    "test_game_state.TryPublisherField.test_an_epa_style_success_flag_in_a_try_is_rejected"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def _try_after_touchdown"
+    ],
+    [
+     "game_state.py",
+     "def try_record"
+    ]
+   ],
+   "gaps": [],
+   "id": "R08",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      439
+     ],
+     "snippet": "def _try_after_touchdown"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      433
+     ],
+     "snippet": "def try_record"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (scoring row)",
+   "note": "",
+   "positive": [
+    "test_game_state.Scoring.test_a_touchdown_takes_its_try_then_the_scoring_team_kicks_off",
+    "test_game_state.Scoring.test_a_two_point_try_scores_eight_when_it_is_chosen_and_made"
+   ],
+   "rule": "Touchdown is 6 points. The try after it is 1 point (kick) or 2 points (conversion). Scoring team kicks off.",
+   "rulebook": {
+    "article": "Rule 11, Section 1, Article 2 (TYPES OF SCORING PLAYS)",
+    "quote": "\"(a) Touchdown: 6 points\" and \"(d) Try after touchdown: 1 point (field goal or safety) or 2 points (touchdown)\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_try_after_touchdown"
+  },
+  {
+   "adversarial": [
+    "test_game_state.Validators.test_a_touchdown_whose_points_disagree_with_its_try_is_refused",
+    "test_game_state.RulesMatrix.test_a_points_total_that_disagrees_with_the_drives_is_a_failure"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "elif terminal == 'field_goal_attempt':"
+    ]
+   ],
+   "gaps": [],
+   "id": "R09",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      949
+     ],
+     "snippet": "elif terminal == 'field_goal_attempt':"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (scoring row)",
+   "note": "The validator refuses points that disagree with the drives; the adversarial test for a field goal is the points-total check.",
+   "positive": [
+    "test_game_state.TryPublisherField.test_a_made_field_goal_scores_three_and_the_kicker_kicks_off"
+   ],
+   "rule": "A field goal is worth 3 points.",
+   "rulebook": {
+    "article": "Rule 11, Section 1, Article 2",
+    "quote": "\"(b) Field goal: 3 points\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_Game._drive_body"
+  },
+  {
+   "adversarial": [],
+   "citations": [
+    [
+     "game_state.py",
+     "SAFETY_POINTS = 2"
+    ]
+   ],
+   "gaps": [
+    "GAP: no positive test",
+    "GAP: no adversarial test"
+   ],
+   "id": "R10",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      55
+     ],
+     "snippet": "SAFETY_POINTS = 2"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (scoring row)",
+   "note": "GAP: the safety is a terminal in E1 (e1_drive) and a constant in game_state; no test covers a game-level safety.",
+   "positive": [],
+   "rule": "A safety is worth 2 points.",
+   "rulebook": {
+    "article": "Rule 11, Section 1, Article 2",
+    "quote": "\"(c) Safety: 2 points\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_Game._drive_body"
+  },
+  {
+   "adversarial": [
+    "test_game_state.MissedFieldGoalSpot.test_the_matrix_rejects_the_snap_based_value_for_a_kick_from_the_21",
+    "test_game_state.MissedFieldGoalSpot.test_the_matrix_rejects_a_next_drive_at_the_kick_spot_inside_the_20"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "Review note, Rule 11-4-2"
+    ],
+    [
+     "rules_matrix.py",
+     "Rule 11-4-2"
+    ],
+    [
+     "game_state.py",
+     "def missed_field_goal_spot"
+    ],
+    [
+     "game_state.py",
+     "'missed_field_goal_return': {'guard'"
+    ]
+   ],
+   "gaps": [],
+   "id": "R11",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      195
+     ],
+     "snippet": "Review note, Rule 11-4-2"
+    },
+    {
+     "file": "rules_matrix.py",
+     "lines": [
+      457,
+      625
+     ],
+     "snippet": "Rule 11-4-2"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      192
+     ],
+     "snippet": "def missed_field_goal_spot"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      90
+     ],
+     "snippet": "'missed_field_goal_return': {'guard'"
+    }
+   ],
+   "lp_reference": "Rules file section 4 and the review note cited by the engine",
+   "note": "The engine docstring says the rulebook text is not in the repository; the text is now verified. The exceptions (1) and (2), where the receivers touch the ball beyond the line of scrimmage, are guarded: missed_field_goal_return is an unsupported rule, so valid_full_game is false.",
+   "positive": [
+    "test_game_state.UnmodelledKinds.test_a_missed_field_goal_is_an_unmodelled_return",
+    "test_game_state.MissedFieldGoalBoundaries.test_one_yard_inside_the_receivers_20_gives_their_20",
+    "test_game_state.MissedFieldGoalBoundaries.test_one_yard_outside_the_receivers_20_gives_the_spot_of_the_kick",
+    "test_game_state.MissedFieldGoalSpot.test_the_receivers_own_20_when_the_kick_spot_is_inside_its_20"
+   ],
+   "rule": "A missed field goal: the receiving team takes the ball at the spot of the kick, or at its own 20 when the kick spot is inside its 20.",
+   "rulebook": {
+    "article": "11-4-2 Article 2 (a) and (b)",
+    "quote": "\"(a) If the spot of the kick was inside the receivers' 20-yard line, it is the receivers' ball at the 20-yard line; or (b) ... at the spot of the kick.\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:missed_field_goal_spot"
+  },
+  {
+   "adversarial": [
+    "test_game_state.MissedFieldGoalSpot.test_the_20_exception_applies_to_the_kick_spot_not_the_snap"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "HOLDER_OFFSET = 7"
+    ],
+    [
+     "game_state.py",
+     "def kick_spot_yardline_100"
+    ]
+   ],
+   "gaps": [],
+   "id": "R12",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      65
+     ],
+     "snippet": "HOLDER_OFFSET = 7"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      184
+     ],
+     "snippet": "def kick_spot_yardline_100"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (kick-spot row)",
+   "note": "DISAGREEMENT, one place. The rule minimum is 7. The engine implies kick_distance = yardline_100 + 17 (holder 7 + end line 10, Rule 3, Section 11, Article 2). The publisher kick_distance is yardline_100 + 18 on most field-goal rows. Ruling: the engine keeps +17; the publisher offset is its own measurement convention, not a rule. Full record in kick-distance-offset.json, source_engine_difference.",
+   "positive": [
+    "test_game_state.MissedFieldGoalSpot.test_the_engine_snap_and_kick_spot_differ_and_the_receiver_starts_at_the_kick_spot_rule"
+   ],
+   "rule": "The holder and kicker stand seven or more yards behind the line of scrimmage. The engine places the kick at the snap yardline plus HOLDER_OFFSET.",
+   "rulebook": {
+    "article": "Section 17 KICKS, Article 7(b)",
+    "quote": "\"a potential holder and potential kicker seven or more yards behind the neutral zone\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:kick_spot_yardline_100"
+  },
+  {
+   "adversarial": [
+    "test_game_state.FiveSecondKick.test_the_matrix_rejects_a_made_kick_charged_over_five_seconds",
+    "test_game_state.FiveSecondKick.test_a_missed_kick_keeps_its_observed_runoff"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def _charge_made_kick"
+    ],
+    [
+     "game_state.py",
+     "KICK_DURATION_SECONDS = 5"
+    ],
+    [
+     "rules_matrix.py",
+     "Field goal made: the kick takes at most five seconds of clock"
+    ]
+   ],
+   "gaps": [],
+   "id": "R13",
+   "implementation": "implemented",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      680
+     ],
+     "snippet": "def _charge_made_kick"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      69
+     ],
+     "snippet": "KICK_DURATION_SECONDS = 5"
+    },
+    {
+     "file": "rules_matrix.py",
+     "lines": [
+      626
+     ],
+     "snippet": "Field goal made: the kick takes at most five seconds of clock"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (clock row)",
+   "note": "Implemented for a made field goal. The unsuccessful-kick clause is row R24.",
+   "positive": [
+    "test_game_state.FiveSecondKick.test_a_made_kick_with_a_long_observed_runoff_is_charged_five_seconds",
+    "test_game_state.FiveSecondKick.test_the_kickoff_after_a_made_kick_starts_from_the_charged_clock"
+   ],
+   "rule": "A made field goal runs off at most five seconds of game clock.",
+   "rulebook": {
+    "article": "11-4-2 Field Goal Attempt Notes (5), clause for a successful field goal",
+    "quote": "\"For a successful field goal ... the maximum amount of time that can run off the game clock is five seconds.\"",
+    "status": "verified"
+   },
+   "status": "modelled",
+   "transition": "game_state:_Game._charge_made_kick"
+  },
+  {
+   "adversarial": [
+    "test_game_state.FiveSecondKick.test_a_missed_kick_keeps_its_observed_runoff"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def _charge_made_kick"
+    ]
+   ],
+   "gaps": [],
+   "id": "R24",
+   "implementation": "unsupported",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      680
+     ],
+     "snippet": "def _charge_made_kick"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (clock row)",
+   "note": "UNSUPPORTED: the engine has no field-of-play landing for a missed kick, so the cap is not applied to misses. The test pins the uncapped runoff.",
+   "positive": [
+    "test_game_state.FiveSecondKick.test_a_missed_kick_keeps_its_observed_runoff"
+   ],
+   "rule": "Five-second runoff, unsuccessful kick that does not land in the field of play (the second clause of note 5).",
+   "rulebook": {
+    "article": "11-4-2 Field Goal Attempt Notes (5), clause for an unsuccessful attempt not landing in the field of play",
+    "quote": "\"or for an unsuccessful attempt that does not land in the field of play, the maximum amount of time ... is five seconds.\"",
+    "status": "verified"
+   },
+   "status": "unsupported",
+   "transition": "game_state:_Game._charge_made_kick"
+  },
+  {
+   "adversarial": [
+    "test_game_state.TimeoutStop.test_a_corrupted_pre_call_count_is_refused",
+    "test_game_state.Guards.test_a_record_without_the_timeout_guard_is_rejected",
+    "test_game_state.TimeoutTransition.test_the_count_is_written_once_in_state_after_and_only_for_the_charged_side"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def _apply_timeouts"
+    ],
+    [
+     "game_state.py",
+     "no timeout is drawn"
+    ]
+   ],
+   "gaps": [],
+   "id": "R14",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      736
+     ],
+     "snippet": "def _apply_timeouts"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [],
+     "snippet": "no timeout is drawn"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (timeouts row)",
+   "note": "Timeouts are charged from flags only; no timeout is drawn from the table, so the count is observed, not sampled.",
+   "positive": [
+    "test_game_state.TimeoutStop.test_the_stop_is_explicit_with_its_counts_and_its_clock",
+    "test_game_state.TimeoutStop.test_the_flagged_play_carries_its_pre_call_count_and_one_fewer_on_the_charged_side",
+    "test_game_state.UnmodelledKinds.test_a_timeout_flag_is_an_unmodelled_stoppage",
+    "test_game_state.TimeoutCharges.test_flags_charge_at_most_three_per_half_and_reset_at_halftime",
+    "test_game_state.TimeoutTransition.test_a_timeout_changes_the_counts_and_nothing_on_the_clock"
+   ],
+   "rule": "Three charged team timeouts per half. The count resets at halftime.",
+   "rulebook": {
+    "article": "4-5-1 Item 1",
+    "quote": "\"A team is allowed three charged team timeouts during each half\"",
+    "status": "verified"
+   },
+   "status": "guard",
+   "transition": "game_state:_Game._apply_timeouts"
+  },
+  {
+   "adversarial": [
+    "test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_01_does_not_stop_the_clock",
+    "test_game_state.TwoMinuteWarning.test_a_period_expiry_does_not_trigger_a_warning",
+    "test_game_state.TwoMinuteWarning.test_a_second_dead_ball_in_the_same_half_does_not_stop_again",
+    "test_legality.UnmodelledNegatives.test_a_crossing_without_a_warning_marker_cannot_pass_as_legal",
+    "test_legality.ScopeGuard.test_a_kickoff_crossing_is_independently_derived_and_requires_a_marker",
+    "test_legality.UnmodelledNegatives.test_a_second_stop_in_the_same_half_cannot_pass_as_legal",
+    "test_game_state.UnmodelledTransitions.test_a_missing_two_minute_guard_event_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "def two_minute_stop"
+    ],
+    [
+     "game_state.py",
+     "def _two_minute_stop_plays"
+    ]
+   ],
+   "gaps": [],
+   "id": "R15",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      142
+     ],
+     "snippet": "def two_minute_stop"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      704
+     ],
+     "snippet": "def _two_minute_stop_plays"
+    }
+   ],
+   "lp_reference": "Rules file section 5 (two_minute_warning substate)",
+   "note": "The crossing marker and actual clock value are modelled and independently checked. The explicit running/stopped state and restart transitions required by the LP rules contract are unsupported under clock_start_stop; this is not full clock-rule coverage.",
+   "positive": [
+    "test_game_state.TwoMinuteWarning.test_a_crossing_keeps_the_actual_post_down_clock",
+    "test_game_state.TwoMinuteWarning.test_a_play_ending_at_2_00_warns_at_2_00",
+    "test_game_state.TwoMinuteWarning.test_the_warning_resets_at_halftime_so_the_fourth_quarter_warns_too",
+    "test_game_state.TwoMinuteWarning.test_a_kickoff_warning_keeps_the_observed_post_kick_clock"
+   ],
+   "rule": "Automatic timeout at the conclusion of the last down legally snapped or kicked before 2:00 in Q2 or Q4; keep the actual clock value at the end of that down.",
+   "rulebook": {
+    "article": "Rule 3 Section 41; Rule 4 Section 3 Article 2; Rule 4 Section 4(h)",
+    "quote": "\"at the conclusion of the last down for which the ball is legally snapped or kicked prior to two minutes remaining\"",
+    "status": "verified"
+   },
+   "status": "partial",
+   "transition": "game_state:two_minute_stop"
+  },
+  {
+   "adversarial": [
+    "test_legality.UnmodelledNegatives.test_a_penalty_transition_cannot_pass_as_a_legal_complete_game"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "penalty_not_modelled"
+    ]
+   ],
+   "gaps": [],
+   "id": "R16",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      915,
+      1146,
+      1171
+     ],
+     "snippet": "penalty_not_modelled"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (overtime/penalty row)",
+   "note": "Penalty plays are excluded from the E1 pool by construction (e1_drive build_pool). not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_game_state.UnmodelledTransitions.test_a_sampled_penalty_blocks_the_game_and_is_not_completed"
+   ],
+   "rule": "Penalties and their enforcement.",
+   "rulebook": {
+    "article": "Rule 14 (per LP reference); article text not read",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "guard",
+   "transition": "game_state:_Game._drive_body"
+  },
+  {
+   "adversarial": [
+    "test_e1_transitions.Reducer.test_unknown_event_is_refused"
+   ],
+   "citations": [
+    [
+     "e1_drive.py",
+     "def classify"
+    ]
+   ],
+   "gaps": [],
+   "id": "R17",
+   "located": [
+    {
+     "file": "e1_drive.py",
+     "lines": [
+      74
+     ],
+     "snippet": "def classify"
+    }
+   ],
+   "lp_reference": "Rules file section 4 (coordinate invariant)",
+   "note": "not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_e1_transitions.Reducer.test_turnover_on_downs_complements_field_position"
+   ],
+   "rule": "Turnover on downs: the other team takes over at the same dead-ball spot, field position complemented.",
+   "rulebook": {
+    "article": "not read",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "modelled",
+   "transition": "e1_drive:classify"
+  },
+  {
+   "adversarial": [
+    "test_e1_transitions.Reducer.test_field_goal_attempt_has_no_result_and_no_next_spot"
+   ],
+   "citations": [
+    [
+     "e1_drive.py",
+     "def classify"
+    ]
+   ],
+   "gaps": [],
+   "id": "R18",
+   "located": [
+    {
+     "file": "e1_drive.py",
+     "lines": [
+      74
+     ],
+     "snippet": "def classify"
+    }
+   ],
+   "lp_reference": "Rules file section 5 (terminal vocabulary)",
+   "note": "not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_e1_transitions.Reducer.test_punt_gives_the_receiving_spot"
+   ],
+   "rule": "Punt: the receiving team takes the ball at the spot of the punt's receipt.",
+   "rulebook": {
+    "article": "not read",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "modelled",
+   "transition": "e1_drive:classify"
+  },
+  {
+   "adversarial": [
+    "test_game_state.Clock.test_a_touchdown_on_the_last_play_of_q1_kicks_off_to_open_q2"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "PRACTICE_SOURCE"
+    ],
+    [
+     "game_state.py",
+     "PENDING_2026 = 'pending_2026_rulebook'"
+    ]
+   ],
+   "gaps": [],
+   "id": "R19",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      107,
+      113,
+      117
+     ],
+     "snippet": "PRACTICE_SOURCE"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      106
+     ],
+     "snippet": "PENDING_2026 = 'pending_2026_rulebook'"
+    }
+   ],
+   "lp_reference": "Rules file section 5 (provisional clock rules)",
+   "note": "PROVISIONAL: practice-sourced and marked so in the record. not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_game_state.ProvisionalIsNeverPass.test_a_score_that_expires_q1_marks_its_rows_provisional"
+   ],
+   "rule": "The restart after a score or a quarter-end score: kickoff timing and the next quarter.",
+   "rulebook": {
+    "article": "not read",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "provisional",
+   "transition": "game_state:_Game._new_quarter"
+  },
+  {
+   "adversarial": [],
+   "citations": [
+    [
+     "game_state.py",
+     "def attacks_x100"
+    ]
+   ],
+   "gaps": [
+    "GAP: no adversarial test"
+   ],
+   "id": "R20",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      359
+     ],
+     "snippet": "def attacks_x100"
+    }
+   ],
+   "lp_reference": "Rules file section 4",
+   "note": "GAP: no test isolates attacks_x100 directly. A representation convention, not a rulebook article.",
+   "positive": [
+    "test_game_state.Ledger.test_second_half_first_choice_follows_the_deferral"
+   ],
+   "rule": "Direction convention: the offense attacks x=100 or x=0. los = 100 - yardline_100 for dir +1.",
+   "rulebook": {
+    "article": "none: LP representation convention",
+    "quote": "",
+    "status": "not applicable"
+   },
+   "status": "representation",
+   "transition": "game_state:CoinTossLedger.attacks_x100"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_rare_kick_outcome_described_as_complete_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "MIN_KICK_N = 30"
+    ]
+   ],
+   "gaps": [],
+   "id": "R21",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      70
+     ],
+     "snippet": "MIN_KICK_N = 30"
+    }
+   ],
+   "lp_reference": "Rules file section 6 (sample selection)",
+   "note": "A blocked record is never complete: validate_game refuses it.",
+   "positive": [
+    "test_game_state.ScopedOut.test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome"
+   ],
+   "rule": "Rare kick outcomes: a published field-goal cell with fewer than MIN_KICK_N attempts blocks the game.",
+   "rulebook": {
+    "article": "not applicable: LP scoping floor (the E1 pool floor applied to kick cells)",
+    "quote": "",
+    "status": "not applicable"
+   },
+   "status": "guard",
+   "transition": "game_state:_draw"
+  },
+  {
+   "adversarial": [
+    "test_game_state.ScopeRefusals.test_a_tie_described_as_complete_without_its_overtime_period_is_refused",
+    "test_game_state.UnmodelledKinds.test_a_guarded_game_with_its_complete_flag_set_is_refused"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "is never described as a complete game"
+    ],
+    [
+     "game_state.py",
+     "a tied regulation game is not a complete game"
+    ]
+   ],
+   "gaps": [],
+   "id": "R22",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      1222,
+      1225
+     ],
+     "snippet": "is never described as a complete game"
+    },
+    {
+     "file": "game_state.py",
+     "lines": [
+      1308
+     ],
+     "snippet": "a tied regulation game is not a complete game"
+    }
+   ],
+   "lp_reference": "Rules file section 7 (overtime row)",
+   "note": "",
+   "positive": [
+    "test_game_state.ScopedOut.test_a_regulation_tie_goes_to_overtime_and_a_tie_after_overtime_is_complete"
+   ],
+   "rule": "No blocked or tied game is described as a complete game.",
+   "rulebook": {
+    "article": "not applicable: LP scoping rule",
+    "quote": "",
+    "status": "not applicable"
+   },
+   "status": "guard",
+   "transition": "game_state:validate_game"
+  },
+  {
+   "adversarial": [
+    "test_game_state.KickoffClock.test_a_negative_clock_is_refused_so_no_clamp_can_hide_one"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "after_clock = 0 if expires else clock_be"
+    ]
+   ],
+   "gaps": [],
+   "id": "R25",
+   "implementation": "deviation",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      526
+     ],
+     "snippet": "after_clock = 0 if expires else clock_be"
+    }
+   ],
+   "lp_reference": "Rules file section 7",
+   "note": "A documented deviation: no five-second cap is applied to kickoffs, because the printed cap is for field goals only. Recorded, not fitted to the data.",
+   "positive": [
+    "test_game_state.KickoffClock.test_a_kickoff_that_fits_is_charged_its_runoff_in_full"
+   ],
+   "rule": "Kickoff clock: the clock starts after a free kick only when the ball is legally touched, so the kickoff runoff is uncapped and the expiry is explicit.",
+   "rulebook": {
+    "article": "Rule 4 Section 3 Article 1 (Free kick down)",
+    "quote": "\"The game clock operator shall start the game clock (time in) after a free kick when the ball is legally touched in the field of play.\"",
+    "status": "verified"
+   },
+   "status": "deviation",
+   "transition": "game_state:_Game._kick"
+  },
+  {
+   "adversarial": [
+    "test_game_state.UnmodelledKinds.test_an_onside_kickoff_kind_is_refused_because_it_is_not_modelled"
+   ],
+   "citations": [
+    [
+     "game_state.py",
+     "'onside_kicks': {'guard'"
+    ]
+   ],
+   "gaps": [],
+   "id": "R23",
+   "located": [
+    {
+     "file": "game_state.py",
+     "lines": [
+      84
+     ],
+     "snippet": "'onside_kicks': {'guard'"
+    }
+   ],
+   "lp_reference": "Rules file section 5 (onside_kicks guard)",
+   "note": "not verified: no rulebook text read; code citation not verified against rulebook text.",
+   "positive": [
+    "test_game_state.Validators.test_recorded_kickoffs_must_match_the_ledger"
+   ],
+   "rule": "Onside kicks: not modelled. Every kickoff is drawn from the observed kickoff pool; an onside kind is refused.",
+   "rulebook": {
+    "article": "RULE 6 FREE KICKS (onside kick)",
+    "quote": "",
+    "status": "not verified"
+   },
+   "status": "guard",
+   "transition": "game_state:validate_game"
+  }
+ ],
+ "rulebook": {
+  "extraction": "pdftotext -layout; the extracted text is not committed",
+  "page": "https://operations.nfl.com/rules-officiating/2026-nfl-rulebook",
+  "pages": 91,
+  "pdf": "https://static.www.nfl.com/image/upload/fl_attachment/league/tqivdkzt9mu6wdgsh1ku.pdf",
+  "retrieved": "2026-10-24",
+  "sha256": "144cec5bffd2725bb703a26523f5ccf0b16c59c2fe5c13f6e671f4bddaa87c55",
+  "title": "2026 NFL Rulebook (ops-2026-NFL-Rulebook-FINAL.pdf)"
+ }
+}
