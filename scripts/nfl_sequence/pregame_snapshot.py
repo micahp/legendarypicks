@@ -15,6 +15,12 @@ from pathlib import Path
 
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
+# Reviewed builder versions of build_full_depth_roster_snapshot.py. The week-7 fixture pins the first; the second is the
+# same builder with --jersey-week (default 7). The running builder and the provenance must both be one of these.
+REVIEWED_FULL_BUILDER_SHA256 = {
+    'f24f6d58b03de47f2e28786d9a835bf034be9211dd90e1f97d18c8728857d649',
+    '90256ed7050aee920b4af299de7c8a529a311602c19daf733c57ba8031fe616b',
+}
 
 
 def parse_as_of(value: str) -> datetime:
@@ -122,9 +128,11 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
         raise ValueError('full depth roster does not retain the pinned starter-builder provenance')
     full_builder = provenance.get('full_depth_builder', {})
     builder_file = Path(__file__).resolve().parents[2] / 'scripts/nfl_sequence/build_full_depth_roster_snapshot.py'
+    running_builder_sha = hashlib.sha256(builder_file.read_bytes()).hexdigest()
     if (full_builder.get('repository') != 'micahp/legendarypicks'
             or full_builder.get('file') != 'scripts/nfl_sequence/build_full_depth_roster_snapshot.py'
-            or full_builder.get('file_sha256') != hashlib.sha256(builder_file.read_bytes()).hexdigest()
+            or full_builder.get('file_sha256') not in REVIEWED_FULL_BUILDER_SHA256
+            or running_builder_sha not in REVIEWED_FULL_BUILDER_SHA256
             or full_builder.get('worktree_dirty') is not False):
         raise ValueError('full depth roster builder code does not match its clean provenance pin')
     if full_depth.get('starter_snapshot_sha256') != provenance.get('starter_snapshot', {}).get('sha256'):

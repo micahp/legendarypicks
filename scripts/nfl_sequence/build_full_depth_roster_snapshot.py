@@ -73,8 +73,8 @@ def build(args) -> tuple[dict, dict]:
     roster_table = pq.read_table(roster_path, columns=ROSTER_COLUMNS).to_pydict()
     regular_weeks = [week for week, kind in zip(roster_table['week'], roster_table['game_type']) if kind == 'REG']
     jersey_week = max(regular_weeks) if regular_weeks else None
-    if jersey_week != 7:
-        raise ValueError(f'nflverse roster source is at week {jersey_week}; the frozen game is week 7')
+    if jersey_week != args.jersey_week:
+        raise ValueError(f'nflverse roster source is at week {jersey_week}; the frozen game is week {args.jersey_week}')
 
     jersey_by_id = {}
     target_teams = {starter['rosters'][side]['team'] for side in ('away', 'home')}
@@ -203,6 +203,8 @@ def main():
     parser.add_argument('--db', required=True, help='LP identity database opened read-only')
     parser.add_argument('--out', required=True)
     parser.add_argument('--provenance-out', required=True)
+    parser.add_argument('--jersey-week', type=int, default=7,
+                        help='regular-season week the nflverse roster source must be at (the frozen game week)')
     args = parser.parse_args()
     doc, provenance = build(args)
     for side in ('away', 'home'):
