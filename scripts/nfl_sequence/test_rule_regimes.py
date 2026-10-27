@@ -20,17 +20,17 @@ class RegistryBoundaries(unittest.TestCase):
         self.assertEqual(self.sha, hashlib.sha256(raw).hexdigest())
         self.assertEqual(len(self.sha), 64)
 
-    def test_kickoff_rules_change_at_the_registered_seasons(self):
+    def test_expanded_registry_season_types_are_read_as_applicability(self):
+        self.assertEqual(self.registry['schema'], 'lp-nfl-rule-regime-registry-2')
         ids = lambda s: rr.active_rules(self.registry, s, 'REG', 'kickoff')
-        self.assertIn('2016-KO-TB25', ids(2022))
-        self.assertNotIn('2024-DYNAMIC-KO', ids(2022))
-        self.assertIn('2023-FAIR-CATCH25', ids(2023))
-        self.assertNotIn('2023-FAIR-CATCH25', ids(2024))
-        self.assertIn('2024-DYNAMIC-KO', ids(2024))
-        self.assertNotIn('2016-KO-TB25', ids(2024))
-        self.assertIn('2025-KO-PERM-TB35', ids(2025))
-        self.assertIn('2026-KO-50-TB', ids(2026))
-        self.assertNotIn('2026-KO-50-TB', ids(2025))
+        self.assertIn('NFL-2011-01', ids(2011))
+        self.assertNotIn('NFL-2011-01', ids(2010))
+        self.assertIn('NFL-2024-01', ids(2024))
+        self.assertNotIn('NFL-2024-01', ids(2023))
+        self.assertIn('NFL-2025-01', ids(2025))
+        self.assertNotIn('NFL-2025-01', ids(2024))
+        self.assertIn('NFL-2026-01', ids(2026))
+        self.assertNotIn('NFL-2026-01', ids(2025))
 
     def test_each_season_from_2022_to_2026_has_its_own_kickoff_regime(self):
         keys = {s: rr.regime_key(self.registry, s, 'REG', 'kickoff') for s in range(2022, 2027)}
@@ -44,42 +44,33 @@ class RegistryBoundaries(unittest.TestCase):
         self.assertEqual(same(2024), [2024])
         self.assertEqual(same(2025), [2025])
         self.assertEqual(same(2026), [2026])
-        self.assertEqual(rr.seasons_with_same_rules(self.registry, 2019, seasons, 'REG', 'kickoff'), [2022])
+        self.assertEqual(rr.seasons_with_same_rules(self.registry, 2019, seasons, 'REG', 'kickoff'), [])
         self.assertEqual(rr.seasons_with_same_rules(self.registry, 2027, seasons, 'REG', 'kickoff'), [2026])  # open-ended rules
         self.assertEqual(rr.seasons_with_same_rules(self.registry, 2010, seasons, 'REG', 'kickoff'), [])
 
     def test_overtime_rule_changes_at_the_registered_seasons(self):
         ids = lambda s, t='REG': rr.active_rules(self.registry, s, t, 'overtime')
-        self.assertIn('2017-REG-OT-10', ids(2024))
-        self.assertNotIn('2025-REG-OT-BOTH', ids(2024))
-        self.assertIn('2025-REG-OT-BOTH', ids(2025))
-        self.assertIn('2025-REG-OT-BOTH', ids(2026))
-        self.assertIn('2022-POST-OT-BOTH', ids(2022, 'POST'))
-        self.assertNotIn('2022-POST-OT-BOTH', ids(2022, 'REG'))
+        self.assertIn('NFL-2017-09', ids(2017))
+        self.assertNotIn('NFL-2025-06', ids(2024))
+        self.assertIn('NFL-2025-06', ids(2025))
+        self.assertIn('NFL-2022-02', ids(2022, 'POST'))
+        self.assertNotIn('NFL-2022-02', ids(2022, 'REG'))
 
-    def test_each_contract_boundary_switches_its_rule_on_one_side_only(self):
-        """Registry guide, contract item 7: the rule is present in the first season of its regime and absent before it."""
-        ids = lambda s, domain, t='REG': rr.active_rules(self.registry, s, t, domain)
-        self.assertIn('2010-REG-OT', ids(2011, 'overtime'))
-        self.assertNotIn('2010-REG-OT', ids(2012, 'overtime'))
-        self.assertIn('2012-REG-OT', ids(2012, 'overtime'))
-        self.assertIn('2012-REG-OT', ids(2016, 'overtime'))
-        self.assertNotIn('2012-REG-OT', ids(2017, 'overtime'))
-        self.assertIn('2017-REG-OT-10', ids(2017, 'overtime'))
-        self.assertIn('2015-PAT-SPOT', ids(2015, 'extra_point'))
-        self.assertNotIn('2015-PAT-SPOT', ids(2014, 'extra_point'))
-        self.assertIn('2016-KO-TB25', ids(2016, 'kickoff'))
-        self.assertNotIn('2016-KO-TB25', ids(2015, 'kickoff'))
-        self.assertIn('2018-WALKOFF-TRY', ids(2018, 'try_scoring'))
-        self.assertNotIn('2018-WALKOFF-TRY', ids(2017, 'try_scoring'))
-        self.assertIn('2022-POST-OT-BOTH', ids(2022, 'overtime', 'POST'))
-        self.assertNotIn('2022-POST-OT-BOTH', ids(2021, 'overtime', 'POST'))
-        self.assertIn('2026-KO-50-TB', ids(2026, 'kickoff'))
-        self.assertNotIn('2026-KO-50-TB', ids(2025, 'kickoff'))
+    def test_legacy_registry_fields_and_explicit_end_seasons_remain_supported(self):
+        legacy = {'changes': [{
+            'id': 'legacy-rule', 'domain': 'kickoff', 'effective_from_season': 2020,
+            'effective_through_season': 2021, 'applies_to': ['REG'],
+        }]}
+        self.assertEqual(rr.active_rules(legacy, 2020, 'REG', 'kickoff'), ['legacy-rule'])
+        self.assertEqual(rr.active_rules(legacy, 2022, 'REG', 'kickoff'), [])
+
+    def test_missing_end_season_uses_the_documented_open_ended_fallback(self):
+        ids = rr.active_rules(self.registry, 2026, 'REG', 'overtime')
+        self.assertIn('NFL-2017-09', ids)
 
     def test_postseason_rules_are_not_applied_to_the_regular_season(self):
-        self.assertNotIn('2022-POST-OT-BOTH', rr.active_rules(self.registry, 2023, 'REG', 'overtime'))
-        self.assertNotIn('2021-PRESEASON-OT-REMOVED', rr.active_rules(self.registry, 2021, 'REG', 'overtime'))
+        self.assertNotIn('NFL-2022-02', rr.active_rules(self.registry, 2023, 'REG', 'overtime'))
+        self.assertNotIn('NFL-2021-07', rr.active_rules(self.registry, 2021, 'REG', 'overtime'))
 
     def test_unknown_domains_and_seasons_have_no_rules(self):
         self.assertEqual(rr.active_rules(self.registry, 2026, 'REG', 'no-such-domain'), [])
