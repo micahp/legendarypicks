@@ -1,0 +1,6 @@
+Failing in origin/dev 382f5ffe but not in integration head: 
+FAILED test_story_form_season.py::TestAgainstTheRealDatabases::test_real_log_seasons_against_a_real_game_season[nfl-2026-True]
+
+Failing in integration head but not in origin/dev: 
+
+Failing in both: 81

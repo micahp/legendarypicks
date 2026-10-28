@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.10, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+rootdir: /root/lp-mls-integrate/backend
+plugins: anyio-4.5.2
+collecting ... collected 23 items
+
+test_mls_cutover_acceptance.py::test_existing_population PASSED          [  4%]
+test_mls_cutover_acceptance.py::test_new_signing PASSED                  [  8%]
+test_mls_cutover_acceptance.py::test_single_source_new_signing PASSED    [ 13%]
+test_mls_cutover_acceptance.py::test_namesake PASSED                     [ 17%]
+test_mls_cutover_acceptance.py::test_rekey PASSED                        [ 21%]
+test_mls_cutover_acceptance.py::test_source_id_collision PASSED          [ 26%]
+test_mls_cutover_acceptance.py::test_departure PASSED                    [ 30%]
+test_mls_cutover_acceptance.py::test_transfer PASSED                     [ 34%]
+test_mls_cutover_acceptance.py::test_single_source_disappearance PASSED  [ 39%]
+test_mls_cutover_acceptance.py::test_publisher_disagreement PASSED       [ 43%]
+test_mls_cutover_acceptance.py::test_conflict_recovery PASSED            [ 47%]
+test_mls_cutover_acceptance.py::test_incomplete_fetch PASSED             [ 52%]
+test_mls_cutover_acceptance.py::test_degraded_recovery PASSED            [ 56%]
+test_mls_cutover_acceptance.py::test_stale_lookup PASSED                 [ 60%]
+test_mls_cutover_acceptance.py::test_all_resolver_paths PASSED           [ 65%]
+test_mls_cutover_acceptance.py::test_historical_resolution PASSED        [ 69%]
+test_mls_cutover_acceptance.py::test_current_team_source PASSED          [ 73%]
+test_mls_cutover_acceptance.py::test_ligamx_lcup PASSED                  [ 78%]
+test_mls_cutover_acceptance.py::test_idempotence PASSED                  [ 82%]
+test_mls_cutover_acceptance.py::test_transition_idempotence PASSED       [ 86%]
+test_mls_cutover_acceptance.py::test_atomicity PASSED                    [ 91%]
+test_mls_cutover_acceptance.py::test_data_integrity PASSED               [ 95%]
+test_mls_cutover_acceptance.py::test_health_reporting PASSED             [100%]
+
+============================== 23 passed in 5.63s ==============================
