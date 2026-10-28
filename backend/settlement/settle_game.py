@@ -409,6 +409,13 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             unmappable += 1
             continue
 
+        if not prop["espn_id"]:
+            # Name only: no player-ID match. The box-score section is found by the stored club, and that club is
+            # today's club, not the club the player was on in this game. Leave it pending. See
+            # docs/issues/settlement-name-only-pending.md.
+            pending += 1
+            continue
+
         category, stat_key = mapping
 
         # Handle compound stats

@@ -236,6 +236,11 @@ def _settle_ncaaf_props(con: sqlite3.Connection, game, props: list,
                 "prop_id": prop["id"], "stage": "espn_fallback",
                 "terminal": "unmappable", "reason": _trail(prior, "no_market_mapping")}
             continue
+        if not prop["espn_id"]:
+            # Name only: no player-ID match, so the stored club would decide. Leave it pending.
+            # See docs/issues/settlement-name-only-pending.md.
+            pending += 1
+            continue
         category, stat_key = mapping
         if category is None:
             components = resolve_compound_market("ncaaf", prop["market"])
