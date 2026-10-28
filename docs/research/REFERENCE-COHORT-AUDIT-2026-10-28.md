@@ -18,15 +18,15 @@ any observation later than the target cutoff fails closed. 2026 stays sealed.
 
 | Source | Where | Window | Per-row date | Cutoff-safe now | Rebuild needed |
 |---|---|---|---|---|---|
-| Blocked kicks | `docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv` plus rates in the JSON | 2022-2025 | season, week | no | filter records by cutoff; recompute the rates and the consistency check from the filtered records |
-| Safety free kicks | `docs/fixtures/e2/safety_kick_outcomes_2022_2025.csv` | 2022-2025 | season, week | no | filter records by cutoff |
-| Overtime drives | `docs/fixtures/e2/overtime_drives_2022_2025.csv` | 2022-2025 | season, week, game_date | no | filter records by cutoff |
+| Blocked kicks | `docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv` plus rates in the JSON | 2022-2025 | season, week | records yes (`eligible_before`); rates withheld, so the consistency check cannot run yet | recompute the blocked rates from kept records and kick-table attempts; rebuild the punt-blocked rate |
+| Safety free kicks | `docs/fixtures/e2/safety_kick_outcomes_2022_2025.csv` | 2022-2025 | season, week | yes (`eligible_before`) | none |
+| Overtime drives | `docs/fixtures/e2/overtime_drives_2022_2025.csv` | 2022-2025 | season, week, game_date | yes (`eligible_before`) | none |
 | Try fallback (two-point by margin) | `docs/fixtures/e2/try_fallback_2022_2025.csv` | 2022-2025 | none (aggregated) | no | rebuild from play-by-play with a cutoff filter |
 | Overtime choice model | `docs/fixtures/e2/overtime_choice_model_2025.csv` | 2025 only | none (one fit) | no | refit from overtime decisions before the cutoff; none exist before 2025 season-end |
-| Kick table (FG, punt rates) | `measure_kick_outcomes.load_kick_table` (SQL, 2022-2025) | 2022-2025 | season, week | no | add `season/week < cutoff` to the SQL |
-| Missed FG pool | `e2_reference.load_missed_field_goal_pool` (SQL, 2022-2025) | 2022-2025 | season, week | no | add the cutoff to the SQL |
-| Participants and extras | `docs/fixtures/e2/play_extras_2022_2025.csv` | 2022-2025 | season, week | no | filter rows by cutoff |
-| Position usage | `e2_reference.load_position_usage` (SQL, 2022-2025) | 2022-2025 | season, week | no | add the cutoff to the SQL |
+| Kick table (FG, punt rates) | `measure_kick_outcomes.load_kick_table` (results file, 2022-2025) | 2022-2025 | season, week | yes (`eligible_before`) | none for field goals and tries; punt attempts still need a cutoff |
+| Missed FG pool | `e2_reference.load_missed_field_goal_pool` (SQL, 2022-2025) | 2022-2025 | season, week | yes (`eligible_before`) | none |
+| Participants and extras | `docs/fixtures/e2/play_extras_2022_2025.csv` | 2022-2025 | season, week | yes (`eligible_before`) | none |
+| Position usage | `e2_reference.load_position_usage` (SQL, 2022-2025) | 2022-2025 | season, week | yes (`eligible_before`) | none |
 | Kickoff and scrimmage pool | `e1.load(eligible_before=...)` | 2022 to cutoff | season, week | yes | none |
 | Team tendencies | `team_tendency.build_from_rows` on prior-season rows | 2022 to cutoff season minus 1 | season | yes | none |
 
