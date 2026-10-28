@@ -26,9 +26,18 @@ This report records completed results incrementally. It does not promote a model
 - Output: /tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_ARI_DAL.json
 - Output SHA-256: b78d02a04ca232f6a187ace71ed9c2384954e3b6b81b9810885c675b32c4ae1d (3,601,584 bytes)
 - Availability snapshot: nfl-2026-w08-20261027T182023Z-c9ad71877b; content SHA-256 c9ad71877bc03ddf865210d2e44d5fdfd8d42f55323e03de60ba61c0422096eb.
-- Full-depth roster snapshot SHA-256: 6aa14de4c69b9e688af2cd9737fe86db88f7d32a86f0067a507bba14f3c7c265.
+- ARI-DAL full-depth roster input SHA-256: c4fea8534e5700b2a908e399a79c5b73424db18c9f058f561dbcaf3a4fe57360.
+- ARI-DAL base pregame snapshot SHA-256: 663ac8566477c3b64d23af810672fc99675a8769d6a2b9e81a586f26b88e36cf; final frozen pregame snapshot SHA-256: 6aa14de4c69b9e688af2cd9737fe86db88f7d32a86f0067a507bba14f3c7c265.
 - Game-information snapshot: gameinfo-2026-w08-20261027T185659Z-039a4748a3; content SHA-256 039a4748a3453b95f83c438af556ffadd98631a5fdcb93cd665f88acf3f5d936 (recorded as not used by the model).
 - Run registry: /root/lp-snapshots/nfl-sim-runs-week08-20261027-1aedc435-retry1.
+
+Original TypeError seeds and their frozen inputs:
+
+| Game | Seeds | Full-depth roster input SHA-256 | Base pregame snapshot SHA-256 | Final frozen pregame snapshot SHA-256 |
+|---|---:|---|---|---|
+| ARI at DAL | 5722 | `c4fea8534e5700b2a908e399a79c5b73424db18c9f058f561dbcaf3a4fe57360` | `663ac8566477c3b64d23af810672fc99675a8769d6a2b9e81a586f26b88e36cf` | `6aa14de4c69b9e688af2cd9737fe86db88f7d32a86f0067a507bba14f3c7c265` |
+| BAL at BUF | 6917, 9243 | `37a16dc62f20598bab2e9165cabeadf0fdda64cbc8ae6b5f745d1d979621e2c4` | `0acf0f348233e01f835f95aab78d639a689c6a893b2a8a818ea7f268ce17c09d` | `e3743bd6358310cd5cc1e1cf070fec3d0ae654922d1f6d966315818af6c6c2eb` |
+| CHI at SEA | 1261, 7805 | `5d88ab40fc503915b28310053208d02c2070685fb0c5dab58b02a7538e041a5c` | `e5cc4b9b83509354fa8c33e65e8be20a292a50cdc844b1ad5ad6bd6b6ffd8f5f` | `9239c62d4f2987c90dadf959e5527a2222f8c51ed7b31c22f6a9fbbae35bddd4` |
 
 ## Four additional completed original runs
 
