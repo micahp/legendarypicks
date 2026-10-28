@@ -299,7 +299,12 @@ def _write(con, league: str, members: List[Dict], now: str) -> None:
          if published_roster.fold(spelling)])
 
 
-def ingest(leagues, dry_run=True):
+def ingest(leagues, dry_run=True, mls_cutover=False, mls_lookup=None):
+    """Fetch every publisher, write the observations, and settle identities.
+
+    mls_cutover=True replaces the legacy identity step for MLS with the membership cycle (mls_roster.run_cycle). It
+    is off by default: production keeps the legacy path until the cutover is authorized.
+    """
     con = sqlite3.connect(DB, timeout=30)
     con.row_factory = sqlite3.Row
     published_roster.ensure(con)
@@ -327,6 +332,21 @@ def ingest(leagues, dry_run=True):
                 continue
             _write(con, league, members, now)
             total += len(members)
+        if not dry_run and mls_cutover and league == "mls":
+            # The observations above are kept. The identity decision is the membership cycle, in one transaction.
+            import mls_roster
+            squads = collections.defaultdict(list)
+            for provider in providers:
+                for member in provider_members.get(provider, []):
+                    squads[member["source"]].append(member)
+            con.commit()
+            cycle = mls_roster.run_cycle(con, dict(squads), captured_at=now, lookup=mls_lookup)
+            print("  mls cutover: {} ({}); onboarded {}, rekeyed {}, queued {}{}".format(
+                cycle.outcome, cycle.result.coverage if cycle.result else "no snapshot",
+                len(cycle.onboarded), len(cycle.rekeyed), len(cycle.queued),
+                "; refused: " + "; ".join(cycle.reasons) if cycle.status == "refused" else ""))
+            identity["mls_cutover_" + cycle.outcome] += 1
+            continue
         if not dry_run:
             touched = [(member["source"], member["source_player_key"])
                        for provider in providers for member in provider_members.get(provider, [])]
@@ -361,8 +381,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("leagues", nargs="*", help="default: every league with a publisher")
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--mls-cutover", action="store_true",
+                        help="settle MLS identities with the membership cycle instead of the legacy step (off by default)")
     args = parser.parse_args(argv)
-    result = ingest(args.leagues or sorted(_PROVIDERS), dry_run=not args.apply)
+    result = ingest(args.leagues or sorted(_PROVIDERS), dry_run=not args.apply, mls_cutover=args.mls_cutover)
     # Exit non-zero only for identities we genuinely cannot decide. A transfer is not a
     # failure: a player who changes clubs does not change which club his old game logs
     # belong to, and the first version of this exited 2 on every such row, which would
