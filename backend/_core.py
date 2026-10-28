@@ -1083,7 +1083,21 @@ def _folded_name_index(con, league: str) -> dict:
 
 
 def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props",
-                               game_id=None):
+                               game_id=None, as_of=None):
+    """Resolve a player name to (player_id, confidence). See _resolve_player_for_ingest_legacy for the steps.
+
+    With the MLS cutover enabled (mls_resolution.CUTOVER_ENABLED), MLS and Leagues Cup names are answered by
+    membership: a person is resolved only if they are on the club as of `as_of` (today when None). Otherwise the
+    legacy steps run unchanged.
+    """
+    import mls_resolution
+    if mls_resolution.CUTOVER_ENABLED and league in ("mls", "lcup"):
+        return mls_resolution.resolve(con, player_name, team, league, as_of, _resolve_player_for_ingest_legacy)
+    return _resolve_player_for_ingest_legacy(con, player_name, team, league, source=source, game_id=game_id)
+
+
+def _resolve_player_for_ingest_legacy(con, player_name: str, team: str, league: str, source: str = "props",
+                                      game_id=None):
     """Resolve a player name to players.id via the identity spine.
 
     Resolution order (deterministic, and a create only ever carries a publisher id):
