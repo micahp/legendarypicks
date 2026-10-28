@@ -207,7 +207,7 @@ def _published_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[i
     out = []
     for one in leagues:
         claims: Dict[Tuple[str, str], List[int]] = {}
-        if one == "mls" and mls_resolution.CUTOVER_ENABLED:
+        if one == "mls" and mls_resolution.cutover_enabled():
             # The claims are the keys the membership snapshot holds for each current person. No observation row is read.
             for pid, record in (mls_resolution.membership_evidence(con) or {}).items():
                 for source, key in record["keys"].items():

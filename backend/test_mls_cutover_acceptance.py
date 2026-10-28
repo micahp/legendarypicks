@@ -240,7 +240,7 @@ def cutover(monkeypatch):
     """Turn the membership gate on for one test. Production leaves it off until the gates pass."""
     if mls_resolution is None:
         pytest.fail("mls_resolution is not implemented")
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
     return mls_resolution
 
 
@@ -512,7 +512,7 @@ def test_degraded_recovery():
 
 # --- current and historical resolution ---------------------------------------------------
 
-def test_stale_lookup(cutover):
+def test_stale_lookup(cutover, monkeypatch):
     fx = json.load(open(CUTOVER))
     con = _db()
     for pid, name, team in fx["players"]:
@@ -527,17 +527,17 @@ def test_stale_lookup(cutover):
     assert len(stale) == 16
 
     # Control: with the gate off, the legacy resolver still returns these people. This is the defect.
-    cutover.CUTOVER_ENABLED = False
+    monkeypatch.delenv(cutover.CUTOVER_ENV, raising=False)
     still_resolved = [pid for pid in stale
                       if _core._resolve_player_for_ingest(con, *_name_team(con, pid), "mls")[0] == pid]
     assert len(still_resolved) == 16
-    cutover.CUTOVER_ENABLED = True
+    monkeypatch.setenv(cutover.CUTOVER_ENV, "1")
     for pid in stale:
         assert _core._resolve_player_for_ingest(con, *_name_team(con, pid), "mls")[0] is None, \
             "a player who is not in the current squads must not resolve (pid %s)" % pid
 
 
-def test_all_resolver_paths(cutover):
+def test_all_resolver_paths(cutover, monkeypatch):
     w = World()
     w.cycle(D1)
     w.drop_person(5)
@@ -551,11 +551,11 @@ def test_all_resolver_paths(cutover):
     w.con.commit()
     probes = {"exact name": name, "normalized name": name.upper() + ".", "alias": "Five Alias Name",
               "published roster": "Five Roster Name"}
-    cutover.CUTOVER_ENABLED = False
+    monkeypatch.delenv(cutover.CUTOVER_ENV, raising=False)
     for path, probe in probes.items():
         assert _core._resolve_player_for_ingest(w.con, probe, team, "mls")[0] == 5, \
             "control: the legacy %s path resolves person 5" % path
-    cutover.CUTOVER_ENABLED = True
+    monkeypatch.setenv(cutover.CUTOVER_ENV, "1")
     for path, probe in probes.items():
         assert _core._resolve_player_for_ingest(w.con, probe, team, "mls")[0] is None, \
             "the %s path must respect current membership" % path

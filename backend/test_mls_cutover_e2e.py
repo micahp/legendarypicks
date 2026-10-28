@@ -88,7 +88,7 @@ def job(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ipr, "DB", path)
     monkeypatch.setattr(ipr, "_PROVIDERS", {"mls": (fotmob_squad, mls_squad)})
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
 
     def legacy_called(*args, **kwargs):
         raise AssertionError("the legacy identity step must not run when the cutover is on")
@@ -167,6 +167,6 @@ def test_legacy_path_untouched_when_cutover_off(job, monkeypatch):
     monkeypatch.setattr(published_roster, "publish_identities",
                         lambda con, league, now, touched: calls.append(league) or
                         {"components": 0, "failure_examples": []})
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", False)
+    monkeypatch.delenv(mls_resolution.CUTOVER_ENV, raising=False)
     ipr.ingest(["mls"], dry_run=False, mls_cutover=False)
     assert calls == ["mls"], "the default job still runs the legacy identity step"

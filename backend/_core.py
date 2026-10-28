@@ -1086,12 +1086,12 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
                                game_id=None, as_of=None):
     """Resolve a player name to (player_id, confidence). See _resolve_player_for_ingest_legacy for the steps.
 
-    With the MLS cutover enabled (mls_resolution.CUTOVER_ENABLED), MLS and Leagues Cup names are answered by
+    With the MLS cutover enabled (mls_resolution.cutover_enabled()), MLS and Leagues Cup names are answered by
     membership: a person is resolved only if they are on the club as of `as_of` (today when None). Otherwise the
     legacy steps run unchanged.
     """
     import mls_resolution
-    if mls_resolution.CUTOVER_ENABLED and league in ("mls", "lcup"):
+    if mls_resolution.cutover_enabled() and league in ("mls", "lcup"):
         if as_of is None and game_id is not None:
             as_of = _game_as_of(con, game_id)
             if as_of is _GAME_DAY_UNKNOWN:
