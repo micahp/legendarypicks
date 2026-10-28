@@ -98,7 +98,8 @@ def known_pair_checks(pairs_path, seed):
     for row in chosen:
         fotmob_dates = mls_identity.default_lookup("fotmob", str(row["fotmob_key"]))
         mls_dates = mls_identity.default_lookup("mlssoccer", str(row["mlssoccer_key"]))
-        corroborated = bool(set(fotmob_dates) & set(mls_dates))
+        dob, _reason = mls_identity.corroborated_dob(sorted(set(mls_dates)), sorted(set(fotmob_dates)))
+        corroborated = dob is not None
         expected = row["final_status"] in ("supported", "supported_order_unresolved")
         out.append({"player_id": row["player_id"], "audit_status": row["final_status"],
                     "live_fotmob_dates": fotmob_dates, "live_mls_dates": mls_dates,

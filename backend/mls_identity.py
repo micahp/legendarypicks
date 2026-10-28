@@ -75,6 +75,22 @@ def _dates(lookup, source, key):
     return sorted({str(d) for d in (found or []) if d})
 
 
+def corroborated_dob(first, second):
+    """(date, reason). A date of birth is accepted only when each publisher gives exactly one reading and the two agree.
+
+    One publisher with two readings is not one interpretation. An MLS page whose day and month can be read either way
+    gives two dates, and nothing here chooses between them. Two single readings that differ are a conflict. In every
+    case where the rule does not accept, nothing is written, and the identity goes to review.
+    """
+    if not first or not second:
+        return None, "dob_missing"
+    if len(first) > 1 or len(second) > 1:
+        return None, "dob_ambiguous"
+    if first != second:
+        return None, "dob_not_corroborated"
+    return first[0], None
+
+
 def _player_names(con):
     """Folded name -> [player ids] for every MLS player."""
     names = {}
@@ -132,10 +148,10 @@ def onboard(con, squads, lookup, now):
         pid, (osrc, okey) = candidates[0]
         mine = _dates(lookup, src, key)
         theirs = _dates(lookup, osrc, okey)
-        common = sorted(set(mine) & set(theirs))
-        if common:
+        dob, _reason = corroborated_dob(mine, theirs)
+        if dob is not None:
             _bind(con, src, key, pid, now)
-            _evidence(con, pid, src, key, common[0], now)
+            _evidence(con, pid, src, key, dob, now)
             out["rekeyed"].append({"player_id": pid, "source": src, "from": None, "to": key})
         else:
             _queue(con, src, key, m["name"], m["team"], "rekey_unverified", pid, now)
@@ -168,12 +184,7 @@ def onboard(con, squads, lookup, now):
         keys = {s: str(pair[s]["source_player_key"]) for s in SOURCES}
         if reason is None:
             dates = {s: _dates(lookup, s, keys[s]) for s in SOURCES}
-            if not dates["mlssoccer"] or not dates["fotmob"]:
-                reason = "dob_missing"
-            else:
-                common = sorted(set(dates["mlssoccer"]) & set(dates["fotmob"]))
-                if not common:
-                    reason = "dob_not_corroborated"
+            dob, reason = corroborated_dob(dates["mlssoccer"], dates["fotmob"])
         if reason is not None:
             for s in SOURCES:
                 _queue(con, s, keys[s], pair[s]["name"], team, reason, None, now)
@@ -187,7 +198,7 @@ def onboard(con, squads, lookup, now):
         pid = int(cur.lastrowid)
         for s in SOURCES:
             _bind(con, s, keys[s], pid, now)
-            _evidence(con, pid, s, keys[s], common[0], now)
+            _evidence(con, pid, s, keys[s], dob, now)
         names.setdefault(f, []).append(pid)
         out["created"].append(pid)
 
