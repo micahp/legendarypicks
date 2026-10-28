@@ -18,7 +18,10 @@ Baselines: the league-wide rate, and a 24-cell model (4 downs x 6 distance bucke
 existing splits-branch 24-cell decision model is fitted on 2025 and its test is spent, so it cannot be a chronological comparator;
 this baseline is a reconstruction on the same definition.
 """
+import hashlib
+import json
 import math
+from pathlib import Path
 
 import numpy as np
 from scipy import sparse
@@ -29,6 +32,7 @@ import e1_drive as e1
 import holdout
 import playcall_observations as pco
 
+BUILDER_VERSION = 'playcall-frame-v2'  # bump when the frame's contents or encoding change
 DOWN_COUNT = 4
 DISTANCE_BUCKETS = ((1, 2, 'd1_2'), (3, 4, 'd3_4'), (5, 6, 'd5_6'), (7, 9, 'd7_9'), (10, 14, 'd10_14'), (15, 99, 'd15p'))
 FIELD_BUCKETS = ('own_deep', 'own_side', 'opp_side', 'red_zone', 'goal_line')  # ordered by yardline_100, deepest first
@@ -121,12 +125,15 @@ def keep_play(obs, include_flagged):
 
 
 class Frame:
-    """Arrays for the scrimmage plays. `teams` maps team code to index; `games` is unused by the fit."""
+    """Arrays for the scrimmage plays. `teams` maps team code to index; `games` maps the codes in arrays['game'] to game_id.
+    `cache_status` is 'hit', 'rebuilt' or 'miss' for a cached load, and None otherwise."""
 
     def __init__(self, arrays, teams, games=None):
         self.a = arrays
         self.teams = teams
-        self.games = games or {}
+        self.games = [] if games is None else games
+        self.cache_status = None
+        self.fingerprint = None
 
     def __len__(self):
         return len(self.a['y'])
@@ -141,6 +148,7 @@ def load_frame(seasons, db=e1.DEFAULT_DB, include_flagged=True):
     holdout.refuse_if_holdout(seasons[-1], 'play-call model frame')
     team_index = {}
     cols = {k: [] for k in FRAME_KEYS}
+    game_index = {}
     wanted = set(seasons)
     for obs in pco.observations(db, first_season=seasons[0], last_season=seasons[-1]):
         if obs['season'] not in wanted or not keep_play(obs, include_flagged):
@@ -154,30 +162,69 @@ def load_frame(seasons, db=e1.DEFAULT_DB, include_flagged=True):
         cols['clock'].append(clock_bucket(obs['qtr'], obs['seconds_in_quarter']))
         cols['y'].append(1 if obs['intent'] == 'dropback' else 0)
         cols['flagged'].append(obs['score_status'] == 'flagged_continuity_exception')
-        cols['game'].append(0)  # game identity is not needed by the fit; observed counts use it through game_id when built
+        cols['game'].append(game_index.setdefault(obs['game_id'], len(game_index)))
     arrays = {k: np.asarray(v, dtype=bool if k == 'flagged' else np.int64) for k, v in cols.items()}
-    return Frame(arrays, team_index)
+    return Frame(arrays, team_index, list(game_index))
 
 
-def save_frame(frame, path, seasons, include_flagged):
+def source_fingerprint(seasons, db, include_flagged):
+    """Everything a frame depends on, as one string. A cache is reused only when this string matches exactly.
+
+    The database is identified by its size and modification time, not its content: hashing it would read every row, including
+    the sealed 2026 season. Any write to the database changes its modification time, so a cache built before the write is
+    rebuilt. The raw score files are identified by their pinned SHA-256, which the loader checks on every read.
+    """
+    stat = Path(db).stat()
+    here = Path(__file__).resolve().parent
+    return json.dumps({
+        'builder': BUILDER_VERSION,
+        'code': {name: pco.sha256(here / name) for name in ('playcall_model.py', 'playcall_observations.py')},
+        'seasons': [int(s) for s in seasons], 'include_flagged': bool(include_flagged),
+        'score_source_pins': {str(s): pco.score_source(s)[1] for s in seasons},
+        'score_flags_sha256': pco.sha256(pco.FLAGS_PATH),
+        'database': {'path': str(db), 'bytes': stat.st_size, 'mtime_ns': stat.st_mtime_ns},
+    }, sort_keys=True)
+
+
+def frame_content_hash(frame):
+    """SHA-256 over every frame array and the team and game code tables, for comparing two frames."""
+    digest = hashlib.sha256()
+    for key in FRAME_KEYS:
+        values = np.ascontiguousarray(frame.a[key])
+        digest.update(f'{key}:{values.dtype.str}:{values.shape}'.encode())
+        digest.update(values.tobytes())
+    digest.update('|'.join(f'{code}={index}' for code, index in sorted(frame.teams.items())).encode())
+    digest.update('|'.join(frame.games).encode())
+    return digest.hexdigest()
+
+
+def save_frame(frame, path, seasons, include_flagged, fingerprint):
     codes = [''] * len(frame.teams)
     for code, index in frame.teams.items():
         codes[index] = code
-    np.savez(path, team_codes=np.array(codes), seasons_built=np.array(seasons, dtype=np.int64),
-             include_flagged=np.array(include_flagged), **{k: frame.a[k] for k in FRAME_KEYS})
+    np.savez(path, team_codes=np.array(codes), game_ids=np.array(frame.games, dtype=str),
+             seasons_built=np.array(seasons, dtype=np.int64), include_flagged=np.array(include_flagged),
+             fingerprint=np.array(fingerprint), **{k: frame.a[k] for k in FRAME_KEYS})
 
 
-def load_frame_cached(path, seasons, include_flagged=True):
-    """The frame for these seasons, read from the cache when it was built for the same seasons and flag setting."""
+def load_frame_cached(path, seasons, include_flagged=True, db=e1.DEFAULT_DB):
+    """The frame for these seasons. The cache is reused only when its fingerprint matches the current sources; otherwise the
+    frame is rebuilt from the observations and the cache is overwritten."""
     seasons = tuple(sorted(seasons))
     holdout.refuse_if_holdout(seasons[-1], 'play-call model frame')
+    fingerprint = source_fingerprint(seasons, db, include_flagged)
+    status = 'miss'
     if path.exists():
         cached = np.load(path)
-        if tuple(int(s) for s in cached['seasons_built']) == seasons and bool(cached['include_flagged']) == include_flagged:
+        if 'fingerprint' in cached.files and str(cached['fingerprint']) == fingerprint:
             teams = {str(code): index for index, code in enumerate(cached['team_codes'])}
-            return Frame({k: cached[k] for k in FRAME_KEYS}, teams)
-    frame = load_frame(seasons, include_flagged=include_flagged)
-    save_frame(frame, path, seasons, include_flagged)
+            frame = Frame({k: cached[k] for k in FRAME_KEYS}, teams, [str(g) for g in cached['game_ids']])
+            frame.cache_status, frame.fingerprint = 'hit', fingerprint
+            return frame
+        status = 'rebuilt'
+    frame = load_frame(seasons, db=db, include_flagged=include_flagged)
+    save_frame(frame, path, seasons, include_flagged, fingerprint)
+    frame.cache_status, frame.fingerprint = status, fingerprint
     return frame
 
 
