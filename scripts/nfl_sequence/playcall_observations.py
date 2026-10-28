@@ -34,7 +34,19 @@ COLUMNS = ('game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'home_t
            'qb_dropback', 'sack', 'qb_scramble', 'two_point_attempt', 'shotgun', 'no_huddle', 'touchdown', 'interception',
            'fumble_lost', 'complete_pass')
 SPECIAL_TEAMS = {'punt': 'punt', 'field_goal': 'field_goal', 'extra_point': 'extra_point', 'kickoff': 'kickoff'}
+FLAGS_PATH = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'score-exceptions' / 'score_continuity_exceptions_2010_2025.csv'
 _SCORE_CACHE = {}
+
+
+def load_score_flags(path=FLAGS_PATH):
+    """Plays whose pre-play score disagrees with the previous play's post-play score (the 2010 to 2025 trace). A flagged play
+    keeps its score and is labelled, so a query can exclude it. Nothing is corrected."""
+    import csv
+    flags = {}
+    with open(path, newline='') as f:
+        for r in csv.DictReader(f):
+            flags[(r['game_id'], int(float(r['play_id'])))] = r['label']
+    return flags
 
 
 def sha256(path):
@@ -70,6 +82,7 @@ def load_pre_play_scores(path, expected_sha256):
                 'posteam_score': _int_or_none(r['posteam_score']),
                 'defteam_score': _int_or_none(r['defteam_score']),
                 'score_differential': _int_or_none(r['score_differential']),
+                'goal_to_go': _int_or_none(r['goal_to_go']),
             }
     return scores
 
@@ -126,7 +139,15 @@ def score_fields(intent, raw_scores):
             'score_status': 'pre_play_nflverse_raw'}
 
 
-def observation(row, raw_scores=None):
+def goal_to_go_flag(raw_scores):
+    """The verified goal-to-go indicator from the raw file, or None. Distance to goal is not used: a second-and-2 at the
+    opponent's 8 is not goal-to-go, and only the publisher's flag says whether it was."""
+    if raw_scores is None or raw_scores.get('goal_to_go') is None:
+        return None
+    return bool(raw_scores['goal_to_go'])
+
+
+def observation(row, raw_scores=None, score_flag=None):
     qtr = row['qtr']
     clock = row['game_seconds_remaining']
     regulation = qtr is not None and 1 <= int(qtr) <= 4 and clock is not None
@@ -134,25 +155,32 @@ def observation(row, raw_scores=None):
     intent, decision = classify(row)
     yardline = row['yardline_100']
     scores = score_fields(intent, raw_scores)
+    if score_flag is not None and scores['score_status'] == 'pre_play_nflverse_raw':
+        scores = {**scores, 'score_status': 'flagged_continuity_exception'}
     return {
         'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season'], 'week': row['week'],
         'qtr': qtr, 'overtime': qtr is not None and int(qtr) >= 5,
         'down': row['down'], 'ydstogo': row['ydstogo'], 'yardline_100': yardline,
         'game_seconds_remaining': clock, 'seconds_in_quarter': seconds_in_quarter,
         'two_minute_window': bool(regulation and int(qtr) in (2, 4) and seconds_in_quarter <= 120),
-        'goal_to_go_derived': None if yardline is None else yardline <= 10,
+        'red_zone': None if yardline is None else yardline <= 20,
+        'goal_to_go': goal_to_go_flag(raw_scores),
+        'goal_to_go_status': 'verified_nflverse_raw' if raw_scores is not None and raw_scores.get('goal_to_go') is not None
+        else 'unavailable',
         'posteam': row['posteam'], 'defteam': row['defteam'], 'home_team': row['home_team'], 'away_team': row['away_team'],
         'shotgun': row['shotgun'], 'no_huddle': row['no_huddle'],
         'intent': intent, 'fourth_down_decision': decision,
         'sack': row['sack'], 'scramble': row['qb_scramble'], 'touchdown': row['touchdown'],
         'interception': row['interception'], 'fumble_lost': row['fumble_lost'], 'yards_gained': row['yards_gained'],
         **scores,
+        'score_flag': score_flag,
         'provenance': {'source': SOURCE, 'season': row['season'], 'model_layer': MODEL_LAYER,
                        'score_source': 'nflverse raw play-by-play, pinned' if raw_scores is not None else None},
     }
 
 
-def observations(db, first_season=FIRST_SEASON, last_season=LAST_SEASON, cutoff=None, scores=scores_for_season):
+def observations(db, first_season=FIRST_SEASON, last_season=LAST_SEASON, cutoff=None, scores=scores_for_season,
+                 flags=None):
     """Yield play-call observations for regular-season plays in [first_season, last_season].
 
     `cutoff` is (season, week). When given, only games in weeks strictly before it are yielded, so a later game cannot
@@ -162,6 +190,7 @@ def observations(db, first_season=FIRST_SEASON, last_season=LAST_SEASON, cutoff=
     holdout.refuse_if_holdout(last_season, 'play-call observations')
     if first_season < FIRST_SEASON or last_season > LAST_SEASON or first_season > last_season:
         raise ValueError(f'play-call window must sit inside {FIRST_SEASON}-{LAST_SEASON}')
+    season_flags = load_score_flags() if flags is None else flags
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
     con.row_factory = sqlite3.Row
     try:
@@ -179,6 +208,6 @@ def observations(db, first_season=FIRST_SEASON, last_season=LAST_SEASON, cutoff=
             season_scores = scores(season)
             for row in con.execute(sql, params):
                 key = (row['game_id'], int(row['play_id']))
-                yield observation(dict(row), season_scores.get(key))
+                yield observation(dict(row), season_scores.get(key), season_flags.get(key))
     finally:
         con.close()
