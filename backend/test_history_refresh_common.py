@@ -87,7 +87,7 @@ class HistoryRefreshBackupTests(unittest.TestCase):
             other = "{}.bak-premigrate-ufc-roster-20260601-000000".format(base)
             open(other, "w").close()
 
-            newest = common.backup_database(db_path, "ufc", now=self.NOW)
+            newest = common.backup_database(db_path, "ufc", now=self.NOW, keep=3)
 
             left = sorted(f for f in os.listdir(directory) if ".bak-premigrate-ufc-2" in f)
             self.assertEqual(
@@ -99,6 +99,36 @@ class HistoryRefreshBackupTests(unittest.TestCase):
                 left,
             )
             self.assertTrue(os.path.exists(other), "a different label must never be pruned")
+
+    def test_a_pinned_backup_is_never_pruned_and_the_newest_copy_stays(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = os.path.join(directory, "picks.db")
+            self._create_database(db_path).close()
+            base = os.path.abspath(db_path)
+            pinned = "{}.bak-premigrate-ufc-roster-20261025-232329".format(base)
+            older = "{}.bak-premigrate-ufc-roster-20261027-231827".format(base)
+            newer = "{}.bak-premigrate-ufc-roster-20261027-232324".format(base)
+            for path in (pinned, older, newer):
+                open(path, "w").close()
+
+            common.prune_backups(db_path, "ufc-roster", keep=1)
+
+            self.assertTrue(os.path.exists(pinned), "a backup a document names must never be pruned")
+            self.assertFalse(os.path.exists(older))
+            self.assertTrue(os.path.exists(newer))
+
+    def test_keep_one_leaves_only_the_newest_backup_of_that_label(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db_path = os.path.join(directory, "picks.db")
+            self._create_database(db_path).close()
+            base = os.path.abspath(db_path)
+            for stamp in ("20260701-000000", "20260702-000000"):
+                open("{}.bak-premigrate-mlb-history-timer-{}".format(base, stamp), "w").close()
+
+            newest = common.backup_database(db_path, "mlb-history-timer", now=self.NOW, keep=1)
+
+            left = sorted(f for f in os.listdir(directory) if ".bak-premigrate-mlb-history-timer-" in f)
+            self.assertEqual([os.path.basename(newest)], left)
 
     def test_prune_refuses_keep_below_one(self):
         with self.assertRaises(ValueError):

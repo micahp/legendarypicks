@@ -57,6 +57,7 @@ def backup_database(
     db_path: str,
     label: str,
     now: Optional[dt.datetime] = None,
+    keep: Optional[int] = None,
 ) -> str:
     safe_label = re.sub(r"[^a-z0-9-]+", "-", label.lower()).strip("-")
     if not safe_label:
@@ -83,13 +84,20 @@ def backup_database(
                 integrity, backup_path
             )
         )
-    prune_backups(db_path, safe_label, keep=BACKUP_KEEP)
+    prune_backups(db_path, safe_label, keep=BACKUP_KEEP if keep is None else keep)
     return backup_path
 
 
 # 2026-10-05: nothing ever deleted these. The UFC roster refresh alone left one full
 # 0.4 GB copy per run, and 171 old backups (51 GB) had piled up by October 5.
-BACKUP_KEEP = 3
+# 2026-10-28: one copy per label. Three copies of the 2.9 GB production database used 9 GB
+# of a disk with 3.8 GB free.
+BACKUP_KEEP = 1
+
+# Backups that a checked-in document names as kept. They are never pruned, whatever the count.
+PINNED_BACKUPS = frozenset({
+    "picks.db.bak-premigrate-ufc-roster-20261025-232329",  # docs/incidents/2026-10-27-identity.md
+})
 
 
 def prune_backups(db_path: str, safe_label: str, keep: int = BACKUP_KEEP) -> list:
@@ -113,7 +121,7 @@ def prune_backups(db_path: str, safe_label: str, keep: int = BACKUP_KEEP) -> lis
         (m.group(1), entry)
         for entry in os.listdir(folder)
         for m in [pattern.match(entry)]
-        if m
+        if m and entry not in PINNED_BACKUPS
     )
     removed = []
     for _, entry in found[:-keep]:
