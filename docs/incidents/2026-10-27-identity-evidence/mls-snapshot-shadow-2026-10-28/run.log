@@ -1,0 +1,13 @@
+  live_vs_prior        legacy {'components': 1041, 'duplicate_candidates': 1, 'source_ids': 1860, 'published': 1041} | snapshot verified
+  signing              legacy {'components': 1042, 'duplicate_candidates': 1, 'source_ids': 1862, 'published': 1042, 'inserted': 1} | snapshot partial
+  departure            legacy {'components': 1040, 'duplicate_candidates': 1, 'source_ids': 1858, 'published': 1040} | snapshot verified
+  transfer             legacy {'components': 1041, 'duplicate_candidates': 1, 'source_ids': 1860, 'published': 1041} | snapshot verified
+  new_publisher_key    legacy {'components': 1041, 'duplicate_candidates': 1, 'source_ids': 1858, 'published': 1040, 'conflicts': 1} | snapshot partial
+  one_source_only      legacy {'components': 1041, 'duplicate_candidates': 1, 'source_ids': 1860, 'published': 1041} | snapshot verified
+  source_lag           legacy {'components': 1042, 'duplicate_candidates': 1, 'source_ids': 1860, 'published': 1042} | snapshot refused
+  club_drop            legacy {'components': 1041, 'duplicate_candidates': 1, 'source_ids': 1860, 'published': 1041} | snapshot refused
+  club_missing         legacy {'components': 1036, 'duplicate_candidates': 1, 'source_ids': 1855, 'published': 1036} | snapshot refused
+  mls_empty            legacy {'components': 900, 'duplicate_candidates': 0, 'source_ids': 1715, 'published': 900} | snapshot refused
+prod counts before: {'players': 57433, 'player_source_ids': 10423, 'published_roster': 3432, 'roster_snapshots': 786, 'props': 891752, 'prop_results': 718556}
+prod counts after:  {'players': 57433, 'player_source_ids': 10423, 'published_roster': 3432, 'roster_snapshots': 786, 'props': 891752, 'prop_results': 718556}
+EXIT 0
