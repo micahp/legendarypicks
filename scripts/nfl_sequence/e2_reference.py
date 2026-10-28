@@ -25,17 +25,7 @@ KICKOFF_SEASONS = (2022, 2023, 2024, 2025)  # every season whose kickoffs can be
 # Reference sources that are not cutoff-safe. Each holds 2022-2025 outcomes with no per-observation cutoff, or a fit on 2025
 # alone. A historical cutoff refuses to load any of them until a cutoff-safe rebuild exists (docs/research/REFERENCE-COHORT-AUDIT).
 # The default path (no cutoff, S0) keeps loading the pinned artifacts exactly as before.
-COHORT_UNSAFE_SOURCES = {
-    'blocked_kicks': 'blocked-kick records and rates over 2022-2025 (rates cannot be recomputed per cutoff yet)',
-    'safety_kicks': 'safety free-kick records over 2022-2025',
-    'overtime_drives': 'overtime drive records over 2022-2025',
-    'try_fallback': 'two-point rates by margin, aggregated over 2022-2025 with no dates',
-    'overtime_choice_model': 'overtime kick-decision fit on 2025 only',
-    'kick_table': 'published kick rates over 2022-2025 (SQL window, no cutoff)',
-    'missed_field_goal_pool': 'missed-field-goal returns over 2022-2025 (SQL window, no cutoff)',
-    'play_extras': 'participant lookup and timeout/out-of-bounds extras over 2022-2025',
-    'position_usage': 'receiver and runner usage over 2022-2025 (SQL window, no cutoff)',
-}
+COHORT_UNSAFE_SOURCES = {}  # every source now has a cutoff path (see docs/research/REFERENCE-COHORT-AUDIT); name one here to refuse
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -483,6 +473,13 @@ def regime_kickoffs(kpool, target_season, kickoff_before):
     return [k for k in kpool if k['season'] in seasons], record
 
 
+def refuse_unsafe_cutoff(eligible_before):
+    """Refuse a historical cutoff while any reference source is still listed in COHORT_UNSAFE_SOURCES. Empty means none."""
+    if eligible_before is not None and COHORT_UNSAFE_SOURCES:
+        raise ValueError('historical cutoff refused: reference sources are not cutoff-safe yet: '
+                         + ', '.join(sorted(COHORT_UNSAFE_SOURCES)))
+
+
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
@@ -513,9 +510,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     before the cutoff season (team_tendency.py). It needs an eligible-before cutoff and cannot be combined with contextual_mode,
     because both fill the same drive-policy slot. False keeps every existing reference unchanged.
     """
-    if eligible_before is not None:
-        raise ValueError('historical cutoff refused: reference sources are not cutoff-safe yet: '
-                         + ', '.join(sorted(COHORT_UNSAFE_SOURCES)))
+    refuse_unsafe_cutoff(eligible_before)
     if team_tendency and contextual_mode is not None:
         raise ValueError('team tendencies and contextual sampling are alternative drive policies; choose one')
     if team_tendency and eligible_before is None:
@@ -550,8 +545,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     if kickoff_regime_season is not None:
         kpool, kickoff_regime = regime_kickoffs(kpool, kickoff_regime_season, kickoff_before)
     kicks = mk.load_kick_table(db, eligible_before=eligible_before)
-    if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
+    # Under a cutoff a bucket can have no observed attempts yet (for example 50+ before 2025). It is left out rather than
+    # filled, and the engine then records `field_goal_outcomes_missing:<bucket>` as a blocker if a kick reaches it.
+    fg_missing = sorted(set(gs.FG_BUCKETS) - set(kicks['field_goal']))
+    if eligible_before is None and fg_missing:
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
+    if not set(kicks['field_goal']) <= set(gs.FG_BUCKETS):
+        raise SystemExit(f"kick table has unknown buckets {sorted(kicks['field_goal'])}")
     blocked = load_blocked_kicks(eligible_before=eligible_before)
     if eligible_before is not None:
         blocked['rates'] = cutoff_blocked_rates(db, blocked, eligible_before)
