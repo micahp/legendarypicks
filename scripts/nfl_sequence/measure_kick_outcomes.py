@@ -12,6 +12,15 @@ from pathlib import Path
 
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
 WINDOW = 'season BETWEEN 2022 AND 2025 AND week <= 18'
+
+
+def before_cutoff(season, week, eligible_before):
+    """True when (season, week) is strictly before the cutoff, or when there is no cutoff."""
+    if eligible_before is None:
+        return True
+    cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
+    season, week = int(season), int(week)
+    return season < cutoff_season or (season == cutoff_season and week < cutoff_week)
 FG_MADE, FG_MISSED = 'Field goal', 'Missed field goal'
 EP_SCORED = ('Touchdown', 'Opp touchdown')
 BUCKET = """CASE WHEN yardline_100 < 10 THEN '1-9' WHEN yardline_100 < 20 THEN '10-19'
@@ -37,7 +46,7 @@ def wilson(k, n, z=1.96):
 KICK_RESULTS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'kick_results_2022_2025.csv'
 
 
-def load_try_results(path=KICK_RESULTS):
+def load_try_results(path=KICK_RESULTS, eligible_before=None):
     """Extra-point and two-point outcomes from the publisher's result fields, read from the rebuilt CSV.
 
     An extra point is made on `extra_point_result` == 'good' and missed on 'failed'. A blocked extra point and a row with no
@@ -49,6 +58,8 @@ def load_try_results(path=KICK_RESULTS):
     tp = {'success': 0, 'failure': 0, 'missing': 0}
     with open(path, newline='') as f:
         for r in csv.DictReader(f):
+            if not before_cutoff(r['season'], r['week'], eligible_before):
+                continue
             if r['play_type'] == 'extra_point':
                 key = r['extra_point_result'] or 'missing'
                 ep[key] = ep.get(key, 0) + 1
@@ -69,7 +80,7 @@ def fg_bucket_of(yardline_100):
     return '50+'
 
 
-def load_field_goal_results(path=KICK_RESULTS):
+def load_field_goal_results(path=KICK_RESULTS, eligible_before=None):
     """Field-goal make and miss counts by yardline_100 bucket, from the publisher's field_goal_result.
 
     A kick is made on `field_goal_result` == 'made' and missed on 'missed', and only when its series label is a kick
@@ -83,6 +94,8 @@ def load_field_goal_results(path=KICK_RESULTS):
     excluded = {'blocked': 0, 'series label is not a kick result': 0, 'missing yardline or result': 0}
     with open(path, newline='') as f:
         for r in csv.DictReader(f):
+            if not before_cutoff(r['season'], r['week'], eligible_before):
+                continue
             if r['play_type'] != 'field_goal':
                 continue
             if r['field_goal_result'] in ('made', 'missed', 'blocked') and r['yardline_100']:
@@ -109,7 +122,7 @@ def load_field_goal_results(path=KICK_RESULTS):
     return {'field_goal': field_goal, 'field_goal_outcomes': outcomes, 'excluded': excluded}
 
 
-def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
+def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS, eligible_before=None):
     """Published kick outcomes for the primary window, as (made, missed) pairs. Read-only.
 
     Field goals come from the dev table's `series_result`, as before. Extra points and two-point tries come from the
@@ -117,8 +130,8 @@ def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS):
     {'field_goal': {bucket: (made, missed)}, 'extra_point': (made, missed), 'two_point': (made, missed),
      'excluded': {...}, 'source': str}
     """
-    fg = load_field_goal_results(results)
-    tries = load_try_results(results)
+    fg = load_field_goal_results(results, eligible_before=eligible_before)
+    tries = load_try_results(results, eligible_before=eligible_before)
     return {'field_goal': fg['field_goal'], 'field_goal_outcomes': fg['field_goal_outcomes'],
             'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
             'excluded': {'field_goal': fg['excluded'], **tries['excluded']},
