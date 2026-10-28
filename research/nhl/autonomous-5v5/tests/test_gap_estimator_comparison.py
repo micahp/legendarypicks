@@ -55,6 +55,18 @@ class GapEstimatorComparisonTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gec._assert_transition_reconciliation([event], [], [event, tied], "fixture")
 
+    def test_zero_exposure_reasons_are_grouped_by_season(self):
+        result = gec._zero_exposure_reason_totals([
+            {"season": 2021, "zero_exposure_origins": {"origin_not_verified_5v5": 2}},
+            {"season": 2021, "zero_exposure_origins": {"origin_at_period_end": 1}},
+            {"season": 2020, "zero_exposure_origins": {"origin_not_verified_5v5": 3}},
+        ])
+        self.assertEqual(result["2021"], {
+            "origin_at_period_end": 1,
+            "origin_not_verified_5v5": 2,
+        })
+        self.assertEqual(result["2020"], {"origin_not_verified_5v5": 3})
+
     def test_game_clustered_bootstrap_supports_both_frozen_references(self):
         a0 = RenewalModel("A0")
         a0.fit(self.transitions)

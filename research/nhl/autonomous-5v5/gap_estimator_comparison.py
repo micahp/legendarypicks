@@ -133,6 +133,14 @@ def _assert_transition_reconciliation(event_signatures: Sequence[tuple[Any, ...]
         )
 
 
+def _zero_exposure_reason_totals(period_summaries: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, int]]:
+    totals: dict[int, collections.Counter[str]] = collections.defaultdict(collections.Counter)
+    for row in period_summaries:
+        totals[int(row["season"])].update(row["zero_exposure_origins"])
+    return {str(season): dict(sorted(counter.items()))
+            for season, counter in sorted(totals.items())}
+
+
 def verify_frozen_inputs(cache_path: Path, data_root: Path) -> tuple[dict[str, Any], list[Any]]:
     parent_result = ROOT / "research/nhl/autonomous-5v5/results/nhl-a1-arrival-gap-diagnosis-2026-10-27.json"
     kernel_path = HERE / "kernel.py"
@@ -439,6 +447,7 @@ def reconstruct_risk_spells(cache_periods: Sequence[Any], data_root: Path,
             str(k): int(v) for k, v in sorted(frozen_transitions_by_season.items())},
         "zero_exposure_origin_counts_by_season": {
             str(k): int(v) for k, v in sorted(zero_exposure_by_season.items())},
+        "zero_exposure_origin_reasons_by_season": _zero_exposure_reason_totals(period_summaries),
         "spells_by_season_and_status": {
             f"{season}:{status}": int(value) for (season, status), value in sorted(counts.items())
         },
@@ -1683,7 +1692,67 @@ def _write_report(path: Path, historical: Mapping[str, Any],
             f"{quantiles['p50_seconds']} | {quantiles['p90_seconds']} | "
             f"{quantiles['p95_seconds']} | {quantiles['p99_seconds']} | {unsupported} |"
         )
-    lines.extend(["", "Event-gap NLL contrasts are game-clustered; confidence intervals and first-versus-later results are in the JSON.",
+    a0_n = historical["training_transition_count"]
+    a0_prior_share = (PERIOD_SECONDS * GAP_ALPHA) / (
+        a0_n + PERIOD_SECONDS * GAP_ALPHA)
+    support = historical["pseudocount_allocation"]["a1_context_support_distribution"]
+    a1_prior_shares = historical["timing_candidate_support"][
+        "A1"]["context_prior_mass_weighted_by_development_rows"]
+    b2_fit_rows = list(historical["training_fit_diagnostics"][
+        "b2_weibull_optimizer_by_context"].values())
+    b2_event_support = [row["events"] for row in b2_fit_rows]
+    b2_censor_support = [row["censored"] for row in b2_fit_rows]
+    lines.extend([
+                  "",
+                  f"A0 and A1 use the same categorical timing estimator and 0.5 count at each second. A0 pools {a0_n:,} training gaps, so its 600-count prior is **{a0_prior_share:.3%}** of each denominator. A1 selects contexts (training support min {support['min']:,}, median {support['p50']:,.1f}, p90 {support['p90']:,.1f}, max {support['max']:,}); its same-sized uniform prior contributes **{historical['pseudocount_allocation']['a1_prior_mass_weighted_by_observed_context']:.2%}** on average (median {a1_prior_shares['p50']:.2%}, p90 {a1_prior_shares['p90']:.2%}, maximum {a1_prior_shares['max']:.2%}). That prior has mean 600.5 seconds and puts **{sum(historical['pseudocount_allocation']['prior_probability_by_duration_bin'][f'{low}-{high}s'] for low, high in ((301,600),(601,900),(901,1200))):.2%}** probability above 300 seconds. The 2021 complete-gap sample has no gaps above 300 seconds. A0's pooled support dilutes the pseudocount; A1's context-specific denominators do not.",
+                  f"B2-E/W fit {len(b2_fit_rows)} selected context buckets. B2-W training event support per bucket ranges from {min(b2_event_support)} to {max(b2_event_support)} (median {_quantile(b2_event_support, .50):,.1f}; p90 {_quantile(b2_event_support, .90):,.1f}); censored support ranges from {min(b2_censor_support)} to {max(b2_censor_support)} (median {_quantile(b2_censor_support, .50):,.1f}). Weibull fits converged in {sum(bool(row['converged']) for row in b2_fit_rows)}/{len(b2_fit_rows)} contexts, with {sum(bool(row['boundary_hit']) for row in b2_fit_rows)} boundary hits. Full context-by-context support and optimizer data are in the JSON.",
+                  "",
+                  "| Transition stratum | n | Observed p50/p90/p95/p99 | A0 NLL/min, p90 | A1 NLL/min, p90 | B1 NLL/min, p90 | B2-E NLL/min, p90 | B2-W NLL/min, p90 |",
+                  "|---|---:|---|---:|---:|---:|---:|---:|"])
+    for label, key in (("First retained transition per period", "first_retained_transition_per_period"),
+                       ("Later transitions", "later_retained_transitions")):
+        block = historical["historical_state_replay"][key]
+        oq = block["observed_gap_quantiles"]
+        observed_label = (f"{oq['p50_seconds']}/{oq['p90_seconds']}/"
+                          f"{oq['p95_seconds']}/{oq['p99_seconds']}")
+        values = []
+        for model_name in ("A0", "A1", "B1", "B2-E", "B2-W"):
+            model = block["models"][model_name]
+            values.append(f"{model['event_gap_nll_nats_per_5v5_minute']:.3f}, "
+                          f"{model['predicted_gap_quantiles']['p90_seconds']}")
+        lines.append(f"| {label} | {block['n']:,} | {observed_label} | "
+                     + " | ".join(values) + " |")
+    entry = historical["period_entry_observations_2021"]
+    source_summary = historical["source_censor_and_exposure_summary"]
+    censor_reasons = historical["censor_reasons_2021"]
+    censor_groups = {
+        "5v5 exit (including same-second ineligible bundle)": (
+            censor_reasons.get("5v5_exit", 0)
+            + censor_reasons.get("5v5_exit_and_ineligible_bundle", 0)),
+        "Period end": censor_reasons.get("period_end", 0),
+        "Ambiguous state (including ineligible bundle)": (
+            censor_reasons.get("ambiguous_state", 0)
+            + censor_reasons.get("ambiguous_state_and_ineligible_bundle", 0)),
+        "Ineligible bundle without a state boundary": censor_reasons.get("ineligible_bundle", 0),
+        "Eligible-event same-second boundary ties": sum(
+            value for key, value in censor_reasons.items()
+            if key.startswith("same_second_eligible_event_")),
+    }
+    if sum(censor_groups.values()) != source_summary["right_censored_spells_by_season"]["2021"]:
+        raise ValueError("2021 report censor-reason rollup does not reconcile")
+    zero_reasons = source_summary.get("zero_exposure_origin_reasons_by_season", {}).get("2021", {})
+    lines.extend([
+        "",
+        f"Period entry remains a separate stratum: {entry['period_entry_first_event_count']:,} initial 5v5 event observations have p50/p90/p95 **{entry['period_entry_first_event_elapsed_quantiles']['p50_seconds']}/{entry['period_entry_first_event_elapsed_quantiles']['p90_seconds']}/{entry['period_entry_first_event_elapsed_quantiles']['p95_seconds']} seconds**, reflecting the event at the period's opening second. These are not treated as post-event gaps or candidate targets.",
+        f"The 2021 replay has {historical['development_transition_count']:,} frozen complete-gap transitions: {historical['source_censor_and_exposure_summary']['event_observed_spells_by_season']['2021']:,} event-observed risk spells plus {historical['source_censor_and_exposure_summary']['same_second_boundary_tied_transition_spells_by_season']['2021']:,} same-second boundary ties. There are {historical['source_censor_and_exposure_summary']['right_censored_spells_by_season']['2021']:,} right-censored spells and {historical['source_censor_and_exposure_summary']['exposure_by_season']['2021:known_risk_seconds']:,} fully observed 5v5 risk seconds. Censor causes and both Kaplan–Meier tie conventions are in the JSON.",
+        f"Separately, {source_summary['zero_exposure_origin_counts_by_season'].get('2021', 0):,} otherwise eligible event origins did not begin in a verified 5v5 second and have no following 5v5 exposure (reasons: {zero_reasons or 'reason detail not recorded'}). They are excluded from risk spells, not converted to long gaps.",
+        "",
+        "| 2021 censor reason | Count |",
+        "|---|---:|",
+    ])
+    for reason, count in censor_groups.items():
+        lines.append(f"| {reason} | {count:,} |")
+    lines.extend(["", "Event-gap NLL contrasts are game-clustered; confidence intervals for both A0 and A1 comparisons are shown above for the all-gap population and preserved by stratum in the JSON.",
                   "", "### Censoring and survival likelihood", "",
                   "The source extractor reconciles event-observed risk spells plus same-second boundary-tied event censors exactly to the frozen transition cache. Ineligible event bundles, 5v5 exits, ambiguous state, period end, and eligible-event boundary ties are separate right-censor reasons. A censor is not encoded as a long event gap. Whole-second censor ties are shown under both censor-first and event-first Kaplan–Meier conventions.",
                   "", "| Estimator | Censored spells | Joint event+censor NLL / at-risk min | Δ vs A0 (95% game-cluster CI) | Δ vs A1 (95% game-cluster CI) | Support failures |",
@@ -1701,7 +1770,7 @@ def _write_report(path: Path, historical: Mapping[str, Any],
                   "A period-entry/re-entry observation is reported separately and is not pooled with post-event gaps. Within the frozen transition sample, the first retained transition per period and later transitions are scored separately. Full predicted/observed quantiles, survival calibration, and censoring splits are preserved in the JSON.",
                   "", "## Autonomous rollout", ""])
     if rollout is None:
-        lines.append("Not yet run. The historical-state stage must complete and validate support before this stage starts.")
+        lines.append("Not yet run. All candidates passed historical support checks; autonomous rollout remains pending.")
     else:
         lines.extend([
             f"The rollout used {rollout['development_periods']:,} periods × {rollout['replicates_per_period']} common seeds, for {rollout['trace_count']:,} traces. Candidate and control marks remain A1's frozen mark model.",
@@ -1720,7 +1789,7 @@ def _write_report(path: Path, historical: Mapping[str, Any],
                     f"{row['crps']:.4f} | {delta} | "
                     f"{quantiles['p50']}/{quantiles['p90']}/{quantiles['p95']}/{quantiles['p99']} |"
                 )
-        lines.extend(["", "Generated emitted-gap and terminal-censor proposal quantiles, mark-family counts, SOG, attempts, goals, trace reproducibility, and runtimes are in the rollout JSON."])
+        lines.extend(["", "Generated first-arrival, later emitted-gap, and terminal-censor proposal quantiles, mark-family counts, SOG, attempts, goals, trace reproducibility, and per-candidate plus total runtimes are in the rollout JSON."])
     lines.extend([
         "",
         "## Decision and limitations",
@@ -1826,8 +1895,12 @@ def run_rollout(args: argparse.Namespace) -> dict[str, Any]:
             PREREG_CENSOR_CONVENTION_COMMIT, PREREG_BOUNDARY_TIE_COMMIT,
         ],
     }
-    spells, _, _ = _read_risk_cache(
+    spells, risk_source_summary, _ = _read_risk_cache(
         args.risk_cache, historical["risk_spell_cache_sha256"], frozen_hashes)
+    historical["source_censor_and_exposure_summary"][
+        "zero_exposure_origin_reasons_by_season"] = _zero_exposure_reason_totals(
+            risk_source_summary["period_summaries"])
+    _write_json(args.historical_output, historical)
     rollout = autonomous_evaluation(cache_periods, historical, spells)
     rollout["preregistration_commits"] = [
         PREREG_COMMIT, PREREG_INPUT_PIN_COMMIT,
