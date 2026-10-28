@@ -266,8 +266,15 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
     return out
 
 
-def load_overtime_choice_model(path=CHOICE_MODEL):
-    """The observed kick rate for the winning coach's overtime decision (2025 regular season). Checked against its manifest."""
+def load_overtime_choice_model(path=CHOICE_MODEL, eligible_before=None):
+    """The observed kick rate for the winning coach's overtime decision (2025 regular season). Checked against its manifest.
+
+    With `eligible_before`, the fitted row is not used. Its games are all 2025, and the toss winner's choice is not recorded in
+    the play-by-play. The only table that records it (the coin-toss fixture) also holds 2026 rows, which are not read here. Before
+    the cutoff the rate is therefore the Beta(1, 1) prior with no observed games: (kicks + 1) / (games + 2) = 0.5."""
+    if eligible_before is not None:
+        meta = {'basis': 'beta_1_1_prior_no_observed_games', 'eligible_before': list(eligible_before), 'games': 0, 'kicks': 0}
+        return (0 + 1) / (0 + 2), hashlib.sha256(json.dumps(meta, sort_keys=True).encode()).hexdigest()
     import csv
     manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
     source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -281,6 +288,46 @@ def load_overtime_choice_model(path=CHOICE_MODEL):
     if not 0.0 <= p <= 1.0:
         raise ValueError('overtime p_kick outside [0, 1]')
     return p, source_hash
+
+
+def wilson_95(successes, total):
+    """Wilson score interval, rounded as the pinned blocked-kick manifest rounds it."""
+    import math
+    if total == 0:
+        return [0.0, 1.0]
+    z = 1.959963984540054
+    p = successes / total
+    denom = 1 + z * z / total
+    centre = (p + z * z / (2 * total)) / denom
+    half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denom
+    return [round(max(0.0, centre - half), 5), round(min(1.0, centre + half), 5)]
+
+
+def cutoff_blocked_rates(db, blocked, eligible_before=None):
+    """Blocked-kick rates with the pinned manifest's definitions, from the cutoff's kick results and kept records.
+
+    A field-goal attempt is a made, missed or blocked kick in its yardline bucket (the same counts the kick table holds, cut the
+    same way). A punt attempt is any punt play in the window, cut by (season, week). The blocked counts come from the kept
+    records, so the rates and the records always describe the same plays."""
+    kicks = mk.load_kick_table(db, eligible_before=eligible_before)
+    fg = {}
+    for bucket, (made, missed, blocked_fg) in kicks['field_goal_outcomes'].items():
+        attempts = made + missed + blocked_fg
+        fg[bucket] = {'attempts': attempts, 'blocked': blocked_fg,
+                      'rate': blocked_fg / attempts if attempts else 0.0,
+                      'wilson_95': wilson_95(blocked_fg, attempts)}
+    cut_sql, cut_args = _cutoff_sql(eligible_before)
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    try:
+        punt_attempts = con.execute(
+            f"SELECT COUNT(*) FROM nfl_pbp WHERE play_type='punt' AND {mk.WINDOW}{cut_sql}", cut_args).fetchone()[0]
+    finally:
+        con.close()
+    punt_blocked = len(blocked['records']['punt'])
+    punt = {'attempts': punt_attempts, 'blocked': punt_blocked,
+            'rate': punt_blocked / punt_attempts if punt_attempts else 0.0,
+            'wilson_95': wilson_95(punt_blocked, punt_attempts)}
+    return {'field_goal_blocked_by_snap_bucket': fg, 'punt_blocked': punt}
 
 
 def load_overtime_try_fallback(path=TRY_FALLBACK, eligible_before=None):
@@ -502,10 +549,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     kickoff_regime = None
     if kickoff_regime_season is not None:
         kpool, kickoff_regime = regime_kickoffs(kpool, kickoff_regime_season, kickoff_before)
-    kicks = mk.load_kick_table(db)
+    kicks = mk.load_kick_table(db, eligible_before=eligible_before)
     if set(kicks['field_goal']) != set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
-    blocked = load_blocked_kicks()
+    blocked = load_blocked_kicks(eligible_before=eligible_before)
+    if eligible_before is not None:
+        blocked['rates'] = cutoff_blocked_rates(db, blocked, eligible_before)
     for bucket, expected in blocked['rates']['field_goal_blocked_by_snap_bucket'].items():
         counts = kicks['field_goal_outcomes'].get(bucket)
         if counts is None or sum(counts) != expected['attempts'] or counts[2] != expected['blocked']:
@@ -515,12 +564,17 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             or len(blocked['records']['field_goal']) != sum(x['blocked'] for x in
                                                              blocked['rates']['field_goal_blocked_by_snap_bucket'].values())):
         raise ValueError('blocked-kick transition counts disagree with the observed-rate manifest')
-    safety_pool, safety_sha = load_safety_kick_pool() if safety_kick_table else (None, None)
-    overtime_pool, overtime_sha = load_overtime_drive_pool() if overtime_table else (None, None)
-    try_fallback, try_fallback_sha = load_overtime_try_fallback() if overtime_table else (None, None)
-    choice_p, choice_sha = load_overtime_choice_model() if overtime_table else (None, None)
-    reference = gs.Reference(pool, kpool, kicks, load_participants(db),
-                             load_missed_field_goal_pool(db), blocked, try_policy=try_policy,
+    safety_pool, safety_sha = (load_safety_kick_pool(eligible_before=eligible_before)
+                               if safety_kick_table else (None, None))
+    overtime_pool, overtime_sha = (load_overtime_drive_pool(eligible_before=eligible_before)
+                                   if overtime_table else (None, None))
+    try_fallback, try_fallback_sha = (load_overtime_try_fallback(eligible_before=eligible_before)
+                                      if overtime_table else (None, None))
+    choice_p, choice_sha = (load_overtime_choice_model(eligible_before=eligible_before)
+                            if overtime_table else (None, None))
+    reference = gs.Reference(pool, kpool, kicks, load_participants(db, eligible_before=eligible_before),
+                             load_missed_field_goal_pool(db, eligible_before=eligible_before), blocked,
+                             try_policy=try_policy,
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
                              overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice,
                              contextual_sampler=contextual_sampler)
@@ -529,7 +583,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     reference.overtime_choice_sha256 = choice_sha
     reference.safety_kick_sha256 = safety_sha
     reference.overtime_sha256 = overtime_sha
-    reference.position_usage = load_position_usage(db)
+    reference.position_usage = load_position_usage(db, eligible_before=eligible_before)
     reference.pool_scope = {'regulation_only': regulation_only,
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
