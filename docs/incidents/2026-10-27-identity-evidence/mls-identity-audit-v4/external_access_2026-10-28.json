@@ -1,0 +1,51 @@
+{
+  "checked": "2026-10-28",
+  "method": {
+    "WebFetch": "Page fetched by the WebFetch tool; the answer quotes the page's date text as the tool reported it.",
+    "audit_fetch": "Raw HTML fetched with the audit's MLS fetch helper; the printed Date of Birth span was read directly.",
+    "fotmob_api": "FotMob playerData birthDate read with the audit's FotMob helper."
+  },
+  "urls": [
+    {"url": "https://en.wikipedia.org/wiki/Jayden_Reid_(American_soccer)", "pairs": [33067], "access": "inspected", "method": "WebFetch", "date_on_page": "August 30, 2001", "matches_review": true},
+    {"url": "https://www.sportingkc.com/news/sporting-kc-signs-defenders-wyatt-meyer-and-jayden-reid-as-free-agents", "pairs": [33067, 59005], "access": "inspected", "method": "WebFetch", "date_on_page": "Reid 8/29/2001; Meyer 11/12/2001", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Cody_Baker", "pairs": [52100], "access": "inspected", "method": "WebFetch", "date_on_page": "January 7, 2004", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Will_Reilly", "pairs": [58334], "access": "inspected", "method": "WebFetch", "date_on_page": "December 3, 2002", "matches_review": true},
+    {"url": "https://www.atlutd.com/players/will-reilly", "pairs": [58334], "access": "inspected", "method": "WebFetch", "date_on_page": "12.3.2002 (23)", "matches_review": true},
+    {"url": "https://www.mlssoccer.com/players/will-reilly", "pairs": [58334], "access": "inspected", "method": "audit_fetch", "date_on_page": "12.3.2002 (23)", "matches_review": true},
+    {"url": "https://chicagofirefc.com/news/chicago-fire-fc-acquires-defender-jack-elliott", "pairs": [58376], "access": "inspected", "method": "WebFetch", "date_on_page": "August 25, 1995", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Zack_Steffen", "pairs": [58489], "access": "inspected", "method": "WebFetch", "date_on_page": "April 2, 1995 (lead; the page is longer than one fetch and only the first 100,000 characters were read)", "matches_review": true},
+    {"url": "https://www.coloradorapids.com/news/colorado-rapids-sign-defender-reggie-cannon", "pairs": [58495], "access": "inspected", "method": "WebFetch", "date_on_page": "June 11, 1998", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Reggie_Cannon", "pairs": [58495], "access": "inspected", "method": "WebFetch", "date_on_page": "June 11, 1998", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Wayne_Frederick_(footballer)", "pairs": [58508], "access": "inspected", "method": "WebFetch", "date_on_page": "June 13, 2004", "matches_review": true},
+    {"url": "https://www.fcdallas.com/northtexassc/news/fc-dallas-academy-product-daniel-baran-signs-first-professional-contract-with-north-texas-sc", "pairs": [58549], "access": "inspected", "method": "WebFetch", "date_on_page": "September 16, 2006 (18)", "matches_review": true, "note": "The review marked this source as not independently opened. It is now opened."},
+    {"url": "https://www.mlssoccer.com/players/daniel-baran/", "pairs": [58549], "access": "inspected", "method": "audit_fetch", "date_on_page": "2.4.1998 (28)", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Matthew_Arana", "pairs": [58598], "access": "inspected", "method": "WebFetch", "date_on_page": "28 August 2010", "matches_review": true},
+    {"url": "https://www.mlssoccer.com/players/matthew-arana/", "pairs": [58598], "access": "inspected", "method": "audit_fetch", "date_on_page": "8.29.2010 (16)", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Gonzalo_Luj%C3%A1n", "pairs": [58670], "access": "inspected", "method": "WebFetch", "date_on_page": "27 April 2001", "matches_review": true},
+    {"url": "https://www.revolutionsoccer.net/news/revolution-acquire-nigerian-central-midfielder-alhassan-yusuf-from-royal-antwerp-fc", "pairs": [58767], "access": "inspected", "method": "WebFetch", "date_on_page": "07/18/2000 (24)", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Alhassan_Yusuf", "pairs": [58767], "access": "inspected", "method": "WebFetch", "date_on_page": "20 July 2000", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Jack_Maher_(soccer)", "pairs": [58788], "access": "inspected", "method": "WebFetch", "date_on_page": "October 28, 1999", "matches_review": true},
+    {"url": "https://www.timbers.com/news/timbers-sign-defender-ian-smith", "pairs": [58909], "access": "inspected", "method": "WebFetch", "date_on_page": "07/16/2002", "matches_review": true},
+    {"url": "https://www.timbers.com/players/ian-smith/", "pairs": [58909], "access": "inspected", "method": "WebFetch", "date_on_page": "7.16.2002 (24)", "matches_review": true},
+    {"url": "https://africa.espn.com/football/player/bio/_/id/380677/kieran-sargeant", "pairs": [58965], "access": "fetched_empty", "method": "WebFetch", "date_on_page": "no profile content returned (two attempts)", "matches_review": false, "note": "The review's ESPN date (15 May 2003) is not confirmed."},
+    {"url": "https://www.mlssoccer.com/news/san-diego-fc-acquire-kieran-sargeant-from-houston-dynamo", "pairs": [58965], "access": "inspected", "method": "audit_fetch", "date_on_page": "no date of birth on this page", "matches_review": true, "note": "Cited for the transfer, not for the date."},
+    {"url": "https://en.wikipedia.org/wiki/Stefan_Cleveland", "pairs": [58996], "access": "inspected", "method": "WebFetch", "date_on_page": "May 25, 1994", "matches_review": true},
+    {"url": "https://www.sportingkc.com/news/sporting-kc-acquires-goalkeeper-stefan-cleveland-in-trade-with-austin-fc", "pairs": [58996], "access": "inspected", "method": "WebFetch", "date_on_page": "5/25/1994 (31 years old)", "matches_review": true},
+    {"url": "https://www.sportingkc.com/news/sporting-kc-acquires-defender-moises-mosquera-in-transfer-from-fc-juarez", "pairs": [59000], "access": "inspected", "method": "WebFetch", "date_on_page": "5/24/2001 (25 years old)", "matches_review": true, "note": "First attempt failed on DNS; the second attempt succeeded."},
+    {"url": "https://www.mlssoccer.com/players/moises-mosquera/", "pairs": [59000], "access": "inspected", "method": "audit_fetch", "date_on_page": "4.24.2001 (25)", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Wyatt_Meyer", "pairs": [59005], "access": "inspected", "method": "WebFetch", "date_on_page": "November 12, 2001", "matches_review": true},
+    {"url": "https://en.wikipedia.org/wiki/Walker_Zimmerman", "pairs": [59030], "access": "inspected", "method": "WebFetch", "date_on_page": "May 19, 1993", "matches_review": true},
+    {"url": "https://www.torontofc.ca/news/toronto-fc-acquire-u-s-international-defender-walker-zimmerman", "pairs": [59030], "access": "inspected", "method": "WebFetch", "date_on_page": "May 19, 1993 (Age 32)", "matches_review": true},
+    {"url": "https://www.mlssoccer.com/players/matthew-edwards/", "pairs": [71232], "access": "inspected", "method": "audit_fetch", "date_on_page": "2.17.2003 (23)", "matches_review": true},
+    {"url": "https://www.atlutd.com/2/news/atlanta-united-2-signs-defender-matthew-edwards", "pairs": [71232], "access": "inspected", "method": "WebFetch", "date_on_page": "February 17, 2003 (20)", "matches_review": true, "note": "The printed age (20) does not fit the printed date on Oct 27, 2026 (it gives 23). The date is the claim being checked."},
+    {"url": "https://www.mlssoccer.com/players/zackory-campagnolo/", "pairs": [71285], "access": "inspected", "method": "audit_fetch", "date_on_page": "3.12.2007 (19)", "matches_review": true}
+  ],
+  "fotmob_direct": [
+    {"pair": 58909, "name": "Ian Smith", "fotmob_birthDate": "2002-07-26", "recorded": "2002-07-26", "note": "The review said a search summary had FotMob at 16 Jul; that is not FotMob's value. FotMob's own API gives 26 Jul."},
+    {"pair": 58549, "name": "Daniel Baran", "fotmob_birthDate": "2006-09-16", "recorded": "2006-09-16"}
+  ],
+  "not_checked": [
+    "Cited only in the review text, not in its sources: ESPN athlete 376512 (Campagnolo); Rapids player profile (Frederick); club media guide (Yusuf); Soccerway and LiveSoccerTV (Yusuf); ESPN and Houston Dynamo bios (Arana); the MLS page for Luján. Their dates are the review's statements, not checked here.",
+    "Opta (reviewer-reported for Cabral Carter and Nolan Miller): no Opta URL is in the bundle, and it was not checked here."
+  ]
+}

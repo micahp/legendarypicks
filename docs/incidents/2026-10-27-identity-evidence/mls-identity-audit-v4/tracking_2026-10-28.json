@@ -1,0 +1,7305 @@
+{
+ "counts": {
+  "dob_agreement": 556,
+  "ambiguous_order": 240,
+  "biographical_disagreement": 10,
+  "mls_date_missing": 4,
+  "biographical_source_error": 5,
+  "single_source": 225,
+  "people_in_membership": 1040
+ },
+ "rows": {
+  "dob_agreement": [
+   {
+    "player_id": 32331,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1999-12-26",
+    "mls_printed": "of Birth | | 12.26.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32334,
+    "club": "New England Revolution",
+    "fotmob_dob": "2005-01-20",
+    "mls_printed": "of Birth | | 1.20.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32353,
+    "club": "Atlanta United",
+    "fotmob_dob": "2002-12-30",
+    "mls_printed": "of Birth | | 12.30.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32359,
+    "club": "Atlanta United",
+    "fotmob_dob": "1995-10-17",
+    "mls_printed": "of Birth | | 10.17.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32377,
+    "club": "CF Montréal",
+    "fotmob_dob": "2000-03-21",
+    "mls_printed": "of Birth | | 3.21.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32442,
+    "club": "Nashville SC",
+    "fotmob_dob": "2003-07-12",
+    "mls_printed": "of Birth | | 7.12.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32458,
+    "club": "DC United",
+    "fotmob_dob": "1995-03-22",
+    "mls_printed": "of Birth | | 3.22.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32750,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1995-11-30",
+    "mls_printed": "of Birth | | 11.30.1995 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32850,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2002-07-26",
+    "mls_printed": "of Birth | | 7.26.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32851,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-05-24",
+    "mls_printed": "of Birth | | 5.24.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32856,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1994-09-27",
+    "mls_printed": "of Birth | | 9.27.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32863,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-12-21",
+    "mls_printed": "of Birth | | 12.21.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32867,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1999-07-31",
+    "mls_printed": "of Birth | | 7.31.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32871,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1993-02-23",
+    "mls_printed": "of Birth | | 2.23.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32873,
+    "club": "DC United",
+    "fotmob_dob": "1997-01-13",
+    "mls_printed": "of Birth | | 1.13.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32874,
+    "club": "Toronto FC",
+    "fotmob_dob": "1995-07-17",
+    "mls_printed": "of Birth | | 7.17.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32875,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1998-07-30",
+    "mls_printed": "of Birth | | 7.30.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32881,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1991-10-23",
+    "mls_printed": "of Birth | | 10.23.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32882,
+    "club": "Toronto FC",
+    "fotmob_dob": "1996-09-30",
+    "mls_printed": "of Birth | | 9.30.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32884,
+    "club": "Minnesota United",
+    "fotmob_dob": "2002-04-23",
+    "mls_printed": "of Birth | | 4.23.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32885,
+    "club": "St. Louis City",
+    "fotmob_dob": "2003-04-28",
+    "mls_printed": "of Birth | | 4.28.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32888,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-11-20",
+    "mls_printed": "of Birth | | 11.20.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32892,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1989-03-23",
+    "mls_printed": "of Birth | | 3.23.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32893,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2001-11-19",
+    "mls_printed": "of Birth | | 11.19.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32894,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2008-03-24",
+    "mls_printed": "of Birth | | 3.24.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32898,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2005-05-24",
+    "mls_printed": "of Birth | | 5.24.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32900,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-11-30",
+    "mls_printed": "of Birth | | 11.30.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32908,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1997-02-28",
+    "mls_printed": "of Birth | | 2.28.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32912,
+    "club": "CF Montréal",
+    "fotmob_dob": "1999-01-15",
+    "mls_printed": "of Birth | | 1.15.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32913,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1999-11-16",
+    "mls_printed": "of Birth | | 11.16.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32915,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2004-04-26",
+    "mls_printed": "of Birth | | 4.26.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32919,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1998-12-20",
+    "mls_printed": "of Birth | | 12.20.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32921,
+    "club": "Orlando City",
+    "fotmob_dob": "2000-06-27",
+    "mls_printed": "of Birth | | 6.27.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32922,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1999-10-18",
+    "mls_printed": "of Birth | | 10.18.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32925,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2000-08-29",
+    "mls_printed": "of Birth | | 8.29.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32935,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2004-10-11",
+    "mls_printed": "of Birth | | 10.11.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32938,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2007-06-28",
+    "mls_printed": "of Birth | | 6.28.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32942,
+    "club": "San Diego FC",
+    "fotmob_dob": "2006-09-28",
+    "mls_printed": "of Birth | | 9.28.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32945,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1995-02-20",
+    "mls_printed": "of Birth | | 2.20.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32946,
+    "club": "San Diego FC",
+    "fotmob_dob": "1997-04-12",
+    "mls_printed": "of Birth | | 4.12.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32948,
+    "club": "San Diego FC",
+    "fotmob_dob": "2006-05-31",
+    "mls_printed": "of Birth | | 5.31.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32952,
+    "club": "San Diego FC",
+    "fotmob_dob": "2003-03-21",
+    "mls_printed": "of Birth | | 3.21.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32954,
+    "club": "San Diego FC",
+    "fotmob_dob": "1994-01-17",
+    "mls_printed": "of Birth | | 1.17.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32955,
+    "club": "San Diego FC",
+    "fotmob_dob": "1993-03-12",
+    "mls_printed": "of Birth | | 3.12.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32958,
+    "club": "San Diego FC",
+    "fotmob_dob": "1999-08-18",
+    "mls_printed": "of Birth | | 8.18.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32959,
+    "club": "San Diego FC",
+    "fotmob_dob": "2006-02-22",
+    "mls_printed": "of Birth | | 2.22.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32960,
+    "club": "San Diego FC",
+    "fotmob_dob": "2006-06-30",
+    "mls_printed": "of Birth | | 6.30.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32963,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1995-07-30",
+    "mls_printed": "of Birth | | 7.30.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32964,
+    "club": "San Diego FC",
+    "fotmob_dob": "1990-06-18",
+    "mls_printed": "of Birth | | 6.18.1990 (36)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32966,
+    "club": "San Diego FC",
+    "fotmob_dob": "2002-04-11",
+    "mls_printed": "of Birth | | 4.11.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32970,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1986-04-20",
+    "mls_printed": "of Birth | | 4.20.1986 (40)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32974,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1989-07-13",
+    "mls_printed": "of Birth | | 7.13.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32976,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1997-06-23",
+    "mls_printed": "of Birth | | 6.23.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32977,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1998-09-24",
+    "mls_printed": "of Birth | | 9.24.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32978,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1996-07-28",
+    "mls_printed": "of Birth | | 7.28.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32979,
+    "club": "Austin FC",
+    "fotmob_dob": "1997-08-26",
+    "mls_printed": "of Birth | | 8.26.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32981,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2002-05-21",
+    "mls_printed": "of Birth | | 5.21.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32986,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2001-07-14",
+    "mls_printed": "of Birth | | 7.14.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32988,
+    "club": "Nashville SC",
+    "fotmob_dob": "2005-03-31",
+    "mls_printed": "of Birth | | 3.31.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32991,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2007-03-23",
+    "mls_printed": "of Birth | | 3.23.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32995,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1994-10-26",
+    "mls_printed": "of Birth | | 10.26.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32996,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2000-12-24",
+    "mls_printed": "of Birth | | 12.24.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33001,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2002-07-25",
+    "mls_printed": "of Birth | | 7.25.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33010,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1997-06-24",
+    "mls_printed": "of Birth | | 6.24.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33014,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2001-10-24",
+    "mls_printed": "of Birth | | 10.24.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33016,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2003-12-09",
+    "mls_printed": "of Birth | | 12.9.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33018,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1998-07-19",
+    "mls_printed": "of Birth | | 7.19.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33021,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1995-03-30",
+    "mls_printed": "of Birth | | 3.30.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33023,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2005-06-19",
+    "mls_printed": "of Birth | | 6.19.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33026,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2003-08-31",
+    "mls_printed": "of Birth | | 8.31.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33028,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2001-12-22",
+    "mls_printed": "of Birth | | 12.22.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33029,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1993-05-19",
+    "mls_printed": "of Birth | | 5.19.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33031,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1999-05-28",
+    "mls_printed": "of Birth | | 5.28.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33032,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-04-28",
+    "mls_printed": "of Birth | | 4.28.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33034,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2001-04-19",
+    "mls_printed": "of Birth | | 4.19.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33047,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1994-08-20",
+    "mls_printed": "of Birth | | 8.20.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33053,
+    "club": "Toronto FC",
+    "fotmob_dob": "1996-07-19",
+    "mls_printed": "of Birth | | 7.19.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33058,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2001-02-19",
+    "mls_printed": "of Birth | | 2.19.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33059,
+    "club": "St. Louis City",
+    "fotmob_dob": "1990-11-14",
+    "mls_printed": "of Birth | | 11.14.1990 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33064,
+    "club": "St. Louis City",
+    "fotmob_dob": "1999-09-28",
+    "mls_printed": "of Birth | | 9.28.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33066,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1998-06-25",
+    "mls_printed": "of Birth | | 6.25.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33069,
+    "club": "St. Louis City",
+    "fotmob_dob": "1997-07-30",
+    "mls_printed": "of Birth | | 7.30.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33072,
+    "club": "St. Louis City",
+    "fotmob_dob": "2004-04-15",
+    "mls_printed": "of Birth | | 4.15.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33074,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1997-01-28",
+    "mls_printed": "of Birth | | 1.28.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33080,
+    "club": "St. Louis City",
+    "fotmob_dob": "1999-12-10",
+    "mls_printed": "of Birth | | 12.10.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33081,
+    "club": "St. Louis City",
+    "fotmob_dob": "2006-08-30",
+    "mls_printed": "of Birth | | 8.30.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33083,
+    "club": "St. Louis City",
+    "fotmob_dob": "2007-08-12",
+    "mls_printed": "of Birth | | 8.12.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33086,
+    "club": "St. Louis City",
+    "fotmob_dob": "1999-07-20",
+    "mls_printed": "of Birth | | 7.20.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33092,
+    "club": "DC United",
+    "fotmob_dob": "1989-05-31",
+    "mls_printed": "of Birth | | 5.31.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33101,
+    "club": "Toronto FC",
+    "fotmob_dob": "2003-10-16",
+    "mls_printed": "of Birth | | 10.16.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33105,
+    "club": "Toronto FC",
+    "fotmob_dob": "1992-06-12",
+    "mls_printed": "of Birth | | 6.12.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33108,
+    "club": "Toronto FC",
+    "fotmob_dob": "1998-11-10",
+    "mls_printed": "of Birth | | 11.10.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33109,
+    "club": "Toronto FC",
+    "fotmob_dob": "2002-07-23",
+    "mls_printed": "of Birth | | 7.23.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33110,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2003-01-27",
+    "mls_printed": "of Birth | | 1.27.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33113,
+    "club": "Toronto FC",
+    "fotmob_dob": "1999-10-12",
+    "mls_printed": "of Birth | | 10.12.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33116,
+    "club": "Toronto FC",
+    "fotmob_dob": "2002-05-17",
+    "mls_printed": "of Birth | | 5.17.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33121,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1996-03-16",
+    "mls_printed": "of Birth | | 3.16.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33125,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1995-01-16",
+    "mls_printed": "of Birth | | 1.16.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33127,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1996-08-12",
+    "mls_printed": "of Birth | | 8.12.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33128,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1999-09-15",
+    "mls_printed": "of Birth | | 9.15.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33129,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1999-03-24",
+    "mls_printed": "of Birth | | 3.24.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33134,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1999-12-29",
+    "mls_printed": "of Birth | | 12.29.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33139,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1995-12-16",
+    "mls_printed": "of Birth | | 12.16.1995 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33140,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1996-05-11",
+    "mls_printed": "of Birth | | 5.11.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33147,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2006-03-11",
+    "mls_printed": "of Birth | | 3.11.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33148,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1989-09-13",
+    "mls_printed": "of Birth | | 9.13.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33150,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1997-12-24",
+    "mls_printed": "of Birth | | 12.24.1997 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33152,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2003-01-27",
+    "mls_printed": "of Birth | | 1.27.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33153,
+    "club": "CF Montréal",
+    "fotmob_dob": "1995-02-22",
+    "mls_printed": "of Birth | | 2.22.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33156,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2007-09-17",
+    "mls_printed": "of Birth | | 9.17.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52062,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1995-03-24",
+    "mls_printed": "of Birth | | 3.24.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52081,
+    "club": "FC Dallas",
+    "fotmob_dob": "2000-04-21",
+    "mls_printed": "of Birth | | 4.21.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52101,
+    "club": "Minnesota United",
+    "fotmob_dob": "2001-10-25",
+    "mls_printed": "of Birth | | 10.25.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52110,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2004-02-23",
+    "mls_printed": "of Birth | | 2.23.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52118,
+    "club": "Toronto FC",
+    "fotmob_dob": "2001-06-16",
+    "mls_printed": "of Birth | | 6.16.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58319,
+    "club": "Atlanta United",
+    "fotmob_dob": "1989-04-29",
+    "mls_printed": "of Birth | | 4.29.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58323,
+    "club": "Atlanta United",
+    "fotmob_dob": "1994-08-25",
+    "mls_printed": "of Birth | | 8.25.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58325,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1997-09-21",
+    "mls_printed": "of Birth | | 9.21.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58327,
+    "club": "Atlanta United",
+    "fotmob_dob": "2004-04-20",
+    "mls_printed": "of Birth | | 4.20.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58328,
+    "club": "Atlanta United",
+    "fotmob_dob": "2004-10-18",
+    "mls_printed": "of Birth | | 10.18.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58329,
+    "club": "Atlanta United",
+    "fotmob_dob": "2007-12-29",
+    "mls_printed": "of Birth | | 12.29.2007 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58336,
+    "club": "Atlanta United",
+    "fotmob_dob": "2005-02-24",
+    "mls_printed": "of Birth | | 2.24.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58337,
+    "club": "Atlanta United",
+    "fotmob_dob": "2005-07-19",
+    "mls_printed": "of Birth | | 7.19.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58340,
+    "club": "Atlanta United",
+    "fotmob_dob": "2008-03-26",
+    "mls_printed": "of Birth | | 3.26.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58348,
+    "club": "Austin FC",
+    "fotmob_dob": "1991-04-16",
+    "mls_printed": "of Birth | | 4.16.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58349,
+    "club": "Austin FC",
+    "fotmob_dob": "2002-04-11",
+    "mls_printed": "of Birth | | 4.11.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58351,
+    "club": "Austin FC",
+    "fotmob_dob": "1994-09-27",
+    "mls_printed": "of Birth | | 9.27.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58352,
+    "club": "Austin FC",
+    "fotmob_dob": "1995-02-19",
+    "mls_printed": "of Birth | | 2.19.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58353,
+    "club": "Austin FC",
+    "fotmob_dob": "1996-02-23",
+    "mls_printed": "of Birth | | 2.23.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58354,
+    "club": "Austin FC",
+    "fotmob_dob": "1994-11-30",
+    "mls_printed": "of Birth | | 11.30.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58357,
+    "club": "Austin FC",
+    "fotmob_dob": "2002-03-15",
+    "mls_printed": "of Birth | | 3.15.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58358,
+    "club": "Austin FC",
+    "fotmob_dob": "2003-01-17",
+    "mls_printed": "of Birth | | 1.17.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58359,
+    "club": "Austin FC",
+    "fotmob_dob": "1990-11-21",
+    "mls_printed": "of Birth | | 11.21.1990 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58361,
+    "club": "Austin FC",
+    "fotmob_dob": "2000-11-06",
+    "mls_printed": "of Birth | | 11.6.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58362,
+    "club": "Austin FC",
+    "fotmob_dob": "1998-03-23",
+    "mls_printed": "of Birth | | 3.23.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58363,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2004-12-30",
+    "mls_printed": "of Birth | | 12.30.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58365,
+    "club": "Austin FC",
+    "fotmob_dob": "2006-03-26",
+    "mls_printed": "of Birth | | 3.26.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58366,
+    "club": "Austin FC",
+    "fotmob_dob": "2003-05-14",
+    "mls_printed": "of Birth | | 5.14.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58367,
+    "club": "Austin FC",
+    "fotmob_dob": "2007-11-14",
+    "mls_printed": "of Birth | | 11.14.2007 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58368,
+    "club": "Austin FC",
+    "fotmob_dob": "2000-04-13",
+    "mls_printed": "of Birth | | 4.13.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58369,
+    "club": "Austin FC",
+    "fotmob_dob": "1998-10-14",
+    "mls_printed": "of Birth | | 10.14.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58371,
+    "club": "Austin FC",
+    "fotmob_dob": "1995-05-31",
+    "mls_printed": "of Birth | | 5.31.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58372,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1992-08-18",
+    "mls_printed": "of Birth | | 8.18.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58375,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1997-10-17",
+    "mls_printed": "of Birth | | 10.17.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58377,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1996-01-24",
+    "mls_printed": "of Birth | | 1.24.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58380,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1997-05-15",
+    "mls_printed": "of Birth | | 5.15.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58381,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-07-14",
+    "mls_printed": "of Birth | | 7.14.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58384,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2005-06-12",
+    "mls_printed": "of Birth | | 6.12.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58385,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2005-09-19",
+    "mls_printed": "of Birth | | 9.19.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58386,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1996-04-12",
+    "mls_printed": "of Birth | | 4.12.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58387,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1993-04-17",
+    "mls_printed": "of Birth | | 4.17.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58388,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1999-03-13",
+    "mls_printed": "of Birth | | 3.13.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58389,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1998-04-12",
+    "mls_printed": "of Birth | | 4.12.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58390,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2005-05-16",
+    "mls_printed": "of Birth | | 5.16.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58393,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2010-01-14",
+    "mls_printed": "of Birth | | 1.14.2010 (16)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58394,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1988-08-21",
+    "mls_printed": "of Birth | | 8.21.1988 (38)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58395,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1994-12-16",
+    "mls_printed": "of Birth | | 12.16.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58396,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1996-03-26",
+    "mls_printed": "of Birth | | 3.26.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58398,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2002-09-30",
+    "mls_printed": "of Birth | | 9.30.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58399,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2004-07-24",
+    "mls_printed": "of Birth | | 7.24.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58402,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1996-01-19",
+    "mls_printed": "of Birth | | 1.19.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58403,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2000-09-14",
+    "mls_printed": "of Birth | | 9.14.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58404,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2003-09-28",
+    "mls_printed": "of Birth | | 9.28.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58406,
+    "club": "New York City FC",
+    "fotmob_dob": "1995-07-19",
+    "mls_printed": "of Birth | | 7.19.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58407,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1992-09-14",
+    "mls_printed": "of Birth | | 9.14.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58409,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2000-08-11",
+    "mls_printed": "of Birth | | 8.11.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58411,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1997-03-14",
+    "mls_printed": "of Birth | | 3.14.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58412,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2008-08-15",
+    "mls_printed": "of Birth | | 8.15.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58416,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1996-11-29",
+    "mls_printed": "of Birth | | 11.29.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58417,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1998-03-11",
+    "mls_printed": "of Birth | | 3.11.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58419,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2004-09-28",
+    "mls_printed": "of Birth | | 9.28.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58420,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2004-04-15",
+    "mls_printed": "of Birth | | 4.15.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58421,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2007-01-15",
+    "mls_printed": "of Birth | | 1.15.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58422,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2009-01-12",
+    "mls_printed": "of Birth | | 1.12.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58424,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2000-11-30",
+    "mls_printed": "of Birth | | 11.30.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58425,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2000-01-30",
+    "mls_printed": "of Birth | | 1.30.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58428,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2002-01-22",
+    "mls_printed": "of Birth | | 1.22.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58431,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2001-03-13",
+    "mls_printed": "of Birth | | 3.13.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58436,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1994-08-13",
+    "mls_printed": "of Birth | | 8.13.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58437,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1994-04-12",
+    "mls_printed": "of Birth | | 4.12.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58438,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1997-09-22",
+    "mls_printed": "of Birth | | 9.22.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58439,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1998-02-11",
+    "mls_printed": "of Birth | | 2.11.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58440,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1998-11-03",
+    "mls_printed": "of Birth | | 11.3.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58441,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1999-12-16",
+    "mls_printed": "of Birth | | 12.16.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58442,
+    "club": "Nashville SC",
+    "fotmob_dob": "2006-02-21",
+    "mls_printed": "of Birth | | 2.21.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58443,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2001-07-13",
+    "mls_printed": "of Birth | | 7.13.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58444,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2007-10-17",
+    "mls_printed": "of Birth | | 10.17.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58445,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1993-07-30",
+    "mls_printed": "of Birth | | 7.30.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58446,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1996-11-29",
+    "mls_printed": "of Birth | | 11.29.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58449,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1997-08-19",
+    "mls_printed": "of Birth | | 8.19.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58450,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2000-04-21",
+    "mls_printed": "of Birth | | 4.21.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58457,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1993-03-31",
+    "mls_printed": "of Birth | | 3.31.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58459,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2002-02-18",
+    "mls_printed": "of Birth | | 2.18.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58460,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2008-04-17",
+    "mls_printed": "of Birth | | 4.17.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58461,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2006-12-31",
+    "mls_printed": "of Birth | | 12.31.2006 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58462,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1993-03-12",
+    "mls_printed": "of Birth | | 3.12.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58463,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1992-07-24",
+    "mls_printed": "of Birth | | 7.24.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58467,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1995-08-19",
+    "mls_printed": "of Birth | | 8.19.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58468,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1998-09-29",
+    "mls_printed": "of Birth | | 9.29.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58470,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2005-02-21",
+    "mls_printed": "of Birth | | 2.21.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58471,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2005-03-11",
+    "mls_printed": "of Birth | | 3.11.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58473,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2003-02-17",
+    "mls_printed": "of Birth | | 2.17.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58474,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2004-12-21",
+    "mls_printed": "of Birth | | 12.21.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58476,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1995-06-20",
+    "mls_printed": "of Birth | | 6.20.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58478,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1998-02-11",
+    "mls_printed": "of Birth | | 2.11.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58481,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1997-03-12",
+    "mls_printed": "of Birth | | 3.12.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58483,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2004-11-07",
+    "mls_printed": "of Birth | | 11.7.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58485,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2004-01-26",
+    "mls_printed": "of Birth | | 1.26.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58486,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2008-02-22",
+    "mls_printed": "of Birth | | 2.22.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58487,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2002-09-18",
+    "mls_printed": "of Birth | | 9.18.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58488,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2006-12-26",
+    "mls_printed": "of Birth | | 12.26.2006 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58493,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1995-09-20",
+    "mls_printed": "of Birth | | 9.20.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58496,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1999-02-26",
+    "mls_printed": "of Birth | | 2.26.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58497,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2005-07-20",
+    "mls_printed": "of Birth | | 7.20.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58502,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1998-06-24",
+    "mls_printed": "of Birth | | 6.24.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58505,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2003-11-14",
+    "mls_printed": "of Birth | | 11.14.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58506,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2003-08-26",
+    "mls_printed": "of Birth | | 8.26.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58507,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2004-01-14",
+    "mls_printed": "of Birth | | 1.14.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58510,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2005-02-16",
+    "mls_printed": "of Birth | | 2.16.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58511,
+    "club": "St. Louis City",
+    "fotmob_dob": "2000-04-14",
+    "mls_printed": "of Birth | | 4.14.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58512,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2004-11-19",
+    "mls_printed": "of Birth | | 11.19.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58513,
+    "club": "CF Montréal",
+    "fotmob_dob": "2003-04-17",
+    "mls_printed": "of Birth | | 4.17.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58519,
+    "club": "FC Dallas",
+    "fotmob_dob": "2001-06-27",
+    "mls_printed": "of Birth | | 6.27.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58520,
+    "club": "FC Dallas",
+    "fotmob_dob": "2001-05-25",
+    "mls_printed": "of Birth | | 5.25.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58521,
+    "club": "FC Dallas",
+    "fotmob_dob": "1996-11-02",
+    "mls_printed": "of Birth | | 11.2.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58522,
+    "club": "FC Dallas",
+    "fotmob_dob": "1992-01-21",
+    "mls_printed": "of Birth | | 1.21.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58523,
+    "club": "FC Dallas",
+    "fotmob_dob": "1994-12-25",
+    "mls_printed": "of Birth | | 12.25.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58525,
+    "club": "FC Dallas",
+    "fotmob_dob": "2001-07-31",
+    "mls_printed": "of Birth | | 7.31.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58526,
+    "club": "FC Dallas",
+    "fotmob_dob": "2005-02-17",
+    "mls_printed": "of Birth | | 2.17.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58528,
+    "club": "FC Dallas",
+    "fotmob_dob": "2005-12-08",
+    "mls_printed": "of Birth | | 12.8.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58529,
+    "club": "FC Dallas",
+    "fotmob_dob": "2005-04-17",
+    "mls_printed": "of Birth | | 4.17.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58530,
+    "club": "FC Dallas",
+    "fotmob_dob": "2007-07-24",
+    "mls_printed": "of Birth | | 7.24.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58532,
+    "club": "FC Dallas",
+    "fotmob_dob": "1993-05-22",
+    "mls_printed": "of Birth | | 5.22.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58533,
+    "club": "FC Dallas",
+    "fotmob_dob": "2000-01-12",
+    "mls_printed": "of Birth | | 1.12.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58534,
+    "club": "FC Dallas",
+    "fotmob_dob": "1999-08-13",
+    "mls_printed": "of Birth | | 8.13.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58535,
+    "club": "FC Dallas",
+    "fotmob_dob": "2003-10-17",
+    "mls_printed": "of Birth | | 10.17.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58536,
+    "club": "FC Dallas",
+    "fotmob_dob": "1997-10-16",
+    "mls_printed": "of Birth | | 10.16.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58537,
+    "club": "FC Dallas",
+    "fotmob_dob": "2006-10-17",
+    "mls_printed": "of Birth | | 10.17.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58538,
+    "club": "FC Dallas",
+    "fotmob_dob": "2001-04-13",
+    "mls_printed": "of Birth | | 4.13.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58540,
+    "club": "FC Dallas",
+    "fotmob_dob": "2005-11-29",
+    "mls_printed": "of Birth | | 11.29.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58542,
+    "club": "FC Dallas",
+    "fotmob_dob": "1996-05-31",
+    "mls_printed": "of Birth | | 5.31.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58547,
+    "club": "FC Dallas",
+    "fotmob_dob": "2001-12-14",
+    "mls_printed": "of Birth | | 12.14.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58548,
+    "club": "FC Dallas",
+    "fotmob_dob": "2006-12-17",
+    "mls_printed": "of Birth | | 12.17.2006 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58552,
+    "club": "FC Dallas",
+    "fotmob_dob": "2011-04-14",
+    "mls_printed": "of Birth | | 4.14.2011 (15)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58553,
+    "club": "DC United",
+    "fotmob_dob": "1994-04-25",
+    "mls_printed": "of Birth | | 4.25.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58556,
+    "club": "DC United",
+    "fotmob_dob": "1997-10-25",
+    "mls_printed": "of Birth | | 10.25.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58557,
+    "club": "DC United",
+    "fotmob_dob": "1998-06-24",
+    "mls_printed": "of Birth | | 6.24.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58558,
+    "club": "DC United",
+    "fotmob_dob": "1997-04-13",
+    "mls_printed": "of Birth | | 4.13.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58560,
+    "club": "DC United",
+    "fotmob_dob": "1997-07-26",
+    "mls_printed": "of Birth | | 7.26.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58561,
+    "club": "DC United",
+    "fotmob_dob": "2002-03-26",
+    "mls_printed": "of Birth | | 3.26.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58562,
+    "club": "DC United",
+    "fotmob_dob": "2004-07-22",
+    "mls_printed": "of Birth | | 7.22.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58564,
+    "club": "DC United",
+    "fotmob_dob": "1999-03-12",
+    "mls_printed": "of Birth | | 3.12.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58566,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2003-05-27",
+    "mls_printed": "of Birth | | 5.27.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58570,
+    "club": "DC United",
+    "fotmob_dob": "2002-06-16",
+    "mls_printed": "of Birth | | 6.16.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58571,
+    "club": "DC United",
+    "fotmob_dob": "2001-05-17",
+    "mls_printed": "of Birth | | 5.17.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58573,
+    "club": "DC United",
+    "fotmob_dob": "1998-01-15",
+    "mls_printed": "of Birth | | 1.15.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58574,
+    "club": "DC United",
+    "fotmob_dob": "2004-01-12",
+    "mls_printed": "of Birth | | 1.12.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58576,
+    "club": "DC United",
+    "fotmob_dob": "2010-03-16",
+    "mls_printed": "of Birth | | 3.16.2010 (16)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58577,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1993-05-19",
+    "mls_printed": "of Birth | | 5.19.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58578,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1988-10-14",
+    "mls_printed": "of Birth | | 10.14.1988 (38)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58579,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2002-10-11",
+    "mls_printed": "of Birth | | 10.11.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58583,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1998-04-23",
+    "mls_printed": "of Birth | | 4.23.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58586,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2002-05-29",
+    "mls_printed": "of Birth | | 5.29.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58587,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2004-01-17",
+    "mls_printed": "of Birth | | 1.17.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58588,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2002-02-28",
+    "mls_printed": "of Birth | | 2.28.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58590,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1990-04-19",
+    "mls_printed": "of Birth | | 4.19.1990 (36)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58591,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1994-11-06",
+    "mls_printed": "of Birth | | 11.6.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58592,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1996-01-11",
+    "mls_printed": "of Birth | | 1.11.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58593,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1994-03-28",
+    "mls_printed": "of Birth | | 3.28.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58594,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1996-03-11",
+    "mls_printed": "of Birth | | 3.11.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58596,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2001-08-22",
+    "mls_printed": "of Birth | | 8.22.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58601,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2002-01-16",
+    "mls_printed": "of Birth | | 1.16.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58607,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1999-06-30",
+    "mls_printed": "of Birth | | 6.30.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58608,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2001-10-25",
+    "mls_printed": "of Birth | | 10.25.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58609,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1988-08-24",
+    "mls_printed": "of Birth | | 8.24.1988 (38)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58612,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1998-07-11",
+    "mls_printed": "of Birth | | 7.11.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58613,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1994-03-25",
+    "mls_printed": "of Birth | | 3.25.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58615,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2003-03-24",
+    "mls_printed": "of Birth | | 3.24.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58616,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2006-08-13",
+    "mls_printed": "of Birth | | 8.13.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58617,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2007-06-21",
+    "mls_printed": "of Birth | | 6.21.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58618,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1989-05-31",
+    "mls_printed": "of Birth | | 5.31.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58620,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2003-12-26",
+    "mls_printed": "of Birth | | 12.26.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58622,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2001-09-12",
+    "mls_printed": "of Birth | | 9.12.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58624,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2000-03-16",
+    "mls_printed": "of Birth | | 3.16.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58628,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2004-05-17",
+    "mls_printed": "of Birth | | 5.17.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58629,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1994-10-21",
+    "mls_printed": "of Birth | | 10.21.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58631,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1995-01-20",
+    "mls_printed": "of Birth | | 1.20.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58632,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2007-01-22",
+    "mls_printed": "of Birth | | 1.22.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58634,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1986-12-26",
+    "mls_printed": "of Birth | | 12.26.1986 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58637,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1991-04-16",
+    "mls_printed": "of Birth | | 4.16.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58639,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1992-10-12",
+    "mls_printed": "of Birth | | 10.12.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58640,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1996-03-23",
+    "mls_printed": "of Birth | | 3.23.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58641,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-03-25",
+    "mls_printed": "of Birth | | 3.25.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58643,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1997-03-23",
+    "mls_printed": "of Birth | | 3.23.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58644,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2002-02-13",
+    "mls_printed": "of Birth | | 2.13.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58645,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2006-03-30",
+    "mls_printed": "of Birth | | 3.30.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58655,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1994-12-30",
+    "mls_printed": "of Birth | | 12.30.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58657,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1997-02-14",
+    "mls_printed": "of Birth | | 2.14.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58658,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-11-26",
+    "mls_printed": "of Birth | | 11.26.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58660,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2003-02-17",
+    "mls_printed": "of Birth | | 2.17.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58661,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2002-11-09",
+    "mls_printed": "of Birth | | 11.9.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58664,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1996-11-08",
+    "mls_printed": "of Birth | | 11.8.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58666,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1996-12-16",
+    "mls_printed": "of Birth | | 12.16.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58667,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1999-03-23",
+    "mls_printed": "of Birth | | 3.23.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58669,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2000-08-12",
+    "mls_printed": "of Birth | | 8.12.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58671,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2002-08-31",
+    "mls_printed": "of Birth | | 8.31.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58672,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2004-04-28",
+    "mls_printed": "of Birth | | 4.28.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58676,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2007-06-25",
+    "mls_printed": "of Birth | | 6.25.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58677,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2008-04-17",
+    "mls_printed": "of Birth | | 4.17.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58678,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1992-02-23",
+    "mls_printed": "of Birth | | 2.23.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58679,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1994-05-24",
+    "mls_printed": "of Birth | | 5.24.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58686,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2005-12-20",
+    "mls_printed": "of Birth | | 12.20.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58688,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1987-06-24",
+    "mls_printed": "of Birth | | 6.24.1987 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58689,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1987-01-24",
+    "mls_printed": "of Birth | | 1.24.1987 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58690,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1998-11-13",
+    "mls_printed": "of Birth | | 11.13.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58691,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1999-02-20",
+    "mls_printed": "of Birth | | 2.20.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58694,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2006-01-14",
+    "mls_printed": "of Birth | | 1.14.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58698,
+    "club": "Minnesota United",
+    "fotmob_dob": "1999-04-13",
+    "mls_printed": "of Birth | | 4.13.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58699,
+    "club": "Minnesota United",
+    "fotmob_dob": "2007-10-26",
+    "mls_printed": "of Birth | | 10.26.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58700,
+    "club": "Minnesota United",
+    "fotmob_dob": "1988-08-18",
+    "mls_printed": "of Birth | | 8.18.1988 (38)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58701,
+    "club": "Minnesota United",
+    "fotmob_dob": "1997-08-26",
+    "mls_printed": "of Birth | | 8.26.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58702,
+    "club": "Minnesota United",
+    "fotmob_dob": "1999-12-26",
+    "mls_printed": "of Birth | | 12.26.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58703,
+    "club": "Minnesota United",
+    "fotmob_dob": "2003-11-28",
+    "mls_printed": "of Birth | | 11.28.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58704,
+    "club": "Minnesota United",
+    "fotmob_dob": "2003-05-11",
+    "mls_printed": "of Birth | | 5.11.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58705,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-10-24",
+    "mls_printed": "of Birth | | 10.24.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58706,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-12-05",
+    "mls_printed": "of Birth | | 12.5.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58708,
+    "club": "Minnesota United",
+    "fotmob_dob": "1993-01-15",
+    "mls_printed": "of Birth | | 1.15.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58709,
+    "club": "Minnesota United",
+    "fotmob_dob": "1998-12-01",
+    "mls_printed": "of Birth | | 12.1.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58710,
+    "club": "Minnesota United",
+    "fotmob_dob": "1993-12-16",
+    "mls_printed": "of Birth | | 12.16.1993 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58713,
+    "club": "Minnesota United",
+    "fotmob_dob": "2003-03-19",
+    "mls_printed": "of Birth | | 3.19.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58715,
+    "club": "Minnesota United",
+    "fotmob_dob": "2001-01-11",
+    "mls_printed": "of Birth | | 1.11.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58716,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-06-20",
+    "mls_printed": "of Birth | | 6.20.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58718,
+    "club": "Minnesota United",
+    "fotmob_dob": "2004-10-14",
+    "mls_printed": "of Birth | | 10.14.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58719,
+    "club": "Minnesota United",
+    "fotmob_dob": "2004-09-15",
+    "mls_printed": "of Birth | | 9.15.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58720,
+    "club": "Minnesota United",
+    "fotmob_dob": "2007-08-25",
+    "mls_printed": "of Birth | | 8.25.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58723,
+    "club": "CF Montréal",
+    "fotmob_dob": "1998-03-15",
+    "mls_printed": "of Birth | | 3.15.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58724,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-05-28",
+    "mls_printed": "of Birth | | 5.28.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58725,
+    "club": "CF Montréal",
+    "fotmob_dob": "2003-09-11",
+    "mls_printed": "of Birth | | 9.11.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58726,
+    "club": "CF Montréal",
+    "fotmob_dob": "2009-07-27",
+    "mls_printed": "of Birth | | 7.27.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58727,
+    "club": "CF Montréal",
+    "fotmob_dob": "2000-06-16",
+    "mls_printed": "of Birth | | 6.16.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58728,
+    "club": "CF Montréal",
+    "fotmob_dob": "2002-02-22",
+    "mls_printed": "of Birth | | 2.22.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58729,
+    "club": "CF Montréal",
+    "fotmob_dob": "2003-08-24",
+    "mls_printed": "of Birth | | 8.24.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58732,
+    "club": "CF Montréal",
+    "fotmob_dob": "2001-05-24",
+    "mls_printed": "of Birth | | 5.24.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58736,
+    "club": "CF Montréal",
+    "fotmob_dob": "2000-09-26",
+    "mls_printed": "of Birth | | 9.26.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58737,
+    "club": "CF Montréal",
+    "fotmob_dob": "2000-07-14",
+    "mls_printed": "of Birth | | 7.14.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58738,
+    "club": "CF Montréal",
+    "fotmob_dob": "2001-05-21",
+    "mls_printed": "of Birth | | 5.21.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58739,
+    "club": "CF Montréal",
+    "fotmob_dob": "2005-10-11",
+    "mls_printed": "of Birth | | 10.11.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58740,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-07-24",
+    "mls_printed": "of Birth | | 7.24.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58742,
+    "club": "CF Montréal",
+    "fotmob_dob": "2008-11-15",
+    "mls_printed": "of Birth | | 11.15.2008 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58743,
+    "club": "CF Montréal",
+    "fotmob_dob": "1988-12-19",
+    "mls_printed": "of Birth | | 12.19.1988 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58744,
+    "club": "CF Montréal",
+    "fotmob_dob": "1993-08-17",
+    "mls_printed": "of Birth | | 8.17.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58746,
+    "club": "CF Montréal",
+    "fotmob_dob": "2006-09-11",
+    "mls_printed": "of Birth | | 9.11.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58748,
+    "club": "New England Revolution",
+    "fotmob_dob": "1994-06-24",
+    "mls_printed": "of Birth | | 6.24.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58749,
+    "club": "New England Revolution",
+    "fotmob_dob": "2000-01-21",
+    "mls_printed": "of Birth | | 1.21.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58750,
+    "club": "New England Revolution",
+    "fotmob_dob": "2004-09-27",
+    "mls_printed": "of Birth | | 9.27.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58751,
+    "club": "New England Revolution",
+    "fotmob_dob": "1998-01-21",
+    "mls_printed": "of Birth | | 1.21.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58753,
+    "club": "New England Revolution",
+    "fotmob_dob": "1997-03-23",
+    "mls_printed": "of Birth | | 3.23.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58755,
+    "club": "New England Revolution",
+    "fotmob_dob": "2004-08-23",
+    "mls_printed": "of Birth | | 8.23.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58756,
+    "club": "New England Revolution",
+    "fotmob_dob": "2005-05-20",
+    "mls_printed": "of Birth | | 5.20.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58757,
+    "club": "New England Revolution",
+    "fotmob_dob": "2007-08-17",
+    "mls_printed": "of Birth | | 8.17.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58758,
+    "club": "New England Revolution",
+    "fotmob_dob": "2007-11-08",
+    "mls_printed": "of Birth | | 11.8.2007 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58763,
+    "club": "New England Revolution",
+    "fotmob_dob": "1992-11-22",
+    "mls_printed": "of Birth | | 11.22.1992 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58764,
+    "club": "New England Revolution",
+    "fotmob_dob": "1995-02-14",
+    "mls_printed": "of Birth | | 2.14.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58766,
+    "club": "New England Revolution",
+    "fotmob_dob": "1997-03-19",
+    "mls_printed": "of Birth | | 3.19.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58768,
+    "club": "New England Revolution",
+    "fotmob_dob": "2005-03-11",
+    "mls_printed": "of Birth | | 3.11.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58770,
+    "club": "New England Revolution",
+    "fotmob_dob": "2008-03-30",
+    "mls_printed": "of Birth | | 3.30.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58772,
+    "club": "New England Revolution",
+    "fotmob_dob": "1996-11-20",
+    "mls_printed": "of Birth | | 11.20.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58773,
+    "club": "New England Revolution",
+    "fotmob_dob": "1999-11-28",
+    "mls_printed": "of Birth | | 11.28.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58774,
+    "club": "New England Revolution",
+    "fotmob_dob": "2000-07-24",
+    "mls_printed": "of Birth | | 7.24.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58775,
+    "club": "New England Revolution",
+    "fotmob_dob": "2002-09-25",
+    "mls_printed": "of Birth | | 9.25.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58776,
+    "club": "New England Revolution",
+    "fotmob_dob": "2003-10-24",
+    "mls_printed": "of Birth | | 10.24.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58781,
+    "club": "New England Revolution",
+    "fotmob_dob": "2009-03-27",
+    "mls_printed": "of Birth | | 3.27.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58783,
+    "club": "Nashville SC",
+    "fotmob_dob": "2001-08-24",
+    "mls_printed": "of Birth | | 8.24.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58784,
+    "club": "Nashville SC",
+    "fotmob_dob": "2003-11-23",
+    "mls_printed": "of Birth | | 11.23.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58785,
+    "club": "Nashville SC",
+    "fotmob_dob": "1993-03-16",
+    "mls_printed": "of Birth | | 3.16.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58786,
+    "club": "Nashville SC",
+    "fotmob_dob": "1994-03-20",
+    "mls_printed": "of Birth | | 3.20.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58787,
+    "club": "Nashville SC",
+    "fotmob_dob": "1991-08-27",
+    "mls_printed": "of Birth | | 8.27.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58788,
+    "club": "Nashville SC",
+    "fotmob_dob": "1999-10-28",
+    "mls_printed": "of Birth | | 10.28.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58789,
+    "club": "Nashville SC",
+    "fotmob_dob": "1998-07-22",
+    "mls_printed": "of Birth | | 7.22.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58792,
+    "club": "Nashville SC",
+    "fotmob_dob": "2004-08-15",
+    "mls_printed": "of Birth | | 8.15.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58793,
+    "club": "Nashville SC",
+    "fotmob_dob": "2002-06-13",
+    "mls_printed": "of Birth | | 6.13.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58795,
+    "club": "Nashville SC",
+    "fotmob_dob": "1995-03-21",
+    "mls_printed": "of Birth | | 3.21.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58796,
+    "club": "Nashville SC",
+    "fotmob_dob": "1993-11-24",
+    "mls_printed": "of Birth | | 11.24.1993 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58797,
+    "club": "Nashville SC",
+    "fotmob_dob": "1995-09-30",
+    "mls_printed": "of Birth | | 9.30.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58798,
+    "club": "Nashville SC",
+    "fotmob_dob": "2001-01-23",
+    "mls_printed": "of Birth | | 1.23.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58800,
+    "club": "Nashville SC",
+    "fotmob_dob": "2006-02-17",
+    "mls_printed": "of Birth | | 2.17.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58802,
+    "club": "St. Louis City",
+    "fotmob_dob": "2003-11-26",
+    "mls_printed": "of Birth | | 11.26.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58804,
+    "club": "Nashville SC",
+    "fotmob_dob": "1998-07-28",
+    "mls_printed": "of Birth | | 7.28.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58805,
+    "club": "Nashville SC",
+    "fotmob_dob": "2004-07-24",
+    "mls_printed": "of Birth | | 7.24.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58807,
+    "club": "Nashville SC",
+    "fotmob_dob": "1999-12-27",
+    "mls_printed": "of Birth | | 12.27.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58809,
+    "club": "Nashville SC",
+    "fotmob_dob": "2008-01-26",
+    "mls_printed": "of Birth | | 1.26.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58810,
+    "club": "New York City FC",
+    "fotmob_dob": "2000-12-19",
+    "mls_printed": "of Birth | | 12.19.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58811,
+    "club": "New York City FC",
+    "fotmob_dob": "1993-07-18",
+    "mls_printed": "of Birth | | 7.18.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58813,
+    "club": "New York City FC",
+    "fotmob_dob": "1995-03-17",
+    "mls_printed": "of Birth | | 3.17.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58814,
+    "club": "New York City FC",
+    "fotmob_dob": "1998-12-14",
+    "mls_printed": "of Birth | | 12.14.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58816,
+    "club": "New York City FC",
+    "fotmob_dob": "2001-05-18",
+    "mls_printed": "of Birth | | 5.18.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58817,
+    "club": "New York City FC",
+    "fotmob_dob": "2002-08-19",
+    "mls_printed": "of Birth | | 8.19.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58819,
+    "club": "New York City FC",
+    "fotmob_dob": "2004-12-26",
+    "mls_printed": "of Birth | | 12.26.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58821,
+    "club": "New York City FC",
+    "fotmob_dob": "2007-02-28",
+    "mls_printed": "of Birth | | 2.28.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58823,
+    "club": "New York City FC",
+    "fotmob_dob": "2001-12-27",
+    "mls_printed": "of Birth | | 12.27.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58824,
+    "club": "New York City FC",
+    "fotmob_dob": "1987-02-27",
+    "mls_printed": "of Birth | | 2.27.1987 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58825,
+    "club": "New York City FC",
+    "fotmob_dob": "2000-01-11",
+    "mls_printed": "of Birth | | 1.11.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58828,
+    "club": "New York City FC",
+    "fotmob_dob": "2000-11-14",
+    "mls_printed": "of Birth | | 11.14.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58830,
+    "club": "New York City FC",
+    "fotmob_dob": "2004-01-21",
+    "mls_printed": "of Birth | | 1.21.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58831,
+    "club": "New York City FC",
+    "fotmob_dob": "2007-04-13",
+    "mls_printed": "of Birth | | 4.13.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58834,
+    "club": "New York City FC",
+    "fotmob_dob": "2009-01-28",
+    "mls_printed": "of Birth | | 1.28.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58835,
+    "club": "New York City FC",
+    "fotmob_dob": "2003-06-21",
+    "mls_printed": "of Birth | | 6.21.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58837,
+    "club": "New York City FC",
+    "fotmob_dob": "1999-04-16",
+    "mls_printed": "of Birth | | 4.16.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58838,
+    "club": "New York City FC",
+    "fotmob_dob": "2002-06-26",
+    "mls_printed": "of Birth | | 6.26.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58839,
+    "club": "New York City FC",
+    "fotmob_dob": "1998-10-15",
+    "mls_printed": "of Birth | | 10.15.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58840,
+    "club": "New York City FC",
+    "fotmob_dob": "2002-11-30",
+    "mls_printed": "of Birth | | 11.30.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58841,
+    "club": "New York City FC",
+    "fotmob_dob": "2004-06-19",
+    "mls_printed": "of Birth | | 6.19.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58843,
+    "club": "New York City FC",
+    "fotmob_dob": "2003-09-23",
+    "mls_printed": "of Birth | | 9.23.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58845,
+    "club": "New York City FC",
+    "fotmob_dob": "2003-01-18",
+    "mls_printed": "of Birth | | 1.18.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58846,
+    "club": "Orlando City",
+    "fotmob_dob": "1994-05-11",
+    "mls_printed": "of Birth | | 5.11.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58847,
+    "club": "Orlando City",
+    "fotmob_dob": "2002-11-18",
+    "mls_printed": "of Birth | | 11.18.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58848,
+    "club": "Orlando City",
+    "fotmob_dob": "2003-07-15",
+    "mls_printed": "of Birth | | 7.15.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58849,
+    "club": "Orlando City",
+    "fotmob_dob": "1991-11-15",
+    "mls_printed": "of Birth | | 11.15.1991 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58852,
+    "club": "Orlando City",
+    "fotmob_dob": "1998-12-03",
+    "mls_printed": "of Birth | | 12.3.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58856,
+    "club": "Orlando City",
+    "fotmob_dob": "1994-09-23",
+    "mls_printed": "of Birth | | 9.23.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58857,
+    "club": "Orlando City",
+    "fotmob_dob": "1998-11-27",
+    "mls_printed": "of Birth | | 11.27.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58858,
+    "club": "Orlando City",
+    "fotmob_dob": "1997-06-18",
+    "mls_printed": "of Birth | | 6.18.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58859,
+    "club": "Orlando City",
+    "fotmob_dob": "1999-03-22",
+    "mls_printed": "of Birth | | 3.22.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58860,
+    "club": "Orlando City",
+    "fotmob_dob": "2008-08-29",
+    "mls_printed": "of Birth | | 8.29.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58861,
+    "club": "Orlando City",
+    "fotmob_dob": "2007-04-12",
+    "mls_printed": "of Birth | | 4.12.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58862,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2007-01-29",
+    "mls_printed": "of Birth | | 1.29.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58863,
+    "club": "Orlando City",
+    "fotmob_dob": "2001-06-30",
+    "mls_printed": "of Birth | | 6.30.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58868,
+    "club": "Orlando City",
+    "fotmob_dob": "1991-03-21",
+    "mls_printed": "of Birth | | 3.21.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58870,
+    "club": "Orlando City",
+    "fotmob_dob": "2000-09-14",
+    "mls_printed": "of Birth | | 9.14.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58871,
+    "club": "Orlando City",
+    "fotmob_dob": "2000-12-04",
+    "mls_printed": "of Birth | | 12.4.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58874,
+    "club": "Orlando City",
+    "fotmob_dob": "2007-05-14",
+    "mls_printed": "of Birth | | 5.14.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58876,
+    "club": "Orlando City",
+    "fotmob_dob": "2005-01-26",
+    "mls_printed": "of Birth | | 1.26.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58877,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1990-11-21",
+    "mls_printed": "of Birth | | 11.21.1990 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58878,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1999-11-10",
+    "mls_printed": "of Birth | | 11.10.1999 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58879,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2006-01-30",
+    "mls_printed": "of Birth | | 1.30.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58880,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1997-02-15",
+    "mls_printed": "of Birth | | 2.15.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58881,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2001-04-23",
+    "mls_printed": "of Birth | | 4.23.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58884,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2005-12-09",
+    "mls_printed": "of Birth | | 12.9.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58885,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2007-10-19",
+    "mls_printed": "of Birth | | 10.19.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58887,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2006-11-19",
+    "mls_printed": "of Birth | | 11.19.2006 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58889,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1987-04-29",
+    "mls_printed": "of Birth | | 4.29.1987 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58890,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2001-02-16",
+    "mls_printed": "of Birth | | 2.16.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58891,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1999-04-15",
+    "mls_printed": "of Birth | | 4.15.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58892,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2000-04-14",
+    "mls_printed": "of Birth | | 4.14.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58894,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2004-03-27",
+    "mls_printed": "of Birth | | 3.27.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58895,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2002-01-20",
+    "mls_printed": "of Birth | | 1.20.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58896,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2000-05-20",
+    "mls_printed": "of Birth | | 5.20.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58897,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2009-09-28",
+    "mls_printed": "of Birth | | 9.28.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58899,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "1999-07-29",
+    "mls_printed": "of Birth | | 7.29.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58900,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2002-04-18",
+    "mls_printed": "of Birth | | 4.18.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58902,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2006-07-11",
+    "mls_printed": "of Birth | | 7.11.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58903,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2005-09-13",
+    "mls_printed": "of Birth | | 9.13.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58905,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2009-06-24",
+    "mls_printed": "of Birth | | 6.24.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58906,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1999-07-26",
+    "mls_printed": "of Birth | | 7.26.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58907,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1997-02-21",
+    "mls_printed": "of Birth | | 2.21.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58908,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-04-25",
+    "mls_printed": "of Birth | | 4.25.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58910,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1993-01-15",
+    "mls_printed": "of Birth | | 1.15.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58911,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1995-11-29",
+    "mls_printed": "of Birth | | 11.29.1995 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58912,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1997-05-16",
+    "mls_printed": "of Birth | | 5.16.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58915,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2003-09-23",
+    "mls_printed": "of Birth | | 9.23.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58916,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-08-20",
+    "mls_printed": "of Birth | | 8.20.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58919,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-05-23",
+    "mls_printed": "of Birth | | 5.23.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58920,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2001-07-28",
+    "mls_printed": "of Birth | | 7.28.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58922,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1994-06-15",
+    "mls_printed": "of Birth | | 6.15.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58926,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2003-11-18",
+    "mls_printed": "of Birth | | 11.18.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58927,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-06-16",
+    "mls_printed": "of Birth | | 6.16.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58929,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2005-11-25",
+    "mls_printed": "of Birth | | 11.25.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58931,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2005-02-24",
+    "mls_printed": "of Birth | | 2.24.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58933,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2008-03-21",
+    "mls_printed": "of Birth | | 3.21.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58935,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2003-10-14",
+    "mls_printed": "of Birth | | 10.14.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58937,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2001-07-23",
+    "mls_printed": "of Birth | | 7.23.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58938,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2005-12-05",
+    "mls_printed": "of Birth | | 12.5.2005 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58942,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2007-12-01",
+    "mls_printed": "of Birth | | 12.1.2007 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58944,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1998-12-14",
+    "mls_printed": "of Birth | | 12.14.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58947,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1996-03-12",
+    "mls_printed": "of Birth | | 3.12.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58949,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2003-04-25",
+    "mls_printed": "of Birth | | 4.25.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58950,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2004-02-17",
+    "mls_printed": "of Birth | | 2.17.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58951,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2008-04-20",
+    "mls_printed": "of Birth | | 4.20.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58954,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1994-12-18",
+    "mls_printed": "of Birth | | 12.18.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58956,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2003-11-01",
+    "mls_printed": "of Birth | | 11.1.2003 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58958,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2008-02-21",
+    "mls_printed": "of Birth | | 2.21.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58961,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2003-02-26",
+    "mls_printed": "of Birth | | 2.26.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58964,
+    "club": "San Diego FC",
+    "fotmob_dob": "2000-01-16",
+    "mls_printed": "of Birth | | 1.16.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58968,
+    "club": "San Diego FC",
+    "fotmob_dob": "2002-04-12",
+    "mls_printed": "of Birth | | 4.12.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58970,
+    "club": "San Diego FC",
+    "fotmob_dob": "2008-02-19",
+    "mls_printed": "of Birth | | 2.19.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58971,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2004-07-21",
+    "mls_printed": "of Birth | | 7.21.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58972,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1998-11-27",
+    "mls_printed": "of Birth | | 11.27.1998 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58977,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2003-02-23",
+    "mls_printed": "of Birth | | 2.23.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58978,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2006-05-21",
+    "mls_printed": "of Birth | | 5.21.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58983,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1996-01-22",
+    "mls_printed": "of Birth | | 1.22.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58988,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1999-04-13",
+    "mls_printed": "of Birth | | 4.13.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58990,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2009-05-28",
+    "mls_printed": "of Birth | | 5.28.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58991,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2007-06-12",
+    "mls_printed": "of Birth | | 6.12.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58993,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-03-15",
+    "mls_printed": "of Birth | | 3.15.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58994,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2005-05-20",
+    "mls_printed": "of Birth | | 5.20.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58998,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2008-01-28",
+    "mls_printed": "of Birth | | 1.28.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59004,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2004-12-15",
+    "mls_printed": "of Birth | | 12.15.2004 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59007,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "1999-08-18",
+    "mls_printed": "of Birth | | 8.18.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59011,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2006-06-27",
+    "mls_printed": "of Birth | | 6.27.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59012,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2000-03-20",
+    "mls_printed": "of Birth | | 3.20.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59014,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2002-04-26",
+    "mls_printed": "of Birth | | 4.26.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59021,
+    "club": "St. Louis City",
+    "fotmob_dob": "1999-08-29",
+    "mls_printed": "of Birth | | 8.29.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59022,
+    "club": "St. Louis City",
+    "fotmob_dob": "2000-06-21",
+    "mls_printed": "of Birth | | 6.21.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59023,
+    "club": "St. Louis City",
+    "fotmob_dob": "2005-04-28",
+    "mls_printed": "of Birth | | 4.28.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59024,
+    "club": "St. Louis City",
+    "fotmob_dob": "2004-01-30",
+    "mls_printed": "of Birth | | 1.30.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59026,
+    "club": "St. Louis City",
+    "fotmob_dob": "2004-04-19",
+    "mls_printed": "of Birth | | 4.19.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59028,
+    "club": "Toronto FC",
+    "fotmob_dob": "1989-03-20",
+    "mls_printed": "of Birth | | 3.20.1989 (37)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59032,
+    "club": "Toronto FC",
+    "fotmob_dob": "2000-12-21",
+    "mls_printed": "of Birth | | 12.21.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59033,
+    "club": "Toronto FC",
+    "fotmob_dob": "2004-04-29",
+    "mls_printed": "of Birth | | 4.29.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59039,
+    "club": "Toronto FC",
+    "fotmob_dob": "1998-01-15",
+    "mls_printed": "of Birth | | 1.15.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59042,
+    "club": "Toronto FC",
+    "fotmob_dob": "2000-02-20",
+    "mls_printed": "of Birth | | 2.20.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59048,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2005-03-25",
+    "mls_printed": "of Birth | | 3.25.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59051,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2001-09-16",
+    "mls_printed": "of Birth | | 9.16.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59052,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2005-05-13",
+    "mls_printed": "of Birth | | 5.13.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59055,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2005-01-15",
+    "mls_printed": "of Birth | | 1.15.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71217,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1996-11-09",
+    "mls_printed": "of Birth | | 11.9.1996 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71221,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2001-07-23",
+    "mls_printed": "of Birth | | 7.23.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71222,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2000-11-07",
+    "mls_printed": "of Birth | | 11.7.2000 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71223,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2002-02-27",
+    "mls_printed": "of Birth | | 2.27.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71230,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2001-05-31",
+    "mls_printed": "of Birth | | 5.31.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71231,
+    "club": "San Diego FC",
+    "fotmob_dob": "2004-03-24",
+    "mls_printed": "of Birth | | 3.24.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71234,
+    "club": "San Diego FC",
+    "fotmob_dob": "2003-07-29",
+    "mls_printed": "of Birth | | 7.29.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71236,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2001-05-31",
+    "mls_printed": "of Birth | | 5.31.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71239,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2002-04-22",
+    "mls_printed": "of Birth | | 4.22.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71240,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2002-02-11",
+    "mls_printed": "of Birth | | 2.11.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71244,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2006-08-18",
+    "mls_printed": "of Birth | | 8.18.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71247,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2003-06-24",
+    "mls_printed": "of Birth | | 6.24.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71248,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2002-02-23",
+    "mls_printed": "of Birth | | 2.23.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71250,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2001-10-11",
+    "mls_printed": "of Birth | | 10.11.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71252,
+    "club": "Toronto FC",
+    "fotmob_dob": "2002-03-15",
+    "mls_printed": "of Birth | | 3.15.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71255,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-07-27",
+    "mls_printed": "of Birth | | 7.27.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71258,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2005-10-12",
+    "mls_printed": "of Birth | | 10.12.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71264,
+    "club": "New York City FC",
+    "fotmob_dob": "2008-02-28",
+    "mls_printed": "of Birth | | 2.28.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71267,
+    "club": "New York City FC",
+    "fotmob_dob": "2006-04-30",
+    "mls_printed": "of Birth | | 4.30.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71268,
+    "club": "Minnesota United",
+    "fotmob_dob": "2005-09-22",
+    "mls_printed": "of Birth | | 9.22.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71272,
+    "club": "FC Dallas",
+    "fotmob_dob": "2005-08-26",
+    "mls_printed": "of Birth | | 8.26.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71273,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2007-03-28",
+    "mls_printed": "of Birth | | 3.28.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71274,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2006-11-14",
+    "mls_printed": "of Birth | | 11.14.2006 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71279,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2006-09-15",
+    "mls_printed": "of Birth | | 9.15.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71281,
+    "club": "Austin FC",
+    "fotmob_dob": "2007-08-23",
+    "mls_printed": "of Birth | | 8.23.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71282,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1990-05-20",
+    "mls_printed": "of Birth | | 5.20.1990 (36)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71287,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2009-01-26",
+    "mls_printed": "of Birth | | 1.26.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71289,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2002-03-12",
+    "mls_printed": "of Birth | | 3.12.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71290,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2006-10-28",
+    "mls_printed": "of Birth | | 10.28.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71294,
+    "club": "San Diego FC",
+    "fotmob_dob": "1991-04-11",
+    "mls_printed": "of Birth | | 4.11.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71298,
+    "club": "San Diego FC",
+    "fotmob_dob": "2008-08-15",
+    "mls_printed": "of Birth | | 8.15.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71300,
+    "club": "Atlanta United",
+    "fotmob_dob": "1997-02-14",
+    "mls_printed": "of Birth | | 2.14.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71302,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1992-01-24",
+    "mls_printed": "of Birth | | 1.24.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71303,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1997-01-17",
+    "mls_printed": "of Birth | | 1.17.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71309,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1999-05-17",
+    "mls_printed": "of Birth | | 5.17.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71312,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1998-05-31",
+    "mls_printed": "of Birth | | 5.31.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71314,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1999-08-13",
+    "mls_printed": "of Birth | | 8.13.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71315,
+    "club": "Atlanta United",
+    "fotmob_dob": "1999-06-18",
+    "mls_printed": "of Birth | | 6.18.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71316,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-08-17",
+    "mls_printed": "of Birth | | 8.17.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71491,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2010-06-29",
+    "mls_printed": "of Birth | | 6.29.2010 (16)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71493,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1999-08-17",
+    "mls_printed": "of Birth | | 8.17.1999 (27)",
+    "source_error_publisher": null
+   }
+  ],
+  "ambiguous_order": [
+   {
+    "player_id": 32438,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1996-08-10",
+    "mls_printed": "of Birth | | 8.10.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32572,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-01-06",
+    "mls_printed": "e of Birth | | 1.6.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32642,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2003-05-05",
+    "mls_printed": "e of Birth | | 5.5.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32692,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2000-04-10",
+    "mls_printed": "of Birth | | 4.10.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32693,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2005-06-03",
+    "mls_printed": "e of Birth | | 6.3.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32754,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2002-08-02",
+    "mls_printed": "e of Birth | | 8.2.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32760,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1999-03-04",
+    "mls_printed": "e of Birth | | 3.4.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32845,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1986-04-05",
+    "mls_printed": "e of Birth | | 4.5.1986 (40)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32847,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1996-05-01",
+    "mls_printed": "e of Birth | | 5.1.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32852,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2001-01-05",
+    "mls_printed": "e of Birth | | 1.5.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32857,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1999-02-08",
+    "mls_printed": "e of Birth | | 2.8.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32858,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1999-09-09",
+    "mls_printed": "e of Birth | | 9.9.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32859,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2001-09-08",
+    "mls_printed": "e of Birth | | 9.8.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32865,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1992-07-04",
+    "mls_printed": "e of Birth | | 7.4.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32876,
+    "club": "Minnesota United",
+    "fotmob_dob": "1997-08-08",
+    "mls_printed": "e of Birth | | 8.8.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32880,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-06-08",
+    "mls_printed": "e of Birth | | 6.8.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32907,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1993-07-09",
+    "mls_printed": "e of Birth | | 7.9.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32909,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1998-05-04",
+    "mls_printed": "e of Birth | | 5.4.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32918,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2003-09-07",
+    "mls_printed": "e of Birth | | 9.7.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32941,
+    "club": "San Diego FC",
+    "fotmob_dob": "1995-07-07",
+    "mls_printed": "e of Birth | | 7.7.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32953,
+    "club": "San Diego FC",
+    "fotmob_dob": "1990-02-10",
+    "mls_printed": "of Birth | | 2.10.1990 (36)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32957,
+    "club": "San Diego FC",
+    "fotmob_dob": "1998-05-02",
+    "mls_printed": "e of Birth | | 5.2.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32961,
+    "club": "San Diego FC",
+    "fotmob_dob": "2005-06-05",
+    "mls_printed": "e of Birth | | 6.5.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32962,
+    "club": "San Diego FC",
+    "fotmob_dob": "1996-01-04",
+    "mls_printed": "e of Birth | | 1.4.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32983,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1994-07-07",
+    "mls_printed": "e of Birth | | 7.7.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32985,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1995-06-03",
+    "mls_printed": "e of Birth | | 6.3.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32993,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1995-02-05",
+    "mls_printed": "e of Birth | | 2.5.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32997,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1999-01-09",
+    "mls_printed": "e of Birth | | 1.9.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 32999,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "2001-02-07",
+    "mls_printed": "e of Birth | | 2.7.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33003,
+    "club": "FC Dallas",
+    "fotmob_dob": "1994-05-06",
+    "mls_printed": "e of Birth | | 5.6.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33007,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1994-07-01",
+    "mls_printed": "e of Birth | | 7.1.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33012,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-02-10",
+    "mls_printed": "of Birth | | 2.10.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33013,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2003-02-06",
+    "mls_printed": "e of Birth | | 2.6.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33017,
+    "club": "Nashville SC",
+    "fotmob_dob": "1995-04-03",
+    "mls_printed": "e of Birth | | 4.3.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33020,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1998-02-07",
+    "mls_printed": "e of Birth | | 2.7.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33022,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2005-04-05",
+    "mls_printed": "e of Birth | | 4.5.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33038,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2008-06-06",
+    "mls_printed": "e of Birth | | 6.6.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33042,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "1999-05-07",
+    "mls_printed": "e of Birth | | 5.7.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33043,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2002-02-10",
+    "mls_printed": "of Birth | | 2.10.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33044,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2001-05-09",
+    "mls_printed": "e of Birth | | 5.9.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33046,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2005-10-07",
+    "mls_printed": "of Birth | | 10.7.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33051,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2002-01-03",
+    "mls_printed": "e of Birth | | 1.3.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33054,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1999-08-07",
+    "mls_printed": "e of Birth | | 8.7.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33062,
+    "club": "St. Louis City",
+    "fotmob_dob": "1996-03-04",
+    "mls_printed": "e of Birth | | 3.4.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33068,
+    "club": "St. Louis City",
+    "fotmob_dob": "2004-06-02",
+    "mls_printed": "e of Birth | | 6.2.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33071,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2003-01-03",
+    "mls_printed": "e of Birth | | 1.3.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33078,
+    "club": "St. Louis City",
+    "fotmob_dob": "2000-02-05",
+    "mls_printed": "e of Birth | | 2.5.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33079,
+    "club": "St. Louis City",
+    "fotmob_dob": "2000-06-09",
+    "mls_printed": "e of Birth | | 6.9.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33085,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1997-03-01",
+    "mls_printed": "e of Birth | | 3.1.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33088,
+    "club": "St. Louis City",
+    "fotmob_dob": "2002-04-01",
+    "mls_printed": "e of Birth | | 4.1.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33090,
+    "club": "St. Louis City",
+    "fotmob_dob": "2002-02-01",
+    "mls_printed": "e of Birth | | 2.1.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33093,
+    "club": "Toronto FC",
+    "fotmob_dob": "2000-05-09",
+    "mls_printed": "e of Birth | | 5.9.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33098,
+    "club": "Toronto FC",
+    "fotmob_dob": "1995-01-07",
+    "mls_printed": "e of Birth | | 1.7.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33100,
+    "club": "Toronto FC",
+    "fotmob_dob": "2003-05-10",
+    "mls_printed": "of Birth | | 5.10.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33118,
+    "club": "Toronto FC",
+    "fotmob_dob": "2003-01-06",
+    "mls_printed": "e of Birth | | 1.6.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33131,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2005-07-10",
+    "mls_printed": "of Birth | | 7.10.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33133,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2003-10-03",
+    "mls_printed": "of Birth | | 10.3.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 33149,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1996-02-03",
+    "mls_printed": "e of Birth | | 2.3.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52086,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2001-10-08",
+    "mls_printed": "of Birth | | 10.8.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52104,
+    "club": "DC United",
+    "fotmob_dob": "2007-01-05",
+    "mls_printed": "e of Birth | | 1.5.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52111,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2006-04-06",
+    "mls_printed": "e of Birth | | 4.6.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58320,
+    "club": "Atlanta United",
+    "fotmob_dob": "2004-08-05",
+    "mls_printed": "e of Birth | | 8.5.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58322,
+    "club": "Atlanta United",
+    "fotmob_dob": "1993-02-09",
+    "mls_printed": "e of Birth | | 2.9.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58326,
+    "club": "Atlanta United",
+    "fotmob_dob": "1998-07-05",
+    "mls_printed": "e of Birth | | 7.5.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58332,
+    "club": "Atlanta United",
+    "fotmob_dob": "1998-09-08",
+    "mls_printed": "e of Birth | | 9.8.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58333,
+    "club": "Atlanta United",
+    "fotmob_dob": "1997-03-07",
+    "mls_printed": "e of Birth | | 3.7.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58338,
+    "club": "Atlanta United",
+    "fotmob_dob": "2006-01-03",
+    "mls_printed": "e of Birth | | 1.3.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58341,
+    "club": "Atlanta United",
+    "fotmob_dob": "2007-06-01",
+    "mls_printed": "e of Birth | | 6.1.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58343,
+    "club": "Atlanta United",
+    "fotmob_dob": "1994-02-10",
+    "mls_printed": "of Birth | | 2.10.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58345,
+    "club": "Atlanta United",
+    "fotmob_dob": "1994-09-04",
+    "mls_printed": "e of Birth | | 9.4.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58346,
+    "club": "Atlanta United",
+    "fotmob_dob": "1993-08-10",
+    "mls_printed": "of Birth | | 8.10.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58355,
+    "club": "Austin FC",
+    "fotmob_dob": "2000-03-03",
+    "mls_printed": "e of Birth | | 3.3.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58356,
+    "club": "Austin FC",
+    "fotmob_dob": "2000-05-01",
+    "mls_printed": "e of Birth | | 5.1.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58360,
+    "club": "Austin FC",
+    "fotmob_dob": "1998-01-05",
+    "mls_printed": "e of Birth | | 1.5.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58370,
+    "club": "Austin FC",
+    "fotmob_dob": "1991-04-04",
+    "mls_printed": "e of Birth | | 4.4.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58373,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2004-03-03",
+    "mls_printed": "e of Birth | | 3.3.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58378,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1996-10-02",
+    "mls_printed": "of Birth | | 10.2.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58401,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2006-06-07",
+    "mls_printed": "e of Birth | | 6.7.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58410,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1992-01-09",
+    "mls_printed": "e of Birth | | 1.9.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58413,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2004-07-10",
+    "mls_printed": "of Birth | | 7.10.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58423,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1995-07-08",
+    "mls_printed": "e of Birth | | 7.8.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58426,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2005-08-06",
+    "mls_printed": "e of Birth | | 8.6.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58427,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "2004-04-02",
+    "mls_printed": "e of Birth | | 4.2.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58429,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1986-03-06",
+    "mls_printed": "e of Birth | | 3.6.1986 (40)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58430,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1996-08-02",
+    "mls_printed": "e of Birth | | 8.2.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58432,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2001-09-03",
+    "mls_printed": "e of Birth | | 9.3.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58433,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2006-03-03",
+    "mls_printed": "e of Birth | | 3.3.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58435,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1991-03-05",
+    "mls_printed": "e of Birth | | 3.5.1991 (35)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58447,
+    "club": "New England Revolution",
+    "fotmob_dob": "1996-03-02",
+    "mls_printed": "e of Birth | | 3.2.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58448,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1997-01-07",
+    "mls_printed": "e of Birth | | 1.7.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58455,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2006-02-05",
+    "mls_printed": "e of Birth | | 2.5.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58456,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2003-04-01",
+    "mls_printed": "e of Birth | | 4.1.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58458,
+    "club": "Columbus Crew",
+    "fotmob_dob": "1999-01-04",
+    "mls_printed": "e of Birth | | 1.4.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58464,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2000-07-03",
+    "mls_printed": "e of Birth | | 7.3.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58465,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1987-10-05",
+    "mls_printed": "of Birth | | 10.5.1987 (39)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58466,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1992-06-05",
+    "mls_printed": "e of Birth | | 6.5.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58469,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2000-08-02",
+    "mls_printed": "e of Birth | | 8.2.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58472,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2004-02-03",
+    "mls_printed": "e of Birth | | 2.3.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58475,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1990-04-01",
+    "mls_printed": "e of Birth | | 4.1.1990 (36)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58477,
+    "club": "Charlotte FC",
+    "fotmob_dob": "1996-09-05",
+    "mls_printed": "e of Birth | | 9.5.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58479,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2006-01-08",
+    "mls_printed": "e of Birth | | 1.8.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58480,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2006-04-03",
+    "mls_printed": "e of Birth | | 4.3.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58482,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2001-10-03",
+    "mls_printed": "of Birth | | 10.3.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58484,
+    "club": "Charlotte FC",
+    "fotmob_dob": "2004-08-09",
+    "mls_printed": "e of Birth | | 8.9.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58494,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1993-12-11",
+    "mls_printed": "of Birth | | 12.11.1993 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58498,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2002-01-07",
+    "mls_printed": "e of Birth | | 1.7.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58517,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2005-01-04",
+    "mls_printed": "e of Birth | | 1.4.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58524,
+    "club": "FC Dallas",
+    "fotmob_dob": "2000-07-04",
+    "mls_printed": "e of Birth | | 7.4.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58527,
+    "club": "FC Dallas",
+    "fotmob_dob": "2003-10-10",
+    "mls_printed": "of Birth | | 10.10.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58531,
+    "club": "FC Dallas",
+    "fotmob_dob": "2007-01-03",
+    "mls_printed": "e of Birth | | 1.3.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58539,
+    "club": "FC Dallas",
+    "fotmob_dob": "2004-02-06",
+    "mls_printed": "e of Birth | | 2.6.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58541,
+    "club": "FC Dallas",
+    "fotmob_dob": "2007-02-04",
+    "mls_printed": "e of Birth | | 2.4.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58543,
+    "club": "FC Dallas",
+    "fotmob_dob": "1998-03-04",
+    "mls_printed": "e of Birth | | 3.4.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58545,
+    "club": "FC Dallas",
+    "fotmob_dob": "2002-01-01",
+    "mls_printed": "e of Birth | | 1.1.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58551,
+    "club": "FC Dallas",
+    "fotmob_dob": "2004-10-04",
+    "mls_printed": "of Birth | | 10.4.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58555,
+    "club": "DC United",
+    "fotmob_dob": "2008-07-03",
+    "mls_printed": "e of Birth | | 7.3.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58559,
+    "club": "DC United",
+    "fotmob_dob": "2002-07-03",
+    "mls_printed": "e of Birth | | 7.3.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58563,
+    "club": "DC United",
+    "fotmob_dob": "1999-05-02",
+    "mls_printed": "e of Birth | | 5.2.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58565,
+    "club": "DC United",
+    "fotmob_dob": "1996-07-10",
+    "mls_printed": "of Birth | | 7.10.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58567,
+    "club": "DC United",
+    "fotmob_dob": "2002-07-01",
+    "mls_printed": "e of Birth | | 7.1.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58568,
+    "club": "DC United",
+    "fotmob_dob": "2004-07-01",
+    "mls_printed": "e of Birth | | 7.1.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58580,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2004-01-07",
+    "mls_printed": "e of Birth | | 1.7.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58581,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "1993-03-07",
+    "mls_printed": "e of Birth | | 3.7.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58585,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2000-05-02",
+    "mls_printed": "e of Birth | | 5.2.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58602,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2001-02-05",
+    "mls_printed": "e of Birth | | 2.5.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58603,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2002-03-07",
+    "mls_printed": "e of Birth | | 3.7.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58606,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1997-05-09",
+    "mls_printed": "e of Birth | | 5.9.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58619,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1992-02-07",
+    "mls_printed": "e of Birth | | 2.7.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58623,
+    "club": "LA Galaxy",
+    "fotmob_dob": "2003-03-10",
+    "mls_printed": "of Birth | | 3.10.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58630,
+    "club": "LA Galaxy",
+    "fotmob_dob": "1998-02-01",
+    "mls_printed": "e of Birth | | 2.1.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58635,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-07-09",
+    "mls_printed": "e of Birth | | 7.9.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58636,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2004-07-05",
+    "mls_printed": "e of Birth | | 5.7.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58638,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1997-02-02",
+    "mls_printed": "e of Birth | | 2.2.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58647,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-01-04",
+    "mls_printed": "e of Birth | | 1.4.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58648,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-02-07",
+    "mls_printed": "e of Birth | | 2.7.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58649,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1999-03-05",
+    "mls_printed": "e of Birth | | 3.5.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58650,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2003-03-07",
+    "mls_printed": "e of Birth | | 3.7.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58651,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2008-10-08",
+    "mls_printed": "of Birth | | 10.8.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58656,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "1994-11-11",
+    "mls_printed": "of Birth | | 11.11.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58663,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1997-05-09",
+    "mls_printed": "e of Birth | | 5.9.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58665,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2002-06-04",
+    "mls_printed": "e of Birth | | 6.4.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58668,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "1997-05-01",
+    "mls_printed": "e of Birth | | 5.1.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58673,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2005-06-02",
+    "mls_printed": "e of Birth | | 6.2.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58674,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2006-02-05",
+    "mls_printed": "e of Birth | | 2.5.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58680,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2007-02-09",
+    "mls_printed": "e of Birth | | 2.9.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58681,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2004-02-08",
+    "mls_printed": "e of Birth | | 2.8.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58682,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2003-04-02",
+    "mls_printed": "e of Birth | | 4.2.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58683,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2001-09-03",
+    "mls_printed": "e of Birth | | 9.3.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58687,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2008-04-03",
+    "mls_printed": "e of Birth | | 4.3.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58695,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2007-06-06",
+    "mls_printed": "e of Birth | | 6.6.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58697,
+    "club": "Minnesota United",
+    "fotmob_dob": "1997-10-07",
+    "mls_printed": "of Birth | | 10.7.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58707,
+    "club": "Minnesota United",
+    "fotmob_dob": "2005-06-09",
+    "mls_printed": "e of Birth | | 6.9.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58712,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-02-03",
+    "mls_printed": "e of Birth | | 2.3.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58714,
+    "club": "Minnesota United",
+    "fotmob_dob": "1999-01-01",
+    "mls_printed": "e of Birth | | 1.1.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58717,
+    "club": "Minnesota United",
+    "fotmob_dob": "2000-05-06",
+    "mls_printed": "e of Birth | | 5.6.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58721,
+    "club": "Minnesota United",
+    "fotmob_dob": "2004-02-04",
+    "mls_printed": "e of Birth | | 2.4.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58730,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-04-07",
+    "mls_printed": "e of Birth | | 4.7.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58731,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-03-04",
+    "mls_printed": "e of Birth | | 3.4.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58733,
+    "club": "CF Montréal",
+    "fotmob_dob": "2004-07-09",
+    "mls_printed": "e of Birth | | 7.9.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58734,
+    "club": "CF Montréal",
+    "fotmob_dob": "1994-11-12",
+    "mls_printed": "of Birth | | 11.12.1994 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58741,
+    "club": "CF Montréal",
+    "fotmob_dob": "2006-07-10",
+    "mls_printed": "of Birth | | 7.10.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58745,
+    "club": "CF Montréal",
+    "fotmob_dob": "1997-01-07",
+    "mls_printed": "e of Birth | | 1.7.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58752,
+    "club": "New England Revolution",
+    "fotmob_dob": "1992-04-02",
+    "mls_printed": "e of Birth | | 4.2.1992 (34)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58754,
+    "club": "New England Revolution",
+    "fotmob_dob": "2000-07-06",
+    "mls_printed": "e of Birth | | 7.6.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58759,
+    "club": "New England Revolution",
+    "fotmob_dob": "2005-05-09",
+    "mls_printed": "e of Birth | | 5.9.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58765,
+    "club": "New England Revolution",
+    "fotmob_dob": "1993-06-08",
+    "mls_printed": "e of Birth | | 6.8.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58778,
+    "club": "New England Revolution",
+    "fotmob_dob": "2002-02-09",
+    "mls_printed": "e of Birth | | 2.9.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58782,
+    "club": "Nashville SC",
+    "fotmob_dob": "1988-08-10",
+    "mls_printed": "of Birth | | 8.10.1988 (38)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58791,
+    "club": "Nashville SC",
+    "fotmob_dob": "2001-07-02",
+    "mls_printed": "e of Birth | | 7.2.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58799,
+    "club": "Nashville SC",
+    "fotmob_dob": "2002-04-05",
+    "mls_printed": "e of Birth | | 4.5.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58803,
+    "club": "Nashville SC",
+    "fotmob_dob": "2005-04-10",
+    "mls_printed": "of Birth | | 4.10.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58812,
+    "club": "New York City FC",
+    "fotmob_dob": "1998-09-02",
+    "mls_printed": "e of Birth | | 9.2.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58826,
+    "club": "New York City FC",
+    "fotmob_dob": "1998-07-04",
+    "mls_printed": "e of Birth | | 7.4.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58827,
+    "club": "New York City FC",
+    "fotmob_dob": "2000-07-06",
+    "mls_printed": "e of Birth | | 7.6.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58829,
+    "club": "New York City FC",
+    "fotmob_dob": "1997-08-06",
+    "mls_printed": "e of Birth | | 8.6.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58833,
+    "club": "New York City FC",
+    "fotmob_dob": "2007-11-12",
+    "mls_printed": "of Birth | | 11.12.2007 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58844,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2008-03-04",
+    "mls_printed": "e of Birth | | 3.4.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58850,
+    "club": "Orlando City",
+    "fotmob_dob": "1997-01-09",
+    "mls_printed": "e of Birth | | 1.9.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58851,
+    "club": "Orlando City",
+    "fotmob_dob": "1999-03-05",
+    "mls_printed": "e of Birth | | 3.5.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58854,
+    "club": "Orlando City",
+    "fotmob_dob": "2004-08-03",
+    "mls_printed": "e of Birth | | 3.8.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58855,
+    "club": "Orlando City",
+    "fotmob_dob": "2008-07-01",
+    "mls_printed": "e of Birth | | 7.1.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58865,
+    "club": "Orlando City",
+    "fotmob_dob": "2005-10-01",
+    "mls_printed": "of Birth | | 10.1.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58869,
+    "club": "Orlando City",
+    "fotmob_dob": "2000-06-03",
+    "mls_printed": "e of Birth | | 6.3.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58888,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2003-01-09",
+    "mls_printed": "e of Birth | | 1.9.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58893,
+    "club": "Philadelphia Union",
+    "fotmob_dob": "2001-03-07",
+    "mls_printed": "e of Birth | | 3.7.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58913,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-09-05",
+    "mls_printed": "e of Birth | | 9.5.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58914,
+    "club": "Portland Timbers",
+    "fotmob_dob": "1997-06-08",
+    "mls_printed": "e of Birth | | 6.8.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58918,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2006-03-09",
+    "mls_printed": "e of Birth | | 3.9.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58921,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2007-09-08",
+    "mls_printed": "e of Birth | | 9.8.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58923,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-09-06",
+    "mls_printed": "e of Birth | | 9.6.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58925,
+    "club": "Red Bull New York",
+    "fotmob_dob": "1995-06-09",
+    "mls_printed": "e of Birth | | 6.9.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58930,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2008-06-05",
+    "mls_printed": "e of Birth | | 6.5.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58934,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2009-04-06",
+    "mls_printed": "e of Birth | | 4.6.2009 (17)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58941,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2005-10-01",
+    "mls_printed": "of Birth | | 10.1.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58945,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2008-01-03",
+    "mls_printed": "e of Birth | | 1.3.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58952,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2007-06-06",
+    "mls_printed": "e of Birth | | 6.6.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58953,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2008-08-08",
+    "mls_printed": "e of Birth | | 8.8.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58955,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "1998-03-10",
+    "mls_printed": "of Birth | | 3.10.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58957,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2008-07-05",
+    "mls_printed": "e of Birth | | 7.5.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58963,
+    "club": "San Diego FC",
+    "fotmob_dob": "2000-05-02",
+    "mls_printed": "e of Birth | | 5.2.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58969,
+    "club": "San Diego FC",
+    "fotmob_dob": "1999-02-10",
+    "mls_printed": "of Birth | | 2.10.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58975,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1997-08-06",
+    "mls_printed": "e of Birth | | 8.6.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58984,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-09-06",
+    "mls_printed": "e of Birth | | 9.6.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58989,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2006-05-03",
+    "mls_printed": "e of Birth | | 5.3.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58992,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "1996-03-06",
+    "mls_printed": "e of Birth | | 3.6.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58995,
+    "club": "San Jose Earthquakes",
+    "fotmob_dob": "2000-09-07",
+    "mls_printed": "e of Birth | | 9.7.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58999,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "1997-06-09",
+    "mls_printed": "e of Birth | | 6.9.1997 (29)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59002,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2000-03-07",
+    "mls_printed": "e of Birth | | 3.7.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59003,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2004-08-04",
+    "mls_printed": "e of Birth | | 8.4.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59013,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2002-01-10",
+    "mls_printed": "of Birth | | 1.10.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59017,
+    "club": "St. Louis City",
+    "fotmob_dob": "1998-02-05",
+    "mls_printed": "e of Birth | | 2.5.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59018,
+    "club": "St. Louis City",
+    "fotmob_dob": "1995-03-08",
+    "mls_printed": "e of Birth | | 3.8.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59019,
+    "club": "St. Louis City",
+    "fotmob_dob": "2006-07-02",
+    "mls_printed": "e of Birth | | 7.2.2006 (20)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59025,
+    "club": "St. Louis City",
+    "fotmob_dob": "1999-06-02",
+    "mls_printed": "e of Birth | | 6.2.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59027,
+    "club": "St. Louis City",
+    "fotmob_dob": "2007-03-08",
+    "mls_printed": "e of Birth | | 3.8.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59031,
+    "club": "Toronto FC",
+    "fotmob_dob": "1996-05-02",
+    "mls_printed": "e of Birth | | 5.2.1996 (30)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59043,
+    "club": "Toronto FC",
+    "fotmob_dob": "2005-08-05",
+    "mls_printed": "e of Birth | | 8.5.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59054,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2003-02-06",
+    "mls_printed": "e of Birth | | 2.6.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71218,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2000-01-08",
+    "mls_printed": "e of Birth | | 1.8.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71224,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1993-04-06",
+    "mls_printed": "e of Birth | | 4.6.1993 (33)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71226,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2001-01-07",
+    "mls_printed": "e of Birth | | 1.7.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71233,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "2001-06-05",
+    "mls_printed": "e of Birth | | 6.5.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71235,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "1999-10-07",
+    "mls_printed": "of Birth | | 10.7.1999 (27)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71238,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2001-02-01",
+    "mls_printed": "e of Birth | | 2.1.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71241,
+    "club": "Toronto FC",
+    "fotmob_dob": "2002-09-03",
+    "mls_printed": "e of Birth | | 9.3.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71243,
+    "club": "New England Revolution",
+    "fotmob_dob": "2005-05-02",
+    "mls_printed": "e of Birth | | 5.2.2005 (21)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71246,
+    "club": "Seattle Sounders FC",
+    "fotmob_dob": "1998-09-01",
+    "mls_printed": "e of Birth | | 9.1.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71249,
+    "club": "Vancouver Whitecaps",
+    "fotmob_dob": "2000-08-09",
+    "mls_printed": "e of Birth | | 8.9.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71253,
+    "club": "Columbus Crew",
+    "fotmob_dob": "2002-04-05",
+    "mls_printed": "e of Birth | | 4.5.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71254,
+    "club": "St. Louis City",
+    "fotmob_dob": "2004-07-06",
+    "mls_printed": "e of Birth | | 7.6.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71259,
+    "club": "Real Salt Lake",
+    "fotmob_dob": "2004-01-08",
+    "mls_printed": "e of Birth | | 1.8.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71261,
+    "club": "Orlando City",
+    "fotmob_dob": "2001-12-11",
+    "mls_printed": "of Birth | | 12.11.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71269,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2002-03-08",
+    "mls_printed": "e of Birth | | 3.8.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71284,
+    "club": "Los Angeles FC",
+    "fotmob_dob": "2004-01-04",
+    "mls_printed": "e of Birth | | 1.4.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71295,
+    "club": "DC United",
+    "fotmob_dob": "2010-01-03",
+    "mls_printed": "e of Birth | | 1.3.2010 (16)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71311,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2000-09-03",
+    "mls_printed": "e of Birth | | 9.3.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71313,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2000-05-07",
+    "mls_printed": "e of Birth | | 5.7.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71432,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2007-02-09",
+    "mls_printed": "e of Birth | | 2.9.2007 (19)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71492,
+    "club": "Red Bull New York",
+    "fotmob_dob": "2008-03-03",
+    "mls_printed": "e of Birth | | 3.3.2008 (18)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71749,
+    "club": "FC Cincinnati",
+    "fotmob_dob": "1994-08-07",
+    "mls_printed": "e of Birth | | 8.7.1994 (32)",
+    "source_error_publisher": null
+   }
+  ],
+  "biographical_disagreement": [
+   {
+    "player_id": 33067,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2001-08-30",
+    "mls_printed": "of Birth | | 8.29.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 52100,
+    "club": "New England Revolution",
+    "fotmob_dob": "2004-01-04",
+    "mls_printed": "e of Birth | | 1.7.2004 (22)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58334,
+    "club": "Atlanta United",
+    "fotmob_dob": "2002-12-13",
+    "mls_printed": "of Birth | | 12.3.2002 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58376,
+    "club": "Chicago Fire FC",
+    "fotmob_dob": "1995-08-24",
+    "mls_printed": "of Birth | | 8.25.1995 (31)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58767,
+    "club": "New England Revolution",
+    "fotmob_dob": "2000-07-18",
+    "mls_printed": "of Birth | | 7.20.2000 (26)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58909,
+    "club": "Portland Timbers",
+    "fotmob_dob": "2002-07-26",
+    "mls_printed": "of Birth | | 7.16.2002 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58965,
+    "club": "San Diego FC",
+    "fotmob_dob": "2003-05-13",
+    "mls_printed": "of Birth | | 5.15.2003 (23)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58996,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "1994-05-24",
+    "mls_printed": "of Birth | | 5.25.1994 (32)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59005,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2001-11-01",
+    "mls_printed": "of Birth | | 11.12.2001 (24)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71232,
+    "club": "Atlanta United",
+    "fotmob_dob": "2003-02-16",
+    "mls_printed": "of Birth | | 2.17.2003 (23)",
+    "source_error_publisher": null
+   }
+  ],
+  "mls_date_missing": [
+   {
+    "player_id": 58489,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1995-04-02",
+    "mls_printed": "",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58495,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "1998-06-11",
+    "mls_printed": "",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58508,
+    "club": "Colorado Rapids",
+    "fotmob_dob": "2004-06-13",
+    "mls_printed": "",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59030,
+    "club": "Toronto FC",
+    "fotmob_dob": "1993-05-19",
+    "mls_printed": "",
+    "source_error_publisher": null
+   }
+  ],
+  "biographical_source_error": [
+   {
+    "player_id": 58549,
+    "club": "FC Dallas",
+    "fotmob_dob": "2006-09-16",
+    "mls_printed": "e of Birth | | 2.4.1998 (28)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58598,
+    "club": "Houston Dynamo FC",
+    "fotmob_dob": "2010-08-28",
+    "mls_printed": "of Birth | | 8.29.2010 (16)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 58670,
+    "club": "Inter Miami CF",
+    "fotmob_dob": "2001-04-27",
+    "mls_printed": "e of Birth | | 4.7.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 59000,
+    "club": "Sporting Kansas City",
+    "fotmob_dob": "2001-05-24",
+    "mls_printed": "of Birth | | 4.24.2001 (25)",
+    "source_error_publisher": null
+   },
+   {
+    "player_id": 71285,
+    "club": "St. Louis City",
+    "fotmob_dob": "2007-12-03",
+    "mls_printed": "of Birth | | 3.12.2007 (19)",
+    "source_error_publisher": null
+   }
+  ],
+  "single_source": [
+   {
+    "player_id": 32301,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "315200435"
+    }
+   },
+   {
+    "player_id": 32466,
+    "team": "Inter Miami CF",
+    "publisher_keys": {
+     "fotmob": "1469015"
+    }
+   },
+   {
+    "player_id": 32558,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "fotmob": "388536"
+    }
+   },
+   {
+    "player_id": 32588,
+    "team": "Inter Miami CF",
+    "publisher_keys": {
+     "mlssoccer": "596302"
+    }
+   },
+   {
+    "player_id": 32651,
+    "team": "CF Montréal",
+    "publisher_keys": {
+     "mlssoccer": "315200488"
+    }
+   },
+   {
+    "player_id": 32689,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "mlssoccer": "541165"
+    }
+   },
+   {
+    "player_id": 32699,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "mlssoccer": "536035"
+    }
+   },
+   {
+    "player_id": 32706,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "fotmob": "1483557"
+    }
+   },
+   {
+    "player_id": 32798,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "mlssoccer": "315196765"
+    }
+   },
+   {
+    "player_id": 32870,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "mlssoccer": "518957"
+    }
+   },
+   {
+    "player_id": 32886,
+    "team": "CF Montréal",
+    "publisher_keys": {
+     "mlssoccer": "479806"
+    }
+   },
+   {
+    "player_id": 32896,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "mlssoccer": "496726"
+    }
+   },
+   {
+    "player_id": 32901,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "mlssoccer": "315200393"
+    }
+   },
+   {
+    "player_id": 32930,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "315205765"
+    }
+   },
+   {
+    "player_id": 32931,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "442345"
+    }
+   },
+   {
+    "player_id": 32933,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "315200203"
+    }
+   },
+   {
+    "player_id": 32940,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "223244"
+    }
+   },
+   {
+    "player_id": 32947,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "fotmob": "1305746"
+    }
+   },
+   {
+    "player_id": 32956,
+    "team": "Charlotte FC",
+    "publisher_keys": {
+     "fotmob": "780418"
+    }
+   },
+   {
+    "player_id": 32969,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "315198565"
+    }
+   },
+   {
+    "player_id": 32975,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "590039"
+    }
+   },
+   {
+    "player_id": 32982,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "mlssoccer": "541264"
+    }
+   },
+   {
+    "player_id": 32990,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "mlssoccer": "617007"
+    }
+   },
+   {
+    "player_id": 33000,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "mlssoccer": "429109"
+    }
+   },
+   {
+    "player_id": 33006,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "mlssoccer": "213213"
+    }
+   },
+   {
+    "player_id": 33015,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "315199815"
+    }
+   },
+   {
+    "player_id": 33030,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "mlssoccer": "162287"
+    }
+   },
+   {
+    "player_id": 33055,
+    "team": "Sporting Kansas City",
+    "publisher_keys": {
+     "mlssoccer": "430298"
+    }
+   },
+   {
+    "player_id": 33060,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "fotmob": "365646"
+    }
+   },
+   {
+    "player_id": 33075,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "fotmob": "848424"
+    }
+   },
+   {
+    "player_id": 33103,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "555488"
+    }
+   },
+   {
+    "player_id": 33112,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "506532"
+    }
+   },
+   {
+    "player_id": 33115,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "220752"
+    }
+   },
+   {
+    "player_id": 33130,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "315198938"
+    }
+   },
+   {
+    "player_id": 33146,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "556959"
+    }
+   },
+   {
+    "player_id": 33154,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "496813"
+    }
+   },
+   {
+    "player_id": 33155,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "315198933"
+    }
+   },
+   {
+    "player_id": 52048,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "mlssoccer": "315198962"
+    }
+   },
+   {
+    "player_id": 52084,
+    "team": "DC United",
+    "publisher_keys": {
+     "mlssoccer": "436398"
+    }
+   },
+   {
+    "player_id": 52090,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "mlssoccer": "315200601"
+    }
+   },
+   {
+    "player_id": 52098,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "mlssoccer": "483460"
+    }
+   },
+   {
+    "player_id": 52108,
+    "team": "DC United",
+    "publisher_keys": {
+     "mlssoccer": "315200416"
+    }
+   },
+   {
+    "player_id": 58339,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "mlssoccer": "556828"
+    }
+   },
+   {
+    "player_id": 58344,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "mlssoccer": "196762"
+    }
+   },
+   {
+    "player_id": 58350,
+    "team": "Austin FC",
+    "publisher_keys": {
+     "fotmob": "1781726"
+    }
+   },
+   {
+    "player_id": 58364,
+    "team": "Austin FC",
+    "publisher_keys": {
+     "mlssoccer": "476764"
+    }
+   },
+   {
+    "player_id": 58382,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "mlssoccer": "315197110"
+    }
+   },
+   {
+    "player_id": 58392,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "mlssoccer": "438368"
+    }
+   },
+   {
+    "player_id": 58397,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "fotmob": "924498"
+    }
+   },
+   {
+    "player_id": 58400,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "mlssoccer": "540915"
+    }
+   },
+   {
+    "player_id": 58405,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "153264"
+    }
+   },
+   {
+    "player_id": 58408,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "245710"
+    }
+   },
+   {
+    "player_id": 58414,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "200933"
+    }
+   },
+   {
+    "player_id": 58418,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "541997"
+    }
+   },
+   {
+    "player_id": 58454,
+    "team": "Columbus Crew",
+    "publisher_keys": {
+     "mlssoccer": "315205412"
+    }
+   },
+   {
+    "player_id": 58490,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "315197192"
+    }
+   },
+   {
+    "player_id": 58491,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "540971"
+    }
+   },
+   {
+    "player_id": 58503,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "981376"
+    }
+   },
+   {
+    "player_id": 58504,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "468741"
+    }
+   },
+   {
+    "player_id": 58514,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "541382"
+    }
+   },
+   {
+    "player_id": 58515,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "619806"
+    }
+   },
+   {
+    "player_id": 58516,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "619018"
+    }
+   },
+   {
+    "player_id": 58518,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "1745119"
+    }
+   },
+   {
+    "player_id": 58546,
+    "team": "FC Dallas",
+    "publisher_keys": {
+     "mlssoccer": "315200233"
+    }
+   },
+   {
+    "player_id": 58550,
+    "team": "FC Dallas",
+    "publisher_keys": {
+     "mlssoccer": "315200042"
+    }
+   },
+   {
+    "player_id": 58554,
+    "team": "DC United",
+    "publisher_keys": {
+     "mlssoccer": "446571"
+    }
+   },
+   {
+    "player_id": 58572,
+    "team": "DC United",
+    "publisher_keys": {
+     "mlssoccer": "315200212"
+    }
+   },
+   {
+    "player_id": 58584,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "224823"
+    }
+   },
+   {
+    "player_id": 58600,
+    "team": "Houston Dynamo FC",
+    "publisher_keys": {
+     "fotmob": "763151"
+    }
+   },
+   {
+    "player_id": 58604,
+    "team": "Houston Dynamo FC",
+    "publisher_keys": {
+     "fotmob": "1311908"
+    }
+   },
+   {
+    "player_id": 58626,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "fotmob": "1781405"
+    }
+   },
+   {
+    "player_id": 58627,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "fotmob": "1840739"
+    }
+   },
+   {
+    "player_id": 58633,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "fotmob": "1532260"
+    }
+   },
+   {
+    "player_id": 58642,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "230635"
+    }
+   },
+   {
+    "player_id": 58646,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "114579"
+    }
+   },
+   {
+    "player_id": 58654,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "85971"
+    }
+   },
+   {
+    "player_id": 58675,
+    "team": "Inter Miami CF",
+    "publisher_keys": {
+     "mlssoccer": "554896"
+    }
+   },
+   {
+    "player_id": 58693,
+    "team": "Inter Miami CF",
+    "publisher_keys": {
+     "fotmob": "1447447"
+    }
+   },
+   {
+    "player_id": 58711,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "mlssoccer": "315205800"
+    }
+   },
+   {
+    "player_id": 58722,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "fotmob": "1780445"
+    }
+   },
+   {
+    "player_id": 58747,
+    "team": "CF Montréal",
+    "publisher_keys": {
+     "mlssoccer": "315200407"
+    }
+   },
+   {
+    "player_id": 58771,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "fotmob": "1676099"
+    }
+   },
+   {
+    "player_id": 58790,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "fotmob": "1078039"
+    }
+   },
+   {
+    "player_id": 58801,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "mlssoccer": "610203"
+    }
+   },
+   {
+    "player_id": 58815,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "315205784"
+    }
+   },
+   {
+    "player_id": 58818,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "fotmob": "1905210"
+    }
+   },
+   {
+    "player_id": 58820,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "315200473"
+    }
+   },
+   {
+    "player_id": 58853,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "mlssoccer": "315204824"
+    }
+   },
+   {
+    "player_id": 58864,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1727842"
+    }
+   },
+   {
+    "player_id": 58866,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1780483"
+    }
+   },
+   {
+    "player_id": 58867,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1919495"
+    }
+   },
+   {
+    "player_id": 58872,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1681901"
+    }
+   },
+   {
+    "player_id": 58873,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "mlssoccer": "315206157"
+    }
+   },
+   {
+    "player_id": 58875,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1780484"
+    }
+   },
+   {
+    "player_id": 58904,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "mlssoccer": "315198150"
+    }
+   },
+   {
+    "player_id": 58936,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "mlssoccer": "443980"
+    }
+   },
+   {
+    "player_id": 58940,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "219510"
+    }
+   },
+   {
+    "player_id": 58948,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "425710"
+    }
+   },
+   {
+    "player_id": 58960,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "315206536"
+    }
+   },
+   {
+    "player_id": 58966,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "315206194"
+    }
+   },
+   {
+    "player_id": 58973,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1732595"
+    }
+   },
+   {
+    "player_id": 58974,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1780942"
+    }
+   },
+   {
+    "player_id": 58976,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1253529"
+    }
+   },
+   {
+    "player_id": 58980,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1729368"
+    }
+   },
+   {
+    "player_id": 58981,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1172299"
+    }
+   },
+   {
+    "player_id": 58985,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "fotmob": "1618609"
+    }
+   },
+   {
+    "player_id": 58986,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "fotmob": "1763080"
+    }
+   },
+   {
+    "player_id": 58987,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "fotmob": "1171017"
+    }
+   },
+   {
+    "player_id": 58997,
+    "team": "Sporting Kansas City",
+    "publisher_keys": {
+     "mlssoccer": "315196729"
+    }
+   },
+   {
+    "player_id": 59001,
+    "team": "Sporting Kansas City",
+    "publisher_keys": {
+     "mlssoccer": "249216"
+    }
+   },
+   {
+    "player_id": 59015,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "mlssoccer": "468835"
+    }
+   },
+   {
+    "player_id": 59016,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "fotmob": "1781731"
+    }
+   },
+   {
+    "player_id": 59020,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "mlssoccer": "315203634"
+    }
+   },
+   {
+    "player_id": 59029,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "564721"
+    }
+   },
+   {
+    "player_id": 59034,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "559587"
+    }
+   },
+   {
+    "player_id": 59035,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "315200675"
+    }
+   },
+   {
+    "player_id": 59036,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "315200163"
+    }
+   },
+   {
+    "player_id": 59040,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "315200671"
+    }
+   },
+   {
+    "player_id": 59046,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "213875"
+    }
+   },
+   {
+    "player_id": 59047,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "468877"
+    }
+   },
+   {
+    "player_id": 59050,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "315200679"
+    }
+   },
+   {
+    "player_id": 59360,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "mlssoccer": "233581"
+    }
+   },
+   {
+    "player_id": 59361,
+    "team": "Austin FC",
+    "publisher_keys": {
+     "mlssoccer": "315200417"
+    }
+   },
+   {
+    "player_id": 59363,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "315200425"
+    }
+   },
+   {
+    "player_id": 59368,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "568181"
+    }
+   },
+   {
+    "player_id": 59390,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "mlssoccer": "315200414"
+    }
+   },
+   {
+    "player_id": 59416,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "fotmob": "168190"
+    }
+   },
+   {
+    "player_id": 59426,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "mlssoccer": "315196963"
+    }
+   },
+   {
+    "player_id": 59429,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "535468"
+    }
+   },
+   {
+    "player_id": 59451,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "mlssoccer": "315196725"
+    }
+   },
+   {
+    "player_id": 59453,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "mlssoccer": "555390"
+    }
+   },
+   {
+    "player_id": 59456,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "fotmob": "1244946"
+    }
+   },
+   {
+    "player_id": 59465,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "mlssoccer": "641719"
+    }
+   },
+   {
+    "player_id": 59466,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "427199"
+    }
+   },
+   {
+    "player_id": 71219,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "fotmob": "1053963"
+    }
+   },
+   {
+    "player_id": 71220,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "fotmob": "1054027"
+    }
+   },
+   {
+    "player_id": 71225,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "1079285"
+    }
+   },
+   {
+    "player_id": 71227,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "1098753"
+    }
+   },
+   {
+    "player_id": 71228,
+    "team": "DC United",
+    "publisher_keys": {
+     "fotmob": "1106871"
+    }
+   },
+   {
+    "player_id": 71237,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "fotmob": "1202678"
+    }
+   },
+   {
+    "player_id": 71242,
+    "team": "CF Montréal",
+    "publisher_keys": {
+     "fotmob": "1246580"
+    }
+   },
+   {
+    "player_id": 71245,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "fotmob": "1263370"
+    }
+   },
+   {
+    "player_id": 71251,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "fotmob": "1338760"
+    }
+   },
+   {
+    "player_id": 71256,
+    "team": "Charlotte FC",
+    "publisher_keys": {
+     "fotmob": "1387178"
+    }
+   },
+   {
+    "player_id": 71257,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "fotmob": "1390408"
+    }
+   },
+   {
+    "player_id": 71260,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "fotmob": "1438379"
+    }
+   },
+   {
+    "player_id": 71262,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "fotmob": "1448714"
+    }
+   },
+   {
+    "player_id": 71263,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1500405"
+    }
+   },
+   {
+    "player_id": 71265,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "fotmob": "1513664"
+    }
+   },
+   {
+    "player_id": 71266,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "1518943"
+    }
+   },
+   {
+    "player_id": 71270,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "fotmob": "1610224"
+    }
+   },
+   {
+    "player_id": 71271,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "fotmob": "1610334"
+    }
+   },
+   {
+    "player_id": 71275,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1640272"
+    }
+   },
+   {
+    "player_id": 71276,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "fotmob": "1642567"
+    }
+   },
+   {
+    "player_id": 71278,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "fotmob": "1660393"
+    }
+   },
+   {
+    "player_id": 71280,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "fotmob": "1668442"
+    }
+   },
+   {
+    "player_id": 71283,
+    "team": "FC Dallas",
+    "publisher_keys": {
+     "fotmob": "1729371"
+    }
+   },
+   {
+    "player_id": 71286,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "fotmob": "1755977"
+    }
+   },
+   {
+    "player_id": 71288,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "fotmob": "1781007"
+    }
+   },
+   {
+    "player_id": 71291,
+    "team": "Austin FC",
+    "publisher_keys": {
+     "fotmob": "1900251"
+    }
+   },
+   {
+    "player_id": 71292,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "fotmob": "1916385"
+    }
+   },
+   {
+    "player_id": 71293,
+    "team": "FC Dallas",
+    "publisher_keys": {
+     "fotmob": "1919446"
+    }
+   },
+   {
+    "player_id": 71296,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "fotmob": "212867"
+    }
+   },
+   {
+    "player_id": 71297,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "fotmob": "2141400"
+    }
+   },
+   {
+    "player_id": 71299,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "fotmob": "464916"
+    }
+   },
+   {
+    "player_id": 71301,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "fotmob": "580600"
+    }
+   },
+   {
+    "player_id": 71304,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "fotmob": "643482"
+    }
+   },
+   {
+    "player_id": 71305,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "fotmob": "649947"
+    }
+   },
+   {
+    "player_id": 71306,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "fotmob": "651093"
+    }
+   },
+   {
+    "player_id": 71307,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "fotmob": "769349"
+    }
+   },
+   {
+    "player_id": 71308,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "fotmob": "787351"
+    }
+   },
+   {
+    "player_id": 71310,
+    "team": "Sporting Kansas City",
+    "publisher_keys": {
+     "fotmob": "861720"
+    }
+   },
+   {
+    "player_id": 71317,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "fotmob": "972488"
+    }
+   },
+   {
+    "player_id": 71318,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "mlssoccer": "128117"
+    }
+   },
+   {
+    "player_id": 71319,
+    "team": "Seattle Sounders FC",
+    "publisher_keys": {
+     "mlssoccer": "191755"
+    }
+   },
+   {
+    "player_id": 71320,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "mlssoccer": "202192"
+    }
+   },
+   {
+    "player_id": 71322,
+    "team": "St. Louis City",
+    "publisher_keys": {
+     "mlssoccer": "211988"
+    }
+   },
+   {
+    "player_id": 71323,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "315191499"
+    }
+   },
+   {
+    "player_id": 71324,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "mlssoccer": "315196628"
+    }
+   },
+   {
+    "player_id": 71325,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "315196953"
+    }
+   },
+   {
+    "player_id": 71326,
+    "team": "DC United",
+    "publisher_keys": {
+     "mlssoccer": "315198353"
+    }
+   },
+   {
+    "player_id": 71327,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "mlssoccer": "315198564"
+    }
+   },
+   {
+    "player_id": 71328,
+    "team": "Orlando City",
+    "publisher_keys": {
+     "mlssoccer": "315199353"
+    }
+   },
+   {
+    "player_id": 71329,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "mlssoccer": "315200431"
+    }
+   },
+   {
+    "player_id": 71330,
+    "team": "San Diego FC",
+    "publisher_keys": {
+     "mlssoccer": "315200447"
+    }
+   },
+   {
+    "player_id": 71331,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "mlssoccer": "315200470"
+    }
+   },
+   {
+    "player_id": 71332,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "315200535"
+    }
+   },
+   {
+    "player_id": 71333,
+    "team": "New York City FC",
+    "publisher_keys": {
+     "mlssoccer": "315200609"
+    }
+   },
+   {
+    "player_id": 71334,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "315203832"
+    }
+   },
+   {
+    "player_id": 71335,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "315206145"
+    }
+   },
+   {
+    "player_id": 71336,
+    "team": "Houston Dynamo FC",
+    "publisher_keys": {
+     "mlssoccer": "315206200"
+    }
+   },
+   {
+    "player_id": 71337,
+    "team": "Vancouver Whitecaps",
+    "publisher_keys": {
+     "mlssoccer": "315209933"
+    }
+   },
+   {
+    "player_id": 71338,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "315209950"
+    }
+   },
+   {
+    "player_id": 71340,
+    "team": "Colorado Rapids",
+    "publisher_keys": {
+     "mlssoccer": "428182"
+    }
+   },
+   {
+    "player_id": 71341,
+    "team": "Columbus Crew",
+    "publisher_keys": {
+     "mlssoccer": "495357"
+    }
+   },
+   {
+    "player_id": 71342,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "mlssoccer": "496701"
+    }
+   },
+   {
+    "player_id": 71343,
+    "team": "FC Cincinnati",
+    "publisher_keys": {
+     "mlssoccer": "501668"
+    }
+   },
+   {
+    "player_id": 71344,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "mlssoccer": "506154"
+    }
+   },
+   {
+    "player_id": 71345,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "mlssoccer": "506463"
+    }
+   },
+   {
+    "player_id": 71346,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "mlssoccer": "534776"
+    }
+   },
+   {
+    "player_id": 71347,
+    "team": "San Jose Earthquakes",
+    "publisher_keys": {
+     "mlssoccer": "540233"
+    }
+   },
+   {
+    "player_id": 71348,
+    "team": "Sporting Kansas City",
+    "publisher_keys": {
+     "mlssoccer": "541186"
+    }
+   },
+   {
+    "player_id": 71349,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "mlssoccer": "541398"
+    }
+   },
+   {
+    "player_id": 71350,
+    "team": "Los Angeles FC",
+    "publisher_keys": {
+     "mlssoccer": "541548"
+    }
+   },
+   {
+    "player_id": 71352,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "mlssoccer": "544907"
+    }
+   },
+   {
+    "player_id": 71353,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "mlssoccer": "555371"
+    }
+   },
+   {
+    "player_id": 71354,
+    "team": "Toronto FC",
+    "publisher_keys": {
+     "mlssoccer": "555476"
+    }
+   },
+   {
+    "player_id": 71355,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "mlssoccer": "559448"
+    }
+   },
+   {
+    "player_id": 71356,
+    "team": "Columbus Crew",
+    "publisher_keys": {
+     "mlssoccer": "587920"
+    }
+   },
+   {
+    "player_id": 71357,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "mlssoccer": "595547"
+    }
+   },
+   {
+    "player_id": 71358,
+    "team": "Minnesota United",
+    "publisher_keys": {
+     "mlssoccer": "598594"
+    }
+   },
+   {
+    "player_id": 71359,
+    "team": "LA Galaxy",
+    "publisher_keys": {
+     "mlssoccer": "612823"
+    }
+   },
+   {
+    "player_id": 71360,
+    "team": "Inter Miami CF",
+    "publisher_keys": {
+     "mlssoccer": "614213"
+    }
+   },
+   {
+    "player_id": 71361,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "mlssoccer": "538023"
+    }
+   },
+   {
+    "player_id": 71504,
+    "team": "Houston Dynamo FC",
+    "publisher_keys": {
+     "mlssoccer": "315206773"
+    }
+   },
+   {
+    "player_id": 71523,
+    "team": "New England Revolution",
+    "publisher_keys": {
+     "fotmob": "1614654"
+    }
+   },
+   {
+    "player_id": 71548,
+    "team": "Chicago Fire FC",
+    "publisher_keys": {
+     "fotmob": "1781455"
+    }
+   },
+   {
+    "player_id": 71549,
+    "team": "Nashville SC",
+    "publisher_keys": {
+     "fotmob": "1781686"
+    }
+   },
+   {
+    "player_id": 71550,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "fotmob": "1136269"
+    }
+   },
+   {
+    "player_id": 71551,
+    "team": "Atlanta United",
+    "publisher_keys": {
+     "fotmob": "1447991"
+    }
+   },
+   {
+    "player_id": 71552,
+    "team": "Real Salt Lake",
+    "publisher_keys": {
+     "fotmob": "1517893"
+    }
+   },
+   {
+    "player_id": 71553,
+    "team": "Philadelphia Union",
+    "publisher_keys": {
+     "fotmob": "1780456"
+    }
+   },
+   {
+    "player_id": 71770,
+    "team": "Charlotte FC",
+    "publisher_keys": {
+     "mlssoccer": "121599"
+    }
+   },
+   {
+    "player_id": 71771,
+    "team": "Charlotte FC",
+    "publisher_keys": {
+     "mlssoccer": "485706"
+    }
+   },
+   {
+    "player_id": 71774,
+    "team": "Red Bull New York",
+    "publisher_keys": {
+     "fotmob": "2264549"
+    }
+   }
+  ]
+ }
+}

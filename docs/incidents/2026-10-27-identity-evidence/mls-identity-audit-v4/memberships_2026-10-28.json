@@ -1,0 +1,7060 @@
+{
+ "source": "mls_snapshot_shadow.py, live squads 2026-10-28 against the 2026-10-27 prior; the membership the snapshot would publish",
+ "people": {
+  "32301": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315200435"
+   }
+  },
+  "32331": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "565754",
+    "fotmob": "1337963"
+   }
+  },
+  "32334": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "540256",
+    "fotmob": "1794408"
+   }
+  },
+  "32353": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "469229",
+    "fotmob": "1170743"
+   }
+  },
+  "32359": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "160174",
+    "fotmob": "442581"
+   }
+  },
+  "32377": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "223175",
+    "fotmob": "961343"
+   }
+  },
+  "32438": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "243891",
+    "fotmob": "841458"
+   }
+  },
+  "32442": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315200451",
+    "fotmob": "1224691"
+   }
+  },
+  "32458": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "451060",
+    "fotmob": "1045118"
+   }
+  },
+  "32466": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "fotmob": "1469015"
+   }
+  },
+  "32558": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "fotmob": "388536"
+   }
+  },
+  "32572": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "503856",
+    "fotmob": "1172905"
+   }
+  },
+  "32588": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "596302"
+   }
+  },
+  "32642": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315201665",
+    "fotmob": "1525182"
+   }
+  },
+  "32651": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315200488"
+   }
+  },
+  "32689": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "541165"
+   }
+  },
+  "32692": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315206201",
+    "fotmob": "1052987"
+   }
+  },
+  "32693": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315206931",
+    "fotmob": "1748225"
+   }
+  },
+  "32699": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "536035"
+   }
+  },
+  "32706": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "fotmob": "1483557"
+   }
+  },
+  "32750": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "423551",
+    "fotmob": "933625"
+   }
+  },
+  "32754": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "433026",
+    "fotmob": "1082109"
+   }
+  },
+  "32760": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "458345",
+    "fotmob": "950967"
+   }
+  },
+  "32798": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315196765"
+   }
+  },
+  "32845": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "96622",
+    "fotmob": "50336"
+   }
+  },
+  "32847": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315199629",
+    "fotmob": "950372"
+   }
+  },
+  "32850": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "479206",
+    "fotmob": "1118540"
+   }
+  },
+  "32851": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "501836",
+    "fotmob": "1200658"
+   }
+  },
+  "32852": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "505834",
+    "fotmob": "1138769"
+   }
+  },
+  "32856": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "210476",
+    "fotmob": "564832"
+   }
+  },
+  "32857": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "204254",
+    "fotmob": "1024172"
+   }
+  },
+  "32858": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315205781",
+    "fotmob": "837731"
+   }
+  },
+  "32859": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "533196",
+    "fotmob": "1248736"
+   }
+  },
+  "32863": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315200475",
+    "fotmob": "1721672"
+   }
+  },
+  "32865": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "163565",
+    "fotmob": "621541"
+   }
+  },
+  "32867": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "537850",
+    "fotmob": "1251758"
+   }
+  },
+  "32870": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "518957"
+   }
+  },
+  "32871": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "202356",
+    "fotmob": "621559"
+   }
+  },
+  "32873": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "477535",
+    "fotmob": "1026114"
+   }
+  },
+  "32874": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "228605",
+    "fotmob": "664764"
+   }
+  },
+  "32875": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "480287",
+    "fotmob": "1136264"
+   }
+  },
+  "32876": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "244899",
+    "fotmob": "771494"
+   }
+  },
+  "32880": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "581966",
+    "fotmob": "1410553"
+   }
+  },
+  "32881": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "66579",
+    "fotmob": "171980"
+   }
+  },
+  "32882": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "168499",
+    "fotmob": "520462"
+   }
+  },
+  "32884": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "432587",
+    "fotmob": "963945"
+   }
+  },
+  "32885": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "468444",
+    "fotmob": "1170233"
+   }
+  },
+  "32886": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "479806"
+   }
+  },
+  "32888": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "619890",
+    "fotmob": "1473738"
+   }
+  },
+  "32892": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "42564",
+    "fotmob": "95082"
+   }
+  },
+  "32893": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "427231",
+    "fotmob": "1178309"
+   }
+  },
+  "32894": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "559454",
+    "fotmob": "1489675"
+   }
+  },
+  "32896": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "496726"
+   }
+  },
+  "32898": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "581968",
+    "fotmob": "1514669"
+   }
+  },
+  "32900": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "622363",
+    "fotmob": "1527097"
+   }
+  },
+  "32901": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315200393"
+   }
+  },
+  "32907": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "151119",
+    "fotmob": "432040"
+   }
+  },
+  "32908": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "183390",
+    "fotmob": "565981"
+   }
+  },
+  "32909": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "233957",
+    "fotmob": "784824"
+   }
+  },
+  "32912": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "444020",
+    "fotmob": "1053724"
+   }
+  },
+  "32913": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "565695",
+    "fotmob": "1338757"
+   }
+  },
+  "32915": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "497042",
+    "fotmob": "1172163"
+   }
+  },
+  "32918": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "442350",
+    "fotmob": "1252636"
+   }
+  },
+  "32919": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "218539",
+    "fotmob": "866068"
+   }
+  },
+  "32921": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "437476",
+    "fotmob": "1075065"
+   }
+  },
+  "32922": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "425238",
+    "fotmob": "1440013"
+   }
+  },
+  "32925": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "613220",
+    "fotmob": "1439925"
+   }
+  },
+  "32930": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315205765"
+   }
+  },
+  "32931": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "442345"
+   }
+  },
+  "32933": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200203"
+   }
+  },
+  "32935": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200275",
+    "fotmob": "1610777"
+   }
+  },
+  "32938": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315197202",
+    "fotmob": "1643328"
+   }
+  },
+  "32940": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "223244"
+   }
+  },
+  "32941": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "201168",
+    "fotmob": "678241"
+   }
+  },
+  "32942": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "572837",
+    "fotmob": "1341120"
+   }
+  },
+  "32945": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "234583",
+    "fotmob": "789046"
+   }
+  },
+  "32946": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "424887",
+    "fotmob": "885504"
+   }
+  },
+  "32947": {
+   "team": "San Diego FC",
+   "keys": {
+    "fotmob": "1305746"
+   }
+  },
+  "32948": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "541819",
+    "fotmob": "1510858"
+   }
+  },
+  "32952": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315200429",
+    "fotmob": "1721726"
+   }
+  },
+  "32953": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "99117",
+    "fotmob": "308131"
+   }
+  },
+  "32954": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "168365",
+    "fotmob": "469803"
+   }
+  },
+  "32955": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315199712",
+    "fotmob": "435493"
+   }
+  },
+  "32956": {
+   "team": "Charlotte FC",
+   "keys": {
+    "fotmob": "780418"
+   }
+  },
+  "32957": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "209987",
+    "fotmob": "641344"
+   }
+  },
+  "32958": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315200430",
+    "fotmob": "835948"
+   }
+  },
+  "32959": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "539630",
+    "fotmob": "1464483"
+   }
+  },
+  "32960": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315205542",
+    "fotmob": "1708148"
+   }
+  },
+  "32961": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315200428",
+    "fotmob": "1729741"
+   }
+  },
+  "32962": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "161376",
+    "fotmob": "443733"
+   }
+  },
+  "32963": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "179361",
+    "fotmob": "521210"
+   }
+  },
+  "32964": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "193842",
+    "fotmob": "313121"
+   }
+  },
+  "32966": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "244930",
+    "fotmob": "1081174"
+   }
+  },
+  "32969": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315198565"
+   }
+  },
+  "32970": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "60238",
+    "fotmob": "168176"
+   }
+  },
+  "32974": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "120764",
+    "fotmob": "253836"
+   }
+  },
+  "32975": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "590039"
+   }
+  },
+  "32976": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "244410",
+    "fotmob": "797551"
+   }
+  },
+  "32977": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "250710",
+    "fotmob": "1285885"
+   }
+  },
+  "32978": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "423568",
+    "fotmob": "924391"
+   }
+  },
+  "32979": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "423400",
+    "fotmob": "1136496"
+   }
+  },
+  "32981": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "438060",
+    "fotmob": "1650945"
+   }
+  },
+  "32982": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "541264"
+   }
+  },
+  "32983": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "84481",
+    "fotmob": "484858"
+   }
+  },
+  "32985": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "172762",
+    "fotmob": "621946"
+   }
+  },
+  "32986": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "436915",
+    "fotmob": "1083216"
+   }
+  },
+  "32988": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "482812",
+    "fotmob": "1190765"
+   }
+  },
+  "32990": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "617007"
+   }
+  },
+  "32991": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "558240",
+    "fotmob": "1529380"
+   }
+  },
+  "32993": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "166921",
+    "fotmob": "462244"
+   }
+  },
+  "32995": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "172483",
+    "fotmob": "578643"
+   }
+  },
+  "32996": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "224372",
+    "fotmob": "825608"
+   }
+  },
+  "32997": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "250711",
+    "fotmob": "861186"
+   }
+  },
+  "32999": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "465479",
+    "fotmob": "962665"
+   }
+  },
+  "33000": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "429109"
+   }
+  },
+  "33001": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "574655",
+    "fotmob": "1387862"
+   }
+  },
+  "33003": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "235529",
+    "fotmob": "789791"
+   }
+  },
+  "33006": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "213213"
+   }
+  },
+  "33007": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315196623",
+    "fotmob": "666937"
+   }
+  },
+  "33010": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "234675",
+    "fotmob": "1026143"
+   }
+  },
+  "33012": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "427035",
+    "fotmob": "1439992"
+   }
+  },
+  "33013": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315200271",
+    "fotmob": "1715117"
+   }
+  },
+  "33014": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315196959",
+    "fotmob": "1610331"
+   }
+  },
+  "33015": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315199815"
+   }
+  },
+  "33016": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315200216",
+    "fotmob": "1715118"
+   }
+  },
+  "33017": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "170799",
+    "fotmob": "589897"
+   }
+  },
+  "33018": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "221608",
+    "fotmob": "748405"
+   }
+  },
+  "33020": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "201407",
+    "fotmob": "1136274"
+   }
+  },
+  "33021": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "226308",
+    "fotmob": "825663"
+   }
+  },
+  "33022": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "535942",
+    "fotmob": "1257603"
+   }
+  },
+  "33023": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "539637",
+    "fotmob": "1339609"
+   }
+  },
+  "33026": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315197272",
+    "fotmob": "1626423"
+   }
+  },
+  "33028": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315200474",
+    "fotmob": "1756515"
+   }
+  },
+  "33029": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "111686",
+    "fotmob": "239287"
+   }
+  },
+  "33030": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "162287"
+   }
+  },
+  "33031": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "524378",
+    "fotmob": "1251793"
+   }
+  },
+  "33032": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "483884",
+    "fotmob": "1339287"
+   }
+  },
+  "33034": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "426496",
+    "fotmob": "1083233"
+   }
+  },
+  "33038": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315197281",
+    "fotmob": "1710543"
+   }
+  },
+  "33042": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "477554",
+    "fotmob": "1023070"
+   }
+  },
+  "33043": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "428215",
+    "fotmob": "1083287"
+   }
+  },
+  "33044": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "449956",
+    "fotmob": "1138136"
+   }
+  },
+  "33046": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "502061",
+    "fotmob": "1710542"
+   }
+  },
+  "33047": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "179028",
+    "fotmob": "519093"
+   }
+  },
+  "33051": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "437236",
+    "fotmob": "1082905"
+   }
+  },
+  "33053": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "213866",
+    "fotmob": "655524"
+   }
+  },
+  "33054": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "229826",
+    "fotmob": "749491"
+   }
+  },
+  "33055": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "430298"
+   }
+  },
+  "33058": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "620012",
+    "fotmob": "1439990"
+   }
+  },
+  "33059": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "45281",
+    "fotmob": "112978"
+   }
+  },
+  "33060": {
+   "team": "St. Louis City",
+   "keys": {
+    "fotmob": "365646"
+   }
+  },
+  "33062": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "176674",
+    "fotmob": "514301"
+   }
+  },
+  "33064": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "247414",
+    "fotmob": "633617"
+   }
+  },
+  "33066": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "425341",
+    "fotmob": "1136410"
+   }
+  },
+  "33067": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "427568",
+    "fotmob": "1440010"
+   }
+  },
+  "33068": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "495897",
+    "fotmob": "1258867"
+   }
+  },
+  "33069": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "574374",
+    "fotmob": "1346870"
+   }
+  },
+  "33071": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "562678",
+    "fotmob": "1440054"
+   }
+  },
+  "33072": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315205413",
+    "fotmob": "1473603"
+   }
+  },
+  "33074": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "225411",
+    "fotmob": "794408"
+   }
+  },
+  "33075": {
+   "team": "St. Louis City",
+   "keys": {
+    "fotmob": "848424"
+   }
+  },
+  "33078": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "250870",
+    "fotmob": "1065321"
+   }
+  },
+  "33079": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315200239",
+    "fotmob": "843710"
+   }
+  },
+  "33080": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "572165",
+    "fotmob": "1346873"
+   }
+  },
+  "33081": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "554855",
+    "fotmob": "1455596"
+   }
+  },
+  "33083": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "560731",
+    "fotmob": "1610325"
+   }
+  },
+  "33085": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "447366",
+    "fotmob": "839021"
+   }
+  },
+  "33086": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "425438",
+    "fotmob": "1370582"
+   }
+  },
+  "33088": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "468953",
+    "fotmob": "1109166"
+   }
+  },
+  "33090": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315197278",
+    "fotmob": "1636109"
+   }
+  },
+  "33092": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "78013",
+    "fotmob": "198426"
+   }
+  },
+  "33093": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "565756",
+    "fotmob": "1338704"
+   }
+  },
+  "33098": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "221403",
+    "fotmob": "729506"
+   }
+  },
+  "33100": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "463248",
+    "fotmob": "1106934"
+   }
+  },
+  "33101": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "450555",
+    "fotmob": "1130753"
+   }
+  },
+  "33103": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "555488"
+   }
+  },
+  "33105": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "153647",
+    "fotmob": "432605"
+   }
+  },
+  "33108": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "246874",
+    "fotmob": "830601"
+   }
+  },
+  "33109": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315200677",
+    "fotmob": "1778338"
+   }
+  },
+  "33110": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "485703",
+    "fotmob": "1261310"
+   }
+  },
+  "33112": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "506532"
+   }
+  },
+  "33113": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "575275",
+    "fotmob": "1364471"
+   }
+  },
+  "33115": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "220752"
+   }
+  },
+  "33116": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "443296",
+    "fotmob": "1113737"
+   }
+  },
+  "33118": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "544796",
+    "fotmob": "1276785"
+   }
+  },
+  "33121": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "448050",
+    "fotmob": "648356"
+   }
+  },
+  "33125": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "169974",
+    "fotmob": "498143"
+   }
+  },
+  "33127": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "423123",
+    "fotmob": "925326"
+   }
+  },
+  "33128": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "425704",
+    "fotmob": "1036108"
+   }
+  },
+  "33129": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "450421",
+    "fotmob": "940774"
+   }
+  },
+  "33130": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315198938"
+   }
+  },
+  "33131": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "531662",
+    "fotmob": "1368139"
+   }
+  },
+  "33133": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315200116",
+    "fotmob": "1388146"
+   }
+  },
+  "33134": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315196774",
+    "fotmob": "1300472"
+   }
+  },
+  "33139": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "116213",
+    "fotmob": "318605"
+   }
+  },
+  "33140": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "181402",
+    "fotmob": "529625"
+   }
+  },
+  "33146": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "556959"
+   }
+  },
+  "33147": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "575019",
+    "fotmob": "1610145"
+   }
+  },
+  "33148": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "55634",
+    "fotmob": "116772"
+   }
+  },
+  "33149": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "443604",
+    "fotmob": "933760"
+   }
+  },
+  "33150": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "241521",
+    "fotmob": "848008"
+   }
+  },
+  "33152": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "518555",
+    "fotmob": "1257135"
+   }
+  },
+  "33153": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "204328",
+    "fotmob": "723480"
+   }
+  },
+  "33154": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "496813"
+   }
+  },
+  "33155": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315198933"
+   }
+  },
+  "33156": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315198936",
+    "fotmob": "1685596"
+   }
+  },
+  "52048": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315198962"
+   }
+  },
+  "52062": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "423062",
+    "fotmob": "848219"
+   }
+  },
+  "52081": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "474035",
+    "fotmob": "1101251"
+   }
+  },
+  "52084": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "436398"
+   }
+  },
+  "52086": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "611736",
+    "fotmob": "1445744"
+   }
+  },
+  "52090": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200601"
+   }
+  },
+  "52098": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "483460"
+   }
+  },
+  "52100": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "495907",
+    "fotmob": "1255486"
+   }
+  },
+  "52101": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "427558",
+    "fotmob": "1252223"
+   }
+  },
+  "52104": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "541435",
+    "fotmob": "1347570"
+   }
+  },
+  "52108": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315200416"
+   }
+  },
+  "52110": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "535411",
+    "fotmob": "1440012"
+   }
+  },
+  "52111": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "499550",
+    "fotmob": "1470127"
+   }
+  },
+  "52118": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "545364",
+    "fotmob": "1374975"
+   }
+  },
+  "58319": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315196737",
+    "fotmob": "113620"
+   }
+  },
+  "58320": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315197071",
+    "fotmob": "1649302"
+   }
+  },
+  "58322": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "168097",
+    "fotmob": "466214"
+   }
+  },
+  "58323": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315199436",
+    "fotmob": "447556"
+   }
+  },
+  "58325": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "214764",
+    "fotmob": "830156"
+   }
+  },
+  "58326": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "233949",
+    "fotmob": "784876"
+   }
+  },
+  "58327": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "557652",
+    "fotmob": "1308412"
+   }
+  },
+  "58328": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315206540",
+    "fotmob": "1513339"
+   }
+  },
+  "58329": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315197246",
+    "fotmob": "1659144"
+   }
+  },
+  "58332": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "235382",
+    "fotmob": "789567"
+   }
+  },
+  "58333": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "240136",
+    "fotmob": "769928"
+   }
+  },
+  "58334": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "451984",
+    "fotmob": "1077994"
+   }
+  },
+  "58336": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "533266",
+    "fotmob": "1305664"
+   }
+  },
+  "58337": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315209901",
+    "fotmob": "1437531"
+   }
+  },
+  "58338": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315206329",
+    "fotmob": "1830234"
+   }
+  },
+  "58339": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "556828"
+   }
+  },
+  "58340": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "556824",
+    "fotmob": "1732500"
+   }
+  },
+  "58341": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315200494",
+    "fotmob": "1781187"
+   }
+  },
+  "58343": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "179018",
+    "fotmob": "442277"
+   }
+  },
+  "58344": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "196762"
+   }
+  },
+  "58345": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "201125",
+    "fotmob": "604410"
+   }
+  },
+  "58346": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315200234",
+    "fotmob": "678043"
+   }
+  },
+  "58348": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "151939",
+    "fotmob": "431642"
+   }
+  },
+  "58349": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "426444",
+    "fotmob": "1187234"
+   }
+  },
+  "58350": {
+   "team": "Austin FC",
+   "keys": {
+    "fotmob": "1781726"
+   }
+  },
+  "58351": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "175916",
+    "fotmob": "510306"
+   }
+  },
+  "58352": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "140246",
+    "fotmob": "402995"
+   }
+  },
+  "58353": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "234618",
+    "fotmob": "922849"
+   }
+  },
+  "58354": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "220448",
+    "fotmob": "716424"
+   }
+  },
+  "58355": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "250984",
+    "fotmob": "862331"
+   }
+  },
+  "58356": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315196592",
+    "fotmob": "1174298"
+   }
+  },
+  "58357": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315200422",
+    "fotmob": "1729684"
+   }
+  },
+  "58358": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315205463",
+    "fotmob": "1284374"
+   }
+  },
+  "58359": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "86155",
+    "fotmob": "213697"
+   }
+  },
+  "58360": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "193808",
+    "fotmob": "619365"
+   }
+  },
+  "58361": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "477444",
+    "fotmob": "1028458"
+   }
+  },
+  "58362": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "428626",
+    "fotmob": "862717"
+   }
+  },
+  "58363": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "481435",
+    "fotmob": "1300906"
+   }
+  },
+  "58364": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "476764"
+   }
+  },
+  "58365": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "541756",
+    "fotmob": "1463762"
+   }
+  },
+  "58366": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315200498",
+    "fotmob": "1557051"
+   }
+  },
+  "58367": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "541734",
+    "fotmob": "1642174"
+   }
+  },
+  "58368": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "474038",
+    "fotmob": "1139168"
+   }
+  },
+  "58369": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "218313",
+    "fotmob": "688296"
+   }
+  },
+  "58370": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "163397",
+    "fotmob": "634865"
+   }
+  },
+  "58371": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "174816",
+    "fotmob": "948247"
+   }
+  },
+  "58372": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "243870",
+    "fotmob": "1073995"
+   }
+  },
+  "58373": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "483209",
+    "fotmob": "1245998"
+   }
+  },
+  "58375": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "244766",
+    "fotmob": "1136089"
+   }
+  },
+  "58376": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "245012",
+    "fotmob": "830664"
+   }
+  },
+  "58377": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "228147",
+    "fotmob": "1100258"
+   }
+  },
+  "58378": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "234214",
+    "fotmob": "1018587"
+   }
+  },
+  "58380": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "234571",
+    "fotmob": "1170975"
+   }
+  },
+  "58381": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315205806",
+    "fotmob": "1666976"
+   }
+  },
+  "58382": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315197110"
+   }
+  },
+  "58384": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315200281",
+    "fotmob": "1525424"
+   }
+  },
+  "58385": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315206149",
+    "fotmob": "1719066"
+   }
+  },
+  "58386": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315206072",
+    "fotmob": "482204"
+   }
+  },
+  "58387": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "108839",
+    "fotmob": "293569"
+   }
+  },
+  "58388": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "430906",
+    "fotmob": "861753"
+   }
+  },
+  "58389": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315204152",
+    "fotmob": "1080684"
+   }
+  },
+  "58390": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "539863",
+    "fotmob": "1338620"
+   }
+  },
+  "58392": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "438368"
+   }
+  },
+  "58393": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315200283",
+    "fotmob": "1715443"
+   }
+  },
+  "58394": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "56764",
+    "fotmob": "93447"
+   }
+  },
+  "58395": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "162344",
+    "fotmob": "449279"
+   }
+  },
+  "58396": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "195883",
+    "fotmob": "466478"
+   }
+  },
+  "58397": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "fotmob": "924498"
+   }
+  },
+  "58398": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315197118",
+    "fotmob": "1517847"
+   }
+  },
+  "58399": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "533771",
+    "fotmob": "1646522"
+   }
+  },
+  "58400": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "540915"
+   }
+  },
+  "58401": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315200282",
+    "fotmob": "1715445"
+   }
+  },
+  "58402": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "234377",
+    "fotmob": "825599"
+   }
+  },
+  "58403": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "424761",
+    "fotmob": "1337962"
+   }
+  },
+  "58404": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315206683",
+    "fotmob": "1384210"
+   }
+  },
+  "58405": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "153264"
+   }
+  },
+  "58406": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "163793",
+    "fotmob": "458324"
+   }
+  },
+  "58407": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "132113",
+    "fotmob": "525614"
+   }
+  },
+  "58408": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "245710"
+   }
+  },
+  "58409": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315206006",
+    "fotmob": "1458513"
+   }
+  },
+  "58410": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "227733",
+    "fotmob": "754583"
+   }
+  },
+  "58411": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "241500",
+    "fotmob": "825623"
+   }
+  },
+  "58412": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315200169",
+    "fotmob": "1742250"
+   }
+  },
+  "58413": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315206928",
+    "fotmob": "1910887"
+   }
+  },
+  "58414": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "200933"
+   }
+  },
+  "58416": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "430076",
+    "fotmob": "861112"
+   }
+  },
+  "58417": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "444635",
+    "fotmob": "923247"
+   }
+  },
+  "58418": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "541997"
+   }
+  },
+  "58419": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "497040",
+    "fotmob": "1362857"
+   }
+  },
+  "58420": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315205794",
+    "fotmob": "1383071"
+   }
+  },
+  "58421": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315197332",
+    "fotmob": "1642605"
+   }
+  },
+  "58422": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315200554",
+    "fotmob": "1731903"
+   }
+  },
+  "58423": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "234346",
+    "fotmob": "847753"
+   }
+  },
+  "58424": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "245918",
+    "fotmob": "820477"
+   }
+  },
+  "58425": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315205761",
+    "fotmob": "1364494"
+   }
+  },
+  "58426": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "537891",
+    "fotmob": "1366206"
+   }
+  },
+  "58427": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315205405",
+    "fotmob": "1248686"
+   }
+  },
+  "58428": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315197181",
+    "fotmob": "1650499"
+   }
+  },
+  "58429": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "109275",
+    "fotmob": "308044"
+   }
+  },
+  "58430": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "214552",
+    "fotmob": "960923"
+   }
+  },
+  "58431": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "431777",
+    "fotmob": "1083292"
+   }
+  },
+  "58432": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315200547",
+    "fotmob": "1732574"
+   }
+  },
+  "58433": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "539969",
+    "fotmob": "1517849"
+   }
+  },
+  "58435": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "89080",
+    "fotmob": "294253"
+   }
+  },
+  "58436": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "141017",
+    "fotmob": "444000"
+   }
+  },
+  "58437": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "197365",
+    "fotmob": "574200"
+   }
+  },
+  "58438": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "178386",
+    "fotmob": "760725"
+   }
+  },
+  "58439": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "445891",
+    "fotmob": "623145"
+   }
+  },
+  "58440": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "466372",
+    "fotmob": "965091"
+   }
+  },
+  "58441": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "484653",
+    "fotmob": "1194635"
+   }
+  },
+  "58442": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "542273",
+    "fotmob": "1647191"
+   }
+  },
+  "58443": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315200545",
+    "fotmob": "1727042"
+   }
+  },
+  "58444": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "499685",
+    "fotmob": "1720648"
+   }
+  },
+  "58445": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "120250",
+    "fotmob": "361770"
+   }
+  },
+  "58446": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "234410",
+    "fotmob": "1026112"
+   }
+  },
+  "58447": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "173787",
+    "fotmob": "630102"
+   }
+  },
+  "58448": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315209557",
+    "fotmob": "640122"
+   }
+  },
+  "58449": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "444465",
+    "fotmob": "770306"
+   }
+  },
+  "58450": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "224364",
+    "fotmob": "1338763"
+   }
+  },
+  "58454": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315205412"
+   }
+  },
+  "58455": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "542319",
+    "fotmob": "1482266"
+   }
+  },
+  "58456": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315200804",
+    "fotmob": "1935404"
+   }
+  },
+  "58457": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "156274",
+    "fotmob": "420216"
+   }
+  },
+  "58458": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315203992",
+    "fotmob": "919036"
+   }
+  },
+  "58459": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315204538",
+    "fotmob": "1108614"
+   }
+  },
+  "58460": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315197256",
+    "fotmob": "1626999"
+   }
+  },
+  "58461": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315205402",
+    "fotmob": "1780591"
+   }
+  },
+  "58462": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "202361",
+    "fotmob": "629065"
+   }
+  },
+  "58463": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "212893",
+    "fotmob": "653737"
+   }
+  },
+  "58464": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "613951",
+    "fotmob": "1513115"
+   }
+  },
+  "58465": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "82514",
+    "fotmob": "198444"
+   }
+  },
+  "58466": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "94440",
+    "fotmob": "212705"
+   }
+  },
+  "58467": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "114241",
+    "fotmob": "575804"
+   }
+  },
+  "58468": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "445433",
+    "fotmob": "923240"
+   }
+  },
+  "58469": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "485429",
+    "fotmob": "1457717"
+   }
+  },
+  "58470": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "542259",
+    "fotmob": "1455815"
+   }
+  },
+  "58471": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "531920",
+    "fotmob": "1473311"
+   }
+  },
+  "58472": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315200214",
+    "fotmob": "1768006"
+   }
+  },
+  "58473": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315206584",
+    "fotmob": "1909094"
+   }
+  },
+  "58474": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315205756",
+    "fotmob": "1663548"
+   }
+  },
+  "58475": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "60551",
+    "fotmob": "182223"
+   }
+  },
+  "58476": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "244988",
+    "fotmob": "828769"
+   }
+  },
+  "58477": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "199830",
+    "fotmob": "897569"
+   }
+  },
+  "58478": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315196950",
+    "fotmob": "977775"
+   }
+  },
+  "58479": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315200513",
+    "fotmob": "1781132"
+   }
+  },
+  "58480": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "576889",
+    "fotmob": "1637571"
+   }
+  },
+  "58481": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "170137",
+    "fotmob": "466482"
+   }
+  },
+  "58482": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "449853",
+    "fotmob": "1091975"
+   }
+  },
+  "58483": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315205782",
+    "fotmob": "1232133"
+   }
+  },
+  "58484": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315200134",
+    "fotmob": "1404547"
+   }
+  },
+  "58485": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315206802",
+    "fotmob": "1919442"
+   }
+  },
+  "58486": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "559455",
+    "fotmob": "1439804"
+   }
+  },
+  "58487": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315196955",
+    "fotmob": "1618023"
+   }
+  },
+  "58488": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "315206583",
+    "fotmob": "1807287"
+   }
+  },
+  "58489": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "164484",
+    "fotmob": "533127"
+   }
+  },
+  "58490": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315197192"
+   }
+  },
+  "58491": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "540971"
+   }
+  },
+  "58493": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "156074",
+    "fotmob": "626667"
+   }
+  },
+  "58494": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "127541",
+    "fotmob": "729473"
+   }
+  },
+  "58495": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "245035",
+    "fotmob": "825603"
+   }
+  },
+  "58496": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "474800",
+    "fotmob": "1048053"
+   }
+  },
+  "58497": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "533259",
+    "fotmob": "1258251"
+   }
+  },
+  "58498": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315209556",
+    "fotmob": "1280203"
+   }
+  },
+  "58502": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315209644",
+    "fotmob": "814619"
+   }
+  },
+  "58503": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "981376"
+   }
+  },
+  "58504": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "468741"
+   }
+  },
+  "58505": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315206185",
+    "fotmob": "1442054"
+   }
+  },
+  "58506": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "468375",
+    "fotmob": "1171008"
+   }
+  },
+  "58507": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315200443",
+    "fotmob": "1670484"
+   }
+  },
+  "58508": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315196605",
+    "fotmob": "1610223"
+   }
+  },
+  "58510": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315200423",
+    "fotmob": "1663077"
+   }
+  },
+  "58511": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "485267",
+    "fotmob": "1173474"
+   }
+  },
+  "58512": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "476737",
+    "fotmob": "1190710"
+   }
+  },
+  "58513": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "437110",
+    "fotmob": "1026050"
+   }
+  },
+  "58514": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "541382"
+   }
+  },
+  "58515": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "619806"
+   }
+  },
+  "58516": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "619018"
+   }
+  },
+  "58517": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315206312",
+    "fotmob": "1786169"
+   }
+  },
+  "58518": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "1745119"
+   }
+  },
+  "58519": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "427379",
+    "fotmob": "1168602"
+   }
+  },
+  "58520": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315196595",
+    "fotmob": "1606021"
+   }
+  },
+  "58521": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "209393",
+    "fotmob": "643583"
+   }
+  },
+  "58522": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "131371",
+    "fotmob": "520795"
+   }
+  },
+  "58523": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "244927",
+    "fotmob": "825694"
+   }
+  },
+  "58524": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "441534",
+    "fotmob": "906085"
+   }
+  },
+  "58525": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "532565",
+    "fotmob": "1339295"
+   }
+  },
+  "58526": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "531145",
+    "fotmob": "1440042"
+   }
+  },
+  "58527": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206172",
+    "fotmob": "1884090"
+   }
+  },
+  "58528": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200229",
+    "fotmob": "1715422"
+   }
+  },
+  "58529": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200444",
+    "fotmob": "1671036"
+   }
+  },
+  "58530": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200081",
+    "fotmob": "1772460"
+   }
+  },
+  "58531": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200041",
+    "fotmob": "1781510"
+   }
+  },
+  "58532": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200195",
+    "fotmob": "452031"
+   }
+  },
+  "58533": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "438973",
+    "fotmob": "1478367"
+   }
+  },
+  "58534": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "425086",
+    "fotmob": "978875"
+   }
+  },
+  "58535": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "479962",
+    "fotmob": "1344245"
+   }
+  },
+  "58536": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206164",
+    "fotmob": "946703"
+   }
+  },
+  "58537": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "546643",
+    "fotmob": "1305970"
+   }
+  },
+  "58538": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206665",
+    "fotmob": "1391242"
+   }
+  },
+  "58539": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206153",
+    "fotmob": "1477917"
+   }
+  },
+  "58540": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200491",
+    "fotmob": "1732589"
+   }
+  },
+  "58541": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200561",
+    "fotmob": "1797282"
+   }
+  },
+  "58542": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "182015",
+    "fotmob": "801720"
+   }
+  },
+  "58543": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "460714",
+    "fotmob": "709796"
+   }
+  },
+  "58545": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "537185",
+    "fotmob": "1251200"
+   }
+  },
+  "58546": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200233"
+   }
+  },
+  "58547": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315196596",
+    "fotmob": "1515619"
+   }
+  },
+  "58548": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "611833",
+    "fotmob": "1534813"
+   }
+  },
+  "58549": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315198644",
+    "fotmob": "1715420"
+   }
+  },
+  "58550": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315200042"
+   }
+  },
+  "58551": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206155",
+    "fotmob": "1904351"
+   }
+  },
+  "58552": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315206979",
+    "fotmob": "1919478"
+   }
+  },
+  "58553": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "163484",
+    "fotmob": "621547"
+   }
+  },
+  "58554": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "446571"
+   }
+  },
+  "58555": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315206675",
+    "fotmob": "1811873"
+   }
+  },
+  "58556": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315206481",
+    "fotmob": "678384"
+   }
+  },
+  "58557": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "218151",
+    "fotmob": "825231"
+   }
+  },
+  "58558": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "477833",
+    "fotmob": "1023942"
+   }
+  },
+  "58559": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "502609",
+    "fotmob": "1084535"
+   }
+  },
+  "58560": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "565617",
+    "fotmob": "1338938"
+   }
+  },
+  "58561": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315209645",
+    "fotmob": "1611171"
+   }
+  },
+  "58562": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315206156",
+    "fotmob": "1904329"
+   }
+  },
+  "58563": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "200087",
+    "fotmob": "729733"
+   }
+  },
+  "58564": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "224382",
+    "fotmob": "924454"
+   }
+  },
+  "58565": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "234050",
+    "fotmob": "949675"
+   }
+  },
+  "58566": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "465049",
+    "fotmob": "1171305"
+   }
+  },
+  "58567": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315196624",
+    "fotmob": "1613510"
+   }
+  },
+  "58568": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "497649",
+    "fotmob": "1280734"
+   }
+  },
+  "58570": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "478605",
+    "fotmob": "1037813"
+   }
+  },
+  "58571": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "223351",
+    "fotmob": "1440015"
+   }
+  },
+  "58572": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315200212"
+   }
+  },
+  "58573": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "234874",
+    "fotmob": "939140"
+   }
+  },
+  "58574": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "494886",
+    "fotmob": "1328863"
+   }
+  },
+  "58576": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315206024",
+    "fotmob": "1904328"
+   }
+  },
+  "58577": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "78603",
+    "fotmob": "186882"
+   }
+  },
+  "58578": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "95778",
+    "fotmob": "254939"
+   }
+  },
+  "58579": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315200445",
+    "fotmob": "1719247"
+   }
+  },
+  "58580": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "483018",
+    "fotmob": "1904742"
+   }
+  },
+  "58581": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "116400",
+    "fotmob": "319812"
+   }
+  },
+  "58583": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "209861",
+    "fotmob": "643577"
+   }
+  },
+  "58584": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "224823"
+   }
+  },
+  "58585": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315206195",
+    "fotmob": "1043762"
+   }
+  },
+  "58586": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "533361",
+    "fotmob": "1501511"
+   }
+  },
+  "58587": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "495941",
+    "fotmob": "1904741"
+   }
+  },
+  "58588": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315200803",
+    "fotmob": "1910398"
+   }
+  },
+  "58590": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "102578",
+    "fotmob": "274623"
+   }
+  },
+  "58591": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315200707",
+    "fotmob": "480787"
+   }
+  },
+  "58592": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "210206",
+    "fotmob": "643646"
+   }
+  },
+  "58593": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "221408",
+    "fotmob": "723682"
+   }
+  },
+  "58594": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "227232",
+    "fotmob": "750922"
+   }
+  },
+  "58596": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "480216",
+    "fotmob": "954194"
+   }
+  },
+  "58598": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315205404",
+    "fotmob": "1781979"
+   }
+  },
+  "58600": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "fotmob": "763151"
+   }
+  },
+  "58601": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "476358",
+    "fotmob": "1178505"
+   }
+  },
+  "58602": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "611570",
+    "fotmob": "1439982"
+   }
+  },
+  "58603": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315199822",
+    "fotmob": "1274604"
+   }
+  },
+  "58604": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "fotmob": "1311908"
+   }
+  },
+  "58606": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "226384",
+    "fotmob": "847987"
+   }
+  },
+  "58607": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "220151",
+    "fotmob": "847989"
+   }
+  },
+  "58608": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "475966",
+    "fotmob": "1068655"
+   }
+  },
+  "58609": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "80447",
+    "fotmob": "72665"
+   }
+  },
+  "58612": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "200784",
+    "fotmob": "1026048"
+   }
+  },
+  "58613": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "223964",
+    "fotmob": "259484"
+   }
+  },
+  "58615": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "467141",
+    "fotmob": "1200661"
+   }
+  },
+  "58616": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "499403",
+    "fotmob": "1413809"
+   }
+  },
+  "58617": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "558284",
+    "fotmob": "1683714"
+   }
+  },
+  "58618": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "50523",
+    "fotmob": "129944"
+   }
+  },
+  "58619": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "86157",
+    "fotmob": "212472"
+   }
+  },
+  "58620": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "315200446",
+    "fotmob": "1609838"
+   }
+  },
+  "58622": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "427396",
+    "fotmob": "1026144"
+   }
+  },
+  "58623": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "482329",
+    "fotmob": "1079298"
+   }
+  },
+  "58624": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "224359",
+    "fotmob": "1245255"
+   }
+  },
+  "58626": {
+   "team": "LA Galaxy",
+   "keys": {
+    "fotmob": "1781405"
+   }
+  },
+  "58627": {
+   "team": "LA Galaxy",
+   "keys": {
+    "fotmob": "1840739"
+   }
+  },
+  "58628": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "315198185",
+    "fotmob": "1922451"
+   }
+  },
+  "58629": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "171770",
+    "fotmob": "448543"
+   }
+  },
+  "58630": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "424163",
+    "fotmob": "850924"
+   }
+  },
+  "58631": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "460110",
+    "fotmob": "826089"
+   }
+  },
+  "58632": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "558296",
+    "fotmob": "1478368"
+   }
+  },
+  "58633": {
+   "team": "LA Galaxy",
+   "keys": {
+    "fotmob": "1532260"
+   }
+  },
+  "58634": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "37915",
+    "fotmob": "26295"
+   }
+  },
+  "58635": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "248397",
+    "fotmob": "1031221"
+   }
+  },
+  "58636": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315200585",
+    "fotmob": "1349978"
+   }
+  },
+  "58637": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "130056",
+    "fotmob": "525623"
+   }
+  },
+  "58638": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "246283",
+    "fotmob": "837974"
+   }
+  },
+  "58639": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "163541",
+    "fotmob": "525136"
+   }
+  },
+  "58640": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "207756",
+    "fotmob": "627490"
+   }
+  },
+  "58641": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "229911",
+    "fotmob": "770998"
+   }
+  },
+  "58642": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "230635"
+   }
+  },
+  "58643": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "501651",
+    "fotmob": "1136251"
+   }
+  },
+  "58644": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315199789",
+    "fotmob": "1687268"
+   }
+  },
+  "58645": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "541626",
+    "fotmob": "1476710"
+   }
+  },
+  "58646": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "114579"
+   }
+  },
+  "58647": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "219843",
+    "fotmob": "767793"
+   }
+  },
+  "58648": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "425625",
+    "fotmob": "943428"
+   }
+  },
+  "58649": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "479760",
+    "fotmob": "1052761"
+   }
+  },
+  "58650": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "543959",
+    "fotmob": "1380816"
+   }
+  },
+  "58651": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315197229",
+    "fotmob": "1710667"
+   }
+  },
+  "58654": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "85971"
+   }
+  },
+  "58655": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "132039",
+    "fotmob": "396757"
+   }
+  },
+  "58656": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "216227",
+    "fotmob": "664962"
+   }
+  },
+  "58657": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "235290",
+    "fotmob": "792024"
+   }
+  },
+  "58658": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "477838",
+    "fotmob": "1023943"
+   }
+  },
+  "58660": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "465832",
+    "fotmob": "1191741"
+   }
+  },
+  "58661": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315200859",
+    "fotmob": "1731726"
+   }
+  },
+  "58663": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "234433",
+    "fotmob": "1026105"
+   }
+  },
+  "58664": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "234311",
+    "fotmob": "1026132"
+   }
+  },
+  "58665": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "467135",
+    "fotmob": "1216069"
+   }
+  },
+  "58666": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "199249",
+    "fotmob": "724436"
+   }
+  },
+  "58667": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "473948",
+    "fotmob": "1029392"
+   }
+  },
+  "58668": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "215117",
+    "fotmob": "1134104"
+   }
+  },
+  "58669": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "532716",
+    "fotmob": "1262208"
+   }
+  },
+  "58670": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315200286",
+    "fotmob": "1257342"
+   }
+  },
+  "58671": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "494355",
+    "fotmob": "1171135"
+   }
+  },
+  "58672": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "486231",
+    "fotmob": "1340790"
+   }
+  },
+  "58673": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "532143",
+    "fotmob": "1376142"
+   }
+  },
+  "58674": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "499422",
+    "fotmob": "1502433"
+   }
+  },
+  "58675": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "554896"
+   }
+  },
+  "58676": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315204115",
+    "fotmob": "1781660"
+   }
+  },
+  "58677": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315209518",
+    "fotmob": "1829065"
+   }
+  },
+  "58678": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "61256",
+    "fotmob": "208494"
+   }
+  },
+  "58679": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "119141",
+    "fotmob": "324578"
+   }
+  },
+  "58680": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "540952",
+    "fotmob": "1529403"
+   }
+  },
+  "58681": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "541416",
+    "fotmob": "1348286"
+   }
+  },
+  "58682": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "485108",
+    "fotmob": "1253904"
+   }
+  },
+  "58683": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315196632",
+    "fotmob": "1600844"
+   }
+  },
+  "58686": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315201746",
+    "fotmob": "1738766"
+   }
+  },
+  "58687": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315205399",
+    "fotmob": "1780795"
+   }
+  },
+  "58688": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "19054",
+    "fotmob": "30981"
+   }
+  },
+  "58689": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "39336",
+    "fotmob": "40636"
+   }
+  },
+  "58690": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "218550",
+    "fotmob": "743536"
+   }
+  },
+  "58691": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315200285",
+    "fotmob": "1330616"
+   }
+  },
+  "58693": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "fotmob": "1447447"
+   }
+  },
+  "58694": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315205805",
+    "fotmob": "1662026"
+   }
+  },
+  "58695": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315198570",
+    "fotmob": "1626969"
+   }
+  },
+  "58697": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "497622",
+    "fotmob": "1136263"
+   }
+  },
+  "58698": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "422997",
+    "fotmob": "1338907"
+   }
+  },
+  "58699": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315197330",
+    "fotmob": "1732519"
+   }
+  },
+  "58700": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "95330",
+    "fotmob": "128949"
+   }
+  },
+  "58701": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "223127",
+    "fotmob": "944942"
+   }
+  },
+  "58702": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "224498",
+    "fotmob": "1339585"
+   }
+  },
+  "58703": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200287",
+    "fotmob": "1230353"
+   }
+  },
+  "58704": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315205807",
+    "fotmob": "1338086"
+   }
+  },
+  "58705": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "574102",
+    "fotmob": "1631396"
+   }
+  },
+  "58706": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200068",
+    "fotmob": "1356311"
+   }
+  },
+  "58707": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200600",
+    "fotmob": "1757992"
+   }
+  },
+  "58708": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "148995",
+    "fotmob": "431896"
+   }
+  },
+  "58709": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200123",
+    "fotmob": "831541"
+   }
+  },
+  "58710": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "244997",
+    "fotmob": "825625"
+   }
+  },
+  "58711": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315205800"
+   }
+  },
+  "58712": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "459639",
+    "fotmob": "1017520"
+   }
+  },
+  "58713": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200442",
+    "fotmob": "1307695"
+   }
+  },
+  "58714": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "432831",
+    "fotmob": "876274"
+   }
+  },
+  "58715": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "464630",
+    "fotmob": "961347"
+   }
+  },
+  "58716": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "483188",
+    "fotmob": "1047139"
+   }
+  },
+  "58717": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200066",
+    "fotmob": "951927"
+   }
+  },
+  "58718": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "546167",
+    "fotmob": "1610316"
+   }
+  },
+  "58719": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315206280",
+    "fotmob": "1458263"
+   }
+  },
+  "58720": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "563259",
+    "fotmob": "1666617"
+   }
+  },
+  "58721": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315198782",
+    "fotmob": "1615771"
+   }
+  },
+  "58722": {
+   "team": "Minnesota United",
+   "keys": {
+    "fotmob": "1780445"
+   }
+  },
+  "58723": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "247362",
+    "fotmob": "823030"
+   }
+  },
+  "58724": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "536934",
+    "fotmob": "1432807"
+   }
+  },
+  "58725": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "437702",
+    "fotmob": "1468809"
+   }
+  },
+  "58726": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315206569",
+    "fotmob": "1901677"
+   }
+  },
+  "58727": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "224764",
+    "fotmob": "1037553"
+   }
+  },
+  "58728": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "436962",
+    "fotmob": "1172426"
+   }
+  },
+  "58729": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "468032",
+    "fotmob": "1171825"
+   }
+  },
+  "58730": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "487699",
+    "fotmob": "1188642"
+   }
+  },
+  "58731": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "482847",
+    "fotmob": "1179047"
+   }
+  },
+  "58732": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315200197",
+    "fotmob": "1289123"
+   }
+  },
+  "58733": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315199820",
+    "fotmob": "1639641"
+   }
+  },
+  "58734": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "182906",
+    "fotmob": "330470"
+   }
+  },
+  "58736": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "424659",
+    "fotmob": "1025983"
+   }
+  },
+  "58737": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "500178",
+    "fotmob": "1246736"
+   }
+  },
+  "58738": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "482884",
+    "fotmob": "1268808"
+   }
+  },
+  "58739": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315206613",
+    "fotmob": "1481891"
+   }
+  },
+  "58740": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315206165",
+    "fotmob": "1663512"
+   }
+  },
+  "58741": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315200354",
+    "fotmob": "1424019"
+   }
+  },
+  "58742": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315206154",
+    "fotmob": "1904302"
+   }
+  },
+  "58743": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "37265",
+    "fotmob": "50047"
+   }
+  },
+  "58744": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "221475",
+    "fotmob": "729983"
+   }
+  },
+  "58745": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "211688",
+    "fotmob": "659094"
+   }
+  },
+  "58746": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "499511",
+    "fotmob": "1650206"
+   }
+  },
+  "58747": {
+   "team": "CF Montréal",
+   "keys": {
+    "mlssoccer": "315200407"
+   }
+  },
+  "58748": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "224068",
+    "fotmob": "729988"
+   }
+  },
+  "58749": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315198550",
+    "fotmob": "1640887"
+   }
+  },
+  "58750": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315200210",
+    "fotmob": "1715314"
+   }
+  },
+  "58751": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "218240",
+    "fotmob": "785536"
+   }
+  },
+  "58752": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "151940",
+    "fotmob": "431646"
+   }
+  },
+  "58753": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "501922",
+    "fotmob": "1136294"
+   }
+  },
+  "58754": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "249219",
+    "fotmob": "1338765"
+   }
+  },
+  "58755": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315200410",
+    "fotmob": "1477873"
+   }
+  },
+  "58756": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "537288",
+    "fotmob": "1448104"
+   }
+  },
+  "58757": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "614797",
+    "fotmob": "1520636"
+   }
+  },
+  "58758": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "541614",
+    "fotmob": "1473789"
+   }
+  },
+  "58759": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315208243",
+    "fotmob": "1680964"
+   }
+  },
+  "58763": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "88554",
+    "fotmob": "358289"
+   }
+  },
+  "58764": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "95284",
+    "fotmob": "254966"
+   }
+  },
+  "58765": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "197428",
+    "fotmob": "621511"
+   }
+  },
+  "58766": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "245628",
+    "fotmob": "825712"
+   }
+  },
+  "58767": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "459212",
+    "fotmob": "955195"
+   }
+  },
+  "58768": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "540970",
+    "fotmob": "1303876"
+   }
+  },
+  "58770": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "594894",
+    "fotmob": "1746754"
+   }
+  },
+  "58771": {
+   "team": "New England Revolution",
+   "keys": {
+    "fotmob": "1676099"
+   }
+  },
+  "58772": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "221399",
+    "fotmob": "751649"
+   }
+  },
+  "58773": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "224637",
+    "fotmob": "945167"
+   }
+  },
+  "58774": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "474003",
+    "fotmob": "1032040"
+   }
+  },
+  "58775": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "436107",
+    "fotmob": "1033176"
+   }
+  },
+  "58776": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315205797",
+    "fotmob": "1177306"
+   }
+  },
+  "58778": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315200087",
+    "fotmob": "1372430"
+   }
+  },
+  "58781": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "315200715",
+    "fotmob": "1769985"
+   }
+  },
+  "58782": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "95309",
+    "fotmob": "254980"
+   }
+  },
+  "58783": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315200289",
+    "fotmob": "1169991"
+   }
+  },
+  "58784": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "495730",
+    "fotmob": "1357558"
+   }
+  },
+  "58785": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "82533",
+    "fotmob": "198453"
+   }
+  },
+  "58786": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315200288",
+    "fotmob": "641306"
+   }
+  },
+  "58787": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "177928",
+    "fotmob": "525617"
+   }
+  },
+  "58788": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "421186",
+    "fotmob": "1124868"
+   }
+  },
+  "58789": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "512141",
+    "fotmob": "1190695"
+   }
+  },
+  "58790": {
+   "team": "Nashville SC",
+   "keys": {
+    "fotmob": "1078039"
+   }
+  },
+  "58791": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315206146",
+    "fotmob": "1069403"
+   }
+  },
+  "58792": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "495767",
+    "fotmob": "1339603"
+   }
+  },
+  "58793": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "573714",
+    "fotmob": "1348284"
+   }
+  },
+  "58795": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "119089",
+    "fotmob": "394462"
+   }
+  },
+  "58796": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "193611",
+    "fotmob": "520424"
+   }
+  },
+  "58797": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "220753",
+    "fotmob": "729772"
+   }
+  },
+  "58798": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315200290",
+    "fotmob": "1083998"
+   }
+  },
+  "58799": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "511150",
+    "fotmob": "1235411"
+   }
+  },
+  "58800": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "531142",
+    "fotmob": "1341159"
+   }
+  },
+  "58801": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "610203"
+   }
+  },
+  "58802": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315206659",
+    "fotmob": "1907513"
+   }
+  },
+  "58803": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "315209635",
+    "fotmob": "1736094"
+   }
+  },
+  "58804": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "217331",
+    "fotmob": "796747"
+   }
+  },
+  "58805": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "519567",
+    "fotmob": "1431651"
+   }
+  },
+  "58807": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "545664",
+    "fotmob": "1285773"
+   }
+  },
+  "58809": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "563269",
+    "fotmob": "1600849"
+   }
+  },
+  "58810": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "224589",
+    "fotmob": "1078053"
+   }
+  },
+  "58811": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "211539",
+    "fotmob": "790163"
+   }
+  },
+  "58812": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "247671",
+    "fotmob": "1026065"
+   }
+  },
+  "58813": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "164232",
+    "fotmob": "498296"
+   }
+  },
+  "58814": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "204263",
+    "fotmob": "769648"
+   }
+  },
+  "58815": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315205784"
+   }
+  },
+  "58816": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315206399",
+    "fotmob": "1101030"
+   }
+  },
+  "58817": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "436014",
+    "fotmob": "1107250"
+   }
+  },
+  "58818": {
+   "team": "New York City FC",
+   "keys": {
+    "fotmob": "1905210"
+   }
+  },
+  "58819": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "543474",
+    "fotmob": "1347947"
+   }
+  },
+  "58820": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315200473"
+   }
+  },
+  "58821": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "541637",
+    "fotmob": "1513262"
+   }
+  },
+  "58823": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315200472",
+    "fotmob": "1720649"
+   }
+  },
+  "58824": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "55831",
+    "fotmob": "29587"
+   }
+  },
+  "58825": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "469341",
+    "fotmob": "976705"
+   }
+  },
+  "58826": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315203699",
+    "fotmob": "785377"
+   }
+  },
+  "58827": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "215471",
+    "fotmob": "880095"
+   }
+  },
+  "58828": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "429548",
+    "fotmob": "1041997"
+   }
+  },
+  "58829": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "244299",
+    "fotmob": "782782"
+   }
+  },
+  "58830": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315206160",
+    "fotmob": "1166267"
+   }
+  },
+  "58831": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "541673",
+    "fotmob": "1513255"
+   }
+  },
+  "58833": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "540876",
+    "fotmob": "1626412"
+   }
+  },
+  "58834": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315197265",
+    "fotmob": "1729724"
+   }
+  },
+  "58835": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315206655",
+    "fotmob": "1909902"
+   }
+  },
+  "58837": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "223586",
+    "fotmob": "727165"
+   }
+  },
+  "58838": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "471445",
+    "fotmob": "1057583"
+   }
+  },
+  "58839": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "517646",
+    "fotmob": "1024424"
+   }
+  },
+  "58840": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "523957",
+    "fotmob": "1231770"
+   }
+  },
+  "58841": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315196770",
+    "fotmob": "1345326"
+   }
+  },
+  "58843": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315196642",
+    "fotmob": "1600848"
+   }
+  },
+  "58844": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315200613",
+    "fotmob": "1726789"
+   }
+  },
+  "58845": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315206612",
+    "fotmob": "1924437"
+   }
+  },
+  "58846": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "153575",
+    "fotmob": "464919"
+   }
+  },
+  "58847": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "474683",
+    "fotmob": "1346741"
+   }
+  },
+  "58848": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315200626",
+    "fotmob": "1780481"
+   }
+  },
+  "58849": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "85601",
+    "fotmob": "202179"
+   }
+  },
+  "58850": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "178873",
+    "fotmob": "571685"
+   }
+  },
+  "58851": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "424474",
+    "fotmob": "1023941"
+   }
+  },
+  "58852": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "487262",
+    "fotmob": "1110819"
+   }
+  },
+  "58853": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315204824"
+   }
+  },
+  "58854": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "534584",
+    "fotmob": "1900962"
+   }
+  },
+  "58855": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315200719",
+    "fotmob": "1780479"
+   }
+  },
+  "58856": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "178615",
+    "fotmob": "427216"
+   }
+  },
+  "58857": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "222145",
+    "fotmob": "20521"
+   }
+  },
+  "58858": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "232274",
+    "fotmob": "858036"
+   }
+  },
+  "58859": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "243810",
+    "fotmob": "964608"
+   }
+  },
+  "58860": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315199795",
+    "fotmob": "1717121"
+   }
+  },
+  "58861": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315206162",
+    "fotmob": "1664779"
+   }
+  },
+  "58862": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315197251",
+    "fotmob": "1624002"
+   }
+  },
+  "58863": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315200272",
+    "fotmob": "1717122"
+   }
+  },
+  "58864": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1727842"
+   }
+  },
+  "58865": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "533236",
+    "fotmob": "1724409"
+   }
+  },
+  "58866": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1780483"
+   }
+  },
+  "58867": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1919495"
+   }
+  },
+  "58868": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "76650",
+    "fotmob": "184138"
+   }
+  },
+  "58869": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "479770",
+    "fotmob": "1136396"
+   }
+  },
+  "58870": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "543825",
+    "fotmob": "1199714"
+   }
+  },
+  "58871": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "615400",
+    "fotmob": "1600850"
+   }
+  },
+  "58872": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1681901"
+   }
+  },
+  "58873": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315206157"
+   }
+  },
+  "58874": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315197250",
+    "fotmob": "1626138"
+   }
+  },
+  "58875": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1780484"
+   }
+  },
+  "58876": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315206482",
+    "fotmob": "1905213"
+   }
+  },
+  "58877": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "163906",
+    "fotmob": "525631"
+   }
+  },
+  "58878": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "250963",
+    "fotmob": "1338676"
+   }
+  },
+  "58879": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "537126",
+    "fotmob": "1617260"
+   }
+  },
+  "58880": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "428338",
+    "fotmob": "862284"
+   }
+  },
+  "58881": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "427603",
+    "fotmob": "1078071"
+   }
+  },
+  "58884": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "537119",
+    "fotmob": "1474341"
+   }
+  },
+  "58885": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "558922",
+    "fotmob": "1517896"
+   }
+  },
+  "58887": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315203424",
+    "fotmob": "1658739"
+   }
+  },
+  "58888": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315206539",
+    "fotmob": "1686706"
+   }
+  },
+  "58889": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "61770",
+    "fotmob": "169217"
+   }
+  },
+  "58890": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "223349",
+    "fotmob": "1101144"
+   }
+  },
+  "58891": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "446603",
+    "fotmob": "919208"
+   }
+  },
+  "58892": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "427526",
+    "fotmob": "1059451"
+   }
+  },
+  "58893": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "440828",
+    "fotmob": "1338670"
+   }
+  },
+  "58894": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "496816",
+    "fotmob": "1171007"
+   }
+  },
+  "58895": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315200412",
+    "fotmob": "1257540"
+   }
+  },
+  "58896": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "421937",
+    "fotmob": "1329461"
+   }
+  },
+  "58897": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315198566",
+    "fotmob": "1630736"
+   }
+  },
+  "58899": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "249198",
+    "fotmob": "1136311"
+   }
+  },
+  "58900": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315200440",
+    "fotmob": "1441866"
+   }
+  },
+  "58902": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "612879",
+    "fotmob": "1626967"
+   }
+  },
+  "58903": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315206148",
+    "fotmob": "1682121"
+   }
+  },
+  "58904": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315198150"
+   }
+  },
+  "58905": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315200637",
+    "fotmob": "1767542"
+   }
+  },
+  "58906": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "224642",
+    "fotmob": "1025925"
+   }
+  },
+  "58907": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "225053",
+    "fotmob": "878311"
+   }
+  },
+  "58908": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "436988",
+    "fotmob": "1082981"
+   }
+  },
+  "58909": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315200356",
+    "fotmob": "1715234"
+   }
+  },
+  "58910": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "164480",
+    "fotmob": "525618"
+   }
+  },
+  "58911": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "442431",
+    "fotmob": "926582"
+   }
+  },
+  "58912": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "248399",
+    "fotmob": "1027412"
+   }
+  },
+  "58913": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "479859",
+    "fotmob": "1137454"
+   }
+  },
+  "58914": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "503971",
+    "fotmob": "1167796"
+   }
+  },
+  "58915": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "563676",
+    "fotmob": "1325761"
+   }
+  },
+  "58916": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315206184",
+    "fotmob": "1364185"
+   }
+  },
+  "58918": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "541639",
+    "fotmob": "1631608"
+   }
+  },
+  "58919": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "479846",
+    "fotmob": "1331128"
+   }
+  },
+  "58920": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "424488",
+    "fotmob": "955472"
+   }
+  },
+  "58921": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315199792",
+    "fotmob": "1780962"
+   }
+  },
+  "58922": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "165990",
+    "fotmob": "467022"
+   }
+  },
+  "58923": {
+   "team": "Portland Timbers",
+   "keys": {
+    "mlssoccer": "315206930",
+    "fotmob": "1190850"
+   }
+  },
+  "58925": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "168547",
+    "fotmob": "471274"
+   }
+  },
+  "58926": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "474970",
+    "fotmob": "1245693"
+   }
+  },
+  "58927": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "475879",
+    "fotmob": "1082103"
+   }
+  },
+  "58929": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315207268",
+    "fotmob": "1474122"
+   }
+  },
+  "58930": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315199380",
+    "fotmob": "1738397"
+   }
+  },
+  "58931": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315203057",
+    "fotmob": "1579896"
+   }
+  },
+  "58933": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "593691",
+    "fotmob": "1656933"
+   }
+  },
+  "58934": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315194492",
+    "fotmob": "1715268"
+   }
+  },
+  "58935": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "467478",
+    "fotmob": "1025942"
+   }
+  },
+  "58936": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "443980"
+   }
+  },
+  "58937": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "506152",
+    "fotmob": "1306870"
+   }
+  },
+  "58938": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315199520",
+    "fotmob": "1452765"
+   }
+  },
+  "58940": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "219510"
+   }
+  },
+  "58941": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315194077",
+    "fotmob": "1710671"
+   }
+  },
+  "58942": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "559119",
+    "fotmob": "1440008"
+   }
+  },
+  "58944": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200434",
+    "fotmob": "860543"
+   }
+  },
+  "58945": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315197168",
+    "fotmob": "1710670"
+   }
+  },
+  "58947": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "204405",
+    "fotmob": "614602"
+   }
+  },
+  "58948": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "425710"
+   }
+  },
+  "58949": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "538362",
+    "fotmob": "1254035"
+   }
+  },
+  "58950": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315206181",
+    "fotmob": "1257558"
+   }
+  },
+  "58951": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "559159",
+    "fotmob": "1663013"
+   }
+  },
+  "58952": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "541797",
+    "fotmob": "1513015"
+   }
+  },
+  "58953": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200182",
+    "fotmob": "1731740"
+   }
+  },
+  "58954": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "196239",
+    "fotmob": "652955"
+   }
+  },
+  "58955": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315206538",
+    "fotmob": "1092680"
+   }
+  },
+  "58956": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200121",
+    "fotmob": "1206970"
+   }
+  },
+  "58957": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315196630",
+    "fotmob": "1610333"
+   }
+  },
+  "58958": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315197167",
+    "fotmob": "1683701"
+   }
+  },
+  "58960": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315206536"
+   }
+  },
+  "58961": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200205",
+    "fotmob": "1907793"
+   }
+  },
+  "58963": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "434035",
+    "fotmob": "937015"
+   }
+  },
+  "58964": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "424358",
+    "fotmob": "1337964"
+   }
+  },
+  "58965": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315196611",
+    "fotmob": "1613512"
+   }
+  },
+  "58966": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315206194"
+   }
+  },
+  "58968": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "514456",
+    "fotmob": "1202616"
+   }
+  },
+  "58969": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "546545",
+    "fotmob": "1015128"
+   }
+  },
+  "58970": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315206746",
+    "fotmob": "1909089"
+   }
+  },
+  "58971": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "495812",
+    "fotmob": "1368350"
+   }
+  },
+  "58972": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "565618",
+    "fotmob": "1338687"
+   }
+  },
+  "58973": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1732595"
+   }
+  },
+  "58974": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1780942"
+   }
+  },
+  "58975": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "474163",
+    "fotmob": "1026098"
+   }
+  },
+  "58976": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1253529"
+   }
+  },
+  "58977": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "539638",
+    "fotmob": "1387072"
+   }
+  },
+  "58978": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "542543",
+    "fotmob": "1660654"
+   }
+  },
+  "58980": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1729368"
+   }
+  },
+  "58981": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1172299"
+   }
+  },
+  "58983": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "107265",
+    "fotmob": "760746"
+   }
+  },
+  "58984": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315199780",
+    "fotmob": "1082120"
+   }
+  },
+  "58985": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "fotmob": "1618609"
+   }
+  },
+  "58986": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "fotmob": "1763080"
+   }
+  },
+  "58987": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "fotmob": "1171017"
+   }
+  },
+  "58988": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "220146",
+    "fotmob": "862783"
+   }
+  },
+  "58989": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "541727",
+    "fotmob": "1610332"
+   }
+  },
+  "58990": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315199839",
+    "fotmob": "1715115"
+   }
+  },
+  "58991": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "541835",
+    "fotmob": "1781177"
+   }
+  },
+  "58992": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "165153",
+    "fotmob": "450980"
+   }
+  },
+  "58993": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315203438",
+    "fotmob": "1075251"
+   }
+  },
+  "58994": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315209622",
+    "fotmob": "1409118"
+   }
+  },
+  "58995": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315200651",
+    "fotmob": "1752870"
+   }
+  },
+  "58996": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "245017",
+    "fotmob": "846521"
+   }
+  },
+  "58997": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315196729"
+   }
+  },
+  "58998": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315198652",
+    "fotmob": "1710544"
+   }
+  },
+  "58999": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "210354",
+    "fotmob": "642153"
+   }
+  },
+  "59000": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "514153",
+    "fotmob": "1187762"
+   }
+  },
+  "59001": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "249216"
+   }
+  },
+  "59002": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "512607",
+    "fotmob": "1091999"
+   }
+  },
+  "59003": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "471923",
+    "fotmob": "1351033"
+   }
+  },
+  "59004": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315207272",
+    "fotmob": "1734140"
+   }
+  },
+  "59005": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315200419",
+    "fotmob": "1600922"
+   }
+  },
+  "59007": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315206684",
+    "fotmob": "1035206"
+   }
+  },
+  "59011": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315206158",
+    "fotmob": "1907812"
+   }
+  },
+  "59012": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "479527",
+    "fotmob": "1244938"
+   }
+  },
+  "59013": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "482298",
+    "fotmob": "1187420"
+   }
+  },
+  "59014": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "315197264",
+    "fotmob": "1625713"
+   }
+  },
+  "59015": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "468835"
+   }
+  },
+  "59016": {
+   "team": "St. Louis City",
+   "keys": {
+    "fotmob": "1781731"
+   }
+  },
+  "59017": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "246999",
+    "fotmob": "970356"
+   }
+  },
+  "59018": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "481367",
+    "fotmob": "1045804"
+   }
+  },
+  "59019": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "540871",
+    "fotmob": "1611215"
+   }
+  },
+  "59020": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315203634"
+   }
+  },
+  "59021": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "226800",
+    "fotmob": "748383"
+   }
+  },
+  "59022": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315206507",
+    "fotmob": "1327826"
+   }
+  },
+  "59023": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "554818",
+    "fotmob": "1346875"
+   }
+  },
+  "59024": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315197664",
+    "fotmob": "1786746"
+   }
+  },
+  "59025": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "315209643",
+    "fotmob": "862716"
+   }
+  },
+  "59026": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "562388",
+    "fotmob": "1343445"
+   }
+  },
+  "59027": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "554813",
+    "fotmob": "1421826"
+   }
+  },
+  "59028": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "119585",
+    "fotmob": "342699"
+   }
+  },
+  "59029": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "564721"
+   }
+  },
+  "59030": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "151933",
+    "fotmob": "431956"
+   }
+  },
+  "59031": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315199439",
+    "fotmob": "574923"
+   }
+  },
+  "59032": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315206163",
+    "fotmob": "1187623"
+   }
+  },
+  "59033": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "496811",
+    "fotmob": "1910047"
+   }
+  },
+  "59034": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "559587"
+   }
+  },
+  "59035": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315200675"
+   }
+  },
+  "59036": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315200163"
+   }
+  },
+  "59039": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315209637",
+    "fotmob": "674499"
+   }
+  },
+  "59040": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315200671"
+   }
+  },
+  "59042": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "215476",
+    "fotmob": "848011"
+   }
+  },
+  "59043": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315206345",
+    "fotmob": "1579304"
+   }
+  },
+  "59046": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "213875"
+   }
+  },
+  "59047": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "468877"
+   }
+  },
+  "59048": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "560030",
+    "fotmob": "1509204"
+   }
+  },
+  "59050": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315200679"
+   }
+  },
+  "59051": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "224810",
+    "fotmob": "1246571"
+   }
+  },
+  "59052": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315209903",
+    "fotmob": "1665196"
+   }
+  },
+  "59054": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "496171",
+    "fotmob": "1338278"
+   }
+  },
+  "59055": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315206506",
+    "fotmob": "1691091"
+   }
+  },
+  "59360": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "233581"
+   }
+  },
+  "59361": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315200417"
+   }
+  },
+  "59363": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315200425"
+   }
+  },
+  "59368": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "568181"
+   }
+  },
+  "59390": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315200414"
+   }
+  },
+  "59416": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "fotmob": "168190"
+   }
+  },
+  "59426": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "315196963"
+   }
+  },
+  "59429": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "535468"
+   }
+  },
+  "59451": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315196725"
+   }
+  },
+  "59453": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "555390"
+   }
+  },
+  "59456": {
+   "team": "Atlanta United",
+   "keys": {
+    "fotmob": "1244946"
+   }
+  },
+  "59465": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "641719"
+   }
+  },
+  "59466": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "427199"
+   }
+  },
+  "71217": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "423492",
+    "fotmob": "1026060"
+   }
+  },
+  "71218": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "474842",
+    "fotmob": "1028704"
+   }
+  },
+  "71219": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "fotmob": "1053963"
+   }
+  },
+  "71220": {
+   "team": "San Diego FC",
+   "keys": {
+    "fotmob": "1054027"
+   }
+  },
+  "71221": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315209957",
+    "fotmob": "1057432"
+   }
+  },
+  "71222": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "511783",
+    "fotmob": "1069536"
+   }
+  },
+  "71223": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "487496",
+    "fotmob": "1070331"
+   }
+  },
+  "71224": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "531043",
+    "fotmob": "1072167"
+   }
+  },
+  "71225": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "1079285"
+   }
+  },
+  "71226": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315209961",
+    "fotmob": "1081288"
+   }
+  },
+  "71227": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "1098753"
+   }
+  },
+  "71228": {
+   "team": "DC United",
+   "keys": {
+    "fotmob": "1106871"
+   }
+  },
+  "71230": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "223345",
+    "fotmob": "1159539"
+   }
+  },
+  "71231": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315196871",
+    "fotmob": "1166315"
+   }
+  },
+  "71232": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315197107",
+    "fotmob": "1170745"
+   }
+  },
+  "71233": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "507365",
+    "fotmob": "1176843"
+   }
+  },
+  "71234": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315200426",
+    "fotmob": "1188588"
+   }
+  },
+  "71235": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "519809",
+    "fotmob": "1188665"
+   }
+  },
+  "71236": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315209965",
+    "fotmob": "1201408"
+   }
+  },
+  "71237": {
+   "team": "New York City FC",
+   "keys": {
+    "fotmob": "1202678"
+   }
+  },
+  "71238": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "315209555",
+    "fotmob": "1220657"
+   }
+  },
+  "71239": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "315206614",
+    "fotmob": "1228079"
+   }
+  },
+  "71240": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315206037",
+    "fotmob": "1241957"
+   }
+  },
+  "71241": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315209970",
+    "fotmob": "1244636"
+   }
+  },
+  "71242": {
+   "team": "CF Montréal",
+   "keys": {
+    "fotmob": "1246580"
+   }
+  },
+  "71243": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "537331",
+    "fotmob": "1252908"
+   }
+  },
+  "71244": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315209968",
+    "fotmob": "1738398"
+   }
+  },
+  "71245": {
+   "team": "St. Louis City",
+   "keys": {
+    "fotmob": "1263370"
+   }
+  },
+  "71246": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "242663",
+    "fotmob": "1268000"
+   }
+  },
+  "71247": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315209952",
+    "fotmob": "1276686"
+   }
+  },
+  "71248": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "546662",
+    "fotmob": "1284944"
+   }
+  },
+  "71249": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "561782",
+    "fotmob": "1317338"
+   }
+  },
+  "71250": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "550308",
+    "fotmob": "1317558"
+   }
+  },
+  "71251": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "fotmob": "1338760"
+   }
+  },
+  "71252": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "315196964",
+    "fotmob": "1346549"
+   }
+  },
+  "71253": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "482193",
+    "fotmob": "1355686"
+   }
+  },
+  "71254": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "613484",
+    "fotmob": "1363536"
+   }
+  },
+  "71255": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "560567",
+    "fotmob": "1367608"
+   }
+  },
+  "71256": {
+   "team": "Charlotte FC",
+   "keys": {
+    "fotmob": "1387178"
+   }
+  },
+  "71257": {
+   "team": "Red Bull New York",
+   "keys": {
+    "fotmob": "1390408"
+   }
+  },
+  "71258": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "547686",
+    "fotmob": "1399943"
+   }
+  },
+  "71259": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315206332",
+    "fotmob": "1433033"
+   }
+  },
+  "71260": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "fotmob": "1438379"
+   }
+  },
+  "71261": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315209946",
+    "fotmob": "1441441"
+   }
+  },
+  "71262": {
+   "team": "Nashville SC",
+   "keys": {
+    "fotmob": "1448714"
+   }
+  },
+  "71263": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1500405"
+   }
+  },
+  "71264": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "559501",
+    "fotmob": "1513250"
+   }
+  },
+  "71265": {
+   "team": "San Diego FC",
+   "keys": {
+    "fotmob": "1513664"
+   }
+  },
+  "71266": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "1518943"
+   }
+  },
+  "71267": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315204898",
+    "fotmob": "1580773"
+   }
+  },
+  "71268": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315209969",
+    "fotmob": "1603715"
+   }
+  },
+  "71269": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315196733",
+    "fotmob": "1610192"
+   }
+  },
+  "71270": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "fotmob": "1610224"
+   }
+  },
+  "71271": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "fotmob": "1610334"
+   }
+  },
+  "71272": {
+   "team": "FC Dallas",
+   "keys": {
+    "mlssoccer": "315209963",
+    "fotmob": "1617099"
+   }
+  },
+  "71273": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315203888",
+    "fotmob": "1622640"
+   }
+  },
+  "71274": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "581887",
+    "fotmob": "1625280"
+   }
+  },
+  "71275": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1640272"
+   }
+  },
+  "71276": {
+   "team": "Nashville SC",
+   "keys": {
+    "fotmob": "1642567"
+   }
+  },
+  "71278": {
+   "team": "Orlando City",
+   "keys": {
+    "fotmob": "1660393"
+   }
+  },
+  "71279": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "315209958",
+    "fotmob": "1664487"
+   }
+  },
+  "71280": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "fotmob": "1668442"
+   }
+  },
+  "71281": {
+   "team": "Austin FC",
+   "keys": {
+    "mlssoccer": "315197152",
+    "fotmob": "1719264"
+   }
+  },
+  "71282": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "61239",
+    "fotmob": "172157"
+   }
+  },
+  "71283": {
+   "team": "FC Dallas",
+   "keys": {
+    "fotmob": "1729371"
+   }
+  },
+  "71284": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "315209944",
+    "fotmob": "1741921"
+   }
+  },
+  "71285": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "540872",
+    "fotmob": "1748341"
+   }
+  },
+  "71286": {
+   "team": "New York City FC",
+   "keys": {
+    "fotmob": "1755977"
+   }
+  },
+  "71287": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315194489",
+    "fotmob": "1780504"
+   }
+  },
+  "71288": {
+   "team": "New York City FC",
+   "keys": {
+    "fotmob": "1781007"
+   }
+  },
+  "71289": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315200204",
+    "fotmob": "1781683"
+   }
+  },
+  "71290": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315209962",
+    "fotmob": "1786672"
+   }
+  },
+  "71291": {
+   "team": "Austin FC",
+   "keys": {
+    "fotmob": "1900251"
+   }
+  },
+  "71292": {
+   "team": "Atlanta United",
+   "keys": {
+    "fotmob": "1916385"
+   }
+  },
+  "71293": {
+   "team": "FC Dallas",
+   "keys": {
+    "fotmob": "1919446"
+   }
+  },
+  "71294": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "83341",
+    "fotmob": "201939"
+   }
+  },
+  "71295": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315209646",
+    "fotmob": "2119503"
+   }
+  },
+  "71296": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "fotmob": "212867"
+   }
+  },
+  "71297": {
+   "team": "New York City FC",
+   "keys": {
+    "fotmob": "2141400"
+   }
+  },
+  "71298": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315209960",
+    "fotmob": "2183614"
+   }
+  },
+  "71299": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "fotmob": "464916"
+   }
+  },
+  "71300": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "181007",
+    "fotmob": "527103"
+   }
+  },
+  "71301": {
+   "team": "Atlanta United",
+   "keys": {
+    "fotmob": "580600"
+   }
+  },
+  "71302": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "130049",
+    "fotmob": "621915"
+   }
+  },
+  "71303": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "209020",
+    "fotmob": "630286"
+   }
+  },
+  "71304": {
+   "team": "Toronto FC",
+   "keys": {
+    "fotmob": "643482"
+   }
+  },
+  "71305": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "fotmob": "649947"
+   }
+  },
+  "71306": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "fotmob": "651093"
+   }
+  },
+  "71307": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "fotmob": "769349"
+   }
+  },
+  "71308": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "fotmob": "787351"
+   }
+  },
+  "71309": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "201431",
+    "fotmob": "841928"
+   }
+  },
+  "71310": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "fotmob": "861720"
+   }
+  },
+  "71311": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "435973",
+    "fotmob": "881500"
+   }
+  },
+  "71312": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315208291",
+    "fotmob": "883759"
+   }
+  },
+  "71313": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "438251",
+    "fotmob": "887137"
+   }
+  },
+  "71314": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "437765",
+    "fotmob": "920173"
+   }
+  },
+  "71315": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "315204483",
+    "fotmob": "921603"
+   }
+  },
+  "71316": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "247718",
+    "fotmob": "934742"
+   }
+  },
+  "71317": {
+   "team": "San Diego FC",
+   "keys": {
+    "fotmob": "972488"
+   }
+  },
+  "71318": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "128117"
+   }
+  },
+  "71319": {
+   "team": "Seattle Sounders FC",
+   "keys": {
+    "mlssoccer": "191755"
+   }
+  },
+  "71320": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "202192"
+   }
+  },
+  "71322": {
+   "team": "St. Louis City",
+   "keys": {
+    "mlssoccer": "211988"
+   }
+  },
+  "71323": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315191499"
+   }
+  },
+  "71324": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "315196628"
+   }
+  },
+  "71325": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315196953"
+   }
+  },
+  "71326": {
+   "team": "DC United",
+   "keys": {
+    "mlssoccer": "315198353"
+   }
+  },
+  "71327": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "mlssoccer": "315198564"
+   }
+  },
+  "71328": {
+   "team": "Orlando City",
+   "keys": {
+    "mlssoccer": "315199353"
+   }
+  },
+  "71329": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "315200431"
+   }
+  },
+  "71330": {
+   "team": "San Diego FC",
+   "keys": {
+    "mlssoccer": "315200447"
+   }
+  },
+  "71331": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "mlssoccer": "315200470"
+   }
+  },
+  "71332": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315200535"
+   }
+  },
+  "71333": {
+   "team": "New York City FC",
+   "keys": {
+    "mlssoccer": "315200609"
+   }
+  },
+  "71334": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315203832"
+   }
+  },
+  "71335": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315206145"
+   }
+  },
+  "71336": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315206200"
+   }
+  },
+  "71337": {
+   "team": "Vancouver Whitecaps",
+   "keys": {
+    "mlssoccer": "315209933"
+   }
+  },
+  "71338": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "315209950"
+   }
+  },
+  "71340": {
+   "team": "Colorado Rapids",
+   "keys": {
+    "mlssoccer": "428182"
+   }
+  },
+  "71341": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "495357"
+   }
+  },
+  "71342": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "496701"
+   }
+  },
+  "71343": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "501668"
+   }
+  },
+  "71344": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "506154"
+   }
+  },
+  "71345": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "506463"
+   }
+  },
+  "71346": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "mlssoccer": "534776"
+   }
+  },
+  "71347": {
+   "team": "San Jose Earthquakes",
+   "keys": {
+    "mlssoccer": "540233"
+   }
+  },
+  "71348": {
+   "team": "Sporting Kansas City",
+   "keys": {
+    "mlssoccer": "541186"
+   }
+  },
+  "71349": {
+   "team": "Atlanta United",
+   "keys": {
+    "mlssoccer": "541398"
+   }
+  },
+  "71350": {
+   "team": "Los Angeles FC",
+   "keys": {
+    "mlssoccer": "541548"
+   }
+  },
+  "71352": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "544907"
+   }
+  },
+  "71353": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "555371"
+   }
+  },
+  "71354": {
+   "team": "Toronto FC",
+   "keys": {
+    "mlssoccer": "555476"
+   }
+  },
+  "71355": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "559448"
+   }
+  },
+  "71356": {
+   "team": "Columbus Crew",
+   "keys": {
+    "mlssoccer": "587920"
+   }
+  },
+  "71357": {
+   "team": "Nashville SC",
+   "keys": {
+    "mlssoccer": "595547"
+   }
+  },
+  "71358": {
+   "team": "Minnesota United",
+   "keys": {
+    "mlssoccer": "598594"
+   }
+  },
+  "71359": {
+   "team": "LA Galaxy",
+   "keys": {
+    "mlssoccer": "612823"
+   }
+  },
+  "71360": {
+   "team": "Inter Miami CF",
+   "keys": {
+    "mlssoccer": "614213"
+   }
+  },
+  "71361": {
+   "team": "New England Revolution",
+   "keys": {
+    "mlssoccer": "538023"
+   }
+  },
+  "71432": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315206571",
+    "fotmob": "2200730"
+   }
+  },
+  "71491": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "315206985",
+    "fotmob": "1983604"
+   }
+  },
+  "71492": {
+   "team": "Red Bull New York",
+   "keys": {
+    "mlssoccer": "315200621",
+    "fotmob": "1752861"
+   }
+  },
+  "71493": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "222690",
+    "fotmob": "865118"
+   }
+  },
+  "71504": {
+   "team": "Houston Dynamo FC",
+   "keys": {
+    "mlssoccer": "315206773"
+   }
+  },
+  "71523": {
+   "team": "New England Revolution",
+   "keys": {
+    "fotmob": "1614654"
+   }
+  },
+  "71548": {
+   "team": "Chicago Fire FC",
+   "keys": {
+    "fotmob": "1781455"
+   }
+  },
+  "71549": {
+   "team": "Nashville SC",
+   "keys": {
+    "fotmob": "1781686"
+   }
+  },
+  "71550": {
+   "team": "Atlanta United",
+   "keys": {
+    "fotmob": "1136269"
+   }
+  },
+  "71551": {
+   "team": "Atlanta United",
+   "keys": {
+    "fotmob": "1447991"
+   }
+  },
+  "71552": {
+   "team": "Real Salt Lake",
+   "keys": {
+    "fotmob": "1517893"
+   }
+  },
+  "71553": {
+   "team": "Philadelphia Union",
+   "keys": {
+    "fotmob": "1780456"
+   }
+  },
+  "71749": {
+   "team": "FC Cincinnati",
+   "keys": {
+    "mlssoccer": "477965",
+    "fotmob": "739536"
+   }
+  },
+  "71770": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "121599"
+   }
+  },
+  "71771": {
+   "team": "Charlotte FC",
+   "keys": {
+    "mlssoccer": "485706"
+   }
+  },
+  "71774": {
+   "team": "Red Bull New York",
+   "keys": {
+    "fotmob": "2264549"
+   }
+  }
+ }
+}

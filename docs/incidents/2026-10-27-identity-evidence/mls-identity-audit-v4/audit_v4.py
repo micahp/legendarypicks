@@ -46,12 +46,15 @@ REVIEW = {
     58549: {"external": "FC Dallas's 24 Sep 2024 announcement and FotMob and Opta give 16 Sep 2006. The MLS profile gives 1998. Reviewer-supplied; not independently opened by this audit.",
             "sources": ["https://www.fcdallas.com/northtexassc/news/fc-dallas-academy-product-daniel-baran-signs-first-professional-contract-with-north-texas-sc",
                         "https://www.mlssoccer.com/players/daniel-baran/"],
+            "source_error_publisher": "mls",
             "conclusion": "source error on the MLS profile. Identity supported by the FC Dallas academy path. Link kept; the MLS profile should be reported."},
     58598: {"external": "Wikipedia, ESPN's bio, and the Houston Dynamo bio give 28 Aug 2010. MLS prints 29 Aug (age 16).",
             "sources": ["https://en.wikipedia.org/wiki/Matthew_Arana", "https://www.mlssoccer.com/players/matthew-arana/"],
+            "source_error_publisher": "mls",
             "conclusion": "source error on the MLS page; FotMob is correct. Link kept."},
     58670: {"external": "Wikipedia gives 27 Apr 2001. FotMob agrees. MLS prints 4.7.2001, which fits neither 7 Apr nor 4 Jul.",
             "sources": ["https://en.wikipedia.org/wiki/Gonzalo_Luj%C3%A1n"],
+            "source_error_publisher": "mls",
             "conclusion": "source error on the MLS page; FotMob is correct. Link kept."},
     58767: {"external": "ESPN, FotMob, LiveSoccerTV, and Soccerway give 18 Jul 2000. Wikipedia gives 20 Jul. The club media guide gives 8 Jul.",
             "sources": ["https://www.revolutionsoccer.net/news/revolution-acquire-nigerian-central-midfielder-alhassan-yusuf-from-royal-antwerp-fc",
@@ -71,6 +74,7 @@ REVIEW = {
     59000: {"external": "Sporting KC's roster vitals and most other listings give 24 May 2001. FotMob agrees. MLS prints 4.24.2001, which is 24 Apr.",
             "sources": ["https://www.sportingkc.com/news/sporting-kc-acquires-defender-moises-mosquera-in-transfer-from-fc-juarez",
                         "https://www.mlssoccer.com/players/moises-mosquera/"],
+            "source_error_publisher": "mls",
             "conclusion": "source error on the MLS page (month wrong); FotMob agrees with the club. Link kept."},
     59005: {"external": "Wikipedia and MLS give 12 Nov 2001. ESPN and FotMob give 1 Nov 2001. Soccerway and Twente list 11 Jan 2001. Three dates across sources.",
             "sources": ["https://en.wikipedia.org/wiki/Wyatt_Meyer",
@@ -82,6 +86,7 @@ REVIEW = {
             "conclusion": "biographical: FotMob is one day off. Link kept."},
     71285: {"external": "ESPN athlete 376512 and the MLS player page both give 12 Mar 2007 (MLS age 19). FotMob gives 3 Dec 2007, which is the day-month swap.",
             "sources": ["https://www.mlssoccer.com/players/zackory-campagnolo/"],
+            "source_error_publisher": "fotmob",
             "conclusion": "FotMob error: day and month swapped. Same person (St. Louis City, goalkeeper, USA). Merge stands."},
     58788: {"external": "Wikipedia and ESPN give 28 Oct 1999 (Caseyville, IL). FotMob agrees. MLS prints 28 Oct 1999 with an age computed on 28 Oct.",
             "sources": ["https://en.wikipedia.org/wiki/Jack_Maher_(soccer)"],
@@ -157,10 +162,12 @@ def main(v2_path, out_dir):
                  "audit_v2_verdict": row["verdict"]}
         if row["player_id"] in REVIEW:
             entry["external_review"] = REVIEW[row["player_id"]]
-        if identity == "biographical_disagreement" and "external_review" in entry:
-            entry["final_status"] = "biographical_source_error" if "source error" in entry["external_review"]["conclusion"] or "error" in entry["external_review"]["conclusion"] else "biographical_disagreement"
-        elif identity == "supported" or identity == "supported_order_unresolved":
-            entry["final_status"] = identity
+        # A source error is named by the reviewer, per pair, as the publisher whose record is wrong. It is never
+        # inferred from the conclusion text.
+        publisher = entry.get("external_review", {}).get("source_error_publisher")
+        if identity == "biographical_disagreement" and publisher:
+            entry["final_status"] = "biographical_source_error"
+            entry["source_error_publisher"] = publisher
         else:
             entry["final_status"] = identity
         v2 = row["verdict"]
