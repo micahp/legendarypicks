@@ -283,9 +283,18 @@ def load_overtime_choice_model(path=CHOICE_MODEL):
     return p, source_hash
 
 
-def load_overtime_try_fallback(path=TRY_FALLBACK):
+def load_overtime_try_fallback(path=TRY_FALLBACK, eligible_before=None):
     """The conditional overtime try table: the two-point probability for each margin bucket (overtime cells of the fitted
-    table). The file is checked against its manifest before any row is read."""
+    table). The file is checked against its manifest before any row is read.
+
+    With `eligible_before`, the cells are refitted from tries before the cutoff only (build_try_fallback.cutoff_table). The
+    committed file is not used, because it was fitted on 2022 to 2025 and its overtime cells come from 2025 alone."""
+    if eligible_before is not None:
+        import build_try_fallback as btf
+        cells, meta = btf.cutoff_table(btf.SOURCE, eligible_before)
+        table = {bucket: cells[('ot', bucket)][3] for bucket in [b[2] for b in btf.MARGIN_BUCKETS]}
+        meta_sha = hashlib.sha256(json.dumps(meta, sort_keys=True).encode()).hexdigest()
+        return table, meta_sha
     import csv
     manifest = json.loads(path.with_suffix(path.suffix + '.manifest.json').read_text())
     source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
