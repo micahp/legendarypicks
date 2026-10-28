@@ -5,11 +5,15 @@ Tests: 2024 is fitted on 2010 to 2023; 2025 is fitted on 2010 to 2024. 2026 is n
 Main results exclude plays whose score is flagged as a continuity exception. The sensitivity run includes them.
 
 Each stage's wall-clock time and the number of L-BFGS iterations are written to the report, so runtime can be compared between
-runs. The frame is cached in --cache; delete the cache to rebuild it from the observations.
+runs. The frame is cached in --cache, and a cache is reused only when its fingerprint matches the current sources.
+
+Report version 2 scores the scenario table with the hierarchical_full fit. Version 1 scored it with the no_team fit, which was a
+labelling error. Version 1 is kept as committed, and its other values are unchanged.
 
 Usage: python3 run_playcall_eval.py --out JSON --cache NPZ
 """
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -156,37 +160,15 @@ def scenario_table(frame, design, prep_cols, beta, train_rows):
     return rows
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--out', type=Path, required=True)
-    ap.add_argument('--cache', type=Path, required=True)
-    args = ap.parse_args()
-    timer = Timer()
+def evaluate_tests(frame, design, penalties, tau, timer):
+    """Fit and score each test season on primary and including-flagged plays, with every ablation and both baselines.
 
-    started = time.time()
-    frame = pm.load_frame_cached(args.cache, range(2010, 2026), include_flagged=True)
-    timer.stage('frame', started)
-    log(f'frame ready: {len(frame)} scrimmage plays in {timer.stages["frame"]}s (cache {args.cache})')
-
-    started = time.time()
-    design = pm.Design(frame)
-    timer.stage('design', started)
-    log(f'design built: width {design.width}, nonzeros {design.X.nnz} in {timer.stages["design"]}s')
-
+    The scenario table is scored with the hierarchical_full coefficients, which are the full model's predictions.
+    """
     a = frame.a
     names = {index: code for code, index in frame.teams.items()}
     primary = ~a['flagged']
-    report = {'plays': len(frame), 'flagged_plays': int(a['flagged'].sum()), 'teams': len(frame.teams),
-              'design_width': design.width}
-
-    started = time.time()
-    penalties, tau, val_ll = tune(design, frame, timer)
-    timer.stage('tune', started)
-    report.update({'chosen_penalties': penalties, 'chosen_recency_tau': tau,
-                   'validation_2023_log_loss': round(val_ll, 6)})
-
-    started = time.time()
-    report['tests'] = {}
+    tests = {}
     for test_season in TESTS:
         for include_flagged in (False, True):
             key = f"{test_season}_{'including_flagged' if include_flagged else 'primary'}"
@@ -217,10 +199,44 @@ def main():
                     test_sc = a['score'][test_rows] * len(pm.CLOCK_BUCKETS) + a['clock'][test_rows]
                     support = np.bincount(train_sc, minlength=pm.GROUP_SIZES['score_clock'])[test_sc]
                     entry['coverage_score_clock_cell_ge_30'] = float(np.mean(support >= 30))
-                if label == 'no_team':
-                    league_prep, league_beta = prep, beta
-            entry['scenarios'] = scenario_table(frame, design, league_prep['cols'], league_beta, train_rows)
-            report['tests'][key] = entry
+                    full_prep, full_beta = prep, beta
+            entry['scenarios'] = scenario_table(frame, design, full_prep['cols'], full_beta, train_rows)
+            tests[key] = entry
+    return tests
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--out', type=Path, required=True)
+    ap.add_argument('--cache', type=Path, required=True)
+    args = ap.parse_args()
+    timer = Timer()
+
+    started = time.time()
+    frame = pm.load_frame_cached(args.cache, range(2010, 2026), include_flagged=True)
+    timer.stage('frame', started)
+    log(f'frame ready: {len(frame)} scrimmage plays in {timer.stages["frame"]}s (cache {args.cache}: {frame.cache_status})')
+
+    started = time.time()
+    design = pm.Design(frame)
+    timer.stage('design', started)
+    log(f'design built: width {design.width}, nonzeros {design.X.nnz} in {timer.stages["design"]}s')
+
+    a = frame.a
+    report = {'report_version': 2, 'plays': len(frame), 'flagged_plays': int(a['flagged'].sum()), 'teams': len(frame.teams),
+              'design_width': design.width, 'frame_cache': frame.cache_status,
+              'frame_content_sha256': pm.frame_content_hash(frame),
+              'source_fingerprint_sha256': hashlib.sha256(frame.fingerprint.encode()).hexdigest(),
+              'scenario_coefficients': 'hierarchical_full'}
+
+    started = time.time()
+    penalties, tau, val_ll = tune(design, frame, timer)
+    timer.stage('tune', started)
+    report.update({'chosen_penalties': penalties, 'chosen_recency_tau': tau,
+                   'validation_2023_log_loss': round(val_ll, 6)})
+
+    started = time.time()
+    report['tests'] = evaluate_tests(frame, design, penalties, tau, timer)
     timer.stage('tests', started)
 
     report['stage_seconds'] = timer.stages

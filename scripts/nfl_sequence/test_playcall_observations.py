@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -229,6 +230,28 @@ class ScoreFlags(unittest.TestCase):
         self.assertTrue(set(flags.values()) <= {'unexplained_single_side', 'both_sides_changed',
                                                 'stale_repeat_of_state_before_previous_play'}
                         | {l for l in flags.values() if l.startswith(('offense_', 'defense_'))})
+
+
+class SeasonBoundary(unittest.TestCase):
+    def test_no_query_is_issued_for_2026_and_no_2026_row_is_yielded(self):
+        rows = [play(game_id='2025_01_AAA_BBB', season=2025), play(game_id='2026_01_AAA_BBB', season=2026)]
+        tmp, db = database(rows)
+        self.addCleanup(tmp.cleanup)
+        issued = []
+        real_connect = sqlite3.connect
+
+        class Recording(sqlite3.Connection):
+            def execute(self, sql, parameters=()):
+                issued.append(list(parameters))
+                return super().execute(sql, parameters)
+
+        def connect(*args, **kwargs):
+            return real_connect(*args, factory=Recording, **kwargs)
+
+        with mock.patch.object(pco.sqlite3, 'connect', connect):
+            out = list(pco.observations(db, first_season=2010, last_season=2025, scores=NO_SCORES))
+        self.assertEqual(sorted({s for params in issued for s in params}), list(range(2010, 2026)))
+        self.assertEqual({o['season'] for o in out}, {2025})
 
 
 if __name__ == '__main__':
