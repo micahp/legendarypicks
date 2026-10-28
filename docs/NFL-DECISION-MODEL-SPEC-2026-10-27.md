@@ -46,6 +46,9 @@ Excluded and counted, not dropped silently:
   here. It is not changed after seeing any 2026 result.
 - Charting codes that are missing (not `0`) are excluded from the category they belong to and counted.
 - Pass plays with a rusher count of 0, 1 or 2 are excluded from N only. Non-pass plays are excluded from N.
+- The code `0` in `n_defense_box` marks a play with no charted defensive alignment, and about 11,000 plays in 2025 carry
+  it. Those plays are excluded from M only. The count `0` is not read as "5 or fewer". This clarification is written
+  before the 2026 run.
 
 Defense by role is not in this spec. Defensive players are not identified per play in the 2026 data. The defensive
 categories are team-level: blitz (I), defenders in the box (M) and pass rushers (N).
@@ -126,10 +129,18 @@ The main comparison is the team prior minus the league prior, per category and p
   `WAS` for Washington. Play-by-play `LA` maps to `LAR` for any join with NGS (corrected 2026-10-27, before any 2026 result;
   the earlier text said no mapping was needed, which was wrong for the Rams).
 
-## 11. Version 2: NGS team-style layer (amendment, 2026-10-27, before any 2026 result)
+## 11. Version 2: NGS team-style layer (WITHDRAWN 2026-10-27, before any 2026 result)
 
-Version 1 (sections 1 to 10) stays as written. Version 2 adds a team-style group to the prior. Both versions are tested on
-2026 in the same single run. The version 1 result and the version 2 result are both kept.
+Status: withdrawn. Nothing below is used. The text is kept on record so the withdrawal is visible.
+
+Reason: the NGS releases are aggregated per player-week. They are not play-by-play. Section 11 applied a team-week NGS
+composite to every play in the following week, which turns an aggregate into a single-play multiplier. That is not
+supported by the data, so version 2 is not part of this test. NGS may be used later only in a separate analysis that
+compares aggregates with aggregates (for example, team-week NGS against team-week observed mixes), with its own spec.
+
+Version 1 (sections 1 to 10) is the only model tested on 2026.
+
+The original text of section 11 follows, unused.
 
 ### 11.1 Measures and the style group
 
