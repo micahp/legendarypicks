@@ -121,6 +121,68 @@ class Sampler(unittest.TestCase):
         self.assertTrue(all(d['fallback'] for d in kicks))
 
 
+class Sensitivity(unittest.TestCase):
+    def _layer(self):
+        blocks = {g: [0.0] * n for g, n in SIZES.items()}
+        blocks['team_down'] = [0.0] * 8
+        blocks['score'][pm.SCORE_BUCKETS.index('dn7')] = 1.0   # trailing by 7
+        blocks['score'][pm.SCORE_BUCKETS.index('up7')] = -1.0  # leading by 7
+        blocks['clock'][pm.CLOCK_BUCKETS.index('q4_2min')] = 0.5
+        return slc.PlayCallLayer(blank_artifact(0.0, blocks=blocks))
+
+    def _dropback_share(self, sampler, pool, state, draws=2000):
+        sampler.decisions.clear()
+        rng = random.Random(7)
+        for _ in range(draws):
+            sampler.sample(rng, pool, 'A', 'B', state=state)
+        return sum(d['intent'] == 'dropback' for d in sampler.decisions) / draws
+
+    def test_changing_score_or_clock_changes_the_probability_and_the_observed_mix(self):
+        layer = self._layer()
+        trailing_late = dict(STATE, quarter=4, clock=90, score_diff=-7)
+        leading_late = dict(STATE, quarter=4, clock=90, score_diff=7)
+        trailing_early = dict(STATE, quarter=4, clock=900, score_diff=-7)
+        p = {name: layer.p_dropback(s['down'], s['togo'], s['yl'], s['score_diff'], s['quarter'], s['clock'], 'AAA')
+             for name, s in (('trailing_late', trailing_late), ('leading_late', leading_late),
+                             ('trailing_early', trailing_early))}
+        self.assertGreater(p['trailing_late'], p['leading_late'])   # score changed, clock held
+        self.assertGreater(p['trailing_late'], p['trailing_early'])  # clock changed, score held
+        sampler = slc.PlayCallSampler(layer, side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('run', 'run'), ('pass_complete', 'pass')])
+        share = {name: self._dropback_share(sampler, pool, s)
+                 for name, s in (('trailing_late', trailing_late), ('leading_late', leading_late),
+                                 ('trailing_early', trailing_early))}
+        self.assertGreater(share['trailing_late'], share['leading_late'] + 0.2)
+        self.assertGreater(share['trailing_late'], share['trailing_early'] + 0.05)
+
+    def test_the_play_type_is_drawn_before_the_outcome_is_drawn(self):
+        layer = self._layer()
+        sampler = slc.PlayCallSampler(layer, side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('run', 'run'), ('pass_complete', 'pass')])
+
+        calls = []
+
+        class Recording(random.Random):
+            # random.choices draws through random() internally, so only the sampler's own first draw is the intent
+            def random(self):
+                if not calls:
+                    calls.append('intent')
+                return super().random()
+
+            def choices(self, population, weights=None, **kw):
+                calls.append('outcome_type')
+                return super().choices(population, weights=weights, **kw)
+
+            def choice(self, seq):
+                calls.append('outcome_row')
+                return super().choice(seq)
+
+        sampler.sample(Recording(3), pool, 'A', 'B', state=dict(STATE, quarter=4, clock=90, score_diff=-7))
+        self.assertEqual(calls, ['intent', 'outcome_type', 'outcome_row'])
+        decision = sampler.decisions[-1]
+        self.assertEqual(decision['intent'] == 'dropback', decision['event'] != 'run')
+
+
 def synthetic_frame(seed=11, n=4000, score_effect=False):
     rng = np.random.default_rng(seed)
     season = rng.integers(2010, 2026, n)
