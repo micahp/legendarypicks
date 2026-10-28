@@ -27,7 +27,11 @@ BACKEND = '/root/legendarypicks/backend'
 sys.path.insert(0, BACKEND)
 import nfl_epa_backtest as nfe  # noqa: E402
 import nfl_epa_model as em  # noqa: E402
+import nfl_elo_replica as er  # noqa: E402
+import nfl_feature_backtest as fb  # noqa: E402
+import nfl_backtest as nb  # noqa: E402
 import nfl_metrics as mt  # noqa: E402
+import numpy as np  # noqa: E402
 
 RESULTS = '/tmp/claude-0/-root/4a715766-ff4b-4980-99e5-dc209eaac7d4/scratchpad/nfl-splits/results'
 WINDOW = range(2021, 2026)
@@ -48,9 +52,36 @@ def epa_setting(con):
     return res[0][2], res[0][3], res
 
 
+def stack_probs(con):
+    """v1 + Elo stack, as lock_nfl_elo.py defines it: margin = b0 + b1 * v1 margin + b2 * pre-game Elo gap, OLS on
+    every earlier season's v1 walk-forward rows, win probability = Phi(margin / residual sd). Pre-game Elo is the
+    replica's rating before each game, so no result from the game itself is used."""
+    games = er.load_games(con)
+    pre = er.run_elo(games, er.start_ratings(con))
+    neutral = {g[0]: g[2] for g in games}
+    rows = {s: nb.backtest_season(con, s, fb.FROZEN) for s in range(2010, max(WINDOW) + 1)}
+    out = {}
+    for season in WINDOW:
+        X, y = [], []
+        for s in range(2010, season):
+            for r in rows[s]:
+                eh, ea = pre[r['game_id']]
+                X.append([1.0, r['proj_margin'], eh - ea + (0.0 if neutral[r['game_id']] else er.BASE['hfa'])])
+                y.append(r['actual_margin'])
+        beta = fb.ols(X, y)
+        sigma = float(np.std(np.array(y) - np.array(X) @ beta, ddof=1))
+        for r in rows[season]:
+            eh, ea = pre[r['game_id']]
+            gap = eh - ea + (0.0 if neutral[r['game_id']] else er.BASE['hfa'])
+            m = float(beta[0] + beta[1] * r['proj_margin'] + beta[2] * gap)
+            out[r['game_id']] = fb.phi(m / sigma)
+    return out
+
+
 def main():
     con = sqlite3.connect(s0.DEV_DB, uri=True)
     hl, lam, grid = epa_setting(con)
+    stack = stack_probs(con)
     print('v2 EPA setting chosen on 2024 (half-life, lambda):', hl, lam)
 
     epa, v1, mkt = {}, {}, {}
@@ -89,16 +120,16 @@ def main():
             continue
         if any(key not in g for key in ('p_s0b', 'p_s1', 'p_s2')):
             continue
-        if gid not in v1 or gid not in epa or mkt.get(gid) is None:
+        if gid not in v1 or gid not in epa or gid not in stack or mkt.get(gid) is None:
             continue
         rows.append({'game_id': gid, 'season': g['season'], 'week': g['week'], 'y': g['y'],
-                     'market': mkt[gid], 'v1': v1[gid], 'epa': epa[gid], 'S0b': g['p_s0b'],
-                     'S1': g['p_s1'], 'S2': g['p_s2']})
+                     'market': mkt[gid], 'v1': v1[gid], 'epa': epa[gid], 'stack': stack[gid],
+                     'S0b': g['p_s0b'], 'S1': g['p_s1'], 'S2': g['p_s2']})
     print(f'common set: {len(rows)} games, seasons {min(r["season"] for r in rows)} to {max(r["season"] for r in rows)}')
 
-    models = ['market', 'v1', 'epa', 'S0b', 'S1', 'S2']
+    models = ['market', 'v1', 'epa', 'stack', 'S0b', 'S1', 'S2']
     names = {'market': 'Closing market', 'v1': 'LP v1 points', 'epa': 'LP v2 EPA',
-             'S0b': 'S0b (ours)', 'S1': 'S1 (ours)', 'S2': 'S2 (ours)'}
+             'stack': 'v1+Elo stack', 'S0b': 'S0b (ours)', 'S1': 'S1 (ours)', 'S2': 'S2 (ours)'}
 
     def block(rs, label):
         out = {'label': label, 'n': len(rs), 'models': {}}
@@ -124,8 +155,11 @@ def main():
     diffs = {}
     for label, rs in subsets.items():
         diffs[label] = {
-            'model minus market': {k: paired(rs, k, 'market') for k in ['v1', 'epa', 'S0b', 'S1', 'S2']},
+            'model minus market': {k: paired(rs, k, 'market') for k in ['v1', 'epa', 'stack', 'S0b', 'S1', 'S2']},
             'LP v2 EPA minus LP v1': paired(rs, 'epa', 'v1'),
+            'v1+Elo stack minus LP v1': paired(rs, 'stack', 'v1'),
+            'v1+Elo stack minus LP v2 EPA': paired(rs, 'stack', 'epa'),
+            'v1+Elo stack minus S1': paired(rs, 'stack', 'S1'),
             'S1 minus LP v1': paired(rs, 'S1', 'v1'),
             'S1 minus S0b': paired(rs, 'S1', 'S0b'),
             'S2 minus S1': paired(rs, 'S2', 'S1'),
@@ -140,10 +174,11 @@ def main():
     print('\nPaired Brier differences, week-block 95% interval')
     for label, d in diffs.items():
         print(f"\n{label}")
-        for mname in ['v1', 'epa', 'S0b', 'S1', 'S2']:
+        for mname in ['v1', 'epa', 'stack', 'S0b', 'S1', 'S2']:
             x = d['model minus market'][mname]
             print(f"  {names[mname]:16s} minus market {x['gap']:+.4f} [{x['lo']:+.4f}, {x['hi']:+.4f}]")
-        for k in ['LP v2 EPA minus LP v1', 'S1 minus LP v1', 'S1 minus S0b', 'S2 minus S1']:
+        for k in ['LP v2 EPA minus LP v1', 'v1+Elo stack minus LP v1', 'v1+Elo stack minus LP v2 EPA',
+                  'v1+Elo stack minus S1', 'S1 minus LP v1', 'S1 minus S0b', 'S2 minus S1']:
             x = d[k]
             print(f"  {k:24s} {x['gap']:+.4f} [{x['lo']:+.4f}, {x['hi']:+.4f}]")
 
