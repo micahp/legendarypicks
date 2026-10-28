@@ -415,6 +415,8 @@ def run_batch(args):
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
     snapshot_seconds = time.monotonic() - snapshot_started
     contextual = None
+    if args.team_tendency and args.context_mode != 'cutoff_unconditioned':
+        raise SystemExit('--team-tendency needs --context-mode cutoff_unconditioned (a cutoff-matched pool, no points kernel)')
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
@@ -428,7 +430,10 @@ def run_batch(args):
         if args.context_mode == 'cutoff_unconditioned':
             ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                              eligible_before=eligible_before,
-                                             safety_kick_table=safety_kick_table)
+                                             safety_kick_table=safety_kick_table,
+                                             team_tendency=args.team_tendency,
+                                             team_tendency_teams={'A': snapshot['schedule']['home_team'],
+                                                                  'B': snapshot['schedule']['away_team']})
         else:
             ref, excluded_kickoffs = er.load(
                 args.db, try_policy=try_policy, eligible_before=eligible_before,
@@ -603,6 +608,8 @@ def main(argv=None):
                     help='Gaussian kernel bandwidth in source team-rating standard deviations')
     ap.add_argument('--context-min-source-games', type=float, default=10.0,
                     help='minimum effective source games in a sampled contextual pool cell')
+    ap.add_argument('--team-tendency', action='store_true',
+                    help='research: drive policy from prior-season team tendencies; needs --context-mode cutoff_unconditioned')
     ap.add_argument('--try-policy', choices=('unconditional', 'k1'), default='unconditional',
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
