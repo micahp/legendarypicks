@@ -208,6 +208,27 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
 
 
 HISTORICAL_DEPTH_LAST_SEASON = 2024
+EVALUATION_CLASSES = ('backtest', 'exploratory_replay')
+# A source enters this table only with a documented capture time: when its content became publicly available. A loader import
+# time, a publisher's artifact date and a historical season file do not qualify. Nothing qualifies yet.
+VERIFIED_CAPTURE_SOURCES = {}
+
+
+def input_provenance(game, rosters):
+    """The pregame inputs with no verified availability time. A backtest needs none; an exploratory replay records them."""
+    unverified = []
+    if game.get('availability_classification', 'versioned_as_of') != 'versioned_as_of':
+        unverified.append('schedule: no versioned row observed by the cutoff; the current row was used')
+    else:
+        unverified.append('schedule: observed_at is a loader import time, not a capture time')
+    for side, roster in rosters.items():
+        if roster['source'] in VERIFIED_CAPTURE_SOURCES:
+            continue
+        if roster['source'] == 'nflverse_depth_charts':
+            unverified.append(f'{side} depth: snapshot_at is the nflverse artifact date, not a capture time')
+        else:
+            unverified.append(f"{side} depth: source {roster['source']!r} has no verified capture time")
+    return {'unverified': unverified}
 
 
 def historical_depth_rows(con, game, team, as_of_text):
@@ -244,7 +265,9 @@ def historical_depth_rows(con, game, team, as_of_text):
 
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           kickoff_source_url: str | None = None,
-          allow_unverified_current_schedule_exploratory: bool = False) -> dict:
+          allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None) -> dict:
+    """evaluation is 'backtest' or 'exploratory_replay'. A backtest is refused while any input lacks a verified availability time;
+    an exploratory replay is built and labelled. Default: backtest for 2026 and later, exploratory for earlier seasons."""
     cutoff = parse_as_of(as_of)
     scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
     if bool(scheduled_start) != bool(kickoff_source_url):
@@ -274,7 +297,10 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
                 game['availability_classification'] = 'current_row_unverified_exploratory'
         if game is None:
             raise ValueError(f'{game_id}: no schedule version was observed on or before --as-of')
-        holdout.refuse_if_holdout(game['season'], 'pregame snapshot')
+        holdout.refuse_unless_cutoff(game['season'], 'pregame snapshot', cutoff)
+        evaluation = evaluation or ('backtest' if game['season'] >= holdout.HOLDOUT_SEASON else 'exploratory_replay')
+        if evaluation not in EVALUATION_CLASSES:
+            raise ValueError(f'unknown evaluation class {evaluation!r}')
         if game['game_type'] not in ('REG', 'POST'):
             raise ValueError(f'{game_id}: unsupported game type {game["game_type"]!r}')
         if not game['gameday'] or not game['gametime']:
@@ -327,8 +353,13 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
     finally:
         con.close()
 
+    provenance = input_provenance(game, rosters)
+    if evaluation == 'backtest' and provenance['unverified']:
+        raise ValueError(f"{game_id}: backtest refused; unverified pregame inputs: " + '; '.join(provenance['unverified']))
     snapshot = {
         'schema': SCHEMA,
+        'evaluation': {'class': evaluation, 'verified': not provenance['unverified'],
+                       'unverified_inputs': provenance['unverified']},
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
         'roster_snapshot_id': f"nfl-depth-chart:{_canonical_hash(rosters)}",
         'schedule': {
