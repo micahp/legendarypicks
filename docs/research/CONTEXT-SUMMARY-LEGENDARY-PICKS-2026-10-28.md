@@ -7,11 +7,11 @@ earlier history, which is cited from git or from the project memory index and wa
 
 | checkout | path | ref | state |
 |---|---|---|---|
-| dev worktree | `/root/legendarypicks` | local `dev` at `79e8e05d`; `origin/dev` at `7ce9ae4e` | **ahead 26, unpushed**. Uncommitted edits, left as found: `.claude/skills/measurement-is-a-claim/SKILL.md`, `components/Leagues/types.ts`, `pages/leagues/[league].tsx` |
+| dev worktree | `/root/legendarypicks` | local `dev` at `79e8e05d`; `origin/dev` at `382f5ffe` (blocked-kick guard pushed 2026-10-28) | **diverged**: local dev is 26 ahead and 2 behind origin dev. Its two guard commits (`e133ab15`, `fee78a05`) duplicate `origin/dev`'s `1d35e47e` and `382f5ffe` in content. Uncommitted edits, left as found: `.claude/skills/measurement-is-a-claim/SKILL.md`, `components/Leagues/types.ts`, `pages/leagues/[league].tsx` |
 | fix branch | `fix/week08-simulation-errors` | `fee78a05` (local and origin agree) | the blocked-kick guard lives here |
 | integration worktree | `/root/lp-event-integration` | branch `research/lp-event-integration-2026-10-28` from `79e8e05d` | research only; this session's Phase 1 work |
 
-Nothing was pushed to `dev` or `main`, merged, deployed, or changed in production defaults.
+On 2026-10-28 the blocked-kick guard (two commits, four files, 187 tests passing) was pushed to `origin/dev` as a fast-forward, on the user's instruction. Nothing else was pushed to `dev` or `main`. Nothing was merged, deployed, or changed in production defaults.
 
 ## 2. Event-based NFL simulator: architecture as found
 
