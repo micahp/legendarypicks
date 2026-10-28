@@ -197,7 +197,7 @@ def list_props(player: Optional[str] = Query(None),
              LEFT JOIN prop_results r ON r.prop_id = p.id
              WHERE 1=1"""
     import mls_resolution
-    sql = sql.replace('pl.team AS player_team', mls_resolution.club_now_sql('pl.id', 'pl.league', 'pl.team', 'NULL', "pg.date >= date('now')") + ' AS player_team', 1)
+    sql = sql.replace('pl.team AS player_team', mls_resolution.club_now_sql('pl.id', 'pl.league', 'pl.team', 'NULL', _UPCOMING) + ' AS player_team', 1)
     params = []
     if player:
         sql += " AND pl.name LIKE ?"
@@ -965,7 +965,7 @@ def props_slate(league: Optional[str] = Query(None),
              JOIN prop_games pg ON pg.id = p.game_id
              WHERE 1=1"""
     import mls_resolution
-    sql = sql.replace('pl.team AS player_team', mls_resolution.club_now_sql('pl.id', 'pl.league', 'pl.team', 'NULL', "pg.date >= date('now')") + ' AS player_team', 1)
+    sql = sql.replace('pl.team AS player_team', mls_resolution.club_now_sql('pl.id', 'pl.league', 'pl.team', 'NULL', _UPCOMING) + ' AS player_team', 1)
     params = []
     league_sql, league_params = _league_sql("pg.league", league, leagues)
     sql += league_sql
