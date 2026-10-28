@@ -198,12 +198,16 @@ def _published_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[i
         return []  # no published roster here; the name-keyed pass is the whole plan
     if not {"team", "active"} <= columns:
         return []  # a schema this old cannot say who is on a squad today
+    import mls_resolution
     out = []
     for one in leagues:
         claims: Dict[Tuple[str, str], List[int]] = {}
+        current = mls_resolution.members_as_of(con) if one == "mls" and mls_resolution.CUTOVER_ENABLED else None
         for row in con.execute(
                 "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
                 (one,)).fetchall():
+            if current is not None and row["id"] not in current:
+                continue  # a departed person's stale observation row proposes no claim
             match = published_roster.lookup(con, one, row["name"], row["team"])
             if match:
                 claims.setdefault((match[0], match[1]), []).append(row["id"])
