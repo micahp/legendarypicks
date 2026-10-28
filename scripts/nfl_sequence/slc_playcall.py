@@ -205,10 +205,11 @@ def main(argv=None):
     fr.add_argument('--report', type=Path, required=True)
     fr.add_argument('--out', type=Path, required=True)
     fr.add_argument('--reference-season', type=int, default=2026)
+    fr.add_argument('--last-season', type=int, default=2025, help='last fitted season; a cutoff fit for a game season S uses S-1')
     args = ap.parse_args(argv)
     if args.command == 'freeze':
         report = json.loads(args.report.read_text())
-        frame = pm.load_frame_cached(args.cache, range(2010, 2026), include_flagged=True)
+        frame = pm.load_frame_cached(args.cache, range(2010, args.last_season + 1), include_flagged=True)
         artifact = freeze(frame, report['chosen_penalties'], report['chosen_recency_tau'], args.reference_season)
         args.out.write_text(json.dumps(artifact, indent=1, sort_keys=True) + '\n')
         print(json.dumps({'artifact_id': artifact['artifact_id'], 'sha256': artifact['sha256'], 'plays': artifact['plays'],
