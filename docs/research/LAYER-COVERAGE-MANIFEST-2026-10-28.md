@@ -35,18 +35,35 @@ separate):
 
 Full per-season counts are in the scratchpad file `playcall-coverage-2010-2025.json`.
 
-## Score gap and the path to close it
+## Pre-play scores (joined, 2010 to 2025)
 
-`nfl_pbp` has no score or kick-result columns. So the builder returns `score_differential = None` with
-`score_status = 'unavailable_in_pbp'`. Nothing is estimated.
+`nfl_pbp` has no score columns. The play-calling builder now joins exact pre-play scores from the nflverse raw play-by-play for
+the same season, on (game_id, play_id). Each raw file is checked against a pinned SHA-256 before it is read.
 
-The raw nflverse file `data/raw/pbp_2022.csv.gz` (372 columns) has the pre-play score fields:
-`posteam_score`, `defteam_score`, `score_differential`, plus `field_goal_result`, `extra_point_result`,
-`two_point_conv_result`, `total_home_score`, `total_away_score`. The `_post` columns are the post-play values.
+Sources and pins:
+- 2022 to 2025: `data/raw/pbp_{season}.csv.gz` in the research repo. Pins are in its build manifest.
+- 2010 to 2021: retrieved 2026-10-28 from `https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{season}.csv.gz`
+  into `/root/lp-snapshots/nfl-pbp-2010-2021/`, with `MANIFEST.json` holding each file's SHA-256. All 12 files carry the full set of
+  score fields.
 
-Path: join those pre-play fields to `nfl_pbp` on game and play id for 2022 to 2025 (the same files exist for 2023 to 2025 locally).
-The join must be checked by row count and by the posteam/defteam match before use. 2010 to 2021 raw files are not local. Adding them
-needs a source fetch, which needs a decision.
+Validation (`validate_pre_play_scores.py`, reports in the scratchpad). For each season 2010 to 2025, regular season weeks 1 to 18:
+
+| Check | Result |
+|---|---|
+| Join coverage, both directions | 100% in every season: every raw play matches a DB play, and every DB play matches a raw play |
+| Shared fields (team, quarter, down, distance, field, clock, play type) | no mismatches after the LA/LAR and WAS/WSH code normalisation |
+| score_differential equals posteam minus defteam | 0 inconsistent rows in every season |
+| Continuity: pre-play score equals the previous play's post-play score for the same team | 0 to 91 mismatches per season, about 0.1 to 0.2% of checked plays |
+| Pre-play totals that decrease within a game | 21 to 91 per season; about 80% are on no-play rows (penalties, timeouts) |
+| Final scores against nfl_schedule | all but 1 to 3 games per season match |
+
+Decisions the validation supports:
+- No-play rows drop their pre-play scores (`excluded_no_play_row`), since their totals are not pre-play state.
+- Unknown-intent plays with no raw score stay `raw_score_missing`. In 2025 all 561 are unknown intent.
+- Plays with no raw row stay `unmatched_in_raw`. None occur in the 2010 to 2025 window.
+- Coverage at the join: 2012 has 41,100 scored plays, 4,194 excluded no-play rows and 535 missing scores. 2025 has 41,353,
+  4,538 and 561.
+- The residual continuity and final-score mismatches are small and are left in the data, not corrected. They are reported here.
 
 ## Registry (play-calling layer)
 
@@ -70,11 +87,29 @@ cutoff_eligibility, rule_regime, provenance, model_layer.
 
 A missing advanced feature (FTN, participation, NGS) triggers the next level for that feature only. It never removes the play.
 
+## Readiness of the conditional play-calling model
+
+Ready:
+- Play facts and intents for 2010 to 2025 (run, dropback, sack, scramble, kneel, spike, two-point, fourth-down choices), with
+  unknown intent kept as unknown.
+- Exact pre-play scores, quarter, clock and field position, joined on (game_id, play_id) from pinned sources, validated as above.
+- Cutoff and holdout guards on the observation builder.
+
+Not ready (the model is not built and must not be frozen yet):
+- The hierarchical probability model: team, down, distance, score, clock and field interactions are not fitted.
+- Era effects, recency weighting and team-specific tendencies are not evaluated.
+- Score-by-clock interactions are not built or tested. The score is in the data, but no model uses it yet.
+- No evaluation against the league prior or the 24-cell decision model on chronological development data.
+- Coaches and quarterbacks are not in the observation rows; coaching and QB changes are not modelled.
+- QB and player decisions are not connected, so statistics are still assigned after the play.
+
+This is research infrastructure. Nothing here is adopted, promoted or integrated.
+
 ## Decisions needed
 
 1. Training window for the situational layer: 2010 to 2025 (this manifest) or 2022 to 2025 (the earlier instruction for the
    frozen model). The layer window can differ from the frozen training window, but this needs to be written down.
-2. Whether to join the 2022 to 2025 pre-play score fields from the raw nflverse files (local, no fetch needed).
-3. Whether to fetch 2010 to 2021 nflverse raw files for score fields. Needed for score-dependent filters before 2022.
-4. Whether the kick, blocked-kick, overtime and safety tables (pinned 2022 to 2025, and containing 2025 outcomes) need
-   cutoff-safe versions before any historical claim.
+2. Resolved: pre-play scores are joined for 2010 to 2025 from pinned raw sources (see above).
+3. Resolved: the 2010 to 2021 raw files were fetched and pinned.
+4. Resolved in code: the kick, blocked-kick, overtime, safety, try and participant sources have cutoff paths, and the leakage tests
+   and the S0 regression pass. The guard is lifted. The cutoff-safe versions are computed per call; the pinned originals are unchanged.
