@@ -25,8 +25,8 @@ Proposed (snapshot path):
 2. `prior_state` reads the latest published snapshot from the database. Callers cannot pass prior counts.
 3. `check_completeness`: 30 clubs per source, a minimum club size, and abnormal club or total drops against
    the prior counts. Any failure refuses. Nothing publishes and the current snapshot stays.
-4. `resolve`: lookup only. One membership per person. Conflicts (two keys from one source, or sources that
-   disagree on a club) refuse.
+4. `resolve`: lookup only. One membership per person. A disputed person (two keys from one source, or sources that
+   disagree on a club) is HELD at the club of the last verified snapshot, with roster_status "held". Others update.
 5. `_classify`: compare with the prior snapshot, person by person. It sorts people into carried, blocker,
    confirmed departure, single-source departure, bind moved, transfer, and rekey.
 6. `build` sets the coverage: `verified` or `partial`, with every count recorded in the payload.
@@ -46,7 +46,8 @@ Unresolved keys can appear when a publisher adds a player. Two options:
 
 Chosen: **B**. A new player should not freeze freshness for 1,040 people. The snapshot must not claim to be
 complete when it is not, so coverage is in the payload and in `health()`. Refusal is kept for the cases
-where the data itself is untrustworthy: incomplete squads, identity conflicts, and a club count other than 30.
+where the data itself is untrustworthy: incomplete squads and a club count other than 30. A disputed identity holds one
+   person and never refuses the league.
 
 ## Consumers, mapped before integration
 
@@ -84,5 +85,15 @@ covers a disagreement.
 - Identity accuracy for the cross-source pairs. See the audit report in the evidence bundle. Membership accuracy
   (who is on which club now) is the snapshot's guarantee. Identity accuracy depends on the binds.
 - Completeness by count is coarse: a drop of up to three players per club passes. The per-person comparison
-  (`_classify`) is the finer check, and it reports rather than refuses.
+  (`_classify`) is the finer check, and it reports rather than refuses. Keys one publisher drops are reported per
+  person (source_lost), and make the snapshot partial.
 - Consumers above are mapped, not migrated. Migration is a separate, reviewed change.
+
+## Cutover (2026-10-28)
+
+Onboarding (`mls_identity.py`) decides every publisher key that is not bound yet, inside the same transaction as the
+snapshot (`mls_roster.run_cycle`). A new person needs the same name and club from both publishers, no existing MLS
+player with that name, and a date of birth that both publishers agree on. A key of a person already known through the
+other publisher is a rekey, bound only when the dates of birth agree. Everything else is queued. The membership gate
+(`mls_resolution.py`) answers every name lookup from the snapshot that covers the date, and is off until authorized.
+The acceptance contract and its evidence are in `docs/incidents/2026-10-27-mls-identity-closure.md`.
