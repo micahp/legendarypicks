@@ -1642,6 +1642,9 @@ def _write_json(path: Path, value: Mapping[str, Any]) -> str:
 
 def _write_report(path: Path, historical: Mapping[str, Any],
                   rollout: Mapping[str, Any] | None = None) -> None:
+    historical_hash = ((rollout or {}).get("historical_result_sha256")
+                       or historical.get("result_sha256", "not yet finalized"))
+
     def ci_cell(row: Mapping[str, Any] | None) -> str:
         if row is None:
             return "reference"
@@ -1653,10 +1656,12 @@ def _write_report(path: Path, historical: Mapping[str, Any],
     lines = [
         "# NHL A1 Gap Estimator Comparison",
         "",
-        "**Date:** 2026-10-28  ",
-        "**Branch:** `research/nhl-a1-gap-estimator-comparison-2026-10-28`  ",
-        f"**Historical result:** `{historical.get('result_sha256', 'not yet finalized')}`  ",
-        f"**Risk-spell cache SHA-256:** `{historical['risk_spell_cache_sha256']}`",
+        "| Metadata | Value |",
+        "|---|---|",
+        "| Date | 2026-10-28 |",
+        "| Branch | `research/nhl-a1-gap-estimator-comparison-2026-10-28` |",
+        f"| Historical result SHA-256 | `{historical_hash}` |",
+        f"| Risk-spell cache SHA-256 | `{historical['risk_spell_cache_sha256']}` |",
         "",
         "## Scope and data boundary",
         "",
@@ -1796,6 +1801,50 @@ def _write_report(path: Path, historical: Mapping[str, Any],
                     f"{quantiles['p50']}/{quantiles['p90']}/{quantiles['p95']}/{quantiles['p99']} |"
                 )
         lines.extend(["", "Generated first-arrival, later emitted-gap, and terminal-censor proposal quantiles, mark-family counts, SOG, attempts, goals, trace reproducibility, and per-candidate plus total runtimes are in the rollout JSON."])
+        bundle_candidates = rollout["metrics"]["bundle_count"]["candidates"]
+        goal_candidates = rollout["metrics"]["goals"]["candidates"]
+        sog_candidates = rollout["metrics"]["sog"]["candidates"]
+
+        def rollout_delta(row: Mapping[str, Any]) -> str:
+            ci = row["crps_delta_vs_a0_game_clustered_interval"]
+            return (f"{row['crps_delta_vs_a0']:+.4f} "
+                    f"[{ci['ci95_low']:+.4f}, {ci['ci95_high']:+.4f}]")
+
+        b1_count = bundle_candidates["B1"]
+        b1_predictive_variance = (
+            b1_count["mean_within_period_trace_variance"]
+            + b1_count["mean_forecast_period_mean_variance"])
+        b2e_count = bundle_candidates["B2-E"]
+        b2e_predictive_variance = (
+            b2e_count["mean_within_period_trace_variance"]
+            + b2e_count["mean_forecast_period_mean_variance"])
+        b2w_count = bundle_candidates["B2-W"]
+        b2w_predictive_variance = (
+            b2w_count["mean_within_period_trace_variance"]
+            + b2w_count["mean_forecast_period_mean_variance"])
+        faceoff = rollout["metrics"]["family:faceoff"]["candidates"]
+        timing_names = ("B1", "B2-E", "B2-W")
+        goal_rows = "; ".join(
+            f"{name} {rollout_delta(goal_candidates[name])}"
+            for name in timing_names)
+        timing_goal_worsened = all(
+            goal_candidates[name]["crps_delta_vs_a0"] > 0
+            and goal_candidates[name]["crps_delta_vs_a0_game_clustered_interval"]["ci95_low"] > 0
+            for name in timing_names)
+        lines.extend([
+            "",
+            "### Rollout interpretation",
+            "",
+            f"The complete rollout and clustered scoring took {rollout['runtime_seconds']:.1f}s. Each estimator generated {rollout['development_periods'] * rollout['replicates_per_period']:,} traces. The recorded fixed-seed replay check was byte-identical. Each candidate had one terminal proposal per trace and no first-arrival right-censored trace.",
+            "",
+            f"B1 lowers bundle-count CRPS versus A0 by {rollout_delta(b1_count)}, but its nominal central-80% interval covers only {b1_count['central_80pct_interval_coverage']:.1%} of observed period counts. Its estimated predictive count variance, combining within-period trace variance and across-period forecast-mean variance, is {b1_predictive_variance:.2f} versus observed period variance {b1_count['observed_period_variance']:.2f}. B2-E and B2-W have bundle-count CRPS deltas {rollout_delta(b2e_count)} and {rollout_delta(b2w_count)}, with predictive variances {b2e_predictive_variance:.2f} and {b2w_predictive_variance:.2f}.",
+            "",
+            f"All three timing candidates worsen goal CRPS against A0, with game-clustered intervals wholly above zero: {goal_rows}. SOG results are mixed: B1 {rollout_delta(sog_candidates['B1'])}, B2-E {rollout_delta(sog_candidates['B2-E'])}, and B2-W {rollout_delta(sog_candidates['B2-W'])}.",
+            "",
+            f"The frozen event-mark process also leaves a separate faceoff-count discrepancy: timing candidates generate {min(faceoff[name]['generated_mean'] for name in timing_names):.2f}–{max(faceoff[name]['generated_mean'] for name in timing_names):.2f} faceoffs per period versus {faceoff['A0']['observed_mean']:.2f} observed. Therefore the historical timing fit does not establish adequate joint event generation. {('The timing candidates fail the preregistered no-goal-deterioration criterion.' if timing_goal_worsened else 'Goal deterioration is not statistically conclusive.')}",
+            "",
+            "No candidate is selected: the bundle-count score improvement does not compensate for count underdispersion and the goal/event-family tradeoffs. Shot conversion and the frozen mark model were not tuned.",
+        ])
     lines.extend([
         "",
         "## Decision and limitations",

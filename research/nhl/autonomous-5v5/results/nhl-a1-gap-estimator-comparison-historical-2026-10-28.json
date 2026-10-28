@@ -20970,6 +20970,20 @@
       "2020": 2308,
       "2021": 2573
     },
+    "zero_exposure_origin_reasons_by_season": {
+      "2019": {
+        "origin_at_period_end": 37,
+        "origin_not_verified_5v5": 97
+      },
+      "2020": {
+        "origin_at_period_end": 31,
+        "origin_not_verified_5v5": 2277
+      },
+      "2021": {
+        "origin_at_period_end": 59,
+        "origin_not_verified_5v5": 2514
+      }
+    },
     "zero_length_spell_policy": "zero-risk source ties are counted by period summary and excluded from duration likelihoods"
   },
   "stage": "historical_state_replay",
