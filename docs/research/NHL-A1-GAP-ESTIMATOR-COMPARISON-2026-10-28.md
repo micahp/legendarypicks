@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-28 |
 | Branch | `research/nhl-a1-gap-estimator-comparison-2026-10-28` |
-| Historical result SHA-256 | `05bbc1b7d689e5b87549eafe3c14301fbf18f08a85d6183f47821dd6abf5d62f` |
+| Historical result SHA-256 | `75046cb85f06c51c23015ce80be7203d39fea07829c10b6a555b33645bc05f77` |
 | Risk-spell cache SHA-256 | `29c2d721d03a17fe153f504ccc03c4299059af96f466b91ab2c1d9adccd9b08a` |
 
 ## Scope and data boundary
@@ -172,6 +172,24 @@ No candidate is selected: the bundle-count score improvement does not compensate
 This is a mechanism comparison on exposed 2021 development data. It does not select or adopt a timing model. B1's complete-gap fit does not use censored spells in its PMF, while B2-E/W use the reconstructed right-censored risk set; censoring reason is retained because penalty/state exits may be informative rather than independent. No puck tracking, new source, or production data was needed for this timing investigation.
 
 A0/A1 original artifacts remain unchanged. All candidate paths keep the shot/mark sampler fixed. The autonomous rollout is not an independent validation of the NHL game model.
+
+## Repository history rewrite
+
+The 70.46 MB 10/27 diagnostic JSON was removed from every commit in this branch's rewritten range. The exact file remains outside Git with its original SHA-256. No model code, metrics, source inputs, or preregistration document contents changed; commit IDs changed because their ancestry changed. The preregistration and result metadata use the rewritten commit IDs below, while the frozen preregistration documents retain their original recorded IDs.
+
+| Original commit | Rewritten commit | Change |
+|---|---|---|
+| `38e181418500be26df61a8b12fe42c78750d9292` | `0c84b49fe0e27e4c219a87b926c0092079a019f9` | Parent diagnostic |
+| `f5d682007133be69127a34077f972c5c1c816d7b` | `fe5fed48660c4a9055c04c3266d9e6c95e9045a7` | Preregistration |
+| `aa6fa660c9cdf92eb962c97f9815e5a364288cb5` | `100c57aa10ecee91d9362b3513f4417e629e7686` | Input pin |
+| `7dbe2bb7555627f275a0a23cf3ba95304045b04a` | `89c4509a3066beba4b8233b7edb31776a354d690` | Censor convention preregistration |
+| `03aea31b9abdfc210b510f45a0cdd40798f21295` | `c792fb8163a0f7267744675cffaddf988169ba5a` | Boundary-tie preregistration |
+| `15db83cd4571141a148c7ab135dee2e9d4517db5` | `26a0bd30a1802c271cb2e6c6c48db4a8adb372bf` | Estimator implementation |
+| `f04b267bf4f46a90a55905ed67d6be30c9b0790f` | `6ed2d0ed6973ad3bb83b8623cac89fc1598e7ab3` | Period-end correction |
+| `01ee949a07aee55ef67fd727ff5e6cb1a65eda4e` | `92755645177664496ecb9abbfe178cc24dc3344c` | Historical result |
+| `6c441f76bd12c70120a6c54dd51ef353902d5038` | `e52ebbac2ff861545f294bfa871adcfec77301ab` | Rollout progress logging |
+| `30ee263672ec6cee1fcb2612b1f07f3d7378d6a6` | `86ea97882806e6b5b74bd84e2170ba6a1abdae1d` | Rollout result |
+| `d6aaa9b8d6936a5bd6d7996344fbdcbd891b9d1f` | `162f20b285de3ac56995392265749b79c12f56b6` | Artifact removal and report-only replacement |
 
 ## Reproduction
 

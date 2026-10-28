@@ -119,7 +119,7 @@
       "trace_generation_runtime_seconds": 30.809439300443046
     }
   },
-  "historical_result_sha256": "05bbc1b7d689e5b87549eafe3c14301fbf18f08a85d6183f47821dd6abf5d62f",
+  "historical_result_sha256": "75046cb85f06c51c23015ce80be7203d39fea07829c10b6a555b33645bc05f77",
   "metrics": {
     "bundle_count": {
       "candidates": {
@@ -2244,10 +2244,10 @@
     "B2-W"
   ],
   "preregistration_commits": [
-    "f5d682007133be69127a34077f972c5c1c816d7b",
-    "aa6fa660c9cdf92eb962c97f9815e5a364288cb5",
-    "7dbe2bb7555627f275a0a23cf3ba95304045b04a",
-    "03aea31b9abdfc210b510f45a0cdd40798f21295"
+    "fe5fed48660c4a9055c04c3266d9e6c95e9045a7",
+    "100c57aa10ecee91d9362b3513f4417e629e7686",
+    "89c4509a3066beba4b8233b7edb31776a354d690",
+    "c792fb8163a0f7267744675cffaddf988169ba5a"
   ],
   "replicates_per_period": 10,
   "risk_spell_cache_sha256": "29c2d721d03a17fe153f504ccc03c4299059af96f466b91ab2c1d9adccd9b08a",

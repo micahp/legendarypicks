@@ -1,5 +1,5 @@
 {
-  "boundary_tie_commit": "03aea31b9abdfc210b510f45a0cdd40798f21295",
+  "boundary_tie_commit": "c792fb8163a0f7267744675cffaddf988169ba5a",
   "branch": "research/nhl-a1-gap-estimator-comparison-2026-10-28",
   "censor_aware_survival_calibration": {
     "all_event_origins": {
@@ -1512,7 +1512,7 @@
       }
     }
   },
-  "censor_convention_commit": "7dbe2bb7555627f275a0a23cf3ba95304045b04a",
+  "censor_convention_commit": "89c4509a3066beba4b8233b7edb31776a354d690",
   "censor_reasons_2021": {
     "5v5_exit": 1609,
     "5v5_exit_and_ineligible_bundle": 5989,
@@ -1554,10 +1554,10 @@
       "v01_loader_sha256": "b6afea41c21660c564ea13ea75c5c17a6088e95cec1f590fb11426c95016e9fc"
     },
     "preregistration_commits": [
-      "f5d682007133be69127a34077f972c5c1c816d7b",
-      "aa6fa660c9cdf92eb962c97f9815e5a364288cb5",
-      "7dbe2bb7555627f275a0a23cf3ba95304045b04a",
-      "03aea31b9abdfc210b510f45a0cdd40798f21295"
+      "fe5fed48660c4a9055c04c3266d9e6c95e9045a7",
+      "100c57aa10ecee91d9362b3513f4417e629e7686",
+      "89c4509a3066beba4b8233b7edb31776a354d690",
+      "c792fb8163a0f7267744675cffaddf988169ba5a"
     ],
     "sequence_cache_sha256": "9cfba618ded78ed92ad2cb6e15be64b493ef768fc8d094669f2a9138ec5275b2"
   },
@@ -3240,7 +3240,7 @@
       }
     }
   },
-  "input_pin_commit": "aa6fa660c9cdf92eb962c97f9815e5a364288cb5",
+  "input_pin_commit": "100c57aa10ecee91d9362b3513f4417e629e7686",
   "joint_event_and_censor_log_likelihood": {
     "models": {
       "A0": {
@@ -3360,7 +3360,7 @@
       }
     }
   },
-  "parent_commit": "38e181418500be26df61a8b12fe42c78750d9292",
+  "parent_commit": "0c84b49fe0e27e4c219a87b926c0092079a019f9",
   "period_entry_observations_2021": {
     "entry_segment_outcomes": {
       "5v5_reentry:censored_5v5_exit_or_period_end": 464,
@@ -3377,12 +3377,12 @@
       "p95_seconds": 0.0
     }
   },
-  "preregistration_commit": "f5d682007133be69127a34077f972c5c1c816d7b",
+  "preregistration_commit": "fe5fed48660c4a9055c04c3266d9e6c95e9045a7",
   "preregistration_commits": [
-    "f5d682007133be69127a34077f972c5c1c816d7b",
-    "aa6fa660c9cdf92eb962c97f9815e5a364288cb5",
-    "7dbe2bb7555627f275a0a23cf3ba95304045b04a",
-    "03aea31b9abdfc210b510f45a0cdd40798f21295"
+    "fe5fed48660c4a9055c04c3266d9e6c95e9045a7",
+    "100c57aa10ecee91d9362b3513f4417e629e7686",
+    "89c4509a3066beba4b8233b7edb31776a354d690",
+    "c792fb8163a0f7267744675cffaddf988169ba5a"
   ],
   "pseudocount_allocation": {
     "a0_pooled_mean_seconds": 16.29324455667687,
