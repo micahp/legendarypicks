@@ -1,0 +1,1330 @@
+{
+ "checkout_head": "79e8e05d",
+ "modules": [
+  {
+   "blob": "4232307066a74ac28e89c3116bb30abcfd86a369",
+   "consumers": [
+    "simulate_pregame_batch.py",
+    "test_availability_adapter.py"
+   ],
+   "data_references": [
+    "index.jsonl",
+    "missing-report flags are the only injury evidence"
+   ],
+   "imports_from_this_dir": [
+    "pregame_snapshot"
+   ],
+   "last_commit": "1aedc435 2026-10-27",
+   "lines": 174,
+   "module": "availability_adapter.py",
+   "sha256": "6c55539c3ec05ed156eb9bb66a25dbcaf2e6189646e921aaf903f436aa45ca5a",
+   "summary": "Apply a frozen weekly availability snapshot to a pregame snapshot's full-depth rosters."
+  },
+  {
+   "blob": "f79a4f50cf3a428ed4526f4bf566dabf6da3f889",
+   "consumers": [
+    "test_blocked_kick_outcomes.py"
+   ],
+   "data_references": [
+    ".manifest.json",
+    "Build an auditable blocked-kick transition pool from nflverse play-by-play.\n\nThe LP dev nfl_pbp table omits blocked-kick, return, and description fields. This compact fixture joins each blocked kick\nto the following play-by-play rows before extracting its transition. Ambiguous records are retained and labelled so the\nsimulator can block on them instead of silently treating them as an ordinary punt or miss.\n\nRun with the parquet environment:\n    /root/.venvs/nfl-parquet/bin/python scripts/nfl_sequence/build_blocked_kick_outcomes.py\n",
+    "docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "5ed3c7e6 2026-10-26",
+   "lines": 399,
+   "module": "build_blocked_kick_outcomes.py",
+   "sha256": "a4946c3f776329c4facb0a560e8d6cb70fcc946bca917330031904efb00b6afe",
+   "summary": "Build an auditable blocked-kick transition pool from nflverse play-by-play."
+  },
+  {
+   "blob": "4f3738026b4adff1f35a6f8606871672e5de6fb0",
+   "consumers": [
+    "test_build_full_depth_roster_snapshot.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [],
+   "last_commit": "0ff9d4c4 2026-10-27",
+   "lines": 252,
+   "module": "build_full_depth_roster_snapshot.py",
+   "sha256": "3e1721a644a987e0e9d75522b990a44bceecc7eb2416e7236dda8af30ad5eb97",
+   "summary": "Build a pinned KC-SEA full depth-chart roster with per-role starter flags and jersey numbers."
+  },
+  {
+   "blob": "8fbd459eca5ddf0fb32c625b855d347c41466b95",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "Build the kick-result table (extra points and two-point tries) from the nflverse play-by-play parquet.\n\nThe curated dev `nfl_pbp` table keeps `success` but not `extra_point_result` or `two_point_conv_result`. Those two columns\nare the publisher",
+    "kick_results_2022_2025.csv",
+    "s files later.\nOutput: docs/fixtures/e2/kick_results_2022_2025.csv and the same name with .manifest.json.\nWindow: season 2022-2025, regular season, week <= 18 (the window every E2 rate uses).\n"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "606991c9 2026-10-24",
+   "lines": 81,
+   "module": "build_kick_results.py",
+   "sha256": "832c89754306464dccedeee092917b1e2e2574d984bba58d94b50512e2e5cf1d",
+   "summary": "Build the kick-result table (extra points and two-point tries) from the nflverse play-by-play parquet."
+  },
+  {
+   "blob": "94a998b5ba57498edb11779ed6c42da3760ba085",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "docs/fixtures/e2/overtime_choice_model_2025.csv",
+    "docs/fixtures/e2/overtime_coin_toss_2023_2026.csv",
+    "s kick-or-receive decision in overtime, estimated from the observed coin-toss table.\n\nSource: docs/fixtures/e2/overtime_coin_toss_2023_2026.csv (toss winner, the choice, and the first receiver for each game,\nwith its source). The coin toss itself is a seeded fair draw in the engine; only the choice after winning it is modelled here.\n\nEstimation window (replay-safe): 2025 regular season, 14 games. A Beta(1, 1) prior gives the posterior mean for the\nprobability of kicking:\n\n    p_kick = (kicks + 1) / (games + 2)\n\nChronological check: the 2026 regular-season rows (through Week 7) are scored against the fitted rate, the 50/50 neutral\nbaseline, and the always-receive control, by log-loss. They are not used to fit the rate.\n\nThe 2023 Super Bowl and the 2025 playoff rows are kept in the source table and excluded here: they are not regular-season\ndecisions under the current overtime rules.\n\nRun with the parquet environment (stdlib only):\n    /root/.venvs/nfl-parquet/bin/python scripts/nfl_sequence/build_overtime_choice_model.py\n"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "dd544ee7 2026-10-26",
+   "lines": 104,
+   "module": "build_overtime_choice_model.py",
+   "sha256": "45a1a284aa78880370fa909254c5ef28d8b09facec961a0d258552543b40dec5",
+   "summary": "The winning coach's kick-or-receive decision in overtime, estimated from the observed coin-toss table."
+  },
+  {
+   "blob": "fa34328ea1009eea82ca93b4b02e506b97f94124",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "docs/fixtures/e2/overtime_drives_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "70d26aad 2026-10-26",
+   "lines": 252,
+   "module": "build_overtime_drives.py",
+   "sha256": "a4bb94b5b5026b75941bddcd77fb5a5cc6e2eb49b1a1797204e58ff6eff3a520",
+   "summary": "Build the observed regular-season overtime drive pool from nflverse play-by-play, 2022-2025."
+  },
+  {
+   "blob": "bb05d99d31b06fbf14a7a9ad7b39a669694dbe17",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "Sparse play flags that the curated dev table lacks: timeouts called and plays ending out of bounds.\n\nRun with the pyarrow venv: /root/.venvs/nfl-parquet/bin/python scripts/nfl_sequence/build_play_extras.py\n\nInput: play_by_play_2022..2025.parquet in --source-dir (the same files as build_kick_results.py; SHA-256 in the\nmanifest). Output: docs/fixtures/e2/play_extras_2022_2025.csv, one row per play with timeout == 1 or out_of_bounds == 1,\nand a manifest. Only rows in the E2 window (regular season, week <= 18) are kept.\n",
+    "play_extras_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "f88a8d43 2026-10-24",
+   "lines": 77,
+   "module": "build_play_extras.py",
+   "sha256": "29086e65ec7870a40151291e78a1fd71abae27f2ea5c2f38afe8816eb4fa3e65",
+   "summary": "Sparse play flags that the curated dev table lacks: timeouts called and plays ending out of bounds."
+  },
+  {
+   "blob": "f827fcd0fafdb45d899da4f239050f52f5aa4bd0",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "docs/fixtures/e2/safety_kick_outcomes_2022_2025.csv",
+    "s own `safety` field on the play that scored it. The LP dev nfl_pbp table has no such field, so this\nfixture is built from the raw parquet files, whose SHA-256 sums are checked against SHA256SUMS before they are read.\n\nRun with the parquet environment:\n    /root/.venvs/nfl-parquet/bin/python scripts/nfl_sequence/build_safety_kick_outcomes.py\n"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "0af6dd81 2026-10-26",
+   "lines": 206,
+   "module": "build_safety_kick_outcomes.py",
+   "sha256": "cea966bcc3ada3a4fea5dcc9aafb119f7a76a2eff415c1007e58e568b1fe6524",
+   "summary": "Build the observed safety free-kick outcome pool from nflverse play-by-play, 2022-2025 regular season."
+  },
+  {
+   "blob": "f5cb6ef4314cd2bcbffcbd87dec13cab671467d1",
+   "consumers": [],
+   "data_references": [
+    "LP-EVENT-INTEGRATION-SOURCE-MANIFEST-2026-10-28.json",
+    "]*(?:docs/|data/|\\.json|\\.csv|evidence|nfl_pbp)[^"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "",
+   "lines": 99,
+   "module": "build_source_manifest.py",
+   "sha256": "884af8016bef05ebb11784ada9481410b0a187b1824a654da73e99e67be796aa",
+   "summary": "Source-to-consumer manifest for the NFL sequence generator. Read-only."
+  },
+  {
+   "blob": "52a25a233ce4e9be699366fce0523ef88d981e63",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "Conditional fallback for the try decision after a touchdown, for overtime (Rule 16) when no point after was observed.\n\nSource: docs/fixtures/e2/try_situation_2022_2025.csv, the observed try decisions built for the two-point model. Each row is one\ntry: the scorer",
+    "docs/fixtures/e2/try_fallback_2022_2025.csv",
+    "docs/fixtures/e2/try_situation_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "bb06bd20 2026-10-26",
+   "lines": 161,
+   "module": "build_try_fallback.py",
+   "sha256": "8bb4402c75e7507e3c225802099d0f4e854467ac1f182316c7287a492dcc7479",
+   "summary": "Conditional fallback for the try decision after a touchdown, for overtime (Rule 16) when no point after was observed."
+  },
+  {
+   "blob": "8743e5ed7a1f025f3d1979fc889c47ba727215c4",
+   "consumers": [],
+   "data_references": [
+    ".audit.json",
+    ".manifest.json",
+    "try_situation_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "e8a2df84 2026-10-26",
+   "lines": 291,
+   "module": "build_try_situation.py",
+   "sha256": "fcb948c6061bf29e41111ced61c78f2ed22d6a6f1a9e017137d16a4599fbc419",
+   "summary": "Went-for-two situations from the nflverse play-by-play parquet files, 2022-2025."
+  },
+  {
+   "blob": "f8c2465678149a1bc1ceb08791b6955098c8f8be",
+   "consumers": [],
+   "data_references": [
+    "s clock runoff is clamped at quarter end.\n\nRuns the four starts named in docs/SEQUENCE-E1-LP-DRIVE-2026-10-24.md (seeds 1-300 each), runs check_drive on\nevery complete drive, and prints plays, clamped plays and drives with one clamp. Reads the dev database read-only.\n"
+   ],
+   "imports_from_this_dir": [
+    "e1_drive"
+   ],
+   "last_commit": "2248f7e1 2026-10-24",
+   "lines": 48,
+   "module": "clamp_census.py",
+   "sha256": "5c02efd2ff132c9f8e742a0b8709a6392394d00cadfbc7a7b3680b39a632e453",
+   "summary": "Boundary-2 census: how often a drive's clock runoff is clamped at quarter end."
+  },
+  {
+   "blob": "547a0e0d95646370b85378a63695a1075dcd8a7f",
+   "consumers": [],
+   "data_references": [
+    "e3-clock-decomposition-2026-10-24.csv",
+    "evidence",
+    "interception, fumble_lost, sack, complete_pass, penalty, drive FROM nfl_pbp WHERE season = 2022 AND week BETWEEN 1 AND 9 ",
+    "nflverse-2022-w1-9-flags.csv",
+    "three-model-clock-comparison-2026-10-24.json"
+   ],
+   "imports_from_this_dir": [
+    "e0_single_play",
+    "e1_drive"
+   ],
+   "last_commit": "108a1afe 2026-10-24",
+   "lines": 396,
+   "module": "clock_compare.py",
+   "sha256": "b90afaad3c88aad62eb932383c8b14c11b14388d50f3467a0e41ad3575f03b05",
+   "summary": "Three clock models on the 2022 data, compared on the same plays."
+  },
+  {
+   "blob": "c5312d8197ba9be85f538bf52274aa5bda976a5e",
+   "consumers": [
+    "clock_d_games.py",
+    "clock_d_replay.py",
+    "test_clock_d.py"
+   ],
+   "data_references": [
+    ".join(e1.COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week BETWEEN ? AND ? ",
+    "play_extras_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [
+    "e1_drive"
+   ],
+   "last_commit": "f5e99381 2026-10-24",
+   "lines": 231,
+   "module": "clock_d.py",
+   "sha256": "ae13cc5772f320a7e693de07029f8e4789944955a6af6c2fd22cd86b7a24620b",
+   "summary": "Model D, the E3 boundary-aware, event-driven conditional clock. Research candidate; the E2 default is unchanged."
+  },
+  {
+   "blob": "1c04bb9ac67c2fe459bcd4bfcf6d9889fe8698a6",
+   "consumers": [],
+   "data_references": [
+    "clock-d-games-per-seed.csv",
+    "clock-d-games-summary.json"
+   ],
+   "imports_from_this_dir": [
+    "clock_d",
+    "e1_drive",
+    "e2_reference",
+    "game_state"
+   ],
+   "last_commit": "b38e9f94 2026-10-24",
+   "lines": 124,
+   "module": "clock_d_games.py",
+   "sha256": "82af95dcce783b524e3f813ef4007e9e25d46ff50dc40b2ddfb2ca1065166407",
+   "summary": "Free-running games: the E2 control against research clock D, on the same seeds."
+  },
+  {
+   "blob": "3bd31f83f85770fddc7df317f1e7b2fce822ff4a",
+   "consumers": [],
+   "data_references": [
+    "clock-d-replay-{args.window}.json"
+   ],
+   "imports_from_this_dir": [
+    "clock_d",
+    "e1_drive"
+   ],
+   "last_commit": "f5e99381 2026-10-24",
+   "lines": 233,
+   "module": "clock_d_replay.py",
+   "sha256": "737a5e2d20fec7fd749d9b092a5e946becf46723f96a6336bd8289f27a99713e",
+   "summary": "Fixed-outcome replay: the research clock D against the E2 cell rule (A), quarter by quarter."
+  },
+  {
+   "blob": "878f14d8c4ab1dfc8e548f21429e6be2939cccae",
+   "consumers": [],
+   "data_references": [
+    "Compare two pinned-validity arms seed by seed: which seeds changed, and why.\n\nUsage: compare_safety_arm.py BASELINE.csv NEW.csv\nEvery seed is compared on every field. A changed seed is expected only if the baseline blocked it on a safety free kick.\n"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "278b2c88 2026-10-26",
+   "lines": 38,
+   "module": "compare_safety_arm.py",
+   "sha256": "cffa51b99685f0dd7043ec1a48517b501816887058f4d71919de121f54f53a59",
+   "summary": "Compare two pinned-validity arms seed by seed: which seeds changed, and why."
+  },
+  {
+   "blob": "0b440237e991cab7bbdbcff772bfbaba263afffe",
+   "consumers": [
+    "evaluate_try_policy.py",
+    "run_pinned_validity.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "e2_reference",
+    "game_state",
+    "rules_matrix",
+    "try_policy"
+   ],
+   "last_commit": "2c2a03e1 2026-10-26",
+   "lines": 132,
+   "module": "compare_try_policy.py",
+   "sha256": "257324bf451e9fcdbbaef63c1b46a83ee501c0910bed4f4f5e97fcdda9992046",
+   "summary": "Identical-seed comparison: the unconditional two-point share against the context-conditioned try policy."
+  },
+  {
+   "blob": "fa51c32753e9c2a8453841c7da8b3177521253bb",
+   "consumers": [],
+   "data_references": [
+    ")\n\n\ndef load(evidence, name):\n    rows = {}\n    with open(evidence / ARMS[name], newline=",
+    ")\n    print()\n\n\ndef tie_section(evidence, arms):\n    old, new = arms[",
+    ")\n    print()\n    outcome_section(arms)\n    tie_section(evidence, arms)\n    pair_section(arms)\n    tries_section(arms)\n\n\nif __name__ == ",
+    ")\n    so, sn = summary(evidence, ",
+    "))\n    args = ap.parse_args()\n    evidence = Path(args.evidence)\n    arms = {name: load(evidence, name) for name in ARMS}\n    fingerprints = {}\n    for name in ARMS:\n        s = summary(evidence, name)\n        fingerprints[name] = (s[",
+    "), summary(evidence, ",
+    "--evidence",
+    ".json",
+    "Paired comparison of the pinned-snapshot arms, seed by seed. Reads the CSVs that run_pinned_validity.py wrote.\n\nArms: the unconditional share (after the tie fix), K=1, K=25, and the unconditional share before the tie fix (the parent commit).\nEvery arm plays the same 300 seeds from the same pinned snapshot, with the same observed reference (checked below). Differences\nare paired per seed, with a 95% interval from the per-seed differences. Two-point tries are compared against the historical\npopulations of the situation fixture. Usage: python3 compare_validity_arms.py [--evidence DIR]\n",
+    "] else [],\n            }\n    return rows\n\n\ndef summary(evidence, name):\n    return json.loads((evidence / ARMS[name].replace(",
+    "evidence",
+    "validity-300-k1.csv",
+    "validity-300-k25.csv",
+    "validity-300-unconditional-pre-tie-fix.csv",
+    "validity-300-unconditional.csv"
+   ],
+   "imports_from_this_dir": [
+    "evaluate_try_policy",
+    "try_policy"
+   ],
+   "last_commit": "7f864a66 2026-10-26",
+   "lines": 196,
+   "module": "compare_validity_arms.py",
+   "sha256": "1ed941ec1359cd23cf506908d5c55501f26855e1db208753b00f89c1553287b2",
+   "summary": "Paired comparison of the pinned-snapshot arms, seed by seed. Reads the CSVs that run_pinned_validity.py wrote."
+  },
+  {
+   "blob": "e7e6ff4cf7e0025406fa2c0aa7da6dbfe25c13b1",
+   "consumers": [
+    "e2_reference.py",
+    "test_contextual_pool.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "e1_drive",
+    "pregame_context"
+   ],
+   "last_commit": "dc0e1969 2026-10-26",
+   "lines": 227,
+   "module": "contextual_pool.py",
+   "sha256": "37d6140e2bcd13f36945ee641d3e95d3692d9bfc937aec8b3eaec3374d411eb3",
+   "summary": "Matchup-weighted sampling over the cutoff-eligible historical E1 play pool."
+  },
+  {
+   "blob": "badbe8a7d3f103934a2f153688dedb8692c0ebc0",
+   "consumers": [
+    "clock_compare.py",
+    "e1_drive.py"
+   ],
+   "data_references": [
+    ".join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 ",
+    "/root/legendarypicks/backend/data/picks.dev.db",
+    "s own recorded outcome is never read. A minimal reducer applies the sampled outcome.\nClock, score, timeouts and participants are not modelled in E0; they are written as explicit nulls\nand listed under `gaps`, never invented.\n\nReads the dev database read-only. Output shape follows docs/GRIDIRON-CONTRACT-v1.md, with\nmode `single_play_statistical_demo` and `valid_full_game: false`.\n",
+    "sampled_empirical_nfl_pbp",
+    "score: not present in nfl_pbp (pregame score schema missing)",
+    "timeouts: not present in nfl_pbp"
+   ],
+   "imports_from_this_dir": [
+    "reducer"
+   ],
+   "last_commit": "924ae190 2026-10-24",
+   "lines": 285,
+   "module": "e0_single_play.py",
+   "sha256": "b4ee37588b871f3406f61d35060d625d84634d2339fe5db2420f739a08fdcf02",
+   "summary": "E0 single-play record for the NFL pregame play-sequence generator (statistical, not physics)."
+  },
+  {
+   "blob": "df566a669699bdde660ae63552c48a5281775806",
+   "consumers": [
+    "clamp_census.py",
+    "clock_compare.py",
+    "clock_d.py",
+    "clock_d_games.py",
+    "clock_d_replay.py",
+    "contextual_pool.py",
+    "e2_reference.py",
+    "game_state.py",
+    "run_pinned_validity.py",
+    "simulate_pregame_batch.py",
+    "simulate_pregame_game.py",
+    "test_contextual_pool.py",
+    "test_e1_transitions.py",
+    "test_pool_scope.py"
+   ],
+   "data_references": [
+    ".join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 ",
+    "A contextual sampling cell lacks enough supported historical evidence.",
+    "SELECT {columns} FROM nfl_pbp WHERE season >= ? AND week <= 18 ",
+    "`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.\n    `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.\n    `sampling_policy`, when given, samples events and source plays using the current simulated teams",
+    "sampled_empirical_nfl_pbp"
+   ],
+   "imports_from_this_dir": [
+    "e0_single_play",
+    "reducer"
+   ],
+   "last_commit": "e133ab15 2026-10-28",
+   "lines": 505,
+   "module": "e1_drive.py",
+   "sha256": "a3a9e36320fb7ae1f999d730ed6c7000b4e26e324886298e714f6847e1263c5a",
+   "summary": "E1 complete-drive generator for the NFL pregame play-sequence generator (statistical, not physics)."
+  },
+  {
+   "blob": "70152f2deeb5cb33fd66f0ee3200ac17ffd6e775",
+   "consumers": [
+    "clock_d_games.py",
+    "compare_try_policy.py",
+    "emit_game.py",
+    "game_survey.py",
+    "run_paired_rules_check.py",
+    "run_pinned_validity.py",
+    "simulate_pregame_batch.py",
+    "simulate_pregame_game.py",
+    "test_game_state.py",
+    "test_safety_kick_outcomes.py"
+   ],
+   "data_references": [
+    ")\n                 AND next.play_id=(\n                    SELECT MIN(n.play_id) FROM nfl_pbp n\n                     WHERE n.game_id=fg.game_id AND n.qtr=fg.qtr AND n.drive=fg.drive+1\n                       AND n.posteam=fg.defteam AND n.play_type IN (",
+    "), COUNT(*)\n                FROM nfl_pbp n\n                LEFT JOIN players p ON p.nfl_gsis_id=n.{player_column} AND lower(p.league)=",
+    ".manifest.json",
+    "Observed reference data for E2 games, loaded once from the dev nfl_pbp table. Read-only.\n\nThe window is E1",
+    "Research variant (opt-in): kickoffs only from the seasons whose registered kickoff rules match the target season.\n\n    Seasons are not pooled across a registered kickoff change, because their spot distributions differ (KS tests in the\n    evidence note). Kickoffs on or after `kickoff_before` are dropped, so the validity game is not its own sample.\n    ",
+    "SELECT fg.game_id, fg.play_id, fg.yardline_100, fg.qtr, fg.drive,\n                    next.play_id, next.yardline_100\n                FROM nfl_pbp fg\n                JOIN nfl_pbp next\n                  ON next.game_id=fg.game_id AND next.qtr=fg.qtr AND next.drive=fg.drive+1\n                 AND next.posteam=fg.defteam AND next.play_type IN (",
+    "SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,\n        posteam, defteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}",
+    "blocked_kick_outcomes_2022_2025.csv",
+    "nfl_pbp player GSIS ID joined to players.nfl_gsis_id; position groups from canonical NFL identity",
+    "overtime_choice_model_2025.csv",
+    "overtime_drives_2022_2025.csv",
+    "play_extras_2022_2025.csv",
+    "safety_kick_outcomes_2022_2025.csv",
+    "try_fallback_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [
+    "contextual_pool",
+    "e1_drive",
+    "game_state",
+    "measure_kick_outcomes",
+    "rule_regimes"
+   ],
+   "last_commit": "dc0e1969 2026-10-26",
+   "lines": 471,
+   "module": "e2_reference.py",
+   "sha256": "c39749505b246782bfdbf2f4272f35687d03c9602f16f89ac4c2e7ae234532b8",
+   "summary": "Observed reference data for E2 games, loaded once from the dev nfl_pbp table. Read-only."
+  },
+  {
+   "blob": "aefc087ffc9b282f776e935b8627dcdc96b16c01",
+   "consumers": [],
+   "data_references": [
+    " IS NULL THEN 1 ELSE 0 END) AS nulls\n            FROM nfl_pbp WHERE {WINDOW}",
+    " || CAST(drive AS TEXT) END) AS drives\n        FROM nfl_pbp WHERE {WINDOW}",
+    " || CAST(drive AS TEXT) END) AS drives\n        FROM nfl_pbp WHERE {WINDOW} GROUP BY season ORDER BY season",
+    ") AS value, COUNT(*) AS n\n        FROM nfl_pbp WHERE {where} GROUP BY {expression} ORDER BY value",
+    ") THEN 1 ELSE 0 END) AS pass_run_rows,\n            SUM(CASE WHEN pass_attempt = 1 THEN 1 ELSE 0 END) AS pass_attempts,\n            SUM(CASE WHEN rush_attempt = 1 THEN 1 ELSE 0 END) AS rush_attempts,\n            SUM(CASE WHEN qb_dropback = 1 THEN 1 ELSE 0 END) AS qb_dropbacks,\n            SUM(CASE WHEN touchdown = 1 THEN 1 ELSE 0 END) AS touchdowns,\n            COUNT(DISTINCT drive) AS drives\n        FROM nfl_pbp WHERE {WINDOW} GROUP BY season, game_id\n    ), games AS (\n        SELECT s.game_id, s.home_score, s.away_score,\n            s.home_score + s.away_score AS total_points,\n            s.home_score - s.away_score AS home_margin,\n            ABS(s.home_score - s.away_score) AS absolute_margin,\n            p.pbp_rows, p.pass_run_rows, p.pass_attempts, p.rush_attempts, p.qb_dropbacks, p.touchdowns, p.drives\n        FROM nfl_schedule s JOIN pbp_game p USING(season, game_id)\n        WHERE s.season BETWEEN ? AND ? AND s.week BETWEEN ? AND ? AND s.game_type = ",
+    "/root/legendarypicks/backend/data/picks.dev.db",
+    "Export read-only observed NFL distributions from dev nfl_pbp, without an LP game payload.\n\nThe pinned output contains play, drive, game, and player-game stat histograms for regular-season data in 2022-2025.\nGame scores come from the matching nfl_schedule rows because the retained nfl_pbp schema has no score columns.\n",
+    "SELECT\n        SUM(CASE WHEN pass_attempt=1 AND (passer_player_id IS NULL OR complete_pass IS NULL\n                   OR pass_touchdown IS NULL OR interception IS NULL) THEN 1 ELSE 0 END) AS passing,\n        SUM(CASE WHEN qb_dropback=1 AND sack IS NULL THEN 1 ELSE 0 END) AS dropbacks,\n        SUM(CASE WHEN rush_attempt=1 AND (rusher_player_id IS NULL OR rush_touchdown IS NULL) THEN 1 ELSE 0 END) AS rushing,\n        SUM(CASE WHEN complete_pass=1 AND (passing_yards IS NULL OR receiving_yards IS NULL) THEN 1 ELSE 0 END) AS completions\n        FROM nfl_pbp WHERE {WINDOW}",
+    "SELECT COUNT(*) FROM (\n        SELECT game_id, play_id FROM nfl_pbp WHERE {WINDOW} GROUP BY game_id, play_id HAVING COUNT(*) != 1\n    )",
+    "SELECT COUNT(*) FROM (\n        SELECT game_id, series FROM nfl_pbp WHERE {WINDOW} AND series IS NOT NULL\n        GROUP BY game_id, series\n        HAVING COUNT(DISTINCT COALESCE(series_result, ",
+    "SELECT COUNT(*) FROM nfl_pbp\n            WHERE {WINDOW} AND ",
+    "SELECT COUNT(*) FROM nfl_pbp WHERE {WINDOW}",
+    "SELECT COUNT(*) FROM nfl_pbp WHERE {where}",
+    "WITH groups AS (\n        SELECT game_id,drive FROM nfl_pbp WHERE {WINDOW} AND drive IS NOT NULL GROUP BY game_id,drive\n    ) SELECT ",
+    "WITH p AS (\n        SELECT DISTINCT season, game_id FROM nfl_pbp WHERE {WINDOW}\n    ), s AS (\n        SELECT DISTINCT season, game_id FROM nfl_schedule WHERE {schedule_where}\n    ) SELECT COUNT(*) FROM p LEFT JOIN s USING(season, game_id) WHERE s.game_id IS NULL",
+    "WITH p AS (\n        SELECT DISTINCT season, game_id FROM nfl_pbp WHERE {WINDOW}\n    ), s AS (\n        SELECT DISTINCT season, game_id FROM nfl_schedule WHERE {schedule_where}\n    ) SELECT COUNT(*) FROM s LEFT JOIN p USING(season, game_id) WHERE p.game_id IS NULL",
+    "WITH source AS (\n        SELECT game_id, passer_player_id, rusher_player_id, receiver_player_id, pass_attempt, rush_attempt,\n            qb_dropback, complete_pass, sack, interception, fumble_lost, passing_yards, rushing_yards,\n            receiving_yards, pass_touchdown, rush_touchdown, touchdown\n        FROM nfl_pbp WHERE {WINDOW}\n    ), player_games AS (\n        SELECT ",
+    "WITH source AS (\n        SELECT game_id, play_id, down, ydstogo, yardline_100, play_type, yards_gained,\n               series_result, series, pass_attempt, rush_attempt, qb_dropback, complete_pass, sack,\n               interception, fumble_lost, touchdown, success,\n               {state_case} AS distance_bucket, {field_case} AS field_zone,\n               ROW_NUMBER() OVER (PARTITION BY game_id, series ORDER BY play_id DESC) AS series_tail\n        FROM nfl_pbp WHERE {WINDOW}\n    )",
+    "WITH source AS (\n        SELECT game_id, play_id, drive, play_type, game_seconds_remaining, series_result,\n            ROW_NUMBER() OVER (PARTITION BY game_id, drive ORDER BY play_id DESC) AS drive_tail\n        FROM nfl_pbp WHERE {WINDOW} AND drive IS NOT NULL\n    ), grouped AS (\n        SELECT game_id, drive,\n            COUNT(*) AS source_rows,\n            SUM(CASE WHEN play_type IN (",
+    "WITH source AS (SELECT * FROM nfl_pbp WHERE {WINDOW}),\n      rushing AS (\n        SELECT game_id,rusher_player_id player_id,\n          SUM(CASE WHEN rush_attempt=1 AND rushing_yards IS NULL THEN 1 ELSE 0 END) AS missing\n        FROM source WHERE rusher_player_id IS NOT NULL AND rush_attempt=1 GROUP BY game_id,rusher_player_id\n      )\n      SELECT ",
+    "docs/research/e3-observed-distributions-2026-10-24",
+    "drive_distribution.csv",
+    "game_distribution.csv",
+    "manifest.json",
+    "nfl_pbp",
+    "nfl_pbp has {duplicate_key_groups} duplicate game_id/play_id keys",
+    "nfl_pbp has {mixed_series} game/series groups with conflicting series_result labels",
+    "nfl_pbp has {pbp_totals[",
+    "nfl_pbp pass_attempt rows",
+    "nfl_pbp passing_yards on completed passes",
+    "nfl_pbp qb_dropback rows; missing IDs are excluded from player-game passing lines",
+    "nfl_pbp receiving_yards on completed passes",
+    "nfl_pbp rush_attempt rows",
+    "nfl_pbp rushing_yards on rush_attempt rows",
+    "nfl_pbp.{flag} has {invalid} non-null values outside 0/1",
+    "nfl_pbp; retained nflverse play-by-play fields",
+    "nfl_pbp_games",
+    "nfl_pbp_nonnull_drive_groups",
+    "nfl_pbp_rows",
+    "nfl_pbp_rows_without_drive"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "a786e70a 2026-10-24",
+   "lines": 556,
+   "module": "e3_observed_distributions.py",
+   "sha256": "b1b8427197b99ecf8284a3dc30f111d2bbafbf9c12a3acf5a17f6b35dc073594",
+   "summary": "Export read-only observed NFL distributions from dev nfl_pbp, without an LP game payload."
+  },
+  {
+   "blob": "e04b3a5ee93e1a11c0c17b20ea3844617d7c28cf",
+   "consumers": [],
+   "data_references": [
+    "Emit one full generated E2 game as a JSON payload, checked against the rules matrix.\n\nReads the dev database read-only.\n\nThe game is the first seed, from 1 up to --scan, that completes regulation untied and unblocked. Its matrix rows are\nrecomputed from the record. The payload is refused, and nothing is written, if the game is not complete or if any row\nFAILs. The output is docs/fixtures/e2/e2-game-seed<seed>.json in this repository.\n\nUsage: python3 emit_game.py [--scan 300] [--out PATH]\n",
+    "]}.json",
+    "dev nfl_pbp, opened read-only",
+    "output path; defaults to docs/fixtures/e2/e2-game-seed<seed>.json"
+   ],
+   "imports_from_this_dir": [
+    "e2_reference",
+    "game_state",
+    "rules_matrix"
+   ],
+   "last_commit": "5fcaa6bc 2026-10-24",
+   "lines": 77,
+   "module": "emit_game.py",
+   "sha256": "fbfeac11f686664a114c4da4e6b40482dba8e90c7ac1ff9b132ad214f93ef9d6",
+   "summary": "Emit one full generated E2 game as a JSON payload, checked against the rules matrix."
+  },
+  {
+   "blob": "c541a66878b2f0eb62bdba3da6cf3d3a122d80fd",
+   "consumers": [
+    "compare_validity_arms.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "compare_try_policy",
+    "try_policy"
+   ],
+   "last_commit": "8601a860 2026-10-26",
+   "lines": 219,
+   "module": "evaluate_try_policy.py",
+   "sha256": "dfe8984db6016d44bc0385dff2d5914cf7326329458e743418fe4713de0134c5",
+   "summary": "Chronological evaluation of the two-point decision on actual regular-season tries."
+  },
+  {
+   "blob": "8010625b9434a3297ffec18e30d0f4d255a91de9",
+   "consumers": [
+    "simulate_pregame_batch.py",
+    "test_game_info_snapshot.py"
+   ],
+   "data_references": [
+    "/root/legendarypicks/backend/data/picks.dev.db",
+    "Frozen game-information snapshot, attached to simulation output as context. It is not a model input.\n\nA snapshot covers one season and week. For each game it records the venue (stadium, city, roof, listed seats,\ncoordinates), the kickoff in UTC and in local time, the weekday, the National Weather Service forecast nearest kickoff\nwith its issue time, the referee assignment as known at freeze time, and the broadcast with its sources. Each source\nkeeps its own fetch time, so a reader can see how old each fact is.\n\nThe snapshot is written once to a store outside the repository and never rewritten. The simulator verifies the content\nhash and the game id, then records the snapshot id and hash on the run. The model does not read it: every attached\nblock says used_by_model false.\n\nUsage:\n  python3 game_info_snapshot.py build --venues VENUES.json --forecasts FORECASTS.json [--db DB] [--store DIR]\n  python3 game_info_snapshot.py show SNAPSHOT.json GAME_ID\n",
+    "index.jsonl",
+    "{snapshot_id}.json"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "e4212626 2026-10-27",
+   "lines": 165,
+   "module": "game_info_snapshot.py",
+   "sha256": "928d3cbad89b90ddc4ff747ef63c6bc791985c31e84ea8a3fca8f1a4628351c8",
+   "summary": "Frozen game-information snapshot, attached to simulation output as context. It is not a model input."
+  },
+  {
+   "blob": "943d6638af5d92083a1e67a614e6d80cb7a4603d",
+   "consumers": [
+    "clock_d_games.py",
+    "compare_try_policy.py",
+    "e2_reference.py",
+    "emit_game.py",
+    "game_survey.py",
+    "rules_matrix.py",
+    "run_pinned_validity.py",
+    "shared_v1.py",
+    "simulate_pregame_batch.py",
+    "simulate_pregame_game.py",
+    "test_game_state.py",
+    "test_shared_v1.py",
+    "test_try_policy.py"
+   ],
+   "data_references": [
+    ": self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged\n        attempt = []  # the plays made before a block are evidence, kept apart from drives and stats\n        plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,\n                                      self.simulation_id, special_teams=special_teams, partial=attempt,\n                                      sampling_policy=self.ref.contextual_sampler, **research)\n        if plays is None:\n            self.blocked_attempt = {",
+    "E2 game: coin-toss ledger, kickoffs, scoring, clock management, and linkage of E1 drives into one regulation game.\n\nScope:\n- the coin-toss ledger for the normal-game policy (docs/rules/NFL-2026-GAME-STATE-RULES.md, sections 1-3 and 7): the\n  first-choice captain receives, and each team kicks off once per half;\n- the two half-start kickoffs, derived from the ledger and validated;\n- scoring: touchdowns (6, then a try: an extra point for 1, or a two-point try for 2), field goals (3, made or missed),\n  and safeties (2);\n- post-touchdown and made-field-goal restarts, after halftime (the second-half kickoff), and after punts and turnovers (the\n  receiving team starts at its published spot); safety scoring is recorded, but a safety free kick blocks pending a separate,\n  observed safety-kick outcome table;\n- clock management: quarters are 15 minutes, a quarter change keeps possession and the spot (no kickoff, rules section\n  2), halftime ends the first half and starts the second with a kickoff (section 3), and the fourth-quarter expiry ends\n  regulation. A clock that runs out on a score, a possession change or a kickoff is resolved by the quarter it expires\n  in;\n- participants: a pregame game fixes QB1 and assigns eligible backs and receivers from the frozen depth chart using\n  historical role shares and depth ranks; other research modes retain their observed-play participants. These are\n  statistical player-line allocations, not player-specific performance projections or complete on-field lineups.\n\nKick outcomes are drawn from the published nfl_pbp rates (measure_kick_outcomes.py, 2022-2025, weeks 1-18): a field\ngoal",
+    "NFL practice, not written in docs/rules/NFL-2026-GAME-STATE-RULES.md. Confirm against the 2026 ",
+    "field-goal and try outcomes are drawn from the published nfl_pbp rates (2022-2025, weeks 1-18): each draw ",
+    "kick_results_2022_2025.csv",
+    "s\n`unsupported_rules` names only exceptional paths it actually takes. Other capability limitations remain in\n`rule_capability_limitations`: penalties are excluded from E1 and block if encountered; onside kicks and exception coin\ntoss paths are not generated; ties block because overtime is not modelled; safety free kicks lack a separate outcome\ntable; and a missed field goal is awarded at the rule-defined spot without modeling a return after a beyond-line touch.\nThe pregame offense participants come from the frozen roster, but the engine does not build a complete 22-player lineup,\ndefensive personnel or substitutions.\n\nKickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and\n`defteam` is the KICKING team. The receiving team",
+    "s position, not the snap. The published yardline_100 of a field goal is the snap position, the\n# line of scrimmage. The holder stands HOLDER_OFFSET yards behind it, so the ball is kicked that much further from the goal.\n# The offset is an authored placement value, not a number taken from the published data; the rules matrix carries its own\n# copy and checks against it.\nHOLDER_OFFSET = 7\n# The clock a made field goal takes is the kick itself. Measured on the published nfl_pbp, 2022-2025: the game clock from a\n# made kick"
+   ],
+   "imports_from_this_dir": [
+    "e1_drive",
+    "game_stats",
+    "reducer"
+   ],
+   "last_commit": "fee78a05 2026-10-28",
+   "lines": 1614,
+   "module": "game_state.py",
+   "sha256": "7da013a188b49ecf26b5d1326863c3029371e89935cf4e96e27158b1f2269d41",
+   "summary": "E2 game: coin-toss ledger, kickoffs, scoring, clock management, and linkage of E1 drives into one regulation game."
+  },
+  {
+   "blob": "f45dd8240a99c8f2c3885ffdfa97713dd91a6894",
+   "consumers": [
+    "game_state.py",
+    "test_game_state.py"
+   ],
+   "data_references": [
+    "s roster or lineup, and these lines are not evidence about those players."
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "2c2a03e1 2026-10-26",
+   "lines": 226,
+   "module": "game_stats.py",
+   "sha256": "827d5d4e06487c9c42704215e11de9301af040a40d3b869805d445576508b1cd",
+   "summary": "Team and player lines for one generated game, computed from its plays."
+  },
+  {
+   "blob": "b9e3c17ffca46e9957647cccf5139a8f749a9429",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "e2_reference",
+    "game_state",
+    "rules_matrix",
+    "shared_v1",
+    "versions"
+   ],
+   "last_commit": "bd5f3383 2026-10-24",
+   "lines": 87,
+   "module": "game_survey.py",
+   "sha256": "08c79373d1824ac7f23a2a66d98ab43b660b58a2d0df6ccfc09b06b19eb19d5f",
+   "summary": "Survey the E2 game over seeded games: status, blockers, scoring, clock boundaries, and the rules matrix."
+  },
+  {
+   "blob": "92a8fb3bf474cb315bf48a6ee4370e08f19deb6c",
+   "consumers": [
+    "e2_reference.py",
+    "test_kick_results.py"
+   ],
+   "data_references": [
+    ") AS missed\nFROM nfl_pbp WHERE play_type = ",
+    ")) AS excluded\nFROM nfl_pbp WHERE play_type = ",
+    "/root/legendarypicks/backend/data/picks.dev.db",
+    "Measure field-goal, extra-point and two-point outcomes in the dev nfl_pbp table. Read-only.\n\nRun: python3 scripts/nfl_sequence/measure_kick_outcomes.py [--db PATH]\n\nThe database is opened with mode=ro. load_kick_table() is the table the E2 engine draws its kick outcomes from. The SQL\nprinted here is the SQL recorded in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md.\n",
+    "SELECT series_result, COUNT(*) FROM nfl_pbp\nWHERE play_type = ",
+    "SELECT series_result, ROUND(AVG(epa), 3) FROM nfl_pbp\nWHERE play_type = ",
+    "WITH n AS (\n  SELECT play_type, posteam, defteam, series_result, season, week,\n    LEAD(play_type) OVER w AS nxt_type, LEAD(posteam) OVER w AS nxt_pos\n  FROM nfl_pbp WINDOW w AS (PARTITION BY game_id ORDER BY play_id))\nSELECT series_result, nxt_type,\n  CASE WHEN nxt_pos IS NULL THEN ",
+    "kick_results_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "d0cae48d 2026-10-25",
+   "lines": 209,
+   "module": "measure_kick_outcomes.py",
+   "sha256": "09aa04bc3c0741222f9b1138b0aa14a1628fd21fda4f730188cd1a8ee6226cf3",
+   "summary": "Measure field-goal, extra-point and two-point outcomes in the dev nfl_pbp table. Read-only."
+  },
+  {
+   "blob": "6d2d0b50f2ab4407f5e3a33b345a8821307a0ce7",
+   "consumers": [],
+   "data_references": [
+    "docs/evidence/e2-overtime/overtime-drive-era-test.json",
+    "docs/fixtures/e2/overtime_drives_2022_2025.csv",
+    "s regular-season overtime regimes (rule_regimes.regime_key, domain overtime), so the 2025 split\ncomes from the registry (2025-REG-OT-BOTH), not from a hard-coded year. Two comparisons are reported, each separately, with\na permutation p-value (era labels shuffled, fixed seed):\n\n  1. outcome categories of the drive (touchdown, field goal made or missed, punt, turnover, other): chi-square statistic\n  2. offensive points per drive: difference of means, two-sided\n\nSource: docs/fixtures/e2/overtime_drives_2022_2025.csv (checked against its manifest). Stdlib only.\n\n    python3 scripts/nfl_sequence/overtime_era_test.py\n",
+    "{SOURCE}.manifest.json"
+   ],
+   "imports_from_this_dir": [
+    "rule_regimes"
+   ],
+   "last_commit": "a7281f1e 2026-10-26",
+   "lines": 120,
+   "module": "overtime_era_test.py",
+   "sha256": "969268726163cb2059cec7c4b24878d2f4bdfd2cbb596efcdd4c09bd70c7c8ae",
+   "summary": "Rule-era check for the observed overtime drive pool before the pool is pooled across eras."
+  },
+  {
+   "blob": "a86044732ec6db0d249edb30892f4568d35102c7",
+   "consumers": [
+    "simulate_pregame_batch.py",
+    "test_pregame_batch.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [],
+   "last_commit": "e29ad60b 2026-10-25",
+   "lines": 124,
+   "module": "pregame_batch.py",
+   "sha256": "02afde2de8789f82e103ea188dcec2475672cd4caafd3b38bf2588aa7865a7b8",
+   "summary": "Pure aggregation helpers for deterministic batches of frozen-snapshot NFL games."
+  },
+  {
+   "blob": "c7d40ae2223896f5dd47090442ac57a33aadc87c",
+   "consumers": [
+    "contextual_pool.py",
+    "simulate_pregame_batch.py",
+    "test_pregame_context.py"
+   ],
+   "data_references": [
+    "SELECT p.game_id, p.play_id, p.posteam, p.play_type, p.pass_attempt,\n                      p.rush_attempt, p.yards_gained, p.epa\n                 FROM nfl_pbp p JOIN nfl_schedule s ON s.game_id=p.game_id\n                WHERE s.game_type=",
+    "nfl_pbp has no row-level ingested_at/version timestamp"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "dc0e1969 2026-10-26",
+   "lines": 280,
+   "module": "pregame_context.py",
+   "sha256": "5885132ae617c3182bad7c66c5e2614e1f6258c49dc044b650189dc606693afd",
+   "summary": "Build cutoff-filtered NFL matchup context for the statistical game simulator."
+  },
+  {
+   "blob": "343718554c8ec3d4c39caadc3c9a20d30b17fc22",
+   "consumers": [
+    "availability_adapter.py",
+    "run_pinned_validity.py",
+    "simulate_pregame_batch.py",
+    "simulate_pregame_game.py",
+    "test_availability_adapter.py",
+    "test_pregame_snapshot.py"
+   ],
+   "data_references": [
+    "nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "6c912ff0 2026-10-27",
+   "lines": 319,
+   "module": "pregame_snapshot.py",
+   "sha256": "f4e4d189918b8b8673930cca1c2a4ce57ddfa67f092ea5c499112e1e83096d58",
+   "summary": "Build a reproducible, read-only NFL matchup and depth-chart snapshot."
+  },
+  {
+   "blob": "b9a6ee3f21132e0e1daeaf45acbf64ffbf1b7133",
+   "consumers": [
+    "e0_single_play.py",
+    "e1_drive.py",
+    "game_state.py",
+    "test_blocked_kick_outcomes.py",
+    "test_e1_transitions.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [],
+   "last_commit": "2c2a03e1 2026-10-26",
+   "lines": 204,
+   "module": "reducer.py",
+   "sha256": "4723341694efb7106676b2033ebac005e03c9f55a32c5e118df399e117fa0f06",
+   "summary": "Authoritative possession-level reducer for the NFL sequence generator, shared by E0 and E1."
+  },
+  {
+   "blob": "fa018a8b59a4286ebf582c3ffa5be8a128332803",
+   "consumers": [
+    "test_replay_evaluation.py"
+   ],
+   "data_references": [],
+   "imports_from_this_dir": [],
+   "last_commit": "ed9cfae4 2026-10-26",
+   "lines": 443,
+   "module": "replay_evaluation.py",
+   "sha256": "81af64680a189922e40f6b3ba9d73f004b978c14fed5aa4edb21d82be23214ec",
+   "summary": "Score frozen historical replay forecasts without mixing exploratory inputs into fair metrics."
+  },
+  {
+   "blob": "d4ee750aad0bb6fc791f83cdfcfaf05fd53d5124",
+   "consumers": [
+    "e2_reference.py",
+    "overtime_era_test.py",
+    "run_pinned_validity.py",
+    "test_rule_regimes.py"
+   ],
+   "data_references": [
+    "Rule regimes from the NFL rule-history registry (docs/research/NFL-RULE-REGIME-REGISTRY-2010-2026.json).\n\nA target game",
+    "docs/research/NFL-RULE-REGIME-REGISTRY-2010-2026.json"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "1e2bb3bf 2026-10-26",
+   "lines": 60,
+   "module": "rule_regimes.py",
+   "sha256": "15b8b1b8216318c70cac38bd83cd38d1bc1501763128a75cb940415ff1d984fa",
+   "summary": "Rule regimes from the NFL rule-history registry (docs/research/NFL-RULE-REGIME-REGISTRY-2010-2026.json)."
+  },
+  {
+   "blob": "94aa97fde115aaa1594d3836070ab4824c7c57da",
+   "consumers": [
+    "compare_try_policy.py",
+    "emit_game.py",
+    "game_survey.py",
+    "test_game_state.py"
+   ],
+   "data_references": [
+    "\n    rows = []\n\n    def add(case, result):\n        status, evidence = result\n        rows.append({",
+    "A made field goal takes at most five seconds of clock: the kick itself, measured on the published nfl_pbp (see\n    game_state.KICK_DURATION_SECONDS). A kick whose separation was not applied (the clock expired on it) is not checked.",
+    "Check one generated game against the 2026 mandatory test matrix (docs/rules/NFL-2026-GAME-STATE-RULES.md, section 7).\n\nEvery row is recomputed from the record",
+    "evidence"
+   ],
+   "imports_from_this_dir": [
+    "game_state"
+   ],
+   "last_commit": "80576ba6 2026-10-26",
+   "lines": 661,
+   "module": "rules_matrix.py",
+   "sha256": "a08a3ca3a8f57f1c50a969efc007c951feb3c0c62af83a2634fd86f4c3142b1e",
+   "summary": "Check one generated game against the 2026 mandatory test matrix (docs/rules/NFL-2026-GAME-STATE-RULES.md, section 7)."
+  },
+  {
+   "blob": "7d1dc2256505d9efefcad7e9e404e4065ee49837",
+   "consumers": [],
+   "data_references": [
+    "Paired rules-only check: run the pinned validity cohort with the reference fingerprint pinned to a saved one.\n\nThe saved fingerprint comes from an earlier commit (docs/evidence/e2-overtime/teamfix-model-inputs.json for 1260efd8).\nOnly the engine rules differ from that run, so any seed that changes is attributable to the rule change.\n\nExtra arguments are passed to run_pinned_validity.py, for example --overtime-choice receive for a paired decision control.\n\nUsage: python3 run_paired_rules_check.py REPO_ROOT SAVED_MODEL_INPUTS.json OUT.csv OUT.json [extra run_pinned_validity args]\n"
+   ],
+   "imports_from_this_dir": [
+    "e2_reference",
+    "run_pinned_validity"
+   ],
+   "last_commit": "704c67f9 2026-10-26",
+   "lines": 25,
+   "module": "run_paired_rules_check.py",
+   "sha256": "9998bcbfe5a182ee9a0ecace9f8543e8228b232d418a308d902dfbce29258e42",
+   "summary": "Paired rules-only check: run the pinned validity cohort with the reference fingerprint pinned to a saved one."
+  },
+  {
+   "blob": "556589dab4c84a495e606c83c3ed74f2bc849cf6",
+   "consumers": [
+    "run_paired_rules_check.py",
+    "test_run_pinned_validity.py"
+   ],
+   "data_references": [
+    "Play a seed range from the pinned KC-SEA pregame snapshot under one two-point policy, one CSV row per seed.\n\nThe pregame inputs (schedule, as-of, kickoff, full-depth roster) come from the pinned fixture, which must reseal to its own\nsnapshot_sha256. Its embedded observed reference is stale (see the reference note in the evidence doc), so the reference is\nloaded from the database at run time and written into the snapshot before it is resealed. Every seed gets exactly one row,\nin one of five exclusive outcomes. Nothing is excluded: a seed that raises is a `failed` row with its error.\n\nUsage: python3 run_pinned_validity.py --policy unconditional --out OUT.csv --summary OUT.json\n       python3 run_pinned_validity.py --policy K=1 --out OUT.csv --summary OUT.json\n",
+    "game-kc-sea-seed1-full-depth.json"
+   ],
+   "imports_from_this_dir": [
+    "compare_try_policy",
+    "e1_drive",
+    "e2_reference",
+    "game_state",
+    "pregame_snapshot",
+    "rule_regimes",
+    "try_policy",
+    "versions"
+   ],
+   "last_commit": "704c67f9 2026-10-26",
+   "lines": 179,
+   "module": "run_pinned_validity.py",
+   "sha256": "33f051557488bdfa65996a06b3cdaae33c5e2bd89524e9d0afd0f3d9d01ae441",
+   "summary": "Play a seed range from the pinned KC-SEA pregame snapshot under one two-point policy, one CSV row per seed."
+  },
+  {
+   "blob": "981fdad221a7db0a481935c447ceea45543f86d0",
+   "consumers": [
+    "game_survey.py",
+    "test_fixtures.py",
+    "test_shared_v1.py"
+   ],
+   "data_references": [
+    "Project an E2 game record onto the shared GRIDIRON-CONTRACT v1 document, and check the result against the contract.\n\nThe contract text is docs/GRIDIRON-CONTRACT-v1.md in the Gridiron repository, byte-identical in both repositories\n(sha256 in CONTRACT_SHA256 below). This module reads nothing from the engine"
+   ],
+   "imports_from_this_dir": [
+    "game_state"
+   ],
+   "last_commit": "bd5f3383 2026-10-24",
+   "lines": 357,
+   "module": "shared_v1.py",
+   "sha256": "e30118362e695061779834f75f8d3cbbfdd11732bbc818d5b040bae68c9646a0",
+   "summary": "Project an E2 game record onto the shared GRIDIRON-CONTRACT v1 document, and check the result against the contract."
+  },
+  {
+   "blob": "fcd0d77d97af1e4131df4655f60c3403a2da65a9",
+   "consumers": [
+    "simulate_pregame_batch.py",
+    "test_sim_run_registry.py"
+   ],
+   "data_references": [
+    "Write-once registry for finished simulation runs, so downstream code finds them without guessing paths.\n\nLayout under the store (default /root/lp-snapshots/nfl-sim-runs, outside the repository):\n  <store>/index.jsonl                                  one line per registered run, appended last\n  <store>/<season>/week<NN>/<game_id>/<run_id>.json    the run payload, read-only\n\nRegistration has two steps. The payload is written to a temporary file in its final directory, fsynced, renamed into\nplace and made read-only. Only then is its index line appended and fsynced, so a reader never sees an index line for a\npartial file. read_index() trusts a line only while the file still hashes to the recorded sha256, and it reports orphan\nfiles that have no index line.\n\nA run is exploratory unless every input is versioned: the schedule row must be the as-of version, the producer tree\nmust be clean, and an availability snapshot must be applied with a classification other than unverifiable. Each reason\nis recorded on the index line.\n",
+    "index.jsonl",
+    "simrun-*.json",
+    "{run_id}.json"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "1aedc435 2026-10-27",
+   "lines": 137,
+   "module": "sim_run_registry.py",
+   "sha256": "e99be5a0d42a975ed0bf5d3994a437d2dbd3c20cdfb74237ad9fc1de2a5c52dc",
+   "summary": "Write-once registry for finished simulation runs, so downstream code finds them without guessing paths."
+  },
+  {
+   "blob": "9021c3eebf4856746979b6cd63973cff259a0fd3",
+   "consumers": [
+    "test_pregame_batch.py"
+   ],
+   "data_references": [
+    "--try-policy {args.try_policy} --out REPLAY.json",
+    "Run reproducible full-game simulations and report their outcome distribution.\n\nExample:\n  python3 scripts/nfl_sequence/simulate_pregame_batch.py \\\n    --game-id 2026_07_KC_SEA --as-of 2026-10-25T22:44:00Z \\\n    --kickoff-utc 2026-10-26T00:20:00Z \\\n    --kickoff-source-url https://www.chiefs.com/news/how-to-watch-and-listen-week-7-chiefs-vs-seahawks \\\n    --games 10000 --seed-start 1 --out batch.json\n\nRegistered, availability-aware run (opt-in; needs the pinned full-depth roster):\n  python3 scripts/nfl_sequence/simulate_pregame_batch.py ... \\\n    --roster-snapshot ROSTER.json --roster-provenance PROVENANCE.json \\\n    --availability-store /root/lp-snapshots/nfl --register-dir /root/lp-snapshots/nfl-sim-runs\n\nAll seeds are retained. Score forecasts and win rates use only valid, untied complete games, with that sample size and\ncoverage reported. A separate regulation-end distribution includes ties and guarded games that reached the clock end;\npartial-game points are recorded per seed but never presented as final scores.\n",
+    "nfl_pbp has no row-level publication/ingestion timestamp",
+    "nfl_pbp seasons 2022 through weeks before {snapshot[",
+    "nfl_pbp seasons 2022-2025, weeks 1-18",
+    "python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file SNAPSHOT.json "
+   ],
+   "imports_from_this_dir": [
+    "availability_adapter",
+    "e1_drive",
+    "e2_reference",
+    "game_info_snapshot",
+    "game_state",
+    "pregame_batch",
+    "pregame_context",
+    "pregame_snapshot",
+    "sim_run_registry",
+    "simulate_pregame_game",
+    "try_policy"
+   ],
+   "last_commit": "e4212626 2026-10-27",
+   "lines": 589,
+   "module": "simulate_pregame_batch.py",
+   "sha256": "02181630cbae319f53c7cd600b090359738d9606259b83275ffa5b08252076ba",
+   "summary": "Run reproducible full-game simulations and report their outcome distribution."
+  },
+  {
+   "blob": "2888c42a1ba91c4487a6591aba929ef678b953bc",
+   "consumers": [
+    "simulate_pregame_batch.py"
+   ],
+   "data_references": [
+    "Generate one reproducible statistical NFL game from a frozen pregame snapshot.\n\nExample:\n  python3 scripts/nfl_sequence/simulate_pregame_game.py \\\n    --game-id 2026_07_KC_SEA --as-of 2026-10-25T22:44:00Z \\\n    --kickoff-utc 2026-10-26T00:20:00Z \\\n    --kickoff-source-url https://www.chiefs.com/news/how-to-watch-and-listen-week-7-chiefs-vs-seahawks \\\n    --seed 1 --out game.json\n\nThe database is opened read-only. Every seed is emitted, including ties and\nblocked or partial games; explicit rule guards remain in each record.\n",
+    "nfl_pbp seasons 2022-2025, weeks 1-18"
+   ],
+   "imports_from_this_dir": [
+    "e1_drive",
+    "e2_reference",
+    "game_state",
+    "pregame_snapshot"
+   ],
+   "last_commit": "ad405e41 2026-10-26",
+   "lines": 121,
+   "module": "simulate_pregame_game.py",
+   "sha256": "56a895ab59fc66f4a2ee74d3ad98c9adb8030135bad6aad0fa26b1ba88218bfa",
+   "summary": "Generate one reproducible statistical NFL game from a frozen pregame snapshot."
+  },
+  {
+   "blob": "fff44b01ad014d23f91624cabd445c91fb79946b",
+   "consumers": [],
+   "data_references": [
+    "frozen.json",
+    "index.jsonl",
+    "{snapshot_id}.json"
+   ],
+   "imports_from_this_dir": [
+    "availability_adapter",
+    "pregame_snapshot"
+   ],
+   "last_commit": "1aedc435 2026-10-27",
+   "lines": 189,
+   "module": "test_availability_adapter.py",
+   "sha256": "27b5b06436ca82c2ebf5077650f8e735b23c7602916509f9a82ff6096d26f471",
+   "summary": ""
+  },
+  {
+   "blob": "3aa67742a8fcd20f6344fb03a8f17362da79b156",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "build_blocked_kick_outcomes",
+    "reducer"
+   ],
+   "last_commit": "5ed3c7e6 2026-10-26",
+   "lines": 116,
+   "module": "test_blocked_kick_outcomes.py",
+   "sha256": "e5edbe478d8fb341774b9fb4c25ab445560db006c1d0035e565a9b85550f6645",
+   "summary": ""
+  },
+  {
+   "blob": "1c4b0fdb46266c96e5a595a207981c67a529829c",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "build_full_depth_roster_snapshot"
+   ],
+   "last_commit": "0ff9d4c4 2026-10-27",
+   "lines": 59,
+   "module": "test_build_full_depth_roster_snapshot.py",
+   "sha256": "f56f9cfb4bcb8881671a29739f28e9d6fc0e6d552c893e94a4f4cd6a43a6a665",
+   "summary": ""
+  },
+  {
+   "blob": "a3aed8364f182018df813b63cc3e65e471956bfe",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "clock_d"
+   ],
+   "last_commit": "b38e9f94 2026-10-24",
+   "lines": 117,
+   "module": "test_clock_d.py",
+   "sha256": "cca97cedede71231c82c413e74b7234ce70a40e2d2dff155658756eff312f77a",
+   "summary": "Tests for the E3 research clock D (clock_d.py). The E2 default is tested in test_game_state.py and is unchanged here."
+  },
+  {
+   "blob": "749062ee8a3627762b976c32e2e7ebf983ce91ae",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "contextual_pool",
+    "e1_drive"
+   ],
+   "last_commit": "dc0e1969 2026-10-26",
+   "lines": 101,
+   "module": "test_contextual_pool.py",
+   "sha256": "bc00149d4a624526e59fc19bf55977e31b7f136e5b95a289ada988345081a53f",
+   "summary": ""
+  },
+  {
+   "blob": "135a04d3d0af79d47f3ad71d2b147d069366e7b1",
+   "consumers": [],
+   "data_references": [
+    "*.json",
+    "CREATE TABLE nfl_pbp (",
+    "INSERT INTO nfl_pbp VALUES (",
+    "Transition tests for the E1 generator, from the rules matrix in docs/rules/NFL-2026-GAME-STATE-RULES.md (section 7).\n\nRun: python3 -m unittest scripts/nfl_sequence/test_e1_transitions.py\n\nThe generator is driven by a fake pool that always returns one observed play, so each test controls the outcome\nand the derived clock runoff. These tests cover transition legality, not the football distribution.\n"
+   ],
+   "imports_from_this_dir": [
+    "e1_drive",
+    "reducer"
+   ],
+   "last_commit": "e133ab15 2026-10-28",
+   "lines": 419,
+   "module": "test_e1_transitions.py",
+   "sha256": "5c8fc4c3e843707ee97dff68fc07015724a22e7d62a8bca58c67c50c0aa7b406",
+   "summary": "Transition tests for the E1 generator, from the rules matrix in docs/rules/NFL-2026-GAME-STATE-RULES.md (section 7)."
+  },
+  {
+   "blob": "77475c467e0c29e1ed31f3ad99d2721b07aaf696",
+   "consumers": [],
+   "data_references": [
+    "CREATE TABLE nfl_pbp ({pbp_ddl})",
+    "INSERT INTO nfl_pbp ({",
+    "INSERT INTO nfl_pbp ({pbp_ddl}) VALUES ({",
+    "drive_distribution.csv",
+    "game_distribution.csv",
+    "manifest.json",
+    "nfl_pbp_games",
+    "nfl_pbp_nonnull_drive_groups",
+    "nfl_pbp_rows",
+    "play_distribution.csv",
+    "player_stat_distribution.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "a786e70a 2026-10-24",
+   "lines": 127,
+   "module": "test_e3_observed_distributions.py",
+   "sha256": "d7ad4e450f55bb5951f459dc4ebc3b30513006e5f391f5558c9d4521c649f240",
+   "summary": "Small source-shaped checks for the read-only E3 distribution exporter."
+  },
+  {
+   "blob": "eae0327e7959b505d76b9cedb9a7591c97722895",
+   "consumers": [],
+   "data_references": [
+    "MANIFEST.json",
+    "The committed E2 fixtures are immutable: their SHA-256 values match docs/fixtures/e2/MANIFEST.json, and the seed-1 shared\ndocument is checked against the contract. Run: python3 -m unittest scripts/nfl_sequence/test_fixtures.py\n",
+    "e2-game-seed1.v1.json"
+   ],
+   "imports_from_this_dir": [
+    "shared_v1"
+   ],
+   "last_commit": "1ca75609 2026-10-24",
+   "lines": 38,
+   "module": "test_fixtures.py",
+   "sha256": "8bf07910af1d4b473ca7e524e5a786a70871f6dab0bcaa3b06e72b5d1f8f1904",
+   "summary": "The committed E2 fixtures are immutable: their SHA-256 values match docs/fixtures/e2/MANIFEST.json, and the seed-1 shared document is checked against the contract. Run: python3 -m unittest scripts/nfl"
+  },
+  {
+   "blob": "ed020415420a7f934a3cdb8b9c43b7748560cb92",
+   "consumers": [],
+   "data_references": [
+    "forecasts.json",
+    "venues.json"
+   ],
+   "imports_from_this_dir": [
+    "game_info_snapshot"
+   ],
+   "last_commit": "e4212626 2026-10-27",
+   "lines": 93,
+   "module": "test_game_info_snapshot.py",
+   "sha256": "5c443593001390aaa6faa43ef57f90b3bfc424a91a665a191f3af98f3ff5007a",
+   "summary": ""
+  },
+  {
+   "blob": "7a5e78f4a08ddab3d9981e2646680cb957c4d199",
+   "consumers": [
+    "test_shared_v1.py",
+    "test_try_policy.py"
+   ],
+   "data_references": [
+    ", evidence)\n\n\n    def test_a_game_blocked_on_its_first_drive_keeps_the_attempt(self):\n        unclassified = {",
+    ": []}\n        status, evidence = rm._continuity(record)\n        self.assertEqual(status, rm.BLOCKED)\n        self.assertIn(",
+    "e2-game-seed1.json",
+    "evidence",
+    "lp-e2-game-seed1-5fcaa6bc.json"
+   ],
+   "imports_from_this_dir": [
+    "e2_reference",
+    "game_state",
+    "game_stats",
+    "rules_matrix"
+   ],
+   "last_commit": "fee78a05 2026-10-28",
+   "lines": 1697,
+   "module": "test_game_state.py",
+   "sha256": "a5ba0f40d56271744e0c8c141dea3669fe47d94b5a7855ce2b5523627e6e2220",
+   "summary": "Unit tests for the E2 game (game_state.py, game_stats.py, rules_matrix.py): ledger, kickoffs, scoring, clock, matrix."
+  },
+  {
+   "blob": "33f85d8f4324bb01bde277fd6100b86fb2899862",
+   "consumers": [],
+   "data_references": [
+    ".csv"
+   ],
+   "imports_from_this_dir": [
+    "measure_kick_outcomes"
+   ],
+   "last_commit": "15fc55cd 2026-10-24",
+   "lines": 74,
+   "module": "test_kick_results.py",
+   "sha256": "ea04da0970731897d6007a6cc7338b6998b83b92cb3e6f62f0acd504c1b97c7c",
+   "summary": "Tests for the try rates, built from the publisher's result fields and never from `success`."
+  },
+  {
+   "blob": "7490794efd40c28cd484de13a532ea04547f31d9",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "e1_drive"
+   ],
+   "last_commit": "c80d2816 2026-10-24",
+   "lines": 52,
+   "module": "test_pool_scope.py",
+   "sha256": "1926a870e23e510a43b4ef4578943bfe6fc4c65834b80c818f7b247c48acf7e3",
+   "summary": "The E1 sampling pool and overtime. A regulation-only candidate must not draw outcomes from overtime rows; the default (regulation_only=False) keeps the accepted E2 pool, and the exclusions are counted"
+  },
+  {
+   "blob": "75060059a8f9901b6bc69e4a73c5b9eea83167a7",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "pregame_batch",
+    "simulate_pregame_batch"
+   ],
+   "last_commit": "623d2b1b 2026-10-26",
+   "lines": 242,
+   "module": "test_pregame_batch.py",
+   "sha256": "1cdbb087f1b6fa7e1a2c0a9f0a72a2e93ca60a8210ba36494a80536a01cfabdd",
+   "summary": ""
+  },
+  {
+   "blob": "ca1ef885a4612253292a318beec6c9745670fce4",
+   "consumers": [],
+   "data_references": [
+    "CREATE TABLE nfl_pbp (game_id TEXT, play_id INTEGER, posteam TEXT, play_type TEXT, ",
+    "INSERT INTO nfl_pbp VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+   ],
+   "imports_from_this_dir": [
+    "pregame_context"
+   ],
+   "last_commit": "dc0e1969 2026-10-26",
+   "lines": 110,
+   "module": "test_pregame_context.py",
+   "sha256": "1274f57d87a601d1e0f7b5a1fa4f4760f69df783ca192097af958e9adcda5943",
+   "summary": ""
+  },
+  {
+   "blob": "1b772ad3496be2fc0a2444b109cb74f1854e1b6f",
+   "consumers": [],
+   "data_references": [
+    "docs/fixtures/pregame/game-kc-sea-seed1-full-depth.json",
+    "exploratory-snapshot.json",
+    "full-depth.json",
+    "provenance.json",
+    "snapshot.json",
+    "starters.json"
+   ],
+   "imports_from_this_dir": [
+    "pregame_snapshot"
+   ],
+   "last_commit": "7e4f5a26 2026-10-26",
+   "lines": 251,
+   "module": "test_pregame_snapshot.py",
+   "sha256": "2da330f7b4fc69263b51e388e8db58f78314558d3fe995adf5da5bc205f6731c",
+   "summary": "The schedule block in force at a cutoff. The pinned fixture holds the only surviving copy of the 2026-10-25 version, so it is the reference a rebuild from the versions table must reproduce."
+  },
+  {
+   "blob": "730889e23dc837eeef356eab1ef6153dc693b260",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "replay_evaluation"
+   ],
+   "last_commit": "ed9cfae4 2026-10-26",
+   "lines": 166,
+   "module": "test_replay_evaluation.py",
+   "sha256": "b14c7eb88fa8aa988ad403c0b556bfb6fa1a2902711f65c5451c228f2bc7cb4d",
+   "summary": ""
+  },
+  {
+   "blob": "c8aa35a09067d3875b42b8dfeccad0b3ed2c14b7",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "rule_regimes"
+   ],
+   "last_commit": "1e2bb3bf 2026-10-26",
+   "lines": 178,
+   "module": "test_rule_regimes.py",
+   "sha256": "6348185a0a551d0067491c2945117a41a7d93a731e996aa0bd50a6276854eecc",
+   "summary": "Regime boundaries from the rule-history registry: the engine must see the rules that applied in the target season."
+  },
+  {
+   "blob": "0c3c6e888bbe5e275c20621a2d1155bfcef9fc64",
+   "consumers": [],
+   "data_references": [
+    "pinned.json"
+   ],
+   "imports_from_this_dir": [
+    "run_pinned_validity"
+   ],
+   "last_commit": "dcb21825 2026-10-26",
+   "lines": 50,
+   "module": "test_run_pinned_validity.py",
+   "sha256": "42d5465947424aab1931ae6f62c6ee64d7a4ad96b4cc91adbd8fc89d5a588546",
+   "summary": "Tests for the pinned-snapshot validity runner: one exclusive outcome per seed, a pinned snapshot that must reseal to its own hash, and a failed seed kept as a row. Run: python3 -m unittest scripts/nfl"
+  },
+  {
+   "blob": "21ace1b2e0f417a2dd1385138ca008aa7d773720",
+   "consumers": [],
+   "data_references": [
+    ".csv.manifest.json",
+    ".manifest.json"
+   ],
+   "imports_from_this_dir": [
+    "e2_reference"
+   ],
+   "last_commit": "a4e43fdf 2026-10-26",
+   "lines": 56,
+   "module": "test_safety_kick_outcomes.py",
+   "sha256": "afe0f992d23227d9a26f155b09b9efe56cbb580868e235d42ac979957bf35528",
+   "summary": "The observed safety free-kick table: its checksum, its usable rows, and the refusals kept out of the pool."
+  },
+  {
+   "blob": "bd44d5cd30a3ce8073bf82f9a145818358056dd2",
+   "consumers": [],
+   "data_references": [],
+   "imports_from_this_dir": [
+    "game_state",
+    "shared_v1",
+    "test_game_state"
+   ],
+   "last_commit": "5af2ff9b 2026-10-26",
+   "lines": 113,
+   "module": "test_shared_v1.py",
+   "sha256": "2d97dc88abb91a67c75eae929b7e5832496ea0ebda5bb7f8ea59cefc2b14533d",
+   "summary": "Tests for the shared-contract projection and its checker (shared_v1.py), with negative fixtures."
+  },
+  {
+   "blob": "e7482504a0b5edec276604fbeca8bca864d57a43",
+   "consumers": [],
+   "data_references": [
+    "index.jsonl",
+    "simrun-20990101T000000Z-0000000000.json"
+   ],
+   "imports_from_this_dir": [
+    "sim_run_registry"
+   ],
+   "last_commit": "1aedc435 2026-10-27",
+   "lines": 107,
+   "module": "test_sim_run_registry.py",
+   "sha256": "d6372abe1895350a0eeccabb4a6fbc4372e77fa05414bbecd3a989bac8d941cb",
+   "summary": ""
+  },
+  {
+   "blob": "cac66813d37f1390c3a104e88fdd17b86808ead4",
+   "consumers": [],
+   "data_references": [
+    ".manifest.json",
+    "situation.csv"
+   ],
+   "imports_from_this_dir": [
+    "game_state",
+    "test_game_state",
+    "try_policy"
+   ],
+   "last_commit": "96aeabdf 2026-10-26",
+   "lines": 158,
+   "module": "test_try_policy.py",
+   "sha256": "57abb88328081a3cddd3b279552a78d7ab476b96eef3a39275c745016a37cde6",
+   "summary": "Tests for the two-point decision policy: period cells, shrinkage, thin-cell fallback, the committed situation fixture, and the opt-in path through a game. Run: python3 -m unittest scripts/nfl_sequence"
+  },
+  {
+   "blob": "744ff9259561a0102a23c9ba23cdc82a930fc893",
+   "consumers": [],
+   "data_references": [
+    ")\n\n    def test_model_version_is_the_engine_commit_not_an_evidence_commit(self):\n        # The git call names ENGINE_FILES only, so a commit that touches no engine file cannot change the value.\n        calls = []\n\n        def spy(*args):\n            calls.append(args)\n            return "
+   ],
+   "imports_from_this_dir": [
+    "versions"
+   ],
+   "last_commit": "d4ef090f 2026-10-24",
+   "lines": 81,
+   "module": "test_versions.py",
+   "sha256": "30970118be5cc56430dcf6b0bf81f5effcff7490cf69f9094df61d9e8457965f",
+   "summary": "Tests for the version stamps (versions.py). Git is replaced by a fake, so these tests do not depend on the working tree."
+  },
+  {
+   "blob": "7ad1962f42f2b52d668ac2d58a356283f2355826",
+   "consumers": [
+    "compare_try_policy.py",
+    "compare_validity_arms.py",
+    "evaluate_try_policy.py",
+    "run_pinned_validity.py",
+    "simulate_pregame_batch.py",
+    "test_try_policy.py"
+   ],
+   "data_references": [
+    ".manifest.json",
+    "try_situation_2022_2025.csv"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "b969c10e 2026-10-26",
+   "lines": 114,
+   "module": "try_policy.py",
+   "sha256": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef",
+   "summary": "The two-point decision for the E2 game: P(go for two | situation) after a touchdown."
+  },
+  {
+   "blob": "e31294b59bc2d2f4a7463d75a203c03e097d31d3",
+   "consumers": [
+    "game_survey.py",
+    "run_pinned_validity.py",
+    "test_versions.py"
+   ],
+   "data_references": [
+    "The two version fields every E2 game record carries, defined once here. The definitions are in\ndocs/evidence/e2-successor/VERSION-DEFINITIONS-2026-10-24.md.\n\nmodel_version is the commit of the engine that produced the record: the most recent commit that changed an ENGINE_FILES\nfile. The producing tree must be clean for those files, so the value names code that exists and was run. Evidence-only\ncommits do not change it.\n\nrules_version is the SHA-256 of the canonical JSON of the rule-bearing producer files"
+   ],
+   "imports_from_this_dir": [],
+   "last_commit": "d4ef090f 2026-10-24",
+   "lines": 82,
+   "module": "versions.py",
+   "sha256": "0e2b12b153cf2382ac70dc1bd4203cd51b38f8402d99a98bae54fa96dc4558f2",
+   "summary": "The two version fields every E2 game record carries, defined once here. The definitions are in docs/evidence/e2-successor/VERSION-DEFINITIONS-2026-10-24.md."
+  }
+ ],
+ "schema": "lp.nfl-sequence.source-manifest.v1"
+}
