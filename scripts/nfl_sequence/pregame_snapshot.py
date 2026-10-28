@@ -207,6 +207,41 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
     return reseal(snapshot)
 
 
+HISTORICAL_DEPTH_LAST_SEASON = 2024
+
+
+def historical_depth_rows(con, game, team, as_of_text):
+    """Expected depth for a historical game: the latest REG week before the target week that has rows for the team.
+
+    Exploratory only. The target week is never read, so the target game's lineup cannot leak into the roster. Publication
+    time is unverified; snapshot_at is the as-of text as a placeholder and each row carries publication_time_unverified.
+    Rows are filtered as the current depth feed is, so a row without an LP player id is dropped, not kept.
+    """
+    target_week = int(game['week'])
+    for depth_week in range(target_week - 1, 0, -1):
+        found = con.execute(
+            """SELECT p.id AS player_id, d.gsis_id, d.full_name AS player_name, d.club_code AS team,
+                      d.depth_position AS pos_abb, CAST(d.depth_team AS INTEGER) AS pos_rank
+                 FROM nfl_hist_depth_charts d
+                 LEFT JOIN players p ON p.nfl_gsis_id = d.gsis_id
+                WHERE d.season=? AND d.game_type='REG' AND d.week=? AND d.club_code=? AND d.gsis_id IS NOT NULL""",
+            (game['season'], depth_week, team),
+        ).fetchall()
+        if found:
+            break
+    else:
+        raise ValueError(f"{game['game_id']}: no historical depth-chart week before week {target_week} for {team}")
+    rows = []
+    for row in found:
+        if row['player_id'] is None or row['pos_rank'] is None or row['pos_rank'] < 1:
+            continue
+        rows.append({'player_id': row['player_id'], 'gsis_id': row['gsis_id'], 'player_name': row['player_name'],
+                     'team': row['team'], 'pos_abb': row['pos_abb'], 'pos_rank': row['pos_rank'],
+                     'snapshot_at': as_of_text, 'source': f'nfl_hist_depth_charts:{game["season"]}:week{depth_week}',
+                     'publication_time_unverified': True})
+    return rows
+
+
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           kickoff_source_url: str | None = None,
           allow_unverified_current_schedule_exploratory: bool = False) -> dict:
@@ -251,16 +286,19 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             raise ValueError(f'{game_id}: schedule must contain two distinct team abbreviations')
         rosters = {}
         for side, team in teams.items():
-            rows = con.execute(
-                """SELECT player_id, gsis_id, player_name, team, pos_abb, pos_rank,
-                          snapshot_at, source
-                     FROM nfl_depth_chart
-                    WHERE season=? AND team=? AND player_id IS NOT NULL
-                      AND gsis_id IS NOT NULL AND pos_rank > 0
-                      AND snapshot_at IS NOT NULL
-                    ORDER BY snapshot_at DESC, pos_abb, pos_rank, gsis_id""",
-                (game['season'], team),
-            ).fetchall()
+            if game['season'] <= HISTORICAL_DEPTH_LAST_SEASON:
+                rows = historical_depth_rows(con, game, team, as_of)
+            else:
+                rows = con.execute(
+                    """SELECT player_id, gsis_id, player_name, team, pos_abb, pos_rank,
+                              snapshot_at, source
+                         FROM nfl_depth_chart
+                        WHERE season=? AND team=? AND player_id IS NOT NULL
+                          AND gsis_id IS NOT NULL AND pos_rank > 0
+                          AND snapshot_at IS NOT NULL
+                        ORDER BY snapshot_at DESC, pos_abb, pos_rank, gsis_id""",
+                    (game['season'], team),
+                ).fetchall()
             eligible = [row for row in rows if _utc(row['snapshot_at'], f'{team} snapshot_at') <= cutoff]
             if not eligible:
                 raise ValueError(f'{game_id}: no pregame depth-chart rows for {team} by {cutoff.isoformat()}')
@@ -274,7 +312,9 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             if len(qb1) != 1:
                 raise ValueError(f'{game_id}: {team} snapshot {latest} must have exactly one QB1')
             rb1 = [row for row in selected if row['pos_abb'] == 'RB' and row['pos_rank'] == 1]
-            if len(rb1) != 1:
+            # Historical depth can list a split backfield as two RB1s. The rule only validates here (nothing reads rb1),
+            # so the historical path keeps every tied row and the current feed keeps the strict rule.
+            if len(rb1) != 1 and not (game['season'] <= HISTORICAL_DEPTH_LAST_SEASON and rb1):
                 raise ValueError(f'{game_id}: {team} snapshot {latest} must have exactly one RB1')
             if not positions.intersection({'WR', 'TE', 'RB', 'FB'}):
                 raise ValueError(f'{game_id}: {team} snapshot {latest} has no receiving options')
