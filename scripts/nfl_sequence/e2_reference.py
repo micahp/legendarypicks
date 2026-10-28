@@ -385,7 +385,7 @@ def regime_kickoffs(kpool, target_season, kickoff_before):
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
-         contextual_min_effective_games=10.0):
+         contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -407,7 +407,17 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     separately pinned 2022-2025 artifacts and are identified as such in `pool_scope`.
 
     `contextual_mode` (opt-in): `offense`, `defense`, or `both`. Requires a target context and eligible-before cutoff.
+
+    `team_tendency` (opt-in, research): the drive policy becomes the team-tendency sampler, built from the plays of seasons
+    before the cutoff season (team_tendency.py). It needs an eligible-before cutoff and cannot be combined with contextual_mode,
+    because both fill the same drive-policy slot. False keeps every existing reference unchanged.
     """
+    if team_tendency and contextual_mode is not None:
+        raise ValueError('team tendencies and contextual sampling are alternative drive policies; choose one')
+    if team_tendency and eligible_before is None:
+        raise ValueError('team tendencies require an eligible-before cutoff')
+    if team_tendency and not team_tendency_teams:
+        raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
     rows = e1.load(db, eligible_before=eligible_before)
     pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
     contextual_sampler = None
@@ -422,6 +432,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         contextual_sampler, contextual_pool_manifest = cp.build(
             db, pool_rows, contextual_context, mode=contextual_mode, bandwidth=contextual_bandwidth,
             min_effective_games=contextual_min_effective_games)
+    if team_tendency:
+        import team_tendency as tt
+        cutoff_season = int(eligible_before[0])
+        prior_rows = [row for row in rows if int(row['season']) < cutoff_season]
+        tendencies = tt.build_from_rows(prior_rows, cutoff_season)
+        contextual_sampler = tt.TendencySampler(tendencies, side_teams=team_tendency_teams)  # the drive-policy slot
+        contextual_pool_manifest = tendencies.manifest
     kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
     kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
     kpool, kex = gs.build_kickoff_pool(kick_rows, include_season=kickoff_regime_season is not None)
