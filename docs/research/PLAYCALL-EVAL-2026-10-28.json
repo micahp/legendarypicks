@@ -1,0 +1,1801 @@
+{
+ "chosen_penalties": {
+  "clock": 0.3,
+  "down_dist": 0.3,
+  "down_field": 30.0,
+  "field": 3.0,
+  "score": 300.0,
+  "score_clock": 3.0,
+  "season": 3.0,
+  "team_down": 30.0
+ },
+ "chosen_recency_tau": 3.0,
+ "design_width": 337,
+ "fits": 83,
+ "flagged_plays": 67,
+ "lbfgs_iterations": 8253,
+ "plays": 522302,
+ "seconds_total": 454.7,
+ "stage_seconds": {
+  "design": 0.77,
+  "frame": 0.14,
+  "tests": 185.23,
+  "tune": 268.56
+ },
+ "teams": 32,
+ "tests": {
+  "2024_including_flagged": {
+   "by_team": {
+    "ARI": {
+     "cell24_log_loss": 0.6391522963969644,
+     "full_log_loss": 0.597918335801534,
+     "n": 1026,
+     "observed_dropback_rate": 0.5974658869395711
+    },
+    "ATL": {
+     "cell24_log_loss": 0.5693343490902177,
+     "full_log_loss": 0.5259640820993029,
+     "n": 1069,
+     "observed_dropback_rate": 0.5556594948550047
+    },
+    "BAL": {
+     "cell24_log_loss": 0.6156718251641354,
+     "full_log_loss": 0.5196433894658851,
+     "n": 1036,
+     "observed_dropback_rate": 0.5231660231660231
+    },
+    "BUF": {
+     "cell24_log_loss": 0.5798562676353411,
+     "full_log_loss": 0.5314820968107673,
+     "n": 1004,
+     "observed_dropback_rate": 0.5747011952191236
+    },
+    "CAR": {
+     "cell24_log_loss": 0.5789321465125286,
+     "full_log_loss": 0.546656828766302,
+     "n": 984,
+     "observed_dropback_rate": 0.6361788617886179
+    },
+    "CHI": {
+     "cell24_log_loss": 0.5626889014460357,
+     "full_log_loss": 0.523788285844714,
+     "n": 1049,
+     "observed_dropback_rate": 0.6482364156339371
+    },
+    "CIN": {
+     "cell24_log_loss": 0.5872564562789282,
+     "full_log_loss": 0.5400222216380768,
+     "n": 1066,
+     "observed_dropback_rate": 0.6763602251407129
+    },
+    "CLE": {
+     "cell24_log_loss": 0.5641580754072993,
+     "full_log_loss": 0.529851552226598,
+     "n": 1113,
+     "observed_dropback_rate": 0.6846361185983828
+    },
+    "DAL": {
+     "cell24_log_loss": 0.6159280956178323,
+     "full_log_loss": 0.5767347506718441,
+     "n": 1092,
+     "observed_dropback_rate": 0.6263736263736264
+    },
+    "DEN": {
+     "cell24_log_loss": 0.5946386540627826,
+     "full_log_loss": 0.5497941619465393,
+     "n": 1037,
+     "observed_dropback_rate": 0.6210221793635486
+    },
+    "DET": {
+     "cell24_log_loss": 0.658097728583895,
+     "full_log_loss": 0.6404095019910413,
+     "n": 1097,
+     "observed_dropback_rate": 0.5432999088422972
+    },
+    "GB": {
+     "cell24_log_loss": 0.6077332300549269,
+     "full_log_loss": 0.573005627689494,
+     "n": 1016,
+     "observed_dropback_rate": 0.5127952755905512
+    },
+    "HOU": {
+     "cell24_log_loss": 0.5878686247809227,
+     "full_log_loss": 0.5509370221915587,
+     "n": 1043,
+     "observed_dropback_rate": 0.6347075743048898
+    },
+    "IND": {
+     "cell24_log_loss": 0.619072334640014,
+     "full_log_loss": 0.5720285638881301,
+     "n": 1029,
+     "observed_dropback_rate": 0.5510204081632653
+    },
+    "JAX": {
+     "cell24_log_loss": 0.5772243698507391,
+     "full_log_loss": 0.5138290867570366,
+     "n": 984,
+     "observed_dropback_rate": 0.6138211382113821
+    },
+    "KC": {
+     "cell24_log_loss": 0.5772950404008268,
+     "full_log_loss": 0.5452555239081169,
+     "n": 1067,
+     "observed_dropback_rate": 0.6354264292408622
+    },
+    "LAC": {
+     "cell24_log_loss": 0.575043359837389,
+     "full_log_loss": 0.53010602240083,
+     "n": 993,
+     "observed_dropback_rate": 0.5881168177240684
+    },
+    "LAR": {
+     "cell24_log_loss": 0.6311206193586818,
+     "full_log_loss": 0.5966704020584084,
+     "n": 1024,
+     "observed_dropback_rate": 0.5791015625
+    },
+    "LV": {
+     "cell24_log_loss": 0.6111100644785508,
+     "full_log_loss": 0.5404478158795281,
+     "n": 1049,
+     "observed_dropback_rate": 0.667302192564347
+    },
+    "MIA": {
+     "cell24_log_loss": 0.6034474358469963,
+     "full_log_loss": 0.5683243502917041,
+     "n": 1071,
+     "observed_dropback_rate": 0.611577964519141
+    },
+    "MIN": {
+     "cell24_log_loss": 0.5745630855709895,
+     "full_log_loss": 0.5310231340801469,
+     "n": 1028,
+     "observed_dropback_rate": 0.607976653696498
+    },
+    "NE": {
+     "cell24_log_loss": 0.5801866963358926,
+     "full_log_loss": 0.5588716823353784,
+     "n": 1017,
+     "observed_dropback_rate": 0.6243854473942969
+    },
+    "NO": {
+     "cell24_log_loss": 0.6109243819406478,
+     "full_log_loss": 0.5554759897392154,
+     "n": 1022,
+     "observed_dropback_rate": 0.6007827788649707
+    },
+    "NYG": {
+     "cell24_log_loss": 0.5854205048248851,
+     "full_log_loss": 0.5315231386442204,
+     "n": 1044,
+     "observed_dropback_rate": 0.6350574712643678
+    },
+    "NYJ": {
+     "cell24_log_loss": 0.5794790499349742,
+     "full_log_loss": 0.5648393343778676,
+     "n": 1005,
+     "observed_dropback_rate": 0.6616915422885572
+    },
+    "PHI": {
+     "cell24_log_loss": 0.6422266579898072,
+     "full_log_loss": 0.5666503180769088,
+     "n": 1087,
+     "observed_dropback_rate": 0.49126034958601655
+    },
+    "PIT": {
+     "cell24_log_loss": 0.6249634096331993,
+     "full_log_loss": 0.5718643097532966,
+     "n": 1064,
+     "observed_dropback_rate": 0.5488721804511278
+    },
+    "SEA": {
+     "cell24_log_loss": 0.5890110503016661,
+     "full_log_loss": 0.5318002375643164,
+     "n": 1015,
+     "observed_dropback_rate": 0.6600985221674877
+    },
+    "SF": {
+     "cell24_log_loss": 0.595569113128801,
+     "full_log_loss": 0.5445607918360235,
+     "n": 1012,
+     "observed_dropback_rate": 0.6037549407114624
+    },
+    "TB": {
+     "cell24_log_loss": 0.5995771483067724,
+     "full_log_loss": 0.5299517696736005,
+     "n": 1081,
+     "observed_dropback_rate": 0.603145235892692
+    },
+    "TEN": {
+     "cell24_log_loss": 0.6034269104171526,
+     "full_log_loss": 0.5641411007339637,
+     "n": 1026,
+     "observed_dropback_rate": 0.5964912280701754
+    },
+    "WSH": {
+     "cell24_log_loss": 0.5863635702846576,
+     "full_log_loss": 0.5567389202904265,
+     "n": 1085,
+     "observed_dropback_rate": 0.5972350230414747
+    }
+   },
+   "cell24_baseline": {
+    "brier": 0.2079135934559642,
+    "ece": 0.01826989634005772,
+    "log_loss": 0.5979106833399399,
+    "n": 33335
+   },
+   "coverage_score_clock_cell_ge_30": 1.0,
+   "hierarchical_full": {
+    "brier": 0.188423894017255,
+    "ece": 0.011772087555195055,
+    "log_loss": 0.5527002875000637,
+    "n": 33335
+   },
+   "league_prior": {
+    "brier": 0.23934213795979195,
+    "ece": 0.006633609225460857,
+    "log_loss": 0.6716803710472252,
+    "n": 33335
+   },
+   "no_era": {
+    "brier": 0.18844301820557108,
+    "ece": 0.012157245446820392,
+    "log_loss": 0.5527398413713402,
+    "n": 33335
+   },
+   "no_score_clock": {
+    "brier": 0.19574525654989844,
+    "ece": 0.01903445482172998,
+    "log_loss": 0.5710877233360881,
+    "n": 33335
+   },
+   "no_team": {
+    "brier": 0.1888265587480842,
+    "ece": 0.011358653574399101,
+    "log_loss": 0.5538490367816286,
+    "n": 33335
+   },
+   "scenarios": [
+    {
+     "model_dropback_probability": 0.8902,
+     "observed_dropback_rate": 1.0,
+     "observed_plays_in_training": 12,
+     "situation": "2nd and 6, Q4 2 minutes, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.6758,
+     "observed_dropback_rate": 0.5833,
+     "observed_plays_in_training": 24,
+     "situation": "2nd and 6, Q4 2 minutes, tied"
+    },
+    {
+     "model_dropback_probability": 0.0894,
+     "observed_dropback_rate": 0.0,
+     "observed_plays_in_training": 10,
+     "situation": "2nd and 6, Q4 2 minutes, leading by 3"
+    },
+    {
+     "model_dropback_probability": 0.5213,
+     "observed_dropback_rate": 0.5137,
+     "observed_plays_in_training": 946,
+     "situation": "2nd and 6, Q1, tied"
+    },
+    {
+     "model_dropback_probability": 0.5356,
+     "observed_dropback_rate": 0.5469,
+     "observed_plays_in_training": 192,
+     "situation": "2nd and 6, Q1, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.9526,
+     "observed_dropback_rate": 0.9688,
+     "observed_plays_in_training": 64,
+     "situation": "3rd and 7, Q4 early, trailing by 4"
+    },
+    {
+     "model_dropback_probability": 0.9281,
+     "observed_dropback_rate": 0.9286,
+     "observed_plays_in_training": 70,
+     "situation": "3rd and 7, Q4 early, leading by 4"
+    }
+   ],
+   "slices": {
+    "clock": {
+     "q1": {
+      "log_loss": 0.6014888925869183,
+      "model_mean_probability": 0.57148399926317,
+      "n": 7444,
+      "observed_dropback_rate": 0.5597796883396023
+     },
+     "q2": {
+      "log_loss": 0.5796918002725292,
+      "model_mean_probability": 0.5890131148132222,
+      "n": 6567,
+      "observed_dropback_rate": 0.5823054667275773
+     },
+     "q2_2min": {
+      "log_loss": 0.4683238496274989,
+      "model_mean_probability": 0.8114340852838818,
+      "n": 2443,
+      "observed_dropback_rate": 0.8067949242734344
+     },
+     "q3": {
+      "log_loss": 0.5777573700722858,
+      "model_mean_probability": 0.5790986117073151,
+      "n": 7644,
+      "observed_dropback_rate": 0.5778388278388278
+     },
+     "q4": {
+      "log_loss": 0.5271738024236916,
+      "model_mean_probability": 0.6027898957002719,
+      "n": 5470,
+      "observed_dropback_rate": 0.6043875685557587
+     },
+     "q4_2min": {
+      "log_loss": 0.4059745851641781,
+      "model_mean_probability": 0.7381140729901043,
+      "n": 1519,
+      "observed_dropback_rate": 0.7208689927583937
+     },
+     "q4_late": {
+      "log_loss": 0.4710618887381887,
+      "model_mean_probability": 0.605482361834176,
+      "n": 2074,
+      "observed_dropback_rate": 0.5978784956605593
+     }
+    },
+    "down": {
+     "1": {
+      "log_loss": 0.6280502290313396,
+      "model_mean_probability": 0.5092799651518415,
+      "n": 14635,
+      "observed_dropback_rate": 0.49484113426716775
+     },
+     "2": {
+      "log_loss": 0.5747470511290994,
+      "model_mean_probability": 0.6140813829648019,
+      "n": 11108,
+      "observed_dropback_rate": 0.6230644580482535
+     },
+     "3": {
+      "log_loss": 0.3692043318730735,
+      "model_mean_probability": 0.8097311956144464,
+      "n": 6828,
+      "observed_dropback_rate": 0.7996485061511424
+     },
+     "4": {
+      "log_loss": 0.42870623032669053,
+      "model_mean_probability": 0.6562855363230268,
+      "n": 764,
+      "observed_dropback_rate": 0.6452879581151832
+     }
+    },
+    "score": {
+     "dn11_14": {
+      "log_loss": 0.47482872674658955,
+      "model_mean_probability": 0.7095156285101418,
+      "n": 2023,
+      "observed_dropback_rate": 0.7241720217498764
+     },
+     "dn15p": {
+      "log_loss": 0.5105259062738908,
+      "model_mean_probability": 0.7540491629951146,
+      "n": 3002,
+      "observed_dropback_rate": 0.7468354430379747
+     },
+     "dn1_2": {
+      "log_loss": 0.5904975048387993,
+      "model_mean_probability": 0.6259175911014953,
+      "n": 1101,
+      "observed_dropback_rate": 0.5885558583106267
+     },
+     "dn3": {
+      "log_loss": 0.5574472579635232,
+      "model_mean_probability": 0.6228414092227992,
+      "n": 2444,
+      "observed_dropback_rate": 0.6117021276595744
+     },
+     "dn4_6": {
+      "log_loss": 0.5543235743231962,
+      "model_mean_probability": 0.642710801878722,
+      "n": 2680,
+      "observed_dropback_rate": 0.6328358208955224
+     },
+     "dn7": {
+      "log_loss": 0.5581892280806824,
+      "model_mean_probability": 0.6261417374678857,
+      "n": 2701,
+      "observed_dropback_rate": 0.6245834875971862
+     },
+     "dn8_10": {
+      "log_loss": 0.5132656668584005,
+      "model_mean_probability": 0.6757924861013008,
+      "n": 2060,
+      "observed_dropback_rate": 0.6713592233009709
+     },
+     "tied": {
+      "log_loss": 0.5876571725834333,
+      "model_mean_probability": 0.5839066903868639,
+      "n": 6097,
+      "observed_dropback_rate": 0.577005084467771
+     },
+     "up11_14": {
+      "log_loss": 0.5711860059140521,
+      "model_mean_probability": 0.5351302663650853,
+      "n": 1340,
+      "observed_dropback_rate": 0.5432835820895522
+     },
+     "up15p": {
+      "log_loss": 0.5397630898448369,
+      "model_mean_probability": 0.418878251805407,
+      "n": 1819,
+      "observed_dropback_rate": 0.39857064321055524
+     },
+     "up1_2": {
+      "log_loss": 0.5570821297405867,
+      "model_mean_probability": 0.5589662668934818,
+      "n": 861,
+      "observed_dropback_rate": 0.5644599303135889
+     },
+     "up3": {
+      "log_loss": 0.5668217533515572,
+      "model_mean_probability": 0.5655717186403861,
+      "n": 1771,
+      "observed_dropback_rate": 0.5708639186900056
+     },
+     "up4_6": {
+      "log_loss": 0.5504811695670172,
+      "model_mean_probability": 0.5747171722746087,
+      "n": 2026,
+      "observed_dropback_rate": 0.5834155972359328
+     },
+     "up7": {
+      "log_loss": 0.5704205887683286,
+      "model_mean_probability": 0.5736712173956455,
+      "n": 1805,
+      "observed_dropback_rate": 0.5756232686980609
+     },
+     "up8_10": {
+      "log_loss": 0.5666213389194082,
+      "model_mean_probability": 0.5400368661399068,
+      "n": 1605,
+      "observed_dropback_rate": 0.5052959501557632
+     }
+    }
+   },
+   "test_plays": 33335,
+   "train_plays": 456154
+  },
+  "2024_primary": {
+   "by_team": {
+    "ARI": {
+     "cell24_log_loss": 0.6391460656569309,
+     "full_log_loss": 0.5979124788422535,
+     "n": 1026,
+     "observed_dropback_rate": 0.5974658869395711
+    },
+    "ATL": {
+     "cell24_log_loss": 0.5693310340941573,
+     "full_log_loss": 0.5259855176621709,
+     "n": 1069,
+     "observed_dropback_rate": 0.5556594948550047
+    },
+    "BAL": {
+     "cell24_log_loss": 0.6156725242772588,
+     "full_log_loss": 0.519680819698383,
+     "n": 1036,
+     "observed_dropback_rate": 0.5231660231660231
+    },
+    "BUF": {
+     "cell24_log_loss": 0.5798612572287477,
+     "full_log_loss": 0.5315182037279517,
+     "n": 1004,
+     "observed_dropback_rate": 0.5747011952191236
+    },
+    "CAR": {
+     "cell24_log_loss": 0.5789276894640463,
+     "full_log_loss": 0.5466604056807948,
+     "n": 984,
+     "observed_dropback_rate": 0.6361788617886179
+    },
+    "CHI": {
+     "cell24_log_loss": 0.5626911130512385,
+     "full_log_loss": 0.5237670747249511,
+     "n": 1049,
+     "observed_dropback_rate": 0.6482364156339371
+    },
+    "CIN": {
+     "cell24_log_loss": 0.5872552570047034,
+     "full_log_loss": 0.5399684984471133,
+     "n": 1066,
+     "observed_dropback_rate": 0.6763602251407129
+    },
+    "CLE": {
+     "cell24_log_loss": 0.5641529726958155,
+     "full_log_loss": 0.5298318722395315,
+     "n": 1113,
+     "observed_dropback_rate": 0.6846361185983828
+    },
+    "DAL": {
+     "cell24_log_loss": 0.6159341815210699,
+     "full_log_loss": 0.5767525889502902,
+     "n": 1092,
+     "observed_dropback_rate": 0.6263736263736264
+    },
+    "DEN": {
+     "cell24_log_loss": 0.5946367677663853,
+     "full_log_loss": 0.5497460368008005,
+     "n": 1037,
+     "observed_dropback_rate": 0.6210221793635486
+    },
+    "DET": {
+     "cell24_log_loss": 0.6581036157990429,
+     "full_log_loss": 0.6404113207961648,
+     "n": 1097,
+     "observed_dropback_rate": 0.5432999088422972
+    },
+    "GB": {
+     "cell24_log_loss": 0.6077356402783061,
+     "full_log_loss": 0.573064564307261,
+     "n": 1016,
+     "observed_dropback_rate": 0.5127952755905512
+    },
+    "HOU": {
+     "cell24_log_loss": 0.5878635580663322,
+     "full_log_loss": 0.5509131353853347,
+     "n": 1043,
+     "observed_dropback_rate": 0.6347075743048898
+    },
+    "IND": {
+     "cell24_log_loss": 0.619074373631023,
+     "full_log_loss": 0.572078909957913,
+     "n": 1029,
+     "observed_dropback_rate": 0.5510204081632653
+    },
+    "JAX": {
+     "cell24_log_loss": 0.5772191391911626,
+     "full_log_loss": 0.5138395115876001,
+     "n": 984,
+     "observed_dropback_rate": 0.6138211382113821
+    },
+    "KC": {
+     "cell24_log_loss": 0.5772883201354564,
+     "full_log_loss": 0.5452702658752583,
+     "n": 1067,
+     "observed_dropback_rate": 0.6354264292408622
+    },
+    "LAC": {
+     "cell24_log_loss": 0.5750343301313704,
+     "full_log_loss": 0.5301224361366074,
+     "n": 993,
+     "observed_dropback_rate": 0.5881168177240684
+    },
+    "LAR": {
+     "cell24_log_loss": 0.6311169370905321,
+     "full_log_loss": 0.5966816641538305,
+     "n": 1024,
+     "observed_dropback_rate": 0.5791015625
+    },
+    "LV": {
+     "cell24_log_loss": 0.6111082965670697,
+     "full_log_loss": 0.5404117384902193,
+     "n": 1049,
+     "observed_dropback_rate": 0.667302192564347
+    },
+    "MIA": {
+     "cell24_log_loss": 0.6034467926762829,
+     "full_log_loss": 0.5683518532044126,
+     "n": 1071,
+     "observed_dropback_rate": 0.611577964519141
+    },
+    "MIN": {
+     "cell24_log_loss": 0.5745703656047246,
+     "full_log_loss": 0.530985047328675,
+     "n": 1028,
+     "observed_dropback_rate": 0.607976653696498
+    },
+    "NE": {
+     "cell24_log_loss": 0.5801851840783085,
+     "full_log_loss": 0.5588808835707104,
+     "n": 1017,
+     "observed_dropback_rate": 0.6243854473942969
+    },
+    "NO": {
+     "cell24_log_loss": 0.6109272445443787,
+     "full_log_loss": 0.5555003461136943,
+     "n": 1022,
+     "observed_dropback_rate": 0.6007827788649707
+    },
+    "NYG": {
+     "cell24_log_loss": 0.5854205534393256,
+     "full_log_loss": 0.5315369691059303,
+     "n": 1044,
+     "observed_dropback_rate": 0.6350574712643678
+    },
+    "NYJ": {
+     "cell24_log_loss": 0.5794815143174217,
+     "full_log_loss": 0.5647920462118349,
+     "n": 1005,
+     "observed_dropback_rate": 0.6616915422885572
+    },
+    "PHI": {
+     "cell24_log_loss": 0.6422328325153221,
+     "full_log_loss": 0.5667160659865025,
+     "n": 1087,
+     "observed_dropback_rate": 0.49126034958601655
+    },
+    "PIT": {
+     "cell24_log_loss": 0.6249789150152222,
+     "full_log_loss": 0.5718872144484884,
+     "n": 1064,
+     "observed_dropback_rate": 0.5488721804511278
+    },
+    "SEA": {
+     "cell24_log_loss": 0.5890063723979292,
+     "full_log_loss": 0.5317838495335212,
+     "n": 1015,
+     "observed_dropback_rate": 0.6600985221674877
+    },
+    "SF": {
+     "cell24_log_loss": 0.5955658675617146,
+     "full_log_loss": 0.5445316545484475,
+     "n": 1012,
+     "observed_dropback_rate": 0.6037549407114624
+    },
+    "TB": {
+     "cell24_log_loss": 0.5995826140909775,
+     "full_log_loss": 0.5299621927539039,
+     "n": 1081,
+     "observed_dropback_rate": 0.603145235892692
+    },
+    "TEN": {
+     "cell24_log_loss": 0.6034273455076521,
+     "full_log_loss": 0.5641499497534077,
+     "n": 1026,
+     "observed_dropback_rate": 0.5964912280701754
+    },
+    "WSH": {
+     "cell24_log_loss": 0.5863630118094797,
+     "full_log_loss": 0.55671537924219,
+     "n": 1085,
+     "observed_dropback_rate": 0.5972350230414747
+    }
+   },
+   "cell24_baseline": {
+    "brier": 0.20791360208116458,
+    "ece": 0.018279486723231812,
+    "log_loss": 0.5979107406650791,
+    "n": 33335
+   },
+   "coverage_score_clock_cell_ge_30": 1.0,
+   "hierarchical_full": {
+    "brier": 0.188425764960693,
+    "ece": 0.011885488478100645,
+    "log_loss": 0.5527034173693576,
+    "n": 33335
+   },
+   "league_prior": {
+    "brier": 0.23934230904213466,
+    "ece": 0.006646491833956936,
+    "log_loss": 0.6716807306448918,
+    "n": 33335
+   },
+   "no_era": {
+    "brier": 0.1884430818770008,
+    "ece": 0.012209264133324094,
+    "log_loss": 0.5527407436050377,
+    "n": 33335
+   },
+   "no_score_clock": {
+    "brier": 0.1957457879821897,
+    "ece": 0.01905463473731681,
+    "log_loss": 0.5710893357744617,
+    "n": 33335
+   },
+   "no_team": {
+    "brier": 0.18882559047249414,
+    "ece": 0.011224462325900214,
+    "log_loss": 0.5538472985647419,
+    "n": 33335
+   },
+   "scenarios": [
+    {
+     "model_dropback_probability": 0.89,
+     "observed_dropback_rate": 1.0,
+     "observed_plays_in_training": 12,
+     "situation": "2nd and 6, Q4 2 minutes, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.6757,
+     "observed_dropback_rate": 0.5833,
+     "observed_plays_in_training": 24,
+     "situation": "2nd and 6, Q4 2 minutes, tied"
+    },
+    {
+     "model_dropback_probability": 0.0895,
+     "observed_dropback_rate": 0.0,
+     "observed_plays_in_training": 10,
+     "situation": "2nd and 6, Q4 2 minutes, leading by 3"
+    },
+    {
+     "model_dropback_probability": 0.5212,
+     "observed_dropback_rate": 0.5137,
+     "observed_plays_in_training": 946,
+     "situation": "2nd and 6, Q1, tied"
+    },
+    {
+     "model_dropback_probability": 0.5354,
+     "observed_dropback_rate": 0.5469,
+     "observed_plays_in_training": 192,
+     "situation": "2nd and 6, Q1, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.9525,
+     "observed_dropback_rate": 0.9688,
+     "observed_plays_in_training": 64,
+     "situation": "3rd and 7, Q4 early, trailing by 4"
+    },
+    {
+     "model_dropback_probability": 0.9281,
+     "observed_dropback_rate": 0.9286,
+     "observed_plays_in_training": 70,
+     "situation": "3rd and 7, Q4 early, leading by 4"
+    }
+   ],
+   "slices": {
+    "clock": {
+     "q1": {
+      "log_loss": 0.6014990165613219,
+      "model_mean_probability": 0.5716491400283018,
+      "n": 7444,
+      "observed_dropback_rate": 0.5597796883396023
+     },
+     "q2": {
+      "log_loss": 0.5796969070280336,
+      "model_mean_probability": 0.5891769948997253,
+      "n": 6567,
+      "observed_dropback_rate": 0.5823054667275773
+     },
+     "q2_2min": {
+      "log_loss": 0.46832894210115955,
+      "model_mean_probability": 0.8115478650146721,
+      "n": 2443,
+      "observed_dropback_rate": 0.8067949242734344
+     },
+     "q3": {
+      "log_loss": 0.5777598434831976,
+      "model_mean_probability": 0.5792856268120258,
+      "n": 7644,
+      "observed_dropback_rate": 0.5778388278388278
+     },
+     "q4": {
+      "log_loss": 0.5271709657104503,
+      "model_mean_probability": 0.6029436425375768,
+      "n": 5470,
+      "observed_dropback_rate": 0.6043875685557587
+     },
+     "q4_2min": {
+      "log_loss": 0.405960541201616,
+      "model_mean_probability": 0.7382275439924996,
+      "n": 1519,
+      "observed_dropback_rate": 0.7208689927583937
+     },
+     "q4_late": {
+      "log_loss": 0.4710605685657969,
+      "model_mean_probability": 0.6056398796259148,
+      "n": 2074,
+      "observed_dropback_rate": 0.5978784956605593
+     }
+    },
+    "down": {
+     "1": {
+      "log_loss": 0.628061780424749,
+      "model_mean_probability": 0.5094762170706387,
+      "n": 14635,
+      "observed_dropback_rate": 0.49484113426716775
+     },
+     "2": {
+      "log_loss": 0.5747389447298421,
+      "model_mean_probability": 0.614250124517135,
+      "n": 11108,
+      "observed_dropback_rate": 0.6230644580482535
+     },
+     "3": {
+      "log_loss": 0.36920919077822045,
+      "model_mean_probability": 0.8098108088427033,
+      "n": 6828,
+      "observed_dropback_rate": 0.7996485061511424
+     },
+     "4": {
+      "log_loss": 0.4286959539248143,
+      "model_mean_probability": 0.6564259256975351,
+      "n": 764,
+      "observed_dropback_rate": 0.6452879581151832
+     }
+    },
+    "score": {
+     "dn11_14": {
+      "log_loss": 0.47481409124237145,
+      "model_mean_probability": 0.7096854174045669,
+      "n": 2023,
+      "observed_dropback_rate": 0.7241720217498764
+     },
+     "dn15p": {
+      "log_loss": 0.5105282294786772,
+      "model_mean_probability": 0.7541840505442287,
+      "n": 3002,
+      "observed_dropback_rate": 0.7468354430379747
+     },
+     "dn1_2": {
+      "log_loss": 0.5905197498429725,
+      "model_mean_probability": 0.6260401184566963,
+      "n": 1101,
+      "observed_dropback_rate": 0.5885558583106267
+     },
+     "dn3": {
+      "log_loss": 0.5574569019321935,
+      "model_mean_probability": 0.6230130730362393,
+      "n": 2444,
+      "observed_dropback_rate": 0.6117021276595744
+     },
+     "dn4_6": {
+      "log_loss": 0.5543294796174095,
+      "model_mean_probability": 0.6428581576649781,
+      "n": 2680,
+      "observed_dropback_rate": 0.6328358208955224
+     },
+     "dn7": {
+      "log_loss": 0.5581963379347835,
+      "model_mean_probability": 0.6263175533785829,
+      "n": 2701,
+      "observed_dropback_rate": 0.6245834875971862
+     },
+     "dn8_10": {
+      "log_loss": 0.5132711230513191,
+      "model_mean_probability": 0.6759773612598132,
+      "n": 2060,
+      "observed_dropback_rate": 0.6713592233009709
+     },
+     "tied": {
+      "log_loss": 0.5876601214586993,
+      "model_mean_probability": 0.5840722956607248,
+      "n": 6097,
+      "observed_dropback_rate": 0.577005084467771
+     },
+     "up11_14": {
+      "log_loss": 0.5711897051743373,
+      "model_mean_probability": 0.5352720030635697,
+      "n": 1340,
+      "observed_dropback_rate": 0.5432835820895522
+     },
+     "up15p": {
+      "log_loss": 0.5397722225385282,
+      "model_mean_probability": 0.4189981381493175,
+      "n": 1819,
+      "observed_dropback_rate": 0.39857064321055524
+     },
+     "up1_2": {
+      "log_loss": 0.5570724708767223,
+      "model_mean_probability": 0.5591558372122615,
+      "n": 861,
+      "observed_dropback_rate": 0.5644599303135889
+     },
+     "up3": {
+      "log_loss": 0.56681443870398,
+      "model_mean_probability": 0.5657668715230251,
+      "n": 1771,
+      "observed_dropback_rate": 0.5708639186900056
+     },
+     "up4_6": {
+      "log_loss": 0.5504692851959223,
+      "model_mean_probability": 0.574895673254475,
+      "n": 2026,
+      "observed_dropback_rate": 0.5834155972359328
+     },
+     "up7": {
+      "log_loss": 0.5704175730242087,
+      "model_mean_probability": 0.5738510187660827,
+      "n": 1805,
+      "observed_dropback_rate": 0.5756232686980609
+     },
+     "up8_10": {
+      "log_loss": 0.5666486780420473,
+      "model_mean_probability": 0.5401808967370116,
+      "n": 1605,
+      "observed_dropback_rate": 0.5052959501557632
+     }
+    }
+   },
+   "test_plays": 33335,
+   "train_plays": 456087
+  },
+  "2025_including_flagged": {
+   "by_team": {
+    "ARI": {
+     "cell24_log_loss": 0.5714318291805344,
+     "full_log_loss": 0.5370183095854293,
+     "n": 1070,
+     "observed_dropback_rate": 0.6962616822429907
+    },
+    "ATL": {
+     "cell24_log_loss": 0.5935530421515965,
+     "full_log_loss": 0.5487584926137355,
+     "n": 1032,
+     "observed_dropback_rate": 0.564922480620155
+    },
+    "BAL": {
+     "cell24_log_loss": 0.5975017458346399,
+     "full_log_loss": 0.5403430711106441,
+     "n": 954,
+     "observed_dropback_rate": 0.5251572327044025
+    },
+    "BUF": {
+     "cell24_log_loss": 0.5965951209202729,
+     "full_log_loss": 0.5528917326682313,
+     "n": 1056,
+     "observed_dropback_rate": 0.553030303030303
+    },
+    "CAR": {
+     "cell24_log_loss": 0.6205140192053505,
+     "full_log_loss": 0.5926535569172969,
+     "n": 991,
+     "observed_dropback_rate": 0.5872855701311807
+    },
+    "CHI": {
+     "cell24_log_loss": 0.6366674279471715,
+     "full_log_loss": 0.5942567982078824,
+     "n": 1090,
+     "observed_dropback_rate": 0.5871559633027523
+    },
+    "CIN": {
+     "cell24_log_loss": 0.5857637838326878,
+     "full_log_loss": 0.5431187536995767,
+     "n": 1044,
+     "observed_dropback_rate": 0.6580459770114943
+    },
+    "CLE": {
+     "cell24_log_loss": 0.5621557171322905,
+     "full_log_loss": 0.5130518980757965,
+     "n": 1024,
+     "observed_dropback_rate": 0.6240234375
+    },
+    "DAL": {
+     "cell24_log_loss": 0.58804808407827,
+     "full_log_loss": 0.559059092531588,
+     "n": 1101,
+     "observed_dropback_rate": 0.6185286103542235
+    },
+    "DEN": {
+     "cell24_log_loss": 0.5788052817566854,
+     "full_log_loss": 0.5439325935170711,
+     "n": 1073,
+     "observed_dropback_rate": 0.625349487418453
+    },
+    "DET": {
+     "cell24_log_loss": 0.6275187027789642,
+     "full_log_loss": 0.5645781390931671,
+     "n": 1050,
+     "observed_dropback_rate": 0.5942857142857143
+    },
+    "GB": {
+     "cell24_log_loss": 0.6020412943173543,
+     "full_log_loss": 0.583390817600968,
+     "n": 991,
+     "observed_dropback_rate": 0.557013118062563
+    },
+    "HOU": {
+     "cell24_log_loss": 0.5857154742960978,
+     "full_log_loss": 0.5385013778507877,
+     "n": 1072,
+     "observed_dropback_rate": 0.5998134328358209
+    },
+    "IND": {
+     "cell24_log_loss": 0.6034623300918429,
+     "full_log_loss": 0.5678049025333058,
+     "n": 1004,
+     "observed_dropback_rate": 0.5966135458167331
+    },
+    "JAX": {
+     "cell24_log_loss": 0.5976304806476364,
+     "full_log_loss": 0.5439490051890731,
+     "n": 1070,
+     "observed_dropback_rate": 0.6018691588785047
+    },
+    "KC": {
+     "cell24_log_loss": 0.5666953929264738,
+     "full_log_loss": 0.5111337742279244,
+     "n": 1045,
+     "observed_dropback_rate": 0.6564593301435406
+    },
+    "LAC": {
+     "cell24_log_loss": 0.558665159103791,
+     "full_log_loss": 0.5076890914459211,
+     "n": 1079,
+     "observed_dropback_rate": 0.6311399443929564
+    },
+    "LAR": {
+     "cell24_log_loss": 0.6242780211698532,
+     "full_log_loss": 0.5877183904766958,
+     "n": 1056,
+     "observed_dropback_rate": 0.5909090909090909
+    },
+    "LV": {
+     "cell24_log_loss": 0.6050153625583949,
+     "full_log_loss": 0.5678247972288651,
+     "n": 939,
+     "observed_dropback_rate": 0.6368477103301384
+    },
+    "MIA": {
+     "cell24_log_loss": 0.6243592602586868,
+     "full_log_loss": 0.5844267920791469,
+     "n": 939,
+     "observed_dropback_rate": 0.564430244941427
+    },
+    "MIN": {
+     "cell24_log_loss": 0.596016431098383,
+     "full_log_loss": 0.5385866759031352,
+     "n": 939,
+     "observed_dropback_rate": 0.6080937167199149
+    },
+    "NE": {
+     "cell24_log_loss": 0.5790334688346702,
+     "full_log_loss": 0.5466803409501122,
+     "n": 1014,
+     "observed_dropback_rate": 0.6045364891518737
+    },
+    "NO": {
+     "cell24_log_loss": 0.5804891896136593,
+     "full_log_loss": 0.5145092689106637,
+     "n": 1061,
+     "observed_dropback_rate": 0.6314797360980208
+    },
+    "NYG": {
+     "cell24_log_loss": 0.6072623586306389,
+     "full_log_loss": 0.5694426080690702,
+     "n": 1075,
+     "observed_dropback_rate": 0.5804651162790697
+    },
+    "NYJ": {
+     "cell24_log_loss": 0.6108225824627196,
+     "full_log_loss": 0.5615525127769353,
+     "n": 1001,
+     "observed_dropback_rate": 0.6073926073926074
+    },
+    "PHI": {
+     "cell24_log_loss": 0.6282853508867849,
+     "full_log_loss": 0.5711822530177856,
+     "n": 992,
+     "observed_dropback_rate": 0.5776209677419355
+    },
+    "PIT": {
+     "cell24_log_loss": 0.5681541996475779,
+     "full_log_loss": 0.5384201967180577,
+     "n": 973,
+     "observed_dropback_rate": 0.6073997944501541
+    },
+    "SEA": {
+     "cell24_log_loss": 0.6675282603036261,
+     "full_log_loss": 0.6140443966050025,
+     "n": 994,
+     "observed_dropback_rate": 0.5211267605633803
+    },
+    "SF": {
+     "cell24_log_loss": 0.5935966542828205,
+     "full_log_loss": 0.538637930679634,
+     "n": 1060,
+     "observed_dropback_rate": 0.5886792452830188
+    },
+    "TB": {
+     "cell24_log_loss": 0.5743773724872551,
+     "full_log_loss": 0.5312908902919707,
+     "n": 1057,
+     "observed_dropback_rate": 0.6035950804162725
+    },
+    "TEN": {
+     "cell24_log_loss": 0.5703034764038061,
+     "full_log_loss": 0.5165139149276694,
+     "n": 995,
+     "observed_dropback_rate": 0.6492462311557788
+    },
+    "WSH": {
+     "cell24_log_loss": 0.5805425482336717,
+     "full_log_loss": 0.5638857294264078,
+     "n": 972,
+     "observed_dropback_rate": 0.5802469135802469
+    }
+   },
+   "cell24_baseline": {
+    "brier": 0.20709063980072534,
+    "ece": 0.019541948383456156,
+    "log_loss": 0.5961218551302997,
+    "n": 32813
+   },
+   "coverage_score_clock_cell_ge_30": 0.9987809709566331,
+   "hierarchical_full": {
+    "brier": 0.18851528420680738,
+    "ece": 0.009119149429165432,
+    "log_loss": 0.5524445497222034,
+    "n": 32813
+   },
+   "league_prior": {
+    "brier": 0.23978405110558967,
+    "ece": 0.008223698571251048,
+    "log_loss": 0.6725783879594699,
+    "n": 32813
+   },
+   "no_era": {
+    "brier": 0.18851436072196534,
+    "ece": 0.009110946603889123,
+    "log_loss": 0.5524461379725819,
+    "n": 32813
+   },
+   "no_score_clock": {
+    "brier": 0.19601995705382122,
+    "ece": 0.01257769843909326,
+    "log_loss": 0.5716014777543499,
+    "n": 32813
+   },
+   "no_team": {
+    "brier": 0.18880085753665077,
+    "ece": 0.009660956201063917,
+    "log_loss": 0.5532826177222079,
+    "n": 32813
+   },
+   "scenarios": [
+    {
+     "model_dropback_probability": 0.873,
+     "observed_dropback_rate": 1.0,
+     "observed_plays_in_training": 12,
+     "situation": "2nd and 6, Q4 2 minutes, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.6706,
+     "observed_dropback_rate": 0.56,
+     "observed_plays_in_training": 25,
+     "situation": "2nd and 6, Q4 2 minutes, tied"
+    },
+    {
+     "model_dropback_probability": 0.0995,
+     "observed_dropback_rate": 0.0,
+     "observed_plays_in_training": 11,
+     "situation": "2nd and 6, Q4 2 minutes, leading by 3"
+    },
+    {
+     "model_dropback_probability": 0.5175,
+     "observed_dropback_rate": 0.5165,
+     "observed_plays_in_training": 1003,
+     "situation": "2nd and 6, Q1, tied"
+    },
+    {
+     "model_dropback_probability": 0.5307,
+     "observed_dropback_rate": 0.545,
+     "observed_plays_in_training": 211,
+     "situation": "2nd and 6, Q1, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.9472,
+     "observed_dropback_rate": 0.9571,
+     "observed_plays_in_training": 70,
+     "situation": "3rd and 7, Q4 early, trailing by 4"
+    },
+    {
+     "model_dropback_probability": 0.925,
+     "observed_dropback_rate": 0.9315,
+     "observed_plays_in_training": 73,
+     "situation": "3rd and 7, Q4 early, leading by 4"
+    }
+   ],
+   "slices": {
+    "clock": {
+     "q1": {
+      "log_loss": 0.5907076009148606,
+      "model_mean_probability": 0.5686596059611998,
+      "n": 7370,
+      "observed_dropback_rate": 0.5618724559023066
+     },
+     "q2": {
+      "log_loss": 0.5828220253476636,
+      "model_mean_probability": 0.58846849273483,
+      "n": 6459,
+      "observed_dropback_rate": 0.5839913299272333
+     },
+     "q2_2min": {
+      "log_loss": 0.47652147975456965,
+      "model_mean_probability": 0.8111359885445806,
+      "n": 2383,
+      "observed_dropback_rate": 0.7914393621485523
+     },
+     "q3": {
+      "log_loss": 0.5783835101836005,
+      "model_mean_probability": 0.5738975055629992,
+      "n": 7455,
+      "observed_dropback_rate": 0.568879946344735
+     },
+     "q4": {
+      "log_loss": 0.5411638618870498,
+      "model_mean_probability": 0.60385461254591,
+      "n": 5375,
+      "observed_dropback_rate": 0.6044651162790697
+     },
+     "q4_2min": {
+      "log_loss": 0.41285438235280875,
+      "model_mean_probability": 0.7273684529099202,
+      "n": 1450,
+      "observed_dropback_rate": 0.7075862068965517
+     },
+     "q4_late": {
+      "log_loss": 0.44350040506972127,
+      "model_mean_probability": 0.6072316160022619,
+      "n": 2131,
+      "observed_dropback_rate": 0.6114500234631628
+     }
+    },
+    "down": {
+     "1": {
+      "log_loss": 0.6331458159335025,
+      "model_mean_probability": 0.5041329420962611,
+      "n": 14267,
+      "observed_dropback_rate": 0.4976519240204668
+     },
+     "2": {
+      "log_loss": 0.5713181323229378,
+      "model_mean_probability": 0.614676451746686,
+      "n": 10863,
+      "observed_dropback_rate": 0.6173248642179877
+     },
+     "3": {
+      "log_loss": 0.3701216279395421,
+      "model_mean_probability": 0.8049706492272634,
+      "n": 6801,
+      "observed_dropback_rate": 0.7850316129980885
+     },
+     "4": {
+      "log_loss": 0.420459853821407,
+      "model_mean_probability": 0.6465684372447753,
+      "n": 882,
+      "observed_dropback_rate": 0.6678004535147393
+     }
+    },
+    "score": {
+     "dn11_14": {
+      "log_loss": 0.4919800006574995,
+      "model_mean_probability": 0.7021770201178841,
+      "n": 2261,
+      "observed_dropback_rate": 0.7041132242370632
+     },
+     "dn15p": {
+      "log_loss": 0.5335801382440349,
+      "model_mean_probability": 0.7493339208944855,
+      "n": 2871,
+      "observed_dropback_rate": 0.722048066875653
+     },
+     "dn1_2": {
+      "log_loss": 0.5356795477305006,
+      "model_mean_probability": 0.6371197873654668,
+      "n": 817,
+      "observed_dropback_rate": 0.6413708690330477
+     },
+     "dn3": {
+      "log_loss": 0.5549306479961648,
+      "model_mean_probability": 0.6263003316856056,
+      "n": 2652,
+      "observed_dropback_rate": 0.6138763197586727
+     },
+     "dn4_6": {
+      "log_loss": 0.5439018826943836,
+      "model_mean_probability": 0.6351903990588056,
+      "n": 2327,
+      "observed_dropback_rate": 0.6308551783412119
+     },
+     "dn7": {
+      "log_loss": 0.5490156159957683,
+      "model_mean_probability": 0.6254701174265235,
+      "n": 2853,
+      "observed_dropback_rate": 0.6239046617595514
+     },
+     "dn8_10": {
+      "log_loss": 0.4950849802919304,
+      "model_mean_probability": 0.6984464001571637,
+      "n": 2071,
+      "observed_dropback_rate": 0.6986962819893772
+     },
+     "tied": {
+      "log_loss": 0.5832223930163835,
+      "model_mean_probability": 0.5783939704024049,
+      "n": 6193,
+      "observed_dropback_rate": 0.576295817858873
+     },
+     "up11_14": {
+      "log_loss": 0.5650319006118879,
+      "model_mean_probability": 0.5371747504465055,
+      "n": 1528,
+      "observed_dropback_rate": 0.5274869109947644
+     },
+     "up15p": {
+      "log_loss": 0.5751824571229964,
+      "model_mean_probability": 0.4153588633390393,
+      "n": 1692,
+      "observed_dropback_rate": 0.41725768321513
+     },
+     "up1_2": {
+      "log_loss": 0.5659563658191081,
+      "model_mean_probability": 0.5637077288358693,
+      "n": 729,
+      "observed_dropback_rate": 0.5555555555555556
+     },
+     "up3": {
+      "log_loss": 0.5729397185410078,
+      "model_mean_probability": 0.5659948858029599,
+      "n": 1839,
+      "observed_dropback_rate": 0.5415986949429038
+     },
+     "up4_6": {
+      "log_loss": 0.5678419300647396,
+      "model_mean_probability": 0.5749367165229661,
+      "n": 1706,
+      "observed_dropback_rate": 0.5767878077373975
+     },
+     "up7": {
+      "log_loss": 0.5700353875299493,
+      "model_mean_probability": 0.5569238962988823,
+      "n": 1913,
+      "observed_dropback_rate": 0.5635128071092524
+     },
+     "up8_10": {
+      "log_loss": 0.5455775542730456,
+      "model_mean_probability": 0.5007146202392062,
+      "n": 1361,
+      "observed_dropback_rate": 0.4981631153563556
+     }
+    }
+   },
+   "test_plays": 32813,
+   "train_plays": 489489
+  },
+  "2025_primary": {
+   "by_team": {
+    "ARI": {
+     "cell24_log_loss": 0.571426448228085,
+     "full_log_loss": 0.5369033119693392,
+     "n": 1070,
+     "observed_dropback_rate": 0.6962616822429907
+    },
+    "ATL": {
+     "cell24_log_loss": 0.5935511676219187,
+     "full_log_loss": 0.5487826008903606,
+     "n": 1032,
+     "observed_dropback_rate": 0.564922480620155
+    },
+    "BAL": {
+     "cell24_log_loss": 0.5975021600739249,
+     "full_log_loss": 0.5404355551170648,
+     "n": 954,
+     "observed_dropback_rate": 0.5251572327044025
+    },
+    "BUF": {
+     "cell24_log_loss": 0.5965974242385673,
+     "full_log_loss": 0.5529656672740516,
+     "n": 1056,
+     "observed_dropback_rate": 0.553030303030303
+    },
+    "CAR": {
+     "cell24_log_loss": 0.6205193105542879,
+     "full_log_loss": 0.592729146215378,
+     "n": 991,
+     "observed_dropback_rate": 0.5872855701311807
+    },
+    "CHI": {
+     "cell24_log_loss": 0.6366701726553572,
+     "full_log_loss": 0.594256245054786,
+     "n": 1090,
+     "observed_dropback_rate": 0.5871559633027523
+    },
+    "CIN": {
+     "cell24_log_loss": 0.5857601931095656,
+     "full_log_loss": 0.543134841805707,
+     "n": 1044,
+     "observed_dropback_rate": 0.6580459770114943
+    },
+    "CLE": {
+     "cell24_log_loss": 0.5621539308231722,
+     "full_log_loss": 0.5130948382524937,
+     "n": 1024,
+     "observed_dropback_rate": 0.6240234375
+    },
+    "DAL": {
+     "cell24_log_loss": 0.5880454103952075,
+     "full_log_loss": 0.5590391174092465,
+     "n": 1101,
+     "observed_dropback_rate": 0.6185286103542235
+    },
+    "DEN": {
+     "cell24_log_loss": 0.578799975742922,
+     "full_log_loss": 0.5438309791039062,
+     "n": 1073,
+     "observed_dropback_rate": 0.625349487418453
+    },
+    "DET": {
+     "cell24_log_loss": 0.6275203204096097,
+     "full_log_loss": 0.5645935524712814,
+     "n": 1050,
+     "observed_dropback_rate": 0.5942857142857143
+    },
+    "GB": {
+     "cell24_log_loss": 0.6020405281017468,
+     "full_log_loss": 0.5834634781911413,
+     "n": 991,
+     "observed_dropback_rate": 0.557013118062563
+    },
+    "HOU": {
+     "cell24_log_loss": 0.5857148837307031,
+     "full_log_loss": 0.5384673110901396,
+     "n": 1072,
+     "observed_dropback_rate": 0.5998134328358209
+    },
+    "IND": {
+     "cell24_log_loss": 0.6034585177089193,
+     "full_log_loss": 0.5677439063291395,
+     "n": 1004,
+     "observed_dropback_rate": 0.5966135458167331
+    },
+    "JAX": {
+     "cell24_log_loss": 0.5976347646945577,
+     "full_log_loss": 0.5438923732368017,
+     "n": 1070,
+     "observed_dropback_rate": 0.6018691588785047
+    },
+    "KC": {
+     "cell24_log_loss": 0.5666932218133308,
+     "full_log_loss": 0.5111529744294054,
+     "n": 1045,
+     "observed_dropback_rate": 0.6564593301435406
+    },
+    "LAC": {
+     "cell24_log_loss": 0.5586637554017597,
+     "full_log_loss": 0.5076685289490467,
+     "n": 1079,
+     "observed_dropback_rate": 0.6311399443929564
+    },
+    "LAR": {
+     "cell24_log_loss": 0.624276281180482,
+     "full_log_loss": 0.5876194720670389,
+     "n": 1056,
+     "observed_dropback_rate": 0.5909090909090909
+    },
+    "LV": {
+     "cell24_log_loss": 0.6050088359953784,
+     "full_log_loss": 0.5678223643659427,
+     "n": 939,
+     "observed_dropback_rate": 0.6368477103301384
+    },
+    "MIA": {
+     "cell24_log_loss": 0.6243645323813938,
+     "full_log_loss": 0.5845586391688512,
+     "n": 939,
+     "observed_dropback_rate": 0.564430244941427
+    },
+    "MIN": {
+     "cell24_log_loss": 0.5960153695983427,
+     "full_log_loss": 0.5386411012850868,
+     "n": 939,
+     "observed_dropback_rate": 0.6080937167199149
+    },
+    "NE": {
+     "cell24_log_loss": 0.5790285205000069,
+     "full_log_loss": 0.5465392996738354,
+     "n": 1014,
+     "observed_dropback_rate": 0.6045364891518737
+    },
+    "NO": {
+     "cell24_log_loss": 0.5804899169999735,
+     "full_log_loss": 0.514515213825747,
+     "n": 1061,
+     "observed_dropback_rate": 0.6314797360980208
+    },
+    "NYG": {
+     "cell24_log_loss": 0.6072612129251153,
+     "full_log_loss": 0.5695050689637341,
+     "n": 1075,
+     "observed_dropback_rate": 0.5804651162790697
+    },
+    "NYJ": {
+     "cell24_log_loss": 0.6108295273244027,
+     "full_log_loss": 0.5617100401834951,
+     "n": 1001,
+     "observed_dropback_rate": 0.6073926073926074
+    },
+    "PHI": {
+     "cell24_log_loss": 0.6282882672538738,
+     "full_log_loss": 0.5711934771790274,
+     "n": 992,
+     "observed_dropback_rate": 0.5776209677419355
+    },
+    "PIT": {
+     "cell24_log_loss": 0.5681473542414547,
+     "full_log_loss": 0.5383695000496842,
+     "n": 973,
+     "observed_dropback_rate": 0.6073997944501541
+    },
+    "SEA": {
+     "cell24_log_loss": 0.6675284642485617,
+     "full_log_loss": 0.6141625967021218,
+     "n": 994,
+     "observed_dropback_rate": 0.5211267605633803
+    },
+    "SF": {
+     "cell24_log_loss": 0.5935937701915321,
+     "full_log_loss": 0.5385906940224967,
+     "n": 1060,
+     "observed_dropback_rate": 0.5886792452830188
+    },
+    "TB": {
+     "cell24_log_loss": 0.5743791951469072,
+     "full_log_loss": 0.5313731968190635,
+     "n": 1057,
+     "observed_dropback_rate": 0.6035950804162725
+    },
+    "TEN": {
+     "cell24_log_loss": 0.5702990925752385,
+     "full_log_loss": 0.5164881261232002,
+     "n": 995,
+     "observed_dropback_rate": 0.6492462311557788
+    },
+    "WSH": {
+     "cell24_log_loss": 0.5805439622910317,
+     "full_log_loss": 0.5639340355516732,
+     "n": 972,
+     "observed_dropback_rate": 0.5802469135802469
+    }
+   },
+   "cell24_baseline": {
+    "brier": 0.20709031597835306,
+    "ece": 0.01954885782832857,
+    "log_loss": 0.5961211302409098,
+    "n": 32813
+   },
+   "coverage_score_clock_cell_ge_30": 0.9987809709566331,
+   "hierarchical_full": {
+    "brier": 0.1885202383396945,
+    "ece": 0.009190160603652194,
+    "log_loss": 0.5524535005891731,
+    "n": 32813
+   },
+   "league_prior": {
+    "brier": 0.2397842476847195,
+    "ece": 0.008235641888810874,
+    "log_loss": 0.6725788009762619,
+    "n": 32813
+   },
+   "no_era": {
+    "brier": 0.18851430607445208,
+    "ece": 0.0091591860323854,
+    "log_loss": 0.5524446712667032,
+    "n": 32813
+   },
+   "no_score_clock": {
+    "brier": 0.19602398736938334,
+    "ece": 0.012568922569091775,
+    "log_loss": 0.5716095065051252,
+    "n": 32813
+   },
+   "no_team": {
+    "brier": 0.18879861528058964,
+    "ece": 0.00966734370140778,
+    "log_loss": 0.5532783263573227,
+    "n": 32813
+   },
+   "scenarios": [
+    {
+     "model_dropback_probability": 0.8728,
+     "observed_dropback_rate": 1.0,
+     "observed_plays_in_training": 12,
+     "situation": "2nd and 6, Q4 2 minutes, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.6705,
+     "observed_dropback_rate": 0.56,
+     "observed_plays_in_training": 25,
+     "situation": "2nd and 6, Q4 2 minutes, tied"
+    },
+    {
+     "model_dropback_probability": 0.0989,
+     "observed_dropback_rate": 0.0,
+     "observed_plays_in_training": 11,
+     "situation": "2nd and 6, Q4 2 minutes, leading by 3"
+    },
+    {
+     "model_dropback_probability": 0.5174,
+     "observed_dropback_rate": 0.5165,
+     "observed_plays_in_training": 1003,
+     "situation": "2nd and 6, Q1, tied"
+    },
+    {
+     "model_dropback_probability": 0.5305,
+     "observed_dropback_rate": 0.545,
+     "observed_plays_in_training": 211,
+     "situation": "2nd and 6, Q1, trailing by 7"
+    },
+    {
+     "model_dropback_probability": 0.9471,
+     "observed_dropback_rate": 0.9571,
+     "observed_plays_in_training": 70,
+     "situation": "3rd and 7, Q4 early, trailing by 4"
+    },
+    {
+     "model_dropback_probability": 0.925,
+     "observed_dropback_rate": 0.9315,
+     "observed_plays_in_training": 73,
+     "situation": "3rd and 7, Q4 early, leading by 4"
+    }
+   ],
+   "slices": {
+    "clock": {
+     "q1": {
+      "log_loss": 0.5907187566672644,
+      "model_mean_probability": 0.5690824704275105,
+      "n": 7370,
+      "observed_dropback_rate": 0.5618724559023066
+     },
+     "q2": {
+      "log_loss": 0.5828321740068999,
+      "model_mean_probability": 0.5888761511090218,
+      "n": 6459,
+      "observed_dropback_rate": 0.5839913299272333
+     },
+     "q2_2min": {
+      "log_loss": 0.4765573519942744,
+      "model_mean_probability": 0.8114143084406734,
+      "n": 2383,
+      "observed_dropback_rate": 0.7914393621485523
+     },
+     "q3": {
+      "log_loss": 0.5783919751279922,
+      "model_mean_probability": 0.5743130225246872,
+      "n": 7455,
+      "observed_dropback_rate": 0.568879946344735
+     },
+     "q4": {
+      "log_loss": 0.5411604989297929,
+      "model_mean_probability": 0.6042287391054626,
+      "n": 5375,
+      "observed_dropback_rate": 0.6044651162790697
+     },
+     "q4_2min": {
+      "log_loss": 0.41288363943352446,
+      "model_mean_probability": 0.7275692778024521,
+      "n": 1450,
+      "observed_dropback_rate": 0.7075862068965517
+     },
+     "q4_late": {
+      "log_loss": 0.4434941750277509,
+      "model_mean_probability": 0.6075145401204589,
+      "n": 2131,
+      "observed_dropback_rate": 0.6114500234631628
+     }
+    },
+    "down": {
+     "1": {
+      "log_loss": 0.6331608299424185,
+      "model_mean_probability": 0.5045833544291067,
+      "n": 14267,
+      "observed_dropback_rate": 0.4976519240204668
+     },
+     "2": {
+      "log_loss": 0.5713058865106494,
+      "model_mean_probability": 0.6150733764706128,
+      "n": 10863,
+      "observed_dropback_rate": 0.6173248642179877
+     },
+     "3": {
+      "log_loss": 0.3701626708406351,
+      "model_mean_probability": 0.8051953712001234,
+      "n": 6801,
+      "observed_dropback_rate": 0.7850316129980885
+     },
+     "4": {
+      "log_loss": 0.4203843361584008,
+      "model_mean_probability": 0.646896532580523,
+      "n": 882,
+      "observed_dropback_rate": 0.6678004535147393
+     }
+    },
+    "score": {
+     "dn11_14": {
+      "log_loss": 0.4919773899526243,
+      "model_mean_probability": 0.7024952035171017,
+      "n": 2261,
+      "observed_dropback_rate": 0.7041132242370632
+     },
+     "dn15p": {
+      "log_loss": 0.5336225287425894,
+      "model_mean_probability": 0.7496319455904181,
+      "n": 2871,
+      "observed_dropback_rate": 0.722048066875653
+     },
+     "dn1_2": {
+      "log_loss": 0.5356757788220671,
+      "model_mean_probability": 0.6374393912375391,
+      "n": 817,
+      "observed_dropback_rate": 0.6413708690330477
+     },
+     "dn3": {
+      "log_loss": 0.5549548762828855,
+      "model_mean_probability": 0.6267006172268601,
+      "n": 2652,
+      "observed_dropback_rate": 0.6138763197586727
+     },
+     "dn4_6": {
+      "log_loss": 0.5439110313737215,
+      "model_mean_probability": 0.63556663425791,
+      "n": 2327,
+      "observed_dropback_rate": 0.6308551783412119
+     },
+     "dn7": {
+      "log_loss": 0.5490184028057309,
+      "model_mean_probability": 0.6258900612658159,
+      "n": 2853,
+      "observed_dropback_rate": 0.6239046617595514
+     },
+     "dn8_10": {
+      "log_loss": 0.4950799710770983,
+      "model_mean_probability": 0.6987704742447267,
+      "n": 2071,
+      "observed_dropback_rate": 0.6986962819893772
+     },
+     "tied": {
+      "log_loss": 0.5832252197360159,
+      "model_mean_probability": 0.5788117942967781,
+      "n": 6193,
+      "observed_dropback_rate": 0.576295817858873
+     },
+     "up11_14": {
+      "log_loss": 0.565039768844587,
+      "model_mean_probability": 0.537566975079294,
+      "n": 1528,
+      "observed_dropback_rate": 0.5274869109947644
+     },
+     "up15p": {
+      "log_loss": 0.5751721732695737,
+      "model_mean_probability": 0.41572348433907214,
+      "n": 1692,
+      "observed_dropback_rate": 0.41725768321513
+     },
+     "up1_2": {
+      "log_loss": 0.565960659475654,
+      "model_mean_probability": 0.5641568359037444,
+      "n": 729,
+      "observed_dropback_rate": 0.5555555555555556
+     },
+     "up3": {
+      "log_loss": 0.5729917337599145,
+      "model_mean_probability": 0.5664115604482396,
+      "n": 1839,
+      "observed_dropback_rate": 0.5415986949429038
+     },
+     "up4_6": {
+      "log_loss": 0.567845431087198,
+      "model_mean_probability": 0.5753399938381544,
+      "n": 1706,
+      "observed_dropback_rate": 0.5767878077373975
+     },
+     "up7": {
+      "log_loss": 0.5700115092437531,
+      "model_mean_probability": 0.557309747622363,
+      "n": 1913,
+      "observed_dropback_rate": 0.5635128071092524
+     },
+     "up8_10": {
+      "log_loss": 0.5455971403862462,
+      "model_mean_probability": 0.5011477126661599,
+      "n": 1361,
+      "observed_dropback_rate": 0.4981631153563556
+     }
+    }
+   },
+   "test_plays": 32813,
+   "train_plays": 489422
+  }
+ },
+ "validation_2023_log_loss": 0.551621
+}
