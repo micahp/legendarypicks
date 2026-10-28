@@ -44,39 +44,39 @@ class PregameContext(unittest.TestCase):
         self.con.execute('CREATE TABLE nfl_pbp (game_id TEXT, play_id INTEGER, posteam TEXT, play_type TEXT, '
                          'pass_attempt INTEGER, rush_attempt INTEGER, yards_gained REAL, epa REAL, '
                          'penalty INTEGER, two_point_attempt INTEGER)')
-        add_game(self.con, '2025_01_AAA_BBB', 2025, 1, 'AAA', 'BBB', 24, 10, '2025-09-07')
-        add_game(self.con, '2025_01_CCC_DDD', 2025, 1, 'CCC', 'DDD', 14, 20, '2025-09-07')
-        add_game(self.con, '2025_02_AAA_CCC', 2025, 2, 'AAA', 'CCC', 21, 20, '2025-09-14')
-        add_game(self.con, '2025_02_BBB_DDD', 2025, 2, 'BBB', 'DDD', 17, 13, '2025-09-14')
-        add_game(self.con, '2026_01_AAA_BBB', 2026, 1, 'AAA', 'BBB', 35, 10, '2026-09-06')
+        add_game(self.con, '2024_01_AAA_BBB', 2024, 1, 'AAA', 'BBB', 24, 10, '2024-09-07')
+        add_game(self.con, '2024_01_CCC_DDD', 2024, 1, 'CCC', 'DDD', 14, 20, '2024-09-07')
+        add_game(self.con, '2024_02_AAA_CCC', 2024, 2, 'AAA', 'CCC', 21, 20, '2024-09-14')
+        add_game(self.con, '2024_02_BBB_DDD', 2024, 2, 'BBB', 'DDD', 17, 13, '2024-09-14')
+        add_game(self.con, '2025_01_AAA_BBB', 2025, 1, 'AAA', 'BBB', 35, 10, '2025-09-06')
         # A completed same-week row is deliberately present; a Week 2 snapshot must not see it.
-        add_game(self.con, '2026_02_AAA_DDD', 2026, 2, 'AAA', 'DDD', 10, 20, '2026-09-13')
+        add_game(self.con, '2025_02_AAA_DDD', 2025, 2, 'AAA', 'DDD', 10, 20, '2025-09-13')
 
     def tearDown(self):
         self.con.close()
 
     def matchup(self, week):
-        return {'game_id': f'2026_{week:02d}_AAA_DDD', 'season': 2026, 'week': week, 'game_type': 'REG',
+        return {'game_id': f'2025_{week:02d}_AAA_DDD', 'season': 2025, 'week': week, 'game_type': 'REG',
                 'home_team': 'AAA', 'away_team': 'DDD', 'location': 'Home',
-                'scheduled_kickoff_utc': f'2026-09-{6 + 7 * (week - 1):02d}T16:00:00Z'}
+                'scheduled_kickoff_utc': f'2025-09-{6 + 7 * (week - 1):02d}T16:00:00Z'}
 
     def test_weekly_context_uses_prior_weeks_and_never_current_week_results(self):
-        week1 = pc.build_from_connection(self.con, self.matchup(1), '2026-09-06T12:00:00Z',
+        week1 = pc.build_from_connection(self.con, self.matchup(1), '2025-09-06T12:00:00Z',
                                          ratings_backend=FakeRatingsBackend)
-        week2 = pc.build_from_connection(self.con, self.matchup(2), '2026-09-13T12:00:00Z',
+        week2 = pc.build_from_connection(self.con, self.matchup(2), '2025-09-13T12:00:00Z',
                                          ratings_backend=FakeRatingsBackend)
         home1 = week1['teams']['home']
         home2 = week2['teams']['home']
         self.assertEqual(home1['record_before_game']['games'], 0)
         self.assertEqual(home2['record_before_game']['wins'], 1)
-        self.assertEqual(home2['recent_form']['last_3']['game_ids'][-1], '2026_01_AAA_BBB')
-        self.assertNotIn('2026_02_AAA_DDD', home2['recent_form']['last_3']['game_ids'])
+        self.assertEqual(home2['recent_form']['last_3']['game_ids'][-1], '2025_01_AAA_BBB')
+        self.assertNotIn('2025_02_AAA_DDD', home2['recent_form']['last_3']['game_ids'])
         self.assertNotEqual(home1['opponent_adjusted']['offense_points_rating'],
                             home2['opponent_adjusted']['offense_points_rating'])
         self.assertEqual(week2['source_manifest']['availability']['classification'], 'chronological_filter_only')
 
     def test_context_hash_is_repeatable_and_pins_both_input_slices(self):
-        args = (self.con, self.matchup(2), '2026-09-13T12:00:00Z')
+        args = (self.con, self.matchup(2), '2025-09-13T12:00:00Z')
         one = pc.build_from_connection(*args, ratings_backend=FakeRatingsBackend)
         two = pc.build_from_connection(*args, ratings_backend=FakeRatingsBackend)
         self.assertEqual(one['context_sha256'], two['context_sha256'])
@@ -90,7 +90,7 @@ class PregameContext(unittest.TestCase):
                     'rosters': {'home': {'players': [{'player_id': 11, 'gsis_id': 'QB1', 'pos_abb': 'QB',
                                                      'pos_rank': 1, 'starter': True, 'jersey_number': 15}]},
                                 'away': {'players': []}}}
-        context = pc.build_from_connection(self.con, self.matchup(2), '2026-09-13T12:00:00Z', snapshot,
+        context = pc.build_from_connection(self.con, self.matchup(2), '2025-09-13T12:00:00Z', snapshot,
                                            ratings_backend=FakeRatingsBackend)
         personnel = context['teams']['home']['personnel']
         self.assertEqual(personnel['status'], 'verified_full_depth')
@@ -98,10 +98,10 @@ class PregameContext(unittest.TestCase):
 
     def test_cutoff_must_be_timezone_aware_and_before_kickoff(self):
         with self.assertRaisesRegex(ValueError, 'timezone'):
-            pc.build_from_connection(self.con, self.matchup(2), '2026-09-13T12:00:00',
+            pc.build_from_connection(self.con, self.matchup(2), '2025-09-13T12:00:00',
                                      ratings_backend=FakeRatingsBackend)
         with self.assertRaisesRegex(ValueError, 'precede scheduled kickoff'):
-            pc.build_from_connection(self.con, self.matchup(2), '2026-09-13T17:00:00Z',
+            pc.build_from_connection(self.con, self.matchup(2), '2025-09-13T17:00:00Z',
                                      ratings_backend=FakeRatingsBackend)
 
 

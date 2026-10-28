@@ -24,6 +24,7 @@ import compare_try_policy as cmp  # noqa: E402
 import e1_drive as e1  # noqa: E402
 import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
+import holdout  # noqa: E402
 import pregame_snapshot as ps  # noqa: E402
 import rule_regimes as rr  # noqa: E402
 import try_policy as tp  # noqa: E402
@@ -81,6 +82,15 @@ def row_for(seed, label, record, error):
     }
 
 
+def _allowed_season(text):
+    season = int(text)
+    try:
+        holdout.refuse_if_holdout(season, '--target-season')
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+    return season
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--policy', default='unconditional', help="'unconditional' or 'K=<int>' (margin_period_opening)")
@@ -97,7 +107,7 @@ def main():
                     help='sensitivity: force the overtime first possession instead of the seeded uniform draw')
     ap.add_argument('--overtime-choice', choices=('kick', 'receive'), default=None,
                     help='labelled control: force the toss winner\'s decision instead of the observed rate')
-    ap.add_argument('--target-season', type=int, default=2026,
+    ap.add_argument('--target-season', type=_allowed_season, default=2025,
                     help='season whose rules the simulated games follow (and the kickoff regime with --kickoff-regime)')
     ap.add_argument('--kickoff-regime', action='store_true',
                     help='research variant: draw kickoffs only from seasons with the target season\'s kickoff rules')

@@ -23,7 +23,11 @@ import csv
 import hashlib
 import json
 import math
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import holdout  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 SOURCE = REPO / 'docs/fixtures/e2/overtime_coin_toss_2023_2026.csv'
@@ -59,6 +63,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', type=Path, default=DEFAULT_OUT)
     args = ap.parse_args()
+    for season in CHECK_SEASONS:
+        holdout.refuse_if_holdout(season, 'overtime chronological check')
     rows = [r for r in csv.DictReader(SOURCE.open()) if r['game_type'] == 'REG']
     fit = [1 if r['toss_choice'] == 'kick' else 0 for r in rows if r['season'] in FIT_SEASONS]
     check = [1 if r['toss_choice'] == 'kick' else 0 for r in rows if r['season'] in CHECK_SEASONS]
