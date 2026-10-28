@@ -201,6 +201,16 @@ def _spell_endpoint(start: int, next_event: int | None, boundary: int,
     return False, boundary - start, "_and_".join(causes), False
 
 
+def _origin_exposure_reason(start: int, states: Sequence[str]) -> str | None:
+    if start < 0 or start > len(states):
+        raise ValueError(f"risk-spell origin is outside the state vector: {start}")
+    if start == len(states):
+        return "origin_at_period_end"
+    if states[start] != "5v5":
+        return "origin_not_verified_5v5"
+    return None
+
+
 def _period_spells(game_id: str, season: int, period: int, pbp: dict[str, Any],
                    shifts: dict[str, Any], records: list[dict[str, Any]],
                    behavior: Any, cached_period: Any) -> tuple[list[RiskSpell], dict[str, Any], list[dict[str, Any]]]:
@@ -244,8 +254,9 @@ def _period_spells(game_id: str, season: int, period: int, pbp: dict[str, Any],
         bad_index = bisect.bisect_right(bad_state_seconds, start)
         next_bad_state = (bad_state_seconds[bad_index]
                           if bad_index < len(bad_state_seconds) else PERIOD_SECONDS)
-        if states[start] != "5v5":
-            zero_exposure["origin_not_verified_5v5"] += 1
+        origin_reason = _origin_exposure_reason(start, states)
+        if origin_reason is not None:
+            zero_exposure[origin_reason] += 1
             continue
 
         boundary = min(next_ineligible, next_bad_state, PERIOD_SECONDS)

@@ -31,6 +31,15 @@ class GapEstimatorComparisonTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gec._spell_endpoint(20, 20, 20, ("period_end",))
 
+    def test_period_end_event_has_no_following_risk_exposure(self):
+        self.assertEqual(gec._origin_exposure_reason(1200, ["5v5"] * 1200),
+                         "origin_at_period_end")
+        self.assertEqual(gec._origin_exposure_reason(0, ["non5v5"]),
+                         "origin_not_verified_5v5")
+        self.assertIsNone(gec._origin_exposure_reason(0, ["5v5"]))
+        with self.assertRaises(ValueError):
+            gec._origin_exposure_reason(1201, ["5v5"] * 1200)
+
     def test_event_and_censor_risk_seconds(self):
         event = gec.RiskSpell("2019020001", 2019, 1, self.context, 5, True,
                               None, 10, 15, 0)
