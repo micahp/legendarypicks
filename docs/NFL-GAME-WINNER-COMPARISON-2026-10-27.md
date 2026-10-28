@@ -74,8 +74,13 @@ Log loss, 2021 to 2025: market 0.6027, v1 0.6379, EPA 0.6412, stack 0.6335, S0b 
 
 ## Caveats
 
-- 2024 is the window where v2 EPA's setting was chosen, and where the card says v1's configuration was selected. Treat 2024
-  results as examined for those two models.
+- **Selection chronology (corrected after review).** A strict replay needs each season's settings chosen from earlier
+  seasons only. Only the 2025 row meets that for the LP models: v2 EPA's half-life and lambda were chosen on 2024, and
+  v1's frozen configuration was selected on 2024. The 2021 to 2023 and 2024 rows for v2 EPA and v1 therefore carry
+  hindsight: their settings were chosen with results from a later season. Those rows are reported, but they are not
+  forward-selected evaluations. Our S-models are forward: S1's ridge settings were chosen on 2018 to 2020, and the S0b
+  and S1 calibrations were fitted on 2010 to 2017. A strictly forward LP comparison needs EPA settings re-chosen per
+  season from earlier seasons, which is not yet done.
 - 2025 was v1's holdout and is a second look for v2 EPA. The stack's coefficients for 2025 were fitted on 2010 to 2024, so
   it is not fitted on 2025 results. The market and v1 are examined there.
 - The Elo replica uses 538's published constants (K 20, home advantage 65, carryover one third, tie multiplier). The card
