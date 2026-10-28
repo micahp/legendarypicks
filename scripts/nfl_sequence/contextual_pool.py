@@ -16,6 +16,9 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import pstdev
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import holdout  # noqa: E402
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e1_drive as e1  # noqa: E402
@@ -52,6 +55,8 @@ def build_source_ratings(con: sqlite3.Connection, rows: list[dict], ratings_back
     if not rows:
         raise ValueError('eligible contextual play pool is empty at this cutoff')
     periods = sorted({(int(r['season']), int(r['week'])) for r in rows})
+    for season, _week in periods:
+        holdout.refuse_if_holdout(season, 'contextual pool')
     source_ratings = {}
     rating_kwargs = {k: v for k, v in RATING_CONFIG.items() if k != 'prior_shrink'}
     priors = {}
