@@ -1,12 +1,17 @@
 """Membership-gated identity resolution for MLS, and for Leagues Cup through its home person.
 
-Every resolver path answers the same question: is this person on the club, as of this date? Current answers come from
-the latest published snapshot. Historical answers come from the newest snapshot captured on or before the date. When no
-snapshot covers the date, the answer is NONE. A historical club is never invented.
+Every answer comes from ONE piece of evidence: the membership snapshot that covers the date. Current answers use the
+latest published snapshot. Historical answers use the newest snapshot captured on or before the date. Nothing here reads
+an observation row (published_roster): a stale row can no longer propose a person. When no snapshot covers the date, the
+answer is NONE. A historical club is never invented.
 
-The gate is off until the cutover is authorized. Production calls the legacy resolver until CUTOVER_ENABLED is set.
+The snapshot stores, for each member, the publisher keys that identify them, the club, and the publisher's own name
+spelling. Name matching therefore uses the spellings the snapshot itself holds.
+
+The gate is off until the cutover is authorized. Production keeps the legacy resolver until CUTOVER_ENABLED is set.
 """
 import datetime as dt
+import json
 
 import published_roster
 
@@ -25,23 +30,59 @@ def _day(as_of):
     return str(as_of)[:10]
 
 
+def _snapshot(con, as_of=None):
+    """(snapshot_id, payload dict) for the snapshot that answers this date, or None."""
+    day = _day(as_of)
+    if day is None:
+        row = con.execute("SELECT id, source_payload FROM roster_snapshots WHERE league=? AND status='published'",
+                          (LEAGUE,)).fetchone()
+    else:
+        row = con.execute(
+            "SELECT id, source_payload FROM roster_snapshots WHERE league=? AND substr(captured_at,1,10) <= ? "
+            "ORDER BY captured_at DESC, id DESC LIMIT 1", (LEAGUE, day)).fetchone()
+    if row is None:
+        return None
+    return int(row[0]), json.loads(row[1])
+
+
+def membership_evidence(con, as_of=None):
+    """{player_id: evidence} for the snapshot that answers this date, or None when no snapshot covers it.
+
+    Each evidence record holds: keys (publisher -> key), team (the club), name (the publisher's spelling), position,
+    and roster_status ("active", "carried" or "held").
+    """
+    found = _snapshot(con, as_of)
+    if found is None:
+        return None
+    _sid, payload = found
+    out = {}
+    for m in payload.get("memberships", []):
+        out[int(m["player_id"])] = {"keys": dict(m.get("keys") or {}), "team": m["team"],
+                                    "name": m.get("display_name") or "", "position": m.get("position"),
+                                    "roster_status": m.get("roster_status", "active")}
+    return out
+
+
+def evidence_match(record, position_group=""):
+    """(source, key, position, group, published_name) for a member's snapshot record, preferring the MLS key.
+
+    The same shape published_roster.lookup returns, so callers switch sources without changing their logic.
+    """
+    if record is None or not record["keys"]:
+        return None
+    source = "mlssoccer" if "mlssoccer" in record["keys"] else sorted(record["keys"])[0]
+    return (source, str(record["keys"][source]), record["position"] or "", position_group or "", record["name"])
+
+
 def members_as_of(con, as_of=None):
     """{player_id: {"team": club, "status": roster_status}} for the snapshot that answers this date, or None.
 
     None means no snapshot covers the date. Callers must treat that as "not a current or known member".
     """
-    day = _day(as_of)
-    if day is None:
-        row = con.execute("SELECT id FROM roster_snapshots WHERE league=? AND status='published'",
-                          (LEAGUE,)).fetchone()
-    else:
-        row = con.execute(
-            "SELECT id FROM roster_snapshots WHERE league=? AND substr(captured_at,1,10) <= ? "
-            "ORDER BY captured_at DESC, id DESC LIMIT 1", (LEAGUE, day)).fetchone()
-    if row is None:
+    evidence = membership_evidence(con, as_of)
+    if evidence is None:
         return None
-    return {int(pid): {"team": team, "status": status} for pid, team, status in con.execute(
-        "SELECT player_id, team, roster_status FROM roster_memberships WHERE snapshot_id=?", (row[0],))}
+    return {pid: {"team": ev["team"], "status": ev["roster_status"]} for pid, ev in evidence.items()}
 
 
 def current_team(con, player_id):
@@ -59,9 +100,10 @@ def _is_mls_player(con, player_id):
 
 def resolve(con, name, team, league, as_of, legacy):
     """Resolve a name to (player_id, confidence), or (None, None). Only called when CUTOVER_ENABLED."""
-    members = members_as_of(con, as_of)
-    if members is None:
+    evidence = membership_evidence(con, as_of)
+    if evidence is None:
         return NO_MATCH
+    members = {pid: {"team": ev["team"]} for pid, ev in evidence.items()}
     if league == "lcup":
         result = legacy(con, name, team, league)
         pid = result[0]
@@ -103,19 +145,14 @@ def resolve(con, name, team, league, as_of, legacy):
     if picked is not None:
         return (picked, "high")
 
-    # 3. Reviewed alias.
+    # 3. Reviewed alias. Accepted only for a current member.
     alias = con.execute("SELECT player_id FROM name_alias WHERE alias_norm=?", (nname,)).fetchone()
     if alias and alias[0] in members and _is_mls_player(con, alias[0]):
         return (alias[0], "high")
 
-    # 4. The publisher's roster names, read from the stored table, and only people on the club.
+    # 4. The publisher's own spelling, as the snapshot holds it, for current members only.
     folded = published_roster.fold(name)
-    pids = {int(pid) for (pid,) in con.execute(
-        "SELECT DISTINCT r.player_id FROM published_roster r WHERE r.league=? AND r.player_id IS NOT NULL "
-        "AND (r.name_folded=? OR EXISTS (SELECT 1 FROM published_roster_name n WHERE n.league=r.league "
-        "AND n.source=r.source AND n.source_player_key=r.source_player_key AND n.name_folded=?))",
-        (LEAGUE, folded, folded))}
-    pids = {pid for pid in pids if pid in members}
+    pids = {pid for pid, ev in evidence.items() if published_roster.fold(ev["name"]) == folded}
     if len(pids) == 1:
         return (pids.pop(), "high")
     return NO_MATCH

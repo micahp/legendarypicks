@@ -202,15 +202,18 @@ def _published_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[i
     out = []
     for one in leagues:
         claims: Dict[Tuple[str, str], List[int]] = {}
-        current = mls_resolution.members_as_of(con) if one == "mls" and mls_resolution.CUTOVER_ENABLED else None
-        for row in con.execute(
-                "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
-                (one,)).fetchall():
-            if current is not None and row["id"] not in current:
-                continue  # a departed person's stale observation row proposes no claim
-            match = published_roster.lookup(con, one, row["name"], row["team"])
-            if match:
-                claims.setdefault((match[0], match[1]), []).append(row["id"])
+        if one == "mls" and mls_resolution.CUTOVER_ENABLED:
+            # The claims are the keys the membership snapshot holds for each current person. No observation row is read.
+            for pid, record in (mls_resolution.membership_evidence(con) or {}).items():
+                for source, key in record["keys"].items():
+                    claims.setdefault((source, str(key)), []).append(pid)
+        else:
+            for row in con.execute(
+                    "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
+                    (one,)).fetchall():
+                match = published_roster.lookup(con, one, row["name"], row["team"])
+                if match:
+                    claims.setdefault((match[0], match[1]), []).append(row["id"])
         for (source, key), ids in claims.items():
             if len(ids) > 1:
                 out.append((one, "{}={}".format(source, key), ids))
