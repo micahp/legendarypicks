@@ -1,25 +1,6 @@
 {
- "checkout_head": "79e8e05d",
+ "checkout_head": "ee4164b9",
  "modules": [
-  {
-   "blob": "4232307066a74ac28e89c3116bb30abcfd86a369",
-   "consumers": [
-    "simulate_pregame_batch.py",
-    "test_availability_adapter.py"
-   ],
-   "data_references": [
-    "index.jsonl",
-    "missing-report flags are the only injury evidence"
-   ],
-   "imports_from_this_dir": [
-    "pregame_snapshot"
-   ],
-   "last_commit": "1aedc435 2026-10-27",
-   "lines": 174,
-   "module": "availability_adapter.py",
-   "sha256": "6c55539c3ec05ed156eb9bb66a25dbcaf2e6189646e921aaf903f436aa45ca5a",
-   "summary": "Apply a frozen weekly availability snapshot to a pregame snapshot's full-depth rosters."
-  },
   {
    "blob": "f79a4f50cf3a428ed4526f4bf566dabf6da3f889",
    "consumers": [
@@ -38,16 +19,14 @@
    "summary": "Build an auditable blocked-kick transition pool from nflverse play-by-play."
   },
   {
-   "blob": "4f3738026b4adff1f35a6f8606871672e5de6fb0",
-   "consumers": [
-    "test_build_full_depth_roster_snapshot.py"
-   ],
+   "blob": "ce9b9d21e9444692ce1941fea69ce2c494b02dd5",
+   "consumers": [],
    "data_references": [],
    "imports_from_this_dir": [],
-   "last_commit": "0ff9d4c4 2026-10-27",
-   "lines": 252,
+   "last_commit": "45aadecc 2026-10-25",
+   "lines": 218,
    "module": "build_full_depth_roster_snapshot.py",
-   "sha256": "3e1721a644a987e0e9d75522b990a44bceecc7eb2416e7236dda8af30ad5eb97",
+   "sha256": "f24f6d58b03de47f2e28786d9a835bf034be9211dd90e1f97d18c8728857d649",
    "summary": "Build a pinned KC-SEA full depth-chart roster with per-role starter flags and jersey numbers."
   },
   {
@@ -134,7 +113,7 @@
     "]*(?:docs/|data/|\\.json|\\.csv|evidence|nfl_pbp)[^"
    ],
    "imports_from_this_dir": [],
-   "last_commit": "",
+   "last_commit": "1176899d 2026-10-28",
    "lines": 99,
    "module": "build_source_manifest.py",
    "sha256": "884af8016bef05ebb11784ada9481410b0a187b1824a654da73e99e67be796aa",
@@ -392,7 +371,7 @@
     "e0_single_play",
     "reducer"
    ],
-   "last_commit": "e133ab15 2026-10-28",
+   "last_commit": "1d35e47e 2026-10-28",
    "lines": 505,
    "module": "e1_drive.py",
    "sha256": "a3a9e36320fb7ae1f999d730ed6c7000b4e26e324886298e714f6847e1263c5a",
@@ -530,25 +509,6 @@
    "summary": "Chronological evaluation of the two-point decision on actual regular-season tries."
   },
   {
-   "blob": "8010625b9434a3297ffec18e30d0f4d255a91de9",
-   "consumers": [
-    "simulate_pregame_batch.py",
-    "test_game_info_snapshot.py"
-   ],
-   "data_references": [
-    "/root/legendarypicks/backend/data/picks.dev.db",
-    "Frozen game-information snapshot, attached to simulation output as context. It is not a model input.\n\nA snapshot covers one season and week. For each game it records the venue (stadium, city, roof, listed seats,\ncoordinates), the kickoff in UTC and in local time, the weekday, the National Weather Service forecast nearest kickoff\nwith its issue time, the referee assignment as known at freeze time, and the broadcast with its sources. Each source\nkeeps its own fetch time, so a reader can see how old each fact is.\n\nThe snapshot is written once to a store outside the repository and never rewritten. The simulator verifies the content\nhash and the game id, then records the snapshot id and hash on the run. The model does not read it: every attached\nblock says used_by_model false.\n\nUsage:\n  python3 game_info_snapshot.py build --venues VENUES.json --forecasts FORECASTS.json [--db DB] [--store DIR]\n  python3 game_info_snapshot.py show SNAPSHOT.json GAME_ID\n",
-    "index.jsonl",
-    "{snapshot_id}.json"
-   ],
-   "imports_from_this_dir": [],
-   "last_commit": "e4212626 2026-10-27",
-   "lines": 165,
-   "module": "game_info_snapshot.py",
-   "sha256": "928d3cbad89b90ddc4ff747ef63c6bc791985c31e84ea8a3fca8f1a4628351c8",
-   "summary": "Frozen game-information snapshot, attached to simulation output as context. It is not a model input."
-  },
-  {
    "blob": "943d6638af5d92083a1e67a614e6d80cb7a4603d",
    "consumers": [
     "clock_d_games.py",
@@ -579,7 +539,7 @@
     "game_stats",
     "reducer"
    ],
-   "last_commit": "fee78a05 2026-10-28",
+   "last_commit": "382f5ffe 2026-10-28",
    "lines": 1614,
    "module": "game_state.py",
    "sha256": "7da013a188b49ecf26b5d1326863c3029371e89935cf4e96e27158b1f2269d41",
@@ -692,23 +652,21 @@
    "summary": "Build cutoff-filtered NFL matchup context for the statistical game simulator."
   },
   {
-   "blob": "343718554c8ec3d4c39caadc3c9a20d30b17fc22",
+   "blob": "f9b49c3ea7c1344704ec0eff8857773904f3bacd",
    "consumers": [
-    "availability_adapter.py",
     "run_pinned_validity.py",
     "simulate_pregame_batch.py",
     "simulate_pregame_game.py",
-    "test_availability_adapter.py",
     "test_pregame_snapshot.py"
    ],
    "data_references": [
     "nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler"
    ],
    "imports_from_this_dir": [],
-   "last_commit": "6c912ff0 2026-10-27",
-   "lines": 319,
+   "last_commit": "7e4f5a26 2026-10-26",
+   "lines": 306,
    "module": "pregame_snapshot.py",
-   "sha256": "f4e4d189918b8b8673930cca1c2a4ce57ddfa67f092ea5c499112e1e83096d58",
+   "sha256": "1b230bf9e0892e0befe6c89894f567735b0400bd4593542cf480b6c4ec32a021",
    "summary": "Build a reproducible, read-only NFL matchup and depth-chart snapshot."
   },
   {
@@ -845,54 +803,32 @@
    "summary": "Project an E2 game record onto the shared GRIDIRON-CONTRACT v1 document, and check the result against the contract."
   },
   {
-   "blob": "fcd0d77d97af1e4131df4655f60c3403a2da65a9",
-   "consumers": [
-    "simulate_pregame_batch.py",
-    "test_sim_run_registry.py"
-   ],
-   "data_references": [
-    "Write-once registry for finished simulation runs, so downstream code finds them without guessing paths.\n\nLayout under the store (default /root/lp-snapshots/nfl-sim-runs, outside the repository):\n  <store>/index.jsonl                                  one line per registered run, appended last\n  <store>/<season>/week<NN>/<game_id>/<run_id>.json    the run payload, read-only\n\nRegistration has two steps. The payload is written to a temporary file in its final directory, fsynced, renamed into\nplace and made read-only. Only then is its index line appended and fsynced, so a reader never sees an index line for a\npartial file. read_index() trusts a line only while the file still hashes to the recorded sha256, and it reports orphan\nfiles that have no index line.\n\nA run is exploratory unless every input is versioned: the schedule row must be the as-of version, the producer tree\nmust be clean, and an availability snapshot must be applied with a classification other than unverifiable. Each reason\nis recorded on the index line.\n",
-    "index.jsonl",
-    "simrun-*.json",
-    "{run_id}.json"
-   ],
-   "imports_from_this_dir": [],
-   "last_commit": "1aedc435 2026-10-27",
-   "lines": 137,
-   "module": "sim_run_registry.py",
-   "sha256": "e99be5a0d42a975ed0bf5d3994a437d2dbd3c20cdfb74237ad9fc1de2a5c52dc",
-   "summary": "Write-once registry for finished simulation runs, so downstream code finds them without guessing paths."
-  },
-  {
-   "blob": "9021c3eebf4856746979b6cd63973cff259a0fd3",
+   "blob": "76da09bc95bcfb3faed8d63761a49037fb123b6a",
    "consumers": [
     "test_pregame_batch.py"
    ],
    "data_references": [
     "--try-policy {args.try_policy} --out REPLAY.json",
-    "Run reproducible full-game simulations and report their outcome distribution.\n\nExample:\n  python3 scripts/nfl_sequence/simulate_pregame_batch.py \\\n    --game-id 2026_07_KC_SEA --as-of 2026-10-25T22:44:00Z \\\n    --kickoff-utc 2026-10-26T00:20:00Z \\\n    --kickoff-source-url https://www.chiefs.com/news/how-to-watch-and-listen-week-7-chiefs-vs-seahawks \\\n    --games 10000 --seed-start 1 --out batch.json\n\nRegistered, availability-aware run (opt-in; needs the pinned full-depth roster):\n  python3 scripts/nfl_sequence/simulate_pregame_batch.py ... \\\n    --roster-snapshot ROSTER.json --roster-provenance PROVENANCE.json \\\n    --availability-store /root/lp-snapshots/nfl --register-dir /root/lp-snapshots/nfl-sim-runs\n\nAll seeds are retained. Score forecasts and win rates use only valid, untied complete games, with that sample size and\ncoverage reported. A separate regulation-end distribution includes ties and guarded games that reached the clock end;\npartial-game points are recorded per seed but never presented as final scores.\n",
+    "Run reproducible full-game simulations and report their outcome distribution.\n\nExample:\n  python3 scripts/nfl_sequence/simulate_pregame_batch.py \\\n    --game-id 2026_07_KC_SEA --as-of 2026-10-25T22:44:00Z \\\n    --kickoff-utc 2026-10-26T00:20:00Z \\\n    --kickoff-source-url https://www.chiefs.com/news/how-to-watch-and-listen-week-7-chiefs-vs-seahawks \\\n    --games 10000 --seed-start 1 --out batch.json\n\nAll seeds are retained. Score forecasts and win rates use only valid, untied complete games, with that sample size and\ncoverage reported. A separate regulation-end distribution includes ties and guarded games that reached the clock end;\npartial-game points are recorded per seed but never presented as final scores.\n",
     "nfl_pbp has no row-level publication/ingestion timestamp",
     "nfl_pbp seasons 2022 through weeks before {snapshot[",
     "nfl_pbp seasons 2022-2025, weeks 1-18",
     "python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file SNAPSHOT.json "
    ],
    "imports_from_this_dir": [
-    "availability_adapter",
     "e1_drive",
     "e2_reference",
-    "game_info_snapshot",
     "game_state",
     "pregame_batch",
     "pregame_context",
     "pregame_snapshot",
-    "sim_run_registry",
     "simulate_pregame_game",
     "try_policy"
    ],
-   "last_commit": "e4212626 2026-10-27",
-   "lines": 589,
+   "last_commit": "cc1d9370 2026-10-26",
+   "lines": 553,
    "module": "simulate_pregame_batch.py",
-   "sha256": "02181630cbae319f53c7cd600b090359738d9606259b83275ffa5b08252076ba",
+   "sha256": "2bfafecde48026b8258d1782e1c8b1f7a3400b871863357ce8078d873bb5763c",
    "summary": "Run reproducible full-game simulations and report their outcome distribution."
   },
   {
@@ -917,24 +853,6 @@
    "summary": "Generate one reproducible statistical NFL game from a frozen pregame snapshot."
   },
   {
-   "blob": "fff44b01ad014d23f91624cabd445c91fb79946b",
-   "consumers": [],
-   "data_references": [
-    "frozen.json",
-    "index.jsonl",
-    "{snapshot_id}.json"
-   ],
-   "imports_from_this_dir": [
-    "availability_adapter",
-    "pregame_snapshot"
-   ],
-   "last_commit": "1aedc435 2026-10-27",
-   "lines": 189,
-   "module": "test_availability_adapter.py",
-   "sha256": "27b5b06436ca82c2ebf5077650f8e735b23c7602916509f9a82ff6096d26f471",
-   "summary": ""
-  },
-  {
    "blob": "3aa67742a8fcd20f6344fb03a8f17362da79b156",
    "consumers": [],
    "data_references": [],
@@ -946,19 +864,6 @@
    "lines": 116,
    "module": "test_blocked_kick_outcomes.py",
    "sha256": "e5edbe478d8fb341774b9fb4c25ab445560db006c1d0035e565a9b85550f6645",
-   "summary": ""
-  },
-  {
-   "blob": "1c4b0fdb46266c96e5a595a207981c67a529829c",
-   "consumers": [],
-   "data_references": [],
-   "imports_from_this_dir": [
-    "build_full_depth_roster_snapshot"
-   ],
-   "last_commit": "0ff9d4c4 2026-10-27",
-   "lines": 59,
-   "module": "test_build_full_depth_roster_snapshot.py",
-   "sha256": "f56f9cfb4bcb8881671a29739f28e9d6fc0e6d552c893e94a4f4cd6a43a6a665",
    "summary": ""
   },
   {
@@ -1001,7 +906,7 @@
     "e1_drive",
     "reducer"
    ],
-   "last_commit": "e133ab15 2026-10-28",
+   "last_commit": "1d35e47e 2026-10-28",
    "lines": 419,
    "module": "test_e1_transitions.py",
    "sha256": "5c8fc4c3e843707ee97dff68fc07015724a22e7d62a8bca58c67c50c0aa7b406",
@@ -1048,22 +953,6 @@
    "summary": "The committed E2 fixtures are immutable: their SHA-256 values match docs/fixtures/e2/MANIFEST.json, and the seed-1 shared document is checked against the contract. Run: python3 -m unittest scripts/nfl"
   },
   {
-   "blob": "ed020415420a7f934a3cdb8b9c43b7748560cb92",
-   "consumers": [],
-   "data_references": [
-    "forecasts.json",
-    "venues.json"
-   ],
-   "imports_from_this_dir": [
-    "game_info_snapshot"
-   ],
-   "last_commit": "e4212626 2026-10-27",
-   "lines": 93,
-   "module": "test_game_info_snapshot.py",
-   "sha256": "5c443593001390aaa6faa43ef57f90b3bfc424a91a665a191f3af98f3ff5007a",
-   "summary": ""
-  },
-  {
    "blob": "7a5e78f4a08ddab3d9981e2646680cb957c4d199",
    "consumers": [
     "test_shared_v1.py",
@@ -1082,7 +971,7 @@
     "game_stats",
     "rules_matrix"
    ],
-   "last_commit": "fee78a05 2026-10-28",
+   "last_commit": "382f5ffe 2026-10-28",
    "lines": 1697,
    "module": "test_game_state.py",
    "sha256": "a5ba0f40d56271744e0c8c141dea3669fe47d94b5a7855ce2b5523627e6e2220",
@@ -1237,22 +1126,6 @@
    "module": "test_shared_v1.py",
    "sha256": "2d97dc88abb91a67c75eae929b7e5832496ea0ebda5bb7f8ea59cefc2b14533d",
    "summary": "Tests for the shared-contract projection and its checker (shared_v1.py), with negative fixtures."
-  },
-  {
-   "blob": "e7482504a0b5edec276604fbeca8bca864d57a43",
-   "consumers": [],
-   "data_references": [
-    "index.jsonl",
-    "simrun-20990101T000000Z-0000000000.json"
-   ],
-   "imports_from_this_dir": [
-    "sim_run_registry"
-   ],
-   "last_commit": "1aedc435 2026-10-27",
-   "lines": 107,
-   "module": "test_sim_run_registry.py",
-   "sha256": "d6372abe1895350a0eeccabb4a6fbc4372e77fa05414bbecd3a989bac8d941cb",
-   "summary": ""
   },
   {
    "blob": "cac66813d37f1390c3a104e88fdd17b86808ead4",
