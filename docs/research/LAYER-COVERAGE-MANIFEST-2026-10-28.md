@@ -53,9 +53,14 @@ Validation (`validate_pre_play_scores.py`, reports in the scratchpad). For each 
 | Join coverage, both directions | 100% in every season: every raw play matches a DB play, and every DB play matches a raw play |
 | Shared fields (team, quarter, down, distance, field, clock, play type) | no mismatches after the LA/LAR and WAS/WSH code normalisation |
 | score_differential equals posteam minus defteam | 0 inconsistent rows in every season |
-| Continuity: pre-play score equals the previous play's post-play score for the same team | 0 to 91 mismatches per season, about 0.1 to 0.2% of checked plays |
-| Pre-play totals that decrease within a game | 21 to 91 per season; about 80% are on no-play rows (penalties, timeouts) |
-| Final scores against nfl_schedule | all but 1 to 3 games per season match |
+| Continuity: pre-play score equals the previous play's post-play score for the same team (plays ordered by quarter, clock, then play id; 567 untimed rows excluded) | 121 exceptions across 2010 to 2025, out of about 670,000 checked transitions. 43 are a scoring play with no row in the file (point after, field goal, touchdown, two-point or safety). 3 repeat the state from before the previous play. 75 are unexplained: 33 change both sides at once (mostly 2011, 2016 and 2020) and 42 change one side. |
+| Final scores against nfl_schedule (clock ordering) | 4,174 of 4,175 games match. One 2010 game disagrees by 6 points on both sides and is kept as is. |
+| Pre-play totals that decrease within a game | Computed in file order by the first validator; about 80% are on no-play rows. Superseded for the clock-ordered trace. |
+
+Earlier counts in this table (0 to 91 continuity mismatches a season, 1 to 3 final-score disagreements a season) were computed
+in play-id order. About 30 games per season, in 2022 to 2025 alone 37 games in 2022 and 16 in 2025, have play ids out of game order,
+so that order made the checks compare states that never followed one another. The figures above replace them.
+Play ids run backwards in game time in 77 games in 2010, 37 in 2022 and 16 in 2025.
 
 Decisions the validation supports:
 - No-play rows drop their pre-play scores (`excluded_no_play_row`), since their totals are not pre-play state.
@@ -76,8 +81,9 @@ cutoff_eligibility, rule_regime, provenance, model_layer.
 | fourth_down_decision | nfl_pbp | 2010 | 2025 | play | only on down 4 | game week before target | NFL regular season | situational_play_calling |
 | down, ydstogo, yardline_100, game_seconds_remaining, qtr | nfl_pbp | 2010 | 2025 | play | down/yardline null on non-scrimmage plays; clock null on a few rows per season | game week before target | NFL regular season | situational_play_calling |
 | seconds_in_quarter, two_minute_window, overtime | derived from clock and qtr | 2010 | 2025 | play | null where clock or qtr is null | game week before target | regulation clock; overtime flagged | situational_play_calling |
-| goal_to_go_derived | derived from yardline_100 | 2010 | 2025 | play | null where yardline is null | game week before target | derived definition (distance to goal at most 10) | situational_play_calling |
-| score_differential | not in nfl_pbp | none | none | none | not available | blocked until joined | n/a | situational_play_calling |
+| goal_to_go | nflverse raw `goal_to_go` flag, joined on (game_id, play_id) | 2010 | 2025 | play | null where the play has no raw row | game week before target | publisher flag; not inferred from distance | situational_play_calling |
+| red_zone | derived from yardline_100 (at most 20) | 2010 | 2025 | play | null where yardline is null | game week before target | derived definition | situational_play_calling |
+| posteam_score_pre, defteam_score_pre, score_differential | nflverse raw pre-play score fields, joined on (game_id, play_id) | 2010 | 2025 | play | `excluded_no_play_row` (penalty and timeout rows), `raw_score_missing`, `unmatched_in_raw`, and `flagged_continuity_exception` (121 plays, see the score exceptions section) | game week before target | NFL regular season; pre-play state only | situational_play_calling |
 
 ## Fallback hierarchy (design, not yet implemented)
 
