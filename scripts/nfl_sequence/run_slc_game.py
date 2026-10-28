@@ -1,10 +1,10 @@
-"""Run one complete game with the SLC layers connected, and write its event trace and component manifest (research).
+"""Run one SLC v1 game from a pregame snapshot, and write its trace and decision record (research, not adopted).
 
-The reference is loaded with the frozen score-by-clock play-call layer as the drive-policy sampler. The historical pool is the 2022
-to 2025 pool, so no 2026 outcome is used. Every scrimmage play's decision is recorded with the state before the play, the probability,
-the chosen play type and the historical row it drew.
+The configuration is slc_engine's, the same code the batch runner uses. The snapshot is built from the database as of --as-of, or
+read from a hash-pinned --snapshot-file. A run without a snapshot is refused. Every scrimmage play's decision is recorded with the
+state before the play, the probability, the chosen play type and the historical row it drew.
 
-Usage: python3 run_slc_game.py --artifact JSON --seed N --home TEAM --away TEAM --out JSON
+Usage: python3 run_slc_game.py --artifact JSON (--game-id ID --as-of TS | --snapshot-file JSON) --seed N --out JSON
 """
 import argparse
 import json
@@ -14,65 +14,96 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e1_drive as e1  # noqa: E402
-import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
+import pregame_snapshot  # noqa: E402
+import slc_engine  # noqa: E402
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--artifact', type=Path, required=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--artifact', type=Path, required=True, help='play-call artifact fitted before the game season')
+    ap.add_argument('--snapshot-file', type=Path, help='hash-pinned pregame snapshot JSON')
+    ap.add_argument('--game-id', help='published nfl_schedule game_id, when building the snapshot')
+    ap.add_argument('--as-of', help='timezone-qualified ISO-8601 pregame cutoff, when building the snapshot')
+    ap.add_argument('--kickoff-utc')
+    ap.add_argument('--kickoff-source-url')
+    ap.add_argument('--allow-unverified-current-schedule-exploratory', action='store_true',
+                    help='historical games have no versioned schedule; use the current row, labelled unverified')
+    ap.add_argument('--roster-snapshot')
+    ap.add_argument('--roster-provenance')
     ap.add_argument('--seed', type=int, required=True)
-    ap.add_argument('--home', required=True)
-    ap.add_argument('--away', required=True)
-    ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
-    ap.add_argument('--eligible-before', default='2025,18',
-                    help='season,week cutoff: pool rows strictly before this week. The default excludes 2025 week 18 and keeps '
-                         'the 2026 holdout out. The loader accepts weeks 1 to 18 only.')
+    ap.add_argument('--out', type=Path, required=True)
     args = ap.parse_args()
 
-    season, week = (int(part) for part in args.eligible_before.split(','))
-    teams = {'A': args.away, 'B': args.home}
-    ref, excluded = er.load(args.db, eligible_before=(season, week), playcall_artifact=str(args.artifact),
-                            playcall_teams=teams)
-    sampler = ref.contextual_sampler
-    result = gs.play_game(args.seed, ref)
-    decisions = sampler.decisions
-    scrimmage = [d for d in decisions if d['intent'] != 'kick']
+    if args.snapshot_file:
+        snapshot = pregame_snapshot.load_frozen_snapshot(str(args.snapshot_file))
+    elif args.game_id and args.as_of:
+        snapshot = pregame_snapshot.build(args.db, args.game_id, args.as_of, args.kickoff_utc, args.kickoff_source_url,
+                                          allow_unverified_current_schedule_exploratory=(
+                                              args.allow_unverified_current_schedule_exploratory))
+    else:
+        raise SystemExit('SLC v1 needs a pregame snapshot: give --snapshot-file, or --game-id and --as-of')
+    if bool(args.roster_snapshot) != bool(args.roster_provenance):
+        raise SystemExit('--roster-snapshot and --roster-provenance must be supplied together')
+    if args.roster_snapshot:
+        pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
+
+    ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact)
+    snapshot['model_reference']['observed_reference'] = ref.model_inputs
+    snapshot['model_reference']['pool_scope'] = ref.pool_scope
+    pregame_snapshot.reseal(snapshot)
+    record, decisions = slc_engine.play(args.seed, ref, snapshot)
+    gs.validate_game(record)
+
+    schedule = snapshot['schedule']
+    schedule_verified = schedule['availability_classification'] == 'versioned_as_of'
+    depth_verified = not any('publication_time_unverified' in player and player['publication_time_unverified']
+                             for side in snapshot['rosters'].values() for player in side['players'])
+    artifact = json.loads(args.artifact.read_text())
     trace = {
-        'model_id': 'slc_v1_incomplete', 'components_connected': ['slc_playcall_v1 (score-by-clock play-call layer)'],
+        'model_id': slc_engine.MODEL_ID,
+        'components_connected': ['score-clock play-call layer (slc_playcall_v1)'],
         'components_not_connected': ['team offense and defense splits', 'playbooks', 'QB and role decisions',
-                                     'player opportunity selection', 'coaching (excluded from v1)'],
-        'seed': args.seed, 'teams': teams, 'sampler': sampler.describe(),
-        'decisions': len(decisions), 'scrimmage_decisions': len(scrimmage),
-        'kick_decisions_fallback': sum(1 for d in decisions if d['intent'] == 'kick'),
-        'excluded_kickoffs': excluded if isinstance(excluded, (int, float, str, dict, list)) else str(excluded),
+                                     'pre-event participant selection', 'coaching (excluded from v1)'],
+        'seed': args.seed,
+        'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
+                 'side_teams': slc_engine.side_teams(snapshot)},
+        'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],
+                     'roster_snapshot_id': snapshot['roster_snapshot_id'],
+                     'schedule_availability': schedule['availability_classification'],
+                     'depth_publication_verified': depth_verified},
+        'playcall': {'artifact_sha256': artifact['sha256'], 'fit_seasons': [min(artifact['fit_seasons']),
+                                                                             max(artifact['fit_seasons'])],
+                     'reference_season': artifact['reference_season'],
+                     'summary': slc_engine.summary(decisions)},
+        'pool': {'eligible_before': [int(schedule['season']), int(schedule['week'])],
+                 'excluded_kickoffs': excluded if isinstance(excluded, (int, float, str, dict, list)) else str(excluded)},
         'contract': {
-            'pregame_snapshot': None,
-            'mode': result.get('mode'),
-            'complete_game': result.get('complete_game'),
-            'valid_full_game': result.get('valid_full_game'),
-            'valid_full_game_requires': 'pregame_full_game mode with a verified pregame snapshot; none is supplied by this runner',
-            'evaluation': 'exploratory smoke run',
-            'cutoff_safe_backtest': False,
-            'artifact_fit_seasons': sampler.layer.artifact['fit_seasons'],
-            'artifact_note': 'the frozen play-call artifact is fit on every 2010 to 2025 primary play, so this run is not a '
-                             'chronologically valid 2025 backtest',
-            'player_stats': 'historical allocation from sampled historical participants; not a player projection and not the '
-                            'roster of the simulated matchup',
+            'mode': record.get('mode'),
+            'complete_game': record.get('complete_game'),
+            'valid_full_game_engine': record.get('valid_full_game'),
+            'valid_full_game_claim': bool(record.get('valid_full_game') and schedule_verified and depth_verified),
+            'valid_full_game_claim_requires': 'engine valid_full_game, a versioned schedule and verified depth publication times',
+            'evaluation': 'exploratory single-game run',
+            'cutoff_safe': True,
+            'cutoff_safe_scope': 'the pool holds only plays before the game and the play-call artifact is fitted before its season',
+            'player_stats': 'historical allocation from sampled historical participants; not a player projection',
         },
         'diagnosis': {
-            'status': result.get('status'), 'blocker': result.get('blocker'),
-            'regulation_end_reached': result.get('regulation_end_reached'),
-            'unmodelled_transitions': result.get('unmodelled_transitions', []),
-            'unsupported_rules': result.get('unsupported_rules', []),
-            'scope_out': result.get('scope_out', []),
+            'status': record.get('status'), 'blocker': record.get('blocker'),
+            'regulation_end_reached': record.get('regulation_end_reached'),
+            'unmodelled_transitions': record.get('unmodelled_transitions', []),
+            'unsupported_rules': record.get('unsupported_rules', []),
+            'scope_out': record.get('scope_out', []),
         },
-        'result': result, 'event_trace': decisions,
+        'result': record,
+        'event_trace': decisions,
     }
     args.out.write_text(json.dumps(trace, indent=1, sort_keys=True, default=str) + '\n')
-    print(json.dumps({'decisions': len(decisions), 'scrimmage_decisions': len(scrimmage),
-                      'result_keys': sorted(result) if isinstance(result, dict) else type(result).__name__}))
+    print(json.dumps({'game_id': schedule['game_id'], 'seed': args.seed, 'status': record.get('status'),
+                      'complete_game': record.get('complete_game'), 'valid_full_game_claim': trace['contract']['valid_full_game_claim'],
+                      'decisions': len(decisions), 'points': record.get('points')}))
 
 
 if __name__ == '__main__':
