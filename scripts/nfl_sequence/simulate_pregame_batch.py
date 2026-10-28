@@ -38,6 +38,7 @@ import pregame_snapshot  # noqa: E402
 import pregame_context  # noqa: E402
 import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
+import slc_engine  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -329,13 +330,19 @@ def _simulate_seed(seed, ref, snapshot):
     record = None
     error = None
     validation_error = False
+    decisions = None
     try:
-        record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+        if slc_engine.is_slc(ref):
+            record, decisions = slc_engine.play(seed, ref, snapshot)
+        else:
+            record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
         gs.validate_game(record)
     except Exception as exc:  # every requested seed gets an outcome row, including generator/validator failures
         error = f'{type(exc).__name__}: {exc}'
         validation_error = record is not None
     outcome = _record_outcome(seed, record, error, validation_error)
+    if decisions is not None:
+        outcome['playcall'] = slc_engine.summary(decisions)
     contribution = None
     if outcome['valid_full_game'] and record:
         contribution = {
@@ -421,7 +428,12 @@ def run_batch(args):
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
     reference_started = time.monotonic()
-    if args.context_mode == 'unconditioned':
+    if args.playcall_artifact:
+        if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
+            raise SystemExit('--playcall-artifact is the SLC v1 policy: it takes no team-tendency, contextual, try-policy or '
+                             'safety option')
+        ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact)
+    elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
     else:
@@ -462,7 +474,7 @@ def run_batch(args):
         'schema': SCHEMA, 'game_id': args.game_id, 'as_of': snapshot['as_of'],
         'source_snapshot_sha256': source_snapshot_sha256, 'observed_reference_sha256': ref.model_inputs['sha256'],
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
-        'seed_start': args.seed_start,
+        'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
@@ -550,6 +562,7 @@ def run_batch(args):
         'pregame_snapshot': snapshot,
         'pregame_context': contextual,
         'contextual_pool_manifest': ref.contextual_pool_manifest,
+        'playcall_layer': slc_engine.describe(ref),
         'data_sources': {
             'database': 'SQLite, opened read-only',
             'source_snapshot_sha256': source_snapshot_sha256,
@@ -614,6 +627,9 @@ def main(argv=None):
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
+    ap.add_argument('--playcall-artifact',
+                    help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
+                         'the weeks before the game. Omit for the S0 control')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--resume', action='store_true',
