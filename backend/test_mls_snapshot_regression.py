@@ -36,9 +36,14 @@ def test_the_saved_records_resolve_to_1040_people_with_no_blockers_or_conflicts(
     assert len({m["team"] for m in memberships}) == 30
 
 
-def test_the_saved_records_pass_completeness_and_build_a_publishable_snapshot():
+def test_the_saved_records_build_a_verified_snapshot_on_an_empty_database():
+    import sqlite3
+    import roster_membership as rm
+    con = sqlite3.connect(":memory:")
+    rm.create_roster_schema(con)
     squads, binds = _load()
-    result = ms.build(squads, binds, captured_at="2026-10-27T21:13:59+00:00")
+    result = ms.build(con, squads, binds, captured_at="2026-10-27T21:13:59+00:00")
     assert result.status == "publish"
+    assert result.coverage == "verified"
     assert result.blockers == [] and result.carried == []
     assert len(result.memberships) == 1040
