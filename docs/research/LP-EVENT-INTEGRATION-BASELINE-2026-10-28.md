@@ -1,14 +1,12 @@
 # Event-based simulation integration: Phase 1 baseline, 2026-10-28
 
-Status: Phase 1 in progress. Research only. No push to `dev` or `main`, no deploy, no production default changed. The 2026
-holdout is not read. This document records what was verified and what needs a decision.
+Status: Phase 1 in progress, consolidated on `research/lp-event-phase1-2026-10-28` (worktree `/root/lp-phase1`, based on `origin/dev` `382f5ffe`). Committed locally, not pushed. Research only. No push to `dev` or `main`, no deploy, no production default changed. The 2026 holdout is not read. This document records what was verified, what was found, and what needs a decision.
 
 ## 1. Isolation
 
-- Worktree: `/root/lp-event-integration`, branch `research/lp-event-integration-2026-10-28`, created from local `dev`
-  at `79e8e05d`. Nothing in the `/root/legendarypicks` dev worktree was changed.
-- That worktree holds two uncommitted edits that are not part of this work:
-  `.claude/skills/measurement-is-a-claim/SKILL.md` and `components/Leagues/types.ts`. They are left as found.
+- Worktree: `/root/lp-phase1`, branch `research/lp-event-phase1-2026-10-28`, based on `origin/dev` at `382f5ffe`. This is the consolidated phase branch.
+- It carries the two integration commits `1176899d` and `ee4164b9`. They are cherry-picks of `e08998f5` and `704661c0` from the earlier branch `research/lp-event-integration-2026-10-28` (worktree `/root/lp-event-integration`, based on local `dev` at `79e8e05d`). That branch is superseded and left in place. Its worktree is clean.
+- The `/root/legendarypicks` dev worktree holds uncommitted edits that are not part of this work: `.claude/skills/measurement-is-a-claim/SKILL.md`, `components/Leagues/types.ts` and `pages/leagues/[league].tsx`, plus untracked files under `backend/data`, `components` and `public`. They are left as found. An earlier draft of this section placed the two first edits in the integration worktree. That was wrong.
 
 ## 2. Blocked-kick guard reconciliation (Phase 1 requirement)
 
@@ -16,85 +14,93 @@ holdout is not read. This document records what was verified and what needs a de
 |---|---|---|
 | `origin/fix/week08-simulation-errors` | `fee78a05` | present (`e133ab15` and `fee78a05`) |
 | local `dev` | `79e8e05d` | present (both commits are ancestors; the four guard files are identical to `fee78a05`) |
-| `origin/dev` | `7ce9ae4e` | **absent** |
+| `origin/dev` | `382f5ffe` | present (`1d35e47e` and `382f5ffe`, content identical to `e133ab15` and `fee78a05`; pushed 2026-10-28 as a fast-forward on the user's instruction) |
 
-The divergence is between origin dev and local dev, not between dev and the fix branch. Local dev is 26 commits ahead of
-`origin/dev`, and those commits are not pushed. They include the fix, and also identity and spine-merge commits, and a revert of
-`fix/identity-stale-rows` (`8f566485`). Origin dev lacks the fix.
+Local dev is 26 commits ahead of `origin/dev` and 2 behind it. The 2 behind are `origin/dev`'s guard pair, which local dev lacks by hash. The 26 ahead include local dev's own guard pair, so 24 are other local-only commits. Those 24 include identity and spine-merge work and a revert of `fix/identity-stale-rows` (`8f566485`). None of the 26 is on this branch.
 
 What the guard does (`fee78a05`, `_sample_blocked_kick` in `game_state.py`):
 
-- A period-expired blocked-kick record keeps its draw weight at every quarter. The earlier code removed such records from the
-  pool at Q1 and Q3, which changed the draw weights.
-- If a period-expired record is drawn at Q1 or Q3, the play blocks with a named status
-  (`blocked_kick_period_expired_next_possession_unresolved`), because the next possession and spot are unknown.
+- A period-expired blocked-kick record keeps its draw weight at every quarter.
+- If a period-expired record is drawn at Q1 or Q3, the play blocks with a named status (`blocked_kick_period_expired_next_possession_unresolved`), because the next possession and spot are unknown.
 
-Verification on the integration base (`79e8e05d`):
+Verification on this base:
 
-- `scripts/nfl_sequence`: `pytest test_game_state.py test_e1_transitions.py` gives 187 passed.
-- `test_period_expired_draw_weight_is_preserved_across_all_quarters` (`test_game_state.py:313`) checks the probability
-  preservation directly.
+- `python3 -m pytest -q scripts/nfl_sequence/test_*.py`, run from the repository root, gives 317 passed. This includes both guard test files.
+- `test_period_expired_draw_weight_is_preserved_across_all_quarters` (`test_game_state.py:313`) checks the probability preservation directly.
 - `test_blocked_kick_at_q1_expiry_blocks_when_next_possession_is_unknown` (`test_e1_transitions.py:138`) checks the Q1 block.
 
-Not yet verified: a numerical comparison of draw weights before and after `e133ab15`. The tests above are the current
-evidence.
+Not yet verified: a numerical comparison of draw weights before and after `e133ab15`.
 
-Decision needed (not taken here): which base the integration branch should use.
+Base decision (taken during consolidation, to be confirmed):
 
-- **Option A:** local `dev` (`79e8e05d`). It has the guard and the 187 passing tests. It also carries 25 unpushed commits,
-  including the identity and spine-merge changes, which are not reviewed for this work.
-- **Option B:** `origin/dev` (`7ce9ae4e`) plus cherry-picks of `e133ab15` and `fee78a05`. This is closer to what has been
-  published. It has not been tried, and the cherry-picks may conflict.
-
-Until that decision, the integration branch is based on option A, as the worktree was created. No merge is made.
+- Not taken: local `dev` (`79e8e05d`). It would bring in 24 local commits that are not reviewed for this work.
+- Taken: `origin/dev` (`382f5ffe`). It is published history and already holds the guard, so the cherry-picks in the earlier option B are not needed. The cost is that seven modules on local dev are absent from this base: `availability_adapter.py`, `game_info_snapshot.py`, `sim_run_registry.py`, and four tests (`test_availability_adapter.py`, `test_build_full_depth_roster_snapshot.py`, `test_game_info_snapshot.py`, `test_sim_run_registry.py`). No file on this base imports any of them. A phase that needs one of them should cherry-pick it after review.
 
 ## 3. Source manifest
 
-Generated by `scripts/nfl_sequence/build_source_manifest.py` at checkout `79e8e05d`. Output:
-`docs/research/LP-EVENT-INTEGRATION-SOURCE-MANIFEST-2026-10-28.md` and `.json`. The JSON records the git blob hash and SHA-256 of
-each of the 70 modules, the last commit that touched it, its consumers, the modules it imports, and the data paths it names.
+Generated by `scripts/nfl_sequence/build_source_manifest.py` at checkout `ee4164b9`. Docs-only commits after that do not change the module set. Output: `docs/research/LP-EVENT-INTEGRATION-SOURCE-MANIFEST-2026-10-28.md` and `.json`. The JSON records the git blob hash and SHA-256 of each of the 63 modules on this base, the last commit that touched it, its consumers, the modules it imports, and the data paths it names. The 70-module version generated at `79e8e05d` is in commit `e08998f5` on the superseded branch.
+
+Consumers, verified from this manifest:
+
+- `reducer.py`: 5 consumers (`e0_single_play`, `e1_drive`, `game_state`, `test_blocked_kick_outcomes`, `test_e1_transitions`).
+- `game_state.py`: 13 consumers.
+- `e1_drive.py`: 14 consumers.
+- `game_stats.py`: 2 consumers (`game_state` and `test_game_state`). Changing participant selection is contained.
 
 Key modules for the integration:
 
 | module | role | status | notes |
 |---|---|---|---|
-| `reducer.py` | possession-level reducer, pure | authoritative | Consumers: `e0_single_play`, `e1_drive`, `game_state`. Must not change. |
+| `reducer.py` | possession-level reducer, pure | authoritative | Consumers listed above. Must not change. |
 | `game_state.py` | E2 framework: coin toss, kickoffs, scoring, clock, tries, overtime, special teams | authoritative framework | Imports `e1_drive`, `game_stats`, `reducer`. Holds the blocked-kick guard. |
-| `e1_drive.py` | E1 drive generator, samples observed plays in down, distance and field cells | statistical, observed pool | Intent is not modelled. Pool is the 2022 to 2025 observed plays. |
-| `e2_reference.py` | loads observed reference data from the dev play-by-play table, read only | data adapter | Window 2022 to 2025, weeks 1 to 18. Includes 2025 in full. |
+| `e1_drive.py` | E1 drive generator, samples observed plays in down, distance and field cells | statistical, observed pool | Intent is not modelled. Play pool is the 2022 to 2025 observed plays. Its `load_seasons` also serves the regime kickoff path, which reads 2026 (section 4). |
+| `e2_reference.py` | loads observed reference data from the dev play-by-play table, read only | data adapter | Window 2022 to 2025, weeks 1 to 18, for plays. Regime kickoffs read 2026 as well (section 4). |
 | `contextual_pool.py` | matchup-weighted sampling over the cutoff-eligible pool | research ablation | S0 keeps the uniform empirical pool. S1 reweights it. |
 | `pregame_context.py` | cutoff-filtered matchup context, opponent-adjusted point ratings | input | Recent form and roster context not yet integrated. |
 | `pregame_snapshot.py` | reproducible matchup and depth-chart snapshot at a cutoff | input | Reads the depth-chart artifact in force at the cutoff. |
 | `game_stats.py` | team and player lines for one generated game | consumer | **Confirmed limitation:** participants are assigned from the frozen depth chart after the event is sampled. |
-| `availability_adapter.py` | applies a frozen weekly availability snapshot | input | Used by `simulate_pregame_batch.py`. |
+| `availability_adapter.py` | applies a frozen weekly availability snapshot | **not on this base** | Exists on local dev only. No file on this base imports it. |
 | `rule_regimes.py` | rule registry and active rules for a season | input | Governs which historical samples a target may use. |
 | `e3_observed_distributions.py` | exports observed distributions from the dev table | data export | 2022 to 2025 regular season. |
 
-The playbook decision model v1 is **not on this base**. It is on
-`origin/research/nfl-historical-splits-2026-10-27` at `scripts/nfl_sequence/splits/decision_model.py`. The base has no
-playbook integration (a search for "playbook" in `scripts/nfl_sequence` returns nothing).
+The playbook decision model v1 is **not on this base**. It is on `origin/research/nfl-historical-splits-2026-10-27` at `scripts/nfl_sequence/splits/decision_model.py`. The base has no playbook integration (a search for "playbook" in `scripts/nfl_sequence` returns nothing).
 
 ## 4. Cutoff-safety findings
 
-- **2026 mentions.** 32 modules under `scripts/nfl_sequence` contain the string `2026`. This is a name match, not a data read.
-  Each one has to be checked for a default that would bring 2026 inputs into a historical run. That check is part of
-  Phase 2, not this document.
-- **The E1 pool includes 2025.** `e2_reference.py` and `e1_drive.py` draw from 2022 to 2025. A game simulated earlier in 2025
-  must not draw on the 2025 pool at a point after its own cutoff. The cutoff filter in `contextual_pool.py` and
-  `pregame_context.py` is the mechanism, and its coverage is not yet verified.
-- **Participant assignment is after the event.** `game_stats.py` assigns the QB from the frozen depth chart, and backs and
-  receivers by sampling the depth chart. The event is sampled first. This is the limitation the integration is meant to
-  remove.
+Method: `grep` and reads of code and docstrings only. In this session no 2026 game data, simulation output, or tracking file was opened. Each item below is a code path read here, not a run.
+
+- **Regime kickoffs read 2026 rows.** `e2_reference.py:24` sets `KICKOFF_SEASONS = (2022, 2023, 2024, 2025, 2026)`. At `e2_reference.py:425`, when `kickoff_regime_season` is set, the code calls `e1.load_seasons(db, KICKOFF_SEASONS)`. `load_seasons` (`e1_drive.py`, about line 91) does not take `eligible_before`, so 2026 rows are read from the database into memory. The only guard is `regime_kickoffs` (`e2_reference.py:363`), which drops kickoffs with `game_date >= kickoff_before` and raises if `kickoff_before` is missing. For a pre-2026 cutoff those rows are dropped, but they are read first. A historical run on this path has read 2026 game data. Whether any earlier run did is not recorded on this branch.
+- **`run_pinned_validity.py:100` defaults `--target-season` to `2026`.** A run that omits the flag targets the holdout season. With `--kickoff-regime`, that value also drives `regime_kickoffs`.
+- **`build_overtime_choice_model.py:32` sets `CHECK_SEASONS = ('2026',)`.** Its `main()` (line 58) scores 2026 regular-season toss choices through Week 7 as a chronological check. That is a read of 2026 game data. It was not run in this session. The record of whether it has run is not on this branch, and its output should not be opened until the holdout exposure record is checked.
+- `build_try_fallback.py` states that 2026 tries are not read and the two-point evaluation is reserved. This matches the code.
+- Other `2026` strings in `scripts/nfl_sequence` are rule names (`PENDING_2026`, `RULES_VERSION`, `NFL-2026-GAME-STATE-RULES`), dated file paths, comments and a seed. 28 files on this base contain the string (tests included, `grep -l 2026 scripts/nfl_sequence/*.py`). The earlier count on local dev was 32. I classified the code matches I read, not every one of the 28 files.
+- **The E1 pool includes 2025.** A game simulated earlier in 2025 must not draw on the 2025 pool after its own cutoff. The cutoff filters in `contextual_pool.py` and `pregame_context.py` are the mechanism. Their coverage is not yet verified.
+- **Participant assignment is after the event** (`game_stats.py`, section 3).
+
+Holdout rule (user, 2026-10-28): 2026 is the holdout for every model. Forward projections for 2026 games not yet played are allowed; the baseline must never read 2026 results.
+
+Changed on this branch:
+
+1. `KICKOFF_SEASONS` is 2022 to 2025. `e1.load_seasons` refuses 2026 and `e1.load` refuses a 2026 cutoff (`HOLDOUT_SEASON` in `e1_drive.py`). Covered by `test_holdout_2026.py`. One fixture test in `test_e1_transitions.py` moved from a 2026 cutoff to a 2025 cutoff, with the same rule.
+2. `_baseline_v1` returns `unavailable` for a 2026 target. It previously fit v1 on 2026 results and read 2026 `game_projections`.
+
+Still open (not changed):
+
+3. `run_pinned_validity.py:100` defaults `--target-season` to 2026.
+4. `build_overtime_choice_model.py` still scores 2026 toss choices (`CHECK_SEASONS`). It was not run and should not be run.
+5. `pregame_context.py` reads 2026 games directly for the context modes. It is not guarded yet, so a context-mode run for a 2026 game needs a decision.
+6. Whether any earlier run loaded 2026 kickoffs or scored the 2026 overtime check belongs in the holdout exposure record. This was not checked.
 
 ## 5. What is not done
 
 - The data dependency list is not complete. The dev play-by-play table was not queried. Only named paths were recorded.
 - The model status of most modules is not reviewed. Only the key modules are annotated.
-- The draw-weight comparison before and after `e133ab15` is not run (section 2).
-- No integration code is written. Phase 2 onward waits on the base decision in section 2.
+- The draw-weight comparison before and after `e133ab15` has not been run (section 2).
+- Section 4 items 3 to 6 are open and not run.
+- No integration code is written. Phase 2 onward waits on confirmation of the base (section 2) and decisions on section 4.
 
 ## 6. Next steps
 
-1. Decision on the integration base (section 2). This is needed before any merge or cherry-pick.
-2. Phase 1 completion: the model-status and data-dependency review of the key modules, and the 2026 default audit.
+1. Confirm the base (section 2). Bring any module from local dev in by cherry-pick, not merge.
+2. Decide section 4 items 3 to 6, including the holdout exposure record entry.
 3. Phase 2: cutoff-safe playbook export, built from 2022 to 2025 eligible games only.
