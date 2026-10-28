@@ -465,10 +465,12 @@ def league_leaders(league: str,
                 if metric["key"] not in ordered_metric_keys:
                     ordered_metric_keys.append(metric["key"])
 
+        import mls_resolution
+        team_now = mls_resolution.club_now_sql("ps.player_id", "p.league", "COALESCE(p.team, ps.team)", "ps.team")
         select_cols = [
             "ps.player_id",
             "p.name AS player_name",
-            "COALESCE(p.team, ps.team) AS team",
+            team_now + " AS team",
             "ps.games",
         ] + [f"ps.{key} AS {key}" for key in ordered_metric_keys]
         select_str = ", ".join(select_cols)
