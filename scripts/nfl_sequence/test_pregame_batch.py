@@ -118,25 +118,25 @@ class BatchAggregation(unittest.TestCase):
             ''')
             con.execute('INSERT INTO game_projections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                         ('r1', 'nfl-v1 frozen', 21.0, 17.0, 4.0, 38.0, 0.61,
-                         '2026-10-11T12:00:00Z', 'A', 'B', 2026, 5, 'nfl', '2026_05_A_B', 1))
+                         '2025-10-11T12:00:00Z', 'A', 'B', 2025, 5, 'nfl', '2025_05_A_B', 1))
             con.execute('INSERT INTO model_runs VALUES (?, ?, ?, ?, ?)',
-                        ('r1', 'ok', 'nfl-ratings-v1', '2026-10-11T11:59:00Z', '{}'))
+                        ('r1', 'ok', 'nfl-ratings-v1', '2025-10-11T11:59:00Z', '{}'))
             con.execute('INSERT INTO nfl_schedule_versions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        ('2026_05_A_B', 2026, 'REG', 5, '2026-10-11', '12:00', 'B', 'A', 'Home',
-                         'test fixture', '2026-10-10 10:00:00'))
+                        ('2025_05_A_B', 2025, 'REG', 5, '2025-10-11', '12:00', 'B', 'A', 'Home',
+                         'test fixture', '2025-10-10 10:00:00'))
             con.commit()
             con.close()
 
-            snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
+            snapshot = {'as_of': '2025-10-11T11:00:00Z', 'schedule': {
+                'game_id': '2025_05_A_B', 'season': 2025, 'week': 5, 'game_type': 'REG',
                 'home_team': 'A', 'away_team': 'B',
-                'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
+                'scheduled_kickoff_utc': '2025-10-11T16:00:00Z'}}
             later = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(later['status'], 'exploratory_later_lock')
             self.assertFalse(later['comparable_at_snapshot_cutoff'])
             self.assertGreater(later['snapshot_cutoff_offset_seconds'], 0)
 
-            snapshot['as_of'] = '2026-10-11T12:00:00Z'
+            snapshot['as_of'] = '2025-10-11T12:00:00Z'
             aligned = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(aligned['status'], 'available')
             self.assertTrue(aligned['comparable_at_snapshot_cutoff'])
@@ -155,24 +155,24 @@ class BatchAggregation(unittest.TestCase):
                     observed_at TEXT);
             ''')
             for run_id, locked_at, home_points in (
-                    ('r-before', '2026-10-11T10:00:00Z', 21.0),
-                    ('r-after', '2026-10-11T12:00:00Z', 25.0)):
+                    ('r-before', '2025-10-11T10:00:00Z', 21.0),
+                    ('r-after', '2025-10-11T12:00:00Z', 25.0)):
                 con.execute('INSERT INTO game_projections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                             (run_id, 'nfl-v1 frozen', home_points, 17.0, home_points - 17.0,
-                             home_points + 17.0, 0.61, locked_at, 'A', 'B', 2026, 5, 'nfl',
-                             '2026_05_A_B', 1))
+                             home_points + 17.0, 0.61, locked_at, 'A', 'B', 2025, 5, 'nfl',
+                             '2025_05_A_B', 1))
                 con.execute('INSERT INTO model_runs VALUES (?, ?, ?, ?, ?)',
                             (run_id, 'ok', 'nfl-ratings-v1', locked_at, '{}'))
             con.execute('INSERT INTO nfl_schedule_versions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        ('2026_05_A_B', 2026, 'REG', 5, '2026-10-11', '12:00', 'B', 'A', 'Home',
-                         'test fixture', '2026-10-10 10:00:00'))
+                        ('2025_05_A_B', 2025, 'REG', 5, '2025-10-11', '12:00', 'B', 'A', 'Home',
+                         'test fixture', '2025-10-10 10:00:00'))
             con.commit()
             con.close()
 
-            snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
+            snapshot = {'as_of': '2025-10-11T11:00:00Z', 'schedule': {
+                'game_id': '2025_05_A_B', 'season': 2025, 'week': 5, 'game_type': 'REG',
                 'home_team': 'A', 'away_team': 'B',
-                'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
+                'scheduled_kickoff_utc': '2025-10-11T16:00:00Z'}}
             result = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(result['status'], 'available')
             self.assertEqual(result['run_id'], 'r-before')
@@ -190,16 +190,16 @@ class BatchAggregation(unittest.TestCase):
             ''')
             con.execute('INSERT INTO game_projections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                         ('r1', 'nfl-v1 frozen', 21.0, 17.0, 4.0, 38.0, 0.61,
-                         '2026-10-11T12:00:00Z', 'A', 'B', 2026, 5, 'nfl', '2026_05_A_B', 1))
+                         '2025-10-11T12:00:00Z', 'A', 'B', 2025, 5, 'nfl', '2025_05_A_B', 1))
             con.execute('INSERT INTO model_runs VALUES (?, ?, ?, ?, ?)',
-                        ('r1', 'ok', 'nfl-ratings-v1', '2026-10-11T12:00:00Z', '{}'))
+                        ('r1', 'ok', 'nfl-ratings-v1', '2025-10-11T12:00:00Z', '{}'))
             con.commit()
             con.close()
 
-            snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
-                'home_team': 'A', 'away_team': 'B', 'location': 'Home', 'gameday': '2026-10-11',
-                'ingested_at': '2026-10-10 10:00:00', 'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
+            snapshot = {'as_of': '2025-10-11T11:00:00Z', 'schedule': {
+                'game_id': '2025_05_A_B', 'season': 2025, 'week': 5, 'game_type': 'REG',
+                'home_team': 'A', 'away_team': 'B', 'location': 'Home', 'gameday': '2025-10-11',
+                'ingested_at': '2025-10-10 10:00:00', 'scheduled_kickoff_utc': '2025-10-11T16:00:00Z'}}
             result = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(result['status'], 'exploratory_later_lock')
             self.assertEqual(result['run_id'], 'r1')
@@ -219,16 +219,16 @@ class BatchAggregation(unittest.TestCase):
             ''')
             con.execute('INSERT INTO game_projections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                         ('r1', 'nfl-v1 frozen', 21.0, 17.0, 4.0, 38.0, 0.61,
-                         '2026-10-11T10:00:00Z', 'A', 'B', 2026, 5, 'nfl', '2026_05_A_B', 1))
+                         '2025-10-11T10:00:00Z', 'A', 'B', 2025, 5, 'nfl', '2025_05_A_B', 1))
             con.execute('INSERT INTO model_runs VALUES (?, ?, ?, ?, ?)',
-                        ('r1', 'ok', 'nfl-ratings-v1', '2026-10-11T10:00:00Z', '{}'))
+                        ('r1', 'ok', 'nfl-ratings-v1', '2025-10-11T10:00:00Z', '{}'))
             con.commit()
             con.close()
 
-            snapshot = {'as_of': '2026-10-11T11:00:00Z', 'schedule': {
-                'game_id': '2026_05_A_B', 'season': 2026, 'week': 5, 'game_type': 'REG',
-                'home_team': 'A', 'away_team': 'B', 'location': 'Home', 'gameday': '2026-10-11',
-                'ingested_at': '2026-10-26 10:00:01', 'scheduled_kickoff_utc': '2026-10-11T16:00:00Z'}}
+            snapshot = {'as_of': '2025-10-11T11:00:00Z', 'schedule': {
+                'game_id': '2025_05_A_B', 'season': 2025, 'week': 5, 'game_type': 'REG',
+                'home_team': 'A', 'away_team': 'B', 'location': 'Home', 'gameday': '2025-10-11',
+                'ingested_at': '2025-10-26 10:00:01', 'scheduled_kickoff_utc': '2025-10-11T16:00:00Z'}}
             result = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(result['status'], 'exploratory_schedule_unverified')
             self.assertEqual(result['run_id'], 'r1')
