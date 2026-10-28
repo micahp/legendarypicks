@@ -188,7 +188,8 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
-def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None):
+def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
+             score_diff=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context."""
@@ -225,7 +226,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         else:
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
-                    rng, cell, offense=st['offense'], defense=st['defense'])
+                    rng, cell, offense=st['offense'], defense=st['defense'],
+                    state={'quarter': st['quarter'], 'clock': st['clock'], 'down': st['down'], 'togo': st['togo'],
+                           'yl': st['yl'], 'score_diff': score_diff})
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event

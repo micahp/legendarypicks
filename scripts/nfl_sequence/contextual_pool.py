@@ -173,7 +173,7 @@ class ContextualSampler:
         self._cache[cache_key] = result
         return result
 
-    def sample(self, rng, cell, offense, defense):
+    def sample(self, rng, cell, offense, defense, state=None):
         weighted, _effective_games = self._weights(cell, offense, defense)
         event_weights = defaultdict(float)
         for sample, weight in weighted:
