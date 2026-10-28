@@ -1,0 +1,156 @@
+{
+  "baseline": {
+    "chosen_group_penalties": {
+      "clock": 0.3,
+      "down_dist": 0.3,
+      "down_field": 10.0,
+      "field": 30.0,
+      "score": 300.0,
+      "score_clock": 3.0,
+      "season": 0.3,
+      "team_down": 30.0
+    },
+    "chosen_recency_tau": 3.0,
+    "validation_all_plays": {
+      "brier": 0.188277,
+      "log_loss": 0.551694,
+      "n": 33836
+    }
+  },
+  "caller_provenance_limit": "The offensive caller source is a pinned public per-game curated dataset, but it does not publish supporting citations per row. Its caller labels are used verbatim; missing labels are not inferred.",
+  "comparison_2023": {
+    "all_validation_plays": {
+      "current_model": {
+        "brier": 0.188277,
+        "log_loss": 0.551694,
+        "n": 33836
+      },
+      "delta_brier": -0.000363,
+      "delta_log_loss": -0.001074,
+      "n": 33836,
+      "with_caller_feature": {
+        "brier": 0.187914,
+        "log_loss": 0.55062,
+        "n": 33836
+      }
+    },
+    "known_caller_plays": {
+      "current_model": {
+        "brier": 0.18868,
+        "log_loss": 0.552838,
+        "n": 31760
+      },
+      "delta_brier": -0.000368,
+      "delta_log_loss": -0.001098,
+      "n": 31760,
+      "with_caller_feature": {
+        "brier": 0.188311,
+        "log_loss": 0.55174,
+        "n": 31760
+      }
+    },
+    "training_supported_caller_plays": {
+      "current_model": {
+        "brier": 0.188021,
+        "log_loss": 0.551031,
+        "n": 25219
+      },
+      "delta_brier": -0.000343,
+      "delta_log_loss": -0.001145,
+      "n": 25219,
+      "with_caller_feature": {
+        "brier": 0.187678,
+        "log_loss": 0.549886,
+        "n": 25219
+      }
+    }
+  },
+  "feature": {
+    "caller_feature_columns": 2880,
+    "candidate_metrics_2023": {
+      "0.3": {
+        "brier": 0.188687,
+        "log_loss": 0.552906
+      },
+      "3.0": {
+        "brier": 0.187914,
+        "log_loss": 0.55062
+      },
+      "30.0": {
+        "brier": 0.187859,
+        "log_loss": 0.550656
+      },
+      "300.0": {
+        "brier": 0.188149,
+        "log_loss": 0.551395
+      }
+    },
+    "name": "published offensive play caller x 24 down-distance cells",
+    "penalty_grid": [
+      0.3,
+      3.0,
+      30.0,
+      300.0
+    ],
+    "penalty_selection_metric": "2023 validation log loss",
+    "selected_penalty": 3.0,
+    "unknown_or_unseen_caller": "zero added effect; existing current-model prediction retained"
+  },
+  "interpretation_limit": "2023 both selects the added penalty and scores the reported validation comparison; this is tuning validation, not independent test performance.",
+  "ledger": {
+    "caller_conflict_team_games": 0,
+    "head_coach_games_known": 7262,
+    "play_caller_games_known": 6972,
+    "regular_season_team_games": 7262,
+    "team_season_rows": 448,
+    "unmapped_caller_rows": 0
+  },
+  "play_sample": {
+    "training_2010_2022_plays": 422251,
+    "validation_2023_caller_down_distance_seen_in_training_plays": 25205,
+    "validation_2023_caller_down_distance_seen_in_training_share": 0.744917,
+    "validation_2023_caller_seen_in_2010_2022_plays": 25219,
+    "validation_2023_caller_seen_in_2010_2022_share": 0.74533,
+    "validation_2023_known_head_coach_plays": 33836,
+    "validation_2023_known_head_coach_share": 1.0,
+    "validation_2023_known_offensive_caller_plays": 31760,
+    "validation_2023_known_offensive_caller_share": 0.938645,
+    "validation_2023_plays": 33836
+  },
+  "source_files": [
+    {
+      "as_of": "2024-01-15",
+      "raw_url": "https://raw.githubusercontent.com/nflverse/nfldata/9f757c1db27b61966c30956fce4b9b78dc3f274a/data/games.csv",
+      "role": "head_coach_per_game",
+      "sha256": "7e74008b2f5a17be41a75426980da2131284c6e435247616a9f607901d35d029",
+      "url": "https://github.com/nflverse/nfldata/blob/9f757c1db27b61966c30956fce4b9b78dc3f274a/data/games.csv"
+    },
+    {
+      "as_of": "2023-12-22",
+      "raw_url": "https://raw.githubusercontent.com/samhoppen/NFL_public/65827e24649ef606d3c052236f2250f771e28b96/data/all_playcallers.csv",
+      "role": "offensive_play_caller_per_game",
+      "sha256": "a048a51ed8153365c709484eab4fbc8462dd9c46af8eadd3fe2250e6418cf85e",
+      "url": "https://github.com/samhoppen/NFL_public/blob/65827e24649ef606d3c052236f2250f771e28b96/data/all_playcallers.csv"
+    }
+  ],
+  "team_code_normalization": [
+    "WSH -> WAS",
+    "LAR -> LA (2016 onward)",
+    "LA -> STL (through 2015)",
+    "LAR -> STL (through 2015)",
+    "LAC -> SD (through 2016)",
+    "LV -> OAK (through 2019)"
+  ],
+  "validation_2023_team_seasons_without_published_caller": [
+    "MIN",
+    "NE"
+  ],
+  "window": {
+    "fit_seasons": [
+      2010,
+      2022
+    ],
+    "metric_population": "regular-season run/dropback plays with complete model state; flagged scores excluded",
+    "validation_season": 2023
+  }
+}
