@@ -4,8 +4,9 @@
 fills a blank value (`COALESCE`). It is therefore not a current club for MLS. With the cutover on, a current MLS club
 comes from the membership snapshot (`mls_resolution.current_team`, `mls_resolution.club_now_sql`).
 
-The inventory covers every backend reader found by searching for `players` joined to `team`, and every
-player-table team read in routers. Each reader is classed as current MLS (corrected), historical (left unchanged, as
+The inventory covers every non-test backend file that reads a player-table team: a search for `team` on the
+`players`, `pl`, `p`, `pp` and `px` aliases, run on the final head, and checked file by file. The first pass missed the RotoWire
+props resolver; the search that found the rest is the one stated here. Each reader is classed as current MLS (corrected), historical (left unchanged, as
 the directive requires), another league or the World Cup module (not MLS, unchanged), or vocabulary (codes, not clubs).
 
 ## Current MLS consumers, corrected (active only when the cutover is on)
@@ -37,6 +38,9 @@ the directive requires), another league or the World Cup module (not MLS, unchan
 
 | Reader | Use | Note |
 |---|---|---|
+| `migrate_log_team_vocabulary.py` | rewrites historical log team codes to the publisher spelling | historical vocabulary migration, not a club lookup; unchanged by directive |
+| `capture_espn_weekly_projections.py` | NFL abbreviation map against `players.team` | NFL vocabulary; unchanged |
+| `audit_league_stats/checks.py` | a comment about `players.team` coverage | not code that reads a club |
 | `club_crosswalk.py` | learns the code vocabulary from `published_roster` and `players.team` pairs | teaches code names, not current clubs; a stale pair gives a stale code, which is still a valid code. Unchanged. |
 
 ## Other leagues and the dormant World Cup module (unchanged)
