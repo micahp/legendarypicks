@@ -153,31 +153,45 @@ def test_a_rekey_links_only_through_an_explicit_bind():
     assert linked.rekeys == [{"player_id": 1, "source": "mlssoccer", "from": "m1", "to": "m-new"}]
 
 
-def test_two_keys_from_one_source_for_one_person_refuse():
+# A dispute holds the one disputed person at the club of the last verified snapshot. It never refuses the league, and
+# it is never silently resolved. (These three tests replaced the earlier whole-league refusals, per the cutover contract.)
+
+def test_two_keys_from_one_source_for_one_person_hold_that_person_not_the_league():
     con, squads, binds = _world()
+    _publish(con, squads, binds)
     binds[("mlssoccer", "m-extra")] = 1
     squads["mlssoccer"].append({"source_player_key": "m-extra", "name": "Player Club01 00",
                                 "team": "Club01", "position": "M", "jersey": "0"})
     result, outcome, _ = _publish(con, squads, binds, captured_at=T2)
-    assert result.status == "refused" and outcome == "refused"
-    assert any(c["reason"] == "two keys from mlssoccer" for c in result.conflicts)
+    assert result.status == "publish" and outcome == "published"
+    assert result.coverage == "partial"
+    assert any(c["player_id"] == 1 and c["held"] for c in result.conflicts)
+    held = {m["player_id"]: m for m in result.memberships}[1]
+    assert held["roster_status"] == "held" and held["team"] == "Club01"
+    assert len(result.memberships) == 30 * 22, "every other person is still updated"
 
 
-def test_sources_that_disagree_on_a_club_refuse():
-    con, squads, binds = _world()
-    squads["fotmob"] = [dict(m, team="Club30") if m["source_player_key"] == "f1" else m for m in squads["fotmob"]]
-    result, outcome, _ = _publish(con, squads, binds)
-    assert result.status == "refused" and outcome == "refused"
-    assert any(c["reason"] == "sources disagree on club" for c in result.conflicts)
-
-
-def test_a_bind_that_moved_to_another_person_is_refused_not_silently_followed():
+def test_sources_that_disagree_on_a_club_hold_only_that_person():
     con, squads, binds = _world()
     _publish(con, squads, binds)
-    binds[("mlssoccer", "m1")] = 2  # m1 now points at person 2, whose fotmob key is in another club
+    squads["fotmob"] = [dict(m, team="Club30") if m["source_player_key"] == "f1" else m for m in squads["fotmob"]]
+    result, outcome, _ = _publish(con, squads, binds, captured_at=T2)
+    assert result.status == "publish" and outcome == "published"
+    assert result.coverage == "partial"
+    assert [h["player_id"] for h in result.held] == [1]
+    held = {m["player_id"]: m for m in result.memberships}[1]
+    assert held["roster_status"] == "held" and held["team"] == "Club01"
+
+
+def test_a_bind_that_moved_to_another_person_is_held_and_flagged_not_silently_followed():
+    con, squads, binds = _world()
+    _publish(con, squads, binds)
+    binds[("mlssoccer", "m1")] = 2  # m1 now points at person 2, who already has mlssoccer m2
     result = ms.build(con, squads, binds, captured_at=T2)
-    assert result.status == "refused"
-    assert any(c["player_id"] == 2 for c in result.conflicts)
+    assert result.status == "publish"
+    assert result.coverage == "partial"
+    assert any(c["player_id"] == 2 for c in result.conflicts), "two mlssoccer keys for person 2 are a dispute"
+    assert [s["player_id"] for s in result.source_lost] == [1], "person 1 lost the mlssoccer key that moved"
 
 
 # --- transitions: collisions, departures, carry-forward ----------------------------
