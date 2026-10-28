@@ -122,7 +122,7 @@ class TendencySampler:
             raise ValueError(f'no team for side {label!r}; the side map is {sorted(self.side_teams)}')
         return self.side_teams[label]
 
-    def sample(self, rng, cell, offense, defense):
+    def sample(self, rng, cell, offense, defense, state=None):
         entry = self._entry(cell)
         offense, defense = self._team(offense), self._team(defense)
         events = [event for event in e1.EVENTS if entry['base'][event] > 0]
