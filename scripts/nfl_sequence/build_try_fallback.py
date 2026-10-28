@@ -54,12 +54,13 @@ def period_group(row):
     return 'other'
 
 
-def load_rows():
+def load_rows(source=SOURCE):
     rows = []
-    for r in csv.DictReader(SOURCE.open()):
+    for r in csv.DictReader(source.open()):
         if r['kind'] not in ('extra_point', 'two_point'):
             continue
-        rows.append({'season': int(r['season']), 'period': r['period'], 'group': period_group(r),
+        rows.append({'season': int(r['season']), 'week': int(r['week']), 'period': r['period'],
+                     'group': period_group(r),
                      'bucket': margin_bucket(int(r['margin'])), 'two': 1 if r['kind'] == 'two_point' else 0,
                      'season_type': r['season_type']})
     return rows
@@ -109,6 +110,35 @@ def log_loss(cells, test):
         total += -(r['two'] * math.log(p) + (1 - r['two']) * math.log(1 - p))
         n += 1
     return total / n if n else float('nan')
+
+
+def cutoff_table(source=SOURCE, eligible_before=None):
+    """The fallback cells fitted only on tries strictly before the cutoff (season, week).
+
+    k is chosen the same way on pre-cutoff data: the test season is the season before the cutoff season, and the training
+    seasons are the earlier ones. Nothing from the cutoff season or later is read. Overtime tries before the cutoff are
+    counted, and with none a cell is its parent, the late-fourth-quarter cell of the same margin. Returns (cells, metadata).
+    """
+    if eligible_before is None:
+        raise ValueError('cutoff_table needs an eligible_before cutoff')
+    cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
+    rows = [r for r in load_rows(source)
+            if r['season'] < cutoff_season or (r['season'] == cutoff_season and r['week'] < cutoff_week)]
+    test_season = cutoff_season - 1
+    train_pool = [r for r in rows if r['season'] < test_season]
+    test = [r for r in rows if r['season'] == test_season]
+    if not train_pool or not test:
+        raise ValueError(f'cutoff {list(eligible_before)}: need training and test seasons before the cutoff')
+    evaluation = {k: log_loss(fit(train_pool, k), test) for k in K_GRID}
+    chosen = min(K_GRID, key=lambda k: evaluation[k])
+    cells = fit(rows, chosen)
+    return cells, {
+        'eligible_before': list(eligible_before), 'chosen_k': chosen, 'test_season': test_season,
+        'training_seasons': sorted({r['season'] for r in train_pool}),
+        'k_grid_logloss_test': {str(k): round(v, 6) for k, v in evaluation.items()},
+        'tries_used': len(rows), 'overtime_tries_used': sum(1 for r in rows if r['group'] == 'ot'),
+        'source_sha256': sha256(source), 'generator_sha256': sha256(__file__),
+    }
 
 
 def main():
