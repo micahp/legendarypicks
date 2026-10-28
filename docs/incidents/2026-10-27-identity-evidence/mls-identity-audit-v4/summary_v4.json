@@ -1,0 +1,36 @@
+{
+ "pairs": 815,
+ "dob_status": {
+  "verified_dob": 556,
+  "ambiguous_dob_match": 240,
+  "dob_disagreement": 15,
+  "mls_date_missing": 4
+ },
+ "identity_status": {
+  "supported": 556,
+  "supported_order_unresolved": 240,
+  "biographical_disagreement": 15,
+  "mls_date_missing": 4
+ },
+ "final_status": {
+  "supported": 556,
+  "supported_order_unresolved": 240,
+  "biographical_disagreement": 10,
+  "mls_date_missing": 4,
+  "biographical_source_error": 5
+ },
+ "changed_from_v2": [
+  {
+   "player_id": 58788,
+   "v2": "mls_age_inconsistent",
+   "v4": "verified_dob",
+   "name": "Jack Maher"
+  },
+  {
+   "player_id": 71290,
+   "v2": "mls_age_inconsistent",
+   "v4": "verified_dob",
+   "name": "Dušan Žagar"
+  }
+ ]
+}
