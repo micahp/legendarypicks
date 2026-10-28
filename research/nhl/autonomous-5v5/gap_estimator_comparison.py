@@ -1498,7 +1498,9 @@ def autonomous_evaluation(cache_periods: Sequence[Any], historical: Mapping[str,
     trace_count = 0
     reproducibility: dict[str, Any] | None = None
 
-    for period in periods:
+    rollout_started = time.perf_counter()
+    print(f"autonomous rollout: 0/{len(periods)} periods", file=sys.stderr, flush=True)
+    for period_index, period in enumerate(periods, start=1):
         key_period = (period.game_id, period.period)
         target = run_experiment._period_target(period, max_bundle_size)
         if target is not None:
@@ -1540,6 +1542,10 @@ def autonomous_evaluation(cache_periods: Sequence[Any], historical: Mapping[str,
                                        "byte_identical": repeated == trace}
                     if not reproducibility["byte_identical"]:
                         raise ValueError("fixed-seed trace is not reproducible")
+        if period_index % 250 == 0 or period_index == len(periods):
+            print(f"autonomous rollout: {period_index}/{len(periods)} periods; "
+                  f"{time.perf_counter() - rollout_started:.1f}s elapsed",
+                  file=sys.stderr, flush=True)
 
     metric_results: dict[str, Any] = {}
     for metric in metrics:
