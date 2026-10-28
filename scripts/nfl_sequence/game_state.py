@@ -887,7 +887,7 @@ class _Game:
                       'attempts': attempts}
             if result != 'blocked':
                 return {'metadata': {'field_goal_result': result, 'field_goal_result_source': source}}
-            kick_type, outcome = self._sample_blocked_kick('field_goal', rng, state['clock'])
+            kick_type, outcome = self._sample_blocked_kick('field_goal', rng, state['clock'], state['quarter'])
             if kick_type:
                 return {'blocker': kick_type}
             return {'event': 'blocked_field_goal', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
@@ -900,15 +900,18 @@ class _Game:
             return {'blocker': 'blocked_punt_rate_unavailable'}
         if rng.randrange(attempts) >= blocked:
             return None
-        kick_type, outcome = self._sample_blocked_kick('punt', rng, state['clock'])
+        kick_type, outcome = self._sample_blocked_kick('punt', rng, state['clock'], state['quarter'])
         if kick_type:
             return {'blocker': kick_type}
         return {'event': 'blocked_punt', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
                 'kick_outcome': outcome}
 
-    def _sample_blocked_kick(self, kick_type, rng, clock):
-        """Draw one observed blocked-kick record that fits the state. A record whose block used up its period only fits a state
-        whose clock runs out on the kick: the observed remaining time must be at least the state's time."""
+    def _sample_blocked_kick(self, kick_type, rng, clock, quarter):
+        """Draw one observed blocked-kick record that fits the state.
+
+        Period-expired records keep their original draw weight. They can resolve Q2/Q4, where the period end also ends the
+        half or game. If selected at another quarter boundary, they block because the next possession and spot are unknown.
+        """
         records = self.ref.blocked_kicks.get('records', {}).get(kick_type, [])
         if not records:
             return 'blocked_kick_outcome_pool_missing', None
@@ -918,6 +921,8 @@ class _Game:
             return f'blocked_kick_period_end_not_reached:{kick_type}', None
         sample = rng.choice(fitting)
         status = sample.get('classification_status')
+        if status == 'period_expired' and quarter not in (2, 4):
+            return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
         supported = reducer.BLOCKED_KICK_STATUSES
         if status not in supported:
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None

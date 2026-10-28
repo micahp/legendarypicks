@@ -653,23 +653,32 @@ class RosterFilesOneNameTwice(unittest.TestCase):
         self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True)
         self.assertEqual(sm.build_plan(self.con, "mls").merges, [])
 
-    def test_an_unlinked_key_binds_to_the_player_who_already_holds_that_publisher(self):
+    def test_an_unlinked_key_is_not_bound_on_name_and_club_alone(self):
         # The Zambrano case: mlssoccer lists him twice and only one of the two keys has a player row.
+        # The publisher is already on him, which says only that the name and club match, so the key waits for review.
         player = self._player("Marcos Zambrano", "NE")
         self._key("fotmob", "1794408", "Marcos Zambrano", "New England Revolution", player, bind=True)
         self._key("mlssoccer", "315191673", "Marcos Zambrano", "New England Revolution", player, bind=True)
         self._key("mlssoccer", "540256", "Marcos Zambrano", "New England Revolution", None)
         plan = sm.build_plan(self.con, "mls")
         self.assertEqual(plan.merges, [])
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("540256" in why and "name and club only" in why for _, _, why in plan.refused))
+        self.assertIsNone(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE source_player_key='540256'").fetchone()[0])
+
+    def test_the_name_and_club_bind_is_kept_behind_a_switch(self):
+        player = self._player("Marcos Zambrano", "NE")
+        self._key("fotmob", "1794408", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "315191673", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "540256", "Marcos Zambrano", "New England Revolution", None)
+        sm.BIND_BY_NAME_AND_CLUB = True
+        try:
+            plan = sm.build_plan(self.con, "mls")
+        finally:
+            sm.BIND_BY_NAME_AND_CLUB = False
         self.assertEqual([(b.source, b.key, b.player_id) for b in plan.binds],
                          [("mlssoccer", "540256", player)])
-        with self.con:
-            counts = sm.apply_plan(self.con, plan)
-        self.assertEqual(counts["bound"], 1)
-        self.assertEqual(self.con.execute(
-            "SELECT player_id FROM player_source_ids WHERE source_player_key='540256'").fetchone()[0], player)
-        self.assertEqual(self.con.execute(
-            "SELECT player_id FROM published_roster WHERE source_player_key='540256'").fetchone()[0], player)
 
     def test_an_unlinked_key_from_a_publisher_the_player_does_not_hold_is_not_bound(self):
         player = self._player("Marcos Zambrano", "NE")
@@ -715,19 +724,17 @@ class LeaguesCupBorrowsItsOwner(unittest.TestCase):
             (league, source, key, name, self.fold(name), team, player_id))
         self.con.commit()
 
-    def test_a_leagues_cup_key_binds_to_the_mls_player_who_holds_the_same_publisher_key(self):
+    def test_a_leagues_cup_key_is_not_bound_to_the_mls_player_on_name_and_club_alone(self):
         owner = self._player("Thayllon", "LAFC", "mls")
         self._key("mls", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
         self._key("lcup", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
         self._key("lcup", "fotmob", "1738398", "Thayllon", "Los Angeles FC", None)
         plan = sm.build_plan(self.con)
-        self.assertEqual([(b.league, b.source, b.key, b.player_id) for b in plan.binds],
-                         [("lcup", "fotmob", "1738398", owner)])
-        with self.con:
-            sm.apply_plan(self.con, plan)
-        self.assertEqual(self.con.execute(
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("1738398" in why and "name and club only" in why for _, _, why in plan.refused))
+        self.assertIsNone(self.con.execute(
             "SELECT player_id FROM published_roster WHERE league='lcup' AND source_player_key='1738398'"
-        ).fetchone()[0], owner)
+        ).fetchone()[0])
 
     def test_a_key_that_names_a_player_in_another_league_is_reported_not_skipped(self):
         owner = self._player("Hugo Rodriguez", "Club Leon", "ligamx")
