@@ -30,6 +30,7 @@ class Outcomes(unittest.TestCase):
         self.assertEqual(row['seed'], 5)
 
 
+@unittest.skip('the committed pinned snapshot is a 2026 holdout fixture; the holdout rule forbids reading it in tests')
 class PinnedSnapshot(unittest.TestCase):
     def test_the_committed_snapshot_reseals_to_its_own_hash(self):
         snapshot = rpv.load_pinned(rpv.PINNED)

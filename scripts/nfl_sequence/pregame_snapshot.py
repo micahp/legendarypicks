@@ -10,8 +10,12 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import holdout  # noqa: E402
 
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
@@ -235,6 +239,7 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
                 game['availability_classification'] = 'current_row_unverified_exploratory'
         if game is None:
             raise ValueError(f'{game_id}: no schedule version was observed on or before --as-of')
+        holdout.refuse_if_holdout(game['season'], 'pregame snapshot')
         if game['game_type'] not in ('REG', 'POST'):
             raise ValueError(f'{game_id}: unsupported game type {game["game_type"]!r}')
         if not game['gameday'] or not game['gametime']:

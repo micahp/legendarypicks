@@ -22,6 +22,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 BACKEND = HERE.parents[1] / 'backend'
 sys.path.insert(0, str(BACKEND))
+sys.path.insert(0, str(HERE))
+import holdout  # noqa: E402
 
 SCHEMA = 'lp-nfl-pregame-context-1'
 RATING_CONFIG = {'half_life': 6.0, 'cap': 14.0, 'prior_games': 4.0, 'prior_shrink': 1.0 / 3.0}
@@ -53,6 +55,7 @@ def _require_matchup(matchup: dict, as_of: str) -> dict:
         season, week = int(matchup['season']), int(matchup['week'])
     except (TypeError, ValueError) as exc:
         raise ValueError('matchup season and week must be integers') from exc
+    holdout.refuse_if_holdout(season, 'pregame context')
     if season < 2010 or week < 1 or week > 18:
         raise ValueError('context v1 supports regular-season weeks 1 through 18 from 2010 onward')
     if matchup['game_type'] != 'REG':

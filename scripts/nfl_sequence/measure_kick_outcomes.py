@@ -160,8 +160,8 @@ WHERE play_type = 'field_goal' AND {WINDOW} AND series_result IN ('{FG_MADE}', '
   SUM(series_result = '{FG_MADE}') AS made,
   SUM(series_result = '{FG_MISSED}') AS missed,
   COUNT(*) - SUM(series_result IN ('{FG_MADE}', '{FG_MISSED}')) AS excluded
-FROM nfl_pbp WHERE play_type = 'field_goal' GROUP BY season ORDER BY season"""
-    section('2. field_goal per season, all seasons', sql)
+FROM nfl_pbp WHERE play_type = 'field_goal' AND {WINDOW} GROUP BY season ORDER BY season"""
+    section('2. field_goal per season, 2022-2025 (2026 holdout excluded)', sql)
     print(f'  {"season":>6s} {"made":>6s} {"missed":>6s} {"excl":>5s} {"rate":>6s}')
     for season, m, x, e in rows(con, sql):
         rate = m / (m + x) if m + x else float('nan')

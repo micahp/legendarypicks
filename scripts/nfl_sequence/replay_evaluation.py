@@ -6,9 +6,13 @@ import random
 import argparse
 import hashlib
 import json
+import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import holdout  # noqa: E402
 
 
 MODELS = ('S0', 'S1', 'v1')
@@ -38,6 +42,9 @@ def _number(value, label, *, probability=False):
 
 def forecast_from_batch(payload: dict) -> dict | None:
     """Extract a game-level forecast and seed coverage from a generated batch payload."""
+    schedule = (payload.get('pregame_snapshot') or {}).get('schedule') or {}
+    if schedule.get('season') is not None:
+        holdout.refuse_if_holdout(schedule['season'], 'replay evaluation')
     summary = payload.get('summary') or {}
     distribution = summary.get('valid_full_game_distribution') or {}
     scores = distribution.get('scores') or {}
