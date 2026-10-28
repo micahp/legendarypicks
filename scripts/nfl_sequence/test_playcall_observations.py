@@ -87,9 +87,22 @@ class ExactState(unittest.TestCase):
         self.assertTrue(pco.observation(play(qtr=4, game_seconds_remaining=120))['two_minute_window'])
         self.assertFalse(pco.observation(play(qtr=1, game_seconds_remaining=100))['two_minute_window'])
 
-    def test_goal_to_go_is_derived_from_distance_to_goal(self):
-        self.assertTrue(pco.observation(play(yardline_100=8))['goal_to_go_derived'])
-        self.assertFalse(pco.observation(play(yardline_100=15))['goal_to_go_derived'])
+    def test_goal_to_go_comes_from_the_verified_raw_flag_not_distance(self):
+        scores = {'posteam_score': 7, 'defteam_score': 0, 'score_differential': 7, 'goal_to_go': 1}
+        self.assertTrue(pco.observation(play(yardline_100=8), scores)['goal_to_go'])
+        second_and_two = play(down=2, ydstogo=2, yardline_100=8)
+        self.assertFalse(pco.observation(second_and_two, {**scores, 'goal_to_go': 0})['goal_to_go'])
+
+    def test_goal_to_go_is_unknown_without_the_raw_flag(self):
+        self.assertIsNone(pco.observation(play(yardline_100=8))['goal_to_go'])
+        self.assertEqual(pco.observation(play(yardline_100=8))['goal_to_go_status'], 'unavailable')
+
+    def test_red_zone_is_kept_separate_from_goal_to_go(self):
+        scores = {'posteam_score': 3, 'defteam_score': 0, 'score_differential': 3, 'goal_to_go': 0}
+        obs = pco.observation(play(yardline_100=15), scores)
+        self.assertTrue(obs['red_zone'])
+        self.assertFalse(obs['goal_to_go'])
+        self.assertFalse(pco.observation(play(yardline_100=25))['red_zone'])
 
     def test_overtime_is_flagged_and_has_no_regulation_clock(self):
         obs = pco.observation(play(qtr=5, game_seconds_remaining=400))
@@ -156,12 +169,12 @@ class PreplayScores(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'pbp_2012.csv.gz'
             with gzip.open(path, 'wt', newline='') as f:
-                f.write('game_id,play_id,season_type,week,posteam_score,defteam_score,score_differential\n')
-                f.write('2012_05_AAA_BBB,1,REG,5,14,7,7\n')
+                f.write('game_id,play_id,season_type,week,posteam_score,defteam_score,score_differential,goal_to_go\n')
+                f.write('2012_05_AAA_BBB,1,REG,5,14,7,7,1\n')
             real = pco.sha256(path)
             scores = pco.load_pre_play_scores(path, real)
             self.assertEqual(scores[('2012_05_AAA_BBB', 1)], {'posteam_score': 14, 'defteam_score': 7,
-                                                              'score_differential': 7})
+                                                              'score_differential': 7, 'goal_to_go': 1})
             with self.assertRaises(ValueError):
                 pco.load_pre_play_scores(path, '0' * 64)
 
@@ -177,6 +190,45 @@ class PreplayScores(unittest.TestCase):
             self.assertEqual(out[2]['score_status'], 'unmatched_in_raw')
         finally:
             tmp.cleanup()
+
+
+class ScoreFlags(unittest.TestCase):
+    def test_a_flagged_play_keeps_its_score_and_is_labelled(self):
+        scores = {'posteam_score': 7, 'defteam_score': 0, 'score_differential': 7, 'goal_to_go': 0}
+        obs = pco.observation(play(), scores, score_flag='unexplained_single_side')
+        self.assertEqual(obs['score_status'], 'flagged_continuity_exception')
+        self.assertEqual(obs['score_differential'], 7)
+        self.assertEqual(obs['score_flag'], 'unexplained_single_side')
+
+    def test_an_unflagged_play_is_unchanged(self):
+        scores = {'posteam_score': 7, 'defteam_score': 0, 'score_differential': 7, 'goal_to_go': 0}
+        obs = pco.observation(play(), scores)
+        self.assertEqual(obs['score_status'], 'pre_play_nflverse_raw')
+        self.assertIsNone(obs['score_flag'])
+
+    def test_observations_apply_the_flag_to_the_matching_play_only(self):
+        rows = [play(game_id='2012_05_AAA_BBB', play_id=1, season=2012, week=5),
+                play(game_id='2012_05_AAA_BBB', play_id=2, season=2012, week=5)]
+        tmp, db = database(rows)
+        try:
+            joined = {('2012_05_AAA_BBB', 1): {'posteam_score': 7, 'defteam_score': 0, 'score_differential': 7,
+                                               'goal_to_go': 0},
+                      ('2012_05_AAA_BBB', 2): {'posteam_score': 7, 'defteam_score': 0, 'score_differential': 7,
+                                               'goal_to_go': 0}}
+            out = {o['play_id']: o for o in pco.observations(db, first_season=2012, last_season=2012,
+                                                             scores=lambda s: joined,
+                                                             flags={('2012_05_AAA_BBB', 2): 'offense_3.0_field_goal'})}
+            self.assertEqual(out[1]['score_status'], 'pre_play_nflverse_raw')
+            self.assertEqual(out[2]['score_status'], 'flagged_continuity_exception')
+        finally:
+            tmp.cleanup()
+
+    def test_the_committed_flag_file_has_one_row_per_flagged_play(self):
+        flags = pco.load_score_flags()
+        self.assertEqual(len(flags), 121)
+        self.assertTrue(set(flags.values()) <= {'unexplained_single_side', 'both_sides_changed',
+                                                'stale_repeat_of_state_before_previous_play'}
+                        | {l for l in flags.values() if l.startswith(('offense_', 'defense_'))})
 
 
 if __name__ == '__main__':
