@@ -52,6 +52,33 @@ def epa_setting(con):
     return res[0][2], res[0][3], res
 
 
+def epa_select(con, sel):
+    """Strict selection: the same grid and rule as nfl_epa_backtest, run on season `sel` with its own prior from
+    `sel - 1`. Uses only seasons up to `sel`."""
+    v1_sel = nfe.v1_rows(con, sel)
+    prev = (nfe.season_plays(con, sel - 1), nfe.sched(con, sel - 1), nfe.teams_of(con, sel - 1))
+    res = []
+    for hl in nfe.GRID['half_life']:
+        for lam in nfe.GRID['lam']:
+            m = nfe.metrics(nfe.run_season(con, sel, hl, lam, prev=prev), v1_sel)
+            nd = (hl != nfe.DEFAULTS['half_life']) + (lam != nfe.DEFAULTS['lam'])
+            res.append((round(m['brier_v2'], 3), nd, hl, lam))
+    res.sort(key=lambda r: (r[0], r[1]))
+    return res[0][2], res[0][3]
+
+
+def epa_strict_probs(con):
+    """EPA probabilities for each season in WINDOW, each with settings chosen on the season before it."""
+    out, chosen = {}, {}
+    for season in WINDOW:
+        hl, lam = epa_select(con, season - 1)
+        chosen[season] = (hl, lam)
+        prev = (nfe.season_plays(con, season - 1), nfe.sched(con, season - 1), nfe.teams_of(con, season - 1))
+        for r, ph, pa, sig in nfe.run_season(con, season, hl, lam, prev=prev):
+            out[r[1]] = em.phi((ph - pa) / sig)
+    return out, chosen
+
+
 def stack_probs(con):
     """v1 + Elo stack, as lock_nfl_elo.py defines it: margin = b0 + b1 * v1 margin + b2 * pre-game Elo gap, OLS on
     every earlier season's v1 walk-forward rows, win probability = Phi(margin / residual sd). Pre-game Elo is the
@@ -82,6 +109,8 @@ def main():
     con = sqlite3.connect(s0.DEV_DB, uri=True)
     hl, lam, grid = epa_setting(con)
     stack = stack_probs(con)
+    epa_strict, epa_strict_settings = epa_strict_probs(con)
+    print('strict EPA settings by season (chosen on the season before):', epa_strict_settings)
     print('v2 EPA setting chosen on 2024 (half-life, lambda):', hl, lam)
 
     epa, v1, mkt = {}, {}, {}
@@ -120,20 +149,20 @@ def main():
             continue
         if any(key not in g for key in ('p_s0b', 'p_s1', 'p_s2')):
             continue
-        if gid not in v1 or gid not in epa or gid not in stack or mkt.get(gid) is None:
+        if gid not in v1 or gid not in epa or gid not in stack or gid not in epa_strict or mkt.get(gid) is None:
             continue
         rows.append({'game_id': gid, 'season': g['season'], 'week': g['week'], 'y': g['y'],
-                     'market': mkt[gid], 'v1': v1[gid], 'epa': epa[gid], 'stack': stack[gid],
+                     'market': mkt[gid], 'v1': v1[gid], 'epa': epa[gid], 'epa_strict': epa_strict[gid], 'stack': stack[gid],
                      'S0b': g['p_s0b'], 'S1': g['p_s1'], 'S2': g['p_s2']})
     print(f'common set: {len(rows)} games, seasons {min(r["season"] for r in rows)} to {max(r["season"] for r in rows)}')
 
-    models = ['market', 'v1', 'epa', 'stack', 'S0b', 'S1', 'S2']
+    models = ['market', 'v1', 'epa', 'epa_strict', 'stack', 'S0b', 'S1', 'S2']
     names = {'market': 'Closing market', 'v1': 'LP v1 points', 'epa': 'LP v2 EPA',
-             'stack': 'v1+Elo stack', 'S0b': 'S0b (ours)', 'S1': 'S1 (ours)', 'S2': 'S2 (ours)'}
+             'epa_strict': 'LP v2 EPA (strict)', 'stack': 'v1+Elo stack', 'S0b': 'S0b (ours)', 'S1': 'S1 (ours)', 'S2': 'S2 (ours)'}
 
-    def block(rs, label):
+    def block(rs, label, mlist=None):
         out = {'label': label, 'n': len(rs), 'models': {}}
-        for mname in models:
+        for mname in (mlist or models):
             ps = [r[mname] for r in rs]
             ys = [r['y'] for r in rs]
             out['models'][mname] = {'brier': sum((p - y) ** 2 for p, y in zip(ps, ys)) / len(rs),
@@ -155,7 +184,8 @@ def main():
     diffs = {}
     for label, rs in subsets.items():
         diffs[label] = {
-            'model minus market': {k: paired(rs, k, 'market') for k in ['v1', 'epa', 'stack', 'S0b', 'S1', 'S2']},
+            'model minus market': {k: paired(rs, k, 'market') for k in ['v1', 'epa', 'epa_strict', 'stack', 'S0b', 'S1', 'S2']},
+            'LP v2 EPA (strict) minus LP v1': paired(rs, 'epa_strict', 'v1'),
             'LP v2 EPA minus LP v1': paired(rs, 'epa', 'v1'),
             'v1+Elo stack minus LP v1': paired(rs, 'stack', 'v1'),
             'v1+Elo stack minus LP v2 EPA': paired(rs, 'stack', 'epa'),
@@ -174,7 +204,7 @@ def main():
     print('\nPaired Brier differences, week-block 95% interval')
     for label, d in diffs.items():
         print(f"\n{label}")
-        for mname in ['v1', 'epa', 'stack', 'S0b', 'S1', 'S2']:
+        for mname in ['v1', 'epa', 'epa_strict', 'stack', 'S0b', 'S1', 'S2']:
             x = d['model minus market'][mname]
             print(f"  {names[mname]:16s} minus market {x['gap']:+.4f} [{x['lo']:+.4f}, {x['hi']:+.4f}]")
         for k in ['LP v2 EPA minus LP v1', 'v1+Elo stack minus LP v1', 'v1+Elo stack minus LP v2 EPA',
@@ -182,10 +212,30 @@ def main():
             x = d[k]
             print(f"  {k:24s} {x['gap']:+.4f} [{x['lo']:+.4f}, {x['hi']:+.4f}]")
 
+    # Early season, strict: weeks 2 to 4 of 2021 to 2025, every game with a market number and all four probabilities.
+    # S1's settings were chosen on 2018 to 2020, so this table tests the preseason prior without development-year hindsight.
+    early = []
+    for g in games:
+        gid = g['game_id']
+        if g['season'] not in WINDOW or not (2 <= g['week'] <= 4) or g['y'] is None or g.get('m1') is None:
+            continue
+        if gid not in v1 or gid not in epa_strict or gid not in stack or mkt.get(gid) is None:
+            continue
+        early.append({'game_id': gid, 'season': g['season'], 'week': g['week'], 'y': g['y'], 'market': mkt[gid],
+                      'v1': v1[gid], 'epa_strict': epa_strict[gid], 'stack': stack[gid], 'S1': g['p_s1']})
+    early_block = block(early, 'weeks 2 to 4, 2021 to 2025 (strict S1)', ['market', 'v1', 'epa_strict', 'stack', 'S1'])
+    print(f"\nEarly season, weeks 2 to 4 of 2021 to 2025, strict: n {len(early)}")
+    for mname in ['market', 'v1', 'epa_strict', 'stack', 'S1']:
+        print(f"  {names[mname]:22s} Brier {early_block['models'][mname]['brier']:.4f}")
+    for a_key, b_key in (('S1', 'v1'), ('S1', 'market'), ('epa_strict', 'v1')):
+        gap, lo, hi = s0.block_bootstrap_brier_gap(early, [r[a_key] for r in early], [r[b_key] for r in early])
+        print(f"  {a_key} minus {b_key:8s} {gap:+.4f} [{lo:+.4f}, {hi:+.4f}]")
+
     os.makedirs(RESULTS, exist_ok=True)
     with open(os.path.join(RESULTS, 'game_winner_comparison.json'), 'w') as handle:
-        json.dump({'epa_setting': {'half_life': hl, 'lam': lam, 'grid_2024': grid}, 'n': len(rows),
-                   'tables': tables, 'diffs': diffs}, handle, indent=1, default=str)
+        json.dump({'epa_setting': {'half_life': hl, 'lam': lam, 'grid_2024': grid},
+                   'epa_strict_settings': epa_strict_settings, 'n': len(rows),
+                   'tables': tables, 'diffs': diffs, 'early_weeks_2_4_strict': early_block}, handle, indent=1, default=str)
     print(f"\nwrote {os.path.join(RESULTS, 'game_winner_comparison.json')}")
 
 
