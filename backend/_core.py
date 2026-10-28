@@ -1092,28 +1092,31 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     """
     import mls_resolution
     if mls_resolution.CUTOVER_ENABLED and league in ("mls", "lcup"):
-        if as_of is None:
-            as_of = _game_day_if_past(con, game_id)
+        if as_of is None and game_id is not None:
+            as_of = _game_as_of(con, game_id)
+            if as_of is _GAME_DAY_UNKNOWN:
+                return (None, None)  # a named game whose day cannot be established: fail closed, never guess today
         return mls_resolution.resolve(con, player_name, team, league, as_of, _resolve_player_for_ingest_legacy)
     return _resolve_player_for_ingest_legacy(con, player_name, team, league, source=source, game_id=game_id)
 
 
-def _game_day_if_past(con, game_id):
-    """The day a prop's game was played, when that day is already past. None for today, later, or no game.
+_GAME_DAY_UNKNOWN = object()
 
-    A past game resolves against the membership on its own day, so a player who has since left is still
-    attributed to the games he played for that club. Today and later use the current membership.
+
+def _game_as_of(con, game_id):
+    """The day a prop's game was played, when that day is already past.
+
+    None when the game is today or later (the current membership answers it). _GAME_DAY_UNKNOWN when the game is named
+    but its day cannot be established, so the caller must fail closed.
     """
     import datetime as _dt
-    if not game_id:
-        return None
-    row = con.execute("SELECT date, start_time FROM prop_games WHERE id=?", (game_id,)).fetchone()
-    if not row:
-        return None
+    row = con.execute("SELECT date FROM prop_games WHERE id=?", (game_id,)).fetchone()
+    if row is None:
+        return _GAME_DAY_UNKNOWN
     try:
-        day = _dt.date.fromisoformat(str(row[0] or row[1] or "")[:10])
+        day = _dt.date.fromisoformat(str(row[0] or "")[:10])
     except ValueError:
-        return None
+        return _GAME_DAY_UNKNOWN
     return day if day < _dt.date.today() else None
 
 

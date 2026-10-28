@@ -101,3 +101,42 @@ def test_a_past_game_resolves_to_the_club_on_its_day_and_today_uses_the_current_
     now_ = _core._resolve_player_for_ingest(w.con, name, "Club01", "mls", game_id=2)
     assert past[0] == 5, "a game played while the person was on the club resolves to them, after they left"
     assert now_[0] is None, "a game today uses the current membership, which no longer has the person"
+
+
+def test_under_the_gate_backfill_never_reads_an_observation_row(tmp_path, cutover_on, monkeypatch):
+    import published_roster as pr
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("backfill read an observation row while the cutover is on")
+
+    monkeypatch.setattr(pr, "lookup", refuse)
+    w = _world_with_departed_person()
+    path = _file_copy(w, tmp_path)
+    backfill_run(path, ["mls"], apply_changes=True)  # would raise if it consulted observation rows
+
+
+def test_under_the_gate_spine_planning_never_reads_an_observation_row(cutover_on, monkeypatch):
+    import published_roster as pr
+    import spine_merge
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("spine planning read an observation row while the cutover is on")
+
+    monkeypatch.setattr(pr, "lookup", refuse)
+    w = _world_with_departed_person()
+    assert spine_merge._published_groups(w.con, "mls") == [], "no two current people share a publisher key"
+
+
+def test_a_named_game_whose_day_cannot_be_established_fails_closed(cutover_on):
+    import _core
+    w = _world_with_departed_person()
+    w.con.execute("CREATE TABLE IF NOT EXISTS prop_games(id INTEGER PRIMARY KEY, league TEXT, date TEXT, home TEXT, "
+                  "away TEXT, start_time TEXT)")
+    w.con.execute("INSERT INTO prop_games(id, league, date, home, away, start_time) VALUES(3,'mls',NULL,'Club01',"
+                  "'Club02',NULL)")
+    w.con.execute("INSERT INTO prop_games(id, league, date, home, away, start_time) VALUES(4,'mls','not-a-date',"
+                  "'Club01','Club02',NULL)")
+    w.con.commit()
+    for game_id in (3, 4, 999):  # no date, an unreadable date, and a game that does not exist
+        assert _core._resolve_player_for_ingest(w.con, "Dara Quill", "Club01", "mls", game_id=game_id) == (None, None), \
+            "a named game whose day cannot be established must fail closed (game %s)" % game_id
