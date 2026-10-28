@@ -398,9 +398,9 @@ class HistoricalPoolCutoff(unittest.TestCase):
             db = Path(tmp) / 'pbp.db'
             con = sqlite3.connect(db)
             con.execute('CREATE TABLE nfl_pbp (' + ', '.join(f'"{name}"' for name in e1.COLUMNS) + ')')
-            for season, week in ((2022, 1), (2025, 18), (2026, 1), (2026, 2), (2027, 1)):
+            for season, week in ((2022, 1), (2025, 1), (2025, 2), (2025, 18), (2027, 1)):
                 row = {name: None for name in e1.COLUMNS}
-                row.update({'game_id': f'{season}_{week}_TEST', 'play_id': 1, 'season': season, 'week': week,
+                row.update({'game_id': f'{season}_{week:02d}_TEST', 'play_id': 1, 'season': season, 'week': week,
                             'qtr': 1, 'game_seconds_remaining': 800})
                 con.execute('INSERT INTO nfl_pbp VALUES (' + ','.join('?' * len(e1.COLUMNS)) + ')',
                             [row[name] for name in e1.COLUMNS])
@@ -408,10 +408,10 @@ class HistoricalPoolCutoff(unittest.TestCase):
             con.close()
 
             pinned = e1.load(str(db))
-            dynamic = e1.load(str(db), eligible_before=(2026, 2))
-            self.assertEqual([r['game_id'] for r in pinned], ['2022_1_TEST', '2025_18_TEST'])
-            self.assertEqual([r['game_id'] for r in dynamic],
-                             ['2022_1_TEST', '2025_18_TEST', '2026_1_TEST'])
+            dynamic = e1.load(str(db), eligible_before=(2025, 2))
+            self.assertEqual([r['game_id'] for r in pinned],
+                             ['2022_01_TEST', '2025_01_TEST', '2025_02_TEST', '2025_18_TEST'])
+            self.assertEqual([r['game_id'] for r in dynamic], ['2022_01_TEST', '2025_01_TEST'])
 
 
 if __name__ == '__main__':

@@ -31,6 +31,7 @@ import reducer  # noqa: E402  the shared reducer
 
 DEFAULT_DB = e0.DEFAULT_DB
 POOL_SEASONS = (2022, 2023, 2024, 2025)
+HOLDOUT_SEASON = 2026  # sealed for every model; no loader in this package may read it
 MODEL_VERSION = 'e1-empirical-v0'
 RULES_VERSION = 'e1-drive-2026-10-24'
 EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
@@ -74,6 +75,8 @@ def load(db, eligible_before=None):
     if eligible_before is None:
         return load_seasons(db, POOL_SEASONS)
     season, week = (int(value) for value in eligible_before)
+    if season >= HOLDOUT_SEASON:
+        raise ValueError(f'{HOLDOUT_SEASON} is the holdout and cannot be a pool cutoff')
     if season < min(POOL_SEASONS) or week < 1 or week > 18:
         raise ValueError('dynamic pool cutoff must be week 1-18 of 2022 or later')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
@@ -88,8 +91,10 @@ def load(db, eligible_before=None):
 
 
 def load_seasons(db, seasons):
-    """Regular-season plays for the given seasons, in game order. Used for kickoffs, which the 2026 season needs beyond the pool."""
+    """Regular-season plays for the given seasons, in game order. Refuses the 2026 holdout."""
     seasons = sorted(seasons)
+    if seasons and seasons[-1] >= HOLDOUT_SEASON:
+        raise ValueError(f'{HOLDOUT_SEASON} is the holdout and cannot be read by load_seasons')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     rows = [dict(zip(COLUMNS, r)) for r in con.execute(
         f"SELECT {', '.join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 "
