@@ -47,6 +47,27 @@ def main():
         'decisions': len(decisions), 'scrimmage_decisions': len(scrimmage),
         'kick_decisions_fallback': sum(1 for d in decisions if d['intent'] == 'kick'),
         'excluded_kickoffs': excluded if isinstance(excluded, (int, float, str, dict, list)) else str(excluded),
+        'contract': {
+            'pregame_snapshot': None,
+            'mode': result.get('mode'),
+            'complete_game': result.get('complete_game'),
+            'valid_full_game': result.get('valid_full_game'),
+            'valid_full_game_requires': 'pregame_full_game mode with a verified pregame snapshot; none is supplied by this runner',
+            'evaluation': 'exploratory smoke run',
+            'cutoff_safe_backtest': False,
+            'artifact_fit_seasons': sampler.layer.artifact['fit_seasons'],
+            'artifact_note': 'the frozen play-call artifact is fit on every 2010 to 2025 primary play, so this run is not a '
+                             'chronologically valid 2025 backtest',
+            'player_stats': 'historical allocation from sampled historical participants; not a player projection and not the '
+                            'roster of the simulated matchup',
+        },
+        'diagnosis': {
+            'status': result.get('status'), 'blocker': result.get('blocker'),
+            'regulation_end_reached': result.get('regulation_end_reached'),
+            'unmodelled_transitions': result.get('unmodelled_transitions', []),
+            'unsupported_rules': result.get('unsupported_rules', []),
+            'scope_out': result.get('scope_out', []),
+        },
         'result': result, 'event_trace': decisions,
     }
     args.out.write_text(json.dumps(trace, indent=1, sort_keys=True, default=str) + '\n')
