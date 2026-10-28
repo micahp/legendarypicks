@@ -44,3 +44,24 @@ SHA-256 of the frozen prior tables: `ed70a4af286fc5f08fdc85f984bd4897fba0c0e9317
 ## The 2026 test
 
 Run once, on 2026 Weeks 1 to 7, with the frozen prior and k = 20. Result recorded below.
+
+## The 2026 test, result (run once)
+
+Run: `decision_model.py test2026`, frozen prior (SHA-256 `ed70a4af...`), k = 20. Test set: 2026 regular-season Weeks 1 to 7,
+107 games, 13,131 scrimmage plays. The stage refused to run a second time. The prior was rebuilt from 2025 and matched the
+frozen hash before scoring. Bootstrap: 2,000 resamples of games, seed 20261027.
+
+| | Team prior | League prior | Team minus league | 95% interval |
+|---|---|---|---|---|
+| Headline, A to N | 0.0605 | 0.0627 | -0.0022 | [-0.0056, +0.0012] |
+| Headline, A to I | 0.0560 | 0.0579 | -0.0019 | [-0.0058, +0.0012] |
+
+Per category (team minus league; negative favours the team prior): A -0.0041, B -0.0052, C -0.0043, D +0.0015,
+E -0.0063, F -0.0043, G -0.0015, H +0.0028, I +0.0043, J -0.0078, K -0.0016, L -0.0110, M +0.0025, N +0.0038.
+
+Reading, as the spec requires: the team prior is directionally better on 9 of 14 categories, and worse on 5 (D, H, I, M, N).
+Its headline advantage is small, and its interval includes zero. On this test the team prior does not clearly beat the
+league prior, so the report says so. This is a null on the headline, not evidence that team tendencies carry no
+information. The 2025 validation gain (0.0493 against 0.0612) did not carry over fully to 2026.
+
+Not tested here: time to throw and pressure (participation data does not exist for 2026), movement, outcomes.
