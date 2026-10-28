@@ -1,10 +1,14 @@
-"""Run the MLS snapshot against a COPY of the production database and prove what did not change.
+"""Run the MLS snapshot against a COPY of production, with identities from the copy's own binds.
 
 Usage: python mls_snapshot_copy_check.py COPY_PATH REPORT_PATH
 
-COPY_PATH must be a separate file that already holds a copy of production. The script refuses the live
-production path. It checksums the tables that must not change, publishes the snapshot into the copy,
-checksums them again, and writes a report. It does not touch production.
+- Identities come from the copy's player_source_ids (binds_from_db), not from the saved fixture.
+- The fixture's squads are the frozen source records. Its bindings are compared with the copy's and every
+  difference is reported.
+- Runs the snapshot twice: the first run publishes, the second must be unchanged.
+- Checksums eight protected tables before and after, and after the repeat run.
+
+Refuses the live production path. Writes only to COPY_PATH.
 """
 import hashlib
 import json
@@ -19,6 +23,7 @@ FIXTURE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "
 PROTECTED = ("players", "player_source_ids", "player_game_logs", "props", "prop_results",
              "settlement_attempts", "team_game_results", "published_roster")
 CAPTURED = "2026-10-27T21:13:59+00:00"
+REPEAT = "2026-10-28T21:13:59+00:00"
 
 
 def table_checksum(con, table):
@@ -34,6 +39,36 @@ def checksums(con):
     return {t: table_checksum(con, t) for t in PROTECTED}
 
 
+def bind_discrepancies(fixture_binds, copy_binds, squad_keys):
+    """Fixture bindings compared with the copy, for the keys in the squads."""
+    report = {"missing_in_copy": [], "different_player": [], "not_in_fixture": 0}
+    for source, key, player_id in fixture_binds:
+        if (source, str(key)) not in squad_keys:
+            continue
+        found = copy_binds.get((source, str(key)))
+        if found is None:
+            report["missing_in_copy"].append([source, key, player_id])
+        elif found != player_id:
+            report["different_player"].append([source, key, player_id, found])
+    fixture_keys = {(s, str(k)) for s, k, _ in fixture_binds}
+    report["not_in_fixture"] = sum(1 for k in squad_keys if k in copy_binds and k not in fixture_keys)
+    return report
+
+
+def run(con, squads, binds, captured_at):
+    result = ms.build(con, squads, binds, captured_at=captured_at)
+    if result.status != "publish":
+        return result, "refused", None
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        outcome, snapshot_id = ms.publish(con, result, captured_at)
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
+    return result, outcome, snapshot_id
+
+
 def main(copy_path, report_path):
     if os.path.abspath(copy_path) == os.path.abspath(PROD):
         raise SystemExit("refusing to run against the production database")
@@ -42,41 +77,47 @@ def main(copy_path, report_path):
     before = checksums(con)
 
     fx = json.load(open(FIXTURE))
-    binds = {}
-    for source, key, player_id in fx["binds"]:
-        binds[(source, key)] = player_id
-    result = ms.build(fx["squads"], binds, prior_memberships=ms.load_prior(con), captured_at=CAPTURED)
+    squads = fx["squads"]
+    squad_keys = {(s, str(m["source_player_key"])) for s in squads for m in squads[s]}
+    copy_binds = ms.binds_from_db(con)
+    discrepancies = bind_discrepancies(fx["binds"], copy_binds, squad_keys)
+
+    result, outcome, snapshot_id = run(con, squads, copy_binds, CAPTURED)
     if result.status != "publish":
-        raise SystemExit("snapshot refused: %s" % result.reasons)
-    con.execute("BEGIN IMMEDIATE")
-    try:
-        snapshot_id = ms.publish(con, result, CAPTURED)
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
-    after = checksums(con)
+        raise SystemExit("snapshot refused on the copy: %s" % result.reasons)
+    after_first = checksums(con)
+
+    repeat, repeat_outcome, repeat_id = run(con, squads, copy_binds, REPEAT)
+    after_repeat = checksums(con)
 
     report = {
         "copy": copy_path,
-        "snapshot_id": snapshot_id,
-        "memberships": len(result.memberships),
-        "blockers": len(result.blockers),
-        "carried": len(result.carried),
-        "unchanged": {t: before[t]["sha256"] == after[t]["sha256"] for t in PROTECTED},
-        "before": before,
-        "after": after,
-        "roster_memberships_for_snapshot": con.execute(
-            "SELECT COUNT(*) FROM roster_memberships WHERE snapshot_id=?", (snapshot_id,)).fetchone()[0],
+        "identities_from": "copy player_source_ids",
+        "bind_discrepancies_vs_fixture": discrepancies,
+        "first_run": {"outcome": outcome, "snapshot_id": snapshot_id, "coverage": result.coverage,
+                      "memberships": len(result.memberships), "blockers": len(result.blockers),
+                      "carried": len(result.carried), "departures": len(result.departures),
+                      "single_source_departures": len(result.single_source_departures),
+                      "transfers": len(result.transfers), "rekeys": len(result.rekeys),
+                      "bind_changed": len(result.bind_changed)},
+        "repeat_run": {"outcome": repeat_outcome, "snapshot_id": repeat_id, "coverage": repeat.coverage},
+        "unchanged_after_first_run": {t: before[t]["sha256"] == after_first[t]["sha256"] for t in PROTECTED},
+        "unchanged_after_repeat_run": {t: before[t]["sha256"] == after_repeat[t]["sha256"] for t in PROTECTED},
+        "checksums_before": before,
+        "checksums_after_first_run": after_first,
+        "checksums_after_repeat_run": after_repeat,
         "published_mls_snapshots": con.execute(
             "SELECT COUNT(*) FROM roster_snapshots WHERE league='mls' AND status='published'").fetchone()[0],
+        "health": ms.health(con),
     }
     with open(report_path, "w") as fh:
         json.dump(report, fh, indent=1)
-    print(json.dumps({k: report[k] for k in ("snapshot_id", "memberships", "blockers", "carried",
-                                              "roster_memberships_for_snapshot")}, indent=1))
-    print("unchanged:", report["unchanged"])
-    return 0 if all(report["unchanged"].values()) else 1
+    print(json.dumps({"first_run": report["first_run"], "repeat_run": report["repeat_run"],
+                      "bind_discrepancies": {k: (v if isinstance(v, int) else len(v))
+                                             for k, v in discrepancies.items()}}, indent=1))
+    ok = all(report["unchanged_after_first_run"].values()) and all(report["unchanged_after_repeat_run"].values())
+    print("protected tables unchanged after both runs:", ok)
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
