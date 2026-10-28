@@ -86,6 +86,15 @@ game logs are in the scope copy.
 
 The refused scenarios change no person, so they have no history to count.
 
+### Defect found after this report, and fixed
+
+The shadow repeats used squads with no transition in them, so they did not catch this. The population checksum
+included the run's events (transfers, departures, rekeys, carries). After a transfer, a second run with the same
+squads had `transfers=0`, so its checksum differed and it published an identical second membership set. Reproduced on
+a scratch copy: snapshots 2, then 3. Fixed by hashing only the memberships. The events are stored with the population
+and refreshed on every run. `test_mls_snapshot_repeats.py` repeats a transfer, a departure, a rekey, a key lost by one
+publisher followed by a departure, and a carry, and each repeat publishes nothing.
+
 ## Blockers before any replacement
 
 1. **`lookup_player` answers from stale observation rows.** `published_roster.lookup_player` matches on
