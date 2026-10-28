@@ -8,16 +8,23 @@ answer is NONE. A historical club is never invented.
 The snapshot stores, for each member, the publisher keys that identify them, the club, and the publisher's own name
 spelling. Name matching therefore uses the spellings the snapshot itself holds.
 
-The gate is off until the cutover is authorized. Production keeps the legacy resolver until CUTOVER_ENABLED is set.
+The gate is a runtime setting, read on every call: LP_MLS_CUTOVER. It is off unless that variable is set to
+1, true, yes or on. Production keeps the legacy resolver until the cutover is authorized and the variable is set.
 """
 import datetime as dt
 import json
+import os
 
 import published_roster
 
-CUTOVER_ENABLED = False
+CUTOVER_ENV = "LP_MLS_CUTOVER"
 LEAGUE = "mls"
 NO_MATCH = (None, None)
+
+
+def cutover_enabled():
+    """The MLS cutover switch, read now from LP_MLS_CUTOVER. Off unless set to 1, true, yes or on."""
+    return os.environ.get(CUTOVER_ENV, "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _day(as_of):
@@ -101,7 +108,7 @@ def club_now_sql(player_id, league, legacy, mls_missing, upcoming=None):
     (never the stale stored club). `upcoming` limits the membership answer to rows where it is true; other rows keep
     `legacy`, so past games still show the club they played for.
     """
-    if not CUTOVER_ENABLED:
+    if not cutover_enabled():
         return legacy
     current = ("{lg} = 'mls' AND EXISTS (SELECT 1 FROM roster_snapshots cs WHERE cs.league = 'mls' "
                "AND cs.status = 'published')").format(lg=league)
@@ -119,7 +126,7 @@ def _is_mls_player(con, player_id):
 
 
 def resolve(con, name, team, league, as_of, legacy):
-    """Resolve a name to (player_id, confidence), or (None, None). Only called when CUTOVER_ENABLED."""
+    """Resolve a name to (player_id, confidence), or (None, None). Only called when the cutover is enabled."""
     evidence = membership_evidence(con, as_of)
     if evidence is None:
         return NO_MATCH

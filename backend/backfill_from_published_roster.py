@@ -80,7 +80,7 @@ def run(db_path, leagues, apply_changes):
             "WHERE league=? AND active=1", (league,)).fetchall()
         # With the MLS cutover on, the match is the person's own membership record in the current snapshot. No
         # observation row is read, so a stale row can never bind anyone. Off, the legacy lookup is unchanged.
-        evidence = mls_resolution.membership_evidence(con) if league == "mls" and mls_resolution.CUTOVER_ENABLED else None
+        evidence = mls_resolution.membership_evidence(con) if league == "mls" and mls_resolution.cutover_enabled() else None
         bound = filled = collided = disagreed = 0
         unresolved = []
         for player in players:

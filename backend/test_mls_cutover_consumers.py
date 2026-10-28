@@ -35,12 +35,12 @@ def _world_with_departed_person():
 
 @pytest.fixture
 def cutover_off(monkeypatch):
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", False)
+    monkeypatch.delenv(mls_resolution.CUTOVER_ENV, raising=False)
 
 
 @pytest.fixture
 def cutover_on(monkeypatch):
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
 
 
 def _file_copy(w, tmp_path):

@@ -113,7 +113,7 @@ def plan(src: sqlite3.Connection, dst: sqlite3.Connection) -> dict:
                                  "reason": "no espn_id on the source players row"})
             continue
         target_id = dst_by_espn.get(espn_id)
-        if target_id is None and mls_resolution.CUTOVER_ENABLED:
+        if target_id is None and mls_resolution.cutover_enabled():
             # With the cutover on, a new MLS person is created only by identity onboarding, which corroborates the
             # publisher keys. A stats promotion would create one from a sidecar's stored club, with no corroboration.
             unresolvable.append({"src_player_id": row["player_id"], "name": row["player_name"],

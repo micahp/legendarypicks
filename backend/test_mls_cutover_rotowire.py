@@ -25,7 +25,7 @@ def _bind_rotowire(w, key, pid):
 
 
 def test_a_departed_person_is_not_returned_by_name_or_by_an_old_binding(monkeypatch):
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
     w = World()
     w.cycle(D1)
     name, club = w.name_of(3), w.team_of(3)
@@ -44,7 +44,7 @@ def test_a_departed_person_is_not_returned_by_name_or_by_an_old_binding(monkeypa
 
 
 def test_a_current_member_resolves_by_name_and_no_binding_is_written(monkeypatch):
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
     w = World()
     w.cycle(D1)
     name, club = w.name_of(4), w.team_of(4)
@@ -57,7 +57,7 @@ def test_a_current_member_resolves_by_name_and_no_binding_is_written(monkeypatch
 
 
 def test_a_current_member_keeps_an_existing_binding_under_another_spelling(monkeypatch):
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", True)
+    monkeypatch.setenv(mls_resolution.CUTOVER_ENV, "1")
     w = World()
     w.cycle(D1)
     _bind_rotowire(w, "r5", 5)
@@ -68,7 +68,7 @@ def test_a_current_member_keeps_an_existing_binding_under_another_spelling(monke
 
 def test_with_the_cutover_off_the_name_rule_is_the_legacy_one(monkeypatch):
     """The control: the same departed person resolves by name when the gate is off. The gate is the only change."""
-    monkeypatch.setattr(mls_resolution, "CUTOVER_ENABLED", False)
+    monkeypatch.delenv(mls_resolution.CUTOVER_ENV, raising=False)
     w = World()
     w.cycle(D1)
     name, club = w.name_of(3), w.team_of(3)

@@ -454,7 +454,7 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     spine says `WSH` and `NYC`, so comparing the raw strings would silently fail every
     fallback that needs a team.
     """
-    if league in ("mls", "lcup") and mls_resolution.CUTOVER_ENABLED:
+    if league in ("mls", "lcup") and mls_resolution.cutover_enabled():
         return _resolve_membership_gated(con, league, row, now, team_code)
     roster_league = roster_league or league
     # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):

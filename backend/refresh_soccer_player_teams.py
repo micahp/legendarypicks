@@ -57,7 +57,7 @@ LEAGUES = ("mls", "ligamx")
 def _refreshed_leagues():
     """With the MLS cutover on, an MLS club is read from the membership snapshot, never copied from a roster row."""
     import mls_resolution
-    return tuple(one for one in LEAGUES if not (one == "mls" and mls_resolution.CUTOVER_ENABLED))
+    return tuple(one for one in LEAGUES if not (one == "mls" and mls_resolution.cutover_enabled()))
 
 
 def plan(con: sqlite3.Connection):
