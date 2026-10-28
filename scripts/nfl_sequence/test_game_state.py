@@ -310,24 +310,37 @@ class BlockedKickFitsTheState(unittest.TestCase):
         self.assertEqual(blocker, 'blocked_kick_period_end_not_reached:punt')
         self.assertIsNone(outcome)
 
-    def test_period_expired_rows_are_not_sampled_at_q1_or_q3_boundaries(self):
-        import random
+    def test_period_expired_draw_weight_is_preserved_across_all_quarters(self):
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
         recovery = {'classification_status': 'classified_dead_ball_spot', 'clock_runoff_seconds': 4,
                     'kick_type': 'punt', 'posteam': 'A', 'defteam': 'B'}
         game = self.sampler([period_end, recovery])
-        for quarter in (1, 3):
-            for seed in range(20):
-                blocker, outcome = game._sample_blocked_kick('punt', random.Random(seed), 9, quarter)
-                self.assertIsNone(blocker)
-                self.assertEqual(outcome['classification_status'], 'classified_dead_ball_spot')
+        class ChoosePeriodExpired:
+            def choice(self, rows):
+                self.rows = rows
+                return next(row for row in rows if row['classification_status'] == 'period_expired')
 
-    def test_period_expired_only_pool_is_named_when_it_cannot_continue_after_q3(self):
+        for quarter in (1, 2, 3, 4, 5):
+            rng = ChoosePeriodExpired()
+            blocker, outcome = game._sample_blocked_kick('punt', rng, 9, quarter)
+            self.assertEqual(len(rng.rows), 2, f'Q{quarter} must retain the original candidate weights')
+            if quarter in (2, 4):
+                self.assertIsNone(blocker)
+                self.assertEqual(outcome['classification_status'], 'period_expired')
+            else:
+                self.assertEqual(
+                    blocker, f'blocked_kick_period_expired_next_possession_unresolved:punt:Q{quarter}')
+                self.assertIsNone(outcome)
+
+    def test_period_expired_only_pool_is_named_outside_q2_and_q4(self):
         import random
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
-        blocker, outcome = self.sampler([period_end])._sample_blocked_kick('punt', random.Random(0), 9, 3)
-        self.assertEqual(blocker, 'blocked_kick_period_expired_next_possession_unresolved:punt:Q3')
-        self.assertIsNone(outcome)
+        for quarter in (1, 3, 5):
+            blocker, outcome = self.sampler([period_end])._sample_blocked_kick(
+                'punt', random.Random(0), 9, quarter)
+            self.assertEqual(
+                blocker, f'blocked_kick_period_expired_next_possession_unresolved:punt:Q{quarter}')
+            self.assertIsNone(outcome)
 
 
 class KickoffPool(unittest.TestCase):
