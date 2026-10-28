@@ -122,4 +122,75 @@ The main comparison is the team prior minus the league prior, per category and p
 - Charting: `ftn_charting_2025.parquet` and `ftn_charting_2026.parquet`. Join to play-by-play on game ID and play ID
   verified at 100% for both seasons, with no duplicate keys.
 - Players: `players.parquet` (position by `gsis_id`). Every receiver and rusher ID in 2025 and 2026 matched a player.
-- Team codes: play-by-play codes are used as they are. `LA` and `WAS` appear in both seasons, so no mapping is needed.
+- Team codes: play-by-play uses `LA` for the Rams and `WAS` for Washington. The NGS releases use `LAR` for the Rams and
+  `WAS` for Washington. Play-by-play `LA` maps to `LAR` for any join with NGS (corrected 2026-10-27, before any 2026 result;
+  the earlier text said no mapping was needed, which was wrong for the Rams).
+
+## 11. Version 2: NGS team-style layer (amendment, 2026-10-27, before any 2026 result)
+
+Version 1 (sections 1 to 10) stays as written. Version 2 adds a team-style group to the prior. Both versions are tested on
+2026 in the same single run. The version 1 result and the version 2 result are both kept.
+
+### 11.1 Measures and the style group
+
+For team T and week w (w of 2 or more), the style group uses only team T's regular-season team-week from week w minus 1
+of the same season. Week 0 rows (season totals) and postseason rows are never used.
+
+| Measure | NGS file | Weight |
+|---|---|---|
+| Time to throw | `ngs_passing`, `avg_time_to_throw` | attempts |
+| Aggressiveness | `ngs_passing`, `aggressiveness` | attempts |
+| Share of attempts against eight or more defenders | `ngs_rushing`, `percent_attempts_gte_eight_defenders` | rush attempts |
+| Receiver separation | `ngs_receiving`, `avg_separation` | targets |
+
+Each measure is standardised with the frozen constants below. The composite is the equal-weight mean of the four
+standardised measures. The group is:
+
+- low, if the composite is below -0.20449;
+- mid, if it is from -0.20449 up to 0.15432;
+- high, if it is 0.15432 or more.
+
+Frozen constants (fitted on 2016 to 2024 team-weeks only, 3,979 team-weeks, from `scripts/nfl_sequence/splits/ngs_style_frozen.py`):
+
+| Measure | Mean | Standard deviation |
+|---|---|---|
+| Time to throw | 2.75549 | 0.27433 |
+| Aggressiveness | 16.03334 | 7.39773 |
+| Eight-plus defenders | 22.86914 | 17.14245 |
+| Separation | 2.90207 | 0.68184 |
+
+Composite cut points: low and mid at -0.20449; mid and high at 0.15432.
+
+### 11.2 Fallbacks and coverage
+
+- Week 1 has no prior week in the season. Version 2 uses the version 1 prior for every week 1 play.
+- If the prior week has no NGS row for team T (for example, a bye week), version 2 uses the version 1 prior for that team's
+  plays that week. The count of such plays is reported.
+- For 2026, the style group for week w uses NGS from weeks 1 to w minus 1. Week 7 plays use week 6 NGS.
+
+### 11.3 The version 2 prior
+
+For team T, category X, situation cell s, and style group g:
+
+p2_T(r | s, g) = (n_T(r, s, g) + k * p1_T(r | s)) / (n_T(s, g) + k)
+
+where p1_T(r | s) is the version 1 team prior from section 4, and k is the same shrinkage weight chosen for version 1 in
+section 5. This makes version 2 nest version 1. If n_T(s, g) is zero, version 2 equals version 1.
+
+### 11.4 Validation and freezing (2025 only)
+
+1. Compute the style group for each 2025 play with weeks 2 to 9 of 2025 for training and weeks 10 to 18 for validation,
+   using the rule in 11.1.
+2. Choose k for version 1 and for version 2 separately, from {5, 20, 80}, by the lowest mean total-variation distance on
+   the 2025 validation window. Ties go to the smaller k.
+3. Refit both versions on all 2025 regular-season plays and freeze the code and the fitted tables before the 2026 run.
+
+### 11.5 The one test on 2026
+
+- Test set: 2026 regular-season plays in Weeks 1 to 7, as in section 8.
+- Both versions use the frozen 2025 fits, the frozen k values, and the frozen constants. No refit, no changed rule.
+- Headline: the mean total-variation distance over categories A to N, for version 1 and for version 2.
+- Decision rule, fixed here: the NGS layer counts as adding information only if version 2 has a lower headline than
+  version 1 and the bootstrap interval of (version 2 minus version 1) excludes zero. Otherwise the report says the NGS
+  layer shows no support on this test. Version 1 is also compared with the league prior, as in section 7.
+- The result is written to the record whatever it shows.
