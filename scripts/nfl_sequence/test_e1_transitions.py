@@ -47,7 +47,7 @@ class QuarterTransitions(unittest.TestCase):
             def __init__(self):
                 self.seen = None
 
-            def sample(self, rng, cell, offense, defense):
+            def sample(self, rng, cell, offense, defense, state=None):
                 self.seen = (offense, defense)
                 return cell[0]
 

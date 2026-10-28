@@ -483,7 +483,8 @@ def refuse_unsafe_cutoff(eligible_before):
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
-         contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None):
+         contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
+         playcall_artifact=None, playcall_teams=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -538,6 +539,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         tendencies = tt.build_from_rows(prior_rows, cutoff_season)
         contextual_sampler = tt.TendencySampler(tendencies, side_teams=team_tendency_teams)  # the drive-policy slot
         contextual_pool_manifest = tendencies.manifest
+    if playcall_artifact is not None:
+        if team_tendency or contextual_mode is not None:
+            raise ValueError('the play-call layer cannot be combined with team tendency or contextual sampling')
+        import slc_playcall as slc
+        contextual_sampler = slc.PlayCallSampler(slc.PlayCallLayer.load(playcall_artifact), side_teams=playcall_teams)
+        contextual_pool_manifest = contextual_sampler.describe()
     kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
     kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]
     kpool, kex = gs.build_kickoff_pool(kick_rows, include_season=kickoff_regime_season is not None)

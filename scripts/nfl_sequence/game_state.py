@@ -1058,7 +1058,8 @@ class _Game:
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
-                                      sampling_policy=self.ref.contextual_sampler, **research)
+                                      sampling_policy=self.ref.contextual_sampler,
+                                      score_diff=self.points[self.offense] - self.points[self.defense], **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
