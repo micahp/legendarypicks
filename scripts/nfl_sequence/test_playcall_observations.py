@@ -1,3 +1,4 @@
+import gzip
 import sqlite3
 import sys
 import tempfile
@@ -7,6 +8,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import playcall_observations as pco  # noqa: E402
+
+
+def NO_SCORES(season):
+    return {}
 
 
 def play(**overrides):
@@ -94,7 +99,7 @@ class ExactState(unittest.TestCase):
     def test_score_differential_is_explicitly_unavailable(self):
         obs = pco.observation(play())
         self.assertIsNone(obs['score_differential'])
-        self.assertEqual(obs['score_status'], 'unavailable_in_pbp')
+        self.assertEqual(obs['score_status'], 'unmatched_in_raw')
 
 
 class CutoffAndHoldout(unittest.TestCase):
@@ -108,12 +113,12 @@ class CutoffAndHoldout(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_a_cutoff_excludes_its_own_week_and_later_games(self):
-        before = [o['game_id'] for o in pco.observations(self.db, cutoff=(2012, 6))]
+        before = [o['game_id'] for o in pco.observations(self.db, cutoff=(2012, 6), scores=NO_SCORES)]
         self.assertEqual(before, ['2012_05_AAA_BBB'])
 
     def test_a_later_game_cannot_change_an_earlier_observation(self):
-        with_later = {o['game_id']: o for o in pco.observations(self.db, cutoff=(2012, 7))}
-        without_later = {o['game_id']: o for o in pco.observations(self.db, cutoff=(2012, 6))}
+        with_later = {o['game_id']: o for o in pco.observations(self.db, cutoff=(2012, 7), scores=NO_SCORES)}
+        without_later = {o['game_id']: o for o in pco.observations(self.db, cutoff=(2012, 6), scores=NO_SCORES)}
         self.assertEqual(with_later['2012_05_AAA_BBB'], without_later['2012_05_AAA_BBB'])
 
     def test_the_holdout_season_is_refused_before_any_query(self):
@@ -122,9 +127,56 @@ class CutoffAndHoldout(unittest.TestCase):
         self.assertIn('holdout', str(caught.exception))
 
     def test_older_pbp_without_ftn_or_ngs_is_still_observed(self):
-        rows = list(pco.observations(self.db, first_season=2010, last_season=2012))
+        rows = list(pco.observations(self.db, first_season=2010, last_season=2012, scores=NO_SCORES))
         self.assertEqual(len(rows), 3)
         self.assertTrue(all(r['provenance']['source'] == 'nfl_pbp' for r in rows))
+
+
+class PreplayScores(unittest.TestCase):
+    def test_a_matched_play_carries_exact_pre_play_scores_and_their_difference(self):
+        obs = pco.observation(play(), {'posteam_score': 14, 'defteam_score': 7, 'score_differential': 7})
+        self.assertEqual((obs['posteam_score_pre'], obs['defteam_score_pre'], obs['score_differential']), (14, 7, 7))
+        self.assertEqual(obs['score_status'], 'pre_play_nflverse_raw')
+
+    def test_a_trailing_team_has_a_negative_difference(self):
+        obs = pco.observation(play(), {'posteam_score': 3, 'defteam_score': 10, 'score_differential': -7})
+        self.assertEqual(obs['score_differential'], -7)
+
+    def test_a_no_play_row_drops_its_scores_because_they_are_not_pre_play_state(self):
+        obs = pco.observation(play(play_type='no_play', rush_attempt=0), {'posteam_score': 14, 'defteam_score': 7})
+        self.assertIsNone(obs['score_differential'])
+        self.assertEqual(obs['score_status'], 'excluded_no_play_row')
+
+    def test_an_empty_raw_score_is_missing_not_zero(self):
+        obs = pco.observation(play(), {'posteam_score': None, 'defteam_score': 7})
+        self.assertIsNone(obs['score_differential'])
+        self.assertEqual(obs['score_status'], 'raw_score_missing')
+
+    def test_the_raw_file_is_refused_unless_its_checksum_is_the_pinned_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'pbp_2012.csv.gz'
+            with gzip.open(path, 'wt', newline='') as f:
+                f.write('game_id,play_id,season_type,week,posteam_score,defteam_score,score_differential\n')
+                f.write('2012_05_AAA_BBB,1,REG,5,14,7,7\n')
+            real = pco.sha256(path)
+            scores = pco.load_pre_play_scores(path, real)
+            self.assertEqual(scores[('2012_05_AAA_BBB', 1)], {'posteam_score': 14, 'defteam_score': 7,
+                                                              'score_differential': 7})
+            with self.assertRaises(ValueError):
+                pco.load_pre_play_scores(path, '0' * 64)
+
+    def test_observations_join_scores_on_game_and_play(self):
+        rows = [play(game_id='2012_05_AAA_BBB', play_id=1, season=2012, week=5),
+                play(game_id='2012_05_AAA_BBB', play_id=2, season=2012, week=5)]
+        tmp, db = database(rows)
+        try:
+            joined = {('2012_05_AAA_BBB', 1): {'posteam_score': 21, 'defteam_score': 14, 'score_differential': 7}}
+            out = {o['play_id']: o for o in pco.observations(db, first_season=2012, last_season=2012,
+                                                             scores=lambda s: joined)}
+            self.assertEqual(out[1]['score_differential'], 7)
+            self.assertEqual(out[2]['score_status'], 'unmatched_in_raw')
+        finally:
+            tmp.cleanup()
 
 
 if __name__ == '__main__':
