@@ -62,6 +62,10 @@ in play-id order. About 30 games per season, in 2022 to 2025 alone 37 games in 2
 so that order made the checks compare states that never followed one another. The figures above replace them.
 Play ids run backwards in game time in 77 games in 2010, 37 in 2022 and 16 in 2025.
 
+Every remaining exception is listed in `docs/research/SCORE-EXCEPTIONS-REMAINING-2010-2025.csv`: 121 continuity rows (with
+the expected and actual scores and the previous play), 567 untimed rows, and 1 final-score mismatch. The 121 continuity
+rows are also the flags the play-call observations carry (`docs/fixtures/score-exceptions/`).
+
 Decisions the validation supports:
 - No-play rows drop their pre-play scores (`excluded_no_play_row`), since their totals are not pre-play state.
 - Unknown-intent plays with no raw score stay `raw_score_missing`. In 2025 all 561 are unknown intent.

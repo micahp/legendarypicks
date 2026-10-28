@@ -57,13 +57,15 @@ def jump_label(delta_off, delta_def):
 def timed(raw):
     """Plays with a game clock. Untimed rows (blank clock, often a game-start row) cannot be placed in game order and are
     left out of the sequence checks; they are counted, not dropped silently."""
-    untimed = sum(1 for r in raw.values() if not r['game_seconds_remaining'])
+    untimed = [{'game_id': k[0], 'play_id': k[1], 'play_type': r['play_type'] or '', 'qtr': r['qtr'] or '',
+                'pre_play_offense': r['posteam_score'] or '', 'pre_play_defense': r['defteam_score'] or ''}
+               for k, r in raw.items() if not r['game_seconds_remaining']]
     return {k: r for k, r in raw.items() if r['game_seconds_remaining']}, untimed
 
 
 def continuity_exceptions(raw):
-    raw, untimed = timed(raw)
-    counts = Counter({'untimed_rows_excluded': untimed})
+    raw, untimed_rows = timed(raw)
+    counts = Counter({'untimed_rows_excluded': len(untimed_rows)})
     by_prev_type = Counter()
     examples = []
     flagged = []
@@ -95,15 +97,19 @@ def continuity_exceptions(raw):
                     label = 'stale_repeat_of_state_before_previous_play'
             counts[label] += 1
             by_prev_type[(r['play_type'] or 'null', label)] += 1
-            flagged.append({'game_id': game, 'play_id': plays[index + 1][0], 'label': label})
+            flagged.append({'game_id': game, 'play_id': plays[index + 1][0], 'label': label,
+                            'previous_play_id': plays[index][0], 'previous_play_type': r['play_type'] or '',
+                            'expected_offense': exp_off, 'expected_defense': exp_def,
+                            'actual_offense': act_off, 'actual_defense': act_def})
             if len(examples) < 3 and label.startswith('unexplained'):
                 examples.append({'game_id': game, 'play_id': plays[index][0], 'prev_play_type': r['play_type'],
                                  'expected': [exp_off, exp_def], 'actual': [act_off, act_def]})
-    return counts, by_prev_type, examples, flagged
+    return counts, by_prev_type, examples, flagged, untimed_rows
 
 
 def final_exceptions(raw, finals):
     counts = Counter()
+    rows = []
     by_game = defaultdict(list)
     for key, r in raw.items():
         by_game[key[0]].append((key[1], r))
@@ -123,7 +129,10 @@ def final_exceptions(raw, finals):
             counts['match'] += 1
         else:
             counts[f'home_{int(dh)}_away_{int(da)}_points_after_last_play'] += 1
-    return counts
+            rows.append({'game_id': game, 'last_play_id': plays[-1][0], 'last_play_type': last['play_type'] or '',
+                         'final_home': int(home_score), 'final_away': int(away_score),
+                         'last_post_home': int(home_post), 'last_post_away': int(away_post)})
+    return counts, rows
 
 
 def trace(season, raw_dir, db):
@@ -131,12 +140,14 @@ def trace(season, raw_dir, db):
     path = Path(raw_dir) / f'pbp_{season}.csv.gz'
     raw = v.raw_plays(path, season)
     finals = v.schedule_finals(db, season)
-    cont, by_type, examples, flagged = continuity_exceptions(raw)
-    fin = final_exceptions(raw, finals)
+    cont, by_type, examples, flagged, untimed_rows = continuity_exceptions(raw)
+    fin, final_rows = final_exceptions(raw, finals)
     return {'season': season, 'continuity_exceptions': dict(cont.most_common()),
             'continuity_by_previous_play_type': {f'{p}|{l}': n for (p, l), n in by_type.most_common(12)},
             'continuity_unexplained_examples': examples, 'final_score_outcomes': dict(fin.most_common()),
-            'flagged_plays': [{**item, 'season': season} for item in flagged]}
+            'flagged_plays': [{**item, 'season': season} for item in flagged],
+            'untimed_rows': [{**item, 'season': season} for item in untimed_rows],
+            'final_mismatch_rows': [{**item, 'season': season} for item in final_rows]}
 
 
 def main():
@@ -145,22 +156,39 @@ def main():
     ap.add_argument('--db', default=v.DEFAULT_DB)
     ap.add_argument('--out', type=Path)
     ap.add_argument('--flags', type=Path, help='CSV of the play ids whose pre-play score disagrees with the previous play')
+    ap.add_argument('--remaining', type=Path, help='CSV listing every remaining continuity, untimed and final-score row')
     args = ap.parse_args()
     report = []
     for season in args.seasons:
         report.append(trace(season, raw_root(season), args.db))
     flagged = [item for season in report for item in season['flagged_plays']]
+    untimed = [item for season in report for item in season['untimed_rows']]
+    final = [item for season in report for item in season['final_mismatch_rows']]
     for season in report:
-        season.pop('flagged_plays')
+        for key in ('flagged_plays', 'untimed_rows', 'final_mismatch_rows'):
+            season.pop(key)
     text = json.dumps(report, indent=1, sort_keys=True)
     if args.out:
         args.out.write_text(text + '\n')
+    import csv
     if args.flags:
-        import csv
         with open(args.flags, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['season', 'game_id', 'play_id', 'label'], lineterminator='\n')
+            writer = csv.DictWriter(f, fieldnames=['season', 'game_id', 'play_id', 'label'], extrasaction='ignore',
+                                    lineterminator='\n')
             writer.writeheader()
             writer.writerows(flagged)
+    if args.remaining:
+        fields = ['category', 'season', 'game_id', 'play_id', 'label', 'previous_play_id', 'previous_play_type',
+                  'expected_offense', 'expected_defense', 'actual_offense', 'actual_defense', 'qtr', 'pre_play_offense',
+                  'pre_play_defense', 'final_home', 'final_away', 'last_post_home', 'last_post_away']
+        rows = ([{**item, 'category': 'continuity_exception'} for item in flagged]
+                + [{**item, 'category': 'untimed_row', 'label': 'no_game_clock'} for item in untimed]
+                + [{**item, 'category': 'final_score_mismatch', 'label': 'final_vs_last_play_post_score',
+                    'play_id': item['last_play_id']} for item in final])
+        with open(args.remaining, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fields, extrasaction='ignore', restval='', lineterminator='\n')
+            writer.writeheader()
+            writer.writerows(rows)
     print(text)
 
 
