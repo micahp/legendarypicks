@@ -1,0 +1,108 @@
+{
+ "copy": "/root/mls-snapshot-check/cutover/migrated_copy.db",
+ "before": {
+  "counts": {
+   "players": 57435,
+   "player_source_ids": 10433,
+   "roster_snapshots": 0,
+   "roster_memberships": 0,
+   "identity_onboarding_queue": null
+  },
+  "checksums": {
+   "players": "af18a1f214a6d1fe39cfa18c811eefc27d7d09442bd95cc8eeba78567618b8c1",
+   "player_source_ids": "2d927659c70e3f6ae9e970f4442ad6ff7f6d349c18a9135d209052c4eb945b50",
+   "player_game_logs": "9f4c0d817e7a3e22bf753fe2249571de3730943415f7d32ef8b02b75f23726c6",
+   "props": "fadd21d8bd897ffc33ab2d8b3f52420e86f356300371931a5d155c358bfbceb7",
+   "prop_results": "5c1cfdf20d1329c0bf6c9c2f83b0a18cb30040d8bad1190bc49592aa1e069bed",
+   "settlement_attempts": "dd5a72a1664e26ec34c814faee85c154b492fe61ebeb5b9c876e94aca8d81ed7",
+   "team_game_results": "dca409594c5d2dcdee4787a011eb318a7d5f2a31270d7f97c77177a8880c4c2a"
+  }
+ },
+ "first_cycle": {
+  "outcome": "published",
+  "coverage": "verified",
+  "memberships": 1040,
+  "onboarded": 0
+ },
+ "after_first": {
+  "counts": {
+   "players": 57435,
+   "player_source_ids": 10433,
+   "roster_snapshots": 1,
+   "roster_memberships": 1040,
+   "identity_onboarding_queue": 0
+  },
+  "checksums": {
+   "players": "af18a1f214a6d1fe39cfa18c811eefc27d7d09442bd95cc8eeba78567618b8c1",
+   "player_source_ids": "2d927659c70e3f6ae9e970f4442ad6ff7f6d349c18a9135d209052c4eb945b50",
+   "player_game_logs": "9f4c0d817e7a3e22bf753fe2249571de3730943415f7d32ef8b02b75f23726c6",
+   "props": "fadd21d8bd897ffc33ab2d8b3f52420e86f356300371931a5d155c358bfbceb7",
+   "prop_results": "5c1cfdf20d1329c0bf6c9c2f83b0a18cb30040d8bad1190bc49592aa1e069bed",
+   "settlement_attempts": "dd5a72a1664e26ec34c814faee85c154b492fe61ebeb5b9c876e94aca8d81ed7",
+   "team_game_results": "dca409594c5d2dcdee4787a011eb318a7d5f2a31270d7f97c77177a8880c4c2a"
+  }
+ },
+ "repeat_cycle": {
+  "outcome": "unchanged",
+  "snapshots_after": 1
+ },
+ "stale_16_resolved_by_legacy_resolver": 16,
+ "stale_16_resolved_with_cutover": 0,
+ "current_members": 1040,
+ "current_members_not_resolving_to_self": [],
+ "departure": {
+  "player": 32331,
+  "outcome": "published",
+  "departures": [
+   32331
+  ],
+  "current_lookup": null,
+  "historical_lookup_on_2026_10_28": 32331,
+  "binds_before": 2,
+  "binds_after": 2
+ },
+ "transfer": {
+  "player": 32353,
+  "from": "Atlanta United",
+  "to": "Austin FC",
+  "outcome": "published",
+  "transfers": [
+   32353
+  ],
+  "current_club": "Austin FC",
+  "club_on_2026_10_28": "Atlanta United",
+  "game_logs": 14,
+  "game_log_clubs": [
+   "ATL"
+  ]
+ },
+ "after_departure": {
+  "counts": {
+   "players": 57435,
+   "player_source_ids": 10433,
+   "roster_snapshots": 3,
+   "roster_memberships": 3118,
+   "identity_onboarding_queue": 0
+  },
+  "checksums": {
+   "players": "af18a1f214a6d1fe39cfa18c811eefc27d7d09442bd95cc8eeba78567618b8c1",
+   "player_source_ids": "2d927659c70e3f6ae9e970f4442ad6ff7f6d349c18a9135d209052c4eb945b50",
+   "player_game_logs": "9f4c0d817e7a3e22bf753fe2249571de3730943415f7d32ef8b02b75f23726c6",
+   "props": "fadd21d8bd897ffc33ab2d8b3f52420e86f356300371931a5d155c358bfbceb7",
+   "prop_results": "5c1cfdf20d1329c0bf6c9c2f83b0a18cb30040d8bad1190bc49592aa1e069bed",
+   "settlement_attempts": "dd5a72a1664e26ec34c814faee85c154b492fe61ebeb5b9c876e94aca8d81ed7",
+   "team_game_results": "dca409594c5d2dcdee4787a011eb318a7d5f2a31270d7f97c77177a8880c4c2a"
+  }
+ },
+ "protected_unchanged_by_all_cycles": {
+  "player_game_logs": true,
+  "props": true,
+  "prop_results": true,
+  "settlement_attempts": true,
+  "team_game_results": true
+ },
+ "identities_unchanged_by_snapshot_only_cycles": {
+  "players": true,
+  "player_source_ids": true
+ }
+}
