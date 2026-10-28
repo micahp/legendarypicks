@@ -35,7 +35,6 @@ COLUMNS = ('game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'home_t
            'fumble_lost', 'complete_pass')
 SPECIAL_TEAMS = {'punt': 'punt', 'field_goal': 'field_goal', 'extra_point': 'extra_point', 'kickoff': 'kickoff'}
 FLAGS_PATH = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'score-exceptions' / 'score_continuity_exceptions_2010_2025.csv'
-_SCORE_CACHE = {}
 
 
 def load_score_flags(path=FLAGS_PATH):
@@ -88,10 +87,10 @@ def load_pre_play_scores(path, expected_sha256):
 
 
 def scores_for_season(season):
-    if season not in _SCORE_CACHE:
-        path, pinned = score_source(season)
-        _SCORE_CACHE[season] = load_pre_play_scores(path, pinned)
-    return _SCORE_CACHE[season]
+    """Pre-play scores for one season. Read per call and not cached: observations() visits each season once, so holding
+    every season in memory would cost space without saving any time."""
+    path, pinned = score_source(season)
+    return load_pre_play_scores(path, pinned)
 
 
 def classify(row):
