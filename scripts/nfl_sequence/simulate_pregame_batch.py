@@ -69,6 +69,9 @@ def _baseline_v1(db, snapshot):
     """Use an immutable pregame v1 lock, or fit v1 on inputs available at the frozen cutoff."""
     schedule = snapshot['schedule']
     season, week = int(schedule['season']), int(schedule['week'])
+    if season >= e1.HOLDOUT_SEASON:
+        # the v1 lock and its fit both read this season's results, which the holdout forbids
+        return {'status': 'unavailable', 'reason': f'{e1.HOLDOUT_SEASON} is the holdout; v1 comparison not computed'}
     cutoff = datetime.fromisoformat(snapshot['as_of'].replace('Z', '+00:00')).astimezone(timezone.utc)
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
     try:
@@ -319,6 +322,68 @@ def _replay_examples(outcomes):
     }
 
 
+ERROR_STATUSES = ('simulation_error', 'validation_error')
+
+
+def _simulate_seed(seed, ref, snapshot):
+    record = None
+    error = None
+    validation_error = False
+    try:
+        record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+        gs.validate_game(record)
+    except Exception as exc:  # every requested seed gets an outcome row, including generator/validator failures
+        error = f'{type(exc).__name__}: {exc}'
+        validation_error = record is not None
+    outcome = _record_outcome(seed, record, error, validation_error)
+    contribution = None
+    if outcome['valid_full_game'] and record:
+        contribution = {
+            str(player['player_id']): {f'{category}.{field}': player.get(category, {}).get(field, 0)
+                                       for category, fields in PLAYER_CATEGORIES.items() for field in fields}
+            for player in record.get('stats', {}).get('player', [])}
+    return outcome, contribution
+
+
+def _open_seed_ledger(path, header, resume):
+    """Return (finished seeds by number, handle for appending). Line one pins the inputs a resume must match."""
+    if not resume and path.exists():
+        raise FileExistsError(f'{path} exists; pass --resume to continue it or remove it to start over')
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handle = path.open('w')
+        handle.write(json.dumps({'header': header}, sort_keys=True) + '\n')
+        handle.flush()
+        return {}, handle
+    lines = path.read_text().splitlines()
+    if not lines or json.loads(lines[0]).get('header') != header:
+        raise ValueError(f'{path} was written from different inputs; use a new --out or remove the ledger')
+    finished = {}
+    for index, line in enumerate(lines[1:], start=2):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            if index != len(lines):
+                raise
+            print(f'{path}: dropping a partial last line left by an interrupted run', file=sys.stderr)
+            lines = lines[:-1]
+            break
+        finished[row['seed']] = row
+    path.write_text(''.join(line + '\n' for line in lines))
+    return finished, path.open('a')
+
+
+def _seed_outcome(seed, finished, ledger, ref, snapshot):
+    """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
+    cached = finished.get(seed)
+    if cached is not None and cached['outcome']['status'] not in ERROR_STATUSES:
+        return cached['outcome'], cached['players']
+    outcome, contribution = _simulate_seed(seed, ref, snapshot)
+    ledger.write(json.dumps({'seed': seed, 'outcome': outcome, 'players': contribution}, sort_keys=True) + '\n')
+    ledger.flush()
+    return outcome, contribution
+
+
 def run_batch(args):
     batch_started = time.monotonic()
     snapshot_started = batch_started
@@ -387,35 +452,42 @@ def run_batch(args):
     outcomes = []
     player_totals = defaultdict(lambda: defaultdict(float))
     games_with_player_stats = 0
+    errors = 0
+    ledger_header = {
+        'schema': SCHEMA, 'game_id': args.game_id, 'as_of': snapshot['as_of'],
+        'source_snapshot_sha256': source_snapshot_sha256, 'observed_reference_sha256': ref.model_inputs['sha256'],
+        'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
+        'seed_start': args.seed_start,
+    }
+    ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
+    finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
     started = time.monotonic()
     for player_id in _player_template(snapshot):
         player_totals[player_id]
-    for seed in range(args.seed_start, args.seed_start + args.games):
-        record = None
-        error = None
-        validation_error = False
-        try:
-            record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
-            gs.validate_game(record)
-        except Exception as exc:  # every requested seed gets an outcome row, including generator/validator failures
-            error = f'{type(exc).__name__}: {exc}'
-            validation_error = record is not None
-        outcome = _record_outcome(seed, record, error, validation_error)
-        outcomes.append(outcome)
-        if outcome['valid_full_game'] and record:
-            games_with_player_stats += 1
-            for player in record.get('stats', {}).get('player', []):
-                player_id = str(player['player_id'])
-                for category, fields in PLAYER_CATEGORIES.items():
-                    for field in fields:
-                        player_totals[player_id][(category, field)] += player.get(category, {}).get(field, 0)
-        completed = len(outcomes)
-        if args.progress_every and completed % args.progress_every == 0:
-            elapsed = time.monotonic() - started
-            rate = completed / elapsed if elapsed else 0
-            remaining = (args.games - completed) / rate if rate else 0
-            print(f'progress {completed}/{args.games}; elapsed {elapsed:.0f}s; ETA {remaining:.0f}s',
-                  file=sys.stderr, flush=True)
+    try:
+        for seed in range(args.seed_start, args.seed_start + args.games):
+            outcome, contribution = _seed_outcome(seed, finished, ledger, ref, snapshot)
+            outcomes.append(outcome)
+            if outcome['status'] in ERROR_STATUSES:
+                errors += 1
+            if contribution is not None:
+                games_with_player_stats += 1
+                for player_id, values in contribution.items():
+                    for key, value in values.items():
+                        category, field = key.split('.')
+                        player_totals[player_id][(category, field)] += value
+            completed = len(outcomes)
+            if args.progress_every and completed % args.progress_every == 0:
+                elapsed = time.monotonic() - started
+                rate = completed / elapsed if elapsed else 0
+                remaining = (args.games - completed) / rate if rate else 0
+                print(f'progress {completed}/{args.games}; errors {errors}; elapsed {elapsed:.0f}s; ETA {remaining:.0f}s',
+                      file=sys.stderr, flush=True)
+            if args.max_simulation_errors is not None and errors > args.max_simulation_errors:
+                raise RuntimeError(f'{errors} error seeds after {completed} of {args.games}; stopped. Finished seeds are '
+                                   f'in {ledger_path}; fix the cause and rerun with --resume')
+    finally:
+        ledger.close()
 
     simulation_seconds = time.monotonic() - started
     summary = aggregation.summarize_outcomes(outcomes, args.games,
@@ -537,6 +609,10 @@ def main(argv=None):
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
+    ap.add_argument('--resume', action='store_true',
+                    help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
+    ap.add_argument('--max-simulation-errors', type=int,
+                    help='stop once more than this many seeds have errored; finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)
     args = ap.parse_args(argv)
     if args.games < 1:
@@ -545,6 +621,8 @@ def main(argv=None):
         ap.error('--seed-start must be non-negative')
     if args.progress_every < 0:
         ap.error('--progress-every must be non-negative')
+    if args.max_simulation_errors is not None and args.max_simulation_errors < 0:
+        ap.error('--max-simulation-errors must be non-negative')
     run_batch(args)
 
 
