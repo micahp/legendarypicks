@@ -41,12 +41,14 @@ RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
 
 
-def load_position_usage(db=e1.DEFAULT_DB):
+def load_position_usage(db=e1.DEFAULT_DB, eligible_before=None):
     """Measure ball-carrier and target position shares on the E1 historical window.
 
     Position is joined by GSIS ID to the canonical NFL player table. Unmatched
     or unusual positions remain counted as unclassified rather than guessed.
+    With `eligible_before`, only plays before the cutoff are counted.
     """
+    cut_sql, cut_args = _cutoff_sql(eligible_before, alias='n.')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         result = {}
@@ -58,8 +60,8 @@ def load_position_usage(db=e1.DEFAULT_DB):
                 LEFT JOIN players p ON p.nfl_gsis_id=n.{player_column} AND lower(p.league)='nfl'
                 WHERE n.season BETWEEN 2022 AND 2025 AND n.week <= 18
                   AND n.play_type=?
-                  AND n.{player_column} IS NOT NULL
-                GROUP BY COALESCE(p.position, 'UNMAPPED')""", (play_type,)).fetchall()
+                  AND n.{player_column} IS NOT NULL{cut_sql}
+                GROUP BY COALESCE(p.position, 'UNMAPPED')""", (play_type, *cut_args)).fetchall()
             counts = {position: int(count) for position, count in rows}
             eligible = {position: counts.get(position, 0) for position in allowed if counts.get(position, 0)}
             denominator = sum(eligible.values())
@@ -161,21 +163,16 @@ def _reference_fingerprint(reference):
     return summary
 
 
-def _before_cutoff(season, week, eligible_before):
-    """True when a record's (season, week) is strictly before the cutoff, or when there is no cutoff."""
-    if eligible_before is None:
-        return True
-    cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
-    season, week = int(season), int(week)
-    return season < cutoff_season or (season == cutoff_season and week < cutoff_week)
+_before_cutoff = mk.before_cutoff  # one definition, shared with the kick-results loaders
 
 
-def _cutoff_sql(eligible_before):
-    """SQL clause and arguments for the same cutoff, for tables that carry season and week."""
+def _cutoff_sql(eligible_before, alias=''):
+    """SQL clause and arguments for the same cutoff, for tables that carry season and week. `alias` qualifies the columns."""
     if eligible_before is None:
         return '', ()
     cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
-    return ' AND (season < ? OR (season = ? AND week < ?))', (cutoff_season, cutoff_season, cutoff_week)
+    return (f' AND ({alias}season < ? OR ({alias}season = ? AND {alias}week < ?))',
+            (cutoff_season, cutoff_season, cutoff_week))
 
 
 def load_blocked_kicks(path=BLOCKED_KICKS, eligible_before=None):
@@ -369,11 +366,15 @@ def load_safety_kick_pool(path=SAFETY_KICKS, eligible_before=None):
     return pool, source_hash
 
 
-def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
-    """Historical defense start spots immediately following a missed kick, by E1 field-position bucket."""
+def load_missed_field_goal_pool(db=e1.DEFAULT_DB, eligible_before=None):
+    """Historical defense start spots immediately following a missed kick, by E1 field-position bucket.
+
+    With `eligible_before`, only misses before the cutoff are used. The following snap is in the same game and drive, so it
+    shares the miss's week and cannot be later than the cutoff when the miss is not."""
+    cut_sql, cut_args = _cutoff_sql(eligible_before, alias='fg.')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
-        rows = con.execute("""SELECT fg.game_id, fg.play_id, fg.yardline_100, fg.qtr, fg.drive,
+        rows = con.execute(f"""SELECT fg.game_id, fg.play_id, fg.yardline_100, fg.qtr, fg.drive,
                     next.play_id, next.yardline_100
                 FROM nfl_pbp fg
                 JOIN nfl_pbp next
@@ -385,8 +386,8 @@ def load_missed_field_goal_pool(db=e1.DEFAULT_DB):
                        AND n.posteam=fg.defteam AND n.play_type IN ('run','pass'))
                WHERE fg.season BETWEEN 2022 AND 2025 AND fg.week <= 18
                  AND fg.play_type='field_goal' AND fg.series_result='Missed field goal'
-                 AND fg.yardline_100 IS NOT NULL AND fg.drive IS NOT NULL
-               ORDER BY fg.game_id, fg.play_id""").fetchall()
+                 AND fg.yardline_100 IS NOT NULL AND fg.drive IS NOT NULL{cut_sql}
+               ORDER BY fg.game_id, fg.play_id""", cut_args).fetchall()
     finally:
         con.close()
     pools = {bucket: [] for bucket in gs.FG_BUCKETS}
