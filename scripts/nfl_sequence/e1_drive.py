@@ -335,6 +335,11 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if kick_outcome:
             play['outcome']['blocked_kick'] = kick_outcome
         plays.append(play)
+        if (quarter_change and kick_outcome is not None
+                and kick_outcome.get('classification_status') == 'period_expired'):
+            # A period-ending blocked kick has no observed next possession or field position. Q1/Q3 continue the game,
+            # so do not carry a null scrimmage state into the next quarter or invent who gets the ball.
+            return halt('blocked_kick_period_expired_next_possession_unresolved')
         st = {'quarter': next_quarter, 'offense': after['offense'], 'defense': after['defense'],
               'down': after['down'], 'togo': after['togo'], 'yl': yl_after, 'clock': state_clock_after}
     return plays, terminal
