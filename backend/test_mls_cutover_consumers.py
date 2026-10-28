@@ -140,3 +140,36 @@ def test_a_named_game_whose_day_cannot_be_established_fails_closed(cutover_on):
     for game_id in (3, 4, 999):  # no date, an unreadable date, and a game that does not exist
         assert _core._resolve_player_for_ingest(w.con, "Dara Quill", "Club01", "mls", game_id=game_id) == (None, None), \
             "a named game whose day cannot be established must fail closed (game %s)" % game_id
+
+
+def test_props_show_the_current_club_for_upcoming_games_and_the_stored_club_for_past_games(cutover_on):
+    import mls_resolution as mr
+    w = acc.World()
+    w.cycle(acc.D1)
+    w.move(6, "Club02")           # person 6 changed clubs; players.team keeps the old value
+    w.cycle(acc.D2)
+    w.con.execute("CREATE TABLE IF NOT EXISTS prop_games(id INTEGER PRIMARY KEY, league TEXT, date TEXT, home TEXT, "
+                  "away TEXT, start_time TEXT)")
+    w.con.execute("INSERT INTO prop_games VALUES(1,'mls','2026-10-27','Club01','Club03',NULL)")
+    w.con.execute("INSERT INTO prop_games VALUES(2,'mls','2099-01-01','Club01','Club03',NULL)")
+    expr = mr.club_now_sql("pl.id", "pl.league", "pl.team", "NULL", "pg.date >= date('now')")
+    sql = "SELECT {} FROM players pl JOIN prop_games pg ON pg.id = ? AND pl.id = 6".format(expr)
+    assert w.con.execute(sql, (2,)).fetchone()[0] == "Club02", "an upcoming game shows the current club"
+    assert w.con.execute(sql, (1,)).fetchone()[0] == "Club01", "a past game keeps the club it was played for"
+
+
+def test_player_stats_club_for_a_departed_mls_player_is_the_season_club_not_the_stale_stored_one(cutover_on):
+    import mls_resolution as mr
+    w = _world_with_departed_person()
+    w.con.execute("CREATE TABLE IF NOT EXISTS player_stats(player_id INTEGER, league TEXT, team TEXT)")
+    w.con.execute("INSERT INTO player_stats VALUES(5, 'mls', 'Season Club')")
+    expr = mr.club_now_sql("ps.player_id", "p.league", "COALESCE(p.team, ps.team)", "ps.team")
+    sql = "SELECT {} FROM player_stats ps JOIN players p ON p.id = ps.player_id".format(expr)
+    assert w.con.execute(sql).fetchone()[0] == "Season Club", "a departed person's stored club is never shown as current"
+
+
+def test_with_the_cutover_off_the_club_expressions_are_the_legacy_sql(cutover_off):
+    import mls_resolution as mr
+    assert mr.club_now_sql("pl.id", "pl.league", "pl.team", "NULL", "pg.date >= date('now')") == "pl.team"
+    assert mr.club_now_sql("ps.player_id", "p.league", "COALESCE(p.team, ps.team)", "ps.team") == \
+        "COALESCE(p.team, ps.team)"

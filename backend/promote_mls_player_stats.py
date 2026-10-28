@@ -94,6 +94,7 @@ def plan(src: sqlite3.Connection, dst: sqlite3.Connection) -> dict:
 
     shared = [c for c in _stats_columns(src) if c in set(_stats_columns(dst)) and c != "id"]
 
+    import mls_resolution
     to_update, to_insert, new_players, unresolvable = [], [], [], []
     for row in src.execute(
         """SELECT ps.*, p.espn_id AS _espn_id, p.name AS _p_name, p.team AS _p_team,
@@ -112,6 +113,12 @@ def plan(src: sqlite3.Connection, dst: sqlite3.Connection) -> dict:
                                  "reason": "no espn_id on the source players row"})
             continue
         target_id = dst_by_espn.get(espn_id)
+        if target_id is None and mls_resolution.CUTOVER_ENABLED:
+            # With the cutover on, a new MLS person is created only by identity onboarding, which corroborates the
+            # publisher keys. A stats promotion would create one from a sidecar's stored club, with no corroboration.
+            unresolvable.append({"src_player_id": row["player_id"], "name": row["player_name"],
+                                 "reason": "new MLS players are created only by identity onboarding"})
+            continue
         record = {
             "espn_id": espn_id,
             "src_player_id": row["player_id"],

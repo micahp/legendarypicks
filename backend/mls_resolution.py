@@ -93,6 +93,26 @@ def current_team(con, player_id):
     return members[player_id]["team"]
 
 
+def club_now_sql(player_id, league, legacy, mls_missing, upcoming=None):
+    """SQL for the club a player is on now, for display and attribution.
+
+    With the cutover off, returns `legacy` unchanged, so production's SQL does not change. With it on, an MLS player
+    in the latest snapshot gets that membership's club. An MLS player who is not a current member gets `mls_missing`
+    (never the stale stored club). `upcoming` limits the membership answer to rows where it is true; other rows keep
+    `legacy`, so past games still show the club they played for.
+    """
+    if not CUTOVER_ENABLED:
+        return legacy
+    current = ("{lg} = 'mls' AND EXISTS (SELECT 1 FROM roster_snapshots cs WHERE cs.league = 'mls' "
+               "AND cs.status = 'published')").format(lg=league)
+    if upcoming:
+        current += " AND ({})".format(upcoming)
+    member = ("(SELECT cm.team FROM roster_memberships cm JOIN roster_snapshots cs2 ON cs2.id = cm.snapshot_id "
+              "WHERE cm.player_id = {pid} AND cs2.league = 'mls' AND cs2.status = 'published')").format(pid=player_id)
+    return "(CASE WHEN {cur} THEN COALESCE({m}, {miss}) ELSE {leg} END)".format(
+        cur=current, m=member, miss=mls_missing, leg=legacy)
+
+
 def _is_mls_player(con, player_id):
     row = con.execute("SELECT league FROM players WHERE id=?", (player_id,)).fetchone()
     return row is not None and row[0] == LEAGUE
