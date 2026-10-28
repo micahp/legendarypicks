@@ -2,6 +2,7 @@
 
 Every test builds its own temporary database. Nothing touches the network or production.
 """
+import json
 import sqlite3
 
 import pytest
@@ -125,9 +126,14 @@ def test_a_namesake_without_a_bind_is_a_blocker_and_is_never_bound():
     squads["mlssoccer"].append({"source_player_key": "m9999", "name": "Player Club05 00",
                                 "team": "Club09", "position": "M", "jersey": "99"})
     result, outcome, _ = _publish(con, squads, binds, captured_at=T2)
-    assert outcome == "published"
+    # A blocker is not a membership, so the population is unchanged. The stored events and coverage still record it.
+    assert outcome == "unchanged"
     assert result.coverage == "partial"
     assert [b["source_player_key"] for b in result.blockers] == ["m9999"]
+    stored = json.loads(con.execute(
+        "SELECT source_payload FROM roster_snapshots WHERE status='published'").fetchone()[0])
+    assert stored["coverage"]["status"] == "partial"
+    assert [b["source_player_key"] for b in stored["blockers"]] == ["m9999"]
     assert _fingerprint(con) == before, "no player or bind created for the namesake"
 
 

@@ -10,8 +10,9 @@ Guarantees:
 - Identity is a lookup in existing binds. Nothing here creates a bind or a player.
 - The prior state is read from the database. Callers cannot pass prior counts.
 - Carry-forward keys are namespaced by source: (source, source_player_key).
-- The population checksum excludes the fetch timestamp. An unchanged population refreshes the verification
-  time of the current snapshot and creates no second membership set.
+- The population checksum covers the memberships only. It excludes the fetch timestamp and the events of the run
+  (transfers, departures, rekeys, carries). An unchanged population refreshes the verification time and the stored
+  events, and creates no second membership set.
 - Coverage is explicit. "verified" means every current member resolved and nothing was carried or
   unexplained. Anything else is "partial", with the measured reasons recorded in the payload.
 
@@ -253,11 +254,15 @@ def build(connection, squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tu
         "rekeys": len(c["rekeys"]),
         "memberships": len(final),
     }
-    # The payload holds the population and its coverage, never the fetch time. Every list is sorted, so the
-    # fetch order of the providers cannot change the checksum.
+    # Two kinds of state, kept apart. The population is who is on which club now, and only it decides whether a
+    # new membership set is published. The events and coverage describe what this run saw. They are stored with
+    # the population but never hashed: a repeat of an unchanged roster must not look new because a transfer or a
+    # departure happened on the run before. Every list is sorted, so the fetch order cannot change either value.
     def stable(items):
         return sorted(items, key=lambda x: json.dumps(x, sort_keys=True, ensure_ascii=False))
 
+    population = json.dumps({"league": LEAGUE, "sources": SOURCE_LABEL, "memberships": final},
+                            sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     payload = json.dumps({"league": LEAGUE, "sources": SOURCE_LABEL, "memberships": final,
                           "coverage": coverage, "blockers": stable(c["blockers"]),
                           "carried": stable(c["carried"]), "departures": stable(c["departures"]),
@@ -269,14 +274,14 @@ def build(connection, squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tu
                   blockers=c["blockers"], carried=c["carried"], departures=c["departures"],
                   single_source_departures=c["single_source_departures"], bind_changed=c["bind_changed"],
                   transfers=c["transfers"], rekeys=c["rekeys"], payload=payload,
-                  checksum=hashlib.sha256(payload.encode("utf-8")).hexdigest())
+                  checksum=hashlib.sha256(population.encode("utf-8")).hexdigest())
 
 
 def publish(connection, result: Result, captured_at: str) -> Tuple[str, Optional[int]]:
     """Returns (outcome, snapshot_id). Outcome is 'refused', 'unchanged' or 'published'.
 
-    'unchanged' refreshes the verification time of the current snapshot and creates no second membership
-    set. Callers must run inside a transaction.
+    'unchanged' refreshes the verification time and the stored events and coverage of the current snapshot, and
+    creates no second membership set. Callers must run inside a transaction.
     """
     if result.status != "publish":
         return "refused", None
@@ -284,7 +289,8 @@ def publish(connection, result: Result, captured_at: str) -> Tuple[str, Optional
         "SELECT id, source_checksum FROM roster_snapshots WHERE league=? AND status='published'",
         (LEAGUE,)).fetchone()
     if current and current[1] == result.checksum:
-        connection.execute("UPDATE roster_snapshots SET captured_at=? WHERE id=?", (captured_at, current[0]))
+        connection.execute("UPDATE roster_snapshots SET captured_at=?, source_payload=? WHERE id=?",
+                           (captured_at, result.payload, current[0]))
         return "unchanged", current[0]
     teams = len({m["team"] for m in result.memberships})
     snapshot_id = rm.publish_roster_snapshot(
@@ -297,6 +303,9 @@ def publish(connection, result: Result, captured_at: str) -> Tuple[str, Optional
         team_count=teams,
         memberships=result.memberships,
     )
+    # roster_membership stores the checksum of the whole payload. This league compares the population, so the
+    # stored checksum is the population checksum. Without this, the next identical run would never match.
+    connection.execute("UPDATE roster_snapshots SET source_checksum=? WHERE id=?", (result.checksum, snapshot_id))
     return "published", snapshot_id
 
 
