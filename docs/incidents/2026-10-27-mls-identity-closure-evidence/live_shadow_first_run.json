@@ -1,0 +1,573 @@
+{
+ "captured_at": "2026-10-28T20:08:14.179971+00:00",
+ "live_squad_counts": {
+  "fotmob": 900,
+  "mlssoccer": 955
+ },
+ "onboarding_decision_on_copy": {
+  "unbound_keys_in_live_squads": 0,
+  "unbound_keys": [],
+  "would_create_players": 0,
+  "would_rekey": 0,
+  "would_queue": [],
+  "copy_persisted_after_rollback": {
+   "players_before": 57435,
+   "players_after": 57435,
+   "binds_before": 10433,
+   "binds_after": 10433
+  }
+ },
+ "known_record_checks": {
+  "sample": 44,
+  "agree_with_audit": 39,
+  "disagree": 5,
+  "by_audit_status": {
+   "supported": 20,
+   "supported_order_unresolved": 10,
+   "biographical_disagreement": 10,
+   "mls_date_missing": 4
+  }
+ },
+ "checks": [
+  {
+   "player_id": 32960,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2006-06-30"
+   ],
+   "live_mls_dates": [
+    "2006-06-30"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58507,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2004-01-14"
+   ],
+   "live_mls_dates": [
+    "2004-01-14"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32945,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1995-02-20"
+   ],
+   "live_mls_dates": [
+    "1995-02-20"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 59048,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2005-03-25"
+   ],
+   "live_mls_dates": [
+    "2005-03-25"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 71316,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2000-08-17"
+   ],
+   "live_mls_dates": [
+    "2000-08-17"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58380,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1997-05-15"
+   ],
+   "live_mls_dates": [
+    "1997-05-15"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58594,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1996-03-11"
+   ],
+   "live_mls_dates": [
+    "1996-03-11",
+    "1996-11-03"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32750,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1995-11-30"
+   ],
+   "live_mls_dates": [
+    "1995-11-30"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58937,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2001-07-23"
+   ],
+   "live_mls_dates": [
+    "2001-07-23"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58538,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2001-04-13"
+   ],
+   "live_mls_dates": [
+    "2001-04-13"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58513,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2003-04-17"
+   ],
+   "live_mls_dates": [
+    "2003-04-17"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32925,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2000-08-29"
+   ],
+   "live_mls_dates": [
+    "2000-08-29"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32334,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2005-01-20"
+   ],
+   "live_mls_dates": [
+    "2005-01-20"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58849,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1991-11-15"
+   ],
+   "live_mls_dates": [
+    "1991-11-15"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58763,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1992-11-22"
+   ],
+   "live_mls_dates": [
+    "1992-11-22"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58486,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2008-02-22"
+   ],
+   "live_mls_dates": [
+    "2008-02-22"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58511,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2000-04-14"
+   ],
+   "live_mls_dates": [
+    "2000-04-14"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58947,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1996-03-12"
+   ],
+   "live_mls_dates": [
+    "1996-03-12",
+    "1996-12-03"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 33092,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "1989-05-31"
+   ],
+   "live_mls_dates": [
+    "1989-05-31"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58505,
+   "audit_status": "supported",
+   "live_fotmob_dates": [
+    "2003-11-14"
+   ],
+   "live_mls_dates": [
+    "2003-11-14"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 59018,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "1995-03-08"
+   ],
+   "live_mls_dates": [
+    "1995-03-08",
+    "1995-08-03"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32852,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "2001-01-05"
+   ],
+   "live_mls_dates": [
+    "2001-01-05",
+    "2001-05-01"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58829,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "1997-08-06"
+   ],
+   "live_mls_dates": [
+    "1997-06-08",
+    "1997-08-06"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32957,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "1998-05-02"
+   ],
+   "live_mls_dates": [
+    "1998-02-05",
+    "1998-05-02"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 33090,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "2002-02-01"
+   ],
+   "live_mls_dates": [
+    "2002-01-02",
+    "2002-02-01"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58602,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "2001-02-05"
+   ],
+   "live_mls_dates": [
+    "2001-02-05",
+    "2001-05-02"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 32876,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "1997-08-08"
+   ],
+   "live_mls_dates": [
+    "1997-08-08"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58782,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "1988-08-10"
+   ],
+   "live_mls_dates": [],
+   "live_corroborated": false,
+   "agrees_with_audit": false
+  },
+  {
+   "player_id": 71432,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "2007-02-09"
+   ],
+   "live_mls_dates": [
+    "2007-02-09",
+    "2007-09-02"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58651,
+   "audit_status": "supported_order_unresolved",
+   "live_fotmob_dates": [
+    "2008-10-08"
+   ],
+   "live_mls_dates": [
+    "2008-08-10",
+    "2008-10-08"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58909,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2002-07-26"
+   ],
+   "live_mls_dates": [
+    "2002-07-16"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58334,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2002-12-13"
+   ],
+   "live_mls_dates": [
+    "2002-12-03"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 59005,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2001-11-01"
+   ],
+   "live_mls_dates": [
+    "2001-11-12",
+    "2001-12-11"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58965,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2003-05-13"
+   ],
+   "live_mls_dates": [
+    "2003-05-15"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 52100,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2004-01-04"
+   ],
+   "live_mls_dates": [
+    "2004-01-07",
+    "2004-07-01"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58376,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "1995-08-24"
+   ],
+   "live_mls_dates": [
+    "1995-08-25"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 71232,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2003-02-16"
+   ],
+   "live_mls_dates": [
+    "2003-02-17"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 33067,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2001-08-30"
+   ],
+   "live_mls_dates": [
+    "2001-08-29"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58767,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "2000-07-18"
+   ],
+   "live_mls_dates": [
+    "2000-07-20"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58996,
+   "audit_status": "biographical_disagreement",
+   "live_fotmob_dates": [
+    "1994-05-24"
+   ],
+   "live_mls_dates": [
+    "1994-05-25"
+   ],
+   "live_corroborated": false,
+   "agrees_with_audit": true
+  },
+  {
+   "player_id": 58495,
+   "audit_status": "mls_date_missing",
+   "live_fotmob_dates": [
+    "1998-06-11"
+   ],
+   "live_mls_dates": [
+    "1998-06-11",
+    "1998-11-06"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": false
+  },
+  {
+   "player_id": 59030,
+   "audit_status": "mls_date_missing",
+   "live_fotmob_dates": [
+    "1993-05-19"
+   ],
+   "live_mls_dates": [
+    "1993-05-19"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": false
+  },
+  {
+   "player_id": 58508,
+   "audit_status": "mls_date_missing",
+   "live_fotmob_dates": [
+    "2004-06-13"
+   ],
+   "live_mls_dates": [
+    "2004-06-13"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": false
+  },
+  {
+   "player_id": 58489,
+   "audit_status": "mls_date_missing",
+   "live_fotmob_dates": [
+    "1995-04-02"
+   ],
+   "live_mls_dates": [
+    "1995-02-04",
+    "1995-04-02"
+   ],
+   "live_corroborated": true,
+   "agrees_with_audit": false
+  }
+ ]
+}

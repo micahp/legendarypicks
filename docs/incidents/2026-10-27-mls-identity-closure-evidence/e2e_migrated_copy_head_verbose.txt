@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.10, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+rootdir: /root/lp-mls-integrate/backend
+plugins: anyio-4.5.2
+collecting ... collected 2 items
+
+test_mls_cutover_e2e.py::test_end_to_end_roster_job PASSED               [ 50%]
+test_mls_cutover_e2e.py::test_legacy_path_untouched_when_cutover_off PASSED [100%]
+
+============================== 2 passed in 20.99s ==============================
