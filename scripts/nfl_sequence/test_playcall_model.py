@@ -1,14 +1,17 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import playcall_model as pm  # noqa: E402
+import run_playcall_eval as rpe  # noqa: E402
 
-KEYS = ('season', 'team', 'down', 'dist', 'field', 'score', 'clock', 'y', 'flagged', 'game')
+KEYS =('season', 'team', 'down', 'dist', 'field', 'score', 'clock', 'y', 'flagged', 'game')
 
 
 def frame_from(rows, teams=None):
@@ -185,6 +188,140 @@ class Query(unittest.TestCase):
         self.assertEqual(counts['dropbacks'], 1)
         self.assertAlmostEqual(counts['observed_dropback_rate'], 0.5)
         self.assertEqual(counts['seasons'], [2010, 2011])
+
+
+def synthetic_frame(seed=11, n=3000):
+    rng = np.random.default_rng(seed)
+    score = rng.integers(0, 15, n)
+    arrays = {'season': rng.integers(2010, 2026, n), 'team': rng.integers(0, 4, n), 'down': rng.integers(0, 4, n),
+              'dist': rng.integers(0, 6, n), 'field': rng.integers(0, 5, n), 'score': score, 'clock': rng.integers(0, 8, n),
+              'y': (rng.random(n) < 0.3 + 0.4 * (score > 7)).astype(np.int64), 'flagged': np.zeros(n, dtype=bool),
+              'game': np.zeros(n, dtype=np.int64)}
+    return pm.Frame(arrays, {'AAA': 0, 'BBB': 1, 'CCC': 2, 'DDD': 3})
+
+
+def with_outcomes_flipped(frame, seasons):
+    arrays = dict(frame.a)
+    arrays['y'] = np.where(np.isin(frame.a['season'], seasons), 1 - frame.a['y'], frame.a['y'])
+    return pm.Frame(arrays, frame.teams)
+
+
+def tune_outcome(frame):
+    with mock.patch.object(rpe, 'log'):
+        penalties, tau, validation = rpe.tune(pm.Design(frame), frame, rpe.Timer())
+    return penalties, tau, validation
+
+
+class Chronology(unittest.TestCase):
+    def test_a_test_season_never_enters_its_own_training_rows(self):
+        frame = synthetic_frame()
+        primary = ~frame.a['flagged']
+        for test_season in (2024, 2025):
+            train = rpe.rows_for(frame.a['season'], primary, range(2010, test_season), primary=True)
+            test = rpe.rows_for(frame.a['season'], primary, (test_season,), primary=True)
+            self.assertGreater(len(train), 0)
+            self.assertTrue(np.all(frame.a['season'][train] < test_season))
+            self.assertTrue(np.all(frame.a['season'][test] == test_season))
+
+    def test_a_split_that_includes_the_test_season_is_detected(self):
+        frame = synthetic_frame()
+        leaking = rpe.rows_for(frame.a['season'], ~frame.a['flagged'], range(2010, 2025), primary=True)
+        self.assertTrue(np.any(frame.a['season'][leaking] == 2024))
+
+
+class TuningIsolation(unittest.TestCase):
+    def test_penalties_and_recency_do_not_change_when_2024_or_2025_outcomes_change(self):
+        frame = synthetic_frame()
+        penalties, tau, _ = tune_outcome(frame)
+        flipped_penalties, flipped_tau, _ = tune_outcome(with_outcomes_flipped(frame, (2024, 2025)))
+        self.assertEqual(flipped_penalties, penalties)
+        self.assertEqual(flipped_tau, tau)
+
+    def test_the_validation_loss_does_change_when_2023_outcomes_change(self):
+        frame = synthetic_frame()
+        _, _, validation = tune_outcome(frame)
+        _, _, flipped = tune_outcome(with_outcomes_flipped(frame, (2023,)))
+        self.assertNotAlmostEqual(flipped, validation, places=6)
+
+
+def tiny_frame():
+    return frame_from([(2012, 0, 1, 2, 2, 7, 3, 1, False, 0), (2012, 0, 0, 0, 0, 7, 3, 0, False, 1)])
+
+
+def observed_play(**overrides):
+    row = {'intent': 'run', 'down': 1, 'ydstogo': 10, 'yardline_100': 50, 'qtr': 1, 'seconds_in_quarter': 900,
+           'score_status': 'pre_play_nflverse_raw', 'season': 2012, 'score_differential': 0, 'posteam': 'AAA',
+           'game_id': '2012_01_AAA_BBB'}
+    row.update(overrides)
+    return row
+
+
+class GameIdentity(unittest.TestCase):
+    def test_each_play_keeps_its_own_game(self):
+        rows = [observed_play(), observed_play(), observed_play(game_id='2012_02_AAA_CCC')]
+        with mock.patch.object(pm.pco, 'observations', lambda *args, **kwargs: iter(rows)):
+            frame = pm.load_frame((2012,))
+        self.assertEqual(frame.games, ['2012_01_AAA_BBB', '2012_02_AAA_CCC'])
+        self.assertEqual(frame.a['game'].tolist(), [0, 0, 1])
+
+
+class CacheFingerprint(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = Path(self.tmp.name) / 'frame.npz'
+        self.db = Path(self.tmp.name) / 'db.sqlite3'
+        self.db.write_bytes(b'x' * 10)
+
+    def test_a_cache_is_reused_only_when_its_fingerprint_matches(self):
+        with mock.patch.object(pm, 'source_fingerprint', return_value='A'), \
+                mock.patch.object(pm, 'load_frame', return_value=tiny_frame()):
+            first = pm.load_frame_cached(self.path, (2012,), db=self.db)
+        self.assertEqual(first.cache_status, 'miss')
+        with mock.patch.object(pm, 'source_fingerprint', return_value='A'), \
+                mock.patch.object(pm, 'load_frame', side_effect=AssertionError('the cache should have been used')):
+            hit = pm.load_frame_cached(self.path, (2012,), db=self.db)
+        self.assertEqual(hit.cache_status, 'hit')
+        with mock.patch.object(pm, 'source_fingerprint', return_value='B'), \
+                mock.patch.object(pm, 'load_frame', return_value=tiny_frame()) as rebuild:
+            stale = pm.load_frame_cached(self.path, (2012,), db=self.db)
+        self.assertEqual(stale.cache_status, 'rebuilt')
+        rebuild.assert_called_once()
+
+    def test_a_cache_without_a_fingerprint_is_rebuilt(self):
+        frame = tiny_frame()
+        np.savez(self.path, team_codes=np.array(['AAA']), seasons_built=np.array([2012]), include_flagged=np.array(True),
+                 **{k: frame.a[k] for k in pm.FRAME_KEYS})
+        with mock.patch.object(pm, 'source_fingerprint', return_value='A'), \
+                mock.patch.object(pm, 'load_frame', return_value=frame):
+            self.assertEqual(pm.load_frame_cached(self.path, (2012,), db=self.db).cache_status, 'rebuilt')
+
+    def test_the_fingerprint_changes_when_the_database_changes(self):
+        with mock.patch.object(pm.pco, 'score_source', lambda season: ('unused', 'pin')):
+            before = pm.source_fingerprint((2012,), self.db, True)
+            self.db.write_bytes(b'x' * 11)
+            after = pm.source_fingerprint((2012,), self.db, True)
+        self.assertNotEqual(before, after)
+
+
+class ScenarioSource(unittest.TestCase):
+    def test_scenarios_are_scored_with_the_full_hierarchical_coefficients(self):
+        frame = synthetic_frame()
+        design = pm.Design(frame)
+        full_width = len(design.columns(pm.GROUP_NAMES))
+        no_team_width = len(design.columns(tuple(g for g in pm.GROUP_NAMES if g != 'team_down')))
+        self.assertLess(no_team_width, full_width)  # the check below can tell the two fits apart
+        widths = []
+        original = rpe.scenario_table
+
+        def record(frame_arg, design_arg, prep_cols, beta, train_rows):
+            widths.append(len(prep_cols))
+            return original(frame_arg, design_arg, prep_cols, beta, train_rows)
+
+        with mock.patch.object(rpe, 'scenario_table', record), mock.patch.object(rpe, 'log'):
+            rpe.evaluate_tests(frame, design, {g: 10.0 for g in pm.GROUP_NAMES}, None, rpe.Timer())
+        self.assertEqual(len(widths), 4)
+        self.assertTrue(all(width == full_width for width in widths))
 
 
 if __name__ == '__main__':
