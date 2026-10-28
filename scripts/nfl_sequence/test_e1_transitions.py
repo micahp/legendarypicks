@@ -135,6 +135,24 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
         e1.check_drive(plays, terminal)
 
+    def test_blocked_kick_at_q1_expiry_blocks_when_next_possession_is_unknown(self):
+        def block(event, st, row, runoff, spot, rng):
+            self.assertEqual(event, 'field_goal_attempt')
+            return {'event': 'blocked_field_goal', 'clock_runoff_seconds': 1,
+                    'kick_outcome': {'kick_type': 'field_goal', 'classification_status': 'period_expired'}}
+
+        partial = []
+        plays, blocker = e1.simulate(start(1, 1, yl=60, down=4, togo=5), 1,
+                                     FakePool(('field_goal_attempt', 0, 1, None)), 'e1-blocked-fg-q1-expiry',
+                                     special_teams=block, partial=partial)
+
+        self.assertIsNone(plays)
+        self.assertEqual(blocker, 'blocked_kick_period_expired_next_possession_unresolved')
+        self.assertEqual(len(partial), 1)
+        self.assertEqual(partial[0]['event_type'], 'blocked_field_goal')
+        self.assertEqual(partial[0]['state_after']['quarter'], 2)
+        self.assertEqual(partial[0]['state_after']['clock_seconds'], e1.QUARTER_LENGTH)
+
     def test_a_fourth_down_turnover_keeps_turnover_on_downs_in_the_outcome(self):
         plays, terminal = e1.simulate(start(1, 600, yl=50, down=4, togo=10), 1,
                                       FakePool(('run', 0, 10, None)), 'e1-turnover-on-downs')
