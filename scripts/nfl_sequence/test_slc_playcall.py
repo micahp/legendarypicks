@@ -1,0 +1,140 @@
+import random
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import e1_drive as e1  # noqa: E402
+import playcall_model as pm  # noqa: E402
+import slc_playcall as slc  # noqa: E402
+
+TEAMS = {'AAA': 0, 'BBB': 1}
+SIZES = {'down_dist': 24, 'field': 5, 'score': 15, 'clock': 8, 'score_clock': 120, 'down_field': 20}
+
+
+def blank_artifact(intercept, teams=('AAA', 'BBB'), blocks=None):
+    sizes = dict(SIZES, team_down=4 * len(teams))
+    blocks = blocks or {g: [0.0] * n for g, n in sizes.items()}
+    artifact = {'artifact_id': slc.ARTIFACT_ID, 'reference_season': 2026, 'recency_tau': 3.0, 'fit_seasons': [2010],
+                'primary_plays_only': True, 'penalties': {}, 'fit_iterations': 0, 'plays': 0, 'frame_sha256': 'test',
+                'teams': list(teams), 'intercept': intercept, 'blocks': blocks, 'bucket_maps': {}, 'season_effect': 'test'}
+    artifact['sha256'] = slc._sha(artifact)
+    return artifact
+
+
+def cell(events_and_types):
+    rows = []
+    for i, (event, play_type) in enumerate(events_and_types):
+        row = {'game_id': '2025_01_AAA_BBB', 'play_id': i, 'season': 2025, 'down': 1, 'ydstogo': 10, 'yardline_100': 50,
+               'play_type': play_type, 'posteam': 'AAA'}
+        rows.append((event, row, 6.0, 52))
+    return rows
+
+
+STATE = {'quarter': 2, 'clock': 500, 'down': 1, 'togo': 10, 'yl': 50, 'score_diff': 0}
+
+
+class Layer(unittest.TestCase):
+    def test_a_tampered_artifact_is_refused(self):
+        artifact = blank_artifact(0.0)
+        artifact['intercept'] = 5.0
+        with self.assertRaises(ValueError):
+            slc.PlayCallLayer(artifact)
+
+    def test_the_layer_gives_the_same_probability_as_the_fitted_model(self):
+        frame = synthetic_frame()
+        penalties = {g: 10.0 for g in pm.GROUP_NAMES}
+        artifact = slc.freeze(frame, penalties, 3.0, 2026)
+        layer = slc.PlayCallLayer(artifact)
+        design = pm.Design(frame)
+        rows = np.arange(len(frame))
+        prep = pm.prepare(design, rows, pm.GROUP_NAMES)
+        weights = pm.recency_weights(frame.a['season'], 2026, 3.0)
+        beta, _ = pm.fit_prepared(design, prep, frame.a['y'].astype(float), weights, penalties)
+        expected = pm.modelled_probability(design, prep['cols'], beta, frame.teams, 1, 2, 'opp_side', 7, 'q3', team='AAA')
+        self.assertAlmostEqual(layer.p_dropback(1, 2, 40, 7, 3, 300, 'AAA'), expected, places=9)
+
+    def test_a_trailing_team_late_in_the_half_is_more_likely_to_throw(self):
+        frame = synthetic_frame(score_effect=True)
+        layer = slc.PlayCallLayer(slc.freeze(frame, {g: 10.0 for g in pm.GROUP_NAMES}, 3.0, 2026))
+        trailing = layer.p_dropback(2, 6, 40, -7, 4, 90, 'AAA')
+        leading = layer.p_dropback(2, 6, 40, 7, 4, 90, 'AAA')
+        self.assertGreater(trailing, leading)
+
+    def test_an_unknown_team_adds_no_team_effect(self):
+        layer = slc.PlayCallLayer(blank_artifact(0.0, blocks=dict(
+            {g: [0.0] * n for g, n in SIZES.items()}, team_down=[0.0] * 4 + [3.0] * 4)))
+        self.assertAlmostEqual(layer.logit(1, 10, 50, 0, 1, 500, 'ZZZ'), layer.logit(1, 10, 50, 0, 1, 500))
+
+
+class Sampler(unittest.TestCase):
+    def test_a_near_certain_dropback_draws_only_dropback_outcomes(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('run', 'run'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass'), ('sack', 'pass')])
+        rng = random.Random(1)
+        drawn = {sampler.sample(rng, pool, 'A', 'B', state=STATE)[0] for _ in range(200)}
+        self.assertEqual(drawn, {'pass_complete', 'pass_incomplete', 'sack'})
+        self.assertTrue(all(d['intent'] == 'dropback' for d in sampler.decisions))
+
+    def test_a_near_certain_run_draws_only_runs(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('run', 'run'), ('pass_complete', 'pass')])
+        rng = random.Random(1)
+        drawn = {sampler.sample(rng, pool, 'A', 'B', state=STATE)[0] for _ in range(200)}
+        self.assertEqual(drawn, {'run'})
+
+    def test_the_play_is_chosen_before_the_outcome_and_every_decision_is_recorded(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('run', 'run'), ('pass_complete', 'pass')])
+        event, row, runoff, spot = sampler.sample(random.Random(2), pool, 'A', 'B', state=STATE)
+        decision = sampler.decisions[-1]
+        self.assertEqual(decision['event'], event)
+        self.assertEqual(decision['source']['game_id'], row['game_id'])
+        self.assertEqual(decision['artifact_sha256'], sampler.layer.artifact['sha256'])
+        self.assertEqual(decision['state']['team'], 'AAA')
+        self.assertAlmostEqual(decision['p_dropback'], 0.5, places=6)
+
+    def test_a_missing_intent_in_the_cell_fails_closed(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        with self.assertRaises(e1.SamplingUnavailable):
+            sampler.sample(random.Random(3), cell([('run', 'run')]), 'A', 'B', state=STATE)
+
+    def test_missing_state_fails_closed(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        with self.assertRaises(e1.SamplingUnavailable):
+            sampler.sample(random.Random(4), cell([('run', 'run'), ('pass_complete', 'pass')]), 'A', 'B')
+        with self.assertRaises(e1.SamplingUnavailable):
+            sampler.sample(random.Random(4), cell([('run', 'run'), ('pass_complete', 'pass')]), 'A', 'B',
+                           state=dict(STATE, score_diff=None))
+
+    def test_kick_outcomes_keep_their_historical_share_and_are_marked_as_a_fallback(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('punt', 'punt'), ('run', 'run'), ('pass_complete', 'pass')])
+        rng = random.Random(5)
+        for _ in range(600):
+            sampler.sample(rng, pool, 'A', 'B', state=STATE)
+        kicks = [d for d in sampler.decisions if d['intent'] == 'kick']
+        self.assertTrue(0.28 < len(kicks) / 600 < 0.39)  # one punt in three cell rows
+        self.assertTrue(all(d['fallback'] for d in kicks))
+
+
+def synthetic_frame(seed=11, n=4000, score_effect=False):
+    rng = np.random.default_rng(seed)
+    season = rng.integers(2010, 2026, n)
+    score = rng.integers(0, 15, n)
+    if score_effect:
+        p = np.where(score < 7, 0.8, 0.3)
+    else:
+        p = 0.3 + 0.4 * (score > 7)
+    arrays = {'season': season, 'team': rng.integers(0, 2, n), 'down': rng.integers(0, 4, n),
+              'dist': rng.integers(0, 6, n), 'field': rng.integers(0, 5, n), 'score': score, 'clock': rng.integers(0, 8, n),
+              'y': (rng.random(n) < p).astype(np.int64), 'flagged': np.zeros(n, dtype=bool),
+              'game': np.zeros(n, dtype=np.int64)}
+    return pm.Frame(arrays, TEAMS)
+
+
+if __name__ == '__main__':
+    unittest.main()
