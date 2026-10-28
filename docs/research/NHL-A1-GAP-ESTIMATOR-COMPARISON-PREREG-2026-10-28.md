@@ -20,6 +20,7 @@ The new code is needed because the frozen A0/A1 harness has neither pooled-distr
 - Parent diagnostic: commit `38e181418500be26df61a8b12fe42c78750d9292`.
 - Frozen A0/A1 timing kernel SHA-256: `ea54dc59dd6df7a4372b506cc6a9105eda023abdf2de0017eece805722788773`.
 - Frozen sequence extractor SHA-256: `dd19648ffbb3c5b3a74b98490e62f71dfd6c990a2d4093c42b22c583ce7280bb`.
+- Frozen eligible-sequence cache SHA-256: `9cfba618ded78ed92ad2cb6e15be64b493ef768fc8d094669f2a9138ec5275b2`.
 - Parent diagnostic JSON SHA-256: `23edf72783ae694062051ec5adac53509eff22e3772bc28b5ebfd1e2ab6280a9`.
 - Training: eligible 2019 and 2020 source games only. Development: the identical eligible 2021 population and transition definitions in the parent diagnostic. The 2021 season is exposed development data, never a fresh holdout.
 - A0 and A1 source, metrics, marks, seeds, and previous results remain byte-for-byte unchanged.
