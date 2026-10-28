@@ -76,7 +76,7 @@ def load(db, eligible_before=None):
     if eligible_before is None:
         return load_seasons(db, POOL_SEASONS)
     season, week = (int(value) for value in eligible_before)
-    holdout.refuse_if_holdout(season, 'pool cutoff')
+    holdout.refuse_unless_cutoff(season, 'pool cutoff', eligible_before)
     if season < min(POOL_SEASONS) or week < 1 or week > 18:
         raise ValueError('dynamic pool cutoff must be week 1-18 of 2022 or later')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)

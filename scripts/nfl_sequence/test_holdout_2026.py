@@ -34,8 +34,8 @@ class HoldoutSeason(unittest.TestCase):
             con.commit()
             con.close()
             self.assertEqual({row['season'] for row in e1.load(db)}, {2025})
-            with self.assertRaises(ValueError):
-                e1.load(db, eligible_before=(2026, 5))
+            self.assertEqual({row['season'] for row in e1.load(db, eligible_before=(2026, 5))}, {2025, 2026})
+            self.assertEqual({row['season'] for row in e1.load(db, eligible_before=(2026, 1))}, {2025})
             with self.assertRaises(ValueError):
                 e1.load_seasons(db, (2025, 2026))
 
@@ -47,6 +47,12 @@ class EveryReadPathRefusesTheHoldout(unittest.TestCase):
             holdout.refuse_if_holdout(2026, 'test')
         with self.assertRaises(ValueError):
             holdout.refuse_if_holdout(2027, 'test')
+
+    def test_a_2026_read_needs_a_pregame_cutoff(self):
+        holdout.refuse_unless_cutoff(2026, 'test', '2026-10-20T12:00:00Z')
+        with self.assertRaises(ValueError):
+            holdout.refuse_unless_cutoff(2026, 'test', None)
+        holdout.refuse_unless_cutoff(2025, 'test', None)
 
     def test_pregame_context_refuses_a_2026_matchup_before_any_table_is_read(self):
         matchup = {'game_id': '2026_05_AAA_BBB', 'season': 2026, 'week': 5, 'game_type': 'REG',
@@ -67,7 +73,7 @@ class EveryReadPathRefusesTheHoldout(unittest.TestCase):
             'home_team': 'AAA', 'away_team': 'BBB'}}
         self.assertEqual(batch._baseline_v1('/nonexistent/picks.db', snapshot)['status'], 'unavailable')
 
-    def test_pregame_snapshot_refuses_a_2026_game_row(self):
+    def test_pregame_snapshot_keeps_its_missing_input_checks_for_2026(self):
         with tempfile.TemporaryDirectory() as tmp:
             db = str(Path(tmp) / 'schedule.sqlite3')
             con = sqlite3.connect(db)
@@ -76,11 +82,14 @@ class EveryReadPathRefusesTheHoldout(unittest.TestCase):
                         'ingested_at TEXT)')
             con.execute("INSERT INTO nfl_schedule VALUES ('2026_08_AAA_BBB', 2026, 'REG', 8, '2026-10-29', '20:15', "
                         "'AAA', 'BBB', 'Home', 'test', '2026-10-01 00:00:00')")
+            con.execute('CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id TEXT, gsis_id TEXT, '
+                        'player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT)')
             con.commit()
             con.close()
+            # 2026 is readable with a cutoff, so the build reaches the depth chart and must still refuse a missing one
             with self.assertRaises(ValueError) as caught:
                 ps.build(db, '2026_08_AAA_BBB', '2026-10-28T12:00:00Z', allow_unverified_current_schedule_exploratory=True)
-            self.assertIn('holdout', str(caught.exception))
+            self.assertIn('no pregame depth-chart rows', str(caught.exception))
 
     def test_replay_evaluation_refuses_a_2026_forecast_payload(self):
         with self.assertRaises(ValueError) as caught:
