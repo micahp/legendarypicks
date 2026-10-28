@@ -1092,8 +1092,29 @@ def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, so
     """
     import mls_resolution
     if mls_resolution.CUTOVER_ENABLED and league in ("mls", "lcup"):
+        if as_of is None:
+            as_of = _game_day_if_past(con, game_id)
         return mls_resolution.resolve(con, player_name, team, league, as_of, _resolve_player_for_ingest_legacy)
     return _resolve_player_for_ingest_legacy(con, player_name, team, league, source=source, game_id=game_id)
+
+
+def _game_day_if_past(con, game_id):
+    """The day a prop's game was played, when that day is already past. None for today, later, or no game.
+
+    A past game resolves against the membership on its own day, so a player who has since left is still
+    attributed to the games he played for that club. Today and later use the current membership.
+    """
+    import datetime as _dt
+    if not game_id:
+        return None
+    row = con.execute("SELECT date, start_time FROM prop_games WHERE id=?", (game_id,)).fetchone()
+    if not row:
+        return None
+    try:
+        day = _dt.date.fromisoformat(str(row[0] or row[1] or "")[:10])
+    except ValueError:
+        return None
+    return day if day < _dt.date.today() else None
 
 
 def _resolve_player_for_ingest_legacy(con, player_name: str, team: str, league: str, source: str = "props",
