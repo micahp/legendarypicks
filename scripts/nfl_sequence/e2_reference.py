@@ -22,6 +22,20 @@ OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e
 TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
 CHOICE_MODEL = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_choice_model_2025.csv'
 KICKOFF_SEASONS = (2022, 2023, 2024, 2025)  # every season whose kickoffs can be drawn; 2026 is the holdout and is never read
+# Reference sources that are not cutoff-safe. Each holds 2022-2025 outcomes with no per-observation cutoff, or a fit on 2025
+# alone. A historical cutoff refuses to load any of them until a cutoff-safe rebuild exists (docs/research/REFERENCE-COHORT-AUDIT).
+# The default path (no cutoff, S0) keeps loading the pinned artifacts exactly as before.
+COHORT_UNSAFE_SOURCES = {
+    'blocked_kicks': 'blocked-kick records and rates over 2022-2025 (rates cannot be recomputed per cutoff yet)',
+    'safety_kicks': 'safety free-kick records over 2022-2025',
+    'overtime_drives': 'overtime drive records over 2022-2025',
+    'try_fallback': 'two-point rates by margin, aggregated over 2022-2025 with no dates',
+    'overtime_choice_model': 'overtime kick-decision fit on 2025 only',
+    'kick_table': 'published kick rates over 2022-2025 (SQL window, no cutoff)',
+    'missed_field_goal_pool': 'missed-field-goal returns over 2022-2025 (SQL window, no cutoff)',
+    'play_extras': 'participant lookup and timeout/out-of-bounds extras over 2022-2025',
+    'position_usage': 'receiver and runner usage over 2022-2025 (SQL window, no cutoff)',
+}
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
@@ -412,6 +426,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     before the cutoff season (team_tendency.py). It needs an eligible-before cutoff and cannot be combined with contextual_mode,
     because both fill the same drive-policy slot. False keeps every existing reference unchanged.
     """
+    if eligible_before is not None:
+        raise ValueError('historical cutoff refused: reference sources are not cutoff-safe yet: '
+                         + ', '.join(sorted(COHORT_UNSAFE_SOURCES)))
     if team_tendency and contextual_mode is not None:
         raise ValueError('team tendencies and contextual sampling are alternative drive policies; choose one')
     if team_tendency and eligible_before is None:
