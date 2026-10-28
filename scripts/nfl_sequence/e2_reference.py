@@ -161,8 +161,28 @@ def _reference_fingerprint(reference):
     return summary
 
 
-def load_blocked_kicks(path=BLOCKED_KICKS):
-    """Load every observed blocked kick, retaining unresolved rows so a sampled unknown outcome can fail closed."""
+def _before_cutoff(season, week, eligible_before):
+    """True when a record's (season, week) is strictly before the cutoff, or when there is no cutoff."""
+    if eligible_before is None:
+        return True
+    cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
+    season, week = int(season), int(week)
+    return season < cutoff_season or (season == cutoff_season and week < cutoff_week)
+
+
+def _cutoff_sql(eligible_before):
+    """SQL clause and arguments for the same cutoff, for tables that carry season and week."""
+    if eligible_before is None:
+        return '', ()
+    cutoff_season, cutoff_week = int(eligible_before[0]), int(eligible_before[1])
+    return ' AND (season < ? OR (season = ? AND week < ?))', (cutoff_season, cutoff_season, cutoff_week)
+
+
+def load_blocked_kicks(path=BLOCKED_KICKS, eligible_before=None):
+    """Load every observed blocked kick, retaining unresolved rows so a sampled unknown outcome can fail closed.
+
+    With `eligible_before`, only records before the cutoff are kept and `rates` is None. The pinned rates cover the whole
+    window, so they must be recomputed from the kept records before any use. The full file is still checked first."""
     import csv
     manifest_path = path.with_suffix(path.suffix + '.manifest.json')
     manifest = json.loads(manifest_path.read_text())
@@ -196,8 +216,10 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
             raise ValueError(f'blocked-kick source provenance mismatch: {key}')
         if row['blocked'] is not True:
             raise ValueError(f'non-blocked source event in blocked-kick fixture: {key}')
-        pools[row['kick_type']].append(row)
-    return {'records': pools, 'rates': manifest['observed_rates'], 'sha256': source_hash,
+        if _before_cutoff(row['season'], row['week'], eligible_before):
+            pools[row['kick_type']].append(row)
+    return {'records': pools, 'rates': None if eligible_before is not None else manifest['observed_rates'],
+            'sha256': source_hash,
             'manifest_sha256': hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
             'source_hashes': manifest['sources'], 'source': manifest['source_dataset'], 'window': manifest['window']}
 
@@ -211,7 +233,7 @@ def extras_team(code):
     return EXTRAS_TEAM_CODES.get(code, code)
 
 
-def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
+def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None):
     """Observed play facts keyed by (game_id, play_id), for the window.
 
     From the dev table: passer, rusher and receiver ids, the posting team, air yards, and receiving yards. Yards after
@@ -222,13 +244,17 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):
     import csv
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
+        cut_sql, cut_args = _cutoff_sql(eligible_before)
         rows = con.execute(f"""SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,
-        posteam, defteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}""").fetchall()
+        posteam, defteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}{cut_sql}""",
+                           cut_args).fetchall()
     finally:
         con.close()
     flags = {}
     with open(extras, newline='') as f:
         for r in csv.DictReader(f):
+            if not _before_cutoff(r['season'], r['week'], eligible_before):
+                continue
             flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), extras_team(r['timeout_team']),
                                                                 int(r['out_of_bounds']))
     out = {}
@@ -278,7 +304,7 @@ def load_overtime_try_fallback(path=TRY_FALLBACK):
     return table, source_hash
 
 
-def load_overtime_drive_pool(path=OVERTIME_DRIVES):
+def load_overtime_drive_pool(path=OVERTIME_DRIVES, eligible_before=None):
     """Usable observed regular-season overtime drives (Rule 16): how each ended, the points each side scored on it, the clock
     it used, and the other team's next start. Returns (pool, file sha256). The fixture is checked against its manifest before
     any row is read; refused rows stay in the file for audit and are never drawn."""
@@ -295,6 +321,8 @@ def load_overtime_drive_pool(path=OVERTIME_DRIVES):
     for row in rows:
         if row['status'] != 'usable':
             continue
+        if not _before_cutoff(row['season'], row['week'], eligible_before):
+            continue
         pool.append({'outcome': row['outcome'], 'duration': int(row['duration_seconds']),
                      'points_offense': int(row['points_offense']), 'points_defense': int(row['points_defense']),
                      'next_offense': row['next_offense'] or None,
@@ -303,12 +331,12 @@ def load_overtime_drive_pool(path=OVERTIME_DRIVES):
                      'try_made': None if row['try_made'] == '' else bool(int(row['try_made'])),
                      'turnover_kind': row['turnover_kind'],
                      'game_id': row['game_id'], 'drive': int(float(row['drive']))})
-    if len(pool) != manifest['usable_count']:
+    if eligible_before is None and len(pool) != manifest['usable_count']:
         raise ValueError('overtime usable rows disagree with the manifest')
     return pool, source_hash
 
 
-def load_safety_kick_pool(path=SAFETY_KICKS):
+def load_safety_kick_pool(path=SAFETY_KICKS, eligible_before=None):
     """Usable observed safety free kicks: the receiving team's first snap and the clock it took. Returns (pool, file sha256).
 
     The fixture is checked against its manifest's checksum and row count before any row is read. Refused rows stay in the
@@ -327,6 +355,8 @@ def load_safety_kick_pool(path=SAFETY_KICKS):
     for row in rows:
         if row['status'] != 'usable':
             continue
+        if not _before_cutoff(row['season'], row['week'], eligible_before):
+            continue
         spot, runoff = int(row['receiving_snap_yardline_100']), int(row['clock_runoff_seconds'])
         if not 1 <= spot <= 99 or runoff < 0:
             raise ValueError(f"safety-kick row {row['safety_play_id']} has an impossible spot or runoff")
@@ -334,7 +364,7 @@ def load_safety_kick_pool(path=SAFETY_KICKS):
                      'play_id': int(float(row['receiving_snap_play_id'])),
                      'safety_play_id': int(float(row['safety_play_id'])), 'kick_play_id': int(float(row['kick_play_id'])),
                      'kick_type': row['kick_type'], 'season': int(row['season'])})
-    if len(pool) != manifest['usable_count']:
+    if eligible_before is None and len(pool) != manifest['usable_count']:
         raise ValueError('safety-kick usable rows disagree with the manifest')
     return pool, source_hash
 
