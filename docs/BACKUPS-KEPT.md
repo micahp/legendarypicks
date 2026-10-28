@@ -1,0 +1,42 @@
+# Backups kept, and why
+
+Each entry names one backup file, what it is for, and when it was made. Keep a named backup until its purpose is closed.
+This list is the reason it is kept. Do not delete an entry on a file name alone.
+
+## Kept
+
+| File | Where | Made | Purpose | Keep until |
+|---|---|---|---|---|
+| `picks.dev.db.bak-pre-mls-identity-closure-20261028-1812` (3.1 GB) | `/root/legendarypicks/backend/data/` | 2026-10-28 18:12 CDT, `VACUUM INTO`, `quick_check` ok | The dev database before the MLS identity closure changes (runtime switch `LP_MLS_CUTOVER`, one-reading date-of-birth rule, name-only settlement guard) are applied to dev | The owner has checked those changes in dev and decided the backup is no longer needed |
+| `picks.db.bak-pre-unbind-20261027` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-27, incident | Production before the 2026-10-27 identity unbind. Pinned in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
+| `picks.db.bak-pre-thayllon-20261027` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-27, incident | Production before the Thayllon identity change. Pinned in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
+| `picks.db.bak-premigrate-ufc-roster-20261025-232329` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-25 23:23 | Production before the UFC roster migration. The pinned UFC copy in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
+
+## Not kept by this work, and not decided here
+
+These are job-made copies. This work did not make them, and no one has decided whether to keep them.
+
+| File | Made by | Note |
+|---|---|---|
+| `picks.db.bak-premigrate-ufc-roster-20261027-232324` (2.8 GB) | A scheduled job, 2026-10-27 23:23 | Newest UFC copy. Not named in any doc. Needs an owner decision before deletion |
+| `picks.db.bak-premigrate-mlb-history-timer-20261028-052524` (2.8 GB) | The MLB history job, 2026-10-28 05:25 | The job writes a new copy each morning and prunes the old one. Do not delete by hand |
+
+## Deleted by this work, 2026-10-28
+
+For the record. These were scratch copies and sidecars this work created, and no document pinned them.
+
+- `/root/mls-snapshot-check/cutover/`: `debug_copy.db`, `evidence_copy.db`, `migrated_copy.db` (about 36 MB each)
+- `/root/mls-snapshot-check/integrate/shadow_copy.db` (36 MB)
+- `/root/mls-snapshot-check/shadow-2026-10-28/`: `base_live.db`, `base_prior.db`, `scope.db`
+- Orphan `-shm` and `-wal` sidecars whose main files were already deleted: `picks.db.bak-pre-delete-roster-315191673-20261027`,
+  `picks.db.bak-pre-rebind-540256-20261027`, `picks.db.bak-pre-unbind-315191673-20261027`
+
+Not deleted: the three pinned incident backups above, the two job-made copies, and every backup belonging to other sessions
+outside this repository (`/root/lp-backups`, `/root/lp-db-backups`, `/root/lp-archive`, `/root/backups`,
+`/root/lp-discrete-eval-artifacts`, `/root/lp-sport-first-nav`, `/root/lp-release-v097`, `/root/.codex`, `/root/.hermes`).
+Those total about 25 GB and need their owners' decision.
+
+## Naming
+
+`<database>.bak-<purpose>-<yyyymmdd>[-<hhmm>]`. The purpose says what the backup protects against, so a later decision to delete
+can be checked against this file.
