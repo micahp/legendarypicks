@@ -62,6 +62,7 @@ from typing import Dict, List, Optional, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import ingest_rotowire_archive as archive
+import mls_resolution
 from espn_client.scoreboard import _slate_day
 from team_codes import (
     ALIASES as TEAM_CODE_ALIASES,
@@ -453,6 +454,8 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     spine says `WSH` and `NYC`, so comparing the raw strings would silently fail every
     fallback that needs a team.
     """
+    if league in ("mls", "lcup") and mls_resolution.CUTOVER_ENABLED:
+        return _resolve_membership_gated(con, league, row, now, team_code)
     roster_league = roster_league or league
     # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
     # source team = roster team = one fixture team. Everywhere else the historical
@@ -549,6 +552,29 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
                 (player_id, now, SOURCE, league, key))
             return player_id
         bind_player_source_key(con, league, key, player_id, now)
+    return player_id
+
+
+def _resolve_membership_gated(con: sqlite3.Connection, league: str, row: Dict, now: str,
+                              team_code: Optional[str]) -> Optional[int]:
+    """MLS and Leagues Cup under the cutover: the person must be on the club now, by the membership snapshot.
+
+    A key already bound to a current member keeps that binding. Otherwise the gated resolver decides by name, and
+    that answer is not written back as a binding: only identity onboarding creates or binds people. A departed
+    person is never returned, even when the stored club or an old binding still names them.
+    """
+    import _core  # lazy: the gated resolver lives there, so this ingest loads the app only when the cutover is on
+    key = row.get("source_player_key")
+    if key:
+        bound = con.execute(
+            "SELECT player_id FROM player_source_ids WHERE source=? AND league=? AND source_player_key=?",
+            (SOURCE, league, key)).fetchone()
+        if bound and bound["player_id"] in (mls_resolution.members_as_of(con) or {}):
+            return bound["player_id"]
+    player_id, _confidence = _core._resolve_player_for_ingest(
+        con, row["player_name"], team_code or "", league, source=SOURCE)
+    if player_id is None:
+        queue_unresolved(con, league, row, now, "not_in_spine")
     return player_id
 
 
