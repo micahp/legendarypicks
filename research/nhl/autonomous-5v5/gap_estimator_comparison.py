@@ -142,7 +142,7 @@ def _zero_exposure_reason_totals(period_summaries: Sequence[Mapping[str, Any]]) 
 
 
 def verify_frozen_inputs(cache_path: Path, data_root: Path) -> tuple[dict[str, Any], list[Any]]:
-    parent_result = ROOT / "research/nhl/autonomous-5v5/results/nhl-a1-arrival-gap-diagnosis-2026-10-27.json"
+    parent_result = Path("/root/lp-data/nhl-a1-arrival-gap-diagnosis-2026-10-27.json")
     kernel_path = HERE / "kernel.py"
     data_path = HERE / "data.py"
     actual = {

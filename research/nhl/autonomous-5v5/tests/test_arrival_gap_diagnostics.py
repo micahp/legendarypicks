@@ -16,6 +16,10 @@ class ArrivalGapDiagnosticTests(unittest.TestCase):
         self.assertEqual(diagnosis.ROOT, Path(__file__).resolve().parents[4])
         self.assertEqual(diagnosis.PREREG_PATH.parent, diagnosis.ROOT / "docs/research")
 
+    def test_large_machine_result_defaults_outside_repository(self):
+        self.assertFalse(diagnosis.EXPECTED_OUTPUT.is_relative_to(diagnosis.ROOT))
+        self.assertEqual(diagnosis.EXPECTED_OUTPUT.parent, Path("/root/lp-data"))
+
     def training_rows(self, n: int = 120, gap: int | None = None) -> list[Transition]:
         rows = []
         for index in range(n):

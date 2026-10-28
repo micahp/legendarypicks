@@ -55,7 +55,7 @@ EXPECTED_MECHANISM_SHA256 = "cfe3743f0333b03d678d0aafa83f516a5bf87f0bd6b371e7708
 EXPECTED_BEHAVIOR_SHA256 = "5b03df12a6e1dfd2bf546192c59c35b26c6bf2b75b04b338b14b57f85cc145a9"
 EXPECTED_EVIDENCE_CORE_SHA256 = "cdcccbb1b4f5185df96178fccad4450a1bb3d8c9e5c4124389439c2281fc3490"
 EXPECTED_EVENT_STATE_SHA256 = "1029c286cc3e20907338fea3f5f5bc612c6bb0bec793661f558ab57edd934f75"
-EXPECTED_OUTPUT = HERE / "results/nhl-a1-arrival-gap-diagnosis-2026-10-27.json"
+EXPECTED_OUTPUT = Path("/root/lp-data/nhl-a1-arrival-gap-diagnosis-2026-10-27.json")
 EXPECTED_REPORT = ROOT / "docs/research/NHL-A1-ARRIVAL-GAP-DIAGNOSIS-2026-10-27.md"
 PREREG_PATH = ROOT / "docs/research/NHL-A1-ARRIVAL-GAP-DIAGNOSIS-PREREG-2026-10-27.md"
 PREREG_SHA256 = "2f22f5b75e8317d10098878ada1eb009d75a8078dbd9cec76864007b8075ac96"
@@ -1521,6 +1521,8 @@ def render_report(result: dict[str, Any]) -> str:
         f"**Base:** `{result['base_audit_commit']}`",
         f"**Scope:** {result['scope']}.",
         "",
+        f"**Artifact note:** The 70.46 MB machine-readable result is omitted from Git. It remains archived on the execution host at `{EXPECTED_OUTPUT}` (SHA-256 `{result.get('result_sha256', 'written after report render')}`). This report is the committed review artifact and retains the principal findings, aggregate tables, and two source-linked traces.",
+        "",
         "## Finding",
         "",
         "**The largest measured cause is A1's smoothed categorical interarrival-gap distribution.** On actual 2021 pre-gap states, A1's predicted gap tail is already much too long: the context-mixture p90/p95/p99 are 375/788/1,118 seconds versus observed 33/43/66. The gap-NLL rate is +0.37777 nats per 5v5 minute worse than A0 (game-clustered 95% CI +0.36931 to +0.38667). Later observed transitions account for the excess; the first scored transition is slightly better under A1. Autonomous feedback is therefore not needed to produce the main conditional timing failure.",
@@ -1602,7 +1604,7 @@ def render_report(result: dict[str, Any]) -> str:
         lines.append(f"| {label} | {a1_bins[label]['n']:,} | {delta:+.2f} |")
     lines += [
         "",
-        "A1's proper-score penalty is not dominated by a few observed extreme waits: its excess is concentrated in the common 6–60 second bins (+23,963.46 nats combined). The uniform prior's long tail is instead exposed most clearly by the conditional survival calibration and autonomous count collapse. State/clock/score breakdowns, complete survival Brier tables, and all support levels are preserved in the JSON.",
+        "A1's proper-score penalty is not dominated by a few observed extreme waits: its excess is concentrated in the common 6–60 second bins (+23,963.46 nats combined). The uniform prior's long tail is instead exposed most clearly by the conditional survival calibration and autonomous count collapse. This report retains aggregate state/clock/score findings; the full survival and support breakdown remains in the local machine-readable archive, which is not committed.",
         "",
         "### Smoothing support",
         "",
@@ -1628,7 +1630,7 @@ def render_report(result: dict[str, Any]) -> str:
         )
     lines += [
         "",
-        "The smoothing-off arm's bundle CRPS change versus A1 is −47.939 (95% paired game-cluster CI −48.564 to −47.315). Score-aware initialization changes CRPS by +1.479 (+1.403 to +1.555), a supported deterioration. A1 versus A0 is +47.697 (+47.209 to +48.179), also worse. Intervals use 2,000 paired game-cluster bootstrap replicates with seed 20261027; full intervals for all metrics and contrasts are in the JSON.",
+        "The smoothing-off arm's bundle CRPS change versus A1 is −47.939 (95% paired game-cluster CI −48.564 to −47.315). Score-aware initialization changes CRPS by +1.479 (+1.403 to +1.555), a supported deterioration. A1 versus A0 is +47.697 (+47.209 to +48.179), also worse. Intervals use 2,000 paired game-cluster bootstrap replicates with seed 20261027; this report includes the decision-driving intervals, while full intervals for all metrics and contrasts remain in the local archive.",
         "",
         "### Bundle-count variance",
         "",
@@ -1668,7 +1670,7 @@ def render_report(result: dict[str, Any]) -> str:
         "",
         "## First divergence: source-linked examples",
         "",
-        "The ten highest A1 count-error traces, their full generated paths, seeds, sampled gap probabilities/uniforms, context transitions, terminal censor proposals, and first observed source event IDs are in the JSON. Two long-wait examples:",
+        "The ranked per-trace paths, seeds, sampled gap probabilities/uniforms, context transitions, terminal censor proposals, and source event IDs are kept in the local machine-readable archive, not in this repository. This report retains two source-linked long-wait examples:",
         "",
     ]
     for rank in (7, 8):
@@ -1689,7 +1691,7 @@ def render_report(result: dict[str, Any]) -> str:
         )
     lines += [
         "",
-        "These are realization traces, not paired counterfactuals. The first mismatch may be stochastic or an initialization-context mismatch; after it, trajectories diverge. The JSON records that distinction and does not attribute downstream differences causally to the first sampled event.",
+        "These are realization traces, not paired counterfactuals. The first mismatch may be stochastic or an initialization-context mismatch; after it, trajectories diverge. The archived source artifact preserves that distinction and does not attribute downstream differences causally to the first sampled event.",
         "",
         "## Ranked next experiments and decision",
         "",
@@ -1705,7 +1707,7 @@ def render_report(result: dict[str, Any]) -> str:
         "",
         "- Preregistration: [protocol](NHL-A1-ARRIVAL-GAP-DIAGNOSIS-PREREG-2026-10-27.md).",
         "- Diagnostic implementation and tests: [script](../../research/nhl/autonomous-5v5/arrival_gap_diagnostics.py), [tests](../../research/nhl/autonomous-5v5/tests/test_arrival_gap_diagnostics.py).",
-        "- Complete machine-readable decomposition: [result JSON](../../research/nhl/autonomous-5v5/results/nhl-a1-arrival-gap-diagnosis-2026-10-27.json).",
+        f"- Full machine-readable decomposition: omitted from Git (70.46 MB); retained outside the repository at `{EXPECTED_OUTPUT}` with SHA-256 `{result.get('result_sha256', 'written after report render')}`.",
         "- Frozen controls: [A1 report](NHL-AUTONOMOUS-5V5-ARRIVAL-REPORT-2026-10-27.md), [mechanism audit](NHL-AUTONOMOUS-MECHANISM-DATA-GAP-AUDIT-2026-10-27.md).",
         "",
         f"Full raw-source and rollout run: {result['runtime_seconds']:.2f}s; Mode A NLL interval postprocess: {result.get('nll_uncertainty_postprocess_seconds', 0.0):.2f}s; combined reported runtime: {result.get('total_runtime_seconds_including_postprocess', result['runtime_seconds']):.2f}s. Result JSON SHA-256: `{result.get('result_sha256', 'written after report render')}`.",

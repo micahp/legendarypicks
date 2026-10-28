@@ -6,6 +6,8 @@
 **Base:** `3c3afb9dc15155de6d006517b2ea833038ddb260`
 **Scope:** diagnostic only; A0/A1 frozen; no candidate selection, tuning, gate change, or production forecast change.
 
+**Artifact note:** The 70.46 MB machine-readable result is omitted from Git. It remains archived on the execution host at `/root/lp-data/nhl-a1-arrival-gap-diagnosis-2026-10-27.json` (SHA-256 `23edf72783ae694062051ec5adac53509eff22e3772bc28b5ebfd1e2ab6280a9`). This report is the committed review artifact and retains the principal findings, aggregate tables, and two source-linked traces.
+
 ## Finding
 
 **The largest measured cause is A1's smoothed categorical interarrival-gap distribution.** On actual 2021 pre-gap states, A1's predicted gap tail is already much too long: the context-mixture p90/p95/p99 are 375/788/1,118 seconds versus observed 33/43/66. The gap-NLL rate is +0.37777 nats per 5v5 minute worse than A0 (game-clustered 95% CI +0.36931 to +0.38667). Later observed transitions account for the excess; the first scored transition is slightly better under A1. Autonomous feedback is therefore not needed to produce the main conditional timing failure.
@@ -71,7 +73,7 @@ A1's 95th percentile is 788 seconds versus 43 observed. On real contexts, A1 pre
 | 61-120s | 3,295 | -205.28 |
 | 121-300s | 69 | -191.94 |
 
-A1's proper-score penalty is not dominated by a few observed extreme waits: its excess is concentrated in the common 6–60 second bins (+23,963.46 nats combined). The uniform prior's long tail is instead exposed most clearly by the conditional survival calibration and autonomous count collapse. State/clock/score breakdowns, complete survival Brier tables, and all support levels are preserved in the JSON.
+A1's proper-score penalty is not dominated by a few observed extreme waits: its excess is concentrated in the common 6–60 second bins (+23,963.46 nats combined). The uniform prior's long tail is instead exposed most clearly by the conditional survival calibration and autonomous count collapse. This report retains aggregate state/clock/score findings; the full survival and support breakdown remains in the local machine-readable archive, which is not committed.
 
 ### Smoothing support
 
@@ -90,7 +92,7 @@ A0 and A1 are distinct frozen fitted models. Within the three A1 arms, fit rows,
 | A1_gap_prior_off | 82.31 | 80.04 | 8.38192 | 10 / 33 / 42 / 64 | 15 / 36 / 46 / 70 |
 | A1_period_score_start | 17.03 | 80.04 | 57.78951 | 12 / 50 / 292 / 891 | 16 / 52 / 319 / 1023 |
 
-The smoothing-off arm's bundle CRPS change versus A1 is −47.939 (95% paired game-cluster CI −48.564 to −47.315). Score-aware initialization changes CRPS by +1.479 (+1.403 to +1.555), a supported deterioration. A1 versus A0 is +47.697 (+47.209 to +48.179), also worse. Intervals use 2,000 paired game-cluster bootstrap replicates with seed 20261027; full intervals for all metrics and contrasts are in the JSON.
+The smoothing-off arm's bundle CRPS change versus A1 is −47.939 (95% paired game-cluster CI −48.564 to −47.315). Score-aware initialization changes CRPS by +1.479 (+1.403 to +1.555), a supported deterioration. A1 versus A0 is +47.697 (+47.209 to +48.179), also worse. Intervals use 2,000 paired game-cluster bootstrap replicates with seed 20261027; this report includes the decision-driving intervals, while full intervals for all metrics and contrasts remain in the local archive.
 
 ### Bundle-count variance
 
@@ -126,12 +128,12 @@ All 48,717 observed faceoff tokens occur after the first token within their even
 
 ## First divergence: source-linked examples
 
-The ten highest A1 count-error traces, their full generated paths, seeds, sampled gap probabilities/uniforms, context transitions, terminal censor proposals, and first observed source event IDs are in the JSON. Two long-wait examples:
+The ranked per-trace paths, seeds, sampled gap probabilities/uniforms, context transitions, terminal censor proposals, and source event IDs are kept in the local machine-readable archive, not in this repository. This report retains two source-linked long-wait examples:
 
 - `2021020589` period 1: observed first eligible bundle after 37s (event 9 sortOrder 12 at 37s (hit)); A1 sampled a 969s first wait with probability 0.00004372 at uniform 0.98986614, then emitted 3 bundles against a 117.0 target. Selected context `["exact", "faceoff", true, "tied", 0]` had support 10,837.
 - `2021020672` period 2: observed first eligible bundle after 24s (event 313 sortOrder 243 at 24s (shot-on-goal)); A1 sampled a 1199s first wait with probability 0.00004372 at uniform 0.99993731, then emitted 1 bundle against a 117.5 target. Selected context `["exact", "faceoff", true, "tied", 0]` had support 10,837.
 
-These are realization traces, not paired counterfactuals. The first mismatch may be stochastic or an initialization-context mismatch; after it, trajectories diverge. The JSON records that distinction and does not attribute downstream differences causally to the first sampled event.
+These are realization traces, not paired counterfactuals. The first mismatch may be stochastic or an initialization-context mismatch; after it, trajectories diverge. The archived source artifact preserves that distinction and does not attribute downstream differences causally to the first sampled event.
 
 ## Ranked next experiments and decision
 
@@ -147,7 +149,7 @@ No new source was needed to identify this timing failure: verified GameCenter PB
 
 - Preregistration: [protocol](NHL-A1-ARRIVAL-GAP-DIAGNOSIS-PREREG-2026-10-27.md).
 - Diagnostic implementation and tests: [script](../../research/nhl/autonomous-5v5/arrival_gap_diagnostics.py), [tests](../../research/nhl/autonomous-5v5/tests/test_arrival_gap_diagnostics.py).
-- Complete machine-readable decomposition: [result JSON](../../research/nhl/autonomous-5v5/results/nhl-a1-arrival-gap-diagnosis-2026-10-27.json).
+- Full machine-readable decomposition: omitted from Git (70.46 MB); retained outside the repository at `/root/lp-data/nhl-a1-arrival-gap-diagnosis-2026-10-27.json` with SHA-256 `23edf72783ae694062051ec5adac53509eff22e3772bc28b5ebfd1e2ab6280a9`.
 - Frozen controls: [A1 report](NHL-AUTONOMOUS-5V5-ARRIVAL-REPORT-2026-10-27.md), [mechanism audit](NHL-AUTONOMOUS-MECHANISM-DATA-GAP-AUDIT-2026-10-27.md).
 
 Full raw-source and rollout run: 379.74s; Mode A NLL interval postprocess: 72.50s; combined reported runtime: 452.24s. Result JSON SHA-256: `23edf72783ae694062051ec5adac53509eff22e3772bc28b5ebfd1e2ab6280a9`.
