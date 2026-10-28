@@ -69,6 +69,7 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 
 def run(db_path, leagues, apply_changes):
+    import mls_resolution
     con = sqlite3.connect(db_path, timeout=30)
     con.row_factory = sqlite3.Row
     published_roster.ensure(con)
@@ -77,9 +78,14 @@ def run(db_path, leagues, apply_changes):
         players = con.execute(
             "SELECT id, name, team, position, position_group FROM players "
             "WHERE league=? AND active=1", (league,)).fetchall()
+        # With the MLS cutover on, a stale observation row must not bind a departed person: only people on the
+        # club today can be matched. Off, the legacy behavior is unchanged.
+        current = mls_resolution.members_as_of(con) if league == "mls" and mls_resolution.CUTOVER_ENABLED else None
         bound = filled = collided = disagreed = 0
         unresolved = []
         for player in players:
+            if current is not None and player["id"] not in current:
+                continue
             match = published_roster.lookup(con, league, player["name"], player["team"])
             if not match:
                 if not (player["position"] or "").strip():
