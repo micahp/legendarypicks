@@ -1,23 +1,23 @@
 """MLS current-membership snapshots built from complete squads.
 
-Development module. It is not wired into the roster job.
-
 Inputs: the squads fetched in one run (FotMob and MLS Soccer) and the binds in player_source_ids.
 
 Guarantees:
 - Membership comes from the squads fetched in this run. It never reads published_roster, so stale
   roster rows cannot change a current membership decision.
-- Identity is a lookup in existing binds. Nothing here creates a bind or a player.
+- Identity is a lookup in existing binds. Nothing here creates a bind or a player. Onboarding, which may create
+  players, is in mls_identity and runs in the same transaction, before this module builds the snapshot.
 - The prior state is read from the database. Callers cannot pass prior counts.
 - Carry-forward keys are namespaced by source: (source, source_player_key).
 - The population checksum covers the memberships only. It excludes the fetch timestamp and the events of the run
-  (transfers, departures, rekeys, carries). An unchanged population refreshes the verification time and the stored
-  events, and creates no second membership set.
-- Coverage is explicit. "verified" means every current member resolved and nothing was carried or
+  (transfers, departures, rekeys, carries, holds, lost sources). An unchanged population refreshes the verification
+  time and the stored events, and creates no second membership set.
+- A person whose publishers disagree on a club, or who has two keys from one publisher, is HELD at the club of the
+  last verified snapshot, with roster_status "held". Other people keep updating.
+- Coverage is explicit. "verified" means every current member resolved and nothing was carried, held, lost or
   unexplained. Anything else is "partial", with the measured reasons recorded in the payload.
 
-Refused (nothing is published, the current snapshot stays): incomplete squads, identity conflicts, a club
-count other than 30.
+Refused (nothing is published, the current snapshot stays): incomplete squads, a club count other than 30.
 """
 from __future__ import annotations
 
@@ -51,7 +51,9 @@ class Result:
     bind_changed: List[dict] = field(default_factory=list)  # a current key now binds to someone else
     transfers: List[dict] = field(default_factory=list)  # same person, new club
     rekeys: List[dict] = field(default_factory=list)  # same person, a different key in one source
-    conflicts: List[dict] = field(default_factory=list)
+    held: List[dict] = field(default_factory=list)  # disputed people, held at their last verified club
+    source_lost: List[dict] = field(default_factory=list)  # a key one publisher dropped while the person stays
+    conflicts: List[dict] = field(default_factory=list)  # every disputed person, held or not
     reasons: List[str] = field(default_factory=list)
     payload: str = ""
     checksum: str = ""
@@ -128,14 +130,20 @@ def check_completeness(squads: Mapping[str, Sequence[Mapping]],
 
 # --- resolution ----------------------------------------------------------------
 
-def resolve(squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tuple[str, str], int]):
+def resolve(squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tuple[str, str], int],
+            prior_memberships: Sequence[Mapping] = ()):
     """Map current squad members to people by lookup only.
 
     Returns (memberships, unresolved, conflicts). One membership per person. Each membership records every
     key that resolved to that person, by source, and the primary key is mlssoccer's when present.
+
+    A disputed person (two keys from one publisher, or the publishers disagree on the club) is not resolved this
+    run. If the prior verified snapshot knew the person, the membership is HELD at the prior club and keys, with
+    roster_status "held". Otherwise the dispute is a conflict and the person is not a member.
     """
+    prior_by_pid = {int(p["player_id"]): p for p in prior_memberships}
     grouped: Dict[int, dict] = {}
-    unresolved, conflicts = [], []
+    unresolved = []
     for source in SOURCES:
         for member in squads.get(source) or []:
             key = str(member["source_player_key"])
@@ -144,20 +152,27 @@ def resolve(squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tuple[str, s
                 unresolved.append({"source": source, "source_player_key": key,
                                    "name": member.get("name"), "team": member.get("team")})
                 continue
-            entry = grouped.setdefault(player_id, {"rows": {}})
+            entry = grouped.setdefault(player_id, {"rows": {}, "reasons": []})
             if source in entry["rows"]:
-                conflicts.append({"player_id": player_id, "reason": "two keys from %s" % source,
-                                  "keys": [entry["rows"][source]["source_player_key"], key]})
+                entry["reasons"].append("two keys from %s" % source)
+                entry.setdefault("extra", []).append({"source": source, "source_player_key": key})
                 continue
             entry["rows"][source] = dict(member, source_player_key=key)
 
-    memberships = []
+    memberships, conflicts = [], []
     for player_id, entry in sorted(grouped.items()):
         rows = entry["rows"]
+        reasons = list(entry["reasons"])
         teams = {row["team"] for row in rows.values()}
         if len(teams) > 1:
-            conflicts.append({"player_id": player_id, "reason": "sources disagree on club",
-                              "teams": {s: r["team"] for s, r in rows.items()}})
+            reasons.append("sources disagree on club")
+        if reasons:
+            prior = prior_by_pid.get(player_id)
+            conflicts.append({"player_id": player_id, "reasons": reasons, "held": prior is not None,
+                              "teams": {s: r["team"] for s, r in rows.items()},
+                              "keys": {s: r["source_player_key"] for s, r in rows.items()}})
+            if prior is not None:
+                memberships.append(dict(prior, roster_status="held", held_reasons=reasons))
             continue
         primary = "mlssoccer" if "mlssoccer" in rows else next(iter(rows))
         row = rows[primary]
@@ -177,7 +192,7 @@ def resolve(squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tuple[str, s
 def _classify(prior_memberships, memberships, unresolved, squads, binds):
     """Compare this run with the prior verified snapshot, person by person."""
     result = {"carried": [], "blockers": [], "departures": [], "single_source_departures": [],
-              "bind_changed": [], "transfers": [], "rekeys": []}
+              "bind_changed": [], "transfers": [], "rekeys": [], "source_lost": []}
     present = {m["player_id"]: m for m in memberships}
     squad_keys = {(src, str(m["source_player_key"])) for src in SOURCES for m in squads.get(src) or []}
     prior_index = {}
@@ -199,12 +214,20 @@ def _classify(prior_memberships, memberships, unresolved, squads, binds):
         pid = p["player_id"]
         if pid in present:
             member = present[pid]
-            if member["team"] != p["team"] and member.get("roster_status") != "carried":
+            if member.get("roster_status") in ("carried", "held"):
+                continue  # the club is the verified one, kept on purpose
+            if member["team"] != p["team"]:
                 result["transfers"].append({"player_id": pid, "from": p["team"], "to": member["team"]})
             for src, key in member["keys"].items():
                 if src in p.get("keys", {}) and p["keys"][src] != key:
                     result["rekeys"].append({"player_id": pid, "source": src,
                                              "from": p["keys"][src], "to": key})
+            # The person is still here, but through the other publisher alone: this publisher's key is gone from the
+            # person, whether the key left the squad or moved to someone else.
+            for src, key in p.get("keys", {}).items():
+                if src not in member["keys"]:
+                    result["source_lost"].append({"player_id": pid, "source": src, "source_player_key": str(key),
+                                                  "still_listed": (src, str(key)) in squad_keys})
             continue
         # Not present and not carried: a departure, or a bind that moved. Check the squads.
         bound_elsewhere = [(src, key) for src, key in p.get("keys", {}).items()
@@ -222,31 +245,35 @@ def _classify(prior_memberships, memberships, unresolved, squads, binds):
 # --- build and publish ----------------------------------------------------------
 
 def build(connection, squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tuple[str, str], int],
-          captured_at: str = "") -> Result:
+          captured_at: str = "", rekeyed: Sequence[Mapping] = ()) -> Result:
+    """`rekeyed` are the rekeys onboarding bound in this same cycle. They are events, reported here, never hashed."""
     prior = prior_state(connection)
     prior_counts = prior["counts"] if prior else None
     reasons = check_completeness(squads, prior_counts)
     if reasons:
         return Result(status="refused", reasons=reasons)
 
-    memberships, unresolved, conflicts = resolve(squads, binds)
-    if conflicts:
-        return Result(status="refused", reasons=["%d identity conflicts" % len(conflicts)], conflicts=conflicts)
+    prior_memberships = prior["memberships"] if prior else []
+    memberships, unresolved, conflicts = resolve(squads, binds, prior_memberships)
     if len({m["team"] for m in memberships}) != EXPECTED_CLUBS:
         return Result(status="refused", reasons=["club count after resolve is not %d" % EXPECTED_CLUBS])
 
-    prior_memberships = prior["memberships"] if prior else []
     present, c = _classify(prior_memberships, memberships, unresolved, squads, binds)
+    c["rekeys"].extend(dict(r, verified=True) for r in rekeyed)
     final = sorted(present.values(), key=lambda m: m["player_id"])
+    held = [x for x in conflicts if x["held"]]
+    unheld = [x for x in conflicts if not x["held"]]
 
-    if c["bind_changed"] or c["blockers"] or c["carried"] or c["single_source_departures"]:
-        status = "partial"
-    else:
-        status = "verified"
+    partial = bool(c["bind_changed"] or c["blockers"] or c["carried"] or c["single_source_departures"]
+                   or c["source_lost"] or held or unheld)
+    status = "partial" if partial else "verified"
     coverage = {
         "status": status,
         "blockers": len(c["blockers"]),
         "carried": len(c["carried"]),
+        "held": len(held),
+        "conflicts_unheld": len(unheld),
+        "source_lost": len(c["source_lost"]),
         "departures_confirmed": len(c["departures"]),
         "single_source_departures": len(c["single_source_departures"]),
         "bind_changed": len(c["bind_changed"]),
@@ -268,12 +295,14 @@ def build(connection, squads: Mapping[str, Sequence[Mapping]], binds: Mapping[Tu
                           "carried": stable(c["carried"]), "departures": stable(c["departures"]),
                           "single_source_departures": stable(c["single_source_departures"]),
                           "bind_changed": stable(c["bind_changed"]), "transfers": stable(c["transfers"]),
-                          "rekeys": stable(c["rekeys"])},
+                          "rekeys": stable(c["rekeys"]), "held": stable(held),
+                          "source_lost": stable(c["source_lost"]), "conflicts": stable(conflicts)},
                          sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return Result(status="publish", coverage=status, memberships=final,
                   blockers=c["blockers"], carried=c["carried"], departures=c["departures"],
                   single_source_departures=c["single_source_departures"], bind_changed=c["bind_changed"],
-                  transfers=c["transfers"], rekeys=c["rekeys"], payload=payload,
+                  transfers=c["transfers"], rekeys=c["rekeys"], held=held, source_lost=c["source_lost"],
+                  conflicts=conflicts, payload=payload,
                   checksum=hashlib.sha256(population.encode("utf-8")).hexdigest())
 
 
@@ -309,6 +338,20 @@ def publish(connection, result: Result, captured_at: str) -> Tuple[str, Optional
     return "published", snapshot_id
 
 
+def publish_atomic(connection, result: Result, captured_at: str) -> Tuple[str, Optional[int]]:
+    """publish() in its own transaction: all of it is kept, or none of it is."""
+    if connection.in_transaction:
+        connection.commit()
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        outcome, snapshot_id = publish(connection, result, captured_at)
+        connection.execute("COMMIT")
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
+    return outcome, snapshot_id
+
+
 def health(connection) -> Optional[dict]:
     """What the current snapshot says about itself, for monitoring. None when nothing is published."""
     row = connection.execute(
@@ -319,4 +362,6 @@ def health(connection) -> Optional[dict]:
     coverage = json.loads(row[4]).get("coverage", {})
     return {"snapshot_id": row[0], "verified_at": row[1], "players": row[2], "clubs": row[3],
             "coverage": coverage.get("status"), "blockers": coverage.get("blockers"),
-            "carried": coverage.get("carried")}
+            "carried": coverage.get("carried"), "held": coverage.get("held", 0),
+            "source_lost": coverage.get("source_lost", 0),
+            "conflicts_unheld": coverage.get("conflicts_unheld", 0)}
