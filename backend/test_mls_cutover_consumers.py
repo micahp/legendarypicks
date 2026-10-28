@@ -82,3 +82,22 @@ def test_refresh_plans_mls_clubs_as_before_while_the_cutover_is_off(cutover_off)
     w.con.execute("UPDATE players SET team='WRONG' WHERE id=6")
     changes, _ = refresh.plan(w.con)
     assert any(pid == 5 for pid, *_ in changes), "the legacy plan still copies the stale club while the cutover is off"
+
+
+def test_a_past_game_resolves_to_the_club_on_its_day_and_today_uses_the_current_membership(cutover_on):
+    import datetime as dt
+    import _core
+    w = _world_with_departed_person()     # person 5 was on the squads on 2026-10-27 and left on 2026-10-28
+    w.con.execute("CREATE TABLE IF NOT EXISTS prop_games(id INTEGER PRIMARY KEY, league TEXT, date TEXT, home TEXT, "
+                  "away TEXT, start_time TEXT)")
+    today = dt.date.today().isoformat()
+    w.con.execute("INSERT INTO prop_games(id, league, date, home, away, start_time) VALUES(1,'mls','2026-10-27',"
+                  "'Club01','Club02','2026-10-27T19:00:00+00:00')")
+    w.con.execute("INSERT INTO prop_games(id, league, date, home, away, start_time) VALUES(2,'mls',?,'Club01','Club02',"
+                  "?)", (today, today + "T19:00:00+00:00"))
+    w.con.commit()
+    name = "Dara Quill"
+    past = _core._resolve_player_for_ingest(w.con, name, "Club01", "mls", game_id=1)
+    now_ = _core._resolve_player_for_ingest(w.con, name, "Club01", "mls", game_id=2)
+    assert past[0] == 5, "a game played while the person was on the club resolves to them, after they left"
+    assert now_[0] is None, "a game today uses the current membership, which no longer has the person"
