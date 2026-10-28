@@ -54,17 +54,24 @@ from published_roster import NO_MINT_LEAGUES
 LEAGUES = ("mls", "ligamx")
 
 
+def _refreshed_leagues():
+    """With the MLS cutover on, an MLS club is read from the membership snapshot, never copied from a roster row."""
+    import mls_resolution
+    return tuple(one for one in LEAGUES if not (one == "mls" and mls_resolution.CUTOVER_ENABLED))
+
+
 def plan(con: sqlite3.Connection):
     """[(player_id, name, ours, published)], and the count refused as contested."""
     claims = collections.defaultdict(set)
     names = {}
     ours = {}
+    leagues = _refreshed_leagues()
     for player_id, name, team, code in con.execute(
             "SELECT p.id, p.name, p.team, r.team_code FROM published_roster r "
             "JOIN players p ON p.id = r.player_id "
             "WHERE r.league IN ({}) AND r.player_id IS NOT NULL "
             "AND COALESCE(r.team_code,'') <> ''".format(
-                ",".join("?" * len(LEAGUES))), LEAGUES):
+                ",".join("?" * len(leagues))), leagues):
         claims[player_id].add(str(code).strip().upper())
         names[player_id] = name
         ours[player_id] = str(team or "").strip().upper()
