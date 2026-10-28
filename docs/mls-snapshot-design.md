@@ -30,8 +30,10 @@ Proposed (snapshot path):
 5. `_classify`: compare with the prior snapshot, person by person. It sorts people into carried, blocker,
    confirmed departure, single-source departure, bind moved, transfer, and rekey.
 6. `build` sets the coverage: `verified` or `partial`, with every count recorded in the payload.
-7. `publish`: a checksum of the population, not the fetch time. An unchanged population refreshes the
-   verification time and creates no second membership set.
+7. `publish`: a checksum of the population (the memberships), not the fetch time or this run's events. An
+   unchanged population refreshes the verification time and the stored events, and creates no second membership
+   set. Transfers, departures, rekeys and carries are reported on the run that sees them and not hashed, so a repeat
+   of the same squads after a transition publishes nothing.
 
 ## Coverage: the tradeoff
 
