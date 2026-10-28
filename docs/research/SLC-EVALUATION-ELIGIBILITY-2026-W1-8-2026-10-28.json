@@ -1,0 +1,1111 @@
+{
+ "as_of_rule": "the day before the scheduled game day, 12:00Z",
+ "counts": {
+  "backtest": 0,
+  "exploratory_replay": 28,
+  "ineligible": 93
+ },
+ "games": [
+  {
+   "as_of": "2026-09-08T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_NE_SEA",
+   "gameday": "2026-09-09",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-09T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "SF snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_SF_LA",
+   "gameday": "2026-09-10",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ARI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_ARI_LAC",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ATL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_ATL_PIT",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BAL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_BAL_IND",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BUF snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_BUF_HOU",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CHI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_CHI_CAR",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CLE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_CLE_JAX",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DAL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_DAL_NYG",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "GB snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_GB_MIN",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIA snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_MIA_LV",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NO snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_NO_DET",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYJ snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_NYJ_TEN",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "TB snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_TB_CIN",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-12T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "WSH snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_WAS_PHI",
+   "gameday": "2026-09-13",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-13T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_01_DEN_KC",
+   "gameday": "2026-09-14",
+   "week": 1
+  },
+  {
+   "as_of": "2026-09-16T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DET snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_DET_BUF",
+   "gameday": "2026-09-17",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CAR snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_CAR_ATL",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CIN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_CIN_HOU",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CLE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_CLE_TB",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "GB snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_GB_NYJ",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "IND snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_IND_KC",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "JAX snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_JAX_DEN",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LV snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_LV_LAC",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIA snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_MIA_SF",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_MIN_CHI",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NO snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_NO_BAL",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PHI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_PHI_TEN",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PIT snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_PIT_NE",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "SEA snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_SEA_ARI",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-19T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "WSH snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_WAS_DAL",
+   "gameday": "2026-09-20",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-20T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYG snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_02_NYG_LA",
+   "gameday": "2026-09-21",
+   "week": 2
+  },
+  {
+   "as_of": "2026-09-23T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ATL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_ATL_GB",
+   "gameday": "2026-09-24",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ARI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_ARI_SF",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BAL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_BAL_DAL",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CAR snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_CAR_CLE",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CIN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_CIN_PIT",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "HOU snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_HOU_IND",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "KC snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_KC_MIA",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LAC snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_LAC_BUF",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LAR snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_LA_DEN",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LV snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_LV_NO",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_MIN_TB",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_NE_JAX",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYJ snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_NYJ_DET",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "SEA snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_SEA_WAS",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-26T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "TEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_TEN_NYG",
+   "gameday": "2026-09-27",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-27T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PHI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_03_PHI_CHI",
+   "gameday": "2026-09-28",
+   "week": 3
+  },
+  {
+   "as_of": "2026-09-30T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PIT snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_PIT_CLE",
+   "gameday": "2026-10-01",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ARI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_ARI_NYG",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DAL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_DAL_HOU",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_DEN_SF",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DET snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_DET_CAR",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "GB snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_GB_TB",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "IND snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_IND_WAS",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "JAX snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_JAX_CIN",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "KC snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_KC_LV",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LAC snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_LAC_SEA",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LAR snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_LA_PHI",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIA snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_MIA_MIN",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_NE_BUF",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYJ snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_NYJ_CHI",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-03T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "TEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_TEN_BAL",
+   "gameday": "2026-10-04",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-04T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ATL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_04_ATL_NO",
+   "gameday": "2026-10-05",
+   "week": 4
+  },
+  {
+   "as_of": "2026-10-07T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "TB snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_TB_DAL",
+   "gameday": "2026-10-08",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BAL snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_05_BAL_ATL",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CHI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_CHI_GB",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CIN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_CIN_MIA",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CLE snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_CLE_NYJ",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_DEN_LAC",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DET snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_DET_ARI",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "HOU snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_HOU_TEN",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "IND snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_05_IND_PIT",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LV snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_LV_NE",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "MIN snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_05_MIN_NO",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYG snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_NYG_WAS",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PHI snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_05_PHI_JAX",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-10T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "SF snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_05_SF_SEA",
+   "gameday": "2026-10-11",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-11T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BUF snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_05_BUF_LA",
+   "gameday": "2026-10-12",
+   "week": 5
+  },
+  {
+   "as_of": "2026-10-14T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "SEA snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_SEA_DEN",
+   "gameday": "2026-10-15",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "ARI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_ARI_LA",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BAL snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_BAL_CLE",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "BUF snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_BUF_LV",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CAR snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_CAR_PHI",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "CHI snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_CHI_ATL",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "DAL snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_DAL_GB",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "HOU snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_HOU_JAX",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "LAC snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_LAC_KC",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NO snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_NO_NYG",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "NYJ snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_NYJ_NE",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "PIT snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_PIT_TB",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-17T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "TEN snapshot 2026-07-28T09:33:02Z must have exactly one QB1",
+   "game_id": "2026_06_TEN_IND",
+   "gameday": "2026-10-18",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-18T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "ineligible",
+   "exploratory_refusal": "WSH snapshot 2026-10-05T15:53:14Z must have exactly one QB1",
+   "game_id": "2026_06_WAS_SF",
+   "gameday": "2026-10-19",
+   "week": 6
+  },
+  {
+   "as_of": "2026-10-21T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_NE_CHI",
+   "gameday": "2026-10-22",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_CIN_BAL",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_CLE_TEN",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_DEN_ARI",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_GB_DET",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_IND_MIN",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_KC_SEA",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_LA_LV",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_MIA_NYJ",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_NYG_HOU",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_PIT_NO",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_SF_ATL",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-24T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_TB_CAR",
+   "gameday": "2026-10-25",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-25T12:00:00Z",
+   "backtest_refusal": "no schedule version was observed on or before --as-of",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_07_DAL_PHI",
+   "gameday": "2026-10-26",
+   "week": 7
+  },
+  {
+   "as_of": "2026-10-28T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_CAR_GB",
+   "gameday": "2026-10-29",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_ARI_DAL",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_ATL_TB",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_BAL_BUF",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_CLE_PIT",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_IND_JAX",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_KC_DEN",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_LAC_LA",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_LV_NYJ",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_MIN_DET",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_NE_MIA",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_PHI_WAS",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-10-31T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_TEN_CIN",
+   "gameday": "2026-11-01",
+   "week": 8
+  },
+  {
+   "as_of": "2026-11-01T12:00:00Z",
+   "backtest_refusal": "backtest refused; unverified pregame inputs: schedule: observed_at is a loader import time, not a capture time; away depth: snapshot_at is the nflverse artifact date, not a capture time; home depth: snapshot_at is the nflverse artifact date",
+   "category": "exploratory_replay",
+   "exploratory_refusal": null,
+   "game_id": "2026_08_CHI_SEA",
+   "gameday": "2026-11-02",
+   "week": 8
+  }
+ ],
+ "note": "no outcome column is read; the categories describe input availability only",
+ "season": 2026,
+ "weeks": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8
+ ]
+}
