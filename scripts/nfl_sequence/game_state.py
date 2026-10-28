@@ -909,21 +909,20 @@ class _Game:
     def _sample_blocked_kick(self, kick_type, rng, clock, quarter):
         """Draw one observed blocked-kick record that fits the state.
 
-        Period-expired records come from Q2/Q4 historical plays, where the period end also ends the half or game. They cannot
-        be used at Q1/Q3 boundaries: the next quarter continues, but these records do not identify the next possession or spot.
+        Period-expired records keep their original draw weight. They can resolve Q2/Q4, where the period end also ends the
+        half or game. If selected at another quarter boundary, they block because the next possession and spot are unknown.
         """
         records = self.ref.blocked_kicks.get('records', {}).get(kick_type, [])
         if not records:
             return 'blocked_kick_outcome_pool_missing', None
         fitting = [r for r in records if r.get('classification_status') != 'period_expired'
-                   or (quarter in (2, 4) and isinstance(r.get('clock_runoff_seconds'), int)
-                       and r['clock_runoff_seconds'] >= clock)]
+                   or (isinstance(r.get('clock_runoff_seconds'), int) and r['clock_runoff_seconds'] >= clock)]
         if not fitting:
-            if quarter not in (2, 4) and any(r.get('classification_status') == 'period_expired' for r in records):
-                return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
             return f'blocked_kick_period_end_not_reached:{kick_type}', None
         sample = rng.choice(fitting)
         status = sample.get('classification_status')
+        if status == 'period_expired' and quarter not in (2, 4):
+            return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
         supported = reducer.BLOCKED_KICK_STATUSES
         if status not in supported:
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
