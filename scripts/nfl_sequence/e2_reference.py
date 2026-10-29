@@ -486,7 +486,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
-         playcall_point_splits=False):
+         playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -568,8 +568,58 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 raise ValueError('point splits need an eligible-before cutoff')
             import playcall_model as pm2
             import point_splits as sp
-            frame = pm2.load_frame(range(2010, int(eligible_before[0])), db=db)
+            seasons = range(2010, int(eligible_before[0]))
+            if isinstance(playcall_point_splits, str):  # a frame cache whose fingerprint matches the same seasons
+                frame = pm2.load_frame_cached(playcall_point_splits, seasons, db=db)
+            else:
+                frame = pm2.load_frame(seasons, db=db)
             contextual_sampler.point_shifts = sp.priors(frame, int(eligible_before[0]))
+        if playcall_streak:  # win-loss streak splits from the prior seasons' streak histories
+            if eligible_before is None:
+                raise ValueError('streak splits need an eligible-before cutoff')
+            import playcall_model as pm3
+            import streak_splits as ss
+            cutoff = int(eligible_before[0])
+            seasons = range(2010, cutoff)
+            frame = pm3.load_frame_cached(playcall_streak, seasons, db=db) if isinstance(playcall_streak, str) \
+                else pm3.load_frame(seasons, db=db)
+            con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+            try:
+                rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
+                                   "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
+            finally:
+                con.close()
+            results = []
+            for season, week, game_id, home, away, hs, aw in rows:
+                outcome = None if hs == aw else hs > aw
+                results.append((season, week, game_id, home, outcome))
+                results.append((season, week, game_id, away, None if outcome is None else not outcome))
+            states = ss.streak_states(results)
+            contextual_sampler.streak_shifts = ss.priors(frame, states, cutoff)
+        if playcall_streak_league:  # league-wide streak splits: a league dropback shift and outcome lifts, prior seasons only
+            if eligible_before is None:
+                raise ValueError('league streak splits need an eligible-before cutoff')
+            import playcall_model as pm4
+            import streak_splits as ss2
+            cutoff = int(eligible_before[0])
+            seasons = range(2010, cutoff)
+            frame = pm4.load_frame_cached(playcall_streak_league, seasons, db=db) if isinstance(playcall_streak_league, str) \
+                else pm4.load_frame(seasons, db=db)
+            con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+            try:
+                rows_s = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
+                                     "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
+            finally:
+                con.close()
+            res = []
+            for season, week, game_id, home, away, hs, aw in rows_s:
+                outcome = None if hs == aw else hs > aw
+                res.append((season, week, game_id, home, outcome))
+                res.append((season, week, game_id, away, None if outcome is None else not outcome))
+            states_l = ss2.streak_states(res)
+            ss2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], states_l)
+            contextual_sampler.streak_league = ss2.league_priors(frame, states_l, cutoff)
+            contextual_sampler.streak_outcomes = True
         if playcall_coverage:  # defensive coverage on dropbacks: the defense's prior shares; outcomes conditioned on it
             if eligible_before is None:
                 raise ValueError('coverage priors need an eligible-before cutoff')

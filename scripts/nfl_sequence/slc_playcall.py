@@ -28,6 +28,7 @@ import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import formation_layer  # noqa: E402
 import point_splits  # noqa: E402
+import streak_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
 
@@ -150,6 +151,12 @@ class PlayCallSampler:
         self.exact_yardline = False
         # team score-state splits: log-odds shifts of the dropback rate by score bucket (point_splits), None when off
         self.point_shifts = None
+        # win-loss streak splits: log-odds shifts by streak bucket, and each team's current bucket (streak_splits)
+        self.streak_shifts = None
+        self.current_streak = {}
+        # league-wide streak effects: a league dropback shift by bucket (streak_splits.league_priors), and outcome lifts by bucket
+        self.streak_league = None
+        self.streak_outcomes = False
         # defensive coverage on dropbacks: the defense's prior shares (defense_layer) and the coverage-conditioned outcomes
         self.coverage_outcomes = False
         self.defense_priors = None
@@ -176,11 +183,14 @@ class PlayCallSampler:
         base = Counter({k: len(v) for k, v in by_key.items()})
         by_formation = defaultdict(Counter)  # outcome-type counts by the play's published formation (UNKNOWN when none)
         by_coverage = defaultdict(Counter)  # and by the published coverage
+        by_streak = defaultdict(Counter)  # and by the offense's streak going into the game
         for sample in cell:
             outcome = (intent_of(sample[0], sample[1]), sample[0])
             by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
             by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
+            by_streak[sample[1].get('streak', 'NONE')][outcome] += 1
         entry = {'key': key, 'base': base, 'by_formation': dict(by_formation), 'by_coverage': dict(by_coverage),
+                 'by_streak': dict(by_streak),
                  'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
         self._cells[id(cell)] = (cell, entry)
         return entry
@@ -200,6 +210,14 @@ class PlayCallSampler:
             bucket = pm.score_bucket(state['score_diff'])
             point_shift = point_splits.shift_for(self.point_shifts, self.layer.team_index[team], bucket)
             p = point_splits.adjust(p, point_shift)  # the team's score-state deviation, in log-odds
+        streak_shift = 0.0
+        if self.streak_shifts is not None and team in self.layer.team_index and team in self.current_streak:
+            streak_shift = streak_splits.shift_for(self.streak_shifts, self.layer.team_index[team], self.current_streak[team])
+            p = point_splits.adjust(p, streak_shift)  # the team's win-loss streak deviation, in log-odds
+        league_streak_shift = 0.0
+        if self.streak_league is not None and team in self.current_streak:
+            league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
+            p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, 'kick decision: historical share of this situation cell (not yet modelled)'
         else:
@@ -215,6 +233,8 @@ class PlayCallSampler:
             coverage = None
         use_formation = formation is not None and self.formation_outcomes
         use_coverage = coverage is not None and self.coverage_outcomes
+        streak_bucket = self.current_streak.get(team) if self.streak_outcomes else None
+        use_streak = streak_bucket is not None
         weights = []
         for k in keys:
             weight = entry['base'][k]
@@ -222,10 +242,12 @@ class PlayCallSampler:
                 weight *= self._lift(entry, k, formation, 'by_formation')
             if use_coverage:
                 weight *= self._lift(entry, k, coverage, 'by_coverage')
+            if use_streak:  # the league's outcome mix for this streak state, relative to the cell
+                weight *= self._lift(entry, k, streak_bucket, 'by_streak')
             if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
             weights.append(weight)
-        if self.team_outcomes is None and not use_formation and not use_coverage:
+        if self.team_outcomes is None and not use_formation and not use_coverage and not use_streak:
             key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
         else:
             key = rng.choices(keys, weights=weights)[0]
@@ -235,6 +257,9 @@ class PlayCallSampler:
             candidates = matched or candidates  # no row with this formation in the cell: the cell's rows
         if use_coverage:
             matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
+            candidates = matched or candidates
+        if use_streak:
+            matched = [c for c in candidates if c[1].get('streak', 'NONE') == streak_bucket]
             candidates = matched or candidates
         if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
@@ -246,12 +271,15 @@ class PlayCallSampler:
             'participants': pe.ids(pre_event),
             'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
+            'streak_outcome_conditioned': bool(use_streak),
             'team_outcome_split': self.team_outcomes is not None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
             'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
-            'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'kick_share': round(kick_share, 6),
+            'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'streak_shift': round(streak_shift, 6),
+            'streak_bucket': self.current_streak.get(team), 'league_streak_shift': round(league_streak_shift, 6),
+            'kick_share': round(kick_share, 6),
             'intent': intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })

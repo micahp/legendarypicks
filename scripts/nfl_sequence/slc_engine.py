@@ -44,17 +44,24 @@ def check_artifact_cutoff(artifact, season):
 
 
 def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
-                   exact_yardline=False, coverage=False, point_splits=False):
+                   exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
+                   streak_league=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
-    return er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
+    ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_formation=formation, playcall_player_shares=player_shares,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
-                   playcall_point_splits=point_splits)
+                   playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league)
+    if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
+        import json as _json
+        import streak_splits as ss
+        records = _json.loads(Path(streak_file).read_text())['teams']
+        ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
+    return ref, excluded
 
 
 def is_slc(ref):
