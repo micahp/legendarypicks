@@ -63,30 +63,31 @@ filter accounts for +6.39 ± 1.78 of the decision layer's +10.36 total uplift. T
 ## Open, and why
 
 - **Row-filter default.** Left on. Review. The lift-only layer is nearer the real total and is the recommendation.
-- **Playbook as the default input.** Built, off by default. The matched arm is not yet run. Review: the playbook files and the decision
-  labels describe the same plays, so this may change nothing.
+- **Playbook as the default input.** Built, off by default. The same-source matched arm is now run. Review the small paired effect
+  before changing the default; no default changed.
 - **Red-zone fix.** Not made. It is an engine change that acts on finding 3, so it waits for review.
 - **Pace.** Not investigated beyond the measurement above. Waits for review.
 
 ## Next steps
 
-1. Run the two matched arms for the playbook input (`decision` with player shares, and the same with `--playcall-playbook`), 100 seeds
-   each, on the current code.
-2. Commit and push the playbook input (`playbook_prior.py`, its tests, and the plumbing). These files are not yet committed.
-3. Review the findings and decide the three defaults above.
+1. Review the matched playbook result and decide whether the playbook input should remain off by default.
+2. Review the row-filter default. The current playbook pair held it on in both arms.
+3. Decide whether to investigate the red-zone gap and the high simulated pace. Neither issue has been changed.
 
 ## Commits on the SLC branch today
 
-`35e7d864`, `0eae58b5`, `5437ad7d`, `18ddc892`, `94260513`, `ddc289cd`, `2bb41d30`, `7d66f989`, `b7bad9bb`, plus the uncommitted
-playbook work.
+`35e7d864`, `0eae58b5`, `5437ad7d`, `18ddc892`, `94260513`, `ddc289cd`, `2bb41d30`, `7d66f989`, `b7bad9bb`, `000ff3fa`,
+`567845ff` (share-model fitting and validation tools), `5a0b9e8c` (one-draw cache and runtime manifests), and `3227a907` (team-player grouping and game-cluster validation).
 
 
 ## Results finalized after this context snapshot
 
-- The 2024-fit, 2025-held-out Dirichlet-multinomial player-share check reproduced byte-for-byte from the current read-only dev database. It improved held-out log score by +4.30 per team-game for targets and +5.54 for carries on returning players with same-team history. Predicted variance and zero rates moved toward the observations but remained low.
-- A current-source player-share control was run against the saved Dirichlet arm. Both used the same snapshot, reference frame, artifact and source hashes. The 99 paired valid full-game seeds had identical total points and margin.
+- The 2024-fit, 2025-held-out Dirichlet-multinomial player-share check is keyed by team and player, with uncertainty resampled across both teams by NFL game. It improved held-out log score by +4.30 per team-game for targets and +5.54 for carries on returning players with same-team history. Variance and zero rates moved closer to observations; lower and median count quantiles remain too low.
+- On the same-source Week 8 player-share versus Dirichlet pair, per-player target and carry counts changed on all 99 paired valid seeds, while team scores were identical on every seed. This confirms the opportunity adapter is connected; outcomes are still not player-conditioned.
+- The same-source playbook pair completed 100 player-share control games and 98 playbook games, with 98 shared valid seeds. Mean paired changes were -0.86 total points (SE 1.76) and -0.47 home-margin points (SE 1.80). The two blocked playbook seeds and all input/output hashes are recorded in SLC-PLAYBOOK-MATCHED-2026-10-29.json.
 - The cohort-corrected 2024 scoring replay covers 229 of 256 games in weeks 2 to 18. Formation shifts scoring by +0.2745 points per team-game with a game-clustered standard error of 0.2572 on 1,071 paired game and seed runs. Missing snapshots include 16 CIN games, so this is not a full-season estimate.
-- Reports and hashes: SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md, SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md, and SLC-RESULTS-PIN-2026-10-29.json.
-- No default changed. The Week 8 lock remains untouched. No 2026 outcome was read.
-- The result source state is commit 8073dc46 plus the existing dirty simulator files. The red-zone decomposition script has no saved result. Existing source and test changes remain outside the result-only commit.
+- The historical holdout scores cover returning same-team players only: 506 receiver player-team units and 332 carry player-team units, including only players with 2024 same-team history. The full frozen-roster population is not evaluated.
+- The simulated pace excess remains about 10 percent and is not fixed. The red-zone yardage gap also remains open. The red-zone decomposition script has no saved result.
+- Reports and hashes: SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md, SLC-PLAYBOOK-MATCHED-2026-10-29.md, SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md, and SLC-RESULTS-PIN-2026-10-29.json.
+- No default changed. The Week 8 lock remains untouched. No 2026 outcome was read. Share-model source and runner wiring are committed at 567845ff and 5a0b9e8c; team-player grouping and game-cluster validation are committed at 3227a907.
 

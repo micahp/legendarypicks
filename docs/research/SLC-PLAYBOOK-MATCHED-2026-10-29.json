@@ -1,0 +1,76 @@
+{
+  "arms": {
+    "off": {
+      "blocked_before_regulation": 0,
+      "command": "simulate_pregame_batch.py --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --playcall-decision --playcall-player-shares --games 100 --seed-start 1",
+      "mean_home_margin": 2.6,
+      "mean_total_points": 50.24,
+      "playcall_decision": true,
+      "playcall_dirichlet_shares": false,
+      "playcall_playbook": false,
+      "playcall_player_shares": true,
+      "raw_output_path": "/tmp/slc-playbook-matched-current-off.json",
+      "raw_output_sha256": "52a6bd08542b63eb66c6ba2ccdc9024ecbcd341d703f1493d5793ed40dedc13f",
+      "seed_ledger_path": "/tmp/slc-playbook-matched-current-off.seeds.jsonl",
+      "seed_ledger_sha256": "4bb3d327dfc461267217ffe0021abe82d357466d6ddbed4e7f146ab9eef0a3a1",
+      "valid_games": 100
+    },
+    "on": {
+      "blocked_before_regulation": 2,
+      "blockers": {
+        "5": "blocked_kick_outcome_unresolved:field_goal:guarded_penalty_fumble_or_review",
+        "68": "playcall_no_run_outcomes_in_cell:(4, '7-10', '80-99')"
+      },
+      "command": "simulate_pregame_batch.py --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --playcall-decision --playcall-player-shares --playcall-playbook --games 100 --seed-start 1",
+      "mean_home_margin": 2.2959,
+      "mean_total_points": 49.4796,
+      "playcall_decision": true,
+      "playcall_dirichlet_shares": false,
+      "playcall_playbook": true,
+      "playcall_player_shares": true,
+      "raw_output_path": "/tmp/slc-playbook-matched-current-on.json",
+      "raw_output_sha256": "c72d9542090b2514936f95db0d855cd1905ad77ec748fd3f60b0cafe4466927c",
+      "seed_ledger_path": "/tmp/slc-playbook-matched-current-on.seeds.jsonl",
+      "seed_ledger_sha256": "bc19b63a6f710326bbc826b64c02e206e1875ba3b1f232b2ab62c53ae565fa77",
+      "valid_games": 98
+    }
+  },
+  "code": {
+    "pinned_source_commit": "567845ffe1d72acbb07c1140ff8745d674a2584a",
+    "run_reported_base_commit": "000ff3fa5b7770da47a5e38e55cc2189f4ea301d",
+    "run_reported_worktree_dirty": true,
+    "source_sha256": {
+      "scripts/nfl_sequence/decision_layer.py": "a29771e8fe7554e77b2c8164ce108bd64d1692b7f75b521d9b6ded57b9fe570d",
+      "scripts/nfl_sequence/playbook_prior.py": "02a6c82cf1b2e5bac0130be12c638711cd174d06e4ccb4732ddcbc5519588c08",
+      "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
+      "scripts/nfl_sequence/pre_event.py": "53dfc34f5d72dd73ae9fc67a47b6e05555d0ee2c866c24159d67d166622fdb62",
+      "scripts/nfl_sequence/simulate_pregame_batch.py": "dedecdfac345684e682421f0f2a763edaca48005c238495893f374370618c03b",
+      "scripts/nfl_sequence/slc_engine.py": "1e89773779a12bdce7c8a859e67e4b23cc16ade258092dd65db48f2d578dc222"
+    }
+  },
+  "inputs": {
+    "artifact_embedded_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+    "artifact_file": "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+    "artifact_file_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "context_frame_sha256": "fc7d65860d9fb2e0a26015455241bfe7ee88a58c9c6902cb05a55ea5fc485e0d",
+    "game_id": "2026_08_CAR_GB",
+    "observed_reference_sha256": "bdab124b9b11a2e9dfb329f147881dbedd7dc8a7efb971d6eadb100c7390228b",
+    "snapshot_file": "docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json",
+    "snapshot_file_sha256": "8e3a99aabde7cc5c0331ed4ce00f645b41a891be7ce6a8fe53ed99f02b597e6c",
+    "snapshot_resealed_sha256": "c71f53027d2c263f9ed4ead6ffabb3fce8e390efbc5b232b98dcb89c5683d404"
+  },
+  "paired": {
+    "mean_home_margin_delta_on_minus_off": -0.4694,
+    "mean_home_margin_delta_standard_error": 1.8016,
+    "mean_total_points_delta_on_minus_off": -0.8571,
+    "mean_total_points_delta_standard_error": 1.7608,
+    "paired_valid_seeds": 98,
+    "seed_range": [
+      1,
+      100
+    ],
+    "se_definition": "sample standard deviation of paired seed differences divided by square root of the paired seed count"
+  },
+  "pin_date": "2026-10-29",
+  "scope": "One-matchup exploratory comparison of the decision layer with fixed player shares, with and without the playbook input. Dirichlet shares are off in both arms."
+}
