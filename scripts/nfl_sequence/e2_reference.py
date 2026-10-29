@@ -484,7 +484,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
-         playcall_artifact=None, playcall_teams=None):
+         playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -544,6 +544,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             raise ValueError('the play-call layer cannot be combined with team tendency or contextual sampling')
         import slc_playcall as slc
         contextual_sampler = slc.PlayCallSampler(slc.PlayCallLayer.load(playcall_artifact), side_teams=playcall_teams)
+        if playcall_team_outcomes:  # team event splits from the prior seasons only, the same cutoff as the pool
+            if eligible_before is None:
+                raise ValueError('team outcome splits need an eligible-before cutoff')
+            import team_tendency as tt
+            cutoff_season = int(eligible_before[0])
+            prior_rows = [row for row in rows if int(row['season']) < cutoff_season]
+            contextual_sampler.team_outcomes = tt.build_from_rows(prior_rows, cutoff_season, cutoff=(cutoff_season, 1))
         contextual_pool_manifest = contextual_sampler.describe()
     kick_source = rows if kickoff_regime_season is None else e1.load_seasons(db, KICKOFF_SEASONS)
     kick_rows = [r for r in kick_source if not regulation_only or (r['qtr'] is not None and int(r['qtr']) <= 4)]

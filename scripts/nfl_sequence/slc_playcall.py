@@ -137,6 +137,8 @@ class PlayCallSampler:
         self.decisions = []
         self._cells = {}
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
+        # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
+        self.team_outcomes = None
 
     def _team(self, label):
         if self.side_teams is None:
@@ -182,12 +184,17 @@ class PlayCallSampler:
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{intent}_outcomes_in_cell:{entry["key"]}')
         pre_event = self.participant_chooser(intent, offense) if self.participant_chooser is not None else None
-        key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]
+        if self.team_outcomes is None:
+            key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]
+        else:  # team splits weight which outcome type is drawn within the intent; the intent above is unchanged
+            key = rng.choices(keys, weights=[entry['base'][k] * self._outcome_weight(k[1], offense, defense, entry['key'])
+                                             for k in keys])[0]
         event, row, runoff, spot = rng.choice(entry['by_key'][key])
         if pre_event is not None:
             row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
         self.decisions.append({
             'participants': pe.ids(pre_event),
+            'team_outcome_split': self.team_outcomes is not None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
@@ -196,6 +203,19 @@ class PlayCallSampler:
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })
         return event, row, runoff, spot
+
+    def _outcome_weight(self, event, offense, defense, cell):
+        """Offense and defense event ratios for this cell, multiplied. A team with no prior-season sample adds no effect."""
+        weight = 1.0
+        for side, label in (('offense', offense), ('defense', defense)):
+            team = self._team(label)
+            if team is None:
+                continue
+            try:
+                weight *= self.team_outcomes.ratio(side, team, cell, event)
+            except ValueError:  # no prior-season sample for this team
+                continue
+        return weight
 
     def describe(self):
         return {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
