@@ -156,6 +156,8 @@ class PlayCallSampler:
         self.current_streak = {}
         # league-wide streak effects: a league dropback shift by bucket (streak_splits.league_priors), and outcome lifts by bucket
         self.streak_league = None
+        # decision model category A (target role) prior, used by the pre-event receiver choice (target_roles)
+        self.role_table = None
         self.streak_outcomes = False
         # defensive coverage on dropbacks: the defense's prior shares (defense_layer) and the coverage-conditioned outcomes
         self.coverage_outcomes = False
