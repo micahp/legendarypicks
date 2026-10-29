@@ -108,6 +108,27 @@ class FormationConditionedOutcomes(unittest.TestCase):
         self.assertFalse(sampler.decisions[-1]['formation_conditioned'])
 
 
+class TeamTendencies(unittest.TestCase):
+    def test_a_teams_own_formation_tendency_moves_the_choice_toward_it(self):
+        table = priors({'SHOTGUN': 1}, {'SHOTGUN': 1, 'UNDER CENTER': 1})
+        table['team_cells'] = {('GB', 'run', 1, '7-10'): {'formation': collections.Counter({'UNDER CENTER': 60}),
+                                                          'personnel': collections.Counter({'11': 1})}}
+        league_only = fl.distribution(table, 'run', 1, 8, 'formation')
+        with_team = fl.distribution(table, 'run', 1, 8, 'formation', team='GB')
+        self.assertGreater(with_team['UNDER CENTER'], league_only['UNDER CENTER'])
+
+    def test_a_team_with_no_history_in_the_situation_gets_the_league_cell(self):
+        table = priors({'SHOTGUN': 1}, {'SHOTGUN': 1, 'UNDER CENTER': 1})
+        self.assertEqual(fl.distribution(table, 'run', 1, 8, 'formation', team='NEW'),
+                         fl.distribution(table, 'run', 1, 8, 'formation'))
+
+    def test_the_team_tendency_never_chooses_unknown(self):
+        table = priors({'SHOTGUN': 1}, {'SHOTGUN': 1})
+        table['team_cells'] = {('GB', 'dropback', 2, '7-10'): {'formation': collections.Counter({fl.UNKNOWN: 99}),
+                                                               'personnel': collections.Counter({'11': 1})}}
+        self.assertEqual({fl.choose(table, 'dropback', 2, 8, f's{i}', team='GB')[0] for i in range(100)}, {'SHOTGUN'})
+
+
 class PreEventChoice(unittest.TestCase):
     def test_the_chooser_adds_formation_and_personnel_when_given_priors(self):
         from test_pre_event import SNAPSHOT

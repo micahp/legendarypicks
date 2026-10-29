@@ -82,7 +82,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional
         chosen['formation'], chosen['personnel'] = formation_layer.choose(
-            formation_priors, intent, state['down'], state['togo'], f'{base}:formation')
+            formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
     if defense_priors is not None and intent == 'dropback':
         import defense_layer
         other = 'away' if side == 'home' else 'home'  # the defense is the other roster's team
