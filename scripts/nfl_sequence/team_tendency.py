@@ -42,9 +42,11 @@ class TeamTendencies:
         return by_team[team].get(cell_name(cell), {}).get(event, 1.0)
 
 
-def build_from_pool(pool, target_season, prior_strength=PRIOR_STRENGTH):
-    """Tendencies from a pool of prior-season samples, {cell: [(event, row, runoff, spot), ...]}."""
-    holdout.refuse_if_holdout(target_season, 'team tendency')
+def build_from_pool(pool, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
+    """Tendencies from a pool of prior-season samples, {cell: [(event, row, runoff, spot), ...]}.
+
+    A target at or after the holdout needs an explicit cutoff, and every sample must come from a season before the target."""
+    holdout.refuse_unless_cutoff(target_season, 'team tendency', cutoff)
     seasons = sorted({int(sample[1]['season']) for samples in pool.values() for sample in samples})
     if not seasons or seasons[-1] >= target_season:
         raise ValueError(f'team tendencies must come from seasons before {target_season}, got {seasons}')
@@ -82,11 +84,11 @@ def build_from_pool(pool, target_season, prior_strength=PRIOR_STRENGTH):
     return TeamTendencies(ratios, manifest)
 
 
-def build_from_rows(rows, target_season, prior_strength=PRIOR_STRENGTH):
+def build_from_rows(rows, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
     """Tendencies from raw play rows (E1 columns) from seasons before the target season."""
-    holdout.refuse_if_holdout(target_season, 'team tendency rows')
+    holdout.refuse_unless_cutoff(target_season, 'team tendency rows', cutoff)
     pool, _excluded = e1.build_pool(rows)
-    return build_from_pool(pool, target_season, prior_strength)
+    return build_from_pool(pool, target_season, prior_strength, cutoff=cutoff)
 
 
 class TendencySampler:
