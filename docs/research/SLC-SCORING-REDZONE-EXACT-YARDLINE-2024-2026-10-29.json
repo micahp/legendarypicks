@@ -1,0 +1,74 @@
+{
+ "actual_2024": {
+  "fourth_down": {
+   "conversion_rate": 0.4655,
+   "converted": 337,
+   "decision_field_goal": 947,
+   "decision_no_play": 256,
+   "decision_punt": 1920,
+   "decision_qb_kneel": 1,
+   "go": 724,
+   "go_rate": 0.1881,
+   "rz_decision_field_goal": 444,
+   "rz_decision_no_play": 33,
+   "rz_decision_pass": 104,
+   "rz_decision_run": 68,
+   "rz_plays_4th": 649,
+   "tries": 3848
+  },
+  "redzone": {
+   "drives": 2016,
+   "outcome_field_goal": 547,
+   "outcome_other": 213,
+   "outcome_touchdown": 1256,
+   "rz_decision_extra_point": 1121,
+   "rz_decision_field_goal": 35,
+   "rz_decision_kickoff": 16,
+   "rz_decision_no_play": 438,
+   "rz_decision_pass": 2446,
+   "rz_decision_qb_kneel": 56,
+   "rz_decision_qb_spike": 16,
+   "rz_decision_run": 2360,
+   "rz_plays_other": 6488,
+   "rz_scrimmage_plays": 4978,
+   "rz_scrimmage_td": 975,
+   "touchdown_per_redzone_drive": 0.623
+  }
+ },
+ "definitions": "rz_scrimmage: run or pass plays inside the 20; rz_scrimmage_td: those whose outcome is a touchdown. fourth down: run or pass on down 4; converted: the next play in the drive is first down; red zone: the drive reaches 20 or closer at any scrimmage play. Replay weeks 2-18, 2 seeds per game, exploratory.",
+ "replay": {
+  "fourth_down": {
+   "conversion_rate": 0.4241,
+   "converted": 598,
+   "decision_dropback": 927,
+   "decision_field_goal_attempt": 1882,
+   "decision_punt": 3864,
+   "decision_run": 483,
+   "go": 1410,
+   "go_rate": 0.197,
+   "rz_decision_dropback": 196,
+   "rz_decision_field_goal_attempt": 896,
+   "rz_decision_punt": 16,
+   "rz_decision_run": 135,
+   "rz_plays_4th": 1243,
+   "tries": 7156
+  },
+  "redzone": {
+   "drives": 3093,
+   "outcome_end_of_regulation": 53,
+   "outcome_field_goal_attempt": 994,
+   "outcome_halftime": 52,
+   "outcome_punt": 51,
+   "outcome_touchdown": 1630,
+   "outcome_turnover": 139,
+   "outcome_turnover_on_downs": 174,
+   "rz_decision_dropback": 4369,
+   "rz_decision_field_goal_attempt": 41,
+   "rz_decision_run": 3932,
+   "rz_plays_other": 8342,
+   "rz_scrimmage_plays": 8632,
+   "rz_scrimmage_td": 1631,
+   "touchdown_per_redzone_drive": 0.527
+  }
+ }
+}
