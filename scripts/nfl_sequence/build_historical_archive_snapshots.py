@@ -64,6 +64,9 @@ EXPECTED_STARTERS = 28
 # https://static.www.nfl.com/image/upload/league/apps/league-site/media-guides/2025/GB.pdf
 VERIFIED_NAME_VARIANTS = {
     '00-0035118': frozenset({('matt orzech', 'matthew orzech')}),
+    # Bengals materials identify Daxton Hill as Dax Hill and report that he prefers Dax.
+    # https://www.bengals.com/news/daxton-hill-press-conference-transcripts
+    '00-0037743': frozenset({('dax hill', 'daxton hill')}),
 }
 
 
