@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
+import shlex
 import sqlite3
 import sys
 import time
@@ -55,6 +56,76 @@ V1_CONFIG = {'half_life': 6.0, 'cap': 14.0, 'prior_games': 4.0, 'sigma': 13.295,
 def _canonical_sha(value):
     encoded = json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _reproduction_command(args, seed):
+    """Return a shell-safe, single-seed command with the same model inputs and flags."""
+    command = [sys.executable, 'scripts/nfl_sequence/simulate_pregame_batch.py']
+    if args.snapshot_file:
+        command.extend(['--snapshot-file', str(args.snapshot_file)])
+    if args.game_id:
+        command.extend(['--game-id', str(args.game_id)])
+    if args.as_of:
+        command.extend(['--as-of', str(args.as_of)])
+    for option, value in (
+        ('--kickoff-utc', args.kickoff_utc),
+        ('--kickoff-source-url', args.kickoff_source_url),
+        ('--db', args.db),
+        ('--roster-snapshot', args.roster_snapshot),
+        ('--roster-provenance', args.roster_provenance),
+        ('--home-market-margin', args.home_market_margin),
+        ('--market-total', args.market_total),
+    ):
+        if value is not None:
+            command.extend([option, str(value)])
+    if args.allow_unverified_current_schedule_exploratory:
+        command.append('--allow-unverified-current-schedule-exploratory')
+
+    command.extend([
+        '--games', '1', '--seed-start', str(seed),
+        '--context-mode', args.context_mode,
+        '--context-bandwidth', str(args.context_bandwidth),
+        '--context-min-source-games', str(args.context_min_source_games),
+        '--try-policy', args.try_policy,
+        '--progress-every', '0', '--out', 'REPLAY.json',
+    ])
+    if args.team_tendency:
+        command.append('--team-tendency')
+    if args.no_safety_table:
+        command.append('--no-safety-table')
+    if args.playcall_artifact:
+        command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+
+    if args.playcall_point_splits_cache:
+        command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
+    elif args.playcall_point_splits:
+        command.append('--playcall-point-splits')
+    if args.playcall_streak_cache:
+        command.extend(['--playcall-streak-cache', str(args.playcall_streak_cache)])
+    elif args.playcall_streak_splits:
+        command.append('--playcall-streak-splits')
+    if args.playcall_streak_file:
+        command.extend(['--playcall-streak-file', str(args.playcall_streak_file)])
+
+    for flag, enabled in (
+        ('--playcall-team-outcomes', args.playcall_team_outcomes),
+        ('--playcall-formation', args.playcall_formation),
+        ('--playcall-coverage', args.playcall_coverage),
+        ('--playcall-player-shares', args.playcall_player_shares),
+        ('--playcall-dirichlet-shares', args.playcall_dirichlet_shares),
+        ('--playcall-exact-yardline', args.playcall_exact_yardline),
+        ('--playcall-target-roles', args.playcall_target_roles),
+        ('--playcall-decision', args.playcall_decision),
+        ('--playcall-decision-unfiltered', args.playcall_decision_unfiltered),
+        ('--playcall-playbook', args.playcall_playbook),
+        ('--playcall-qb-decisions', args.playcall_qb_decisions),
+        ('--playcall-player-outcomes', args.playcall_player_outcomes),
+        ('--playcall-player-outcomes-receiver-only', args.playcall_player_outcomes_receiver_only),
+        ('--playcall-streak-league', args.playcall_streak_league),
+    ):
+        if enabled:
+            command.append(flag)
+    return shlex.join(command)
 
 
 def _utc_timestamp(value, label):
@@ -477,6 +548,7 @@ def run_batch(args):
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
+    playcall_description = slc_engine.describe(ref)
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
     baseline_started = time.monotonic()
@@ -495,11 +567,11 @@ def run_batch(args):
         'source_snapshot_sha256': source_snapshot_sha256, 'observed_reference_sha256': ref.model_inputs['sha256'],
         'source_commit': source_provenance['base_commit'],
         'producer_file_sha256': source_provenance['producer_file_sha256'],
-        'player_share_model_manifest': (slc_engine.describe(ref) or {}).get('player_share_distribution'),
-        'qb_decision_model_manifest': (slc_engine.describe(ref) or {}).get('qb_decision_model'),
-        'player_outcome_model_manifest': (slc_engine.describe(ref) or {}).get('player_outcome_model'),
+        'player_share_model_manifest': (playcall_description or {}).get('player_share_distribution'),
+        'qb_decision_model_manifest': (playcall_description or {}).get('qb_decision_model'),
+        'player_outcome_model_manifest': (playcall_description or {}).get('player_outcome_model'),
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
-        'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
+        'seed_start': args.seed_start, 'playcall_artifact_sha256': (playcall_description or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -509,6 +581,14 @@ def run_batch(args):
         'playcall_player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
         'playcall_playbook': bool(args.playcall_playbook),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
+        'playcall_enabled_layers': (playcall_description or {}).get('enabled_layers'),
+        'playcall_source_cutoff': (playcall_description or {}).get('source_cutoff'),
+        'playcall_optional_input_sha256': (playcall_description or {}).get('optional_input_sha256'),
+        'playcall_point_splits': bool(args.playcall_point_splits or args.playcall_point_splits_cache),
+        'playcall_streak_splits': bool(args.playcall_streak_splits or args.playcall_streak_cache),
+        'playcall_streak_league': bool(args.playcall_streak_league),
+        'playcall_target_roles': bool(args.playcall_target_roles),
+        'playcall_decision_filter_enabled': (not args.playcall_decision_unfiltered if args.playcall_decision else None),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
@@ -555,13 +635,7 @@ def run_batch(args):
         })
     replay_examples = _replay_examples(outcomes)
     if replay_examples:
-        replay_examples['reproduction_command'] = (
-            'python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file SNAPSHOT.json '
-            f'--db {args.db} --games 1 --seed-start SEED --context-mode {args.context_mode} '
-            f'--context-bandwidth {args.context_bandwidth} --context-min-source-games {args.context_min_source_games} '
-            f'--try-policy {args.try_policy} --out REPLAY.json')
-        if args.no_safety_table:
-            replay_examples['reproduction_command'] += ' --no-safety-table'
+        replay_examples['reproduction_command'] = _reproduction_command(args, replay_examples['closest_to_mean_margin']['seed'])
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
@@ -588,6 +662,9 @@ def run_batch(args):
             'qb_decisions': bool(args.playcall_qb_decisions),
             'player_conditioned_outcomes': bool(args.playcall_player_outcomes),
             'player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
+            'playcall_enabled_layers': (playcall_description or {}).get('enabled_layers'),
+            'playcall_source_cutoff': (playcall_description or {}).get('source_cutoff'),
+            'playcall_optional_input_sha256': (playcall_description or {}).get('optional_input_sha256'),
         },
         'runtime_seconds': {
             'snapshot_load': round(snapshot_seconds, 4),
@@ -600,7 +677,7 @@ def run_batch(args):
         'pregame_snapshot': snapshot,
         'pregame_context': contextual,
         'contextual_pool_manifest': ref.contextual_pool_manifest,
-        'playcall_layer': slc_engine.describe(ref),
+        'playcall_layer': playcall_description,
         'data_sources': {
             'database': 'SQLite, opened read-only',
             'source_snapshot_sha256': source_snapshot_sha256,

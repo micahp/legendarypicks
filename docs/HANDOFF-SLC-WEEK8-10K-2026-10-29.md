@@ -1,119 +1,89 @@
-# SLC Week 8 10K run handoff
+# SLC Week 8 execution and calibration handoff
 
 - **Prepared:** 2026-10-29
 - **Checkout:** `/root/lp-slc-preevent`
 - **Branch:** `research/slc-decision-layer-2026-10-29`
-- **Base HEAD and remote:** `e655f55165db56ee545ed5e98a4f37c9ea8b35c4`
-- The QB/player integration commit `03c8c1f7` is earlier in this branch history; `e655f551` is the current branch tip.
-- **Status:** Research work is uncommitted. No 10K simulation was started.
+- **Branch HEAD:** `5e6c8de15edffe6aeee983ee0b643b976f188b02`; remote matched at inspection.
+- **Base commit:** `5e6c8de15edffe6aeee983ee0b643b976f188b02`; the pushed branch matched this commit when this change set was reviewed.
+- **Run status:** one all-layer execution smoke completed. A corrected exact-yardline paired replay is active on the faster host through tmux pane `shell:0.0`; no Week 8 10K batch, production promotion or deployment has been performed.
+- **Current calibration verdict:** no full-stack calibration. See [layer calibration audit](research/SLC-LAYER-CALIBRATION-AUDIT-2026-10-29.md).
 
-## Request and run scope
+## What the latest evidence says
 
-The requested next experiment is a 10,000-seed Week 8 SLC run with the connected SLC layers enabled. The Week 8 snapshot directory contains multiple games. Confirm which game is the target before running. This handoff assumes one selected matchup; 10,000 seeds for every Week 8 game is a materially larger experiment and must be treated as a separate scope decision.
+- The corrected 2024 red-zone replay finds 3.294 trips per team-game in SLC and 3.311 actual; the interval includes zero. Conversion is low (0.495 versus 0.583 touchdowns per trip) and red-zone play volume is high (10.350 versus 9.669 plays per team-game). Do not report a red-zone trip deficit.
+- The 2025 replay has about 10% too many scrimmage plays. This remains a system-level blocker for scoring, possession and player-volume calibration.
+- The 2024-fit/2025-held-out Dirichlet-multinomial share model improves joint log scores by 4.303 targets and 5.543 carries per team-game on returning players with same-team history. Zero rates and lower/median count quantiles remain miscalibrated.
+- Receiver-conditioned event and completion-result scores improve on the 2025 holdout. QB target-role and completion-result scores regress; rushing results are inconclusive.
+- Team outcomes, formation, coverage, playbook, point and streak results are small exploratory paired runs. They do not establish calibrated team scores or winner probabilities.
+- The old exact-yardline claim is invalid: its trip definition, touchdown classification and incomplete-seed handling were inconsistent. The earlier local rerun was interrupted and produced no result. The corrected paired run now writes `/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json`, with a flushed log at `/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log`. At the latest update the default arm had processed 100/256 schedule games (175 complete game-seeds, 9 incomplete, 0 engine errors); the exact-yardline arm is pending. Do not cite this as a completed comparison until the JSON is saved and reviewed.
+- No target CAR–GB game outcome was read. The current-streak input uses only games before the frozen Week 8 cutoff. All fitted SLC sources in the smoke are cut before 2026 Week 1.
 
-For an interpretable player-model result, use the same snapshot and seed range for three arms:
+## Executable engine evidence
 
-1. **Pooled SLC:** score-clock play calling with the frozen play-call artifact and no optional splits.
-2. **Team-conditioned SLC:** pooled SLC plus team offense/defense outcome splits, formation-conditioned outcomes, and coverage-conditioned outcomes.
-3. **Full player stack:** team-conditioned SLC plus Dirichlet player shares, QB decisions, and all player-conditioned outcome roles.
+The batch runner completed seed 1 on the frozen `2026_08_CAR_GB` snapshot with every available SLC feature enabled: one complete regulation game, 150 decisions, no blocked game and no simulation/validation errors. The output labels all 17 feature booleans as enabled and records source cutoffs, model versions, input hashes and integration-code hashes.
 
-Use 10,000 common seed IDs in each arm (`--seed-start 1`, `--games 10000`). This is 30,000 simulated games for one matchup. The three arms distinguish the pooled baseline, the existing team/formation/coverage layer, and the added player stack. Do not report an uplift from the full arm alone as a model comparison.
+- Output: [all-layer engine smoke](research/SLC-ALL-LAYERS-ENGINE-SMOKE-2026_08_CAR_GB-2026-10-29.json)
+- Seed ledger: [smoke seed ledger](research/SLC-ALL-LAYERS-ENGINE-SMOKE-2026_08_CAR_GB-2026-10-29.seeds.jsonl)
+- Frozen snapshot SHA-256: `35a295d98022e5b5ec9ac0fded4bbe04cf94e50c962cd8da6d6e2c1a4a2f6e77`
+- Observed reference SHA-256: `0f793fd0edf5c20f8c1d00aeaa5782b7069b2acc8b2d01150f32f65fe223b6a6`
+- Play-call artifact identity SHA-256: `27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7`
+- Pregame streak input SHA-256: `691c7d4a5b66ca7e9f7e5643571e0df8da89fa36084a0273ea286b4fe7cf0b50`
+- Smoke output SHA-256: `4fee19c6809ce7dc1918f496ddab47b5d92a9c33c9ce9113995409a90f927bb4`
+- Seed ledger SHA-256: `81201706895db916962df32db8e20237e8b2b1a5724ca81f0f4f8a7fb03df33b`
 
-For the full player stack, enable:
-
-```text
---playcall-team-outcomes
---playcall-formation
---playcall-coverage
---playcall-dirichlet-shares
---playcall-qb-decisions
---playcall-player-outcomes
-```
-
-`--playcall-dirichlet-shares` also enables the player-share participant adapter. Do not add `--playcall-player-outcomes-receiver-only`; the full arm should include QB, receiver, and rusher outcome roles.
-
-Keep the independent target-role/decision/playbook, point-split, streak, exact-yardline, and contextual-policy experiments off for this comparison. They are separate switches and some overlap with QB decisions or formation/outcome conditioning. If the requested meaning of “all SLC layers” includes those experiments, add them to all applicable arms and identify them separately in the run manifest.
-
-## Preflight and execution
-
-Do not start the 10K job until the receiving agent has:
-
-1. Confirmed the target game and loaded the selected frozen snapshot with `pregame_snapshot.load_frozen_snapshot()` so its hash and cutoff are validated. Do not use target-game outcomes in fitting or inputs.
-2. Confirmed the play-call artifact cutoff and the exact model/source manifests in each arm.
-3. Run a 100-seed pilot for all three arms using the same seed range. Check runtime, error count, completed/valid game count, player eligibility, participant-before-outcome traces, and score/stat reconciliation.
-4. Immediately before the 10K run, checked both `uptime` and `free -h`. The box has 5.8 GB RAM; do not start if available memory is below about 1.5 GB. Run one process at a time with no hidden parallel workers. The earlier 3.0 GB availability reading from this session is stale and must not be used as the run-time gate.
-
-Use the repository virtualenv Python, not host Python. Do not run `npm`, start/restart a server, or use a second dev-server stack.
-
-Command template for the full player stack (replace the two placeholders after the target matchup is selected):
+The saved smoke JSON was produced before the reproduction-command fix. The batch runner now emits a shell-quoted command with the actual snapshot, DB, policy artifact, optional model flags, caches and roster inputs. The command below reconstructs the smoke configuration under the current checkout.
 
 ```bash
 /root/legendarypicks/backend/venv/bin/python scripts/nfl_sequence/simulate_pregame_batch.py \
-  --snapshot-file docs/research/slc-week8-2026/snapshots/<TARGET_WEEK8_GAME>.json \
+  --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json \
+  --db /root/legendarypicks/backend/data/picks.dev.db \
+  --games 1 --seed-start 1 \
+  --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json \
+  --playcall-team-outcomes --playcall-formation --playcall-coverage \
+  --playcall-dirichlet-shares --playcall-qb-decisions --playcall-player-outcomes \
+  --playcall-target-roles --playcall-decision --playcall-playbook \
+  --playcall-point-splits --playcall-streak-splits --playcall-streak-league \
+  --playcall-streak-file docs/research/SLC-STREAK-PREGAME-2026_08_CAR_GB-2026-10-29.json \
+  --playcall-exact-yardline --progress-every 0 \
+  --out /tmp/slc-all-layers-replay.json
+```
+
+With `--playcall-decision`, the row filter is enabled unless `--playcall-decision-unfiltered` is supplied. Keep the filter as a separate ablation. The 100-seed CAR–GB comparison attributed +6.39 ± 1.78 total points to the filter by itself; this uplift is not evidence of better player modeling.
+
+## Week 8 10K command
+
+The existing Week 8 directory contains multiple games. This command uses CAR–GB, the snapshot already used by the smoke. A 10K run describes the distribution for these frozen inputs; it does **not** calibrate the model. Run the three-arm and per-layer comparisons separately for calibration.
+
+Before a large run, execute a 100-seed pilot, check the finished/valid/error counts and all roster/outcome traces, then measure runtime. Immediately before the 10K run, check `uptime` and `free -h`; use one process and do not start if available memory is below 1.5 GiB. Keep outputs in a new research directory, preserve blocked and failed seeds, and do not overwrite prior artifacts.
+
+```bash
+/root/legendarypicks/backend/venv/bin/python scripts/nfl_sequence/simulate_pregame_batch.py \
+  --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json \
+  --db /root/legendarypicks/backend/data/picks.dev.db \
   --games 10000 --seed-start 1 \
   --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json \
   --playcall-team-outcomes --playcall-formation --playcall-coverage \
   --playcall-dirichlet-shares --playcall-qb-decisions --playcall-player-outcomes \
-  --progress-every 100 \
-  --out docs/research/slc-week8-2026/paired-player-stack/<TARGET_WEEK8_GAME>-full-player-stack-10k.json
+  --playcall-target-roles --playcall-decision --playcall-playbook \
+  --playcall-point-splits --playcall-streak-splits --playcall-streak-league \
+  --playcall-streak-file docs/research/SLC-STREAK-PREGAME-2026_08_CAR_GB-2026-10-29.json \
+  --playcall-exact-yardline --progress-every 100 \
+  --out docs/research/slc-week8-2026/all-layers-10k/2026_08_CAR_GB.json
 ```
 
-Run the other two arms sequentially with the same snapshot, artifact, `--games 10000`, and seed range. Keep output and `.seeds.jsonl` files in a new research subdirectory; do not overwrite existing Week 8 artifacts. Preserve every failed or blocked seed in the ledgers.
+Use the same seed IDs and frozen inputs for pooled score-clock, team-conditioned, player-conditioned and all-layer arms. Report the decision-filter-on and decision-filter-off arms separately. Do not claim a layer improves from the full-stack result alone.
 
-## Metrics and review gates
+## Calibration order
 
-Report, by arm and paired difference:
+1. **Pace and game mechanics:** resolve the excess plays through clock stoppages, drives, possession changes and game duration. Recheck plays and possessions against the same historical cohort.
+2. **Red-zone outcomes:** finish the matched exact-yardline comparison, then isolate yards, touchdowns, field goals, turnovers and fourth-down decisions on the same games and seeds.
+3. **Conditional outcome layers:** compare team offense/defense, formation/personnel and coverage against pooled and team-conditioned baselines on chronological holdouts.
+4. **Decision priors:** validate target-role, QB, decision labels and playbook separately. Tune the decision row filter independently because it changes outcome selection sharply.
+5. **Player distributions:** retain the positive share-model log-score result, but correct zero rates and count quantiles and include new players, transfers and frozen-roster eligibility in the scored cohort.
+6. **Full-game calibration:** after the preceding gates pass, evaluate score, win/tie, player-stat distributions and prediction scores on a held-out season with game-cluster uncertainty.
 
-- Valid complete games, ties, blocked games, and simulation errors.
-- Home/away points, win/tie rates, total points, plays, drives, possessions, touchdowns, red-zone trips, and red-zone conversions.
-- Passing, rushing, target, and carry counts; player count means, variance, quantiles, and zero-opportunity rates.
-- QB action counts, QB target-role counts, target-role history support, source-row conditioning/fallback counts, and draw-time roster-role fallbacks.
-- Player eligibility failures, missing-history participation, and any emitted participant not found on the frozen roster.
-- Exact snapshot, artifact, source, model-version, code, and seed-ledger hashes.
+For every comparison, record the exact source cutoff, model version, artifact/input/code hashes, paired seed ledger, matched-game population and valid-game coverage. The current 2024 and 2025 historical replays lack row-level publication timestamps and remain exploratory rather than verified point-in-time backtests.
 
-Use matched seeds and game-level uncertainty for arm comparisons. Treat the Week 8 10K run as an exploratory simulation of the frozen inputs, not evidence of historical calibration. Player shares should change player opportunity allocations; they should not be credited with improving scoring unless the player-conditioned outcome model is enabled. Team scoring and win probability remain unvalidated by the earlier event-level tests.
+## Current local changes
 
-## Work completed in this checkout during this session
-
-### Receiver and outcome isolation
-
-- Added a receiver-only outcome ablation switch to `run_slc_game.py` and `simulate_pregame_batch.py`. It requires player outcomes to be enabled and is included in run/seed manifests.
-- Routed the enabled player roles through `player_outcomes.py`, `slc_playcall.py`, and `slc_engine.py`; receiver-only weighting leaves QB and rusher outcome weights at neutral.
-- Added tests proving receiver-only outcome sampling responds to receiver identity but ignores QB identity, and that receiver result weights are attached to the selected receiver.
-- The pre-event participant chooser now applies frozen `Out`/`Doubtful` eligibility across QB, receiver, and rusher choices even when QB decisions and Dirichlet shares are off. The fallback QB is selected from the available roster when an injury report exists.
-
-### QB target-role diagnosis and test findings
-
-- Added `scripts/nfl_sequence/diagnose_qb_target_role.py` and a reproducible JSON/Markdown report under `docs/research/SLC-PLAYER-CONDITIONING-2026-10-29/`.
-- Inputs are the local read-only play-by-play database plus official nflverse 2024 and 2025 depth-chart parquet files. Their SHA-256 hashes are in the JSON report. The 2025 file is available from the [official nflverse release](https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2025.parquet); the 2024 file uses the corresponding [2024 release](https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2024.parquet).
-- 2024 is a tuning holdout (fit 2022–2023); 2025 is the chronological final holdout (fit 2022–2024). Candidate own-QB shrinkage strengths were 0, 5, 10, 20, 40, 80, and 160, while the team prior remains shrunk by 20 observations.
-- At the current strength 20, 2025 QB target-role log loss is worse than the team-conditioned baseline by `0.00734` per target (95% game-bootstrap CI `[-0.00894, -0.00576]` in the new diagnostic; the prior report gives `[-0.00889, -0.00572]`). The same direction remains when scoring only targets whose receiver and role appear in the pregame depth chart: `-0.00702` on 16,437 targets.
-- Tuning on 2024 selects strength 160, the weakest QB-specific effect in the candidate grid. It still regresses on 2025 by `0.00114` log loss (95% CI `[-0.00154, -0.00072]`). Zero-support rows match the team prior; deterioration is concentrated among supported QB/team/situation cells, so sparse history is not the only explanation.
-- The diagnostic was generated before the new zero-mass handling in `qb_decisions.draw()`. That edit did not change `_target_distribution`, `_distribution`, or the validation scoring path, so these scores are unaffected; the JSON's QB source hash identifies the pre-fallback file. Rerun the diagnostic if the final report must carry a post-fallback source hash.
-- The depth-chart inputs are only role/roster proxies. Historical 2025 injury rows have no `date_modified`, so the report does not claim frozen injury eligibility or complete roster-valid calibration. The role-model regression remains a promotion blocker.
-
-### Additional tests and robustness fix
-
-- Added QB tests for team-keyed histories across a transfer, new-QB backoff to the team prior, normalized target-role probabilities after roster filtering, and zero estimated mass across all available roles.
-- Found and fixed a real zero-mass failure: `qb_decisions.draw()` divided by zero when every model prior assigned zero mass to roles available on the frozen roster. It now falls back uniformly across the available roles and records `no_model_mass_for_available_roles`.
-- Added pre-event and sampler tests for that fallback, for filtering source outcomes by the selected QB target role, and for recording the fallback when the source cell contains no row matching the chosen role. In that latter case the current sampler retains the original candidate row; the trace counts it as `no_target_identity_match_in_event_cell`, so the Week 8 run should report its frequency and role mismatch implications.
-- Decision traces now include the normalized role probabilities and draw-time fallback count. `slc_engine.summary()` records these separately from the later source-row role-match fallback.
-- Added player-outcome tests proving event/result weights follow the matching selected role and do not leak across passer, receiver, and rusher identities.
-- Latest focused run: **61 tests passed** across `test_qb_decisions`, `test_pre_event`, `test_slc_playcall`, `test_player_outcomes`, and `test_slc_engine`. Earlier, before the last zero-mass tests/trace fields, the wider SLC integration set reported **93 tests passed**. No 10K job has been launched.
-
-### Existing evidence and unresolved model issues
-
-- Existing 2025 event holdout: receiver event and completion-result log-loss improvements are `+0.00746` and `+0.02066`; QB pass/scramble is inconclusive (`-0.00099`); QB target role regresses (`-0.00734`); QB completion result regresses (`-0.00448`); rusher scores are near zero/inconclusive. These are event-level scores, not full-game validation.
-- The 2024-fit/2025-held-out Dirichlet player-share report shows joint log-score improvements over fixed shares of `+4.30` per team-game for targets and `+5.54` for carries for the tested returning-player cohort. Zero rates and some quantiles remain miscalibrated.
-- Team-strength pass-through remains unresolved. The simulation still produces roughly 10% too many scrimmage plays, and the 2024 replay has too few red-zone trips/too little touchdown conversion. Those mechanisms can distort player totals and game probabilities.
-- No player-specific model is promoted or on by default. There is no complete QB progression/pressure-response model or defensive adaptation model.
-
-## Checkout safety and ownership
-
-- Do not discard/reset the worktree. The diagnostic and integration changes above are uncommitted.
-- The uncommitted **engine and runner** changes are `scripts/nfl_sequence/slc_engine.py`, `slc_playcall.py`, `run_slc_game.py`, and `simulate_pregame_batch.py`. They include receiver-only role wiring, QB target-role probability/fallback traces and summaries, and runner/batch flags and manifests. The other uncommitted implementation files are `player_outcomes.py`, `pre_event.py`, `qb_decisions.py`, and `validate_qb_player_outcomes.py`.
-- The uncommitted tests are `test_player_outcomes.py`, `test_pre_event.py`, `test_pregame_batch.py`, `test_qb_decisions.py`, `test_run_slc_game_flags.py`, `test_slc_engine.py`, and `test_slc_playcall.py`. The target-role diagnostic script and its report/data inputs are also uncommitted.
-- A 10K run from this checkout would execute these dirty engine/runner changes while its base commit remains `e655f551`. Before starting, the receiving agent must either use this exact worktree and record the patch/source hashes with the run, or obtain a reviewed/committed research revision. Do not assume the base commit alone identifies the executed code.
-- `scripts/nfl_sequence/scoring_redzone_decomp_2024.py` was already untracked before the current QB-test additions; preserve it and do not stage it accidentally.
-- This session did not commit or push. The branch remote matched `e655f551` at inspection. No production promotion is authorized.
-- The 10K run is a research batch, not a release. Keep all outputs under `docs/research/slc-week8-2026/`; do not change defaults or deploy.
+This change set includes the corrected red-zone diagnostic and report, updated model/context documents, layer-calibration audit, engine manifest and runner wiring, and the paired exact-yardline comparison. The run status above is a timestamped progress snapshot, not a result. Coaching tendencies remain separate research and are not part of the executable SLC layer set.

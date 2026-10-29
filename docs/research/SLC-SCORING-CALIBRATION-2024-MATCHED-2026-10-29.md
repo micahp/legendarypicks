@@ -22,4 +22,4 @@ Actual final scores include defense and special teams scoring. The matched 2024 
 
 The cohort is incomplete and team-selective, especially for CIN. The nfl_pbp data has no row-level publication timestamp, so the retrospective cutoff is checked by season and week. Treat these values as results for the 229 available games, not a full-season estimate or calibration. The result supersedes the earlier formation comparison that included blocked partial games and used a different actual-score population.
 
-The red-zone decomposition script was not run in the saved Claude session. This report makes no red-zone mechanism claim. The raw replay and summary hashes are pinned in docs/research/SLC-RESULTS-PIN-2026-10-29.json.
+The corrected red-zone decomposition is reported separately in `SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md`. It finds trips per team-game are in line, while red-zone play volume is high and offensive touchdown conversion is low. This report's scoring comparison is unchanged. The raw replay and summary hashes are pinned in docs/research/SLC-RESULTS-PIN-2026-10-29.json.

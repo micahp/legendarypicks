@@ -29,9 +29,10 @@ Replay plays per seed are the replay total divided by the two seeds.
 - Yardage is the open problem. Red-zone passes gain 0.52 yards against 3.78 actual, and red-zone runs 0.69 against 2.80. In the
   20 to 49 zone the gap is 6.25 against 7.41 for passes and 4.12 against 4.82 for runs. Past midfield the two sides are close
   (pass 8.04 against 8.09, run 4.88 against 5.07).
-- The gap is largest where the distance to the goal limits the play, which is the red-zone mechanism already recorded in
-  `SLC-SCORING-REDZONE-MECHANISM-2026-10-29.md`. The exact yard-line draw closed about 30 percent of the trip gap earlier.
-  It has not closed the yardage gap in this table.
+- The gap is largest where the distance to the goal limits the play. The earlier claim that exact-yardline sampling closed about
+  30 percent of the trip-conversion gap is withdrawn because the actual-side trip definition was inconsistent. See the corrected
+  matched-cohort analysis in `SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md`. This yardage table does not test the exact-yardline
+  arm and does not establish that it closes the yardage gap.
 
 ## Status
 
