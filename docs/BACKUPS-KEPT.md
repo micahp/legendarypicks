@@ -31,10 +31,12 @@ For the record. These were scratch copies and sidecars this work created, and no
 - Orphan `-shm` and `-wal` sidecars whose main files were already deleted: `picks.db.bak-pre-delete-roster-315191673-20261027`,
   `picks.db.bak-pre-rebind-540256-20261027`, `picks.db.bak-pre-unbind-315191673-20261027`
 
-Not deleted: the three pinned incident backups above, the two job-made copies, and every backup belonging to other sessions
-outside this repository (`/root/lp-backups`, `/root/lp-db-backups`, `/root/lp-archive`, `/root/backups`,
-`/root/lp-discrete-eval-artifacts`, `/root/lp-sport-first-nav`, `/root/lp-release-v097`, `/root/.codex`, `/root/.hermes`).
-Those total about 25 GB and need their owners' decision.
+Not deleted: the three pinned incident backups above, the two job-made copies, and the backup folders that belong to other
+sessions outside this repository. Measured with `du` on 2026-10-28: `/root/lp-backups` 3.4 GiB, `/root/lp-db-backups` 3.0 GiB,
+`/root/lp-archive` 1.2 GiB, `/root/backups` 2.6 GiB, `/root/lp-discrete-eval-artifacts` 2.9 GiB, `/root/lp-sport-first-nav`
+3.9 GiB (a project tree that holds backups among other files), `/root/lp-release-v097` 0.8 GiB. Total about 18 GiB. Their owners
+decide. An earlier draft of this list also counted `/root/.codex` and `/root/.hermes`. Those are not backup folders and are
+not counted here.
 
 ## Naming
 
