@@ -1,0 +1,45 @@
+{
+ "actual_2024_regular_season": {
+  "drives": 10.768,
+  "plays_per_drive": 5.833,
+  "points": 22.912,
+  "points_per_drive": 2.128,
+  "team_games": 512,
+  "terminals_per_team_game": {
+   "end_of_period": 0.246,
+   "field_goal": 1.691,
+   "missed_field_goal": 0.332,
+   "other": 0.541,
+   "punt": 3.734,
+   "safety": 0.025,
+   "touchdown": 2.562,
+   "turnover": 1.062,
+   "turnover_on_downs": 0.572
+  }
+ },
+ "definitions": "points include overtime; drives are possessions; plays are run and pass plays only; actual terminals from the play-by-play series result",
+ "sim_meta": {
+  "errors": 0,
+  "games": 229,
+  "skipped": 43,
+  "team_games": 2290
+ },
+ "simulated_2024_replay": {
+  "drives": 11.369,
+  "plays_per_drive": 6.565,
+  "points": 19.697,
+  "points_per_drive": 1.733,
+  "team_games": 2290,
+  "terminals_per_team_game": {
+   "end_of_overtime": 0.001,
+   "end_of_regulation": 0.474,
+   "field_goal_attempt": 2.197,
+   "halftime": 0.474,
+   "punt": 4.213,
+   "safety": 0.041,
+   "touchdown": 2.023,
+   "turnover": 1.097,
+   "turnover_on_downs": 0.848
+  }
+ }
+}
