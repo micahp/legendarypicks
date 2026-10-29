@@ -53,7 +53,8 @@ def _by_player_share(players, table, team, role, positions, draw):
     return draw.choices(candidates, weights=weights, k=1)[0]
 
 
-def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None):
+def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
+           role_table=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -70,7 +71,16 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             chosen['receiver'] = _by_usage(players, observed['receiver_position_usage'], team, 'receiver',
                                            _draw(f'{base}:receiver:position'))
         else:  # the adapter: rostered receivers in proportion to their prior-season target shares
-            chosen['receiver'] = _by_player_share(players, player_shares, team, 'receive', player_shares_positions('receive'),
+            positions = player_shares_positions('receive')
+            if role_table is not None and state is not None:  # decision model category A: the target's role first
+                import target_roles
+                present = {p['pos_abb'] for p in players if p['pos_abb'] in ('RB', 'WR', 'TE')}
+                role = target_roles.draw(role_table, team, state['down'], state['togo'], state['yl'], f'{base}:role',
+                                         available=present | {'Other'})
+                chosen['target_role'] = role
+                if role in ('RB', 'WR', 'TE'):
+                    positions = (role,)
+            chosen['receiver'] = _by_player_share(players, player_shares, team, 'receive', positions,
                                                   _draw(f'{base}:receiver:player'))
     else:
         if player_shares is None:
@@ -90,7 +100,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     return chosen
 
 
-def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None):
+def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -100,7 +110,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         counter['index'] += 1
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
-                      player_shares=player_shares, defense_priors=defense_priors)
+                      player_shares=player_shares, defense_priors=defense_priors, role_table=role_table)
     return pick
 
 

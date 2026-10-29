@@ -486,7 +486,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
-         playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False):
+         playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -574,6 +574,11 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             else:
                 frame = pm2.load_frame(seasons, db=db)
             contextual_sampler.point_shifts = sp.priors(frame, int(eligible_before[0]))
+        if playcall_target_roles:  # decision model category A: team target-role priors by situation, prior seasons only
+            if eligible_before is None:
+                raise ValueError('target-role priors need an eligible-before cutoff')
+            import target_roles as tr
+            contextual_sampler.role_table = tr.load(db, int(eligible_before[0]))
         if playcall_streak:  # win-loss streak splits from the prior seasons' streak histories
             if eligible_before is None:
                 raise ValueError('streak splits need an eligible-before cutoff')
