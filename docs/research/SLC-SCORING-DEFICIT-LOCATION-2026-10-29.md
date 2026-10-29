@@ -1,16 +1,13 @@
+# SLC scoring deficit location, 2026-10-29
 
-## Formation-conditioned replay (added 2026-10-29)
+## Current matched 2024 replay
 
-Same replay, same seeds, with pre-event formation and personnel and outcomes conditioned on the formation
-(`--formation`, branch `research/slc-layered-2026-10-29`). Raw output: `SLC-SCORING-CALIBRATION-2024-FORMATION-COMPARE-2026-10-29.json`.
+The cohort-corrected replay uses 229 of 256 regular-season games from weeks 2 to 18. On the same 1,071 completed game and seed pairs, formation-conditioned outcomes change mean scoring by +0.2745 points per team-game, with a game-clustered standard error of 0.2572. This does not establish that formation closes the scoring gap.
 
-| Measure | Baseline replay | Formation replay | Actual 2024 |
-|---|---|---|---|
-| Points per team-game | 19.47 | 19.70 | 22.91 |
-| Touchdowns per team-game | 2.00 | 2.02 | 2.56 |
-| Points per drive | 1.735 | 1.733 | 2.128 |
-| Punts per team-game | 4.15 | 4.21 | 3.73 |
+Actual final scores on this cohort average 22.559 points per team-game. The baseline averages 19.8595 and the formation arm 20.1340. Actual scores include defense and special teams. Snapshot coverage is team-selective, including 16 omitted CIN games.
 
-The formation layer moves points by +0.23 and touchdowns by +0.02. It does not close the gap, so the deficit is not in the formation
-decision or the formation-conditioned outcome weights. The remaining candidates are the red-zone field-goal share and the outcome
-draw inside trips, which need per-play red-zone decisions to split (see above).
+The earlier 19.47 versus 19.70 comparison included blocked partial runs and used a different actual-score cohort. It is superseded for scoring claims by [the matched replay report](SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md) and its machine-readable result file, [SLC-SCORING-CALIBRATION-2024-FORMATION-COMPARE-2026-10-29.json](SLC-SCORING-CALIBRATION-2024-FORMATION-COMPARE-2026-10-29.json).
+
+## Open
+
+The red-zone decomposition script was written but the saved session ended before it was run. The current reports make no red-zone mechanism claim.
