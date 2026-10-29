@@ -31,6 +31,7 @@ import pregame_snapshot  # noqa: E402
 import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import slc_playcall  # noqa: E402
+import source_preflight  # noqa: E402
 
 EXPECTED_CLASSES = {'cutoff-valid': 28, 'exploratory reconstruction': 51, 'refused': 28}
 RUNTIME_FIELDS = {
@@ -98,6 +99,7 @@ def _validate_inputs(args, candidates):
     slc_playcall.PlayCallLayer(artifact)  # verifies the artifact's self-hash and schema
     artifact_raw_sha = _sha(args.artifact)
     snapshot_paths = {}
+    target_games = []
     for row in candidates:
         snapshot_path = args.snapshot_dir / 'snapshots' / f"{row['game_id']}.json"
         if not snapshot_path.is_file():
@@ -109,10 +111,12 @@ def _validate_inputs(args, candidates):
             archive_root=args.archive_root, streak_file=streak_file, expected_game_id=row['game_id'])
         if validation['prospective'] or validation['classification'] != historical_archive.MODE:
             raise ValueError(f"{row['game_id']}: input was not admitted as retrospective archive reconstruction")
+        target_games.append(snapshot['schedule'])
         snapshot_paths[row['game_id']] = {'path': str(snapshot_path), 'snapshot_sha256': snapshot['snapshot_sha256'],
                                           'streak_sha256': validation['streak_file_sha256'],
                                           'source_hashes': {key: value['sha256'] for key, value in
                                                             validation['source_assets'].items()}}
+    source_preflight.validate_comparison_sources(args, target_games)
     return artifact, artifact_raw_sha, snapshot_paths
 
 
@@ -647,8 +651,12 @@ def main(argv=None):
     args.games = args.games if args.games is not None else (2 if args.phase == 'smoke' else 25)
     if args.games < 1 or args.seed_start < 0:
         parser.error('--games must be positive and --seed-start must be non-negative')
-    candidates, classes = _primary_candidates(args.readiness_matrix)
-    artifact, artifact_raw_sha, snapshot_pins = _validate_inputs(args, candidates)
+    try:
+        source_preflight.validate_comparison_paths(args)
+        candidates, classes = _primary_candidates(args.readiness_matrix)
+        artifact, artifact_raw_sha, snapshot_pins = _validate_inputs(args, candidates)
+    except source_preflight.PreflightError as exc:
+        parser.error(str(exc))
     if args.phase == 'diagnostic':
         smoke_path = args.smoke_report or (args.out_root / 'smoke' / 'smoke_report.json')
         smoke = _read_json(smoke_path)

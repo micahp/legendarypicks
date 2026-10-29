@@ -51,6 +51,7 @@ import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
+import source_preflight  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -642,6 +643,7 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    source_preflight.validate_model_sources(args, snapshot)
     if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
         # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
         evaluation = snapshot.get('evaluation', {})
@@ -1060,7 +1062,11 @@ def main(argv=None):
         ap.error('--progress-every must be non-negative')
     if args.max_simulation_errors is not None and args.max_simulation_errors < 0:
         ap.error('--max-simulation-errors must be non-negative')
-    run_batch(args)
+    try:
+        source_preflight.validate_cli_paths(args)
+        run_batch(args)
+    except source_preflight.PreflightError as exc:
+        ap.error(str(exc))
 
 
 if __name__ == '__main__':
