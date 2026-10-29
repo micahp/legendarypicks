@@ -18,7 +18,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 import sys
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # Python 3.8 backend environment
+    import pytz
+
+    ZoneInfo = pytz.timezone
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
@@ -52,6 +57,14 @@ STARTER_ROLES = {
     'Special Teams': {('PK', 1), ('P', 1), ('LS', 1), ('H', 1), ('KR', 1), ('PR', 1)},
 }
 EXPECTED_STARTERS = 28
+# NFL's official 2022 Rams and 2025 Packers media guides use both "Matthew Orzech" and
+# "Matt Orzech" for this player. Keep the exception keyed by GSIS and exact normalized
+# names; never use it to join identities. Sources:
+# https://static.www.nfl.com/image/upload/league/apps/league-site/media-guides/2022/LAR.pdf
+# https://static.www.nfl.com/image/upload/league/apps/league-site/media-guides/2025/GB.pdf
+VERIFIED_NAME_VARIANTS = {
+    '00-0035118': frozenset({('matt orzech', 'matthew orzech')}),
+}
 
 
 def _sha(path):
@@ -82,6 +95,16 @@ def _name_key(value):
     return re.sub(r'\s+(jr|sr|ii|iii|iv)$', '', key)
 
 
+def _identity_name_matches(gsis_id, source_name, canonical_name):
+    source_key, canonical_key = _name_key(source_name), _name_key(canonical_name)
+    if source_key == canonical_key:
+        return True
+    pair = (source_key, canonical_key)
+    reverse = (canonical_key, source_key)
+    return pair in VERIFIED_NAME_VARIANTS.get(str(gsis_id), ()) or reverse in VERIFIED_NAME_VARIANTS.get(
+        str(gsis_id), ())
+
+
 def _iso_utc(value):
     parsed = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
     if parsed.tzinfo is None:
@@ -94,7 +117,9 @@ def _schedule_row(games, row):
     if len(match) != 1:
         raise ValueError(f"{row['game_id']}: archived schedule must contain exactly one row")
     game = match.iloc[0].to_dict()
-    kickoff = datetime.strptime(f"{game['gameday']} {game['gametime']}", '%Y-%m-%d %H:%M').replace(tzinfo=EASTERN)
+    kickoff_local = datetime.strptime(f"{game['gameday']} {game['gametime']}", '%Y-%m-%d %H:%M')
+    kickoff = (EASTERN.localize(kickoff_local) if hasattr(EASTERN, 'localize')
+               else kickoff_local.replace(tzinfo=EASTERN))
     kickoff = kickoff.astimezone(timezone.utc)
     expected_kickoff = archive._utc(row['kickoff_utc'], 'readiness kickoff')
     if kickoff != expected_kickoff:
@@ -269,7 +294,7 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
             continue
         source_name = _text(record.get('player_name')) or roster_entry.get('full_name')
         canonical_name = player_identity['canonical_name']
-        if not source_name or not canonical_name or _name_key(source_name) != _name_key(canonical_name):
+        if not source_name or not canonical_name or not _identity_name_matches(gsis_id, source_name, canonical_name):
             raise ValueError(f'{game_id}: GSIS {gsis_id} identity/name mismatch: archive={source_name!r}; '
                              f'canonical={canonical_name!r}')
         role_key = (group, pos, rank)
