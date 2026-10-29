@@ -479,7 +479,7 @@ def _open_seed_ledger(path, header, resume):
         handle = path.open('w')
         handle.write(json.dumps({'header': header}, sort_keys=True) + '\n')
         handle.flush()
-        return {}, handle
+        return FinishedSeeds(), handle
     lines = path.read_text().splitlines()
     if not lines or json.loads(lines[0]).get('header') != header:
         raise ValueError(f'{path} was written from different inputs; use a new --out or remove the ledger')

@@ -33,6 +33,12 @@ class SeedLedger(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             batch._open_seed_ledger(self.path, HEADER, resume=False)
 
+    def test_new_ledger_has_duplicate_counter_for_boxscore_summary(self):
+        finished, handle = batch._open_seed_ledger(self.path, HEADER, resume=False)
+        handle.close()
+        self.assertIsInstance(finished, batch.FinishedSeeds)
+        self.assertEqual(finished.duplicate_rows, 0)
+
     def test_resume_refuses_a_ledger_from_other_inputs(self):
         self._fresh().close()
         with self.assertRaises(ValueError):
